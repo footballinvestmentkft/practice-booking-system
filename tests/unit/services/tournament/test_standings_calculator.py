@@ -55,9 +55,25 @@ def _make_session(group_identifier=None, participant_user_ids=None, game_results
 
 
 def _h2h(uid1, score1, uid2, score2):
-    """Shorthand for a standard HEAD_TO_HEAD dict result."""
+    """Shorthand for a standard HEAD_TO_HEAD dict result (raw_results key = legacy)."""
     return {"raw_results": [{"user_id": uid1, "score": score1},
                             {"user_id": uid2, "score": score2}]}
+
+
+def _h2h_api(uid1, score1, uid2, score2, r1="", r2=""):
+    """Shorthand using the current API format (participants key)."""
+    def _res(s1, s2, r):
+        if r:
+            return r
+        return "win" if s1 > s2 else ("draw" if s1 == s2 else "loss")
+    return {
+        "match_format": "HEAD_TO_HEAD",
+        "participants": [
+            {"user_id": uid1, "score": score1, "result": _res(score1, score2, r1)},
+            {"user_id": uid2, "score": score2, "result": _res(score2, score1, r2)},
+        ],
+        "match_status": "completed",
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -269,6 +285,53 @@ class TestParsing:
         by = {e["user_id"]: e for e in
               StandingsCalculator(_make_db([u1, u2])).calculate_group_standings([init, bad])["A"]}
         assert by[1]["wins"] == 0
+
+    def test_participants_key_parsed_correctly(self):
+        """SC-KEY-01: API format uses 'participants' key — must parse same as 'raw_results'."""
+        u1, u2 = _make_user(1), _make_user(2)
+        session = _make_session("A", [1, 2], _h2h_api(1, 3, 2, 0))
+        by = {e["user_id"]: e for e in
+              StandingsCalculator(_make_db([u1, u2])).calculate_group_standings([session])["A"]}
+        assert by[1]["wins"] == 1
+        assert by[1]["points"] == 3
+        assert by[2]["losses"] == 1
+        assert by[2]["points"] == 0
+
+    def test_participants_key_draw(self):
+        """SC-KEY-02: 'participants' format — draw scored correctly."""
+        u1, u2 = _make_user(1), _make_user(2)
+        session = _make_session("A", [1, 2], _h2h_api(1, 1, 2, 1))
+        by = {e["user_id"]: e for e in
+              StandingsCalculator(_make_db([u1, u2])).calculate_group_standings([session])["A"]}
+        assert by[1]["draws"] == 1 and by[1]["points"] == 1
+        assert by[2]["draws"] == 1 and by[2]["points"] == 1
+
+    def test_participants_key_as_json_string(self):
+        """SC-KEY-03: 'participants' format as JSON string (as stored in DB)."""
+        u1, u2 = _make_user(1), _make_user(2)
+        results_str = json.dumps(_h2h_api(1, 5, 2, 2))
+        session = _make_session("A", [1, 2], results_str)
+        by = {e["user_id"]: e for e in
+              StandingsCalculator(_make_db([u1, u2])).calculate_group_standings([session])["A"]}
+        assert by[1]["wins"] == 1
+        assert by[1]["goals_for"] == 5
+        assert by[2]["goals_for"] == 2
+
+    def test_qualification_uses_correct_standings_with_api_format(self):
+        """
+        SC-KEY-04 / Core regression: with 'participants' key data, top-ranked player
+        (highest pts) must appear first — not random insertion order.
+        """
+        users = [_make_user(uid) for uid in (10, 20, 30, 40)]
+        # Player 10 wins all 3 matches → 9 pts; others get 0
+        sessions = [
+            _make_session("A", [10, 20], _h2h_api(10, 3, 20, 0)),
+            _make_session("A", [10, 30], _h2h_api(10, 3, 30, 0)),
+            _make_session("A", [10, 40], _h2h_api(10, 3, 40, 0)),
+        ]
+        result = StandingsCalculator(_make_db(users)).calculate_group_standings(sessions)
+        assert result["A"][0]["user_id"] == 10
+        assert result["A"][0]["points"] == 9
 
 
 # ---------------------------------------------------------------------------

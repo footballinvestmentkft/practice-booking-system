@@ -198,9 +198,9 @@ class StandingsCalculator:
                 except json.JSONDecodeError:
                     continue
 
-            # game_results is a dict with "raw_results" key for HEAD_TO_HEAD
+            # game_results may use "participants" (current API) or "raw_results" (legacy)
             if isinstance(results, dict):
-                raw_results = results.get('raw_results', [])
+                raw_results = results.get('raw_results') or results.get('participants') or []
             elif isinstance(results, list):
                 raw_results = results  # Fallback for old format
             else:
