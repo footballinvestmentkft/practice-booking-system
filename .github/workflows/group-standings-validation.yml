@@ -49,6 +49,8 @@ concurrency:
 env:
   DATABASE_URL: postgresql://postgres:postgres@localhost:5432/lfa_intern_system
   SECRET_KEY: ci-group-standings-secret-not-for-production
+  # TESTING=true → is_testing()=True → ENABLE_RATE_LIMITING=False (bypasses in-memory rate limiter)
+  TESTING: "true"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Job 1: Seed — bootstrap + full REWARDS_DISTRIBUTED showcase (formats C and H

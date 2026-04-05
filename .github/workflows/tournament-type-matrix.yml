@@ -40,6 +40,7 @@ concurrency:
 env:
   DATABASE_URL: postgresql://postgres:postgres@localhost:5432/lfa_intern_system
   SECRET_KEY: ci-tournament-matrix-secret-not-for-production
+  TESTING: "true"
 
 # ── Job 1: SRL-09..18 Integration tests ───────────────────────────────────────
 jobs:

@@ -19,6 +19,7 @@ concurrency:
 env:
   DATABASE_URL: postgresql://postgres:postgres@localhost:5432/lfa_intern_system
   SECRET_KEY: ci-promo-e2e-secret-key-not-for-production
+  TESTING: "true"
   API_URL: http://localhost:8000
   PYTEST_HEADLESS: "true"
   ADMIN_EMAIL: admin@lfa.com

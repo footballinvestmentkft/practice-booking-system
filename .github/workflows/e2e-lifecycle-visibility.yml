@@ -51,6 +51,7 @@ concurrency:
 env:
   DATABASE_URL: postgresql://postgres:postgres@localhost:5432/lfa_intern_system
   SECRET_KEY: ci-lifecycle-visibility-secret-not-for-production
+  TESTING: "true"
 
 jobs:
   lifecycle-visibility:
