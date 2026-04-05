@@ -503,11 +503,12 @@ def public_event_detail(
                     name = schedule_player_cache.get(pid, f"Player #{pid}")
                 rows_in_group.append({
                     "name": name,
+                    "id": pid,
                     "W": s["W"], "D": s["D"], "L": s["L"],
                     "GF": s["GF"], "GA": s["GA"], "GD": gd, "Pts": pts,
                     "qualifies": pid in qualifiers_set,
                 })
-            rows_in_group.sort(key=lambda r: (-r["Pts"], -r["GD"], -r["GF"]))
+            rows_in_group.sort(key=lambda r: (-r["Pts"], -r["GD"], -r["GF"], r["id"]))
             group_standings[grp] = rows_in_group
 
     # How many qualifiers per group (for "top N advance" note)

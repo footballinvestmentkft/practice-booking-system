@@ -414,3 +414,48 @@ class TestNameFallback:
         session = _make_session("A", [1], game_results=None)
         result = StandingsCalculator(_make_db([user])).calculate_group_standings([session])
         assert result["A"][0]["name"] == "fallback@test.com"
+
+
+# ---------------------------------------------------------------------------
+# Deterministic tie-breaker (SC-TIE-01)
+# ---------------------------------------------------------------------------
+
+class TestDeterministicTieBreaker:
+    """
+    SC-TIE-01: When Pts + GD + GF are fully equal, lower user_id must rank higher.
+    This prevents qualification/display ordering mismatch.
+    """
+
+    def _three_way_tie_standings(self):
+        """
+        Group A: players 10, 20, 30
+        All draw all their matches → each has 2 pts, GD=0, GF=1
+        Correct final order: id=10 > id=20 > id=30 (lower id ranks higher).
+        """
+        users = [_make_user(uid) for uid in (10, 20, 30)]
+        # 3 round-robin sessions: 10v20 draw, 10v30 draw, 20v30 draw
+        sessions = [
+            _make_session("A", [10, 20], _h2h(10, 1, 20, 1)),
+            _make_session("A", [10, 30], _h2h(10, 1, 30, 1)),
+            _make_session("A", [20, 30], _h2h(20, 1, 30, 1)),
+        ]
+        return users, sessions
+
+    def test_lower_user_id_ranks_higher_on_full_tie(self):
+        users, sessions = self._three_way_tie_standings()
+        result = StandingsCalculator(_make_db(users)).calculate_group_standings(sessions)
+        order = [e["user_id"] for e in result["A"]]
+        assert order == [10, 20, 30], f"Expected [10,20,30] but got {order}"
+
+    def test_rank_field_consistent_with_sort_order_on_full_tie(self):
+        users, sessions = self._three_way_tie_standings()
+        result = StandingsCalculator(_make_db(users)).calculate_group_standings(sessions)
+        for expected_rank, entry in enumerate(result["A"], start=1):
+            assert entry["rank"] == expected_rank
+
+    def test_top_n_qualifiers_are_deterministically_lowest_ids(self):
+        """Top 2 must be user_id 10 and 20, regardless of dict insertion order."""
+        users, sessions = self._three_way_tie_standings()
+        result = StandingsCalculator(_make_db(users)).calculate_group_standings(sessions)
+        top2_ids = {e["user_id"] for e in result["A"][:2]}
+        assert top2_ids == {10, 20}, f"Expected top-2 = {{10, 20}}, got {top2_ids}"

@@ -130,8 +130,7 @@ class StandingsCalculator:
                 })
 
             standings_list.sort(
-                key=lambda x: (x["points"], x["goal_difference"], x["goals_for"]),
-                reverse=True,
+                key=lambda x: (-x["points"], -x["goal_difference"], -x["goals_for"], x["team_id"]),
             )
             for rank, entry in enumerate(standings_list, start=1):
                 entry["rank"] = rank
@@ -274,10 +273,9 @@ class StandingsCalculator:
                     'matches_played': user_stats['matches_played']
                 })
 
-            # Sort by: points (desc), goal_difference (desc), goals_for (desc)
+            # Sort by: points (desc), goal_difference (desc), goals_for (desc), user_id (asc) as stable tie-breaker
             standings_list.sort(
-                key=lambda x: (x['points'], x['goal_difference'], x['goals_for']),
-                reverse=True
+                key=lambda x: (-x['points'], -x['goal_difference'], -x['goals_for'], x['user_id'])
             )
 
             # Add rank
