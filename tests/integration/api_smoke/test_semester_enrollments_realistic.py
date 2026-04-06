@@ -24,19 +24,17 @@ from tests.fixtures.builders import build_enrollment, build_semester, build_user
 
 # ── Module-scoped DB state ────────────────────────────────────────────────────
 
-@pytest.fixture(scope="module")
-def _enrollment_data(test_db: Session, admin_token: str, student_token: str) -> dict:
+@pytest.fixture(scope="function")
+def _enrollment_data(test_db: Session, admin_token: str, _student_user) -> dict:
     """
     Create:
       - A test semester (rolling -30/+150 day window)
-      - A PLAYER UserLicense for the smoke student
+      - A PLAYER UserLicense for the per-test student user
       - An APPROVED enrollment (is_active=True)
       - A PENDING enrollment in a second semester (for workflow branch coverage)
     """
-    from app.models.user import User
-
     uid = uuid.uuid4().hex[:8]
-    student = test_db.query(User).filter(User.email == "smoke.student@example.com").first()
+    student = _student_user
 
     # Approved enrollment
     sem_approved = build_semester(

@@ -33,20 +33,14 @@ from typing import Optional
 
 # ── Module-scoped preconditions ───────────────────────────────────────────────
 
-@pytest.fixture(scope="module")
-def wf_user_license_id(test_db, student_token) -> Optional[int]:
+@pytest.fixture(scope="function")
+def wf_user_license_id(test_db, _student_user) -> Optional[int]:
     """
-    Get or create a UserLicense for the smoke.student user.
-    Returns None if student user is not found (unlikely in CI).
+    Get or create a UserLicense for the per-test student user.
     """
-    from app.models.user import User
     from app.models.license import UserLicense
 
-    student = test_db.query(User).filter(
-        User.email == "smoke.student@example.com"
-    ).first()
-    if not student:
-        return None
+    student = _student_user
 
     # Prefer an existing LFA_PLAYER_YOUTH license
     lic = test_db.query(UserLicense).filter(

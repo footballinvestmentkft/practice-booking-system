@@ -30,7 +30,7 @@ from app.models.booking import Booking
 
 # ── Module-scoped preconditions ───────────────────────────────────────────────
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def wf_semester_id(test_db) -> int:
     """
     Get or create a minimal Semester for session creation.

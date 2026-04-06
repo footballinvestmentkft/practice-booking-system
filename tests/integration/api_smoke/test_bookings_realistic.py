@@ -34,21 +34,18 @@ from sqlalchemy.orm import Session
 
 # ── Module-scoped fixture ─────────────────────────────────────────────────────
 
-@pytest.fixture(scope="module")
-def _booking_data(test_db: Session) -> Dict:
+@pytest.fixture(scope="function")
+def _booking_data(test_db: Session, _student_user) -> Dict:
     """
     Create real DB state for booking tests:
       - Semester + Session (7 days from now, within semester bounds)
-      - UserLicense for smoke.student
-      - A CONFIRMED booking for smoke.student on that session
-
-    Uses builders.py (flush-only, module-scoped commit at end).
+      - UserLicense for the per-test student user
+      - A CONFIRMED booking for that student on that session
     """
     from app.models.booking import Booking, BookingStatus
-    from app.models.user import User
     from tests.fixtures.builders import build_semester, build_session, build_user_license
 
-    student = test_db.query(User).filter(User.email == "smoke.student@example.com").first()
+    student = _student_user
 
     sem = build_semester(test_db, code=None, name="Booking Smoke Semester")
     sess = build_session(test_db, sem.id, title="Booking Smoke Session")

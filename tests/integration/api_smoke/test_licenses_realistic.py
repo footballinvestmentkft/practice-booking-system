@@ -33,18 +33,16 @@ from tests.fixtures.builders import build_user_license
 
 # ── Module-scoped DB state ────────────────────────────────────────────────────
 
-@pytest.fixture(scope="module")
-def _license_data(test_db: Session, student_token: str, instructor_token: str) -> dict:
+@pytest.fixture(scope="function")
+def _license_data(test_db: Session, _student_user, _instructor_user) -> dict:
     """
-    Create two UserLicenses for the smoke student:
+    Create two UserLicenses for the per-test student user:
       - specialization_type="PLAYER"           (standard)
       - specialization_type="LFA_FOOTBALL_PLAYER" (for football-skills endpoints)
     Returns a dict with user and license IDs.
     """
-    from app.models.user import User
-
-    student = test_db.query(User).filter(User.email == "smoke.student@example.com").first()
-    instructor = test_db.query(User).filter(User.email == "smoke.instructor@example.com").first()
+    student = _student_user
+    instructor = _instructor_user
 
     player_lic = build_user_license(test_db, user_id=student.id, specialization_type="PLAYER")
     test_db.commit()

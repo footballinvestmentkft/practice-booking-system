@@ -37,8 +37,8 @@ def _now_naive() -> datetime:
 
 # ── Module-scoped DB state ────────────────────────────────────────────────────
 
-@pytest.fixture(scope="module")
-def _session_data(test_db: Session, admin_token: str, instructor_token: str) -> dict:
+@pytest.fixture(scope="function")
+def _session_data(test_db: Session, admin_token: str, _instructor_user) -> dict:
     """
     Create:
       - One test semester (rolling ±30/+150 day window)
@@ -46,11 +46,7 @@ def _session_data(test_db: Session, admin_token: str, instructor_token: str) -> 
       - One instructor-assigned session in that semester
     Returns IDs for use in tests.
     """
-    from app.models.user import User
-
-    instructor = test_db.query(User).filter(
-        User.email == "smoke.instructor@example.com"
-    ).first()
+    instructor = _instructor_user
 
     uid = uuid.uuid4().hex[:8]
     sem = build_semester(test_db, code=f"SESS-REAL-{uid}", name=f"Sessions Realistic {uid}")

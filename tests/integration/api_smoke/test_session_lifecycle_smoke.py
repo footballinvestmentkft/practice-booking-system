@@ -29,7 +29,7 @@ from typing import Optional
 
 # ── Module-scoped preconditions ───────────────────────────────────────────────
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def wf_session_semester_id(test_db) -> int:
     """Get or create a Semester for session lifecycle tests."""
     from app.models.semester import Semester, SemesterStatus
