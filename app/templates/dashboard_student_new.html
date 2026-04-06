@@ -117,6 +117,22 @@
         font-size: 0.5rem; line-height: 1; pointer-events: none;
     }
 
+    /* ── Variant picker ───────────────────────────────────────────────────────── */
+    .variant-picker { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .variant-btn {
+        font-size: 0.68rem; font-weight: 700; padding: 4px 10px; border-radius: 99px;
+        cursor: pointer; border: 1.5px solid transparent; transition: all .15s;
+        background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.65);
+        display: flex; align-items: center; gap: 0.3rem; white-space: nowrap;
+    }
+    .variant-btn:hover { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.88); }
+    .variant-btn.active {
+        background: rgba(102,126,234,0.2); border-color: rgba(102,126,234,0.6);
+        color: #a3b3f7;
+    }
+    .variant-btn.locked { opacity: 0.6; }
+    .variant-btn .var-cost { font-size: 0.6rem; opacity: 0.75; }
+
     /* ── 2-column main layout ─────────────────────────────────────────────────── */
     .dash-main-grid {
         display: grid;
@@ -263,6 +279,23 @@
                     </div>
                     <a href="/players/{{ user.id }}/card" target="_blank" class="section-link">🌐 Open full screen →</a>
                 </div>
+                {# ── Variant picker ── #}
+                {% if card_variants is defined %}
+                <div class="variant-picker" id="variant-picker">
+                    {% for v in card_variants %}
+                    <button class="variant-btn {% if v.id == active_card_variant %}active{% endif %} {% if not v.unlocked %}locked{% endif %}"
+                            title="{{ v.description }}{% if v.is_premium and not v.unlocked %} · Unlock for {{ v.credit_cost }} CR{% endif %}"
+                            onclick="setCardVariant('{{ v.id }}', {{ 'true' if v.unlocked else 'false' }}, '{{ v.label }}', {{ v.credit_cost }})">
+                        {% if v.is_premium and not v.unlocked %}🔒{% endif %}
+                        {{ v.label }}
+                        {% if v.is_premium and not v.unlocked %}<span class="var-cost">{{ v.credit_cost }} CR</span>{% endif %}
+                        <a href="/players/{{ user.id }}/card?preview={{ v.id }}" target="_blank"
+                           onclick="event.stopPropagation();" title="Preview in new tab"
+                           style="font-size:0.6rem; opacity:0.6; text-decoration:none; color:inherit;">↗</a>
+                    </button>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
             <div class="player-card-embed-wrap">
                 <iframe id="player-card-iframe" src="/players/{{ user.id }}/card" height="920" scrolling="no"
@@ -576,6 +609,45 @@ async function setCardTheme(themeId, unlocked, label, cost) {
         if (iframe) { iframe.src = iframe.src; }
     } else {
         alert(data.error || 'Could not apply theme.');
+    }
+}
+
+async function unlockVariant(variantId, label, cost) {
+    if (!confirm(`Unlock "${label}" layout for ${cost} CR from your credit balance?`)) return;
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/unlock-variant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+        body: JSON.stringify({ variant: variantId }),
+    });
+    const data = await r.json();
+    if (data.ok) {
+        location.reload();
+    } else {
+        alert('❌ ' + (data.error || 'Could not unlock variant.'));
+    }
+}
+
+async function setCardVariant(variantId, unlocked, label, cost) {
+    if (!unlocked) {
+        await unlockVariant(variantId, label, cost);
+        return;
+    }
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/card-variant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+        body: JSON.stringify({ variant: variantId }),
+    });
+    const data = await r.json();
+    if (data.ok) {
+        document.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('active'));
+        const active = document.querySelector(`.variant-btn[onclick*="'${variantId}'"]`);
+        if (active) active.classList.add('active');
+        const iframe = document.getElementById('player-card-iframe');
+        if (iframe) { iframe.src = iframe.src; }
+    } else {
+        alert(data.error || 'Could not apply variant.');
     }
 }
 

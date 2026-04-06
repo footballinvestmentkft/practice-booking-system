@@ -1,0 +1,346 @@
+{% extends "public/player_card_base.html" %}
+
+{% block extra_styles %}
+.card-wrap {
+    width: 100%;
+    max-width: min(960px, calc(100vw - 2rem));
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.55);
+    border: 1px solid var(--card-border);
+}
+
+/* ── Split header ─────────────────────────────────────────── */
+.fifa-header {
+    display: grid;
+    grid-template-columns: 170px 1fr;
+}
+.fifa-left {
+    background: var(--card-panel-bg);
+    padding: 1.5rem 1rem;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 0.5rem; text-align: center;
+}
+.fifa-avatar {
+    width: 68px; height: 68px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.55rem; font-weight: 900; color: white;
+    border: 3px solid rgba(255,255,255,0.18); flex-shrink: 0;
+}
+.fifa-overall { font-size: 2.8rem; font-weight: 900; color: white; line-height: 1; margin-top: 0.15rem; }
+.fifa-tier {
+    font-size: 0.58rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.12em; padding: 3px 10px; border-radius: 99px; color: white;
+    white-space: nowrap;
+}
+.fifa-right {
+    background: var(--card-right-bg);
+    padding: 1.25rem 1.25rem 1rem;
+    display: flex; flex-direction: column; gap: 0.7rem;
+    min-width: 0;
+}
+.fifa-name {
+    font-size: 1.45rem; font-weight: 800; color: var(--card-right-text); line-height: 1.1;
+    overflow-wrap: break-word; word-break: break-word;
+}
+.fifa-pos-badge {
+    display: inline-block; padding: 3px 11px; border-radius: 6px;
+    font-size: 0.7rem; font-weight: 800; color: white;
+    text-transform: uppercase; letter-spacing: 0.08em;
+}
+.identity-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem 0.75rem;
+}
+.id-field { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.id-label { font-size: 0.6rem; font-weight: 700; color: var(--card-right-subtext); text-transform: uppercase; letter-spacing: 0.07em; }
+.id-value { font-size: 0.84rem; font-weight: 700; color: var(--card-right-value); overflow-wrap: break-word; }
+.fifa-club-pills { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.club-pill {
+    font-size: 0.7rem; font-weight: 600; color: var(--card-pill-text);
+    background: var(--card-pill-bg); border: 1px solid var(--card-pill-border);
+    border-radius: 99px; padding: 3px 9px;
+    overflow-wrap: anywhere;
+}
+
+/* ── Skills section ───────────────────────────────────────── */
+.skills-section {
+    background: var(--card-body-bg);
+    padding: 1.1rem 1.1rem;
+}
+.skills-title {
+    font-size: 0.63rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.13em; color: var(--card-text-faint);
+    margin-bottom: 0.85rem;
+}
+.skill-cats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0.65rem;
+}
+.skill-cat { background: var(--card-cat-bg); border-radius: 9px; padding: 0.65rem; min-width: 0; }
+.skill-cat-name {
+    font-size: 0.58rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--card-text-muted); margin-bottom: 0.45rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.skill-row { display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.3rem; }
+.skill-row:last-child { margin-bottom: 0; }
+.skill-name { font-size: 0.62rem; color: var(--card-text-secondary); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.skill-val { font-size: 0.67rem; font-weight: 700; width: 28px; text-align: right; flex-shrink: 0; }
+.skill-up { font-size: 0.6rem; color: var(--card-skill-up); font-weight: 900; flex-shrink: 0; line-height: 1; }
+.skill-bar-bg { flex: 0 1 36px; height: 4px; background: var(--card-bar-bg); border-radius: 2px; }
+.skill-bar-fill { height: 100%; border-radius: 2px; }
+
+/* ── Tab bar ─────────────────────────────────────────────── */
+.tab-bar {
+    display: flex;
+    background: var(--card-tab-bg);
+    border-bottom: 1px solid var(--card-tab-border);
+}
+.tab-btn {
+    flex: 1;
+    padding: 0.55rem 1rem;
+    background: none;
+    border: none;
+    color: var(--card-text-tab);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color .15s, border-color .15s;
+}
+.tab-btn.active { color: var(--card-text-primary); border-bottom-color: var(--card-accent); }
+
+/* ── Events section ──────────────────────────────────────── */
+.events-section { background: var(--card-body-bg); padding: 0.75rem 1rem; }
+.ev-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--card-ev-border);
+}
+.ev-row:last-child { border-bottom: none; }
+.ev-rank { min-width: 2rem; font-size: 1.1rem; text-align: center; padding-top: 0.05rem; }
+.ev-body { flex: 1; min-width: 0; }
+.ev-name { margin-bottom: 0.2rem; }
+.ev-link { color: var(--card-text-primary); font-size: 0.82rem; font-weight: 600; text-decoration: none; }
+.ev-link:hover { text-decoration: underline; }
+.ev-rewards { display: flex; gap: 0.3rem; margin-bottom: 0.25rem; flex-wrap: wrap; }
+.ev-badge { font-size: 0.68rem; font-weight: 700; padding: 1px 6px; border-radius: 99px; }
+.ev-badge.xp { background: var(--card-badge-xp-bg); color: var(--card-badge-xp-text); }
+.ev-badge.cr { background: var(--card-badge-cr-bg); color: var(--card-badge-cr-text); }
+.ev-skills { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.ev-skill-pill { font-size: 0.65rem; padding: 1px 6px; border-radius: 99px; }
+.ev-skill-pill.up { background: var(--card-pill-up-bg); color: var(--card-pill-up-text); }
+.ev-skill-pill.dn { background: var(--card-pill-dn-bg); color: var(--card-pill-dn-text); }
+.ev-empty { text-align: center; color: var(--card-text-faint); font-size: 0.8rem; padding: 2rem 0; }
+
+/* ── Responsive ─────────────────────────────────────────────
+   Breakpoints:
+   ≥ 768px : desktop           — wider card (960px), scaled header + skills
+   < 560px : tablet/large phone — 2-col skills, 2-col identity, smaller left
+   < 440px : phone portrait    — stack header vertically, 1-col skills
+   < 340px : tiny phone        — extra compact
+───────────────────────────────────────────────────────────── */
+/* ── 561px-767px (tablet landscape) ─────────────────────────
+   4-col skills but wrapping allowed — names never truncate     */
+@media (min-width: 561px) and (max-width: 767px) {
+    .skill-name     { white-space: normal; line-height: 1.3; }
+    .skill-cat-name { white-space: normal; line-height: 1.3; }
+}
+/* ── 768px+ (desktop / large tablet) ────────────────────────
+   Wider card (960px), scaled header, larger controls           */
+@media (min-width: 768px) {
+    body { padding: 2rem 1.5rem 5rem; }
+    .fifa-header { grid-template-columns: 200px 1fr; }
+    .fifa-left  { padding: 1.75rem 1.25rem; gap: 0.6rem; }
+    .fifa-avatar { width: 82px; height: 82px; font-size: 1.85rem; }
+    .fifa-overall { font-size: 3.2rem; }
+    .fifa-right { padding: 1.5rem 1.5rem 1.25rem; gap: 0.8rem; }
+    .fifa-name  { font-size: 1.75rem; }
+    .id-label   { font-size: 0.62rem; }
+    .id-value   { font-size: 0.9rem; }
+    .tab-btn    { font-size: 0.88rem; padding: 0.65rem 1rem; }
+    .skills-section { padding: 1.25rem 1.5rem; }
+    .skill-cats { gap: 0.8rem; }
+    .skill-cat  { padding: 0.75rem 0.85rem; }
+    .skill-cat-name { font-size: 0.62rem; margin-bottom: 0.5rem; }
+    .skill-name { font-size: 0.68rem; white-space: normal; line-height: 1.3; }
+    .skill-val  { font-size: 0.7rem; width: 30px; }
+    .skill-bar-bg { flex: 0 1 52px; }
+}
+@media (max-width: 560px) {
+    body { padding: 1rem 0.5rem 3rem; }
+    .fifa-header { grid-template-columns: 130px 1fr; }
+    .fifa-left { padding: 1.1rem 0.75rem; }
+    .fifa-avatar { width: 58px; height: 58px; font-size: 1.3rem; }
+    .fifa-overall { font-size: 2.3rem; }
+    .fifa-right { padding: 1rem; gap: 0.6rem; }
+    .fifa-name { font-size: 1.2rem; }
+    .identity-grid { grid-template-columns: 1fr 1fr; }
+    .skill-cats { grid-template-columns: 1fr 1fr; }
+    .skills-section { padding: 0.9rem; }
+}
+@media (max-width: 440px) {
+    .fifa-header { grid-template-columns: 1fr; }
+    .fifa-left {
+        flex-direction: row; justify-content: center;
+        align-items: center; flex-wrap: wrap;
+        gap: 0.6rem 1rem; padding: 1rem 1.25rem;
+    }
+    .fifa-overall { font-size: 2.4rem; }
+    .fifa-right { padding: 1rem; }
+    .identity-grid { grid-template-columns: repeat(3, 1fr); }
+    .skill-cats { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 340px) {
+    .identity-grid { grid-template-columns: 1fr 1fr; }
+    .skill-cats { grid-template-columns: 1fr; }
+    .fifa-name { font-size: 1.05rem; }
+}
+{% endblock %}
+
+{% block content %}
+<div class="card-wrap">
+
+    <!-- Split header -->
+    <div class="fifa-header">
+        <div class="fifa-left">
+            {% if photo_url %}
+            <img class="fifa-avatar" src="{{ photo_url }}" alt="{{ initials }}"
+                 style="background: {{ avatar_bg }}; object-fit: cover;">
+            {% else %}
+            <div class="fifa-avatar" style="background: {{ avatar_bg }};">{{ initials }}</div>
+            {% endif %}
+            <div class="fifa-overall">{{ overall }}</div>
+            <span class="fifa-tier" style="background: {{ tier_color }};">{{ tier_label }}</span>
+        </div>
+        <div class="fifa-right">
+            <div>
+                <h2 class="fifa-name">{{ player.name }}</h2>
+                {% if player.position and player.position != "Unknown" %}
+                <span class="fifa-pos-badge" style="background: {{ pos_color }};">{{ player.position }}</span>
+                {% endif %}
+            </div>
+
+            <div class="identity-grid">
+                <div class="id-field">
+                    <span class="id-label">Nationality</span>
+                    <span class="id-value">{{ player.nationality or "—" }}</span>
+                </div>
+                <div class="id-field">
+                    <span class="id-label">Age Group</span>
+                    <span class="id-value">{{ player.age_group or "—" }}</span>
+                </div>
+                <div class="id-field">
+                    <span class="id-label">Tournaments</span>
+                    <span class="id-value">{{ player.total_tournaments }}</span>
+                </div>
+            </div>
+
+            {% if teams_info %}
+            <div class="fifa-club-pills">
+                {% for t in teams_info %}
+                <span class="club-pill">🏟️ {{ t.team_name }}{% if t.club_name %} · {{ t.club_name }}{% endif %}{% if t.age_group_label %} · {{ t.age_group_label }}{% endif %}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Tab bar -->
+    <div class="tab-bar">
+        <button class="tab-btn active" id="btn-skills" onclick="switchTab('skills')">⚽ Skills</button>
+        <button class="tab-btn"        id="btn-events" onclick="switchTab('events')">🏆 Events</button>
+    </div>
+
+    <!-- Skills tab -->
+    {% if skill_categories %}
+    <div class="skills-section" id="tab-skills">
+        <div class="skills-title">Football Skills — {{ overall }} OVR</div>
+        <div class="skill-cats">
+            {% for cat in skill_categories %}
+            <div class="skill-cat">
+                <div class="skill-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
+                {% for skill in cat.skills %}
+                {% set sdata = player.skills.get(skill.key, {}) %}
+                {% set sval = sdata.get('current_level', 50) | round(1) %}
+                {% set fill_pct = [sval, 100] | min %}
+                {% set sdelta = last_skill_delta.get(skill.key, 0) %}
+                {# Color driven solely by last-tournament delta, not by level tier.
+                   Neutral = not affected by the most recent tournament. #}
+                {% if sdelta > 0 %}
+                    {% set bar_color = 'var(--card-skill-up)' %}
+                    {% set val_color = 'var(--card-skill-up)' %}
+                {% elif sdelta < 0 %}
+                    {% set bar_color = 'var(--card-skill-dn)' %}
+                    {% set val_color = 'var(--card-skill-dn)' %}
+                {% else %}
+                    {% set bar_color = 'var(--card-bar-neutral)' %}
+                    {% set val_color = 'var(--card-val-neutral)' %}
+                {% endif %}
+                <div class="skill-row">
+                    <span class="skill-name">{{ skill.name_en }}</span>
+                    <div class="skill-bar-bg"><div class="skill-bar-fill" style="width:{{ fill_pct }}%; background:{{ bar_color }};"></div></div>
+                    <span class="skill-val" style="color:{{ val_color }};">{{ sval }}</span>
+                    {% if sdelta > 0 %}<span class="skill-up">↑</span>
+                    {% elif sdelta < 0 %}<span class="skill-up" style="color:var(--card-skill-dn);">↓</span>
+                    {% else %}<span class="skill-up" style="visibility:hidden">↑</span>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Events tab -->
+    <div class="events-section" id="tab-events" style="display:none;">
+        {% if participations_history %}
+            {% for ev in participations_history %}
+            <div class="ev-row">
+                <div class="ev-rank">
+                    {% if ev.placement == 1 %}🥇
+                    {% elif ev.placement == 2 %}🥈
+                    {% elif ev.placement == 3 %}🥉
+                    {% elif ev.placement %}#{{ ev.placement }}
+                    {% else %}—{% endif %}
+                </div>
+                <div class="ev-body">
+                    <div class="ev-name">
+                        <a href="/events/{{ ev.event_id }}" class="ev-link">{{ ev.event_name }}</a>
+                    </div>
+                    <div class="ev-rewards">
+                        {% if ev.xp_awarded %}<span class="ev-badge xp">+{{ ev.xp_awarded }} XP</span>{% endif %}
+                        {% if ev.credits_awarded %}<span class="ev-badge cr">+{{ ev.credits_awarded }} CR</span>{% endif %}
+                    </div>
+                    {% if ev.top_skills %}
+                    <div class="ev-skills">
+                        {% for sk, delta in ev.top_skills %}
+                        <span class="ev-skill-pill {% if delta > 0 %}up{% else %}dn{% endif %}">
+                            {{ sk.replace('_',' ') }} {{ '+' if delta > 0 else '' }}{{ delta | round(1) }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="ev-empty">No tournament data yet.</div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function switchTab(name) {
+    document.getElementById('tab-skills').style.display = (name === 'skills') ? '' : 'none';
+    document.getElementById('tab-events').style.display = (name === 'events')  ? '' : 'none';
+    document.getElementById('btn-skills').classList.toggle('active', name === 'skills');
+    document.getElementById('btn-events').classList.toggle('active', name === 'events');
+}
+</script>
+{% endblock %}

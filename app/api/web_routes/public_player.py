@@ -30,6 +30,7 @@ _POS_COLORS = {
 def public_player_card(
     request: Request,
     user_id: int,
+    preview: str | None = None,
     db: Session = Depends(get_db),
 ):
     user = db.query(User).filter(
@@ -49,6 +50,12 @@ def public_player_card(
     # Card theme
     from app.services.card_theme_service import get_theme as _get_theme
     card_theme = _get_theme(lfa_license.card_theme if lfa_license.card_theme else "default")
+
+    # Card variant — preview param allows viewing any variant without saving
+    from app.services.card_variant_service import get_variant as _get_variant, VARIANTS as _VARIANTS
+    _saved_variant_id = lfa_license.card_variant if lfa_license.card_variant else "fifa"
+    _effective_variant_id = preview if preview in _VARIANTS else _saved_variant_id
+    card_variant = _get_variant(_effective_variant_id)
 
     # Skill profile
     from app.services.skill_progression_service import get_skill_profile
@@ -158,7 +165,7 @@ def public_player_card(
         "skills": skills_data,
     }
 
-    return templates.TemplateResponse(request, "public/player_card.html", {
+    return templates.TemplateResponse(request, card_variant.template, {
         "player": player,
         "overall": overall,
         "tier_label": tier_label,
@@ -172,4 +179,5 @@ def public_player_card(
         "last_skill_delta": last_skill_delta,
         "participations_history": participations_history,
         "card_theme": card_theme.id,
+        "card_variant": _effective_variant_id,
     })

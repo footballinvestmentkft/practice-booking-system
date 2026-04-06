@@ -175,6 +175,10 @@ class UserLicense(Base):
                         comment="Active player card colour theme (e.g. default, midnight, gold)")
     unlocked_card_themes = Column(JSON, nullable=False, default=list, server_default='[]',
                                   comment="Premium theme IDs unlocked by this user (e.g. ['gold', 'crimson'])")
+    card_variant = Column(String(30), nullable=False, default='fifa', server_default='fifa',
+                          comment="Active player card layout variant (e.g. fifa, compact, showcase)")
+    unlocked_card_variants = Column(JSON, nullable=False, default=list, server_default='[]',
+                                    comment="Premium variant IDs unlocked by this user (e.g. ['compact', 'showcase'])")
     skills_last_updated_at = Column(DateTime, nullable=True,
                                     comment="When skills were last updated")
     skills_updated_by = Column(Integer, ForeignKey("users.id"), nullable=True,

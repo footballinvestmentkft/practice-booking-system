@@ -493,7 +493,7 @@ async def spec_dashboard(
     spec_header_class = _spec_header_map.get(spec_enum, "hdr-football")
 
     # Theme picker data
-    from ...services.card_theme_service import get_all_themes as _get_all_themes, is_unlocked as _is_unlocked
+    from ...services.card_theme_service import get_all_themes as _get_all_themes, is_unlocked as _is_theme_unlocked
     card_themes = [
         {
             "id": t.id,
@@ -501,11 +501,29 @@ async def spec_dashboard(
             "dot_color": t.dot_color,
             "is_premium": t.is_premium,
             "credit_cost": t.credit_cost,
-            "unlocked": _is_unlocked(user_license, t.id) if user_license else not t.is_premium,
+            "unlocked": _is_theme_unlocked(user_license, t.id) if user_license else not t.is_premium,
         }
         for t in _get_all_themes()
     ]
     active_card_theme = user_license.card_theme if user_license and user_license.card_theme else "default"
+
+    # Variant picker data
+    from ...services.card_variant_service import (  # noqa: E402
+        get_all_variants as _get_all_variants,
+        is_variant_unlocked as _is_variant_unlocked,
+    )
+    card_variants = [
+        {
+            "id": v.id,
+            "label": v.label,
+            "description": v.description,
+            "is_premium": v.is_premium,
+            "credit_cost": v.credit_cost,
+            "unlocked": _is_variant_unlocked(user_license, v.id) if user_license else not v.is_premium,
+        }
+        for v in _get_all_variants()
+    ]
+    active_card_variant = user_license.card_variant if user_license and user_license.card_variant else "fifa"
 
     return templates.TemplateResponse(
         "dashboard_student_new.html",
@@ -533,6 +551,9 @@ async def spec_dashboard(
             # Card theme picker
             "card_themes": card_themes,
             "active_card_theme": active_card_theme,
+            # Card variant picker
+            "card_variants": card_variants,
+            "active_card_variant": active_card_variant,
         }
     )
 
@@ -595,11 +616,16 @@ async def student_delete_player_photo(
 # ══════════════════════════════════════════════════════════════════════════════
 
 from ...services.card_theme_service import apply_theme as _apply_theme, unlock_theme as _unlock_theme  # noqa: E402
+from ...services.card_variant_service import apply_variant as _apply_variant, unlock_variant as _unlock_variant  # noqa: E402
 from pydantic import BaseModel as _BaseModel  # noqa: E402
 
 
 class _CardThemeRequest(_BaseModel):
     theme: str
+
+
+class _CardVariantRequest(_BaseModel):
+    variant: str
 
 
 def _get_lfa_license(db, user_id: int):
@@ -641,6 +667,41 @@ async def student_unlock_theme(
     try:
         _unlock_theme(db, user, lfa_license, payload.theme)
         return JSONResponse({"ok": True, "theme": payload.theme,
+                             "new_balance": user.credit_balance})
+    except ValueError as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+
+
+@router.post("/dashboard/card-variant")
+async def student_set_card_variant(
+    payload: _CardVariantRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Apply a card layout variant (must already be unlocked for premium variants)."""
+    lfa_license = _get_lfa_license(db, user.id)
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "No active LFA Football Player license"}, status_code=404)
+    try:
+        _apply_variant(db, lfa_license, payload.variant)
+        return JSONResponse({"ok": True, "variant": payload.variant})
+    except ValueError as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+
+
+@router.post("/dashboard/unlock-variant")
+async def student_unlock_variant(
+    payload: _CardVariantRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Unlock a premium card layout variant by spending credits."""
+    lfa_license = _get_lfa_license(db, user.id)
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "No active LFA Football Player license"}, status_code=404)
+    try:
+        _unlock_variant(db, user, lfa_license, payload.variant)
+        return JSONResponse({"ok": True, "variant": payload.variant,
                              "new_balance": user.credit_balance})
     except ValueError as e:
         return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
