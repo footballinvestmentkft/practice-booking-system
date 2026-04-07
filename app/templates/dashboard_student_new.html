@@ -131,6 +131,8 @@
         color: #a3b3f7;
     }
     .variant-btn.locked { opacity: 0.6; }
+    .variant-btn.unavailable { opacity: 0.45; cursor: not-allowed; }
+    .variant-btn.unavailable:hover { background: transparent; color: rgba(255,255,255,0.5); }
     .variant-btn .var-cost { font-size: 0.6rem; opacity: 0.75; }
 
     /* ── 2-column main layout ─────────────────────────────────────────────────── */
@@ -279,19 +281,21 @@
                     </div>
                     <a href="/players/{{ user.id }}/card" target="_blank" class="section-link">🌐 Open full screen →</a>
                 </div>
-                {# ── Variant picker ── #}
-                {% if card_variants is defined %}
+                {# ── Variant picker — only for LFA Football Player ── #}
+                {% if show_variant_picker and card_variants is defined %}
                 <div class="variant-picker" id="variant-picker">
                     {% for v in card_variants %}
-                    <button class="variant-btn {% if v.id == active_card_variant %}active{% endif %} {% if not v.unlocked %}locked{% endif %}"
-                            title="{{ v.description }}{% if v.is_premium and not v.unlocked %} · Unlock for {{ v.credit_cost }} CR{% endif %}"
-                            onclick="setCardVariant('{{ v.id }}', {{ 'true' if v.unlocked else 'false' }}, '{{ v.label }}', {{ v.credit_cost }})">
-                        {% if v.is_premium and not v.unlocked %}🔒{% endif %}
+                    <button class="variant-btn {% if v.id == active_card_variant %}active{% endif %} {% if not v.unlocked %}locked{% endif %} {% if not v.available %}unavailable{% endif %}"
+                            title="{{ v.description }}{% if not v.available %} · Coming soon{% elif v.is_premium and not v.unlocked %} · Unlock for {{ v.credit_cost }} CR{% endif %}"
+                            onclick="{% if v.available %}setCardVariant('{{ v.id }}', {{ 'true' if v.unlocked else 'false' }}, '{{ v.label }}', {{ v.credit_cost }}){% endif %}">
+                        {% if not v.available %}⏳{% elif v.is_premium and not v.unlocked %}🔒{% endif %}
                         {{ v.label }}
-                        {% if v.is_premium and not v.unlocked %}<span class="var-cost">{{ v.credit_cost }} CR</span>{% endif %}
+                        {% if not v.available %}<span class="var-cost" style="opacity:0.5;">Soon</span>{% elif v.is_premium and not v.unlocked %}<span class="var-cost">{{ v.credit_cost }} CR</span>{% endif %}
+                        {% if v.available %}
                         <a href="/players/{{ user.id }}/card?preview={{ v.id }}" target="_blank"
                            onclick="event.stopPropagation();" title="Preview in new tab"
                            style="font-size:0.6rem; opacity:0.6; text-decoration:none; color:inherit;">↗</a>
+                        {% endif %}
                     </button>
                     {% endfor %}
                 </div>

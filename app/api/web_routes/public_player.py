@@ -54,7 +54,11 @@ def public_player_card(
     # Card variant — preview param allows viewing any variant without saving
     from app.services.card_variant_service import get_variant as _get_variant, VARIANTS as _VARIANTS
     _saved_variant_id = lfa_license.card_variant if lfa_license.card_variant else "fifa"
-    _effective_variant_id = preview if preview in _VARIANTS else _saved_variant_id
+    _effective_variant_id = (
+        preview if (preview in _VARIANTS and _VARIANTS[preview].available)
+        else _saved_variant_id
+    )
+    # get_variant falls back to 'fifa' if the effective variant is unavailable
     card_variant = _get_variant(_effective_variant_id)
 
     # Skill profile

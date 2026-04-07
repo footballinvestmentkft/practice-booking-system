@@ -519,11 +519,16 @@ async def spec_dashboard(
             "description": v.description,
             "is_premium": v.is_premium,
             "credit_cost": v.credit_cost,
+            "available": v.available,
             "unlocked": _is_variant_unlocked(user_license, v.id) if user_license else not v.is_premium,
         }
         for v in _get_all_variants()
     ]
     active_card_variant = user_license.card_variant if user_license and user_license.card_variant else "fifa"
+    # Variant picker only relevant for LFA Football Player specialization
+    show_variant_picker = bool(
+        user_license and user_license.specialization_type == "LFA_FOOTBALL_PLAYER"
+    )
 
     return templates.TemplateResponse(
         "dashboard_student_new.html",
@@ -554,6 +559,7 @@ async def spec_dashboard(
             # Card variant picker
             "card_variants": card_variants,
             "active_card_variant": active_card_variant,
+            "show_variant_picker": show_variant_picker,
         }
     )
 

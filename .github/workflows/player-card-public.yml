@@ -125,9 +125,15 @@ jobs:
           assert set(VARIANT_ORDER) == set(VARIANTS.keys()), "VARIANT_ORDER must match VARIANTS keys"
           assert 'fifa' in VARIANTS, "Default 'fifa' variant must be in registry"
           assert not VARIANTS['fifa'].is_premium, "'fifa' must be free"
+          assert VARIANTS['fifa'].available, "'fifa' must be available"
           fallback = get_variant('nonexistent_xyz')
           assert fallback.id == 'fifa', f"Fallback must be 'fifa', got: {fallback.id}"
-          print(f"✅ card_variant_service: {list(VARIANTS.keys())}, fallback=fifa")
+          # Unavailable variants must fall back to fifa (safety net)
+          assert not VARIANTS['compact'].available, "compact must be unavailable (Fázis 2)"
+          assert not VARIANTS['showcase'].available, "showcase must be unavailable (Fázis 3)"
+          unavail_fallback = get_variant('showcase')
+          assert unavail_fallback.id == 'fifa', f"Unavailable variant must fall back to fifa, got: {unavail_fallback.id}"
+          print(f"✅ card_variant_service: {list(VARIANTS.keys())}, fallback=fifa, unavailable safety net OK")
           PYEOF
 
       - name: Run PC-01..04 integration tests

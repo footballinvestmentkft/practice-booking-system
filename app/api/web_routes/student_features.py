@@ -193,6 +193,7 @@ async def credits_page(
         "TOURNAMENT_REWARD":     ("🏆", "Tournament Reward"),
         "EXPIRATION":            ("⏳", "Credit Expiry"),
         "THEME_UNLOCK":          ("🎨", "Theme Unlock"),
+        "VARIANT_UNLOCK":        ("🃏", "Variant Unlock"),
     }
     license_ids = [lic.id for lic in user_licenses]
     _exclude_types = ["PURCHASE"]

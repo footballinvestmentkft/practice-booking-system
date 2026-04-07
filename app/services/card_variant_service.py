@@ -28,6 +28,7 @@ class VariantDefinition:
     is_premium:  bool
     credit_cost: int          # 0 for free variants
     template:    str          # path relative to templates/ directory
+    available:   bool = True  # False = coming soon; blocks unlock/apply/preview
 
 
 # ── Variant registry ──────────────────────────────────────────────────────────
@@ -47,6 +48,7 @@ VARIANTS: dict[str, VariantDefinition] = {
         is_premium=True,
         credit_cost=300,
         template="public/player_card_compact.html",
+        available=False,  # Fázis 2 — template not yet implemented
     ),
     "showcase": VariantDefinition(
         id="showcase",
@@ -55,6 +57,7 @@ VARIANTS: dict[str, VariantDefinition] = {
         is_premium=True,
         credit_cost=500,
         template="public/player_card_showcase.html",
+        available=False,  # Fázis 3 — template not yet implemented
     ),
 }
 
@@ -65,8 +68,9 @@ VARIANT_ORDER = ["fifa", "compact", "showcase"]
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def get_variant(variant_id: str) -> VariantDefinition:
-    """Return variant by ID, falling back to 'fifa' for unknown IDs."""
-    return VARIANTS.get(variant_id, VARIANTS["fifa"])
+    """Return variant by ID, falling back to 'fifa' for unknown or unavailable IDs."""
+    v = VARIANTS.get(variant_id, VARIANTS["fifa"])
+    return v if v.available else VARIANTS["fifa"]
 
 
 def get_all_variants() -> list[VariantDefinition]:
@@ -92,10 +96,12 @@ def is_variant_unlocked(user_license, variant_id: str) -> bool:
 def apply_variant(db, user_license, variant_id: str) -> None:
     """
     Set the active variant on user_license and commit.
-    Raises ValueError if variant unknown or not yet unlocked.
+    Raises ValueError if variant unknown, not yet available, or not yet unlocked.
     """
     if variant_id not in VARIANTS:
         raise ValueError(f"Unknown variant: {variant_id!r}")
+    if not VARIANTS[variant_id].available:
+        raise ValueError(f"Variant '{VARIANTS[variant_id].label}' is not yet available")
     if not is_variant_unlocked(user_license, variant_id):
         variant = VARIANTS[variant_id]
         raise ValueError(
@@ -118,6 +124,8 @@ def unlock_variant(db, user, user_license, variant_id: str) -> None:
     if variant_id not in VARIANTS:
         raise ValueError(f"Unknown variant: {variant_id!r}")
     variant = VARIANTS[variant_id]
+    if not variant.available:
+        raise ValueError(f"Variant '{variant.label}' is not yet available")
     if not variant.is_premium:
         return  # free variants don't need unlocking
     unlocked: list = list(user_license.unlocked_card_variants or [])
