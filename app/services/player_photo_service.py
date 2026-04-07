@@ -15,7 +15,8 @@ from pathlib import Path
 from PIL import Image
 
 ALLOWED_MIME: set[str] = {"image/jpeg", "image/png", "image/webp"}
-MAX_BYTES: int = 2 * 1024 * 1024             # 2 MB hard limit
+MAX_BYTES:    int = 2 * 1024 * 1024          # 2 MB — cutout/card photos
+MAX_BG_BYTES: int = 8 * 1024 * 1024          # 8 MB — background photos
 MAX_CARD_SIZE: tuple[int, int] = (800, 1200) # max fit box — no crop, aspect ratio preserved
 PHOTO_DIR: Path = Path("app/static/uploads/lfa_player_photos")
 
@@ -98,6 +99,7 @@ def _save_variant_photo(
     user_id: int,
     target_size: tuple[int, int],
     suffix: str,
+    max_bytes: int = MAX_BYTES,
 ) -> str:
     """
     Save a PNG for a card variant.
@@ -113,8 +115,8 @@ def _save_variant_photo(
     """
     if content_type not in ALLOWED_MIME:
         raise ValueError(f"Nem támogatott képformátum: {content_type}. Elfogadott: JPEG, PNG, WEBP")
-    if len(file_bytes) > MAX_BYTES:
-        raise ValueError("A fájl mérete meghaladja a 2 MB-os korlátot")
+    if len(file_bytes) > max_bytes:
+        raise ValueError(f"A fájl mérete meghaladja a {max_bytes // (1024 * 1024)} MB-os korlátot")
 
     try:
         img = Image.open(io.BytesIO(file_bytes))
@@ -166,7 +168,7 @@ _BG_SIZE: tuple[int, int] = (800, 800)  # max fit box for background images
 
 def save_compact_bg_photo(file_bytes: bytes, content_type: str, user_id: int) -> str:
     """Fit into 800×800 box, preserve alpha, save as PNG. Returns static URL."""
-    return _save_variant_photo(file_bytes, content_type, user_id, _BG_SIZE, "bg_compact")
+    return _save_variant_photo(file_bytes, content_type, user_id, _BG_SIZE, "bg_compact", max_bytes=MAX_BG_BYTES)
 
 
 def delete_compact_bg_photo(user_id: int) -> None:
@@ -178,7 +180,7 @@ def delete_compact_bg_photo(user_id: int) -> None:
 
 def save_showcase_bg_photo(file_bytes: bytes, content_type: str, user_id: int) -> str:
     """Fit into 800×800 box, preserve alpha, save as PNG. Returns static URL."""
-    return _save_variant_photo(file_bytes, content_type, user_id, _BG_SIZE, "bg_showcase")
+    return _save_variant_photo(file_bytes, content_type, user_id, _BG_SIZE, "bg_showcase", max_bytes=MAX_BG_BYTES)
 
 
 def delete_showcase_bg_photo(user_id: int) -> None:
