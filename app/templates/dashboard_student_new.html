@@ -120,6 +120,10 @@
         .dash-main-grid { grid-template-columns: 1fr; }
     }
 
+    /* ── Player Card live preview (left column) ─────────────────────────────── */
+    .player-card-embed-wrap { border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.13); }
+    .player-card-embed-wrap iframe { display: block; width: 100%; border: none; }
+
     /* ── Last Result ─────────────────────────────────────────────────────────── */
     .s-last-result-card { background: var(--app-card); border-left: 4px solid #667eea; border-radius: 0 10px 10px 0; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
     .s-result-name     { font-weight: 700; color: var(--app-text); font-size: 1rem; flex: 1; min-width: 140px; }
@@ -187,20 +191,14 @@
 
         {# LEFT: My Card teaser (LFA license) / Skill Snapshot fallback ────────── #}
         {% if user_license %}
-        <section class="section-block" style="margin-bottom: 0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding: 2rem 1.5rem; min-height: 240px;">
-            <div style="font-size:3rem; margin-bottom:0.75rem;">🪪</div>
-            <h2 class="page-title" style="margin-bottom:0.5rem;">My Player Card</h2>
-            <p style="color:var(--app-text-muted); font-size:0.92rem; margin-bottom:1.5rem; max-width:280px;">
-                Customise your card theme, variant and photos in the dedicated editor.
-            </p>
-            <a href="/dashboard/lfa-football-player/card-editor"
-               style="display:inline-block; padding:0.7rem 1.6rem; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; border-radius:10px; font-weight:600; font-size:0.95rem; text-decoration:none; margin-bottom:0.75rem;">
-                ✏️ Edit My Card
-            </a>
-            <br>
-            <a href="/players/{{ user.id }}/card" target="_blank" class="section-link" style="font-size:0.85rem;">
-                🌐 View public card →
-            </a>
+        <section class="section-block" style="margin-bottom: 0; padding: 1.25rem 1.5rem 1.5rem;">
+            <div class="section-header" style="margin-bottom: 1rem;">
+                <h2 class="page-title">🪪 My Player Card</h2>
+                <a href="/dashboard/lfa-football-player/card-editor" class="section-link">✏️ Edit →</a>
+            </div>
+            <div class="player-card-embed-wrap">
+                <iframe src="/players/{{ user.id }}/card" height="680" scrolling="no" title="My Player Card"></iframe>
+            </div>
         </section>
         {% else %}
         <section class="section-block" style="margin-bottom: 0;">

@@ -3,6 +3,30 @@
 {% block title %}My Player Card — LFA{% endblock %}
 {% block active_page %}lfa-player{% endblock %}
 
+{# ── Spec-style floating header — matches /dashboard/lfa-football-player ──── #}
+{% block student_header %}
+<div class="student-header spec-pg-hdr">
+    <div class="student-header-inner">
+        <a href="/dashboard" class="s-hdr-btn" title="Back to Hub">🏠</a>
+        <div class="student-brand">⚽ LFA Football Player</div>
+        <nav class="student-nav" id="student-nav" aria-label="Student navigation">
+            <a href="/dashboard/lfa-football-player" class="nav-item active">⚽ LFA Player</a>
+            <a href="/sessions"     class="nav-item">📅 Sessions</a>
+            <a href="/progress"     class="nav-item">📊 Progress</a>
+            <a href="/skills"       class="nav-item">⚡ Skills</a>
+            <a href="/achievements" class="nav-item">🏆 Achievements</a>
+            <a href="/calendar"     class="nav-item">📆 Calendar</a>
+        </nav>
+        <div class="student-header-actions">
+            <span class="credit-pill">💰 {{ user.credit_balance if user else 0 }}</span>
+            <a href="/credits" class="s-hdr-btn" title="Credits">💳</a>
+            <a href="/profile" class="s-hdr-btn" title="Profile">👤</a>
+            <a href="/logout"  class="s-hdr-btn" title="Logout">🚪</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
 {% block extra_styles %}
 <style>
     /* ── Container ──────────────────────────────────────────────────────────── */
