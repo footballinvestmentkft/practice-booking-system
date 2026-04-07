@@ -5,6 +5,8 @@
 
 {% block extra_styles %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 <style>
     .sh-container {
         max-width: 1100px;
@@ -78,12 +80,27 @@
     }
 
     .sh-chart-card h3 {
-        margin: 0 0 16px;
+        margin: 0;
         color: #1b4332;
         font-size: 1.05rem;
     }
 
-    .sh-chart-wrap { position: relative; height: 300px; }
+    .sh-chart-wrap { position: relative; height: 420px; }
+
+    .sh-chart-controls { display: flex; gap: 6px; align-items: center; }
+    .sh-size-btn {
+        padding: 4px 10px; border: 1px solid #d1d5db; border-radius: 6px;
+        background: white; color: #374151; font-size: 0.78rem; font-weight: 600;
+        cursor: pointer; transition: all .15s;
+    }
+    .sh-size-btn:hover { background: #f0fdf4; border-color: #40916c; color: #1b4332; }
+    .sh-size-btn.active { background: #40916c; border-color: #40916c; color: white; }
+    #sh-reset-zoom {
+        padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 6px;
+        background: white; color: #6b7280; font-size: 0.85rem;
+        cursor: pointer; transition: all .15s;
+    }
+    #sh-reset-zoom:hover { background: #fef3c7; border-color: #f59e0b; color: #92400e; }
 
     /* Empty state */
     .sh-empty {
@@ -173,8 +190,10 @@
 
     @media (max-width: 640px) {
         .sh-stats-row { grid-template-columns: 1fr 1fr; }
-        .sh-chart-wrap { height: 220px; }
+        .sh-chart-wrap { height: 280px; }
         .sh-table th, .sh-table td { padding: 8px; font-size: 0.8rem; }
+        .sh-chart-controls { gap: 4px; }
+        .sh-size-btn { padding: 3px 7px; font-size: 0.72rem; }
     }
 </style>
 {% endblock %}
@@ -263,7 +282,15 @@
 
         <!-- Chart -->
         <div class="sh-chart-card">
-            <h3 id="sh-chart-title">Skill Progression</h3>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                <h3 id="sh-chart-title" style="margin:0;">Skill Progression</h3>
+                <div class="sh-chart-controls">
+                    <button class="sh-size-btn" data-h="280">S</button>
+                    <button class="sh-size-btn active" data-h="420">M</button>
+                    <button class="sh-size-btn" data-h="580">L</button>
+                    <button id="sh-reset-zoom" title="Reset zoom">⤢</button>
+                </div>
+            </div>
             <div id="sh-empty" class="sh-empty" style="display:none;">
                 <div class="sh-empty-icon">📊</div>
                 <p>No event data yet for this skill.</p>
@@ -404,6 +431,11 @@
             window.skillChart = null;
         }
 
+        // Dynamic Y-axis: ±5 padding around actual data range
+        var allVals = skillLine.concat(targetLine).filter(function(v){ return v != null; });
+        var yMin = allVals.length ? Math.max(0,   Math.floor(Math.min.apply(null, allVals) - 5)) : 40;
+        var yMax = allVals.length ? Math.min(100, Math.ceil( Math.max.apply(null, allVals) + 5)) : 99;
+
         window.skillChart = new Chart(document.getElementById('skill-chart'), {
             type: 'line',
             data: {
@@ -451,8 +483,8 @@
                 interaction: { mode: 'index', intersect: false },
                 scales: {
                     y: {
-                        min: 40,
-                        max: 99,
+                        min: yMin,
+                        max: yMax,
                         title: { display: true, text: 'Skill Level', color: '#6b7280', font: { size: 12 } },
                         ticks: { color: '#6b7280' },
                         grid: { color: '#f3f4f6' },
@@ -465,6 +497,20 @@
                 },
                 plugins: {
                     legend: { display: true, position: 'top' },
+                    zoom: {
+                        zoom: {
+                            wheel: { enabled: true },
+                            pinch: { enabled: true },
+                            mode: 'x',
+                        },
+                        pan: {
+                            enabled: true,
+                            mode: 'x',
+                        },
+                        limits: {
+                            x: { min: 'original', max: 'original' },
+                        },
+                    },
                     tooltip: {
                         callbacks: {
                             title: function (ctx) {
@@ -558,6 +604,22 @@
                 showError('Failed to load event data: ' + err.message);
             });
     }
+
+    // ── Height toggle buttons ─────────────────────────────────────────────────
+    document.querySelectorAll('.sh-size-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var h = parseInt(this.dataset.h);
+            document.getElementById('sh-chart-wrap').style.height = h + 'px';
+            document.querySelectorAll('.sh-size-btn').forEach(function(b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            if (window.skillChart) window.skillChart.resize();
+        });
+    });
+
+    // ── Reset zoom button ─────────────────────────────────────────────────────
+    document.getElementById('sh-reset-zoom').addEventListener('click', function() {
+        if (window.skillChart) window.skillChart.resetZoom();
+    });
 
     skillSelect.addEventListener('change', function () {
         var url = new URL(window.location.href);

@@ -2,7 +2,7 @@
 
 {% block extra_styles %}
 <style>
-/* ── Compact variant: header split (photo | identity) + full-width tabs below ── */
+/* ── Compact+BG variant: same as Compact, photo column supports custom background ── */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--card-page-bg); }
 
@@ -23,10 +23,12 @@ body { background: var(--card-page-bg); }
 }
 .cmp-header.photo-right { flex-direction: row-reverse; }
 
-/* ── Photo sidebar (lives inside header only) ── */
+/* ── Photo sidebar ── */
 .cmp-photo-col {
     flex: 0 0 155px;
     background: var(--card-panel-bg);
+    background-size: cover;
+    background-position: center top;
     position: relative;
     min-height: 180px;
 }
@@ -170,7 +172,8 @@ body { background: var(--card-page-bg); }
     {# ── HEADER: photo sidebar + identity (side by side) ── #}
     <div class="cmp-header photo-{{ compact_photo_position }}">
 
-        <div class="cmp-photo-col">
+        {# Background image applied as CSS background-image — player PNG sits on top naturally #}
+        <div class="cmp-photo-col"{% if compact_bg_url %} style="background-image: url('{{ compact_bg_url }}');"{% endif %}>
             {% if photo_url %}
                 <img src="{{ photo_url }}" alt="{{ player.name }}">
             {% else %}

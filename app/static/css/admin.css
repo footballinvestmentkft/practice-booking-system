@@ -96,8 +96,9 @@ body {
 /* ── Admin Nav Bar ─────────────────────────────────────────────────── */
 .admin-nav {
     display: flex;
+    align-items: center;
     gap: 0.25rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     padding-bottom: 0.5rem;
 }
 .nav-item {
@@ -437,14 +438,14 @@ td { padding: 0.85rem 0.75rem; color: var(--app-text-muted); }
         max-height: 0;
         overflow: hidden;
         flex-direction: column;
-        flex-wrap: nowrap;  /* prevent column→row wrap when max-height:0 */
+        flex-wrap: nowrap;
         gap: 0.15rem;
         transition: max-height 0.3s ease;
         padding-bottom: 0;
         width: 100%;
     }
     .admin-nav.nav-open {
-        max-height: 600px;
+        max-height: 960px;
         padding-bottom: 0.75rem;
     }
     .nav-item { width: 100%; padding: 0.5rem 0.85rem; }
@@ -471,8 +472,6 @@ td { padding: 0.85rem 0.75rem; color: var(--app-text-muted); }
         background: rgba(255,255,255,0.15);
         color: white;
     }
-    .admin-nav.nav-open { max-height: 960px; }
-
     /* Stats compact — 2-column grid on mobile */
     .stats-row { grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
     .stat-card { padding: 0.85rem 0.5rem; }

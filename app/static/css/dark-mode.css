@@ -447,3 +447,311 @@
     [style*="background-color: white"] { background: var(--app-card) !important; }
 }
 
+/* ══════════════════════════════════════════════════════════════
+   Part III.R — Admin nav dropdown (admin.css gaps)
+   ══════════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+    .nav-dropdown-item:hover  { background: rgba(102,126,234,0.15) !important; }
+    .nav-dropdown-item.active { background: rgba(102,126,234,0.20) !important; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Part III.S — Admin pagination + filter buttons (admin.css gaps)
+   ══════════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+    .pagination a {
+        background: rgba(255,255,255,0.06) !important;
+        color: #a3b3f7 !important;
+        border-color: rgba(255,255,255,0.10) !important;
+    }
+    .pagination .disabled { background: rgba(255,255,255,0.03) !important; }
+    .btn-filter-white,
+    .btn-filter-white:hover {
+        background: rgba(255,255,255,0.08) !important;
+        color: rgba(255,255,255,0.80) !important;
+    }
+    .module-strip-item:hover {
+        background: rgba(255,255,255,0.06) !important;
+        color: rgba(255,255,255,0.85) !important;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Part III.T — tournament_edit.html — status badges + banners
+   ══════════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+    .status-draft     { background: rgba(160,174,192,0.15) !important; color: #a0aec0 !important; }
+    .status-open      { background: rgba(72,187,120,0.15)  !important; color: #68d391 !important; }
+    .status-closed    { background: rgba(237,137,54,0.15)  !important; color: #f6ad55 !important; }
+    .status-progress  { background: rgba(229,62,62,0.15)   !important; color: #fc8181 !important; }
+    .status-completed { background: rgba(56,161,105,0.15)  !important; color: #68d391 !important; }
+    .status-cancelled { background: rgba(113,128,150,0.15) !important; color: #a0aec0 !important; }
+    .info-banner {
+        background: rgba(66,153,225,0.12) !important;
+        color: #90cdf4 !important;
+        border-color: rgba(66,153,225,0.25) !important;
+    }
+    .warn-banner {
+        background: rgba(237,137,54,0.12) !important;
+        color: #f6ad55 !important;
+        border-color: rgba(237,137,54,0.25) !important;
+    }
+    .reward-tier { background: rgba(255,255,255,0.04) !important; }
+    .session-list-row .sess-type {
+        background: rgba(66,153,225,0.15) !important;
+        color: #90cdf4 !important;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Part III.U — analytics.html — card backgrounds + table header
+   ══════════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+    .fin-card,
+    .stat-card,
+    .spec-card,
+    .campus-card,
+    .loc-filter {
+        background: var(--app-card) !important;
+        color: var(--app-text) !important;
+    }
+    .fin-card .val,
+    .campus-name { color: var(--app-text) !important; }
+    .spec-table th {
+        background: var(--app-card-alt) !important;
+        color: var(--app-text-muted) !important;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Part III.V — promotion_events + chips + attendance + instructors
+   ══════════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+    /* Promotion event rows */
+    .event-row   { background: var(--app-card) !important; }
+    .event-title { color: var(--app-text) !important; }
+    .meta-club   { color: var(--app-text-muted) !important; }
+
+    /* Chips */
+    .ag-chip        { background: rgba(66,153,225,0.15)  !important; color: #90cdf4 !important; }
+    .fmt-chip       { background: rgba(128,90,213,0.15)  !important; color: #b794f4 !important; }
+    .type-chip      { background: rgba(56,178,172,0.15)  !important; color: #81e6d9 !important; }
+    .scoring-chip   { background: rgba(214,158,46,0.15)  !important; color: #f6e05e !important; }
+    .direction-chip { background: rgba(66,153,225,0.15)  !important; color: #90cdf4 !important; }
+
+    /* Attendance badges */
+    .badge-grey   { background: rgba(160,174,192,0.15) !important; color: #a0aec0 !important; }
+    .badge-blue   { background: rgba(66,153,225,0.15)  !important; color: #90cdf4 !important; }
+    .badge-green  { background: rgba(72,187,120,0.15)  !important; color: #68d391 !important; }
+    .badge-red    { background: rgba(252,129,129,0.15) !important; color: #fc8181 !important; }
+    .badge-orange { background: rgba(246,173,85,0.15)  !important; color: #f6ad55 !important; }
+
+    /* Instructor table */
+    .instructor-table th     { background: var(--app-card-alt) !important; color: var(--app-text-muted) !important; }
+    .instructor-table tr:hover td { background: rgba(255,255,255,0.04) !important; }
+    .badge-role,
+    .badge-master { background: rgba(66,153,225,0.15) !important; color: #90cdf4 !important; }
+    .count-pill          { background: rgba(255,255,255,0.08) !important; color: var(--app-text-muted) !important; }
+    .count-pill.has-data { background: rgba(66,153,225,0.15) !important; color: #90cdf4 !important; }
+    /* Fix badge-role/badge-master → purple (role semantics), not blue */
+    .badge-role,
+    .badge-master { background: rgba(128,90,213,0.15) !important; color: #b794f4 !important; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Part III.W — 9-page audit: shared admin containers + nav
+   ══════════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+    /* ── White page container cards ── */
+    .content-card,
+    .section-card,
+    .campus-section,
+    .coupon-card,
+    .coupon-stat-card,
+    .inv-stat-card,
+    .action-section,
+    .codes-section,
+    .create-form,
+    .maintenance-card,
+    .filter-bar {
+        background: var(--app-card) !important;
+        color: var(--app-text) !important;
+        border-color: var(--app-border) !important;
+    }
+    /* Collapsible preset cards */
+    .card     { background: var(--app-card)     !important; border-color: var(--app-border) !important; }
+    .card-header { background: var(--app-card-alt) !important; border-color: var(--app-border) !important; }
+    .card-header h3,
+    .skills-str { color: var(--app-text) !important; }
+
+    /* ── Module-link (sport-directors/clubs/pitches use .module-link not .module-strip-item) ── */
+    .module-link         { color: var(--app-text-muted) !important; }
+    .module-link:hover   { background: rgba(255,255,255,0.08) !important; color: var(--app-text) !important; }
+    .module-link.active  { background: rgba(102,126,234,0.20) !important; color: var(--app-text) !important; }
+    .module-link.btn-primary { color: white !important; }  /* gradient btn keeps white text */
+    .module-strip-label  { color: var(--app-text-muted) !important; border-color: var(--app-border) !important; }
+    /* Active strip item (used in bookings/payments/coupons/inv-codes) */
+    .module-strip-item.active { background: rgba(102,126,234,0.25) !important; color: var(--app-text) !important; }
+
+    /* ── Assign card + blue info box (sport-directors) ── */
+    .assign-card   { background: var(--app-card-alt) !important; border-color: var(--app-border) !important; }
+    .assign-card h3 { color: var(--app-text) !important; }
+    .info-box { background: rgba(66,153,225,0.10) !important; color: #90cdf4 !important; border-color: rgba(66,153,225,0.25) !important; }
+
+    /* ── Modal box (clubs, pitches — distinct from .modal-content) ── */
+    .modal-box         { background: var(--app-card) !important; color: var(--app-text) !important; }
+    .modal-box h3      { color: var(--app-text) !important; }
+    .modal-field label { color: var(--app-text-muted) !important; }
+    .btn-modal-cancel  { background: var(--app-card-alt) !important; color: var(--app-text) !important; border-color: var(--app-border) !important; }
+
+    /* ── Filter bar sub-elements (bookings) ── */
+    .filter-bar label { color: var(--app-text-muted) !important; }
+    .reset-btn        { background: var(--app-card-alt) !important; color: var(--app-text-muted) !important; }
+
+    /* ── Alert bars (sport-directors / pitches: .alert-bar.success/error; clubs: .alert-error) ── */
+    .alert-bar.success { background: rgba(72,187,120,0.12)  !important; color: #9ae6b4 !important; border-color: rgba(72,187,120,0.30)  !important; }
+    .alert-bar.error   { background: rgba(252,129,129,0.12) !important; color: #feb2b2 !important; border-color: rgba(252,129,129,0.30) !important; }
+    .alert-error       { background: rgba(252,129,129,0.12) !important; color: #feb2b2 !important; border-color: rgba(252,129,129,0.30) !important; }
+
+    /* ── Neutral action buttons (white-on-light tables) ── */
+    .action-btn          { background: var(--app-card-alt) !important; color: var(--app-text) !important; border-color: var(--app-border) !important; }
+    .action-btn:hover    { background: rgba(255,255,255,0.10) !important; }
+    /* Re-assert colored variants so they survive the generic .action-btn override */
+    .btn-deactivate, .btn-toggle-off { background: rgba(229,62,62,0.85)  !important; color: white !important; border-color: transparent !important; }
+    .btn-toggle-on                   { background: rgba(56,161,105,0.85) !important; color: white !important; border-color: transparent !important; }
+    .btn-assign                      { background: rgba(99,102,241,0.85) !important; color: white !important; border-color: transparent !important; }
+    .btn-confirm                     { background: rgba(40,167,69,0.85)  !important; color: white !important; }
+    .btn-cancel-bk                   { background: rgba(220,53,69,0.85)  !important; color: white !important; }
+    .btn-unverify                    { background: rgba(236,153,0,0.85)  !important; color: white !important; }
+
+    /* Coupon card internals */
+    .coupon-code        { color: var(--app-text) !important; }
+    .coupon-description { color: var(--app-text-muted) !important; }
+    .detail-label       { color: var(--app-text-muted) !important; }
+    .detail-value,
+    .stat-value         { color: var(--app-text) !important; }
+    .stat-label,
+    .stat-description   { color: var(--app-text-muted) !important; }
+    .coupon-footer      { border-color: var(--app-border) !important; }
+    .section-card h2,
+    .section-card .section-subtitle { color: var(--app-text-muted) !important; }
+
+    /* Invitation codes page headings (color: #1a1a2e) */
+    .action-section h2,
+    .codes-section h2 { color: var(--app-text) !important; }
+
+    /* Pitches: create-form inline row bg */
+    .create-form-row td { background: var(--app-card-alt) !important; }
+
+    /* Game presets: skills-section, skill chips, weights */
+    .skills-section   { background: var(--app-card-alt) !important; }
+    .skill-group-label { color: var(--app-text-muted) !important; }
+    .skill-item       { background: var(--app-card) !important; border-color: var(--app-border) !important; }
+    .skill-item label { color: var(--app-text) !important; }
+    .weights-section  { background: rgba(66,153,225,0.08) !important; }
+    .weights-section h4 { color: #90cdf4 !important; }
+    .info-row label   { color: var(--app-text-muted) !important; }
+
+    /* System events */
+    .payload-box      { background: var(--app-card-alt) !important; color: var(--app-text) !important; }
+    .warning-box      { background: rgba(237,137,54,0.10) !important; color: #f6ad55 !important; border-color: rgba(237,137,54,0.25) !important; }
+
+    /* Empty states / no-data */
+    .empty-state,
+    .no-data          { color: var(--app-text-muted) !important; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Part III.X — 9-page audit: all badge + status variants
+   ══════════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+    /* Green — success/active/confirmed/unused */
+    .badge-active,
+    .status-active,
+    .status-verified,
+    .status-CONFIRMED,
+    .status-unused,
+    .badge-resolved,
+    .resolved-badge,
+    .att-present,
+    .sum-ok       { background: rgba(72,187,120,0.15)  !important; color: #68d391 !important; }
+
+    /* Red — danger/inactive(coupon)/cancelled/used/open */
+    .badge-open,
+    .badge-security,
+    .status-cancelled,
+    .status-CANCELLED,
+    .status-inactive,
+    .status-used,
+    .att-absent,
+    .sum-err      { background: rgba(252,129,129,0.15) !important; color: #fc8181 !important; }
+
+    /* Yellow — warning/pending/late/recommended */
+    .badge-warning,
+    .status-PENDING,
+    .status-pending,
+    .att-late,
+    .badge-recommended { background: rgba(246,173,85,0.15) !important; color: #f6ad55 !important; }
+
+    /* Blue — info/waitlisted/payment-ref */
+    .badge-info,
+    .status-WAITLISTED  { background: rgba(66,153,225,0.15) !important; color: #90cdf4 !important; }
+    .payment-ref        { background: rgba(66,153,225,0.15) !important; color: #90cdf4 !important; font-family: monospace; }
+
+    /* Gray — inactive(general)/expired/excused */
+    .badge-inactive,
+    .status-expired,
+    .att-excused  { background: rgba(160,174,192,0.15) !important; color: #a0aec0 !important; }
+
+    /* Coupon type chips */
+    .type-percent { background: rgba(66,153,225,0.15)  !important; color: #90cdf4 !important; }
+    .type-fixed   { background: rgba(128,90,213,0.15)  !important; color: #b794f4 !important; }
+    .type-credits { background: rgba(237,137,54,0.15)  !important; color: #f6ad55 !important; }
+
+    /* System event level badges */
+    .badge-security { background: rgba(252,129,129,0.15) !important; color: #fc8181 !important; }
+    .badge-warning  { background: rgba(246,173,85,0.15)  !important; color: #f6ad55 !important; }
+    .badge-info     { background: rgba(66,153,225,0.15)  !important; color: #90cdf4 !important; }
+    .badge-resolved { background: rgba(72,187,120,0.15)  !important; color: #68d391 !important; }
+    .badge-open     { background: rgba(252,129,129,0.15) !important; color: #fc8181 !important; }
+
+    /* Disabled delete button */
+    .btn-delete:disabled { background: var(--app-card-alt) !important; color: var(--app-text-muted) !important; cursor: not-allowed; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Part III.Y — Inline style attribute fallbacks (extend III.Q)
+   ══════════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+    /* Dark text colors (invisible on dark bg) → readable */
+    [style*="color: #2d3748"],
+    [style*="color:#2d3748"],
+    [style*="color: #1a1a2e"],
+    [style*="color:#1a1a2e"]  { color: var(--app-text) !important; }
+
+    [style*="color: #718096"],
+    [style*="color:#718096"],
+    [style*="color: #4a5568"],
+    [style*="color:#4a5568"],
+    [style*="color: #a0aec0"],
+    [style*="color:#a0aec0"]  { color: var(--app-text-muted) !important; }
+
+    /* Light gray backgrounds (inline code snippets, row highlights) */
+    [style*="background: #f0f0f0"],
+    [style*="background:#f0f0f0"],
+    [style*="background: #f9f9f9"],
+    [style*="background:#f9fafb"],
+    [style*="background: #ebf8ff"],
+    [style*="background:#ebf8ff"],
+    [style*="background: #fefcbf"],
+    [style*="background:#fefcbf"],
+    [style*="background: #fff3e0"],
+    [style*="background:#fff3e0"],
+    [style*="background: #e2e8f0"],
+    [style*="background:#e2e8f0"]  { background: var(--app-card-alt) !important; }
+
+    /* Modal inline cancel button */
+    [style*="background:#e2e8f0"][style*="color:#4a5568"],
+    [style*="background: #e2e8f0"] { background: var(--app-card-alt) !important; color: var(--app-text-muted) !important; }
+}
+

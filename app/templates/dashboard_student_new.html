@@ -131,8 +131,12 @@
         color: #a3b3f7;
     }
     .variant-btn.locked { opacity: 0.6; }
-    .variant-btn.unavailable { opacity: 0.45; cursor: not-allowed; }
-    .variant-btn.unavailable:hover { background: transparent; color: rgba(255,255,255,0.5); }
+    .variant-btn.unavailable { opacity: 0.55; cursor: pointer; }
+    .variant-btn.previewing {
+        border-color: rgba(102,126,234,0.35);
+        background: rgba(102,126,234,0.1);
+        color: rgba(163,179,247,0.8);
+    }
     .variant-btn .var-cost { font-size: 0.6rem; opacity: 0.75; }
 
     /* ── 2-column main layout ─────────────────────────────────────────────────── */
@@ -286,13 +290,14 @@
                 <div class="variant-picker" id="variant-picker">
                     {% for v in card_variants %}
                     <button class="variant-btn {% if v.id == active_card_variant %}active{% endif %} {% if not v.unlocked %}locked{% endif %} {% if not v.available %}unavailable{% endif %}"
-                            title="{{ v.description }}{% if not v.available %} · Coming soon{% elif v.is_premium and not v.unlocked %} · Unlock for {{ v.credit_cost }} CR{% endif %}"
-                            onclick="{% if v.available %}setCardVariant('{{ v.id }}', {{ 'true' if v.unlocked else 'false' }}, '{{ v.label }}', {{ v.credit_cost }}){% endif %}">
+                            data-variant="{{ v.id }}"
+                            title="{{ v.description }}{% if not v.available %} · Preview only{% elif v.is_premium and not v.unlocked %} · Unlock for {{ v.credit_cost }} CR{% endif %}"
+                            onclick="{% if v.available %}setCardVariant('{{ v.id }}', {{ 'true' if v.unlocked else 'false' }}, '{{ v.label }}', {{ v.credit_cost }}){% else %}previewVariant('{{ v.id }}'){% endif %}">
                         {% if not v.available %}⏳{% elif v.is_premium and not v.unlocked %}🔒{% endif %}
                         {{ v.label }}
-                        {% if not v.available %}<span class="var-cost" style="opacity:0.5;">Soon</span>{% elif v.is_premium and not v.unlocked %}<span class="var-cost">{{ v.credit_cost }} CR</span>{% endif %}
+                        {% if v.is_premium and not v.unlocked and v.available %}<span class="var-cost">{{ v.credit_cost }} CR</span>{% endif %}
                         <a href="/players/{{ user.id }}/card?preview={{ v.id }}" target="_blank"
-                           onclick="event.stopPropagation();" title="Preview {{ v.label }} in new tab"
+                           onclick="event.stopPropagation();" title="Preview {{ v.label }} layout in new tab"
                            style="font-size:0.6rem; opacity:0.6; text-decoration:none; color:inherit;">↗</a>
                     </button>
                     {% endfor %}
@@ -452,6 +457,58 @@
             <p class="player-photo-hint">Max 2 MB · JPEG/PNG/WEBP · automatikus 400×400 vágás</p>
         </div>
     </div>
+
+    {# ── Compact BG photo (only when compact_bg is unlocked) ── #}
+    {% set _unlocked = user_license.unlocked_card_variants or [] %}
+    {% if 'compact_bg' in _unlocked %}
+    <div class="player-photo-section">
+        <div class="player-photo-section-title">🎨 Compact+BG — Background Photo</div>
+        <div class="player-photo-body">
+            {% if user_license.card_bg_compact_url %}
+            <img src="{{ user_license.card_bg_compact_url }}"
+                 class="player-photo-preview" alt="Compact BG photo">
+            {% else %}
+            <div class="player-photo-placeholder">🖼️</div>
+            <p class="player-photo-empty">Háttérkép hiányzik — tölts fel egyet!</p>
+            {% endif %}
+            <label class="btn-photo-upload-student">
+                🖼️ Háttér feltöltése
+                <input type="file" accept="image/jpeg,image/png,image/webp"
+                       onchange="uploadCompactBg(this)" hidden>
+            </label>
+            {% if user_license.card_bg_compact_url %}
+            <button class="btn-photo-delete-student" onclick="deleteCompactBg()">✕ Törlés</button>
+            {% endif %}
+            <p class="player-photo-hint">Max 2 MB · JPEG/PNG/WEBP · 800×800 px max</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {# ── Showcase BG photo (only when showcase_bg is unlocked) ── #}
+    {% if 'showcase_bg' in _unlocked %}
+    <div class="player-photo-section">
+        <div class="player-photo-section-title">🎨 Showcase+BG — Background Photo</div>
+        <div class="player-photo-body">
+            {% if user_license.card_bg_showcase_url %}
+            <img src="{{ user_license.card_bg_showcase_url }}"
+                 class="player-photo-preview" alt="Showcase BG photo">
+            {% else %}
+            <div class="player-photo-placeholder">🖼️</div>
+            <p class="player-photo-empty">Háttérkép hiányzik — tölts fel egyet!</p>
+            {% endif %}
+            <label class="btn-photo-upload-student">
+                🖼️ Háttér feltöltése
+                <input type="file" accept="image/jpeg,image/png,image/webp"
+                       onchange="uploadShowcaseBg(this)" hidden>
+            </label>
+            {% if user_license.card_bg_showcase_url %}
+            <button class="btn-photo-delete-student" onclick="deleteShowcaseBg()">✕ Törlés</button>
+            {% endif %}
+            <p class="player-photo-hint">Max 2 MB · JPEG/PNG/WEBP · 800×800 px max</p>
+        </div>
+    </div>
+    {% endif %}
+
     {% endif %}
 
 
@@ -630,6 +687,18 @@ async function unlockVariant(variantId, label, cost) {
     }
 }
 
+const _cardUserId = {{ user.id }};
+
+function previewVariant(variantId) {
+    const iframe = document.getElementById('player-card-iframe');
+    if (iframe) {
+        iframe.src = `/players/${_cardUserId}/card?preview=${variantId}`;
+    }
+    document.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('previewing'));
+    const btn = document.querySelector(`.variant-btn[data-variant="${variantId}"]`);
+    if (btn) btn.classList.add('previewing');
+}
+
 async function setCardVariant(variantId, unlocked, label, cost) {
     if (!unlocked) {
         await unlockVariant(variantId, label, cost);
@@ -644,10 +713,11 @@ async function setCardVariant(variantId, unlocked, label, cost) {
     const data = await r.json();
     if (data.ok) {
         document.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('active'));
-        const active = document.querySelector(`.variant-btn[onclick*="'${variantId}'"]`);
+        document.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('active', 'previewing'));
+        const active = document.querySelector(`.variant-btn[data-variant="${variantId}"]`);
         if (active) active.classList.add('active');
         const iframe = document.getElementById('player-card-iframe');
-        if (iframe) { iframe.src = iframe.src; }
+        if (iframe) { iframe.src = `/players/${_cardUserId}/card`; }
     } else {
         alert(data.error || 'Could not apply variant.');
     }
@@ -674,5 +744,50 @@ async function deleteMyPhoto() {
     const data = await r.json();
     if (data.ok) location.reload();
 }
+
+async function uploadCompactBg(input) {
+    if (!input.files[0]) return;
+    const fd = new FormData();
+    fd.append('file', input.files[0]);
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-photo-compact-bg', {
+        method: 'POST', body: fd, headers: { 'X-CSRF-Token': csrf }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload();
+    else alert('Hiba a feltöltésnél: ' + data.error);
+}
+async function deleteCompactBg() {
+    if (!confirm('Törli a Compact+BG háttérképet?')) return;
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-photo-compact-bg/delete', {
+        method: 'POST', headers: { 'X-CSRF-Token': csrf, 'Content-Type': 'application/json' }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload();
+}
+
+async function uploadShowcaseBg(input) {
+    if (!input.files[0]) return;
+    const fd = new FormData();
+    fd.append('file', input.files[0]);
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-photo-showcase-bg', {
+        method: 'POST', body: fd, headers: { 'X-CSRF-Token': csrf }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload();
+    else alert('Hiba a feltöltésnél: ' + data.error);
+}
+async function deleteShowcaseBg() {
+    if (!confirm('Törli a Showcase+BG háttérképet?')) return;
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-photo-showcase-bg/delete', {
+        method: 'POST', headers: { 'X-CSRF-Token': csrf, 'Content-Type': 'application/json' }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload();
+}
+
 </script>
 {% endblock %}

@@ -163,3 +163,90 @@ def test_PC_04_arctic_theme_renders_body_class(test_db: Session):
     resp = client.get(f"/players/{player.id}/card")
     assert resp.status_code == 200, resp.text
     assert 'class="theme-arctic"' in resp.text
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PC-05: Preview compact_bg returns 200
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_PC_05_preview_compact_bg_returns_200(test_db: Session):
+    """GET /players/{uid}/card?preview=compact_bg returns 200 with compact_bg template."""
+    player, _ = _player_with_license(test_db)
+    client = _public_client(test_db)
+
+    resp = client.get(f"/players/{player.id}/card?preview=compact_bg")
+    assert resp.status_code == 200, resp.text
+    assert "cmp-photo-col" in resp.text
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PC-06: Preview showcase_bg returns 200
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_PC_06_preview_showcase_bg_returns_200(test_db: Session):
+    """GET /players/{uid}/card?preview=showcase_bg returns 200 with showcase_bg template."""
+    player, _ = _player_with_license(test_db)
+    client = _public_client(test_db)
+
+    resp = client.get(f"/players/{player.id}/card?preview=showcase_bg")
+    assert resp.status_code == 200, resp.text
+    assert "sc-banner" in resp.text
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PC-07: BG fallback — renders without error when bg_url is None
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_PC_07_bg_url_none_fallback_no_crash(test_db: Session):
+    """compact_bg and showcase_bg templates render cleanly when bg URL columns are NULL."""
+    player, lic = _player_with_license(test_db)
+    assert lic.card_bg_compact_url is None
+    assert lic.card_bg_showcase_url is None
+
+    client = _public_client(test_db)
+    for variant in ("compact_bg", "showcase_bg"):
+        resp = client.get(f"/players/{player.id}/card?preview={variant}")
+        assert resp.status_code == 200, f"{variant} returned {resp.status_code}: {resp.text[:300]}"
+        # No inline background-image → bg_url was None
+        assert "background-image" not in resp.text, (
+            f"{variant}: unexpected background-image in output when bg_url is None"
+        )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PC-08: Unlock compact_bg deducts 400 CR
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_PC_08_unlock_compact_bg_deducts_credits(test_db: Session):
+    """POST /dashboard/unlock-variant compact_bg deducts 400 CR and adds to unlocked list."""
+    player, lic = _player_with_license(test_db, credit_balance=500)
+    client = _student_client(test_db, player)
+
+    resp = client.post("/dashboard/unlock-variant", json={"variant": "compact_bg"})
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    assert data["ok"] is True
+    assert data["new_balance"] == 100  # 500 - 400 CR
+
+    test_db.refresh(lic)
+    assert "compact_bg" in (lic.unlocked_card_variants or [])
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PC-09: Apply compact_bg after unlock saves card_variant
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_PC_09_apply_compact_bg_after_unlock(test_db: Session):
+    """POST /dashboard/card-variant compact_bg succeeds when already unlocked."""
+    player, lic = _player_with_license(test_db, credit_balance=500)
+    lic.unlocked_card_variants = ["compact_bg"]
+    test_db.flush()
+
+    client = _student_client(test_db, player)
+    resp = client.post("/dashboard/card-variant", json={"variant": "compact_bg"})
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    assert data["ok"] is True
+
+    test_db.refresh(lic)
+    assert lic.card_variant == "compact_bg"

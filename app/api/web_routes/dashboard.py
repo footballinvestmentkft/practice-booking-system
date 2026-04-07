@@ -526,9 +526,7 @@ async def spec_dashboard(
     ]
     active_card_variant = user_license.card_variant if user_license and user_license.card_variant else "fifa"
     # Variant picker only relevant for LFA Football Player specialization
-    show_variant_picker = bool(
-        user_license and user_license.specialization_type == "LFA_FOOTBALL_PLAYER"
-    )
+    show_variant_picker = (spec_enum == "LFA_FOOTBALL_PLAYER" and user_license is not None)
 
     return templates.TemplateResponse(
         "dashboard_student_new.html",
@@ -573,6 +571,14 @@ from fastapi.responses import JSONResponse  # noqa: E402
 from ...services.player_photo_service import (  # noqa: E402
     save_player_photo,
     delete_player_photo,
+    save_portrait_photo,
+    delete_portrait_photo,
+    save_landscape_photo,
+    delete_landscape_photo,
+    save_compact_bg_photo,
+    delete_compact_bg_photo,
+    save_showcase_bg_photo,
+    delete_showcase_bg_photo,
 )
 
 
@@ -615,6 +621,205 @@ async def student_delete_player_photo(
         lfa_license.player_card_photo_url = None
         db.commit()
     return JSONResponse({"ok": True})
+
+
+@router.post("/dashboard/lfa-player-photo-portrait")
+async def student_upload_portrait_photo(
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "Nincs aktív LFA Football Player licensz"}, status_code=404)
+    try:
+        url = save_portrait_photo(await file.read(), file.content_type or "", user.id)
+        lfa_license.card_photo_portrait_url = url
+        db.commit()
+        return JSONResponse({"ok": True, "photo_url": url})
+    except ValueError as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+
+
+@router.post("/dashboard/lfa-player-photo-portrait/delete")
+async def student_delete_portrait_photo(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if lfa_license:
+        delete_portrait_photo(user.id)
+        lfa_license.card_photo_portrait_url = None
+        db.commit()
+    return JSONResponse({"ok": True})
+
+
+@router.post("/dashboard/lfa-player-photo-landscape")
+async def student_upload_landscape_photo(
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "Nincs aktív LFA Football Player licensz"}, status_code=404)
+    try:
+        url = save_landscape_photo(await file.read(), file.content_type or "", user.id)
+        lfa_license.card_photo_landscape_url = url
+        db.commit()
+        return JSONResponse({"ok": True, "photo_url": url})
+    except ValueError as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+
+
+@router.post("/dashboard/lfa-player-photo-landscape/delete")
+async def student_delete_landscape_photo(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if lfa_license:
+        delete_landscape_photo(user.id)
+        lfa_license.card_photo_landscape_url = None
+        db.commit()
+    return JSONResponse({"ok": True})
+
+
+@router.post("/dashboard/lfa-player-photo-compact-bg")
+async def student_upload_compact_bg_photo(
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "Nincs aktív LFA Football Player licensz"}, status_code=404)
+    try:
+        url = save_compact_bg_photo(await file.read(), file.content_type or "", user.id)
+        lfa_license.card_bg_compact_url = url
+        db.commit()
+        return JSONResponse({"ok": True, "photo_url": url})
+    except ValueError as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+
+
+@router.post("/dashboard/lfa-player-photo-compact-bg/delete")
+async def student_delete_compact_bg_photo(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if lfa_license:
+        delete_compact_bg_photo(user.id)
+        lfa_license.card_bg_compact_url = None
+        db.commit()
+    return JSONResponse({"ok": True})
+
+
+@router.post("/dashboard/lfa-player-photo-showcase-bg")
+async def student_upload_showcase_bg_photo(
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "Nincs aktív LFA Football Player licensz"}, status_code=404)
+    try:
+        url = save_showcase_bg_photo(await file.read(), file.content_type or "", user.id)
+        lfa_license.card_bg_showcase_url = url
+        db.commit()
+        return JSONResponse({"ok": True, "photo_url": url})
+    except ValueError as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+
+
+@router.post("/dashboard/lfa-player-photo-showcase-bg/delete")
+async def student_delete_showcase_bg_photo(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if lfa_license:
+        delete_showcase_bg_photo(user.id)
+        lfa_license.card_bg_showcase_url = None
+        db.commit()
+    return JSONResponse({"ok": True})
+
+
+@router.post("/dashboard/card-photo-focus")
+async def student_set_card_photo_focus(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Save photo focus point (X%, Y%) for a specific card variant."""
+    try:
+        body = await request.json()
+        variant = body.get("variant")
+        x = int(body.get("x", 50))
+        y = int(body.get("y", 50))
+    except Exception:
+        return JSONResponse({"ok": False, "error": "Invalid request body"}, status_code=400)
+    if variant not in ("compact", "showcase"):
+        return JSONResponse({"ok": False, "error": "Invalid variant"}, status_code=400)
+    x = max(0, min(100, x))
+    y = max(0, min(100, y))
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "Nincs aktív LFA Football Player licensz"}, status_code=404)
+    if variant == "compact":
+        lfa_license.card_compact_focus_x = x
+        lfa_license.card_compact_focus_y = y
+    else:
+        lfa_license.card_showcase_focus_x = x
+        lfa_license.card_showcase_focus_y = y
+    db.commit()
+    return JSONResponse({"ok": True, "x": x, "y": y})
 
 
 # ══════════════════════════════════════════════════════════════════════════════

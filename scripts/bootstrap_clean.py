@@ -726,28 +726,25 @@ def _seed_invitation_codes(db, admin: User) -> dict:
     _ok(f"Historical codes (used): {created_hist} new, {skipped_hist} already existed")
     _ok(f"CreditTransactions: {created_tx} new, {skipped_tx} already existed")
 
-    # ── Validation: every student has a code + credit sum matches balance ──────
-    issues = []
+    # ── Validation: every student has a used invitation code ──────────────────
+    # Note: credit_balance == sum(CreditTransaction) is only valid on a clean DB
+    # (CI). On a dirty dev DB, tournament rewards accumulate in CreditTransaction
+    # while enrollment deductions are stored against user_license_id, causing
+    # false mismatches. We only check code presence here; credit consistency
+    # is enforced by the CI workflow (e2e-invitation-code-seed.yml).
+    missing_codes = []
     for user in students:
         code = db.query(InvitationCode).filter(
             InvitationCode.used_by_user_id == user.id
         ).first()
         if not code:
-            issues.append(f"    no invitation code for user {user.id} ({user.email})")
-        tx_sum = db.query(func.sum(CreditTransaction.amount)).filter(
-            CreditTransaction.user_id == user.id
-        ).scalar() or 0
-        if tx_sum != user.credit_balance:
-            issues.append(
-                f"    credit mismatch user {user.id}: "
-                f"balance={user.credit_balance}, tx_sum={tx_sum}"
-            )
-    if issues:
+            missing_codes.append(f"    no invitation code for user {user.id} ({user.email})")
+    if missing_codes:
         print("  ❌ Validation issues:")
-        for iss in issues:
+        for iss in missing_codes:
             print(iss)
     else:
-        _ok(f"Validation passed: {len(students)} students — codes + transactions consistent")
+        _ok(f"Validation passed: {len(students)} students — every student has an invitation code")
 
     # ── Final stats ────────────────────────────────────────────────────────────
     total_codes  = db.query(InvitationCode).count()

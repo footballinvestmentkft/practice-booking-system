@@ -171,6 +171,20 @@ class UserLicense(Base):
                              comment="6 football skill percentages for LFA Player specializations (heading, shooting, crossing, passing, dribbling, ball_control)")
     player_card_photo_url = Column(String(512), nullable=True,
                                    comment="LFA Football Player spec-specific card photo URL (not global avatar)")
+    card_photo_portrait_url = Column(String(512), nullable=True,
+                                     comment="9:16 portrait PNG for Compact card variant (transparent background)")
+    card_photo_landscape_url = Column(String(512), nullable=True,
+                                      comment="16:9 landscape PNG for Showcase card variant (transparent background)")
+    card_compact_focus_x = Column(Integer, nullable=True, default=50, server_default="50",
+                                   comment="Compact card photo focus X% (0-100, default centre=50)")
+    card_compact_focus_y = Column(Integer, nullable=True, default=50, server_default="50",
+                                   comment="Compact card photo focus Y% (0-100, default centre=50)")
+    card_showcase_focus_x = Column(Integer, nullable=True, default=50, server_default="50",
+                                    comment="Showcase card photo focus X% (0-100, default centre=50)")
+    card_showcase_focus_y = Column(Integer, nullable=True, default=50, server_default="50",
+                                    comment="Showcase card photo focus Y% (0-100, default centre=50)")
+    card_compact_photo_position = Column(String(10), nullable=False, default='left', server_default='left',
+                                          comment="Compact card photo sidebar position: 'left' or 'right'")
     card_theme = Column(String(32), nullable=False, default='default', server_default='default',
                         comment="Active player card colour theme (e.g. default, midnight, gold)")
     unlocked_card_themes = Column(JSON, nullable=False, default=list, server_default='[]',
@@ -179,6 +193,10 @@ class UserLicense(Base):
                           comment="Active player card layout variant (e.g. fifa, compact, showcase)")
     unlocked_card_variants = Column(JSON, nullable=False, default=list, server_default='[]',
                                     comment="Premium variant IDs unlocked by this user (e.g. ['compact', 'showcase'])")
+    card_bg_compact_url = Column(String(512), nullable=True,
+                                  comment="Background photo URL for the Compact+BG card variant")
+    card_bg_showcase_url = Column(String(512), nullable=True,
+                                   comment="Background photo URL for the Showcase+BG card variant")
     skills_last_updated_at = Column(DateTime, nullable=True,
                                     comment="When skills were last updated")
     skills_updated_by = Column(Integer, ForeignKey("users.id"), nullable=True,

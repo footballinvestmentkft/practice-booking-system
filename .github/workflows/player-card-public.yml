@@ -13,6 +13,11 @@ on:
       - 'app/templates/dashboard_student_new.html'
       - 'alembic/versions/2026_04_01_card_theme.py'
       - 'alembic/versions/2026_04_06_1900_add_card_variant_to_user_licenses.py'
+      - 'alembic/versions/2026_04_07_1000_add_variant_photos_to_user_licenses.py'
+      - 'alembic/versions/2026_04_07_1100_add_card_focus_points.py'
+      - 'alembic/versions/2026_04_07_1200_add_compact_photo_position.py'
+      - 'alembic/versions/2026_04_07_1300_add_variant_bg_photos.py'
+      - 'app/services/player_photo_service.py'
       - 'tests/integration/web_flows/test_player_card_themes.py'
       - '.github/workflows/player-card-public.yml'
   workflow_dispatch:
@@ -86,7 +91,8 @@ jobs:
             WHERE table_name='user_licenses'
             AND column_name IN (
               'card_theme', 'unlocked_card_themes',
-              'card_variant', 'unlocked_card_variants'
+              'card_variant', 'unlocked_card_variants',
+              'card_bg_compact_url', 'card_bg_showcase_url'
             )
           """)
           cols = [r[0] for r in cur.fetchall()]
@@ -94,15 +100,19 @@ jobs:
           assert 'unlocked_card_themes' in cols, "unlocked_card_themes column missing from user_licenses"
           assert 'card_variant' in cols, "card_variant column missing from user_licenses"
           assert 'unlocked_card_variants' in cols, "unlocked_card_variants column missing from user_licenses"
+          assert 'card_bg_compact_url' in cols, "card_bg_compact_url column missing from user_licenses"
+          assert 'card_bg_showcase_url' in cols, "card_bg_showcase_url column missing from user_licenses"
           conn.close()
-          print("✅ Schema verified: card_theme/themes + card_variant/variants present in user_licenses")
+          print("✅ Schema verified: card_theme/themes + card_variant/variants + bg_compact/showcase_url present in user_licenses")
           PYEOF
 
       - name: Static audit — variant templates must not query DB
         run: |
           VIOLATIONS=0
           for f in app/templates/public/player_card_compact.html \
-                    app/templates/public/player_card_showcase.html; do
+                    app/templates/public/player_card_showcase.html \
+                    app/templates/public/player_card_compact_bg.html \
+                    app/templates/public/player_card_showcase_bg.html; do
             if [ -f "$f" ] && grep -qE "db\.query|db\.execute|SessionLocal" "$f"; then
               echo "❌ DB access found in variant template: $f"
               VIOLATIONS=$((VIOLATIONS+1))
@@ -128,12 +138,19 @@ jobs:
           assert VARIANTS['fifa'].available, "'fifa' must be available"
           fallback = get_variant('nonexistent_xyz')
           assert fallback.id == 'fifa', f"Fallback must be 'fifa', got: {fallback.id}"
-          # Unavailable variants must fall back to fifa (safety net)
-          assert not VARIANTS['compact'].available, "compact must be unavailable (Fázis 2)"
-          assert not VARIANTS['showcase'].available, "showcase must be unavailable (Fázis 3)"
-          unavail_fallback = get_variant('showcase')
-          assert unavail_fallback.id == 'fifa', f"Unavailable variant must fall back to fifa, got: {unavail_fallback.id}"
-          print(f"✅ card_variant_service: {list(VARIANTS.keys())}, fallback=fifa, unavailable safety net OK")
+          # All current variants must be available
+          for vid in ('compact', 'showcase', 'compact_bg', 'showcase_bg'):
+              assert VARIANTS[vid].available, f"{vid} must be available"
+              assert VARIANTS[vid].is_premium, f"{vid} must be premium"
+          # Credit costs
+          assert VARIANTS['compact'].credit_cost == 300, "compact must cost 300 CR"
+          assert VARIANTS['showcase'].credit_cost == 500, "showcase must cost 500 CR"
+          assert VARIANTS['compact_bg'].credit_cost == 400, "compact_bg must cost 400 CR"
+          assert VARIANTS['showcase_bg'].credit_cost == 600, "showcase_bg must cost 600 CR"
+          # Template paths
+          assert VARIANTS['compact_bg'].template == 'public/player_card_compact_bg.html'
+          assert VARIANTS['showcase_bg'].template == 'public/player_card_showcase_bg.html'
+          print(f"✅ card_variant_service: {list(VARIANTS.keys())}, fallback=fifa, all variants available, costs OK")
           PYEOF
 
       - name: Run PC-01..04 integration tests
@@ -160,7 +177,7 @@ jobs:
     steps:
       - name: Gate check
         run: |
-          echo "## Player Card Theme Integration Results" >> $GITHUB_STEP_SUMMARY
+          echo "## Player Card Theme + Variant Integration Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Test | Covers | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|------|--------|--------|" >> $GITHUB_STEP_SUMMARY
@@ -168,6 +185,11 @@ jobs:
           echo "| PC-02 | POST /dashboard/card-theme free theme → ok:true | ${{ needs.player-card-integration.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| PC-03 | POST /dashboard/card-theme locked premium → 400 | ${{ needs.player-card-integration.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| PC-04 | GET /players/{uid}/card arctic → body class=theme-arctic | ${{ needs.player-card-integration.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PC-05 | GET /players/{uid}/card?preview=compact_bg → 200 | ${{ needs.player-card-integration.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PC-06 | GET /players/{uid}/card?preview=showcase_bg → 200 | ${{ needs.player-card-integration.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PC-07 | compact_bg + showcase_bg render with bg_url=None (no 500) | ${{ needs.player-card-integration.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PC-08 | POST /dashboard/unlock-variant compact_bg → 400 CR deducted | ${{ needs.player-card-integration.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PC-09 | POST /dashboard/card-variant compact_bg after unlock → ok:true | ${{ needs.player-card-integration.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           RESULT="${{ needs.player-card-integration.result }}"

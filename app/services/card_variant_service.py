@@ -48,7 +48,6 @@ VARIANTS: dict[str, VariantDefinition] = {
         is_premium=True,
         credit_cost=300,
         template="public/player_card_compact.html",
-        available=False,  # Fázis 2 — template not yet implemented
     ),
     "showcase": VariantDefinition(
         id="showcase",
@@ -57,20 +56,36 @@ VARIANTS: dict[str, VariantDefinition] = {
         is_premium=True,
         credit_cost=500,
         template="public/player_card_showcase.html",
-        available=False,  # Fázis 3 — template not yet implemented
+    ),
+    "compact_bg": VariantDefinition(
+        id="compact_bg",
+        label="Compact + BG",
+        description="Compact layout with a custom background image behind your player photo.",
+        is_premium=True,
+        credit_cost=400,
+        template="public/player_card_compact_bg.html",
+    ),
+    "showcase_bg": VariantDefinition(
+        id="showcase_bg",
+        label="Showcase + BG",
+        description="Showcase layout with a custom background image behind your player photo.",
+        is_premium=True,
+        credit_cost=600,
+        template="public/player_card_showcase_bg.html",
     ),
 }
 
 # Display order for the dashboard picker (free first, then premium)
-VARIANT_ORDER = ["fifa", "compact", "showcase"]
+VARIANT_ORDER = ["fifa", "compact", "compact_bg", "showcase", "showcase_bg"]
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def get_variant(variant_id: str) -> VariantDefinition:
-    """Return variant by ID, falling back to 'fifa' for unknown or unavailable IDs."""
-    v = VARIANTS.get(variant_id, VARIANTS["fifa"])
-    return v if v.available else VARIANTS["fifa"]
+    """Return variant by ID, falling back to 'fifa' for unknown IDs.
+    The available flag is NOT used here — render path must never be feature-gated.
+    """
+    return VARIANTS.get(variant_id, VARIANTS["fifa"])
 
 
 def get_all_variants() -> list[VariantDefinition]:

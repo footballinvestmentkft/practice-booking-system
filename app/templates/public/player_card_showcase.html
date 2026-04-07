@@ -2,266 +2,302 @@
 
 {% block extra_styles %}
 <style>
-/* ── Showcase variant — premium wide trading card ── */
+/* ── Showcase variant — landscape card, 16:9 banner, tab-based Skills/Events ── */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--card-page-bg); }
 
-.sc-wrap {
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 1rem;
-    font-family: 'Segoe UI', sans-serif;
-    color: var(--card-body-text);
-}
-
-/* ── Draft badge ── */
-.draft-badge {
-    display: inline-block;
-    font-size: 0.6rem; font-weight: 700;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    background: rgba(237,137,54,0.2); color: #f6ad55;
-    border: 1px solid rgba(237,137,54,0.4);
-    border-radius: 4px; padding: 2px 6px;
-    margin-bottom: 0.75rem;
-}
-
-/* ── Card shell ── */
-.sc-card {
-    background: var(--card-body-bg);
+.card-wrap {
+    max-width: min(720px, calc(100vw - 1.5rem));
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.55);
     border: 1px solid var(--card-border);
-    border-radius: 12px;
-    overflow: hidden;
 }
 
-/* ── Hero strip ── */
-.sc-hero {
+/* ── Banner zone — 16:9 landscape, object-position from focus point ── */
+.sc-banner {
+    width: 100%;
+    aspect-ratio: 16 / 9;
     background: var(--card-panel-bg);
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-    padding: 1.25rem 1.5rem;
-}
-.sc-avatar {
-    width: 80px; height: 80px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.8rem; font-weight: 700;
-    flex-shrink: 0;
+    position: relative;
     overflow: hidden;
-    border: 2px solid rgba(255,255,255,0.15);
 }
-.sc-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-.sc-hero-info { flex: 1; min-width: 0; }
+.sc-banner img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    object-position: center center;
+    display: block;
+}
+.sc-banner-initials {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 6rem; font-weight: 900; color: rgba(255,255,255,0.35);
+    letter-spacing: -0.02em;
+}
+.sc-banner-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 2.5rem 1.25rem 0.6rem;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+}
+
+/* ── Hero identity strip ── */
+.sc-hero {
+    background: var(--card-right-bg);
+    padding: 0.85rem 1.25rem;
+    display: flex; align-items: flex-start;
+    gap: 1rem; flex-wrap: wrap;
+    border-bottom: 1px solid var(--card-border);
+}
+.sc-hero-main { flex: 1; min-width: 200px; }
 .sc-name {
-    font-size: 1.4rem; font-weight: 800;
-    color: var(--card-text-primary);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 1.45rem; font-weight: 800;
+    color: var(--card-right-text);
+    line-height: 1.1; margin-bottom: 0.35rem;
+    overflow-wrap: break-word;
 }
-.sc-sub {
-    font-size: 0.75rem; color: var(--card-text-secondary);
-    margin-top: 4px;
+.sc-pos-badge {
+    display: inline-block; padding: 2px 10px;
+    border-radius: 5px; font-size: 0.68rem; font-weight: 800;
+    color: white; text-transform: uppercase; letter-spacing: 0.07em;
+    margin-bottom: 0.45rem;
 }
-.sc-overall-block { text-align: center; flex-shrink: 0; }
+.sc-meta-row {
+    font-size: 0.72rem; color: var(--card-right-subtext);
+    display: flex; flex-wrap: wrap; gap: 0.3rem 0.45rem;
+    align-items: center; margin-bottom: 0.45rem;
+}
+.sc-meta-sep { opacity: 0.4; }
+.sc-club-pills { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.sc-club-pill {
+    font-size: 0.65rem; font-weight: 600;
+    color: var(--card-pill-text);
+    background: var(--card-pill-bg);
+    border: 1px solid var(--card-pill-border);
+    border-radius: 99px; padding: 2px 8px;
+    overflow-wrap: anywhere;
+}
+.sc-overall-block {
+    text-align: right; flex-shrink: 0;
+    padding-top: 0.1rem;
+}
 .sc-overall {
-    font-size: 3rem; font-weight: 900; line-height: 1;
+    font-size: 3.2rem; font-weight: 900; line-height: 1;
 }
 .sc-tier {
-    font-size: 0.62rem; font-weight: 700;
-    letter-spacing: 0.08em; text-transform: uppercase;
+    font-size: 0.6rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.1em;
     margin-top: 2px;
 }
 
-/* ── Body ── */
-.sc-body {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
+/* ── Tab bar ── */
+.tab-bar {
+    display: flex;
+    background: var(--card-tab-bg);
+    border-bottom: 1px solid var(--card-tab-border);
 }
-@media (max-width: 540px) {
-    .sc-body { grid-template-columns: 1fr; }
+.tab-btn {
+    flex: 1; padding: 0.55rem 1rem;
+    background: none; border: none;
+    color: var(--card-text-tab);
+    font-size: 0.82rem; font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color .15s, border-color .15s;
 }
+.tab-btn.active { color: var(--card-text-primary); border-bottom-color: var(--card-accent); }
 
-/* ── Category panel ── */
-.sc-cats {
-    padding: 1rem 1.25rem;
-    border-right: 1px solid var(--card-border);
+/* ── Skills section ── */
+.skills-section {
+    background: var(--card-body-bg);
+    padding: 1.1rem 1.25rem;
 }
-.sc-panel-title {
-    font-size: 0.6rem; font-weight: 700;
-    letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--card-text-muted);
-    margin-bottom: 0.75rem;
+.skills-title {
+    font-size: 0.63rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.13em; color: var(--card-text-faint);
+    margin-bottom: 0.85rem;
 }
-.sc-cat-row {
-    display: flex; align-items: center;
-    gap: 0.5rem; margin-bottom: 0.55rem;
+.skill-cats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0.65rem;
 }
-.sc-cat-emoji { font-size: 0.8rem; flex-shrink: 0; width: 20px; text-align: center; }
-.sc-cat-label {
-    flex: 1; font-size: 0.68rem;
-    color: var(--card-text-secondary);
+.skill-cat { background: var(--card-cat-bg); border-radius: 9px; padding: 0.65rem; min-width: 0; }
+.skill-cat-name {
+    font-size: 0.58rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--card-text-muted); margin-bottom: 0.45rem;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.sc-cat-bar-wrap {
-    width: 60px; height: 5px;
-    background: var(--card-bar-bg);
-    border-radius: 3px; overflow: hidden;
-}
-.sc-cat-bar-fill {
-    height: 100%; border-radius: 3px;
-    background: var(--card-accent);
-}
-.sc-cat-val {
-    font-size: 0.72rem; font-weight: 700;
-    color: var(--card-text-primary);
-    width: 24px; text-align: right; flex-shrink: 0;
-}
+.skill-row { display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.3rem; }
+.skill-row:last-child { margin-bottom: 0; }
+.skill-name { font-size: 0.62rem; color: var(--card-text-secondary); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.skill-val { font-size: 0.67rem; font-weight: 700; width: 28px; text-align: right; flex-shrink: 0; }
+.skill-up { font-size: 0.6rem; font-weight: 900; flex-shrink: 0; line-height: 1; }
+.skill-bar-bg { flex: 0 1 36px; height: 4px; background: var(--card-bar-bg); border-radius: 2px; }
+.skill-bar-fill { height: 100%; border-radius: 2px; }
 
-/* ── Events panel ── */
-.sc-events {
-    padding: 1rem 1.25rem;
-}
-.sc-event-row {
-    display: flex; align-items: baseline;
-    gap: 0.5rem;
-    padding: 0.45rem 0;
+/* ── Events section ── */
+.events-section { background: var(--card-body-bg); padding: 0.75rem 1.25rem; }
+.ev-row {
+    display: flex; align-items: flex-start;
+    gap: 0.75rem; padding: 0.55rem 0;
     border-bottom: 1px solid var(--card-ev-border);
-    font-size: 0.7rem;
 }
-.sc-event-place {
-    font-size: 0.75rem; font-weight: 800;
-    color: var(--card-accent);
-    flex-shrink: 0; width: 20px;
-}
-.sc-event-name {
-    flex: 1; color: var(--card-text-primary);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.sc-event-xp {
-    font-size: 0.6rem; color: var(--card-text-muted);
-    flex-shrink: 0;
-}
-.sc-no-events {
-    font-size: 0.7rem; color: var(--card-text-muted);
-    font-style: italic;
-}
+.ev-row:last-child { border-bottom: none; }
+.ev-rank { min-width: 2rem; font-size: 1.1rem; text-align: center; padding-top: 0.05rem; }
+.ev-body { flex: 1; min-width: 0; }
+.ev-name { margin-bottom: 0.2rem; }
+.ev-link { color: var(--card-text-primary); font-size: 0.82rem; font-weight: 600; text-decoration: none; }
+.ev-link:hover { text-decoration: underline; }
+.ev-rewards { display: flex; gap: 0.3rem; margin-bottom: 0.25rem; flex-wrap: wrap; }
+.ev-badge { font-size: 0.68rem; font-weight: 700; padding: 1px 6px; border-radius: 99px; }
+.ev-badge.xp { background: var(--card-badge-xp-bg); color: var(--card-badge-xp-text); }
+.ev-badge.cr { background: var(--card-badge-cr-bg); color: var(--card-badge-cr-text); }
+.ev-skills { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.ev-skill-pill { font-size: 0.65rem; padding: 1px 6px; border-radius: 99px; }
+.ev-skill-pill.up { background: var(--card-pill-up-bg); color: var(--card-pill-up-text); }
+.ev-skill-pill.dn { background: var(--card-pill-dn-bg); color: var(--card-pill-dn-text); }
+.ev-empty { text-align: center; color: var(--card-text-faint); font-size: 0.8rem; padding: 2rem 0; }
 
-/* ── Footer ── */
-.sc-footer {
-    border-top: 1px solid var(--card-border);
-    padding: 0.6rem 1.25rem;
-    display: flex; justify-content: space-between; align-items: center;
+/* ── Responsive ── */
+@media (max-width: 520px) {
+    .skill-cats { grid-template-columns: 1fr 1fr; }
+    .sc-name { font-size: 1.2rem; }
 }
-.sc-teams {
-    display: flex; flex-wrap: wrap; gap: 4px;
-}
-.sc-team-chip {
-    font-size: 0.6rem;
-    background: var(--card-cat-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 3px; padding: 2px 5px;
-    color: var(--card-text-secondary);
-}
-.sc-brand {
-    font-size: 0.55rem; font-weight: 700;
-    letter-spacing: 0.12em; text-transform: uppercase;
-    color: var(--card-text-muted); opacity: 0.6;
+@media (max-width: 380px) {
+    .skill-cats { grid-template-columns: 1fr; }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="sc-wrap">
+<div class="card-wrap">
 
-    <div class="draft-badge">✨ Showcase — Draft Preview</div>
-
-    <div class="sc-card">
-
-        {# ── Hero ── #}
-        <div class="sc-hero">
-            <div class="sc-avatar" style="background: {{ avatar_bg }};">
-                {% if photo_url %}
-                    <img src="{{ photo_url }}" alt="{{ player.name }}">
-                {% else %}
-                    {{ initials }}
-                {% endif %}
-            </div>
-            <div class="sc-hero-info">
-                <div class="sc-name">{{ player.name }}</div>
-                <div class="sc-sub">
-                    {{ player.position }}{% if player.nationality %} · {{ player.nationality }}{% endif %}
-                    · {{ player.age_group }} · {{ player.total_tournaments }} events
-                </div>
-                {% if teams_info %}
-                <div class="sc-sub" style="margin-top:4px;">
-                    {% for t in teams_info[:2] %}{{ t.club_name or t.team_name }}{% if not loop.last %}, {% endif %}{% endfor %}
-                </div>
-                {% endif %}
-            </div>
-            <div class="sc-overall-block">
-                <div class="sc-overall" style="color: {{ tier_color }};">{{ overall | round(0) | int }}</div>
-                <div class="sc-tier" style="color: {{ tier_color }};">{{ tier_label }}</div>
-            </div>
-        </div>
-
-        {# ── Body: categories + events ── #}
-        <div class="sc-body">
-
-            {# Category averages #}
-            <div class="sc-cats">
-                <div class="sc-panel-title">Skill categories</div>
-                {% for cat in skill_categories %}
-                    {% set ns = namespace(total=0, count=0) %}
-                    {% for skill in cat.skills %}
-                        {% set skill_data = player.skills.get(skill.key) %}
-                        {% set val = skill_data.current_level if skill_data else 0 %}
-                        {% if val %}
-                            {% set ns.total = ns.total + val %}
-                            {% set ns.count = ns.count + 1 %}
-                        {% endif %}
-                    {% endfor %}
-                    {% if ns.count > 0 %}
-                        {% set avg = (ns.total / ns.count) | round(0) | int %}
-                        <div class="sc-cat-row">
-                            <div class="sc-cat-emoji">{{ cat.emoji }}</div>
-                            <div class="sc-cat-label">{{ cat.name_en }}</div>
-                            <div class="sc-cat-bar-wrap">
-                                <div class="sc-cat-bar-fill" style="width: {{ avg }}%;"></div>
-                            </div>
-                            <div class="sc-cat-val">{{ avg }}</div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-
-            {# Recent events #}
-            <div class="sc-events">
-                <div class="sc-panel-title">Recent events</div>
-                {% if participations_history %}
-                    {% for ev in participations_history[:5] %}
-                    <div class="sc-event-row">
-                        <div class="sc-event-place">#{{ ev.placement }}</div>
-                        <div class="sc-event-name">{{ ev.event_name }}</div>
-                        {% if ev.xp_awarded %}<div class="sc-event-xp">+{{ ev.xp_awarded }} XP</div>{% endif %}
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="sc-no-events">No tournament data yet.</div>
-                {% endif %}
-            </div>
-
-        </div>
-
-        {# ── Footer ── #}
-        <div class="sc-footer">
-            <div class="sc-teams">
-                {% for t in teams_info %}
-                <span class="sc-team-chip">{{ t.team_name }}</span>
-                {% endfor %}
-            </div>
-            <div class="sc-brand">LFA · Showcase Card</div>
-        </div>
-
+    {# ── Banner — 16:9, object-position from saved focus point ── #}
+    <div class="sc-banner">
+        {% if photo_url %}
+            <img src="{{ photo_url }}" alt="{{ player.name }}">
+        {% else %}
+            <div class="sc-banner-initials">{{ initials }}</div>
+        {% endif %}
+        <div class="sc-banner-overlay"></div>
     </div>
+
+    {# ── Hero identity strip ── #}
+    <div class="sc-hero">
+        <div class="sc-hero-main">
+            <div class="sc-name">{{ player.name }}</div>
+            {% if player.position and player.position != "Unknown" %}
+            <span class="sc-pos-badge" style="background: {{ pos_color }};">{{ player.position }}</span>
+            {% endif %}
+            <div class="sc-meta-row">
+                {% if player.nationality %}<span>{{ player.nationality }}</span><span class="sc-meta-sep">·</span>{% endif %}
+                <span>{{ player.age_group }}</span>
+                <span class="sc-meta-sep">·</span>
+                <span>{{ player.total_tournaments }} events</span>
+            </div>
+            {% if teams_info %}
+            <div class="sc-club-pills">
+                {% for t in teams_info %}
+                <span class="sc-club-pill">🏟️ {{ t.team_name }}{% if t.club_name %} · {{ t.club_name }}{% endif %}{% if t.age_group_label %} · {{ t.age_group_label }}{% endif %}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        <div class="sc-overall-block">
+            <div class="sc-overall" style="color: {{ tier_color }};">{{ overall | round(0) | int }}</div>
+            <div class="sc-tier" style="color: {{ tier_color }};">{{ tier_label }}</div>
+        </div>
+    </div>
+
+    {# ── Tab bar ── #}
+    <div class="tab-bar">
+        <button class="tab-btn active" id="btn-skills" onclick="switchTab('skills')">⚽ Skills</button>
+        <button class="tab-btn"        id="btn-events" onclick="switchTab('events')">🏆 Events</button>
+    </div>
+
+    {# ── Skills tab ── #}
+    {% if skill_categories %}
+    <div class="skills-section" id="tab-skills">
+        <div class="skills-title">Football Skills — {{ overall | round(0) | int }} OVR</div>
+        <div class="skill-cats">
+            {% for cat in skill_categories %}
+            <div class="skill-cat">
+                <div class="skill-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
+                {% for skill in cat.skills %}
+                {% set sdata = player.skills.get(skill.key, {}) %}
+                {% set sval = sdata.get('current_level', 50) | round(1) %}
+                {% set fill_pct = [sval, 100] | min %}
+                {% set sdelta = last_skill_delta.get(skill.key, 0) %}
+                {% if sdelta > 0 %}
+                    {% set bar_color = 'var(--card-skill-up)' %}
+                    {% set val_color = 'var(--card-skill-up)' %}
+                {% elif sdelta < 0 %}
+                    {% set bar_color = 'var(--card-skill-dn)' %}
+                    {% set val_color = 'var(--card-skill-dn)' %}
+                {% else %}
+                    {% set bar_color = 'var(--card-bar-neutral)' %}
+                    {% set val_color = 'var(--card-val-neutral)' %}
+                {% endif %}
+                <div class="skill-row">
+                    <span class="skill-name">{{ skill.name_en }}</span>
+                    <div class="skill-bar-bg"><div class="skill-bar-fill" style="width:{{ fill_pct }}%; background:{{ bar_color }};"></div></div>
+                    <span class="skill-val" style="color:{{ val_color }};">{{ sval }}</span>
+                    {% if sdelta > 0 %}<span class="skill-up" style="color:var(--card-skill-up);">↑</span>
+                    {% elif sdelta < 0 %}<span class="skill-up" style="color:var(--card-skill-dn);">↓</span>
+                    {% else %}<span class="skill-up" style="visibility:hidden;">↑</span>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# ── Events tab ── #}
+    <div class="events-section" id="tab-events" style="display:none;">
+        {% if participations_history %}
+            {% for ev in participations_history %}
+            <div class="ev-row">
+                <div class="ev-rank">
+                    {% if ev.placement == 1 %}🥇
+                    {% elif ev.placement == 2 %}🥈
+                    {% elif ev.placement == 3 %}🥉
+                    {% elif ev.placement %}#{{ ev.placement }}
+                    {% else %}—{% endif %}
+                </div>
+                <div class="ev-body">
+                    <div class="ev-name">
+                        <a href="/events/{{ ev.event_id }}" class="ev-link">{{ ev.event_name }}</a>
+                    </div>
+                    <div class="ev-rewards">
+                        {% if ev.xp_awarded %}<span class="ev-badge xp">+{{ ev.xp_awarded }} XP</span>{% endif %}
+                        {% if ev.credits_awarded %}<span class="ev-badge cr">+{{ ev.credits_awarded }} CR</span>{% endif %}
+                    </div>
+                    {% if ev.top_skills %}
+                    <div class="ev-skills">
+                        {% for sk, delta in ev.top_skills %}
+                        <span class="ev-skill-pill {% if delta > 0 %}up{% else %}dn{% endif %}">
+                            {{ sk.replace('_',' ') }} {{ '+' if delta > 0 else '' }}{{ delta | round(1) }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="ev-empty">No tournament data yet.</div>
+        {% endif %}
+    </div>
+
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function switchTab(name) {
+    document.getElementById('tab-skills').style.display = (name === 'skills') ? '' : 'none';
+    document.getElementById('tab-events').style.display = (name === 'events')  ? '' : 'none';
+    document.getElementById('btn-skills').classList.toggle('active', name === 'skills');
+    document.getElementById('btn-events').classList.toggle('active', name === 'events');
+}
+</script>
 {% endblock %}
