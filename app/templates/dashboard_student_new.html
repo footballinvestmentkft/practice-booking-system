@@ -291,11 +291,9 @@
                         {% if not v.available %}⏳{% elif v.is_premium and not v.unlocked %}🔒{% endif %}
                         {{ v.label }}
                         {% if not v.available %}<span class="var-cost" style="opacity:0.5;">Soon</span>{% elif v.is_premium and not v.unlocked %}<span class="var-cost">{{ v.credit_cost }} CR</span>{% endif %}
-                        {% if v.available %}
                         <a href="/players/{{ user.id }}/card?preview={{ v.id }}" target="_blank"
-                           onclick="event.stopPropagation();" title="Preview in new tab"
+                           onclick="event.stopPropagation();" title="Preview {{ v.label }} in new tab"
                            style="font-size:0.6rem; opacity:0.6; text-decoration:none; color:inherit;">↗</a>
-                        {% endif %}
                     </button>
                     {% endfor %}
                 </div>

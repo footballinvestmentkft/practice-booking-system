@@ -51,15 +51,16 @@ def public_player_card(
     from app.services.card_theme_service import get_theme as _get_theme
     card_theme = _get_theme(lfa_license.card_theme if lfa_license.card_theme else "default")
 
-    # Card variant — preview param allows viewing any variant without saving
+    # Card variant — preview param allows viewing any variant without saving.
+    # Preview bypasses availability: UX testing of any registered variant is always allowed.
+    # Only APPLY and UNLOCK are gated by availability.
     from app.services.card_variant_service import get_variant as _get_variant, VARIANTS as _VARIANTS
     _saved_variant_id = lfa_license.card_variant if lfa_license.card_variant else "fifa"
-    _effective_variant_id = (
-        preview if (preview in _VARIANTS and _VARIANTS[preview].available)
-        else _saved_variant_id
-    )
-    # get_variant falls back to 'fifa' if the effective variant is unavailable
-    card_variant = _get_variant(_effective_variant_id)
+    if preview and preview in _VARIANTS:
+        card_variant = _VARIANTS[preview]
+    else:
+        # Saved variant: fall back to 'fifa' if unavailable (safety net for DB state)
+        card_variant = _get_variant(_saved_variant_id)
 
     # Skill profile
     from app.services.skill_progression_service import get_skill_profile
@@ -183,5 +184,5 @@ def public_player_card(
         "last_skill_delta": last_skill_delta,
         "participations_history": participations_history,
         "card_theme": card_theme.id,
-        "card_variant": _effective_variant_id,
+        "card_variant": card_variant.id,
     })

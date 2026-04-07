@@ -1,0 +1,266 @@
+{% extends "public/player_card_base.html" %}
+
+{% block extra_styles %}
+<style>
+/* ── Showcase variant — premium wide trading card ── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--card-page-bg); }
+
+.sc-wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 1rem;
+    font-family: 'Segoe UI', sans-serif;
+    color: var(--card-body-text);
+}
+
+/* ── Draft badge ── */
+.draft-badge {
+    display: inline-block;
+    font-size: 0.6rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    background: rgba(237,137,54,0.2); color: #f6ad55;
+    border: 1px solid rgba(237,137,54,0.4);
+    border-radius: 4px; padding: 2px 6px;
+    margin-bottom: 0.75rem;
+}
+
+/* ── Card shell ── */
+.sc-card {
+    background: var(--card-body-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* ── Hero strip ── */
+.sc-hero {
+    background: var(--card-panel-bg);
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.25rem 1.5rem;
+}
+.sc-avatar {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; font-weight: 700;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 2px solid rgba(255,255,255,0.15);
+}
+.sc-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.sc-hero-info { flex: 1; min-width: 0; }
+.sc-name {
+    font-size: 1.4rem; font-weight: 800;
+    color: var(--card-text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sc-sub {
+    font-size: 0.75rem; color: var(--card-text-secondary);
+    margin-top: 4px;
+}
+.sc-overall-block { text-align: center; flex-shrink: 0; }
+.sc-overall {
+    font-size: 3rem; font-weight: 900; line-height: 1;
+}
+.sc-tier {
+    font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-top: 2px;
+}
+
+/* ── Body ── */
+.sc-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+}
+@media (max-width: 540px) {
+    .sc-body { grid-template-columns: 1fr; }
+}
+
+/* ── Category panel ── */
+.sc-cats {
+    padding: 1rem 1.25rem;
+    border-right: 1px solid var(--card-border);
+}
+.sc-panel-title {
+    font-size: 0.6rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--card-text-muted);
+    margin-bottom: 0.75rem;
+}
+.sc-cat-row {
+    display: flex; align-items: center;
+    gap: 0.5rem; margin-bottom: 0.55rem;
+}
+.sc-cat-emoji { font-size: 0.8rem; flex-shrink: 0; width: 20px; text-align: center; }
+.sc-cat-label {
+    flex: 1; font-size: 0.68rem;
+    color: var(--card-text-secondary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sc-cat-bar-wrap {
+    width: 60px; height: 5px;
+    background: var(--card-bar-bg);
+    border-radius: 3px; overflow: hidden;
+}
+.sc-cat-bar-fill {
+    height: 100%; border-radius: 3px;
+    background: var(--card-accent);
+}
+.sc-cat-val {
+    font-size: 0.72rem; font-weight: 700;
+    color: var(--card-text-primary);
+    width: 24px; text-align: right; flex-shrink: 0;
+}
+
+/* ── Events panel ── */
+.sc-events {
+    padding: 1rem 1.25rem;
+}
+.sc-event-row {
+    display: flex; align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--card-ev-border);
+    font-size: 0.7rem;
+}
+.sc-event-place {
+    font-size: 0.75rem; font-weight: 800;
+    color: var(--card-accent);
+    flex-shrink: 0; width: 20px;
+}
+.sc-event-name {
+    flex: 1; color: var(--card-text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sc-event-xp {
+    font-size: 0.6rem; color: var(--card-text-muted);
+    flex-shrink: 0;
+}
+.sc-no-events {
+    font-size: 0.7rem; color: var(--card-text-muted);
+    font-style: italic;
+}
+
+/* ── Footer ── */
+.sc-footer {
+    border-top: 1px solid var(--card-border);
+    padding: 0.6rem 1.25rem;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.sc-teams {
+    display: flex; flex-wrap: wrap; gap: 4px;
+}
+.sc-team-chip {
+    font-size: 0.6rem;
+    background: var(--card-cat-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 3px; padding: 2px 5px;
+    color: var(--card-text-secondary);
+}
+.sc-brand {
+    font-size: 0.55rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--card-text-muted); opacity: 0.6;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sc-wrap">
+
+    <div class="draft-badge">✨ Showcase — Draft Preview</div>
+
+    <div class="sc-card">
+
+        {# ── Hero ── #}
+        <div class="sc-hero">
+            <div class="sc-avatar" style="background: {{ avatar_bg }};">
+                {% if photo_url %}
+                    <img src="{{ photo_url }}" alt="{{ player.name }}">
+                {% else %}
+                    {{ initials }}
+                {% endif %}
+            </div>
+            <div class="sc-hero-info">
+                <div class="sc-name">{{ player.name }}</div>
+                <div class="sc-sub">
+                    {{ player.position }}{% if player.nationality %} · {{ player.nationality }}{% endif %}
+                    · {{ player.age_group }} · {{ player.total_tournaments }} events
+                </div>
+                {% if teams_info %}
+                <div class="sc-sub" style="margin-top:4px;">
+                    {% for t in teams_info[:2] %}{{ t.club_name or t.team_name }}{% if not loop.last %}, {% endif %}{% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="sc-overall-block">
+                <div class="sc-overall" style="color: {{ tier_color }};">{{ overall | round(0) | int }}</div>
+                <div class="sc-tier" style="color: {{ tier_color }};">{{ tier_label }}</div>
+            </div>
+        </div>
+
+        {# ── Body: categories + events ── #}
+        <div class="sc-body">
+
+            {# Category averages #}
+            <div class="sc-cats">
+                <div class="sc-panel-title">Skill categories</div>
+                {% for cat in skill_categories %}
+                    {% set ns = namespace(total=0, count=0) %}
+                    {% for skill in cat.skills %}
+                        {% set val = player.skills.get(skill.key, 0) %}
+                        {% if val %}
+                            {% set ns.total = ns.total + val %}
+                            {% set ns.count = ns.count + 1 %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if ns.count > 0 %}
+                        {% set avg = (ns.total / ns.count) | round(0) | int %}
+                        <div class="sc-cat-row">
+                            <div class="sc-cat-emoji">{{ cat.emoji }}</div>
+                            <div class="sc-cat-label">{{ cat.name_en }}</div>
+                            <div class="sc-cat-bar-wrap">
+                                <div class="sc-cat-bar-fill" style="width: {{ avg }}%;"></div>
+                            </div>
+                            <div class="sc-cat-val">{{ avg }}</div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            {# Recent events #}
+            <div class="sc-events">
+                <div class="sc-panel-title">Recent events</div>
+                {% if participations_history %}
+                    {% for ev in participations_history[:5] %}
+                    <div class="sc-event-row">
+                        <div class="sc-event-place">#{{ ev.placement }}</div>
+                        <div class="sc-event-name">{{ ev.event_name }}</div>
+                        {% if ev.xp_awarded %}<div class="sc-event-xp">+{{ ev.xp_awarded }} XP</div>{% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="sc-no-events">No tournament data yet.</div>
+                {% endif %}
+            </div>
+
+        </div>
+
+        {# ── Footer ── #}
+        <div class="sc-footer">
+            <div class="sc-teams">
+                {% for t in teams_info %}
+                <span class="sc-team-chip">{{ t.team_name }}</span>
+                {% endfor %}
+            </div>
+            <div class="sc-brand">LFA · Showcase Card</div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
