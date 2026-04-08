@@ -1,0 +1,133 @@
+name: E2E Session Type Config (Phase 1 — ON_SITE Stabilisation)
+
+# Proves:
+#   STC-01  TournamentConfiguration.session_type_config defaults to 'on_site'
+#   STC-02  _resolve_session_type() returns 'on_site' when config absent
+#   STC-03  PATCH session_type_config after sessions_generated=True → 400
+#   STC-04  _resolve_session_type() honours virtual / hybrid values
+
+on:
+  push:
+    branches: [main, develop, "feature/*", "fix/*"]
+    paths:
+      - 'app/services/tournament/session_generation/**'
+      - 'app/models/tournament_configuration.py'
+      - 'app/api/api_v1/endpoints/tournaments/lifecycle_updates.py'
+      - 'alembic/versions/**'
+      - 'tests/integration/web_flows/test_session_type_config.py'
+      - '.github/workflows/e2e-session-type-config.yml'
+  pull_request:
+    branches: [main, develop, "feature/*", "fix/*"]
+    paths:
+      - 'app/services/tournament/session_generation/**'
+      - 'app/models/tournament_configuration.py'
+      - 'app/api/api_v1/endpoints/tournaments/lifecycle_updates.py'
+      - 'alembic/versions/**'
+      - 'tests/integration/web_flows/test_session_type_config.py'
+      - '.github/workflows/e2e-session-type-config.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-session-type-config-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/lfa_intern_system
+  SECRET_KEY: ci-session-type-config-secret-not-for-production
+  TESTING: "true"
+
+jobs:
+  stc-pytest:
+    name: "STC-01..04 — session_type_config tests"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lfa_intern_system
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write .env
+        run: |
+          cat > .env <<'EOF'
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/lfa_intern_system
+          SECRET_KEY=ci-session-type-config-secret-not-for-production
+          ENVIRONMENT=test
+          TESTING=true
+          DEBUG=false
+          ADMIN_EMAIL=admin@lfa.com
+          ADMIN_PASSWORD=admin123
+          EOF
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+
+      - name: Assert DB is empty
+        run: |
+          TABLE_COUNT=$(PGPASSWORD=postgres psql -h localhost -U postgres lfa_intern_system \
+            -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public';" \
+            | tr -d '[:space:]')
+          echo "Tables before bootstrap: $TABLE_COUNT"
+          if [ "$TABLE_COUNT" -ne "0" ]; then
+            echo "❌ DB is not empty — $TABLE_COUNT tables found before bootstrap"
+            exit 1
+          fi
+          echo "✅ DB is empty — clean start confirmed"
+
+      - name: Bootstrap DB
+        run: PYTHONPATH=. python scripts/bootstrap_clean.py
+
+      - name: Validate seed state
+        run: PYTHONPATH=. python scripts/validate_seed_state.py
+
+      - name: Run STC tests
+        run: |
+          PYTHONPATH=. pytest tests/integration/web_flows/test_session_type_config.py \
+            -v --tb=short -x
+
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## Session Type Config Tests (Phase 1)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test | What it proves |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|----------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| STC-01 | \`session_type_config\` column defaults to \`on_site\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| STC-02 | \`_resolve_session_type()\` returns \`on_site\` when config absent |" >> $GITHUB_STEP_SUMMARY
+          echo "| STC-03 | PATCH \`session_type_config\` after sessions generated → HTTP 400 |" >> $GITHUB_STEP_SUMMARY
+          echo "| STC-04 | \`_resolve_session_type()\` honours virtual/hybrid config + \`_resolve_base_xp()\` correct |" >> $GITHUB_STEP_SUMMARY
+
+  stc-gate:
+    name: "Gate"
+    runs-on: ubuntu-latest
+    needs: [stc-pytest]
+    if: always()
+    steps:
+      - name: Check all jobs passed
+        run: |
+          if [ "${{ needs.stc-pytest.result }}" != "success" ]; then
+            echo "❌ stc-pytest failed"
+            exit 1
+          fi
+          echo "✅ All STC Phase 1 jobs passed"

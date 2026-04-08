@@ -98,7 +98,8 @@ class KnockoutGenerator(BaseFormatGenerator):
                     'tournament_round': round_num,
                     'tournament_match_number': match_in_round,
                     'location': get_tournament_venue(tournament),
-                    'session_type': 'on_site',
+                    'session_type': self._resolve_session_type(tournament),
+                    'base_xp': self._resolve_base_xp(self._resolve_session_type(tournament)),
                     'ranking_mode': 'HEAD_TO_HEAD',
                     'round_number': round_num,
                     'expected_participants': 2,
@@ -143,7 +144,8 @@ class KnockoutGenerator(BaseFormatGenerator):
                 'tournament_round': total_rounds,
                 'tournament_match_number': 999,  # Special match number
                 'location': get_tournament_venue(tournament),
-                'session_type': 'on_site',
+                'session_type': self._resolve_session_type(tournament),
+                'base_xp': self._resolve_base_xp(self._resolve_session_type(tournament)),
                 # ✅ HEAD_TO_HEAD: 1v1 match
                 'ranking_mode': 'HEAD_TO_HEAD',
                 'round_number': total_rounds,

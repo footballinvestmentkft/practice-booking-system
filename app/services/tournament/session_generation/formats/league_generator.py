@@ -84,7 +84,8 @@ class LeagueGenerator(BaseFormatGenerator):
                     'tournament_round': round_num,
                     'tournament_match_number': round_num,
                     'location': get_tournament_venue(tournament),
-                    'session_type': 'on_site',
+                    'session_type': self._resolve_session_type(tournament),
+                    'base_xp': self._resolve_base_xp(self._resolve_session_type(tournament)),
                     # ✅ UNIFIED RANKING: Ranking metadata
                     'ranking_mode': 'ALL_PARTICIPANTS',
                     'round_number': round_num,  # ✅ MANDATORY: Round number for fixtures display
@@ -179,7 +180,8 @@ class LeagueGenerator(BaseFormatGenerator):
                         'tournament_match_number': match_num,
                         'leg_number': leg,
                         'location': get_tournament_venue(tournament),
-                        'session_type': 'on_site',
+                        'session_type': self._resolve_session_type(tournament),
+                        'base_xp': self._resolve_base_xp(self._resolve_session_type(tournament)),
                         'ranking_mode': 'ALL_PARTICIPANTS',
                         'round_number': round_num,
                         'expected_participants': 2,

@@ -141,7 +141,14 @@
             'tournament_direct_invitation':    '📩',
             'tournament_instructor_accepted':  '🤝',
             'tournament_instructor_declined':  '❌',
+            'skill_tier_reached':             '🌟',
         }.get(n.type.value, '📢') %}
+        {# ── Backward-compat link resolution: legacy skill_tier_reached had link="/notifications" (circular) ── #}
+        {% if n.type.value == 'skill_tier_reached' and (not n.link or n.link == '/notifications') %}
+            {% set resolved_link = '/players/' ~ n.user_id ~ '/card' %}
+        {% else %}
+            {% set resolved_link = n.link %}
+        {% endif %}
         <div class="notif-card {% if not n.is_read %}unread{% endif %}" id="notif-{{ n.id }}">
             <div class="notif-icon">{{ icon }}</div>
             <div class="notif-body">
@@ -152,8 +159,8 @@
                     {% if n.is_read %} · Read{% else %} · <strong>Unread</strong>{% endif %}
                 </div>
                 <div class="notif-actions">
-                    {% if n.link %}
-                    <a href="{{ n.link }}" class="btn-sm btn-link">🔗 View</a>
+                    {% if resolved_link %}
+                    <a href="{{ resolved_link }}" class="btn-sm btn-link">🔗 View</a>
                     {% endif %}
                     {% if not n.is_read %}
                     <button class="btn-sm btn-read" onclick="markRead({{ n.id }}, this)">✓ Mark read</button>

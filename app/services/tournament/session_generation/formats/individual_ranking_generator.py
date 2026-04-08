@@ -139,7 +139,8 @@ class IndividualRankingGenerator(BaseFormatGenerator):
                 'tournament_round': 1,  # Always 1 since this session contains all rounds
                 'tournament_match_number': 1,
                 'location': venue,
-                'session_type': 'on_site',
+                'session_type': self._resolve_session_type(tournament),
+                'base_xp': self._resolve_base_xp(self._resolve_session_type(tournament)),
                 # ✅ INDIVIDUAL_RANKING metadata
                 'ranking_mode': 'ALL_PARTICIPANTS',
                 'round_number': 1,

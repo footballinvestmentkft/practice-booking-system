@@ -11,6 +11,13 @@ from app.models.semester import Semester
 from app.models.tournament_type import TournamentType
 
 
+_BASE_XP_BY_SESSION_TYPE: dict = {
+    "on_site": 75,
+    "virtual": 50,
+    "hybrid": 100,
+}
+
+
 class BaseFormatGenerator(ABC):
     """
     Abstract base class for tournament format generators
@@ -24,6 +31,17 @@ class BaseFormatGenerator(ABC):
             db: SQLAlchemy database session
         """
         self.db = db
+
+    def _resolve_session_type(self, tournament: Semester) -> str:
+        """Return the session delivery type configured for this tournament (default: on_site)."""
+        cfg = getattr(tournament, "tournament_config_obj", None)
+        if cfg and cfg.session_type_config:
+            return cfg.session_type_config
+        return "on_site"
+
+    def _resolve_base_xp(self, session_type: str) -> int:
+        """Return the base XP for a session type (on_site=75, virtual=50, hybrid=100)."""
+        return _BASE_XP_BY_SESSION_TYPE.get(session_type, 75)
 
     @abstractmethod
     def generate(

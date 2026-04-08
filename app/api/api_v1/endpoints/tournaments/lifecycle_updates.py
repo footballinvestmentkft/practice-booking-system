@@ -53,6 +53,7 @@ class TournamentUpdateRequest(BaseModel):
     theme: Optional[str] = Field(None, description="Marketing theme / headline (e.g. 'Spring 2026 Edition')")
     winner_count: Optional[int] = Field(None, ge=1, description="Number of winners (INDIVIDUAL_RANKING)")
     team_enrollment_cost: Optional[int] = Field(None, ge=0, description="Credit cost per team enrollment (TEAM tournaments)")
+    session_type_config: Optional[str] = Field(None, description="Session delivery type for generated sessions: on_site / virtual / hybrid (⚠️ Cannot change after sessions are generated)")
 
 
 # ============================================================================
@@ -216,6 +217,24 @@ def update_tournament(
         if campus.location_id and not tournament.location_id:
             tournament.location_id = campus.location_id
             updates["location_id_derived"] = {"source": "campus", "value": campus.location_id}
+
+    # Update session_type_config (⚠️ blocked after sessions are generated)
+    if request.session_type_config is not None:
+        valid_types = {"on_site", "virtual", "hybrid"}
+        if request.session_type_config not in valid_types:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid session_type_config '{request.session_type_config}'. Must be one of: {sorted(valid_types)}"
+            )
+        if tournament.sessions_generated:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot change session_type_config after sessions have been generated. Delete existing sessions first."
+            )
+        if tournament.tournament_config_obj:
+            old_type = tournament.tournament_config_obj.session_type_config or "on_site"
+            tournament.tournament_config_obj.session_type_config = request.session_type_config
+            updates["session_type_config"] = {"old": old_type, "new": request.session_type_config}
 
     # Update tournament_type_id (lives in TournamentConfiguration — ⚠️ auto-deletes sessions on change)
     # Use model_fields_set to detect explicit null (IR switch) vs omitted field

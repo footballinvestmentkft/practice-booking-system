@@ -204,7 +204,8 @@ class GroupKnockoutGenerator(BaseFormatGenerator):
                                 'tournament_match_number': match_num,
                                 'leg_number': leg,
                                 'location': session_location,
-                                'session_type': 'on_site',
+                                'session_type': self._resolve_session_type(tournament),
+                                'base_xp': self._resolve_base_xp(self._resolve_session_type(tournament)),
                                 # ✅ HEAD_TO_HEAD: Group stage metadata
                                 'ranking_mode': 'GROUP_ISOLATED',
                                 'group_identifier': group_name,
@@ -277,7 +278,8 @@ class GroupKnockoutGenerator(BaseFormatGenerator):
                         'tournament_round': round_num,
                         'tournament_match_number': (group_num - 1) * group_rounds + round_num,
                         'location': session_location,
-                        'session_type': 'on_site',
+                        'session_type': self._resolve_session_type(tournament),
+                        'base_xp': self._resolve_base_xp(self._resolve_session_type(tournament)),
                         # ✅ UNIFIED RANKING: Group isolation metadata
                         'ranking_mode': 'GROUP_ISOLATED',
                         'group_identifier': group_name,
@@ -341,7 +343,8 @@ class GroupKnockoutGenerator(BaseFormatGenerator):
                     'tournament_round': 0,  # Play-in is round 0
                     'tournament_match_number': match_num,
                     'location': knockout_location,
-                    'session_type': 'on_site',
+                    'session_type': self._resolve_session_type(tournament),
+                    'base_xp': self._resolve_base_xp(self._resolve_session_type(tournament)),
                     # ✅ UNIFIED RANKING: Play-in metadata
                     'ranking_mode': 'QUALIFIED_ONLY',
                     'round_number': 0,  # ✅ MANDATORY: Round number for fixtures display (play-in = round 0)
@@ -424,7 +427,8 @@ class GroupKnockoutGenerator(BaseFormatGenerator):
                     'tournament_round': round_num,
                     'tournament_match_number': match_in_round,
                     'location': knockout_location,
-                    'session_type': 'on_site',
+                    'session_type': self._resolve_session_type(tournament),
+                    'base_xp': self._resolve_base_xp(self._resolve_session_type(tournament)),
                     # ✅ UNIFIED RANKING: Knockout stage metadata
                     'ranking_mode': 'QUALIFIED_ONLY',
                     'round_number': round_num,  # ✅ MANDATORY: Round number for fixtures display
@@ -470,7 +474,8 @@ class GroupKnockoutGenerator(BaseFormatGenerator):
                 'tournament_round': knockout_rounds + 1,  # After final
                 'tournament_match_number': 1,
                 'location': knockout_location,
-                'session_type': 'on_site',
+                'session_type': self._resolve_session_type(tournament),
+                'base_xp': self._resolve_base_xp(self._resolve_session_type(tournament)),
                 # ✅ UNIFIED RANKING: Bronze match metadata
                 'ranking_mode': 'QUALIFIED_ONLY',
                 'round_number': knockout_rounds + 1,  # ✅ MANDATORY: Round number for fixtures display (bronze = after final)

@@ -245,7 +245,7 @@ def create_skill_tier_notification(
             f"({new_pct:.0f}%). Keep competing to progress further!"
         ),
         notification_type=NotificationType.SKILL_TIER_REACHED,
-        link="/notifications",
+        link=f"/players/{user_id}/card",
         related_semester_id=tournament_id,
     )
 

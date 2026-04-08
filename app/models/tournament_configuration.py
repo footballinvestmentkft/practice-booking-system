@@ -160,6 +160,15 @@ class TournamentConfiguration(Base):
         comment="Tournament instructor assignment strategy: OPEN_ASSIGNMENT (admin assigns directly) or APPLICATION_BASED (instructors apply)"
     )
 
+    # Session Delivery Type
+    session_type_config = Column(
+        String(20),
+        nullable=True,
+        default="on_site",
+        server_default="on_site",
+        comment="Session delivery type for generated sessions: on_site / virtual / hybrid (default: on_site)"
+    )
+
     # Session Generation Tracking
     sessions_generated = Column(
         Boolean,
