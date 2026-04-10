@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review — {{ quiz.title }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+        .review-container { max-width: 680px; margin: 0 auto; background: white; border-radius: 8px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 28px; }
+        .quiz-title { font-size: 22px; font-weight: bold; color: #333; margin-bottom: 10px; }
+        .score-badge { display: inline-block; font-size: 28px; font-weight: bold; margin: 8px 0; }
+        .score-badge.passed { color: #27ae60; }
+        .score-badge.failed { color: #e74c3c; }
+        .result-label { font-size: 15px; color: #7f8c8d; }
+        .stats { background: #f8f9fa; padding: 16px 20px; border-radius: 6px; margin: 20px 0; display: flex; gap: 24px; flex-wrap: wrap; }
+        .stat { font-size: 14px; color: #555; }
+        .stat strong { color: #333; }
+        .answers-heading { font-size: 16px; font-weight: 600; color: #555; margin-bottom: 12px; }
+        .answer-item { padding: 14px 16px; border-bottom: 1px solid #f0f0f0; }
+        .answer-item:last-child { border-bottom: none; }
+        .answer-item.correct { border-left: 4px solid #27ae60; }
+        .answer-item.incorrect { border-left: 4px solid #e74c3c; }
+        .answers-list { border: 1px solid #dee2e6; border-radius: 6px; overflow: hidden; }
+        .answer-q { font-weight: 600; color: #333; margin-bottom: 8px; display: flex; gap: 8px; }
+        .q-num { background: #3498db; color: white; border-radius: 12px; padding: 1px 8px; font-size: 12px; white-space: nowrap; align-self: center; }
+        .answer-detail { font-size: 14px; color: #555; padding-left: 4px; }
+        .your-answer { margin-bottom: 4px; }
+        .badge-correct { color: #27ae60; font-weight: bold; margin-left: 6px; }
+        .badge-wrong { color: #e74c3c; font-weight: bold; margin-left: 6px; }
+        .correct-answer { color: #27ae60; margin-bottom: 4px; }
+        .explanation { color: #7f8c8d; font-style: italic; margin-top: 6px; padding: 6px 10px; background: #f8f9fa; border-radius: 4px; }
+        .actions { margin-top: 28px; text-align: center; }
+        .btn { display: inline-block; padding: 10px 22px; margin: 4px; border-radius: 6px; text-decoration: none; font-size: 15px; font-weight: 600; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-primary:hover { background: #2980b9; }
+        .no-answers { text-align: center; color: #7f8c8d; padding: 24px; }
+    </style>
+</head>
+<body>
+    <div class="review-container">
+        <div class="header">
+            <div class="quiz-title">{{ quiz.title }}</div>
+            <div class="score-badge {{ 'passed' if attempt.passed else 'failed' }}">
+                {{ attempt.score|int if attempt.score is not none else 0 }}%
+                {% if attempt.passed %}✓{% else %}✗{% endif %}
+            </div>
+            <div class="result-label">
+                {% if attempt.passed %}Passed{% else %}Failed{% endif %}
+                &nbsp;·&nbsp;
+                {{ attempt.correct_answers }}/{{ attempt.total_questions }} correct
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat">Date: <strong>{{ attempt.completed_at.strftime('%Y-%m-%d %H:%M') if attempt.completed_at else '—' }}</strong></div>
+            <div class="stat">Passing score: <strong>{{ (quiz.passing_score * 100)|int }}%</strong></div>
+            {% if attempt.time_spent_minutes %}
+            <div class="stat">Time spent: <strong>{{ "%.1f"|format(attempt.time_spent_minutes) }} min</strong></div>
+            {% endif %}
+        </div>
+
+        {% if attempt_answers %}
+        <div class="answers-heading">Answer Review ({{ attempt_answers | length }} question{{ 's' if attempt_answers | length != 1 else '' }})</div>
+        <div class="answers-list">
+            {% for ua in attempt_answers %}
+            <div class="answer-item {{ 'correct' if ua.is_correct else 'incorrect' }}">
+                <div class="answer-q">
+                    <span class="q-num">Q{{ loop.index }}</span>
+                    {{ ua.question.question_text }}
+                </div>
+                <div class="answer-detail">
+                    <div class="your-answer">
+                        Your answer:
+                        {% if ua.selected_option %}
+                            <strong>{{ ua.selected_option.option_text }}</strong>
+                        {% elif ua.answer_text %}
+                            <strong>{{ ua.answer_text }}</strong>
+                        {% else %}
+                            <em>No answer given</em>
+                        {% endif %}
+                        {% if ua.is_correct %}
+                            <span class="badge-correct">✓</span>
+                        {% else %}
+                            <span class="badge-wrong">✗</span>
+                        {% endif %}
+                    </div>
+                    {% if not ua.is_correct %}
+                    <div class="correct-answer">
+                        Correct: <strong>{{ ua.question.answer_options | selectattr('is_correct') | map(attribute='option_text') | first | default('—') }}</strong>
+                    </div>
+                    {% endif %}
+                    {% if ua.question.explanation %}
+                    <div class="explanation">💡 {{ ua.question.explanation }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-answers">No answers recorded for this attempt.</div>
+        {% endif %}
+
+        <div class="actions">
+            <a href="/sessions" class="btn btn-primary">← Back to Sessions</a>
+        </div>
+    </div>
+</body>
+</html>

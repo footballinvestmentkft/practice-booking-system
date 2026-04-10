@@ -1,0 +1,141 @@
+name: E2E Quiz Attempt Review (QAW-01..04)
+
+# Proves:
+#   QAW-01  GET /quizzes/attempts/{id}/review — own completed attempt → 200 + full review HTML
+#   QAW-02  GET /quizzes/attempts/{id}/review — other user's attempt → 404 (ownership)
+#   QAW-03  GET /quizzes/attempts/{id}/review — incomplete attempt → 404
+#   QAW-04  session_details.html 'id' in user_attempts dict → review link URL resolves
+
+on:
+  push:
+    branches: [main, develop, "feature/*", "fix/*"]
+    paths:
+      - 'app/api/web_routes/quiz.py'
+      - 'app/api/web_routes/sessions.py'
+      - 'app/templates/quiz_attempt_review.html'
+      - 'app/templates/session_details.html'
+      - 'app/templates/quiz_result.html'
+      - 'tests/integration/web_flows/test_quiz_attempt_review.py'
+      - '.github/workflows/e2e-quiz-attempt-review.yml'
+  pull_request:
+    branches: [main, develop, "feature/*", "fix/*"]
+    paths:
+      - 'app/api/web_routes/quiz.py'
+      - 'app/api/web_routes/sessions.py'
+      - 'app/templates/quiz_attempt_review.html'
+      - 'app/templates/session_details.html'
+      - 'app/templates/quiz_result.html'
+      - 'tests/integration/web_flows/test_quiz_attempt_review.py'
+      - '.github/workflows/e2e-quiz-attempt-review.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-quiz-attempt-review-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/lfa_intern_system
+  SECRET_KEY: ci-quiz-attempt-review-secret-not-for-production
+  TESTING: "true"
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 1: pytest QAW-01..04 (SAVEPOINT-isolated)
+  # ─────────────────────────────────────────────────────────────────────────────
+  qaw-pytest:
+    name: "QAW-01..04 — quiz attempt review web route tests"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lfa_intern_system
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write .env
+        run: |
+          cat > .env <<'EOF'
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/lfa_intern_system
+          SECRET_KEY=ci-quiz-attempt-review-secret-not-for-production
+          ENVIRONMENT=test
+          TESTING=true
+          DEBUG=false
+          ADMIN_EMAIL=admin@lfa.com
+          ADMIN_PASSWORD=admin123
+          EOF
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+
+      - name: Assert DB is empty
+        run: |
+          TABLE_COUNT=$(PGPASSWORD=postgres psql -h localhost -U postgres lfa_intern_system \
+            -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public';" \
+            | tr -d '[:space:]')
+          echo "Tables before bootstrap: $TABLE_COUNT"
+          if [ "$TABLE_COUNT" -ne "0" ]; then
+            echo "❌ DB is not empty — $TABLE_COUNT tables found before bootstrap"
+            exit 1
+          fi
+          echo "✅ DB is empty — clean start confirmed"
+
+      - name: Bootstrap DB
+        run: PYTHONPATH=. python scripts/bootstrap_clean.py
+
+      - name: Validate seed state
+        run: PYTHONPATH=. python scripts/validate_seed_state.py
+
+      - name: Run QAW tests
+        run: |
+          PYTHONPATH=. pytest tests/integration/web_flows/test_quiz_attempt_review.py \
+            -v --tb=short -x
+
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## Quiz Attempt Review Tests (QAW-01..04)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test | What it proves |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|----------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| QAW-01 | Own completed attempt → 200 HTML with question/answer/correctness detail |" >> $GITHUB_STEP_SUMMARY
+          echo "| QAW-02 | Other user's attempt → 404 (ownership enforcement) |" >> $GITHUB_STEP_SUMMARY
+          echo "| QAW-03 | Incomplete (not yet submitted) attempt → 404 |" >> $GITHUB_STEP_SUMMARY
+          echo "| QAW-04 | \`user_attempts\` dict includes \`id\` → review URL resolves to 200 |" >> $GITHUB_STEP_SUMMARY
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Gate
+  # ─────────────────────────────────────────────────────────────────────────────
+  qaw-gate:
+    name: "Gate"
+    runs-on: ubuntu-latest
+    needs: [qaw-pytest]
+    if: always()
+    steps:
+      - name: Check all jobs passed
+        run: |
+          if [ "${{ needs.qaw-pytest.result }}" != "success" ]; then
+            echo "❌ qaw-pytest failed"
+            exit 1
+          fi
+          echo "✅ All Quiz Attempt Review jobs passed (QAW-01..04)"

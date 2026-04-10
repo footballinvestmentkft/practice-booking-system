@@ -472,6 +472,7 @@ async def session_details(
 
                     for attempt in attempts:
                         user_attempts.append({
+                            'id': attempt.id,
                             'score': attempt.score,
                             'passed': attempt.passed,
                             'completed_at': attempt.completed_at,

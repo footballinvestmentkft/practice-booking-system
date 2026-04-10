@@ -425,6 +425,40 @@ async def submit_quiz(
         "xp_awarded": attempt.xp_awarded,
         "time_spent": time_spent,
         "attempt_answers": attempt_answers,
+        "attempt_id": attempt.id,
+    })
+
+
+@router.get("/quizzes/attempts/{attempt_id}/review")
+async def quiz_attempt_review(
+    request: Request,
+    attempt_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Persistent, ownership-protected review page for a completed quiz attempt."""
+    attempt = (
+        db.query(QuizAttempt)
+        .options(
+            joinedload(QuizAttempt.quiz),
+            joinedload(QuizAttempt.user_answers)
+                .joinedload(QuizUserAnswer.question)
+                .joinedload(QuizQuestion.answer_options),
+            joinedload(QuizAttempt.user_answers)
+                .joinedload(QuizUserAnswer.selected_option),
+        )
+        .filter(QuizAttempt.id == attempt_id, QuizAttempt.user_id == user.id)
+        .first()
+    )
+    if not attempt or not attempt.completed_at:
+        raise HTTPException(status_code=404)
+    attempt_answers = sorted(attempt.user_answers, key=lambda ua: ua.question.order_index)
+    return templates.TemplateResponse("quiz_attempt_review.html", {
+        "request": request,
+        "user": user,
+        "quiz": attempt.quiz,
+        "attempt": attempt,
+        "attempt_answers": attempt_answers,
     })
 
 

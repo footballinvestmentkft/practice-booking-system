@@ -102,6 +102,10 @@
                 <a href="/sessions" class="btn btn-primary">← Back to Sessions</a>
             {% endif %}
 
+            {% if attempt_id %}
+                <a href="/quizzes/attempts/{{ attempt_id }}/review" class="btn btn-secondary">📝 View Detailed Review</a>
+            {% endif %}
+
             {% if not passed %}
                 <a href="/quizzes/{{ quiz.id }}/take?session_id={{ session_id or '' }}" class="btn btn-secondary">Try Again</a>
             {% endif %}
