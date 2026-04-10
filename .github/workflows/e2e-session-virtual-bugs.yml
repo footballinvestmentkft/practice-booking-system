@@ -1,14 +1,15 @@
-name: E2E Session Virtual Bugs (SBF-01..08)
+name: E2E Session Virtual Bugs (SBF-01..09)
 
 # Proves:
 #   SBF-01  passing_score=0.60 → template shows "60%" (not "6000%")
 #   SBF-02  SemesterEnrollment (no Booking) → is_enrolled=True, no "Enrollment Required"
-#   SBF-03  Virtual session with meeting_link → "💻 Meeting Link" shown
-#   SBF-04  Virtual session without meeting_link → "TBA" under Meeting Link
+#   SBF-03  Virtual session → "Meeting Link" section NOT shown (removed)
+#   SBF-04  Virtual session → "📍 Location:" NOT shown
 #   SBF-05  SemesterEnrollment student → GET take_quiz → 200 (not 403)
 #   SBF-06  SemesterEnrollment student → POST submit_quiz → 200 (not 403)
 #   SBF-07  GET review?session_id=X → back link = /sessions/X
 #   SBF-08  GET review (no session_id) → back link = /sessions (generic)
+#   SBF-09  SemesterEnrollment → enrolled count > 0 (not 0/capacity)
 
 on:
   push:
@@ -51,7 +52,7 @@ jobs:
   # Job 1: pytest SBF-01..04
   # ─────────────────────────────────────────────────────────────────────────────
   sbf-pytest:
-    name: "SBF-01..08 — virtual session bug fix tests"
+    name: "SBF-01..09 — virtual session bug fix tests"
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -122,18 +123,19 @@ jobs:
       - name: Write job summary
         if: always()
         run: |
-          echo "## Virtual Session Bug Fix Tests (SBF-01..08)" >> $GITHUB_STEP_SUMMARY
+          echo "## Virtual Session Bug Fix Tests (SBF-01..09)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Test | What it proves |" >> $GITHUB_STEP_SUMMARY
           echo "|------|----------------|" >> $GITHUB_STEP_SUMMARY
           echo "| SBF-01 | \`passing_score=0.60\` displays as \`60%\` (not \`6000%\`) |" >> $GITHUB_STEP_SUMMARY
           echo "| SBF-02 | SemesterEnrollment-only student sees quiz (no 'Enrollment Required') |" >> $GITHUB_STEP_SUMMARY
-          echo "| SBF-03 | Virtual session with meeting_link shows '💻 Meeting Link' |" >> $GITHUB_STEP_SUMMARY
-          echo "| SBF-04 | Virtual session without meeting_link shows 'TBA' under Meeting Link |" >> $GITHUB_STEP_SUMMARY
+          echo "| SBF-03 | Virtual session → 'Meeting Link' section NOT shown |" >> $GITHUB_STEP_SUMMARY
+          echo "| SBF-04 | Virtual session → '📍 Location:' NOT shown |" >> $GITHUB_STEP_SUMMARY
           echo "| SBF-05 | SemesterEnrollment student can GET take_quiz (not 403) |" >> $GITHUB_STEP_SUMMARY
           echo "| SBF-06 | SemesterEnrollment student can POST submit_quiz (not 403) |" >> $GITHUB_STEP_SUMMARY
           echo "| SBF-07 | review?session_id=X → back link = /sessions/X |" >> $GITHUB_STEP_SUMMARY
           echo "| SBF-08 | review (no session_id) → back link = /sessions (generic) |" >> $GITHUB_STEP_SUMMARY
+          echo "| SBF-09 | SemesterEnrollment → enrolled count > 0 (not 0/capacity) |" >> $GITHUB_STEP_SUMMARY
 
   # ─────────────────────────────────────────────────────────────────────────────
   # Gate
@@ -150,4 +152,4 @@ jobs:
             echo "❌ sbf-pytest failed"
             exit 1
           fi
-          echo "✅ All Virtual Session Bug Fix jobs passed (SBF-01..08)"
+          echo "✅ All Virtual Session Bug Fix jobs passed (SBF-01..09)"

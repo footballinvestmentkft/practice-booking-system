@@ -4,12 +4,13 @@ Virtual Session Page — Bug Fix Tests (SBF-01..08)
 SBF-01  passing_score=0.60 → template shows "60%" (not "6000%")
 SBF-02  Tournament-enrolled student (SemesterEnrollment only, no Booking)
         → is_enrolled=True, quiz section visible (no "Enrollment Required")
-SBF-03  Virtual session with meeting_link → "💻 Meeting Link" shown (not "📍 Location: TBA")
-SBF-04  Virtual session without meeting_link → "TBA" shown under "💻 Meeting Link"
+SBF-03  Virtual session → "Meeting Link" section NOT shown (removed entirely)
+SBF-04  Virtual session → "📍 Location:" NOT shown (only for on-site/hybrid)
 SBF-05  SemesterEnrollment student → GET take_quiz → 200 (not 403)
 SBF-06  SemesterEnrollment student → POST submit_quiz → 200 result page (not 403)
 SBF-07  GET review?session_id=<id> → back link = /sessions/<id>
 SBF-08  GET review (no session_id) → back link = /sessions (generic)
+SBF-09  SemesterEnrollment students → enrolled_students count matches enrollment count (not 0)
 """
 
 import uuid
@@ -234,10 +235,10 @@ class TestSessionVirtualBugs:
         assert "You must book this session before you can take the quiz" not in html
         assert quiz.title in html, "Quiz title must appear when student is enrolled"
 
-    def test_SBF_03_virtual_session_shows_meeting_link(
+    def test_SBF_03_virtual_session_does_not_show_meeting_link_section(
         self, test_db, semester, student_user, instructor_user
     ):
-        """SBF-03: Virtual session with meeting_link → '💻 Meeting Link' shown."""
+        """SBF-03: Virtual session → '💻 Meeting Link' section removed entirely."""
         meeting_url = "https://meet.example.com/lfa-virtual-abc"
         session = _make_virtual_session(
             test_db, semester.id, instructor_user.id, meeting_link=meeting_url
@@ -249,15 +250,15 @@ class TestSessionVirtualBugs:
 
         assert resp.status_code == 200
         html = resp.text
-        assert "Meeting Link" in html, "Virtual session must show '💻 Meeting Link'"
-        assert meeting_url in html, "The actual meeting URL must appear in the page"
+        assert "Meeting Link" not in html, \
+            "Virtual session must NOT show 'Meeting Link' section (LFA platform sessions)"
         assert "📍 Location:" not in html, \
             "Virtual session must NOT show '📍 Location:'"
 
-    def test_SBF_04_virtual_session_without_meeting_link_shows_tba(
+    def test_SBF_04_virtual_session_does_not_show_location(
         self, test_db, semester, student_user, instructor_user
     ):
-        """SBF-04: Virtual session with no meeting_link → 'TBA' under '💻 Meeting Link'."""
+        """SBF-04: Virtual session → neither 'Meeting Link' nor '📍 Location:' shown."""
         session = _make_virtual_session(
             test_db, semester.id, instructor_user.id, meeting_link=None
         )
@@ -268,9 +269,10 @@ class TestSessionVirtualBugs:
 
         assert resp.status_code == 200
         html = resp.text
-        assert "Meeting Link" in html
-        assert "TBA" in html
-        assert "📍 Location:" not in html
+        assert "Meeting Link" not in html, \
+            "Virtual session must NOT show 'Meeting Link'"
+        assert "📍 Location:" not in html, \
+            "Virtual session must NOT show '📍 Location:'"
 
     def test_SBF_05_semester_enrolled_student_can_take_quiz(
         self, test_db, semester, student_user, instructor_user
@@ -370,3 +372,21 @@ class TestSessionVirtualBugs:
             "Back link must point to generic /sessions when no session_id given"
         assert f'href="/sessions/{attempt.id}"' not in html, \
             "Back link must NOT use attempt id as session id"
+
+    def test_SBF_09_virtual_session_enrollment_count_matches_semester_enrollment(
+        self, test_db, semester, student_user, instructor_user
+    ):
+        """SBF-09: Virtual session with SemesterEnrollment → enrolled count > 0 (not 0/capacity)."""
+        session = _make_virtual_session(test_db, semester.id, instructor_user.id)
+        _enroll(test_db, student_user.id, semester.id)
+
+        with _web_client(test_db, student_user) as client:
+            resp = client.get(f"/sessions/{session.id}")
+
+        assert resp.status_code == 200
+        html = resp.text
+        # Template renders "{{ enrolled_students|length }}/{{ session.capacity }} students enrolled"
+        assert "0/10 students enrolled" not in html, \
+            "Enrollment count must NOT be 0 for SemesterEnrollment students"
+        assert "1/10 students enrolled" in html, \
+            "Enrollment count must reflect SemesterEnrollment (1 enrolled student)"

@@ -113,24 +113,12 @@ if (urlParams.get('error') === 'quiz_locked') {
                 <strong>🕐 Time:</strong>
                 <p style="margin: 0.25rem 0 0 0;">{{ session.date_start.strftime('%H:%M') }} - {{ session.date_end.strftime('%H:%M') }}</p>
             </div>
+            {% if session.session_type.value != 'virtual' %}
             <div>
-                {% if session.session_type.value == 'virtual' %}
-                    <strong>💻 Meeting Link:</strong>
-                    <p style="margin: 0.25rem 0 0 0;">
-                        {% if session.meeting_link %}
-                            <a href="{{ session.meeting_link }}" target="_blank"
-                               style="color: #3498db; text-decoration: none; word-break: break-all;">
-                                {{ session.meeting_link }}
-                            </a>
-                        {% else %}
-                            TBA
-                        {% endif %}
-                    </p>
-                {% else %}
-                    <strong>📍 Location:</strong>
-                    <p style="margin: 0.25rem 0 0 0;">{{ session.location or 'TBA' }}</p>
-                {% endif %}
+                <strong>📍 Location:</strong>
+                <p style="margin: 0.25rem 0 0 0;">{{ session.location or 'TBA' }}</p>
             </div>
+            {% endif %}
             <div>
                 <strong>👨‍🏫 Instructor:</strong>
                 <p style="margin: 0.25rem 0 0 0;">{{ session.instructor_name }}</p>
@@ -405,7 +393,7 @@ if (urlParams.get('error') === 'quiz_locked') {
                            class="btn"
                            style="width: 100%; background-color: {% if session.session_type.value == 'hybrid' %}#3498db{% else %}#e74c3c{% endif %}; color: white; text-align: center; padding: 1rem; font-size: 1.1rem; text-decoration: none; display: block;">
                             {% if attempts_count > 0 %}
-                                🔄 Retry Quiz (Attempt {{ attempts_count + 1 }}{% if sq.max_attempts %}/{{ sq.max_attempts }}{% endif %})
+                                🔄 Retry Quiz
                             {% else %}
                                 ▶️ Start {{ 'Understanding Check' if session.session_type.value == 'hybrid' else 'Certification Exam' }}
                             {% endif %}

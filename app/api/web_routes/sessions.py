@@ -412,6 +412,34 @@ async def session_details(
                 'performance_review': performance_review_dict
             })
 
+    # Virtual tournament sessions: SemesterEnrollment fallback (no Booking rows exist)
+    if not enrolled_students and session.session_type == SessionType.virtual and session.semester_id:
+        se_rows = db.query(SemesterEnrollment).filter(
+            SemesterEnrollment.semester_id == session.semester_id,
+            SemesterEnrollment.is_active.is_(True),
+            SemesterEnrollment.request_status == EnrollmentStatus.APPROVED,
+        ).all()
+        se_user_ids = [se.user_id for se in se_rows]
+        se_users = {u.id: u for u in db.query(User).filter(User.id.in_(se_user_ids)).all()}
+        for se in se_rows:
+            se_user = se_users.get(se.user_id)
+            if se_user:
+                enrolled_students.append({
+                    'id': se_user.id,
+                    'name': se_user.name,
+                    'email': se_user.email,
+                    'booking_id': None,
+                    'status': None,
+                    'attendance_status': None,
+                    'attendance_id': None,
+                    'confirmation_status': None,
+                    'dispute_reason': None,
+                    'pending_change_to': None,
+                    'change_request_reason': None,
+                    'history': [],
+                    'performance_review': None,
+                })
+
     # Check if current user is enrolled and get their attendance
     # Split booking vs. tournament enrollment so can_cancel_booking stays Booking-only
     booking_for_user = next((b for b in bookings if b.user_id == user.id), None)
