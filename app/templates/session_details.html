@@ -472,6 +472,14 @@ if (urlParams.get('error') === 'quiz_locked') {
                                             Last: {{ result.last_attempt_date.strftime('%Y-%m-%d %H:%M') }}
                                         </div>
                                         {% endif %}
+                                        {% if result.all_attempts and result.all_attempts[0].id %}
+                                        <div style="margin-top: 0.5rem;">
+                                            <a href="/quizzes/attempts/{{ result.all_attempts[0].id }}/review?session_id={{ session.id }}"
+                                               style="font-size: 0.75rem; color: #3498db; text-decoration: none;">
+                                                📝 Review
+                                            </a>
+                                        </div>
+                                        {% endif %}
                                     {% else %}
                                         <div style="font-size: 0.9rem; color: #95a5a6;">
                                             Not started

@@ -1,5 +1,5 @@
 """
-Virtual Session Page — Bug Fix Tests (SBF-01..08)
+Virtual Session Page — Bug Fix Tests (SBF-01..10)
 
 SBF-01  passing_score=0.60 → template shows "60%" (not "6000%")
 SBF-02  Tournament-enrolled student (SemesterEnrollment only, no Booking)
@@ -11,6 +11,7 @@ SBF-06  SemesterEnrollment student → POST submit_quiz → 200 result page (not
 SBF-07  GET review?session_id=<id> → back link = /sessions/<id>
 SBF-08  GET review (no session_id) → back link = /sessions (generic)
 SBF-09  SemesterEnrollment students → enrolled_students count matches enrollment count (not 0)
+SBF-10  Admin can view another user's quiz attempt review → 200 + admin banner shown
 """
 
 import uuid
@@ -390,3 +391,22 @@ class TestSessionVirtualBugs:
             "Enrollment count must NOT be 0 for SemesterEnrollment students"
         assert "1/10 students enrolled" in html, \
             "Enrollment count must reflect SemesterEnrollment (1 enrolled student)"
+
+    def test_SBF_10_admin_can_view_any_participant_quiz_attempt_review(
+        self, test_db, semester, student_user, admin_user, instructor_user
+    ):
+        """SBF-10: Admin can GET /quizzes/attempts/{id}/review for another user's attempt → 200 + admin banner."""
+        quiz = _make_quiz(test_db, passing_score=0.60)
+        attempt = _make_completed_attempt(test_db, student_user.id, quiz)
+
+        with _web_client(test_db, admin_user) as client:
+            resp = client.get(f"/quizzes/attempts/{attempt.id}/review")
+
+        assert resp.status_code == 200, (
+            f"Admin must be able to view any user's quiz attempt, got {resp.status_code}: {resp.text[:300]}"
+        )
+        html = resp.text
+        assert "Admin view" in html, \
+            "Review page must show admin banner when viewed by admin"
+        assert student_user.name in html, \
+            "Admin banner must include the reviewed student's name"

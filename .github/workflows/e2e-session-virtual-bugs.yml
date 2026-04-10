@@ -1,4 +1,4 @@
-name: E2E Session Virtual Bugs (SBF-01..09)
+name: E2E Session Virtual Bugs (SBF-01..10)
 
 # Proves:
 #   SBF-01  passing_score=0.60 → template shows "60%" (not "6000%")
@@ -52,7 +52,7 @@ jobs:
   # Job 1: pytest SBF-01..04
   # ─────────────────────────────────────────────────────────────────────────────
   sbf-pytest:
-    name: "SBF-01..09 — virtual session bug fix tests"
+    name: "SBF-01..10 — virtual session bug fix tests"
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -123,7 +123,7 @@ jobs:
       - name: Write job summary
         if: always()
         run: |
-          echo "## Virtual Session Bug Fix Tests (SBF-01..09)" >> $GITHUB_STEP_SUMMARY
+          echo "## Virtual Session Bug Fix Tests (SBF-01..10)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Test | What it proves |" >> $GITHUB_STEP_SUMMARY
           echo "|------|----------------|" >> $GITHUB_STEP_SUMMARY
@@ -136,6 +136,7 @@ jobs:
           echo "| SBF-07 | review?session_id=X → back link = /sessions/X |" >> $GITHUB_STEP_SUMMARY
           echo "| SBF-08 | review (no session_id) → back link = /sessions (generic) |" >> $GITHUB_STEP_SUMMARY
           echo "| SBF-09 | SemesterEnrollment → enrolled count > 0 (not 0/capacity) |" >> $GITHUB_STEP_SUMMARY
+          echo "| SBF-10 | Admin can view any participant's quiz attempt review (200 + admin banner) |" >> $GITHUB_STEP_SUMMARY
 
   # ─────────────────────────────────────────────────────────────────────────────
   # Gate
@@ -152,4 +153,4 @@ jobs:
             echo "❌ sbf-pytest failed"
             exit 1
           fi
-          echo "✅ All Virtual Session Bug Fix jobs passed (SBF-01..09)"
+          echo "✅ All Virtual Session Bug Fix jobs passed (SBF-01..10)"

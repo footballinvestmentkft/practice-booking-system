@@ -523,9 +523,21 @@ async def session_details(
                 # Get all student results (for instructors)
                 student_results = []
                 if is_instructor:
-                    # Get all enrolled students
+                    # Collect students from bookings OR SemesterEnrollment (virtual sessions)
+                    result_students = []
                     for booking in bookings:
-                        student = db.query(User).filter(User.id == booking.user_id).first()
+                        s = db.query(User).filter(User.id == booking.user_id).first()
+                        if s:
+                            result_students.append(s)
+                    if not result_students and session.session_type == SessionType.virtual and session.semester_id:
+                        se_ids = [se.user_id for se in db.query(SemesterEnrollment).filter(
+                            SemesterEnrollment.semester_id == session.semester_id,
+                            SemesterEnrollment.is_active.is_(True),
+                            SemesterEnrollment.request_status == EnrollmentStatus.APPROVED,
+                        ).all()]
+                        result_students = db.query(User).filter(User.id.in_(se_ids)).all()
+
+                    for student in result_students:
                         if student:
                             # Get all attempts for this student
                             attempts = db.query(QuizAttempt).filter(
@@ -542,6 +554,7 @@ async def session_details(
 
                             for attempt in attempts:
                                 all_attempts.append({
+                                    'id': attempt.id,
                                     'score': attempt.score,
                                     'passed': attempt.passed,
                                     'completed_at': attempt.completed_at,

@@ -468,8 +468,10 @@ async def quiz_attempt_review(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
-    """Persistent, ownership-protected review page for a completed quiz attempt."""
-    attempt = (
+    """Review page for a completed quiz attempt.
+    Students see only their own attempt; admins/instructors can view any attempt."""
+    is_admin_view = user.role in (UserRole.ADMIN, UserRole.INSTRUCTOR)
+    q = (
         db.query(QuizAttempt)
         .options(
             joinedload(QuizAttempt.quiz),
@@ -479,12 +481,15 @@ async def quiz_attempt_review(
             joinedload(QuizAttempt.user_answers)
                 .joinedload(QuizUserAnswer.selected_option),
         )
-        .filter(QuizAttempt.id == attempt_id, QuizAttempt.user_id == user.id)
-        .first()
+        .filter(QuizAttempt.id == attempt_id)
     )
+    if not is_admin_view:
+        q = q.filter(QuizAttempt.user_id == user.id)
+    attempt = q.first()
     if not attempt or not attempt.completed_at:
         raise HTTPException(status_code=404)
     attempt_answers = sorted(attempt.user_answers, key=lambda ua: ua.question.order_index)
+    reviewed_user = db.query(User).filter(User.id == attempt.user_id).first() if is_admin_view else None
     return templates.TemplateResponse("quiz_attempt_review.html", {
         "request": request,
         "user": user,
@@ -492,6 +497,8 @@ async def quiz_attempt_review(
         "attempt": attempt,
         "attempt_answers": attempt_answers,
         "session_id": session_id,
+        "reviewed_user": reviewed_user,
+        "is_admin_view": is_admin_view,
     })
 
 
