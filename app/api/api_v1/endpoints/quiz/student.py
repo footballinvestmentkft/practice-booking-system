@@ -4,17 +4,18 @@ Browse quizzes, view statistics, dashboard
 """
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from .....database import get_db
 from .....dependencies import get_current_user
 from .....models.user import User, UserRole
-from .....models.quiz import QuizCategory, SessionQuiz
+from .....models.quiz import QuizCategory, SessionQuiz, QuizAttempt, QuizUserAnswer, QuizQuestion
 from .....models.session import Session as SessionModel, SessionType
 from .....models.attendance import Attendance, AttendanceStatus
 from .....models.booking import Booking, BookingStatus
 from .....schemas.quiz import (
     QuizListItem, QuizPublic, QuizAttemptSummary, UserQuizStatistics, QuizDashboardOverview,
+    QuizAttemptDetailResponse, QuizAnswerDetail,
 )
 from .....services.quiz_service import QuizService
 from .helpers import get_quiz_service
@@ -250,6 +251,69 @@ def get_my_quiz_attempts(
         )
         for attempt in attempts
     ]
+
+@router.get("/attempts/{attempt_id}", response_model=QuizAttemptDetailResponse)
+def get_attempt_detail(
+    attempt_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Get detailed result of a specific quiz attempt including per-question answers"""
+    attempt = (
+        db.query(QuizAttempt)
+        .options(
+            joinedload(QuizAttempt.quiz),
+            joinedload(QuizAttempt.user_answers)
+                .joinedload(QuizUserAnswer.question)
+                .joinedload(QuizQuestion.answer_options),
+            joinedload(QuizAttempt.user_answers)
+                .joinedload(QuizUserAnswer.selected_option),
+        )
+        .filter(
+            QuizAttempt.id == attempt_id,
+            QuizAttempt.user_id == current_user.id,
+        )
+        .first()
+    )
+
+    if not attempt:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attempt not found")
+
+    if not attempt.completed_at:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Attempt not yet completed")
+
+    answers = []
+    for ua in sorted(attempt.user_answers, key=lambda x: x.question.order_index):
+        question = ua.question
+        correct_opt = next((o for o in question.answer_options if o.is_correct), None)
+        answers.append(QuizAnswerDetail(
+            question_id=question.id,
+            question_text=question.question_text,
+            question_order=question.order_index,
+            selected_option_id=ua.selected_option_id,
+            selected_option_text=ua.selected_option.option_text if ua.selected_option else None,
+            correct_option_text=correct_opt.option_text if correct_opt else None,
+            is_correct=ua.is_correct,
+            answer_text=ua.answer_text,
+            explanation=question.explanation,
+        ))
+
+    return QuizAttemptDetailResponse(
+        id=attempt.id,
+        quiz_id=attempt.quiz_id,
+        user_id=attempt.user_id,
+        quiz_title=attempt.quiz.title,
+        started_at=attempt.started_at,
+        completed_at=attempt.completed_at,
+        score=attempt.score,
+        total_questions=attempt.total_questions,
+        correct_answers=attempt.correct_answers,
+        xp_awarded=attempt.xp_awarded,
+        passed=attempt.passed,
+        time_spent_minutes=attempt.time_spent_minutes,
+        answers=answers,
+    )
+
 
 @router.get("/statistics/my", response_model=UserQuizStatistics)
 def get_my_quiz_statistics(

@@ -184,9 +184,58 @@ class QuizAttemptSummary(BaseModel):
     passed: bool
     xp_awarded: int
     time_spent_minutes: Optional[float] = None
-    
+
     class Config:
         from_attributes = True
+
+class QuizAnswerDetail(BaseModel):
+    """Per-question answer detail for attempt review"""
+    question_id: int
+    question_text: str
+    question_order: int
+    selected_option_id: Optional[int] = None
+    selected_option_text: Optional[str] = None
+    correct_option_text: Optional[str] = None  # pedagogical reveal — which option was correct
+    is_correct: bool
+    answer_text: Optional[str] = None  # fill-in-blank answers
+    explanation: Optional[str] = None
+
+class QuizAttemptDetailResponse(BaseModel):
+    """Full attempt detail with per-question answers for student review"""
+    id: int
+    quiz_id: int
+    user_id: int
+    quiz_title: str
+    started_at: datetime
+    completed_at: Optional[datetime] = None
+    score: Optional[float] = None
+    total_questions: int
+    correct_answers: int
+    xp_awarded: int
+    passed: bool
+    time_spent_minutes: Optional[float] = None
+    answers: List[QuizAnswerDetail] = []
+
+class QuizAttemptAdminItem(BaseModel):
+    """Single attempt entry in admin list view"""
+    id: int
+    user_id: int
+    user_email: str
+    user_name: str
+    started_at: datetime
+    completed_at: Optional[datetime] = None
+    score: Optional[float] = None
+    correct_answers: int
+    total_questions: int
+    passed: bool
+    xp_awarded: int
+
+class QuizAttemptsAdminResponse(BaseModel):
+    """Admin view: all attempts for a quiz"""
+    quiz_id: int
+    quiz_title: str
+    total_attempts: int
+    attempts: List[QuizAttemptAdminItem] = []
 
 # Statistics schemas
 class QuizStatistics(BaseModel):

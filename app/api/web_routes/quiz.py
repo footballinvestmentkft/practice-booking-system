@@ -197,7 +197,8 @@ async def take_quiz(
             "correct_count": 0,
             "total_questions": len(quiz.questions),
             "xp_awarded": 0,
-            "time_spent": quiz.time_limit_minutes
+            "time_spent": quiz.time_limit_minutes,
+            "attempt_answers": [],
         })
 
     # Get session if provided
@@ -356,6 +357,24 @@ async def submit_quiz(
 
     db.commit()
 
+    # Eager-load user answers for result review (N+1 prevention)
+    attempt_with_answers = (
+        db.query(QuizAttempt)
+        .options(
+            joinedload(QuizAttempt.user_answers)
+                .joinedload(QuizUserAnswer.question)
+                .joinedload(QuizQuestion.answer_options),
+            joinedload(QuizAttempt.user_answers)
+                .joinedload(QuizUserAnswer.selected_option),
+        )
+        .filter(QuizAttempt.id == attempt.id)
+        .first()
+    )
+    attempt_answers = (
+        sorted(attempt_with_answers.user_answers, key=lambda ua: ua.question.order_index)
+        if attempt_with_answers else []
+    )
+
     # Get session for back link
     session = None
     if session_id and session_id.strip():
@@ -404,7 +423,8 @@ async def submit_quiz(
         "correct_count": correct_count,
         "total_questions": len(quiz.questions),
         "xp_awarded": attempt.xp_awarded,
-        "time_spent": time_spent
+        "time_spent": time_spent,
+        "attempt_answers": attempt_answers,
     })
 
 

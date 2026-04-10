@@ -26,6 +26,22 @@
         .btn-secondary { background: #95a5a6; color: white; }
         .btn-secondary:hover { background: #7f8c8d; }
         .time-info { color: #7f8c8d; font-size: 14px; margin-top: 10px; }
+        .review-section { margin-top: 24px; text-align: left; }
+        .review-toggle { width: 100%; padding: 12px 16px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .review-toggle:hover { background: #e9ecef; }
+        .review-body { border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 6px 6px; }
+        .answer-item { padding: 14px 16px; border-bottom: 1px solid #f0f0f0; }
+        .answer-item:last-child { border-bottom: none; }
+        .answer-item.correct { border-left: 4px solid #27ae60; }
+        .answer-item.incorrect { border-left: 4px solid #e74c3c; }
+        .answer-q { font-weight: 600; color: #333; margin-bottom: 8px; display: flex; gap: 8px; }
+        .q-num { background: #3498db; color: white; border-radius: 12px; padding: 1px 8px; font-size: 12px; white-space: nowrap; align-self: center; }
+        .answer-detail { font-size: 14px; color: #555; padding-left: 4px; }
+        .your-answer { margin-bottom: 4px; }
+        .badge-correct { color: #27ae60; font-weight: bold; margin-left: 6px; }
+        .badge-wrong { color: #e74c3c; font-weight: bold; margin-left: 6px; }
+        .correct-answer { color: #27ae60; margin-bottom: 4px; }
+        .explanation { color: #7f8c8d; font-style: italic; margin-top: 6px; padding: 6px 10px; background: #f8f9fa; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -94,6 +110,62 @@
         <div class="time-info">
             Quiz: {{ quiz.title }}
         </div>
+
+        {% if attempt_answers %}
+        <div class="review-section">
+            <button class="review-toggle" onclick="toggleReview(this)">
+                📝 Review Answers <span class="toggle-icon">▼</span>
+            </button>
+            <div class="review-body" style="display:none">
+                {% for ua in attempt_answers %}
+                <div class="answer-item {{ 'correct' if ua.is_correct else 'incorrect' }}">
+                    <div class="answer-q">
+                        <span class="q-num">Q{{ loop.index }}</span>
+                        {{ ua.question.question_text }}
+                    </div>
+                    <div class="answer-detail">
+                        <div class="your-answer">
+                            Your answer:
+                            {% if ua.selected_option %}
+                                <strong>{{ ua.selected_option.option_text }}</strong>
+                            {% elif ua.answer_text %}
+                                <strong>{{ ua.answer_text }}</strong>
+                            {% else %}
+                                <em>No answer given</em>
+                            {% endif %}
+                            {% if ua.is_correct %}
+                                <span class="badge-correct">✓</span>
+                            {% else %}
+                                <span class="badge-wrong">✗</span>
+                            {% endif %}
+                        </div>
+                        {% if not ua.is_correct %}
+                        <div class="correct-answer">
+                            Correct: <strong>{{ ua.question.answer_options | selectattr('is_correct') | map(attribute='option_text') | first | default('—') }}</strong>
+                        </div>
+                        {% endif %}
+                        {% if ua.question.explanation %}
+                        <div class="explanation">💡 {{ ua.question.explanation }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <script>
+        function toggleReview(btn) {
+            const body = btn.nextElementSibling;
+            const icon = btn.querySelector('.toggle-icon');
+            if (body.style.display === 'none') {
+                body.style.display = 'block';
+                icon.textContent = '▲';
+            } else {
+                body.style.display = 'none';
+                icon.textContent = '▼';
+            }
+        }
+        </script>
+        {% endif %}
     </div>
 </body>
 </html>

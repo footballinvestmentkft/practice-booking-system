@@ -1,0 +1,151 @@
+name: E2E Quiz Attempt Detail (QA-01..07)
+
+# Proves:
+#   QA-01  GET /api/v1/quizzes/attempts/{id}  — own completed attempt → 200 + full answer detail
+#   QA-02  question→answer→correctness mapping is accurate (selected & correct option text)
+#   QA-03  other user's attempt → 404 (ownership enforcement)
+#   QA-04  incomplete attempt → 400
+#   QA-05  non-existent attempt → 404
+#   QA-06  admin GET /api/v1/quizzes/admin/{quiz_id}/attempts → 200, all attempts listed
+#   QA-07  student role on admin endpoint → 403
+
+on:
+  push:
+    branches: [main, develop, "feature/*", "fix/*"]
+    paths:
+      - 'app/schemas/quiz.py'
+      - 'app/api/api_v1/endpoints/quiz/student.py'
+      - 'app/api/api_v1/endpoints/quiz/admin.py'
+      - 'app/api/api_v1/endpoints/quiz/__init__.py'
+      - 'app/api/web_routes/quiz.py'
+      - 'app/templates/quiz_result.html'
+      - 'app/models/quiz.py'
+      - 'tests/integration/web_flows/test_quiz_attempt_detail.py'
+      - '.github/workflows/e2e-quiz-attempt-detail.yml'
+  pull_request:
+    branches: [main, develop, "feature/*", "fix/*"]
+    paths:
+      - 'app/schemas/quiz.py'
+      - 'app/api/api_v1/endpoints/quiz/student.py'
+      - 'app/api/api_v1/endpoints/quiz/admin.py'
+      - 'app/api/api_v1/endpoints/quiz/__init__.py'
+      - 'app/api/web_routes/quiz.py'
+      - 'app/templates/quiz_result.html'
+      - 'app/models/quiz.py'
+      - 'tests/integration/web_flows/test_quiz_attempt_detail.py'
+      - '.github/workflows/e2e-quiz-attempt-detail.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-quiz-attempt-detail-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/lfa_intern_system
+  SECRET_KEY: ci-quiz-attempt-detail-secret-not-for-production
+  TESTING: "true"
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 1: pytest QA-01..07 (SAVEPOINT-isolated)
+  # ─────────────────────────────────────────────────────────────────────────────
+  qa-pytest:
+    name: "QA-01..07 — quiz attempt detail tests"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lfa_intern_system
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write .env
+        run: |
+          cat > .env <<'EOF'
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/lfa_intern_system
+          SECRET_KEY=ci-quiz-attempt-detail-secret-not-for-production
+          ENVIRONMENT=test
+          TESTING=true
+          DEBUG=false
+          ADMIN_EMAIL=admin@lfa.com
+          ADMIN_PASSWORD=admin123
+          EOF
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+
+      - name: Assert DB is empty
+        run: |
+          TABLE_COUNT=$(PGPASSWORD=postgres psql -h localhost -U postgres lfa_intern_system \
+            -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public';" \
+            | tr -d '[:space:]')
+          echo "Tables before bootstrap: $TABLE_COUNT"
+          if [ "$TABLE_COUNT" -ne "0" ]; then
+            echo "❌ DB is not empty — $TABLE_COUNT tables found before bootstrap"
+            exit 1
+          fi
+          echo "✅ DB is empty — clean start confirmed"
+
+      - name: Bootstrap DB
+        run: PYTHONPATH=. python scripts/bootstrap_clean.py
+
+      - name: Validate seed state
+        run: PYTHONPATH=. python scripts/validate_seed_state.py
+
+      - name: Run QA tests
+        run: |
+          PYTHONPATH=. pytest tests/integration/web_flows/test_quiz_attempt_detail.py \
+            -v --tb=short -x
+
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## Quiz Attempt Detail Tests (QA-01..07)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test | What it proves |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|----------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| QA-01 | Own completed attempt → 200 with full \`QuizAttemptDetailResponse\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| QA-02 | question_text, selected_option_text, correct_option_text all accurate |" >> $GITHUB_STEP_SUMMARY
+          echo "| QA-03 | Other user's attempt → 404 (ownership enforcement) |" >> $GITHUB_STEP_SUMMARY
+          echo "| QA-04 | Incomplete (not yet submitted) attempt → 400 |" >> $GITHUB_STEP_SUMMARY
+          echo "| QA-05 | Non-existent attempt_id → 404 |" >> $GITHUB_STEP_SUMMARY
+          echo "| QA-06 | Admin lists all attempts for a quiz — user email/name included |" >> $GITHUB_STEP_SUMMARY
+          echo "| QA-07 | Student role on admin endpoint → 403 |" >> $GITHUB_STEP_SUMMARY
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Gate
+  # ─────────────────────────────────────────────────────────────────────────────
+  qa-gate:
+    name: "Gate"
+    runs-on: ubuntu-latest
+    needs: [qa-pytest]
+    if: always()
+    steps:
+      - name: Check all jobs passed
+        run: |
+          if [ "${{ needs.qa-pytest.result }}" != "success" ]; then
+            echo "❌ qa-pytest failed"
+            exit 1
+          fi
+          echo "✅ All Quiz Attempt Detail jobs passed (QA-01..07)"
