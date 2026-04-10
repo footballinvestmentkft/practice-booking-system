@@ -1,0 +1,334 @@
+name: E2E Virtual Promo Event (PE-01..06)
+
+# Proves:
+#   PE-01  max_players cap blocks 11th admin batch-enroll
+#   PE-02  Virtual session has meeting_link set (non-null)
+#   PE-03  SessionQuiz with ≥5 questions is correctly linked
+#   PE-04  Quiz submission on virtual session → auto-attendance (Attendance row created)
+#   PE-05  POST /rank-from-quiz → ranking created, rank 1 = highest quiz score
+#   PE-06  COMPLETED transition → Notification created for every enrolled participant
+#   SEED   2 Promo Event demos seeded (DRAFT + COMPLETED) with full quiz + ranking + notification flow
+
+on:
+  push:
+    branches: [main, develop, "feature/*", "fix/*"]
+    paths:
+      - 'app/services/tournament/quiz_ranking_service.py'
+      - 'app/api/api_v1/endpoints/sessions/quiz_rank.py'
+      - 'app/api/api_v1/endpoints/tournaments/admin_enroll.py'
+      - 'app/api/api_v1/endpoints/tournaments/lifecycle.py'
+      - 'app/services/notification_service.py'
+      - 'app/models/quiz.py'
+      - 'app/models/attendance.py'
+      - 'app/models/notification.py'
+      - 'app/models/tournament_configuration.py'
+      - 'scripts/seed_promo_event_demo.py'
+      - 'tests/integration/web_flows/test_promo_event.py'
+      - '.github/workflows/e2e-promo-event.yml'
+  pull_request:
+    branches: [main, develop, "feature/*", "fix/*"]
+    paths:
+      - 'app/services/tournament/quiz_ranking_service.py'
+      - 'app/api/api_v1/endpoints/sessions/quiz_rank.py'
+      - 'app/api/api_v1/endpoints/tournaments/admin_enroll.py'
+      - 'app/api/api_v1/endpoints/tournaments/lifecycle.py'
+      - 'app/services/notification_service.py'
+      - 'app/models/quiz.py'
+      - 'app/models/attendance.py'
+      - 'app/models/notification.py'
+      - 'app/models/tournament_configuration.py'
+      - 'scripts/seed_promo_event_demo.py'
+      - 'tests/integration/web_flows/test_promo_event.py'
+      - '.github/workflows/e2e-promo-event.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-promo-event-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/lfa_intern_system
+  SECRET_KEY: ci-promo-event-secret-not-for-production
+  TESTING: "true"
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 1: pytest PE-01..06 (SAVEPOINT-isolated, no seed dependency)
+  # ─────────────────────────────────────────────────────────────────────────────
+  pe-pytest:
+    name: "PE-01..06 — virtual promo event tests"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lfa_intern_system
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write .env
+        run: |
+          cat > .env <<'EOF'
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/lfa_intern_system
+          SECRET_KEY=ci-promo-event-secret-not-for-production
+          ENVIRONMENT=test
+          TESTING=true
+          DEBUG=false
+          ADMIN_EMAIL=admin@lfa.com
+          ADMIN_PASSWORD=admin123
+          EOF
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+
+      - name: Assert DB is empty
+        run: |
+          TABLE_COUNT=$(PGPASSWORD=postgres psql -h localhost -U postgres lfa_intern_system \
+            -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public';" \
+            | tr -d '[:space:]')
+          echo "Tables before bootstrap: $TABLE_COUNT"
+          if [ "$TABLE_COUNT" -ne "0" ]; then
+            echo "❌ DB is not empty — $TABLE_COUNT tables found before bootstrap"
+            exit 1
+          fi
+          echo "✅ DB is empty — clean start confirmed"
+
+      - name: Bootstrap DB
+        run: PYTHONPATH=. python scripts/bootstrap_clean.py
+
+      - name: Validate seed state
+        run: PYTHONPATH=. python scripts/validate_seed_state.py
+
+      - name: Run PE tests
+        run: |
+          PYTHONPATH=. pytest tests/integration/web_flows/test_promo_event.py \
+            -v --tb=short -x
+
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## Virtual Promo Event Tests (PE-01..06)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test | What it proves |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|----------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| PE-01 | \`max_players\` cap blocks 11th admin batch-enroll (HTTP 200, player in \`failed_players\`) |" >> $GITHUB_STEP_SUMMARY
+          echo "| PE-02 | Virtual session \`meeting_link\` is set and non-null |" >> $GITHUB_STEP_SUMMARY
+          echo "| PE-03 | \`SessionQuiz\` with ≥5 questions linked to virtual session |" >> $GITHUB_STEP_SUMMARY
+          echo "| PE-04 | Quiz submission on virtual session → \`Attendance\` row created (auto-attendance) |" >> $GITHUB_STEP_SUMMARY
+          echo "| PE-05 | \`auto_rank_from_quiz()\` → ranking created, rank 1 = highest quiz score |" >> $GITHUB_STEP_SUMMARY
+          echo "| PE-06 | COMPLETED transition → \`Notification\` created for every enrolled participant |" >> $GITHUB_STEP_SUMMARY
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 2: seed_promo_event_demo.py + DB assertion
+  # ─────────────────────────────────────────────────────────────────────────────
+  pe-seed:
+    name: "Promo Event Demo Seed — 2 events + DB assertion"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lfa_intern_system
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write .env
+        run: |
+          cat > .env <<'EOF'
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/lfa_intern_system
+          SECRET_KEY=ci-promo-event-secret-not-for-production
+          ENVIRONMENT=test
+          TESTING=true
+          DEBUG=false
+          ADMIN_EMAIL=admin@lfa.com
+          ADMIN_PASSWORD=admin123
+          EOF
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+
+      - name: Assert DB is empty
+        run: |
+          TABLE_COUNT=$(PGPASSWORD=postgres psql -h localhost -U postgres lfa_intern_system \
+            -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public';" \
+            | tr -d '[:space:]')
+          echo "Tables before bootstrap: $TABLE_COUNT"
+          if [ "$TABLE_COUNT" -ne "0" ]; then
+            echo "❌ DB is not empty — $TABLE_COUNT tables found before bootstrap"
+            exit 1
+          fi
+          echo "✅ DB is empty — clean start confirmed"
+
+      - name: Bootstrap DB
+        run: PYTHONPATH=. python scripts/bootstrap_clean.py
+
+      - name: Validate seed state
+        run: PYTHONPATH=. python scripts/validate_seed_state.py
+
+      - name: Run seed_promo_event_demo.py
+        run: |
+          PYTHONPATH=. python scripts/seed_promo_event_demo.py 2>&1 | tee /tmp/seed_promo_output.log
+          echo "--- Seed output captured ---"
+
+      - name: Grep check — success lines
+        run: |
+          COUNT=$(grep -c "✅" /tmp/seed_promo_output.log || true)
+          echo "Success lines found: $COUNT"
+          if [ "$COUNT" -lt "3" ]; then
+            echo "❌ Expected ≥3 '✅' lines in seed output, got $COUNT"
+            cat /tmp/seed_promo_output.log
+            exit 1
+          fi
+          echo "✅ Grep check passed: $COUNT success lines"
+
+      - name: DB assertion — quiz, ranking, notifications
+        run: |
+          PYTHONPATH=. TESTING=true python - <<'PYEOF'
+          import os, sys
+          os.environ.setdefault("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/lfa_intern_system")
+
+          from app.database import SessionLocal
+          from app.models.semester import Semester
+          from app.models.session import Session as SessionModel, SessionType
+          from app.models.quiz import Quiz, SessionQuiz, QuizAttempt
+          from app.models.notification import Notification
+          from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
+
+          db = SessionLocal()
+          issues = []
+
+          promo_tournaments = (
+              db.query(Semester)
+              .filter(Semester.name.like("Promo Event: %"))
+              .all()
+          )
+
+          if len(promo_tournaments) < 2:
+              issues.append(f"Expected ≥2 'Promo Event:' tournaments, got {len(promo_tournaments)}")
+
+          for t in promo_tournaments:
+              sessions = db.query(SessionModel).filter(SessionModel.semester_id == t.id).all()
+
+              # All sessions must be virtual
+              bad_type = [s.id for s in sessions if s.session_type != SessionType.virtual]
+              if bad_type:
+                  issues.append(f"{t.name}: sessions {bad_type} are not virtual")
+
+              # All sessions must have meeting_link
+              missing_link = [s.id for s in sessions if not s.meeting_link]
+              if missing_link:
+                  issues.append(f"{t.name}: sessions {missing_link} missing meeting_link")
+
+              # Must have a SessionQuiz link
+              for s in sessions:
+                  sq = db.query(SessionQuiz).filter(SessionQuiz.session_id == s.id).first()
+                  if sq is None:
+                      issues.append(f"{t.name}: session {s.id} has no SessionQuiz link")
+
+              # COMPLETED tournaments must have notifications
+              if t.tournament_status == "COMPLETED":
+                  enrolled_count = db.query(SemesterEnrollment).filter(
+                      SemesterEnrollment.semester_id == t.id,
+                      SemesterEnrollment.is_active == True,
+                      SemesterEnrollment.request_status == EnrollmentStatus.APPROVED,
+                  ).count()
+                  notif_count = db.query(Notification).filter(
+                      Notification.related_semester_id == t.id,
+                  ).count()
+                  if notif_count < enrolled_count:
+                      issues.append(
+                          f"{t.name}: expected ≥{enrolled_count} notifications, got {notif_count}"
+                      )
+
+                  # Must have rounds_data written (quiz ranking ran)
+                  for s in sessions:
+                      if not s.rounds_data or "round_results" not in s.rounds_data:
+                          issues.append(
+                              f"{t.name}: session {s.id} missing rounds_data.round_results after COMPLETED"
+                          )
+
+          db.close()
+
+          if issues:
+              print(f"\n❌ Promo Event DB assertion FAILED — {len(issues)} issue(s):")
+              for iss in issues:
+                  print(f"   • {iss}")
+              sys.exit(1)
+
+          print(f"\n✅ Promo Event DB assertion passed — {len(promo_tournaments)} tournaments OK")
+          for t in promo_tournaments:
+              print(f"   • {t.name}  [{t.tournament_status}]")
+          PYEOF
+
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## Promo Event Demo Seed Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Event | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Promo Event: Virtual Quiz Demo (DRAFT) | Setup only — quiz + 6 players enrolled |" >> $GITHUB_STEP_SUMMARY
+          echo "| Promo Event: Virtual Quiz Demo (COMPLETED) | Full flow — ranking + 6 notifications |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Assertions checked:** session_type=virtual, meeting_link set, SessionQuiz linked, rounds_data written, notifications sent" >> $GITHUB_STEP_SUMMARY
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Gate: fail if any upstream job failed
+  # ─────────────────────────────────────────────────────────────────────────────
+  pe-gate:
+    name: "Gate"
+    runs-on: ubuntu-latest
+    needs: [pe-pytest, pe-seed]
+    if: always()
+    steps:
+      - name: Check all jobs passed
+        run: |
+          if [ "${{ needs.pe-pytest.result }}" != "success" ]; then
+            echo "❌ pe-pytest failed"
+            exit 1
+          fi
+          if [ "${{ needs.pe-seed.result }}" != "success" ]; then
+            echo "❌ pe-seed failed"
+            exit 1
+          fi
+          echo "✅ All Promo Event jobs passed (PE-01..06 + seed assertion)"

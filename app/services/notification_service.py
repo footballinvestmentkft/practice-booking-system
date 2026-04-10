@@ -250,6 +250,44 @@ def create_skill_tier_notification(
     )
 
 
+def create_result_published_notification(
+    db: Session,
+    tournament: Semester,
+    enrolled_users: list,
+) -> int:
+    """
+    Create in-app notifications for all enrolled participants when tournament results
+    are published (status → COMPLETED).
+
+    Uses NotificationType.GENERAL — no migration required.
+    The caller is responsible for db.commit() after calling this function.
+
+    Args:
+        db: Database session (caller manages transaction)
+        tournament: Semester (tournament) whose results were just published
+        enrolled_users: List of User objects who are active enrollees
+
+    Returns:
+        Number of notifications created.
+    """
+    count = 0
+    for user in enrolled_users:
+        create_notification(
+            db=db,
+            user_id=user.id,
+            title=f"\U0001f4ca Eredmények közzétéve: {tournament.name}",
+            message=(
+                f"A(z) '{tournament.name}' esemény végeredménye megjelent. "
+                f"Kattints a megtekintéshez!"
+            ),
+            notification_type=NotificationType.GENERAL,
+            link=f"/events/{tournament.id}",
+            related_semester_id=tournament.id,
+        )
+        count += 1
+    return count
+
+
 def mark_notification_as_read(
     db: Session,
     notification_id: int,

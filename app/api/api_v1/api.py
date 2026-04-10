@@ -83,6 +83,8 @@ api_router.include_router(conflict_check.router, prefix="/enrollments", tags=["e
 api_router.include_router(groups.router, prefix="/groups", tags=["groups"])
 api_router.include_router(sessions.router, prefix="/sessions", tags=["sessions"])
 api_router.include_router(session_results.router, prefix="/sessions", tags=["sessions", "game-results"])  # 🏆 Game results endpoints
+from app.api.api_v1.endpoints.sessions import quiz_rank as session_quiz_rank
+api_router.include_router(session_quiz_rank.router, prefix="/sessions", tags=["sessions", "quiz-ranking"])  # 📊 Quiz-based ranking
 api_router.include_router(bookings.router, prefix="/bookings", tags=["bookings"])
 api_router.include_router(attendance.router, prefix="/attendance", tags=["attendance"])
 api_router.include_router(feedback.router, prefix="/feedback", tags=["feedback"])

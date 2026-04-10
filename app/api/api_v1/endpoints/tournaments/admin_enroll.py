@@ -155,6 +155,22 @@ def admin_batch_enroll_players(
                 enrolled_count += 1
                 continue
 
+            # 5b. Respect max_players capacity if set on TournamentConfiguration
+            max_players = tournament.max_players  # proxied from TournamentConfiguration
+            if max_players is not None:
+                current_count = db.query(SemesterEnrollment).filter(
+                    SemesterEnrollment.semester_id == tournament_id,
+                    SemesterEnrollment.is_active == True,
+                    SemesterEnrollment.request_status == EnrollmentStatus.APPROVED,
+                ).count()
+                if current_count >= max_players:
+                    logger.warning(
+                        f"⚠️ Tournament {tournament_id} is full ({current_count}/{max_players}); "
+                        f"skipping player {player_id}"
+                    )
+                    failed_players.append(player_id)
+                    continue
+
             # 6. Create enrollment (admin privilege - auto-approved, no credit deduction)
             enrollment = SemesterEnrollment(
                 user_id=player_id,

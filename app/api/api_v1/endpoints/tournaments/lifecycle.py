@@ -537,6 +537,37 @@ def transition_tournament_status(
         metadata=request.metadata
     )
 
+    # ── COMPLETED: notify all enrolled participants ───────────────────────────
+    if request.new_status == "COMPLETED":
+        try:
+            from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
+            from app.models.user import User as UserModel
+            from app.services import notification_service
+
+            enrolled_users = (
+                db.query(UserModel)
+                .join(SemesterEnrollment, SemesterEnrollment.user_id == UserModel.id)
+                .filter(
+                    SemesterEnrollment.semester_id == tournament_id,
+                    SemesterEnrollment.is_active == True,
+                    SemesterEnrollment.request_status == EnrollmentStatus.APPROVED,
+                )
+                .all()
+            )
+            notified = notification_service.create_result_published_notification(
+                db=db,
+                tournament=tournament,
+                enrolled_users=enrolled_users,
+            )
+            print(f"📊 Sent result notifications to {notified} participants for tournament {tournament_id}")
+        except Exception as _exc:
+            # Non-blocking: notification failure must not roll back the status transition
+            import logging as _logging
+            _logging.getLogger(__name__).warning(
+                f"[lifecycle] Failed to send result notifications for tournament {tournament_id}: {_exc}",
+                exc_info=True,
+            )
+
     db.commit()
     db.refresh(tournament)
 
