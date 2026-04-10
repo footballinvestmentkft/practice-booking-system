@@ -25,6 +25,10 @@ on:
       - 'scripts/seed_promo_event_demo.py'
       - 'tests/integration/web_flows/test_promo_event.py'
       - '.github/workflows/e2e-promo-event.yml'
+      - 'app/templates/quiz_attempt_review.html'
+      - 'app/templates/quiz_result.html'
+      - 'app/api/web_routes/sessions.py'
+      - 'app/api/web_routes/quiz.py'
   pull_request:
     branches: [main, develop, "feature/*", "fix/*"]
     paths:
@@ -40,6 +44,10 @@ on:
       - 'scripts/seed_promo_event_demo.py'
       - 'tests/integration/web_flows/test_promo_event.py'
       - '.github/workflows/e2e-promo-event.yml'
+      - 'app/templates/quiz_attempt_review.html'
+      - 'app/templates/quiz_result.html'
+      - 'app/api/web_routes/sessions.py'
+      - 'app/api/web_routes/quiz.py'
   workflow_dispatch:
 
 concurrency:
@@ -300,6 +308,132 @@ jobs:
               print(f"   • {t.name}  [{t.tournament_status}]")
           PYEOF
 
+      - name: HTTP access validation — seeded session + quiz + review
+        run: |
+          PYTHONPATH=. TESTING=true python - <<'PYEOF'
+          import os, sys
+          os.environ.setdefault("DATABASE_URL",
+              "postgresql://postgres:postgres@localhost:5432/lfa_intern_system")
+          os.environ.setdefault("SECRET_KEY", "ci-promo-event-secret-not-for-production")
+          os.environ["TESTING"] = "true"
+
+          from app.database import SessionLocal, get_db
+          from app.models.semester import Semester
+          from app.models.session import Session as SessionModel
+          from app.models.quiz import QuizAttempt, SessionQuiz
+          from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
+          from app.models.user import User, UserRole
+          from app.main import app
+          from app.dependencies import get_current_user_web
+          from fastapi.testclient import TestClient
+
+          db = SessionLocal()
+
+          # 1. Seeded COMPLETED semester
+          comp = db.query(Semester).filter(
+              Semester.name.like("Promo Event: %"),
+              Semester.tournament_status == "COMPLETED",
+          ).first()
+          assert comp, "❌ No COMPLETED promo event found"
+
+          # 2. Session
+          session = db.query(SessionModel).filter(
+              SessionModel.semester_id == comp.id
+          ).first()
+          assert session, f"❌ No session for semester {comp.id}"
+
+          # 3. Enrolled student with a completed quiz attempt
+          enr = db.query(SemesterEnrollment).filter(
+              SemesterEnrollment.semester_id == comp.id,
+              SemesterEnrollment.is_active.is_(True),
+              SemesterEnrollment.request_status == EnrollmentStatus.APPROVED,
+          ).first()
+          assert enr, "❌ No approved enrollment"
+          student = db.query(User).filter(User.id == enr.user_id).first()
+
+          # 4. Completed quiz attempt for that student
+          sq = db.query(SessionQuiz).filter(SessionQuiz.session_id == session.id).first()
+          assert sq, f"❌ No SessionQuiz for session {session.id}"
+          attempt = db.query(QuizAttempt).filter(
+              QuizAttempt.quiz_id == sq.quiz_id,
+              QuizAttempt.user_id == student.id,
+              QuizAttempt.completed_at.isnot(None),
+          ).first()
+          assert attempt, f"❌ No completed attempt for {student.email}"
+
+          # 5. Admin user
+          admin = db.query(User).filter(User.role == UserRole.ADMIN).first()
+          db.close()
+
+          print(f"Validating HTTP access:")
+          print(f"  Student : {student.email}")
+          print(f"  Session : /sessions/{session.id}")
+          print(f"  Review  : /quizzes/attempts/{attempt.id}/review?session_id={session.id}")
+
+          issues = []
+
+          def web_client(user):
+              db2 = SessionLocal()
+              app.dependency_overrides[get_current_user_web] = lambda: user
+              app.dependency_overrides[get_db] = lambda: (yield db2)
+              return TestClient(app, raise_server_exceptions=False), db2
+
+          # C1: Student → GET /sessions/{id} → 200 + enrollment count shown
+          client, db2 = web_client(student)
+          try:
+              resp = client.get(f"/sessions/{session.id}")
+              if resp.status_code != 200:
+                  issues.append(f"C1: GET /sessions/{session.id} → {resp.status_code}")
+              elif "students enrolled" not in resp.text:
+                  issues.append("C1: session page missing enrollment count")
+              else:
+                  print(f"  ✅ C1: GET /sessions/{session.id} → 200 + enrollment shown")
+          finally:
+              db2.close()
+              app.dependency_overrides.clear()
+
+          # C2: Student → GET review?session_id=X → 200 + back link + passing score
+          client, db2 = web_client(student)
+          try:
+              url = f"/quizzes/attempts/{attempt.id}/review?session_id={session.id}"
+              resp = client.get(url)
+              if resp.status_code != 200:
+                  issues.append(f"C2: GET {url} → {resp.status_code}")
+              elif "Passing score" not in resp.text:
+                  issues.append("C2: review page missing 'Passing score'")
+              elif f"/sessions/{session.id}" not in resp.text:
+                  issues.append(f"C2: back link missing session ID {session.id}")
+              else:
+                  print(f"  ✅ C2: GET {url} → 200 + back link OK")
+          finally:
+              db2.close()
+              app.dependency_overrides.clear()
+
+          # C3: Admin → GET review (no session_id) → 200 + admin banner
+          client, db2 = web_client(admin)
+          try:
+              resp = client.get(f"/quizzes/attempts/{attempt.id}/review")
+              if resp.status_code != 200:
+                  issues.append(f"C3: Admin GET /quizzes/attempts/{attempt.id}/review → {resp.status_code}")
+              elif "Admin view" not in resp.text:
+                  issues.append("C3: admin banner missing")
+              else:
+                  print(f"  ✅ C3: Admin GET /quizzes/attempts/{attempt.id}/review → 200 + banner")
+          finally:
+              db2.close()
+              app.dependency_overrides.clear()
+
+          if issues:
+              print(f"\n❌ HTTP access validation FAILED — {len(issues)} issue(s):")
+              for iss in issues:
+                  print(f"   • {iss}")
+              sys.exit(1)
+
+          print(f"\n✅ HTTP access validation passed (C1 + C2 + C3)")
+          print(f"   /sessions/{session.id}")
+          print(f"   /quizzes/attempts/{attempt.id}/review?session_id={session.id}")
+          PYEOF
+
       - name: Write job summary
         if: always()
         run: |
@@ -310,7 +444,13 @@ jobs:
           echo "| Promo Event: Virtual Quiz Demo (DRAFT) | Setup only — quiz + 6 players enrolled |" >> $GITHUB_STEP_SUMMARY
           echo "| Promo Event: Virtual Quiz Demo (COMPLETED) | Full flow — ranking + 6 notifications |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Assertions checked:** session_type=virtual, meeting_link set, SessionQuiz linked, rounds_data written, notifications sent" >> $GITHUB_STEP_SUMMARY
+          echo "**DB assertions:** session_type=virtual, meeting_link set, SessionQuiz linked, rounds_data written, notifications sent" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| HTTP Check | What it proves |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|----------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| C1 | Student GET \`/sessions/{id}\` → 200 + enrollment count |" >> $GITHUB_STEP_SUMMARY
+          echo "| C2 | Student GET \`/quizzes/attempts/{id}/review?session_id={id}\` → 200 + back link |" >> $GITHUB_STEP_SUMMARY
+          echo "| C3 | Admin GET \`/quizzes/attempts/{id}/review\` → 200 + admin banner |" >> $GITHUB_STEP_SUMMARY
 
   # ─────────────────────────────────────────────────────────────────────────────
   # Gate: fail if any upstream job failed
