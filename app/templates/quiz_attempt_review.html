@@ -103,7 +103,11 @@
         {% endif %}
 
         <div class="actions">
-            <a href="/sessions" class="btn btn-primary">← Back to Sessions</a>
+            {% if session_id %}
+                <a href="/sessions/{{ session_id }}" class="btn btn-primary">← Back to Session</a>
+            {% else %}
+                <a href="/sessions" class="btn btn-primary">← Back to Sessions</a>
+            {% endif %}
         </div>
     </div>
 </body>

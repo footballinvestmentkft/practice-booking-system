@@ -103,7 +103,7 @@
             {% endif %}
 
             {% if attempt_id %}
-                <a href="/quizzes/attempts/{{ attempt_id }}/review" class="btn btn-secondary">📝 View Detailed Review</a>
+                <a href="/quizzes/attempts/{{ attempt_id }}/review{% if session_id %}?session_id={{ session_id }}{% endif %}" class="btn btn-secondary">📝 View Detailed Review</a>
             {% endif %}
 
             {% if not passed %}

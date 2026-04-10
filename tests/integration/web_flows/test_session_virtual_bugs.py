@@ -1,11 +1,15 @@
 """
-Virtual Session Page — Bug Fix Tests (SBF-01..04)
+Virtual Session Page — Bug Fix Tests (SBF-01..08)
 
 SBF-01  passing_score=0.60 → template shows "60%" (not "6000%")
 SBF-02  Tournament-enrolled student (SemesterEnrollment only, no Booking)
         → is_enrolled=True, quiz section visible (no "Enrollment Required")
 SBF-03  Virtual session with meeting_link → "💻 Meeting Link" shown (not "📍 Location: TBA")
 SBF-04  Virtual session without meeting_link → "TBA" shown under "💻 Meeting Link"
+SBF-05  SemesterEnrollment student → GET take_quiz → 200 (not 403)
+SBF-06  SemesterEnrollment student → POST submit_quiz → 200 result page (not 403)
+SBF-07  GET review?session_id=<id> → back link = /sessions/<id>
+SBF-08  GET review (no session_id) → back link = /sessions (generic)
 """
 
 import uuid
@@ -22,6 +26,7 @@ from app.models.session import Session as SessionModel, SessionType
 from app.models.quiz import (
     Quiz, QuizCategory, QuizDifficulty,
     QuizQuestion, QuestionType, QuizAnswerOption, SessionQuiz,
+    QuizAttempt, QuizUserAnswer,
 )
 from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 from app.models.license import UserLicense
@@ -40,10 +45,11 @@ def _override_get_db(test_db):
 
 
 @contextmanager
-def _web_client(test_db, user):
+def _web_client(test_db, user, csrf_bypass: bool = False):
     app.dependency_overrides[get_db] = _override_get_db(test_db)
     app.dependency_overrides[get_current_user_web] = lambda: user
-    with TestClient(app, raise_server_exceptions=True) as c:
+    headers = {"Authorization": "Bearer test-csrf-bypass"} if csrf_bypass else {}
+    with TestClient(app, raise_server_exceptions=True, headers=headers) as c:
         yield c
     app.dependency_overrides.clear()
 
@@ -96,6 +102,55 @@ def _make_virtual_session(test_db, semester_id, instructor_id, meeting_link=None
     test_db.commit()
     test_db.refresh(s)
     return s
+
+
+def _make_started_virtual_session(test_db, semester_id, instructor_id) -> SessionModel:
+    """Create a virtual session that has already started (quiz taking is allowed)."""
+    now = datetime.now()
+    s = SessionModel(
+        title=f"Virtual SBF Started {uuid.uuid4().hex[:6]}",
+        session_type=SessionType.virtual,
+        semester_id=semester_id,
+        instructor_id=instructor_id,
+        date_start=now - timedelta(hours=1),
+        date_end=now + timedelta(hours=1),
+        capacity=10,
+    )
+    test_db.add(s)
+    test_db.commit()
+    test_db.refresh(s)
+    return s
+
+
+def _make_completed_attempt(test_db, user_id: int, quiz: Quiz) -> QuizAttempt:
+    """Create a completed QuizAttempt with one QuizUserAnswer (correct)."""
+    now = datetime.now(timezone.utc)
+    attempt = QuizAttempt(
+        user_id=user_id,
+        quiz_id=quiz.id,
+        started_at=now - timedelta(minutes=10),
+        completed_at=now - timedelta(minutes=5),
+        time_spent_minutes=5.0,
+        score=100.0,
+        total_questions=1,
+        correct_answers=1,
+        xp_awarded=0,
+        passed=True,
+    )
+    test_db.add(attempt)
+    test_db.flush()
+
+    question = quiz.questions[0]
+    correct_opt = next(o for o in question.answer_options if o.is_correct)
+    test_db.add(QuizUserAnswer(
+        attempt_id=attempt.id,
+        question_id=question.id,
+        selected_option_id=correct_opt.id,
+        is_correct=True,
+    ))
+    test_db.commit()
+    test_db.refresh(attempt)
+    return attempt
 
 
 def _enroll(test_db, user_id, semester_id) -> SemesterEnrollment:
@@ -216,3 +271,102 @@ class TestSessionVirtualBugs:
         assert "Meeting Link" in html
         assert "TBA" in html
         assert "📍 Location:" not in html
+
+    def test_SBF_05_semester_enrolled_student_can_take_quiz(
+        self, test_db, semester, student_user, instructor_user
+    ):
+        """SBF-05: SemesterEnrollment student (no Booking) → GET take_quiz → 200."""
+        quiz = _make_quiz(test_db, passing_score=0.60)
+        session = _make_started_virtual_session(test_db, semester.id, instructor_user.id)
+        test_db.add(SessionQuiz(session_id=session.id, quiz_id=quiz.id, max_attempts=3))
+        test_db.commit()
+
+        _enroll(test_db, student_user.id, semester.id)
+
+        with _web_client(test_db, student_user) as client:
+            resp = client.get(f"/quizzes/{quiz.id}/take?session_id={session.id}")
+
+        assert resp.status_code == 200, (
+            f"SemesterEnrollment student must be allowed to take quiz, got {resp.status_code}: {resp.text[:200]}"
+        )
+
+    def test_SBF_06_semester_enrolled_student_can_submit_quiz(
+        self, test_db, semester, student_user, instructor_user
+    ):
+        """SBF-06: SemesterEnrollment student (no Booking) → POST submit_quiz → 200."""
+        quiz = _make_quiz(test_db, passing_score=0.60)
+        session = _make_started_virtual_session(test_db, semester.id, instructor_user.id)
+        test_db.add(SessionQuiz(session_id=session.id, quiz_id=quiz.id, max_attempts=3))
+        test_db.commit()
+
+        _enroll(test_db, student_user.id, semester.id)
+
+        # Create an active (incomplete) attempt directly in DB
+        now = datetime.now(timezone.utc)
+        attempt = QuizAttempt(
+            user_id=student_user.id,
+            quiz_id=quiz.id,
+            started_at=now - timedelta(minutes=5),
+            completed_at=None,
+            total_questions=len(quiz.questions),
+            correct_answers=0,
+            xp_awarded=0,
+            passed=False,
+        )
+        test_db.add(attempt)
+        test_db.commit()
+        test_db.refresh(attempt)
+
+        question = quiz.questions[0]
+        correct_opt = next(o for o in question.answer_options if o.is_correct)
+        form_data = {
+            "session_id": str(session.id),
+            "attempt_id": str(attempt.id),
+            "time_spent": "5.0",
+            f"question_{question.id}": str(correct_opt.id),
+        }
+
+        with _web_client(test_db, student_user, csrf_bypass=True) as client:
+            resp = client.post(f"/quizzes/{quiz.id}/submit", data=form_data)
+
+        assert resp.status_code == 200, (
+            f"SemesterEnrollment student must be allowed to submit quiz, got {resp.status_code}: {resp.text[:200]}"
+        )
+
+    def test_SBF_07_review_with_session_id_shows_session_back_link(
+        self, test_db, semester, student_user, instructor_user
+    ):
+        """SBF-07: GET /quizzes/attempts/{id}/review?session_id=X → back link = /sessions/X."""
+        quiz = _make_quiz(test_db, passing_score=0.60)
+        session = _make_virtual_session(test_db, semester.id, instructor_user.id)
+        test_db.add(SessionQuiz(session_id=session.id, quiz_id=quiz.id, max_attempts=3))
+        test_db.commit()
+
+        attempt = _make_completed_attempt(test_db, student_user.id, quiz)
+
+        with _web_client(test_db, student_user) as client:
+            resp = client.get(
+                f"/quizzes/attempts/{attempt.id}/review?session_id={session.id}"
+            )
+
+        assert resp.status_code == 200
+        html = resp.text
+        assert f'href="/sessions/{session.id}"' in html, \
+            f"Back link must point to /sessions/{session.id}"
+
+    def test_SBF_08_review_without_session_id_shows_generic_back_link(
+        self, test_db, semester, student_user, instructor_user
+    ):
+        """SBF-08: GET /quizzes/attempts/{id}/review (no session_id) → back link = /sessions."""
+        quiz = _make_quiz(test_db, passing_score=0.60)
+        attempt = _make_completed_attempt(test_db, student_user.id, quiz)
+
+        with _web_client(test_db, student_user) as client:
+            resp = client.get(f"/quizzes/attempts/{attempt.id}/review")
+
+        assert resp.status_code == 200
+        html = resp.text
+        assert 'href="/sessions"' in html, \
+            "Back link must point to generic /sessions when no session_id given"
+        assert f'href="/sessions/{attempt.id}"' not in html, \
+            "Back link must NOT use attempt id as session id"

@@ -338,7 +338,7 @@ if (urlParams.get('error') === 'quiz_locked') {
                                     {{ attempt.correct_answers }}/{{ attempt.total_questions }} correct
                                 </div>
                                 {% if attempt.id and attempt.completed_at %}
-                                <a href="/quizzes/attempts/{{ attempt.id }}/review"
+                                <a href="/quizzes/attempts/{{ attempt.id }}/review?session_id={{ session.id }}"
                                    style="font-size: 0.75rem; color: #3498db; text-decoration: none;">
                                     📝 Review
                                 </a>

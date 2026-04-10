@@ -1,17 +1,24 @@
-name: E2E Session Virtual Bugs (SBF-01..04)
+name: E2E Session Virtual Bugs (SBF-01..08)
 
 # Proves:
 #   SBF-01  passing_score=0.60 → template shows "60%" (not "6000%")
 #   SBF-02  SemesterEnrollment (no Booking) → is_enrolled=True, no "Enrollment Required"
 #   SBF-03  Virtual session with meeting_link → "💻 Meeting Link" shown
 #   SBF-04  Virtual session without meeting_link → "TBA" under Meeting Link
+#   SBF-05  SemesterEnrollment student → GET take_quiz → 200 (not 403)
+#   SBF-06  SemesterEnrollment student → POST submit_quiz → 200 (not 403)
+#   SBF-07  GET review?session_id=X → back link = /sessions/X
+#   SBF-08  GET review (no session_id) → back link = /sessions (generic)
 
 on:
   push:
     branches: [main, develop, "feature/*", "fix/*"]
     paths:
       - 'app/api/web_routes/sessions.py'
+      - 'app/api/web_routes/quiz.py'
       - 'app/templates/session_details.html'
+      - 'app/templates/quiz_attempt_review.html'
+      - 'app/templates/quiz_result.html'
       - 'app/models/quiz.py'
       - 'scripts/seed_promo_event_demo.py'
       - 'tests/integration/web_flows/test_session_virtual_bugs.py'
@@ -20,7 +27,10 @@ on:
     branches: [main, develop, "feature/*", "fix/*"]
     paths:
       - 'app/api/web_routes/sessions.py'
+      - 'app/api/web_routes/quiz.py'
       - 'app/templates/session_details.html'
+      - 'app/templates/quiz_attempt_review.html'
+      - 'app/templates/quiz_result.html'
       - 'app/models/quiz.py'
       - 'scripts/seed_promo_event_demo.py'
       - 'tests/integration/web_flows/test_session_virtual_bugs.py'
@@ -41,7 +51,7 @@ jobs:
   # Job 1: pytest SBF-01..04
   # ─────────────────────────────────────────────────────────────────────────────
   sbf-pytest:
-    name: "SBF-01..04 — virtual session bug fix tests"
+    name: "SBF-01..08 — virtual session bug fix tests"
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -112,7 +122,7 @@ jobs:
       - name: Write job summary
         if: always()
         run: |
-          echo "## Virtual Session Bug Fix Tests (SBF-01..04)" >> $GITHUB_STEP_SUMMARY
+          echo "## Virtual Session Bug Fix Tests (SBF-01..08)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Test | What it proves |" >> $GITHUB_STEP_SUMMARY
           echo "|------|----------------|" >> $GITHUB_STEP_SUMMARY
@@ -120,6 +130,10 @@ jobs:
           echo "| SBF-02 | SemesterEnrollment-only student sees quiz (no 'Enrollment Required') |" >> $GITHUB_STEP_SUMMARY
           echo "| SBF-03 | Virtual session with meeting_link shows '💻 Meeting Link' |" >> $GITHUB_STEP_SUMMARY
           echo "| SBF-04 | Virtual session without meeting_link shows 'TBA' under Meeting Link |" >> $GITHUB_STEP_SUMMARY
+          echo "| SBF-05 | SemesterEnrollment student can GET take_quiz (not 403) |" >> $GITHUB_STEP_SUMMARY
+          echo "| SBF-06 | SemesterEnrollment student can POST submit_quiz (not 403) |" >> $GITHUB_STEP_SUMMARY
+          echo "| SBF-07 | review?session_id=X → back link = /sessions/X |" >> $GITHUB_STEP_SUMMARY
+          echo "| SBF-08 | review (no session_id) → back link = /sessions (generic) |" >> $GITHUB_STEP_SUMMARY
 
   # ─────────────────────────────────────────────────────────────────────────────
   # Gate
@@ -136,4 +150,4 @@ jobs:
             echo "❌ sbf-pytest failed"
             exit 1
           fi
-          echo "✅ All Virtual Session Bug Fix jobs passed (SBF-01..04)"
+          echo "✅ All Virtual Session Bug Fix jobs passed (SBF-01..08)"

@@ -58,7 +58,8 @@ from app.models.game_configuration import GameConfiguration
 from app.models.game_preset import GamePreset
 from app.models.license import UserLicense
 from app.models.notification import Notification
-from app.models.quiz import Quiz, QuizQuestion, QuizAnswerOption, QuizAttempt, SessionQuiz
+from sqlalchemy.orm import joinedload
+from app.models.quiz import Quiz, QuizQuestion, QuizAnswerOption, QuizAttempt, QuizUserAnswer, SessionQuiz
 from app.models.semester import Semester, SemesterCategory, SemesterStatus
 from app.models.semester_enrollment import EnrollmentStatus, SemesterEnrollment
 from app.models.session import Session as SessionModel, SessionType, EventCategory
@@ -222,6 +223,15 @@ if _existing_ids:
     ok(f"Deleted {len(_existing_ids)} Promo Event tournament(s)")
 else:
     ok("No existing Promo Event tournaments found")
+
+# Safety net: fix any stale passing_score > 1.0 left by previous buggy runs
+_stale = db.execute(_sql(
+    "UPDATE quizzes SET passing_score = 0.60 "
+    "WHERE title = 'Promo Event Knowledge Quiz' AND passing_score > 1.0"
+))
+if _stale.rowcount:
+    ok(f"Fixed {_stale.rowcount} stale quiz(zes) with passing_score > 1.0 → 0.60")
+db.commit()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -484,8 +494,16 @@ def link_quiz_to_session(sess: SessionModel, quiz: Quiz) -> SessionQuiz:
 def simulate_quiz_attempts(
     quiz: Quiz, players: list, scores: list[float]
 ) -> None:
-    """Simulate completed QuizAttempt rows for each player with given scores."""
-    total_q = len(quiz.questions)
+    """Simulate completed QuizAttempt + QuizUserAnswer rows for each player."""
+    # Load questions with their options (needed for per-question answer simulation)
+    questions = (
+        db.query(QuizQuestion)
+        .options(joinedload(QuizQuestion.answer_options))
+        .filter(QuizQuestion.quiz_id == quiz.id)
+        .order_by(QuizQuestion.order_index)
+        .all()
+    )
+    total_q = len(questions)
     for player, score in zip(players, scores):
         correct = round(score / 100 * total_q)
         attempt = QuizAttempt(
@@ -501,8 +519,23 @@ def simulate_quiz_attempts(
             passed=(score >= quiz.passing_score * 100),
         )
         db.add(attempt)
+        db.flush()  # get attempt.id
+
+        # Create per-question answer rows: first `correct` → right answer, rest → wrong
+        for i, question in enumerate(questions):
+            is_correct_answer = i < correct
+            correct_opt = next((o for o in question.answer_options if o.is_correct), None)
+            wrong_opt = next((o for o in question.answer_options if not o.is_correct), None)
+            chosen = correct_opt if is_correct_answer else (wrong_opt or correct_opt)
+            if chosen:
+                db.add(QuizUserAnswer(
+                    attempt_id=attempt.id,
+                    question_id=question.id,
+                    selected_option_id=chosen.id,
+                    is_correct=is_correct_answer,
+                ))
     db.commit()
-    ok(f"Simulated {len(players)} QuizAttempts — scores: {scores}")
+    ok(f"Simulated {len(players)} QuizAttempts + QuizUserAnswers — scores: {scores}")
 
 
 # ─────────────────────────────────────────────────────────────────────────────

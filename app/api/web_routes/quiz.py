@@ -22,6 +22,7 @@ from ...models.booking import Booking
 from ...models.attendance import Attendance
 from ...models.quiz import Quiz, QuizQuestion, QuizAnswerOption, QuizAttempt, QuizUserAnswer, SessionQuiz
 from ...models.gamification import UserStats
+from ...models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 
 # Setup templates
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -147,10 +148,25 @@ async def take_quiz(
         ).first()
 
         if not booking:
-            raise HTTPException(
-                status_code=403,
-                detail="You must book this session before taking the quiz. Please enroll first!"
-            )
+            # Fallback: virtual tournament sessions use SemesterEnrollment (no Booking)
+            if session.session_type == SessionType.virtual and session.semester_id:
+                tournament_enrolled = db.query(SemesterEnrollment).filter(
+                    SemesterEnrollment.user_id == user.id,
+                    SemesterEnrollment.semester_id == session.semester_id,
+                    SemesterEnrollment.is_active.is_(True),
+                    SemesterEnrollment.request_status == EnrollmentStatus.APPROVED,
+                ).first()
+                if not tournament_enrolled:
+                    raise HTTPException(
+                        status_code=403,
+                        detail="You must be enrolled in this event to take the quiz."
+                    )
+                # tournament_enrolled → proceed
+            else:
+                raise HTTPException(
+                    status_code=403,
+                    detail="You must book this session before taking the quiz. Please enroll first!"
+                )
 
     # Check if user already has an active (incomplete) attempt
     active_attempt = db.query(QuizAttempt).filter(
@@ -272,10 +288,25 @@ async def submit_quiz(
         ).first()
 
         if not booking:
-            raise HTTPException(
-                status_code=403,
-                detail="You must book this session before submitting the quiz!"
-            )
+            # Fallback: virtual tournament sessions use SemesterEnrollment (no Booking)
+            if session.session_type == SessionType.virtual and session.semester_id:
+                tournament_enrolled = db.query(SemesterEnrollment).filter(
+                    SemesterEnrollment.user_id == user.id,
+                    SemesterEnrollment.semester_id == session.semester_id,
+                    SemesterEnrollment.is_active.is_(True),
+                    SemesterEnrollment.request_status == EnrollmentStatus.APPROVED,
+                ).first()
+                if not tournament_enrolled:
+                    raise HTTPException(
+                        status_code=403,
+                        detail="You must be enrolled in this event to submit the quiz."
+                    )
+                # tournament_enrolled → proceed
+            else:
+                raise HTTPException(
+                    status_code=403,
+                    detail="You must book this session before submitting the quiz!"
+                )
 
     # Get the active attempt — SELECT FOR UPDATE serialises concurrent submits:
     # two simultaneous requests both see completed_at=None without the lock;
@@ -433,6 +464,7 @@ async def submit_quiz(
 async def quiz_attempt_review(
     request: Request,
     attempt_id: int,
+    session_id: Optional[int] = None,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
@@ -459,6 +491,7 @@ async def quiz_attempt_review(
         "quiz": attempt.quiz,
         "attempt": attempt,
         "attempt_answers": attempt_answers,
+        "session_id": session_id,
     })
 
 
