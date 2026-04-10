@@ -1,51 +1,56 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Review — {{ quiz.title }}</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
-        .review-container { max-width: 680px; margin: 0 auto; background: white; border-radius: 8px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .header { text-align: center; margin-bottom: 28px; }
-        .quiz-title { font-size: 22px; font-weight: bold; color: #333; margin-bottom: 10px; }
-        .score-badge { display: inline-block; font-size: 28px; font-weight: bold; margin: 8px 0; }
-        .score-badge.passed { color: #27ae60; }
-        .score-badge.failed { color: #e74c3c; }
-        .result-label { font-size: 15px; color: #7f8c8d; }
-        .stats { background: #f8f9fa; padding: 16px 20px; border-radius: 6px; margin: 20px 0; display: flex; gap: 24px; flex-wrap: wrap; }
-        .stat { font-size: 14px; color: #555; }
-        .stat strong { color: #333; }
-        .answers-heading { font-size: 16px; font-weight: 600; color: #555; margin-bottom: 12px; }
-        .answer-item { padding: 14px 16px; border-bottom: 1px solid #f0f0f0; }
-        .answer-item:last-child { border-bottom: none; }
-        .answer-item.correct { border-left: 4px solid #27ae60; }
-        .answer-item.incorrect { border-left: 4px solid #e74c3c; }
-        .answers-list { border: 1px solid #dee2e6; border-radius: 6px; overflow: hidden; }
-        .answer-q { font-weight: 600; color: #333; margin-bottom: 8px; display: flex; gap: 8px; }
-        .q-num { background: #3498db; color: white; border-radius: 12px; padding: 1px 8px; font-size: 12px; white-space: nowrap; align-self: center; }
-        .answer-detail { font-size: 14px; color: #555; padding-left: 4px; }
-        .your-answer { margin-bottom: 4px; }
-        .badge-correct { color: #27ae60; font-weight: bold; margin-left: 6px; }
-        .badge-wrong { color: #e74c3c; font-weight: bold; margin-left: 6px; }
-        .correct-answer { color: #27ae60; margin-bottom: 4px; }
-        .explanation { color: #7f8c8d; font-style: italic; margin-top: 6px; padding: 6px 10px; background: #f8f9fa; border-radius: 4px; }
-        .actions { margin-top: 28px; text-align: center; }
-        .btn { display: inline-block; padding: 10px 22px; margin: 4px; border-radius: 6px; text-decoration: none; font-size: 15px; font-weight: 600; }
-        .btn-primary { background: #3498db; color: white; }
-        .btn-primary:hover { background: #2980b9; }
-        .no-answers { text-align: center; color: #7f8c8d; padding: 24px; }
-    </style>
-</head>
-<body>
-    <div class="review-container">
-        {% if is_admin_view and reviewed_user %}
-        <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.9rem;color:#856404;">
-            👁️ Admin view — reviewing attempt by <strong>{{ reviewed_user.name }}</strong> ({{ reviewed_user.email }})
-        </div>
-        {% endif %}
-        <div class="header">
+{% extends "student_base.html" %}
+{% block title %}Review — {{ quiz.title }}{% endblock %}
+{% block active_page %}sessions{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .review-container { max-width: 680px; margin: 0 auto; }
+    .review-header { text-align: center; margin-bottom: 28px; }
+    .quiz-title { font-size: 22px; font-weight: bold; color: var(--app-text); margin-bottom: 10px; }
+    .score-badge { display: inline-block; font-size: 28px; font-weight: bold; margin: 8px 0; }
+    .score-badge.passed { color: var(--app-success); }
+    .score-badge.failed  { color: var(--app-error); }
+    .result-label { font-size: 15px; color: var(--app-text-muted); }
+    .review-stats { background: var(--app-card-alt); padding: 16px 20px; border-radius: 6px;
+                    margin: 20px 0; display: flex; gap: 24px; flex-wrap: wrap; border: 1px solid var(--app-border); }
+    .review-stat { font-size: 14px; color: var(--app-text-muted); }
+    .review-stat strong { color: var(--app-text); }
+    .answers-heading { font-size: 16px; font-weight: 600; color: var(--app-text-muted); margin-bottom: 12px; }
+    .answers-list { border: 1px solid var(--app-border); border-radius: 6px; overflow: hidden;
+                    background: var(--app-card); }
+    .answer-item { padding: 14px 16px; border-bottom: 1px solid var(--app-border); }
+    .answer-item:last-child { border-bottom: none; }
+    .answer-item.correct   { border-left: 4px solid var(--app-success); }
+    .answer-item.incorrect { border-left: 4px solid var(--app-error); }
+    .answer-q { font-weight: 600; color: var(--app-text); margin-bottom: 8px; display: flex; gap: 8px; }
+    .q-num { background: #3498db; color: white; border-radius: 12px; padding: 1px 8px;
+             font-size: 12px; white-space: nowrap; align-self: center; }
+    .answer-detail { font-size: 14px; color: var(--app-text-muted); padding-left: 4px; }
+    .your-answer { margin-bottom: 4px; }
+    .badge-correct { color: var(--app-success); font-weight: bold; margin-left: 6px; }
+    .badge-wrong   { color: var(--app-error);   font-weight: bold; margin-left: 6px; }
+    .correct-answer { color: var(--app-success); margin-bottom: 4px; }
+    .explanation { color: var(--app-text-muted); font-style: italic; margin-top: 6px;
+                   padding: 6px 10px; background: var(--app-card-alt); border-radius: 4px; }
+    .no-answers { text-align: center; color: var(--app-text-muted); padding: 24px; }
+    .review-actions { margin-top: 28px; text-align: center; }
+    .admin-banner { background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px;
+                    padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-size: 0.9rem; color: #856404; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="review-container">
+
+    {% if is_admin_view and reviewed_user %}
+    <div class="admin-banner">
+        👁️ Admin view — reviewing attempt by <strong>{{ reviewed_user.name }}</strong>
+        ({{ reviewed_user.email }})
+    </div>
+    {% endif %}
+
+    <div class="section-block">
+        <div class="review-header">
             <div class="quiz-title">{{ quiz.title }}</div>
             <div class="score-badge {{ 'passed' if attempt.passed else 'failed' }}">
                 {{ attempt.score|int if attempt.score is not none else 0 }}%
@@ -58,16 +63,24 @@
             </div>
         </div>
 
-        <div class="stats">
-            <div class="stat">Date: <strong>{{ attempt.completed_at.strftime('%Y-%m-%d %H:%M') if attempt.completed_at else '—' }}</strong></div>
-            <div class="stat">Passing score: <strong>{{ (quiz.passing_score * 100)|int }}%</strong></div>
+        <div class="review-stats">
+            <div class="review-stat">Date:
+                <strong>{{ attempt.completed_at.strftime('%Y-%m-%d %H:%M') if attempt.completed_at else '—' }}</strong>
+            </div>
+            <div class="review-stat">Passing score:
+                <strong>{{ (quiz.passing_score * 100)|int }}%</strong>
+            </div>
             {% if attempt.time_spent_minutes %}
-            <div class="stat">Time spent: <strong>{{ "%.1f"|format(attempt.time_spent_minutes) }} min</strong></div>
+            <div class="review-stat">Time spent:
+                <strong>{{ "%.1f"|format(attempt.time_spent_minutes) }} min</strong>
+            </div>
             {% endif %}
         </div>
 
         {% if attempt_answers %}
-        <div class="answers-heading">Answer Review ({{ attempt_answers | length }} question{{ 's' if attempt_answers | length != 1 else '' }})</div>
+        <div class="answers-heading">
+            Answer Review ({{ attempt_answers | length }} question{{ 's' if attempt_answers | length != 1 else '' }})
+        </div>
         <div class="answers-list">
             {% for ua in attempt_answers %}
             <div class="answer-item {{ 'correct' if ua.is_correct else 'incorrect' }}">
@@ -107,7 +120,7 @@
         <div class="no-answers">No answers recorded for this attempt.</div>
         {% endif %}
 
-        <div class="actions">
+        <div class="review-actions">
             {% if session_id %}
                 <a href="/sessions/{{ session_id }}" class="btn btn-primary">← Back to Session</a>
             {% else %}
@@ -115,5 +128,6 @@
             {% endif %}
         </div>
     </div>
-</body>
-</html>
+
+</div>
+{% endblock %}

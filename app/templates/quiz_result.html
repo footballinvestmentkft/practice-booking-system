@@ -1,53 +1,57 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz Result - {{ quiz.title }}</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
-        .result-container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; }
-        .result-icon { font-size: 80px; margin-bottom: 20px; }
-        .result-title { font-size: 36px; font-weight: bold; margin-bottom: 10px; }
-        .result-title.passed { color: #27ae60; }
-        .result-title.failed { color: #e74c3c; }
-        .result-subtitle { font-size: 24px; color: #7f8c8d; margin-bottom: 30px; }
-        .stats { background: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0; }
-        .stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e9ecef; }
-        .stat-row:last-child { border-bottom: none; }
-        .stat-label { font-weight: 600; color: #555; }
-        .stat-value { font-weight: bold; color: #333; }
-        .xp-badge { background: #3498db; color: white; padding: 10px 20px; border-radius: 20px; display: inline-block; margin: 20px 0; font-size: 18px; font-weight: bold; }
-        .actions { margin-top: 30px; }
-        .btn { display: inline-block; padding: 12px 24px; margin: 5px; border-radius: 6px; text-decoration: none; font-size: 16px; font-weight: 600; transition: all 0.2s; }
-        .btn-primary { background: #3498db; color: white; }
-        .btn-primary:hover { background: #2980b9; }
-        .btn-secondary { background: #95a5a6; color: white; }
-        .btn-secondary:hover { background: #7f8c8d; }
-        .time-info { color: #7f8c8d; font-size: 14px; margin-top: 10px; }
-        .review-section { margin-top: 24px; text-align: left; }
-        .review-toggle { width: 100%; padding: 12px 16px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .review-toggle:hover { background: #e9ecef; }
-        .review-body { border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 6px 6px; }
-        .answer-item { padding: 14px 16px; border-bottom: 1px solid #f0f0f0; }
-        .answer-item:last-child { border-bottom: none; }
-        .answer-item.correct { border-left: 4px solid #27ae60; }
-        .answer-item.incorrect { border-left: 4px solid #e74c3c; }
-        .answer-q { font-weight: 600; color: #333; margin-bottom: 8px; display: flex; gap: 8px; }
-        .q-num { background: #3498db; color: white; border-radius: 12px; padding: 1px 8px; font-size: 12px; white-space: nowrap; align-self: center; }
-        .answer-detail { font-size: 14px; color: #555; padding-left: 4px; }
-        .your-answer { margin-bottom: 4px; }
-        .badge-correct { color: #27ae60; font-weight: bold; margin-left: 6px; }
-        .badge-wrong { color: #e74c3c; font-weight: bold; margin-left: 6px; }
-        .correct-answer { color: #27ae60; margin-bottom: 4px; }
-        .explanation { color: #7f8c8d; font-style: italic; margin-top: 6px; padding: 6px 10px; background: #f8f9fa; border-radius: 4px; }
-    </style>
-</head>
-<body>
-    <div class="result-container">
+{% extends "student_base.html" %}
+{% block title %}Quiz Result — {{ quiz.title }}{% endblock %}
+{% block active_page %}sessions{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .result-container { max-width: 600px; margin: 0 auto; text-align: center; }
+    .result-icon { font-size: 80px; margin-bottom: 20px; }
+    .result-title { font-size: 36px; font-weight: bold; margin-bottom: 10px; }
+    .result-title.passed { color: var(--app-success); }
+    .result-title.failed  { color: var(--app-error); }
+    .result-subtitle { font-size: 24px; color: var(--app-text-muted); margin-bottom: 30px; }
+    .result-stats { background: var(--app-card-alt); padding: 20px; border-radius: 6px;
+                    margin: 20px 0; border: 1px solid var(--app-border); text-align: left; }
+    .stat-row { display: flex; justify-content: space-between; padding: 10px 0;
+                border-bottom: 1px solid var(--app-border); }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-label { font-weight: 600; color: var(--app-text-muted); }
+    .stat-value { font-weight: bold; color: var(--app-text); }
+    .xp-badge { background: #3498db; color: white; padding: 10px 20px; border-radius: 20px;
+                display: inline-block; margin: 20px 0; font-size: 18px; font-weight: bold; }
+    .result-actions { margin-top: 30px; }
+    .time-info { color: var(--app-text-muted); font-size: 14px; margin-top: 10px; }
+    .review-section { margin-top: 24px; text-align: left; }
+    .review-toggle { width: 100%; padding: 12px 16px; background: var(--app-card-alt);
+                     border: 1px solid var(--app-border); border-radius: 6px; font-size: 15px;
+                     font-weight: 600; cursor: pointer; display: flex; justify-content: space-between;
+                     align-items: center; color: var(--app-text); }
+    .review-toggle:hover { background: var(--app-border); }
+    .review-body { border: 1px solid var(--app-border); border-top: none;
+                   border-radius: 0 0 6px 6px; background: var(--app-card); }
+    .answer-item { padding: 14px 16px; border-bottom: 1px solid var(--app-border); }
+    .answer-item:last-child { border-bottom: none; }
+    .answer-item.correct   { border-left: 4px solid var(--app-success); }
+    .answer-item.incorrect { border-left: 4px solid var(--app-error); }
+    .answer-q { font-weight: 600; color: var(--app-text); margin-bottom: 8px; display: flex; gap: 8px; }
+    .q-num { background: #3498db; color: white; border-radius: 12px; padding: 1px 8px;
+             font-size: 12px; white-space: nowrap; align-self: center; }
+    .answer-detail { font-size: 14px; color: var(--app-text-muted); padding-left: 4px; }
+    .your-answer { margin-bottom: 4px; }
+    .badge-correct { color: var(--app-success); font-weight: bold; margin-left: 6px; }
+    .badge-wrong   { color: var(--app-error);   font-weight: bold; margin-left: 6px; }
+    .correct-answer { color: var(--app-success); margin-bottom: 4px; }
+    .explanation { color: var(--app-text-muted); font-style: italic; margin-top: 6px;
+                   padding: 6px 10px; background: var(--app-card-alt); border-radius: 4px; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="result-container">
+    <div class="section-block">
+
         {% if session and session.session_type.value == 'virtual' %}
-            {# VIRTUAL SESSION - Exam Mode (PASSED/FAILED) #}
+            {# VIRTUAL SESSION — Exam Mode (PASSED/FAILED) #}
             {% if passed %}
                 <div class="result-icon">✅</div>
                 <h1 class="result-title passed">PASSED!</h1>
@@ -58,7 +62,7 @@
                 <p class="result-subtitle">Study more and try again</p>
             {% endif %}
         {% else %}
-            {# HYBRID SESSION - Short Test Mode (Understood/Needs Review) #}
+            {# HYBRID SESSION — Short Test Mode #}
             {% if passed %}
                 <div class="result-icon">✅</div>
                 <h1 class="result-title passed">Understood!</h1>
@@ -70,7 +74,7 @@
             {% endif %}
         {% endif %}
 
-        <div class="stats">
+        <div class="result-stats">
             <div class="stat-row">
                 <span class="stat-label">Score</span>
                 <span class="stat-value">{{ "%.1f"|format(score) }}%</span>
@@ -90,12 +94,10 @@
         </div>
 
         {% if xp_awarded > 0 %}
-        <div class="xp-badge">
-            🎯 +{{ xp_awarded }} XP Earned
-        </div>
+        <div class="xp-badge">🎯 +{{ xp_awarded }} XP Earned</div>
         {% endif %}
 
-        <div class="actions">
+        <div class="result-actions">
             {% if session %}
                 <a href="/sessions/{{ session.id }}" class="btn btn-primary">← Back to Session</a>
             {% else %}
@@ -103,17 +105,17 @@
             {% endif %}
 
             {% if attempt_id %}
-                <a href="/quizzes/attempts/{{ attempt_id }}/review{% if session_id %}?session_id={{ session_id }}{% endif %}" class="btn btn-secondary">📝 View Detailed Review</a>
+                <a href="/quizzes/attempts/{{ attempt_id }}/review{% if session_id %}?session_id={{ session_id }}{% endif %}"
+                   class="btn btn-secondary">📝 View Detailed Review</a>
             {% endif %}
 
             {% if not passed %}
-                <a href="/quizzes/{{ quiz.id }}/take?session_id={{ session_id or '' }}" class="btn btn-secondary">Try Again</a>
+                <a href="/quizzes/{{ quiz.id }}/take?session_id={{ session_id or '' }}"
+                   class="btn btn-secondary">🔄 Retry Quiz</a>
             {% endif %}
         </div>
 
-        <div class="time-info">
-            Quiz: {{ quiz.title }}
-        </div>
+        <div class="time-info">Quiz: {{ quiz.title }}</div>
 
         {% if attempt_answers %}
         <div class="review-section">
@@ -170,6 +172,7 @@
         }
         </script>
         {% endif %}
+
     </div>
-</body>
-</html>
+</div>
+{% endblock %}

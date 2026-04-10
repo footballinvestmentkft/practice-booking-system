@@ -418,7 +418,7 @@ def create_virtual_session(sem: Semester, in_past: bool = False) -> SessionModel
         base_xp=50,
         capacity=_MAX_PLAYERS,
         meeting_link=_MEETING_LINK,
-        instructor_id=admin.id,
+        instructor_id=instructor.id,
         auto_generated=True,
     )
     db.add(sess)
@@ -724,3 +724,14 @@ for s in comp_sessions_fresh:
 print(f"\n   Notifications sent: {len(notifs)}")
 for n in notifs:
     print(f"     → user_id={n.user_id}  title={n.title[:50]!r}")
+
+print("\n" + "=" * 60)
+print("  🔗 Navigációs URL-ek (re-seed után mindig frissül!)")
+print("=" * 60)
+print(f"  [DRAFT]     /sessions/{draft_session.id}")
+print(f"  [COMPLETED] /sessions/{completed_session.id}")
+print()
+print("  👤 Enrolled student login (COMPLETED event):")
+print("     Email:    lfa-u15-james.archer@lfa.com")
+print("     Jelszó:   Bootstrap#123")
+print("=" * 60)
