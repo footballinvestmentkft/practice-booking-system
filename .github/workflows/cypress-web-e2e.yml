@@ -2,7 +2,7 @@ name: Cypress Web E2E Tests (FastAPI Jinja2)
 
 on:
   push:
-    branches: [ develop, main ]
+    branches: [ develop, main, "feature/*", "fix/*" ]
   pull_request:
     branches: [ main, develop ]
   workflow_dispatch:
@@ -26,6 +26,10 @@ jobs:
           - role: admin
             specs: "cypress/e2e/web/admin/**"
             db_scenario: baseline
+            allow_failure: false
+          - role: virtual-tournament
+            specs: "cypress/e2e/web/tournament/**"
+            db_scenario: tournament_virtual_e2e
             allow_failure: false
           - role: instructor
             specs: "cypress/e2e/web/instructor/**,cypress/e2e/web/sessions/instructor_session_lifecycle.cy.js"

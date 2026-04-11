@@ -169,6 +169,13 @@ class TournamentConfiguration(Base):
         comment="Session delivery type for generated sessions: on_site / virtual / hybrid (default: on_site)"
     )
 
+    # Meeting URL for virtual/hybrid tournament sessions — propagated to all generated sessions
+    meeting_link = Column(
+        String,
+        nullable=True,
+        comment="Meeting URL for virtual/hybrid sessions — propagated to all generated sessions"
+    )
+
     # Session Generation Tracking
     sessions_generated = Column(
         Boolean,

@@ -448,6 +448,14 @@
             </div>
             {% endif %}
 
+            {% if session.is_enrolled and session.meeting_link %}
+            <div style="margin-top: 1rem;">
+                <a href="{{ session.meeting_link }}" class="btn btn-primary" style="width: 100%;" target="_blank" rel="noopener">
+                    💻 Join Meeting
+                </a>
+            </div>
+            {% endif %}
+
             <div style="margin-top: 1rem;">
                 <a href="/sessions/{{ session.id }}" class="btn btn-secondary" style="width: 100%; display: inline-block; text-align: center; margin-bottom: 0.5rem;">View Details</a>
                 {% if session.is_enrolled %}

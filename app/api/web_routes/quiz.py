@@ -148,8 +148,8 @@ async def take_quiz(
         ).first()
 
         if not booking:
-            # Fallback: virtual tournament sessions use SemesterEnrollment (no Booking)
-            if session.session_type == SessionType.virtual and session.semester_id:
+            # Fallback: virtual/hybrid tournament sessions use SemesterEnrollment (no Booking)
+            if session.session_type in (SessionType.virtual, SessionType.hybrid) and session.semester_id:
                 tournament_enrolled = db.query(SemesterEnrollment).filter(
                     SemesterEnrollment.user_id == user.id,
                     SemesterEnrollment.semester_id == session.semester_id,
@@ -288,8 +288,8 @@ async def submit_quiz(
         ).first()
 
         if not booking:
-            # Fallback: virtual tournament sessions use SemesterEnrollment (no Booking)
-            if session.session_type == SessionType.virtual and session.semester_id:
+            # Fallback: virtual/hybrid tournament sessions use SemesterEnrollment (no Booking)
+            if session.session_type in (SessionType.virtual, SessionType.hybrid) and session.semester_id:
                 tournament_enrolled = db.query(SemesterEnrollment).filter(
                     SemesterEnrollment.user_id == user.id,
                     SemesterEnrollment.semester_id == session.semester_id,

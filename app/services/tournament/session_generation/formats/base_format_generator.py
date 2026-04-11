@@ -43,6 +43,11 @@ class BaseFormatGenerator(ABC):
         """Return the base XP for a session type (on_site=75, virtual=50, hybrid=100)."""
         return _BASE_XP_BY_SESSION_TYPE.get(session_type, 75)
 
+    def _resolve_meeting_link(self, tournament: Semester) -> str | None:
+        """Return tournament-level meeting URL (None for on-site tournaments)."""
+        cfg = getattr(tournament, "tournament_config_obj", None)
+        return cfg.meeting_link if cfg else None
+
     @abstractmethod
     def generate(
         self,

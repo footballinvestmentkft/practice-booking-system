@@ -105,6 +105,24 @@ module.exports = defineConfig({
           return null;
         },
 
+        // Returns the DB id of a semester/tournament by code.
+        // Used by TVST-03 to get the virtual tournament's id for the public event URL.
+        getTournamentIdByCode(code) {
+          const { execSync } = require('child_process');
+          const cwd = require('path').resolve(__dirname, '..');
+          const script = [
+            'import sys; sys.path.insert(0, ".")',
+            'from app.database import SessionLocal',
+            'from app.models.semester import Semester',
+            'db = SessionLocal()',
+            `t = db.query(Semester).filter(Semester.code == "${code}").first()`,
+            'db.close()',
+            'print(t.id if t else "null")',
+          ].join('; ');
+          const out = execSync(`python -c '${script}'`, { cwd, encoding: 'utf8' }).trim();
+          return out === 'null' ? null : parseInt(out, 10);
+        },
+
         // Returns the DB id of the "E2E UI Quiz" seeded by reset_e2e_web_db.py
         getE2eQuizId() {
           const { execSync } = require('child_process');

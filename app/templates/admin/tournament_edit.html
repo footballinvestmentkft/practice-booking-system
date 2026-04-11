@@ -427,6 +427,36 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
         </div>
     </div>
 
+    {# ── Session Delivery Type + Meeting Link ── #}
+    <div class="form-row">
+        <div class="form-group">
+            <label>Session Type</label>
+            {% if cfg and t.sessions_generated %}
+                <div style="font-size:0.9rem;padding:0.4rem 0;">
+                    {% if cfg.session_type_config == 'virtual' %}💻 Virtual
+                    {% elif cfg.session_type_config == 'hybrid' %}🔀 Hybrid
+                    {% else %}🏢 On-Site{% endif %}
+                    <span class="field-hint">(locked — sessions already generated)</span>
+                </div>
+                <input type="hidden" id="basic-session-type-config" value="{{ cfg.session_type_config or 'on_site' }}">
+            {% else %}
+                <select id="basic-session-type-config" onchange="toggleEditMeetingLink()">
+                    <option value="on_site" {% if not cfg or cfg.session_type_config == 'on_site' %}selected{% endif %}>🏢 On-Site</option>
+                    <option value="virtual" {% if cfg and cfg.session_type_config == 'virtual' %}selected{% endif %}>💻 Virtual</option>
+                    <option value="hybrid"  {% if cfg and cfg.session_type_config == 'hybrid'  %}selected{% endif %}>🔀 Hybrid</option>
+                </select>
+            {% endif %}
+        </div>
+        <div class="form-group" id="edit-meeting-link-row"
+             style="{% if not cfg or cfg.session_type_config == 'on_site' %}display:none{% endif %}">
+            <label>Meeting Link</label>
+            <input type="url" id="basic-meeting-link"
+                   value="{{ cfg.meeting_link or '' if cfg else '' }}"
+                   placeholder="https://meet.example.com/event">
+            <span class="field-hint">Virtual/hybrid sessions — updateable anytime</span>
+        </div>
+    </div>
+
     <div class="save-row">
         <button class="btn btn-primary" onclick="saveBasicInfo()">💾 Save Basic Info</button>
         <span id="basic-save-status" style="font-size:0.85rem;color:#718096;"></span>
@@ -1310,6 +1340,12 @@ async function saveBasicInfo() {
         if (gpVal) body.game_preset_id = parseInt(gpVal);
     }
 
+    // Session delivery type + meeting link
+    const stEl = document.getElementById('basic-session-type-config');
+    if (stEl) body.session_type_config = stEl.value;
+    const mlVal = (document.getElementById('basic-meeting-link')?.value || '').trim();
+    body.meeting_link = mlVal || '';
+
     const statusEl = document.getElementById('basic-save-status');
     statusEl.textContent = 'Saving…';
     try {
@@ -1321,6 +1357,12 @@ async function saveBasicInfo() {
         statusEl.textContent = '❌ ' + err.message;
         toast(err.message, 'error');
     }
+}
+
+function toggleEditMeetingLink() {
+    const val = document.getElementById('basic-session-type-config')?.value;
+    const row = document.getElementById('edit-meeting-link-row');
+    if (row) row.style.display = (val === 'virtual' || val === 'hybrid') ? '' : 'none';
 }
 
 function filterEditCampuses() {

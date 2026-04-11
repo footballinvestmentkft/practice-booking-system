@@ -77,8 +77,8 @@ async def sessions_page(
             enrolled_count = db.query(Booking).filter(
                 Booking.session_id == session.id
             ).count()
-            # Virtual tournament sessions use SemesterEnrollment (no Booking rows)
-            if enrolled_count == 0 and session.session_type == SessionType.virtual and session.semester_id:
+            # Virtual/hybrid tournament sessions use SemesterEnrollment (no Booking rows)
+            if enrolled_count == 0 and session.session_type in (SessionType.virtual, SessionType.hybrid) and session.semester_id:
                 enrolled_count = db.query(SemesterEnrollment).filter(
                     SemesterEnrollment.semester_id == session.semester_id,
                     SemesterEnrollment.is_active.is_(True),
@@ -131,6 +131,7 @@ async def sessions_page(
             Booking.user_id == user.id
         ).all()
         enrolled_session_ids = {b.session_id for b in my_bookings}
+        approved_semesters_set = set(approved_semester_ids)
 
         # Add enrolled status and instructor name to sessions
         budapest_tz = ZoneInfo("Europe/Budapest")
@@ -138,6 +139,11 @@ async def sessions_page(
 
         for session in upcoming_sessions:
             session.is_enrolled = session.id in enrolled_session_ids
+            # Virtual/hybrid tournament sessions: enrolled via SemesterEnrollment (no Booking from seed)
+            if (not session.is_enrolled
+                    and session.session_type in (SessionType.virtual, SessionType.hybrid)
+                    and session.semester_id in approved_semesters_set):
+                session.is_enrolled = True
 
             # Calculate if booking can be cancelled (12-hour deadline + no attendance/review)
             session_start = session.date_start  # Stored as naive Budapest time
@@ -195,8 +201,8 @@ async def sessions_page(
             enrolled_count = db.query(Booking).filter(
                 Booking.session_id == session.id
             ).count()
-            # Virtual tournament sessions use SemesterEnrollment (no Booking rows)
-            if enrolled_count == 0 and session.session_type == SessionType.virtual and session.semester_id:
+            # Virtual/hybrid tournament sessions use SemesterEnrollment (no Booking rows)
+            if enrolled_count == 0 and session.session_type in (SessionType.virtual, SessionType.hybrid) and session.semester_id:
                 enrolled_count = db.query(SemesterEnrollment).filter(
                     SemesterEnrollment.semester_id == session.semester_id,
                     SemesterEnrollment.is_active.is_(True),
@@ -426,8 +432,8 @@ async def session_details(
                 'performance_review': performance_review_dict
             })
 
-    # Virtual tournament sessions: SemesterEnrollment fallback (no Booking rows exist)
-    if not enrolled_students and session.session_type == SessionType.virtual and session.semester_id:
+    # Virtual/hybrid tournament sessions: SemesterEnrollment fallback (no Booking rows exist)
+    if not enrolled_students and session.session_type in (SessionType.virtual, SessionType.hybrid) and session.semester_id:
         se_rows = db.query(SemesterEnrollment).filter(
             SemesterEnrollment.semester_id == session.semester_id,
             SemesterEnrollment.is_active.is_(True),
@@ -459,8 +465,8 @@ async def session_details(
     booking_for_user = next((b for b in bookings if b.user_id == user.id), None)
     is_enrolled = booking_for_user is not None
 
-    # Virtual tournament sessions: students enroll via SemesterEnrollment (no Booking created)
-    if not is_enrolled and session.session_type == SessionType.virtual and session.semester_id:
+    # Virtual/hybrid tournament sessions: students enroll via SemesterEnrollment (no Booking created)
+    if not is_enrolled and session.session_type in (SessionType.virtual, SessionType.hybrid) and session.semester_id:
         is_enrolled = db.query(SemesterEnrollment).filter(
             SemesterEnrollment.user_id == user.id,
             SemesterEnrollment.semester_id == session.semester_id,
@@ -543,7 +549,7 @@ async def session_details(
                         s = db.query(User).filter(User.id == booking.user_id).first()
                         if s:
                             result_students.append(s)
-                    if not result_students and session.session_type == SessionType.virtual and session.semester_id:
+                    if not result_students and session.session_type in (SessionType.virtual, SessionType.hybrid) and session.semester_id:
                         se_ids = [se.user_id for se in db.query(SemesterEnrollment).filter(
                             SemesterEnrollment.semester_id == session.semester_id,
                             SemesterEnrollment.is_active.is_(True),

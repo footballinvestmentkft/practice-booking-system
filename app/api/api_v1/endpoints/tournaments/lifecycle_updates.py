@@ -54,6 +54,7 @@ class TournamentUpdateRequest(BaseModel):
     winner_count: Optional[int] = Field(None, ge=1, description="Number of winners (INDIVIDUAL_RANKING)")
     team_enrollment_cost: Optional[int] = Field(None, ge=0, description="Credit cost per team enrollment (TEAM tournaments)")
     session_type_config: Optional[str] = Field(None, description="Session delivery type for generated sessions: on_site / virtual / hybrid (⚠️ Cannot change after sessions are generated)")
+    meeting_link: Optional[str] = Field(None, description="Meeting URL for virtual/hybrid tournament sessions (updateable anytime)")
 
 
 # ============================================================================
@@ -235,6 +236,12 @@ def update_tournament(
             old_type = tournament.tournament_config_obj.session_type_config or "on_site"
             tournament.tournament_config_obj.session_type_config = request.session_type_config
             updates["session_type_config"] = {"old": old_type, "new": request.session_type_config}
+
+    # Update meeting_link (not guarded by sessions_generated — updateable anytime)
+    if request.meeting_link is not None:
+        if tournament.tournament_config_obj:
+            tournament.tournament_config_obj.meeting_link = request.meeting_link or None
+            updates["meeting_link"] = request.meeting_link
 
     # Update tournament_type_id (lives in TournamentConfiguration — ⚠️ auto-deletes sessions on change)
     # Use model_fields_set to detect explicit null (IR switch) vs omitted field

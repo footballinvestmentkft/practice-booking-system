@@ -664,6 +664,11 @@ body {
                 {%- elif participant_type == 'INDIVIDUAL' %}Individual
                 {%- else %}{{ participant_type }}{%- endif %}
             </span>
+            {% if session_type_config == 'virtual' %}
+            <span class="meta-chip">💻 Online</span>
+            {% elif session_type_config == 'hybrid' %}
+            <span class="meta-chip">🔀 Hybrid</span>
+            {% endif %}
         </div>
 
         <div class="event-info-grid">

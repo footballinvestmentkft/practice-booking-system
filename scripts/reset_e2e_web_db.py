@@ -13,6 +13,7 @@ Usage:
     python scripts/reset_e2e_web_db.py --scenario business_lifecycle
     python scripts/reset_e2e_web_db.py --scenario tournament_e2e
     python scripts/reset_e2e_web_db.py --scenario tournament_e2e_enrolled
+    python scripts/reset_e2e_web_db.py --scenario tournament_virtual_e2e
 
 Scenarios:
     baseline             admin + instructor + student (DOB set) + semester
@@ -24,6 +25,7 @@ Scenarios:
     tournament_e2e_enrolled  tournament_e2e + student already enrolled (900 cr, for instructor view tests)
     student_skill_history    baseline + student LFA license (29 skills) + 2 COMPLETED tournaments + TournamentParticipation (EMA timeline)
     student_1tournament      baseline + student LFA license (29 skills) + 1 COMPLETED tournament (single-entry EMA edge case)
+    tournament_virtual_e2e   baseline + student LFA license + virtual tournament (TournamentConfig session_type_config=virtual, meeting_link) + 1 virtual session + SemesterEnrollment
 """
 
 import sys
@@ -51,6 +53,7 @@ from app.models.invitation_code import InvitationCode
 from app.models.license import UserLicense
 from app.models.tournament_achievement import TournamentParticipation
 from app.models.tournament_reward_config import TournamentRewardConfig
+from app.models.tournament_configuration import TournamentConfiguration
 from app.core.security import get_password_hash
 
 TZ = ZoneInfo("Europe/Budapest")
@@ -752,6 +755,112 @@ def scenario_student_1tournament(db) -> list[str]:
     return lines
 
 
+# ── tournament_virtual_e2e scenario ───────────────────────────────────────────
+
+_TOURN_VIRTUAL_E2E_CODE = "TOURN-VIRTUAL-E2E-2026"
+_VIRTUAL_MEETING_LINK   = "https://meet.example.com/e2e-virtual-session"
+
+
+def scenario_tournament_virtual_e2e(db) -> list[str]:
+    """Virtual tournament UI scenario: public chip, admin form, student 'Join Meeting' button.
+
+    State:
+        - Student rdias@manchestercity.com: 1000 credits, LFA license, onboarding done
+        - Virtual tournament TOURN-VIRTUAL-E2E-2026: IN_PROGRESS
+          - TournamentConfiguration: session_type_config='virtual', meeting_link set
+          - 1 Session: session_type=virtual, meeting_link set, date_start=tomorrow
+          - SemesterEnrollment for student: APPROVED, is_active=True
+    """
+    lines = scenario_baseline(db)
+
+    student_spec = next(s for s in _BASELINE_USERS if s["role"] == UserRole.STUDENT)
+    student = _upsert_user(db, student_spec, credit_balance=1000, onboarding_completed=True)
+    lines.append(f"  set {student_spec['email']} credit_balance=1000 onboarding_completed=True")
+
+    lic = _upsert_lfa_license(db, student)
+    lines.append(f"  upserted LFA_FOOTBALL_PLAYER license for {student_spec['email']}")
+
+    instructor = db.query(User).filter(User.email == "grandmaster@lfa.com").first()
+
+    # Remove stale virtual tournament (idempotent)
+    old = db.query(Semester).filter(Semester.code == _TOURN_VIRTUAL_E2E_CODE).first()
+    if old:
+        db.query(SemesterEnrollment).filter(SemesterEnrollment.semester_id == old.id).delete(synchronize_session=False)
+        db.query(SessionModel).filter(SessionModel.semester_id == old.id).delete(synchronize_session=False)
+        db.query(TournamentConfiguration).filter(TournamentConfiguration.semester_id == old.id).delete(synchronize_session=False)
+        db.delete(old)
+        db.commit()
+
+    today = date.today()
+    tourn = Semester(
+        code=_TOURN_VIRTUAL_E2E_CODE,
+        name="E2E Virtual Tournament 2026",
+        start_date=today - timedelta(days=1),
+        end_date=today + timedelta(days=14),
+        tournament_status="IN_PROGRESS",
+        enrollment_cost=100,
+        specialization_type="LFA_FOOTBALL_PLAYER",
+        age_group="AMATEUR",
+        master_instructor_id=instructor.id,
+    )
+    db.add(tourn)
+    db.flush()
+
+    cfg = TournamentConfiguration(
+        semester_id=tourn.id,
+        session_type_config="virtual",
+        meeting_link=_VIRTUAL_MEETING_LINK,
+        sessions_generated=True,
+        sessions_generated_at=datetime.utcnow(),
+    )
+    db.add(cfg)
+    db.flush()
+
+    now = datetime.now(TZ).replace(tzinfo=None)
+    session = SessionModel(
+        title="E2E Virtual Session",
+        description="Auto-created for Cypress virtual tournament E2E",
+        date_start=now + timedelta(days=1),
+        date_end=now + timedelta(days=1, hours=1),
+        session_type=SessionType.virtual,
+        meeting_link=_VIRTUAL_MEETING_LINK,
+        capacity=30,
+        location="Online",
+        semester_id=tourn.id,
+        instructor_id=instructor.id,
+        session_status="scheduled",
+        quiz_unlocked=False,
+    )
+    db.add(session)
+    db.flush()
+
+    enrollment = SemesterEnrollment(
+        user_id=student.id,
+        semester_id=tourn.id,
+        user_license_id=lic.id,
+        age_category="AMATEUR",
+        request_status=EnrollmentStatus.APPROVED,
+        approved_at=datetime.utcnow(),
+        approved_by=student.id,
+        payment_verified=True,
+        is_active=True,
+        enrolled_at=datetime.utcnow(),
+        requested_at=datetime.utcnow(),
+    )
+    db.add(enrollment)
+    db.commit()
+    db.refresh(tourn)
+    lines.append(
+        f"  created virtual tournament id={tourn.id} '{tourn.name}' "
+        f"session_type_config=virtual meeting_link={_VIRTUAL_MEETING_LINK}"
+    )
+    lines.append(
+        f"  created virtual session id={session.id} + SemesterEnrollment "
+        f"for student id={student.id}"
+    )
+    return lines
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 _SCENARIOS = {
@@ -764,6 +873,7 @@ _SCENARIOS = {
     "tournament_e2e_enrolled":      scenario_tournament_e2e_enrolled,
     "student_skill_history":        scenario_student_skill_history,
     "student_1tournament":          scenario_student_1tournament,
+    "tournament_virtual_e2e":       scenario_tournament_virtual_e2e,
 }
 
 

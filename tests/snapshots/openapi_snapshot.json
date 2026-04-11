@@ -2410,6 +2410,11 @@
             "title": "Location Id",
             "type": "string"
           },
+          "meeting_link": {
+            "default": "",
+            "title": "Meeting Link",
+            "type": "string"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -2422,6 +2427,11 @@
           "participant_type": {
             "default": "INDIVIDUAL",
             "title": "Participant Type",
+            "type": "string"
+          },
+          "session_type_config": {
+            "default": "on_site",
+            "title": "Session Type Config",
             "type": "string"
           },
           "start_date": {
@@ -3490,6 +3500,34 @@
         "title": "Body_specialization_unlock_specialization_unlock_post",
         "type": "object"
       },
+      "Body_student_upload_compact_bg_photo_dashboard_lfa_player_photo_compact_bg_post": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_student_upload_compact_bg_photo_dashboard_lfa_player_photo_compact_bg_post",
+        "type": "object"
+      },
+      "Body_student_upload_landscape_photo_dashboard_lfa_player_photo_landscape_post": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_student_upload_landscape_photo_dashboard_lfa_player_photo_landscape_post",
+        "type": "object"
+      },
       "Body_student_upload_player_photo_dashboard_lfa_player_photo_post": {
         "properties": {
           "file": {
@@ -3502,6 +3540,34 @@
           "file"
         ],
         "title": "Body_student_upload_player_photo_dashboard_lfa_player_photo_post",
+        "type": "object"
+      },
+      "Body_student_upload_portrait_photo_dashboard_lfa_player_photo_portrait_post": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_student_upload_portrait_photo_dashboard_lfa_player_photo_portrait_post",
+        "type": "object"
+      },
+      "Body_student_upload_showcase_bg_photo_dashboard_lfa_player_photo_showcase_bg_post": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_student_upload_showcase_bg_photo_dashboard_lfa_player_photo_showcase_bg_post",
         "type": "object"
       },
       "Body_submit_quiz_quizzes__quiz_id__submit_post": {
@@ -12368,6 +12434,90 @@
         "title": "QuestionType",
         "type": "string"
       },
+      "QuizAnswerDetail": {
+        "description": "Per-question answer detail for attempt review",
+        "properties": {
+          "answer_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer Text"
+          },
+          "correct_option_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correct Option Text"
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanation"
+          },
+          "is_correct": {
+            "title": "Is Correct",
+            "type": "boolean"
+          },
+          "question_id": {
+            "title": "Question Id",
+            "type": "integer"
+          },
+          "question_order": {
+            "title": "Question Order",
+            "type": "integer"
+          },
+          "question_text": {
+            "title": "Question Text",
+            "type": "string"
+          },
+          "selected_option_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Option Id"
+          },
+          "selected_option_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Option Text"
+          }
+        },
+        "required": [
+          "question_id",
+          "question_text",
+          "question_order",
+          "is_correct"
+        ],
+        "title": "QuizAnswerDetail",
+        "type": "object"
+      },
       "QuizAnswerOptionCreate": {
         "properties": {
           "is_correct": {
@@ -12448,6 +12598,181 @@
           "question_id"
         ],
         "title": "QuizAnswerOptionResponse",
+        "type": "object"
+      },
+      "QuizAttemptAdminItem": {
+        "description": "Single attempt entry in admin list view",
+        "properties": {
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "correct_answers": {
+            "title": "Correct Answers",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "boolean"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "total_questions": {
+            "title": "Total Questions",
+            "type": "integer"
+          },
+          "user_email": {
+            "title": "User Email",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          },
+          "user_name": {
+            "title": "User Name",
+            "type": "string"
+          },
+          "xp_awarded": {
+            "title": "Xp Awarded",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "user_email",
+          "user_name",
+          "started_at",
+          "correct_answers",
+          "total_questions",
+          "passed",
+          "xp_awarded"
+        ],
+        "title": "QuizAttemptAdminItem",
+        "type": "object"
+      },
+      "QuizAttemptDetailResponse": {
+        "description": "Full attempt detail with per-question answers for student review",
+        "properties": {
+          "answers": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/QuizAnswerDetail"
+            },
+            "title": "Answers",
+            "type": "array"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "correct_answers": {
+            "title": "Correct Answers",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "boolean"
+          },
+          "quiz_id": {
+            "title": "Quiz Id",
+            "type": "integer"
+          },
+          "quiz_title": {
+            "title": "Quiz Title",
+            "type": "string"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "time_spent_minutes": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Spent Minutes"
+          },
+          "total_questions": {
+            "title": "Total Questions",
+            "type": "integer"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          },
+          "xp_awarded": {
+            "title": "Xp Awarded",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "quiz_id",
+          "user_id",
+          "quiz_title",
+          "started_at",
+          "total_questions",
+          "correct_answers",
+          "xp_awarded",
+          "passed"
+        ],
+        "title": "QuizAttemptDetailResponse",
         "type": "object"
       },
       "QuizAttemptResponse": {
@@ -12646,6 +12971,38 @@
           "xp_awarded"
         ],
         "title": "QuizAttemptSummary",
+        "type": "object"
+      },
+      "QuizAttemptsAdminResponse": {
+        "description": "Admin view: all attempts for a quiz",
+        "properties": {
+          "attempts": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/QuizAttemptAdminItem"
+            },
+            "title": "Attempts",
+            "type": "array"
+          },
+          "quiz_id": {
+            "title": "Quiz Id",
+            "type": "integer"
+          },
+          "quiz_title": {
+            "title": "Quiz Title",
+            "type": "string"
+          },
+          "total_attempts": {
+            "title": "Total Attempts",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "quiz_id",
+          "quiz_title",
+          "total_attempts"
+        ],
+        "title": "QuizAttemptsAdminResponse",
         "type": "object"
       },
       "QuizCategory": {
@@ -18189,6 +18546,18 @@
             "description": "Measurement unit (seconds, meters, points, etc.)",
             "title": "Measurement Unit"
           },
+          "meeting_link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Meeting URL for virtual/hybrid tournament sessions (updateable anytime)",
+            "title": "Meeting Link"
+          },
           "name": {
             "anyOf": [
               {
@@ -18250,6 +18619,18 @@
             ],
             "description": "Scoring type (TIME_BASED, DISTANCE_BASED, SCORE_BASED, PLACEMENT)",
             "title": "Scoring Type"
+          },
+          "session_type_config": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Session delivery type for generated sessions: on_site / virtual / hybrid (\u26a0\ufe0f Cannot change after sessions are generated)",
+            "title": "Session Type Config"
           },
           "specialization_type": {
             "anyOf": [
@@ -20590,6 +20971,19 @@
           "theme"
         ],
         "title": "_CardThemeRequest",
+        "type": "object"
+      },
+      "_CardVariantRequest": {
+        "properties": {
+          "variant": {
+            "title": "Variant",
+            "type": "string"
+          }
+        },
+        "required": [
+          "variant"
+        ],
+        "title": "_CardVariantRequest",
         "type": "object"
       },
       "app__api__api_v1__endpoints__coach__licenses__LicenseCreate": {
@@ -44642,6 +45036,54 @@
         ]
       }
     },
+    "/api/v1/quizzes/admin/{quiz_id}/attempts": {
+      "get": {
+        "description": "List all attempts for a quiz (admin/instructor only)",
+        "operationId": "get_quiz_attempts_admin_api_v1_quizzes_admin__quiz_id__attempts_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "title": "Quiz Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuizAttemptsAdminResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Quiz Attempts Admin",
+        "tags": [
+          "quizzes"
+        ]
+      }
+    },
     "/api/v1/quizzes/attempts/my": {
       "get": {
         "description": "Get current user's quiz attempts",
@@ -44668,6 +45110,54 @@
           }
         ],
         "summary": "Get My Quiz Attempts",
+        "tags": [
+          "quizzes"
+        ]
+      }
+    },
+    "/api/v1/quizzes/attempts/{attempt_id}": {
+      "get": {
+        "description": "Get detailed result of a specific quiz attempt including per-question answers",
+        "operationId": "get_attempt_detail_api_v1_quizzes_attempts__attempt_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "title": "Attempt Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuizAttemptDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Attempt Detail",
         "tags": [
           "quizzes"
         ]
@@ -47493,6 +47983,55 @@
         "tags": [
           "sessions",
           "game-results"
+        ]
+      }
+    },
+    "/api/v1/sessions/{session_id}/rank-from-quiz": {
+      "post": {
+        "description": "Compute and store tournament rankings derived from quiz attempt scores.\n\n**Authorization:** Admin only\n\n**Guards:**\n- Session must exist\n- Session must be `session_type = virtual`\n- A `SessionQuiz` link must exist for this session\n- Session quiz window must be closed (`date_end < now`)\n\n**Ranking logic:**\n- Only participants with a **completed** `QuizAttempt` are ranked\n- Rank 1 = highest quiz score (ties receive the same rank)\n- Results are written to `session.rounds_data` in standard IR format\n- Session `session_status` is set to `completed`\n\n**Returns:**\n```json\n{\n    \"session_id\": 42,\n    \"quiz_id\": 7,\n    \"ranked\": [{\"user_id\": 1, \"score\": 95.0, \"rank\": 1}, ...],\n    \"total\": 6,\n    \"excluded\": 1\n}\n```",
+        "operationId": "rank_from_quiz_api_v1_sessions__session_id__rank_from_quiz_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Rank participants from quiz scores (virtual sessions only)",
+        "tags": [
+          "sessions",
+          "quiz-ranking",
+          "sessions",
+          "quiz-ranking"
         ]
       }
     },
@@ -54610,6 +55149,26 @@
         ]
       }
     },
+    "/dashboard/card-photo-focus": {
+      "post": {
+        "description": "Save photo focus point (X%, Y%) for a specific card variant.",
+        "operationId": "student_set_card_photo_focus_dashboard_card_photo_focus_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Student Set Card Photo Focus",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/dashboard/card-theme": {
       "post": {
         "description": "Update the active colour theme for the authenticated student's player card.",
@@ -54650,6 +55209,68 @@
         ]
       }
     },
+    "/dashboard/card-variant": {
+      "post": {
+        "description": "Apply a card layout variant (must already be unlocked for premium variants).",
+        "operationId": "student_set_card_variant_dashboard_card_variant_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_CardVariantRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Set Card Variant",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/lfa-football-player/card-editor": {
+      "get": {
+        "description": "Dedicated sub-page for LFA Football Player card editing (Phase 1 extraction).",
+        "operationId": "lfa_player_card_editor_dashboard_lfa_football_player_card_editor_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Lfa Player Card Editor",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/dashboard/lfa-player-photo": {
       "post": {
         "operationId": "student_upload_player_photo_dashboard_lfa_player_photo_post",
@@ -54684,6 +55305,238 @@
           }
         },
         "summary": "Student Upload Player Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/lfa-player-photo-compact-bg": {
+      "post": {
+        "operationId": "student_upload_compact_bg_photo_dashboard_lfa_player_photo_compact_bg_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_student_upload_compact_bg_photo_dashboard_lfa_player_photo_compact_bg_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Upload Compact Bg Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/lfa-player-photo-compact-bg/delete": {
+      "post": {
+        "operationId": "student_delete_compact_bg_photo_dashboard_lfa_player_photo_compact_bg_delete_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Student Delete Compact Bg Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/lfa-player-photo-landscape": {
+      "post": {
+        "operationId": "student_upload_landscape_photo_dashboard_lfa_player_photo_landscape_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_student_upload_landscape_photo_dashboard_lfa_player_photo_landscape_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Upload Landscape Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/lfa-player-photo-landscape/delete": {
+      "post": {
+        "operationId": "student_delete_landscape_photo_dashboard_lfa_player_photo_landscape_delete_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Student Delete Landscape Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/lfa-player-photo-portrait": {
+      "post": {
+        "operationId": "student_upload_portrait_photo_dashboard_lfa_player_photo_portrait_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_student_upload_portrait_photo_dashboard_lfa_player_photo_portrait_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Upload Portrait Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/lfa-player-photo-portrait/delete": {
+      "post": {
+        "operationId": "student_delete_portrait_photo_dashboard_lfa_player_photo_portrait_delete_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Student Delete Portrait Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/lfa-player-photo-showcase-bg": {
+      "post": {
+        "operationId": "student_upload_showcase_bg_photo_dashboard_lfa_player_photo_showcase_bg_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_student_upload_showcase_bg_photo_dashboard_lfa_player_photo_showcase_bg_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Upload Showcase Bg Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/lfa-player-photo-showcase-bg/delete": {
+      "post": {
+        "operationId": "student_delete_showcase_bg_photo_dashboard_lfa_player_photo_showcase_bg_delete_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Student Delete Showcase Bg Photo",
         "tags": [
           "web"
         ]
@@ -54743,6 +55596,46 @@
           }
         },
         "summary": "Student Unlock Theme",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/unlock-variant": {
+      "post": {
+        "description": "Unlock a premium card layout variant by spending credits.",
+        "operationId": "student_unlock_variant_dashboard_unlock_variant_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_CardVariantRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Unlock Variant",
         "tags": [
           "web"
         ]
@@ -55633,6 +56526,22 @@
               "title": "User Id",
               "type": "integer"
             }
+          },
+          {
+            "in": "query",
+            "name": "preview",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Preview"
+            }
           }
         ],
         "responses": {
@@ -55762,6 +56671,63 @@
           }
         },
         "summary": "Progress Page",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/quizzes/attempts/{attempt_id}/review": {
+      "get": {
+        "description": "Review page for a completed quiz attempt.\nStudents see only their own attempt; admins/instructors can view any attempt.",
+        "operationId": "quiz_attempt_review_quizzes_attempts__attempt_id__review_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "title": "Attempt Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "session_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Quiz Attempt Review",
         "tags": [
           "web"
         ]

@@ -177,9 +177,9 @@ def check_duplicate_enrollment(
 
 def validate_tournament_session_type(session_type: str) -> Tuple[bool, Optional[str]]:
     """
-    Validate that tournament sessions are ONLY on_site.
+    Validate session delivery type for tournament sessions.
 
-    Tournaments do not support hybrid or virtual session types.
+    Tournaments support on_site, virtual, and hybrid session types.
 
     Args:
         session_type: The session type (on_site, hybrid, virtual)
@@ -187,8 +187,9 @@ def validate_tournament_session_type(session_type: str) -> Tuple[bool, Optional[
     Returns:
         Tuple of (is_valid: bool, error_message: Optional[str])
     """
-    if session_type != "on_site":
-        return False, "Tournaments only support ON_SITE session type (no hybrid/virtual)"
+    valid = {"on_site", "virtual", "hybrid"}
+    if session_type not in valid:
+        return False, f"Invalid session type '{session_type}'. Must be one of: {sorted(valid)}"
 
     return True, None
 

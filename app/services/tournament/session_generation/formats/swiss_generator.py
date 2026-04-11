@@ -98,6 +98,7 @@ class SwissGenerator(BaseFormatGenerator):
                         'location': get_tournament_venue(tournament),
                         'session_type': self._resolve_session_type(tournament),
                         'base_xp': self._resolve_base_xp(self._resolve_session_type(tournament)),
+                        'meeting_link': self._resolve_meeting_link(tournament),
                         # ✅ HEAD_TO_HEAD: 1v1 match metadata
                         'ranking_mode': 'PERFORMANCE_PAIRING',
                         'round_number': round_num,
@@ -156,6 +157,7 @@ class SwissGenerator(BaseFormatGenerator):
                         'location': get_tournament_venue(tournament),
                         'session_type': self._resolve_session_type(tournament),
                         'base_xp': self._resolve_base_xp(self._resolve_session_type(tournament)),
+                        'meeting_link': self._resolve_meeting_link(tournament),
                         # ✅ UNIFIED RANKING: Swiss performance pod metadata
                         'ranking_mode': 'PERFORMANCE_POD',
                         'round_number': round_num,

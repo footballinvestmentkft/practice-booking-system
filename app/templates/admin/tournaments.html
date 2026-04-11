@@ -623,6 +623,24 @@
                             {% endfor %}
                         </select>
                     </div>
+
+                    <!-- Session Delivery Type -->
+                    <div class="form-group">
+                        <label for="session_type_config">Session Type</label>
+                        <select id="session_type_config" name="session_type_config" onchange="toggleMeetingLinkField()">
+                            <option value="on_site" selected>🏢 On-Site</option>
+                            <option value="virtual">💻 Virtual</option>
+                            <option value="hybrid">🔀 Hybrid</option>
+                        </select>
+                    </div>
+
+                    <!-- Meeting Link (shown only for virtual/hybrid) -->
+                    <div class="form-group" id="meeting_link_row" style="display:none;">
+                        <label for="meeting_link">Meeting Link</label>
+                        <input type="url" id="meeting_link" name="meeting_link"
+                               placeholder="https://meet.example.com/event">
+                        <small>Required for virtual / optional for hybrid</small>
+                    </div>
                 </div>
 
                 <div class="form-footer">
@@ -696,6 +714,12 @@ function filterCampuses() {
         }
     });
     document.getElementById('campus_id').value = '';
+}
+
+function toggleMeetingLinkField() {
+    const t = document.getElementById('session_type_config').value;
+    document.getElementById('meeting_link_row').style.display =
+        (t === 'virtual' || t === 'hybrid') ? '' : 'none';
 }
 </script>
 {% endblock %}

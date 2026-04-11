@@ -262,7 +262,7 @@ class TestCheckDuplicateEnrollment:
 @pytest.mark.tournament
 @pytest.mark.validation
 class TestValidateTournamentSessionType:
-    """Test tournament session type validation (ONLY on_site)."""
+    """Test tournament session type validation (on_site, virtual, hybrid)."""
 
     def test_on_site_is_valid(self):
         """Tournament sessions can be on_site."""
@@ -271,21 +271,26 @@ class TestValidateTournamentSessionType:
         assert is_valid is True
         assert error is None
 
-    def test_hybrid_is_invalid(self):
-        """Tournament sessions cannot be hybrid."""
+    def test_hybrid_is_valid(self):
+        """Tournament sessions can be hybrid."""
         is_valid, error = validate_tournament_session_type("hybrid")
 
-        assert is_valid is False
-        assert "only support ON_SITE" in error
-        assert "no hybrid" in error.lower()
+        assert is_valid is True
+        assert error is None
 
-    def test_virtual_is_invalid(self):
-        """Tournament sessions cannot be virtual."""
+    def test_virtual_is_valid(self):
+        """Tournament sessions can be virtual."""
         is_valid, error = validate_tournament_session_type("virtual")
 
+        assert is_valid is True
+        assert error is None
+
+    def test_invalid_type_is_rejected(self):
+        """Unknown session types are rejected."""
+        is_valid, error = validate_tournament_session_type("offline")
+
         assert is_valid is False
-        assert "only support ON_SITE" in error
-        assert "no hybrid/virtual" in error.lower()
+        assert "offline" in error
 
 
 # ============================================================================

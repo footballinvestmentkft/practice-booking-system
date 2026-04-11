@@ -631,6 +631,8 @@ async def admin_create_tournament(
     game_preset_id: str = Form(""),
     participant_type: str = Form("INDIVIDUAL"),
     number_of_rounds: int = Form(1),
+    session_type_config: str = Form("on_site"),
+    meeting_link: str = Form(""),
 ):
     """Admin: create a new tournament."""
     _admin_only(user)
@@ -669,6 +671,8 @@ async def admin_create_tournament(
         assignment_type=assignment_type,
         participant_type=participant_type,
         number_of_rounds=max(1, min(10, number_of_rounds)),
+        session_type_config=session_type_config if session_type_config in {"on_site", "virtual", "hybrid"} else "on_site",
+        meeting_link=meeting_link.strip() or None,
     )
     db.add(cfg)
 

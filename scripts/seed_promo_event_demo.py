@@ -373,6 +373,7 @@ def create_promo_tournament(name: str) -> Semester:
         participant_type="INDIVIDUAL",
         sessions_generated=False,
         session_type_config="virtual",    # Phase 1
+        meeting_link=_MEETING_LINK,       # Phase 2 — propagated to all generated sessions
         scoring_type="SCORE_BASED",
         ranking_direction="DESC",
         number_of_rounds=1,

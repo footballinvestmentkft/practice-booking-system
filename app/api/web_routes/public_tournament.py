@@ -898,4 +898,5 @@ def public_event_detail(
         "game_preset_skills": game_preset_skills,
         "bracket_rounds": bracket_rounds,
         "venue_schedule": venue_schedule,
+        "session_type_config": cfg.session_type_config if cfg else "on_site",
     })
