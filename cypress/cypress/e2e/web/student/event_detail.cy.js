@@ -46,7 +46,7 @@ describe('Student Event UX — Terminology + Navigation', {
     cy.get('body').should('not.contain.text', 'Internal Server Error');
 
     // Nav must show "Events" (not "Tournaments") — A-group rename
-    cy.get('.student-main-nav a[href="/tournaments"]')
+    cy.get('.student-nav a[href="/tournaments"]')
       .should('exist')
       .and('contain.text', 'Events');
 

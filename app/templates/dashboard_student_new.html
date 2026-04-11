@@ -219,9 +219,13 @@
         <div class="dash-right-col">
 
             {# ── Module Navigation ─────────────────────────────────────────────── #}
-            {# All targets have require_student_onboarding guard                   #}
+            {# Events is the primary entry point — Sessions are subordinate to Events #}
             <section class="mod-nav-section">
                 <div class="mod-nav-grid">
+                    <a href="/tournaments" class="mod-nav-card" style="border-top: 3px solid #3498db;">
+                        <span class="mod-nav-icon">🗓️</span>
+                        <span class="mod-nav-title">Events</span>
+                    </a>
                     <a href="/sessions" class="mod-nav-card">
                         <span class="mod-nav-icon">📅</span>
                         <span class="mod-nav-title">Sessions</span>
@@ -238,10 +242,6 @@
                         <span class="mod-nav-icon">🏆</span>
                         <span class="mod-nav-title">Achievements</span>
                     </a>
-                    <a href="/calendar" class="mod-nav-card">
-                        <span class="mod-nav-icon">📆</span>
-                        <span class="mod-nav-title">Calendar</span>
-                    </a>
                     <a href="/dashboard/lfa-football-player/card-editor" class="mod-nav-card">
                         <span class="mod-nav-icon">🪪</span>
                         <span class="mod-nav-title">My Card</span>
@@ -257,7 +257,7 @@
                 </div>
                 <div class="s-kpi-card">
                     <div class="s-kpi-val" id="kpi-tournaments">—</div>
-                    <div class="s-kpi-lbl">Tournaments</div>
+                    <div class="s-kpi-lbl">Events</div>
                 </div>
                 <div class="s-kpi-card">
                     <div class="s-kpi-val">{{ credit_balance }}</div>
@@ -280,27 +280,30 @@
                 </div>
             </section>
 
-            {# ── My Active Events widget ───────────────────────────────────────── #}
-            {% if my_active_tournaments %}
-            <section class="section-block">
+            {# ── My Active Events — primary widget ────────────────────────────── #}
+            <section class="section-block" style="border-left: 4px solid #3498db; padding-left: 1rem;">
                 <div class="section-header">
                     <h2 class="page-title">🗓️ My Active Events</h2>
-                    <a href="/tournaments" class="section-link">View all events →</a>
+                    <a href="/tournaments" class="section-link">All events →</a>
                 </div>
-                {% for t in my_active_tournaments %}
-                <a href="/tournaments/{{ t.id }}" style="display:flex; justify-content:space-between; align-items:center; background:#d6eaf8; color:#1a5276; padding:0.5rem 1rem; border-radius:8px; margin-bottom:0.5rem; text-decoration:none; font-weight:600;">
-                    <span>🗓️ {{ t.name }}</span>
-                    <span style="font-size:0.8rem; font-weight:400; opacity:0.85;">
-                        {% if t.tournament_status == 'IN_PROGRESS' %}⏳ In Progress
-                        {% elif t.tournament_status == 'ENROLLMENT_OPEN' %}🟢 Open
-                        {% elif t.tournament_status == 'ENROLLMENT_CLOSED' %}🔒 Closed
-                        {% elif t.tournament_status == 'CHECK_IN_OPEN' %}📋 Check-In
-                        {% else %}{{ t.tournament_status }}{% endif %}
-                    </span>
-                </a>
-                {% endfor %}
+                {% if my_active_tournaments %}
+                    {% for t in my_active_tournaments %}
+                    <a href="/tournaments/{{ t.id }}" style="display:flex; justify-content:space-between; align-items:center; background:#d6eaf8; color:#1a5276; padding:0.5rem 1rem; border-radius:8px; margin-bottom:0.5rem; text-decoration:none; font-weight:600;">
+                        <span>🗓️ {{ t.name }}</span>
+                        <span style="font-size:0.8rem; font-weight:400; opacity:0.85;">
+                            {% if t.tournament_status == 'IN_PROGRESS' %}⏳ In Progress
+                            {% elif t.tournament_status == 'ENROLLMENT_OPEN' %}🟢 Open
+                            {% elif t.tournament_status == 'ENROLLMENT_CLOSED' %}🔒 Closed
+                            {% elif t.tournament_status == 'CHECK_IN_OPEN' %}📋 Check-In
+                            {% else %}{{ t.tournament_status }}{% endif %}
+                        </span>
+                    </a>
+                    {% endfor %}
+                {% else %}
+                <p style="color: var(--app-text-muted); margin: 0 0 0.75rem;">You have no active event enrollments.</p>
+                <a href="/tournaments" class="btn btn-primary" style="display:inline-block;">🗓️ Browse Events</a>
+                {% endif %}
             </section>
-            {% endif %}
 
             {# ── Available Events ──────────────────────────────────────────────── #}
             <section class="section-block">

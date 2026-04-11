@@ -39,7 +39,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.database import SessionLocal
 from app.models.user import User, UserRole
-from app.models.semester import Semester
+from app.models.semester import Semester, SemesterCategory
 from app.models.session import Session as SessionModel, SessionType
 from app.models.booking import Booking, BookingStatus
 from app.models.attendance import Attendance
@@ -426,6 +426,7 @@ def _upsert_tournament_e2e(db, instructor: User) -> Semester:
     if tourn:
         tourn.name = "E2E Tournament 2026"
         tourn.tournament_status = "ENROLLMENT_OPEN"
+        tourn.semester_category = SemesterCategory.TOURNAMENT
         tourn.master_instructor_id = instructor.id
         tourn.start_date = today + timedelta(days=7)
         tourn.end_date = today + timedelta(days=14)
@@ -437,6 +438,7 @@ def _upsert_tournament_e2e(db, instructor: User) -> Semester:
         tourn = Semester(
             code=_TOURN_E2E_CODE,
             name="E2E Tournament 2026",
+            semester_category=SemesterCategory.TOURNAMENT,
             start_date=today + timedelta(days=7),
             end_date=today + timedelta(days=14),
             tournament_status="ENROLLMENT_OPEN",
