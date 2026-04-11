@@ -50,6 +50,35 @@
 .badge-completed-past { background-color: #95a5a6; color: white; }
 .badge-cancel   { background-color: #e74c3c; border-color: #c0392b; }
 
+/* Event-first grouping */
+.events-section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--app-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 1.5rem 0 0.75rem;
+}
+.event-group { margin-bottom: 2rem; }
+.event-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--app-card-alt);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.75rem;
+    border-left: 4px solid #3498db;
+}
+.event-group-link {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--app-text);
+    text-decoration: none;
+}
+.event-group-link:hover { color: #3498db; }
+.event-group-meta { font-size: 0.85rem; color: var(--app-text-muted); }
+
 /* Info/feedback boxes */
 .info-box-virtual {
     background-color: var(--app-card-alt, #f8f9fa);
@@ -321,206 +350,216 @@
         </div>
     </div>
 
-    <!-- Upcoming Sessions -->
-    <div class="mt-3">
-        <h2>All Sessions</h2>
-    {% if upcoming_sessions %}
-    <div class="cards-grid mt-2">
-        {% for session in upcoming_sessions %}
-        <div class="card student-session-card"
-             data-date="{{ session.date_start.strftime('%Y-%m-%d') }}"
-             data-datetime="{{ session.date_end.strftime('%Y-%m-%d %H:%M:%S') }}"
-             data-session-type="{{ session.session_type.value }}">
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.25rem;">
-                <h3 style="margin: 0;">{{ session.title }}</h3>
-                <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                    <!-- Session Type Badge -->
-                    <span class="badge
-                        {% if session.session_type.value == 'on_site' %}badge-on-site
-                        {% elif session.session_type.value == 'hybrid' %}badge-hybrid
-                        {% elif session.session_type.value == 'virtual' %}badge-virtual
-                        {% endif %}">
-                        {% if session.session_type.value == 'on_site' %}🏢 On-Site
-                        {% elif session.session_type.value == 'hybrid' %}🔀 Hybrid
-                        {% elif session.session_type.value == 'virtual' %}💻 Virtual
-                        {% endif %}
-                    </span>
-
-                    <span class="badge badge-info">{{ session.mode }}</span>
-
-                    <!-- Session Status Badge (On-Site & Hybrid only) -->
-                    {% if session.session_type.value in ['on_site', 'hybrid'] %}
-                        {% if session.actual_start_time and not session.actual_end_time %}
-                            <!-- Session in progress -->
-                            <span class="badge badge-in-progress">⏳ IN PROGRESS</span>
-                        {% elif session.actual_end_time %}
-                            <!-- Session completed - only show if student attended (not absent) -->
-                            {% if session.my_attendance and session.my_attendance.status.value != 'absent' %}
-                                <span class="badge badge-done">✅ COMPLETED</span>
-                            {% endif %}
-                        {% elif session.session_type.value == 'virtual' and session.quiz_completed %}
-                            <!-- VIRTUAL session completed (quiz passed) -->
-                            <span class="badge badge-done">✅ COMPLETED</span>
-                        {% endif %}
-                    {% endif %}
-                </div>
-            </div>
-
-            {% if session.parent_semester_name %}
-            <div class="session-tournament-badge">
-                🏅 <a href="/events/{{ session.parent_semester_id }}">{{ session.parent_semester_name }}</a>
-            </div>
-            {% endif %}
-
-            {% if session.description %}
-            <p class="text-muted" style="margin-bottom: 1rem;">{{ session.description[:100] }}{% if session.description|length > 100 %}...{% endif %}</p>
-            {% endif %}
-
-            {% if session.session_type.value == 'virtual' %}
-                {# VIRTUAL: Show full date range (can span multiple days) #}
-                <div class="info-box-virtual">
-                    <div style="margin-bottom: 0.5rem;">
-                        <strong>📅 Available From:</strong>
-                        <p style="margin: 0; font-size: 0.95rem;">{{ session.date_start.strftime('%b %d, %Y at %H:%M') }}</p>
-                    </div>
-                    <div>
-                        <strong>⏰ Until:</strong>
-                        <p style="margin: 0; font-size: 0.95rem;">{{ session.date_end.strftime('%b %d, %Y at %H:%M') }}</p>
-                    </div>
-                    <p class="text-sm text-muted" style="margin: 0.5rem 0 0 0; font-style: italic;">
-                        Multiple attempts available during this period
-                    </p>
-                </div>
-            {% else %}
-                {# ON-SITE / HYBRID: Show single day time slot #}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;">
-                    <div>
-                        <strong>📅 Date:</strong>
-                        <p style="margin: 0;">{{ session.date_start.strftime('%b %d, %Y') }}</p>
-                    </div>
-                    <div>
-                        <strong>🕐 Time:</strong>
-                        <p style="margin: 0;">{{ session.date_start.strftime('%H:%M') }} - {{ session.date_end.strftime('%H:%M') }}</p>
-                    </div>
-                </div>
-            {% endif %}
-
-            {% if session.location %}
-            <div style="margin-top: 0.5rem;">
-                <strong>📍 Location:</strong>
-                <p style="margin: 0;">{{ session.location }}</p>
-            </div>
-            {% endif %}
-
-            {% if session.instructor_name %}
-            <div style="margin-top: 0.5rem;">
-                <strong>👨‍🏫 Instructor:</strong>
-                <p style="margin: 0;">{{ session.instructor_name }}</p>
-            </div>
-            {% endif %}
-
-            {% if session.capacity %}
-            <div style="margin-top: 1rem;">
-                <div class="progress-container">
-                    <div class="progress-label">
-                        <span>Capacity</span>
-                        <span>{{ session.enrolled_count or 0 }}/{{ session.capacity }}</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: {{ ((session.enrolled_count or 0) / session.capacity * 100) if session.capacity > 0 else 0 }}%"></div>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- Instructor Performance Review (if exists) -->
-            {% if session.performance_review %}
-            <div class="info-box-eval">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <strong class="eval-title">📊 Instructor Evaluation</strong>
-                    <span class="eval-score text-muted">
-                        ⭐ {{ "%.1f"|format((session.performance_review.punctuality + session.performance_review.engagement + session.performance_review.focus + session.performance_review.collaboration + session.performance_review.attitude) / 5.0) }}/5.0
-                    </span>
-                </div>
-                <div class="eval-details text-muted">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem;">
-                        <span>⏰ Punctuality: {{ session.performance_review.punctuality }}/5</span>
-                        <span>🎯 Engagement: {{ session.performance_review.engagement }}/5</span>
-                        <span>🎓 Focus: {{ session.performance_review.focus }}/5</span>
-                        <span>🤝 Collaboration: {{ session.performance_review.collaboration }}/5</span>
-                        <span style="grid-column: span 2;">😊 Attitude: {{ session.performance_review.attitude }}/5</span>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-
-            {% if session.is_enrolled and session.meeting_link %}
-            <div style="margin-top: 1rem;">
-                <a href="{{ session.meeting_link }}" class="btn btn-primary" style="width: 100%;" target="_blank" rel="noopener">
-                    💻 Join Meeting
-                </a>
-            </div>
-            {% endif %}
-
-            <div style="margin-top: 1rem;">
-                {% if session.quiz_pending and session.is_enrolled %}
-                <a href="/quizzes/{{ session.pending_quiz_id }}/take?session_id={{ session.id }}"
-                   class="btn btn-primary" style="width: 100%; display: inline-block; text-align: center; margin-bottom: 0.5rem;">
-                    📝 Take Quiz
-                </a>
+{# ── Session Card Macro ──────────────────────────────────────────────────────── #}
+{% macro session_card(session) %}
+<div class="card student-session-card"
+     data-date="{{ session.date_start.strftime('%Y-%m-%d') }}"
+     data-datetime="{{ session.date_end.strftime('%Y-%m-%d %H:%M:%S') }}"
+     data-session-type="{{ session.session_type.value }}">
+    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.25rem;">
+        <h3 style="margin: 0;">{{ session.title }}</h3>
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            <span class="badge
+                {% if session.session_type.value == 'on_site' %}badge-on-site
+                {% elif session.session_type.value == 'hybrid' %}badge-hybrid
+                {% elif session.session_type.value == 'virtual' %}badge-virtual
+                {% endif %}">
+                {% if session.session_type.value == 'on_site' %}🏢 On-Site
+                {% elif session.session_type.value == 'hybrid' %}🔀 Hybrid
+                {% elif session.session_type.value == 'virtual' %}💻 Virtual
                 {% endif %}
-                <a href="/sessions/{{ session.id }}" class="btn btn-secondary" style="width: 100%; display: inline-block; text-align: center; margin-bottom: 0.5rem;">View Details</a>
-                {% if session.is_enrolled %}
-                    {% if session.can_cancel %}
-                        <div style="display: flex; gap: 0.5rem;">
-                            <button class="btn btn-success" style="flex: 1;" disabled>✓ Booked</button>
-                            <form method="POST" action="/sessions/cancel/{{ session.id }}" style="margin: 0; flex: 1;">
-                                <button type="submit" class="btn btn-secondary badge-cancel" style="width: 100%;"
-                                        onclick="return confirm('Are you sure you want to cancel this booking?')">Cancel</button>
-                            </form>
-                        </div>
-                    {% else %}
-                        <button class="btn btn-success" style="width: 100%;" disabled>✓ Booked</button>
+            </span>
+            <span class="badge badge-info">{{ session.mode }}</span>
+            {% if session.session_type.value in ['on_site', 'hybrid'] %}
+                {% if session.actual_start_time and not session.actual_end_time %}
+                    <span class="badge badge-in-progress">⏳ IN PROGRESS</span>
+                {% elif session.actual_end_time %}
+                    {% if session.my_attendance and session.my_attendance.status.value != 'absent' %}
+                        <span class="badge badge-done">✅ COMPLETED</span>
                     {% endif %}
-                {% else %}
-                    {% if session.can_book %}
-                        <form method="POST" action="/sessions/book/{{ session.id }}" style="margin: 0;">
-                            <button type="submit" class="btn btn-primary" style="width: 100%;">Book Session</button>
-                        </form>
-                    {% else %}
-                        <button class="btn btn-secondary" style="width: 100%;" disabled>⏰ Booking Closed</button>
-                    {% endif %}
+                {% elif session.session_type.value == 'virtual' and session.quiz_completed %}
+                    <span class="badge badge-done">✅ COMPLETED</span>
                 {% endif %}
-            </div>
+            {% endif %}
         </div>
-        {% endfor %}
     </div>
-    {% else %}
-    <div class="card text-center" style="padding: 3rem;">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
-        <h3>No Upcoming Sessions</h3>
-        <p class="text-muted">Check back later for new training sessions</p>
+
+    {% if session.parent_semester_name %}
+    <div class="session-tournament-badge">
+        🏅 <a href="/tournaments/{{ session.parent_semester_id }}">{{ session.parent_semester_name }}</a>
     </div>
     {% endif %}
-</div>
 
-<!-- Past Sessions -->
-{% if past_sessions %}
-<div class="mt-3">
-    <h2>Past Sessions</h2>
-    <div class="cards-grid mt-2">
-        {% for session in past_sessions %}
-        <div class="card" style="opacity: 0.8;">
-            <h3>{{ session.title }}</h3>
-            <p class="text-muted">{{ session.date_start.strftime('%b %d, %Y at %H:%M') }}</p>
-            <span class="badge badge-completed-past">Completed</span>
+    {% if session.description %}
+    <p class="text-muted" style="margin-bottom: 1rem;">{{ session.description[:100] }}{% if session.description|length > 100 %}...{% endif %}</p>
+    {% endif %}
+
+    {% if session.session_type.value == 'virtual' %}
+        <div class="info-box-virtual">
+            <div style="margin-bottom: 0.5rem;">
+                <strong>📅 Available From:</strong>
+                <p style="margin: 0; font-size: 0.95rem;">{{ session.date_start.strftime('%b %d, %Y at %H:%M') }}</p>
+            </div>
+            <div>
+                <strong>⏰ Until:</strong>
+                <p style="margin: 0; font-size: 0.95rem;">{{ session.date_end.strftime('%b %d, %Y at %H:%M') }}</p>
+            </div>
+            <p class="text-sm text-muted" style="margin: 0.5rem 0 0 0; font-style: italic;">
+                Multiple attempts available during this period
+            </p>
         </div>
+    {% else %}
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;">
+            <div>
+                <strong>📅 Date:</strong>
+                <p style="margin: 0;">{{ session.date_start.strftime('%b %d, %Y') }}</p>
+            </div>
+            <div>
+                <strong>🕐 Time:</strong>
+                <p style="margin: 0;">{{ session.date_start.strftime('%H:%M') }} - {{ session.date_end.strftime('%H:%M') }}</p>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if session.location %}
+    <div style="margin-top: 0.5rem;">
+        <strong>📍 Location:</strong>
+        <p style="margin: 0;">{{ session.location }}</p>
+    </div>
+    {% endif %}
+
+    {% if session.instructor_name %}
+    <div style="margin-top: 0.5rem;">
+        <strong>👨‍🏫 Instructor:</strong>
+        <p style="margin: 0;">{{ session.instructor_name }}</p>
+    </div>
+    {% endif %}
+
+    {% if session.capacity %}
+    <div style="margin-top: 1rem;">
+        <div class="progress-container">
+            <div class="progress-label">
+                <span>Capacity</span>
+                <span>{{ session.enrolled_count or 0 }}/{{ session.capacity }}</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ ((session.enrolled_count or 0) / session.capacity * 100) if session.capacity > 0 else 0 }}%"></div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if session.performance_review %}
+    <div class="info-box-eval">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <strong class="eval-title">📊 Instructor Evaluation</strong>
+            <span class="eval-score text-muted">
+                ⭐ {{ "%.1f"|format((session.performance_review.punctuality + session.performance_review.engagement + session.performance_review.focus + session.performance_review.collaboration + session.performance_review.attitude) / 5.0) }}/5.0
+            </span>
+        </div>
+        <div class="eval-details text-muted">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem;">
+                <span>⏰ Punctuality: {{ session.performance_review.punctuality }}/5</span>
+                <span>🎯 Engagement: {{ session.performance_review.engagement }}/5</span>
+                <span>🎓 Focus: {{ session.performance_review.focus }}/5</span>
+                <span>🤝 Collaboration: {{ session.performance_review.collaboration }}/5</span>
+                <span style="grid-column: span 2;">😊 Attitude: {{ session.performance_review.attitude }}/5</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if session.is_enrolled and session.meeting_link %}
+    <div style="margin-top: 1rem;">
+        <a href="{{ session.meeting_link }}" class="btn btn-primary" style="width: 100%;" target="_blank" rel="noopener">
+            💻 Join Meeting
+        </a>
+    </div>
+    {% endif %}
+
+    <div style="margin-top: 1rem;">
+        {% if session.quiz_pending and session.is_enrolled %}
+        <a href="/quizzes/{{ session.pending_quiz_id }}/take?session_id={{ session.id }}"
+           class="btn btn-primary" style="width: 100%; display: inline-block; text-align: center; margin-bottom: 0.5rem;"
+           data-testid="take-quiz-btn">
+            📝 Take Quiz
+        </a>
+        {% endif %}
+        <a href="/sessions/{{ session.id }}" class="btn btn-secondary" style="width: 100%; display: inline-block; text-align: center; margin-bottom: 0.5rem;">View Details</a>
+        {% if session.is_enrolled %}
+            {% if session.can_cancel %}
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-success" style="flex: 1;" disabled>✓ Booked</button>
+                    <form method="POST" action="/sessions/cancel/{{ session.id }}" style="margin: 0; flex: 1;">
+                        <button type="submit" class="btn btn-secondary badge-cancel" style="width: 100%;"
+                                onclick="return confirm('Are you sure you want to cancel this booking?')">Cancel</button>
+                    </form>
+                </div>
+            {% else %}
+                <button class="btn btn-success" style="width: 100%;" disabled>✓ Booked</button>
+            {% endif %}
+        {% else %}
+            {% if session.can_book %}
+                <form method="POST" action="/sessions/book/{{ session.id }}" style="margin: 0;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Book Session</button>
+                </form>
+            {% else %}
+                <button class="btn btn-secondary" style="width: 100%;" disabled>⏰ Booking Closed</button>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+{# ── My Events (grouped by tournament) ──────────────────────────────────────── #}
+{% if tournament_groups %}
+<div class="mt-3">
+    <div class="events-section-title">🗓️ My Events</div>
+    {% for group in tournament_groups %}
+    <div class="event-group">
+        <div class="event-group-header">
+            <a href="/tournaments/{{ group.tournament_id }}" class="event-group-link">
+                🗓️ {{ group.tournament_name }} →
+            </a>
+            <span class="event-group-meta">
+                {{ group.sessions | length }} session{{ 's' if group.sessions | length != 1 else '' }}
+            </span>
+        </div>
+        <div class="cards-grid">
+            {% for session in group.sessions %}
+            {{ session_card(session) }}
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{# ── Training Sessions ───────────────────────────────────────────────────────── #}
+{% if training_sessions %}
+<div class="mt-3">
+    {% if tournament_groups %}
+    <div class="events-section-title">📅 Training Sessions</div>
+    {% endif %}
+    <div class="cards-grid">
+        {% for session in training_sessions %}
+        {{ session_card(session) }}
         {% endfor %}
     </div>
 </div>
 {% endif %}
 
-{% endif %}  <!-- End STUDENT VIEW -->
+{# ── Empty state ─────────────────────────────────────────────────────────────── #}
+{% if not tournament_groups and not training_sessions %}
+<div class="card text-center mt-3" style="padding: 3rem;">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
+    <h3>No Sessions</h3>
+    <p class="text-muted">You have no sessions yet. Browse events to get started.</p>
+    <a href="/tournaments" class="btn btn-primary mt-2">🗓️ Browse Events</a>
+</div>
+{% endif %}
+
+{% endif %}  {# End STUDENT VIEW #}
 
 {% endblock %}
 

@@ -566,6 +566,24 @@ async def spec_dashboard(
     # Get user credit balance
     credit_balance = user.credit_balance if hasattr(user, 'credit_balance') else 0
 
+    # My active tournament enrollments (for "My Active Events" widget)
+    my_active_tournaments = (
+        db.query(Semester)
+        .join(SemesterEnrollment, SemesterEnrollment.semester_id == Semester.id)
+        .filter(
+            SemesterEnrollment.user_id == user.id,
+            SemesterEnrollment.is_active.is_(True),
+            SemesterEnrollment.request_status == EnrollmentStatus.APPROVED,
+            Semester.semester_category == SemesterCategory.TOURNAMENT,
+            Semester.tournament_status.in_(
+                ["IN_PROGRESS", "ENROLLMENT_OPEN", "ENROLLMENT_CLOSED", "CHECK_IN_OPEN"]
+            ),
+        )
+        .order_by(Semester.start_date.asc())
+        .limit(3)
+        .all()
+    )
+
     # Map spec type to header gradient class
     _spec_header_map = {
         "LFA_FOOTBALL_PLAYER": "hdr-football",
@@ -600,6 +618,7 @@ async def spec_dashboard(
             "age_description": age_description,
             "user_age": user_age,
             "spec_header_class": spec_header_class,
+            "my_active_tournaments": my_active_tournaments,
         }
     )
 

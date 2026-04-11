@@ -233,6 +233,22 @@ async def sessions_page(
                 ).first()
                 session.performance_review = performance_review
 
+        # Group sessions for event-first display
+        tournament_groups: dict = {}
+        training_sessions_list: list = []
+        for session in upcoming_sessions:
+            if session.parent_semester_id:
+                gid = session.parent_semester_id
+                if gid not in tournament_groups:
+                    tournament_groups[gid] = {
+                        "tournament_id": gid,
+                        "tournament_name": session.parent_semester_name,
+                        "sessions": [],
+                    }
+                tournament_groups[gid]["sessions"].append(session)
+            else:
+                training_sessions_list.append(session)
+
         return templates.TemplateResponse(
             "sessions.html",
             {
@@ -240,6 +256,8 @@ async def sessions_page(
                 "user": user,
                 "is_instructor": False,
                 "upcoming_sessions": upcoming_sessions,
+                "tournament_groups": list(tournament_groups.values()),
+                "training_sessions": training_sessions_list,
                 "my_teaching_sessions": [],
                 "spec_header_class": "hdr-hub",
                 **_spec_ctx(user, db),

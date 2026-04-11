@@ -62,7 +62,7 @@ describe('Tournament Lifecycle — Student', {
     cy.visit('/tournaments');
     cy.get('body').should('not.contain.text', 'Internal Server Error');
 
-    cy.contains('Tournaments').should('be.visible');
+    cy.contains('Events').should('be.visible');  // nav/title renamed A-group
     cy.get('[data-testid="tournament-card"]').should('have.length.at.least', 1);
     cy.contains('E2E Tournament').should('be.visible');
     cy.contains('Enrollment Open').should('be.visible');

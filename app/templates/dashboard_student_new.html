@@ -280,6 +280,28 @@
                 </div>
             </section>
 
+            {# ── My Active Events widget ───────────────────────────────────────── #}
+            {% if my_active_tournaments %}
+            <section class="section-block">
+                <div class="section-header">
+                    <h2 class="page-title">🗓️ My Active Events</h2>
+                    <a href="/tournaments" class="section-link">View all events →</a>
+                </div>
+                {% for t in my_active_tournaments %}
+                <a href="/tournaments/{{ t.id }}" style="display:flex; justify-content:space-between; align-items:center; background:#d6eaf8; color:#1a5276; padding:0.5rem 1rem; border-radius:8px; margin-bottom:0.5rem; text-decoration:none; font-weight:600;">
+                    <span>🗓️ {{ t.name }}</span>
+                    <span style="font-size:0.8rem; font-weight:400; opacity:0.85;">
+                        {% if t.tournament_status == 'IN_PROGRESS' %}⏳ In Progress
+                        {% elif t.tournament_status == 'ENROLLMENT_OPEN' %}🟢 Open
+                        {% elif t.tournament_status == 'ENROLLMENT_CLOSED' %}🔒 Closed
+                        {% elif t.tournament_status == 'CHECK_IN_OPEN' %}📋 Check-In
+                        {% else %}{{ t.tournament_status }}{% endif %}
+                    </span>
+                </a>
+                {% endfor %}
+            </section>
+            {% endif %}
+
             {# ── Available Events ──────────────────────────────────────────────── #}
             <section class="section-block">
                 <div class="section-header">

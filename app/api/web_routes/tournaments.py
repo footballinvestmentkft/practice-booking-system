@@ -40,6 +40,7 @@ from ...models.location import Location
 from ...models.semester import Semester, SemesterStatus, SemesterCategory
 from ...models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 from ...models.session import Session as SessionModel, EventCategory
+from ...models.quiz import SessionQuiz, QuizAttempt
 from ...models.tournament_ranking import TournamentRanking
 from ...models.team import Team, TeamMember, TournamentTeamEnrollment, TournamentPlayerCheckin
 from ...models.club import Club
@@ -107,7 +108,8 @@ async def tournaments_list(
         .all()
     )
 
-    tournament_data = []
+    enrolled_events = []
+    browse_events = []
     for t in tournaments:
         enrollment_count = (
             db.query(SemesterEnrollment)
@@ -131,23 +133,129 @@ async def tournaments_list(
         if t.master_instructor_id:
             instructor = db.query(User).filter(User.id == t.master_instructor_id).first()
 
-        tournament_data.append({
+        # Extra context for event-first UX
+        cfg = t.tournament_config_obj
+        session_count = db.query(SessionModel).filter(SessionModel.semester_id == t.id).count()
+        has_quiz = (
+            db.query(SessionQuiz)
+            .join(SessionModel, SessionModel.id == SessionQuiz.session_id)
+            .filter(SessionModel.semester_id == t.id)
+            .count()
+        ) > 0
+        session_type_config = cfg.session_type_config if cfg else "on_site"
+        tournament_type_code = (
+            cfg.tournament_type.code if cfg and cfg.tournament_type else None
+        )
+
+        info = {
             "tournament": t,
             "enrollment_count": enrollment_count,
             "max_players": t.max_players or 999,
             "is_enrolled": user_enrollment is not None,
             "enrollment_status": user_enrollment.request_status.value if user_enrollment else None,
             "instructor": instructor,
-        })
+            "session_count": session_count,
+            "has_quiz": has_quiz,
+            "session_type_config": session_type_config,
+            "tournament_type_code": tournament_type_code,
+        }
+        if user_enrollment is not None:
+            enrolled_events.append(info)
+        else:
+            browse_events.append(info)
 
     return templates.TemplateResponse(
         "tournaments.html",
         {
             "request": request,
             "user": user,
-            "tournaments": tournament_data,
+            "enrolled_events": enrolled_events,
+            "browse_events": browse_events,
+            # backwards-compat alias used by tests
+            "tournaments": enrolled_events + browse_events,
             "flash": request.query_params.get("flash"),
             "flash_type": request.query_params.get("flash_type", "info"),
+            "active_page": "tournaments",
+            "show_spec_nav": True,
+            **_spec_ctx(user, db),
+        },
+    )
+
+
+@router.get("/tournaments/{tournament_id}", response_class=HTMLResponse)
+async def student_tournament_detail(
+    tournament_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Student-facing event detail page — session schedule, quiz CTAs, enrollment status."""
+    tournament = db.query(Semester).filter(
+        Semester.id == tournament_id,
+        Semester.semester_category == SemesterCategory.TOURNAMENT,
+    ).first()
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    enrollment = db.query(SemesterEnrollment).filter(
+        SemesterEnrollment.semester_id == tournament_id,
+        SemesterEnrollment.user_id == user.id,
+        SemesterEnrollment.is_active.is_(True),
+    ).first()
+
+    sessions = (
+        db.query(SessionModel)
+        .filter(SessionModel.semester_id == tournament_id)
+        .order_by(SessionModel.date_start.asc())
+        .all()
+    )
+
+    session_info = []
+    for s in sessions:
+        sq = db.query(SessionQuiz).filter(SessionQuiz.session_id == s.id).first()
+        quiz_id = sq.quiz_id if sq else None
+        quiz_completed = False
+        if quiz_id and enrollment:
+            quiz_completed = (
+                db.query(QuizAttempt)
+                .filter(QuizAttempt.quiz_id == quiz_id, QuizAttempt.user_id == user.id)
+                .first()
+            ) is not None
+        session_info.append({
+            "session": s,
+            "quiz_id": quiz_id,
+            "quiz_completed": quiz_completed,
+            "quiz_pending": bool(quiz_id and not quiz_completed and enrollment),
+        })
+
+    my_ranking = db.query(TournamentRanking).filter(
+        TournamentRanking.tournament_id == tournament_id,
+        TournamentRanking.user_id == user.id,
+    ).first()
+
+    enrollment_count = db.query(SemesterEnrollment).filter(
+        SemesterEnrollment.semester_id == tournament_id,
+        SemesterEnrollment.is_active.is_(True),
+    ).count()
+
+    cfg = tournament.tournament_config_obj
+    instructor = None
+    if tournament.master_instructor_id:
+        instructor = db.query(User).filter(User.id == tournament.master_instructor_id).first()
+
+    return templates.TemplateResponse(
+        "tournament_detail.html",
+        {
+            "request": request,
+            "user": user,
+            "tournament": tournament,
+            "cfg": cfg,
+            "enrollment": enrollment,
+            "session_info": session_info,
+            "my_ranking": my_ranking,
+            "enrollment_count": enrollment_count,
+            "max_players": tournament.max_players,
+            "instructor": instructor,
             "active_page": "tournaments",
             "show_spec_nav": True,
             **_spec_ctx(user, db),
