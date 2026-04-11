@@ -1,15 +1,16 @@
-{% extends "base.html" %}
+{% extends "student_base.html" %}
 
 {% block title %}Tournaments - LFA Education Center{% endblock %}
+{% block active_page %}tournaments{% endblock %}
 
-{% block content %}
+{% block extra_styles %}
 <style>
 .tournament-card {
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     margin-bottom: 1.5rem;
-    background: white;
+    background: var(--app-card);
     border-left: 5px solid #27ae60;
     transition: box-shadow 0.2s ease;
 }
@@ -35,7 +36,7 @@
     font-size: 1.2rem;
     font-weight: 700;
     margin: 0;
-    color: #2c3e50;
+    color: var(--app-text);
 }
 .status-badge {
     padding: 0.3rem 0.8rem;
@@ -56,14 +57,15 @@
     margin-bottom: 1rem;
 }
 .meta-item {
-    background: #f8f9fa;
+    background: var(--app-card-alt);
     border-radius: 6px;
     padding: 0.6rem 0.8rem;
     font-size: 0.9rem;
+    color: var(--app-text);
 }
-.meta-item strong { display: block; font-size: 0.75rem; color: #7f8c8d; margin-bottom: 0.2rem; }
+.meta-item strong { display: block; font-size: 0.75rem; color: var(--app-text-muted); margin-bottom: 0.2rem; }
 .capacity-bar-wrap {
-    background: #ecf0f1;
+    background: var(--app-border);
     border-radius: 4px;
     height: 8px;
     margin-top: 0.3rem;
@@ -96,6 +98,9 @@
     align-items: center;
 }
 </style>
+{% endblock %}
+
+{% block student_content %}
 
 <div class="welcome-section">
     <h1>⚽ Tournaments</h1>
@@ -115,7 +120,7 @@
 <div class="card text-center" style="padding: 3rem;">
     <div style="font-size: 3rem; margin-bottom: 1rem;">🏆</div>
     <h3>No Open Tournaments</h3>
-    <p style="color: #7f8c8d;">There are no tournaments open for enrollment right now. Check back later!</p>
+    <p style="color: var(--app-text-muted);">There are no tournaments open for enrollment right now. Check back later!</p>
 </div>
 {% else %}
 
@@ -130,7 +135,7 @@
     <div class="tournament-header">
         <div>
             <p class="tournament-title">🏆 {{ t.name }}</p>
-            <p style="color: #7f8c8d; font-size: 0.85rem; margin: 0.25rem 0 0;">{{ t.code }}</p>
+            <p style="color: var(--app-text-muted); font-size: 0.85rem; margin: 0.25rem 0 0;">{{ t.code }}</p>
         </div>
         <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
             {% if t.tournament_status == 'ENROLLMENT_OPEN' %}
@@ -190,7 +195,7 @@
         </div>
 
         {% if t.description %}
-        <p style="color: #555; margin-bottom: 1rem; font-size: 0.95rem;">{{ t.description }}</p>
+        <p style="color: var(--app-text-muted); margin-bottom: 1rem; font-size: 0.95rem;">{{ t.description }}</p>
         {% endif %}
 
         <div class="action-row">

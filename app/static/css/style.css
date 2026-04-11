@@ -408,3 +408,17 @@ body {
 .mb-1 { margin-bottom: 0.5rem; }
 .mb-2 { margin-bottom: 1rem; }
 .mb-3 { margin-bottom: 1.5rem; }
+
+/* ── Breadcrumb trail (session detail → parent tournament) ────────────────── */
+.breadcrumb-trail {
+    font-size: 13px;
+    color: var(--app-text-muted);
+    margin-bottom: 12px;
+    padding: 0;
+}
+.breadcrumb-trail a {
+    color: var(--app-text-muted);
+    text-decoration: none;
+}
+.breadcrumb-trail a:hover { color: var(--app-text); text-decoration: underline; }
+.bc-sep { margin: 0 6px; }

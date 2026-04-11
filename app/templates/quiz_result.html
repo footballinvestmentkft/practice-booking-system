@@ -104,6 +104,10 @@
                 <a href="/sessions" class="btn btn-primary">← Back to Sessions</a>
             {% endif %}
 
+            {% if parent_semester_id %}
+                <a href="/events/{{ parent_semester_id }}" class="btn btn-secondary">🏅 Back to Tournament</a>
+            {% endif %}
+
             {% if attempt_id %}
                 <a href="/quizzes/attempts/{{ attempt_id }}/review{% if session_id %}?session_id={{ session_id }}{% endif %}"
                    class="btn btn-secondary">📝 View Detailed Review</a>

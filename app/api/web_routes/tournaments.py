@@ -64,6 +64,7 @@ from ...services.age_category_service import (
     get_automatic_age_category,
     get_current_season_year,
 )
+from .student_features import _spec_ctx
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -147,6 +148,9 @@ async def tournaments_list(
             "tournaments": tournament_data,
             "flash": request.query_params.get("flash"),
             "flash_type": request.query_params.get("flash_type", "info"),
+            "active_page": "tournaments",
+            "show_spec_nav": True,
+            **_spec_ctx(user, db),
         },
     )
 
@@ -581,6 +585,13 @@ async def admin_tournaments_list(
             .filter(SessionModel.semester_id == t.id)
             .count()
         )
+        sessions_preview = (
+            db.query(SessionModel)
+            .filter(SessionModel.semester_id == t.id)
+            .order_by(SessionModel.date_start.asc())
+            .limit(5)
+            .all()
+        )
         instructor = None
         if t.master_instructor_id:
             instructor = db.query(User).filter(User.id == t.master_instructor_id).first()
@@ -588,6 +599,7 @@ async def admin_tournaments_list(
             "tournament": t,
             "enrollment_count": enroll_count,
             "session_count": session_count,
+            "sessions_preview": sessions_preview,
             "instructor": instructor,
         })
 
@@ -636,6 +648,13 @@ async def admin_create_tournament(
 ):
     """Admin: create a new tournament."""
     _admin_only(user)
+
+    # Game preset is required for all new tournaments
+    if not game_preset_id.strip():
+        return RedirectResponse(
+            url="/admin/tournaments?error=Game+Preset+is+required.+Select+a+preset+to+define+skill+rules+for+this+tournament.&tab=create",
+            status_code=303,
+        )
 
     from datetime import datetime as _dt
     code = f"TOURN-{date.fromisoformat(start_date).strftime('%Y%m%d')}-{_dt.now().strftime('%H%M%S%f')[:9]}"

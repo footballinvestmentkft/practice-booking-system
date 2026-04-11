@@ -881,3 +881,16 @@ body {
 @media (max-width: 480px) {
     .footer-links a { margin: 0 0.4rem; font-size: 0.8rem; }
 }
+
+/* ── Session card: parent tournament badge ───────────────────────────────── */
+.session-tournament-badge {
+    font-size: 12px;
+    color: var(--app-text-muted);
+    margin: 0 0 10px;
+}
+.session-tournament-badge a {
+    color: var(--app-text-muted);
+    text-decoration: none;
+    font-weight: 600;
+}
+.session-tournament-badge a:hover { color: var(--app-text); }

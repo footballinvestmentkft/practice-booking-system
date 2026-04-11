@@ -215,6 +215,7 @@ async def take_quiz(
             "xp_awarded": 0,
             "time_spent": quiz.time_limit_minutes,
             "attempt_answers": [],
+            "parent_semester_id": None,
         })
 
     # Get session if provided
@@ -443,6 +444,7 @@ async def submit_quiz(
             pass
 
     # Render result page
+    parent_semester_id = session.semester_id if session else None
     return templates.TemplateResponse("quiz_result.html", {
         "request": request,
         "user": user,
@@ -457,6 +459,7 @@ async def submit_quiz(
         "time_spent": time_spent,
         "attempt_answers": attempt_answers,
         "attempt_id": attempt.id,
+        "parent_semester_id": parent_semester_id,
     })
 
 

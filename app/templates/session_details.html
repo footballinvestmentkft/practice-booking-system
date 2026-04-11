@@ -97,9 +97,23 @@ if (urlParams.get('error') === 'quiz_locked') {
 }
 </script>
 
+{% if parent_semester %}
+<nav class="breadcrumb-trail">
+    <a href="/tournaments">Tournaments</a>
+    <span class="bc-sep">›</span>
+    <a href="/events/{{ parent_semester.id }}">{{ parent_semester.name }}</a>
+    <span class="bc-sep">›</span>
+    <span>{{ session.title }}</span>
+</nav>
+{% endif %}
+
 <div class="welcome-section">
     <h1>📋 Session Details</h1>
+    {% if parent_semester %}
+    <a href="/events/{{ parent_semester.id }}" class="btn btn-secondary" style="margin-top: 1rem;">← Back to Tournament</a>
+    {% else %}
     <a href="/sessions" class="btn btn-secondary" style="margin-top: 1rem;">← Back to Sessions</a>
+    {% endif %}
 </div>
 
 <div class="mt-3">

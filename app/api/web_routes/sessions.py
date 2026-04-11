@@ -17,6 +17,7 @@ from ...database import get_db
 from ...dependencies import get_current_user_web
 from ...models.user import User, UserRole
 from ...models.session import Session as SessionModel, SessionType
+from ...models.semester import SemesterCategory, Semester
 from ...models.booking import Booking, BookingStatus
 from ...models.attendance import Attendance, AttendanceHistory
 from ...models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
@@ -119,6 +120,8 @@ async def sessions_page(
         if approved_semester_ids:
             upcoming_sessions = db.query(SessionModel).filter(
                 SessionModel.semester_id.in_(approved_semester_ids)
+            ).options(
+                joinedload(SessionModel.semester)
             ).order_by(
                 SessionModel.date_start.asc()  # Chronological order (earliest first)
             ).limit(50).all()  # Show last 50 sessions
@@ -167,14 +170,16 @@ async def sessions_page(
             session.my_attendance = my_attendance
             session.my_instructor_review = my_instructor_review
 
-            # VIRTUAL session: Check if student completed quiz (for "COMPLETED" badge)
+            # VIRTUAL/HYBRID session: Check quiz status (completed + pending)
             session.quiz_completed = False
-            if session.is_enrolled and session.session_type == SessionType.virtual:
+            session.quiz_pending = False
+            session.pending_quiz_id = None
+            if session.is_enrolled and session.session_type in (SessionType.virtual, SessionType.hybrid):
                 session_quizzes = db.query(SessionQuiz).filter(
                     SessionQuiz.session_id == session.id
                 ).all()
 
-                # Check if student passed ANY required quiz
+                # Check if student passed ANY required quiz; also track pending quizzes
                 for sq in session_quizzes:
                     if sq.is_required:
                         passed_attempt = db.query(QuizAttempt).filter(
@@ -182,10 +187,19 @@ async def sessions_page(
                             QuizAttempt.user_id == user.id,
                             QuizAttempt.passed == True
                         ).first()
-
                         if passed_attempt:
                             session.quiz_completed = True
-                            break
+                        elif not session.quiz_pending:
+                            # First unanswered required quiz
+                            session.quiz_pending = True
+                            session.pending_quiz_id = sq.quiz_id
+
+            # Parent tournament context for session cards
+            session.parent_semester_name = None
+            session.parent_semester_id = None
+            if session.semester_id and session.semester and session.semester.semester_category == SemesterCategory.TOURNAMENT:
+                session.parent_semester_name = session.semester.name
+                session.parent_semester_id = session.semester_id
 
             session.can_cancel = session.is_enrolled and now < cancellation_deadline and not my_attendance and not my_instructor_review
             session.can_book = not session.is_enrolled and now < cancellation_deadline  # Can only book if 12+ hours before session start
@@ -619,6 +633,13 @@ async def session_details(
                     'student_results': student_results
                 })
 
+    # Parent tournament context for breadcrumb navigation
+    parent_semester = None
+    if session.semester_id:
+        sem = db.query(Semester).filter(Semester.id == session.semester_id).first()
+        if sem and sem.semester_category == SemesterCategory.TOURNAMENT:
+            parent_semester = sem
+
     return templates.TemplateResponse(
         "session_details.html",
         {
@@ -635,7 +656,8 @@ async def session_details(
             "my_attendance": my_attendance,
             "my_instructor_review": my_instructor_review,
             "session_quizzes": session_quizzes,
-            "now": now
+            "now": now,
+            "parent_semester": parent_semester,
         }
     )
 

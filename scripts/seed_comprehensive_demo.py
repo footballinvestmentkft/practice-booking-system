@@ -53,6 +53,10 @@ from app.models.club import Club
 from app.models.game_configuration import GameConfiguration
 from app.models.game_preset import GamePreset
 from app.models.license import UserLicense
+from app.models.quiz import (
+    Quiz, QuizQuestion, QuizAnswerOption, QuizAttempt, QuizUserAnswer,
+    SessionQuiz, QuizCategory, QuizDifficulty, QuestionType,
+)
 from app.models.semester import Semester, SemesterCategory, SemesterStatus
 from app.models.semester_enrollment import EnrollmentStatus, SemesterEnrollment
 from app.models.session import Session as SessionModel
@@ -207,6 +211,28 @@ if _existing_ids:
     ok(f"Deleted {len(_existing_ids)} tournament(s)")
 else:
     ok("No existing Demo tournaments found")
+
+# Cleanup orphaned Format L quizzes (quiz rows are not tied to a semester)
+_vq_quiz_ids = [
+    row[0] for row in db.execute(
+        _sql("SELECT id FROM quizzes WHERE title LIKE 'Virtual Quiz L — %'")
+    ).fetchall()
+]
+if _vq_quiz_ids:
+    qid_list = ", ".join(str(i) for i in _vq_quiz_ids)
+    db.execute(_sql(
+        f"DELETE FROM quiz_user_answers WHERE attempt_id IN "
+        f"(SELECT id FROM quiz_attempts WHERE quiz_id IN ({qid_list}))"
+    ))
+    db.execute(_sql(f"DELETE FROM quiz_attempts WHERE quiz_id IN ({qid_list})"))
+    db.execute(_sql(
+        f"DELETE FROM quiz_answer_options WHERE question_id IN "
+        f"(SELECT id FROM quiz_questions WHERE quiz_id IN ({qid_list}))"
+    ))
+    db.execute(_sql(f"DELETE FROM quiz_questions WHERE quiz_id IN ({qid_list})"))
+    db.execute(_sql(f"DELETE FROM quizzes WHERE id IN ({qid_list})"))
+    db.commit()
+    ok(f"Cleaned up {len(_vq_quiz_ids)} orphaned Format L quiz/quizzes")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1927,6 +1953,244 @@ transition(t.id, "CANCELLED")
 
 
 # ═════════════════════════════════════════════════════════════════════════════
+# FORMAT L — VIRTUAL TOURNAMENT × INDIVIDUAL × QUIZ-BASED RANKING
+# ═════════════════════════════════════════════════════════════════════════════
+#
+# Demonstrates the full virtual+quiz student flow:
+#   enroll → virtual session → take quiz → score → ranking
+#
+# Only 2 lifecycle states are meaningful for virtual quiz tournaments:
+#   L1: IN_PROGRESS (session active, quiz open, 2 attempts seeded)
+#   L2: REWARDS_DISTRIBUTED (completed, quiz ranking applied)
+#
+# ═════════════════════════════════════════════════════════════════════════════
+
+section("FORMAT L — Virtual Quiz Tournament (INDIVIDUAL, quiz-based ranking) — 2 states")
+
+_L_QUESTIONS = [
+    {
+        "text": "What is the offside rule in football?",
+        "explanation": "A player is offside if they are nearer to the opponent's goal than the ball when the ball is played.",
+        "options": [
+            ("A player is offside if nearer to opponent's goal than the ball when played", True),
+            ("A player is offside if they touch the ball last", False),
+            ("Offside only applies in the penalty area", False),
+        ],
+    },
+    {
+        "text": "How long is a standard football match?",
+        "explanation": "A standard match consists of two 45-minute halves = 90 minutes total.",
+        "options": [
+            ("90 minutes (two 45-minute halves)", True),
+            ("80 minutes (two 40-minute halves)", False),
+            ("60 minutes (one continuous half)", False),
+        ],
+    },
+    {
+        "text": "How many players are on a football team during a match?",
+        "explanation": "Each team fields 11 players including the goalkeeper.",
+        "options": [
+            ("11 players including goalkeeper", True),
+            ("10 outfield players only", False),
+            ("12 players including one reserve", False),
+        ],
+    },
+]
+
+
+def _create_virtual_quiz_tournament(label: str) -> tuple:
+    """Create a virtual tournament with a quiz linked to one session.
+    Returns (semester, session, quiz).
+    """
+    from datetime import datetime as _dt, timezone as _tz, timedelta as _td
+
+    name = f"Demo: Virtual Quiz L — {label}"
+    t = Semester(
+        name=name,
+        code=f"DEMO-VQL-{_uid()}",
+        master_instructor_id=instructor.id,
+        campus_id=campus.id,
+        location_id=campus.location_id,
+        start_date=date(2026, 9, 1),
+        end_date=date(2026, 9, 30),
+        status=SemesterStatus.ONGOING,
+        semester_category=SemesterCategory.TOURNAMENT,
+        tournament_status="DRAFT",
+    )
+    db.add(t)
+    db.flush()
+    db.add(TournamentConfiguration(
+        semester_id=t.id,
+        tournament_type_id=None,
+        participant_type="INDIVIDUAL",
+        max_players=64,
+        number_of_rounds=1,
+        session_type_config="virtual",
+        sessions_generated=True,
+        sessions_generated_at=_dt.now(_tz.utc),
+    ))
+    db.add(GameConfiguration(semester_id=t.id, game_preset_id=preset.id))
+    db.add(TournamentRewardConfig(
+        semester_id=t.id,
+        reward_policy_name="Demo Default",
+        reward_config=_REWARD_CONFIG,
+    ))
+    db.flush()
+
+    # Virtual session: started 2 hours ago so quiz is accessible
+    now = _dt.now(_tz.utc).replace(tzinfo=None)
+    sess = SessionModel(
+        title=f"{name} — Session",
+        semester_id=t.id,
+        session_type="virtual",
+        meeting_link="https://meet.example.com/demo-virtual-quiz-l",
+        date_start=now - _td(hours=2),
+        date_end=now + _td(hours=22),
+        capacity=50,
+        base_xp=50,
+    )
+    db.add(sess)
+    db.flush()
+
+    # Quiz: 3 questions, 60% passing threshold
+    quiz = Quiz(
+        title=f"Virtual Quiz L — {label}",
+        description="Football knowledge quiz for virtual tournament demo.",
+        category=QuizCategory.LESSON,
+        difficulty=QuizDifficulty.EASY,
+        passing_score=0.6,
+        time_limit_minutes=15,
+        is_active=True,
+    )
+    db.add(quiz)
+    db.flush()
+
+    correct_option_ids: list[int] = []
+    for i, q_spec in enumerate(_L_QUESTIONS):
+        q = QuizQuestion(
+            quiz_id=quiz.id,
+            question_text=q_spec["text"],
+            question_type=QuestionType.MULTIPLE_CHOICE,
+            points=1.0,
+            order_index=i + 1,
+            explanation=q_spec["explanation"],
+        )
+        db.add(q)
+        db.flush()
+        correct_id = None
+        for j, (opt_text, is_correct) in enumerate(q_spec["options"]):
+            ao = QuizAnswerOption(
+                question_id=q.id,
+                option_text=opt_text,
+                is_correct=is_correct,
+                order_index=j + 1,
+            )
+            db.add(ao)
+            db.flush()
+            if is_correct:
+                correct_id = ao.id
+        correct_option_ids.append(correct_id)
+
+    db.add(SessionQuiz(
+        session_id=sess.id,
+        quiz_id=quiz.id,
+        is_required=True,
+        max_attempts=3,
+    ))
+    db.commit()
+    db.expire_all()
+    ok(f"Created '{t.name}'  id={t.id}  session={sess.id}  quiz={quiz.id}")
+    return t, sess, quiz, correct_option_ids
+
+
+def _seed_quiz_attempts(quiz_id: int, session_id: int, players: list[User],
+                        correct_option_ids: list[int]) -> None:
+    """Seed quiz attempts: player[0] → 100% pass, player[1] → 33% fail."""
+    from datetime import datetime as _dt, timezone as _tz, timedelta as _td
+    now = _dt.now(_tz.utc)
+
+    for idx, player in enumerate(players[:2]):
+        if idx == 0:
+            # Player 0: all 3 correct → 100%
+            selected_ids = correct_option_ids[:]
+        else:
+            # Player 1: only first correct → 33%
+            selected_ids = [correct_option_ids[0], None, None]
+
+        correct_count = sum(1 for sid in selected_ids if sid is not None)
+        score = correct_count / len(selected_ids)
+        passed = score >= 0.6
+
+        attempt = QuizAttempt(
+            user_id=player.id,
+            quiz_id=quiz_id,
+            score=score,
+            passed=passed,
+            correct_answers=correct_count,
+            total_questions=len(selected_ids),
+            xp_awarded=50 if passed else 0,
+            started_at=now - _td(minutes=20),
+            completed_at=now - _td(minutes=10),
+            time_spent_minutes=10,
+        )
+        db.add(attempt)
+        db.flush()
+
+        questions = db.query(QuizQuestion).filter(QuizQuestion.quiz_id == quiz_id).order_by(QuizQuestion.order_index).all()
+        for q_idx, question in enumerate(questions):
+            sel_id = selected_ids[q_idx] if q_idx < len(selected_ids) else None
+            if sel_id:
+                db.add(QuizUserAnswer(
+                    attempt_id=attempt.id,
+                    question_id=question.id,
+                    selected_option_id=sel_id,
+                ))
+        db.commit()
+        result = "PASSED ✅" if passed else "FAILED ❌"
+        info(f"Attempt: {player.email}  score={score:.0%}  {result}")
+
+
+# L1: IN_PROGRESS — session active, quiz open, 2 attempts seeded
+print("\n[L1/2] IN_PROGRESS (virtual, quiz active, 2 attempts seeded)")
+t, sess, quiz, correct_ids = _create_virtual_quiz_tournament("In Progress")
+enrolled = enroll_individual_players(t.id, all_demo_players[:4])
+transition(t.id, "ENROLLMENT_OPEN")
+transition(t.id, "ENROLLMENT_CLOSED")
+transition(t.id, "CHECK_IN_OPEN")
+transition(t.id, "IN_PROGRESS")
+if enrolled:
+    _seed_quiz_attempts(quiz.id, sess.id, enrolled, correct_ids)
+
+# L2: REWARDS_DISTRIBUTED — quiz ranking applied
+print("\n[L2/2] REWARDS_DISTRIBUTED (quiz completed, ranking seeded)")
+t, sess, quiz, correct_ids = _create_virtual_quiz_tournament("Rewards Distributed")
+enrolled = enroll_individual_players(t.id, all_demo_players[:4])
+transition(t.id, "ENROLLMENT_OPEN")
+transition(t.id, "ENROLLMENT_CLOSED")
+transition(t.id, "CHECK_IN_OPEN")
+transition(t.id, "IN_PROGRESS")
+if enrolled:
+    _seed_quiz_attempts(quiz.id, sess.id, enrolled, correct_ids)
+    # Seed rankings directly based on quiz scores
+    db.expire_all()
+    from app.models.tournament_ranking import TournamentRanking as TR
+    existing_ranks = db.query(TR).filter(TR.tournament_id == t.id).count()
+    if existing_ranks == 0 and len(enrolled) >= 2:
+        # player[0] = rank 1 (100%), player[1] = rank 2 (33%), others = rank 3+
+        for rank_pos, player in enumerate(enrolled, start=1):
+            db.add(TR(
+                tournament_id=t.id,
+                user_id=player.id,
+                rank=rank_pos,
+                score=1.0 if rank_pos == 1 else (0.33 if rank_pos == 2 else 0.0),
+                xp_awarded=50 if rank_pos == 1 else (25 if rank_pos == 2 else 0),
+            ))
+        db.commit()
+    transition(t.id, "COMPLETED")
+    distribute_rewards(t.id)
+
+
+# ═════════════════════════════════════════════════════════════════════════════
 # MULTI-CAMPUS TOURNAMENTS (MC-1, MC-2, MC-3)
 # ═════════════════════════════════════════════════════════════════════════════
 
@@ -2181,6 +2445,7 @@ _FORMATS = [
     ("I",    "Demo: IR TEAM —",                 "TEAM"),
     ("J",    "Demo: IR Time —",                 "INDIVIDUAL"),
     ("K",    "Demo: IR Placement —",            "INDIVIDUAL"),
+    ("L",    "Demo: Virtual Quiz L —",          "INDIVIDUAL"),
     ("MC-1", "MC Demo: Group Knockout 2026",    "INDIVIDUAL"),
     ("MC-2", "MC Demo: H2H League 2026",        "INDIVIDUAL"),
     ("MC-3", "MC Demo: IR 2026",                "INDIVIDUAL"),

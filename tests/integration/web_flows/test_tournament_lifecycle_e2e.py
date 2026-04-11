@@ -1362,6 +1362,7 @@ class TestTournamentFieldBindings:
         test_db: Session,
         admin_client: TestClient,
         tournament_type: TournamentType,
+        game_preset: GamePreset,
     ):
         """
         POST /admin/tournaments with participant_type=TEAM + number_of_rounds=3 must
@@ -1377,7 +1378,7 @@ class TestTournamentFieldBindings:
             "campus_id": "",
             "assignment_type": "OPEN_ASSIGNMENT",
             "tournament_type_id": str(tournament_type.id),
-            "game_preset_id": "",
+            "game_preset_id": str(game_preset.id),
             "participant_type": "TEAM",
             "number_of_rounds": "3",
         }
@@ -1422,6 +1423,7 @@ class TestFormatBranching:
         self,
         test_db: Session,
         admin_client: TestClient,
+        game_preset: GamePreset,
     ):
         """
         INDIVIDUAL_RANKING torna (tournament_type_id=None):
@@ -1444,7 +1446,7 @@ class TestFormatBranching:
             "campus_id": "",
             "assignment_type": "OPEN_ASSIGNMENT",
             "tournament_type_id": "",   # ← üres → INDIVIDUAL_RANKING
-            "game_preset_id": "",
+            "game_preset_id": str(game_preset.id),
             "participant_type": "INDIVIDUAL",
             "number_of_rounds": "1",
         }
@@ -1499,6 +1501,7 @@ class TestFormatBranching:
         test_db: Session,
         admin_client: TestClient,
         tournament_type: TournamentType,
+        game_preset: GamePreset,
     ):
         """
         HEAD_TO_HEAD torna (tournament_type_id=league):
@@ -1519,7 +1522,7 @@ class TestFormatBranching:
             "campus_id": "",
             "assignment_type": "OPEN_ASSIGNMENT",
             "tournament_type_id": str(tournament_type.id),
-            "game_preset_id": "",
+            "game_preset_id": str(game_preset.id),
             "participant_type": "INDIVIDUAL",
             "number_of_rounds": "1",
         }

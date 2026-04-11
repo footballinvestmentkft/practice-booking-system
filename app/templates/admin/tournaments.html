@@ -484,6 +484,19 @@
                         </div>
                         {% if session_count == 0 %}
                         <p style="color:#a0aec0; font-size:0.9rem; margin-top:0.75rem;">No sessions generated yet</p>
+                        {% elif info.sessions_preview %}
+                        <ul style="list-style:none; padding:0; margin:0.75rem 0 0; font-size:0.88rem;">
+                            {% for s in info.sessions_preview %}
+                            <li style="padding:0.35rem 0; border-bottom:1px solid var(--app-border); display:flex; gap:0.75rem; align-items:center;">
+                                <a href="/sessions/{{ s.id }}" style="font-weight:600; color:var(--app-text); text-decoration:none;" target="_blank">{{ s.title }}</a>
+                                {% if s.date_start %}<span style="color:var(--app-text-muted);">{{ s.date_start.strftime('%b %-d') }}</span>{% endif %}
+                                <span class="badge" style="font-size:0.75rem;">{{ s.session_type.value }}</span>
+                            </li>
+                            {% endfor %}
+                            {% if session_count > 5 %}
+                            <li style="padding:0.35rem 0; color:var(--app-text-muted); font-style:italic;">+{{ session_count - 5 }} more sessions</li>
+                            {% endif %}
+                        </ul>
                         {% endif %}
                     </div>
                 </div>
@@ -552,14 +565,14 @@
 
                     <!-- Game Preset -->
                     <div class="form-group">
-                        <label for="game_preset_id">Game Preset</label>
-                        <select id="game_preset_id" name="game_preset_id">
-                            <option value="">— No preset —</option>
+                        <label for="game_preset_id">Game Preset *</label>
+                        <select id="game_preset_id" name="game_preset_id" required>
+                            <option value="">— Select a preset —</option>
                             {% for gp in game_presets %}
                             <option value="{{ gp.id }}">{{ gp.name }}</option>
                             {% endfor %}
                         </select>
-                        <small>Optional: defines skill weights for the game</small>
+                        <small>Required — defines skill rules and impact on player stats</small>
                     </div>
 
                     <!-- Participant Type -->
@@ -641,6 +654,11 @@
                                placeholder="https://meet.example.com/event">
                         <small>Required for virtual / optional for hybrid</small>
                     </div>
+
+                    <!-- Virtual/hybrid quiz reminder -->
+                    <div id="virtual_quiz_hint" style="display:none; padding:0.75rem 1rem; background:#fff3cd; border-left:4px solid #f39c12; border-radius:4px; font-size:0.88rem; color:#856404;">
+                        ⚠️ <strong>Virtual tournament:</strong> after generating sessions, link a Quiz to each session so students can complete quiz-based ranking.
+                    </div>
                 </div>
 
                 <div class="form-footer">
@@ -718,8 +736,9 @@ function filterCampuses() {
 
 function toggleMeetingLinkField() {
     const t = document.getElementById('session_type_config').value;
-    document.getElementById('meeting_link_row').style.display =
-        (t === 'virtual' || t === 'hybrid') ? '' : 'none';
+    const isRemote = (t === 'virtual' || t === 'hybrid');
+    document.getElementById('meeting_link_row').style.display = isRemote ? '' : 'none';
+    document.getElementById('virtual_quiz_hint').style.display = isRemote ? '' : 'none';
 }
 </script>
 {% endblock %}

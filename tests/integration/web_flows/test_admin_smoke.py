@@ -1202,7 +1202,7 @@ class TestSmoke11AdminPOSTActions:
 
     # ── Tournament actions ─────────────────────────────────────────────────────
 
-    def test_01_create_tournament(self, admin_client, test_db):
+    def test_01_create_tournament(self, admin_client, test_db, game_preset):
         """SMOKE-11a: POST /admin/tournaments creates a DRAFT tournament — code is auto-generated."""
         tournament_name = f"Smoke Tournament 11 {uuid.uuid4().hex[:6]}"
         start_date = (date.today() + timedelta(days=10)).isoformat()
@@ -1214,6 +1214,7 @@ class TestSmoke11AdminPOSTActions:
                 "end_date": (date.today() + timedelta(days=40)).isoformat(),
                 "age_group": "AMATEUR",
                 "enrollment_cost": "0",
+                "game_preset_id": str(game_preset.id),
             },
             follow_redirects=False,
         )
@@ -1226,23 +1227,24 @@ class TestSmoke11AdminPOSTActions:
         assert t.tournament_status == "DRAFT"
         assert t.status == SemesterStatus.DRAFT
 
-    def test_02_create_two_tournaments_get_unique_codes(self, admin_client, test_db):
+    def test_02_create_two_tournaments_get_unique_codes(self, admin_client, test_db, game_preset):
         """SMOKE-11b: Two sequential creates produce unique auto-generated codes (no collision)."""
         import time
         name_a = f"Smoke T11 Alpha {uuid.uuid4().hex[:4]}"
         name_b = f"Smoke T11 Beta {uuid.uuid4().hex[:4]}"
         start_date_a = (date.today() + timedelta(days=10)).isoformat()
         start_date_b = (date.today() + timedelta(days=20)).isoformat()
+        gp_id = str(game_preset.id)
 
         resp_a = admin_client.post(
             "/admin/tournaments",
-            data={"name": name_a, "start_date": start_date_a, "end_date": (date.today() + timedelta(days=40)).isoformat()},
+            data={"name": name_a, "start_date": start_date_a, "end_date": (date.today() + timedelta(days=40)).isoformat(), "game_preset_id": gp_id},
             follow_redirects=False,
         )
         time.sleep(1)  # ensure different HHMMSS
         resp_b = admin_client.post(
             "/admin/tournaments",
-            data={"name": name_b, "start_date": start_date_b, "end_date": (date.today() + timedelta(days=50)).isoformat()},
+            data={"name": name_b, "start_date": start_date_b, "end_date": (date.today() + timedelta(days=50)).isoformat(), "game_preset_id": gp_id},
             follow_redirects=False,
         )
         assert resp_a.status_code == 303

@@ -331,7 +331,7 @@
              data-date="{{ session.date_start.strftime('%Y-%m-%d') }}"
              data-datetime="{{ session.date_end.strftime('%Y-%m-%d %H:%M:%S') }}"
              data-session-type="{{ session.session_type.value }}">
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.25rem;">
                 <h3 style="margin: 0;">{{ session.title }}</h3>
                 <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
                     <!-- Session Type Badge -->
@@ -365,6 +365,12 @@
                     {% endif %}
                 </div>
             </div>
+
+            {% if session.parent_semester_name %}
+            <div class="session-tournament-badge">
+                🏅 <a href="/events/{{ session.parent_semester_id }}">{{ session.parent_semester_name }}</a>
+            </div>
+            {% endif %}
 
             {% if session.description %}
             <p class="text-muted" style="margin-bottom: 1rem;">{{ session.description[:100] }}{% if session.description|length > 100 %}...{% endif %}</p>
@@ -457,6 +463,12 @@
             {% endif %}
 
             <div style="margin-top: 1rem;">
+                {% if session.quiz_pending and session.is_enrolled %}
+                <a href="/quizzes/{{ session.pending_quiz_id }}/take?session_id={{ session.id }}"
+                   class="btn btn-primary" style="width: 100%; display: inline-block; text-align: center; margin-bottom: 0.5rem;">
+                    📝 Take Quiz
+                </a>
+                {% endif %}
                 <a href="/sessions/{{ session.id }}" class="btn btn-secondary" style="width: 100%; display: inline-block; text-align: center; margin-bottom: 0.5rem;">View Details</a>
                 {% if session.is_enrolled %}
                     {% if session.can_cancel %}
@@ -488,47 +500,6 @@
         <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
         <h3>No Upcoming Sessions</h3>
         <p class="text-muted">Check back later for new training sessions</p>
-    </div>
-    {% endif %}
-</div>
-
-<!-- My Enrolled Sessions -->
-<div class="mt-3">
-    <h2>My Enrolled Sessions</h2>
-    {% if enrolled_sessions %}
-    <div class="cards-grid mt-2">
-        {% for session in enrolled_sessions %}
-        <div class="card" style="border-left: 4px solid var(--success-color);">
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                <h3 style="margin: 0;">{{ session.title }}</h3>
-                <span class="badge badge-success">✓ Enrolled</span>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                <div>
-                    <strong>📅 Date:</strong>
-                    <p style="margin: 0;">{{ session.date_start.strftime('%b %d, %Y') }}</p>
-                </div>
-                <div>
-                    <strong>🕐 Time:</strong>
-                    <p style="margin: 0;">{{ session.date_start.strftime('%H:%M') }}</p>
-                </div>
-            </div>
-
-            {% if session.meeting_link %}
-            <div style="margin-top: 1rem;">
-                <a href="{{ session.meeting_link }}" class="btn btn-primary" style="width: 100%;" target="_blank">
-                    Join Meeting
-                </a>
-            </div>
-            {% endif %}
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="card text-center" style="padding: 2rem;">
-        <p class="text-muted">You haven't enrolled in any sessions yet</p>
-        <p class="text-muted text-sm">Browse upcoming sessions above to get started!</p>
     </div>
     {% endif %}
 </div>
