@@ -1,0 +1,23 @@
+{% extends "student_base.html" %}
+
+{% block title %}{{ event_type }} — LFA Education Center{% endblock %}
+{% block active_page %}events{% endblock %}
+
+{% block student_content %}
+
+<nav class="breadcrumb-trail" style="margin-bottom: 1rem;">
+    <a href="/events">Events</a>
+    <span class="bc-sep">›</span>
+    <span>{{ event_type }}</span>
+</nav>
+
+<div style="text-align: center; padding: 4rem 2rem;">
+    <div style="font-size: 4rem; margin-bottom: 1rem;">{{ event_icon }}</div>
+    <h1 style="color: var(--app-text); margin-bottom: 0.5rem;">{{ event_type }}</h1>
+    <p style="color: var(--app-text-muted); font-size: 1.1rem; margin-bottom: 2rem;">
+        This section is coming soon. Stay tuned!
+    </p>
+    <a href="/events" class="btn btn-outline">← Back to Events</a>
+</div>
+
+{% endblock %}

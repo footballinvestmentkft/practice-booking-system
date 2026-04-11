@@ -84,183 +84,26 @@ def _get_player_age_category(user: User) -> str:
     return get_automatic_age_category(age_at) or "AMATEUR"
 
 
-# ── Student: browse + enroll ───────────────────────────────────────────────────
+# ── Student: browse + enroll (redirects to /events/* canonical URLs) ───────────
 
 @router.get("/tournaments", response_class=HTMLResponse)
-async def tournaments_list(
-    request: Request,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user_web),
-):
-    """Browse ENROLLMENT_OPEN / IN_PROGRESS tournaments available to the student."""
-    tournaments = (
-        db.query(Semester)
-        .filter(
-            and_(
-                Semester.code.like("TOURN-%"),
-                Semester.tournament_status.in_(["ENROLLMENT_OPEN", "IN_PROGRESS"]),
-                Semester.specialization_type == "LFA_FOOTBALL_PLAYER",
-                Semester.status != SemesterStatus.CANCELLED,
-                Semester.end_date >= date.today(),
-            )
-        )
-        .order_by(Semester.start_date.asc())
-        .all()
-    )
-
-    enrolled_events = []
-    browse_events = []
-    for t in tournaments:
-        enrollment_count = (
-            db.query(SemesterEnrollment)
-            .filter(
-                SemesterEnrollment.semester_id == t.id,
-                SemesterEnrollment.is_active == True,
-            )
-            .count()
-        )
-        user_enrollment = (
-            db.query(SemesterEnrollment)
-            .filter(
-                SemesterEnrollment.semester_id == t.id,
-                SemesterEnrollment.user_id == user.id,
-                SemesterEnrollment.is_active == True,
-            )
-            .first()
-        )
-        # Instructor info
-        instructor = None
-        if t.master_instructor_id:
-            instructor = db.query(User).filter(User.id == t.master_instructor_id).first()
-
-        # Extra context for event-first UX
-        cfg = t.tournament_config_obj
-        session_count = db.query(SessionModel).filter(SessionModel.semester_id == t.id).count()
-        has_quiz = (
-            db.query(SessionQuiz)
-            .join(SessionModel, SessionModel.id == SessionQuiz.session_id)
-            .filter(SessionModel.semester_id == t.id)
-            .count()
-        ) > 0
-        session_type_config = cfg.session_type_config if cfg else "on_site"
-        tournament_type_code = (
-            cfg.tournament_type.code if cfg and cfg.tournament_type else None
-        )
-
-        info = {
-            "tournament": t,
-            "enrollment_count": enrollment_count,
-            "max_players": t.max_players or 999,
-            "is_enrolled": user_enrollment is not None,
-            "enrollment_status": user_enrollment.request_status.value if user_enrollment else None,
-            "instructor": instructor,
-            "session_count": session_count,
-            "has_quiz": has_quiz,
-            "session_type_config": session_type_config,
-            "tournament_type_code": tournament_type_code,
-        }
-        if user_enrollment is not None:
-            enrolled_events.append(info)
-        else:
-            browse_events.append(info)
-
-    return templates.TemplateResponse(
-        "tournaments.html",
-        {
-            "request": request,
-            "user": user,
-            "enrolled_events": enrolled_events,
-            "browse_events": browse_events,
-            # backwards-compat alias used by tests
-            "tournaments": enrolled_events + browse_events,
-            "flash": request.query_params.get("flash"),
-            "flash_type": request.query_params.get("flash_type", "info"),
-            "active_page": "tournaments",
-            "show_spec_nav": True,
-            **_spec_ctx(user, db),
-        },
-    )
+async def tournaments_list_redirect(request: Request):
+    """301 redirect: /tournaments → /events/tournaments (canonical URL)."""
+    qs = request.url.query
+    target = "/events/tournaments"
+    if qs:
+        target = f"{target}?{qs}"
+    return RedirectResponse(url=target, status_code=301)
 
 
 @router.get("/tournaments/{tournament_id}", response_class=HTMLResponse)
-async def student_tournament_detail(
-    tournament_id: int,
-    request: Request,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user_web),
-):
-    """Student-facing event detail page — session schedule, quiz CTAs, enrollment status."""
-    tournament = db.query(Semester).filter(
-        Semester.id == tournament_id,
-        Semester.semester_category == SemesterCategory.TOURNAMENT,
-    ).first()
-    if not tournament:
-        raise HTTPException(status_code=404, detail="Event not found")
-
-    enrollment = db.query(SemesterEnrollment).filter(
-        SemesterEnrollment.semester_id == tournament_id,
-        SemesterEnrollment.user_id == user.id,
-        SemesterEnrollment.is_active.is_(True),
-    ).first()
-
-    sessions = (
-        db.query(SessionModel)
-        .filter(SessionModel.semester_id == tournament_id)
-        .order_by(SessionModel.date_start.asc())
-        .all()
-    )
-
-    session_info = []
-    for s in sessions:
-        sq = db.query(SessionQuiz).filter(SessionQuiz.session_id == s.id).first()
-        quiz_id = sq.quiz_id if sq else None
-        quiz_completed = False
-        if quiz_id and enrollment:
-            quiz_completed = (
-                db.query(QuizAttempt)
-                .filter(QuizAttempt.quiz_id == quiz_id, QuizAttempt.user_id == user.id)
-                .first()
-            ) is not None
-        session_info.append({
-            "session": s,
-            "quiz_id": quiz_id,
-            "quiz_completed": quiz_completed,
-            "quiz_pending": bool(quiz_id and not quiz_completed and enrollment),
-        })
-
-    my_ranking = db.query(TournamentRanking).filter(
-        TournamentRanking.tournament_id == tournament_id,
-        TournamentRanking.user_id == user.id,
-    ).first()
-
-    enrollment_count = db.query(SemesterEnrollment).filter(
-        SemesterEnrollment.semester_id == tournament_id,
-        SemesterEnrollment.is_active.is_(True),
-    ).count()
-
-    cfg = tournament.tournament_config_obj
-    instructor = None
-    if tournament.master_instructor_id:
-        instructor = db.query(User).filter(User.id == tournament.master_instructor_id).first()
-
-    return templates.TemplateResponse(
-        "tournament_detail.html",
-        {
-            "request": request,
-            "user": user,
-            "tournament": tournament,
-            "cfg": cfg,
-            "enrollment": enrollment,
-            "session_info": session_info,
-            "my_ranking": my_ranking,
-            "enrollment_count": enrollment_count,
-            "max_players": tournament.max_players,
-            "instructor": instructor,
-            "active_page": "tournaments",
-            "show_spec_nav": True,
-            **_spec_ctx(user, db),
-        },
-    )
+async def student_tournament_detail_redirect(tournament_id: int, request: Request):
+    """301 redirect: /tournaments/{id} → /events/tournaments/{id} (canonical URL)."""
+    qs = request.url.query
+    target = f"/events/tournaments/{tournament_id}"
+    if qs:
+        target = f"{target}?{qs}"
+    return RedirectResponse(url=target, status_code=301)
 
 
 @router.post("/tournaments/{tournament_id}/enroll", response_class=HTMLResponse)

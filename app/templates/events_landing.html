@@ -1,0 +1,130 @@
+{% extends "student_base.html" %}
+
+{% block title %}Events — LFA Education Center{% endblock %}
+{% block active_page %}events{% endblock %}
+
+{% block extra_styles %}
+<style>
+.events-landing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+}
+.event-type-card {
+    background: var(--app-card);
+    border-radius: 14px;
+    padding: 1.75rem 1.5rem;
+    border: 1px solid var(--app-border);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    text-decoration: none;
+    color: var(--app-text);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: box-shadow 0.2s, transform 0.15s;
+    position: relative;
+}
+.event-type-card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+    text-decoration: none;
+    color: var(--app-text);
+}
+.event-type-card.tournament-card { border-top: 4px solid #3498db; }
+.event-type-card.camp-card       { border-top: 4px solid #27ae60; }
+.event-type-card.stub-card       { border-top: 4px solid var(--app-border); opacity: 0.75; cursor: default; }
+.event-type-card.stub-card:hover { transform: none; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.etcard-icon  { font-size: 2.2rem; line-height: 1; }
+.etcard-title { font-size: 1.2rem; font-weight: 700; margin: 0.25rem 0 0; }
+.etcard-meta  { font-size: 0.85rem; color: var(--app-text-muted); }
+.etcard-badge {
+    display: inline-block;
+    background: #d6eaf8;
+    color: #1a5276;
+    border-radius: 20px;
+    padding: 0.2rem 0.65rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 0.25rem;
+    width: fit-content;
+}
+.etcard-arrow {
+    margin-top: auto;
+    font-size: 0.9rem;
+    color: var(--app-text-muted);
+    font-weight: 600;
+}
+.etcard-coming-soon {
+    font-size: 0.82rem;
+    color: var(--app-text-muted);
+    font-style: italic;
+    margin-top: auto;
+}
+</style>
+{% endblock %}
+
+{% block student_content %}
+
+<div class="welcome-section">
+    <h1>🗓️ Events</h1>
+    <p>Choose an event type to browse and enroll</p>
+</div>
+
+<div class="events-landing-grid">
+
+    {# ── Tournaments ── #}
+    <a href="/events/tournaments" class="event-type-card tournament-card">
+        <span class="etcard-icon">🏆</span>
+        <span class="etcard-title">Tournaments</span>
+        <span class="etcard-meta">
+            Competitive events with sessions, rankings, and rewards
+        </span>
+        {% if tournament_enrolled > 0 %}
+        <span class="etcard-badge">{{ tournament_enrolled }} enrolled</span>
+        {% endif %}
+        {% if tournament_available > 0 %}
+        <span class="etcard-meta" style="color: #1a7a4a;">{{ tournament_available }} open for enrollment</span>
+        {% endif %}
+        <span class="etcard-arrow">Browse Tournaments →</span>
+    </a>
+
+    {# ── Camps ── #}
+    <a href="/events/camps" class="event-type-card camp-card">
+        <span class="etcard-icon">⛺</span>
+        <span class="etcard-title">Camps</span>
+        <span class="etcard-meta">
+            Short-term intensive training camps
+        </span>
+        {% if camp_enrolled > 0 %}
+        <span class="etcard-badge">{{ camp_enrolled }} enrolled</span>
+        {% endif %}
+        {% if camp_available > 0 %}
+        <span class="etcard-meta" style="color: #1a7a4a;">{{ camp_available }} open for enrollment</span>
+        {% endif %}
+        <span class="etcard-arrow">Browse Camps →</span>
+    </a>
+
+    {# ── Academy Seasons — Coming Soon ── #}
+    <div class="event-type-card stub-card">
+        <span class="etcard-icon">📚</span>
+        <span class="etcard-title">Academy Seasons</span>
+        <span class="etcard-meta">
+            Full-year development programs
+        </span>
+        <span class="etcard-coming-soon">Coming Soon</span>
+    </div>
+
+    {# ── Mini Seasons — Coming Soon ── #}
+    <div class="event-type-card stub-card">
+        <span class="etcard-icon">📅</span>
+        <span class="etcard-title">Mini Seasons</span>
+        <span class="etcard-meta">
+            Short academy season programs (4–8 weeks)
+        </span>
+        <span class="etcard-coming-soon">Coming Soon</span>
+    </div>
+
+</div>
+
+{% endblock %}

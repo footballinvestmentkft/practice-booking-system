@@ -18,6 +18,7 @@ from . import (
     instructor_dashboard,
     admin,
     tournaments,
+    events,
     communications,
     teams,
     tournament_live,
@@ -43,6 +44,7 @@ router.include_router(instructor.router)
 router.include_router(instructor_dashboard.router)
 router.include_router(admin.router)
 router.include_router(tournaments.router)
+router.include_router(events.router)          # 🗓️ Events domain — /events/* (before public_tournament)
 router.include_router(communications.router)
 router.include_router(teams.router)
 router.include_router(tournament_live.router)  # ✅ Live monitoring (WebSocket + admin page)

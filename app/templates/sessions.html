@@ -386,7 +386,7 @@
 
     {% if session.parent_semester_name %}
     <div class="session-tournament-badge">
-        🏅 <a href="/tournaments/{{ session.parent_semester_id }}">{{ session.parent_semester_name }}</a>
+        🏅 <a href="/events/tournaments/{{ session.parent_semester_id }}">{{ session.parent_semester_name }}</a>
     </div>
     {% endif %}
 
@@ -518,7 +518,7 @@
     {% for group in tournament_groups %}
     <div class="event-group">
         <div class="event-group-header">
-            <a href="/tournaments/{{ group.tournament_id }}" class="event-group-link">
+            <a href="/events/tournaments/{{ group.tournament_id }}" class="event-group-link">
                 🗓️ {{ group.tournament_name }} →
             </a>
             <span class="event-group-meta">

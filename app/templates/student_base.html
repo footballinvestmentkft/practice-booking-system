@@ -10,7 +10,7 @@
            <h1>Page content here</h1>
        {% endblock %}
 
-   Active page values: hub | lfa-player | sessions | progress | skills |
+   Active page values: hub | lfa-player | events | sessions | progress | skills |
                        achievements | calendar | credits | card-editor
 
    Context expected from route handler (at minimum):
@@ -46,8 +46,8 @@
             {% if show_spec_nav | default(true) %}
             <a href="/dashboard/lfa-football-player"
                class="nav-item{% if _active == 'lfa-player' or p.startswith('/dashboard/lfa') %} active{% endif %}">⚽ LFA Player</a>
-            <a href="/tournaments"
-               class="nav-item{% if _active == 'tournaments' or p.startswith('/tournaments') %} active{% endif %}">🗓️ Events</a>
+            <a href="/events"
+               class="nav-item{% if _active == 'events' or p.startswith('/events') %} active{% endif %}">🗓️ Events</a>
             <a href="/sessions"
                class="nav-item{% if _active == 'sessions' or p.startswith('/sessions') %} active{% endif %}">📅 Sessions</a>
             <a href="/progress"
@@ -97,7 +97,7 @@
 <div class="footer-links">
     <a href="/dashboard">🏠 Hub</a>
     <a href="/skills">⚡ Skills</a>
-    <a href="/tournaments">🗓️ Events</a>
+    <a href="/events">🗓️ Events</a>
     <a href="/sessions">📅 Sessions</a>
     <a href="/progress">📊 Progress</a>
     <a href="/achievements">🏆 Achievements</a>

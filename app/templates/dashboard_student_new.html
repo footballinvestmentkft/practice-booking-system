@@ -222,7 +222,7 @@
             {# Events is the primary entry point — Sessions are subordinate to Events #}
             <section class="mod-nav-section">
                 <div class="mod-nav-grid">
-                    <a href="/tournaments" class="mod-nav-card" style="border-top: 3px solid #3498db;">
+                    <a href="/events" class="mod-nav-card" style="border-top: 3px solid #3498db;">
                         <span class="mod-nav-icon">🗓️</span>
                         <span class="mod-nav-title">Events</span>
                     </a>
@@ -280,29 +280,44 @@
                 </div>
             </section>
 
-            {# ── My Active Events — primary widget ────────────────────────────── #}
+            {# ── My Events — per-type cards ───────────────────────────────────── #}
             <section class="section-block" style="border-left: 4px solid #3498db; padding-left: 1rem;">
                 <div class="section-header">
-                    <h2 class="page-title">🗓️ My Active Events</h2>
-                    <a href="/tournaments" class="section-link">All events →</a>
+                    <h2 class="page-title">🗓️ My Events</h2>
+                    <a href="/events" class="section-link">All event types →</a>
                 </div>
-                {% if my_active_tournaments %}
-                    {% for t in my_active_tournaments %}
-                    <a href="/tournaments/{{ t.id }}" style="display:flex; justify-content:space-between; align-items:center; background:#d6eaf8; color:#1a5276; padding:0.5rem 1rem; border-radius:8px; margin-bottom:0.5rem; text-decoration:none; font-weight:600;">
-                        <span>🗓️ {{ t.name }}</span>
-                        <span style="font-size:0.8rem; font-weight:400; opacity:0.85;">
-                            {% if t.tournament_status == 'IN_PROGRESS' %}⏳ In Progress
-                            {% elif t.tournament_status == 'ENROLLMENT_OPEN' %}🟢 Open
-                            {% elif t.tournament_status == 'ENROLLMENT_CLOSED' %}🔒 Closed
-                            {% elif t.tournament_status == 'CHECK_IN_OPEN' %}📋 Check-In
-                            {% else %}{{ t.tournament_status }}{% endif %}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    {# Tournaments card #}
+                    <a href="/events/tournaments" style="display:flex; flex-direction:column; gap:0.25rem;
+                        background: var(--app-card-alt); border-radius: 10px; padding: 1rem;
+                        border-left: 3px solid #3498db; text-decoration: none; color: var(--app-text);
+                        transition: box-shadow 0.2s;">
+                        <span style="font-size:1.3rem;">🏆</span>
+                        <span style="font-weight:700; font-size:0.95rem;">Tournaments</span>
+                        {% if tournament_enrolled_count > 0 %}
+                        <span style="font-size:0.8rem; background:#d6eaf8; color:#1a5276; border-radius:12px; padding:0.15rem 0.6rem; width:fit-content; font-weight:600;">
+                            {{ tournament_enrolled_count }} enrolled
                         </span>
+                        {% else %}
+                        <span style="font-size:0.8rem; color:var(--app-text-muted);">Browse →</span>
+                        {% endif %}
                     </a>
-                    {% endfor %}
-                {% else %}
-                <p style="color: var(--app-text-muted); margin: 0 0 0.75rem;">You have no active event enrollments.</p>
-                <a href="/tournaments" class="btn btn-primary" style="display:inline-block;">🗓️ Browse Events</a>
-                {% endif %}
+                    {# Camps card #}
+                    <a href="/events/camps" style="display:flex; flex-direction:column; gap:0.25rem;
+                        background: var(--app-card-alt); border-radius: 10px; padding: 1rem;
+                        border-left: 3px solid #27ae60; text-decoration: none; color: var(--app-text);
+                        transition: box-shadow 0.2s;">
+                        <span style="font-size:1.3rem;">⛺</span>
+                        <span style="font-weight:700; font-size:0.95rem;">Camps</span>
+                        {% if camp_enrolled_count > 0 %}
+                        <span style="font-size:0.8rem; background:#d5f5e3; color:#1a7a4a; border-radius:12px; padding:0.15rem 0.6rem; width:fit-content; font-weight:600;">
+                            {{ camp_enrolled_count }} enrolled
+                        </span>
+                        {% else %}
+                        <span style="font-size:0.8rem; color:var(--app-text-muted);">Browse →</span>
+                        {% endif %}
+                    </a>
+                </div>
             </section>
 
             {# ── Available Events ──────────────────────────────────────────────── #}

@@ -1,0 +1,285 @@
+{% extends "student_base.html" %}
+
+{% block title %}Camps — LFA Education Center{% endblock %}
+{% block active_page %}events{% endblock %}
+
+{% block extra_styles %}
+<style>
+.camp-card {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+    background: var(--app-card);
+    border-left: 5px solid #27ae60;
+    transition: box-shadow 0.2s ease;
+}
+.camp-card:hover { box-shadow: 0 6px 16px rgba(0,0,0,0.15); }
+.camp-card.enrolled { border-left-color: #3498db; }
+.camp-card.full     { border-left-color: #95a5a6; opacity: 0.85; }
+.camp-header {
+    padding: 1.2rem 1.5rem 0.8rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.camp-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--app-text);
+}
+.status-badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.status-enrollment-open { background: #d5f5e3; color: #1a7a4a; }
+.status-in-progress     { background: #fdebd0; color: #a04000; }
+.status-closed          { background: #f2f3f4; color: #566573; }
+.camp-body { padding: 0 1.5rem 1.2rem; }
+.meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+.meta-item {
+    background: var(--app-card-alt);
+    border-radius: 6px;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
+    color: var(--app-text);
+}
+.meta-item strong { display: block; font-size: 0.75rem; color: var(--app-text-muted); margin-bottom: 0.2rem; }
+.capacity-bar-wrap {
+    background: var(--app-border);
+    border-radius: 4px;
+    height: 8px;
+    margin-top: 0.3rem;
+    overflow: hidden;
+}
+.capacity-bar-fill {
+    background: #27ae60;
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s;
+}
+.capacity-bar-fill.nearly-full { background: #f39c12; }
+.capacity-bar-fill.full        { background: #e74c3c; }
+.enrolled-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #d6eaf8;
+    color: #1a5276;
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    text-decoration: none;
+}
+.enrolled-badge:hover { background: #aed6f1; color: #154360; }
+.action-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.section-divider { border: none; border-top: 2px solid var(--app-border); margin: 2rem 0 1.5rem; }
+.events-section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--app-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+}
+</style>
+{% endblock %}
+
+{% block student_content %}
+
+<nav class="breadcrumb-trail" style="margin-bottom: 1rem;">
+    <a href="/events">Events</a>
+    <span class="bc-sep">›</span>
+    <span>Camps</span>
+</nav>
+
+<div class="welcome-section">
+    <h1>⛺ Camps</h1>
+    <p>Browse intensive training camps and manage your participation</p>
+</div>
+
+{% if flash %}
+<div class="alert" style="padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;
+    {% if flash_type == 'success' %}background:#d5f5e3; color:#1a7a4a; border-left:4px solid #27ae60;
+    {% elif flash_type == 'error' %}background:#fadbd8; color:#7b241c; border-left:4px solid #e74c3c;
+    {% else %}background:#d6eaf8; color:#1a5276; border-left:4px solid #3498db;{% endif %}">
+    {{ flash | replace('+', ' ') | replace('%2C', ',') }}
+</div>
+{% endif %}
+
+{# ── My Enrolled Camps ────────────────────────────────────────────────────────── #}
+{% if enrolled_events %}
+<div class="events-section-title">✅ My Enrolled Camps</div>
+{% for item in enrolled_events %}
+{% set c = item.camp %}
+
+<div class="camp-card enrolled"
+     data-testid="camp-card" data-camp-id="{{ c.id }}">
+
+    <div class="camp-header">
+        <div>
+            <p class="camp-title">⛺ {{ c.name }}</p>
+            {% if c.code %}<p style="color: var(--app-text-muted); font-size: 0.85rem; margin: 0.25rem 0 0;">{{ c.code }}</p>{% endif %}
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            {% if c.tournament_status == 'ENROLLMENT_OPEN' %}
+            <span class="status-badge status-enrollment-open">🟢 Enrollment Open</span>
+            {% elif c.tournament_status == 'IN_PROGRESS' %}
+            <span class="status-badge status-in-progress">⏳ In Progress</span>
+            {% else %}
+            <span class="status-badge status-closed">{{ c.tournament_status }}</span>
+            {% endif %}
+            {% if c.age_group %}
+            <span class="status-badge" style="background:#eaf2ff; color:#1a5276;">{{ c.age_group }}</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="camp-body">
+        <a href="/events/camps/{{ c.id }}" class="enrolled-badge" data-testid="enrolled-badge">
+            ✅ Enrolled — View Camp →
+        </a>
+
+        <div class="meta-grid">
+            <div class="meta-item">
+                <strong>📅 Start Date</strong>
+                {{ c.start_date.strftime('%b %d, %Y') if c.start_date else '—' }}
+            </div>
+            <div class="meta-item">
+                <strong>⏰ End Date</strong>
+                {{ c.end_date.strftime('%b %d, %Y') if c.end_date else '—' }}
+            </div>
+            <div class="meta-item">
+                <strong>💳 Entry Fee</strong>
+                {{ c.enrollment_cost if c.enrollment_cost is not none else 0 }} credits
+            </div>
+            <div class="meta-item">
+                <strong>👥 Participants</strong>
+                {{ item.enrollment_count }} / {{ item.max_players if item.max_players < 999 else '∞' }}
+            </div>
+        </div>
+
+        <div class="action-row">
+            <a href="/events/camps/{{ c.id }}" class="btn btn-primary">📋 View Camp</a>
+            <form method="POST" action="/events/camps/{{ c.id }}/unenroll" style="margin: 0;">
+                <button type="submit" class="btn btn-secondary"
+                        style="background: #e74c3c; border-color: #c0392b; color: white;"
+                        onclick="return confirm('Are you sure you want to withdraw? You will receive a 50% refund.')">
+                    ↩ Withdraw (50% refund)
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<hr class="section-divider">
+{% endif %}
+
+{# ── Browse Camps ─────────────────────────────────────────────────────────────── #}
+{% if browse_events %}
+{% if enrolled_events %}
+<div class="events-section-title">🔍 Browse Camps</div>
+{% endif %}
+
+{% for item in browse_events %}
+{% set c = item.camp %}
+{% set pct = (item.enrollment_count / item.max_players * 100) | int if item.max_players < 999 else 0 %}
+{% set is_full = item.enrollment_count >= item.max_players and item.max_players < 999 %}
+
+<div class="camp-card {% if is_full %}full{% endif %}"
+     data-testid="camp-card" data-camp-id="{{ c.id }}">
+
+    <div class="camp-header">
+        <div>
+            <p class="camp-title">⛺ {{ c.name }}</p>
+            {% if c.code %}<p style="color: var(--app-text-muted); font-size: 0.85rem; margin: 0.25rem 0 0;">{{ c.code }}</p>{% endif %}
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            {% if c.tournament_status == 'ENROLLMENT_OPEN' %}
+            <span class="status-badge status-enrollment-open">🟢 Enrollment Open</span>
+            {% elif c.tournament_status == 'IN_PROGRESS' %}
+            <span class="status-badge status-in-progress">⏳ In Progress</span>
+            {% endif %}
+            {% if c.age_group %}
+            <span class="status-badge" style="background:#eaf2ff; color:#1a5276;">{{ c.age_group }}</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="camp-body">
+        <div class="meta-grid">
+            <div class="meta-item">
+                <strong>📅 Start Date</strong>
+                {{ c.start_date.strftime('%b %d, %Y') if c.start_date else '—' }}
+            </div>
+            <div class="meta-item">
+                <strong>⏰ End Date</strong>
+                {{ c.end_date.strftime('%b %d, %Y') if c.end_date else '—' }}
+            </div>
+            <div class="meta-item">
+                <strong>💳 Entry Fee</strong>
+                {{ c.enrollment_cost if c.enrollment_cost is not none else 0 }} credits
+            </div>
+            <div class="meta-item">
+                <strong>👥 Participants</strong>
+                {{ item.enrollment_count }} / {{ item.max_players if item.max_players < 999 else '∞' }}
+                {% if item.max_players < 999 %}
+                <div class="capacity-bar-wrap">
+                    <div class="capacity-bar-fill {% if pct >= 100 %}full{% elif pct >= 75 %}nearly-full{% endif %}"
+                         style="width: {{ [pct, 100] | min }}%"></div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if c.description %}
+        <p style="color: var(--app-text-muted); margin-bottom: 1rem; font-size: 0.95rem;">{{ c.description }}</p>
+        {% endif %}
+
+        <div class="action-row">
+            <a href="/events/camps/{{ c.id }}" class="btn btn-outline">📋 View Details</a>
+            {% if is_full %}
+                <button class="btn btn-secondary" disabled>Camp Full</button>
+            {% elif c.tournament_status == 'ENROLLMENT_OPEN' %}
+                <form method="POST" action="/events/camps/{{ c.id }}/enroll" style="margin: 0;">
+                    <button type="submit" class="btn btn-primary" data-testid="enroll-btn">
+                        ⛺ Enroll ({{ c.enrollment_cost if c.enrollment_cost is not none else 0 }} credits)
+                    </button>
+                </form>
+            {% else %}
+                <button class="btn btn-secondary" disabled>Enrollment Closed</button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% elif not enrolled_events %}
+<div class="card text-center" style="padding: 3rem;">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">⛺</div>
+    <h3>No Camps Available</h3>
+    <p style="color: var(--app-text-muted);">There are no camps open for enrollment right now. Check back later!</p>
+    <a href="/events" class="btn btn-outline" style="margin-top: 1rem;">← Back to Events</a>
+</div>
+{% endif %}
+
+{% endblock %}
