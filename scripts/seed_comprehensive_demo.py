@@ -2181,9 +2181,9 @@ if enrolled:
             db.add(TR(
                 tournament_id=t.id,
                 user_id=player.id,
+                participant_type="INDIVIDUAL",
                 rank=rank_pos,
-                score=1.0 if rank_pos == 1 else (0.33 if rank_pos == 2 else 0.0),
-                xp_awarded=50 if rank_pos == 1 else (25 if rank_pos == 2 else 0),
+                points=100.0 if rank_pos == 1 else (33.0 if rank_pos == 2 else 0.0),
             ))
         db.commit()
     transition(t.id, "COMPLETED")
