@@ -133,7 +133,6 @@ async def events_tournaments_list(
         db.query(Semester)
         .filter(
             Semester.semester_category == SemesterCategory.TOURNAMENT,
-            Semester.specialization_type == "LFA_FOOTBALL_PLAYER",
             Semester.status != SemesterStatus.CANCELLED,
         )
         .order_by(Semester.start_date.desc())  # most recent first for discovery
