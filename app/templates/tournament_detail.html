@@ -1,175 +1,173 @@
 {% extends "student_base.html" %}
 
 {% block title %}{{ tournament.name }} — LFA Education Center{% endblock %}
-{% block active_page %}tournaments{% endblock %}
+{% block active_page %}events{% endblock %}
 
 {% block extra_styles %}
 <style>
-.event-detail-header { margin-bottom: 1.5rem; }
-.event-detail-header h1 { margin: 0 0 0.5rem; font-size: 1.8rem; color: var(--app-text); }
-.event-badges { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
-.badge-status-open   { background: #d5f5e3; color: #1a7a4a; }
-.badge-status-prog   { background: #fdebd0; color: #a04000; }
-.badge-status-closed { background: #f2f3f4; color: #566573; }
-.badge-virtual { background: #e8d5f5; color: #6c3483; }
-.badge-hybrid  { background: #d6eaf8; color: #1a5276; }
-.badge-format  { background: #fef9e7; color: #7d6608; }
-.badge-age     { background: #eaf2ff; color: #1a5276; }
-.ev-badge {
-    padding: 0.3rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    white-space: nowrap;
-}
-.enrollment-panel {
-    background: var(--app-card-alt);
-    border-radius: 10px;
-    padding: 1.2rem 1.5rem;
-    margin-bottom: 1.5rem;
-    border: 1px solid var(--app-border);
-}
-.enrollment-enrolled {
-    border-left: 4px solid #3498db;
-}
-.enrollment-open {
-    border-left: 4px solid #27ae60;
-}
-.enrollment-closed {
-    border-left: 4px solid #95a5a6;
-}
-.enrollment-panel h3 { margin: 0 0 0.75rem; font-size: 1rem; color: var(--app-text); }
-.enrollment-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; margin-top: 0.75rem; }
-.event-info-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-}
-.info-tile {
-    background: var(--app-card-alt);
-    border-radius: 8px;
-    padding: 0.8rem 1rem;
-}
-.info-tile .tile-label { font-size: 0.75rem; color: var(--app-text-muted); font-weight: 600; margin-bottom: 0.2rem; }
-.info-tile .tile-value { font-size: 0.95rem; color: var(--app-text); font-weight: 500; }
-.schedule-section { margin-bottom: 2rem; }
-.schedule-section h2 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--app-text); }
-.schedule-table { width: 100%; border-collapse: collapse; }
-.schedule-table th {
-    text-align: left;
-    font-size: 0.8rem;
-    color: var(--app-text-muted);
-    font-weight: 600;
-    padding: 0.5rem 0.75rem;
-    border-bottom: 2px solid var(--app-border);
-    text-transform: uppercase;
-}
-.schedule-table td {
-    padding: 0.75rem;
-    border-bottom: 1px solid var(--app-border);
-    font-size: 0.9rem;
-    color: var(--app-text);
-    vertical-align: middle;
-}
-.schedule-table tr:last-child td { border-bottom: none; }
-.schedule-table tr:hover td { background: var(--app-card-alt); }
-.sched-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-.btn-sm { padding: 0.3rem 0.75rem; font-size: 0.82rem; }
-.badge-stype {
-    display: inline-block;
-    padding: 0.2rem 0.6rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-.badge-stype-on_site  { background: #d5f5e3; color: #1a7a4a; }
-.badge-stype-virtual  { background: #e8d5f5; color: #6c3483; }
-.badge-stype-hybrid   { background: #d6eaf8; color: #1a5276; }
-.my-ranking-panel {
-    background: var(--app-card-alt);
-    border-radius: 10px;
-    padding: 1.2rem 1.5rem;
-    border: 1px solid var(--app-border);
-    border-left: 4px solid #f39c12;
-    margin-bottom: 1.5rem;
-}
-.my-ranking-panel h2 { margin: 0 0 0.75rem; font-size: 1rem; }
-.rank-display { font-size: 1.5rem; font-weight: 700; color: var(--app-text); margin-bottom: 0.5rem; }
-.no-sessions-msg {
-    background: var(--app-card-alt);
-    border-radius: 8px;
-    padding: 2rem;
-    text-align: center;
-    color: var(--app-text-muted);
-    margin-bottom: 1.5rem;
-}
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.t-header           { margin-bottom: 1.5rem; }
+.t-header h1        { margin: 0 0 0.4rem; font-size: 1.8rem; color: var(--app-text); }
+.t-code             { color: var(--app-text-muted); font-size: 0.88rem; margin: 0 0 0.6rem; }
+.t-badges           { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.t-badge            { padding: 0.25rem 0.7rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
+.t-badge-open       { background: #d5f5e3; color: #1a7a4a; }
+.t-badge-prog       { background: #fdebd0; color: #a04000; }
+.t-badge-done       { background: #eaecee; color: #566573; }
+.t-badge-closed     { background: #fef9e7; color: #7d6608; }
+.t-badge-virtual    { background: #e8d5f5; color: #6c3483; }
+.t-badge-hybrid     { background: #d6eaf8; color: #1a5276; }
+.t-badge-type       { background: #fef9e7; color: #7d6608; }
+.t-badge-age        { background: #eaf2ff; color: #1a5276; }
+
+/* ── Enrollment panel ─────────────────────────────────────────────────────── */
+.enroll-panel       { border-radius: 10px; padding: 1.2rem 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--app-border); background: var(--app-card-alt); }
+.enroll-enrolled    { border-left: 4px solid #3498db; }
+.enroll-open        { border-left: 4px solid #27ae60; }
+.enroll-closed      { border-left: 4px solid #95a5a6; }
+.enroll-panel h3    { margin: 0 0 0.6rem; font-size: 1rem; color: var(--app-text); }
+.enroll-actions     { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; margin-top: 0.75rem; }
+
+/* ── My Standing ─────────────────────────────────────────────────────────── */
+.standing-panel     { border-radius: 10px; padding: 1.2rem 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--app-border); background: var(--app-card-alt); border-left: 4px solid #f39c12; }
+.standing-panel h2  { margin: 0 0 0.6rem; font-size: 1rem; color: var(--app-text); }
+.standing-rank      { font-size: 1.6rem; font-weight: 700; color: var(--app-text); }
+.standing-detail    { font-size: 0.88rem; color: var(--app-text-muted); margin-top: 0.25rem; }
+.standing-pending   { color: var(--app-text-muted); font-size: 0.9rem; }
+
+/* ── Structure section ───────────────────────────────────────────────────── */
+.t-section          { margin-bottom: 2rem; }
+.t-section-title    { font-size: 1.1rem; font-weight: 700; color: var(--app-text); margin-bottom: 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--app-border); }
+
+/* Standings table */
+.standings-table    { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.standings-table th { text-align: center; padding: 0.4rem 0.6rem; color: var(--app-text-muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid var(--app-border); }
+.standings-table th.left { text-align: left; }
+.standings-table td { padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--app-border); text-align: center; color: var(--app-text); }
+.standings-table td.left { text-align: left; }
+.standings-table tr.me td { background: #eaf6ff; font-weight: 600; }
+.standings-table tr:last-child td { border-bottom: none; }
+.rank-pill          { display: inline-block; width: 1.6rem; height: 1.6rem; line-height: 1.6rem; border-radius: 50%; text-align: center; font-size: 0.78rem; font-weight: 700; background: var(--app-border); color: var(--app-text-muted); }
+.rank-pill.gold     { background: #f9ca24; color: #000; }
+.rank-pill.silver   { background: #c0c0c0; color: #000; }
+.rank-pill.bronze   { background: #cd7f32; color: #fff; }
+
+/* Group standings */
+.group-grid         { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+.group-card         { background: var(--app-card-alt); border-radius: 8px; padding: 0.75rem 1rem; border: 1px solid var(--app-border); }
+.group-card.my-group { border: 2px solid #3498db; }
+.group-card-title   { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--app-text); }
+.group-my-badge     { font-size: 0.72rem; font-weight: 600; background: #d6eaf8; color: #1a5276; padding: 0.15rem 0.5rem; border-radius: 10px; margin-left: 0.4rem; }
+
+/* Bracket */
+.bracket-wrap       { overflow-x: auto; }
+.bracket-cols       { display: flex; gap: 1.5rem; align-items: flex-start; min-width: max-content; padding-bottom: 0.5rem; }
+.bracket-round      { display: flex; flex-direction: column; gap: 1rem; min-width: 160px; }
+.bracket-round-hdr  { font-size: 0.75rem; font-weight: 700; color: var(--app-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+.bracket-match      { background: var(--app-card-alt); border: 1px solid var(--app-border); border-radius: 6px; padding: 0.4rem 0.6rem; font-size: 0.82rem; }
+.bracket-match.my-match { border: 2px solid #3498db; background: #eaf6ff; }
+.bracket-match.tbd  { opacity: 0.5; }
+.bracket-team       { display: flex; justify-content: space-between; padding: 0.15rem 0; }
+.bracket-team.winner { font-weight: 700; }
+.bracket-score      { font-weight: 700; min-width: 1.5rem; text-align: right; }
+
+/* Session schedule */
+.phase-group        { margin-bottom: 1.5rem; }
+.phase-hdr          { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--app-text-muted); padding: 0.4rem 0; border-bottom: 1px solid var(--app-border); margin-bottom: 0.5rem; }
+.sess-row           { display: flex; align-items: flex-start; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid var(--app-border); flex-wrap: wrap; }
+.sess-row:last-child { border-bottom: none; }
+.sess-date          { min-width: 80px; font-size: 0.82rem; color: var(--app-text-muted); flex-shrink: 0; }
+.sess-main          { flex: 1; min-width: 180px; }
+.sess-title         { font-weight: 600; font-size: 0.92rem; color: var(--app-text); }
+.sess-meta          { font-size: 0.8rem; color: var(--app-text-muted); margin-top: 0.2rem; }
+.sess-actions       { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; flex-shrink: 0; }
+.btn-sm             { padding: 0.3rem 0.75rem; font-size: 0.82rem; }
+.stype-badge        { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 10px; font-size: 0.72rem; font-weight: 600; }
+.stype-virtual      { background: #e8d5f5; color: #6c3483; }
+.stype-hybrid       { background: #d6eaf8; color: #1a5276; }
+.stype-on_site      { background: #d5f5e3; color: #1a7a4a; }
+.result-chip        { font-size: 0.78rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 10px; }
+.result-win         { background: #d5f5e3; color: #1a7a4a; }
+.result-loss        { background: #fadbd8; color: #7b241c; }
+.result-draw        { background: #fef9e7; color: #7d6608; }
+
+/* Info tiles */
+.info-tiles         { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.6rem; margin-bottom: 1.5rem; }
+.info-tile          { background: var(--app-card-alt); border-radius: 8px; padding: 0.7rem 0.9rem; }
+.tile-lbl           { font-size: 0.72rem; color: var(--app-text-muted); font-weight: 600; margin-bottom: 0.15rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.tile-val           { font-size: 0.92rem; color: var(--app-text); font-weight: 500; }
 </style>
 {% endblock %}
 
 {% block student_content %}
 
-{# ── Breadcrumb ──────────────────────────────────────────────────────────────── #}
+{# ── Breadcrumb ────────────────────────────────────────────────────────────── #}
 <nav class="breadcrumb-trail" style="margin-bottom: 1rem;">
-    <a href="/events/tournaments">Events</a>
+    <a href="/events/tournaments">Tournaments</a>
     <span class="bc-sep">›</span>
     <span>{{ tournament.name }}</span>
 </nav>
 
-{# ── Event Header ────────────────────────────────────────────────────────────── #}
-<div class="event-detail-header">
+{# ── [A] Header ────────────────────────────────────────────────────────────── #}
+<div class="t-header">
     <h1>{{ tournament.name }}</h1>
-    <p style="color: var(--app-text-muted); font-size: 0.9rem; margin: 0 0 0.5rem;">{{ tournament.code }}</p>
-    <div class="event-badges">
+    <p class="t-code">{{ tournament.code }}</p>
+    <div class="t-badges">
         {% if tournament.tournament_status == 'ENROLLMENT_OPEN' %}
-        <span class="ev-badge badge-status-open">🟢 Enrollment Open</span>
+        <span class="t-badge t-badge-open">🟢 Enrollment Open</span>
         {% elif tournament.tournament_status == 'IN_PROGRESS' %}
-        <span class="ev-badge badge-status-prog">⏳ In Progress</span>
-        {% elif tournament.tournament_status in ['COMPLETED', 'REWARDS_DISTRIBUTED'] %}
-        <span class="ev-badge badge-status-closed">✅ Completed</span>
-        {% else %}
-        <span class="ev-badge badge-status-closed">{{ tournament.tournament_status }}</span>
+        <span class="t-badge t-badge-prog">⏳ In Progress</span>
+        {% elif tournament.tournament_status in ('COMPLETED', 'REWARDS_DISTRIBUTED') %}
+        <span class="t-badge t-badge-done">✔ Completed</span>
+        {% elif tournament.tournament_status == 'ENROLLMENT_CLOSED' %}
+        <span class="t-badge t-badge-closed">🔒 Enrollment Closed</span>
+        {% elif tournament.tournament_status == 'CHECK_IN_OPEN' %}
+        <span class="t-badge t-badge-prog">📋 Check-In Open</span>
+        {% endif %}
+
+        {% if type_display_name %}
+        <span class="t-badge t-badge-type">{{ type_display_name }}</span>
         {% endif %}
 
         {% if cfg %}
             {% if cfg.session_type_config == 'virtual' %}
-            <span class="ev-badge badge-virtual">💻 Virtual</span>
+            <span class="t-badge t-badge-virtual">💻 Virtual</span>
             {% elif cfg.session_type_config == 'hybrid' %}
-            <span class="ev-badge badge-hybrid">🔀 Hybrid</span>
-            {% endif %}
-            {% if cfg.tournament_type %}
-            <span class="ev-badge badge-format">{{ cfg.tournament_type.code | title }}</span>
+            <span class="t-badge t-badge-hybrid">🔀 Hybrid</span>
             {% endif %}
         {% endif %}
 
         {% if tournament.age_group %}
-        <span class="ev-badge badge-age">{{ tournament.age_group }}</span>
+        <span class="t-badge t-badge-age">{{ tournament.age_group }}</span>
         {% endif %}
     </div>
 </div>
 
-{# ── Enrollment Panel ────────────────────────────────────────────────────────── #}
+{# ── [B] Enrollment / Action Panel ────────────────────────────────────────── #}
 {% if enrollment %}
-<div class="enrollment-panel enrollment-enrolled" data-testid="enrollment-panel">
-    <h3>✅ You are enrolled in this event</h3>
-    <div class="enrollment-actions">
+<div class="enroll-panel enroll-enrolled" data-testid="enrollment-panel">
+    <h3>✅ You are enrolled in this tournament</h3>
+    <div class="enroll-actions">
+        {% if tournament.tournament_status == 'ENROLLMENT_OPEN' %}
         <form method="POST" action="/tournaments/{{ tournament.id }}/unenroll" style="margin: 0;">
-            <button type="submit" class="btn btn-secondary" style="background:#e74c3c; border-color:#c0392b; color:white;"
+            <button type="submit" class="btn btn-secondary"
+                    style="background:#e74c3c; border-color:#c0392b; color:white;"
                     onclick="return confirm('Withdraw? You will receive a 50% refund.')">
                 ↩ Withdraw (50% refund)
             </button>
         </form>
-        <a href="/events/{{ tournament.id }}" class="btn btn-outline btn-sm" target="_blank">🏆 Public Event Page</a>
+        {% endif %}
+        <a href="/events/{{ tournament.id }}" class="btn btn-outline btn-sm" target="_blank">🌐 Public Event Page →</a>
     </div>
 </div>
 {% elif tournament.tournament_status == 'ENROLLMENT_OPEN' %}
-<div class="enrollment-panel enrollment-open" data-testid="enrollment-panel">
-    <h3>⚽ Join this event</h3>
-    <p style="margin: 0 0 0.75rem; color: var(--app-text-muted);">
+<div class="enroll-panel enroll-open" data-testid="enrollment-panel">
+    <h3>⚽ Join this tournament</h3>
+    <p style="margin: 0 0 0.6rem; color: var(--app-text-muted);">
         Entry fee: <strong>{{ tournament.enrollment_cost or 500 }} credits</strong>
         &nbsp;·&nbsp; Your balance: <strong>{{ user.credit_balance }} credits</strong>
     </p>
-    <div class="enrollment-actions">
+    <div class="enroll-actions">
         {% if user.credit_balance >= (tournament.enrollment_cost or 500) %}
         <form method="POST" action="/tournaments/{{ tournament.id }}/enroll" style="margin: 0;">
             <button type="submit" class="btn btn-primary" data-testid="enroll-btn">
@@ -183,114 +181,304 @@
     </div>
 </div>
 {% else %}
-<div class="enrollment-panel enrollment-closed" data-testid="enrollment-panel">
+<div class="enroll-panel enroll-closed" data-testid="enrollment-panel">
     <h3>🔒 Enrollment Closed</h3>
-    <p style="margin: 0; color: var(--app-text-muted);">This event is no longer accepting new enrollments.</p>
+    <p style="margin: 0; color: var(--app-text-muted);">This tournament is no longer accepting new enrollments.</p>
 </div>
 {% endif %}
 
-{# ── My Ranking (if completed) ───────────────────────────────────────────────── #}
-{% if my_ranking %}
-<div class="my-ranking-panel">
-    <h2>🏅 My Result</h2>
-    <div class="rank-display">Rank #{{ my_ranking.rank }}</div>
-    <p style="margin: 0; color: var(--app-text-muted);">{{ my_ranking.points | round(0) | int }} points</p>
-    <div style="margin-top: 0.75rem;">
-        <a href="/events/{{ tournament.id }}" class="btn btn-outline btn-sm" target="_blank">🏆 View Full Results</a>
-    </div>
+{# ── [C] My Standing ──────────────────────────────────────────────────────── #}
+{% if standings_state != 'NONE' and enrollment %}
+<div class="standing-panel">
+    <h2>🏅 My Standing</h2>
+    {% if my_ranking %}
+        <div class="standing-rank">
+            {% if my_ranking.rank == 1 %}🥇
+            {% elif my_ranking.rank == 2 %}🥈
+            {% elif my_ranking.rank == 3 %}🥉
+            {% else %}#{{ my_ranking.rank }}{% endif %}
+            Rank #{{ my_ranking.rank }}
+        </div>
+        {% if show_wdl %}
+        <div class="standing-detail">
+            W {{ my_ranking.wins or 0 }} · D {{ my_ranking.draws or 0 }} · L {{ my_ranking.losses or 0 }}
+            {% set gd = (my_ranking.goals_for or 0) - (my_ranking.goals_against or 0) %}
+            · GD {{ '+' if gd > 0 else '' }}{{ gd }}
+            · {{ my_ranking.points | round(0) | int }} Pts
+        </div>
+        {% else %}
+        <div class="standing-detail">
+            {{ my_ranking.points | round(1) }} pts
+        </div>
+        {% endif %}
+        {% if my_group %}
+        <div class="standing-detail" style="margin-top: 0.3rem;">Group {{ my_group }}</div>
+        {% endif %}
+    {% elif standings_state == 'PENDING' %}
+        <p class="standing-pending">⏳ Standings will be calculated after rounds are completed.</p>
+    {% elif standings_state in ('LIVE', 'FINAL') %}
+        <p class="standing-pending">No personal ranking record found.</p>
+    {% endif %}
 </div>
 {% endif %}
 
-{# ── Event Info Grid ─────────────────────────────────────────────────────────── #}
-<div class="event-info-grid">
+{# ── [D] Tournament Structure ─────────────────────────────────────────────── #}
+{% if standings_state in ('LIVE', 'FINAL') or group_standings or bracket_rounds %}
+<div class="t-section">
+
+    {# GROUP KNOCKOUT: group standings + bracket #}
+    {% if tournament_type_code == 'group_knockout' %}
+
+        {% if group_standings %}
+        <div class="t-section-title">Group Stage Standings</div>
+        <div class="group-grid" style="margin-bottom: 1.5rem;">
+            {% for grp_key, grp_rows in group_standings.items() %}
+            <div class="group-card {% if grp_key == my_group %}my-group{% endif %}">
+                <div class="group-card-title">
+                    Group {{ grp_key }}
+                    {% if grp_key == my_group %}<span class="group-my-badge">My Group</span>{% endif %}
+                </div>
+                <table class="standings-table">
+                    <thead>
+                        <tr>
+                            <th class="left">#</th>
+                            <th class="left">Player</th>
+                            <th>W</th><th>D</th><th>L</th><th>Pts</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in grp_rows %}
+                        <tr {% if row.is_me %}class="me"{% endif %}>
+                            <td>{{ loop.index }}</td>
+                            <td class="left">{{ row.name }}{% if row.is_me %} ⬅{% endif %}</td>
+                            <td>{{ row.W }}</td><td>{{ row.D }}</td><td>{{ row.L }}</td>
+                            <td><strong>{{ row.Pts }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if bracket_rounds %}
+        <div class="t-section-title">Knockout Bracket</div>
+        <div class="bracket-wrap">
+            <div class="bracket-cols">
+                {% for rd in bracket_rounds %}
+                <div class="bracket-round">
+                    <div class="bracket-round-hdr">{{ rd.round_name }}</div>
+                    {% for m in rd.matches %}
+                    <div class="bracket-match {% if m.is_my_match %}my-match{% elif m.tbd %}tbd{% endif %}">
+                        <div class="bracket-team {% if m.score_a is not none and m.score_a > m.score_b %}winner{% endif %}">
+                            <span>{{ m.team_a }}</span>
+                            <span class="bracket-score">{{ m.score_a if m.score_a is not none else '' }}</span>
+                        </div>
+                        <div class="bracket-team {% if m.score_b is not none and m.score_b > m.score_a %}winner{% endif %}">
+                            <span>{{ m.team_b }}</span>
+                            <span class="bracket-score">{{ m.score_b if m.score_b is not none else '' }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    {# KNOCKOUT: bracket only #}
+    {% elif tournament_type_code == 'knockout' %}
+
+        {% if bracket_rounds %}
+        <div class="t-section-title">Bracket</div>
+        <div class="bracket-wrap">
+            <div class="bracket-cols">
+                {% for rd in bracket_rounds %}
+                <div class="bracket-round">
+                    <div class="bracket-round-hdr">{{ rd.round_name }}</div>
+                    {% for m in rd.matches %}
+                    <div class="bracket-match {% if m.is_my_match %}my-match{% elif m.tbd %}tbd{% endif %}">
+                        <div class="bracket-team {% if m.score_a is not none and m.score_a > m.score_b %}winner{% endif %}">
+                            <span>{{ m.team_a }}</span>
+                            <span class="bracket-score">{{ m.score_a if m.score_a is not none else '' }}</span>
+                        </div>
+                        <div class="bracket-team {% if m.score_b is not none and m.score_b > m.score_a %}winner{% endif %}">
+                            <span>{{ m.team_b }}</span>
+                            <span class="bracket-score">{{ m.score_b if m.score_b is not none else '' }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    {# LEAGUE / SWISS: standings table #}
+    {% elif tournament_type_code in ('league', 'swiss') %}
+
+        {% if live_rankings %}
+        <div class="t-section-title">
+            {% if standings_state == 'FINAL' %}Final Standings{% else %}Current Standings{% endif %}
+        </div>
+        <table class="standings-table">
+            <thead>
+                <tr>
+                    <th style="width:2rem;">#</th>
+                    <th class="left">Player</th>
+                    {% if show_wdl %}
+                    <th>W</th><th>D</th><th>L</th><th>GD</th>
+                    {% endif %}
+                    <th>Pts</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in live_rankings %}
+                <tr {% if row.is_me %}class="me"{% endif %}>
+                    <td>
+                        <span class="rank-pill {% if row.rank == 1 %}gold{% elif row.rank == 2 %}silver{% elif row.rank == 3 %}bronze{% endif %}">
+                            {{ row.rank }}
+                        </span>
+                    </td>
+                    <td class="left">{{ row.name }}{% if row.is_me %} ⬅{% endif %}</td>
+                    {% if show_wdl %}
+                    <td>{{ row.wins or 0 }}</td>
+                    <td>{{ row.draws or 0 }}</td>
+                    <td>{{ row.losses or 0 }}</td>
+                    <td>{{ '+' if (row.gd or 0) > 0 else '' }}{{ row.gd or 0 }}</td>
+                    {% endif %}
+                    <td><strong>{{ row.points | round(0) | int if row.points else 0 }}</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+    {# IR: no structure section needed (per-session results shown in schedule) #}
+    {% endif %}
+
+</div>
+{% endif %}
+
+{# ── [E] Session Schedule ─────────────────────────────────────────────────── #}
+<div class="t-section">
+    <div class="t-section-title">📋 Schedule</div>
+
+    {% if schedule_by_phase %}
+    {% for group in schedule_by_phase %}
+    <div class="phase-group">
+        <div class="phase-hdr">{{ group.round_name }}</div>
+        {% for item in group.sessions %}
+        {% set s = item.session %}
+        <div class="sess-row" data-testid="session-row">
+            <div class="sess-date">
+                {% if s.date_start %}
+                {{ s.date_start.strftime('%b %-d') }}<br>
+                <span style="font-size:0.78rem;">{{ s.date_start.strftime('%H:%M') }}</span>
+                {% else %}
+                —
+                {% endif %}
+            </div>
+            <div class="sess-main">
+                <div class="sess-title">
+                    <a href="/sessions/{{ s.id }}" style="color: var(--app-text); text-decoration: none;">
+                        {% if item.opponent_label %}
+                        vs. {{ item.opponent_label }}
+                        {% else %}
+                        {{ s.title }}
+                        {% endif %}
+                    </a>
+                </div>
+                <div class="sess-meta">
+                    {# Session type badge #}
+                    {% set stype = s.session_type.value if s.session_type else 'on_site' %}
+                    <span class="stype-badge stype-{{ stype }}">
+                        {% if stype == 'virtual' %}💻 Virtual
+                        {% elif stype == 'hybrid' %}🔀 Hybrid
+                        {% else %}🏢 On-Site{% endif %}
+                    </span>
+
+                    {# H2H result chip #}
+                    {% if item.score_a is not none and item.score_b is not none and item.opponent_label %}
+                    {% set uids = s.participant_user_ids or [] %}
+                    {% if uids and uids[0] == user.id %}
+                        {% set my_score = item.score_a %}{% set opp_score = item.score_b %}
+                    {% else %}
+                        {% set my_score = item.score_b %}{% set opp_score = item.score_a %}
+                    {% endif %}
+                    &nbsp;
+                    {% if my_score > opp_score %}
+                    <span class="result-chip result-win">W {{ my_score }}–{{ opp_score }}</span>
+                    {% elif my_score < opp_score %}
+                    <span class="result-chip result-loss">L {{ my_score }}–{{ opp_score }}</span>
+                    {% else %}
+                    <span class="result-chip result-draw">D {{ my_score }}–{{ opp_score }}</span>
+                    {% endif %}
+                    {% endif %}
+
+                    {# IR per-session score #}
+                    {% if item.my_ir_score is not none %}
+                    &nbsp;<span style="font-weight:600;">Score: {{ item.my_ir_score }}{% if item.my_ir_position %} · #{{ item.my_ir_position }}{% endif %}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="sess-actions">
+                {# Meeting link for virtual/hybrid #}
+                {% if item.meeting_link %}
+                <a href="{{ item.meeting_link }}" class="btn btn-outline btn-sm" target="_blank">💻 Join</a>
+                {% endif %}
+                {# Quiz actions #}
+                {% if item.quiz_pending %}
+                <a href="/quizzes/{{ item.quiz_id }}/take?session_id={{ s.id }}"
+                   class="btn btn-primary btn-sm" data-testid="take-quiz-btn">📝 Quiz</a>
+                {% elif item.quiz_completed %}
+                <span style="color: var(--app-success); font-size: 0.82rem; font-weight: 600;">✅ Quiz</span>
+                {% endif %}
+                <a href="/sessions/{{ s.id }}" class="btn btn-outline btn-sm" data-testid="view-session-btn">View</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <div style="background: var(--app-card-alt); border-radius: 8px; padding: 2rem; text-align: center; color: var(--app-text-muted);">
+        No sessions have been generated yet for this tournament.
+    </div>
+    {% endif %}
+</div>
+
+{# ── [F] Event Info ────────────────────────────────────────────────────────── #}
+<div class="info-tiles">
+    {% if tournament.start_date %}
     <div class="info-tile">
-        <div class="tile-label">📅 Start Date</div>
-        <div class="tile-value">{{ tournament.start_date.strftime('%b %d, %Y') if tournament.start_date else '—' }}</div>
+        <div class="tile-lbl">📅 Start</div>
+        <div class="tile-val">{{ tournament.start_date.strftime('%b %-d, %Y') }}</div>
+    </div>
+    {% endif %}
+    {% if tournament.end_date %}
+    <div class="info-tile">
+        <div class="tile-lbl">⏰ End</div>
+        <div class="tile-val">{{ tournament.end_date.strftime('%b %-d, %Y') }}</div>
+    </div>
+    {% endif %}
+    <div class="info-tile">
+        <div class="tile-lbl">💳 Entry Fee</div>
+        <div class="tile-val">{{ tournament.enrollment_cost or 500 }} credits</div>
     </div>
     <div class="info-tile">
-        <div class="tile-label">⏰ End Date</div>
-        <div class="tile-value">{{ tournament.end_date.strftime('%b %d, %Y') if tournament.end_date else '—' }}</div>
+        <div class="tile-lbl">👥 Enrolled</div>
+        <div class="tile-val">{{ enrollment_count }}{% if max_players %} / {{ max_players }}{% endif %}</div>
     </div>
     <div class="info-tile">
-        <div class="tile-label">💳 Entry Fee</div>
-        <div class="tile-value">{{ tournament.enrollment_cost or 500 }} credits</div>
-    </div>
-    <div class="info-tile">
-        <div class="tile-label">👥 Enrolled</div>
-        <div class="tile-value">{{ enrollment_count }}{% if max_players %} / {{ max_players }}{% endif %}</div>
-    </div>
-    <div class="info-tile">
-        <div class="tile-label">📋 Sessions</div>
-        <div class="tile-value">{{ session_info | length }}</div>
+        <div class="tile-lbl">📋 Sessions</div>
+        <div class="tile-val">{{ session_info | length }}</div>
     </div>
     {% if instructor %}
     <div class="info-tile">
-        <div class="tile-label">👨‍🏫 Instructor</div>
-        <div class="tile-value">{{ instructor.name }}</div>
-    </div>
-    {% endif %}
-    {% if cfg and cfg.participant_type %}
-    <div class="info-tile">
-        <div class="tile-label">🎯 Participant Type</div>
-        <div class="tile-value">{{ cfg.participant_type | title }}</div>
-    </div>
-    {% endif %}
-</div>
-
-{# ── Session Schedule ────────────────────────────────────────────────────────── #}
-<div class="schedule-section">
-    <h2>📋 Sessions</h2>
-    {% if session_info %}
-    <table class="schedule-table" data-testid="session-schedule">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Session</th>
-                <th>Type</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in session_info %}
-            {% set s = item.session %}
-            <tr>
-                <td style="white-space: nowrap; color: var(--app-text-muted); font-size: 0.85rem;">
-                    {{ s.date_start.strftime('%b %d, %Y') if s.date_start else '—' }}<br>
-                    <span style="font-size:0.8rem;">{{ s.date_start.strftime('%H:%M') if s.date_start else '' }}</span>
-                </td>
-                <td>
-                    <a href="/sessions/{{ s.id }}" style="font-weight: 600; color: var(--app-text);">{{ s.title }}</a>
-                    {% if s.description %}
-                    <div style="font-size: 0.8rem; color: var(--app-text-muted); margin-top: 2px;">
-                        {{ s.description[:60] }}{% if s.description|length > 60 %}…{% endif %}
-                    </div>
-                    {% endif %}
-                </td>
-                <td>
-                    <span class="badge-stype badge-stype-{{ s.session_type.value if s.session_type else 'on_site' }}">
-                        {% if s.session_type and s.session_type.value == 'virtual' %}💻 Virtual
-                        {% elif s.session_type and s.session_type.value == 'hybrid' %}🔀 Hybrid
-                        {% else %}🏢 On-Site{% endif %}
-                    </span>
-                </td>
-                <td>
-                    <div class="sched-actions">
-                        {% if item.quiz_pending %}
-                        <a href="/quizzes/{{ item.quiz_id }}/take?session_id={{ s.id }}"
-                           class="btn btn-primary btn-sm" data-testid="take-quiz-btn">📝 Take Quiz</a>
-                        {% elif item.quiz_completed %}
-                        <span style="color: var(--app-success); font-size: 0.85rem; font-weight: 600;">✅ Quiz done</span>
-                        {% endif %}
-                        <a href="/sessions/{{ s.id }}" class="btn btn-outline btn-sm">View</a>
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="no-sessions-msg">
-        No sessions have been generated yet for this event.
+        <div class="tile-lbl">👨‍🏫 Instructor</div>
+        <div class="tile-val">{{ instructor.name or instructor.email }}</div>
     </div>
     {% endif %}
 </div>

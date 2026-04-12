@@ -123,13 +123,13 @@
 <nav class="breadcrumb-trail" style="margin-bottom: 1rem;">
     <a href="/events">Events</a>
     <span class="bc-sep">›</span>
-    <span>Competitive Events</span>
+    <span>Tournaments</span>
 </nav>
 
 <div class="welcome-section" style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
     <div>
-        <h1>🏆 Events</h1>
-        <p>Browse competitive events and manage your participation</p>
+        <h1>🏆 Tournaments</h1>
+        <p>Competitive events with rounds, rankings, and rewards</p>
     </div>
     <a href="/events" class="btn btn-outline" style="white-space: nowrap; margin-top: 0.5rem;">← Back to Events</a>
 </div>
@@ -146,7 +146,7 @@
 {# ── My Events ────────────────────────────────────────────────────────────────
    Always rendered — enrolled events regardless of status or date.
 #}
-<div id="my-events" class="events-section-title">✅ My Events</div>
+<div id="my-events" class="events-section-title">✅ My Tournaments</div>
 
 {% if enrolled_events %}
 {% for item in enrolled_events %}
@@ -246,7 +246,7 @@
 {# ── Browse Events ─────────────────────────────────────────────────────────────
    Only ENROLLMENT_OPEN + future — events the student can still join.
 #}
-<div class="events-section-title">🔍 Browse Events</div>
+<div class="events-section-title">🔍 Open for Enrollment</div>
 
 {% if browse_events %}
 {% for item in browse_events %}
