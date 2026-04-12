@@ -64,6 +64,12 @@
 </style>
 {% endblock %}
 
+{% block student_header %}
+{% set _page_icon = '🗓️' %}
+{% set _page_name = 'Events' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
 {% block student_content %}
 
 <div class="welcome-section">
@@ -125,6 +131,12 @@
         <span class="etcard-coming-soon">Coming Soon</span>
     </div>
 
+</div>
+
+<div style="margin-top: 2rem; text-align: center;">
+    <a href="{{ spec_dashboard_url | default('/dashboard') }}" class="btn btn-outline">
+        ← Back to {{ spec_dashboard_icon | default('⚽') }} Dashboard
+    </a>
 </div>
 
 {% endblock %}

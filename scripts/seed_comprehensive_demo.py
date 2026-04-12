@@ -1998,9 +1998,11 @@ _L_QUESTIONS = [
 ]
 
 
-def _create_virtual_quiz_tournament(label: str) -> tuple:
+def _create_virtual_quiz_tournament(label: str, session_mode: str = "live") -> tuple:
     """Create a virtual tournament with a quiz linked to one session.
-    Returns (semester, session, quiz).
+    Returns (semester, session, quiz, correct_option_ids).
+    session_mode: "live" = started 30min ago, ends in 2h (quiz accessible now)
+                  "past" = ended yesterday (use for REWARDS_DISTRIBUTED state)
     """
     from datetime import datetime as _dt, timezone as _tz, timedelta as _td
 
@@ -2037,15 +2039,23 @@ def _create_virtual_quiz_tournament(label: str) -> tuple:
     ))
     db.flush()
 
-    # Virtual session: started 2 hours ago so quiz is accessible
-    now = _dt.now(_tz.utc).replace(tzinfo=None)
+    now_dt = _dt.now(_tz.utc).replace(tzinfo=None)
+    if session_mode == "past":
+        # Ended yesterday — suitable for COMPLETED / REWARDS_DISTRIBUTED
+        s_start = now_dt - _td(hours=26)
+        s_end   = now_dt - _td(hours=24)
+    else:
+        # Live: started 30min ago, ends in 2h — quiz accessible right now
+        s_start = now_dt - _td(minutes=30)
+        s_end   = now_dt + _td(hours=2)
+
     sess = SessionModel(
         title=f"{name} — Session",
         semester_id=t.id,
         session_type="virtual",
         meeting_link="https://meet.example.com/demo-virtual-quiz-l",
-        date_start=now - _td(hours=2),
-        date_end=now + _td(hours=22),
+        date_start=s_start,
+        date_end=s_end,
         capacity=50,
         base_xp=50,
     )
@@ -2150,34 +2160,125 @@ def _seed_quiz_attempts(quiz_id: int, session_id: int, players: list[User],
         info(f"Attempt: {player.email}  score={score:.0%}  {result}")
 
 
-# L1: IN_PROGRESS — session active, quiz open, 2 attempts seeded
-print("\n[L1/2] IN_PROGRESS (virtual, quiz active, 2 attempts seeded)")
-t, sess, quiz, correct_ids = _create_virtual_quiz_tournament("In Progress")
-enrolled = enroll_individual_players(t.id, all_demo_players[:4])
-transition(t.id, "ENROLLMENT_OPEN")
-transition(t.id, "ENROLLMENT_CLOSED")
-transition(t.id, "CHECK_IN_OPEN")
-transition(t.id, "IN_PROGRESS")
-if enrolled:
-    _seed_quiz_attempts(quiz.id, sess.id, enrolled, correct_ids)
+# ── L helpers: incomplete and failed attempt seeders ──────────────────────────
 
-# L2: REWARDS_DISTRIBUTED — quiz ranking applied
-print("\n[L2/2] REWARDS_DISTRIBUTED (quiz completed, ranking seeded)")
-t, sess, quiz, correct_ids = _create_virtual_quiz_tournament("Rewards Distributed")
+def _get_wrong_option_id(quiz_id: int, question_order: int) -> int | None:
+    """Return the ID of the first *incorrect* answer option for a given question."""
+    question = db.query(QuizQuestion).filter(
+        QuizQuestion.quiz_id == quiz_id,
+        QuizQuestion.order_index == question_order,
+    ).first()
+    if not question:
+        return None
+    wrong = db.query(QuizAnswerOption).filter(
+        QuizAnswerOption.question_id == question.id,
+        QuizAnswerOption.is_correct == False,  # noqa: E712
+    ).first()
+    return wrong.id if wrong else None
+
+
+def _seed_interrupted_attempt(quiz_id: int, session_id: int, player: User,
+                               correct_option_ids: list) -> None:
+    """Player opened the quiz 10min ago — not yet submitted (completed_at=NULL)."""
+    from datetime import datetime as _dt, timezone as _tz, timedelta as _td
+    now_dt = _dt.now(_tz.utc).replace(tzinfo=None)
+    attempt = QuizAttempt(
+        user_id=player.id,
+        quiz_id=quiz_id,
+        score=None,
+        passed=False,
+        correct_answers=0,
+        total_questions=len(correct_option_ids),
+        xp_awarded=0,
+        started_at=now_dt - _td(minutes=10),
+        completed_at=None,   # ← key: attempt is still IN PROGRESS
+        time_spent_minutes=None,
+    )
+    db.add(attempt)
+    db.flush()
+    # Answer only Q1 and Q2 (correctly) — Q3 left unanswered
+    questions = (
+        db.query(QuizQuestion)
+        .filter(QuizQuestion.quiz_id == quiz_id)
+        .order_by(QuizQuestion.order_index)
+        .all()
+    )
+    for q_idx, question in enumerate(questions[:2]):
+        sel_id = correct_option_ids[q_idx] if q_idx < len(correct_option_ids) else None
+        if sel_id:
+            db.add(QuizUserAnswer(
+                attempt_id=attempt.id,
+                question_id=question.id,
+                selected_option_id=sel_id,
+            ))
+    db.commit()
+    info(f"Interrupted attempt: {player.email}  2/{len(correct_option_ids)} answered  NOT completed")
+
+
+def _seed_failed_attempt(quiz_id: int, session_id: int, player: User,
+                          correct_option_ids: list) -> None:
+    """Player completed quiz — only Q2 correct (1/3 = 33% → FAILED, 2 retries left)."""
+    from datetime import datetime as _dt, timezone as _tz, timedelta as _td
+    now_dt = _dt.now(_tz.utc).replace(tzinfo=None)
+    questions = (
+        db.query(QuizQuestion)
+        .filter(QuizQuestion.quiz_id == quiz_id)
+        .order_by(QuizQuestion.order_index)
+        .all()
+    )
+    wrong_q1 = _get_wrong_option_id(quiz_id, 1)
+    wrong_q3 = _get_wrong_option_id(quiz_id, 3)
+    # Q1 wrong, Q2 correct, Q3 wrong → 1/3 = 33%
+    selected = [
+        wrong_q1,
+        correct_option_ids[1] if len(correct_option_ids) > 1 else None,
+        wrong_q3,
+    ]
+    correct_count = sum(1 for s, c in zip(selected, correct_option_ids) if s == c)
+    total = len(questions)
+    score = correct_count / total if total else 0.0
+    passed = score >= 0.6  # False (0.33 < 0.6)
+    attempt = QuizAttempt(
+        user_id=player.id,
+        quiz_id=quiz_id,
+        score=score,
+        passed=passed,
+        correct_answers=correct_count,
+        total_questions=total,
+        xp_awarded=0,
+        started_at=now_dt - _td(minutes=15),
+        completed_at=now_dt - _td(minutes=5),
+        time_spent_minutes=10,
+    )
+    db.add(attempt)
+    db.flush()
+    for q_idx, question in enumerate(questions):
+        sel_id = selected[q_idx] if q_idx < len(selected) else None
+        if sel_id:
+            db.add(QuizUserAnswer(
+                attempt_id=attempt.id,
+                question_id=question.id,
+                selected_option_id=sel_id,
+            ))
+    db.commit()
+    info(f"Failed attempt: {player.email}  score={score:.0%}  FAILED ❌  (attempt 1/3 used)")
+
+
+# ── L1/4: DONE — REWARDS_DISTRIBUTED ─────────────────────────────────────────
+# Session: PAST (ended yesterday).  Players: Aaron=PASSED, Billy=FAILED
+print("\n[L1/4] DONE — REWARDS_DISTRIBUTED (quiz completed, ranking + rewards applied)")
+t, sess, quiz, correct_ids = _create_virtual_quiz_tournament("Done", session_mode="past")
 enrolled = enroll_individual_players(t.id, all_demo_players[:4])
 transition(t.id, "ENROLLMENT_OPEN")
 transition(t.id, "ENROLLMENT_CLOSED")
 transition(t.id, "CHECK_IN_OPEN")
 transition(t.id, "IN_PROGRESS")
-if enrolled:
-    _seed_quiz_attempts(quiz.id, sess.id, enrolled, correct_ids)
-    # Seed rankings directly based on quiz scores
+if enrolled and len(enrolled) >= 2:
+    _seed_quiz_attempts(quiz.id, sess.id, enrolled[:2], correct_ids)
     db.expire_all()
     from app.models.tournament_ranking import TournamentRanking as TR
-    existing_ranks = db.query(TR).filter(TR.tournament_id == t.id).count()
-    if existing_ranks == 0 and len(enrolled) >= 2:
-        # player[0] = rank 1 (100%), player[1] = rank 2 (33%), others = rank 3+
-        for rank_pos, player in enumerate(enrolled, start=1):
+    if db.query(TR).filter(TR.tournament_id == t.id).count() == 0:
+        for rank_pos, player in enumerate(enrolled[:4], start=1):
             db.add(TR(
                 tournament_id=t.id,
                 user_id=player.id,
@@ -2188,6 +2289,42 @@ if enrolled:
         db.commit()
     transition(t.id, "COMPLETED")
     distribute_rewards(t.id)
+_vq_done = {"t_id": t.id, "sess_id": sess.id, "quiz_id": quiz.id}
+
+# ── L2/4: ACTIVE — IN_PROGRESS, session LIVE, no quiz attempts yet ────────────
+print("\n[L2/4] ACTIVE — IN_PROGRESS (session live, quiz NOT yet attempted)")
+t, sess, quiz, correct_ids = _create_virtual_quiz_tournament("Active", session_mode="live")
+enrolled = enroll_individual_players(t.id, all_demo_players[:4])
+transition(t.id, "ENROLLMENT_OPEN")
+transition(t.id, "ENROLLMENT_CLOSED")
+transition(t.id, "CHECK_IN_OPEN")
+transition(t.id, "IN_PROGRESS")
+info("No quiz attempts seeded — quiz is LIVE and awaiting player action (Take Quiz button)")
+_vq_active = {"t_id": t.id, "sess_id": sess.id, "quiz_id": quiz.id}
+
+# ── L3/4: INTERRUPTED — player[0] started quiz but did NOT submit ─────────────
+print("\n[L3/4] INTERRUPTED — IN_PROGRESS (quiz started, 2/3 answered, not submitted)")
+t, sess, quiz, correct_ids = _create_virtual_quiz_tournament("Interrupted", session_mode="live")
+enrolled = enroll_individual_players(t.id, all_demo_players[:4])
+transition(t.id, "ENROLLMENT_OPEN")
+transition(t.id, "ENROLLMENT_CLOSED")
+transition(t.id, "CHECK_IN_OPEN")
+transition(t.id, "IN_PROGRESS")
+if enrolled:
+    _seed_interrupted_attempt(quiz.id, sess.id, enrolled[0], correct_ids)
+_vq_interrupted = {"t_id": t.id, "sess_id": sess.id, "quiz_id": quiz.id}
+
+# ── L4/4: FAILED — player[0] completed quiz, score < passing threshold ─────────
+print("\n[L4/4] FAILED — IN_PROGRESS (quiz completed, score=33% < 60% passing → retry)")
+t, sess, quiz, correct_ids = _create_virtual_quiz_tournament("Failed", session_mode="live")
+enrolled = enroll_individual_players(t.id, all_demo_players[:4])
+transition(t.id, "ENROLLMENT_OPEN")
+transition(t.id, "ENROLLMENT_CLOSED")
+transition(t.id, "CHECK_IN_OPEN")
+transition(t.id, "IN_PROGRESS")
+if enrolled:
+    _seed_failed_attempt(quiz.id, sess.id, enrolled[0], correct_ids)
+_vq_failed = {"t_id": t.id, "sess_id": sess.id, "quiz_id": quiz.id}
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -2431,7 +2568,7 @@ else:
 # ─────────────────────────────────────────────────────────────────────────────
 
 db.expire_all()
-section("FINAL SUMMARY — 88 Demo Events (A-K × 8 states + 3 MC)")
+section("FINAL SUMMARY — 95 Demo Events (A-K: 88 + L: 4 + MC: 3)")
 
 _FORMATS = [
     ("A",    "Demo: H2H League —",               "TEAM"),
@@ -2487,5 +2624,44 @@ print()
 print("  View events : http://localhost:8000/admin/promotion-events")
 print("  Public page : http://localhost:8000/events/<id>")
 print("="*64)
+
+# ── Virtual Quiz States — QA credential map ───────────────────────────────────
+_p0 = all_demo_players[0] if all_demo_players else None
+_p1 = all_demo_players[1] if len(all_demo_players) > 1 else None
+print()
+print("═"*64)
+print("  Virtual Quiz States — QA State Map")
+print("═"*64)
+print()
+print("  Shared credentials (password: Demo#1234):")
+print(f"    player 1:  {_p0.email if _p0 else '?'}  /  Demo#1234")
+print(f"    player 2:  {_p1.email if _p1 else '?'}  /  Demo#1234")
+print()
+print(f"  [DONE]         t_id={_vq_done['t_id']}  sess={_vq_done['sess_id']}  quiz={_vq_done['quiz_id']}")
+print(f"    → player 1:  COMPLETED — score=100%  PASSED ✅  xp=50")
+print(f"    → player 2:  COMPLETED — score=33%   FAILED ❌  xp=0")
+print(f"    Expected UI: Completed event + rankings visible")
+print(f"    URL:  http://localhost:8000/events/{_vq_done['t_id']}")
+print()
+print(f"  [ACTIVE]       t_id={_vq_active['t_id']}  sess={_vq_active['sess_id']}  quiz={_vq_active['quiz_id']}")
+print(f"    → player 1:  NO ATTEMPT — 'Take Quiz' button")
+print(f"    → player 2:  NO ATTEMPT — 'Take Quiz' button")
+print(f"    Expected UI: In-progress event, live session, quiz available")
+print(f"    URL:  http://localhost:8000/events/{_vq_active['t_id']}")
+print(f"    Quiz: http://localhost:8000/quizzes/{_vq_active['quiz_id']}/take?session_id={_vq_active['sess_id']}")
+print()
+print(f"  [INTERRUPTED]  t_id={_vq_interrupted['t_id']}  sess={_vq_interrupted['sess_id']}  quiz={_vq_interrupted['quiz_id']}")
+print(f"    → player 1:  STARTED 10min ago — 2/3 answered, NOT submitted")
+print(f"    → player 2:  NO ATTEMPT — 'Take Quiz' button")
+print(f"    Expected UI: player 1 sees 'Continue' / in-progress state")
+print(f"    URL:  http://localhost:8000/events/{_vq_interrupted['t_id']}")
+print()
+print(f"  [FAILED]       t_id={_vq_failed['t_id']}  sess={_vq_failed['sess_id']}  quiz={_vq_failed['quiz_id']}")
+print(f"    → player 1:  COMPLETED — score=33%  FAILED ❌  (1/3 attempts used, 2 retries left)")
+print(f"    → player 2:  NO ATTEMPT — 'Take Quiz' button")
+print(f"    Expected UI: player 1 sees 'Retry Quiz' (max_attempts=3)")
+print(f"    URL:  http://localhost:8000/events/{_vq_failed['t_id']}")
+print()
+print("═"*64)
 
 db.close()

@@ -34,7 +34,7 @@
     /* spec-pg-hdr + mod-nav-* → student.css v5 */
 
     /* ── Spec dashboard: 6-column override (sub-pages use 4-col from student.css) */
-    .mod-nav-grid { grid-template-columns: repeat(6, 1fr); }
+    .mod-nav-grid { grid-template-columns: repeat(5, 1fr); }
     @media (max-width: 768px) { .mod-nav-grid { grid-template-columns: repeat(3, 1fr); } }
     @media (max-width: 480px) { .mod-nav-grid { grid-template-columns: repeat(3, 1fr); } }
 
@@ -124,8 +124,8 @@
     }
 
     /* ── Player Card live preview (left column) ─────────────────────────────── */
-    .player-card-embed-wrap { border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.13); }
-    .player-card-embed-wrap iframe { display: block; width: 100%; border: none; }
+    .player-card-embed-wrap { border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.13); min-height: 320px; }
+    .player-card-embed-wrap iframe { display: block; width: 100%; border: none; min-height: 320px; }
 
     /* ── Last Result ─────────────────────────────────────────────────────────── */
     .s-last-result-card { background: var(--app-card); border-left: 4px solid #667eea; border-radius: 0 10px 10px 0; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
@@ -200,7 +200,7 @@
                 <a href="/dashboard/lfa-football-player/card-editor" class="section-link">✏️ Edit →</a>
             </div>
             <div class="player-card-embed-wrap">
-                <iframe src="/players/{{ user.id }}/card" height="680" scrolling="no" title="My Player Card"></iframe>
+                <iframe src="/players/{{ user.id }}/card" id="card-preview-frame" scrolling="no" title="My Player Card"></iframe>
             </div>
         </section>
         {% else %}
@@ -225,10 +225,6 @@
                     <a href="/events" class="mod-nav-card" style="border-top: 3px solid #3498db;">
                         <span class="mod-nav-icon">🗓️</span>
                         <span class="mod-nav-title">Events</span>
-                    </a>
-                    <a href="/sessions" class="mod-nav-card">
-                        <span class="mod-nav-icon">📅</span>
-                        <span class="mod-nav-title">Sessions</span>
                     </a>
                     <a href="/progress" class="mod-nav-card">
                         <span class="mod-nav-icon">📊</span>
@@ -487,6 +483,32 @@
     document.addEventListener('DOMContentLoaded', function () {
         loadSkillsData();
         loadLastResult();
+    });
+})();
+
+// ── Player Card preview: auto-height (same-origin iframe) ─────────────────
+(function () {
+    var frame = document.getElementById('card-preview-frame');
+    if (!frame) return;
+
+    function syncHeight() {
+        try {
+            var doc = frame.contentDocument || frame.contentWindow.document;
+            var h = doc.documentElement.scrollHeight || doc.body.scrollHeight;
+            if (h > 100) frame.style.height = h + 'px';
+        } catch (e) { /* cross-origin guard */ }
+    }
+
+    frame.addEventListener('load', function () {
+        syncHeight();
+        try {
+            var doc = frame.contentDocument || frame.contentWindow.document;
+            if (window.ResizeObserver) {
+                new ResizeObserver(syncHeight).observe(doc.body);
+            } else {
+                setTimeout(syncHeight, 400);
+            }
+        } catch (e) {}
     });
 })();
 </script>
