@@ -138,6 +138,7 @@ tests/e2e/admin_ui/screenshots/
 tests/e2e_frontend/screenshots/
 # Uploaded player card photos (user data, not source code)
 app/static/uploads/lfa_player_photos/*.jpg
+app/static/uploads/lfa_player_photos/*.png
 *.pyc
 __pycache__/
 .pytest_cache/
