@@ -123,12 +123,12 @@
 <nav class="breadcrumb-trail" style="margin-bottom: 1rem;">
     <a href="/events">Events</a>
     <span class="bc-sep">›</span>
-    <span>Tournaments</span>
+    <span>Competitive Events</span>
 </nav>
 
 <div class="welcome-section" style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
     <div>
-        <h1>🏆 Tournaments</h1>
+        <h1>🏆 Events</h1>
         <p>Browse competitive events and manage your participation</p>
     </div>
     <a href="/events" class="btn btn-outline" style="white-space: nowrap; margin-top: 0.5rem;">← Back to Events</a>
@@ -143,12 +143,14 @@
 </div>
 {% endif %}
 
-{# ── My Enrolled Events ──────────────────────────────────────────────────────── #}
+{# ── My Events ────────────────────────────────────────────────────────────────
+   Always rendered — enrolled events regardless of status or date.
+#}
+<div id="my-events" class="events-section-title">✅ My Events</div>
+
 {% if enrolled_events %}
-<div class="events-section-title">✅ My Enrolled Events</div>
 {% for item in enrolled_events %}
 {% set t = item.tournament %}
-{% set pct = (item.enrollment_count / item.max_players * 100) | int if item.max_players < 999 else 0 %}
 
 <div class="tournament-card enrolled"
      data-testid="tournament-card" data-tournament-id="{{ t.id }}">
@@ -160,9 +162,13 @@
         </div>
         <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
             {% if t.tournament_status == 'ENROLLMENT_OPEN' %}
-            <span class="status-badge status-enrollment-open">🟢 Enrollment Open</span>
+            <span class="status-badge status-enrollment-open">🟢 Open</span>
             {% elif t.tournament_status == 'IN_PROGRESS' %}
             <span class="status-badge status-in-progress">⏳ In Progress</span>
+            {% elif t.tournament_status in ('COMPLETED', 'REWARDS_DISTRIBUTED') %}
+            <span class="status-badge" style="background:#f0f0f0; color:#666;">✔ Completed</span>
+            {% elif t.tournament_status == 'ENROLLMENT_CLOSED' %}
+            <span class="status-badge" style="background:#fef9e7; color:#7d6608;">🔒 Closed</span>
             {% endif %}
             {% if item.session_type_config == 'virtual' %}
             <span class="status-badge badge-virtual">💻 Virtual</span>
@@ -185,12 +191,12 @@
 
         <div class="meta-grid">
             <div class="meta-item">
-                <strong>📅 Start Date</strong>
-                {{ t.start_date.strftime('%b %d, %Y') if t.start_date else '—' }}
+                <strong>📅 Start</strong>
+                {{ t.start_date.strftime('%b %-d, %Y') if t.start_date else '—' }}
             </div>
             <div class="meta-item">
-                <strong>⏰ End Date</strong>
-                {{ t.end_date.strftime('%b %d, %Y') if t.end_date else '—' }}
+                <strong>⏰ End</strong>
+                {{ t.end_date.strftime('%b %-d, %Y') if t.end_date else '—' }}
             </div>
             <div class="meta-item">
                 <strong>💳 Entry Fee</strong>
@@ -214,6 +220,7 @@
 
         <div class="action-row">
             <a href="/events/tournaments/{{ t.id }}" class="btn btn-primary" data-testid="view-details-btn">📋 View Event</a>
+            {% if t.tournament_status == 'ENROLLMENT_OPEN' %}
             <form method="POST" action="/tournaments/{{ t.id }}/unenroll" style="margin: 0;">
                 <button type="submit" class="btn btn-secondary"
                         style="background: #e74c3c; border-color: #c0392b; color: white;"
@@ -222,20 +229,26 @@
                     ↩ Withdraw (50% refund)
                 </button>
             </form>
+            {% endif %}
         </div>
     </div>
 </div>
 {% endfor %}
 
+{% else %}
+<div class="card" style="padding: 1.5rem; margin-bottom: 1.5rem; text-align: center; color: var(--app-text-muted);">
+    You haven't enrolled in any events yet. Browse below to join one.
+</div>
+{% endif %}
+
 <hr class="section-divider">
-{% endif %}
 
-{# ── Browse Events ───────────────────────────────────────────────────────────── #}
-{% if browse_events %}
-{% if enrolled_events %}
+{# ── Browse Events ─────────────────────────────────────────────────────────────
+   Only ENROLLMENT_OPEN + future — events the student can still join.
+#}
 <div class="events-section-title">🔍 Browse Events</div>
-{% endif %}
 
+{% if browse_events %}
 {% for item in browse_events %}
 {% set t = item.tournament %}
 {% set pct = (item.enrollment_count / item.max_players * 100) | int if item.max_players < 999 else 0 %}
@@ -250,11 +263,7 @@
             <p style="color: var(--app-text-muted); font-size: 0.85rem; margin: 0.25rem 0 0;">{{ t.code }}</p>
         </div>
         <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-            {% if t.tournament_status == 'ENROLLMENT_OPEN' %}
-            <span class="status-badge status-enrollment-open">🟢 Enrollment Open</span>
-            {% elif t.tournament_status == 'IN_PROGRESS' %}
-            <span class="status-badge status-in-progress">⏳ In Progress</span>
-            {% endif %}
+            <span class="status-badge status-enrollment-open">🟢 Open</span>
             {% if item.session_type_config == 'virtual' %}
             <span class="status-badge badge-virtual">💻 Virtual</span>
             {% elif item.session_type_config == 'hybrid' %}
@@ -272,12 +281,12 @@
     <div class="tournament-body">
         <div class="meta-grid">
             <div class="meta-item">
-                <strong>📅 Start Date</strong>
-                {{ t.start_date.strftime('%b %d, %Y') if t.start_date else '—' }}
+                <strong>📅 Start</strong>
+                {{ t.start_date.strftime('%b %-d, %Y') if t.start_date else '—' }}
             </div>
             <div class="meta-item">
-                <strong>⏰ End Date</strong>
-                {{ t.end_date.strftime('%b %d, %Y') if t.end_date else '—' }}
+                <strong>⏰ End</strong>
+                {{ t.end_date.strftime('%b %-d, %Y') if t.end_date else '—' }}
             </div>
             <div class="meta-item">
                 <strong>💳 Entry Fee</strong>
@@ -313,25 +322,31 @@
             <a href="/events/tournaments/{{ t.id }}" class="btn btn-outline" data-testid="view-details-btn">📋 View Details</a>
             {% if is_full %}
                 <button class="btn btn-secondary" disabled>Event Full</button>
-            {% elif t.tournament_status == 'ENROLLMENT_OPEN' %}
+            {% else %}
                 <form method="POST" action="/tournaments/{{ t.id }}/enroll" style="margin: 0;">
                     <button type="submit" class="btn btn-primary" data-testid="enroll-btn">
                         ⚽ Enroll ({{ t.enrollment_cost if t.enrollment_cost is not none else 500 }} credits)
                     </button>
                 </form>
-            {% else %}
-                <button class="btn btn-secondary" disabled>Enrollment Closed</button>
             {% endif %}
         </div>
     </div>
 </div>
 {% endfor %}
 
-{% elif not enrolled_events %}
-<div class="card text-center" style="padding: 3rem;">
-    <div style="font-size: 3rem; margin-bottom: 1rem;">🏆</div>
-    <h3>No Open Tournaments</h3>
-    <p style="color: var(--app-text-muted);">There are no tournaments open for enrollment right now. Check back later!</p>
+{% else %}
+{# Browse empty state — always show, never hides My Events above #}
+<div class="card text-center" style="padding: 2.5rem;">
+    <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">📭</div>
+    <h3 style="margin-bottom: 0.5rem;">No events open for enrollment</h3>
+    <p style="color: var(--app-text-muted); margin-bottom: 1.5rem;">
+        All upcoming events are currently closed for registration.
+    </p>
+    {% if enrolled_events %}
+    <a href="#my-events" class="btn btn-primary">View my active events ↑</a>
+    {% else %}
+    <a href="/sessions" class="btn btn-primary">Browse my sessions →</a>
+    {% endif %}
 </div>
 {% endif %}
 
