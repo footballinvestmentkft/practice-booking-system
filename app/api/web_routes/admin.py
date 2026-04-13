@@ -924,6 +924,13 @@ async def admin_revoke_license(
 
     now = datetime.now(timezone.utc)
     license.is_active = False
+    # Cascade: deactivate all active tournament enrollments linked to this license.
+    # An inactive license means the student can no longer participate — keeping
+    # SemesterEnrollment.is_active=True would leave orphaned active enrollments.
+    db.query(SemesterEnrollment).filter(
+        SemesterEnrollment.user_license_id == license.id,
+        SemesterEnrollment.is_active == True,
+    ).update({"is_active": False}, synchronize_session=False)
     progression = LicenseProgression(
         user_license_id=license.id,
         from_level=license.current_level or 0,

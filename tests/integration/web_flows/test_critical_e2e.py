@@ -1,7 +1,7 @@
 """
 Critical E2E Tests
 ==================
-12 full-chain tests covering previously-identified coverage gaps:
+13 full-chain tests covering previously-identified coverage gaps:
 
   QRB — Quiz Retry Best Score      : fail → retry → pass (UI + DB)
   QEG — Quiz Enrollment Gate       : no booking → 403; with booking → 200
@@ -15,6 +15,7 @@ Critical E2E Tests
   ISC — Instructor Slot Conflict   : add instructor → duplicate rejected → 409 Conflict
   ICR — Invitation Code Reg.       : valid code + registration → User.credit_balance = bonus
   APR — Admin Password Reset       : admin resets → old fails login → new succeeds
+  LRC — License Revoke Cascade     : license revoked → SemesterEnrollment.is_active = False
 
 Design rules:
   - Self-contained: each test creates all required data inline via db.flush()
@@ -1062,4 +1063,62 @@ def test_admin_password_reset_enables_login(test_db: Session, client: TestClient
     location = r_new.headers.get("location", "")
     assert "/dashboard" in location, (
         f"Successful login must redirect to /dashboard. Got location: {location}"
+    )
+
+
+# ── Test 13: LRC — License Revoke Cascade ────────────────────────────────────
+
+def test_license_revoke_cascades_to_enrollments(test_db: Session, client: TestClient):
+    """LRC: admin revokes license → active SemesterEnrollment.is_active becomes False.
+
+    Closes RISK C gap: license deactivation was not cascading to tournament enrollments,
+    leaving students with active enrollments despite expired/revoked licenses.
+
+    Fix location: admin.py::admin_revoke_license (line 926 area) — cascade UPDATE added.
+
+    Flow:
+      1. Create student + license + active tournament enrollment
+      2. Admin POSTs /admin/users/{id}/revoke-license/{lid} → 303
+      3. DB: license.is_active = False
+      4. DB: enrollment.is_active = False (cascade — the fix being tested)
+    """
+    student = _make_user(test_db, role=UserRole.STUDENT)
+    lic = _make_license(test_db, student)
+    tourn = _make_tournament(test_db)
+    admin = _make_user(test_db, role=UserRole.ADMIN)
+
+    # Create active enrollment linked to the license
+    enrollment = SemesterEnrollment(
+        user_id=student.id,
+        semester_id=tourn.id,
+        user_license_id=lic.id,
+        request_status=EnrollmentStatus.APPROVED,
+        is_active=True,
+    )
+    test_db.add(enrollment)
+    test_db.flush()
+
+    # Sanity: enrollment is active before revoke
+    assert enrollment.is_active is True
+
+    # Admin revokes the license
+    app.dependency_overrides[get_current_user_web] = lambda: admin
+    r = client.post(
+        f"/admin/users/{student.id}/revoke-license/{lic.id}",
+        data={"reason": "E2E test revoke — cascade verification"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303, (
+        f"License revoke must return 303 redirect. Got {r.status_code}: {r.text[:400]}"
+    )
+
+    # DB: license deactivated
+    test_db.refresh(lic)
+    assert lic.is_active is False, "UserLicense.is_active must be False after revoke"
+
+    # DB: enrollment cascaded to inactive — this is the fix being tested
+    test_db.refresh(enrollment)
+    assert enrollment.is_active is False, (
+        "SemesterEnrollment.is_active must be False after license revoke. "
+        "Without the cascade fix, this would be True (orphaned active enrollment)."
     )

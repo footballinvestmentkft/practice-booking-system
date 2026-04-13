@@ -18,6 +18,7 @@ from app.models.license import UserLicense
 from app.models.user import User
 from app.models.audit_log import AuditLog
 from app.models.credit_transaction import CreditTransaction
+from app.models.semester_enrollment import SemesterEnrollment
 
 
 class InsufficientCreditsError(Exception):
@@ -254,12 +255,23 @@ class LicenseRenewalService:
 
         expired_count = 0
         still_active = 0
+        expired_license_ids = []
 
         for license in licenses:
             if cls.check_license_expiration(license):
                 still_active += 1
             else:
                 expired_count += 1
+                expired_license_ids.append(license.id)
+
+        # Cascade: deactivate all active tournament enrollments for expired licenses.
+        # An expired license means the student can no longer participate — keeping
+        # SemesterEnrollment.is_active=True would leave orphaned active enrollments.
+        if expired_license_ids:
+            db.query(SemesterEnrollment).filter(
+                SemesterEnrollment.user_license_id.in_(expired_license_ids),
+                SemesterEnrollment.is_active == True,
+            ).update({"is_active": False}, synchronize_session=False)
 
         # Commit all deactivations
         db.commit()

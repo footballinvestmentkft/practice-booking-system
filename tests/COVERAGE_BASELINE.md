@@ -134,6 +134,28 @@ Integration tests run in a single OS process. Simulating concurrent HTTP request
 
 ---
 
+### RISK-02 (resolved): License revoke did not cascade to SemesterEnrollment
+~~**Risk:** `admin_revoke_license()` and `bulk_check_expirations()` set `UserLicense.is_active=False` but left `SemesterEnrollment.is_active=True`, creating orphaned active enrollments for inactive licenses.~~
+
+**Fixed 2026-04-13.** Both paths now cascade:
+- `admin.py::admin_revoke_license` — explicit bulk UPDATE after `license.is_active = False`
+- `license_renewal_service.py::bulk_check_expirations` — tracks `expired_license_ids`, batch UPDATE after loop
+
+**E2E test:** `test_critical_e2e.py::test_license_revoke_cascades_to_enrollments` (LRC) — admin revoke → enrollment.is_active=False asserted.
+
+---
+
+### DESIGN-01 (known debt): No session cancellation endpoint
+**Gap:** `DELETE /sessions/{id}` blocks deletion when bookings exist — correct guard, but there is no `POST /sessions/{id}/cancel` endpoint. Contrast: tournaments have a full `/cancel` endpoint with refund logic.
+
+**Business impact:** Admin has no clean way to mark a session cancelled while preserving booking records. Workaround: manually update session status via DB or admin panel if available.
+
+**Financial impact:** LOW — on-site/virtual session bookings do not deduct credits, so no refund logic is needed. The absence of a cancel endpoint is a UX/data-integrity issue, not a financial one.
+
+**When to address:** When a future feature requires session-level cancellation with student notification or attendance record cleanup.
+
+---
+
 ## Section 4: BASELINE RULES
 
 From 2026-04-13 forward:
