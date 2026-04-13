@@ -129,6 +129,15 @@ def _truncate_transactional_data(db) -> None:
     db.query(SessionModel).filter(
         SessionModel.title.like("E2E%")
     ).delete(synchronize_session=False)
+    # Clean up browse_filter_e2e scenario tournaments so they don't leak into
+    # other scenarios (BF-T1/T2/T3 are Semester rows not deleted by other scenarios).
+    _BF_CODES = ["BF-T1", "BF-T2", "BF-T3"]
+    bf_sem_ids = [r[0] for r in db.query(Semester.id).filter(Semester.code.in_(_BF_CODES)).all()]
+    if bf_sem_ids:
+        db.query(TournamentConfiguration).filter(
+            TournamentConfiguration.semester_id.in_(bf_sem_ids)
+        ).delete(synchronize_session=False)
+        db.query(Semester).filter(Semester.code.in_(_BF_CODES)).delete(synchronize_session=False)
     db.commit()
 
 
