@@ -863,6 +863,78 @@ def scenario_tournament_virtual_e2e(db) -> list[str]:
     return lines
 
 
+def scenario_browse_filter_e2e(db) -> list[str]:
+    """Browse filter Cypress test scenario.
+
+    State:
+        - Student rdias@manchestercity.com: 1000 credits, LFA license, onboarding done
+        - 3 tournaments with distinct status + delivery combinations:
+            T1: ENROLLMENT_OPEN + on_site  (BF-T1-{date})
+            T2: IN_PROGRESS     + on_site  (BF-T2-{date})
+            T3: ENROLLMENT_OPEN + virtual   (BF-T3-{date})
+        - No enrollments (purely for browse/filter UI testing)
+    """
+    lines = scenario_baseline(db)
+
+    student_spec = next(s for s in _BASELINE_USERS if s["role"] == UserRole.STUDENT)
+    student = _upsert_user(db, student_spec, credit_balance=1000, onboarding_completed=True)
+    lines.append(f"  set {student_spec['email']} credit_balance=1000 onboarding_completed=True")
+
+    _upsert_lfa_license(db, student)
+    lines.append(f"  upserted LFA_FOOTBALL_PLAYER license for {student_spec['email']}")
+
+    today = date.today()
+    _BF_SPECS = [
+        {"code": "BF-T1", "name": "BF Open On-Site",    "tournament_status": "ENROLLMENT_OPEN", "delivery": "on_site"},
+        {"code": "BF-T2", "name": "BF In Progress",     "tournament_status": "IN_PROGRESS",     "delivery": "on_site"},
+        {"code": "BF-T3", "name": "BF Open Virtual",    "tournament_status": "ENROLLMENT_OPEN", "delivery": "virtual"},
+    ]
+    for spec in _BF_SPECS:
+        tourn = db.query(Semester).filter(Semester.code == spec["code"]).first()
+        if tourn:
+            tourn.name = spec["name"]
+            tourn.tournament_status = spec["tournament_status"]
+            tourn.semester_category = SemesterCategory.TOURNAMENT
+            tourn.enrollment_cost = 0
+            db.flush()
+        else:
+            tourn = Semester(
+                code=spec["code"],
+                name=spec["name"],
+                semester_category=SemesterCategory.TOURNAMENT,
+                start_date=today,
+                end_date=today + timedelta(days=30),
+                tournament_status=spec["tournament_status"],
+                enrollment_cost=0,
+                specialization_type="LFA_FOOTBALL_PLAYER",
+            )
+            db.add(tourn)
+            db.flush()
+
+        # Upsert TournamentConfiguration with session_type_config
+        cfg = db.query(TournamentConfiguration).filter(
+            TournamentConfiguration.semester_id == tourn.id
+        ).first()
+        if cfg:
+            cfg.session_type_config = spec["delivery"]
+        else:
+            cfg = TournamentConfiguration(
+                semester_id=tourn.id,
+                participant_type="INDIVIDUAL",
+                session_type_config=spec["delivery"],
+            )
+            db.add(cfg)
+        db.flush()
+
+        lines.append(
+            f"  upserted tournament id={tourn.id} '{tourn.name}' "
+            f"status={tourn.tournament_status} delivery={spec['delivery']}"
+        )
+
+    db.commit()
+    return lines
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 _SCENARIOS = {
@@ -876,6 +948,7 @@ _SCENARIOS = {
     "student_skill_history":        scenario_student_skill_history,
     "student_1tournament":          scenario_student_1tournament,
     "tournament_virtual_e2e":       scenario_tournament_virtual_e2e,
+    "browse_filter_e2e":            scenario_browse_filter_e2e,
 }
 
 
