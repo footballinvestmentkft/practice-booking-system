@@ -134,7 +134,7 @@ class TestUsersRealistic:
     # ── GET /users/ — admin list ──────────────────────────────────────────────
 
     def test_admin_list_users_200(
-        self, api_client: TestClient, admin_token: str
+        self, api_client: TestClient, admin_token: str, _student_user, _instructor_user
     ):
         """GET / as admin → 200 + {users: list, total: int, page: int, size: int}."""
         headers = {"Authorization": f"Bearer {admin_token}"}
@@ -144,7 +144,7 @@ class TestUsersRealistic:
         assert "users" in data
         assert "total" in data
         assert isinstance(data["users"], list)
-        assert data["total"] >= 3  # at least 3 smoke users exist
+        assert data["total"] >= 3  # at least admin + student + instructor
 
     def test_admin_list_users_student_403(
         self, api_client: TestClient, student_token: str
