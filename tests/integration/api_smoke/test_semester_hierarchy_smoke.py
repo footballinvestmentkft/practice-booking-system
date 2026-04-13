@@ -23,10 +23,12 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from app.core.security import get_password_hash
 from app.models.semester import Semester, SemesterCategory
 from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 from app.models.session import Session as SessionModel, SessionType, EventCategory
 from app.models.event_reward_log import EventRewardLog
+from app.models.user import User, UserRole
 from app.services.reward_service import award_session_completion
 from tests.fixtures.builders import build_enrollment, build_semester, build_user_license
 
@@ -68,9 +70,28 @@ def _auth(admin_token: str) -> dict:
 
 @pytest.fixture()
 def smoke_student(test_db: Session):
-    """Retrieve the canonical smoke student seeded by conftest."""
-    from app.models.user import User
-    return test_db.query(User).filter(User.email == "smoke.student@example.com").first()
+    """Create a fresh student user for this test module (independent of conftest seeding)."""
+    from app.models.license import UserLicense
+    uid = _uid()
+    user = User(
+        name=f"Smoke Hierarchy Student {uid}",
+        email=f"smoke.hierarchy.{uid}@example.com",
+        password_hash=get_password_hash("student123"),
+        role=UserRole.STUDENT,
+        is_active=True,
+        date_of_birth=date(2000, 1, 1),
+        credit_balance=1000,
+    )
+    test_db.add(user)
+    test_db.commit()
+    test_db.refresh(user)
+
+    yield user
+
+    # Teardown: remove licenses then user (enrollments removed by hierarchy_data teardown)
+    test_db.query(UserLicense).filter(UserLicense.user_id == user.id).delete(synchronize_session=False)
+    test_db.delete(user)
+    test_db.commit()
 
 
 @pytest.fixture()
