@@ -48,6 +48,7 @@ from app.models.team import Team, TeamMember, TournamentTeamEnrollment  # noqa: 
 from app.models.tournament_configuration import TournamentConfiguration  # noqa: E402
 from app.models.tournament_type import TournamentType  # noqa: E402
 from app.models.user import User, UserRole  # noqa: E402
+from app.models.game_preset import GamePreset  # noqa: E402
 from app.dependencies import (  # noqa: E402
     get_current_user_web,
     get_current_admin_user_hybrid,
@@ -288,6 +289,14 @@ def _get_tournament_after_promotion(name_fragment):
     return t
 
 
+def _get_default_preset_id() -> str:
+    """Return the ID of the 'outfield_default' GamePreset (seeded by bootstrap)."""
+    preset = _db.query(GamePreset).filter(GamePreset.code == "outfield_default").first()
+    if not preset:
+        fail_local("GamePreset 'outfield_default' not found — run bootstrap_clean.py first")
+    return str(preset.id)
+
+
 def _create_team_tournament(club_id, campus_id, tt_id, age_group, label, name_prefix):
     """Run the promotion wizard for a single age group. Returns tournament id."""
     resp = _post_form(
@@ -343,7 +352,7 @@ def s2_individual_knockout(club, campus, tt_by_code, instructor, boot_teams):
             "enrollment_cost": "0",
             "campus_id": str(campus.id),
             "tournament_type_id": str(tt_by_code["knockout"].id),
-            "game_preset_id": "",
+            "game_preset_id": _get_default_preset_id(),
             "participant_type": "INDIVIDUAL",
             "number_of_rounds": "1",
         },
@@ -412,7 +421,7 @@ def s3_individual_group_knockout(club, campus, tt_by_code, instructor, boot_team
             "enrollment_cost": "0",
             "campus_id": str(campus.id),
             "tournament_type_id": str(tt_by_code["group_knockout"].id),
-            "game_preset_id": "",
+            "game_preset_id": _get_default_preset_id(),
             "participant_type": "INDIVIDUAL",
             "number_of_rounds": "1",
         },
@@ -501,7 +510,7 @@ def s5_individual_league(club, campus, tt_by_code, instructor, boot_teams):
             "enrollment_cost": "0",
             "campus_id": str(campus.id),
             "tournament_type_id": str(tt_by_code["league"].id),
-            "game_preset_id": "",
+            "game_preset_id": _get_default_preset_id(),
             "participant_type": "INDIVIDUAL",
             "number_of_rounds": "1",
         },

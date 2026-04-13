@@ -215,7 +215,8 @@ class TestSessionsPage:
         db = MagicMock()
         # .all() calls: approved_enrollments=[enrollment], my_bookings=[]
         db.query.return_value.filter.return_value.all.side_effect = [[enrollment], []]
-        # upcoming_sessions via order_by().limit().all()
+        # upcoming_sessions via filter().options().order_by().limit().all()
+        db.query.return_value.filter.return_value.options.return_value = db.query.return_value.filter.return_value
         db.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = [session_obj]
         db.query.return_value.filter.return_value.count.return_value = 2
 
@@ -253,6 +254,7 @@ class TestSessionsPage:
         db.query.return_value.filter.return_value.all.side_effect = [
             [enrollment], [booking_obj],
         ]
+        db.query.return_value.filter.return_value.options.return_value = db.query.return_value.filter.return_value
         db.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = [session_obj]
         db.query.return_value.filter.return_value.count.return_value = 3
         # .first() sequence inside loop:
@@ -294,6 +296,7 @@ class TestSessionsPage:
         db.query.return_value.filter.return_value.all.side_effect = [
             [enrollment], [booking_obj], [],
         ]
+        db.query.return_value.filter.return_value.options.return_value = db.query.return_value.filter.return_value
         db.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = [session_obj]
         db.query.return_value.filter.return_value.count.return_value = 0
         # .first(): attendance=None, instructor_review=None, performance_review=None
@@ -332,6 +335,7 @@ class TestSessionsPage:
         db.query.return_value.filter.return_value.all.side_effect = [
             [enrollment], [booking_obj], [sq_not_required],
         ]
+        db.query.return_value.filter.return_value.options.return_value = db.query.return_value.filter.return_value
         db.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = [session_obj]
         db.query.return_value.filter.return_value.count.return_value = 0
         db.query.return_value.filter.return_value.first.side_effect = [None, None, None]
@@ -369,6 +373,7 @@ class TestSessionsPage:
         db.query.return_value.filter.return_value.all.side_effect = [
             [enrollment], [booking_obj], [sq_required],
         ]
+        db.query.return_value.filter.return_value.options.return_value = db.query.return_value.filter.return_value
         db.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = [session_obj]
         db.query.return_value.filter.return_value.count.return_value = 0
         # .first(): attendance=None, instructor_review=None,
@@ -411,6 +416,7 @@ class TestSessionsPage:
         db.query.return_value.filter.return_value.all.side_effect = [
             [enrollment], [booking_obj], [sq],
         ]
+        db.query.return_value.filter.return_value.options.return_value = db.query.return_value.filter.return_value
         db.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = [session_obj]
         db.query.return_value.filter.return_value.count.return_value = 1
         # .first(): attendance=None, instructor_review=None, QuizAttempt=passed,
@@ -609,7 +615,7 @@ class TestSessionDetails:
         instructor_obj.name = "Coach"
 
         db = MagicMock()
-        db.query.return_value.filter.return_value.first.side_effect = [s, instructor_obj]
+        db.query.return_value.filter.return_value.first.side_effect = [s, instructor_obj, None]
         db.query.return_value.filter.return_value.all.return_value = []
         db.query.return_value.filter.return_value.order_by.return_value.all.return_value = []
         db.query.return_value.filter.return_value.count.return_value = 0
@@ -629,7 +635,7 @@ class TestSessionDetails:
         instructor_obj.name = "Coach"
 
         db = MagicMock()
-        db.query.return_value.filter.return_value.first.side_effect = [s, instructor_obj]
+        db.query.return_value.filter.return_value.first.side_effect = [s, instructor_obj, None]
         db.query.return_value.filter.return_value.all.return_value = []
         db.query.return_value.filter.return_value.order_by.return_value.all.return_value = []
         db.query.return_value.filter.return_value.count.return_value = 0
@@ -672,10 +678,12 @@ class TestSessionDetails:
         #   booking loop: [2] student_obj, [3] attendance=None
         #     → both `if attendance:` blocks skipped (history/.first() and student_review skip)
         #   enrolled check: [4] my_attendance (truthy!), [5] my_instructor_review (line 424)
+        #   [6] parent semester query (semester_id truthy but not a tournament)
         db.query.return_value.filter.return_value.first.side_effect = [
             s, instructor_obj,
             student_obj, None,
             my_attendance, my_instructor_review,
+            None,
         ]
 
         with patch(f"{_BASE}.templates") as mock_tmpl:
@@ -735,9 +743,11 @@ class TestSessionDetails:
         # 1. session, 2. instructor_obj,
         # booking loop: 3. student_obj, 4. attendance(found), 5. changer_obj, 6. sr(found)
         # student NOT enrolled (booking.user_id=55 != user.id=99) → no my_attendance queries
+        # 7. parent semester query (semester_id truthy but not a tournament)
         db.query.return_value.filter.return_value.first.side_effect = [
             s, instructor_obj,
             student_obj, attendance, changer_obj, sr,
+            None,
         ]
 
         with patch(f"{_BASE}.templates") as mock_tmpl:
@@ -793,12 +803,14 @@ class TestSessionDetails:
         student_in_loop = MagicMock()
         student_in_loop.id = 99
         # .first(): session, instructor_obj, student(loop), attendance=None(loop),
-        #           my_attendance=None(enrolled check), quiz_obj
+        #           my_attendance=None(enrolled check), quiz_obj,
+        #           parent semester (semester_id truthy but not a tournament)
         db.query.return_value.filter.return_value.first.side_effect = [
             s, instructor_obj,
             student_in_loop, None,
             None,
             quiz_obj,
+            None,
         ]
 
         with patch(f"{_BASE}.templates") as mock_tmpl:
@@ -826,8 +838,9 @@ class TestSessionDetails:
         db.query.return_value.filter.return_value.all.return_value = [booking]
         db.query.return_value.filter.return_value.order_by.return_value.all.return_value = []
         db.query.return_value.filter.return_value.count.return_value = 0
-        # .first(): session, instructor_obj, student=None (skip body)
-        db.query.return_value.filter.return_value.first.side_effect = [s, instructor_obj, None]
+        # .first(): session, instructor_obj, student=None (skip body),
+        #           parent semester (semester_id truthy but not a tournament)
+        db.query.return_value.filter.return_value.first.side_effect = [s, instructor_obj, None, None]
 
         with patch(f"{_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
@@ -865,10 +878,12 @@ class TestSessionDetails:
         #   booking loop: [2] student_obj, [3] attendance=None
         #     → `if attendance:` False → no history .first(), no student_review .first()
         #   enrolled check: [4] my_attendance (truthy → True!), [5] my_instructor_review (line 424)
+        #   [6] parent semester (semester_id truthy but not a tournament)
         db.query.return_value.filter.return_value.first.side_effect = [
             s, instructor_obj,
             student_obj, None,
             my_attendance, my_instructor_review,
+            None,
         ]
 
         with patch(f"{_BASE}.templates") as mock_tmpl:
@@ -901,8 +916,9 @@ class TestSessionDetails:
         db.query.return_value.filter.return_value.all.side_effect = [[], [sq]]
         db.query.return_value.filter.return_value.order_by.return_value.all.return_value = []
         db.query.return_value.filter.return_value.count.return_value = 0
-        # .first(): session, instructor_obj, quiz=None (skip body)
-        db.query.return_value.filter.return_value.first.side_effect = [s, instructor_obj, None]
+        # .first(): session, instructor_obj, quiz=None (skip body),
+        #           parent semester (semester_id truthy but not a tournament)
+        db.query.return_value.filter.return_value.first.side_effect = [s, instructor_obj, None, None]
 
         with patch(f"{_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
@@ -946,11 +962,13 @@ class TestSessionDetails:
         #   booking loop: student=None → skip (344→342)
         #   quiz fetch: quiz_obj
         #   instructor quiz loop: student=None → skip (479→477)
+        #   parent semester (semester_id truthy but not a tournament)
         db.query.return_value.filter.return_value.first.side_effect = [
             s, instructor_obj,
             None,      # booking loop: student not found → skip
             quiz_obj,  # quiz fetch
             None,      # instructor quiz loop: student not found → skip
+            None,      # parent semester
         ]
 
         with patch(f"{_BASE}.templates") as mock_tmpl:
@@ -1020,6 +1038,7 @@ class TestSessionDetails:
             student_result_user, None,  # booking loop: student found, attendance=None
             student_result_user,        # instructor quiz loop: student found
             quiz_obj,
+            None,                       # parent semester (semester_id truthy but not a tournament)
         ]
 
         with patch(f"{_BASE}.templates") as mock_tmpl:
@@ -1081,12 +1100,14 @@ class TestSessionDetails:
         student_in_loop.id = 55
         # .first(): session, instructor_obj,
         #   booking loop: student_in_loop, attendance=None,
-        #   instructor quiz results: student_result_user, quiz_obj
+        #   instructor quiz results: student_result_user, quiz_obj,
+        #   parent semester (semester_id truthy but not a tournament)
         db.query.return_value.filter.return_value.first.side_effect = [
             s, instructor_obj,
             student_in_loop, None,
             student_result_user,
             quiz_obj,
+            None,
         ]
 
         with patch(f"{_BASE}.templates") as mock_tmpl:

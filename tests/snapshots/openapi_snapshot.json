@@ -55684,6 +55684,318 @@
         ]
       }
     },
+    "/events": {
+      "get": {
+        "description": "Events landing page \u2014 4 type cards linking to per-type browse pages.",
+        "operationId": "events_landing_events_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Events Landing",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/events/academy-seasons": {
+      "get": {
+        "operationId": "events_academy_seasons_events_academy_seasons_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Events Academy Seasons",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/events/camps": {
+      "get": {
+        "description": "CAMP browse \u2014 enrolled section + available section.",
+        "operationId": "events_camps_list_events_camps_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Events Camps List",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/events/camps/{camp_id}": {
+      "get": {
+        "description": "CAMP student detail page \u2014 enrollment panel + session list.",
+        "operationId": "events_camp_detail_events_camps__camp_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "camp_id",
+            "required": true,
+            "schema": {
+              "title": "Camp Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Events Camp Detail",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/events/camps/{camp_id}/enroll": {
+      "post": {
+        "description": "Enroll current student in a camp (auto-approved, deducts credits).",
+        "operationId": "events_camp_enroll_events_camps__camp_id__enroll_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "camp_id",
+            "required": true,
+            "schema": {
+              "title": "Camp Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Events Camp Enroll",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/events/camps/{camp_id}/unenroll": {
+      "post": {
+        "description": "Withdraw student from camp (50% refund).",
+        "operationId": "events_camp_unenroll_events_camps__camp_id__unenroll_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "camp_id",
+            "required": true,
+            "schema": {
+              "title": "Camp Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Events Camp Unenroll",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/events/mini-seasons": {
+      "get": {
+        "operationId": "events_mini_seasons_events_mini_seasons_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Events Mini Seasons",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/events/tournaments": {
+      "get": {
+        "description": "TOURNAMENT browse \u2014 My (no filter) + Browse (status + delivery filtered, backend SOT).",
+        "operationId": "events_tournaments_list_events_tournaments_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "title": "Status",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "delivery",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "title": "Delivery",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Events Tournaments List",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/events/tournaments/{tournament_id}": {
+      "get": {
+        "description": "Student-facing TOURNAMENT event detail page \u2014 with round structure and standings.",
+        "operationId": "events_tournament_detail_events_tournaments__tournament_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Events Tournament Detail",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/events/{tournament_id}": {
       "get": {
         "operationId": "public_event_detail_events__tournament_id__get",
@@ -58398,8 +58710,8 @@
     },
     "/tournaments": {
       "get": {
-        "description": "Browse ENROLLMENT_OPEN / IN_PROGRESS tournaments available to the student.",
-        "operationId": "tournaments_list_tournaments_get",
+        "description": "301 redirect: /tournaments \u2192 /events/tournaments (canonical URL).",
+        "operationId": "tournaments_list_redirect_tournaments_get",
         "responses": {
           "200": {
             "content": {
@@ -58412,7 +58724,50 @@
             "description": "Successful Response"
           }
         },
-        "summary": "Tournaments List",
+        "summary": "Tournaments List Redirect",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/tournaments/{tournament_id}": {
+      "get": {
+        "description": "301 redirect: /tournaments/{id} \u2192 /events/tournaments/{id} (canonical URL).",
+        "operationId": "student_tournament_detail_redirect_tournaments__tournament_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Tournament Detail Redirect",
         "tags": [
           "web"
         ]
