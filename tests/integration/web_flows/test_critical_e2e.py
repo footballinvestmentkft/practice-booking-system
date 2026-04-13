@@ -1,13 +1,16 @@
 """
 Critical E2E Tests
 ==================
-5 full-chain tests covering previously-identified coverage gaps:
+8 full-chain tests covering previously-identified coverage gaps:
 
-  QRB — Quiz Retry Best Score  : fail → retry → pass (UI + DB)
-  QEG — Quiz Enrollment Gate   : no booking → 403; with booking → 200
-  SFJ — Student Full Journey   : browse → enroll → enrolled state visible
-  SDE — Skill Delta E2E        : tournament → TournamentParticipation → skills page
-  CDE — Credit Deduction E2E   : enroll in paid event → deduction → history visible
+  QRB — Quiz Retry Best Score      : fail → retry → pass (UI + DB)
+  QEG — Quiz Enrollment Gate       : no booking → 403; with booking → 200
+  SFJ — Student Full Journey       : browse → enroll → enrolled state visible
+  SDE — Skill Delta E2E            : tournament → TournamentParticipation → skills page
+  CDE — Credit Deduction E2E       : enroll in paid event → deduction → history visible
+  QAL — Quiz Attempt Limit         : fail × max_attempts → "No More Attempts" UI state
+  QIS — Quiz Interrupted Resume    : start → abandon → re-GET → same attempt resumed
+  QPG — Quiz State Progression     : no attempt → fail → pass → session_details tracks state
 
 Design rules:
   - Self-contained: each test creates all required data inline via db.flush()
@@ -111,6 +114,37 @@ def _make_tournament(db: Session, enrollment_cost: int = 0) -> Semester:
     db.add(cfg)
     db.flush()
     return sem
+
+
+def _make_virtual_session(db: Session) -> tuple:
+    """Create Semester + virtual SessionModel + Instructor. Returns (session, instructor, semester).
+
+    date_start is in the past so the quiz is immediately available in session_details.
+    Virtual sessions expose the quiz section in session_details (hybrid/virtual only).
+    """
+    instructor = _make_user(db, role=UserRole.INSTRUCTOR)
+    uid = _uid()
+    sem = Semester(
+        code=f"VS-{uid}",
+        name=f"VS Semester {uid}",
+        start_date=date.today(),
+        end_date=date.today() + timedelta(days=30),
+        status=SemesterStatus.ONGOING,
+    )
+    db.add(sem)
+    db.flush()
+    sess = SessionModel(
+        title=f"E2E Virtual Session {uid}",
+        session_type=SessionType.virtual,
+        date_start=datetime(2026, 1, 1, 10, 0),   # past naive dt → quiz is available now
+        date_end=datetime(2026, 1, 1, 12, 0),
+        semester_id=sem.id,
+        instructor_id=instructor.id,
+        base_xp=50,
+    )
+    db.add(sess)
+    db.flush()
+    return sess, instructor, sem
 
 
 def _make_quiz(db: Session, passing_score: float = 0.6) -> tuple:
@@ -480,3 +514,255 @@ def test_credit_flow_deduction_and_history(test_db: Session, client: TestClient)
     assert "800" in r3.text, (
         f"Updated balance 800 not visible on credits page. Snippet: {r3.text[:500]}"
     )
+
+
+# ── Test 6: QAL — Quiz Attempt Limit Exhaustion ───────────────────────────────
+
+def test_quiz_attempt_limit_exhaustion(test_db: Session, client: TestClient):
+    """QAL: exhaust max_attempts → session_details shows 'No More Attempts' UI state.
+
+    Setup: virtual session (quiz section shown for virtual/hybrid only) +
+           SessionQuiz(max_attempts=2) + Booking(CONFIRMED) for is_enrolled.
+    Flow:  fail × 2 → GET /sessions/{id} → 'No More Attempts' in HTML.
+    """
+    quiz, question, opt_wrong, opt_correct = _make_quiz(test_db, passing_score=0.6)
+    student = _make_user(test_db)
+    sess, _instr, _sem = _make_virtual_session(test_db)
+
+    sq = SessionQuiz(session_id=sess.id, quiz_id=quiz.id, is_required=True, max_attempts=2)
+    test_db.add(sq)
+    booking = Booking(user_id=student.id, session_id=sess.id, status=BookingStatus.CONFIRMED)
+    test_db.add(booking)
+    test_db.flush()
+
+    app.dependency_overrides[get_current_user_web] = lambda: student
+
+    def _fail_attempt() -> None:
+        """Start a quiz attempt (no session_id → no gate) and submit a wrong answer."""
+        r_take = client.get(f"/quizzes/{quiz.id}/take")
+        assert r_take.status_code == 200
+        attempt = test_db.query(QuizAttempt).filter(
+            QuizAttempt.quiz_id == quiz.id,
+            QuizAttempt.user_id == student.id,
+            QuizAttempt.completed_at.is_(None),
+        ).first()
+        assert attempt is not None
+        r_sub = client.post(
+            f"/quizzes/{quiz.id}/submit",
+            data={"attempt_id": str(attempt.id), "time_spent": "20",
+                  f"question_{question.id}": str(opt_wrong.id)},
+        )
+        assert r_sub.status_code == 200
+        test_db.expire_all()
+
+    _fail_attempt()   # attempt 1: fail
+    _fail_attempt()   # attempt 2: fail
+
+    # DB: exactly 2 completed, failed attempts
+    attempts = test_db.query(QuizAttempt).filter(
+        QuizAttempt.quiz_id == quiz.id,
+        QuizAttempt.user_id == student.id,
+    ).all()
+    assert len(attempts) == 2, f"Expected 2 attempts, got {len(attempts)}"
+    assert all(a.passed is False for a in attempts), "Both attempts must be failed"
+    assert all(a.completed_at is not None for a in attempts), "Both attempts must be completed"
+
+    # UI: session_details shows 'No More Attempts' — the exhausted state
+    resp = client.get(f"/sessions/{sess.id}", follow_redirects=True)
+    assert resp.status_code == 200
+    assert "No More Attempts" in resp.text, (
+        f"'No More Attempts' not found in session_details after exhausting max_attempts=2. "
+        f"Snippet: {resp.text[:600]}"
+    )
+
+
+# ── Test 7: QIS — Quiz Interrupted State Resume ───────────────────────────────
+
+def test_quiz_interrupted_state_resume(test_db: Session, client: TestClient):
+    """QIS: start quiz → abandon (no submit) → GET /take again → resumes SAME attempt.
+
+    The quiz route checks for an existing in-progress attempt (completed_at IS NULL)
+    and returns it instead of creating a new one.  This test verifies:
+      - Same attempt_id on second GET /take
+      - Only 1 QuizAttempt row exists (not 2)
+      - The resumed attempt can be completed successfully
+    """
+    quiz, question, opt_wrong, opt_correct = _make_quiz(test_db, passing_score=0.6)
+    student = _make_user(test_db)
+
+    app.dependency_overrides[get_current_user_web] = lambda: student
+
+    # Step 1: Start quiz — creates in-progress QuizAttempt
+    r1 = client.get(f"/quizzes/{quiz.id}/take")
+    assert r1.status_code == 200
+    assert quiz.title in r1.text or "question" in r1.text.lower()
+
+    attempt1 = test_db.query(QuizAttempt).filter(
+        QuizAttempt.quiz_id == quiz.id,
+        QuizAttempt.user_id == student.id,
+        QuizAttempt.completed_at.is_(None),
+    ).first()
+    assert attempt1 is not None, "QuizAttempt must be created on first GET /take"
+    attempt1_id = attempt1.id
+
+    # DB: exactly 1 in-progress attempt
+    total_before = test_db.query(QuizAttempt).filter(
+        QuizAttempt.quiz_id == quiz.id,
+        QuizAttempt.user_id == student.id,
+    ).count()
+    assert total_before == 1
+
+    # Step 2: GET /take again WITHOUT submitting — must resume the same attempt
+    r2 = client.get(f"/quizzes/{quiz.id}/take")
+    assert r2.status_code == 200
+
+    # DB: still only 1 QuizAttempt row (not a new one)
+    total_after = test_db.query(QuizAttempt).filter(
+        QuizAttempt.quiz_id == quiz.id,
+        QuizAttempt.user_id == student.id,
+    ).count()
+    assert total_after == 1, (
+        f"Second GET /take must resume existing attempt — not create a new one. "
+        f"Expected 1 row, got {total_after}"
+    )
+
+    # The in-progress attempt is still the same one (same id)
+    still_in_progress = test_db.query(QuizAttempt).filter(
+        QuizAttempt.quiz_id == quiz.id,
+        QuizAttempt.user_id == student.id,
+        QuizAttempt.completed_at.is_(None),
+    ).first()
+    assert still_in_progress is not None
+    assert still_in_progress.id == attempt1_id, (
+        f"Resumed attempt id={still_in_progress.id} != original id={attempt1_id}"
+    )
+
+    # Step 3: Complete the resumed attempt with a correct answer → pass
+    r3 = client.post(
+        f"/quizzes/{quiz.id}/submit",
+        data={"attempt_id": str(attempt1_id), "time_spent": "60",
+              f"question_{question.id}": str(opt_correct.id)},
+    )
+    assert r3.status_code == 200
+    assert "pass" in r3.text.lower() or "100" in r3.text or "correct" in r3.text.lower(), (
+        f"Pass result not visible. Snippet: {r3.text[:400]}"
+    )
+
+    # DB: 1 completed, passed QuizAttempt (the same one we resumed)
+    test_db.expire_all()
+    final_attempt = test_db.query(QuizAttempt).filter(
+        QuizAttempt.quiz_id == quiz.id,
+        QuizAttempt.user_id == student.id,
+    ).first()
+    assert final_attempt.id == attempt1_id, "Must be the same attempt that was resumed"
+    assert final_attempt.passed is True
+    assert final_attempt.completed_at is not None
+    assert test_db.query(QuizAttempt).filter(
+        QuizAttempt.quiz_id == quiz.id,
+        QuizAttempt.user_id == student.id,
+    ).count() == 1, "Exactly 1 QuizAttempt row must exist (no duplicate created on resume)"
+
+
+# ── Test 8: QPG — Quiz Required State Progression ────────────────────────────
+
+def test_quiz_required_state_progression(test_db: Session, client: TestClient):
+    """QPG: session_details tracks quiz state across fail → pass transitions.
+
+    Verifies the session_details quiz UI correctly reflects each state:
+      1. Before any attempt  → 'Start Certification Exam' available
+      2. After failed attempt → 'Retry Quiz' available (can still attempt)
+      3. After passed attempt → 'PASSED' state shown
+
+    Uses a virtual session (quiz section only shown for virtual/hybrid in session_details).
+    quiz attempts taken via GET /quizzes/{id}/take (no session_id) to bypass gate.
+    """
+    quiz, question, opt_wrong, opt_correct = _make_quiz(test_db, passing_score=0.6)
+    student = _make_user(test_db)
+    sess, _instr, _sem = _make_virtual_session(test_db)
+
+    # Link quiz to session (required for session_details to show quiz section)
+    sq = SessionQuiz(session_id=sess.id, quiz_id=quiz.id, is_required=True)
+    test_db.add(sq)
+    # Booking provides is_enrolled=True → quiz section is populated
+    booking = Booking(user_id=student.id, session_id=sess.id, status=BookingStatus.CONFIRMED)
+    test_db.add(booking)
+    test_db.flush()
+
+    app.dependency_overrides[get_current_user_web] = lambda: student
+
+    # ── State 1: no attempt → start button visible ─────────────────────────
+    r1 = client.get(f"/sessions/{sess.id}", follow_redirects=True)
+    assert r1.status_code == 200
+    assert "Start Certification Exam" in r1.text, (
+        f"Expected 'Start Certification Exam' before any attempt. "
+        f"Quiz section snippet: {r1.text[r1.text.find('session_quizzes') - 50 : r1.text.find('session_quizzes') + 200] if 'session_quizzes' in r1.text else r1.text[:600]}"
+    )
+    # DB: no attempts yet
+    assert test_db.query(QuizAttempt).filter(
+        QuizAttempt.quiz_id == quiz.id,
+        QuizAttempt.user_id == student.id,
+    ).count() == 0
+
+    # ── State 2: fail one attempt → retry available ────────────────────────
+    r_take = client.get(f"/quizzes/{quiz.id}/take")
+    assert r_take.status_code == 200
+    attempt_fail = test_db.query(QuizAttempt).filter(
+        QuizAttempt.quiz_id == quiz.id,
+        QuizAttempt.user_id == student.id,
+        QuizAttempt.completed_at.is_(None),
+    ).first()
+    assert attempt_fail is not None
+    r_sub = client.post(
+        f"/quizzes/{quiz.id}/submit",
+        data={"attempt_id": str(attempt_fail.id), "time_spent": "25",
+              f"question_{question.id}": str(opt_wrong.id)},
+    )
+    assert r_sub.status_code == 200
+    test_db.expire_all()
+
+    # DB: 1 failed attempt
+    assert test_db.query(QuizAttempt).filter(
+        QuizAttempt.quiz_id == quiz.id,
+        QuizAttempt.user_id == student.id,
+        QuizAttempt.passed.is_(False),
+    ).count() == 1
+
+    r2 = client.get(f"/sessions/{sess.id}", follow_redirects=True)
+    assert r2.status_code == 200
+    assert "Retry Quiz" in r2.text, (
+        f"Expected 'Retry Quiz' button after failed attempt. Snippet: {r2.text[:600]}"
+    )
+    assert "No More Attempts" not in r2.text, "Should not show exhausted state (max_attempts=None)"
+    assert "PASSED" not in r2.text, "Should not show PASSED after a failed attempt"
+
+    # ── State 3: pass second attempt → PASSED state ────────────────────────
+    r_take2 = client.get(f"/quizzes/{quiz.id}/take")
+    assert r_take2.status_code == 200
+    attempt_pass = test_db.query(QuizAttempt).filter(
+        QuizAttempt.quiz_id == quiz.id,
+        QuizAttempt.user_id == student.id,
+        QuizAttempt.completed_at.is_(None),
+    ).first()
+    assert attempt_pass is not None
+    r_sub2 = client.post(
+        f"/quizzes/{quiz.id}/submit",
+        data={"attempt_id": str(attempt_pass.id), "time_spent": "45",
+              f"question_{question.id}": str(opt_correct.id)},
+    )
+    assert r_sub2.status_code == 200
+    test_db.expire_all()
+
+    # DB: 2 total attempts (1 failed + 1 passed), latest is passed
+    all_attempts = test_db.query(QuizAttempt).filter(
+        QuizAttempt.quiz_id == quiz.id,
+        QuizAttempt.user_id == student.id,
+    ).all()
+    assert len(all_attempts) == 2
+    assert any(a.passed for a in all_attempts), "At least one passed attempt must exist"
+
+    r3 = client.get(f"/sessions/{sess.id}", follow_redirects=True)
+    assert r3.status_code == 200
+    assert "PASSED" in r3.text, (
+        f"Expected 'PASSED' state after passing quiz. Snippet: {r3.text[:600]}"
+    )
+    assert "Retry Quiz" not in r3.text, "Retry button must not show after passing"
