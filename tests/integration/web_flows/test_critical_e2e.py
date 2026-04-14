@@ -1642,3 +1642,77 @@ def test_license_renewal_updates_expiry(test_db: Session, client: TestClient):
     assert "2027" in r_edit.text, (
         f"Admin user edit page must show expiry year 2027. Snippet: {r_edit.text[:500]}"
     )
+
+
+def test_quiz_pass_awards_xp_to_user_stats(test_db: Session, client: TestClient):
+    """GAP-06: Quiz pass on virtual session → QuizAttempt.xp_awarded > 0 + UserStats.total_xp updated.
+
+    Note: quiz pass does NOT create XPTransaction — it updates UserStats.total_xp directly.
+
+    Chain:
+      virtual session + SessionQuiz(xp_reward=10) + Booking(CONFIRMED)
+      GET /quizzes/{id}/take  → QuizAttempt created
+      POST /quizzes/{id}/submit (correct answer)  → 200, passed=True
+      DB:  QuizAttempt.xp_awarded == 10
+      DB:  UserStats.total_xp >= 10
+      GET  /progress  → XP value visible in HTML
+    """
+    from app.models.gamification import UserStats
+
+    quiz, question, opt_wrong, opt_correct = _make_quiz(test_db, passing_score=0.6)
+    # quiz.xp_reward = 10 (set in _make_quiz)
+    student = _make_user(test_db)
+    _make_license(test_db, student)
+    sess, _instr, _sem = _make_virtual_session(test_db)
+
+    sq = SessionQuiz(session_id=sess.id, quiz_id=quiz.id, is_required=True, max_attempts=3)
+    test_db.add(sq)
+    booking = Booking(user_id=student.id, session_id=sess.id, status=BookingStatus.CONFIRMED)
+    test_db.add(booking)
+    test_db.flush()
+
+    app.dependency_overrides[get_current_user_web] = lambda: student
+
+    # Start quiz
+    r_take = client.get(f"/quizzes/{quiz.id}/take")
+    assert r_take.status_code == 200
+
+    attempt = test_db.query(QuizAttempt).filter(
+        QuizAttempt.quiz_id == quiz.id,
+        QuizAttempt.user_id == student.id,
+        QuizAttempt.completed_at.is_(None),
+    ).first()
+    assert attempt is not None
+
+    # Submit correct answer → pass
+    r_sub = client.post(
+        f"/quizzes/{quiz.id}/submit",
+        data={
+            "attempt_id": str(attempt.id),
+            "time_spent": "30",
+            f"question_{question.id}": str(opt_correct.id),
+        },
+    )
+    assert r_sub.status_code == 200
+
+    # DB: QuizAttempt.xp_awarded set to quiz.xp_reward
+    test_db.expire_all()
+    test_db.refresh(attempt)
+    assert attempt.passed is True, f"attempt.passed must be True, got {attempt.passed}"
+    assert attempt.xp_awarded == quiz.xp_reward, (
+        f"QuizAttempt.xp_awarded must equal quiz.xp_reward={quiz.xp_reward}, got {attempt.xp_awarded}"
+    )
+
+    # DB: UserStats.total_xp updated
+    stats = test_db.query(UserStats).filter(UserStats.user_id == student.id).first()
+    assert stats is not None, "UserStats row must be created after quiz pass with xp_reward > 0"
+    assert stats.total_xp >= quiz.xp_reward, (
+        f"UserStats.total_xp must be >= {quiz.xp_reward}, got {stats.total_xp}"
+    )
+
+    # UI: /progress page shows XP value
+    r_progress = client.get("/progress")
+    assert r_progress.status_code == 200, f"Progress page must render 200, got {r_progress.status_code}"
+    assert str(quiz.xp_reward) in r_progress.text, (
+        f"Progress page must show XP value {quiz.xp_reward}. Snippet: {r_progress.text[:500]}"
+    )
