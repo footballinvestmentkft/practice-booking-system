@@ -35,7 +35,7 @@ from sqlalchemy.orm import Session
 
 from app.main import app
 from app.database import get_db
-from app.dependencies import get_current_user_web, get_current_user_optional
+from app.dependencies import get_current_user_web, get_current_user_optional, get_current_user
 from app.core.security import get_password_hash, verify_password
 from app.models.user import User, UserRole, SpecializationType
 from app.models.invitation_code import InvitationCode
@@ -1261,4 +1261,144 @@ def test_camp_enrollment_credit_deduction_and_refund(test_db: Session, client: T
     assert r_credits.status_code == 200
     assert "900" in r_credits.text, (
         f"Balance 900 not visible on /credits after camp 50% refund. Snippet: {r_credits.text[:400]}"
+    )
+
+
+# ── GAP-01: Tournament cancellation → bulk credit refund ──────────────────────
+
+def test_tournament_cancellation_refund(test_db: Session, client: TestClient):
+    """GAP-01: Admin cancels tournament → CreditTransaction(REFUND) + user_license balance updated.
+
+    Chain:
+      POST /api/v1/tournaments/{id}/enroll  → APPROVED, credit deducted
+      POST /api/v1/tournaments/{id}/cancel  → CANCELLED, REFUND tx created
+      GET  /admin/tournaments/{id}/edit     → "CANCELLED" visible in HTML
+    """
+    student = _make_user(test_db, credit_balance=500)
+    lic = _make_license(test_db, student)
+    admin = _make_user(test_db, role=UserRole.ADMIN)
+    tournament = _make_tournament(test_db, enrollment_cost=100)
+
+    # Step 1: Student enrolls via web route → AUTO-APPROVED, credit deducted (500 → 400)
+    app.dependency_overrides[get_current_user_web] = lambda: student
+    resp = client.post(f"/tournaments/{tournament.id}/enroll", follow_redirects=False)
+    assert resp.status_code == 303, f"Expected 303 enroll redirect, got {resp.status_code}: {resp.text[:300]}"
+
+    test_db.expire_all()
+    test_db.refresh(student)
+    assert student.credit_balance == 400, (
+        f"Expected 400 after enrollment deduction, got {student.credit_balance}"
+    )
+
+    # Step 2: Admin cancels tournament → refund processed
+    # cancel endpoint uses get_current_user (API auth, not web session)
+    app.dependency_overrides[get_current_user] = lambda: admin
+    resp = client.post(
+        f"/api/v1/tournaments/{tournament.id}/cancel",
+        json={"reason": "E2E GAP-01 test cancellation"},
+    )
+    assert resp.status_code == 200, f"Expected 200 cancel, got {resp.status_code}: {resp.text[:300]}"
+    body = resp.json()
+    assert body.get("message") or body.get("tournament_id"), (
+        f"Cancel response missing expected fields: {body}"
+    )
+
+    # DB: CreditTransaction(REFUND, amount=100) created for this license + tournament
+    test_db.expire_all()
+    tx = (
+        test_db.query(CreditTransaction)
+        .filter(
+            CreditTransaction.user_license_id == lic.id,
+            CreditTransaction.semester_id == tournament.id,
+            CreditTransaction.amount == 100,
+        )
+        .first()
+    )
+    assert tx is not None, "CreditTransaction(REFUND, amount=100) must exist after tournament cancellation"
+    assert "REFUND" in tx.transaction_type.upper(), (
+        f"Transaction type must be REFUND, got {tx.transaction_type}"
+    )
+
+    # DB: user_license.credit_balance increased by refund amount
+    test_db.refresh(lic)
+    assert lic.credit_balance >= 100, (
+        f"user_license.credit_balance must include refund; got {lic.credit_balance}"
+    )
+
+    # UI: admin tournament edit page renders CANCELLED status
+    app.dependency_overrides[get_current_user_web] = lambda: admin
+    r_edit = client.get(f"/admin/tournaments/{tournament.id}/edit")
+    assert r_edit.status_code == 200, f"Edit page must render 200 after cancel, got {r_edit.status_code}"
+    assert "CANCELLED" in r_edit.text, (
+        f"'CANCELLED' badge must appear on edit page after tournament cancel. "
+        f"Snippet: {r_edit.text[:400]}"
+    )
+
+
+# ── GAP-03: Enrollment rejection → REJECTED state, no charge ─────────────────
+
+def test_enrollment_rejection_sets_rejected_status(test_db: Session, client: TestClient):
+    """GAP-03: Admin rejects PENDING enrollment → request_status=REJECTED, credit_balance unchanged.
+
+    Chain:
+      SemesterEnrollment(PENDING) created directly (no credit charge)
+      POST /api/v1/semester-enrollments/{id}/reject  → 200, request_status=REJECTED
+      DB:  enrollment.request_status == REJECTED, student.credit_balance unchanged
+      GET  /events/tournaments  → student sees enroll button (not enrolled badge)
+    """
+    student = _make_user(test_db, credit_balance=300)
+    lic = _make_license(test_db, student)
+    admin = _make_user(test_db, role=UserRole.ADMIN)
+    tournament = _make_tournament(test_db, enrollment_cost=0)
+
+    # Create PENDING enrollment directly — no credit deduction (simulates manual/admin-created enrollment)
+    enrollment = SemesterEnrollment(
+        user_id=student.id,
+        semester_id=tournament.id,
+        user_license_id=lic.id,
+        request_status=EnrollmentStatus.PENDING,
+        is_active=False,
+        requested_at=datetime.now(timezone.utc),
+    )
+    test_db.add(enrollment)
+    test_db.flush()
+
+    # Step 1: Admin rejects
+    app.dependency_overrides[get_current_user_web] = lambda: admin
+    resp = client.post(
+        f"/api/v1/semester-enrollments/{enrollment.id}/reject",
+        json={"reason": "E2E GAP-03 test rejection"},
+    )
+    assert resp.status_code == 200, f"Expected 200 reject, got {resp.status_code}: {resp.text[:300]}"
+    body = resp.json()
+    assert body.get("request_status", "").upper() == "REJECTED", (
+        f"Response must confirm REJECTED status, got: {body}"
+    )
+
+    # DB: enrollment.request_status == REJECTED
+    test_db.expire_all()
+    enrollment = test_db.query(SemesterEnrollment).filter(SemesterEnrollment.id == enrollment.id).first()
+    assert enrollment.request_status == EnrollmentStatus.REJECTED, (
+        f"enrollment.request_status must be REJECTED, got {enrollment.request_status}"
+    )
+
+    # DB: credit_balance unchanged (PENDING enrollment never charges)
+    test_db.refresh(student)
+    assert student.credit_balance == 300, (
+        f"credit_balance must be unchanged (300) after rejection of uncharged PENDING enrollment. "
+        f"Got {student.credit_balance}"
+    )
+
+    # UI: student views tournament list → tournament appears as available (enroll button, no enrolled badge)
+    app.dependency_overrides[get_current_user_web] = lambda: student
+    app.dependency_overrides[get_current_user_optional] = lambda: student
+    r_browse = client.get("/events/tournaments")
+    assert r_browse.status_code == 200, f"Browse page must render 200, got {r_browse.status_code}"
+    assert tournament.name in r_browse.text, (
+        f"Tournament must be visible on browse page after rejection. "
+        f"Snippet: {r_browse.text[:400]}"
+    )
+    # After REJECTED enrollment, student is NOT in enrolled_events → sees browse section with enroll option
+    assert "enrolled-badge" not in r_browse.text or tournament.name not in r_browse.text.split("enrolled-badge")[0], (
+        "Rejected student must NOT see enrolled badge for this tournament"
     )
