@@ -58,6 +58,7 @@ from app.models.quiz import (
 )
 from app.models.credit_transaction import CreditTransaction
 from app.models.tournament_achievement import TournamentParticipation
+from app.models.team import Team, TeamMember, TournamentTeamEnrollment
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -1401,4 +1402,128 @@ def test_enrollment_rejection_sets_rejected_status(test_db: Session, client: Tes
     # After REJECTED enrollment, student is NOT in enrolled_events → sees browse section with enroll option
     assert "enrolled-badge" not in r_browse.text or tournament.name not in r_browse.text.split("enrolled-badge")[0], (
         "Rejected student must NOT see enrolled badge for this tournament"
+    )
+
+
+def test_team_enrollment_deducts_credits(test_db: Session, client: TestClient):
+    """GAP-02: Captain enrolls existing team → TournamentTeamEnrollment + CreditTransaction(ENROLLMENT).
+
+    Chain:
+      TEAM tournament(team_enrollment_cost=150) + Team + captain with license(credit_balance=500)
+      POST /tournaments/{tid}/teams/{team_id}/enroll  → 303
+      DB:  TournamentTeamEnrollment.is_active=True
+      DB:  CreditTransaction(ENROLLMENT, amount=-150) created
+      DB:  UserLicense.credit_balance == 350 (500 - 150)
+      GET  /student/credits  → "350" visible in HTML (balance updated)
+    """
+    COST = 150
+
+    # ── Setup ──────────────────────────────────────────────────────────────────
+    captain = _make_user(test_db, credit_balance=0)   # User.credit_balance unused for teams
+    lic = UserLicense(
+        user_id=captain.id,
+        specialization_type="LFA_FOOTBALL_PLAYER",
+        is_active=True,
+        onboarding_completed=True,
+        started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+        credit_balance=500,                             # team cost deducted from license balance
+        football_skills={"ball_control": 70.0},
+    )
+    test_db.add(lic)
+    test_db.flush()
+
+    # TEAM tournament with a team enrollment cost
+    sem = Semester(
+        code=f"E2E-TM-{_uid()}",
+        name=f"E2E Team Tournament {_uid()}",
+        start_date=date.today(),
+        end_date=date.today() + timedelta(days=30),
+        status=SemesterStatus.ONGOING,
+        semester_category=SemesterCategory.TOURNAMENT,
+        tournament_status="ENROLLMENT_OPEN",
+        enrollment_cost=0,
+    )
+    test_db.add(sem)
+    test_db.flush()
+    cfg = TournamentConfiguration(
+        semester_id=sem.id,
+        participant_type="TEAM",
+        session_type_config="on_site",
+        team_enrollment_cost=COST,
+        max_players=100,
+    )
+    test_db.add(cfg)
+    test_db.flush()
+
+    # Team with captain
+    team = Team(
+        name=f"E2E Team {_uid()}",
+        code=f"ET{_uid()[:6]}",
+        captain_user_id=captain.id,
+        is_active=True,
+    )
+    test_db.add(team)
+    test_db.flush()
+
+    # Captain must appear as an active TeamMember (service checks active_member_count > 0)
+    member = TeamMember(
+        team_id=team.id,
+        user_id=captain.id,
+        role="CAPTAIN",
+        is_active=True,
+    )
+    test_db.add(member)
+    test_db.flush()
+
+    # ── HTTP: captain enrolls team ──────────────────────────────────────────────
+    app.dependency_overrides[get_current_user_web] = lambda: captain
+    resp = client.post(
+        f"/tournaments/{sem.id}/teams/{team.id}/enroll",
+        follow_redirects=False,
+    )
+    assert resp.status_code == 303, (
+        f"Expected 303 redirect after team enroll, got {resp.status_code}: {resp.text[:300]}"
+    )
+
+    # ── DB: TournamentTeamEnrollment created and active ───────────────────────
+    test_db.expire_all()
+    tte = (
+        test_db.query(TournamentTeamEnrollment)
+        .filter(
+            TournamentTeamEnrollment.semester_id == sem.id,
+            TournamentTeamEnrollment.team_id == team.id,
+        )
+        .first()
+    )
+    assert tte is not None, "TournamentTeamEnrollment row must be created after team enrollment"
+    assert tte.is_active is True, f"TournamentTeamEnrollment.is_active must be True, got {tte.is_active}"
+
+    # ── DB: CreditTransaction(ENROLLMENT, amount=-COST) created ───────────────
+    tx = (
+        test_db.query(CreditTransaction)
+        .filter(
+            CreditTransaction.user_license_id == lic.id,
+            CreditTransaction.amount == -COST,
+        )
+        .first()
+    )
+    assert tx is not None, f"CreditTransaction(amount=-{COST}) must exist after team enrollment"
+    assert "ENROLLMENT" in tx.transaction_type.upper(), (
+        f"transaction_type must be ENROLLMENT, got {tx.transaction_type}"
+    )
+
+    # ── DB: license.credit_balance reduced by COST ────────────────────────────
+    test_db.refresh(lic)
+    assert lic.credit_balance == 500 - COST, (
+        f"license.credit_balance must be {500 - COST} after deducting {COST}, got {lic.credit_balance}"
+    )
+
+    # ── UI: GET /credits → updated balance visible ────────────────────────────
+    # credits page uses get_current_user_optional (not get_current_user_web)
+    app.dependency_overrides[get_current_user_optional] = lambda: captain
+    r_credits = client.get("/credits")
+    assert r_credits.status_code == 200, f"Credits page must render 200, got {r_credits.status_code}"
+    assert str(500 - COST) in r_credits.text, (
+        f"Credits page must show updated balance {500 - COST}. "
+        f"Snippet: {r_credits.text[:500]}"
     )
