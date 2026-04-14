@@ -1716,3 +1716,82 @@ def test_quiz_pass_awards_xp_to_user_stats(test_db: Session, client: TestClient)
     assert str(quiz.xp_reward) in r_progress.text, (
         f"Progress page must show XP value {quiz.xp_reward}. Snippet: {r_progress.text[:500]}"
     )
+
+
+def test_session_capacity_waitlist(test_db: Session, client: TestClient):
+    """GAP-07: Session at capacity → next booking becomes WAITLISTED.
+
+    Chain:
+      Session(capacity=1) + Student1 CONFIRMED booking (fills capacity)
+      POST /api/v1/bookings/  as Student2  → 201, Booking.status=WAITLISTED
+      DB:  Booking.status == WAITLISTED for student2
+      GET  /admin/bookings    as Admin    → WAITLISTED count visible in page
+    """
+    admin = _make_user(test_db, role=UserRole.ADMIN)
+    student1 = _make_user(test_db)
+    student2 = _make_user(test_db)
+
+    # Semester required as FK for session
+    sem = Semester(
+        code=f"E2E-GAP07-{_uid()}",
+        name=f"GAP-07 Semester {_uid()}",
+        start_date=date.today(),
+        end_date=date.today() + timedelta(days=60),
+        status=SemesterStatus.ONGOING,
+    )
+    test_db.add(sem)
+    test_db.flush()
+
+    instructor = _make_user(test_db, role=UserRole.INSTRUCTOR)
+    # Session: capacity=1, far-future date (> 24h deadline), accessible to all (no target_specialization)
+    sess = SessionModel(
+        title=f"GAP-07 Session {_uid()}",
+        session_type=SessionType.on_site,
+        date_start=datetime(2026, 12, 31, 10, 0),
+        date_end=datetime(2026, 12, 31, 12, 0),
+        capacity=1,
+        semester_id=sem.id,
+        instructor_id=instructor.id,
+        # target_specialization = None → is_accessible_to_all = True
+    )
+    test_db.add(sess)
+    test_db.flush()
+
+    # Student1 has CONFIRMED booking → fills the 1 slot
+    booking1 = Booking(user_id=student1.id, session_id=sess.id, status=BookingStatus.CONFIRMED)
+    test_db.add(booking1)
+    test_db.flush()
+
+    # ── HTTP: student2 books → WAITLISTED ─────────────────────────────────────
+    app.dependency_overrides[get_current_user] = lambda: student2
+    resp = client.post(
+        "/api/v1/bookings/",
+        json={"session_id": sess.id},
+    )
+    assert resp.status_code == 200, (
+        f"Expected 200 after booking full session, got {resp.status_code}: {resp.text[:300]}"
+    )
+    body = resp.json()
+    assert body.get("status", "").upper() == "WAITLISTED", (
+        f"Booking status must be WAITLISTED for full session, got: {body.get('status')}"
+    )
+
+    # ── DB: Booking.status == WAITLISTED ──────────────────────────────────────
+    test_db.expire_all()
+    b2 = (
+        test_db.query(Booking)
+        .filter(Booking.session_id == sess.id, Booking.user_id == student2.id)
+        .first()
+    )
+    assert b2 is not None, "Booking row must exist for student2"
+    assert b2.status == BookingStatus.WAITLISTED, (
+        f"Booking.status must be WAITLISTED, got {b2.status}"
+    )
+
+    # ── UI: admin sees WAITLISTED count on /admin/bookings ────────────────────
+    app.dependency_overrides[get_current_user_web] = lambda: admin
+    r_admin = client.get("/admin/bookings")
+    assert r_admin.status_code == 200, f"Admin bookings page must render 200, got {r_admin.status_code}"
+    assert "WAITLISTED" in r_admin.text or "Waitlisted" in r_admin.text or "waitlisted" in r_admin.text.lower(), (
+        f"Admin bookings page must show WAITLISTED status. Snippet: {r_admin.text[:600]}"
+    )
