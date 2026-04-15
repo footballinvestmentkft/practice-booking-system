@@ -26,22 +26,7 @@ on:
       - 'alembic/versions/**'
       - '.github/workflows/e2e-lifecycle-visibility.yml'
   pull_request:
-    branches: [main, develop, "feature/*", "fix/*"]
-    paths:
-      - 'app/api/web_routes/admin.py'
-      - 'app/api/api_v1/endpoints/tournaments/lifecycle.py'
-      - 'app/api/web_routes/public_tournament.py'
-      - 'app/templates/public/tournament_detail.html'
-      - 'app/services/tournament/status_validator.py'
-      - 'app/services/tournament/session_generation/**'
-      - 'app/services/tournament/ranking/**'
-      - 'app/services/tournament/rewards/**'
-      - 'app/services/tournament/knockout_progression_service.py'
-      - 'app/api/api_v1/endpoints/sessions/results.py'
-      - 'scripts/bootstrap_clean.py'
-      - 'scripts/e2e_lifecycle_visibility_test.py'
-      - 'alembic/versions/**'
-      - '.github/workflows/e2e-lifecycle-visibility.yml'
+    branches: [main]  # no path filter — runs on every PR to main
   workflow_dispatch:
 
 concurrency:

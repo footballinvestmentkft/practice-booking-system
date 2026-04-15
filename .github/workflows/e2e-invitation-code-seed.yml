@@ -22,14 +22,7 @@ on:
       - 'alembic/versions/**'
       - '.github/workflows/e2e-invitation-code-seed.yml'
   pull_request:
-    branches: [main, develop, "feature/*", "fix/*"]
-    paths:
-      - 'scripts/bootstrap_clean.py'
-      - 'scripts/seed_comprehensive_demo.py'
-      - 'app/models/invitation_code.py'
-      - 'app/models/credit_transaction.py'
-      - 'alembic/versions/**'
-      - '.github/workflows/e2e-invitation-code-seed.yml'
+    branches: [main]  # no path filter — runs on every PR to main
   workflow_dispatch:
 
 concurrency:

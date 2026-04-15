@@ -23,26 +23,7 @@ on:
       - 'tests/integration/web_flows/test_dark_mode_coverage.py'
       - '.github/workflows/dark-mode-validation.yml'
   pull_request:
-    branches: [main, develop, "feature/*", "fix/*"]
-    paths:
-      - 'app/static/css/**'
-      - 'app/templates/base.html'
-      - 'app/templates/admin/admin_base.html'
-      - 'app/templates/student_base.html'
-      - 'app/templates/achievements.html'
-      - 'app/templates/progress.html'
-      - 'app/templates/skills.html'
-      - 'app/templates/calendar.html'
-      - 'app/templates/sessions.html'
-      - 'app/templates/admin/tournament_edit.html'
-      - 'app/templates/admin/tournament_attendance.html'
-      - 'app/templates/login.html'
-      - 'app/templates/dashboard_student_new.html'
-      - 'app/templates/dashboard_card_editor.html'
-      - 'app/templates/includes/**'
-      - 'scripts/validate_dark_mode_css.py'
-      - 'tests/integration/web_flows/test_dark_mode_coverage.py'
-      - '.github/workflows/dark-mode-validation.yml'
+    branches: [main]  # no path filter — runs on every PR to main
   workflow_dispatch:
 
 concurrency:

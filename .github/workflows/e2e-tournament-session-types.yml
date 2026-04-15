@@ -31,22 +31,7 @@ on:
       - 'tests/integration/web_flows/test_tournament_session_types.py'
       - '.github/workflows/e2e-tournament-session-types.yml'
   pull_request:
-    branches: [main, develop, "feature/*", "fix/*"]
-    paths:
-      - 'app/services/tournament/session_generation/**'
-      - 'app/services/tournament/validation.py'
-      - 'app/api/web_routes/sessions.py'
-      - 'app/api/web_routes/quiz.py'
-      - 'app/api/web_routes/public_tournament.py'
-      - 'app/api/api_v1/endpoints/tournaments/lifecycle_updates.py'
-      - 'app/models/tournament_configuration.py'
-      - 'app/models/semester_enrollment.py'
-      - 'app/templates/admin/tournament_edit.html'
-      - 'app/templates/admin/tournaments.html'
-      - 'app/templates/public/tournament_detail.html'
-      - 'alembic/versions/**'
-      - 'tests/integration/web_flows/test_tournament_session_types.py'
-      - '.github/workflows/e2e-tournament-session-types.yml'
+    branches: [main]  # no path filter — runs on every PR to main
   workflow_dispatch:
 
 concurrency:

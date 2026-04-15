@@ -2,9 +2,9 @@ name: Test Baseline Check
 
 on:
   pull_request:
-    branches: [ main, develop, feature/* ]
+    branches: [ main, develop, "feature/*", "fix/*" ]
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, "feature/*", "fix/*" ]
   workflow_dispatch:  # manual trigger via GitHub UI → Actions → Run workflow
 
 # Concurrency control: Only 1 baseline pipeline per branch

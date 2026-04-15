@@ -31,18 +31,7 @@ on:
       - 'tests/integration/web_flows/test_multi_campus_venue.py'
       - '.github/workflows/e2e-multi-campus-venue.yml'
   pull_request:
-    branches: [main, develop, "feature/*", "fix/*"]
-    paths:
-      - 'scripts/bootstrap_clean.py'
-      - 'scripts/seed_comprehensive_demo.py'
-      - 'app/api/web_routes/public_tournament.py'
-      - 'app/templates/public/tournament_detail.html'
-      - 'app/models/campus.py'
-      - 'app/models/pitch.py'
-      - 'app/models/tournament_instructor_slot.py'
-      - 'app/models/location.py'
-      - 'tests/integration/web_flows/test_multi_campus_venue.py'
-      - '.github/workflows/e2e-multi-campus-venue.yml'
+    branches: [main]  # no path filter — runs on every PR to main
   workflow_dispatch:
 
 concurrency:
