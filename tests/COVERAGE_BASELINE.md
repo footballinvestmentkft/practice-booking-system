@@ -1,5 +1,5 @@
 # E2E Coverage Baseline — Practice Booking System
-**Last updated: 2026-04-13 | Branch: fix/e2e-ops-seed-1024**
+**Last updated: 2026-04-15 | Branch: fix/e2e-ops-seed-1024**
 
 This document is the reference baseline for end-to-end test coverage.
 Every future feature **must** add a corresponding E2E test and keep CI green.
@@ -25,10 +25,10 @@ Every future feature **must** add a corresponding E2E test and keep CI green.
 
 | Suite | Count |
 |-------|-------|
-| `tests/integration/web_flows/` | **554** (41 files) |
+| `tests/integration/web_flows/` | **558** (41 files) |
 | `tests/integration/api_smoke/` | **1,741** |
 | Cypress (`cypress/e2e/`) | **13** (4 files) |
-| **Total** | **2,308** |
+| **Total** | **2,312** |
 
 ---
 
@@ -51,6 +51,11 @@ Each entry has: at least 1 HTTP assertion + DB assertion + UI assertion.
 | SFJ — Student Full Journey | GET /events/tournaments → POST /enroll → enrolled badge visible |
 | CDE — Credit Deduction | POST /enroll (paid) → credit_balance−200 → CreditTransaction → history page |
 | TCR — Tournament Credit Refund | POST /enroll → POST /unenroll → 50% refund → CreditTransaction(REFUND) |
+| GAP-01 — Tournament Cancellation Refund | POST /enroll (web) → POST /cancel (api) → CreditTransaction(REFUND, 100) → lic.credit_balance restored → CANCELLED in admin UI |
+| GAP-02 — Team Enrollment Deduction | POST /tournaments/{id}/teams/{id}/enroll → TournamentTeamEnrollment.is_active=True, CreditTransaction(ENROLLMENT, −150), lic.credit_balance=350 → /credits |
+| GAP-03 — Enrollment Rejection | SemesterEnrollment(PENDING) → POST /reject → request_status=REJECTED, credit_balance unchanged → browse page |
+| GAP-08 — Public Event Group Standings GD | group_knockout tournament + GROUP_STAGE session with game_results → GET /events/{id} → "GD" in HTML |
+| GAP-09 — Public Event Knockout Bracket | knockout tournament + KNOCKOUT session with participant_team_ids → GET /events/{id} → bracket section |
 | TOUR-S-01..05 (Cypress) | UI: balance=1000 → enroll → 900 → unenroll → 950 |
 
 ### Camp domain
@@ -63,6 +68,10 @@ Each entry has: at least 1 HTTP assertion + DB assertion + UI assertion.
 |------|-------|
 | ISC — Instructor Slot Conflict | POST instructor slot → POST same instructor again → 409 → DB count=1 |
 | APR — Admin Password Reset | POST /reset-password → verify_password(new)=True → old login 200 → new login 303 |
+| LRC — License Revoke Cascade | POST /revoke-license → SemesterEnrollment.is_active=False → /admin/users/{id}/edit |
+| GAP-04 — Admin Grant Credit | POST /admin/users/{id}/grant-credit → CreditTransaction(ADMIN_ADJUSTMENT, +200) → User.credit_balance=500 → /admin/users/{id}/edit |
+| GAP-05 — License Renewal | POST /renew-license/{lid} → LicenseProgression('RENEWED') → expires_at updated → admin edit page |
+| GAP-10 — Invitation Code Creation | POST /api/v1/admin/invitation-codes → InvitationCode row + visible in /admin/invitation-codes |
 | test_admin_smoke (157 tests) | Page loads, CRUD operations, capacity, ban, license revoke |
 
 ### Credit / Registration domain
@@ -76,11 +85,13 @@ Each entry has: at least 1 HTTP assertion + DB assertion + UI assertion.
 | test_booking_cancellation (6 tests) | Cancel within deadline → Booking deleted; after deadline → redirect error |
 | test_session_virtual_bugs (10 tests) | Virtual/hybrid session visibility, quiz gate, is_enrolled |
 | test_tournament_session_types (10 tests) | session_type_config lifecycle, meeting_link, hybrid enrollment |
+| GAP-07 — Session Capacity Waitlist | Session(capacity=1) + existing CONFIRMED booking → POST /api/v1/bookings/ → Booking.status=WAITLISTED → admin bookings page |
 
 ### Skill / Profile domain
 | Test | Chain |
 |------|-------|
 | SDE — Skill Delta E2E | TournamentFactory → TournamentParticipation.skill_rating_delta → GET /skills |
+| GAP-06 — Quiz Pass XP Award | Pass quiz (virtual session) → QuizAttempt.xp_awarded=10, UserStats.total_xp≥10 → /progress |
 
 ### Browse / Filter domain
 | Test | Chain |
