@@ -13,19 +13,24 @@ All MUST FIX items resolved. All acceptance conditions closed.
 
 ---
 
-## Execution Truth Model v1 — Release Gate
+## Execution Truth Model v1 — Release Gate (AMENDED 2026-04-17)
 
-Three conditions. All required. All satisfied.
+Four gates. A/B/C required. D optional (future layer). All required gates satisfied.
 
 | Gate | Condition | Evidence | Status |
 |------|-----------|----------|--------|
-| **G-1** | CI job conclusion = `success` | `gh run view 24533537667 --json conclusion` | ✅ |
-| **G-2** | 59 test_critical_e2e.py nodeids in step log | `gh run view 24533537667 --log \| grep test_critical_e2e.py:: \| wc -l` = 59 | ✅ |
-| **G-3** | 0 failed, 0 errors in suite summary | `7766 passed, 2 skipped, 21 xfailed, 1 xpassed` | ✅ |
+| **Gate A** | pytest CI conclusion = `success` | `gh run view 24533537667 --json conclusion` | ✅ |
+| **Gate B** | 59 test_critical_e2e.py nodeids in log AND 0 failed | `wc -l` = 59; `7766 passed, 2 skipped, 21 xfailed, 1 xpassed` | ✅ |
+| **Gate C** | Cypress E2E suite — all 5 jobs pass, 0 skipped | `gh run list --workflow=cypress-web-e2e.yml --branch=main --limit=1` | ✅ (post-fix) |
+| **Gate D** | JUnit XML + per-assertion runtime values | NOT YET AVAILABLE — RFC-001 backlog | 🔵 optional |
 
-Authoritative run: **`24533537667`** — SHA `3138f5b` — 2026-04-16T20:56Z — 24/24 jobs ✅
+**pytest run:** **`24533537667`** — SHA `3138f5b` — 2026-04-16T20:56Z — 24/24 jobs ✅
+**Cypress run:** triggered on every push to main after amendment (see `cypress-web-e2e.yml` line 138)
 
-Gate definitions are **immutable**. Any future change to G-1/G-2/G-3 requires a new
+**Amendment note:** Gate C added 2026-04-17. `cypress-web-integration` was PR-only (skipped on push);
+fixed by extending condition to `github.event_name == 'pull_request' || github.event_name == 'push'`.
+
+Gate definitions are **immutable**. Any future change to Gates A/B/C requires a new
 model version (`EXECUTION_TRUTH_MODEL_v2.md`) and explicit Engineering Lead approval.
 
 ---
@@ -49,7 +54,7 @@ F-20/GAP-01). Full mapping in `COVERAGE_EVIDENCE_INDEX.md`.
 `RFC_CI_OBSERVABILITY_GAP.md` (RFC-001, BACKLOG) describes future enrichment:
 JUnit XML artifact + per-assertion structured log output.
 
-**This RFC is an enhancement. It does not affect Gates G-1/G-2/G-3.**
+**This RFC is an enhancement. It does not affect Gates A/B/C.**
 Absence of JUnit XML or per-assertion runtime values does not block any release.
 
 ---
@@ -84,7 +89,7 @@ All changes after this sign-off are classified as one of:
 | **Model version bump** | Creates `EXECUTION_TRUTH_MODEL_v2.md` | Yes — requires explicit approval |
 
 No change in the **Enhancement** or **Observability improvement** categories
-may redefine, weaken, or replace Gates G-1/G-2/G-3 of this document.
+may redefine, weaken, or replace Gates A/B/C of this document.
 
 ---
 

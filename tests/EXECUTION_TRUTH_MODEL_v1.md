@@ -1,7 +1,12 @@
 # Execution Truth Model v1 — Audit Closure
 ## Practice Booking System
-**Status: CLOSED**
-**Closed: 2026-04-17 | SHA: cbb5697 | Authority: Engineering Lead**
+**Status: CLOSED — AMENDED 2026-04-17**
+**Closed: 2026-04-17 | SHA: cbb5697 → amended SHA: see §Gate C | Authority: Engineering Lead**
+
+> **AMENDMENT (2026-04-17):** Cypress E2E gate added as Gate C (required).
+> Prior v1 was incomplete: `cypress-web-integration` was PR-only (skipped on push to main).
+> Fix: `cypress-web-e2e.yml` line 138 — condition extended to include `push` events.
+> The amendment does not invalidate Gates 1–3; it adds a third parallel required gate.
 
 This document formally closes the E2E Coverage Audit Program at the
 "Execution Truth Model v1" level and defines the release gate that applies
@@ -33,10 +38,11 @@ without adding risk coverage.
 
 ## Formal Release Gate Definition
 
-These are the three conditions for a merge to main to be considered
-"release gated". They are immutable at this model version.
+These are the **four** conditions for a merge to main to be considered
+"release gated". Gates A/B/C are required. Gate D is optional (future layer).
+All are independently verifiable from GitHub Actions artifacts.
 
-### Gate 1 — CI Success (REQUIRED)
+### Gate A — pytest CI Success (REQUIRED)
 
 | Property | Value |
 |----------|-------|
@@ -46,27 +52,64 @@ These are the three conditions for a merge to main to be considered
 | Evidence source | GitHub Actions run conclusion (raw API) |
 | Status at freeze | ✅ SATISFIED — run `24533537667`, conclusion `success` |
 
-### Gate 2 — Nodeid Execution (REQUIRED)
+### Gate B — Nodeid Execution + Failure Absence (REQUIRED)
 
 | Property | Value |
 |----------|-------|
-| Check | All 59 test_critical_e2e.py nodeids present in CI step log |
+| Check | 59 test_critical_e2e.py nodeids in step log AND `0 failed, 0 errors` |
 | Scope | `Unit Tests` job → `Run unit + integration tests with coverage` step |
-| Tolerance | 0 nodeids missing |
-| Evidence source | `gh run view {run_id} --log \| grep test_critical_e2e.py:: \| wc -l` = 59 |
-| Status at freeze | ✅ SATISFIED — 59/59 nodeids confirmed in run `24533537667` |
+| Tolerance | 0 nodeids missing; 0 failures; 0 errors |
+| Evidence source | `gh run view {run_id} --log \| grep test_critical_e2e.py:: \| wc -l` = 59; summary = `7766 passed` |
+| Status at freeze | ✅ SATISFIED — 59/59 nodeids, `7766 passed, 2 skipped, 21 xfailed, 1 xpassed` |
 
-### Gate 3 — Failure Absence (REQUIRED)
+### Gate C — Cypress E2E Suite (REQUIRED) ← ADDED BY AMENDMENT
 
 | Property | Value |
 |----------|-------|
-| Check | Suite summary line contains `0 failed, 0 errors` |
-| Scope | Full test suite (7766 tests) |
-| Tolerance | 0 failures, 0 errors (`xfailed` and `xpassed` are tolerated) |
-| Evidence source | `gh run view {run_id} --log \| grep "passed.*failed.*error"` |
-| Status at freeze | ✅ SATISFIED — `7766 passed, 2 skipped, 21 xfailed, 1 xpassed` |
+| Check | `cypress-web-e2e.yml` workflow conclusion = `success`; ALL 5 jobs pass (`skipped` not acceptable for `cypress-web-integration`) |
+| Scope | `cypress-web-by-role` ×4 + `cypress-web-integration` ×1 = 5 jobs |
+| Tolerance | 0 failed jobs; 0 skipped jobs |
+| Evidence source | `gh run list --workflow=cypress-web-e2e.yml --branch=main --limit=1 --json databaseId,conclusion` |
+| Status at freeze (pre-fix) | ⚠️ PARTIAL — 4/5 jobs passed; `cypress-web-integration` was SKIPPED (PR-only condition) |
+| Status after fix | ✅ REQUIRED — `cypress-web-e2e.yml` line 138 amended; `push` events now trigger integration job |
+| Fix SHA | see commit after this amendment |
 
-### Gate 4 — Assertion Runtime Visibility (OPTIONAL — FUTURE LAYER)
+**Gap that was present:** `cypress-web-integration` had `if: github.event_name == 'pull_request'` — the cross-role full student lifecycle Cypress test was never executed on push to main. Fixed by extending the condition to `if: github.event_name == 'pull_request' || github.event_name == 'push'`.
+
+**What Cypress covers (13 specs):**
+- `cypress/e2e/web/admin/**` — admin CRUD flows
+- `cypress/e2e/web/instructor/**` + `instructor_session_lifecycle.cy.js` — instructor flows
+- `cypress/e2e/web/auth/**` + `student/**` + `student_booking.cy.js` — student flows
+- `cypress/e2e/web/business_workflows/**` — business lifecycle flows
+- `cypress/e2e/web/cross_role/full_student_lifecycle.cy.js` — cross-role integration (was PR-only)
+
+**Gate C verification command:**
+```bash
+gh run list --workflow=cypress-web-e2e.yml --branch=main --limit=1 \
+  --json databaseId,conclusion,headSha \
+  | python3 -c "
+import sys,json; runs=json.load(sys.stdin)
+r=runs[0]; assert r['conclusion']=='success', f'FAIL: {r}'
+print(f'Gate C PASS — run {r[\"databaseId\"]} SHA {r[\"headSha\"][:7]}')
+"
+```
+
+**Gate C job-level verification:**
+```bash
+gh run view $(gh run list --workflow=cypress-web-e2e.yml --branch=main --limit=1 --json databaseId --jq '.[0].databaseId') \
+  --json jobs \
+  | python3 -c "
+import sys,json
+jobs=json.load(sys.stdin)['jobs']
+skipped=[j['name'] for j in jobs if j['conclusion']=='skipped']
+failed=[j['name'] for j in jobs if j['conclusion'] in ('failure','cancelled')]
+assert not skipped, f'SKIPPED jobs (not allowed): {skipped}'
+assert not failed, f'FAILED jobs: {failed}'
+print(f'Gate C PASS — {len(jobs)}/5 jobs success, 0 skipped, 0 failed')
+"
+```
+
+### Gate D — Assertion Runtime Visibility (OPTIONAL — FUTURE LAYER)
 
 | Property | Value |
 |----------|-------|
@@ -76,7 +119,7 @@ These are the three conditions for a merge to main to be considered
 | Evidence source | NOT YET AVAILABLE — see `RFC_CI_OBSERVABILITY_GAP.md` |
 | Status at freeze | 🔵 NOT GATING — backlog item |
 
-> **Rule:** Gate 4 is explicitly NOT a release gate at v1.
+> **Rule:** Gate D is explicitly NOT a release gate at v1.
 > Absence of per-assertion runtime values does not block release.
 > It is a future quality improvement, not a correctness requirement.
 
@@ -111,24 +154,24 @@ A third-party auditor can independently verify the release gate using
 only these commands (no repo checkout required):
 
 ```bash
-# Gate 1: CI success
+# Gate A: CI success
 gh run view 24533537667 --json conclusion \
-  | python3 -c "import sys,json; d=json.load(sys.stdin); assert d['conclusion']=='success', d['conclusion']; print('Gate 1 PASS')"
+  | python3 -c "import sys,json; d=json.load(sys.stdin); assert d['conclusion']=='success', d['conclusion']; print('Gate A PASS')"
 
-# Gate 2: 59 nodeids executed
+# Gate B: 59 nodeids executed
 gh run view 24533537667 --log \
   | grep "Unit Tests.*Run unit" \
   | grep "test_critical_e2e.py::" \
   | grep -v "warning\b" \
   | wc -l
-# Expected: 59 → Gate 2 PASS
+# Expected: 59 → Gate B PASS
 
-# Gate 3: 0 failures
+# Gate B: 0 failures
 gh run view 24533537667 --log \
   | grep "Unit Tests.*Run unit" \
   | grep -E "[0-9]+ passed.*[0-9]+ (failed|skipped)" \
   | tail -1
-# Expected: "7766 passed ... 0 failed" → Gate 3 PASS
+# Expected: "7766 passed ... 0 failed" → Gate B PASS
 ```
 
 ---
@@ -139,15 +182,15 @@ gh run view 24533537667 --log \
 ┌─────────────────────────────────────────────────────────┐
 │  EXECUTION TRUTH MODEL v1  (CLOSED — this document)     │
 │                                                          │
-│  Gates 1+2+3: CI success, nodeid execution, 0 failures  │
+│  Gates A+B+C: CI success, nodeid execution, Cypress E2E │
 │  Evidence: raw GitHub Actions logs                       │
-│  Status: SATISFIED at SHA cbb5697                        │
+│  Status: SATISFIED at SHA cbb5697 (amended)              │
 └─────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────┐
 │  ASSERTION OBSERVABILITY LAYER  (BACKLOG)                │
 │                                                          │
-│  Gate 4: JUnit XML + per-assert runtime values           │
+│  Gate D: JUnit XML + per-assert runtime values           │
 │  Evidence: structured CI artifacts (not yet produced)    │
 │  Status: RFC drafted in RFC_CI_OBSERVABILITY_GAP.md      │
 │  Release impact: NONE — optional quality improvement     │

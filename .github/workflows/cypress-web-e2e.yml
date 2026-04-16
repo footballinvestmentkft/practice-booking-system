@@ -135,7 +135,7 @@ jobs:
   # Ez az egyetlen helye a full student lifecycle integrációs tesztnek.
   cypress-web-integration:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
     needs: cypress-web-by-role
 
     services:
