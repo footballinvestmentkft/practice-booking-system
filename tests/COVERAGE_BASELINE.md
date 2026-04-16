@@ -1,5 +1,5 @@
 # E2E Coverage Baseline — Practice Booking System
-**Last updated: 2026-04-16 | Branch: fix/e2e-coverage-clean | Sprint 6 (clean integration to main)**
+**Last updated: 2026-04-16 | Branch: fix/e2e-coverage-clean | Sprint 7 (Admin lifecycle + Evaluation + Tournament ops)**
 
 ---
 
@@ -14,17 +14,18 @@ A flow is COVERED only when ALL 3 layers are proven:
 
 | Metric | Value |
 |--------|-------|
-| Total defined flows | **54** |
-| Covered (all 3 layers) | **54** |
+| Total defined flows | **62** |
+| Covered (all 3 layers) | **62** |
 | Not Implemented on main | **2** (F-26, F-27 — camp enrollment routes absent) |
 | Not Covered | **0** |
-| **Coverage KPI** | **100%** (54/54 implemented flows) |
+| **Coverage KPI** | **100%** (62/62 implemented flows) |
 | Sprint 1 additions | +5 flows (F-03, F-14, F-15, F-16, F-29) |
 | Sprint 2 additions | +8 flows (F-04, F-05, F-12, F-24, F-25, F-32, F-35, F-38) |
 | Sprint 3 additions | +2 flows (F-41, F-42) |
 | Sprint 4 additions | +4 flows (F-43, F-44, F-45, F-46) — Instructor domain |
 | Sprint 5 additions | +5 flows (F-47, F-48, F-49, F-50, F-51) — Communications domain |
 | Sprint 6 additions | +5 flows (F-52, F-53, F-54, F-55, F-56) — Admin Operations domain |
+| Sprint 7 additions | +8 flows (F-57..F-64) — Admin Lifecycle + Evaluation + Tournament Ops |
 
 ---
 
@@ -32,7 +33,7 @@ A flow is COVERED only when ALL 3 layers are proven:
 
 | Workflow | Last result | SHA |
 |----------|-------------|-----|
-| Test Baseline Check | ✅ | 4f96870 |
+| Test Baseline Check | ✅ | 553e5c3 |
 | E2E Lifecycle Visibility | ✅ | 4f96870 |
 | Dark Mode CSS Validation | ✅ | 4f96870 |
 | E2E Multi-Campus Venue + Instructor | ✅ | 4f96870 |
@@ -47,7 +48,7 @@ A flow is COVERED only when ALL 3 layers are proven:
 
 | Suite | Count |
 |-------|-------|
-| `tests/integration/web_flows/` | **580** (41 files) |
+| `tests/integration/web_flows/` | **588** (41 files, +8 Sprint 7) |
 | `tests/integration/api_smoke/` | **1,741** |
 | Cypress (`cypress/e2e/`) | **13** (4 files) |
 | **Total** | **2,334** |
@@ -121,6 +122,14 @@ A flow is COVERED only when ALL 3 layers are proven:
 | F-54 | Admin invoice unverify → status reverts to "pending", verified_at=None, credit_balance -= amount + CreditTransaction(REFUND) | ✅ | ✅ | ✅ | **COVERED** | test_admin_invoice_unverify_reverts_credits |
 | F-55 | Admin player batch-enroll → SemesterEnrollment × N (APPROVED, payment_verified=True, is_active=True) | ✅ | ✅ | ✅ | **COVERED** | test_admin_batch_enroll_players_creates_enrollments |
 | F-56 | Admin team bulk-enroll → TournamentTeamEnrollment × N (is_active=True, payment_verified=True) → 303 | ✅ | ✅ | ✅ | **COVERED** | test_admin_team_bulk_enroll_creates_team_enrollments |
+| F-57 | Admin user create (POST /admin/users/create) → User(is_active=True, role=STUDENT) | ✅ | ✅ | ✅ | **COVERED** | test_admin_user_create_creates_active_user |
+| F-58 | Admin user toggle-status → User.is_active flipped True→False → 303 + /admin/users | ✅ | ✅ | ✅ | **COVERED** | test_admin_toggle_user_status_deactivates_active_user |
+| F-59 | Admin booking cancel → Booking.status=CANCELLED + cancelled_at IS NOT NULL + 200 JSON | ✅ | ✅ | ✅ | **COVERED** | test_admin_booking_cancel_sets_cancelled_status |
+| F-60 | Session postpone (PATCH) → Session.postponed_reason set → 200 JSON {ok: True} | ✅ | ✅ | ✅ | **COVERED** | test_admin_session_postpone_sets_postponed_reason |
+| F-61 | Instructor slot create (MASTER) → TournamentInstructorSlot(status=PLANNED) → 201 JSON | ✅ | ✅ | ✅ | **COVERED** | test_admin_instructor_slot_create_planned |
+| F-62 | Player check-in → TournamentPlayerCheckin created + checked_in_at IS NOT NULL → 200 JSON | ✅ | ✅ | ✅ | **COVERED** | test_admin_player_checkin_creates_checkin_record |
+| F-63 | Student evaluates instructor → InstructorSessionReview(session_id, student_id) created → 303 | ✅ | ✅ | ✅ | **COVERED** | test_student_evaluates_instructor_creates_review |
+| F-64 | Instructor evaluates student → StudentPerformanceReview(punctuality..attitude) + average_score → 303 | ✅ | ✅ | ✅ | **COVERED** | test_instructor_evaluates_student_creates_performance_review |
 
 ---
 
