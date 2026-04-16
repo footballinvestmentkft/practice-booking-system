@@ -1444,10 +1444,12 @@ def run_ops_scenario(
                     parallel_fields=1,   # Default to 1 field per campus (nullable=True but CHECK constraint requires >= 1)
                     is_active=True,
                 ))
-        # Sync campus_id onto the Semester so generation_validator passes its campus check
+        # Sync campus_id onto the Semester so generation_validator passes its campus check.
+        # MUST commit (not just flush): background thread opens its own SessionLocal()
+        # and would see campus_id=NULL if we only flush within the current transaction.
         if not getattr(tournament, 'campus_id', None):
             tournament.campus_id = campus_ids[0]
-        db.flush()
+        db.commit()
 
     campus_overrides_raw = None
     # 1 field per physical campus — distributes sessions across campus-field slots.
