@@ -58,6 +58,7 @@ from app.models.quiz import (
     QuestionType,
 )
 from app.models.credit_transaction import CreditTransaction
+from app.models.audit_log import AuditLog
 from app.models.tournament_achievement import TournamentParticipation
 from app.models.team import Team, TeamMember, TournamentTeamEnrollment, TeamInvite, TeamInviteStatus
 
@@ -2864,4 +2865,235 @@ def test_sport_director_team_remove(test_db: Session, client: TestClient):
     test_db.refresh(enrollment)
     assert enrollment.is_active is False, (
         "TournamentTeamEnrollment.is_active must be False after sport-director remove"
+    )
+
+
+# ── Sprint 4 — Instructor domain (F-43..F-46) ──────────────────────────────
+
+def test_instructor_skills_form_renders(test_db: Session, client: TestClient):
+    """F-43 (INSTR-01) — Instructor GET skills form → 200 + form rendered.
+
+    GET /instructor/students/{student_id}/skills/{license_id} → 200
+    DB:  UserLicense with LFA_PLAYER_ specialization exists
+    UI:  "Edit Football Skills" visible in HTML response
+    """
+    instructor = _make_user(test_db, role=UserRole.INSTRUCTOR)
+    student = _make_user(test_db, role=UserRole.STUDENT)
+    lic = UserLicense(
+        user_id=student.id,
+        specialization_type="LFA_PLAYER_YOUTH",
+        is_active=True,
+        onboarding_completed=True,
+        started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+        football_skills={
+            "heading": 50.0, "shooting": 50.0, "crossing": 50.0,
+            "passing": 50.0, "dribbling": 50.0, "ball_control": 50.0,
+        },
+    )
+    test_db.add(lic)
+    test_db.flush()
+
+    app.dependency_overrides[get_current_user_web] = lambda: instructor
+
+    r = client.get(f"/instructor/students/{student.id}/skills/{lic.id}")
+    assert r.status_code == 200, (
+        f"Skills form must return 200, got {r.status_code}. Snippet: {r.text[:300]}"
+    )
+
+    # DB: license with LFA_PLAYER_ specialization exists
+    found = test_db.query(UserLicense).filter(UserLicense.id == lic.id).first()
+    assert found is not None, "UserLicense must exist in DB"
+    assert found.specialization_type.startswith("LFA_PLAYER_"), (
+        f"specialization_type must start with LFA_PLAYER_, got '{found.specialization_type}'"
+    )
+
+    # UI: skills form page rendered with heading
+    assert "Edit Football Skills" in r.text, (
+        f"'Edit Football Skills' must appear in skills form page. Snippet: {r.text[:400]}"
+    )
+
+
+def test_instructor_skills_update_and_audit(test_db: Session, client: TestClient):
+    """F-44 (INSTR-02 CRITICAL) — Instructor updates student football skills → DB mutation + AuditLog.
+
+    POST /instructor/students/{id}/skills/{lic_id} (valid values) → 200 + success message
+    DB:  UserLicense.football_skills updated; AuditLog(FOOTBALL_SKILLS_UPDATED) created
+    UI:  "Skills updated successfully" in response
+    """
+    instructor = _make_user(test_db, role=UserRole.INSTRUCTOR)
+    student = _make_user(test_db, role=UserRole.STUDENT)
+    lic = UserLicense(
+        user_id=student.id,
+        specialization_type="LFA_PLAYER_YOUTH",
+        is_active=True,
+        onboarding_completed=True,
+        started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+        football_skills={
+            "heading": 50.0, "shooting": 50.0, "crossing": 50.0,
+            "passing": 50.0, "dribbling": 50.0, "ball_control": 50.0,
+        },
+    )
+    test_db.add(lic)
+    test_db.flush()
+
+    app.dependency_overrides[get_current_user_web] = lambda: instructor
+
+    r = client.post(
+        f"/instructor/students/{student.id}/skills/{lic.id}",
+        data={
+            "heading": "75.0",
+            "shooting": "80.0",
+            "crossing": "65.0",
+            "passing": "70.0",
+            "dribbling": "85.0",
+            "ball_control": "90.0",
+            "instructor_notes": "Great progress in training",
+        },
+    )
+    assert r.status_code == 200, (
+        f"Skills update must return 200, got {r.status_code}. Snippet: {r.text[:300]}"
+    )
+
+    # UI: success message visible (from template: "Skills updated successfully!")
+    assert "Skills updated successfully" in r.text, (
+        f"'Skills updated successfully' must appear after update. Snippet: {r.text[:400]}"
+    )
+
+    # DB: UserLicense.football_skills dict updated
+    test_db.expire_all()
+    updated = test_db.query(UserLicense).filter(UserLicense.id == lic.id).first()
+    assert updated.football_skills["heading"] == 75.0, (
+        f"heading must be 75.0 after update, got {updated.football_skills.get('heading')}"
+    )
+    assert updated.skills_updated_by == instructor.id, (
+        f"skills_updated_by must be instructor.id={instructor.id}, got {updated.skills_updated_by}"
+    )
+
+    # DB: AuditLog(FOOTBALL_SKILLS_UPDATED) created for this license
+    audit = test_db.query(AuditLog).filter(
+        AuditLog.action == "FOOTBALL_SKILLS_UPDATED",
+        AuditLog.resource_id == lic.id,
+    ).first()
+    assert audit is not None, "AuditLog(FOOTBALL_SKILLS_UPDATED) must be created"
+    assert audit.resource_type == "football_skills", (
+        f"AuditLog.resource_type must be 'football_skills', got '{audit.resource_type}'"
+    )
+
+
+def test_instructor_skills_invalid_value_returns_error(test_db: Session, client: TestClient):
+    """F-45 (INSTR-03) — POST skill value >100 → 200 + error message, no DB mutation.
+
+    POST /instructor/students/{id}/skills/{lic_id} (heading=150) → 200 + error template
+    DB:  no AuditLog created; UserLicense.football_skills unchanged
+    UI:  "must be between 0 and 100" in response
+    """
+    instructor = _make_user(test_db, role=UserRole.INSTRUCTOR)
+    student = _make_user(test_db, role=UserRole.STUDENT)
+    original_skills = {
+        "heading": 50.0, "shooting": 50.0, "crossing": 50.0,
+        "passing": 50.0, "dribbling": 50.0, "ball_control": 50.0,
+    }
+    lic = UserLicense(
+        user_id=student.id,
+        specialization_type="LFA_PLAYER_YOUTH",
+        is_active=True,
+        onboarding_completed=True,
+        started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+        football_skills=original_skills,
+    )
+    test_db.add(lic)
+    test_db.flush()
+
+    app.dependency_overrides[get_current_user_web] = lambda: instructor
+
+    r = client.post(
+        f"/instructor/students/{student.id}/skills/{lic.id}",
+        data={
+            "heading": "150.0",  # INVALID: exceeds max of 100
+            "shooting": "80.0",
+            "crossing": "65.0",
+            "passing": "70.0",
+            "dribbling": "85.0",
+            "ball_control": "90.0",
+            "instructor_notes": "",
+        },
+    )
+    assert r.status_code == 200, (
+        f"Invalid skill must return 200 with error template, got {r.status_code}"
+    )
+
+    # UI: validation error message rendered
+    assert "must be between 0 and 100" in r.text, (
+        f"Error message must appear for out-of-range value. Snippet: {r.text[:400]}"
+    )
+
+    # DB: no AuditLog created (route returned early without committing)
+    audit_count = test_db.query(AuditLog).filter(
+        AuditLog.action == "FOOTBALL_SKILLS_UPDATED",
+        AuditLog.resource_id == lic.id,
+    ).count()
+    assert audit_count == 0, (
+        f"No AuditLog must be created on invalid input, got count={audit_count}"
+    )
+
+
+def test_instructor_enrollments_page_renders(test_db: Session, client: TestClient):
+    """F-46 (INSTR-04) — GET /instructor/enrollments → 200 + enrollment list for instructor's semesters.
+
+    GET /instructor/enrollments → 200
+    DB:  SemesterEnrollment(PENDING) exists for instructor's semester
+    UI:  "Enrollment Requests" in HTML response (page title block)
+    """
+    instructor = _make_user(test_db, role=UserRole.INSTRUCTOR)
+    student = _make_user(test_db, role=UserRole.STUDENT)
+    lic = UserLicense(
+        user_id=student.id,
+        specialization_type="LFA_PLAYER_YOUTH",
+        is_active=True,
+        onboarding_completed=True,
+        started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+    )
+    test_db.add(lic)
+    test_db.flush()
+
+    uid = _uid()
+    sem = Semester(
+        code=f"IE-{uid}",
+        name=f"IE Semester {uid}",
+        start_date=date.today(),
+        end_date=date.today() + timedelta(days=30),
+        status=SemesterStatus.ONGOING,
+        master_instructor_id=instructor.id,
+    )
+    test_db.add(sem)
+    test_db.flush()
+
+    enrollment = SemesterEnrollment(
+        user_id=student.id,
+        semester_id=sem.id,
+        user_license_id=lic.id,
+        request_status=EnrollmentStatus.PENDING,
+    )
+    test_db.add(enrollment)
+    test_db.flush()
+
+    app.dependency_overrides[get_current_user_web] = lambda: instructor
+
+    r = client.get("/instructor/enrollments")
+    assert r.status_code == 200, (
+        f"Enrollments page must return 200, got {r.status_code}. Snippet: {r.text[:300]}"
+    )
+
+    # DB: PENDING enrollment exists for this semester
+    found = test_db.query(SemesterEnrollment).filter(
+        SemesterEnrollment.semester_id == sem.id,
+    ).first()
+    assert found is not None, "SemesterEnrollment must exist for instructor's semester"
+    assert found.request_status == EnrollmentStatus.PENDING, (
+        f"Enrollment status must be PENDING, got {found.request_status}"
+    )
+
+    # UI: enrollment requests page title rendered
+    assert "Enrollment Requests" in r.text, (
+        f"'Enrollment Requests' must appear on enrollments page. Snippet: {r.text[:400]}"
     )
