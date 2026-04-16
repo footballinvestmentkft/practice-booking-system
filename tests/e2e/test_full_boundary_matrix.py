@@ -1562,13 +1562,18 @@ class TestTypeBoundaryMatrix:
         """
         knockout 128p (2^7): safety threshold boundary.
         confirmed=True required. Sessions = 128 (127 bracket + 1 playoff).
+        128 == BACKGROUND_GENERATION_THRESHOLD → async thread generation; must wait.
         """
         token = _get_admin_token(api_url)
         data = _launch_tournament(api_url, token, 128, "knockout",
                                   scenario="large_field_monitor", timeout=300)
         tid = data["tournament_id"]
-        sessions = _get_sessions(api_url, token, tid)
+        task_id = data.get("task_id")
         expected = 128  # 2^7: 127 bracket + 1 playoff
+        # 128p == BACKGROUND_GENERATION_THRESHOLD → async daemon thread.
+        # Wait for generation-status=done before asserting sessions.
+        _wait_for_generation_done(api_url, token, tid, task_id, max_wait=120)
+        sessions = _wait_for_sessions(api_url, token, tid, min_count=expected, retries=10)
         assert len(sessions) == expected, (
             f"knockout 128p: expected {expected} sessions, got {len(sessions)}"
         )
