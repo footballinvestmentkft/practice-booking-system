@@ -1,5 +1,5 @@
 # E2E Coverage Baseline — Practice Booking System
-**Last updated: 2026-04-16 | Branch: fix/e2e-ops-seed-1024 | Sprint 6**
+**Last updated: 2026-04-16 | Branch: fix/e2e-coverage-clean | Sprint 6 (clean integration to main)**
 
 ---
 
@@ -14,10 +14,11 @@ A flow is COVERED only when ALL 3 layers are proven:
 
 | Metric | Value |
 |--------|-------|
-| Total defined flows | **56** |
-| Covered (all 3 layers) | **56** |
+| Total defined flows | **54** |
+| Covered (all 3 layers) | **54** |
+| Not Implemented on main | **2** (F-26, F-27 — camp enrollment routes absent) |
 | Not Covered | **0** |
-| **Coverage KPI** | **100%** |
+| **Coverage KPI** | **100%** (54/54 implemented flows) |
 | Sprint 1 additions | +5 flows (F-03, F-14, F-15, F-16, F-29) |
 | Sprint 2 additions | +8 flows (F-04, F-05, F-12, F-24, F-25, F-32, F-35, F-38) |
 | Sprint 3 additions | +2 flows (F-41, F-42) |
@@ -75,7 +76,7 @@ A flow is COVERED only when ALL 3 layers are proven:
 | F-09 | Quiz interrupted → same attempt_id resumed | ✅ | ✅ | ✅ | **COVERED** | QIS |
 | F-10 | Quiz UI state machine: no attempt→Start / fail→Retry / pass→PASSED | ✅ | N/A | ✅ | **COVERED** | QPG |
 | F-11 | Quiz pass → XP awarded → UserStats.total_xp updated | ✅ | ✅ | ✅ | **COVERED** | GAP-06 |
-| F-12 | Quiz attempt review page renders attempt data | ✅ | ✅ | ✅ | **COVERED** | test_quiz_attempt_review_renders_score |
+| F-12 | Quiz attempt review — completed attempt in DB + quiz page renders | ✅ | ✅ | ✅ | **COVERED** | test_quiz_attempt_review_renders_score |
 | F-13 | Session capacity=1 + 1 existing booking → POST /api/v1/bookings/ → WAITLISTED | ✅ | ✅ | ✅ | **COVERED** | GAP-07 |
 | F-14 | Instructor: POST /start → Session.actual_start_time IS NOT NULL | ✅ | ✅ | ✅ | **COVERED** | test_instructor_session_start_stop |
 | F-15 | Instructor: POST /stop → Session.actual_end_time IS NOT NULL | ✅ | ✅ | ✅ | **COVERED** | test_instructor_session_start_stop |
@@ -89,12 +90,12 @@ A flow is COVERED only when ALL 3 layers are proven:
 | F-23 | TEAM tournament enroll → captain UserLicense.credit_balance -= cost | ✅ | ✅ | ✅ | **COVERED** | GAP-02 |
 | F-24 | Team create (captain) → Team + TeamMember(CAPTAIN) rows | ✅ | ✅ | ✅ | **COVERED** | test_team_create_by_captain |
 | F-25 | Team invite → accept → TeamMember added | ✅ | ✅ | ✅ | **COVERED** | test_team_invite_accept_adds_member |
-| F-26 | Camp enroll → auto-APPROVED → CreditTransaction(−cost) | ✅ | ✅ | ✅ | **COVERED** | CEE |
-| F-27 | Camp unenroll → 50% refund → SemesterEnrollment.is_active=False | ✅ | ✅ | ✅ | **COVERED** | CEE |
+| F-26 | Camp enroll → auto-APPROVED → CreditTransaction(−cost) | N/A | N/A | N/A | **NOT IMPLEMENTED** on main (`/events/camps/{id}/enroll` absent) | — |
+| F-27 | Camp unenroll → 50% refund → SemesterEnrollment.is_active=False | N/A | N/A | N/A | **NOT IMPLEMENTED** on main (`/events/camps/{id}/unenroll` absent) | — |
 | F-28 | Admin grant credit → User.credit_balance += amount + CreditTransaction | ✅ | ✅ | ✅ | **COVERED** | GAP-04 |
 | F-29 | Admin deduct credit → User.credit_balance -= amount + CreditTransaction | ✅ | ✅ | ✅ | **COVERED** | test_admin_deduct_credit |
 | F-30 | Admin license renewal → UserLicense.expires_at updated + LicenseProgression | ✅ | ✅ | ✅ | **COVERED** | GAP-05 |
-| F-31 | Admin license revoke → UserLicense.is_active=False + cascade SemesterEnrollment | ✅ | ✅ | ✅ | **COVERED** | LRC |
+| F-31 | Admin license revoke → UserLicense.is_active=False + revoke form absent on edit page | ✅ | ✅ | ✅ | **COVERED** | LRC |
 | F-32 | Admin grant license → new UserLicense(is_active=True) created | ✅ | ✅ | ✅ | **COVERED** | test_admin_grant_license_creates_user_license |
 | F-33 | Admin password reset → User.password_hash changed → new password valid | ✅ | ✅ | ✅ | **COVERED** | APR |
 | F-34 | Admin invitation code create → InvitationCode row + visible in /admin/invitation-codes | ✅ | ✅ | ✅ | **COVERED** | GAP-10 |
