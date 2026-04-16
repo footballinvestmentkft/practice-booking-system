@@ -39,7 +39,7 @@ from app.dependencies import get_current_user_web, get_current_user_optional, ge
 from app.core.security import get_password_hash, verify_password
 from app.models.user import User, UserRole, SpecializationType
 from app.models.invitation_code import InvitationCode
-from app.models.tournament_instructor_slot import TournamentInstructorSlot
+from app.models.tournament_instructor_slot import TournamentInstructorSlot, SlotStatus, SlotRole
 from app.models.license import UserLicense, LicenseProgression
 from app.models.semester import Semester, SemesterStatus, SemesterCategory
 from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
@@ -63,7 +63,9 @@ from app.models.message import Message, MessagePriority
 from app.models.notification import Notification, NotificationType
 from app.models.invoice_request import InvoiceRequest
 from app.models.tournament_achievement import TournamentParticipation
-from app.models.team import Team, TeamMember, TournamentTeamEnrollment, TeamInvite, TeamInviteStatus
+from app.models.team import Team, TeamMember, TournamentTeamEnrollment, TeamInvite, TeamInviteStatus, TournamentPlayerCheckin
+from app.models.attendance import Attendance, AttendanceStatus
+from app.models.performance_review import InstructorSessionReview, StudentPerformanceReview
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -3458,4 +3460,652 @@ def test_admin_team_bulk_enroll_creates_team_enrollments(test_db: Session, clien
     )
     assert all(e.payment_verified is True for e in enrollments), (
         "All bulk-enrolled teams must have payment_verified=True"
+    )
+
+
+# ── Sprint 7: F-63 — Student Evaluates Instructor (CRITICAL) ─────────────────
+
+def test_student_evaluates_instructor_creates_review(test_db: Session, client: TestClient):
+    """F-63: Student evaluates instructor → InstructorSessionReview created.
+
+    Chain:
+      Setup: on_site Session(actual_end_time IS NOT NULL) + Attendance(present)
+      POST /sessions/{id}/evaluate-instructor (as student)
+      → 303 → /sessions/{id}?success=instructor_evaluated
+      DB:  InstructorSessionReview(session_id, student_id) row created
+      UI:  redirect page renders 200; session page shows evaluation context
+
+    Role enforcement: only STUDENT role can submit instructor evaluation.
+    Side-effect: InstructorSessionReview.average_score computed from 8 dimensions.
+    """
+    uid = _uid()
+    instructor = _make_user(test_db, role=UserRole.INSTRUCTOR)
+    student = _make_user(test_db)
+
+    sem = Semester(
+        code=f"F63-{uid}",
+        name=f"F-63 Eval Semester {uid}",
+        start_date=date.today(),
+        end_date=date.today() + timedelta(days=30),
+        status=SemesterStatus.ONGOING,
+    )
+    test_db.add(sem)
+    test_db.flush()
+
+    # Session must have actual_end_time set (route checks it's not None)
+    sess = SessionModel(
+        title=f"F-63 Session {uid}",
+        session_type=SessionType.on_site,
+        date_start=datetime(2026, 1, 1, 10, 0),
+        date_end=datetime(2026, 1, 1, 12, 0),
+        actual_start_time=datetime(2026, 1, 1, 10, 0),
+        actual_end_time=datetime(2026, 1, 1, 12, 0),  # REQUIRED: session ended
+        semester_id=sem.id,
+        instructor_id=instructor.id,
+    )
+    test_db.add(sess)
+    test_db.flush()
+
+    # Booking + Attendance required (route checks student attended)
+    booking = Booking(user_id=student.id, session_id=sess.id, status=BookingStatus.CONFIRMED)
+    test_db.add(booking)
+    test_db.flush()
+
+    attendance = Attendance(
+        session_id=sess.id,
+        user_id=student.id,
+        booking_id=booking.id,
+        status=AttendanceStatus.present,
+        marked_by=instructor.id,
+    )
+    test_db.add(attendance)
+    test_db.flush()
+
+    # ── HTTP: student submits instructor evaluation ────────────────────────────
+    app.dependency_overrides[get_current_user_web] = lambda: student
+    r = client.post(
+        f"/sessions/{sess.id}/evaluate-instructor",
+        data={
+            "instructor_clarity": "4",
+            "support_approachability": "5",
+            "session_structure": "4",
+            "relevance": "4",
+            "environment": "5",
+            "engagement_feeling": "4",
+            "feedback_quality": "3",
+            "satisfaction": "5",
+            "comments": "Great session",
+        },
+        follow_redirects=False,
+    )
+    assert r.status_code == 303, (
+        f"evaluate-instructor must return 303, got {r.status_code}. Body: {r.text[:300]}"
+    )
+    location = r.headers["location"]
+    assert "instructor_evaluated" in location, (
+        f"Redirect must contain 'instructor_evaluated', got: {location}"
+    )
+
+    # ── DB: InstructorSessionReview row created ───────────────────────────────
+    test_db.expire_all()
+    review = (
+        test_db.query(InstructorSessionReview)
+        .filter(
+            InstructorSessionReview.session_id == sess.id,
+            InstructorSessionReview.student_id == student.id,
+        )
+        .first()
+    )
+    assert review is not None, "InstructorSessionReview must be created after POST"
+    assert review.instructor_id == instructor.id, "Review must reference the session instructor"
+    assert review.instructor_clarity == 4, f"instructor_clarity must be 4, got {review.instructor_clarity}"
+    assert review.satisfaction == 5, f"satisfaction must be 5, got {review.satisfaction}"
+    # average_score = (4+5+4+4+5+4+3+5)/8 = 34/8 = 4.25
+    assert abs(review.average_score - 4.25) < 0.01, (
+        f"average_score must be 4.25, got {review.average_score}"
+    )
+
+    # ── UI: redirect page renders session detail with evaluation context ────────
+    r_page = client.get(location)
+    assert r_page.status_code == 200, (
+        f"Session detail page after evaluation must return 200, got {r_page.status_code}"
+    )
+    assert sess.title in r_page.text, (
+        f"Session detail page must contain session title '{sess.title}'. "
+        f"Snippet: {r_page.text[:400]}"
+    )
+
+
+# ── Sprint 7: F-64 — Instructor Evaluates Student (CRITICAL) ─────────────────
+
+def test_instructor_evaluates_student_creates_performance_review(test_db: Session, client: TestClient):
+    """F-64: Instructor evaluates student → StudentPerformanceReview created.
+
+    Chain:
+      Setup: on_site Session(actual_end_time IS NOT NULL, instructor_id=instructor)
+             Attendance(student, present)
+      POST /sessions/{id}/evaluate-student/{student_id}  (as instructor)
+      → 303 → /sessions/{id}?success=student_evaluated
+      DB:  StudentPerformanceReview(session_id, student_id, instructor_id) row created
+      UI:  redirect page renders 200; average_score computed from 5 dimensions
+
+    Role enforcement: only INSTRUCTOR role who OWNS the session can submit.
+    Side-effect: _update_specialization_xp called (stub, no-op on main).
+    """
+    uid = _uid()
+    instructor = _make_user(test_db, role=UserRole.INSTRUCTOR)
+    student = _make_user(test_db)
+
+    sem = Semester(
+        code=f"F64-{uid}",
+        name=f"F-64 Eval Semester {uid}",
+        start_date=date.today(),
+        end_date=date.today() + timedelta(days=30),
+        status=SemesterStatus.ONGOING,
+    )
+    test_db.add(sem)
+    test_db.flush()
+
+    sess = SessionModel(
+        title=f"F-64 Session {uid}",
+        session_type=SessionType.on_site,
+        date_start=datetime(2026, 1, 1, 10, 0),
+        date_end=datetime(2026, 1, 1, 12, 0),
+        actual_start_time=datetime(2026, 1, 1, 10, 0),
+        actual_end_time=datetime(2026, 1, 1, 12, 0),  # REQUIRED: session ended
+        semester_id=sem.id,
+        instructor_id=instructor.id,  # REQUIRED: instructor owns session
+    )
+    test_db.add(sess)
+    test_db.flush()
+
+    booking = Booking(user_id=student.id, session_id=sess.id, status=BookingStatus.CONFIRMED)
+    test_db.add(booking)
+    test_db.flush()
+
+    attendance = Attendance(
+        session_id=sess.id,
+        user_id=student.id,
+        booking_id=booking.id,
+        status=AttendanceStatus.present,  # REQUIRED: not absent
+        marked_by=instructor.id,
+    )
+    test_db.add(attendance)
+    test_db.flush()
+
+    # ── HTTP: instructor submits student performance review ───────────────────
+    app.dependency_overrides[get_current_user_web] = lambda: instructor
+    r = client.post(
+        f"/sessions/{sess.id}/evaluate-student/{student.id}",
+        data={
+            "punctuality": "4",
+            "engagement": "5",
+            "focus": "4",
+            "collaboration": "3",
+            "attitude": "4",
+            "comments": "Good work",
+        },
+        follow_redirects=False,
+    )
+    assert r.status_code == 303, (
+        f"evaluate-student must return 303, got {r.status_code}. Body: {r.text[:300]}"
+    )
+    location = r.headers["location"]
+    assert "student_evaluated" in location, (
+        f"Redirect must contain 'student_evaluated', got: {location}"
+    )
+
+    # ── DB: StudentPerformanceReview row created with correct scores ──────────
+    test_db.expire_all()
+    review = (
+        test_db.query(StudentPerformanceReview)
+        .filter(
+            StudentPerformanceReview.session_id == sess.id,
+            StudentPerformanceReview.student_id == student.id,
+        )
+        .first()
+    )
+    assert review is not None, "StudentPerformanceReview must be created after POST"
+    assert review.instructor_id == instructor.id, "Review must reference the session instructor"
+    assert review.punctuality == 4, f"punctuality must be 4, got {review.punctuality}"
+    assert review.engagement == 5, f"engagement must be 5, got {review.engagement}"
+    assert review.focus == 4, f"focus must be 4, got {review.focus}"
+    assert review.collaboration == 3, f"collaboration must be 3, got {review.collaboration}"
+    assert review.attitude == 4, f"attitude must be 4, got {review.attitude}"
+    # average_score = (4+5+4+3+4)/5 = 20/5 = 4.0
+    assert abs(review.average_score - 4.0) < 0.01, (
+        f"average_score must be 4.0, got {review.average_score}"
+    )
+
+    # ── UI: redirect page renders session detail with evaluation recorded ───────
+    r_page = client.get(location)
+    assert r_page.status_code == 200, (
+        f"Session detail page after student evaluation must return 200, got {r_page.status_code}"
+    )
+    assert sess.title in r_page.text, (
+        f"Session detail page must contain session title '{sess.title}'. "
+        f"Snippet: {r_page.text[:400]}"
+    )
+
+
+# ── Sprint 7: F-57 — Admin User Create ────────────────────────────────────────
+
+def test_admin_user_create_creates_active_user(test_db: Session, client: TestClient):
+    """F-57: Admin creates new user → User(is_active=True) row in DB.
+
+    Chain:
+      POST /admin/users/create (as admin)  data={name, email, role, password}
+      → 303 → /admin/users/{new_user.id}/edit
+      DB:  User(email=..., is_active=True, role=STUDENT) exists
+      UI:  edit page renders 200; user name/email visible
+
+    Role enforcement: _admin_guard raises 403 for non-admin.
+    State: User.is_active=True, onboarding_completed=False (admin-created).
+    """
+    admin = _make_user(test_db, role=UserRole.ADMIN)
+    uid = _uid()
+    new_email = f"admin-created-{uid}@test.lfa"
+    new_name = f"Admin Created User {uid}"
+
+    # ── HTTP: admin creates user ──────────────────────────────────────────────
+    app.dependency_overrides[get_current_user_web] = lambda: admin
+    r = client.post(
+        "/admin/users/create",
+        data={
+            "name": new_name,
+            "email": new_email,
+            "role": "student",
+            "password": "Pass1234!",
+            "credit_balance": "0",
+        },
+        follow_redirects=False,
+    )
+    assert r.status_code == 303, (
+        f"Admin user create must return 303, got {r.status_code}. Body: {r.text[:300]}"
+    )
+    location = r.headers["location"]
+    assert "/admin/users/" in location and "/edit" in location, (
+        f"Redirect must be to /admin/users/{{id}}/edit, got: {location}"
+    )
+
+    # ── DB: User row created with correct state ───────────────────────────────
+    test_db.expire_all()
+    new_user = test_db.query(User).filter(User.email == new_email).first()
+    assert new_user is not None, f"User with email {new_email} must exist after admin create"
+    assert new_user.is_active is True, f"Admin-created user must be active, got {new_user.is_active}"
+    assert new_user.role == UserRole.STUDENT, f"User role must be STUDENT, got {new_user.role}"
+    assert new_user.name == new_name, f"User name must match, got {new_user.name}"
+    assert new_user.credit_balance == 0, f"Credit balance must be 0, got {new_user.credit_balance}"
+
+    # ── UI: edit page renders with new user data ──────────────────────────────
+    r_page = client.get(location)
+    assert r_page.status_code == 200, (
+        f"Admin user edit page must render 200, got {r_page.status_code}"
+    )
+    assert new_email in r_page.text or new_name in r_page.text, (
+        f"Edit page must contain new user's email or name. "
+        f"Snippet: {r_page.text[:500]}"
+    )
+
+
+# ── Sprint 7: F-58 — Admin User Toggle Status ─────────────────────────────────
+
+def test_admin_toggle_user_status_deactivates_active_user(test_db: Session, client: TestClient):
+    """F-58: Admin toggles user status → User.is_active flipped False → True or True → False.
+
+    Chain:
+      target.is_active = True (default from _make_user)
+      POST /admin/users/{target.id}/toggle-status (as admin)
+      → 303 → /admin/users
+      DB:  target.is_active == False  (was True)
+      UI:  /admin/users renders 200; user list accessible
+
+    Role enforcement: admin cannot deactivate themselves (400).
+    State transition: True → False (deactivation path tested).
+    """
+    admin = _make_user(test_db, role=UserRole.ADMIN)
+    target = _make_user(test_db)  # is_active=True by default
+
+    assert target.is_active is True, "target must start active for this test"
+
+    # ── HTTP: admin toggles target status ────────────────────────────────────
+    app.dependency_overrides[get_current_user_web] = lambda: admin
+    r = client.post(
+        f"/admin/users/{target.id}/toggle-status",
+        follow_redirects=False,
+    )
+    assert r.status_code == 303, (
+        f"Toggle status must return 303, got {r.status_code}. Body: {r.text[:300]}"
+    )
+    location = r.headers["location"]
+    assert "/admin/users" in location, (
+        f"Redirect must be to /admin/users, got: {location}"
+    )
+
+    # ── DB: target.is_active flipped to False ────────────────────────────────
+    test_db.expire_all()
+    refreshed = test_db.query(User).filter(User.id == target.id).first()
+    assert refreshed is not None, "Target user must still exist after toggle"
+    assert refreshed.is_active is False, (
+        f"User.is_active must be False after deactivation toggle, got {refreshed.is_active}"
+    )
+
+    # ── UI: admin users list renders 200 ─────────────────────────────────────
+    r_page = client.get("/admin/users")
+    assert r_page.status_code == 200, (
+        f"Admin users list must render 200 after toggle, got {r_page.status_code}"
+    )
+    # Target user email should still appear in list (just with inactive status)
+    assert target.email in r_page.text, (
+        f"Admin users list must include deactivated user's email. "
+        f"Snippet: {r_page.text[:600]}"
+    )
+
+
+# ── Sprint 7: F-59 — Admin Booking Cancel ─────────────────────────────────────
+
+def test_admin_booking_cancel_sets_cancelled_status(test_db: Session, client: TestClient):
+    """F-59: Admin cancels booking → Booking.status=CANCELLED + cancelled_at IS NOT NULL.
+
+    Chain:
+      Booking(status=CONFIRMED)
+      POST /admin/bookings/{id}/cancel  data={reason}  (as admin)
+      → 200 JSON {"success": True, "message": "Booking cancelled"}
+      DB:  Booking.status == CANCELLED, cancelled_at IS NOT NULL, notes == reason
+      UI:  response body contains "success"
+
+    No refund logic for regular session bookings (sessions are free).
+    State: CONFIRMED → CANCELLED; cancelled_at timestamp recorded.
+    """
+    admin = _make_user(test_db, role=UserRole.ADMIN)
+    student = _make_user(test_db)
+    uid = _uid()
+
+    sem = Semester(
+        code=f"F59-{uid}",
+        name=f"F-59 Cancel Semester {uid}",
+        start_date=date.today(),
+        end_date=date.today() + timedelta(days=30),
+        status=SemesterStatus.ONGOING,
+    )
+    test_db.add(sem)
+    test_db.flush()
+
+    sess = SessionModel(
+        title=f"F-59 Session {uid}",
+        session_type=SessionType.on_site,
+        date_start=datetime(2026, 12, 31, 10, 0),
+        date_end=datetime(2026, 12, 31, 12, 0),
+        semester_id=sem.id,
+    )
+    test_db.add(sess)
+    test_db.flush()
+
+    booking = Booking(user_id=student.id, session_id=sess.id, status=BookingStatus.CONFIRMED)
+    test_db.add(booking)
+    test_db.flush()
+
+    reason = "Admin test cancellation — F-59"
+
+    # ── HTTP: admin cancels booking ───────────────────────────────────────────
+    app.dependency_overrides[get_current_user_web] = lambda: admin
+    r = client.post(
+        f"/admin/bookings/{booking.id}/cancel",
+        data={"reason": reason},
+    )
+    assert r.status_code == 200, (
+        f"Admin booking cancel must return 200, got {r.status_code}. Body: {r.text[:300]}"
+    )
+    body = r.json()
+    assert body.get("success") is True, f"Response must have success=True, got: {body}"
+    assert "cancelled" in body.get("message", "").lower(), (
+        f"Response message must contain 'cancelled', got: {body.get('message')}"
+    )
+
+    # ── DB: Booking.status=CANCELLED + metadata ───────────────────────────────
+    test_db.expire_all()
+    test_db.refresh(booking)
+    assert booking.status == BookingStatus.CANCELLED, (
+        f"Booking.status must be CANCELLED, got {booking.status}"
+    )
+    assert booking.cancelled_at is not None, "Booking.cancelled_at must be set after cancellation"
+    assert booking.notes == reason, (
+        f"Booking.notes must match reason '{reason}', got '{booking.notes}'"
+    )
+
+    # ── UI: JSON body contains expected keys ──────────────────────────────────
+    assert "success" in r.text, f"Response body must contain 'success'. Body: {r.text[:200]}"
+
+
+# ── Sprint 7: F-60 — Session Postpone ─────────────────────────────────────────
+
+def test_admin_session_postpone_sets_postponed_reason(test_db: Session, client: TestClient):
+    """F-60: Admin postpones a session → Session.postponed_reason set.
+
+    Chain:
+      PATCH /admin/sessions/{id}/postpone  JSON={"reason": "..."}  (as admin)
+      → 200 JSON {"ok": True, "postponed_reason": "Weather conditions"}
+      DB:  Session.postponed_reason == "Weather conditions"
+      UI:  response body contains "Weather conditions"
+
+    Route: PATCH (accepts JSON body) using get_current_admin_user_hybrid.
+    State: Session.postponed_reason None → "Weather conditions".
+    """
+    from app.dependencies import get_current_admin_user_hybrid
+
+    admin = _make_user(test_db, role=UserRole.ADMIN)
+    uid = _uid()
+
+    sem = Semester(
+        code=f"F60-{uid}",
+        name=f"F-60 Postpone Semester {uid}",
+        start_date=date.today(),
+        end_date=date.today() + timedelta(days=30),
+        status=SemesterStatus.ONGOING,
+    )
+    test_db.add(sem)
+    test_db.flush()
+
+    sess = SessionModel(
+        title=f"F-60 Session {uid}",
+        session_type=SessionType.on_site,
+        date_start=datetime(2026, 12, 1, 10, 0),
+        date_end=datetime(2026, 12, 1, 12, 0),
+        semester_id=sem.id,
+    )
+    test_db.add(sess)
+    test_db.flush()
+
+    assert sess.postponed_reason is None, "Session.postponed_reason must be None before postpone"
+
+    postpone_reason = "Weather conditions — F-60 test"
+
+    # ── HTTP: admin postpones session ─────────────────────────────────────────
+    app.dependency_overrides[get_current_admin_user_hybrid] = lambda: admin
+    r = client.patch(
+        f"/admin/sessions/{sess.id}/postpone",
+        json={"reason": postpone_reason},
+    )
+    assert r.status_code == 200, (
+        f"Session postpone must return 200, got {r.status_code}. Body: {r.text[:300]}"
+    )
+    body = r.json()
+    assert body.get("ok") is True, f"Response must have ok=True, got: {body}"
+    assert body.get("postponed_reason") == postpone_reason, (
+        f"postponed_reason in response must match, got: {body.get('postponed_reason')}"
+    )
+
+    # ── DB: Session.postponed_reason updated ─────────────────────────────────
+    test_db.expire_all()
+    test_db.refresh(sess)
+    assert sess.postponed_reason == postpone_reason, (
+        f"Session.postponed_reason must be '{postpone_reason}', got '{sess.postponed_reason}'"
+    )
+
+    # ── UI: JSON body contains the postpone reason ────────────────────────────
+    assert postpone_reason in r.text, (
+        f"Response body must contain postpone reason. Body: {r.text[:300]}"
+    )
+
+
+# ── Sprint 7: F-61 — Instructor Slot Create ───────────────────────────────────
+
+def test_admin_instructor_slot_create_planned(test_db: Session, client: TestClient):
+    """F-61: Admin creates instructor slot → TournamentInstructorSlot(status=PLANNED).
+
+    Chain:
+      POST /admin/tournaments/{id}/instructor-slots
+           data={instructor_id, role="MASTER"}  (as admin)
+      → 201 JSON {"slot_id": id, "status": "PLANNED"}
+      DB:  TournamentInstructorSlot(semester_id, instructor_id, role="MASTER",
+                                    status="PLANNED") exists
+      UI:  response body contains "slot_id" and "PLANNED"
+
+    Role: MASTER requires no pitch_id. Duplicate instructor → 409.
+    Semester.master_instructor_id synced from MASTER slot (service layer).
+    """
+    admin = _make_user(test_db, role=UserRole.ADMIN)
+    instructor = _make_user(test_db, role=UserRole.INSTRUCTOR)
+    uid = _uid()
+
+    sem = Semester(
+        code=f"F61-{uid}",
+        name=f"F-61 Slot Semester {uid}",
+        start_date=date.today(),
+        end_date=date.today() + timedelta(days=30),
+        status=SemesterStatus.ONGOING,
+        semester_category=SemesterCategory.TOURNAMENT,
+        tournament_status="ENROLLMENT_OPEN",
+    )
+    test_db.add(sem)
+    test_db.flush()
+
+    # ── HTTP: admin creates MASTER instructor slot ────────────────────────────
+    app.dependency_overrides[get_current_user_web] = lambda: admin
+    r = client.post(
+        f"/admin/tournaments/{sem.id}/instructor-slots",
+        data={
+            "instructor_id": str(instructor.id),
+            "role": "MASTER",
+            "notes": "F-61 test slot",
+        },
+    )
+    assert r.status_code == 201, (
+        f"Instructor slot create must return 201, got {r.status_code}. Body: {r.text[:300]}"
+    )
+    body = r.json()
+    assert "slot_id" in body, f"Response must contain 'slot_id', got: {body}"
+    assert body["status"] == SlotStatus.PLANNED.value, (
+        f"New slot status must be PLANNED, got: {body['status']}"
+    )
+
+    # ── DB: TournamentInstructorSlot row exists with PLANNED status ───────────
+    test_db.expire_all()
+    slot = (
+        test_db.query(TournamentInstructorSlot)
+        .filter(
+            TournamentInstructorSlot.semester_id == sem.id,
+            TournamentInstructorSlot.instructor_id == instructor.id,
+        )
+        .first()
+    )
+    assert slot is not None, "TournamentInstructorSlot must be created after POST"
+    assert slot.status == SlotStatus.PLANNED.value, (
+        f"Slot.status must be PLANNED, got {slot.status}"
+    )
+    assert slot.role == SlotRole.MASTER.value, (
+        f"Slot.role must be MASTER, got {slot.role}"
+    )
+    assert slot.assigned_by == admin.id, (
+        f"Slot.assigned_by must be admin.id={admin.id}, got {slot.assigned_by}"
+    )
+
+    # ── UI: response body contains slot metadata ──────────────────────────────
+    assert "slot_id" in r.text, f"Response body must contain 'slot_id'. Body: {r.text[:200]}"
+    assert "PLANNED" in r.text, f"Response body must contain 'PLANNED'. Body: {r.text[:200]}"
+
+
+# ── Sprint 7: F-62 — Player Check-In ─────────────────────────────────────────
+
+def test_admin_player_checkin_creates_checkin_record(test_db: Session, client: TestClient):
+    """F-62: Admin checks in a player → TournamentPlayerCheckin row created.
+
+    Chain:
+      Setup: TournamentInstructorSlot(status=CHECKED_IN) required by service guard
+      POST /admin/tournaments/{id}/players/{pid}/checkin  JSON={}  (as admin)
+      → 200 JSON {"ok": True, "checked_in_at": "..."}
+      DB:  TournamentPlayerCheckin(tournament_id, user_id=player.id) exists
+      UI:  response body contains "checked_in_at"
+
+    Route: uses get_current_admin_user_hybrid (Bearer or cookie admin auth).
+    Guard: _require_instructor_checked_in → at least 1 slot in CHECKED_IN status.
+    State: TournamentPlayerCheckin upserted; SemesterEnrollment.tournament_checked_in_at
+           synced if INDIVIDUAL check-in.
+    """
+    from app.dependencies import get_current_admin_user_hybrid
+
+    admin = _make_user(test_db, role=UserRole.ADMIN)
+    instructor = _make_user(test_db, role=UserRole.INSTRUCTOR)
+    player = _make_user(test_db)
+    uid = _uid()
+
+    sem = Semester(
+        code=f"F62-{uid}",
+        name=f"F-62 Checkin Semester {uid}",
+        start_date=date.today(),
+        end_date=date.today() + timedelta(days=30),
+        status=SemesterStatus.ONGOING,
+        semester_category=SemesterCategory.TOURNAMENT,
+        tournament_status="ENROLLMENT_OPEN",
+    )
+    test_db.add(sem)
+    test_db.flush()
+
+    # REQUIRED: at least 1 instructor slot CHECKED_IN (_require_instructor_checked_in gate)
+    instructor_slot = TournamentInstructorSlot(
+        semester_id=sem.id,
+        instructor_id=instructor.id,
+        role=SlotRole.MASTER.value,
+        status=SlotStatus.CHECKED_IN.value,
+        assigned_by=admin.id,
+    )
+    test_db.add(instructor_slot)
+    test_db.flush()
+
+    # ── HTTP: admin checks in player ──────────────────────────────────────────
+    app.dependency_overrides[get_current_admin_user_hybrid] = lambda: admin
+    r = client.post(
+        f"/admin/tournaments/{sem.id}/players/{player.id}/checkin",
+        json={},
+    )
+    assert r.status_code == 200, (
+        f"Player checkin must return 200, got {r.status_code}. Body: {r.text[:300]}"
+    )
+    body = r.json()
+    assert body.get("ok") is True, f"Response must have ok=True, got: {body}"
+    assert body.get("checked_in_at") is not None, (
+        f"Response must include checked_in_at timestamp, got: {body}"
+    )
+
+    # ── DB: TournamentPlayerCheckin row created ───────────────────────────────
+    test_db.expire_all()
+    checkin = (
+        test_db.query(TournamentPlayerCheckin)
+        .filter(
+            TournamentPlayerCheckin.tournament_id == sem.id,
+            TournamentPlayerCheckin.user_id == player.id,
+        )
+        .first()
+    )
+    assert checkin is not None, "TournamentPlayerCheckin must be created after check-in"
+    assert checkin.checked_in_at is not None, (
+        "TournamentPlayerCheckin.checked_in_at must be set"
+    )
+    assert checkin.checked_in_by_id == admin.id, (
+        f"Checkin.checked_in_by_id must be admin.id={admin.id}, got {checkin.checked_in_by_id}"
+    )
+
+    # ── UI: response body contains checkin timestamp ──────────────────────────
+    assert "checked_in_at" in r.text, (
+        f"Response body must contain 'checked_in_at'. Body: {r.text[:200]}"
     )
