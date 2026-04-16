@@ -1,5 +1,5 @@
 # E2E Coverage Baseline — Practice Booking System
-**Last updated: 2026-04-16 | Branch: fix/e2e-ops-seed-1024 | Sprint 4**
+**Last updated: 2026-04-16 | Branch: fix/e2e-ops-seed-1024 | Sprint 5**
 
 ---
 
@@ -14,14 +14,15 @@ A flow is COVERED only when ALL 3 layers are proven:
 
 | Metric | Value |
 |--------|-------|
-| Total defined flows | **46** |
-| Covered (all 3 layers) | **46** |
+| Total defined flows | **51** |
+| Covered (all 3 layers) | **51** |
 | Not Covered | **0** |
 | **Coverage KPI** | **100%** |
 | Sprint 1 additions | +5 flows (F-03, F-14, F-15, F-16, F-29) |
 | Sprint 2 additions | +8 flows (F-04, F-05, F-12, F-24, F-25, F-32, F-35, F-38) |
 | Sprint 3 additions | +2 flows (F-41, F-42) |
 | Sprint 4 additions | +4 flows (F-43, F-44, F-45, F-46) — Instructor domain |
+| Sprint 5 additions | +5 flows (F-47, F-48, F-49, F-50, F-51) — Communications domain |
 
 ---
 
@@ -44,10 +45,10 @@ A flow is COVERED only when ALL 3 layers are proven:
 
 | Suite | Count |
 |-------|-------|
-| `tests/integration/web_flows/` | **570** (41 files) |
+| `tests/integration/web_flows/` | **575** (41 files) |
 | `tests/integration/api_smoke/` | **1,741** |
 | Cypress (`cypress/e2e/`) | **13** (4 files) |
-| **Total** | **2,324** |
+| **Total** | **2,329** |
 
 ---
 
@@ -108,6 +109,11 @@ A flow is COVERED only when ALL 3 layers are proven:
 | F-44 | Instructor POST skills update → UserLicense.football_skills dict + AuditLog(FOOTBALL_SKILLS_UPDATED) | ✅ | ✅ | ✅ | **COVERED** | test_instructor_skills_update_and_audit |
 | F-45 | Instructor POST invalid skill (>100) → 200 + error message, no AuditLog | ✅ | ✅ | ✅ | **COVERED** | test_instructor_skills_invalid_value_returns_error |
 | F-46 | Instructor GET /enrollments → 200 + PENDING enrollment visible | ✅ | ✅ | ✅ | **COVERED** | test_instructor_enrollments_page_renders |
+| F-47 | Message send (POST /messages/send → 303) → Message row(is_read=False) created | ✅ | ✅ | ✅ | **COVERED** | test_message_send_creates_row |
+| F-48 | Message detail GET → auto-marks is_read=True + read_at set for recipient | ✅ | ✅ | ✅ | **COVERED** | test_message_detail_auto_marks_read |
+| F-49 | Notifications read-all (POST → 303) → all Notification.is_read=True | ✅ | ✅ | ✅ | **COVERED** | test_notifications_read_all_marks_all_read |
+| F-50 | Notification single read (POST → 200 JSON) → Notification.is_read=True | ✅ | ✅ | ✅ | **COVERED** | test_notification_single_read_updates_state |
+| F-51 | Inbox user separation: recipient sees unread subject, sender row absent | ✅ | ✅ | ✅ | **COVERED** | test_messages_inbox_shows_unread_for_recipient |
 
 ---
 

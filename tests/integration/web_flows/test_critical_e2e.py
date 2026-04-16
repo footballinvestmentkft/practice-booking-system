@@ -59,6 +59,8 @@ from app.models.quiz import (
 )
 from app.models.credit_transaction import CreditTransaction
 from app.models.audit_log import AuditLog
+from app.models.message import Message, MessagePriority
+from app.models.notification import Notification, NotificationType
 from app.models.tournament_achievement import TournamentParticipation
 from app.models.team import Team, TeamMember, TournamentTeamEnrollment, TeamInvite, TeamInviteStatus
 
@@ -3096,4 +3098,235 @@ def test_instructor_enrollments_page_renders(test_db: Session, client: TestClien
     # UI: enrollment requests page title rendered
     assert "Enrollment Requests" in r.text, (
         f"'Enrollment Requests' must appear on enrollments page. Snippet: {r.text[:400]}"
+    )
+
+
+# ── Sprint 5 — Communications domain (F-47..F-51) ──────────────────────────
+
+def test_message_send_creates_row(test_db: Session, client: TestClient):
+    """F-47 (COMM-06) — POST /messages/send → Message row created; success flash on redirect.
+
+    POST /messages/send → 303 → GET /messages?tab=sent&success=sent → 200
+    DB:  Message(sender_id, recipient_id, subject, is_read=False) created
+    UI:  "Message sent successfully" in redirect-page HTML (business-state flash)
+    """
+    sender = _make_user(test_db, role=UserRole.STUDENT)
+    recipient = _make_user(test_db, role=UserRole.STUDENT)
+    uid = _uid()
+    subject = f"Sprint5 MSG {uid}"
+
+    app.dependency_overrides[get_current_user_web] = lambda: sender
+
+    r = client.post(
+        "/messages/send",
+        data={
+            "recipient_id": str(recipient.id),
+            "subject": subject,
+            "message": "E2E test message body.",
+            "priority": "NORMAL",
+        },
+        follow_redirects=False,
+    )
+    assert r.status_code == 303, (
+        f"Message send must return 303, got {r.status_code}. Body: {r.text[:300]}"
+    )
+
+    # 303 rule: follow redirect → sent tab + success flash
+    redirect_url = r.headers["location"]
+    r_page = client.get(redirect_url)
+    assert r_page.status_code == 200
+    assert "Message sent successfully" in r_page.text, (
+        f"'Message sent successfully' must appear after send. Snippet: {r_page.text[:400]}"
+    )
+
+    # DB: Message row created with correct sender/recipient, is_read=False
+    msg = test_db.query(Message).filter(
+        Message.sender_id == sender.id,
+        Message.recipient_id == recipient.id,
+    ).first()
+    assert msg is not None, "Message row must be created in DB"
+    assert msg.is_read is False, "New message must have is_read=False"
+    assert msg.subject == subject, (
+        f"Message subject must match, got '{msg.subject}'"
+    )
+
+
+def test_message_detail_auto_marks_read(test_db: Session, client: TestClient):
+    """F-48 (COMM-07) — GET /messages/{id} by recipient → is_read=True + read_at set.
+
+    GET /messages/{message_id} (as recipient) → 200
+    DB:  Message.is_read=True, Message.read_at IS NOT NULL after recipient opens detail
+    UI:  message subject visible in detail page HTML
+    """
+    sender = _make_user(test_db, role=UserRole.STUDENT)
+    recipient = _make_user(test_db, role=UserRole.STUDENT)
+    uid = _uid()
+    subject = f"Sprint5 Detail {uid}"
+    msg = Message(
+        sender_id=sender.id,
+        recipient_id=recipient.id,
+        subject=subject,
+        message="E2E auto-read test body.",
+        priority=MessagePriority.NORMAL,
+        is_read=False,
+    )
+    test_db.add(msg)
+    test_db.flush()
+
+    app.dependency_overrides[get_current_user_web] = lambda: recipient
+
+    r = client.get(f"/messages/{msg.id}")
+    assert r.status_code == 200, (
+        f"Message detail must return 200, got {r.status_code}. Snippet: {r.text[:300]}"
+    )
+
+    # UI: message subject rendered in detail heading
+    assert subject in r.text, (
+        f"Message subject '{subject}' must appear in detail page. Snippet: {r.text[:400]}"
+    )
+
+    # DB: is_read=True + read_at set by auto-read logic
+    test_db.expire_all()
+    updated = test_db.query(Message).filter(Message.id == msg.id).first()
+    assert updated.is_read is True, (
+        "Message.is_read must be True after recipient opens detail page"
+    )
+    assert updated.read_at is not None, (
+        "Message.read_at must be set after recipient opens detail page"
+    )
+
+
+def test_notifications_read_all_marks_all_read(test_db: Session, client: TestClient):
+    """F-49 (COMM-02) — POST /notifications/read-all → all notifications is_read=True.
+
+    POST /notifications/read-all → 303 → GET /notifications?success=marked → 200
+    DB:  all Notification rows for user have is_read=True
+    UI:  "All notifications marked as read" in redirect-page HTML
+    """
+    student = _make_user(test_db, role=UserRole.STUDENT)
+    uid = _uid()
+    notif1 = Notification(
+        user_id=student.id,
+        title=f"Notif A {uid}",
+        message="First test notification.",
+        type=NotificationType.GENERAL,
+        is_read=False,
+    )
+    notif2 = Notification(
+        user_id=student.id,
+        title=f"Notif B {uid}",
+        message="Second test notification.",
+        type=NotificationType.GENERAL,
+        is_read=False,
+    )
+    test_db.add_all([notif1, notif2])
+    test_db.flush()
+
+    app.dependency_overrides[get_current_user_web] = lambda: student
+
+    r = client.post("/notifications/read-all", follow_redirects=False)
+    assert r.status_code == 303, (
+        f"read-all must return 303, got {r.status_code}. Body: {r.text[:300]}"
+    )
+
+    # 303 rule: follow redirect → success flash visible
+    redirect_url = r.headers["location"]
+    r_page = client.get(redirect_url)
+    assert r_page.status_code == 200
+    assert "All notifications marked as read" in r_page.text, (
+        f"Success flash must appear after read-all. Snippet: {r_page.text[:400]}"
+    )
+
+    # DB: both notifications now is_read=True
+    test_db.expire_all()
+    updated1 = test_db.query(Notification).filter(Notification.id == notif1.id).first()
+    updated2 = test_db.query(Notification).filter(Notification.id == notif2.id).first()
+    assert updated1.is_read is True, "notif1.is_read must be True after read-all"
+    assert updated2.is_read is True, "notif2.is_read must be True after read-all"
+
+
+def test_notification_single_read_updates_state(test_db: Session, client: TestClient):
+    """F-50 (COMM-03) — POST /notifications/{id}/read → single notification is_read=True + read_at set.
+
+    POST /notifications/{id}/read (fetch endpoint) → 200 JSON {"ok": True}
+    DB:  Notification.is_read=True, Notification.read_at IS NOT NULL
+    UI:  JSON response body contains "ok" (business-state proof)
+    """
+    student = _make_user(test_db, role=UserRole.STUDENT)
+    uid = _uid()
+    notif = Notification(
+        user_id=student.id,
+        title=f"Unread Notif {uid}",
+        message="Single read test notification.",
+        type=NotificationType.GENERAL,
+        is_read=False,
+    )
+    test_db.add(notif)
+    test_db.flush()
+
+    app.dependency_overrides[get_current_user_web] = lambda: student
+
+    r = client.post(f"/notifications/{notif.id}/read")
+    assert r.status_code == 200, (
+        f"Notification single read must return 200, got {r.status_code}"
+    )
+
+    # UI: JSON response confirms action
+    assert "ok" in r.text, (
+        f"JSON response must contain 'ok'. Got: {r.text[:200]}"
+    )
+
+    # DB: is_read=True + read_at set by service layer
+    test_db.refresh(notif)
+    assert notif.is_read is True, (
+        "Notification.is_read must be True after single read"
+    )
+    assert notif.read_at is not None, (
+        "Notification.read_at must be set after single read"
+    )
+
+
+def test_messages_inbox_shows_unread_for_recipient(test_db: Session, client: TestClient):
+    """F-51 (COMM-inbox) — GET /messages → recipient inbox shows unread message (user separation).
+
+    GET /messages (as recipient) → 200 + subject in inbox HTML
+    DB:  Message.is_read=False exists for recipient; sender's inbox is empty (no self-send)
+    UI:  message subject visible in recipient's inbox page HTML
+    """
+    sender = _make_user(test_db, role=UserRole.STUDENT)
+    recipient = _make_user(test_db, role=UserRole.STUDENT)
+    uid = _uid()
+    subject = f"Sprint5 Inbox {uid}"
+    msg = Message(
+        sender_id=sender.id,
+        recipient_id=recipient.id,
+        subject=subject,
+        message="Inbox user-separation test.",
+        priority=MessagePriority.NORMAL,
+        is_read=False,
+    )
+    test_db.add(msg)
+    test_db.flush()
+
+    # Recipient opens their inbox
+    app.dependency_overrides[get_current_user_web] = lambda: recipient
+
+    r = client.get("/messages")
+    assert r.status_code == 200, (
+        f"Messages page must return 200, got {r.status_code}. Snippet: {r.text[:300]}"
+    )
+
+    # UI: unread message subject visible in recipient's inbox
+    assert subject in r.text, (
+        f"Message subject '{subject}' must appear in recipient inbox. Snippet: {r.text[:400]}"
+    )
+
+    # DB: unread Message exists for recipient (state proven separately from UI)
+    unread = test_db.query(Message).filter(
+        Message.recipient_id == recipient.id,
+        Message.is_read == False,
+    ).first()
+    assert unread is not None, "Unread Message must exist for recipient in DB"
+    assert unread.subject == subject, (
+        f"Unread message subject must match, got '{unread.subject}'"
     )
