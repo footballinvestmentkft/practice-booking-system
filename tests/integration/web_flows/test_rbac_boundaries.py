@@ -1,21 +1,25 @@
 """
-Role-Based Access Control (RBAC) Boundary Tests — RBAC-01..03
+Role-Based Access Control (RBAC) Boundary Tests — RBAC-01..05
 =============================================================
 
-Closes the Role × Flow matrix gaps identified in the Phase 5.5 audit:
+Closes the Role × Flow matrix (12 cells) and adds 2 symmetry tests
+to confirm the admin guard and the student-role guard are consistent
+across all non-student roles.
 
   RBAC-01  STUDENT cannot access /admin/* (real E2E: inline _admin_guard fires)
   RBAC-02  ADMIN cannot enroll in a semester (programs.py role check)
   RBAC-03  SD team enrollment is reflected in student-visible public event page
+  RBAC-04  INSTRUCTOR cannot access /admin/* (symmetry with RBAC-01)
+  RBAC-05  SPORT_DIRECTOR cannot enroll in a semester (symmetry with RBAC-02)
 
-Matrix cells closed by these tests:
+Full Role × Flow matrix:
 
-  | Role           | Forbidden Path | Cross-Role       |
-  |----------------|----------------|------------------|
-  | STUDENT        | RBAC-01 ✅     | existing ✅      |
-  | ADMIN          | RBAC-02 ✅     | existing ✅      |
-  | INSTRUCTOR     | G3-11 ✅       | existing ✅      |
-  | SPORT_DIRECTOR | SD-05 ✅       | RBAC-03 ✅       |
+  | Role           | Happy Path  | Forbidden Path          | Cross-Role       |
+  |----------------|-------------|-------------------------|------------------|
+  | STUDENT        | existing ✅ | RBAC-01 ✅              | existing ✅      |
+  | ADMIN          | existing ✅ | RBAC-02 ✅              | existing ✅      |
+  | INSTRUCTOR     | existing ✅ | G3-11 + RBAC-04 ✅      | existing ✅      |
+  | SPORT_DIRECTOR | existing ✅ | SD-05 + RBAC-05 ✅      | RBAC-03 ✅       |
 """
 import uuid
 import pytest
@@ -283,6 +287,73 @@ class TestRBACBoundaries:
             assert team_name in student_resp.text, (
                 f"RBAC-03: team '{team_name}' not visible in public event page "
                 f"after SD enrollment — cross-role state consistency broken"
+            )
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_rbac_04_instructor_forbidden_from_admin_ui(self, test_db: Session):
+        """RBAC-04: INSTRUCTOR hitting /admin/users → 403.
+
+        Symmetry test for RBAC-01 (STUDENT → 403).  Confirms the admin guard
+        is role-specific, not just 'non-student'.
+
+        Closes: INSTRUCTOR forbidden-path symmetry.
+        """
+        instructor = _make_user(test_db, role=UserRole.INSTRUCTOR)
+
+        app.dependency_overrides[get_db] = _db_override(test_db)
+        app.dependency_overrides[get_current_user_web] = lambda: instructor
+        client = TestClient(app, headers={"Authorization": "Bearer test-csrf-bypass"})
+
+        try:
+            resp = client.get("/admin/users")
+            assert resp.status_code == 403, (
+                f"RBAC-04: expected 403 for instructor on /admin/users, got {resp.status_code}"
+            )
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_rbac_05_sport_director_cannot_enroll_in_semester(self, test_db: Session):
+        """RBAC-05: SPORT_DIRECTOR POST /semesters/request-enrollment → 'Student+role+required'.
+
+        Symmetry test for RBAC-02 (ADMIN → blocked).  Confirms the student-role
+        check in programs.py blocks every non-STUDENT role uniformly.
+
+        Asserts:
+          - 303 redirect
+          - 'Student+role+required' in Location header
+        """
+        sd = _make_user(test_db, role=UserRole.SPORT_DIRECTOR)
+
+        sem = Semester(
+            code=f"RBAC-SEM2-{uuid.uuid4().hex[:8].upper()}",
+            name="RBAC SD-Enroll Test Semester",
+            semester_category=SemesterCategory.MINI_SEASON,
+            status=SemesterStatus.ONGOING,
+            start_date=date(2027, 1, 1),
+            end_date=date(2027, 6, 30),
+            enrollment_cost=0,
+            specialization_type="LFA_FOOTBALL_PLAYER",
+        )
+        test_db.add(sem)
+        test_db.flush()
+
+        app.dependency_overrides[get_db] = _db_override(test_db)
+        app.dependency_overrides[get_current_user_web] = lambda: sd
+        client = TestClient(app, headers={"Authorization": "Bearer test-csrf-bypass"})
+
+        try:
+            resp = client.post(
+                "/semesters/request-enrollment",
+                data={"semester_id": str(sem.id)},
+                follow_redirects=False,
+            )
+            assert resp.status_code == 303, (
+                f"RBAC-05: expected 303, got {resp.status_code}"
+            )
+            assert "Student+role+required" in resp.headers["location"], (
+                f"RBAC-05: expected 'Student+role+required' in location, "
+                f"got {resp.headers['location']}"
             )
         finally:
             app.dependency_overrides.clear()
