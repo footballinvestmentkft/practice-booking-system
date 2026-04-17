@@ -15,10 +15,10 @@ A flow is COVERED only when ALL 3 layers are proven:
 | Metric | Value |
 |--------|-------|
 | Total defined flows | **74** |
-| Covered (all 3 layers) | **80** |
+| Covered (all 3 layers) | **83** |
 | Not Implemented on main | **0** |
 | Not Covered | **0** |
-| **Coverage KPI** | **100%** (80/80 implemented flows) |
+| **Coverage KPI** | **100%** (83/83 implemented flows) |
 | Sprint 1 additions | +5 flows (F-03, F-14, F-15, F-16, F-29) |
 | Sprint 2 additions | +8 flows (F-04, F-05, F-12, F-24, F-25, F-32, F-35, F-38) |
 | Sprint 3 additions | +2 flows (F-41, F-42) |
@@ -33,6 +33,7 @@ A flow is COVERED only when ALL 3 layers are proven:
 | Phase 4 additions | +2 flows (F-75, F-76) — Capacity enforcement + re-enrollment after withdraw |
 | Phase 5 additions | +2 flows (F-77, F-78) — Waitlist auto-promote on withdraw + audit log on enroll |
 | Phase 5.5 additions | +2 flows (F-79, F-80) — Enrollment status guard + session delete cleans bookings |
+| Phase 5.5 invariants | +3 flows (F-81, F-82, F-83) — Credit / capacity / post-withdraw invariant smoke tests |
 
 ---
 
@@ -56,10 +57,10 @@ A flow is COVERED only when ALL 3 layers are proven:
 
 | Suite | Count |
 |-------|-------|
-| `tests/integration/web_flows/` | **601** (41 files, +10 SCHED_G3-01..10) |
+| `tests/integration/web_flows/` | **604** (41 files, +13 SCHED_G3-01..10 + SCHED_INV-01..03) |
 | `tests/integration/api_smoke/` | **1,741** |
 | Cypress (`cypress/e2e/`) | **18** (5 files, +SCHED-01..05) |
-| **Total** | **2,360** |
+| **Total** | **2,363** |
 
 ---
 
@@ -154,6 +155,9 @@ A flow is COVERED only when ALL 3 layers are proven:
 | F-78 | Audit log on enroll: POST /semesters/request-enrollment creates AuditLog(action=SEMESTER_ENROLLED) atomically | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-08 (test_audit_log_on_semester_enroll) |
 | F-79 | Enrollment status guard: POST enroll on COMPLETED semester → 303 + error=Semester+not+open+for+enrollment | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-09 (test_enrollment_blocked_when_semester_closed) |
 | F-80 | Session delete cleans bookings: admin DELETE sessions → orphaned bookings removed before session delete | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-10 (test_session_delete_cleans_bookings) |
+| F-81 | Credit invariant: balance = initial - cost + refund (exact); CreditTransaction amounts correct; 0 orphan bookings after withdraw | ✅ | ✅ | ✅ | **COVERED** | SCHED_INV-01 (test_credit_balance_invariant) |
+| F-82 | Capacity invariant: confirmed_count <= session.capacity; over-capacity students get WAITLISTED; all sessions at exactly capacity after enroll | ✅ | ✅ | ✅ | **COVERED** | SCHED_INV-02 (test_booking_capacity_invariant) |
+| F-83 | Post-withdraw invariant: after withdraw + auto-promote, confirmed_count == 1, waitlisted_count == 1, withdrawer has 0 bookings, total == 2 | ✅ | ✅ | ✅ | **COVERED** | SCHED_INV-03 (test_post_withdraw_capacity_invariant) |
 
 ---
 

@@ -1,14 +1,33 @@
 name: SCHED Regression Gate (mandatory)
 
+# ── Fail-safe rule ─────────────────────────────────────────────────────────────
+# "No green CI = no phase complete"
+#
+# This workflow is the MANDATORY merge gate for all scheduling-related changes.
+# It runs the full @pytest.mark.sched suite, which includes:
+#   - SCHED_G1-01..04  session generation + pitch conflict + delete guard
+#   - SCHED_G2-01..02  admin UI + Cypress schedule page
+#   - SCHED_G3-01..10  student enrollment + capacity + waitlist + audit + edge cases
+#   - SCHED_INV-01..03 invariant smoke tests (credit / capacity / post-withdraw)
+#
+# Required branch protection (configure in GitHub → Settings → Branches → main):
+#   - Require status checks to pass before merging: ✅ sched-regression
+#   - Require branches to be up to date before merging: ✅
+#
+# Failures block merge. There are no exceptions.
+# ──────────────────────────────────────────────────────────────────────────────
+
 on:
   push:
     branches: [main, develop]
     paths:
       - 'app/services/scheduling/**'
+      - 'app/services/semester_service.py'
       - 'app/api/api_v1/endpoints/semesters/schedule_generator.py'
       - 'app/api/web_routes/admin.py'
       - 'app/api/web_routes/programs.py'
       - 'app/models/semester_schedule_config.py'
+      - 'app/models/session.py'
       - 'app/templates/admin/semester_schedule.html'
       - 'app/templates/semester_enrollment_request.html'
       - 'tests/integration/web_flows/test_critical_e2e.py'
@@ -17,14 +36,22 @@ on:
     branches: [main, develop]
     paths:
       - 'app/services/scheduling/**'
+      - 'app/services/semester_service.py'
       - 'app/api/api_v1/endpoints/semesters/schedule_generator.py'
       - 'app/api/web_routes/admin.py'
       - 'app/api/web_routes/programs.py'
       - 'app/models/semester_schedule_config.py'
+      - 'app/models/session.py'
       - 'app/templates/admin/semester_schedule.html'
       - 'app/templates/semester_enrollment_request.html'
       - 'tests/integration/web_flows/test_critical_e2e.py'
       - '.github/workflows/e2e-scheduling.yml'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual trigger'
+        required: false
+        default: 'manual verification'
 
 jobs:
   sched-regression:
@@ -86,7 +113,7 @@ jobs:
           done
           curl --fail http://localhost:8000/health || exit 1
 
-      - name: Run SCHED regression gate
+      - name: Run SCHED regression + invariant gate
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
           SECRET_KEY: ci-scheduling-gate-key-not-for-production
@@ -95,8 +122,16 @@ jobs:
             -m sched \
             -v --tb=short -ra --durations=5
 
-      - name: Report result
+      - name: Invariant gate summary
         if: always()
         run: |
+          echo "──────────────────────────────────────────────────────"
           echo "SCHED regression gate completed."
-          echo "This workflow is MANDATORY — failures block merge."
+          echo "Suite includes:"
+          echo "  - SCHED_G1-01..04 (session generation)"
+          echo "  - SCHED_G3-01..10 (enrollment + edge cases)"
+          echo "  - SCHED_INV-01..03 (credit / capacity / post-withdraw invariants)"
+          echo ""
+          echo "MANDATORY: this workflow must be green before any merge."
+          echo "Failures block merge — no exceptions."
+          echo "──────────────────────────────────────────────────────"

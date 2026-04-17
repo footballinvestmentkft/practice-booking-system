@@ -5184,3 +5184,285 @@ def test_session_delete_cleans_bookings(test_db: Session, client: TestClient):
     assert booking_count_after == 0, (
         f"Expected 0 bookings after session delete, got {booking_count_after}"
     )
+
+
+# ── Phase 5.5: Invariant Smoke Tests (mandatory CI gate) ──────────────────────
+#
+# SCHED_INV-01  credit invariant   — balance = initial - cost + refund (exact)
+# SCHED_INV-02  capacity invariant — confirmed_count <= session.capacity always
+# SCHED_INV-03  post-withdraw inv  — confirmed_count restored to capacity after
+#                                    withdraw + auto-promote
+#
+# Rule: all 3 invariants must hold on every sched-touching commit.
+# CI enforces: pytest -m sched → 19/19 (or higher) green = phase complete.
+# "No green CI = no phase complete" — violations block merge.
+# ------------------------------------------------------------------------------
+
+
+def _make_inv_session(
+    db: Session,
+    semester,
+    campus,
+    pitch,
+    date_start: datetime,
+    capacity: int,
+    title: str = "INV Session",
+) -> SessionModel:
+    """Create a single auto-generated session for invariant tests."""
+    s = SessionModel(
+        title=title,
+        semester_id=semester.id,
+        campus_id=campus.id,
+        pitch_id=pitch.id,
+        date_start=date_start,
+        date_end=date_start.replace(hour=date_start.hour + 1, minute=30),
+        session_status="scheduled",
+        auto_generated=True,
+        rounds_data={},
+        capacity=capacity,
+    )
+    db.add(s)
+    db.flush()
+    return s
+
+
+def _make_inv_student(db: Session) -> tuple:
+    """Create student + license, returns (student, license)."""
+    stu = _make_user(db, role=UserRole.STUDENT, credit_balance=0)
+    stu.specialization = SpecializationType.LFA_FOOTBALL_PLAYER
+    lic = _make_license(db, stu)
+    db.flush()
+    return stu, lic
+
+
+@pytest.mark.sched
+def test_credit_balance_invariant(test_db: Session, client: TestClient):
+    """SCHED_INV-01: Credit invariant — balance = initial - cost + refund (exact).
+
+    Asserts:
+      balance_after_enroll == initial - cost
+      balance_after_withdraw == initial - cost + cost // 2
+      CreditTransaction(SEMESTER_ENROLLMENT).amount == -cost
+      CreditTransaction(SEMESTER_UNENROLL_REFUND).amount == cost // 2
+      booking count == 0 after withdraw (no orphans)
+    """
+    INITIAL = 1000
+    COST = 400
+    REFUND = COST // 2  # 200
+
+    semester, campus, pitch = _make_mini_season_with_config(
+        test_db, start_date=date(2027, 1, 1), weeks=2, day_of_week=0
+    )
+    _make_inv_session(test_db, semester, campus, pitch,
+                      datetime(2027, 1, 6, 17, 0), capacity=10, title="INV-01 Session")
+    semester.enrollment_cost = COST
+    test_db.flush()
+
+    student, license_ = _make_inv_student(test_db)
+    student.credit_balance = INITIAL
+    test_db.flush()
+    app.dependency_overrides[get_current_user_web] = lambda: student
+
+    # ── Enroll ────────────────────────────────────────────────────────────────
+    r = client.post("/semesters/request-enrollment",
+                    data={"semester_id": str(semester.id)}, follow_redirects=False)
+    assert r.status_code == 303, f"Enroll failed: {r.status_code}"
+
+    test_db.expire_all()
+    test_db.refresh(student)
+    assert student.credit_balance == INITIAL - COST, (
+        f"INV-01: balance after enroll must be {INITIAL - COST}, got {student.credit_balance}"
+    )
+    tx_enroll = (
+        test_db.query(CreditTransaction)
+        .filter_by(user_license_id=license_.id, transaction_type="SEMESTER_ENROLLMENT")
+        .first()
+    )
+    assert tx_enroll is not None, "INV-01: CreditTransaction(SEMESTER_ENROLLMENT) must exist"
+    assert tx_enroll.amount == -COST, (
+        f"INV-01: enroll tx.amount must be -{COST}, got {tx_enroll.amount}"
+    )
+
+    enrollment = (
+        test_db.query(SemesterEnrollment)
+        .filter_by(user_id=student.id, semester_id=semester.id, is_active=True)
+        .first()
+    )
+    assert enrollment is not None
+    assert test_db.query(Booking).filter_by(enrollment_id=enrollment.id).count() == 1, (
+        "INV-01: exactly 1 booking must exist after enroll"
+    )
+
+    # ── Withdraw ──────────────────────────────────────────────────────────────
+    r2 = client.post("/semesters/withdraw-enrollment",
+                     data={"enrollment_id": str(enrollment.id)}, follow_redirects=False)
+    assert r2.status_code == 303, f"Withdraw failed: {r2.status_code}"
+
+    test_db.expire_all()
+    test_db.refresh(student)
+    assert student.credit_balance == INITIAL - COST + REFUND, (
+        f"INV-01: balance after withdraw must be {INITIAL - COST + REFUND}, got {student.credit_balance}"
+    )
+    tx_refund = (
+        test_db.query(CreditTransaction)
+        .filter_by(user_license_id=license_.id, transaction_type="SEMESTER_UNENROLL_REFUND")
+        .first()
+    )
+    assert tx_refund is not None, "INV-01: CreditTransaction(SEMESTER_UNENROLL_REFUND) must exist"
+    assert tx_refund.amount == REFUND, (
+        f"INV-01: refund tx.amount must be {REFUND}, got {tx_refund.amount}"
+    )
+    assert test_db.query(Booking).filter_by(enrollment_id=enrollment.id).count() == 0, (
+        "INV-01: all bookings must be cleaned up after withdraw"
+    )
+
+
+@pytest.mark.sched
+def test_booking_capacity_invariant(test_db: Session, client: TestClient):
+    """SCHED_INV-02: confirmed_count(session) <= session.capacity for all sessions always.
+
+    Asserts:
+      after N students enrolled up to capacity → confirmed_count == capacity
+      N+1-th student enrolled beyond capacity → all bookings WAITLISTED
+      confirmed_count never exceeds capacity for any session
+    """
+    CAPACITY = 2
+    N_SESSIONS = 3
+
+    semester, campus, pitch = _make_mini_season_with_config(
+        test_db, start_date=date(2027, 2, 1), weeks=4, day_of_week=0
+    )
+    sessions = [
+        _make_inv_session(test_db, semester, campus, pitch,
+                          datetime(2027, 2, 3 + i * 7, 17, 0),
+                          capacity=CAPACITY, title=f"INV-02 S{i+1}")
+        for i in range(N_SESSIONS)
+    ]
+    semester.enrollment_cost = 0
+    test_db.flush()
+
+    def _enroll(student):
+        app.dependency_overrides[get_current_user_web] = lambda s=student: s
+        r = client.post("/semesters/request-enrollment",
+                        data={"semester_id": str(semester.id)}, follow_redirects=False)
+        assert r.status_code == 303, f"Enroll failed for user {student.id}: {r.status_code}"
+
+    # Enroll CAPACITY students → all CONFIRMED
+    students_ok = []
+    for _ in range(CAPACITY):
+        stu, _ = _make_inv_student(test_db)
+        _enroll(stu)
+        students_ok.append(stu)
+
+    # Enroll 1 extra student → all WAITLISTED (session full)
+    student_extra, _ = _make_inv_student(test_db)
+    _enroll(student_extra)
+
+    test_db.expire_all()
+
+    # Invariant: confirmed_count <= capacity for every session
+    for s in sessions:
+        confirmed = (
+            test_db.query(Booking)
+            .filter_by(session_id=s.id, status=BookingStatus.CONFIRMED)
+            .count()
+        )
+        assert confirmed <= CAPACITY, (
+            f"INV-02: session {s.id} confirmed={confirmed} exceeds capacity={CAPACITY}"
+        )
+        assert confirmed == CAPACITY, (
+            f"INV-02: session {s.id} confirmed={confirmed} should be exactly {CAPACITY}"
+        )
+
+    # Extra student's bookings are all WAITLISTED
+    extra_bookings = (
+        test_db.query(Booking).filter_by(user_id=student_extra.id).all()
+    )
+    assert len(extra_bookings) == N_SESSIONS, (
+        f"INV-02: extra student must have {N_SESSIONS} bookings, got {len(extra_bookings)}"
+    )
+    assert all(b.status == BookingStatus.WAITLISTED for b in extra_bookings), (
+        f"INV-02: extra student must be fully WAITLISTED, statuses: {[b.status for b in extra_bookings]}"
+    )
+
+
+@pytest.mark.sched
+def test_post_withdraw_capacity_invariant(test_db: Session, client: TestClient):
+    """SCHED_INV-03: After withdraw + auto-promote, confirmed_count == capacity again.
+
+    Asserts:
+      before withdraw: 1 CONFIRMED (A), 2 WAITLISTED (B, C)
+      after A withdraws: A has 0 bookings, exactly 1 CONFIRMED, exactly 1 WAITLISTED
+      confirmed_count never drops below 1 (capacity=1 maintained)
+      total bookings for session = 2 (no ghost rows, no duplicates)
+    """
+    semester, campus, pitch = _make_mini_season_with_config(
+        test_db, start_date=date(2027, 3, 1), weeks=2, day_of_week=2
+    )
+    s = _make_inv_session(test_db, semester, campus, pitch,
+                          datetime(2027, 3, 5, 17, 0), capacity=1, title="INV-03 Session")
+    semester.enrollment_cost = 0
+    test_db.flush()
+
+    # Create + enroll each student just-in-time (G3-07 pattern)
+    student_a, _ = _make_inv_student(test_db)
+    student_a_id = student_a.id
+    app.dependency_overrides[get_current_user_web] = lambda: student_a
+    r = client.post("/semesters/request-enrollment",
+                    data={"semester_id": str(semester.id)}, follow_redirects=False)
+    assert r.status_code == 303, f"Enroll A failed: {r.status_code}"
+    test_db.expire_all()
+
+    student_b, _ = _make_inv_student(test_db)
+    app.dependency_overrides[get_current_user_web] = lambda: student_b
+    r = client.post("/semesters/request-enrollment",
+                    data={"semester_id": str(semester.id)}, follow_redirects=False)
+    assert r.status_code == 303, f"Enroll B failed: {r.status_code}"
+    test_db.expire_all()
+
+    student_c, _ = _make_inv_student(test_db)
+    app.dependency_overrides[get_current_user_web] = lambda: student_c
+    r = client.post("/semesters/request-enrollment",
+                    data={"semester_id": str(semester.id)}, follow_redirects=False)
+    assert r.status_code == 303, f"Enroll C failed: {r.status_code}"
+
+    # Verify pre-state: A=CONFIRMED, B+C=WAITLISTED
+    test_db.expire_all()
+    assert test_db.query(Booking).filter_by(
+        session_id=s.id, status=BookingStatus.CONFIRMED).count() == 1
+    assert test_db.query(Booking).filter_by(
+        session_id=s.id, status=BookingStatus.WAITLISTED).count() == 2
+
+    # Student A withdraws — re-query after expire_all
+    student_a = test_db.query(User).filter_by(id=student_a_id).first()
+    enrollment_a = (
+        test_db.query(SemesterEnrollment)
+        .filter_by(user_id=student_a_id, semester_id=semester.id, is_active=True)
+        .first()
+    )
+    assert enrollment_a is not None
+    app.dependency_overrides[get_current_user_web] = lambda: student_a
+    r_w = client.post("/semesters/withdraw-enrollment",
+                      data={"enrollment_id": str(enrollment_a.id)}, follow_redirects=False)
+    assert r_w.status_code == 303, f"Withdraw failed: {r_w.status_code}"
+
+    # Post-withdraw invariants
+    test_db.expire_all()
+    a_count = test_db.query(Booking).filter_by(user_id=student_a_id, session_id=s.id).count()
+    assert a_count == 0, f"INV-03: student_A must have 0 bookings after withdraw, got {a_count}"
+
+    confirmed_after = test_db.query(Booking).filter_by(
+        session_id=s.id, status=BookingStatus.CONFIRMED).count()
+    waitlisted_after = test_db.query(Booking).filter_by(
+        session_id=s.id, status=BookingStatus.WAITLISTED).count()
+
+    assert confirmed_after == 1, (
+        f"INV-03: exactly 1 booking must be CONFIRMED after auto-promote (capacity=1), got {confirmed_after}"
+    )
+    assert waitlisted_after == 1, (
+        f"INV-03: exactly 1 booking must remain WAITLISTED, got {waitlisted_after}"
+    )
+    total = test_db.query(Booking).filter_by(session_id=s.id).count()
+    assert total == 2, (
+        f"INV-03: total bookings for session must be 2 (1 confirmed + 1 waitlisted), got {total}"
+    )
