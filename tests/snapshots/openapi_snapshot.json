@@ -25167,6 +25167,56 @@
         ]
       }
     },
+    "/admin/semesters/{semester_id}/sessions/{session_id}/instructor": {
+      "patch": {
+        "description": "Override the instructor on a single auto-generated session.\n\nBody: {\"instructor_id\": <int>}   \u2014 set to specific instructor\n      {\"instructor_id\": null}    \u2014 clear override (reverts to semester default)",
+        "operationId": "admin_patch_session_instructor_admin_semesters__semester_id__sessions__session_id__instructor_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "semester_id",
+            "required": true,
+            "schema": {
+              "title": "Semester Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Patch Session Instructor",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/admin/sessions": {
       "get": {
         "description": "Admin-only: Session management \u2014 hierarchical view (Location \u2192 Spec \u2192 Semester \u2192 Session)",

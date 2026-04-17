@@ -15,10 +15,10 @@ A flow is COVERED only when ALL 3 layers are proven:
 | Metric | Value |
 |--------|-------|
 | Total defined flows | **74** |
-| Covered (all 3 layers) | **74** |
+| Covered (all 3 layers) | **76** |
 | Not Implemented on main | **0** |
 | Not Covered | **0** |
-| **Coverage KPI** | **100%** (74/74 implemented flows) |
+| **Coverage KPI** | **100%** (76/76 implemented flows) |
 | Sprint 1 additions | +5 flows (F-03, F-14, F-15, F-16, F-29) |
 | Sprint 2 additions | +8 flows (F-04, F-05, F-12, F-24, F-25, F-32, F-35, F-38) |
 | Sprint 3 additions | +2 flows (F-41, F-42) |
@@ -30,6 +30,7 @@ A flow is COVERED only when ALL 3 layers are proven:
 | Phase 2 Step 2 additions | +2 flows (F-68, F-69) — Scheduling Admin UI (web routes + template) |
 | Phase 2 Release Gate | +1 flow (F-70) — DELETE sessions 409 when attendance exists |
 | Phase 3 Step 2 additions | +4 flows (F-71, F-72, F-73, F-74) — Student enrollment MINI_SEASON / ACADEMY_SEASON |
+| Phase 4 additions | +2 flows (F-75, F-76) — Capacity enforcement + re-enrollment after withdraw |
 
 ---
 
@@ -53,10 +54,10 @@ A flow is COVERED only when ALL 3 layers are proven:
 
 | Suite | Count |
 |-------|-------|
-| `tests/integration/web_flows/` | **595** (41 files, +4 SCHED_G3-01..04) |
+| `tests/integration/web_flows/` | **597** (41 files, +6 SCHED_G3-01..06) |
 | `tests/integration/api_smoke/` | **1,741** |
 | Cypress (`cypress/e2e/`) | **18** (5 files, +SCHED-01..05) |
-| **Total** | **2,354** |
+| **Total** | **2,356** |
 
 ---
 
@@ -145,6 +146,8 @@ A flow is COVERED only when ALL 3 layers are proven:
 | F-72 | POST /semesters/request-enrollment → APPROVED enrollment + credit deducted + 4 Booking rows | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-02 (test_semester_auto_enroll) |
 | F-73 | After APPROVED enrollment, GET /sessions shows auto_generated sessions from that semester | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-03 (test_semester_session_visibility_after_enroll) |
 | F-74 | POST /semesters/withdraw-enrollment → 50% refund + enrollment WITHDRAWN + Booking rows deleted | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-04 (test_semester_withdraw_enrollment) |
+| F-75 | Auto-booking capacity enforcement: session full (capacity=1, 1 CONFIRMED) → new enrollment creates WAITLISTED booking | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-05 (test_auto_booking_capacity_enforced) |
+| F-76 | Re-enrollment after withdraw: WITHDRAWN row reactivated (same id), credits deducted again, refund on prior withdraw confirmed | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-06 (test_re_enrollment_after_withdraw) |
 
 ---
 

@@ -4848,3 +4848,122 @@ def test_semester_withdraw_enrollment(test_db: Session, client: TestClient):
         test_db.query(Booking).filter_by(enrollment_id=enrollment.id).count()
     )
     assert remaining == 0, f"Expected 0 bookings after withdrawal, got {remaining}"
+
+
+@pytest.mark.sched
+def test_auto_booking_capacity_enforced(test_db: Session, client: TestClient):
+    """SCHED_G3-05: Session full at enrollment time → auto-booking creates WAITLISTED booking."""
+    semester, campus, pitch = _make_mini_season_with_config(
+        test_db, start_date=date(2026, 9, 1), weeks=2, day_of_week=1
+    )
+    # 1 session, capacity=1
+    s = SessionModel(
+        title="Full Session",
+        semester_id=semester.id,
+        campus_id=campus.id,
+        pitch_id=pitch.id,
+        date_start=datetime(2026, 9, 8, 17, 0),
+        date_end=datetime(2026, 9, 8, 18, 30),
+        session_status="scheduled",
+        auto_generated=True,
+        rounds_data={},
+        capacity=1,
+    )
+    test_db.add(s)
+    test_db.flush()
+    # Fill it with another student
+    filler = _make_user(test_db, role=UserRole.STUDENT)
+    test_db.add(Booking(
+        user_id=filler.id,
+        session_id=s.id,
+        enrollment_id=None,
+        status=BookingStatus.CONFIRMED,
+        created_at=datetime.utcnow(),
+    ))
+    test_db.flush()
+
+    student = _make_user(test_db, role=UserRole.STUDENT, credit_balance=0)
+    student.specialization = SpecializationType.LFA_FOOTBALL_PLAYER
+    _make_license(test_db, student)
+    semester.enrollment_cost = 0
+    test_db.flush()
+    app.dependency_overrides[get_current_user_web] = lambda: student
+
+    r = client.post(
+        "/semesters/request-enrollment",
+        data={"semester_id": str(semester.id)},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303, f"Expected 303, got {r.status_code}"
+
+    test_db.expire_all()
+    booking = test_db.query(Booking).filter_by(user_id=student.id, session_id=s.id).first()
+    assert booking is not None, "Auto-booking should have been created even for full session"
+    assert booking.status == BookingStatus.WAITLISTED, (
+        f"Expected WAITLISTED (session full, capacity=1), got {booking.status}"
+    )
+
+
+@pytest.mark.sched
+def test_re_enrollment_after_withdraw(test_db: Session, client: TestClient):
+    """SCHED_G3-06: Withdraw then re-enroll → WITHDRAWN enrollment reactivated, credits deducted again."""
+    semester, campus, pitch = _make_mini_season_with_config(
+        test_db, start_date=date(2026, 9, 1), weeks=2, day_of_week=2
+    )
+    student = _make_user(test_db, role=UserRole.STUDENT, credit_balance=4000)
+    student.specialization = SpecializationType.LFA_FOOTBALL_PLAYER
+    license_ = _make_license(test_db, student)
+    semester.enrollment_cost = 1000
+    test_db.flush()
+    app.dependency_overrides[get_current_user_web] = lambda: student
+
+    # First enroll
+    r1 = client.post(
+        "/semesters/request-enrollment",
+        data={"semester_id": str(semester.id)},
+        follow_redirects=False,
+    )
+    assert r1.status_code == 303
+    test_db.expire_all()
+    test_db.refresh(student)
+    assert student.credit_balance == 3000, f"Expected 3000 after enrollment, got {student.credit_balance}"
+
+    enrollment = (
+        test_db.query(SemesterEnrollment)
+        .filter_by(user_id=student.id, semester_id=semester.id)
+        .first()
+    )
+    first_id = enrollment.id
+
+    # Withdraw
+    r2 = client.post(
+        "/semesters/withdraw-enrollment",
+        data={"enrollment_id": str(enrollment.id)},
+        follow_redirects=False,
+    )
+    assert r2.status_code == 303
+    test_db.expire_all()
+    test_db.refresh(student)
+    assert student.credit_balance == 3500, f"Expected 3500 after 50% refund, got {student.credit_balance}"
+
+    # Re-enroll (unique constraint would block INSERT; reactivation must succeed)
+    r3 = client.post(
+        "/semesters/request-enrollment",
+        data={"semester_id": str(semester.id)},
+        follow_redirects=False,
+    )
+    assert r3.status_code == 303, f"Re-enrollment should succeed, got {r3.status_code}"
+    assert "success=enrolled" in r3.headers["location"]
+
+    test_db.expire_all()
+    enrollment_after = (
+        test_db.query(SemesterEnrollment)
+        .filter_by(user_id=student.id, semester_id=semester.id)
+        .first()
+    )
+    assert enrollment_after.id == first_id, "Same enrollment row should be reactivated (not a new row)"
+    assert enrollment_after.request_status == EnrollmentStatus.APPROVED
+    assert enrollment_after.is_active == True
+
+    test_db.refresh(student)
+    assert student.credit_balance == 2500, f"Expected 2500 (3500 - 1000), got {student.credit_balance}"

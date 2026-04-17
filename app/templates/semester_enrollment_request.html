@@ -87,6 +87,21 @@
                     <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 0.95rem;">
                         <strong>Period:</strong> {{ semester.start_date.strftime('%B %d, %Y') }} - {{ semester.end_date.strftime('%B %d, %Y') }}
                     </p>
+                    <div style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;">
+                        {% set sc = session_counts.get(semester.id, 0) %}
+                        <span style="background:rgba(255,255,255,0.25); color:white; padding:2px 10px; border-radius:12px; font-size:0.82rem; font-weight:600;">
+                            📅 {{ sc }} session{{ 's' if sc != 1 else '' }}
+                        </span>
+                        {% if semester.enrollment_cost and semester.enrollment_cost > 0 %}
+                        <span style="background:rgba(255,255,255,0.25); color:white; padding:2px 10px; border-radius:12px; font-size:0.82rem; font-weight:600;">
+                            💳 {{ semester.enrollment_cost }} credits
+                        </span>
+                        {% else %}
+                        <span style="background:rgba(255,255,255,0.25); color:white; padding:2px 10px; border-radius:12px; font-size:0.82rem; font-weight:600;">
+                            🆓 Free
+                        </span>
+                        {% endif %}
+                    </div>
 
                     {% set enrollment = enrollment_map.get(semester.id) %}
                     {% if enrollment %}
@@ -118,12 +133,25 @@
                     {% endif %}
                 </div>
 
-                <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <div style="display: flex; gap: 0.75rem; align-items: center; flex-direction: column;">
                     {% if not enrollment %}
+                    {% if semester.enrollment_cost and semester.enrollment_cost > 0 and user.credit_balance < semester.enrollment_cost %}
+                    <p style="color:rgba(255,220,150,1); font-size:0.82rem; margin:0 0 4px 0; font-weight:600;">
+                        ⚠️ Insufficient credits ({{ user.credit_balance }} / {{ semester.enrollment_cost }} required)
+                    </p>
+                    {% endif %}
                     <form method="POST" action="/semesters/request-enrollment">
                         <input type="hidden" name="semester_id" value="{{ semester.id }}">
                         <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.5rem; background: white; color: {{ specialization_color if specialization_color else '#667eea' }}; border: 2px solid white; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                             📝 Request Enrollment
+                        </button>
+                    </form>
+                    {% elif enrollment.request_status.value == 'approved' and enrollment.is_active %}
+                    <form method="POST" action="/semesters/withdraw-enrollment"
+                          onsubmit="return confirm('Withdraw from this semester? You will receive a 50% credit refund.')">
+                        <input type="hidden" name="enrollment_id" value="{{ enrollment.id }}">
+                        <button type="submit" class="btn" style="padding: 0.75rem 1.5rem; background: rgba(255,255,255,0.15); color: white; border: 2px solid white; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                            🚪 Withdraw
                         </button>
                     </form>
                     {% elif enrollment.request_status.value == 'PENDING' %}

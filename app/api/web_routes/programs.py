@@ -15,7 +15,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import update as sql_update
+from sqlalchemy import func, update as sql_update
 from sqlalchemy.orm import Session
 
 from ...database import get_db
@@ -88,6 +88,19 @@ async def semester_enroll_browse(
         .all()
     )
 
+    session_counts: dict = {}
+    if available:
+        rows = (
+            db.query(SessionModel.semester_id, func.count(SessionModel.id))
+            .filter(
+                SessionModel.semester_id.in_([s.id for s in available]),
+                SessionModel.auto_generated == True,
+            )
+            .group_by(SessionModel.semester_id)
+            .all()
+        )
+        session_counts = {sid: cnt for sid, cnt in rows}
+
     return templates.TemplateResponse(
         "semester_enrollment_request.html",
         {
@@ -97,6 +110,7 @@ async def semester_enroll_browse(
             "available_semesters": available,
             "enrollment_map": enrollment_map,
             "user_licenses": user_licenses,
+            "session_counts": session_counts,
         },
     )
 
@@ -160,18 +174,39 @@ async def semester_request_enrollment(
         db.refresh(user)
 
     now = datetime.utcnow()
-    enrollment = SemesterEnrollment(
-        user_id=user.id,
-        semester_id=semester_id,
-        user_license_id=license_.id,
-        request_status=EnrollmentStatus.APPROVED,
-        is_active=True,
-        requested_at=now,
-        approved_at=now,
-        enrolled_at=now,
+
+    # Re-enrollment: reactivate WITHDRAWN enrollment if it exists (avoids unique constraint violation)
+    withdrawn = (
+        db.query(SemesterEnrollment)
+        .filter(
+            SemesterEnrollment.user_id == user.id,
+            SemesterEnrollment.semester_id == semester_id,
+            SemesterEnrollment.user_license_id == license_.id,
+            SemesterEnrollment.is_active == False,
+            SemesterEnrollment.request_status == EnrollmentStatus.WITHDRAWN,
+        )
+        .first()
     )
-    db.add(enrollment)
-    db.flush()
+    if withdrawn:
+        withdrawn.request_status = EnrollmentStatus.APPROVED
+        withdrawn.is_active = True
+        withdrawn.approved_at = now
+        withdrawn.enrolled_at = now
+        enrollment = withdrawn
+        db.flush()
+    else:
+        enrollment = SemesterEnrollment(
+            user_id=user.id,
+            semester_id=semester_id,
+            user_license_id=license_.id,
+            request_status=EnrollmentStatus.APPROVED,
+            is_active=True,
+            requested_at=now,
+            approved_at=now,
+            enrolled_at=now,
+        )
+        db.add(enrollment)
+        db.flush()
 
     if cost > 0:
         db.add(CreditTransaction(
@@ -202,11 +237,20 @@ async def semester_request_enrollment(
         )
         if already:
             continue
+        confirmed_count = (
+            db.query(func.count(Booking.id))
+            .filter(Booking.session_id == s.id, Booking.status == BookingStatus.CONFIRMED)
+            .scalar() or 0
+        )
+        booking_status = (
+            BookingStatus.CONFIRMED if confirmed_count < s.capacity
+            else BookingStatus.WAITLISTED
+        )
         db.add(Booking(
             user_id=user.id,
             session_id=s.id,
             enrollment_id=enrollment.id,
-            status=BookingStatus.CONFIRMED,
+            status=booking_status,
             created_at=now,
         ))
 

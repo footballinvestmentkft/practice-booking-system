@@ -4341,3 +4341,35 @@ async def semester_schedule_delete_sessions(
         f"?flash={deleted}+sessions+deleted&flash_type=success"
     )
     return RedirectResponse(url=redirect_url, status_code=303)
+
+
+# ── Instructor override (per-session hook) ────────────────────────────────────
+
+@router.patch("/admin/semesters/{semester_id}/sessions/{session_id}/instructor")
+async def admin_patch_session_instructor(
+    semester_id: int,
+    session_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Override the instructor on a single auto-generated session.
+
+    Body: {"instructor_id": <int>}   — set to specific instructor
+          {"instructor_id": null}    — clear override (reverts to semester default)
+    """
+    _admin_guard(user)
+    body = await request.json()
+    instructor_id = body.get("instructor_id")
+
+    session = (
+        db.query(SessionModel)
+        .filter(SessionModel.id == session_id, SessionModel.semester_id == semester_id)
+        .first()
+    )
+    if not session:
+        return JSONResponse({"error": "Session not found"}, status_code=404)
+
+    session.instructor_id = instructor_id
+    db.commit()
+    return JSONResponse({"ok": True, "instructor_id": instructor_id})
