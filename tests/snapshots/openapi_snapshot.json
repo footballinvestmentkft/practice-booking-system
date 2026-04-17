@@ -54489,6 +54489,114 @@
         ]
       }
     },
+    "/camps": {
+      "get": {
+        "description": "Student browse: list open camps and show enrollment status.",
+        "operationId": "camps_list_camps_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Camps List",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/camps/{camp_id}/enroll": {
+      "post": {
+        "description": "Enroll current student in the given camp (auto-approved, deducts credits).",
+        "operationId": "camp_enroll_camps__camp_id__enroll_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "camp_id",
+            "required": true,
+            "schema": {
+              "title": "Camp Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Camp Enroll",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/camps/{camp_id}/unenroll": {
+      "post": {
+        "description": "Withdraw student from camp (50% refund).",
+        "operationId": "camp_unenroll_camps__camp_id__unenroll_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "camp_id",
+            "required": true,
+            "schema": {
+              "title": "Camp Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Camp Unenroll",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/credits": {
       "get": {
         "description": "Credits management page - view balance, purchase credits, transaction history",
