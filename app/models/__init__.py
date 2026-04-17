@@ -22,6 +22,7 @@ from .pitch_instructor_assignment import (
     PitchAssignmentStatus,
 )
 from .semester import Semester, SemesterStatus, SemesterCategory
+from .semester_schedule_config import SemesterScheduleConfig
 from .group import Group, group_users
 from .session import Session, SessionType, EventCategory, SessionParticipantType, DeliveryMode
 from .event_reward_log import EventRewardLog
