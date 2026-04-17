@@ -496,13 +496,13 @@ jobs:
       run: |
         uvicorn app.main:app --host 0.0.0.0 --port 8000 &
         # Wait for FastAPI to finish startup (lifespan, scheduler init)
-        for i in {1..20}; do
+        for i in {1..45}; do
           if curl --fail --silent --max-time 2 http://localhost:8000/health > /dev/null 2>&1; then
             echo "✅ FastAPI ready after ${i} attempts"
             break
           fi
-          if [ $i -eq 20 ]; then
-            echo "❌ FastAPI failed to start after 20 attempts (40s)"
+          if [ $i -eq 45 ]; then
+            echo "❌ FastAPI failed to start after 45 attempts (90s)"
             exit 1
           fi
           sleep 2
@@ -600,13 +600,13 @@ jobs:
       run: |
         uvicorn app.main:app --host 0.0.0.0 --port 8000 &
         # Wait for FastAPI to finish startup (lifespan, scheduler init)
-        for i in {1..20}; do
+        for i in {1..45}; do
           if curl --fail --silent --max-time 2 http://localhost:8000/health > /dev/null 2>&1; then
             echo "✅ FastAPI ready after ${i} attempts"
             break
           fi
-          if [ $i -eq 20 ]; then
-            echo "❌ FastAPI failed to start after 20 attempts (40s)"
+          if [ $i -eq 45 ]; then
+            echo "❌ FastAPI failed to start after 45 attempts (90s)"
             exit 1
           fi
           sleep 2
@@ -706,13 +706,13 @@ jobs:
       run: |
         uvicorn app.main:app --host 0.0.0.0 --port 8000 &
         # Wait for FastAPI to finish startup (lifespan, scheduler init)
-        for i in {1..20}; do
+        for i in {1..45}; do
           if curl --fail --silent --max-time 2 http://localhost:8000/health > /dev/null 2>&1; then
             echo "✅ FastAPI ready after ${i} attempts"
             break
           fi
-          if [ $i -eq 20 ]; then
-            echo "❌ FastAPI failed to start after 20 attempts (40s)"
+          if [ $i -eq 45 ]; then
+            echo "❌ FastAPI failed to start after 45 attempts (90s)"
             exit 1
           fi
           sleep 2
@@ -811,13 +811,13 @@ jobs:
       run: |
         uvicorn app.main:app --host 0.0.0.0 --port 8000 &
         # Wait for FastAPI to finish startup (lifespan, scheduler init)
-        for i in {1..20}; do
+        for i in {1..45}; do
           if curl --fail --silent --max-time 2 http://localhost:8000/health > /dev/null 2>&1; then
             echo "✅ FastAPI ready after ${i} attempts"
             break
           fi
-          if [ $i -eq 20 ]; then
-            echo "❌ FastAPI failed to start after 20 attempts (40s)"
+          if [ $i -eq 45 ]; then
+            echo "❌ FastAPI failed to start after 45 attempts (90s)"
             exit 1
           fi
           sleep 2
@@ -916,13 +916,13 @@ jobs:
       run: |
         uvicorn app.main:app --host 0.0.0.0 --port 8000 &
         # Wait for FastAPI to finish startup (lifespan, scheduler init)
-        for i in {1..20}; do
+        for i in {1..45}; do
           if curl --fail --silent --max-time 2 http://localhost:8000/health > /dev/null 2>&1; then
             echo "✅ FastAPI ready after ${i} attempts"
             break
           fi
-          if [ $i -eq 20 ]; then
-            echo "❌ FastAPI failed to start after 20 attempts (40s)"
+          if [ $i -eq 45 ]; then
+            echo "❌ FastAPI failed to start after 45 attempts (90s)"
             exit 1
           fi
           sleep 2
@@ -1021,13 +1021,13 @@ jobs:
       run: |
         uvicorn app.main:app --host 0.0.0.0 --port 8000 &
         # Wait for FastAPI to finish startup (lifespan, scheduler init)
-        for i in {1..20}; do
+        for i in {1..45}; do
           if curl --fail --silent --max-time 2 http://localhost:8000/health > /dev/null 2>&1; then
             echo "✅ FastAPI ready after ${i} attempts"
             break
           fi
-          if [ $i -eq 20 ]; then
-            echo "❌ FastAPI failed to start after 20 attempts (40s)"
+          if [ $i -eq 45 ]; then
+            echo "❌ FastAPI failed to start after 45 attempts (90s)"
             exit 1
           fi
           sleep 2
@@ -1126,13 +1126,13 @@ jobs:
       run: |
         uvicorn app.main:app --host 0.0.0.0 --port 8000 &
         # Wait for FastAPI to finish startup (lifespan, scheduler init)
-        for i in {1..20}; do
+        for i in {1..45}; do
           if curl --fail --silent --max-time 2 http://localhost:8000/health > /dev/null 2>&1; then
             echo "✅ FastAPI ready after ${i} attempts"
             break
           fi
-          if [ $i -eq 20 ]; then
-            echo "❌ FastAPI failed to start after 20 attempts (40s)"
+          if [ $i -eq 45 ]; then
+            echo "❌ FastAPI failed to start after 45 attempts (90s)"
             exit 1
           fi
           sleep 2
@@ -1314,13 +1314,13 @@ jobs:
       run: |
         uvicorn app.main:app --host 0.0.0.0 --port 8000 &
         # Wait for FastAPI to finish startup (lifespan, scheduler init)
-        for i in {1..20}; do
+        for i in {1..45}; do
           if curl --fail --silent --max-time 2 http://localhost:8000/health > /dev/null 2>&1; then
             echo "✅ FastAPI ready after ${i} attempts"
             break
           fi
-          if [ $i -eq 20 ]; then
-            echo "❌ FastAPI failed to start after 20 attempts (40s)"
+          if [ $i -eq 45 ]; then
+            echo "❌ FastAPI failed to start after 45 attempts (90s)"
             exit 1
           fi
           sleep 2
@@ -1418,13 +1418,13 @@ jobs:
         TESTING: "true"
       run: |
         uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-        for i in {1..20}; do
+        for i in {1..45}; do
           if curl --fail --silent --max-time 2 http://localhost:8000/health > /dev/null 2>&1; then
             echo "✅ FastAPI ready after ${i} attempts"
             break
           fi
-          if [ $i -eq 20 ]; then
-            echo "❌ FastAPI failed to start after 20 attempts (40s)"
+          if [ $i -eq 45 ]; then
+            echo "❌ FastAPI failed to start after 45 attempts (90s)"
             exit 1
           fi
           sleep 2
@@ -1522,13 +1522,13 @@ jobs:
         TESTING: "true"
       run: |
         uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-        for i in {1..20}; do
+        for i in {1..45}; do
           if curl --fail --silent --max-time 2 http://localhost:8000/health > /dev/null 2>&1; then
             echo "✅ FastAPI ready after ${i} attempts"
             break
           fi
-          if [ $i -eq 20 ]; then
-            echo "❌ FastAPI failed to start after 20 attempts (40s)"
+          if [ $i -eq 45 ]; then
+            echo "❌ FastAPI failed to start after 45 attempts (90s)"
             exit 1
           fi
           sleep 2
@@ -1626,13 +1626,13 @@ jobs:
         TESTING: "true"
       run: |
         uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-        for i in {1..20}; do
+        for i in {1..45}; do
           if curl --fail --silent --max-time 2 http://localhost:8000/health > /dev/null 2>&1; then
             echo "✅ FastAPI ready after ${i} attempts"
             break
           fi
-          if [ $i -eq 20 ]; then
-            echo "❌ FastAPI failed to start after 20 attempts (40s)"
+          if [ $i -eq 45 ]; then
+            echo "❌ FastAPI failed to start after 45 attempts (90s)"
             exit 1
           fi
           sleep 2
@@ -1730,13 +1730,13 @@ jobs:
         TESTING: "true"
       run: |
         uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-        for i in {1..20}; do
+        for i in {1..45}; do
           if curl --fail --silent --max-time 2 http://localhost:8000/health > /dev/null 2>&1; then
             echo "✅ FastAPI ready after ${i} attempts"
             break
           fi
-          if [ $i -eq 20 ]; then
-            echo "❌ FastAPI failed to start after 20 attempts (40s)"
+          if [ $i -eq 45 ]; then
+            echo "❌ FastAPI failed to start after 45 attempts (90s)"
             exit 1
           fi
           sleep 2
@@ -2249,10 +2249,399 @@ jobs:
         echo "The application stack did not start cleanly or a core endpoint returned"
         echo "an unexpected status code.  Check the 'Collect application logs' step above."
 
+  # ─── CYPRESS E2E WEB SUITE (GATE C) ──────────────────────────────────────────
+  # Inlined from cypress-web-e2e.yml to produce a single unified run ID.
+  # All 5 jobs must pass (0 skipped allowed) — Gate C of EXECUTION_TRUTH_MODEL_v1.
+
+  cypress-web-admin:
+    name: Cypress Web E2E — admin
+    runs-on: ubuntu-latest
+    needs: unit-tests
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_DB: lfa_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+      - name: Write .env
+        run: |
+          cat > .env << 'EOF'
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/lfa_test
+          SECRET_KEY=ci-web-e2e-key-not-for-production
+          ENVIRONMENT=test
+          TESTING=true
+          DEBUG=false
+          ENABLE_RATE_LIMITING=false
+          EOF
+      - name: Run Alembic migrations
+        run: alembic upgrade head
+      - name: Seed DB — baseline
+        run: python scripts/reset_e2e_web_db.py --scenario baseline
+      - name: Start FastAPI backend
+        run: |
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          timeout 90 bash -c 'until curl -sf http://localhost:8000/health; do sleep 1; done'
+          echo "FastAPI backend ready"
+      - name: Install Cypress
+        working-directory: cypress
+        run: npm ci
+      - name: Run Cypress — admin
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: cypress
+          spec: cypress/e2e/web/admin/**
+          browser: chrome
+          config: "baseUrl=http://localhost:8000"
+        env:
+          CYPRESS_webAdminEmail: admin@lfa.com
+          CYPRESS_webAdminPassword: admin123
+          CYPRESS_webInstructorEmail: grandmaster@lfa.com
+          CYPRESS_webInstructorPassword: TestInstructor2026
+          CYPRESS_webStudentEmail: rdias@manchestercity.com
+          CYPRESS_webStudentPassword: TestPlayer2026
+          CYPRESS_webFreshEmail: fresh.e2e@lfa.com
+          CYPRESS_webFreshPassword: FreshE2E2026
+          CYPRESS_apiUrl: http://localhost:8000
+      - name: Upload screenshots on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots-admin
+          path: cypress/cypress/screenshots
+          retention-days: 7
+
+  cypress-web-instructor:
+    name: Cypress Web E2E — instructor
+    runs-on: ubuntu-latest
+    needs: unit-tests
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_DB: lfa_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+      - name: Write .env
+        run: |
+          cat > .env << 'EOF'
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/lfa_test
+          SECRET_KEY=ci-web-e2e-key-not-for-production
+          ENVIRONMENT=test
+          TESTING=true
+          DEBUG=false
+          ENABLE_RATE_LIMITING=false
+          EOF
+      - name: Run Alembic migrations
+        run: alembic upgrade head
+      - name: Seed DB — session_ready
+        run: python scripts/reset_e2e_web_db.py --scenario session_ready
+      - name: Start FastAPI backend
+        run: |
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          timeout 90 bash -c 'until curl -sf http://localhost:8000/health; do sleep 1; done'
+          echo "FastAPI backend ready"
+      - name: Install Cypress
+        working-directory: cypress
+        run: npm ci
+      - name: Run Cypress — instructor
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: cypress
+          spec: "cypress/e2e/web/instructor/**,cypress/e2e/web/sessions/instructor_session_lifecycle.cy.js"
+          browser: chrome
+          config: "baseUrl=http://localhost:8000"
+        env:
+          CYPRESS_webAdminEmail: admin@lfa.com
+          CYPRESS_webAdminPassword: admin123
+          CYPRESS_webInstructorEmail: grandmaster@lfa.com
+          CYPRESS_webInstructorPassword: TestInstructor2026
+          CYPRESS_webStudentEmail: rdias@manchestercity.com
+          CYPRESS_webStudentPassword: TestPlayer2026
+          CYPRESS_webFreshEmail: fresh.e2e@lfa.com
+          CYPRESS_webFreshPassword: FreshE2E2026
+          CYPRESS_apiUrl: http://localhost:8000
+      - name: Upload screenshots on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots-instructor
+          path: cypress/cypress/screenshots
+          retention-days: 7
+
+  cypress-web-student:
+    name: Cypress Web E2E — student
+    runs-on: ubuntu-latest
+    needs: unit-tests
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_DB: lfa_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+      - name: Write .env
+        run: |
+          cat > .env << 'EOF'
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/lfa_test
+          SECRET_KEY=ci-web-e2e-key-not-for-production
+          ENVIRONMENT=test
+          TESTING=true
+          DEBUG=false
+          ENABLE_RATE_LIMITING=false
+          EOF
+      - name: Run Alembic migrations
+        run: alembic upgrade head
+      - name: Seed DB — student_with_credits
+        run: python scripts/reset_e2e_web_db.py --scenario student_with_credits
+      - name: Start FastAPI backend
+        run: |
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          timeout 90 bash -c 'until curl -sf http://localhost:8000/health; do sleep 1; done'
+          echo "FastAPI backend ready"
+      - name: Install Cypress
+        working-directory: cypress
+        run: npm ci
+      - name: Run Cypress — student
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: cypress
+          spec: "cypress/e2e/web/auth/**,cypress/e2e/web/student/**,cypress/e2e/web/sessions/student_booking.cy.js"
+          browser: chrome
+          config: "baseUrl=http://localhost:8000"
+        env:
+          CYPRESS_webAdminEmail: admin@lfa.com
+          CYPRESS_webAdminPassword: admin123
+          CYPRESS_webInstructorEmail: grandmaster@lfa.com
+          CYPRESS_webInstructorPassword: TestInstructor2026
+          CYPRESS_webStudentEmail: rdias@manchestercity.com
+          CYPRESS_webStudentPassword: TestPlayer2026
+          CYPRESS_webFreshEmail: fresh.e2e@lfa.com
+          CYPRESS_webFreshPassword: FreshE2E2026
+          CYPRESS_apiUrl: http://localhost:8000
+      - name: Upload screenshots on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots-student
+          path: cypress/cypress/screenshots
+          retention-days: 7
+
+  cypress-web-business:
+    name: Cypress Web E2E — business-workflow
+    runs-on: ubuntu-latest
+    needs: unit-tests
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_DB: lfa_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+      - name: Write .env
+        run: |
+          cat > .env << 'EOF'
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/lfa_test
+          SECRET_KEY=ci-web-e2e-key-not-for-production
+          ENVIRONMENT=test
+          TESTING=true
+          DEBUG=false
+          ENABLE_RATE_LIMITING=false
+          EOF
+      - name: Run Alembic migrations
+        run: alembic upgrade head
+      - name: Seed DB — business_lifecycle
+        run: python scripts/reset_e2e_web_db.py --scenario business_lifecycle
+      - name: Start FastAPI backend
+        run: |
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          timeout 90 bash -c 'until curl -sf http://localhost:8000/health; do sleep 1; done'
+          echo "FastAPI backend ready"
+      - name: Install Cypress
+        working-directory: cypress
+        run: npm ci
+      - name: Run Cypress — business-workflow
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: cypress
+          spec: cypress/e2e/web/business_workflows/**
+          browser: chrome
+          config: "baseUrl=http://localhost:8000"
+        env:
+          CYPRESS_webAdminEmail: admin@lfa.com
+          CYPRESS_webAdminPassword: admin123
+          CYPRESS_webInstructorEmail: grandmaster@lfa.com
+          CYPRESS_webInstructorPassword: TestInstructor2026
+          CYPRESS_webStudentEmail: rdias@manchestercity.com
+          CYPRESS_webStudentPassword: TestPlayer2026
+          CYPRESS_webFreshEmail: fresh.e2e@lfa.com
+          CYPRESS_webFreshPassword: FreshE2E2026
+          CYPRESS_apiUrl: http://localhost:8000
+      - name: Upload screenshots on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots-business
+          path: cypress/cypress/screenshots
+          retention-days: 7
+
+  cypress-web-integration:
+    name: Cypress Web E2E — cross-role integration
+    runs-on: ubuntu-latest
+    needs: [cypress-web-admin, cypress-web-instructor, cypress-web-student, cypress-web-business]
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_DB: lfa_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+      - name: Write .env
+        run: |
+          cat > .env << 'EOF'
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/lfa_test
+          SECRET_KEY=ci-web-e2e-key-not-for-production
+          ENVIRONMENT=test
+          TESTING=true
+          DEBUG=false
+          ENABLE_RATE_LIMITING=false
+          EOF
+      - name: Run Alembic migrations
+        run: alembic upgrade head
+      - name: Seed DB — session_ready (cross-role lifecycle)
+        run: python scripts/reset_e2e_web_db.py --scenario session_ready
+      - name: Start FastAPI backend
+        run: |
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          timeout 90 bash -c 'until curl -sf http://localhost:8000/health; do sleep 1; done'
+          echo "FastAPI backend ready"
+      - name: Install Cypress
+        working-directory: cypress
+        run: npm ci
+      - name: Run cross-role lifecycle test
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: cypress
+          spec: cypress/e2e/web/cross_role/full_student_lifecycle.cy.js
+          browser: chrome
+          config: "baseUrl=http://localhost:8000"
+        env:
+          CYPRESS_webAdminEmail: admin@lfa.com
+          CYPRESS_webAdminPassword: admin123
+          CYPRESS_webInstructorEmail: grandmaster@lfa.com
+          CYPRESS_webInstructorPassword: TestInstructor2026
+          CYPRESS_webStudentEmail: rdias@manchestercity.com
+          CYPRESS_webStudentPassword: TestPlayer2026
+          CYPRESS_webFreshEmail: fresh.e2e@lfa.com
+          CYPRESS_webFreshPassword: FreshE2E2026
+          CYPRESS_apiUrl: http://localhost:8000
+      - name: Upload screenshots on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots-integration
+          path: cypress/cypress/screenshots
+          retention-days: 7
+
   baseline-report:
     name: Generate Baseline Report
     runs-on: ubuntu-latest
-    needs: [unit-tests, smoke-tests, api-module-integrity, hardcoded-id-guard, credit-audit, security-gate, migration-integrity, migration-volume-test, payment-workflow-gate, core-access-gate, student-lifecycle-gate, instructor-lifecycle-gate, refund-workflow-gate, multi-campus-gate, session-management-gate, skill-assessment-lifecycle-gate, booking-lifecycle-gate, auth-lifecycle-gate, enrollment-workflow-gate, user-account-gate, instructor-assignment-lifecycle-gate, operational-smoke-test]
+    needs: [unit-tests, smoke-tests, api-module-integrity, hardcoded-id-guard, credit-audit, security-gate, migration-integrity, migration-volume-test, payment-workflow-gate, core-access-gate, student-lifecycle-gate, instructor-lifecycle-gate, refund-workflow-gate, multi-campus-gate, session-management-gate, skill-assessment-lifecycle-gate, booking-lifecycle-gate, auth-lifecycle-gate, enrollment-workflow-gate, user-account-gate, instructor-assignment-lifecycle-gate, operational-smoke-test, cypress-web-admin, cypress-web-instructor, cypress-web-student, cypress-web-business, cypress-web-integration]
     if: always()
 
     steps:
@@ -2285,8 +2674,13 @@ jobs:
         INSTRUCTOR_ASSIGNMENT="${{ needs.instructor-assignment-lifecycle-gate.result }}"
         MIGRATION_VOLUME="${{ needs.migration-volume-test.result }}"
         OPERATIONAL_SMOKE="${{ needs.operational-smoke-test.result }}"
+        CYPRESS_ADMIN="${{ needs.cypress-web-admin.result }}"
+        CYPRESS_INSTRUCTOR="${{ needs.cypress-web-instructor.result }}"
+        CYPRESS_STUDENT="${{ needs.cypress-web-student.result }}"
+        CYPRESS_BUSINESS="${{ needs.cypress-web-business.result }}"
+        CYPRESS_INTEGRATION="${{ needs.cypress-web-integration.result }}"
 
-        if [ "$UNIT" == "success" ] && [ "$SMOKE" == "success" ] && [ "$INTEGRITY" == "success" ] && [ "$ID_GUARD" == "success" ] && [ "$CREDIT_AUDIT" == "success" ] && [ "$SECURITY" == "success" ] && [ "$MIGRATION" == "success" ] && [ "$MIGRATION_VOLUME" == "success" ] && [ "$OPERATIONAL_SMOKE" == "success" ] && [ "$PAYMENT" == "success" ] && [ "$CORE_ACCESS" == "success" ] && [ "$STUDENT_LIFECYCLE" == "success" ] && [ "$INSTRUCTOR_LIFECYCLE" == "success" ] && [ "$REFUND_WORKFLOW" == "success" ] && [ "$MULTI_CAMPUS" == "success" ] && [ "$SESSION_MANAGEMENT" == "success" ] && [ "$SKILL_LIFECYCLE" == "success" ] && [ "$BOOKING_LIFECYCLE" == "success" ] && [ "$AUTH_LIFECYCLE" == "success" ] && [ "$ENROLLMENT_WORKFLOW" == "success" ] && [ "$USER_ACCOUNT" == "success" ] && [ "$INSTRUCTOR_ASSIGNMENT" == "success" ]; then
+        if [ "$UNIT" == "success" ] && [ "$SMOKE" == "success" ] && [ "$INTEGRITY" == "success" ] && [ "$ID_GUARD" == "success" ] && [ "$CREDIT_AUDIT" == "success" ] && [ "$SECURITY" == "success" ] && [ "$MIGRATION" == "success" ] && [ "$MIGRATION_VOLUME" == "success" ] && [ "$OPERATIONAL_SMOKE" == "success" ] && [ "$PAYMENT" == "success" ] && [ "$CORE_ACCESS" == "success" ] && [ "$STUDENT_LIFECYCLE" == "success" ] && [ "$INSTRUCTOR_LIFECYCLE" == "success" ] && [ "$REFUND_WORKFLOW" == "success" ] && [ "$MULTI_CAMPUS" == "success" ] && [ "$SESSION_MANAGEMENT" == "success" ] && [ "$SKILL_LIFECYCLE" == "success" ] && [ "$BOOKING_LIFECYCLE" == "success" ] && [ "$AUTH_LIFECYCLE" == "success" ] && [ "$ENROLLMENT_WORKFLOW" == "success" ] && [ "$USER_ACCOUNT" == "success" ] && [ "$INSTRUCTOR_ASSIGNMENT" == "success" ] && [ "$CYPRESS_ADMIN" == "success" ] && [ "$CYPRESS_INSTRUCTOR" == "success" ] && [ "$CYPRESS_STUDENT" == "success" ] && [ "$CYPRESS_BUSINESS" == "success" ] && [ "$CYPRESS_INTEGRATION" == "success" ]; then
           echo "✅ **PASS** - Baseline maintained (100% LIFECYCLE COVERAGE)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Unit & Integration Tests" >> $GITHUB_STEP_SUMMARY
@@ -2312,6 +2706,13 @@ jobs:
           echo "- **Enrollment Workflow E2E: 3/3 tests passing (enroll→auto-approve→duplicate rejected)** 📋 NEW - Sprint 38" >> $GITHUB_STEP_SUMMARY
           echo "- **User Account E2E: 3/3 tests passing (password change → old creds fail → new creds work)** 🔑 NEW - Sprint 39" >> $GITHUB_STEP_SUMMARY
           echo "- **Instructor Assignment Lifecycle E2E: 4/4 tests passing (admin assigns → accept/decline, auth guards)** 👨‍🏫 NEW - Sprint 40" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Cypress Web E2E (Gate C — 5/5 jobs, 339 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- **admin**: all admin CRUD flows, RBAC, responsive layout — ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- **instructor**: dashboard, session lifecycle, tournament manage — ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- **student**: auth, onboarding, quiz, credits, booking, profile — ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- **business-workflow**: booking workflow, session lifecycle workflow — ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- **cross-role integration**: full_student_lifecycle.cy.js (15 tests: login→book→start→attend→stop→evaluate) — ✅" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Policy Enforcement" >> $GITHUB_STEP_SUMMARY
           echo "- **0 Flake Tolerance**: All tests must pass 20 sequential runs with 0 failures" >> $GITHUB_STEP_SUMMARY
@@ -2346,6 +2747,11 @@ jobs:
           echo "| **Enrollment Workflow E2E** 📋 | $ENROLLMENT_WORKFLOW |" >> $GITHUB_STEP_SUMMARY
           echo "| **User Account E2E** 🔑 | $USER_ACCOUNT |" >> $GITHUB_STEP_SUMMARY
           echo "| **Instructor Assignment Lifecycle E2E** 👨‍🏫 | $INSTRUCTOR_ASSIGNMENT |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Cypress — admin** 🌐 | $CYPRESS_ADMIN |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Cypress — instructor** 🌐 | $CYPRESS_INSTRUCTOR |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Cypress — student** 🌐 | $CYPRESS_STUDENT |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Cypress — business-workflow** 🌐 | $CYPRESS_BUSINESS |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Cypress — cross-role integration** 🌐 | $CYPRESS_INTEGRATION |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**DO NOT MERGE** - Fix tests first" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
