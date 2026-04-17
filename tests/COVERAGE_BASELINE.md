@@ -46,7 +46,7 @@ A flow is COVERED only when ALL 3 layers are proven:
 
 | Workflow | Last result | SHA |
 |----------|-------------|-----|
-| Test Baseline Check | ✅ | ccd43b4 (run 24532953093, 24/24) |
+| Test Baseline Check | ✅ | f9acabd (run 24584231861, all jobs green — incl. 7 ATK attack surface tests + RACE-01) |
 | E2E Lifecycle Visibility | ✅ | 4f96870 |
 | Dark Mode CSS Validation | ✅ | 4f96870 |
 | E2E Multi-Campus Venue + Instructor | ✅ | 4f96870 |
