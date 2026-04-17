@@ -4635,3 +4635,206 @@ def test_delete_sessions_blocked_by_attendance(test_db: Session, client: TestCli
     from app.models.semester_schedule_config import SemesterScheduleConfig
     cfg = test_db.query(SemesterScheduleConfig).filter_by(semester_id=semester.id).first()
     assert cfg.sessions_generated == True, "Config should still be sessions_generated=True"
+
+
+# ── Phase 3: Student Enrollment (MINI_SEASON / ACADEMY_SEASON) ───────────────
+
+
+def test_semester_enroll_browse_page(test_db: Session, client: TestClient):
+    """SCHED_G3-01: GET /semesters/enroll → 200, matching semester visible for student."""
+    semester, _, _ = _make_mini_season_with_config(
+        test_db, start_date=date(2026, 8, 4), weeks=8, day_of_week=1
+    )
+    student = _make_user(test_db, role=UserRole.STUDENT)
+    student.specialization = SpecializationType.LFA_FOOTBALL_PLAYER
+    _make_license(test_db, student)
+    test_db.flush()
+    app.dependency_overrides[get_current_user_web] = lambda: student
+
+    r = client.get("/semesters/enroll")
+    assert r.status_code == 200, f"Expected 200, got {r.status_code}. Body: {r.text[:300]}"
+    assert semester.name in r.text, f"Expected '{semester.name}' in page"
+
+
+def test_semester_auto_enroll(test_db: Session, client: TestClient):
+    """SCHED_G3-02: POST /semesters/request-enrollment → APPROVED + credits deducted + sessions booked."""
+    semester, campus, pitch = _make_mini_season_with_config(
+        test_db, start_date=date(2026, 8, 4), weeks=4, day_of_week=1
+    )
+    # Seed 4 auto_generated sessions for the semester
+    for i in range(4):
+        s = SessionModel(
+            title=f"G3 Session {i + 1}",
+            semester_id=semester.id,
+            campus_id=campus.id,
+            pitch_id=pitch.id,
+            date_start=datetime(2026, 8, 5 + i * 7, 17, 0),
+            date_end=datetime(2026, 8, 5 + i * 7, 18, 30),
+            session_status="scheduled",
+            auto_generated=True,
+            rounds_data={},
+        )
+        test_db.add(s)
+    test_db.flush()
+
+    student = _make_user(test_db, role=UserRole.STUDENT, credit_balance=5000)
+    student.specialization = SpecializationType.LFA_FOOTBALL_PLAYER
+    license_ = _make_license(test_db, student)
+    # enrollment_cost already set to 2000 by _make_mini_season_with_config
+    test_db.flush()
+    app.dependency_overrides[get_current_user_web] = lambda: student
+
+    r = client.post(
+        "/semesters/request-enrollment",
+        data={"semester_id": str(semester.id)},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303, f"Expected 303, got {r.status_code}. Body: {r.text[:300]}"
+    assert "success=enrolled" in r.headers["location"], (
+        f"Expected success=enrolled in redirect: {r.headers['location']}"
+    )
+
+    test_db.expire_all()
+    enrollment = (
+        test_db.query(SemesterEnrollment)
+        .filter_by(user_id=student.id, semester_id=semester.id)
+        .first()
+    )
+    assert enrollment is not None, "SemesterEnrollment not created"
+    assert enrollment.request_status == EnrollmentStatus.APPROVED
+    assert enrollment.is_active == True
+
+    test_db.refresh(student)
+    assert student.credit_balance == 3000, (
+        f"Expected credit_balance=3000 (5000-2000), got {student.credit_balance}"
+    )
+
+    bookings = (
+        test_db.query(Booking)
+        .filter_by(user_id=student.id, enrollment_id=enrollment.id)
+        .all()
+    )
+    assert len(bookings) == 4, f"Expected 4 Booking rows, got {len(bookings)}"
+
+
+def test_semester_session_visibility_after_enroll(test_db: Session, client: TestClient):
+    """SCHED_G3-03: After APPROVED enrollment, student sees sessions at GET /sessions."""
+    semester, campus, pitch = _make_mini_season_with_config(
+        test_db, start_date=date(2026, 8, 4), weeks=2, day_of_week=1
+    )
+    s1 = SessionModel(
+        title="G3 Visible Session",
+        semester_id=semester.id,
+        campus_id=campus.id,
+        pitch_id=pitch.id,
+        date_start=datetime(2026, 8, 5, 17, 0),
+        date_end=datetime(2026, 8, 5, 18, 30),
+        session_status="scheduled",
+        auto_generated=True,
+        rounds_data={},
+    )
+    test_db.add(s1)
+    test_db.flush()
+
+    student = _make_user(test_db, role=UserRole.STUDENT, credit_balance=0)
+    student.specialization = SpecializationType.LFA_FOOTBALL_PLAYER
+    license_ = _make_license(test_db, student)
+    semester.enrollment_cost = 0
+    test_db.flush()
+
+    # Enroll directly in DB (route-level already tested in G3-02)
+    now = datetime.utcnow()
+    enrollment = SemesterEnrollment(
+        user_id=student.id,
+        semester_id=semester.id,
+        user_license_id=license_.id,
+        request_status=EnrollmentStatus.APPROVED,
+        is_active=True,
+        requested_at=now,
+        approved_at=now,
+        enrolled_at=now,
+    )
+    test_db.add(enrollment)
+    test_db.commit()
+    app.dependency_overrides[get_current_user_web] = lambda: student
+
+    r = client.get("/sessions")
+    assert r.status_code == 200, f"Expected 200 for /sessions, got {r.status_code}"
+    assert "G3 Visible Session" in r.text, (
+        "Expected session title to appear in /sessions after enrollment"
+    )
+
+
+def test_semester_withdraw_enrollment(test_db: Session, client: TestClient):
+    """SCHED_G3-04: POST /semesters/withdraw-enrollment → 50% refund + bookings deleted + WITHDRAWN."""
+    semester, campus, pitch = _make_mini_season_with_config(
+        test_db, start_date=date(2026, 8, 4), weeks=4, day_of_week=2
+    )
+    # enrollment_cost=2000 from helper; student has 3000 (simulating post-enrollment state)
+    student = _make_user(test_db, role=UserRole.STUDENT, credit_balance=3000)
+    student.specialization = SpecializationType.LFA_FOOTBALL_PLAYER
+    license_ = _make_license(test_db, student)
+    test_db.flush()
+
+    now = datetime.utcnow()
+    enrollment = SemesterEnrollment(
+        user_id=student.id,
+        semester_id=semester.id,
+        user_license_id=license_.id,
+        request_status=EnrollmentStatus.APPROVED,
+        is_active=True,
+        requested_at=now,
+        approved_at=now,
+        enrolled_at=now,
+    )
+    test_db.add(enrollment)
+    test_db.flush()
+
+    # Create a proper session + booking so we can verify booking deletion
+    session_obj = SessionModel(
+        title="G3 Withdraw Session",
+        semester_id=semester.id,
+        campus_id=campus.id,
+        pitch_id=pitch.id,
+        date_start=datetime(2026, 8, 5, 17, 0),
+        date_end=datetime(2026, 8, 5, 18, 30),
+        session_status="scheduled",
+        auto_generated=True,
+        rounds_data={},
+    )
+    test_db.add(session_obj)
+    test_db.flush()
+    test_db.add(Booking(
+        user_id=student.id,
+        session_id=session_obj.id,
+        enrollment_id=enrollment.id,
+        status=BookingStatus.CONFIRMED,
+        created_at=now,
+    ))
+    test_db.flush()
+    app.dependency_overrides[get_current_user_web] = lambda: student
+
+    r = client.post(
+        "/semesters/withdraw-enrollment",
+        data={"enrollment_id": str(enrollment.id)},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303, f"Expected 303, got {r.status_code}. Body: {r.text[:300]}"
+    assert "success=withdrawn" in r.headers["location"], (
+        f"Expected success=withdrawn in redirect: {r.headers['location']}"
+    )
+
+    test_db.expire_all()
+    test_db.refresh(enrollment)
+    assert enrollment.is_active == False, "Enrollment should be inactive after withdrawal"
+    assert enrollment.request_status == EnrollmentStatus.WITHDRAWN
+
+    test_db.refresh(student)
+    assert student.credit_balance == 4000, (
+        f"Expected credit_balance=4000 (3000 + 1000 refund), got {student.credit_balance}"
+    )
+
+    remaining = (
+        test_db.query(Booking).filter_by(enrollment_id=enrollment.id).count()
+    )
+    assert remaining == 0, f"Expected 0 bookings after withdrawal, got {remaining}"

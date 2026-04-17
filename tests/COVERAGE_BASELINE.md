@@ -14,11 +14,11 @@ A flow is COVERED only when ALL 3 layers are proven:
 
 | Metric | Value |
 |--------|-------|
-| Total defined flows | **65** |
-| Covered (all 3 layers) | **70** |
+| Total defined flows | **74** |
+| Covered (all 3 layers) | **74** |
 | Not Implemented on main | **0** |
 | Not Covered | **0** |
-| **Coverage KPI** | **100%** (70/70 implemented flows) |
+| **Coverage KPI** | **100%** (74/74 implemented flows) |
 | Sprint 1 additions | +5 flows (F-03, F-14, F-15, F-16, F-29) |
 | Sprint 2 additions | +8 flows (F-04, F-05, F-12, F-24, F-25, F-32, F-35, F-38) |
 | Sprint 3 additions | +2 flows (F-41, F-42) |
@@ -29,6 +29,7 @@ A flow is COVERED only when ALL 3 layers are proven:
 | Phase 2 Step 1 additions | +3 flows (F-65, F-66, F-67) — MINI_SEASON / ACADEMY_SEASON Scheduling API |
 | Phase 2 Step 2 additions | +2 flows (F-68, F-69) — Scheduling Admin UI (web routes + template) |
 | Phase 2 Release Gate | +1 flow (F-70) — DELETE sessions 409 when attendance exists |
+| Phase 3 Step 2 additions | +4 flows (F-71, F-72, F-73, F-74) — Student enrollment MINI_SEASON / ACADEMY_SEASON |
 
 ---
 
@@ -44,6 +45,7 @@ A flow is COVERED only when ALL 3 layers are proven:
 | E2E Virtual Tournament | ✅ | 4f96870 |
 | E2E Tournament Session Types | ✅ | 4f96870 |
 | Cypress Web E2E Tests | ✅ | 4f96870 |
+| SCHED Regression Gate | ✅ | pending (Phase 3 Step 2) |
 
 ---
 
@@ -51,10 +53,10 @@ A flow is COVERED only when ALL 3 layers are proven:
 
 | Suite | Count |
 |-------|-------|
-| `tests/integration/web_flows/` | **591** (41 files, +3 SCHED_G1-04/G2-01/G2-02) |
+| `tests/integration/web_flows/` | **595** (41 files, +4 SCHED_G3-01..04) |
 | `tests/integration/api_smoke/` | **1,741** |
 | Cypress (`cypress/e2e/`) | **18** (5 files, +SCHED-01..05) |
-| **Total** | **2,341** |
+| **Total** | **2,354** |
 
 ---
 
@@ -139,6 +141,10 @@ A flow is COVERED only when ALL 3 layers are proven:
 | F-68 | GET /admin/semesters/{id}/schedule → 200, generate form visible, semester name in page | ✅ | ✅ | ✅ | **COVERED** | SCHED_G2-01 (test_semester_schedule_page_renders) |
 | F-69 | POST /admin/semesters/{id}/schedule/generate → 303 redirect + sessions in DB | ✅ | ✅ | ✅ | **COVERED** | SCHED_G2-02 (test_semester_schedule_generate_via_web) |
 | F-70 | DELETE /api/v1/semesters/{id}/sessions with attendance → 409, 0 sessions deleted, config unchanged | ✅ | ✅ | ✅ | **COVERED** | SCHED_G1-04 (test_delete_sessions_blocked_by_attendance) |
+| F-71 | GET /semesters/enroll → 200, matching MINI_SEASON semester visible for student with correct spec | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-01 (test_semester_enroll_browse_page) |
+| F-72 | POST /semesters/request-enrollment → APPROVED enrollment + credit deducted + 4 Booking rows | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-02 (test_semester_auto_enroll) |
+| F-73 | After APPROVED enrollment, GET /sessions shows auto_generated sessions from that semester | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-03 (test_semester_session_visibility_after_enroll) |
+| F-74 | POST /semesters/withdraw-enrollment → 50% refund + enrollment WITHDRAWN + Booking rows deleted | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-04 (test_semester_withdraw_enrollment) |
 
 ---
 
