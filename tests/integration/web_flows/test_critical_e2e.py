@@ -4967,3 +4967,112 @@ def test_re_enrollment_after_withdraw(test_db: Session, client: TestClient):
 
     test_db.refresh(student)
     assert student.credit_balance == 2500, f"Expected 2500 (3500 - 1000), got {student.credit_balance}"
+
+
+@pytest.mark.sched
+def test_waitlist_auto_promote_on_withdraw(test_db: Session, client: TestClient):
+    """SCHED_G3-07: Withdraw semester → CONFIRMED booking freed → first WAITLISTED promoted to CONFIRMED."""
+    semester, campus, pitch = _make_mini_season_with_config(
+        test_db, start_date=date(2026, 10, 1), weeks=2, day_of_week=3
+    )
+    s = SessionModel(
+        title="Promo Session",
+        semester_id=semester.id,
+        campus_id=campus.id,
+        pitch_id=pitch.id,
+        date_start=datetime(2026, 10, 7, 17, 0),
+        date_end=datetime(2026, 10, 7, 18, 30),
+        session_status="scheduled",
+        auto_generated=True,
+        rounds_data={},
+        capacity=1,
+    )
+    test_db.add(s)
+    semester.enrollment_cost = 0
+    test_db.flush()
+
+    # Student A enrolls → session CONFIRMED (capacity=1, 0 confirmed so far)
+    student_a = _make_user(test_db, role=UserRole.STUDENT, credit_balance=0)
+    student_a.specialization = SpecializationType.LFA_FOOTBALL_PLAYER
+    _make_license(test_db, student_a)
+    test_db.flush()
+    app.dependency_overrides[get_current_user_web] = lambda: student_a
+    r1 = client.post(
+        "/semesters/request-enrollment",
+        data={"semester_id": str(semester.id)},
+        follow_redirects=False,
+    )
+    assert r1.status_code == 303
+    test_db.expire_all()
+    booking_a = test_db.query(Booking).filter_by(user_id=student_a.id, session_id=s.id).first()
+    assert booking_a.status == BookingStatus.CONFIRMED, "Student A should be CONFIRMED"
+
+    # Student B enrolls → session WAITLISTED (capacity=1, 1 confirmed)
+    student_b = _make_user(test_db, role=UserRole.STUDENT, credit_balance=0)
+    student_b.specialization = SpecializationType.LFA_FOOTBALL_PLAYER
+    _make_license(test_db, student_b)
+    test_db.flush()
+    app.dependency_overrides[get_current_user_web] = lambda: student_b
+    r2 = client.post(
+        "/semesters/request-enrollment",
+        data={"semester_id": str(semester.id)},
+        follow_redirects=False,
+    )
+    assert r2.status_code == 303
+    test_db.expire_all()
+    booking_b = test_db.query(Booking).filter_by(user_id=student_b.id, session_id=s.id).first()
+    assert booking_b.status == BookingStatus.WAITLISTED, "Student B should be WAITLISTED"
+
+    # Student A withdraws → frees the CONFIRMED slot
+    enroll_a = (
+        test_db.query(SemesterEnrollment)
+        .filter_by(user_id=student_a.id, semester_id=semester.id)
+        .first()
+    )
+    app.dependency_overrides[get_current_user_web] = lambda: student_a
+    r3 = client.post(
+        "/semesters/withdraw-enrollment",
+        data={"enrollment_id": str(enroll_a.id)},
+        follow_redirects=False,
+    )
+    assert r3.status_code == 303
+
+    # Student B should now be auto-promoted to CONFIRMED
+    test_db.expire_all()
+    booking_b_after = (
+        test_db.query(Booking).filter_by(user_id=student_b.id, session_id=s.id).first()
+    )
+    assert booking_b_after is not None, "Student B booking should still exist after promotion"
+    assert booking_b_after.status == BookingStatus.CONFIRMED, (
+        f"Expected CONFIRMED after auto-promote, got {booking_b_after.status}"
+    )
+
+
+@pytest.mark.sched
+def test_audit_log_on_semester_enroll(test_db: Session, client: TestClient):
+    """SCHED_G3-08: Semester enrollment creates AuditLog(action=SEMESTER_ENROLLED) entry."""
+    semester, campus, pitch = _make_mini_season_with_config(
+        test_db, start_date=date(2026, 10, 1), weeks=2, day_of_week=4
+    )
+    student = _make_user(test_db, role=UserRole.STUDENT, credit_balance=0)
+    student.specialization = SpecializationType.LFA_FOOTBALL_PLAYER
+    _make_license(test_db, student)
+    semester.enrollment_cost = 0
+    test_db.flush()
+    app.dependency_overrides[get_current_user_web] = lambda: student
+
+    r = client.post(
+        "/semesters/request-enrollment",
+        data={"semester_id": str(semester.id)},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303, f"Expected 303, got {r.status_code}"
+
+    test_db.expire_all()
+    log = (
+        test_db.query(AuditLog)
+        .filter_by(user_id=student.id, action="SEMESTER_ENROLLED")
+        .first()
+    )
+    assert log is not None, "AuditLog entry should be created on semester enrollment"
+    assert log.resource_type == "semester_enrollment"

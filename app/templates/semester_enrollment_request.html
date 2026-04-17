@@ -147,6 +147,20 @@
                         </button>
                     </form>
                     {% elif enrollment.request_status.value == 'approved' and enrollment.is_active %}
+                    {% set stats = booking_stats.get(semester.id, {}) %}
+                    {% if stats %}
+                    <div style="font-size:0.8em; text-align:center; margin-bottom:4px;">
+                        <span style="color:#38ef7d; font-weight:600;">✓ {{ stats.confirmed }} confirmed</span>
+                        {% if stats.waitlisted > 0 %}
+                        &nbsp;<span style="color:#f59e0b; font-weight:600;">⏳ {{ stats.waitlisted }} waitlisted</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% if semester.enrollment_cost and semester.enrollment_cost > 0 %}
+                    <div style="font-size:0.78em; opacity:0.75; text-align:center; margin-bottom:4px;">
+                        50% refund: {{ semester.enrollment_cost // 2 }} credits
+                    </div>
+                    {% endif %}
                     <form method="POST" action="/semesters/withdraw-enrollment"
                           onsubmit="return confirm('Withdraw from this semester? You will receive a 50% credit refund.')">
                         <input type="hidden" name="enrollment_id" value="{{ enrollment.id }}">

@@ -32,7 +32,7 @@ from ...models.session import Session as SessionModel, EventCategory
 from ...models.booking import Booking, BookingStatus
 from ...models.attendance import Attendance, AttendanceStatus
 from ...services.audit_service import AuditService
-from ...models.audit_log import AuditAction
+from ...models.audit_log import AuditAction, AuditLog
 from ...services.tournament.session_generation import get_tournament_venue
 from ...models.location import Location, LocationType
 from ...models.campus import Campus
@@ -4382,5 +4382,14 @@ async def admin_patch_session_instructor(
         return JSONResponse({"error": "Session not found"}, status_code=404)
 
     session.instructor_id = instructor_id
+    db.add(AuditLog(
+        user_id=user.id,
+        action="INSTRUCTOR_UPDATED",
+        resource_type="session",
+        resource_id=int(session_id),
+        details={"semester_id": int(semester_id), "new_instructor_id": instructor_id},
+        request_method="PATCH",
+        request_path=f"/admin/semesters/{semester_id}/sessions/{session_id}/instructor",
+    ))
     db.commit()
     return JSONResponse({"ok": True, "instructor_id": instructor_id})

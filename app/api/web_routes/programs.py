@@ -21,7 +21,9 @@ from sqlalchemy.orm import Session
 
 from ...database import get_db
 from ...dependencies import get_current_user_web
+from ...models.audit_log import AuditLog
 from ...models.booking import Booking, BookingStatus
+from ..api_v1.endpoints.bookings.helpers import auto_promote_from_waitlist
 from ...models.credit_transaction import CreditTransaction
 from ...models.license import UserLicense
 from ...models.semester import Semester, SemesterCategory, SemesterStatus
@@ -102,6 +104,27 @@ async def semester_enroll_browse(
         )
         session_counts = {sid: cnt for sid, cnt in rows}
 
+    booking_stats: dict = {}
+    enrolled_semester_ids = [sid for sid, e in enrollment_map.items() if e.is_active]
+    if enrolled_semester_ids:
+        rows = (
+            db.query(SessionModel.semester_id, Booking.status, func.count(Booking.id))
+            .join(Booking, Booking.session_id == SessionModel.id)
+            .filter(
+                Booking.user_id == user.id,
+                SessionModel.semester_id.in_(enrolled_semester_ids),
+                Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.WAITLISTED]),
+            )
+            .group_by(SessionModel.semester_id, Booking.status)
+            .all()
+        )
+        for sid, status, count in rows:
+            stats = booking_stats.setdefault(sid, {"confirmed": 0, "waitlisted": 0})
+            if status == BookingStatus.CONFIRMED:
+                stats["confirmed"] = count
+            elif status == BookingStatus.WAITLISTED:
+                stats["waitlisted"] = count
+
     return templates.TemplateResponse(
         "semester_enrollment_request.html",
         {
@@ -112,6 +135,7 @@ async def semester_enroll_browse(
             "enrollment_map": enrollment_map,
             "user_licenses": user_licenses,
             "session_counts": session_counts,
+            "booking_stats": booking_stats,
         },
     )
 
@@ -209,6 +233,16 @@ async def semester_request_enrollment(
             )
             db.add(enrollment)
             db.flush()
+
+        db.add(AuditLog(
+            user_id=user.id,
+            action="SEMESTER_ENROLLED",
+            resource_type="semester_enrollment",
+            resource_id=enrollment.id,
+            details={"semester_id": semester_id, "cost": cost, "semester_name": semester.name},
+            request_method="POST",
+            request_path="/semesters/request-enrollment",
+        ))
 
         if cost > 0:
             db.add(CreditTransaction(
@@ -338,10 +372,34 @@ async def semester_withdraw_enrollment(
             idempotency_key=str(uuid.uuid4()),
         ))
 
+    # Capture CONFIRMED session_ids before deletion (for waitlist auto-promotion)
+    confirmed_session_ids = [
+        row[0]
+        for row in db.query(Booking.session_id).filter(
+            Booking.enrollment_id == enrollment.id,
+            Booking.user_id == user.id,
+            Booking.status == BookingStatus.CONFIRMED,
+        ).all()
+    ]
+
     db.query(Booking).filter(
         Booking.enrollment_id == enrollment.id,
         Booking.user_id == user.id,
     ).delete(synchronize_session=False)
+
+    # Auto-promote first WAITLISTED → CONFIRMED for each freed session
+    for sid in confirmed_session_ids:
+        auto_promote_from_waitlist(db, sid)
+
+    db.add(AuditLog(
+        user_id=user.id,
+        action="SEMESTER_WITHDRAWN",
+        resource_type="semester_enrollment",
+        resource_id=enrollment.id,
+        details={"semester_id": enrollment.semester_id, "refund": refund},
+        request_method="POST",
+        request_path="/semesters/withdraw-enrollment",
+    ))
 
     db.commit()
     return RedirectResponse(url="/semesters/enroll?success=withdrawn", status_code=303)
