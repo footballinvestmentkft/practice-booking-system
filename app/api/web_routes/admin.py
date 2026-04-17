@@ -44,6 +44,9 @@ from ...models.event_reward_log import EventRewardLog
 from ...models.football_skill_assessment import FootballSkillAssessment
 from ...models.notification import Notification, NotificationType
 from ...models.instructor_assignment import InstructorAssignment
+from ...models.pitch import Pitch
+from ...models.semester_schedule_config import SemesterScheduleConfig
+from ...services.scheduling.mini_season_generator import MiniSeasonSessionGenerator, PitchConflictError
 from datetime import timedelta
 
 # Setup templates
@@ -4172,3 +4175,169 @@ async def admin_delete_player_photo(
     lfa_license.player_card_photo_url = None
     db.commit()
     return JSONResponse({"ok": True})
+
+
+# ============================================================================
+# ADMIN: Semester Schedule / Session Generation (Phase 2 — MINI_SEASON / ACADEMY_SEASON)
+# ============================================================================
+
+_SCHEDULING_CATEGORIES = {SemesterCategory.MINI_SEASON, SemesterCategory.ACADEMY_SEASON}
+
+
+@router.get("/admin/semesters/{semester_id}/schedule", response_class=HTMLResponse)
+async def semester_schedule_view(
+    semester_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    _admin_guard(user)
+
+    semester = db.query(Semester).filter(Semester.id == semester_id).first()
+    if not semester or semester.semester_category not in _SCHEDULING_CATEGORIES:
+        raise HTTPException(status_code=404, detail="Semester not found or not a scheduling semester.")
+
+    config = semester.schedule_config_obj
+    sessions = (
+        db.query(SessionModel)
+        .filter(
+            SessionModel.semester_id == semester_id,
+            SessionModel.auto_generated == True,
+        )
+        .order_by(SessionModel.date_start.asc())
+        .all()
+    )
+    attended_count = (
+        db.query(Attendance)
+        .join(SessionModel, Attendance.session_id == SessionModel.id)
+        .filter(SessionModel.semester_id == semester_id)
+        .count()
+    )
+    location_campuses = []
+    if semester.location_id:
+        location_campuses = (
+            db.query(Campus)
+            .filter(Campus.location_id == semester.location_id, Campus.is_active == True)
+            .all()
+        )
+
+    return templates.TemplateResponse(
+        "admin/semester_schedule.html",
+        {
+            "request": request,
+            "user": user,
+            "semester": semester,
+            "config": config,
+            "sessions": sessions,
+            "session_count": len(sessions),
+            "can_generate": config is None or not config.sessions_generated,
+            "can_delete": (
+                config is not None
+                and config.sessions_generated
+                and attended_count == 0
+            ),
+            "location_campuses": location_campuses,
+            "flash": request.query_params.get("flash"),
+            "flash_type": request.query_params.get("flash_type", "info"),
+        },
+    )
+
+
+@router.post("/admin/semesters/{semester_id}/schedule/generate", response_class=HTMLResponse)
+async def semester_schedule_generate(
+    semester_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    _admin_guard(user)
+
+    semester = db.query(Semester).filter(Semester.id == semester_id).first()
+    if not semester or semester.semester_category not in _SCHEDULING_CATEGORIES:
+        raise HTTPException(status_code=404, detail="Semester not found or not a scheduling semester.")
+
+    form = await request.form()
+    try:
+        day_of_week = int(form.get("day_of_week", 0))
+        start_time_str = form.get("start_time", "17:00")
+        parts = start_time_str.split(":")
+        from datetime import time as dt_time
+        start_time = dt_time(int(parts[0]), int(parts[1]))
+        duration_minutes = int(form.get("duration_minutes", 90))
+        sessions_per_week = int(form.get("sessions_per_week", 1))
+        campus_id = int(form["campus_id"]) if form.get("campus_id") else None
+        pitch_id = int(form["pitch_id"]) if form.get("pitch_id") else None
+        skip_conflicts = form.get("skip_conflicts") in ("on", "true", "1", True)
+    except (ValueError, KeyError) as exc:
+        redirect_url = (
+            f"/admin/semesters/{semester_id}/schedule"
+            f"?flash=Invalid+form+data&flash_type=error"
+        )
+        return RedirectResponse(url=redirect_url, status_code=303)
+
+    # Upsert SemesterScheduleConfig
+    config = semester.schedule_config_obj
+    if config is None:
+        config = SemesterScheduleConfig(semester_id=semester_id)
+        db.add(config)
+    config.day_of_week = day_of_week
+    config.start_time = start_time
+    config.duration_minutes = duration_minutes
+    config.sessions_per_week = sessions_per_week
+    config.campus_id = campus_id
+    config.pitch_id = pitch_id
+    config.sessions_generated = False
+    db.flush()
+
+    generator = MiniSeasonSessionGenerator(db)
+    try:
+        result = generator.generate(semester, config, skip_conflicts=skip_conflicts)
+    except PitchConflictError as exc:
+        db.rollback()
+        redirect_url = (
+            f"/admin/semesters/{semester_id}/schedule"
+            f"?flash=Pitch+conflict+on+{exc.detail.date}&flash_type=error"
+        )
+        return RedirectResponse(url=redirect_url, status_code=303)
+
+    db.commit()
+    msg = (
+        f"{result.sessions_created}+sessions+generated"
+        + (f",+{result.sessions_skipped}+skipped" if result.sessions_skipped else "")
+    )
+    redirect_url = (
+        f"/admin/semesters/{semester_id}/schedule"
+        f"?flash={msg}&flash_type=success"
+    )
+    return RedirectResponse(url=redirect_url, status_code=303)
+
+
+@router.post("/admin/semesters/{semester_id}/schedule/delete-sessions", response_class=HTMLResponse)
+async def semester_schedule_delete_sessions(
+    semester_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    _admin_guard(user)
+
+    semester = db.query(Semester).filter(Semester.id == semester_id).first()
+    if not semester or semester.semester_category not in _SCHEDULING_CATEGORIES:
+        raise HTTPException(status_code=404, detail="Semester not found or not a scheduling semester.")
+
+    generator = MiniSeasonSessionGenerator(db)
+    try:
+        deleted = generator.delete_generated_sessions(semester_id)
+    except HTTPException as exc:
+        redirect_url = (
+            f"/admin/semesters/{semester_id}/schedule"
+            f"?flash={exc.detail}&flash_type=error"
+        )
+        return RedirectResponse(url=redirect_url, status_code=303)
+
+    db.commit()
+    redirect_url = (
+        f"/admin/semesters/{semester_id}/schedule"
+        f"?flash={deleted}+sessions+deleted&flash_type=success"
+    )
+    return RedirectResponse(url=redirect_url, status_code=303)

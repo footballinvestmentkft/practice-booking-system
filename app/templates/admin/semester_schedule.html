@@ -1,0 +1,228 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Schedule — {{ semester.name }}{% endblock %}
+{% block page_heading %}📅 Semester Schedule{% endblock %}
+{% block page_subtitle %}Auto-generate weekly sessions for MINI_SEASON / ACADEMY_SEASON semesters{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .sched-header { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+    .sched-header h2 { margin: 0 0 0.5rem; font-size: 1.15rem; color: #2d3748; }
+    .sched-meta { font-size: 0.84rem; color: #718096; display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 0.4rem; }
+    .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
+    .badge-mini { background: #bee3f8; color: #2c5282; }
+    .badge-academy { background: #c6f6d5; color: #276749; }
+    .badge-ongoing { background: #c6f6d5; color: #276749; }
+    .badge-draft { background: #e2e8f0; color: #4a5568; }
+    .sched-form-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .sched-form-card h3 { margin: 0 0 1.25rem; font-size: 1rem; color: #2d3748; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
+    .form-group { display: flex; flex-direction: column; }
+    .form-group label { font-size: 0.82rem; font-weight: 600; color: #4a5568; margin-bottom: 0.35rem; }
+    .form-group select, .form-group input[type="time"], .form-group input[type="number"] {
+        padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px;
+        font-size: 0.88rem; color: #2d3748; background: #f7fafc;
+    }
+    .form-group.full { grid-column: 1 / -1; }
+    .radio-group { display: flex; gap: 1.5rem; margin-top: 0.4rem; }
+    .radio-group label { font-weight: 400; font-size: 0.88rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; }
+    .checkbox-group { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.5rem; }
+    .checkbox-group label { font-size: 0.88rem; font-weight: 400; color: #4a5568; cursor: pointer; }
+    .btn-generate { background: #4299e1; color: white; border: none; padding: 0.65rem 1.5rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+    .btn-generate:hover { background: #3182ce; }
+    .btn-delete { background: #fc8181; color: white; border: none; padding: 0.55rem 1.25rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+    .btn-delete:hover { background: #f56565; }
+    .generated-banner { background: #f0fff4; border: 1px solid #68d391; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .generated-banner .info { font-size: 0.95rem; color: #276749; font-weight: 600; }
+    .generated-banner .sub { font-size: 0.83rem; color: #48bb78; margin-top: 0.2rem; }
+    .dtable { width: 100%; border-collapse: collapse; }
+    .dtable th { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #718096; padding: 0.5rem 0.75rem; border-bottom: 2px solid #e2e8f0; text-align: left; }
+    .dtable td { padding: 0.55rem 0.75rem; border-bottom: 1px solid #f0f0f0; font-size: 0.86rem; vertical-align: middle; }
+    .dtable tr:last-child td { border-bottom: none; }
+    .dtable tr:hover td { background: #f8faff; }
+    .table-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0; overflow: hidden; }
+    .table-card-header { padding: 0.9rem 1.25rem; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; font-weight: 600; color: #4a5568; }
+    .flash-success { background: #f0fff4; border: 1px solid #68d391; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; color: #276749; font-size: 0.9rem; }
+    .flash-error   { background: #fff5f5; border: 1px solid #fc8181; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; color: #c53030; font-size: 0.9rem; }
+    .flash-info    { background: #ebf8ff; border: 1px solid #90cdf4; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; color: #2b6cb0; font-size: 0.9rem; }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+
+<!-- Breadcrumb -->
+<nav style="font-size:0.82rem;color:#718096;margin-bottom:1.25rem;">
+    <a href="/admin" style="color:#4299e1;text-decoration:none;">Admin</a> /
+    <a href="/admin/programs" style="color:#4299e1;text-decoration:none;">Programs</a> /
+    <span>{{ semester.name }}</span> /
+    <span style="color:#4a5568;font-weight:600;">Schedule</span>
+</nav>
+
+<!-- Flash -->
+{% if flash %}
+<div class="flash-{{ flash_type }}">
+    {% if flash_type == "success" %}✅{% elif flash_type == "error" %}⚠️{% else %}ℹ️{% endif %}
+    {{ flash | replace("+", " ") }}
+</div>
+{% endif %}
+
+<!-- Semester header -->
+<div class="sched-header">
+    <h2>
+        {% if semester.semester_category.value == "MINI_SEASON" %}
+            <span class="badge badge-mini">MINI SEASON</span>
+        {% else %}
+            <span class="badge badge-academy">ACADEMY SEASON</span>
+        {% endif %}
+        {{ semester.name }}
+    </h2>
+    <div class="sched-meta">
+        <span>📅 {{ semester.start_date.strftime('%b %-d, %Y') }} — {{ semester.end_date.strftime('%b %-d, %Y') }}</span>
+        <span>
+            <span class="badge badge-{{ semester.status.value.lower() }}">{{ semester.status.value }}</span>
+        </span>
+        {% if semester.campus %}
+            <span>🏟️ {{ semester.campus.name }}</span>
+        {% endif %}
+        <span>🔑 <code>{{ semester.code }}</code></span>
+    </div>
+</div>
+
+<!-- Generate form OR generated banner -->
+{% if can_generate %}
+<div class="sched-form-card">
+    <h3>⚙️ Generate Sessions</h3>
+    <form method="post" action="/admin/semesters/{{ semester.id }}/schedule/generate" data-testid="schedule-form">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="day_of_week">Day of Week</label>
+                <select id="day_of_week" name="day_of_week">
+                    <option value="0" {% if config and config.day_of_week == 0 %}selected{% endif %}>Monday</option>
+                    <option value="1" {% if config and config.day_of_week == 1 %}selected{% endif %}>Tuesday</option>
+                    <option value="2" {% if config and config.day_of_week == 2 %}selected{% endif %}>Wednesday</option>
+                    <option value="3" {% if config and config.day_of_week == 3 %}selected{% endif %}>Thursday</option>
+                    <option value="4" {% if config and config.day_of_week == 4 %}selected{% endif %}>Friday</option>
+                    <option value="5" {% if config and config.day_of_week == 5 %}selected{% endif %}>Saturday</option>
+                    <option value="6" {% if config and config.day_of_week == 6 %}selected{% endif %}>Sunday</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="start_time">Start Time</label>
+                <input type="time" id="start_time" name="start_time"
+                       value="{{ config.start_time.strftime('%H:%M') if config and config.start_time else '17:00' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="duration_minutes">Duration (min)</label>
+                <select id="duration_minutes" name="duration_minutes">
+                    <option value="60" {% if config and config.duration_minutes == 60 %}selected{% endif %}>60 min</option>
+                    <option value="90" {% if not config or config.duration_minutes == 90 %}selected{% endif %}>90 min</option>
+                    <option value="120" {% if config and config.duration_minutes == 120 %}selected{% endif %}>120 min</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Sessions / Week</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="sessions_per_week" value="1"
+                        {% if not config or config.sessions_per_week == 1 %}checked{% endif %}> 1×</label>
+                    <label><input type="radio" name="sessions_per_week" value="2"
+                        {% if config and config.sessions_per_week == 2 %}checked{% endif %}> 2×</label>
+                </div>
+            </div>
+
+            {% if location_campuses %}
+            <div class="form-group">
+                <label for="campus_id">Campus Override</label>
+                <select id="campus_id" name="campus_id">
+                    <option value="">— use semester default —</option>
+                    {% for c in location_campuses %}
+                    <option value="{{ c.id }}" {% if config and config.campus_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            <div class="form-group full">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="skip_conflicts" name="skip_conflicts"
+                           {% if config and config.sessions_generated == False %}{% endif %}>
+                    <label for="skip_conflicts">Skip conflicting slots (instead of blocking)</label>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top:1.25rem;">
+            <button type="submit" class="btn-generate" data-testid="generate-btn">
+                ▶ Generate Sessions
+            </button>
+        </div>
+    </form>
+</div>
+{% else %}
+<!-- Already generated banner -->
+<div class="generated-banner">
+    <div>
+        <div class="info">✅ {{ config.sessions_count }} sessions generated</div>
+        {% if sessions %}
+        <div class="sub">
+            {{ sessions[0].date_start.strftime('%b %-d') }} — {{ sessions[-1].date_start.strftime('%b %-d, %Y') }}
+        </div>
+        {% endif %}
+    </div>
+    {% if can_delete %}
+    <form method="post" action="/admin/semesters/{{ semester.id }}/schedule/delete-sessions"
+          onsubmit="return confirm('Delete all {{ session_count }} auto-generated sessions? This cannot be undone.')">
+        <button type="submit" class="btn-delete" data-testid="delete-sessions-btn">
+            🗑 Delete All Sessions
+        </button>
+    </form>
+    {% else %}
+    <span style="font-size:0.82rem;color:#718096;">
+        Cannot delete — attendance records exist.
+    </span>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Session table -->
+{% if sessions %}
+<div class="table-card">
+    <div class="table-card-header">📋 {{ session_count }} Auto-generated Sessions</div>
+    <table class="dtable">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Title</th>
+                <th>Campus</th>
+                <th>Pitch</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in sessions %}
+            <tr data-testid="session-row">
+                <td style="color:#a0aec0;">{{ loop.index }}</td>
+                <td>{{ s.date_start.strftime('%a, %b %-d, %Y') }}</td>
+                <td>{{ s.date_start.strftime('%H:%M') }}</td>
+                <td>{{ s.date_end.strftime('%H:%M') }}</td>
+                <td>{{ s.title }}</td>
+                <td>{{ s.campus.name if s.campus else '—' }}</td>
+                <td>{{ s.pitch.name if s.pitch else '—' }}</td>
+                <td>{{ s.session_status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% elif not can_generate %}
+<div style="color:#a0aec0;font-size:0.9rem;text-align:center;padding:2rem;">
+    No sessions found (config marked as generated but 0 sessions).
+</div>
+{% endif %}
+
+{% endblock %}

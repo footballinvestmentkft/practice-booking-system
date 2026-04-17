@@ -13,6 +13,7 @@ Usage:
     python scripts/reset_e2e_web_db.py --scenario business_lifecycle
     python scripts/reset_e2e_web_db.py --scenario tournament_e2e
     python scripts/reset_e2e_web_db.py --scenario tournament_e2e_enrolled
+    python scripts/reset_e2e_web_db.py --scenario semester_scheduling
 
 Scenarios:
     baseline             admin + instructor + student (DOB set) + semester
@@ -24,6 +25,7 @@ Scenarios:
     tournament_e2e_enrolled  tournament_e2e + student already enrolled (900 cr, for instructor view tests)
     student_skill_history    baseline + student LFA license (29 skills) + 2 COMPLETED tournaments + TournamentParticipation (EMA timeline)
     student_1tournament      baseline + student LFA license (29 skills) + 1 COMPLETED tournament (single-entry EMA edge case)
+    semester_scheduling      sched-admin@lfa.com + MINI_SEASON (SCHED-CYPRESS-01) + SemesterScheduleConfig (fresh state)
 """
 
 import sys
@@ -37,7 +39,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.database import SessionLocal
 from app.models.user import User, UserRole
-from app.models.semester import Semester
+from app.models.semester import Semester, SemesterCategory, SemesterStatus
+from app.models.semester_schedule_config import SemesterScheduleConfig
+from app.models.location import Location, LocationType
+from app.models.campus import Campus
+from app.models.pitch import Pitch
 from app.models.session import Session as SessionModel, SessionType
 from app.models.booking import Booking, BookingStatus
 from app.models.attendance import Attendance
@@ -752,6 +758,153 @@ def scenario_student_1tournament(db) -> list[str]:
     return lines
 
 
+_SCHED_CODE = "SCHED-CYPRESS-01"
+_SCHED_ADMIN_EMAIL = "sched-admin@lfa.com"
+
+
+def scenario_semester_scheduling(db) -> list[str]:
+    """
+    Seed for Cypress SCHED-01..05 (admin semester scheduling UI).
+
+    Creates:
+      - sched-admin@lfa.com (ADMIN, SchedAdmin123!)
+      - Location → Campus → Pitch (all deterministic, idempotent)
+      - MINI_SEASON Semester (code=SCHED-CYPRESS-01, start=today+12w, end=today+24w)
+      - SemesterScheduleConfig (Monday 17:00, 90 min, sessions_per_week=1)
+      - Clears any auto_generated sessions for that semester (fresh state)
+    """
+    lines: list[str] = []
+
+    # 1. Admin user
+    admin_spec = {
+        "email":    _SCHED_ADMIN_EMAIL,
+        "name":     "Sched Admin",
+        "password": "SchedAdmin123!",
+        "role":     UserRole.ADMIN,
+        "dob":      date(1985, 1, 1),
+    }
+    admin = _upsert_user(db, admin_spec, credit_balance=0)
+    lines.append(f"  upserted admin: {admin.email} (id={admin.id})")
+
+    # 2. Location (idempotent by name)
+    loc = db.query(Location).filter(Location.name == "Sched Cypress Location").first()
+    if not loc:
+        loc = Location(
+            name="Sched Cypress Location",
+            city="Sched City",
+            country="Hungary",
+            location_type=LocationType.CENTER,
+            is_active=True,
+        )
+        db.add(loc)
+        db.flush()
+    lines.append(f"  upserted location: id={loc.id}")
+
+    # 3. Campus (idempotent by name + location)
+    campus = db.query(Campus).filter(
+        Campus.name == "Sched Campus",
+        Campus.location_id == loc.id,
+    ).first()
+    if not campus:
+        campus = Campus(
+            name="Sched Campus",
+            location_id=loc.id,
+            is_active=True,
+        )
+        db.add(campus)
+        db.flush()
+    lines.append(f"  upserted campus: id={campus.id}")
+
+    # 4. Pitch (idempotent by campus + pitch_number)
+    pitch = db.query(Pitch).filter(
+        Pitch.campus_id == campus.id,
+        Pitch.pitch_number == 1,
+    ).first()
+    if not pitch:
+        pitch = Pitch(
+            campus_id=campus.id,
+            pitch_number=1,
+            name="Sched Pitch 1",
+            capacity=20,
+            is_active=True,
+        )
+        db.add(pitch)
+        db.flush()
+    lines.append(f"  upserted pitch: id={pitch.id}")
+
+    # 5. MINI_SEASON Semester (idempotent by code)
+    today = date.today()
+    start_date = today + timedelta(weeks=12)
+    end_date   = today + timedelta(weeks=24)
+
+    semester = db.query(Semester).filter(Semester.code == _SCHED_CODE).first()
+    if semester:
+        semester.start_date = start_date
+        semester.end_date   = end_date
+        semester.status     = SemesterStatus.ONGOING
+        db.flush()
+    else:
+        semester = Semester(
+            code=_SCHED_CODE,
+            name="Mini Season Cypress",
+            semester_category=SemesterCategory.MINI_SEASON,
+            specialization_type="LFA_FOOTBALL_PLAYER",
+            status=SemesterStatus.ONGOING,
+            start_date=start_date,
+            end_date=end_date,
+            location_id=loc.id,
+            campus_id=campus.id,
+            enrollment_cost=2000,
+            master_instructor_id=admin.id,
+        )
+        db.add(semester)
+        db.flush()
+        db.refresh(semester)
+    lines.append(f"  upserted semester: {semester.code} (id={semester.id})")
+
+    # 6. Clear auto-generated sessions (fresh state for generate/delete tests)
+    deleted = (
+        db.query(SessionModel)
+        .filter(
+            SessionModel.semester_id == semester.id,
+            SessionModel.auto_generated == True,
+        )
+        .delete(synchronize_session=False)
+    )
+    if deleted:
+        lines.append(f"  cleared {deleted} auto_generated sessions")
+
+    # 7. Upsert SemesterScheduleConfig (reset sessions_generated=False)
+    config = db.query(SemesterScheduleConfig).filter_by(semester_id=semester.id).first()
+    if config:
+        config.day_of_week        = 0          # Monday
+        config.start_time         = __import__("datetime").time(17, 0)
+        config.duration_minutes   = 90
+        config.sessions_per_week  = 1
+        config.campus_id          = campus.id
+        config.pitch_id           = pitch.id
+        config.sessions_generated = False
+        config.sessions_generated_at = None
+        config.sessions_count     = None
+    else:
+        from datetime import time as dt_time
+        config = SemesterScheduleConfig(
+            semester_id=semester.id,
+            day_of_week=0,
+            start_time=dt_time(17, 0),
+            duration_minutes=90,
+            sessions_per_week=1,
+            campus_id=campus.id,
+            pitch_id=pitch.id,
+            sessions_generated=False,
+        )
+        db.add(config)
+    db.commit()
+    lines.append(f"  upserted SemesterScheduleConfig (sessions_generated=False)")
+    lines.append(f"  semester_id={semester.id} ready for SCHED Cypress tests")
+    return lines
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 _SCENARIOS = {
@@ -764,6 +917,7 @@ _SCENARIOS = {
     "tournament_e2e_enrolled":      scenario_tournament_e2e_enrolled,
     "student_skill_history":        scenario_student_skill_history,
     "student_1tournament":          scenario_student_1tournament,
+    "semester_scheduling":          scenario_semester_scheduling,
 }
 
 

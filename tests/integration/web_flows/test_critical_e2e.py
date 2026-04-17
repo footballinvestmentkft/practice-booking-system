@@ -4495,3 +4495,57 @@ def test_skip_conflict_partial_generation(test_db: Session, client: TestClient):
         .count()
     )
     assert auto_count == 11, f"Expected 11 auto_generated sessions, got {auto_count}"
+
+
+# ── Phase 2: Scheduling — Web UI (SCHED_G2) ───────────────────────────────────
+#
+# SCHED_G2-01  GET schedule page renders (form visible, semester name)
+# SCHED_G2-02  POST web generate form → 303 redirect + sessions in DB
+
+def test_semester_schedule_page_renders(test_db: Session, client: TestClient):
+    """SCHED_G2-01: GET /admin/semesters/{id}/schedule → 200, form + semester name visible."""
+    semester, campus, pitch = _make_mini_season_with_config(
+        test_db, start_date=date(2026, 7, 7), weeks=4, day_of_week=0
+    )
+    admin = _make_user(test_db, role=UserRole.ADMIN)
+    app.dependency_overrides[get_current_user_web] = lambda: admin
+
+    r = client.get(f"/admin/semesters/{semester.id}/schedule")
+    assert r.status_code == 200, f"Expected 200, got {r.status_code}. Body: {r.text[:300]}"
+    assert semester.name in r.text
+    assert "Generate Sessions" in r.text
+    assert "schedule-form" in r.text or "generate-btn" in r.text
+
+
+def test_semester_schedule_generate_via_web(test_db: Session, client: TestClient):
+    """SCHED_G2-02: POST generate form → 303 redirect with flash + sessions in DB."""
+    semester, campus, pitch = _make_mini_season_with_config(
+        test_db, start_date=date(2026, 7, 7), weeks=4, day_of_week=0
+    )
+    admin = _make_user(test_db, role=UserRole.ADMIN)
+    app.dependency_overrides[get_current_user_web] = lambda: admin
+
+    r = client.post(
+        f"/admin/semesters/{semester.id}/schedule/generate",
+        data={
+            "day_of_week": "0",
+            "start_time": "17:00",
+            "duration_minutes": "90",
+            "sessions_per_week": "1",
+        },
+        follow_redirects=False,
+    )
+    assert r.status_code == 303, f"Expected 303, got {r.status_code}. Body: {r.text[:300]}"
+    assert f"/admin/semesters/{semester.id}/schedule" in r.headers["location"]
+    assert "flash" in r.headers["location"]
+
+    test_db.expire_all()
+    count = (
+        test_db.query(SessionModel)
+        .filter(
+            SessionModel.semester_id == semester.id,
+            SessionModel.auto_generated == True,
+        )
+        .count()
+    )
+    assert count == 4, f"Expected 4 sessions (4 Mondays in 4-week window starting 2026-07-07), got {count}"

@@ -139,6 +139,23 @@ module.exports = defineConfig({
           const out = execSync(`python -c '${script}'`, { cwd, encoding: 'utf8' }).trim();
           return out === 'null' ? null : JSON.parse(out);
         },
+
+        // Returns the DB id of the SCHED-CYPRESS-01 semester (semester_scheduling scenario)
+        getSchedSemesterId() {
+          const { execSync } = require('child_process');
+          const cwd = require('path').resolve(__dirname, '..');
+          const script = [
+            'import sys; sys.path.insert(0, ".")',
+            'from app.database import SessionLocal',
+            'from app.models.semester import Semester',
+            'db = SessionLocal()',
+            'sem = db.query(Semester).filter(Semester.code == "SCHED-CYPRESS-01").first()',
+            'db.close()',
+            'print(sem.id if sem else "null")',
+          ].join('; ');
+          const out = execSync(`python -c '${script}'`, { cwd, encoding: 'utf8' }).trim();
+          return out === 'null' ? null : parseInt(out, 10);
+        },
       });
 
       // cypress-mochawesome-reporter

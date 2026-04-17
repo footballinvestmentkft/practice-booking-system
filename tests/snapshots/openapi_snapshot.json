@@ -25041,6 +25041,132 @@
         ]
       }
     },
+    "/admin/semesters/{semester_id}/schedule": {
+      "get": {
+        "operationId": "semester_schedule_view_admin_semesters__semester_id__schedule_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "semester_id",
+            "required": true,
+            "schema": {
+              "title": "Semester Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Semester Schedule View",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/semesters/{semester_id}/schedule/delete-sessions": {
+      "post": {
+        "operationId": "semester_schedule_delete_sessions_admin_semesters__semester_id__schedule_delete_sessions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "semester_id",
+            "required": true,
+            "schema": {
+              "title": "Semester Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Semester Schedule Delete Sessions",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/semesters/{semester_id}/schedule/generate": {
+      "post": {
+        "operationId": "semester_schedule_generate_admin_semesters__semester_id__schedule_generate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "semester_id",
+            "required": true,
+            "schema": {
+              "title": "Semester Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Semester Schedule Generate",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/admin/sessions": {
       "get": {
         "description": "Admin-only: Session management \u2014 hierarchical view (Location \u2192 Spec \u2192 Semester \u2192 Session)",
