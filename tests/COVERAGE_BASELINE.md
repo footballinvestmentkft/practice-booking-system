@@ -1,5 +1,5 @@
 # E2E Coverage Baseline — Practice Booking System
-**Last updated: 2026-04-16 | Branch: fix/e2e-coverage-clean | Sprint 7 (Admin lifecycle + Evaluation + Tournament ops)**
+**Last updated: 2026-04-17 | Branch: main | RBAC role-based boundary audit (Phase 5.5 exit criteria)**
 
 ---
 
@@ -14,11 +14,11 @@ A flow is COVERED only when ALL 3 layers are proven:
 
 | Metric | Value |
 |--------|-------|
-| Total defined flows | **88** |
-| Covered (all 3 layers) | **88** |
+| Total defined flows | **91** |
+| Covered (all 3 layers) | **91** |
 | Not Implemented on main | **0** |
 | Not Covered | **0** |
-| **Coverage KPI** | **100%** (88/88 implemented flows) |
+| **Coverage KPI** | **100%** (91/91 implemented flows) |
 | Sprint 1 additions | +5 flows (F-03, F-14, F-15, F-16, F-29) |
 | Sprint 2 additions | +8 flows (F-04, F-05, F-12, F-24, F-25, F-32, F-35, F-38) |
 | Sprint 3 additions | +2 flows (F-41, F-42) |
@@ -35,6 +35,7 @@ A flow is COVERED only when ALL 3 layers are proven:
 | Phase 5.5 additions | +2 flows (F-79, F-80) — Enrollment status guard + session delete cleans bookings |
 | Phase 5.5 invariants | +3 flows (F-81, F-82, F-83) — Credit / capacity / post-withdraw invariant smoke tests |
 | Phase 5.5 audit | +5 flows (F-84..F-88) — Guard negative paths: role / license / duplicate / credit / ownership |
+| RBAC audit | +3 flows (F-89..F-91) — Role-based boundary: student→admin forbidden / admin→enroll forbidden / SD→student cross-role |
 
 ---
 
@@ -50,7 +51,7 @@ A flow is COVERED only when ALL 3 layers are proven:
 | E2E Virtual Tournament | ✅ | 4f96870 |
 | E2E Tournament Session Types | ✅ | 4f96870 |
 | Cypress Web E2E Tests | ✅ | 4f96870 |
-| SCHED Regression Gate | ✅ | 2bd2853 (run 24573259513, 19/19) — Phase 5.5 audit: 24/24 pending CI |
+| SCHED Regression Gate | ✅ | 5da8a63 (24/24) — v1.0-scheduling-core tag |
 
 ---
 
@@ -58,10 +59,10 @@ A flow is COVERED only when ALL 3 layers are proven:
 
 | Suite | Count |
 |-------|-------|
-| `tests/integration/web_flows/` | **609** (41 files, +18 SCHED_G3-01..15 + SCHED_INV-01..03) |
+| `tests/integration/web_flows/` | **612** (42 files, +18 SCHED_G3-01..15 + SCHED_INV-01..03 + 3 RBAC-01..03) |
 | `tests/integration/api_smoke/` | **1,741** |
 | Cypress (`cypress/e2e/`) | **18** (5 files, +SCHED-01..05) |
-| **Total** | **2,368** |
+| **Total** | **2,371** |
 
 ---
 
@@ -164,6 +165,9 @@ A flow is COVERED only when ALL 3 layers are proven:
 | F-86 | Duplicate guard: already-enrolled student POST enroll → 303 + error=Already+enrolled; enrollment count unchanged (1) | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-13 (test_enrollment_blocked_when_already_enrolled) |
 | F-87 | Credit guard: credit_balance (100) < cost (500) → 303 + error=Insufficient+credits; balance unchanged; no enrollment created | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-14 (test_enrollment_blocked_insufficient_credits) |
 | F-88 | Ownership guard: student_b POST withdraw with enrollment_id owned by student_a → 303 + error=Enrollment+not+found; enrollment_a.is_active unchanged | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-15 (test_withdraw_blocked_for_wrong_user) |
+| F-89 | STUDENT GET /admin/users → 403 (inline _admin_guard fires for non-ADMIN role) | ✅ | N/A | N/A | **COVERED** | RBAC-01 (test_rbac_01_student_forbidden_from_admin_ui) |
+| F-90 | ADMIN POST /semesters/request-enrollment → 303 + error=Student+role+required (programs.py role check) | ✅ | N/A | ✅ | **COVERED** | RBAC-02 (test_rbac_02_admin_cannot_enroll_in_semester) |
+| F-91 | SD enrolls team → student GET /events/{id} shows team name in participants list (cross-role state consistency) | ✅ | ✅ | ✅ | **COVERED** | RBAC-03 (test_rbac_03_sd_enrollment_reflected_for_student) |
 
 ---
 
