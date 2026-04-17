@@ -190,6 +190,15 @@ class Semester(Base):
         doc="Game configuration for this tournament (1:1 relationship)"
     )
 
+    # 📅 Schedule configuration (Phase 2: MINI_SEASON + ACADEMY_SEASON session generation)
+    schedule_config_obj = relationship(
+        "SemesterScheduleConfig",
+        uselist=False,
+        back_populates="semester",
+        cascade="all, delete-orphan",
+        doc="Weekly schedule config for session generation (MINI_SEASON / ACADEMY_SEASON)"
+    )
+
     @property
     def format(self) -> str:
         """

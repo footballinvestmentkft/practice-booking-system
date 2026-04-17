@@ -4224,3 +4224,274 @@ def test_admin_player_checkin_creates_checkin_record(test_db: Session, client: T
     assert "checked_in_at" in r.text, (
         f"Response body must contain 'checked_in_at'. Body: {r.text[:200]}"
     )
+
+
+# ── Phase 2: Scheduling (MINI_SEASON / ACADEMY_SEASON) ────────────────────────
+#
+# SCHED_G1-01  normal generation   — 12-week MINI_SEASON, 12 sessions created
+# SCHED_G1-02  pitch conflict      — hard-block → 409, full rollback
+# SCHED_G1-03  skip_conflicts=True — partial generation (1 conflict skipped)
+# ---------------------------------------------------------------------------
+
+
+def _make_mini_season_with_config(
+    db: Session,
+    *,
+    start_date: date,
+    weeks: int,
+    day_of_week: int,
+    start_time_h: int = 17,
+):
+    """Create Location → Campus → Pitch → MINI_SEASON Semester → SemesterScheduleConfig.
+
+    Returns (semester, campus, pitch).
+    """
+    from datetime import time as dt_time
+    from app.models.location import Location, LocationType
+    from app.models.campus import Campus as CampusModel
+    from app.models.pitch import Pitch as PitchModel
+    from app.models.semester_schedule_config import SemesterScheduleConfig as SSC
+
+    uid = _uid()
+    loc = Location(
+        name=f"SLoc-{uid}",
+        city=f"City-{uid}",
+        country="Hungary",
+        location_type=LocationType.CENTER,
+    )
+    db.add(loc)
+    db.flush()
+
+    campus = CampusModel(name=f"SC-{uid}", location_id=loc.id, is_active=True)
+    db.add(campus)
+    db.flush()
+
+    pitch = PitchModel(
+        campus_id=campus.id,
+        pitch_number=1,
+        name="Pálya 1",
+        capacity=20,
+        is_active=True,
+    )
+    db.add(pitch)
+    db.flush()
+
+    end_date = start_date + timedelta(weeks=weeks) - timedelta(days=1)
+    semester = Semester(
+        code=f"MS-{uid}",
+        name=f"Mini Season {uid}",
+        semester_category=SemesterCategory.MINI_SEASON,
+        specialization_type="LFA_FOOTBALL_PLAYER",
+        status=SemesterStatus.ONGOING,
+        start_date=start_date,
+        end_date=end_date,
+        location_id=loc.id,
+        campus_id=campus.id,
+        enrollment_cost=2000,
+    )
+    db.add(semester)
+    db.flush()
+
+    config = SSC(
+        semester_id=semester.id,
+        day_of_week=day_of_week,
+        start_time=dt_time(start_time_h, 0),
+        duration_minutes=90,
+        sessions_per_week=1,
+        campus_id=campus.id,
+        pitch_id=pitch.id,
+    )
+    db.add(config)
+    db.flush()
+
+    return semester, campus, pitch
+
+
+def test_mini_season_generate_sessions(test_db: Session, client: TestClient):
+    """SCHED_G1-01: 12-week MINI_SEASON, day_of_week=0 (Monday).
+
+    start_date=2026-07-07 (Tuesday) → first Monday is 2026-07-13.
+    Wait — 2026-07-07 is a Tuesday, so first Monday >= 07-07 is 07-13.
+
+    Actually let me recalculate: day_of_week=0 (Monday).
+    2026-07-07 is a Tuesday (weekday()=1). days_ahead = (0 - 1) % 7 = 6.
+    First session: 2026-07-07 + 6 days = 2026-07-13 (Monday).
+    12 weeks → last session: 2026-07-13 + 11*7 = 2026-07-13 + 77 = 2026-09-28.
+
+    Asserts: 12 sessions created, first/last dates correct, campus/pitch assigned,
+             config.sessions_generated=True, config.sessions_count=12.
+    """
+    from app.dependencies import get_current_admin_user as _get_admin
+    from app.models.semester_schedule_config import SemesterScheduleConfig as SSC
+
+    semester, campus, pitch = _make_mini_season_with_config(
+        test_db,
+        start_date=date(2026, 7, 7),
+        weeks=12,
+        day_of_week=0,
+    )
+    admin = _make_user(test_db, role=UserRole.ADMIN)
+    app.dependency_overrides[_get_admin] = lambda: admin
+
+    r = client.post(
+        f"/api/v1/semesters/{semester.id}/generate-sessions",
+        json={
+            "day_of_week": 0,
+            "start_time": "17:00",
+            "duration_minutes": 90,
+            "sessions_per_week": 1,
+            "skip_conflicts": False,
+        },
+    )
+    assert r.status_code == 200, f"Expected 200, got {r.status_code}. Body: {r.text[:400]}"
+    body = r.json()
+    assert body["sessions_created"] == 12, f"Expected 12 sessions, got {body}"
+    assert body["sessions_skipped"] == 0
+
+    # DB assertions
+    test_db.expire_all()
+    sessions = (
+        test_db.query(SessionModel)
+        .filter(
+            SessionModel.semester_id == semester.id,
+            SessionModel.auto_generated == True,
+        )
+        .order_by(SessionModel.date_start.asc())
+        .all()
+    )
+    assert len(sessions) == 12, f"Expected 12 auto_generated sessions in DB, got {len(sessions)}"
+
+    # First Monday on or after 2026-07-07: days_ahead=(0-1)%7=6 → 2026-07-13
+    assert sessions[0].date_start == datetime(2026, 7, 13, 17, 0), (
+        f"First session should be 2026-07-13 17:00, got {sessions[0].date_start}"
+    )
+    # 11 more weekly Mondays → 2026-07-13 + 77 days = 2026-09-28
+    assert sessions[-1].date_start == datetime(2026, 9, 28, 17, 0), (
+        f"Last session should be 2026-09-28 17:00, got {sessions[-1].date_start}"
+    )
+    assert all(s.campus_id == campus.id for s in sessions), "All sessions must use the campus"
+    assert all(s.pitch_id == pitch.id for s in sessions), "All sessions must use the pitch"
+    assert all(s.event_category.value == "TRAINING" for s in sessions)
+
+    config = test_db.query(SSC).filter_by(semester_id=semester.id).first()
+    assert config.sessions_generated is True
+    assert config.sessions_count == 12
+
+
+def test_pitch_conflict_blocks_generation(test_db: Session, client: TestClient):
+    """SCHED_G1-02: Blocking session on the pitch → 409 pitch_conflict, 0 auto-generated sessions."""
+    from app.dependencies import get_current_admin_user as _get_admin
+
+    semester, campus, pitch = _make_mini_season_with_config(
+        test_db,
+        start_date=date(2026, 7, 7),
+        weeks=12,
+        day_of_week=0,
+    )
+
+    # 2026-07-13 is the first Monday >= 2026-07-07
+    blocker = SessionModel(
+        title="Blocker",
+        semester_id=semester.id,
+        campus_id=campus.id,
+        pitch_id=pitch.id,
+        date_start=datetime(2026, 7, 13, 17, 0),
+        date_end=datetime(2026, 7, 13, 18, 30),
+        session_status="scheduled",
+        auto_generated=False,
+        rounds_data={},
+    )
+    test_db.add(blocker)
+    test_db.flush()
+
+    admin = _make_user(test_db, role=UserRole.ADMIN)
+    app.dependency_overrides[_get_admin] = lambda: admin
+
+    r = client.post(
+        f"/api/v1/semesters/{semester.id}/generate-sessions",
+        json={
+            "day_of_week": 0,
+            "start_time": "17:00",
+            "duration_minutes": 90,
+            "sessions_per_week": 1,
+            "skip_conflicts": False,
+        },
+    )
+    assert r.status_code == 409, f"Expected 409, got {r.status_code}. Body: {r.text[:400]}"
+    body = r.json()
+    # App uses custom error handler: {"error": {"message": ...}} not {"detail": ...}
+    error_msg = body.get("error", {}).get("message") or body.get("detail", {})
+    if isinstance(error_msg, str):
+        error_msg = {}
+    assert error_msg.get("error") == "pitch_conflict", (
+        f"Expected pitch_conflict in error message, got: {body}"
+    )
+
+    # Full rollback: 0 auto_generated sessions in DB
+    test_db.expire_all()
+    auto_count = (
+        test_db.query(SessionModel)
+        .filter(
+            SessionModel.semester_id == semester.id,
+            SessionModel.auto_generated == True,
+        )
+        .count()
+    )
+    assert auto_count == 0, f"Expected 0 auto_generated sessions after conflict rollback, got {auto_count}"
+
+
+def test_skip_conflict_partial_generation(test_db: Session, client: TestClient):
+    """SCHED_G1-03: skip_conflicts=True with 1 blocker → 11 sessions created, 1 skipped."""
+    from app.dependencies import get_current_admin_user as _get_admin
+
+    semester, campus, pitch = _make_mini_season_with_config(
+        test_db,
+        start_date=date(2026, 7, 7),
+        weeks=12,
+        day_of_week=0,
+    )
+
+    # 2nd Monday: 2026-07-13 + 7 = 2026-07-20
+    blocker = SessionModel(
+        title="Blocker",
+        semester_id=semester.id,
+        campus_id=campus.id,
+        pitch_id=pitch.id,
+        date_start=datetime(2026, 7, 20, 17, 0),
+        date_end=datetime(2026, 7, 20, 18, 30),
+        session_status="scheduled",
+        auto_generated=False,
+        rounds_data={},
+    )
+    test_db.add(blocker)
+    test_db.flush()
+
+    admin = _make_user(test_db, role=UserRole.ADMIN)
+    app.dependency_overrides[_get_admin] = lambda: admin
+
+    r = client.post(
+        f"/api/v1/semesters/{semester.id}/generate-sessions",
+        json={
+            "day_of_week": 0,
+            "start_time": "17:00",
+            "duration_minutes": 90,
+            "sessions_per_week": 1,
+            "skip_conflicts": True,
+        },
+    )
+    assert r.status_code == 200, f"Expected 200, got {r.status_code}. Body: {r.text[:400]}"
+    body = r.json()
+    assert body["sessions_created"] == 11, f"Expected 11 sessions, got {body}"
+    assert body["sessions_skipped"] == 1, f"Expected 1 skipped, got {body}"
+    assert len(body["conflict_details"]) == 1
+
+    test_db.expire_all()
+    auto_count = (
+        test_db.query(SessionModel)
+        .filter(
+            SessionModel.semester_id == semester.id,
+            SessionModel.auto_generated == True,
+        )
+        .count()
+    )
+    assert auto_count == 11, f"Expected 11 auto_generated sessions, got {auto_count}"

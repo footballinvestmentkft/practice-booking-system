@@ -5013,6 +5013,39 @@
         "title": "CompetitionResponse",
         "type": "object"
       },
+      "ConflictDetailSchema": {
+        "properties": {
+          "conflicting_session_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Conflicting Session Ids",
+            "type": "array"
+          },
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "pitch_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pitch Id"
+          }
+        },
+        "required": [
+          "date",
+          "pitch_id",
+          "conflicting_session_ids"
+        ],
+        "title": "ConflictDetailSchema",
+        "type": "object"
+      },
       "CouponCreate": {
         "description": "Schema for creating a coupon",
         "properties": {
@@ -5408,6 +5441,24 @@
           }
         },
         "title": "DeclineRequest",
+        "type": "object"
+      },
+      "DeleteSessionsResponse": {
+        "properties": {
+          "deleted_count": {
+            "title": "Deleted Count",
+            "type": "integer"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "deleted_count",
+          "message"
+        ],
+        "title": "DeleteSessionsResponse",
         "type": "object"
       },
       "DemoteRequest": {
@@ -13942,6 +13993,134 @@
           "export_data"
         ],
         "title": "RunTestResponse",
+        "type": "object"
+      },
+      "ScheduleGenerateRequest": {
+        "properties": {
+          "campus_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Campus override (optional)",
+            "title": "Campus Id"
+          },
+          "day_of_week": {
+            "description": "0=Monday .. 6=Sunday",
+            "maximum": 6.0,
+            "minimum": 0.0,
+            "title": "Day Of Week",
+            "type": "integer"
+          },
+          "duration_minutes": {
+            "default": 90,
+            "description": "Session duration in minutes",
+            "maximum": 240.0,
+            "minimum": 30.0,
+            "title": "Duration Minutes",
+            "type": "integer"
+          },
+          "pitch_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pitch override (optional)",
+            "title": "Pitch Id"
+          },
+          "sessions_per_week": {
+            "default": 1,
+            "description": "1 or 2 sessions per week",
+            "maximum": 2.0,
+            "minimum": 1.0,
+            "title": "Sessions Per Week",
+            "type": "integer"
+          },
+          "skip_conflicts": {
+            "default": false,
+            "description": "Skip conflicting slots instead of hard-blocking",
+            "title": "Skip Conflicts",
+            "type": "boolean"
+          },
+          "start_time": {
+            "description": "HH:MM local start time, e.g. '17:00'",
+            "title": "Start Time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "day_of_week",
+          "start_time"
+        ],
+        "title": "ScheduleGenerateRequest",
+        "type": "object"
+      },
+      "ScheduleGenerateResponse": {
+        "properties": {
+          "conflict_details": {
+            "items": {
+              "$ref": "#/components/schemas/ConflictDetailSchema"
+            },
+            "title": "Conflict Details",
+            "type": "array"
+          },
+          "first_session_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Session Date"
+          },
+          "last_session_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Session Date"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "semester_id": {
+            "title": "Semester Id",
+            "type": "integer"
+          },
+          "sessions_created": {
+            "title": "Sessions Created",
+            "type": "integer"
+          },
+          "sessions_skipped": {
+            "title": "Sessions Skipped",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "semester_id",
+          "sessions_created",
+          "sessions_skipped",
+          "conflict_details",
+          "first_session_date",
+          "last_session_date",
+          "message"
+        ],
+        "title": "ScheduleGenerateResponse",
         "type": "object"
       },
       "Semester": {
@@ -46624,6 +46803,118 @@
         "summary": "Update Semester",
         "tags": [
           "semesters"
+        ]
+      }
+    },
+    "/api/v1/semesters/{semester_id}/generate-sessions": {
+      "post": {
+        "description": "Generate weekly training sessions for a MINI_SEASON or ACADEMY_SEASON semester.\n\nValidations (in order):\n  1. Semester exists \u2192 404\n  2. semester_category in (MINI_SEASON, ACADEMY_SEASON) \u2192 400\n  3. start_date + end_date set \u2192 400\n  4. sessions already generated \u2192 409\n  5. campus_id belongs to semester's location \u2192 400\n  6. pitch_id belongs to resolved campus \u2192 400",
+        "operationId": "generate_sessions_api_v1_semesters__semester_id__generate_sessions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "semester_id",
+            "required": true,
+            "schema": {
+              "title": "Semester Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleGenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleGenerateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Generate Sessions",
+        "tags": [
+          "semesters",
+          "scheduling",
+          "semesters",
+          "scheduling"
+        ]
+      }
+    },
+    "/api/v1/semesters/{semester_id}/sessions": {
+      "delete": {
+        "description": "Delete all auto-generated sessions for a semester.\n\nReturns 409 if any session has Attendance records.",
+        "operationId": "delete_generated_sessions_api_v1_semesters__semester_id__sessions_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "semester_id",
+            "required": true,
+            "schema": {
+              "title": "Semester Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteSessionsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Generated Sessions",
+        "tags": [
+          "semesters",
+          "scheduling",
+          "semesters",
+          "scheduling"
         ]
       }
     },

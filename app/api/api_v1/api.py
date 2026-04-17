@@ -64,6 +64,7 @@ from .endpoints.sandbox import data as sandbox_data  # 🧪 NEW: Add sandbox dat
 from .endpoints.sessions import results as session_results  # 🏆 NEW: Game results management
 
 from .endpoints.semesters import academy_generator  # 🏫 NEW: Add Academy Season generator
+from .endpoints.semesters import schedule_generator  # 📅 NEW: MINI_SEASON / ACADEMY_SEASON session generation
 from .endpoints.enrollments import conflict_check  # ⚠️ NEW: Add enrollment conflict detection
 
 from .endpoints.periods import lfa_player_generators  # 🚀 NEW: Add modular LFA_PLAYER period generators
@@ -79,6 +80,7 @@ api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
 api_router.include_router(users.router, prefix="/users", tags=["users"])
 api_router.include_router(semesters.router, prefix="/semesters", tags=["semesters"])
 api_router.include_router(academy_generator.router, prefix="/semesters", tags=["semesters", "academy-season"])  # 🏫 Academy Season generator
+api_router.include_router(schedule_generator.router, prefix="/semesters", tags=["semesters", "scheduling"])  # 📅 MINI_SEASON / ACADEMY_SEASON session generation
 api_router.include_router(conflict_check.router, prefix="/enrollments", tags=["enrollments", "conflict-check"])  # ⚠️ Enrollment conflict detection
 api_router.include_router(groups.router, prefix="/groups", tags=["groups"])
 api_router.include_router(sessions.router, prefix="/sessions", tags=["sessions"])
