@@ -92,7 +92,7 @@ jobs:
           SECRET_KEY: ci-scheduling-gate-key-not-for-production
         run: |
           PYTHONPATH=. pytest tests/integration/web_flows/test_critical_e2e.py \
-            -k "semester or mini_season_generate or pitch_conflict_blocks or skip_conflict_partial or delete_sessions_blocked" \
+            -m sched \
             -v --tb=short -ra --durations=5
 
       - name: Report result

@@ -31,7 +31,7 @@ from ...models.user import User, UserRole
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
-router = APIRouter(tags=["programs"])
+router = APIRouter(tags=["programs"], include_in_schema=False)
 
 _PROGRAM_CATEGORIES = {SemesterCategory.MINI_SEASON, SemesterCategory.ACADEMY_SEASON}
 _BROWSE_STATUSES = {SemesterStatus.ONGOING, SemesterStatus.READY_FOR_ENROLLMENT}
@@ -195,6 +195,13 @@ async def semester_request_enrollment(
         .all()
     )
     for s in sessions:
+        already = (
+            db.query(Booking)
+            .filter(Booking.user_id == user.id, Booking.session_id == s.id)
+            .first()
+        )
+        if already:
+            continue
         db.add(Booking(
             user_id=user.id,
             session_id=s.id,

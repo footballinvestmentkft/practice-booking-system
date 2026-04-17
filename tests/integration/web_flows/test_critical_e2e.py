@@ -4307,6 +4307,7 @@ def _make_mini_season_with_config(
     return semester, campus, pitch
 
 
+@pytest.mark.sched
 def test_mini_season_generate_sessions(test_db: Session, client: TestClient):
     """SCHED_G1-01: 12-week MINI_SEASON, day_of_week=0 (Monday).
 
@@ -4378,6 +4379,7 @@ def test_mini_season_generate_sessions(test_db: Session, client: TestClient):
     assert config.sessions_count == 12
 
 
+@pytest.mark.sched
 def test_pitch_conflict_blocks_generation(test_db: Session, client: TestClient):
     """SCHED_G1-02: Blocking session on the pitch → 409 pitch_conflict, 0 auto-generated sessions."""
     from app.dependencies import get_current_admin_user as _get_admin
@@ -4440,6 +4442,7 @@ def test_pitch_conflict_blocks_generation(test_db: Session, client: TestClient):
     assert auto_count == 0, f"Expected 0 auto_generated sessions after conflict rollback, got {auto_count}"
 
 
+@pytest.mark.sched
 def test_skip_conflict_partial_generation(test_db: Session, client: TestClient):
     """SCHED_G1-03: skip_conflicts=True with 1 blocker → 11 sessions created, 1 skipped."""
     from app.dependencies import get_current_admin_user as _get_admin
@@ -4502,6 +4505,7 @@ def test_skip_conflict_partial_generation(test_db: Session, client: TestClient):
 # SCHED_G2-01  GET schedule page renders (form visible, semester name)
 # SCHED_G2-02  POST web generate form → 303 redirect + sessions in DB
 
+@pytest.mark.sched
 def test_semester_schedule_page_renders(test_db: Session, client: TestClient):
     """SCHED_G2-01: GET /admin/semesters/{id}/schedule → 200, form + semester name visible."""
     semester, campus, pitch = _make_mini_season_with_config(
@@ -4517,6 +4521,7 @@ def test_semester_schedule_page_renders(test_db: Session, client: TestClient):
     assert "schedule-form" in r.text or "generate-btn" in r.text
 
 
+@pytest.mark.sched
 def test_semester_schedule_generate_via_web(test_db: Session, client: TestClient):
     """SCHED_G2-02: POST generate form → 303 redirect with flash + sessions in DB."""
     semester, campus, pitch = _make_mini_season_with_config(
@@ -4553,6 +4558,7 @@ def test_semester_schedule_generate_via_web(test_db: Session, client: TestClient
 
 # ── Phase 2 Release Gate: delete-with-attendance → 409 (SCHED_G1-04) ─────────
 
+@pytest.mark.sched
 def test_delete_sessions_blocked_by_attendance(test_db: Session, client: TestClient):
     """SCHED_G1-04 (release gate): DELETE sessions returns 409 when attendance exists.
 
@@ -4640,6 +4646,7 @@ def test_delete_sessions_blocked_by_attendance(test_db: Session, client: TestCli
 # ── Phase 3: Student Enrollment (MINI_SEASON / ACADEMY_SEASON) ───────────────
 
 
+@pytest.mark.sched
 def test_semester_enroll_browse_page(test_db: Session, client: TestClient):
     """SCHED_G3-01: GET /semesters/enroll → 200, matching semester visible for student."""
     semester, _, _ = _make_mini_season_with_config(
@@ -4656,6 +4663,7 @@ def test_semester_enroll_browse_page(test_db: Session, client: TestClient):
     assert semester.name in r.text, f"Expected '{semester.name}' in page"
 
 
+@pytest.mark.sched
 def test_semester_auto_enroll(test_db: Session, client: TestClient):
     """SCHED_G3-02: POST /semesters/request-enrollment → APPROVED + credits deducted + sessions booked."""
     semester, campus, pitch = _make_mini_season_with_config(
@@ -4717,6 +4725,7 @@ def test_semester_auto_enroll(test_db: Session, client: TestClient):
     assert len(bookings) == 4, f"Expected 4 Booking rows, got {len(bookings)}"
 
 
+@pytest.mark.sched
 def test_semester_session_visibility_after_enroll(test_db: Session, client: TestClient):
     """SCHED_G3-03: After APPROVED enrollment, student sees sessions at GET /sessions."""
     semester, campus, pitch = _make_mini_season_with_config(
@@ -4765,6 +4774,7 @@ def test_semester_session_visibility_after_enroll(test_db: Session, client: Test
     )
 
 
+@pytest.mark.sched
 def test_semester_withdraw_enrollment(test_db: Session, client: TestClient):
     """SCHED_G3-04: POST /semesters/withdraw-enrollment → 50% refund + bookings deleted + WITHDRAWN."""
     semester, campus, pitch = _make_mini_season_with_config(
