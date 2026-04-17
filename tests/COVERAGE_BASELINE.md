@@ -14,11 +14,11 @@ A flow is COVERED only when ALL 3 layers are proven:
 
 | Metric | Value |
 |--------|-------|
-| Total defined flows | **93** |
-| Covered (all 3 layers) | **93** |
+| Total defined flows | **96** |
+| Covered (all 3 layers) | **96** |
 | Not Implemented on main | **0** |
 | Not Covered | **0** |
-| **Coverage KPI** | **Full role-based E2E business flow coverage achieved** (93/93) |
+| **Coverage KPI** | **Full role-based E2E business flow coverage achieved** (96/96) |
 | Sprint 1 additions | +5 flows (F-03, F-14, F-15, F-16, F-29) |
 | Sprint 2 additions | +8 flows (F-04, F-05, F-12, F-24, F-25, F-32, F-35, F-38) |
 | Sprint 3 additions | +2 flows (F-41, F-42) |
@@ -37,6 +37,7 @@ A flow is COVERED only when ALL 3 layers are proven:
 | Phase 5.5 audit | +5 flows (F-84..F-88) — Guard negative paths: role / license / duplicate / credit / ownership |
 | RBAC audit | +3 flows (F-89..F-91) — Role-based boundary: student→admin forbidden / admin→enroll forbidden / SD→student cross-role |
 | RBAC symmetry | +2 flows (F-92..F-93) — instructor→admin forbidden / SD→enroll forbidden (guard uniformity) |
+| Security validation | +3 flows (F-94..F-96) — SQL injection / XSS escaping / CSRF enforcement validation |
 
 ---
 
@@ -60,10 +61,10 @@ A flow is COVERED only when ALL 3 layers are proven:
 
 | Suite | Count |
 |-------|-------|
-| `tests/integration/web_flows/` | **614** (42 files, +18 SCHED_G3-01..15 + SCHED_INV-01..03 + 5 RBAC-01..05) |
+| `tests/integration/web_flows/` | **617** (43 files, +18 SCHED_G3-01..15 + SCHED_INV-01..03 + 5 RBAC-01..05 + 3 SEC-01..03) |
 | `tests/integration/api_smoke/` | **1,741** |
 | Cypress (`cypress/e2e/`) | **18** (5 files, +SCHED-01..05) |
-| **Total** | **2,373** |
+| **Total** | **2,376** |
 
 ---
 
@@ -171,6 +172,9 @@ A flow is COVERED only when ALL 3 layers are proven:
 | F-91 | SD enrolls team → student GET /events/{id} shows team name in participants list (cross-role state consistency) | ✅ | ✅ | ✅ | **COVERED** | RBAC-03 (test_rbac_03_sd_enrollment_reflected_for_student) |
 | F-92 | INSTRUCTOR GET /admin/users → 403 (symmetry: admin guard blocks all non-ADMIN roles uniformly) | ✅ | N/A | N/A | **COVERED** | RBAC-04 (test_rbac_04_instructor_forbidden_from_admin_ui) |
 | F-93 | SPORT_DIRECTOR POST /semesters/request-enrollment → 303 + error=Student+role+required (symmetry: role guard uniform) | ✅ | N/A | ✅ | **COVERED** | RBAC-05 (test_rbac_05_sport_director_cannot_enroll_in_semester) |
+| F-94 | SQL injection payloads in admin search → 200 (no DB crash); users table intact after all payloads | ✅ | ✅ | N/A | **COVERED** | SEC-01 (test_sec_01_sql_injection_probe_in_admin_search) |
+| F-95 | XSS payload in tournament name → HTML-escaped (&lt;script&gt;) in public event page; raw script tag absent | ✅ | N/A | ✅ | **COVERED** | SEC-02 (test_sec_02_xss_payload_escaped_in_public_event_page) |
+| F-96 | Form POST without CSRF token or Bearer header → 403 (CSRF middleware blocks before route handler runs) | ✅ | N/A | N/A | **COVERED** | SEC-03 (test_sec_03_csrf_middleware_blocks_unprotected_post) |
 
 ---
 
