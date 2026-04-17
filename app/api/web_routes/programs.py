@@ -16,6 +16,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, update as sql_update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ...database import get_db
@@ -175,91 +176,109 @@ async def semester_request_enrollment(
 
     now = datetime.utcnow()
 
-    # Re-enrollment: reactivate WITHDRAWN enrollment if it exists (avoids unique constraint violation)
-    withdrawn = (
-        db.query(SemesterEnrollment)
-        .filter(
-            SemesterEnrollment.user_id == user.id,
-            SemesterEnrollment.semester_id == semester_id,
-            SemesterEnrollment.user_license_id == license_.id,
-            SemesterEnrollment.is_active == False,
-            SemesterEnrollment.request_status == EnrollmentStatus.WITHDRAWN,
-        )
-        .first()
-    )
-    if withdrawn:
-        withdrawn.request_status = EnrollmentStatus.APPROVED
-        withdrawn.is_active = True
-        withdrawn.approved_at = now
-        withdrawn.enrolled_at = now
-        enrollment = withdrawn
-        db.flush()
-    else:
-        enrollment = SemesterEnrollment(
-            user_id=user.id,
-            semester_id=semester_id,
-            user_license_id=license_.id,
-            request_status=EnrollmentStatus.APPROVED,
-            is_active=True,
-            requested_at=now,
-            approved_at=now,
-            enrolled_at=now,
-        )
-        db.add(enrollment)
-        db.flush()
-
-    if cost > 0:
-        db.add(CreditTransaction(
-            user_license_id=license_.id,
-            transaction_type="SEMESTER_ENROLLMENT",
-            amount=-cost,
-            balance_after=user.credit_balance,
-            description=f"Semester enrollment: {semester.name} ({semester.code})",
-            semester_id=semester_id,
-            enrollment_id=enrollment.id,
-            idempotency_key=str(uuid.uuid4()),
-        ))
-
-    # Auto-book all existing auto_generated sessions.
-    # Transaction boundary: credit deduction + enrollment + CreditTransaction + all Bookings
-    # are committed atomically in the single db.commit() below.
-    sessions = (
-        db.query(SessionModel)
-        .filter(
-            SessionModel.semester_id == semester_id,
-            SessionModel.auto_generated == True,
-        )
-        .all()
-    )
-    for s in sessions:
-        already = (
-            db.query(Booking)
-            .filter(Booking.user_id == user.id, Booking.session_id == s.id)
+    try:
+        # Re-enrollment: reactivate WITHDRAWN enrollment if it exists (avoids unique constraint violation)
+        withdrawn = (
+            db.query(SemesterEnrollment)
+            .filter(
+                SemesterEnrollment.user_id == user.id,
+                SemesterEnrollment.semester_id == semester_id,
+                SemesterEnrollment.user_license_id == license_.id,
+                SemesterEnrollment.is_active == False,
+                SemesterEnrollment.request_status == EnrollmentStatus.WITHDRAWN,
+            )
             .first()
         )
-        if already:
-            continue
-        # Lock session row before capacity read — serializes concurrent auto-bookings
-        # and prevents TOCTOU race where two students both see capacity available.
-        s = db.query(SessionModel).filter(SessionModel.id == s.id).with_for_update().one()
-        confirmed_count = (
-            db.query(func.count(Booking.id))
-            .filter(Booking.session_id == s.id, Booking.status == BookingStatus.CONFIRMED)
-            .scalar() or 0
-        )
-        booking_status = (
-            BookingStatus.CONFIRMED if confirmed_count < s.capacity
-            else BookingStatus.WAITLISTED
-        )
-        db.add(Booking(
-            user_id=user.id,
-            session_id=s.id,
-            enrollment_id=enrollment.id,
-            status=booking_status,
-            created_at=now,
-        ))
+        if withdrawn:
+            withdrawn.request_status = EnrollmentStatus.APPROVED
+            withdrawn.is_active = True
+            withdrawn.approved_at = now
+            withdrawn.enrolled_at = now
+            enrollment = withdrawn
+            db.flush()
+        else:
+            enrollment = SemesterEnrollment(
+                user_id=user.id,
+                semester_id=semester_id,
+                user_license_id=license_.id,
+                request_status=EnrollmentStatus.APPROVED,
+                is_active=True,
+                requested_at=now,
+                approved_at=now,
+                enrolled_at=now,
+            )
+            db.add(enrollment)
+            db.flush()
 
-    db.commit()  # atomic: enrollment + credit + bookings
+        if cost > 0:
+            db.add(CreditTransaction(
+                user_license_id=license_.id,
+                transaction_type="SEMESTER_ENROLLMENT",
+                amount=-cost,
+                balance_after=user.credit_balance,
+                description=f"Semester enrollment: {semester.name} ({semester.code})",
+                semester_id=semester_id,
+                enrollment_id=enrollment.id,
+                idempotency_key=str(uuid.uuid4()),
+            ))
+
+        # Auto-book all existing auto_generated sessions.
+        # Batch dedup (1 query) + SELECT FOR UPDATE per session (capacity race guard)
+        # + bulk insert — all committed atomically with enrollment + credit above.
+        sessions = (
+            db.query(SessionModel)
+            .filter(
+                SessionModel.semester_id == semester_id,
+                SessionModel.auto_generated == True,
+            )
+            .all()
+        )
+        session_ids = [s.id for s in sessions]
+        already_booked: set = set()
+        if session_ids:
+            already_booked = {
+                r[0]
+                for r in db.query(Booking.session_id).filter(
+                    Booking.user_id == user.id,
+                    Booking.session_id.in_(session_ids),
+                ).all()
+            }
+
+        new_bookings = []
+        for s in sessions:
+            if s.id in already_booked:
+                continue
+            # Lock session row before capacity read — serializes concurrent auto-bookings
+            # and prevents TOCTOU race where two students both see capacity available.
+            s = db.query(SessionModel).filter(SessionModel.id == s.id).with_for_update().one()
+            confirmed_count = (
+                db.query(func.count(Booking.id))
+                .filter(Booking.session_id == s.id, Booking.status == BookingStatus.CONFIRMED)
+                .scalar() or 0
+            )
+            booking_status = (
+                BookingStatus.CONFIRMED if confirmed_count < s.capacity
+                else BookingStatus.WAITLISTED
+            )
+            new_bookings.append(Booking(
+                user_id=user.id,
+                session_id=s.id,
+                enrollment_id=enrollment.id,
+                status=booking_status,
+                created_at=now,
+            ))
+
+        if new_bookings:
+            db.bulk_save_objects(new_bookings)
+
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        return _err("Already+enrolled+(concurrent+submission)")
+    except Exception:
+        db.rollback()
+        raise
+
     return RedirectResponse(
         url=f"/semesters/enroll?success=enrolled&semester={semester.name}",
         status_code=303,
