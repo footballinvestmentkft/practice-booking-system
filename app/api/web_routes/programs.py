@@ -220,7 +220,9 @@ async def semester_request_enrollment(
             idempotency_key=str(uuid.uuid4()),
         ))
 
-    # Auto-book all existing auto_generated sessions
+    # Auto-book all existing auto_generated sessions.
+    # Transaction boundary: credit deduction + enrollment + CreditTransaction + all Bookings
+    # are committed atomically in the single db.commit() below.
     sessions = (
         db.query(SessionModel)
         .filter(
@@ -237,6 +239,9 @@ async def semester_request_enrollment(
         )
         if already:
             continue
+        # Lock session row before capacity read — serializes concurrent auto-bookings
+        # and prevents TOCTOU race where two students both see capacity available.
+        s = db.query(SessionModel).filter(SessionModel.id == s.id).with_for_update().one()
         confirmed_count = (
             db.query(func.count(Booking.id))
             .filter(Booking.session_id == s.id, Booking.status == BookingStatus.CONFIRMED)
@@ -254,7 +259,7 @@ async def semester_request_enrollment(
             created_at=now,
         ))
 
-    db.commit()
+    db.commit()  # atomic: enrollment + credit + bookings
     return RedirectResponse(
         url=f"/semesters/enroll?success=enrolled&semester={semester.name}",
         status_code=303,

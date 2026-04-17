@@ -4362,6 +4362,17 @@ async def admin_patch_session_instructor(
     body = await request.json()
     instructor_id = body.get("instructor_id")
 
+    # Validate instructor if provided (None = clear override)
+    if instructor_id is not None:
+        instructor = db.query(User).filter(User.id == instructor_id).first()
+        if not instructor:
+            return JSONResponse({"error": "Instructor not found"}, status_code=400)
+        if instructor.role != UserRole.INSTRUCTOR:
+            return JSONResponse(
+                {"error": f"User {instructor_id} does not have INSTRUCTOR role (role={instructor.role.value})"},
+                status_code=400,
+            )
+
     session = (
         db.query(SessionModel)
         .filter(SessionModel.id == session_id, SessionModel.semester_id == semester_id)
