@@ -8,6 +8,7 @@ Routes:
 
 Pattern: tournaments.py CAMP enrollment (auto-approve, credit deduct, session auto-book).
 """
+import logging
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -19,17 +20,24 @@ from sqlalchemy import func, update as sql_update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from ...core.metrics import metrics
+from ...core.structured_log import log_event
 from ...database import get_db
 from ...dependencies import get_current_user_web
 from ...models.audit_log import AuditLog
 from ...models.booking import Booking, BookingStatus
-from ..api_v1.endpoints.bookings.helpers import auto_promote_from_waitlist
 from ...models.credit_transaction import CreditTransaction
 from ...models.license import UserLicense
 from ...models.semester import Semester, SemesterCategory, SemesterStatus
 from ...models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 from ...models.session import Session as SessionModel
 from ...models.user import User, UserRole
+from ...services.semester_service import (
+    create_enrollment_with_bookings,
+    withdraw_enrollment_bookings,
+)
+
+_logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -155,6 +163,9 @@ async def semester_request_enrollment(
     if not semester or semester.semester_category not in _PROGRAM_CATEGORIES:
         return _err("Invalid+semester")
 
+    if semester.status not in _BROWSE_STATUSES:
+        return _err("Semester+not+open+for+enrollment")
+
     if user.role != UserRole.STUDENT:
         return _err("Student+role+required")
 
@@ -201,110 +212,17 @@ async def semester_request_enrollment(
     now = datetime.utcnow()
 
     try:
-        # Re-enrollment: reactivate WITHDRAWN enrollment if it exists (avoids unique constraint violation)
-        withdrawn = (
-            db.query(SemesterEnrollment)
-            .filter(
-                SemesterEnrollment.user_id == user.id,
-                SemesterEnrollment.semester_id == semester_id,
-                SemesterEnrollment.user_license_id == license_.id,
-                SemesterEnrollment.is_active == False,
-                SemesterEnrollment.request_status == EnrollmentStatus.WITHDRAWN,
-            )
-            .first()
-        )
-        if withdrawn:
-            withdrawn.request_status = EnrollmentStatus.APPROVED
-            withdrawn.is_active = True
-            withdrawn.approved_at = now
-            withdrawn.enrolled_at = now
-            enrollment = withdrawn
-            db.flush()
-        else:
-            enrollment = SemesterEnrollment(
-                user_id=user.id,
-                semester_id=semester_id,
-                user_license_id=license_.id,
-                request_status=EnrollmentStatus.APPROVED,
-                is_active=True,
-                requested_at=now,
-                approved_at=now,
-                enrolled_at=now,
-            )
-            db.add(enrollment)
-            db.flush()
-
-        db.add(AuditLog(
+        enrollment_id, n_confirmed, n_waitlisted = create_enrollment_with_bookings(
+            db,
+            semester_id=semester_id,
             user_id=user.id,
-            action="SEMESTER_ENROLLED",
-            resource_type="semester_enrollment",
-            resource_id=enrollment.id,
-            details={"semester_id": semester_id, "cost": cost, "semester_name": semester.name},
-            request_method="POST",
-            request_path="/semesters/request-enrollment",
-        ))
-
-        if cost > 0:
-            db.add(CreditTransaction(
-                user_license_id=license_.id,
-                transaction_type="SEMESTER_ENROLLMENT",
-                amount=-cost,
-                balance_after=user.credit_balance,
-                description=f"Semester enrollment: {semester.name} ({semester.code})",
-                semester_id=semester_id,
-                enrollment_id=enrollment.id,
-                idempotency_key=str(uuid.uuid4()),
-            ))
-
-        # Auto-book all existing auto_generated sessions.
-        # Batch dedup (1 query) + SELECT FOR UPDATE per session (capacity race guard)
-        # + bulk insert — all committed atomically with enrollment + credit above.
-        sessions = (
-            db.query(SessionModel)
-            .filter(
-                SessionModel.semester_id == semester_id,
-                SessionModel.auto_generated == True,
-            )
-            .all()
+            license_id=license_.id,
+            cost=cost,
+            semester_name=semester.name,
+            semester_code=semester.code,
+            user_credit_balance=user.credit_balance,
+            now=now,
         )
-        session_ids = [s.id for s in sessions]
-        already_booked: set = set()
-        if session_ids:
-            already_booked = {
-                r[0]
-                for r in db.query(Booking.session_id).filter(
-                    Booking.user_id == user.id,
-                    Booking.session_id.in_(session_ids),
-                ).all()
-            }
-
-        new_bookings = []
-        for s in sessions:
-            if s.id in already_booked:
-                continue
-            # Lock session row before capacity read — serializes concurrent auto-bookings
-            # and prevents TOCTOU race where two students both see capacity available.
-            s = db.query(SessionModel).filter(SessionModel.id == s.id).with_for_update().one()
-            confirmed_count = (
-                db.query(func.count(Booking.id))
-                .filter(Booking.session_id == s.id, Booking.status == BookingStatus.CONFIRMED)
-                .scalar() or 0
-            )
-            booking_status = (
-                BookingStatus.CONFIRMED if confirmed_count < s.capacity
-                else BookingStatus.WAITLISTED
-            )
-            new_bookings.append(Booking(
-                user_id=user.id,
-                session_id=s.id,
-                enrollment_id=enrollment.id,
-                status=booking_status,
-                created_at=now,
-            ))
-
-        if new_bookings:
-            db.bulk_save_objects(new_bookings)
-
         db.commit()
     except IntegrityError:
         db.rollback()
@@ -312,6 +230,16 @@ async def semester_request_enrollment(
     except Exception:
         db.rollback()
         raise
+
+    # Post-commit observability — explicit, always after commit
+    log_event(_logger, "semester_enrollment_created",
+              user_id=user.id, semester_id=semester_id, cost=cost,
+              n_confirmed=n_confirmed, n_waitlisted=n_waitlisted)
+    metrics.increment("semester_enrollments_total")
+    if n_confirmed:
+        metrics.increment("bookings_created", by=n_confirmed)
+    if n_waitlisted:
+        metrics.increment("bookings_waitlisted", by=n_waitlisted)
 
     return RedirectResponse(
         url=f"/semesters/enroll?success=enrolled&semester={semester.name}",
@@ -372,24 +300,8 @@ async def semester_withdraw_enrollment(
             idempotency_key=str(uuid.uuid4()),
         ))
 
-    # Capture CONFIRMED session_ids before deletion (for waitlist auto-promotion)
-    confirmed_session_ids = [
-        row[0]
-        for row in db.query(Booking.session_id).filter(
-            Booking.enrollment_id == enrollment.id,
-            Booking.user_id == user.id,
-            Booking.status == BookingStatus.CONFIRMED,
-        ).all()
-    ]
-
-    db.query(Booking).filter(
-        Booking.enrollment_id == enrollment.id,
-        Booking.user_id == user.id,
-    ).delete(synchronize_session=False)
-
-    # Auto-promote first WAITLISTED → CONFIRMED for each freed session
-    for sid in confirmed_session_ids:
-        auto_promote_from_waitlist(db, sid)
+    # Booking cleanup + waitlist auto-promotion (service owns query logic)
+    promoted_count = withdraw_enrollment_bookings(db, enrollment.id, user.id)
 
     db.add(AuditLog(
         user_id=user.id,
@@ -402,4 +314,13 @@ async def semester_withdraw_enrollment(
     ))
 
     db.commit()
+
+    # Post-commit observability — explicit, always after commit
+    log_event(_logger, "semester_enrollment_withdrawn",
+              user_id=user.id, enrollment_id=enrollment.id,
+              refund=refund, promoted_count=promoted_count)
+    metrics.increment("semester_withdrawals_total")
+    if promoted_count:
+        metrics.increment("waitlist_promotions_total", by=promoted_count)
+
     return RedirectResponse(url="/semesters/enroll?success=withdrawn", status_code=303)

@@ -15,10 +15,10 @@ A flow is COVERED only when ALL 3 layers are proven:
 | Metric | Value |
 |--------|-------|
 | Total defined flows | **74** |
-| Covered (all 3 layers) | **78** |
+| Covered (all 3 layers) | **80** |
 | Not Implemented on main | **0** |
 | Not Covered | **0** |
-| **Coverage KPI** | **100%** (78/78 implemented flows) |
+| **Coverage KPI** | **100%** (80/80 implemented flows) |
 | Sprint 1 additions | +5 flows (F-03, F-14, F-15, F-16, F-29) |
 | Sprint 2 additions | +8 flows (F-04, F-05, F-12, F-24, F-25, F-32, F-35, F-38) |
 | Sprint 3 additions | +2 flows (F-41, F-42) |
@@ -32,6 +32,7 @@ A flow is COVERED only when ALL 3 layers are proven:
 | Phase 3 Step 2 additions | +4 flows (F-71, F-72, F-73, F-74) — Student enrollment MINI_SEASON / ACADEMY_SEASON |
 | Phase 4 additions | +2 flows (F-75, F-76) — Capacity enforcement + re-enrollment after withdraw |
 | Phase 5 additions | +2 flows (F-77, F-78) — Waitlist auto-promote on withdraw + audit log on enroll |
+| Phase 5.5 additions | +2 flows (F-79, F-80) — Enrollment status guard + session delete cleans bookings |
 
 ---
 
@@ -55,10 +56,10 @@ A flow is COVERED only when ALL 3 layers are proven:
 
 | Suite | Count |
 |-------|-------|
-| `tests/integration/web_flows/` | **599** (41 files, +8 SCHED_G3-01..08) |
+| `tests/integration/web_flows/` | **601** (41 files, +10 SCHED_G3-01..10) |
 | `tests/integration/api_smoke/` | **1,741** |
 | Cypress (`cypress/e2e/`) | **18** (5 files, +SCHED-01..05) |
-| **Total** | **2,358** |
+| **Total** | **2,360** |
 
 ---
 
@@ -151,6 +152,8 @@ A flow is COVERED only when ALL 3 layers are proven:
 | F-76 | Re-enrollment after withdraw: WITHDRAWN row reactivated (same id), credits deducted again, refund on prior withdraw confirmed | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-06 (test_re_enrollment_after_withdraw) |
 | F-77 | Waitlist auto-promote: student A withdraws semester → CONFIRMED booking freed → student B WAITLISTED → promoted to CONFIRMED | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-07 (test_waitlist_auto_promote_on_withdraw) |
 | F-78 | Audit log on enroll: POST /semesters/request-enrollment creates AuditLog(action=SEMESTER_ENROLLED) atomically | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-08 (test_audit_log_on_semester_enroll) |
+| F-79 | Enrollment status guard: POST enroll on COMPLETED semester → 303 + error=Semester+not+open+for+enrollment | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-09 (test_enrollment_blocked_when_semester_closed) |
+| F-80 | Session delete cleans bookings: admin DELETE sessions → orphaned bookings removed before session delete | ✅ | ✅ | ✅ | **COVERED** | SCHED_G3-10 (test_session_delete_cleans_bookings) |
 
 ---
 

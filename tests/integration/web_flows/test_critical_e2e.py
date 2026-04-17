@@ -5076,3 +5076,111 @@ def test_audit_log_on_semester_enroll(test_db: Session, client: TestClient):
     )
     assert log is not None, "AuditLog entry should be created on semester enrollment"
     assert log.resource_type == "semester_enrollment"
+
+
+# ── Phase 5.5: Stabilization ───────────────────────────────────────────────────
+#
+# SCHED_G3-09  status guard          — COMPLETED semester → enrollment blocked
+# SCHED_G3-10  session delete cleans — bookings cleaned up before sessions deleted
+# ------------------------------------------------------------------------------
+
+
+@pytest.mark.sched
+def test_enrollment_blocked_when_semester_closed(test_db: Session, client: TestClient):
+    """SCHED_G3-09: POST enroll on a COMPLETED semester → 303 + error=Semester+not+open+for+enrollment."""
+    semester, campus, pitch = _make_mini_season_with_config(
+        test_db, start_date=date(2026, 9, 1), weeks=4, day_of_week=2
+    )
+    semester.status = SemesterStatus.COMPLETED
+    test_db.flush()
+
+    student = _make_user(test_db, role=UserRole.STUDENT, credit_balance=0)
+    student.specialization = SpecializationType.LFA_FOOTBALL_PLAYER
+    _make_license(test_db, student)
+    semester.enrollment_cost = 0
+    test_db.flush()
+    app.dependency_overrides[get_current_user_web] = lambda: student
+
+    r = client.post(
+        "/semesters/request-enrollment",
+        data={"semester_id": str(semester.id)},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303, f"Expected 303, got {r.status_code}"
+    assert "Semester+not+open+for+enrollment" in r.headers["location"], (
+        f"Expected closed-semester error in redirect, got: {r.headers['location']}"
+    )
+
+
+@pytest.mark.sched
+def test_session_delete_cleans_bookings(test_db: Session, client: TestClient):
+    """SCHED_G3-10: Admin DELETE sessions → orphaned bookings are removed before session delete."""
+    from app.dependencies import get_current_admin_user as _get_admin
+
+    semester, campus, pitch = _make_mini_season_with_config(
+        test_db, start_date=date(2026, 10, 1), weeks=2, day_of_week=3
+    )
+    admin = _make_user(test_db, role=UserRole.ADMIN)
+    student = _make_user(test_db, role=UserRole.STUDENT, credit_balance=0)
+    student.specialization = SpecializationType.LFA_FOOTBALL_PLAYER
+    _make_license(test_db, student)
+    semester.enrollment_cost = 0
+    test_db.flush()
+
+    app.dependency_overrides[get_current_user_web] = lambda: student
+    app.dependency_overrides[_get_admin] = lambda: admin
+
+    # Generate 2 weekly sessions
+    r_gen = client.post(
+        f"/api/v1/semesters/{semester.id}/generate-sessions",
+        json={
+            "day_of_week": 3,
+            "start_time": "17:00",
+            "duration_minutes": 90,
+            "sessions_per_week": 1,
+            "skip_conflicts": False,
+        },
+    )
+    assert r_gen.status_code == 200, f"Generate failed: {r_gen.text[:300]}"
+    sessions_created = r_gen.json()["sessions_created"]
+    assert sessions_created > 0, "Expected at least 1 session generated"
+
+    # Enroll student → creates CONFIRMED bookings
+    r_enroll = client.post(
+        "/semesters/request-enrollment",
+        data={"semester_id": str(semester.id)},
+        follow_redirects=False,
+    )
+    assert r_enroll.status_code == 303, f"Enroll failed: {r_enroll.text[:300]}"
+
+    # Verify bookings exist before delete
+    test_db.expire_all()
+    enrollment = (
+        test_db.query(SemesterEnrollment)
+        .filter_by(user_id=student.id, semester_id=semester.id, is_active=True)
+        .first()
+    )
+    assert enrollment is not None, "Enrollment must exist after successful enrollment"
+    booking_count_before = (
+        test_db.query(Booking)
+        .filter_by(enrollment_id=enrollment.id)
+        .count()
+    )
+    assert booking_count_before > 0, f"Expected bookings before delete, got 0"
+
+    # Admin deletes all generated sessions
+    r_del = client.delete(f"/api/v1/semesters/{semester.id}/sessions")
+    assert r_del.status_code == 200, (
+        f"Expected 200 on session delete, got {r_del.status_code}. Body: {r_del.text[:300]}"
+    )
+
+    # Assert all bookings for the enrollment are gone
+    test_db.expire_all()
+    booking_count_after = (
+        test_db.query(Booking)
+        .filter_by(enrollment_id=enrollment.id)
+        .count()
+    )
+    assert booking_count_after == 0, (
+        f"Expected 0 bookings after session delete, got {booking_count_after}"
+    )

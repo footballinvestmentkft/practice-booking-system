@@ -27,6 +27,7 @@ from .....services.scheduling.mini_season_generator import (
     MiniSeasonSessionGenerator,
     PitchConflictError,
 )
+from .....services.semester_service import cleanup_generated_session_bookings
 
 router = APIRouter()
 
@@ -250,6 +251,9 @@ def delete_generated_sessions(
     """
     sem = _get_semester_or_404(db, semester_id)
     _validate_semester_for_scheduling(sem)
+
+    # Delete bookings for auto-generated sessions before deleting the sessions
+    cleanup_generated_session_bookings(db, semester_id)
 
     generator = MiniSeasonSessionGenerator(db)
     deleted = generator.delete_generated_sessions(semester_id)
