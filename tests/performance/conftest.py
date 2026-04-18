@@ -10,8 +10,7 @@ Strategy:
 
 This makes test_query_budget.py portable without changing business-logic tests.
 """
-import json
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 import pytest
 
@@ -42,6 +41,8 @@ def heavy_event_id():
             tournament_status="REWARDS_DISTRIBUTED",
             status=SemesterStatus.COMPLETED,
             enrollment_cost=0,
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 3, 31),
         )
         db.add(sem)
         db.flush()
