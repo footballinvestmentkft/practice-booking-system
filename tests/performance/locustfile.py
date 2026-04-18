@@ -70,6 +70,16 @@ Phase 6.3 environment variables:
   LOAD_SEMESTER_IDS      Same as Phase 6.2 — comma-separated semester IDs
   LOAD_EVENT_IDS         Same as Phase 6.2 — comma-separated event IDs
 
+RUNTIME WORKAROUND — TECHNICAL DEBT (see GitHub issue: "Upgrade to Python 3.13 +
+remove cookie workaround"):
+  Under Python 3.12 + gevent, requests.Session.send() calls extract_cookies_to_jar
+  twice; the second call finds http.client.HTTPResponse.msg exhausted → session.cookies
+  stays empty.  All cookie injection in SoakBurstUser uses cookies.set(name, value)
+  with domain="" to bypass domain matching.  This is NOT semantically correct —
+  the proper fix is upgrading psycopg2 to ≥2.9.10 and switching CI to Python 3.13,
+  where session.cookies is correctly populated and cookies.update() works as intended.
+  Track: https://github.com/football-investment/practice-booking-system/issues (DEBT-01)
+
 Phase 5 environment variables:
   ADMIN_EMAIL:    Admin user email (default: admin@lfa.com)
   ADMIN_PASSWORD: Admin user password (default: admin123)
@@ -419,7 +429,7 @@ class SoakBurstUser(HttpUser):
                 token = self.client.cookies.get("csrf_token", "")
         if token:
             self._csrf_token = token
-            self.client.cookies.set("csrf_token", token)
+            self.client.cookies.set("csrf_token", token)  # DEBT-01
         return token
 
     def on_start(self) -> None:
@@ -451,13 +461,12 @@ class SoakBurstUser(HttpUser):
         ) as resp:
             if resp.status_code in (302, 303):
                 self._logged_in = True
-                # Python 3.12 + gevent: session.cookies stays empty (see docstring).
-                # Read from response.cookies (always populated) and inject via
-                # cookies.set() — domain="" bypasses domain matching, ensuring the
-                # token is sent on every subsequent request.
+                # DEBT-01: Python 3.12 + gevent workaround — see module docstring.
+                # cookies.set() with domain="" bypasses domain matching.
+                # Remove when CI upgrades to Python 3.13 + psycopg2≥2.9.10.
                 _at = resp.cookies.get("access_token", "")
                 if _at:
-                    self.client.cookies.set("access_token", _at)
+                    self.client.cookies.set("access_token", _at)  # DEBT-01
                 resp.success()
             else:
                 resp.failure(
@@ -466,8 +475,8 @@ class SoakBurstUser(HttpUser):
                 )
 
         # Fetch CSRF token via a public endpoint — no auth dependency.
-        # Same Python 3.12 + gevent issue as login: read from response.cookies
-        # and inject via cookies.set() to ensure the token is in the session jar.
+        # Same Python 3.12 + gevent issue as login (DEBT-01): read from
+        # response.cookies and inject via cookies.set() domain="" workaround.
         if self._logged_in:
             event_id = random.choice(LOAD_EVENT_IDS)
             with self.client.get(
@@ -481,7 +490,7 @@ class SoakBurstUser(HttpUser):
                     _tok = self.client.cookies.get("csrf_token", "")
                 if _tok:
                     self._csrf_token = _tok
-                    self.client.cookies.set("csrf_token", _tok)
+                    self.client.cookies.set("csrf_token", _tok)  # DEBT-01
 
     # ── Tasks ────────────────────────────────────────────────────────────────
 
@@ -521,7 +530,7 @@ class SoakBurstUser(HttpUser):
                 _new_tok = resp.cookies.get("csrf_token", "")
                 if _new_tok:
                     self._csrf_token = _new_tok
-                    self.client.cookies.set("csrf_token", _new_tok)
+                    self.client.cookies.set("csrf_token", _new_tok)  # DEBT-01
                 resp.success()
             elif resp.status_code == 429:
                 resp.success()  # expected under load
@@ -545,7 +554,7 @@ class SoakBurstUser(HttpUser):
         _tok = list_resp.cookies.get("csrf_token", "")
         if _tok:
             self._csrf_token = _tok
-            self.client.cookies.set("csrf_token", _tok)
+            self.client.cookies.set("csrf_token", _tok)  # DEBT-01
         elif not self._csrf_token:
             self._csrf_token = self.client.cookies.get("csrf_token", "")
 
@@ -571,7 +580,7 @@ class SoakBurstUser(HttpUser):
                 _new_tok = resp.cookies.get("csrf_token", "")
                 if _new_tok:
                     self._csrf_token = _new_tok
-                    self.client.cookies.set("csrf_token", _new_tok)
+                    self.client.cookies.set("csrf_token", _new_tok)  # DEBT-01
                 resp.success()
             elif resp.status_code == 429:
                 resp.success()
