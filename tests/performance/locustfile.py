@@ -391,9 +391,19 @@ class SoakBurstUser(HttpUser):
     _password: str = ""
     _logged_in: bool = False
     _enrolled_semester_id: int = 0
+    _csrf_token: str = ""
+
+    def _get_csrf_token(self) -> str:
+        """Return the CSRF token from the session cookie jar (refresh if missing)."""
+        token = self.client.cookies.get("csrf_token", "")
+        if not token:
+            # Trigger a GET to receive the CSRF cookie from the middleware
+            self.client.get("/semesters/enroll", name="[P63] Refresh CSRF")
+            token = self.client.cookies.get("csrf_token", "")
+        return token
 
     def on_start(self) -> None:
-        """Assign a pooled account to this VU and log in."""
+        """Assign a pooled account to this VU, log in, and capture CSRF token."""
         with _USER_LOCK:
             self._email, self._password = next(_USER_CYCLE)
 
@@ -411,6 +421,11 @@ class SoakBurstUser(HttpUser):
                     f"[P63] Login failed: {resp.status_code} ({self._email}) — "
                     f"run scripts/seed_load_test_users.py first"
                 )
+
+        # Fetch CSRF token: one GET to receive the csrf_token cookie
+        if self._logged_in:
+            self.client.get("/semesters/enroll", name="[P63] Init CSRF")
+            self._csrf_token = self.client.cookies.get("csrf_token", "")
 
     # ── Tasks ────────────────────────────────────────────────────────────────
 
@@ -432,9 +447,11 @@ class SoakBurstUser(HttpUser):
             return
 
         sem_id = random.choice(LOAD_SEMESTER_IDS)
+        csrf = self._get_csrf_token()
         with self.client.post(
             "/semesters/request-enrollment",
             data={"semester_id": str(sem_id)},
+            headers={"X-CSRF-Token": csrf} if csrf else {},
             allow_redirects=False,
             name="[P63] Enroll",
             catch_response=True,
@@ -462,6 +479,9 @@ class SoakBurstUser(HttpUser):
             "/semesters/enroll",
             name="[P63] Fetch enrollments (pre-withdraw)",
         )
+        # Refresh CSRF token from the GET response cookie
+        self._csrf_token = self.client.cookies.get("csrf_token", self._csrf_token)
+
         match = re.search(
             r'name=["\']enrollment_id["\']\s+value=["\'](\d+)["\']',
             list_resp.text,
@@ -470,9 +490,11 @@ class SoakBurstUser(HttpUser):
             return
 
         enrollment_id = match.group(1)
+        csrf = self._csrf_token
         with self.client.post(
             "/semesters/withdraw-enrollment",
             data={"enrollment_id": enrollment_id},
+            headers={"X-CSRF-Token": csrf} if csrf else {},
             allow_redirects=False,
             name="[P63] Withdraw",
             catch_response=True,
