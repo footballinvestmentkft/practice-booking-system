@@ -414,29 +414,30 @@ class SoakBurstUser(HttpUser):
                 catch_response=True,
             ) as r:
                 r.success()
-                # Read from response.cookies (this response's Set-Cookie only)
                 token = r.cookies.get("csrf_token", "")
             if not token:
                 token = self.client.cookies.get("csrf_token", "")
+            if r.cookies:
+                self.client.cookies.update(r.cookies)
         if token:
             self._csrf_token = token
-            self.client.cookies.set("csrf_token", token)
         return token
 
     def on_start(self) -> None:
         """Assign a pooled account to this VU, log in, and capture CSRF token.
 
-        MUST use allow_redirects=False on the login POST.
-        With allow_redirects=True, requests.Session follows 303 → /dashboard;
-        the access_token cookie from the intermediate 303 response is merged
-        only into the prepared_request cookie jar (for the redirect GET), NOT
-        into session.cookies.  Only the *final* response's (GET /dashboard 200)
-        cookies land in session.cookies — which does NOT include access_token.
-        Every subsequent authenticated request therefore gets 401.
+        MUST use allow_redirects=False on the login POST so the 303 is the
+        final response and its Set-Cookie headers are processed.
 
-        With allow_redirects=False the 303 IS the final response; its
-        Set-Cookie goes through the normal cookie-extraction path and
-        access_token lands in session.cookies reliably.
+        Cookie sync note (Python 3.12 + gevent):
+          requests.Session.send() calls extract_cookies_to_jar TWICE:
+            1. HTTPAdapter.build_response() → populates response.cookies  ✅
+            2. Session.send() itself        → populates session.cookies    ❌ on Py3.12
+          Under gevent on Python 3.12, http.client.HTTPResponse.msg is
+          consumed by call #1; call #2 finds it exhausted → session.cookies
+          stays empty.  Python 3.13 preserves .msg; session.cookies is correct.
+          We sync from response.cookies via cookies.update() as defence-in-depth
+          on both versions: idempotent on 3.13, essential on 3.12.
         """
         with _USER_LOCK:
             self._email, self._password = next(_USER_CYCLE)
@@ -450,13 +451,15 @@ class SoakBurstUser(HttpUser):
         ) as resp:
             if resp.status_code in (302, 303):
                 self._logged_in = True
-                # gevent's monkey-patching can silently break http.cookiejar's
-                # extract_cookies_to_jar, leaving the session jar empty even when
-                # Set-Cookie headers are present.  Read directly from response.cookies
-                # (parsed straight from the raw headers) and force into the jar.
-                _at = resp.cookies.get("access_token", "")
-                if _at:
-                    self.client.cookies.set("access_token", _at)
+                # Python 3.12 + gevent: http.client.HTTPResponse.msg (the headers
+                # object) is consumed after build_response() reads it.  The second
+                # extract_cookies_to_jar call in Session.send() finds .msg exhausted
+                # → session.cookies stays empty.  Sync from response.cookies directly
+                # (populated by the first call, which always works).
+                # cookies.update() preserves original domain/path/SameSite attrs;
+                # idempotent on Python 3.13 where session.cookies is already correct.
+                if resp.cookies:
+                    self.client.cookies.update(resp.cookies)
                 resp.success()
             else:
                 resp.failure(
@@ -465,10 +468,8 @@ class SoakBurstUser(HttpUser):
                 )
 
         # Fetch CSRF token via a public endpoint — no auth dependency.
-        # Extract directly from response.cookies (this response's Set-Cookie
-        # headers only) rather than the session jar: the session jar's
-        # domain-matching policy can silently return "" for 127.0.0.1 hosts
-        # even when the server correctly sent Set-Cookie.
+        # Same Python 3.12 + gevent issue as login: sync from response.cookies
+        # directly to ensure the token lands in the session jar.
         if self._logged_in:
             event_id = random.choice(LOAD_EVENT_IDS)
             with self.client.get(
@@ -477,13 +478,11 @@ class SoakBurstUser(HttpUser):
                 catch_response=True,
             ) as r:
                 r.success()
-                _tok = r.cookies.get("csrf_token", "")
-                if not _tok:
-                    _tok = self.client.cookies.get("csrf_token", "")
+                _tok = r.cookies.get("csrf_token", "") or self.client.cookies.get("csrf_token", "")
                 if _tok:
                     self._csrf_token = _tok
-                    # Force into session jar so Cookie header is sent with POSTs
-                    self.client.cookies.set("csrf_token", _tok)
+                if r.cookies:
+                    self.client.cookies.update(r.cookies)
 
     # ── Tasks ────────────────────────────────────────────────────────────────
 
@@ -523,7 +522,8 @@ class SoakBurstUser(HttpUser):
                 _new_tok = resp.cookies.get("csrf_token", "")
                 if _new_tok:
                     self._csrf_token = _new_tok
-                    self.client.cookies.set("csrf_token", _new_tok)
+                if resp.cookies:
+                    self.client.cookies.update(resp.cookies)
                 resp.success()
             elif resp.status_code == 429:
                 resp.success()  # expected under load
@@ -547,9 +547,10 @@ class SoakBurstUser(HttpUser):
         _tok = list_resp.cookies.get("csrf_token", "")
         if _tok:
             self._csrf_token = _tok
-            self.client.cookies.set("csrf_token", _tok)
         elif not self._csrf_token:
             self._csrf_token = self.client.cookies.get("csrf_token", "")
+        if list_resp.cookies:
+            self.client.cookies.update(list_resp.cookies)
 
         match = re.search(
             r'name=["\']enrollment_id["\']\s+value=["\'](\d+)["\']',
@@ -573,7 +574,8 @@ class SoakBurstUser(HttpUser):
                 _new_tok = resp.cookies.get("csrf_token", "")
                 if _new_tok:
                     self._csrf_token = _new_tok
-                    self.client.cookies.set("csrf_token", _new_tok)
+                if resp.cookies:
+                    self.client.cookies.update(resp.cookies)
                 resp.success()
             elif resp.status_code == 429:
                 resp.success()
