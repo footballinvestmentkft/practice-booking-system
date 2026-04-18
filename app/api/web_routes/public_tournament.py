@@ -249,9 +249,20 @@ def public_event_detail(
                 })
 
     # ── Schedule (shown when sessions exist, any state) ───────────────────────
-    # Q (TEAM+INDIVIDUAL path): sessions fetch
+    # Q (TEAM+INDIVIDUAL path): sessions fetch — explicit columns only (Phase 11)
+    # SELECT * width=1,439 B/row × 32 sessions = 46 KB per request at idle.
+    # Selecting only the 6 consumed fields reduces payload to ~105 B/row (13.7×).
+    # SQLAlchemy returns sqlalchemy.engine.Row objects — attribute access (sess.field)
+    # works identically to ORM objects for these six columns.
     raw_sessions = (
-        db.query(SessionModel)
+        db.query(
+            SessionModel.round_number,
+            SessionModel.session_status,
+            SessionModel.date_start,
+            SessionModel.participant_team_ids,
+            SessionModel.participant_user_ids,
+            SessionModel.rounds_data,
+        )
         .filter(SessionModel.semester_id == tournament_id)
         .order_by(SessionModel.round_number.asc().nulls_last(), SessionModel.id)
         .all()
@@ -287,7 +298,7 @@ def public_event_detail(
                     except (ValueError, KeyError):
                         pass
             # Also collect participant_user_ids for IR results display
-            for uid in (getattr(sess, "participant_user_ids", None) or []):
+            for uid in (sess.participant_user_ids or []):
                 all_player_uids.add(uid)
         if all_player_uids:
             for u in db.query(User).filter(User.id.in_(all_player_uids)).all():
@@ -333,7 +344,7 @@ def public_event_detail(
     if tournament_format == "INDIVIDUAL_RANKING":
         for sess in raw_sessions:
             tids = list(sess.participant_team_ids or [])
-            uids = list(getattr(sess, "participant_user_ids", None) or [])
+            uids = list(sess.participant_user_ids or [])
             rr = (sess.rounds_data or {}).get("round_results", {}).get("1", {})
             entries: list[dict] = []
             for team_id in tids:
