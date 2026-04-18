@@ -450,6 +450,13 @@ class SoakBurstUser(HttpUser):
         ) as resp:
             if resp.status_code in (302, 303):
                 self._logged_in = True
+                # gevent's monkey-patching can silently break http.cookiejar's
+                # extract_cookies_to_jar, leaving the session jar empty even when
+                # Set-Cookie headers are present.  Read directly from response.cookies
+                # (parsed straight from the raw headers) and force into the jar.
+                _at = resp.cookies.get("access_token", "")
+                if _at:
+                    self.client.cookies.set("access_token", _at)
                 resp.success()
             else:
                 resp.failure(
