@@ -107,11 +107,14 @@ class TestQueryBudget:
             f"See tests/performance/DB_PROFILING_300VU.md for patterns."
         )
 
-    def test_event_31_is_the_heaviest_case(self, client):
-        """Event 31 (16 rankings + 32 sessions) must be within budget — proves N-independence."""
-        n = _count_queries_for(client, "/events/31")
+    def test_event_31_is_the_heaviest_case(self, client, heavy_event_id):
+        """Heaviest event (16 rankings + 32 sessions) must be within budget — proves N-independence.
+
+        Uses heavy_event_id fixture: event 31 in dev/staging, a CI-created event in fresh DBs.
+        """
+        n = _count_queries_for(client, f"/events/{heavy_event_id}")
         assert n <= QUERY_BUDGET, (
-            f"Event 31 used {n} queries (heaviest load test case). "
+            f"GET /events/{heavy_event_id} used {n} queries (heaviest load test case). "
             f"Budget: {QUERY_BUDGET}. Fix N+1 before raising budget."
         )
         # Also assert it uses more than 3 queries (sanity — confirms real DB access)
@@ -126,19 +129,19 @@ class TestSessionColumnNarrowing:
     increases per-request data transfer from ~3 KB to ~46 KB for event 31.
     """
 
-    def test_sessions_query_does_not_select_star(self, client):
+    def test_sessions_query_does_not_select_star(self, client, heavy_event_id):
         """The sessions fetch must NOT emit SELECT sessions.* (full ORM object load).
 
         Checks that the emitted SQL selects specific columns, not the wildcard.
         A SELECT * would indicate db.query(SessionModel) was re-introduced.
         """
-        stmts = _capture_sessions_sql(client, "/events/31")
+        stmts = _capture_sessions_sql(client, f"/events/{heavy_event_id}")
         # Filter to the main bulk-fetch (not the DISTINCT campus_id sub-query)
         bulk_fetches = [
             s for s in stmts
             if "DISTINCT" not in s and "campus_id" not in s
         ]
-        assert bulk_fetches, "No bulk sessions SELECT found — event 31 should have 32 sessions"
+        assert bulk_fetches, f"No bulk sessions SELECT found — event {heavy_event_id} should have 32 sessions"
 
         for stmt in bulk_fetches:
             # SELECT * or sessions.* indicates full ORM object load
@@ -153,18 +156,18 @@ class TestSessionColumnNarrowing:
                 "Sessions query accidentally joins User table — check query construction."
             )
 
-    def test_sessions_query_includes_all_required_fields(self, client):
+    def test_sessions_query_includes_all_required_fields(self, client, heavy_event_id):
         """The sessions SQL must include all 6 required column names.
 
         If a required field is missing, the route will raise AttributeError at runtime
         when accessing sess.<field> in the schedule/IR loops.
         """
-        stmts = _capture_sessions_sql(client, "/events/31")
+        stmts = _capture_sessions_sql(client, f"/events/{heavy_event_id}")
         bulk_fetches = [
             s for s in stmts
             if "DISTINCT" not in s and "campus_id" not in s
         ]
-        assert bulk_fetches, "No bulk sessions SELECT found"
+        assert bulk_fetches, f"No bulk sessions SELECT found — event {heavy_event_id}"
 
         combined = " ".join(bulk_fetches)
         for field in SESSION_REQUIRED_FIELDS:

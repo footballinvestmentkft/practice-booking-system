@@ -1,0 +1,124 @@
+name: Performance Regression Gate
+
+# ── Purpose ────────────────────────────────────────────────────────────────────
+# Mandatory CI gate for GET /events/{id} query budget and ORM regression guards.
+#
+# Blocks merge if:
+#   - Any event uses > QUERY_BUDGET (15) SQL queries
+#   - Sessions query reverts to SELECT * (sessions.*)
+#   - Sessions query drops any of the 6 required columns
+#   - Sessions row width (EXPLAIN) exceeds 200 B
+#
+# Tests (test_query_budget.py):
+#   TestQueryBudget          — 6 tests: parametrized budget check + heaviest-case
+#   TestSessionColumnNarrowing — 3 tests: SQL check + fields check + EXPLAIN width
+#
+# Seeding: uses conftest.py heavy_event_id fixture — creates minimal event data
+# if the dev seed (event 31) is not present. No external seed script required.
+#
+# Required branch protection (GitHub → Settings → Branches → main):
+#   - Require status checks: performance-query-budget ✅
+# ──────────────────────────────────────────────────────────────────────────────
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'app/api/web_routes/public_tournament.py'
+      - 'tests/performance/test_query_budget.py'
+      - 'tests/performance/conftest.py'
+      - 'app/models/session.py'
+      - 'app/models/semester.py'
+      - '.github/workflows/performance-regression-gate.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'app/api/web_routes/public_tournament.py'
+      - 'tests/performance/test_query_budget.py'
+      - 'tests/performance/conftest.py'
+      - 'app/models/session.py'
+      - 'app/models/semester.py'
+      - '.github/workflows/performance-regression-gate.yml'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual trigger'
+        required: false
+        default: 'manual verification'
+
+jobs:
+  performance-query-budget:
+    name: Query Budget + ORM Regression (≤15 queries, no SELECT *)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write .env
+        run: |
+          cat > .env <<'EOF'
+          DATABASE_URL=postgresql://test_user:test_password@localhost:5432/test_db
+          SECRET_KEY=ci-perf-gate-key-not-for-production
+          ENVIRONMENT=test
+          TESTING=true
+          DEBUG=false
+          ENABLE_RATE_LIMITING=false
+          EOF
+
+      - name: Run database migrations
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          SECRET_KEY: ci-perf-gate-key-not-for-production
+        run: alembic upgrade head
+
+      - name: Run query budget + ORM regression tests
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          SECRET_KEY: ci-perf-gate-key-not-for-production
+        run: |
+          PYTHONPATH=. pytest tests/performance/test_query_budget.py \
+            -v --tb=short -ra \
+            --durations=5
+
+      - name: Gate summary
+        if: always()
+        run: |
+          echo "══════════════════════════════════════════════════════"
+          echo " Performance Regression Gate — Summary"
+          echo "══════════════════════════════════════════════════════"
+          echo " Tests: TestQueryBudget (6) + TestSessionColumnNarrowing (3)"
+          echo " Budget: ≤15 queries per GET /events/{id} (any event)"
+          echo " ORM guard: sessions query must not emit SELECT *"
+          echo " Column guard: all 6 required fields must be present"
+          echo " Width guard: EXPLAIN row width ≤ 200 B"
+          echo ""
+          echo " MANDATORY: this gate must pass before merge."
+          echo " N+1 regressions silently degrade production performance."
+          echo " Do NOT raise QUERY_BUDGET without fixing the root cause."
+          echo "══════════════════════════════════════════════════════"
