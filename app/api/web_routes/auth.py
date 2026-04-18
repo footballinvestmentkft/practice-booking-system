@@ -8,6 +8,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from pathlib import Path
 from datetime import timedelta, datetime, date
+import asyncio
 import logging
 import traceback
 
@@ -67,7 +68,14 @@ async def login_submit(
     # Find user
     user = db.query(User).filter(User.email == email).first()
 
-    if not user or not verify_password(password, user.password_hash):
+    # asyncio.to_thread: bcrypt.checkpw (~60ms) is CPU-bound + blocking.
+    # Calling it directly in async def blocks the entire event loop for the
+    # duration — at 125 VU/worker this serialises logins into a 7.5s queue.
+    # Running in a thread lets other requests proceed concurrently. (Phase 8)
+    pwd_ok = user is not None and await asyncio.to_thread(
+        verify_password, password, user.password_hash
+    )
+    if not user or not pwd_ok:
         return templates.TemplateResponse(
             "login.html",
             {"request": request, "error": "Invalid email or password", "next_url": next}
