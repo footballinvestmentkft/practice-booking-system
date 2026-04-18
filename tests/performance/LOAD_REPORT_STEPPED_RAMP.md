@@ -1,6 +1,6 @@
 # Phase 6.3 — Stepped Ramp Capacity Report
 
-**Generated:** 2026-04-18 14:56 local
+**Generated:** 2026-04-18 15:45 local
 **Protocol:** 5 levels × 300s hold, 15s cooldown
 **Workers:** 4 uvicorn, 1 PostgreSQL 14, rate-limiting OFF
 **Breaking point thresholds:** Browse p95>1000ms OR Enroll/Withdraw p95>2000ms OR error>5.0% OR Login 5xx>2.0%
@@ -11,11 +11,11 @@
 
 | VUs | Requests | RPS | Error% | Browse p95 | Enroll p95 | Withdraw p95 | Login p95 | slow_q Δ | Status |
 |-----|----------|-----|--------|-----------|-----------|-------------|----------|---------|--------|
-|  50 |    20077 |  67.0 |   0.0% |        29ms |        23ms |          0ms |     1600ms |        0 | ✅ Stable |
-| 100 |    40147 | 134.0 |   0.0% |        29ms |        23ms |          0ms |     1900ms |        2 | ✅ Stable |
-| 200 |    78292 | 261.3 |   0.0% |        74ms |        67ms |          0ms |     2100ms |        6 | ✅ Stable |
-| 300 |    95010 | 317.9 |   0.0% |       550ms |       610ms |          0ms |     2300ms |       41 | ✅ Stable |
-| 500 |    85546 | 286.0 |   0.9% |      1700ms |      1900ms |          0ms |     6600ms |      111 | ❌ BROKEN |
+|  50 |    20164 |  67.3 |   0.0% |        29ms |        22ms |          0ms |      740ms |        2 | ✅ Stable |
+| 100 |    40369 | 134.7 |   0.0% |        29ms |        23ms |          0ms |      650ms |        4 | ✅ Stable |
+| 200 |    78674 | 262.6 |   0.0% |        72ms |        59ms |          0ms |      860ms |       13 | ✅ Stable |
+| 300 |    96228 | 320.8 |   0.0% |       550ms |       580ms |          0ms |     1300ms |       61 | ✅ Stable |
+| 500 |    84379 | 281.4 |   1.0% |      1900ms |      2200ms |          0ms |     2100ms |      101 | ❌ BROKEN |
 
 ---
 
@@ -26,8 +26,9 @@
 **Bottleneck:** DB connection pool exhaustion (Login 5xx spike)
 
 Threshold violations at breaking point:
-- Browse p95=1700ms > 1000ms
-- Login 5xx=147.8% > 2.0% (DB pool)
+- Browse p95=1900ms > 1000ms
+- Enroll p95=2200ms > 2000ms
+- Login 5xx=144.8% > 2.0% (DB pool)
 
 ---
 
@@ -39,9 +40,9 @@ Threshold violations at breaking point:
 |-----|-----------|------------|
 |  50 |        29ms | — |
 | 100 |        29ms | +0ms |
-| 200 |        74ms | +45ms |
-| 300 |       550ms | +476ms |
-| 500 |      1700ms | +1150ms |
+| 200 |        72ms | +43ms |
+| 300 |       550ms | +478ms |
+| 500 |      1900ms | +1350ms |
 
 ### DB Pool Signal (Login 5xx rate)
 
@@ -51,7 +52,7 @@ Threshold violations at breaking point:
 | 100 |       100 |          0 |         0 | 0.0% |
 | 200 |       200 |          0 |         0 | 0.0% |
 | 300 |       300 |          0 |         0 | 0.0% |
-| 500 |       500 |          0 |       739 | 147.8% |
+| 500 |       500 |          0 |       724 | 144.8% |
 
 ---
 
