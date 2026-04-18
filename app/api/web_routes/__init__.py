@@ -16,7 +16,6 @@ from . import (
     quiz,
     instructor,
     instructor_dashboard,
-    admin,
     tournaments,
     programs,
     communications,
@@ -26,6 +25,7 @@ from . import (
     public_tournament,
     sport_director,
 )
+from .admin import router as admin_router
 
 # Create main router with tags
 router = APIRouter(tags=["web"])
@@ -42,7 +42,7 @@ router.include_router(attendance.router)
 router.include_router(quiz.router)
 router.include_router(instructor.router)
 router.include_router(instructor_dashboard.router)
-router.include_router(admin.router)
+router.include_router(admin_router)
 router.include_router(tournaments.router)
 router.include_router(programs.router)       # 📅 MINI_SEASON / ACADEMY_SEASON student enrollment
 router.include_router(communications.router)

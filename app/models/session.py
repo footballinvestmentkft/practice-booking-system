@@ -338,6 +338,7 @@ class Session(Base):
         if self.mixed_specialization:
             return "Vegyes (Player + Coach)"
         elif self.target_specialization:
+            from app.services.specialization_config_loader import SpecializationConfigLoader
             loader = SpecializationConfigLoader()
             try:
                 display_info = loader.get_display_info(self.target_specialization)
@@ -352,6 +353,7 @@ class Session(Base):
         if self.mixed_specialization:
             return "⚽👨‍🏫"
         elif self.target_specialization:
+            from app.services.specialization_config_loader import SpecializationConfigLoader
             loader = SpecializationConfigLoader()
             try:
                 display_info = loader.get_display_info(self.target_specialization)

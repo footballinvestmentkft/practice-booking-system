@@ -27,21 +27,29 @@ from unittest.mock import MagicMock, patch
 from fastapi import HTTPException
 from fastapi.responses import RedirectResponse
 
-from app.api.web_routes.admin import (
+from app.api.web_routes.admin.users import (
     admin_users_page,
-    admin_semesters_page,
+    admin_reset_user_password,
+)
+from app.api.web_routes.admin.semesters import admin_semesters_page
+from app.api.web_routes.admin.coupons import (
     admin_coupons_page,
     admin_invitation_codes_page,
+)
+from app.api.web_routes.admin.analytics import (
     admin_analytics_page,
-    admin_payments_page,
     motivation_assessment_page,
     motivation_assessment_submit,
-    admin_reset_user_password,
+)
+from app.api.web_routes.admin.finance import admin_payments_page
+from app.api.web_routes.admin.credits import (
     admin_grant_credit,
     admin_deduct_credit,
     admin_grant_license,
     admin_revoke_license,
     admin_renew_license,
+)
+from app.api.web_routes.admin.bookings import (
     admin_bookings_page,
     admin_booking_confirm,
     admin_booking_cancel,
@@ -57,7 +65,13 @@ from app.api.web_routes.instructor_dashboard import (
 from app.models.user import UserRole
 
 
-_BASE = "app.api.web_routes.admin"
+_USERS_BASE = "app.api.web_routes.admin.users"
+_SEMS_BASE = "app.api.web_routes.admin.semesters"
+_COUPONS_BASE = "app.api.web_routes.admin.coupons"
+_ANALYTICS_BASE = "app.api.web_routes.admin.analytics"
+_FINANCE_BASE = "app.api.web_routes.admin.finance"
+_CREDITS_BASE = "app.api.web_routes.admin.credits"
+_BOOKINGS_BASE = "app.api.web_routes.admin.bookings"
 _INSTRUCTOR_BASE = "app.api.web_routes.instructor_dashboard"
 
 
@@ -114,7 +128,7 @@ class TestAdminUsersPage:
         db.query.return_value.filter.return_value.count.return_value = 0
         db.query.return_value.order_by.return_value.offset.return_value.limit.return_value.all.return_value = []
 
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_USERS_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(admin_users_page(request=_req(), db=db, user=user))
 
@@ -139,7 +153,7 @@ class TestAdminSemestersPage:
         db = MagicMock()
         db.query.return_value.order_by.return_value.all.return_value = []
 
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_SEMS_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(admin_semesters_page(request=_req(), db=db, user=user))
 
@@ -164,7 +178,7 @@ class TestAdminCouponsPage:
         db = MagicMock()
         db.query.return_value.order_by.return_value.all.return_value = []
 
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_COUPONS_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(admin_coupons_page(request=_req(), db=db, user=user))
 
@@ -179,7 +193,7 @@ class TestAdminCouponsPage:
         db = MagicMock()
         db.query.return_value.order_by.return_value.all.return_value = [coupon]
 
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_COUPONS_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(admin_coupons_page(request=_req(), db=db, user=user))
 
@@ -204,7 +218,7 @@ class TestAdminInvitationCodesPage:
         db = MagicMock()
         db.query.return_value.order_by.return_value.all.return_value = []
 
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_COUPONS_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(admin_invitation_codes_page(request=_req(), db=db, user=user))
 
@@ -230,7 +244,7 @@ class TestAdminInvitationCodesPage:
         q_users.filter.return_value.all.return_value = [u1, u2]
         db.query.side_effect = [q_codes, q_users]
 
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_COUPONS_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(admin_invitation_codes_page(request=_req(), db=db, user=user))
 
@@ -246,7 +260,7 @@ class TestAdminInvitationCodesPage:
         db = MagicMock()
         db.query.return_value.order_by.return_value.all.return_value = [code]
 
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_COUPONS_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(admin_invitation_codes_page(request=_req(), db=db, user=user))
 
@@ -263,7 +277,7 @@ class TestAdminInvitationCodesPage:
         db.query.return_value.order_by.return_value.all.return_value = [code]
         db.query.return_value.filter.return_value.first.return_value = None  # user not found
 
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_COUPONS_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(admin_invitation_codes_page(request=_req(), db=db, user=user))
 
@@ -289,7 +303,7 @@ class TestAdminAnalyticsPage:
         db.query.return_value.count.return_value = 200        # total_users, total_sessions, total_bookings
         db.query.return_value.filter.return_value.count.return_value = 75  # students, instructors
 
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_ANALYTICS_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(admin_analytics_page(request=_req(), db=db, user=user))
 
@@ -322,7 +336,7 @@ class TestAdminPaymentsPage:
         # newcomer_licenses: options().filter().order_by().all()
         db.query.return_value.options.return_value.filter.return_value.order_by.return_value.all.return_value = []
 
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_FINANCE_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(admin_payments_page(request=_req(), db=db, user=user))
 
@@ -341,7 +355,7 @@ class TestAdminPaymentsPage:
         # newcomer_licenses: options().filter().order_by().all()
         db.query.return_value.options.return_value.filter.return_value.order_by.return_value.all.return_value = []
 
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_FINANCE_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(admin_payments_page(request=_req(), db=db, user=user))
 
@@ -606,7 +620,7 @@ class TestMotivationAssessmentPage:
         db = MagicMock()
         db.query.return_value.filter.return_value.first.side_effect = [student, license_obj]
 
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_ANALYTICS_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(motivation_assessment_page(
                 request=_req(), student_id=99, specialization="LFA_PLAYER_PRE",
@@ -778,7 +792,7 @@ class TestAdminPasswordReset:
         db = MagicMock()
         db.query.return_value.filter.return_value.first.return_value = target
 
-        with patch(f"{_BASE}.get_password_hash", return_value="hashed_pw"):
+        with patch(f"{_USERS_BASE}.get_password_hash", return_value="hashed_pw"):
             result = _run(admin_reset_user_password(
                 user_id=5, request=_req(),
                 new_password="newSecure99", db=db, user=user,
@@ -1134,7 +1148,7 @@ class TestAdminBookingsPage:
         # Sessions dropdown: db.query(SessionModel).join(...).distinct().order_by(...).limit(100).all()
         db.query.return_value.join.return_value.distinct.return_value.order_by.return_value.limit.return_value.all.return_value = []
 
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_BOOKINGS_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(admin_bookings_page(request=_req(), db=db, user=user))
 
@@ -1150,7 +1164,7 @@ class TestAdminBookingsPage:
         db.query.return_value.filter.return_value.scalar.return_value = 0
         db.query.return_value.join.return_value.distinct.return_value.order_by.return_value.limit.return_value.all.return_value = []
 
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_BOOKINGS_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             # should not raise
             _run(admin_bookings_page(
@@ -1331,7 +1345,7 @@ class TestAdminBookingAttendance:
         db = MagicMock()
         db.query.return_value.filter.return_value.with_for_update.return_value.first.return_value = booking_mock
 
-        with patch(f"{_BASE}.Attendance") as mock_att_cls:
+        with patch(f"{_BOOKINGS_BASE}.Attendance") as mock_att_cls:
             result = _run(admin_booking_attendance(
                 booking_id=30, request=_req(),
                 attendance_status="present", notes="test note", db=db, user=user,

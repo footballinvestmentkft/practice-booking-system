@@ -19,17 +19,20 @@ import pytest
 from fastapi import HTTPException
 from fastapi.responses import RedirectResponse
 
-from app.api.web_routes.admin import (
-    admin_delete_semester,
+from app.api.web_routes.admin.users import (
     admin_edit_user_page,
     admin_edit_user_submit,
+    admin_toggle_user_status,
+)
+from app.api.web_routes.admin.semesters import (
+    admin_delete_semester,
     admin_new_semester_page,
     admin_new_semester_submit,
-    admin_toggle_user_status,
 )
 from app.models.user import UserRole
 
-_BASE = "app.api.web_routes.admin"
+_USERS_BASE = "app.api.web_routes.admin.users"
+_SEMS_BASE = "app.api.web_routes.admin.semesters"
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -152,7 +155,7 @@ class TestEditUserPage:
     def test_renders_user_edit_template(self):
         target = _student_user()
         db = _mock_db(first_return=target)
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_USERS_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(admin_edit_user_page(
                 user_id=target.id, request=_req(), db=db, user=_admin_user()
@@ -197,7 +200,7 @@ class TestEditUserSubmit:
         # First query: get target by user_id; second: check email uniqueness → existing user
         db.query.return_value.filter.return_value.first.side_effect = [target, other]
 
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_USERS_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(admin_edit_user_submit(
                 user_id=2, request=_req(), name="Test User",
@@ -240,7 +243,7 @@ class TestNewSemesterPage:
     def test_renders_semester_new_template(self):
         db = MagicMock()
         db.query.return_value.filter.return_value.all.return_value = []
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_SEMS_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(admin_new_semester_page(
                 request=_req(), db=db, user=_admin_user()
@@ -276,7 +279,7 @@ class TestNewSemesterSubmit:
 
     def test_invalid_date_format_renders_error(self):
         db = self._db_with_instructors()
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_SEMS_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(admin_new_semester_submit(
                 request=_req(), code="TEST_2026", name="Test",
@@ -289,7 +292,7 @@ class TestNewSemesterSubmit:
 
     def test_end_before_start_renders_error(self):
         db = self._db_with_instructors()
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_SEMS_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(admin_new_semester_submit(
                 request=_req(), code="TEST_2026", name="Test",
@@ -302,7 +305,7 @@ class TestNewSemesterSubmit:
 
     def test_duplicate_code_renders_error(self):
         db = self._db_with_instructors(code_exists=True)
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(f"{_SEMS_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(admin_new_semester_submit(
                 request=_req(), code="EXISTING_CODE", name="Test",
@@ -318,7 +321,7 @@ class TestNewSemesterSubmit:
         db.query.return_value.filter.return_value.all.return_value = []
         db.query.return_value.filter.return_value.first.return_value = None  # code not taken
 
-        with patch(f"{_BASE}.Semester") as mock_sem_cls:
+        with patch(f"{_SEMS_BASE}.Semester") as mock_sem_cls:
             new_sem = MagicMock()
             new_sem.code = "NEW_SEM_2026"
             mock_sem_cls.return_value = new_sem
