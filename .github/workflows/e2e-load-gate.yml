@@ -140,6 +140,7 @@ jobs:
           LOAD_PEAK_VUS: ${{ github.event.inputs.peak_vus || '50' }}
           LOAD_SEMESTER_IDS: ${{ env.LOAD_SEMESTER_IDS }}
           LOAD_EVENT_IDS: ${{ env.LOAD_EVENT_IDS }}
+          LOAD_USERS_COUNT: '10'   # must match seed step — avoids 403/login-fail for users 11+
           CI: 'true'
         run: |
           mkdir -p tests/performance/results

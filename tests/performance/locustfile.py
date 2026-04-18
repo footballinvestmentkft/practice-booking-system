@@ -394,11 +394,17 @@ class SoakBurstUser(HttpUser):
     _csrf_token: str = ""
 
     def _get_csrf_token(self) -> str:
-        """Return the CSRF token from the session cookie jar.
+        """Return the current CSRF token, refreshing if missing.
 
-        Refreshes via a public event page if the token is missing — avoids
-        any auth dependency when acquiring the CSRF cookie.
+        Uses self._csrf_token as the authoritative source (set in on_start and
+        updated after each response that carries a rotated token).  Falls back
+        to the session cookie jar, and finally re-fetches via a public GET if
+        both are empty.
         """
+        if self._csrf_token:
+            return self._csrf_token
+        # Session jar fallback (usually sufficient, but can silently return ""
+        # if the domain-matching policy rejects the cookie for the host)
         token = self.client.cookies.get("csrf_token", "")
         if not token:
             event_id = random.choice(LOAD_EVENT_IDS)
@@ -407,8 +413,14 @@ class SoakBurstUser(HttpUser):
                 name="[P63] Refresh CSRF",
                 catch_response=True,
             ) as r:
-                r.success()  # any status is fine; we just need the cookie
-            token = self.client.cookies.get("csrf_token", "")
+                r.success()
+                # Read from response.cookies (this response's Set-Cookie only)
+                token = r.cookies.get("csrf_token", "")
+            if not token:
+                token = self.client.cookies.get("csrf_token", "")
+        if token:
+            self._csrf_token = token
+            self.client.cookies.set("csrf_token", token)
         return token
 
     def on_start(self) -> None:
@@ -445,7 +457,11 @@ class SoakBurstUser(HttpUser):
                     f"run scripts/seed_load_test_users.py first"
                 )
 
-        # Fetch CSRF token via a public endpoint — no auth dependency
+        # Fetch CSRF token via a public endpoint — no auth dependency.
+        # Extract directly from response.cookies (this response's Set-Cookie
+        # headers only) rather than the session jar: the session jar's
+        # domain-matching policy can silently return "" for 127.0.0.1 hosts
+        # even when the server correctly sent Set-Cookie.
         if self._logged_in:
             event_id = random.choice(LOAD_EVENT_IDS)
             with self.client.get(
@@ -453,8 +469,14 @@ class SoakBurstUser(HttpUser):
                 name="[P63] Init CSRF",
                 catch_response=True,
             ) as r:
-                r.success()  # accept any status; CSRF cookie is set by middleware
-            self._csrf_token = self.client.cookies.get("csrf_token", "")
+                r.success()
+                _tok = r.cookies.get("csrf_token", "")
+                if not _tok:
+                    _tok = self.client.cookies.get("csrf_token", "")
+                if _tok:
+                    self._csrf_token = _tok
+                    # Force into session jar so Cookie header is sent with POSTs
+                    self.client.cookies.set("csrf_token", _tok)
 
     # ── Tasks ────────────────────────────────────────────────────────────────
 
@@ -489,6 +511,12 @@ class SoakBurstUser(HttpUser):
                 loc = resp.headers.get("location", "")
                 if "error" not in loc:
                     self._enrolled_semester_id = sem_id
+                # CSRF middleware rotates the token on every successful POST;
+                # capture the new value so the next POST doesn't send a stale token.
+                _new_tok = resp.cookies.get("csrf_token", "")
+                if _new_tok:
+                    self._csrf_token = _new_tok
+                    self.client.cookies.set("csrf_token", _new_tok)
                 resp.success()
             elif resp.status_code == 429:
                 resp.success()  # expected under load
@@ -508,8 +536,13 @@ class SoakBurstUser(HttpUser):
             "/semesters/enroll",
             name="[P63] Fetch enrollments (pre-withdraw)",
         )
-        # Refresh CSRF token from the GET response cookie
-        self._csrf_token = self.client.cookies.get("csrf_token", self._csrf_token)
+        # Capture CSRF token from GET response (middleware echoes or refreshes it)
+        _tok = list_resp.cookies.get("csrf_token", "")
+        if _tok:
+            self._csrf_token = _tok
+            self.client.cookies.set("csrf_token", _tok)
+        elif not self._csrf_token:
+            self._csrf_token = self.client.cookies.get("csrf_token", "")
 
         match = re.search(
             r'name=["\']enrollment_id["\']\s+value=["\'](\d+)["\']',
@@ -519,7 +552,7 @@ class SoakBurstUser(HttpUser):
             return
 
         enrollment_id = match.group(1)
-        csrf = self._csrf_token
+        csrf = self._get_csrf_token()
         with self.client.post(
             "/semesters/withdraw-enrollment",
             data={"enrollment_id": enrollment_id},
@@ -530,6 +563,10 @@ class SoakBurstUser(HttpUser):
         ) as resp:
             if resp.status_code == 303:
                 self._enrolled_semester_id = 0
+                _new_tok = resp.cookies.get("csrf_token", "")
+                if _new_tok:
+                    self._csrf_token = _new_tok
+                    self.client.cookies.set("csrf_token", _new_tok)
                 resp.success()
             elif resp.status_code == 429:
                 resp.success()
