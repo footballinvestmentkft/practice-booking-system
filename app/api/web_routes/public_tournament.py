@@ -487,3 +487,4 @@ def public_event_detail(
         "is_draft": status == "DRAFT",
         "is_cancelled": status == "CANCELLED",
     })
+# CI enforcement proof — Sat Apr 18 22:47:34 CEST 2026
