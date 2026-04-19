@@ -46,36 +46,17 @@ _STATUS_COLOR = {
 }
 
 
-@router.get("/events/{tournament_id}", response_class=HTMLResponse)
-def public_event_detail(
-    request: Request,
-    tournament_id: int,
-    db: Session = Depends(get_db),
-):
-    # Q1: Semester (simple PK index scan — faster under load than JOIN)
-    # Q2 (conditional): TournamentConfiguration lazy-loaded on first access below.
-    # Rationale: a LEFT JOIN on tournament_configurations makes Q1 heavier under
-    # concurrent load even though it saves one round-trip; two fast PK lookups
-    # outperform one JOIN when >50 concurrent requests share the connection pool.
-    tournament = db.query(Semester).filter(Semester.id == tournament_id).first()
-    if not tournament:
-        return HTMLResponse("<h2>Event not found</h2>", status_code=404)
+# ── Phase helpers ──────────────────────────────────────────────────────────────
 
-    # Every existing event has a public page — visibility is state-driven, not binary.
-    # 404 is reserved for non-existent IDs only.
-    status = tournament.tournament_status or "DRAFT"
 
-    cfg = tournament.tournament_config_obj
-    participant_type = cfg.participant_type if cfg else "INDIVIDUAL"
-    tournament_format = tournament.format  # HEAD_TO_HEAD / INDIVIDUAL_RANKING
-    max_players = cfg.max_players if cfg else None
-    match_duration = cfg.match_duration_minutes if cfg else None
-    number_of_legs    = cfg.number_of_legs if cfg and hasattr(cfg, "number_of_legs") else 1
-    scoring_type      = cfg.scoring_type if cfg else None
-    ranking_direction = cfg.ranking_direction if cfg else None
-    measurement_unit  = cfg.measurement_unit if cfg else None
-
-    # Location / Campus (multi-campus aware)
+def _build_location_campus_ctx(
+    db: Session,
+    tournament: Semester,
+) -> "tuple[str | None, str | None, list[dict]]":
+    """Phase 2: Location / Campus (multi-campus aware).
+    Returns (location_name, campus_name, extra_campuses).
+    Lazy-imports Location + Campus to preserve original import behaviour.
+    """
     location_name = None
     campus_name = None
     extra_campuses: list[dict] = []
@@ -98,7 +79,7 @@ def public_event_detail(
         session_campus_ids = (
             db.query(SessionModel.campus_id)
             .filter(
-                SessionModel.semester_id == tournament_id,
+                SessionModel.semester_id == tournament.id,
                 SessionModel.campus_id.isnot(None),
                 SessionModel.campus_id != tournament.campus_id,
             )
@@ -122,16 +103,18 @@ def public_event_detail(
                 })
     except Exception:
         pass
+    return location_name, campus_name, extra_campuses
 
-    # Tournament type display name
-    type_name = ""
-    try:
-        if cfg and cfg.tournament_type:
-            type_name = cfg.tournament_type.name
-    except Exception:
-        pass
 
-    # ── Rankings ──────────────────────────────────────────────────────────────
+def _build_rankings_block(
+    db: Session,
+    tournament_id: int,
+    participant_type: str,
+    tournament_format: str,
+) -> "tuple[list[dict], bool]":
+    """Phases 4–5 (rankings): TournamentRanking rows with eager-loaded user/team/club.
+    Returns (rankings, has_rankings).
+    """
     # Q8 + Q9 (selectinload user batch) + Q10 (selectinload team batch) + Q11 (club batch)
     # selectinload fires one additional SELECT per relationship, regardless of row count.
     # For INDIVIDUAL: user batch fires, team/club batches are empty (no teams).
@@ -198,11 +181,20 @@ def public_event_detail(
                 "members": [],
             })
 
-    has_rankings = len(rankings) > 0
+    return rankings, len(rankings) > 0
 
-    # ── Enrolled participants (shown when no final rankings yet) ──────────────
+
+def _build_participants_block(
+    db: Session,
+    tournament_id: int,
+    participant_type: str,
+    has_rankings: bool,
+) -> "tuple[int, list[dict]]":
+    """Phase 5 (enrollments): enrolled count + pre-result participant list.
+    Returns (enrolled_count, participants).
+    """
     enrolled_count = 0
-    participants = []  # [{name, club_name}] for pre-result display
+    participants: list[dict] = []
 
     if participant_type == "TEAM":
         # Q12 + Q13 (team batch) + Q14 (club batch): team enrollments with eager loading
@@ -248,7 +240,26 @@ def public_event_detail(
                     "club_name": None,
                 })
 
-    # ── Schedule (shown when sessions exist, any state) ───────────────────────
+    return enrolled_count, participants
+
+
+def _build_schedule_block(
+    db: Session,
+    tournament_id: int,
+    tournament_format: str,
+    rankings: list,
+) -> "tuple[int, list[dict], list[dict]]":
+    """Phases 6–7 (sessions + IR results): explicit 6-col select (Phase 11 optimisation),
+    team/player cache build, schedule list, IR results list.
+    Mutates rankings[*]["members"] in-place to enrich with score/position from player_data.
+    Returns (sessions_total, schedule, ir_results).
+
+    IMPORTANT — preserve Phase 11 column narrowing:
+    SELECT * width=1,439 B/row × 32 sessions = 46 KB per request at idle.
+    Selecting only the 6 consumed fields reduces payload to ~105 B/row (13.7×).
+    SQLAlchemy returns sqlalchemy.engine.Row objects — attribute access (sess.field)
+    works identically to ORM objects for these six columns.
+    """
     # Q (TEAM+INDIVIDUAL path): sessions fetch — explicit columns only (Phase 11)
     # SELECT * width=1,439 B/row × 32 sessions = 46 KB per request at idle.
     # Selecting only the 6 consumed fields reduces payload to ~105 B/row (13.7×).
@@ -391,7 +402,18 @@ def public_event_detail(
                     "done": sess.session_status == "completed",
                 })
 
-    # ── Prize pool (all states — motivational) ────────────────────────────────
+    return sessions_total, schedule, ir_results
+
+
+def _build_prize_pool_block(
+    db: Session,
+    tournament_id: int,
+    tournament: Semester,
+) -> "tuple[list[dict], bool]":
+    """Phase 8 (prize pool): load reward policy and build prize tier list.
+    Returns (prize_pool, has_prize_pool).
+    Lazy-imports load_reward_policy_from_config to preserve original import behaviour.
+    """
     from app.services.tournament.tournament_reward_orchestrator import load_reward_policy_from_config
     prize_pool: list[dict] = []
     try:
@@ -407,52 +429,111 @@ def public_event_detail(
         prize_pool = [e for e in entries if e["xp"] > 0 or e["credits"] > 0]
     except Exception:
         prize_pool = []
-    has_prize_pool = len(prize_pool) > 0
+    return prize_pool, len(prize_pool) > 0
 
-    # ── Awards (COMPLETED + REWARDS_DISTRIBUTED) ──────────────────────────────
-    awards: list[dict] = []
-    if status in ("COMPLETED", "REWARDS_DISTRIBUTED"):
-        from app.models.tournament_achievement import TournamentParticipation
-        # Q + selectinload(user) + selectinload(team): 1-3 queries regardless of placement count
-        parts = (
-            db.query(TournamentParticipation)
-            .options(
-                selectinload(TournamentParticipation.user),
-                selectinload(TournamentParticipation.team),
-            )
-            .filter(TournamentParticipation.semester_id == tournament_id)
-            .order_by(TournamentParticipation.placement.asc())
-            .all()
+
+def _build_awards_block(
+    db: Session,
+    tournament_id: int,
+    status: str,
+) -> "tuple[list[dict], bool]":
+    """Phase 9 (awards): TournamentParticipation with eager-loaded user/team.
+    Only runs when status in (COMPLETED, REWARDS_DISTRIBUTED).
+    Returns (awards, has_awards).
+    Lazy-imports TournamentParticipation to preserve original import behaviour.
+    """
+    if status not in ("COMPLETED", "REWARDS_DISTRIBUTED"):
+        return [], False
+
+    from app.models.tournament_achievement import TournamentParticipation
+    # Q + selectinload(user) + selectinload(team): 1-3 queries regardless of placement count
+    parts = (
+        db.query(TournamentParticipation)
+        .options(
+            selectinload(TournamentParticipation.user),
+            selectinload(TournamentParticipation.team),
         )
+        .filter(TournamentParticipation.semester_id == tournament_id)
+        .order_by(TournamentParticipation.placement.asc())
+        .all()
+    )
 
-        placement_map: dict[int, dict] = {}
-        for p in parts:
-            pl = p.placement
-            if pl not in placement_map:
-                placement_map[pl] = {
-                    "placement": pl,
-                    "xp": p.xp_awarded,
-                    "credits": p.credits_awarded,
-                    "count": 0,
-                    "names": [],
-                    "players": [],
-                }
-            placement_map[pl]["count"] += 1
-            if p.team_id:
-                team = p.team   # already loaded — no additional query
-                name = team.name if team else f"Team #{p.team_id}"
-                if name and name not in placement_map[pl]["names"]:
-                    placement_map[pl]["names"].append(name)
-                    placement_map[pl]["players"].append({"name": name, "user_id": None})
-            elif p.user_id:
-                user = p.user   # already loaded — no additional query
-                name = (user.name or user.email) if user else f"Player #{p.user_id}"
-                if name and name not in placement_map[pl]["names"]:
-                    placement_map[pl]["names"].append(name)
-                    placement_map[pl]["players"].append({"name": name, "user_id": p.user_id})
-        awards = sorted(placement_map.values(), key=lambda x: x["placement"])
+    placement_map: dict[int, dict] = {}
+    for p in parts:
+        pl = p.placement
+        if pl not in placement_map:
+            placement_map[pl] = {
+                "placement": pl,
+                "xp": p.xp_awarded,
+                "credits": p.credits_awarded,
+                "count": 0,
+                "names": [],
+                "players": [],
+            }
+        placement_map[pl]["count"] += 1
+        if p.team_id:
+            team = p.team   # already loaded — no additional query
+            name = team.name if team else f"Team #{p.team_id}"
+            if name and name not in placement_map[pl]["names"]:
+                placement_map[pl]["names"].append(name)
+                placement_map[pl]["players"].append({"name": name, "user_id": None})
+        elif p.user_id:
+            user = p.user   # already loaded — no additional query
+            name = (user.name or user.email) if user else f"Player #{p.user_id}"
+            if name and name not in placement_map[pl]["names"]:
+                placement_map[pl]["names"].append(name)
+                placement_map[pl]["players"].append({"name": name, "user_id": p.user_id})
+    awards = sorted(placement_map.values(), key=lambda x: x["placement"])
+    return awards, len(awards) > 0
 
-    has_awards = len(awards) > 0
+
+# ── Route ──────────────────────────────────────────────────────────────────────
+
+
+@router.get("/events/{tournament_id}", response_class=HTMLResponse)
+def public_event_detail(
+    request: Request,
+    tournament_id: int,
+    db: Session = Depends(get_db),
+):
+    # Q1: Semester (simple PK index scan — faster under load than JOIN)
+    # Q2 (conditional): TournamentConfiguration lazy-loaded on first access below.
+    # Rationale: a LEFT JOIN on tournament_configurations makes Q1 heavier under
+    # concurrent load even though it saves one round-trip; two fast PK lookups
+    # outperform one JOIN when >50 concurrent requests share the connection pool.
+    tournament = db.query(Semester).filter(Semester.id == tournament_id).first()
+    if not tournament:
+        return HTMLResponse("<h2>Event not found</h2>", status_code=404)
+
+    # Every existing event has a public page — visibility is state-driven, not binary.
+    # 404 is reserved for non-existent IDs only.
+    status = tournament.tournament_status or "DRAFT"
+
+    cfg = tournament.tournament_config_obj
+    participant_type = cfg.participant_type if cfg else "INDIVIDUAL"
+    tournament_format = tournament.format  # HEAD_TO_HEAD / INDIVIDUAL_RANKING
+    max_players = cfg.max_players if cfg else None
+    match_duration = cfg.match_duration_minutes if cfg else None
+    number_of_legs    = cfg.number_of_legs if cfg and hasattr(cfg, "number_of_legs") else 1
+    scoring_type      = cfg.scoring_type if cfg else None
+    ranking_direction = cfg.ranking_direction if cfg else None
+    measurement_unit  = cfg.measurement_unit if cfg else None
+
+    location_name, campus_name, extra_campuses = _build_location_campus_ctx(db, tournament)
+
+    # Tournament type display name
+    type_name = ""
+    try:
+        if cfg and cfg.tournament_type:
+            type_name = cfg.tournament_type.name
+    except Exception:
+        pass
+
+    rankings, has_rankings = _build_rankings_block(db, tournament_id, participant_type, tournament_format)
+    enrolled_count, participants = _build_participants_block(db, tournament_id, participant_type, has_rankings)
+    sessions_total, schedule, ir_results = _build_schedule_block(db, tournament_id, tournament_format, rankings)
+    prize_pool, has_prize_pool = _build_prize_pool_block(db, tournament_id, tournament)
+    awards, has_awards = _build_awards_block(db, tournament_id, status)
 
     return templates.TemplateResponse(request, "public/tournament_detail.html", {
         "t": tournament,
