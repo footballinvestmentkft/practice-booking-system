@@ -3734,7 +3734,7 @@ class TestOpsScenarioIntegration:
           - At least 1 session generated (real TSG with ≥2 enrolled players)
           - _finalize_tournament_with_rewards called once (lifecycle hook fired)
         """
-        from app.models.session import Session as SessionModel
+        from app.models.session import Session as SessionModel, EventCategory
         from app.models.semester import Semester
         from app.models.tournament_ranking import TournamentRanking
 
@@ -3778,7 +3778,7 @@ class TestOpsScenarioIntegration:
         # Real TSG generated at least 1 session (4 enrolled players → ≥ 1 IR session)
         sessions = test_db.query(SessionModel).filter(
             SessionModel.semester_id == tid,
-            SessionModel.is_tournament_game == True,
+            SessionModel.event_category == EventCategory.MATCH,
         ).all()
         assert len(sessions) >= 1, (
             f"Real TSG must generate ≥1 session for 4 players; got {len(sessions)}"
