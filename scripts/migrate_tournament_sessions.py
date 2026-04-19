@@ -14,7 +14,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app.database import SessionLocal
-from app.models.session import Session
+from app.models.session import Session, EventCategory
 from app.models.semester import Semester
 
 
@@ -50,8 +50,8 @@ def migrate_tournament_sessions():
             # Update each session
             updated_count = 0
             for session in sessions:
-                if not session.is_tournament_game:
-                    session.is_tournament_game = True
+                if session.event_category != EventCategory.MATCH:
+                    session.event_category = EventCategory.MATCH
                     updated_count += 1
                 # game_type and game_results remain NULL (can be filled later by instructor)
 

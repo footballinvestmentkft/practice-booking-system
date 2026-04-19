@@ -1,5 +1,4 @@
 from sqlalchemy import Column, Integer, SmallInteger, String, Text, DateTime, ForeignKey, Enum, Boolean, ARRAY, case
-from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime, timezone
@@ -18,7 +17,7 @@ class SessionType(enum.Enum):
 
 
 class EventCategory(str, enum.Enum):
-    """What kind of event this session is — replaces boolean is_tournament_game (M-03)."""
+    """What kind of event this session is."""
     TRAINING = "TRAINING"  # Practice, drill, skills session
     MATCH = "MATCH"        # Competitive game / tournament match
 
@@ -116,33 +115,6 @@ class Session(Base):
         nullable=False,
         comment="Number of credits required to book this session (default: 1, workshops may cost more)"
     )
-
-    # 🏆 DEPRECATED — is_tournament_game (backward-compat bridge, scheduled for removal)
-    # ────────────────────────────────────────────────────────────────────────────
-    # The DB column was dropped in M-10 (2026-03-15). This hybrid_property
-    # provides a transparent compatibility bridge so existing callers continue
-    # to work without changes.
-    #
-    # Replacement: use `event_category` / `EventCategory` directly.
-    #   Read:   session.event_category == EventCategory.MATCH
-    #   Filter: SessionModel.event_category == EventCategory.MATCH
-    #   Write:  session.event_category = EventCategory.MATCH
-    #
-    # TODO: remove after all call-sites have been migrated to event_category.
-    @hybrid_property
-    def is_tournament_game(self) -> bool:
-        """DEPRECATED — use event_category == EventCategory.MATCH instead."""
-        return self.event_category == EventCategory.MATCH
-
-    @is_tournament_game.setter
-    def is_tournament_game(self, value: bool) -> None:
-        """DEPRECATED — use event_category = EventCategory.MATCH instead."""
-        self.event_category = EventCategory.MATCH if value else EventCategory.TRAINING
-
-    @is_tournament_game.expression
-    def is_tournament_game(cls):  # noqa: N805
-        """DEPRECATED — use SessionModel.event_category == EventCategory.MATCH instead."""
-        return cls.event_category == EventCategory.MATCH
 
     game_type = Column(
         String(100),
@@ -273,7 +245,7 @@ class Session(Base):
 
     # ─── NEW SEMANTIC DIMENSIONS (M-03 to M-06, 2026-03-15) ───────────────────
 
-    # M-03: Replaces is_tournament_game boolean with a proper categorical discriminator
+    # M-03
     event_category = Column(
         Enum(EventCategory, name='event_category_type'),
         nullable=True,
