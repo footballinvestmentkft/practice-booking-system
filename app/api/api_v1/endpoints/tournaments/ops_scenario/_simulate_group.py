@@ -1,11 +1,9 @@
-"""GROUP_STAGE + KNOCKOUT simulation helper, plus tournament-format dispatcher."""
+"""GROUP_STAGE + KNOCKOUT simulation helper."""
 import logging as _logging
 from sqlalchemy.orm import Session
 
 from ._session_helpers import _get_tournament_sessions, _build_h2h_game_results
-from ._simulate_knockout import _simulate_head_to_head_knockout, _simulate_knockout_bracket
-from ._simulate_ir import _simulate_individual_ranking
-from ._simulate_league import _simulate_league_tournament
+from ._simulate_knockout import _simulate_knockout_bracket
 
 
 def _simulate_group_knockout_tournament(
@@ -223,62 +221,3 @@ def _simulate_group_knockout_tournament(
     )
 
     return True, f"{total_simulated} sessions simulated (group={group_simulated}, knockout={knockout_simulated}), {total_skipped} skipped"
-
-
-def _simulate_tournament_results(
-    db: Session,
-    tournament_id: int,
-    logger: _logging.Logger,
-) -> tuple[bool, str]:
-    """
-    Simulate tournament results for OPS-generated tournaments.
-
-    Supports:
-    - HEAD_TO_HEAD knockout: Full bracket advancement logic
-    - HEAD_TO_HEAD group+knockout: Group stage → Knockout stage progression
-    - HEAD_TO_HEAD league: Round robin (all play all)
-    - INDIVIDUAL_RANKING: Random performance data (time/score/rounds based on scoring_type)
-
-    Returns:
-        (success: bool, message: str)
-    """
-    import random
-    import json
-    from app.models.session import Session as SessionModel
-    from app.models.semester import Semester as TournamentModel
-    from app.models.tournament_enums import TournamentPhase
-    from sqlalchemy import asc
-
-    # Detect tournament format and phases
-    tournament = db.query(TournamentModel).filter(TournamentModel.id == tournament_id).first()
-    if not tournament:
-        return False, "Tournament not found"
-
-    # Get tournament format (derived from tournament_type)
-    tournament_format = tournament.format if tournament.format else "INDIVIDUAL_RANKING"
-
-    # Check if tournament has multiple phases (GROUP_STAGE + KNOCKOUT)
-    sessions = _get_tournament_sessions(db, tournament_id)
-
-    phases_present = set([s.tournament_phase for s in sessions if s.tournament_phase])
-    has_group_stage = TournamentPhase.GROUP_STAGE in phases_present or TournamentPhase.GROUP_STAGE.value in phases_present
-    has_knockout = TournamentPhase.KNOCKOUT in phases_present or TournamentPhase.KNOCKOUT.value in phases_present
-
-    logger.info("[ops] Starting auto-result simulation for tournament_id=%d, format=%s, phases=%s",
-                tournament_id, tournament_format, phases_present)
-
-    # Route to appropriate simulation based on format and phases
-    if tournament_format == "HEAD_TO_HEAD":
-        if has_group_stage and has_knockout:
-            # Group + Knockout hybrid
-            return _simulate_group_knockout_tournament(db, tournament_id, logger)
-        elif has_group_stage:
-            # League (round robin)
-            return _simulate_league_tournament(db, tournament_id, logger)
-        else:
-            # Pure knockout
-            return _simulate_head_to_head_knockout(db, tournament_id, logger)
-    elif tournament_format == "INDIVIDUAL_RANKING":
-        return _simulate_individual_ranking(db, tournament, logger)
-    else:
-        return False, f"Unsupported tournament format: {tournament_format}"

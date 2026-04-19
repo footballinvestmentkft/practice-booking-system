@@ -19,14 +19,608 @@ from app.api.api_v1.endpoints.auth import get_current_user
 from app.models.user import User, UserRole
 
 from .schemas import OpsScenarioRequest, OpsScenarioResponse, _OPS_CONFIRM_THRESHOLD
-from ._session_helpers import _get_tournament_sessions
-from ._simulate_group import _simulate_tournament_results
-from ._simulate_ir import _calculate_ir_rankings
+from ._session_helpers import _get_tournament_sessions, _build_h2h_game_results
+from ._simulate_ir import _calculate_ir_rankings, _simulate_individual_ranking
 from ._finalization import _finalize_tournament_with_rewards
 
 router = APIRouter()
 
 _ops_logger = _logging.getLogger(__name__)
+
+
+# ============================================================================
+# SIMULATION HELPERS — defined here so patch(f"{_BASE}.func") intercepts
+# calls via LOAD_GLOBAL in this module's scope (patching sub-module refs fails)
+# ============================================================================
+
+def _simulate_head_to_head_knockout(
+    db: Session,
+    tournament_id: int,
+    logger: _logging.Logger,
+) -> tuple[bool, str]:
+    """
+    Simulate HEAD_TO_HEAD knockout tournament with full bracket advancement.
+
+    1. Process sessions round-by-round (Semi-finals → Final/3rd Place)
+    2. For each session: randomly select a winner, populate game_results
+    3. Advance winners/losers to next round sessions (update participant_user_ids)
+    4. Continue until all rounds are simulated
+
+    Returns:
+        (success: bool, message: str)
+    """
+    import random
+    import json
+    from app.models.session import Session as SessionModel
+    from sqlalchemy import asc
+
+    logger.info("[ops] Starting HEAD_TO_HEAD knockout bracket simulation for tournament_id=%d", tournament_id)
+
+    # Get all tournament sessions, ordered by tournament_round
+    sessions = _get_tournament_sessions(db, tournament_id, ordered=True)
+
+    if not sessions:
+        return False, "No tournament sessions found for simulation"
+
+    # Group sessions by round
+    from collections import defaultdict
+    rounds = defaultdict(list)
+    for session in sessions:
+        round_num = session.tournament_round or 1
+        rounds[round_num].append(session)
+
+    total_simulated = 0
+    total_skipped = 0
+
+    # Process rounds in order
+    for round_num in sorted(rounds.keys()):
+        round_sessions = rounds[round_num]
+        logger.info("[ops] Processing Round %d (%d sessions)", round_num, len(round_sessions))
+
+        round_simulated = 0
+        round_winners = []
+        round_losers = []
+
+        for session in round_sessions:
+            # Skip if already has results
+            if session.game_results:
+                total_skipped += 1
+                continue
+
+            # Skip if no participants assigned
+            if not session.participant_user_ids or len(session.participant_user_ids) == 0:
+                total_skipped += 1
+                logger.warning("[ops] Session %d (Round %d, Match %d) has no participants — skipping",
+                              session.id, session.tournament_round, session.tournament_match_number)
+                continue
+
+            # Knockout sessions have exactly 2 participants
+            if len(session.participant_user_ids) != 2:
+                total_skipped += 1
+                logger.warning("[ops] Session %d has %d participants (expected 2) — skipping",
+                              session.id, len(session.participant_user_ids))
+                continue
+
+            # Simulate: randomly pick a winner
+            winner_id = random.choice(session.participant_user_ids)
+            loser_id = [uid for uid in session.participant_user_ids if uid != winner_id][0]
+
+            # Update session
+            session.game_results = _build_h2h_game_results(
+                [{"user_id": winner_id, "result": "win", "score": 3},
+                 {"user_id": loser_id, "result": "loss", "score": 0}],
+                session.tournament_round,
+            )
+            session.session_status = "completed"
+            round_simulated += 1
+
+            # Track winners and losers for bracket advancement
+            round_winners.append(winner_id)
+            round_losers.append(loser_id)
+
+            logger.info("[ops] Round %d, Match %d: User %d defeats User %d",
+                       round_num, session.tournament_match_number, winner_id, loser_id)
+
+        # Commit after each round
+        db.commit()
+        total_simulated += round_simulated
+        logger.info("[ops] Round %d complete: %d sessions simulated", round_num, round_simulated)
+
+        # Bracket advancement: assign winners/losers to next round sessions
+        next_round = round_num + 1
+        if next_round in rounds:
+            next_round_sessions = sorted(rounds[next_round], key=lambda s: s.tournament_match_number or 0)
+
+            # Separate playoff (3rd place) sessions from main bracket sessions
+            main_sessions = [s for s in next_round_sessions
+                             if "3rd Place" not in (s.title or "") and "Playoff" not in (s.title or "")]
+            playoff_sessions = [s for s in next_round_sessions
+                                if "3rd Place" in (s.title or "") or "Playoff" in (s.title or "")]
+
+            # General bracket pairing: pair winners into main bracket sessions (2 per session)
+            for idx, ns in enumerate(main_sessions):
+                p1_idx = idx * 2
+                p2_idx = idx * 2 + 1
+                if p1_idx < len(round_winners) and p2_idx < len(round_winners):
+                    ns.participant_user_ids = [round_winners[p1_idx], round_winners[p2_idx]]
+                    logger.info("[ops] Round %d→%d, Match %d: Assigned winners %s to session %d (%s)",
+                               round_num, next_round, idx + 1,
+                               ns.participant_user_ids, ns.id, ns.title)
+                else:
+                    logger.warning("[ops] Not enough winners (%d) to fill main session %d (slot %d-%d)",
+                                   len(round_winners), ns.id, p1_idx, p2_idx)
+
+            # Assign losers to 3rd Place Playoff (only if losers exist and there's a playoff session)
+            if playoff_sessions and len(round_losers) >= 2:
+                playoff_sessions[0].participant_user_ids = round_losers[:2]
+                logger.info("[ops] Assigned losers %s to 3rd Place Playoff (session %d)",
+                           round_losers[:2], playoff_sessions[0].id)
+
+            db.commit()
+
+    logger.info(
+        "[ops] Bracket simulation complete: %d sessions simulated, %d skipped",
+        total_simulated, total_skipped
+    )
+
+    return True, f"{total_simulated} sessions simulated, {total_skipped} skipped"
+
+
+def _simulate_knockout_bracket(
+    db: Session,
+    knockout_sessions: list,
+    logger: _logging.Logger,
+) -> tuple[int, int]:
+    """
+    Helper: Simulate knockout bracket sessions round-by-round.
+    Used by both pure knockout and group+knockout tournaments.
+
+    Returns:
+        (simulated_count, skipped_count)
+    """
+    import random
+    import json
+    from collections import defaultdict
+    from sqlalchemy import asc
+
+    # Group sessions by round
+    rounds = defaultdict(list)
+    for session in knockout_sessions:
+        round_num = session.tournament_round or 1
+        rounds[round_num].append(session)
+
+    total_simulated = 0
+    total_skipped = 0
+
+    # Process rounds in order
+    for round_num in sorted(rounds.keys()):
+        round_sessions = rounds[round_num]
+        logger.info("[ops] Processing Knockout Round %d (%d sessions)", round_num, len(round_sessions))
+
+        round_winners = []
+        round_losers = []
+
+        for session in round_sessions:
+            # Skip if already has results
+            if session.game_results:
+                total_skipped += 1
+                continue
+
+            # Skip if no participants yet (waiting for previous round)
+            if not session.participant_user_ids or len(session.participant_user_ids) < 2:
+                logger.info("[ops] Session %d has no participants yet (waiting for previous round), skipping", session.id)
+                total_skipped += 1
+                continue
+
+            # Randomly select winner
+            winner_id = random.choice(session.participant_user_ids)
+            loser_id = [uid for uid in session.participant_user_ids if uid != winner_id][0]
+
+            session.game_results = _build_h2h_game_results(
+                [{"user_id": winner_id, "result": "win", "score": random.randint(1, 5)},
+                 {"user_id": loser_id, "result": "loss", "score": random.randint(0, 3)}],
+                session.tournament_round,
+            )
+            session.session_status = "completed"
+
+            round_winners.append(winner_id)
+            round_losers.append(loser_id)
+
+            logger.info("[ops] Simulated knockout session %d: Winner=%d, Loser=%d",
+                       session.id, winner_id, loser_id)
+
+            total_simulated += 1
+
+        # Bracket advancement: assign winners/losers to next round
+        next_round = round_num + 1
+        if next_round in rounds:
+            next_round_sessions = rounds[next_round]
+
+            # General bracket pairing: separate playoff from main bracket
+            next_round_sessions_sorted = sorted(next_round_sessions, key=lambda s: s.tournament_match_number or 0)
+            main_sessions = [s for s in next_round_sessions_sorted
+                             if "3rd Place" not in (s.title or "") and "Playoff" not in (s.title or "")]
+            playoff_sessions = [s for s in next_round_sessions_sorted
+                                if "3rd Place" in (s.title or "") or "Playoff" in (s.title or "")]
+
+            # Assign winners into main bracket sessions (2 per session, in order)
+            for idx, ns in enumerate(main_sessions):
+                p1_idx = idx * 2
+                p2_idx = idx * 2 + 1
+                if p1_idx < len(round_winners) and p2_idx < len(round_winners):
+                    ns.participant_user_ids = [round_winners[p1_idx], round_winners[p2_idx]]
+                    logger.info("[ops] Round %d→%d, Match %d: Assigned winners %s to session %d (%s)",
+                               round_num, next_round, idx + 1,
+                               ns.participant_user_ids, ns.id, ns.title)
+
+            # Assign losers to 3rd Place Playoff
+            if playoff_sessions and len(round_losers) >= 2:
+                playoff_sessions[0].participant_user_ids = round_losers[:2]
+                logger.info("[ops] Assigned 3rd Place Playoff participants: %s", round_losers[:2])
+
+    return total_simulated, total_skipped
+
+
+def _simulate_league_tournament(
+    db: Session,
+    tournament_id: int,
+    logger: _logging.Logger,
+) -> tuple[bool, str]:
+    """
+    Simulate LEAGUE (Round Robin) tournament:
+    - All players play against each other once
+    - Each match is HEAD_TO_HEAD
+    - Final rankings based on points, goal difference, goals scored
+
+    Returns:
+        (success: bool, message: str)
+    """
+    import random
+    import json
+    from app.models.session import Session as SessionModel
+    from sqlalchemy import asc
+
+    logger.info("[ops] Starting LEAGUE (Round Robin) simulation for tournament_id=%d", tournament_id)
+
+    # Get all tournament sessions
+    sessions = _get_tournament_sessions(db, tournament_id, ordered=True)
+
+    if not sessions:
+        return False, "No tournament sessions found for simulation"
+
+    simulated_count = 0
+    skipped_count = 0
+
+    for session in sessions:
+        # Skip if already has results
+        if session.game_results:
+            skipped_count += 1
+            continue
+
+        # Verify session has participants
+        if not session.participant_user_ids or len(session.participant_user_ids) < 2:
+            logger.warning("[ops] League session %d has no participants, skipping", session.id)
+            skipped_count += 1
+            continue
+
+        # Simulate HEAD_TO_HEAD match (1v1)
+        user_id_1, user_id_2 = session.participant_user_ids[0], session.participant_user_ids[1]
+
+        # Random match result: win, loss, or draw
+        outcome = random.choice(["win", "draw", "win"])  # Bias towards decisive results
+
+        if outcome == "draw":
+            score_1 = random.randint(0, 3)
+            score_2 = score_1  # Equal scores for draw
+            result_1 = "draw"
+            result_2 = "draw"
+        else:
+            # Winner gets higher score
+            winner_score = random.randint(1, 5)
+            loser_score = random.randint(0, winner_score - 1)
+
+            if random.choice([True, False]):  # Randomly assign winner
+                score_1 = winner_score
+                score_2 = loser_score
+                result_1 = "win"
+                result_2 = "loss"
+            else:
+                score_1 = loser_score
+                score_2 = winner_score
+                result_1 = "loss"
+                result_2 = "win"
+
+        session.game_results = _build_h2h_game_results(
+            [{"user_id": user_id_1, "result": result_1, "score": score_1},
+             {"user_id": user_id_2, "result": result_2, "score": score_2}],
+            session.tournament_round or 1,
+        )
+        session.session_status = "completed"
+        simulated_count += 1
+
+    db.commit()
+
+    logger.info(
+        "[ops] LEAGUE simulation complete: %d sessions simulated, %d skipped",
+        simulated_count, skipped_count
+    )
+
+    return True, f"{simulated_count} league sessions simulated, {skipped_count} skipped"
+
+
+def _simulate_group_knockout_tournament(
+    db: Session,
+    tournament_id: int,
+    logger: _logging.Logger,
+) -> tuple[bool, str]:
+    """
+    Simulate GROUP_STAGE + KNOCKOUT tournament:
+    1. Simulate all group stage sessions (HEAD_TO_HEAD matches within groups)
+    2. Calculate group standings (wins, goal difference, etc.)
+    3. Determine qualifiers (top N from each group)
+    4. Assign qualifiers to knockout bracket sessions
+    5. Simulate knockout stage (winners advance to next round)
+
+    Returns:
+        (success: bool, message: str)
+    """
+    import random
+    import json
+    from app.models.session import Session as SessionModel
+    from app.models.tournament_enums import TournamentPhase
+    from sqlalchemy import asc
+    from collections import defaultdict
+
+    logger.info("[ops] Starting GROUP + KNOCKOUT simulation for tournament_id=%d", tournament_id)
+
+    # Get all tournament sessions, ordered by phase, round, match
+    sessions = _get_tournament_sessions(db, tournament_id, with_phase=True)
+
+    if not sessions:
+        return False, "No tournament sessions found for simulation"
+
+    # Separate sessions by phase
+    group_sessions = [s for s in sessions if s.tournament_phase == TournamentPhase.GROUP_STAGE.value]
+    knockout_sessions = [s for s in sessions if s.tournament_phase == TournamentPhase.KNOCKOUT.value]
+
+    logger.info("[ops] Found %d group sessions, %d knockout sessions", len(group_sessions), len(knockout_sessions))
+
+    # ============================================================================
+    # PHASE 1: Simulate Group Stage
+    # ============================================================================
+    group_simulated = 0
+    group_skipped = 0
+
+    # Track group standings: {group_identifier: {user_id: {wins, losses, draws, gf, ga, points}}}
+    group_standings = defaultdict(lambda: defaultdict(lambda: {
+        "wins": 0, "losses": 0, "draws": 0, "goals_for": 0, "goals_against": 0, "points": 0
+    }))
+
+    for session in group_sessions:
+        # Skip if already has results
+        if session.game_results:
+            group_skipped += 1
+            continue
+
+        # Verify session has participants
+        if not session.participant_user_ids or len(session.participant_user_ids) < 2:
+            logger.warning("[ops] Group session %d has no participants, skipping", session.id)
+            group_skipped += 1
+            continue
+
+        # Simulate HEAD_TO_HEAD match (1v1)
+        user_id_1, user_id_2 = session.participant_user_ids[0], session.participant_user_ids[1]
+
+        # Random match result: win, loss, or draw
+        outcome = random.choice(["win", "draw", "win"])  # Bias towards decisive results
+
+        if outcome == "draw":
+            score_1 = random.randint(0, 3)
+            score_2 = score_1  # Equal scores for draw
+            result_1 = "draw"
+            result_2 = "draw"
+        else:
+            # Winner gets higher score
+            winner_score = random.randint(1, 5)
+            loser_score = random.randint(0, winner_score - 1)
+
+            if random.choice([True, False]):  # Randomly assign winner
+                score_1 = winner_score
+                score_2 = loser_score
+                result_1 = "win"
+                result_2 = "loss"
+            else:
+                score_1 = loser_score
+                score_2 = winner_score
+                result_1 = "loss"
+                result_2 = "win"
+
+        session.game_results = _build_h2h_game_results(
+            [{"user_id": user_id_1, "result": result_1, "score": score_1},
+             {"user_id": user_id_2, "result": result_2, "score": score_2}],
+            session.tournament_round or 1,
+        )
+        session.session_status = "completed"
+
+        # Update group standings
+        group_id = session.group_identifier or "A"
+
+        # Update user_1 stats
+        group_standings[group_id][user_id_1]["goals_for"] += score_1
+        group_standings[group_id][user_id_1]["goals_against"] += score_2
+        if result_1 == "win":
+            group_standings[group_id][user_id_1]["wins"] += 1
+            group_standings[group_id][user_id_1]["points"] += 3
+        elif result_1 == "draw":
+            group_standings[group_id][user_id_1]["draws"] += 1
+            group_standings[group_id][user_id_1]["points"] += 1
+        else:
+            group_standings[group_id][user_id_1]["losses"] += 1
+
+        # Update user_2 stats
+        group_standings[group_id][user_id_2]["goals_for"] += score_2
+        group_standings[group_id][user_id_2]["goals_against"] += score_1
+        if result_2 == "win":
+            group_standings[group_id][user_id_2]["wins"] += 1
+            group_standings[group_id][user_id_2]["points"] += 3
+        elif result_2 == "draw":
+            group_standings[group_id][user_id_2]["draws"] += 1
+            group_standings[group_id][user_id_2]["points"] += 1
+        else:
+            group_standings[group_id][user_id_2]["losses"] += 1
+
+        group_simulated += 1
+
+    db.commit()
+
+    logger.info("[ops] Group stage simulation: %d sessions simulated, %d skipped", group_simulated, group_skipped)
+
+    # ============================================================================
+    # PHASE 2: Calculate Group Qualifiers
+    # ============================================================================
+    # Sort each group by: points DESC, goal_diff DESC, goals_for DESC
+    group_qualifiers = {}  # {group_id: [user_id_rank1, user_id_rank2, ...]}
+
+    for group_id, standings in group_standings.items():
+        # Convert to list of (user_id, stats)
+        standings_list = [(user_id, stats) for user_id, stats in standings.items()]
+
+        # Sort by: points DESC, goal_diff DESC, goals_for DESC
+        standings_list.sort(
+            key=lambda x: (
+                -x[1]["points"],
+                -(x[1]["goals_for"] - x[1]["goals_against"]),  # goal difference
+                -x[1]["goals_for"],
+                x[0]  # user_id as tiebreaker (stable sort)
+            )
+        )
+
+        # Extract top qualifiers (typically top 2 from each group)
+        group_qualifiers[group_id] = [user_id for user_id, _ in standings_list]
+
+        logger.info("[ops] Group %s standings: %s", group_id,
+                   [(uid, stats["points"], stats["goals_for"] - stats["goals_against"])
+                    for uid, stats in standings_list])
+
+    # ============================================================================
+    # PHASE 3: Assign Qualifiers to Knockout Bracket
+    # ============================================================================
+    group_ids_sorted = sorted(group_qualifiers.keys())  # ['A', 'B', 'C', 'D', ...]
+    qualifiers_per_group = 2  # Standard config
+
+    # Build seeded list: [A1, B1, C1, D1, A2, B2, C2, D2]
+    seeded_qualifiers = []
+    for rank_index in range(qualifiers_per_group):
+        for group_id in group_ids_sorted:
+            if rank_index < len(group_qualifiers[group_id]):
+                seeded_qualifiers.append(group_qualifiers[group_id][rank_index])
+
+    logger.info("[ops] Seeded qualifiers for knockout: %s", seeded_qualifiers)
+
+    # Assign qualifiers to first knockout round sessions
+    first_round_sessions = [s for s in knockout_sessions if s.tournament_round == 1]
+
+    # Standard bracket seeding: 1 vs N, 2 vs N-1, 3 vs N-2, etc.
+    if len(seeded_qualifiers) != len(first_round_sessions) * 2:
+        logger.warning("[ops] Seeded qualifiers count (%d) doesn't match first round sessions (%d * 2)",
+                      len(seeded_qualifiers), len(first_round_sessions))
+
+    # Assign participants to first round sessions using standard bracket seeding
+    for i, session in enumerate(first_round_sessions):
+        if i * 2 + 1 < len(seeded_qualifiers):
+            seed_high = i
+            seed_low = len(seeded_qualifiers) - 1 - i
+
+            session.participant_user_ids = [seeded_qualifiers[seed_high], seeded_qualifiers[seed_low]]
+
+            logger.info("[ops] Assigned knockout R1 Match %d: Seed %d (user %d) vs Seed %d (user %d)",
+                       i + 1, seed_high + 1, seeded_qualifiers[seed_high],
+                       seed_low + 1, seeded_qualifiers[seed_low])
+
+    db.commit()
+
+    # ============================================================================
+    # PHASE 4: Simulate Knockout Stage (same as pure knockout)
+    # ============================================================================
+    knockout_simulated, knockout_skipped = _simulate_knockout_bracket(
+        db, knockout_sessions, logger
+    )
+
+    db.commit()
+
+    total_simulated = group_simulated + knockout_simulated
+    total_skipped = group_skipped + knockout_skipped
+
+    logger.info(
+        "[ops] GROUP+KNOCKOUT simulation complete: %d total sessions simulated, %d skipped",
+        total_simulated, total_skipped
+    )
+
+    return True, f"{total_simulated} sessions simulated (group={group_simulated}, knockout={knockout_simulated}), {total_skipped} skipped"
+
+
+# ============================================================================
+# SIMULATION DISPATCHER — lives here so patch(f"{_BASE}.func") intercepts
+# calls via LOAD_GLOBAL in this module's scope (patching sub-module refs fails)
+# ============================================================================
+
+def _simulate_tournament_results(
+    db: Session,
+    tournament_id: int,
+    logger: _logging.Logger,
+) -> tuple[bool, str]:
+    """
+    Simulate tournament results for OPS-generated tournaments.
+
+    Supports:
+    - HEAD_TO_HEAD knockout: Full bracket advancement logic
+    - HEAD_TO_HEAD group+knockout: Group stage → Knockout stage progression
+    - HEAD_TO_HEAD league: Round robin (all play all)
+    - INDIVIDUAL_RANKING: Random performance data (time/score/rounds based on scoring_type)
+
+    Returns:
+        (success: bool, message: str)
+    """
+    import random
+    import json
+    from app.models.session import Session as SessionModel
+    from app.models.semester import Semester as TournamentModel
+    from app.models.tournament_enums import TournamentPhase
+    from sqlalchemy import asc
+
+    # Detect tournament format and phases
+    tournament = db.query(TournamentModel).filter(TournamentModel.id == tournament_id).first()
+    if not tournament:
+        return False, "Tournament not found"
+
+    # Get tournament format (derived from tournament_type)
+    tournament_format = tournament.format if tournament.format else "INDIVIDUAL_RANKING"
+
+    # Check if tournament has multiple phases (GROUP_STAGE + KNOCKOUT)
+    sessions = _get_tournament_sessions(db, tournament_id)
+
+    phases_present = set([s.tournament_phase for s in sessions if s.tournament_phase])
+    has_group_stage = TournamentPhase.GROUP_STAGE in phases_present or TournamentPhase.GROUP_STAGE.value in phases_present
+    has_knockout = TournamentPhase.KNOCKOUT in phases_present or TournamentPhase.KNOCKOUT.value in phases_present
+
+    logger.info("[ops] Starting auto-result simulation for tournament_id=%d, format=%s, phases=%s",
+                tournament_id, tournament_format, phases_present)
+
+    # Route to appropriate simulation based on format and phases
+    if tournament_format == "HEAD_TO_HEAD":
+        if has_group_stage and has_knockout:
+            # Group + Knockout hybrid
+            return _simulate_group_knockout_tournament(db, tournament_id, logger)
+        elif has_group_stage:
+            # League (round robin)
+            return _simulate_league_tournament(db, tournament_id, logger)
+        else:
+            # Pure knockout
+            return _simulate_head_to_head_knockout(db, tournament_id, logger)
+    elif tournament_format == "INDIVIDUAL_RANKING":
+        return _simulate_individual_ranking(db, tournament, logger)
+    else:
+        return False, f"Unsupported tournament format: {tournament_format}"
 
 
 # ============================================================================
