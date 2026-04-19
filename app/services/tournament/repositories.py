@@ -380,7 +380,7 @@ class FakeSessionRepository(SessionRepository):
         mock_session.tournament_round = session_data["tournament_round"]
         mock_session.participant_user_ids = session_data.get("participant_user_ids", [])
         mock_session.game_results = None
-        mock_session.is_tournament_game = True
+        mock_session.event_category = EventCategory.MATCH
 
         # Store for verification
         self.created_sessions.append(mock_session)
