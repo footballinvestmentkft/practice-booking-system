@@ -80,8 +80,8 @@ class TestTournamentSessionDetection:
         test_db: Session,
         tournament_session_with_bookings: SessionModel
     ):
-        """Tournament session has is_tournament_game=True."""
-        assert tournament_session_with_bookings.is_tournament_game is True
+        """Tournament session has event_category=MATCH."""
+        assert tournament_session_with_bookings.event_category == EventCategory.MATCH
         assert tournament_session_with_bookings.game_type is not None
 
     def test_tournament_semester_has_master_instructor(
@@ -98,7 +98,7 @@ class TestTournamentSessionDetection:
         instructor_user,
         student_user
     ):
-        """Regular session has is_tournament_game=False or NULL."""
+        """Regular session has event_category=TRAINING."""
         from app.models.semester import SemesterStatus
         from app.models.specialization import SpecializationType
         from app.models.session import SessionType
@@ -132,7 +132,7 @@ class TestTournamentSessionDetection:
         test_db.commit()
         test_db.refresh(session)
 
-        assert session.is_tournament_game is False
+        assert session.event_category == EventCategory.TRAINING
         assert session.game_type is None
 
 
@@ -157,7 +157,7 @@ class TestTournamentValidationFlow:
         """
         # Step 1: Check if session is tournament
         session = tournament_session_with_bookings
-        assert session.is_tournament_game is True
+        assert session.event_category == EventCategory.MATCH
 
         # Step 2: If tournament, ONLY present/absent allowed
         valid_statuses = ["present", "absent"]

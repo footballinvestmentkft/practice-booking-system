@@ -224,7 +224,7 @@ class TestTournamentSessionGenerationAPI:
 
         # Verify each session has correct metadata (HEAD_TO_HEAD 1v1 matches)
         for session in sessions:
-            assert session.is_tournament_game is True
+            assert session.event_category == EventCategory.MATCH
             assert session.auto_generated is True
             assert session.tournament_phase == 'GROUP_STAGE'
             assert session.expected_participants == 2, "HEAD_TO_HEAD matches have 2 participants"
@@ -597,7 +597,7 @@ class TestTournamentSessionGenerationAPI:
         # Verify each session has participant assignments (HEAD_TO_HEAD 1v1)
         for session in sessions:
             assert session.expected_participants == 2, "HEAD_TO_HEAD matches have 2 participants"
-            assert session.is_tournament_game is True
+            assert session.event_category == EventCategory.MATCH
             assert session.auto_generated is True
 
             # Note: Bookings and attendance are created separately, not by generator
@@ -714,7 +714,7 @@ class TestTournamentSessionGenerationAPI:
 
         for session in sessions:
             assert session.expected_participants == 2, "Knockout matches are 1v1"
-            assert session.is_tournament_game is True
+            assert session.event_category == EventCategory.MATCH
             assert session.auto_generated is True
             assert session.group_identifier is None
 
@@ -840,7 +840,7 @@ class TestTournamentSessionGenerationAPI:
         # All sessions should be HEAD_TO_HEAD 1v1 matches
         for session in sessions:
             assert session.expected_participants == 2, "Swiss matches are 1v1 HEAD_TO_HEAD"
-            assert session.is_tournament_game is True
+            assert session.event_category == EventCategory.MATCH
             assert session.auto_generated is True
 
         # Verify round distribution (4 matches per round)

@@ -21,7 +21,7 @@ from app.services.tournament.core import (
     delete_tournament,
 )
 from app.models.semester import Semester, SemesterStatus
-from app.models.session import Session as SessionModel, SessionType
+from app.models.session import Session as SessionModel, SessionType, EventCategory
 from app.models.booking import Booking, BookingStatus
 from app.models.specialization import SpecializationType
 
@@ -181,7 +181,7 @@ class TestCreateTournamentSessions:
         assert session.capacity == 20
         assert session.credit_cost == 1
         assert session.game_type == "Semifinal"
-        assert session.is_tournament_game is True
+        assert session.event_category == EventCategory.MATCH
         assert session.session_type == SessionType.on_site
         assert session.instructor_id is None  # No instructor yet
         assert session.semester_id == tournament_semester.id
@@ -307,7 +307,7 @@ class TestCreateTournamentSessions:
         tournament_semester: Semester,
         tournament_date: date
     ):
-        """All tournament sessions have is_tournament_game=True."""
+        """All tournament sessions have event_category=MATCH."""
         session_configs = [
             {"time": "09:00", "title": "Match 1"},
             {"time": "11:00", "title": "Match 2"},
@@ -321,7 +321,7 @@ class TestCreateTournamentSessions:
         )
 
         for session in sessions:
-            assert session.is_tournament_game is True
+            assert session.event_category == EventCategory.MATCH
 
     def test_all_sessions_on_site_type(
         self,
