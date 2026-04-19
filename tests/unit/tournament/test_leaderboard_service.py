@@ -23,6 +23,7 @@ from app.models import (
     Booking,
     BookingStatus,
     SessionType,
+    EventCategory,
     SemesterStatus,
     ParticipantType,
     TeamMemberRole
@@ -136,7 +137,7 @@ def create_test_session(
         capacity=20,
         semester_id=semester_id,
         credit_cost=1,
-        is_tournament_game=True
+        event_category=EventCategory.MATCH
     )
     db.add(session)
     db.commit()

@@ -8,7 +8,7 @@ from datetime import date, datetime, timedelta
 from sqlalchemy.orm import Session
 
 from app.models.semester import Semester, SemesterStatus
-from app.models.session import Session as SessionModel, SessionType
+from app.models.session import Session as SessionModel, SessionType, EventCategory
 from app.models.booking import Booking, BookingStatus
 from app.models.user import User
 
@@ -48,7 +48,7 @@ def tournament_session_with_bookings(
         capacity=20,
         instructor_id=instructor_user.id,
         semester_id=tournament_semester_with_instructor.id,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         game_type="Skills Challenge",
     )
     test_db.add(session)

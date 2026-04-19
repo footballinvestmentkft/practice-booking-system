@@ -37,7 +37,7 @@ from datetime import date, datetime, timedelta
 from sqlalchemy.orm import Session
 
 from app.models.semester import Semester, SemesterStatus
-from app.models.session import Session as SessionModel, SessionType
+from app.models.session import Session as SessionModel, SessionType, EventCategory
 from app.models.user import User, UserRole
 from app.models.tournament_ranking import TournamentRanking
 from app.services.tournament.result_processor import ResultProcessor
@@ -84,7 +84,7 @@ def ir_session(test_db: Session, ir_tournament: Semester, instructor_user: User)
         capacity=20,
         instructor_id=instructor_user.id,
         semester_id=ir_tournament.id,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
     )
     test_db.add(sess)
     test_db.commit()
@@ -406,7 +406,7 @@ def h2h_session(test_db: Session, h2h_tournament: Semester, instructor_user: Use
         capacity=20,
         instructor_id=instructor_user.id,
         semester_id=h2h_tournament.id,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         match_format="HEAD_TO_HEAD",
         tournament_phase=None,  # explicit: KnockoutProgressionService never invoked
     )

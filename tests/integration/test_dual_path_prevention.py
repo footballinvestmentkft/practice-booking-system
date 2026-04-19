@@ -19,7 +19,7 @@ from datetime import date as date_type, datetime
 from sqlalchemy.exc import IntegrityError
 from app.models.tournament_ranking import TournamentRanking
 from app.models.semester import Semester, SemesterStatus
-from app.models.session import Session as SessionModel
+from app.models.session import Session as SessionModel, EventCategory
 from app.models.user import User, UserRole
 from app.core.security import get_password_hash
 from app.services.tournament.results.finalization.session_finalizer import SessionFinalizer
@@ -181,7 +181,7 @@ def test_double_finalization_blocked(
         date_start=datetime(2026, 2, 1, 10, 0),
         date_end=datetime(2026, 2, 1, 12, 0),
         match_format="INDIVIDUAL_RANKING",
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         rounds_data={
             "total_rounds": 2,
             "completed_rounds": 2,
@@ -313,7 +313,7 @@ def sample_session_individual(test_db, sample_tournament_individual):
         date_start=datetime(2026, 2, 1, 10, 0),
         date_end=datetime(2026, 2, 1, 12, 0),
         match_format="INDIVIDUAL_RANKING",
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         rounds_data={
             "total_rounds": 3,
             "completed_rounds": 3,

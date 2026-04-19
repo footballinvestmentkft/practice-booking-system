@@ -19,7 +19,7 @@ import json
 
 from app.models.semester import Semester
 from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
-from app.models.session import Session as SessionModel
+from app.models.session import Session as SessionModel, EventCategory
 from app.models.user import User, UserRole
 from app.models.tournament_type import TournamentType
 from app.models.tournament_configuration import TournamentConfiguration
@@ -945,7 +945,7 @@ class TestTournamentSessionGenerationAPI:
             instructor_id=instructor_user.id,
             date_start=datetime.now(timezone.utc),
             date_end=datetime.now(timezone.utc) + timedelta(hours=2),
-            is_tournament_game=True,
+            event_category=EventCategory.MATCH,
             auto_generated=True,
             ranking_mode='TIERED',
             expected_participants=4,

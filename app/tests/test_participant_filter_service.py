@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.services.tournament.participant_filter_service import ParticipantFilterService
 from app.models.user import User, UserRole
-from app.models.session import Session as SessionModel
+from app.models.session import Session as SessionModel, EventCategory
 from app.models.semester import Semester
 from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 from app.models.tournament_ranking import TournamentRanking
@@ -119,7 +119,7 @@ class TestParticipantFilterService:
             instructor_id=test_tournament.master_instructor_id,
             date_start=datetime.now(timezone.utc) + timedelta(days=7),
             date_end=datetime.now(timezone.utc) + timedelta(days=7, hours=2),
-            is_tournament_game=True,
+            event_category=EventCategory.MATCH,
             ranking_mode='ALL_PARTICIPANTS',
             expected_participants=8,
             participant_filter=None,
@@ -154,7 +154,7 @@ class TestParticipantFilterService:
             instructor_id=test_tournament.master_instructor_id,
             date_start=datetime.now(timezone.utc) + timedelta(days=7),
             date_end=datetime.now(timezone.utc) + timedelta(days=7, hours=2),
-            is_tournament_game=True,
+            event_category=EventCategory.MATCH,
             ranking_mode='GROUP_ISOLATED',
             expected_participants=4,
             participant_filter='group_membership',
@@ -189,7 +189,7 @@ class TestParticipantFilterService:
             instructor_id=test_tournament.master_instructor_id,
             date_start=datetime.now(timezone.utc) + timedelta(days=7),
             date_end=datetime.now(timezone.utc) + timedelta(days=7, hours=2),
-            is_tournament_game=True,
+            event_category=EventCategory.MATCH,
             ranking_mode='GROUP_ISOLATED',
             expected_participants=4,
             participant_filter='group_membership',
@@ -240,7 +240,7 @@ class TestParticipantFilterService:
             instructor_id=test_tournament.master_instructor_id,
             date_start=datetime.now(timezone.utc) + timedelta(days=10),
             date_end=datetime.now(timezone.utc) + timedelta(days=10, hours=2),
-            is_tournament_game=True,
+            event_category=EventCategory.MATCH,
             ranking_mode='QUALIFIED_ONLY',
             expected_participants=4,
             participant_filter='top_group_qualifiers',
@@ -291,7 +291,7 @@ class TestParticipantFilterService:
             instructor_id=test_tournament.master_instructor_id,
             date_start=datetime.now(timezone.utc) + timedelta(days=8),
             date_end=datetime.now(timezone.utc) + timedelta(days=8, hours=2),
-            is_tournament_game=True,
+            event_category=EventCategory.MATCH,
             ranking_mode='PERFORMANCE_POD',
             expected_participants=4,
             participant_filter='dynamic_swiss_pairing',
@@ -335,7 +335,7 @@ class TestParticipantFilterService:
             instructor_id=test_tournament.master_instructor_id,
             date_start=datetime.now(timezone.utc) + timedelta(days=8),
             date_end=datetime.now(timezone.utc) + timedelta(days=8, hours=2),
-            is_tournament_game=True,
+            event_category=EventCategory.MATCH,
             ranking_mode='PERFORMANCE_POD',
             expected_participants=4,
             participant_filter='dynamic_swiss_pairing',
@@ -371,7 +371,7 @@ class TestParticipantFilterService:
             instructor_id=test_tournament.master_instructor_id,
             date_start=datetime.now(timezone.utc) + timedelta(days=12),
             date_end=datetime.now(timezone.utc) + timedelta(days=12, hours=2),
-            is_tournament_game=True,
+            event_category=EventCategory.MATCH,
             ranking_mode='TIERED',
             expected_participants=8,
             participant_filter=None,
@@ -420,7 +420,7 @@ class TestParticipantFilterService:
             instructor_id=test_instructor.id,
             date_start=datetime.now(timezone.utc) + timedelta(days=30),
             date_end=datetime.now(timezone.utc) + timedelta(days=30, hours=2),
-            is_tournament_game=True,
+            event_category=EventCategory.MATCH,
             ranking_mode='ALL_PARTICIPANTS'
         )
         db_session.add(session)
@@ -438,7 +438,7 @@ class TestParticipantFilterService:
             instructor_id=test_tournament.master_instructor_id,
             date_start=datetime.now(timezone.utc) + timedelta(days=7),
             date_end=datetime.now(timezone.utc) + timedelta(days=7, hours=2),
-            is_tournament_game=True,
+            event_category=EventCategory.MATCH,
             ranking_mode='GROUP_ISOLATED',
             expected_participants=4,
             group_identifier='A'

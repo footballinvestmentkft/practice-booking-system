@@ -21,7 +21,7 @@ from app.main import app
 from app.models.user import User, UserRole
 from app.models.specialization import SpecializationType
 from app.models.semester import Semester, SemesterStatus
-from app.models.session import Session as SessionModel, SessionType
+from app.models.session import Session as SessionModel, SessionType, EventCategory
 from app.models.booking import Booking, BookingStatus
 from app.models.instructor_assignment import InstructorAssignmentRequest, AssignmentRequestStatus
 from app.models.coupon import Coupon, CouponUsage, CouponType
@@ -256,7 +256,7 @@ def tournament_sessions(
             instructor_id=None,
             semester_id=tournament_semester.id,
             credit_cost=1,
-            is_tournament_game=True,
+            event_category=EventCategory.MATCH,
             game_type=f"Round {i+1}",
         )
         test_db.add(session)

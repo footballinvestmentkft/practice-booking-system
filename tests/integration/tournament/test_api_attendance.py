@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 
 from app.models.user import User
 from app.models.semester import Semester
-from app.models.session import Session as SessionModel
+from app.models.session import Session as SessionModel, EventCategory
 from app.models.booking import Booking, BookingStatus
 from app.models.attendance import Attendance, AttendanceStatus
 
@@ -210,7 +210,7 @@ class TestRegularSessionAttendanceAPI:
             capacity=20,
             instructor_id=instructor_user.id,
             semester_id=semester.id,
-            is_tournament_game=False  # NOT a tournament
+            event_category=EventCategory.TRAINING  # NOT a tournament
         )
         test_db.add(session)
         test_db.commit()

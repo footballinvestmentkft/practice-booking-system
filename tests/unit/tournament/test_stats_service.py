@@ -28,7 +28,7 @@ from app.models.attendance import AttendanceStatus
 from app.models.user import UserRole
 from app.models.specialization import SpecializationType
 from app.models.semester import SemesterStatus
-from app.models.session import SessionType
+from app.models.session import SessionType, EventCategory
 from app.models.tournament_enums import TeamMemberRole
 from app.models.license import UserLicense
 
@@ -244,7 +244,7 @@ class TestUpdateTournamentStats:
                 session_type=SessionType.on_site,
                 capacity=20,
                 semester_id=tournament.id,
-                is_tournament_game=True,
+                event_category=EventCategory.MATCH,
                 game_results=json.dumps({"winner": "Team A"}) if i < 3 else None  # First 3 have results
             )
             test_db.add(session)
@@ -268,7 +268,7 @@ class TestUpdateTournamentStats:
             session_type=SessionType.on_site,
             capacity=20,
             semester_id=tournament.id,
-            is_tournament_game=True
+            event_category=EventCategory.MATCH
         )
         test_db.add(session)
         test_db.commit()
@@ -334,7 +334,7 @@ class TestUpdateTournamentStats:
                 session_type=SessionType.on_site,
                 capacity=20,
                 semester_id=tournament.id,
-                is_tournament_game=True,
+                event_category=EventCategory.MATCH,
                 game_results=json.dumps({"winner": "A"}) if i < 2 else None
             )
             test_db.add(session)
@@ -441,7 +441,7 @@ class TestGetTournamentAnalytics:
                 session_type=SessionType.on_site,
                 capacity=20,
                 semester_id=tournament.id,
-                is_tournament_game=True,
+                event_category=EventCategory.MATCH,
                 game_results=json.dumps({"winner": "A"}) if i < 6 else None
             )
             test_db.add(session)

@@ -190,7 +190,6 @@ def _session(db: Session, tournament: Semester) -> SessionModel:
         semester_id=tournament.id,
         event_category=EventCategory.MATCH,
         session_type=SessionType.on_site,
-        is_tournament_game=True,
     )
     db.add(sess)
     db.flush()

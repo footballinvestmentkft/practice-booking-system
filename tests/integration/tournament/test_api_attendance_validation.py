@@ -10,7 +10,7 @@ from datetime import date, datetime, timedelta
 from sqlalchemy.orm import Session
 
 from app.services.tournament.validation import validate_tournament_attendance_status
-from app.models.session import Session as SessionModel
+from app.models.session import Session as SessionModel, EventCategory
 from app.models.semester import Semester
 
 
@@ -126,7 +126,7 @@ class TestTournamentSessionDetection:
             capacity=20,
             instructor_id=instructor_user.id,
             semester_id=semester.id,
-            is_tournament_game=False  # NOT a tournament
+            event_category=EventCategory.TRAINING  # NOT a tournament
         )
         test_db.add(session)
         test_db.commit()

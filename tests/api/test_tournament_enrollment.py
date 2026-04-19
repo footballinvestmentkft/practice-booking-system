@@ -25,7 +25,7 @@ from app.models.user import User, UserRole
 from app.models.semester import Semester, SemesterStatus
 from app.models.license import UserLicense
 from app.models.specialization import SpecializationType
-from app.models.session import Session as SessionModel, SessionType
+from app.models.session import Session as SessionModel, SessionType, EventCategory
 from app.core.security import get_password_hash
 from app.core.auth import create_access_token
 
@@ -150,7 +150,7 @@ def tournament_seeking_instructor(test_db: Session) -> Semester:
         instructor_id=None,
         semester_id=semester.id,
         credit_cost=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         game_type="Round 1"
     )
     test_db.add(first_session)
@@ -190,7 +190,7 @@ def tournament_instructor_assigned(test_db: Session, instructor_user: User) -> S
         instructor_id=instructor_user.id,
         semester_id=semester.id,
         credit_cost=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         game_type="Round 1"
     )
     test_db.add(first_session)
@@ -230,7 +230,7 @@ def tournament_ready_for_enrollment(test_db: Session, instructor_user: User) -> 
         instructor_id=instructor_user.id,
         semester_id=semester.id,
         credit_cost=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         game_type="Round 1"
     )
     test_db.add(first_session)

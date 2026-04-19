@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
-from app.models.session import Session as SessionModel
+from app.models.session import Session as SessionModel, EventCategory
 from app.models.semester import Semester
 from app.models.tournament_enums import TournamentPhase
 from app.services.tournament.knockout_progression_service import KnockoutProgressionService
@@ -103,7 +103,7 @@ def test_baseline_semifinals_complete_creates_final_and_bronze(test_db: Session)
         title=f"{test_tournament.name} - Semi-final 1",
         tournament_phase=TournamentPhase.KNOCKOUT,
         tournament_round=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         participant_user_ids=[101, 102],  # Player 101 vs 102
         game_results=json.dumps(_create_game_results(winner_id=101, loser_id=102)),
         date_start=datetime.now(),
@@ -118,7 +118,7 @@ def test_baseline_semifinals_complete_creates_final_and_bronze(test_db: Session)
         title=f"{test_tournament.name} - Semi-final 2",
         tournament_phase=TournamentPhase.KNOCKOUT,
         tournament_round=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         participant_user_ids=[103, 104],  # Player 103 vs 104
         game_results=json.dumps(_create_game_results(winner_id=103, loser_id=104)),
         date_start=datetime.now(),
@@ -192,7 +192,7 @@ def test_baseline_one_semifinal_incomplete_waits(test_db: Session):
         title=f"{test_tournament.name} - Semi-final 1",
         tournament_phase=TournamentPhase.KNOCKOUT,
         tournament_round=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         participant_user_ids=[201, 202],
         game_results=json.dumps(_create_game_results(winner_id=201, loser_id=202)),
         date_start=datetime.now(),
@@ -207,7 +207,7 @@ def test_baseline_one_semifinal_incomplete_waits(test_db: Session):
         title=f"{test_tournament.name} - Semi-final 2",
         tournament_phase=TournamentPhase.KNOCKOUT,
         tournament_round=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         participant_user_ids=[203, 204],
         game_results=None,  # INCOMPLETE - no results yet
         date_start=datetime.now(),
@@ -274,7 +274,7 @@ def test_baseline_non_knockout_session_returns_none(test_db: Session):
         title=f"{test_tournament.name} - Group Stage Match",
         tournament_phase=TournamentPhase.GROUP_STAGE,  # NOT knockout
         tournament_round=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         participant_user_ids=[301, 302],
         game_results=json.dumps(_create_game_results(winner_id=301, loser_id=302)),
         date_start=datetime.now(),
@@ -325,7 +325,7 @@ def test_baseline_idempotency_no_duplicate_finals(test_db: Session):
         title=f"{test_tournament.name} - Semi-final 1",
         tournament_phase=TournamentPhase.KNOCKOUT,
         tournament_round=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         participant_user_ids=[401, 402],
         game_results=json.dumps(_create_game_results(winner_id=401, loser_id=402)),
         date_start=datetime.now(),
@@ -340,7 +340,7 @@ def test_baseline_idempotency_no_duplicate_finals(test_db: Session):
         title=f"{test_tournament.name} - Semi-final 2",
         tournament_phase=TournamentPhase.KNOCKOUT,
         tournament_round=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         participant_user_ids=[403, 404],
         game_results=json.dumps(_create_game_results(winner_id=403, loser_id=404)),
         date_start=datetime.now(),
@@ -426,7 +426,7 @@ def test_baseline_empty_game_results_handled(test_db: Session):
         title=f"{test_tournament.name} - Semi-final 1",
         tournament_phase=TournamentPhase.KNOCKOUT,
         tournament_round=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         participant_user_ids=[501, 502],
         game_results=json.dumps({"raw_results": []}),  # Empty results
         date_start=datetime.now(),
@@ -441,7 +441,7 @@ def test_baseline_empty_game_results_handled(test_db: Session):
         title=f"{test_tournament.name} - Semi-final 2",
         tournament_phase=TournamentPhase.KNOCKOUT,
         tournament_round=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         participant_user_ids=[503, 504],
         game_results=json.dumps(_create_game_results(winner_id=503, loser_id=504)),
         date_start=datetime.now(),
@@ -496,7 +496,7 @@ def test_baseline_quarterfinals_complete_creates_semifinals(test_db: Session):
         title=f"{test_tournament.name} - Quarterfinal 1",
         tournament_phase=TournamentPhase.KNOCKOUT,
         tournament_round=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         participant_user_ids=[601, 602],
         game_results=json.dumps(_create_game_results(winner_id=601, loser_id=602)),
         date_start=datetime.now(),
@@ -511,7 +511,7 @@ def test_baseline_quarterfinals_complete_creates_semifinals(test_db: Session):
         title=f"{test_tournament.name} - Quarterfinal 2",
         tournament_phase=TournamentPhase.KNOCKOUT,
         tournament_round=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         participant_user_ids=[603, 604],
         game_results=json.dumps(_create_game_results(winner_id=603, loser_id=604)),
         date_start=datetime.now(),
@@ -526,7 +526,7 @@ def test_baseline_quarterfinals_complete_creates_semifinals(test_db: Session):
         title=f"{test_tournament.name} - Quarterfinal 3",
         tournament_phase=TournamentPhase.KNOCKOUT,
         tournament_round=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         participant_user_ids=[605, 606],
         game_results=json.dumps(_create_game_results(winner_id=605, loser_id=606)),
         date_start=datetime.now(),
@@ -541,7 +541,7 @@ def test_baseline_quarterfinals_complete_creates_semifinals(test_db: Session):
         title=f"{test_tournament.name} - Quarterfinal 4",
         tournament_phase=TournamentPhase.KNOCKOUT,
         tournament_round=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         participant_user_ids=[607, 608],
         game_results=json.dumps(_create_game_results(winner_id=607, loser_id=608)),
         date_start=datetime.now(),
@@ -620,7 +620,7 @@ def test_baseline_participant_order_preserved(test_db: Session):
         title=f"{test_tournament.name} - Semi-final 1",
         tournament_phase=TournamentPhase.KNOCKOUT,
         tournament_round=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         participant_user_ids=[701, 702],
         game_results=json.dumps(_create_game_results(winner_id=702, loser_id=701)),  # 702 wins
         date_start=datetime.now(),
@@ -635,7 +635,7 @@ def test_baseline_participant_order_preserved(test_db: Session):
         title=f"{test_tournament.name} - Semi-final 2",
         tournament_phase=TournamentPhase.KNOCKOUT,
         tournament_round=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         participant_user_ids=[703, 704],
         game_results=json.dumps(_create_game_results(winner_id=704, loser_id=703)),  # 704 wins
         date_start=datetime.now(),
@@ -712,7 +712,7 @@ def test_baseline_uses_tournament_phase_enum(test_db: Session):
         title=f"{test_tournament.name} - Semi-final 1",
         tournament_phase=TournamentPhase.KNOCKOUT,  # Using enum
         tournament_round=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         participant_user_ids=[801, 802],
         game_results=json.dumps(_create_game_results(winner_id=801, loser_id=802)),
         date_start=datetime.now(),
@@ -727,7 +727,7 @@ def test_baseline_uses_tournament_phase_enum(test_db: Session):
         title=f"{test_tournament.name} - Semi-final 2",
         tournament_phase=TournamentPhase.KNOCKOUT,  # Using enum
         tournament_round=1,
-        is_tournament_game=True,
+        event_category=EventCategory.MATCH,
         participant_user_ids=[803, 804],
         game_results=None,  # Incomplete
         date_start=datetime.now(),

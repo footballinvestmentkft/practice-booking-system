@@ -260,7 +260,6 @@ def tm01_tournament():
             semester_id=t.id,
             event_category=EventCategory.MATCH,
             session_type=SessionType.on_site,
-            is_tournament_game=True,
             game_results={
                 "match_format": "HEAD_TO_HEAD",
                 "participants": [
