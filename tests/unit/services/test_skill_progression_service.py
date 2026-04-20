@@ -513,6 +513,18 @@ _PATCH_OPP = f"{_BASE}._compute_opponent_factor"
 _PATCH_MOD = f"{_BASE}._compute_match_performance_modifier"
 _PATCH_SKV = f"{_BASE}.calculate_skill_value_from_placement"
 
+# EMA engine patch targets — used for calculate_tournament_skill_contribution
+# and compute_single_tournament_skill_delta, which live in _ema_engine.py.
+# Layer 5 functions (get_skill_timeline, get_skill_audit, …) remain in the
+# shim and continue to use the _PATCH_* constants above.
+_BASE_EMA = "app.services.skill_progression._ema_engine"
+_PATCH_GBS_EMA = f"{_BASE_EMA}.get_baseline_skills"
+_PATCH_ETS_EMA = f"{_BASE_EMA}._extract_tournament_skills"
+_PATCH_OPP_EMA = f"{_BASE_EMA}._compute_opponent_factor"
+_PATCH_MOD_EMA = f"{_BASE_EMA}._compute_match_performance_modifier"
+_PATCH_SKV_EMA = f"{_BASE_EMA}.calculate_skill_value_from_placement"
+_PATCH_GAK_EMA = f"{_BASE_EMA}.get_all_skill_keys"
+
 
 @pytest.mark.unit
 class TestCalculateTournamentSkillContribution:
@@ -520,7 +532,7 @@ class TestCalculateTournamentSkillContribution:
         db = _db()
         q = _fluent_q(all_=[])
         db.query.return_value = q
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}):
+        with patch(_PATCH_GBS_EMA, return_value={"passing": 60.0}):
             result = calculate_tournament_skill_contribution(db, user_id=42, skill_keys=["passing"])
         assert result["passing"]["baseline"] == 60.0
         assert result["passing"]["current_value"] == 60.0
@@ -532,7 +544,7 @@ class TestCalculateTournamentSkillContribution:
         p = _part(tournament=None)
         q = _fluent_q(all_=[p])
         db.query.return_value = q
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}):
+        with patch(_PATCH_GBS_EMA, return_value={"passing": 60.0}):
             result = calculate_tournament_skill_contribution(db, user_id=42, skill_keys=["passing"])
         assert result["passing"]["tournament_count"] == 0
 
@@ -542,8 +554,8 @@ class TestCalculateTournamentSkillContribution:
         p = _part(tournament=t)
         q = _fluent_q(all_=[p])
         db.query.return_value = q
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}), \
-             patch(_PATCH_ETS, return_value={}):
+        with patch(_PATCH_GBS_EMA, return_value={"passing": 60.0}), \
+             patch(_PATCH_ETS_EMA, return_value={}):
             result = calculate_tournament_skill_contribution(db, user_id=42, skill_keys=["passing"])
         assert result["passing"]["tournament_count"] == 0
 
@@ -553,8 +565,8 @@ class TestCalculateTournamentSkillContribution:
         p = _part(tournament=t, placement=None)
         q = _fluent_q(all_=[p])
         db.query.return_value = q
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}), \
-             patch(_PATCH_ETS, return_value={"passing": 1.0}):
+        with patch(_PATCH_GBS_EMA, return_value={"passing": 60.0}), \
+             patch(_PATCH_ETS_EMA, return_value={"passing": 1.0}):
             result = calculate_tournament_skill_contribution(db, user_id=42, skill_keys=["passing"])
         assert result["passing"]["tournament_count"] == 0
 
@@ -565,8 +577,8 @@ class TestCalculateTournamentSkillContribution:
         q1 = _fluent_q(all_=[p])   # participations
         q2 = _fluent_q(count=0)    # total_players → 0 → skip
         db.query.side_effect = [q1, q2]
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}), \
-             patch(_PATCH_ETS, return_value={"passing": 1.0}):
+        with patch(_PATCH_GBS_EMA, return_value={"passing": 60.0}), \
+             patch(_PATCH_ETS_EMA, return_value={"passing": 1.0}):
             result = calculate_tournament_skill_contribution(db, user_id=42, skill_keys=["passing"])
         assert result["passing"]["tournament_count"] == 0
 
@@ -577,11 +589,11 @@ class TestCalculateTournamentSkillContribution:
         q1 = _fluent_q(all_=[p])
         q2 = _fluent_q(count=4)
         db.query.side_effect = [q1, q2]
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}), \
-             patch(_PATCH_ETS, return_value={"passing": 1.0}), \
-             patch(_PATCH_OPP, return_value=1.0), \
-             patch(_PATCH_MOD, return_value=0.0), \
-             patch(_PATCH_SKV, return_value=72.0):
+        with patch(_PATCH_GBS_EMA, return_value={"passing": 60.0}), \
+             patch(_PATCH_ETS_EMA, return_value={"passing": 1.0}), \
+             patch(_PATCH_OPP_EMA, return_value=1.0), \
+             patch(_PATCH_MOD_EMA, return_value=0.0), \
+             patch(_PATCH_SKV_EMA, return_value=72.0):
             result = calculate_tournament_skill_contribution(db, user_id=42, skill_keys=["passing"])
         assert result["passing"]["tournament_count"] == 1
         assert result["passing"]["current_value"] == 72.0
@@ -598,8 +610,8 @@ class TestComputeSingleTournamentSkillDelta:
         db = _db()
         q = _fluent_q(all_=[])
         db.query.return_value = q
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["passing"]):
+        with patch(_PATCH_GBS_EMA, return_value={"passing": 60.0}), \
+             patch(_PATCH_GAK_EMA, return_value=["passing"]):
             result = compute_single_tournament_skill_delta(db, user_id=42, tournament_id=10)
         assert result == {}
 
@@ -608,8 +620,8 @@ class TestComputeSingleTournamentSkillDelta:
         p = _part(tournament=None)
         q = _fluent_q(all_=[p])
         db.query.return_value = q
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["passing"]):
+        with patch(_PATCH_GBS_EMA, return_value={"passing": 60.0}), \
+             patch(_PATCH_GAK_EMA, return_value=["passing"]):
             result = compute_single_tournament_skill_delta(db, user_id=42, tournament_id=10)
         assert result == {}
 
@@ -619,8 +631,8 @@ class TestComputeSingleTournamentSkillDelta:
         p = _part(tournament=t, placement=None)
         q = _fluent_q(all_=[p])
         db.query.return_value = q
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["passing"]):
+        with patch(_PATCH_GBS_EMA, return_value={"passing": 60.0}), \
+             patch(_PATCH_GAK_EMA, return_value=["passing"]):
             result = compute_single_tournament_skill_delta(db, user_id=42, tournament_id=10)
         assert result == {}
 
@@ -631,9 +643,9 @@ class TestComputeSingleTournamentSkillDelta:
         q1 = _fluent_q(all_=[p])
         q2 = _fluent_q(count=0)
         db.query.side_effect = [q1, q2]
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["passing"]), \
-             patch(_PATCH_ETS, return_value={"passing": 1.0}):
+        with patch(_PATCH_GBS_EMA, return_value={"passing": 60.0}), \
+             patch(_PATCH_GAK_EMA, return_value=["passing"]), \
+             patch(_PATCH_ETS_EMA, return_value={"passing": 1.0}):
             result = compute_single_tournament_skill_delta(db, user_id=42, tournament_id=10)
         assert result == {}
 
@@ -644,12 +656,12 @@ class TestComputeSingleTournamentSkillDelta:
         q1 = _fluent_q(all_=[p])
         q2 = _fluent_q(count=4)
         db.query.side_effect = [q1, q2]
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["passing"]), \
-             patch(_PATCH_ETS, return_value={"passing": 1.0}), \
-             patch(_PATCH_OPP, return_value=1.0), \
-             patch(_PATCH_MOD, return_value=0.0), \
-             patch(_PATCH_SKV, return_value=72.0):
+        with patch(_PATCH_GBS_EMA, return_value={"passing": 60.0}), \
+             patch(_PATCH_GAK_EMA, return_value=["passing"]), \
+             patch(_PATCH_ETS_EMA, return_value={"passing": 1.0}), \
+             patch(_PATCH_OPP_EMA, return_value=1.0), \
+             patch(_PATCH_MOD_EMA, return_value=0.0), \
+             patch(_PATCH_SKV_EMA, return_value=72.0):
             result = compute_single_tournament_skill_delta(db, user_id=42, tournament_id=10)
         assert result == {"passing": 12.0}  # 72.0 - 60.0
 
@@ -660,12 +672,12 @@ class TestComputeSingleTournamentSkillDelta:
         q1 = _fluent_q(all_=[p])
         q2 = _fluent_q(count=4)
         db.query.side_effect = [q1, q2]
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["passing"]), \
-             patch(_PATCH_ETS, return_value={"passing": 1.0}), \
-             patch(_PATCH_OPP, return_value=1.0), \
-             patch(_PATCH_MOD, return_value=0.0), \
-             patch(_PATCH_SKV, return_value=60.0):  # same as prev → delta=0 → excluded
+        with patch(_PATCH_GBS_EMA, return_value={"passing": 60.0}), \
+             patch(_PATCH_GAK_EMA, return_value=["passing"]), \
+             patch(_PATCH_ETS_EMA, return_value={"passing": 1.0}), \
+             patch(_PATCH_OPP_EMA, return_value=1.0), \
+             patch(_PATCH_MOD_EMA, return_value=0.0), \
+             patch(_PATCH_SKV_EMA, return_value=60.0):  # same as prev → delta=0 → excluded
             result = compute_single_tournament_skill_delta(db, user_id=42, tournament_id=10)
         assert result == {}
 
@@ -676,12 +688,12 @@ class TestComputeSingleTournamentSkillDelta:
         q1 = _fluent_q(all_=[p])
         q2 = _fluent_q(count=4)
         db.query.side_effect = [q1, q2]
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["passing"]), \
-             patch(_PATCH_ETS, return_value={"passing": 1.0}), \
-             patch(_PATCH_OPP, return_value=1.0), \
-             patch(_PATCH_MOD, return_value=0.0), \
-             patch(_PATCH_SKV, return_value=72.0):
+        with patch(_PATCH_GBS_EMA, return_value={"passing": 60.0}), \
+             patch(_PATCH_GAK_EMA, return_value=["passing"]), \
+             patch(_PATCH_ETS_EMA, return_value={"passing": 1.0}), \
+             patch(_PATCH_OPP_EMA, return_value=1.0), \
+             patch(_PATCH_MOD_EMA, return_value=0.0), \
+             patch(_PATCH_SKV_EMA, return_value=72.0):
             result = compute_single_tournament_skill_delta(db, user_id=42, tournament_id=10)
         assert result == {}  # tournament 5 != 10 → never was target
 
@@ -967,10 +979,10 @@ class TestSkillProgressionBranchBuffer:
         q1 = _fluent_q(all_=[p])
         q2 = _fluent_q(count=4)
         db.query.side_effect = [q1, q2]
-        with patch(_PATCH_GBS, return_value={"dribbling": 60.0}), \
-             patch(_PATCH_ETS, return_value={"pace": 1.0}), \
-             patch(_PATCH_OPP, return_value=1.0), \
-             patch(_PATCH_MOD, return_value=0.0):
+        with patch(_PATCH_GBS_EMA, return_value={"dribbling": 60.0}), \
+             patch(_PATCH_ETS_EMA, return_value={"pace": 1.0}), \
+             patch(_PATCH_OPP_EMA, return_value=1.0), \
+             patch(_PATCH_MOD_EMA, return_value=0.0):
             result = calculate_tournament_skill_contribution(
                 db, user_id=42, skill_keys=["dribbling"]
             )
@@ -990,9 +1002,9 @@ class TestSkillProgressionBranchBuffer:
         p = _part(tournament=t, placement=1)
         q = _fluent_q(all_=[p])
         db.query.return_value = q
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["passing"]), \
-             patch(_PATCH_ETS, return_value={}):
+        with patch(_PATCH_GBS_EMA, return_value={"passing": 60.0}), \
+             patch(_PATCH_GAK_EMA, return_value=["passing"]), \
+             patch(_PATCH_ETS_EMA, return_value={}):
             result = compute_single_tournament_skill_delta(
                 db, user_id=42, tournament_id=5
             )
@@ -1011,11 +1023,11 @@ class TestSkillProgressionBranchBuffer:
         q1 = _fluent_q(all_=[p])
         q2 = _fluent_q(count=4)
         db.query.side_effect = [q1, q2]
-        with patch(_PATCH_GBS, return_value={"dribbling": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["dribbling"]), \
-             patch(_PATCH_ETS, return_value={"pace": 1.0}), \
-             patch(_PATCH_OPP, return_value=1.0), \
-             patch(_PATCH_MOD, return_value=0.0):
+        with patch(_PATCH_GBS_EMA, return_value={"dribbling": 60.0}), \
+             patch(_PATCH_GAK_EMA, return_value=["dribbling"]), \
+             patch(_PATCH_ETS_EMA, return_value={"pace": 1.0}), \
+             patch(_PATCH_OPP_EMA, return_value=1.0), \
+             patch(_PATCH_MOD_EMA, return_value=0.0):
             result = compute_single_tournament_skill_delta(
                 db, user_id=42, tournament_id=5
             )
