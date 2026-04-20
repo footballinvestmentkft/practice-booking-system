@@ -19,11 +19,15 @@ Safety: All inserts are inside explicit transactions that are rolled back
 after each test — no persistent data is written.
 """
 
+import os
 import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import IntegrityError
 
-DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/lfa_intern_system"
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL",
+    "postgresql://postgres:postgres@localhost:5432/lfa_intern_system"
+)
 
 
 @pytest.fixture(scope="module")

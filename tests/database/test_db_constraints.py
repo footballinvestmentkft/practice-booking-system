@@ -5,12 +5,16 @@ This test verifies that the unique constraints added in Phase 1
 successfully prevent dual-path bugs at the database level.
 """
 
+import os
 import sys
 import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import IntegrityError
 
-DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/lfa_intern_system"
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL",
+    "postgresql://postgres:postgres@localhost:5432/lfa_intern_system"
+)
 
 @pytest.mark.xfail(reason="Requires user_id=2 in dev DB; not present in test environment")
 def test_xp_transactions_constraint():
