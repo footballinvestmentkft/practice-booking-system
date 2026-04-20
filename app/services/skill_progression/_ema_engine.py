@@ -17,8 +17,6 @@ from sqlalchemy.orm import Session
 from app.models.tournament_achievement import TournamentParticipation
 from ._formulas import (
     DEFAULT_BASELINE,
-    MAX_SKILL_VALUE,
-    MIN_SKILL_VALUE,
     calculate_skill_value_from_placement,
 )
 from ._config import (
