@@ -515,8 +515,6 @@ _PATCH_SKV = f"{_BASE}.calculate_skill_value_from_placement"
 
 # EMA engine patch targets — used for calculate_tournament_skill_contribution
 # and compute_single_tournament_skill_delta, which live in _ema_engine.py.
-# Layer 5 functions (get_skill_timeline, get_skill_audit, …) remain in the
-# shim and continue to use the _PATCH_* constants above.
 _BASE_EMA = "app.services.skill_progression._ema_engine"
 _PATCH_GBS_EMA = f"{_BASE_EMA}.get_baseline_skills"
 _PATCH_ETS_EMA = f"{_BASE_EMA}._extract_tournament_skills"
@@ -524,6 +522,14 @@ _PATCH_OPP_EMA = f"{_BASE_EMA}._compute_opponent_factor"
 _PATCH_MOD_EMA = f"{_BASE_EMA}._compute_match_performance_modifier"
 _PATCH_SKV_EMA = f"{_BASE_EMA}.calculate_skill_value_from_placement"
 _PATCH_GAK_EMA = f"{_BASE_EMA}.get_all_skill_keys"
+
+# Views patch targets — used for get_skill_timeline, get_skill_audit, and
+# get_avg_skill_level_checkpoints, which live in _views.py (Layer 5).
+_BASE_VIEWS = "app.services.skill_progression._views"
+_PATCH_GBS_VIEWS = f"{_BASE_VIEWS}.get_baseline_skills"
+_PATCH_ETS_VIEWS = f"{_BASE_VIEWS}._extract_tournament_skills"
+_PATCH_OPP_VIEWS = f"{_BASE_VIEWS}._compute_opponent_factor"
+_PATCH_SKV_VIEWS = f"{_BASE_VIEWS}.calculate_skill_value_from_placement"
 
 
 @pytest.mark.unit
@@ -713,8 +719,8 @@ class TestGetSkillTimeline:
         db = _db()
         q = _fluent_q(all_=[])
         db.query.return_value = q
-        with patch(_PATCH_GBS, return_value={"ball_control": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["ball_control"]):
+        with patch(_PATCH_GBS_VIEWS, return_value={"ball_control": 60.0}), \
+             patch(f"{_BASE_VIEWS}.get_all_skill_keys", return_value=["ball_control"]):
             result = get_skill_timeline(db, user_id=42, skill_key="ball_control")
         assert result == {
             "skill": "ball_control",
@@ -729,8 +735,8 @@ class TestGetSkillTimeline:
         p = _part(tournament=None, placement=None)
         q = _fluent_q(all_=[p])
         db.query.return_value = q
-        with patch(_PATCH_GBS, return_value={"ball_control": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["ball_control"]):
+        with patch(_PATCH_GBS_VIEWS, return_value={"ball_control": 60.0}), \
+             patch(f"{_BASE_VIEWS}.get_all_skill_keys", return_value=["ball_control"]):
             result = get_skill_timeline(db, user_id=42, skill_key="ball_control")
         assert result["timeline"] == []
 
@@ -741,9 +747,9 @@ class TestGetSkillTimeline:
         q = _fluent_q(all_=[p])
         db.query.return_value = q
         # tournament has "shooting" skill, not "ball_control"
-        with patch(_PATCH_GBS, return_value={"ball_control": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["ball_control"]), \
-             patch(_PATCH_ETS, return_value={"shooting": 1.0}):
+        with patch(_PATCH_GBS_VIEWS, return_value={"ball_control": 60.0}), \
+             patch(f"{_BASE_VIEWS}.get_all_skill_keys", return_value=["ball_control"]), \
+             patch(_PATCH_ETS_VIEWS, return_value={"shooting": 1.0}):
             result = get_skill_timeline(db, user_id=42, skill_key="ball_control")
         assert result["timeline"] == []
 
@@ -754,9 +760,9 @@ class TestGetSkillTimeline:
         q1 = _fluent_q(all_=[p])
         q2 = _fluent_q(count=0)
         db.query.side_effect = [q1, q2]
-        with patch(_PATCH_GBS, return_value={"ball_control": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["ball_control"]), \
-             patch(_PATCH_ETS, return_value={"ball_control": 1.0}):
+        with patch(_PATCH_GBS_VIEWS, return_value={"ball_control": 60.0}), \
+             patch(f"{_BASE_VIEWS}.get_all_skill_keys", return_value=["ball_control"]), \
+             patch(_PATCH_ETS_VIEWS, return_value={"ball_control": 1.0}):
             result = get_skill_timeline(db, user_id=42, skill_key="ball_control")
         assert result["timeline"] == []
 
@@ -767,11 +773,11 @@ class TestGetSkillTimeline:
         q1 = _fluent_q(all_=[p])
         q2 = _fluent_q(count=4)
         db.query.side_effect = [q1, q2]
-        with patch(_PATCH_GBS, return_value={"ball_control": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["ball_control"]), \
-             patch(_PATCH_ETS, return_value={"ball_control": 1.0}), \
-             patch(_PATCH_OPP, return_value=1.0), \
-             patch(_PATCH_SKV, return_value=67.0):
+        with patch(_PATCH_GBS_VIEWS, return_value={"ball_control": 60.0}), \
+             patch(f"{_BASE_VIEWS}.get_all_skill_keys", return_value=["ball_control"]), \
+             patch(_PATCH_ETS_VIEWS, return_value={"ball_control": 1.0}), \
+             patch(_PATCH_OPP_VIEWS, return_value=1.0), \
+             patch(_PATCH_SKV_VIEWS, return_value=67.0):
             result = get_skill_timeline(db, user_id=42, skill_key="ball_control")
         assert len(result["timeline"]) == 1
         entry = result["timeline"][0]
@@ -796,8 +802,8 @@ class TestGetSkillAudit:
         db = _db()
         q = _fluent_q(all_=[])
         db.query.return_value = q
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["passing"]):
+        with patch(_PATCH_GBS_VIEWS, return_value={"passing": 60.0}), \
+             patch(f"{_BASE_VIEWS}.get_all_skill_keys", return_value=["passing"]):
             result = get_skill_audit(db, user_id=42)
         assert result == []
 
@@ -806,8 +812,8 @@ class TestGetSkillAudit:
         p = _part(tournament=None, placement=None)
         q = _fluent_q(all_=[p])
         db.query.return_value = q
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["passing"]):
+        with patch(_PATCH_GBS_VIEWS, return_value={"passing": 60.0}), \
+             patch(f"{_BASE_VIEWS}.get_all_skill_keys", return_value=["passing"]):
             result = get_skill_audit(db, user_id=42)
         assert result == []
 
@@ -817,9 +823,9 @@ class TestGetSkillAudit:
         p = _part(tournament=t, placement=1)
         q = _fluent_q(all_=[p])
         db.query.return_value = q
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["passing"]), \
-             patch(_PATCH_ETS, return_value={}):
+        with patch(_PATCH_GBS_VIEWS, return_value={"passing": 60.0}), \
+             patch(f"{_BASE_VIEWS}.get_all_skill_keys", return_value=["passing"]), \
+             patch(_PATCH_ETS_VIEWS, return_value={}):
             result = get_skill_audit(db, user_id=42)
         assert result == []
 
@@ -830,9 +836,9 @@ class TestGetSkillAudit:
         q1 = _fluent_q(all_=[p])
         q2 = _fluent_q(count=0)
         db.query.side_effect = [q1, q2]
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["passing"]), \
-             patch(_PATCH_ETS, return_value={"passing": 1.0}):
+        with patch(_PATCH_GBS_VIEWS, return_value={"passing": 60.0}), \
+             patch(f"{_BASE_VIEWS}.get_all_skill_keys", return_value=["passing"]), \
+             patch(_PATCH_ETS_VIEWS, return_value={"passing": 1.0}):
             result = get_skill_audit(db, user_id=42)
         assert result == []
 
@@ -844,11 +850,11 @@ class TestGetSkillAudit:
         q2 = _fluent_q(count=4)
         db.query.side_effect = [q1, q2]
         # called twice per skill: delta compute + state advance
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["passing"]), \
-             patch(_PATCH_ETS, return_value={"passing": 1.0}), \
-             patch(_PATCH_OPP, return_value=1.0), \
-             patch(_PATCH_SKV, return_value=68.0):
+        with patch(_PATCH_GBS_VIEWS, return_value={"passing": 60.0}), \
+             patch(f"{_BASE_VIEWS}.get_all_skill_keys", return_value=["passing"]), \
+             patch(_PATCH_ETS_VIEWS, return_value={"passing": 1.0}), \
+             patch(_PATCH_OPP_VIEWS, return_value=1.0), \
+             patch(_PATCH_SKV_VIEWS, return_value=68.0):
             result = get_skill_audit(db, user_id=42)
         assert len(result) == 1
         row = result[0]
@@ -872,11 +878,11 @@ class TestGetSkillAudit:
         db.query.side_effect = [q1, q2]
         # call order: passing_delta, shooting_delta, passing_advance, shooting_advance
         skv_returns = [60.5, 68.0, 60.5, 68.0]
-        with patch(_PATCH_GBS, return_value={"passing": 60.0, "shooting": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["passing", "shooting"]), \
-             patch(_PATCH_ETS, return_value={"passing": 2.0, "shooting": 1.0}), \
-             patch(_PATCH_OPP, return_value=1.0), \
-             patch(_PATCH_SKV, side_effect=skv_returns):
+        with patch(_PATCH_GBS_VIEWS, return_value={"passing": 60.0, "shooting": 60.0}), \
+             patch(f"{_BASE_VIEWS}.get_all_skill_keys", return_value=["passing", "shooting"]), \
+             patch(_PATCH_ETS_VIEWS, return_value={"passing": 2.0, "shooting": 1.0}), \
+             patch(_PATCH_OPP_VIEWS, return_value=1.0), \
+             patch(_PATCH_SKV_VIEWS, side_effect=skv_returns):
             result = get_skill_audit(db, user_id=42)
         passing_row = next(r for r in result if r["skill"] == "passing")
         assert passing_row["is_dominant"] is True
@@ -1046,11 +1052,11 @@ class TestSkillProgressionBranchBuffer:
         q1 = _fluent_q(all_=[p])
         q2 = _fluent_q(count=1)   # ← single player
         db.query.side_effect = [q1, q2]
-        with patch(_PATCH_GBS, return_value={"ball_control": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["ball_control"]), \
-             patch(_PATCH_ETS, return_value={"ball_control": 1.0}), \
-             patch(_PATCH_OPP, return_value=1.0), \
-             patch(_PATCH_SKV, return_value=68.0):
+        with patch(_PATCH_GBS_VIEWS, return_value={"ball_control": 60.0}), \
+             patch(f"{_BASE_VIEWS}.get_all_skill_keys", return_value=["ball_control"]), \
+             patch(_PATCH_ETS_VIEWS, return_value={"ball_control": 1.0}), \
+             patch(_PATCH_OPP_VIEWS, return_value=1.0), \
+             patch(_PATCH_SKV_VIEWS, return_value=68.0):
             result = get_skill_timeline(db, user_id=42, skill_key="ball_control")
         assert len(result["timeline"]) == 1
         entry = result["timeline"][0]
@@ -1069,11 +1075,11 @@ class TestSkillProgressionBranchBuffer:
         q1 = _fluent_q(all_=[p])
         q2 = _fluent_q(count=1)   # ← single player
         db.query.side_effect = [q1, q2]
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["passing"]), \
-             patch(_PATCH_ETS, return_value={"passing": 1.0}), \
-             patch(_PATCH_OPP, return_value=1.0), \
-             patch(_PATCH_SKV, return_value=68.0):
+        with patch(_PATCH_GBS_VIEWS, return_value={"passing": 60.0}), \
+             patch(f"{_BASE_VIEWS}.get_all_skill_keys", return_value=["passing"]), \
+             patch(_PATCH_ETS_VIEWS, return_value={"passing": 1.0}), \
+             patch(_PATCH_OPP_VIEWS, return_value=1.0), \
+             patch(_PATCH_SKV_VIEWS, return_value=68.0):
             result = get_skill_audit(db, user_id=42)
         assert len(result) == 1
         assert result[0]["total_players"] == 1
@@ -1091,11 +1097,11 @@ class TestSkillProgressionBranchBuffer:
         q2 = _fluent_q(count=4)
         db.query.side_effect = [q1, q2]
         # SKV returns 60.0 (same as prev=60.0) for delta, then again for advance
-        with patch(_PATCH_GBS, return_value={"passing": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["passing"]), \
-             patch(_PATCH_ETS, return_value={"passing": 1.0}), \
-             patch(_PATCH_OPP, return_value=1.0), \
-             patch(_PATCH_SKV, return_value=60.0):  # unchanged → delta=0
+        with patch(_PATCH_GBS_VIEWS, return_value={"passing": 60.0}), \
+             patch(f"{_BASE_VIEWS}.get_all_skill_keys", return_value=["passing"]), \
+             patch(_PATCH_ETS_VIEWS, return_value={"passing": 1.0}), \
+             patch(_PATCH_OPP_VIEWS, return_value=1.0), \
+             patch(_PATCH_SKV_VIEWS, return_value=60.0):  # unchanged → delta=0
             result = get_skill_audit(db, user_id=42)
         assert len(result) == 1
         row = result[0]
@@ -1125,11 +1131,11 @@ class TestSkillProgressionBranchBuffer:
         # prev = 60.0 for all; SKV returns: delta + advance for 3 skills = 6 calls
         # dribbling: 68.0/68.0, passing: 68.0/68.0, shooting: 68.0/68.0
         skv_returns = [68.0, 68.0, 68.0, 68.0, 68.0, 68.0]
-        with patch(_PATCH_GBS, return_value={"dribbling": 60.0, "passing": 60.0, "shooting": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["dribbling", "passing", "shooting"]), \
-             patch(_PATCH_ETS, return_value=skills), \
-             patch(_PATCH_OPP, return_value=1.0), \
-             patch(_PATCH_SKV, side_effect=skv_returns):
+        with patch(_PATCH_GBS_VIEWS, return_value={"dribbling": 60.0, "passing": 60.0, "shooting": 60.0}), \
+             patch(f"{_BASE_VIEWS}.get_all_skill_keys", return_value=["dribbling", "passing", "shooting"]), \
+             patch(_PATCH_ETS_VIEWS, return_value=skills), \
+             patch(_PATCH_OPP_VIEWS, return_value=1.0), \
+             patch(_PATCH_SKV_VIEWS, side_effect=skv_returns):
             result = get_skill_audit(db, user_id=42)
         # Should produce 3 audit rows (one per skill)
         assert len(result) == 3
@@ -1155,11 +1161,11 @@ class TestSkillProgressionBranchBuffer:
         # call order: passing_delta, shooting_delta, passing_advance, shooting_advance
         # passing prev=60 → new=68 (delta=8.0); shooting prev=60 → new=60.5 (delta=0.5)
         skv_returns = [68.0, 60.5, 68.0, 60.5]
-        with patch(_PATCH_GBS, return_value={"passing": 60.0, "shooting": 60.0}), \
-             patch(f"{_BASE}.get_all_skill_keys", return_value=["passing", "shooting"]), \
-             patch(_PATCH_ETS, return_value=skills), \
-             patch(_PATCH_OPP, return_value=1.0), \
-             patch(_PATCH_SKV, side_effect=skv_returns):
+        with patch(_PATCH_GBS_VIEWS, return_value={"passing": 60.0, "shooting": 60.0}), \
+             patch(f"{_BASE_VIEWS}.get_all_skill_keys", return_value=["passing", "shooting"]), \
+             patch(_PATCH_ETS_VIEWS, return_value=skills), \
+             patch(_PATCH_OPP_VIEWS, return_value=1.0), \
+             patch(_PATCH_SKV_VIEWS, side_effect=skv_returns):
             result = get_skill_audit(db, user_id=42)
         passing_row = next(r for r in result if r["skill"] == "passing")
         assert passing_row["is_dominant"] is True
