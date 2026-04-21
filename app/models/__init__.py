@@ -47,6 +47,8 @@ from .invoice_request import InvoiceRequest, InvoiceRequestStatus
 from .coupon import Coupon, CouponType
 from .invitation_code import InvitationCode
 from .session_group import SessionGroupAssignment, SessionGroupStudent
+from .session_segment import SessionSegment
+from .session_segment_result import SessionSegmentResult
 from .audit_log import AuditLog
 from .system_event import SystemEvent, SystemEventLevel, SystemEventType
 from .match_structure import MatchStructure, MatchResult, MatchFormat, ScoringType
@@ -168,6 +170,8 @@ __all__ = [
     "InstructorSessionReview",
     "SessionGroupAssignment",
     "SessionGroupStudent",
+    "SessionSegment",
+    "SessionSegmentResult",
     "AuditLog",
     "SystemEvent",
     "SystemEventLevel",

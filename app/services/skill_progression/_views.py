@@ -35,6 +35,10 @@ from ._db_helpers import (
     _compute_match_performance_modifier,
 )
 from ._ema_engine import calculate_tournament_skill_contribution
+from app.services.segment_reward_service import (
+    get_training_skill_deltas_for_user,
+    get_training_session_count_for_user,
+)
 
 
 def get_skill_profile(db: Session, user_id: int) -> Dict[str, any]:
@@ -111,6 +115,10 @@ def get_skill_profile(db: Session, user_id: int) -> Dict[str, any]:
         .count()
     )
 
+    # Training contributions (additive on top of EMA; EMA state is not touched)
+    training_deltas = get_training_skill_deltas_for_user(db, user_id)
+    training_session_count = get_training_session_count_for_user(db, user_id)
+
     # Build skill profile
     skill_profile = {}
     total_level = 0.0
@@ -123,8 +131,13 @@ def get_skill_profile(db: Session, user_id: int) -> Dict[str, any]:
             "tournament_count": 0
         })
 
-        current_level = data["current_value"]
-        total_delta = data["contribution"]
+        tournament_delta = data["contribution"]
+        training_delta = round(training_deltas.get(skill_key, 0.0), 1)
+        current_level = min(
+            MAX_SKILL_CAP,
+            max(MIN_SKILL_VALUE, data["current_value"] + training_delta),
+        )
+        total_delta = round(tournament_delta + training_delta, 1)
 
         # Determine tier
         tier, tier_emoji = get_skill_tier(current_level)
@@ -133,10 +146,12 @@ def get_skill_profile(db: Session, user_id: int) -> Dict[str, any]:
             "baseline": data["baseline"],
             "current_level": current_level,
             "total_delta": total_delta,
-            "tournament_delta": total_delta,  # Currently only tournaments
+            "tournament_delta": tournament_delta,
+            "training_delta": training_delta,
             "assessment_delta": round(assessed_map.get(skill_key, data["baseline"]) - data["baseline"], 1),
             "tournament_count": data["tournament_count"],
             "assessment_count": assessed_count_map.get(skill_key, 0),
+            "training_sessions": training_session_count,
             "tier": tier,
             "tier_emoji": tier_emoji
         }

@@ -297,6 +297,8 @@ class Session(Base):
     instructor = relationship("User", back_populates="taught_sessions")
     pitch = relationship("Pitch", back_populates="sessions")
     game_preset = relationship("GamePreset", foreign_keys=[game_preset_id])
+    segments = relationship("SessionSegment", back_populates="session", cascade="all, delete-orphan")
+    segment_results = relationship("SessionSegmentResult", back_populates="session", cascade="all, delete-orphan")
     bookings = relationship("Booking", back_populates="session")
     attendances = relationship("Attendance", back_populates="session")
     feedbacks = relationship("Feedback", back_populates="session")

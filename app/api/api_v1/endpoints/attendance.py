@@ -18,6 +18,7 @@ from ....schemas.attendance import (
     AttendanceWithRelations, AttendanceList, AttendanceCheckIn
 )
 from sqlalchemy.orm import joinedload
+from app.services import segment_reward_service
 
 router = APIRouter()
 
@@ -95,6 +96,11 @@ def create_attendance(
         # Update milestone progress if attendance is marked as present
         if existing_attendance.status == AttendanceStatus.present:
             _update_milestone_sessions_on_attendance(db, existing_attendance.user_id, existing_attendance.session_id)
+            # Award training segment results (no-op if session has no segments)
+            segment_reward_service.award_session_segments(
+                db, existing_attendance.session_id, existing_attendance.id
+            )
+            db.commit()
 
         return existing_attendance
     else:
@@ -111,6 +117,11 @@ def create_attendance(
         # Update milestone progress if attendance is marked as present
         if attendance.status == AttendanceStatus.present:
             _update_milestone_sessions_on_attendance(db, attendance.user_id, attendance.session_id)
+            # Award training segment results (no-op if session has no segments)
+            segment_reward_service.award_session_segments(
+                db, attendance.session_id, attendance.id
+            )
+            db.commit()
 
         return attendance
 

@@ -179,8 +179,22 @@ def calculate_user_stats(db: Session, user_id: int) -> UserStats:
     return stats
 
 
-def award_xp(db: Session, user_id: int, xp_amount: int, reason: str = "Quiz completion") -> UserStats:
-    """Award XP to a user and update their stats"""
+def award_xp(
+    db: Session,
+    user_id: int,
+    xp_amount: int,
+    reason: str = "Quiz completion",
+    idempotency_key: Optional[str] = None,
+    transaction_type: str = "GENERAL_XP_AWARD",
+    semester_id: Optional[int] = None,
+) -> UserStats:
+    """Award XP to a user and update their stats.
+
+    Optional kwargs allow callers to supply a stable idempotency_key,
+    a specific transaction_type, and a semester_id.  When idempotency_key
+    is None a timestamp-based key is generated (original one-shot-event
+    behaviour).
+    """
     # Atomic balance update — replaces ORM read-modify-write on users.xp_balance
     new_balance = db.execute(
         text(
@@ -190,19 +204,21 @@ def award_xp(db: Session, user_id: int, xp_amount: int, reason: str = "Quiz comp
         {"delta": xp_amount, "uid": user_id},
     ).scalar() or 0
 
-    # Ledger row — timestamp-based key (award_xp is called for one-shot events)
-    idempotency_key = (
-        f"xp_{''.join(c for c in reason.lower() if c.isalnum() or c == '_')}"
-        f"_{user_id}_{int(datetime.now(timezone.utc).timestamp())}"
-    )
+    # Build idempotency key: caller-supplied or timestamp-based fallback
+    if idempotency_key is None:
+        idempotency_key = (
+            f"xp_{''.join(c for c in reason.lower() if c.isalnum() or c == '_')}"
+            f"_{user_id}_{int(datetime.now(timezone.utc).timestamp())}"
+        )
     sp = db.begin_nested()
     db.add(XPTransaction(
         user_id=user_id,
-        transaction_type="GENERAL_XP_AWARD",
+        transaction_type=transaction_type,
         amount=xp_amount,
         balance_after=new_balance,
         description=reason,
         idempotency_key=idempotency_key,
+        semester_id=semester_id,
     ))
     try:
         sp.commit()
