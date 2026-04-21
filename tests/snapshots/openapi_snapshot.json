@@ -16069,6 +16069,82 @@
         "title": "SessionSegmentRead",
         "type": "object"
       },
+      "SessionSegmentUpdate": {
+        "description": "Partial update schema for a session segment.\n\nAll fields are optional \u2014 omit a field to leave it unchanged.\n``null`` is valid only for ``duration_minutes`` and ``skill_targets``\n(it clears the field); ``label``, ``position``, and ``is_active``\nreject explicit null.  An empty body ``{}`` is rejected with 422.",
+        "properties": {
+          "duration_minutes": {
+            "anyOf": [
+              {
+                "maximum": 300.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null clears the field.",
+            "title": "Duration Minutes"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Omit to leave unchanged.",
+            "title": "Is Active"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Omit to leave unchanged.",
+            "title": "Label"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "maximum": 32767.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Omit to leave unchanged.",
+            "title": "Position"
+          },
+          "skill_targets": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null clears the field (reverts to preset at reward time).",
+            "title": "Skill Targets"
+          }
+        },
+        "title": "SessionSegmentUpdate",
+        "type": "object"
+      },
       "SessionSummaryResponse": {
         "properties": {
           "correct_answers": {
@@ -48230,6 +48306,74 @@
           }
         ],
         "summary": "Create a session segment",
+        "tags": [
+          "sessions",
+          "session-segments"
+        ]
+      }
+    },
+    "/api/v1/sessions/{session_id}/segments/{segment_id}": {
+      "patch": {
+        "description": "Partially update a segment on an existing session.\n\n- Only fields present in the request body are modified.\n- **Admin**: may update segments on any session.\n- **Instructor**: may only update segments on sessions they own.\n- ``null`` on ``duration_minutes`` or ``skill_targets`` clears the field.\n- Returns **409** if the new ``position`` conflicts with an existing segment.",
+        "operationId": "update_session_segment_api_v1_sessions__session_id__segments__segment_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "segment_id",
+            "required": true,
+            "schema": {
+              "title": "Segment Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionSegmentUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionSegmentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update a session segment",
         "tags": [
           "sessions",
           "session-segments"

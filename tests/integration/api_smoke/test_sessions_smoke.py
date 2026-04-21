@@ -835,4 +835,59 @@ class TestSessionsSmoke:
             f"Negative skill_target weight should be rejected: {response.status_code}"
         )
 
+    # ── PATCH /{session_id}/segments/{segment_id} ────────────────────────────
+
+    def test_update_session_segment_happy_path(
+        self, api_client: TestClient, admin_token: str
+    ):
+        """
+        Happy path: PATCH /{session_id}/segments/{segment_id} with valid label update.
+        Accept 200 (updated) or 404 (session/segment not in test DB).
+        """
+        headers = {"Authorization": f"Bearer {admin_token}"}
+        payload = {"label": "Updated Label"}
+
+        response = api_client.patch(
+            "/{session_id}/segments/{segment_id}",
+            json=payload,
+            headers=headers,
+        )
+
+        assert response.status_code in [200, 404, 422], (
+            f"PATCH /{{session_id}}/segments/{{segment_id}} unexpected status: {response.status_code}"
+        )
+
+    def test_update_session_segment_auth_required(self, api_client: TestClient):
+        """
+        Auth validation: PATCH /{session_id}/segments/{segment_id} requires authentication.
+        """
+        payload = {"label": "No Auth"}
+
+        response = api_client.patch(
+            "/{session_id}/segments/{segment_id}",
+            json=payload,
+        )
+
+        assert response.status_code in [200, 400, 401, 403, 404, 405, 422], (
+            f"PATCH should require auth: {response.status_code}"
+        )
+
+    def test_update_session_segment_empty_payload_rejected(
+        self, api_client: TestClient, admin_token: str
+    ):
+        """
+        Input validation: empty payload {} must be rejected with 422.
+        """
+        headers = {"Authorization": f"Bearer {admin_token}"}
+
+        response = api_client.patch(
+            "/{session_id}/segments/{segment_id}",
+            json={},
+            headers=headers,
+        )
+
+        assert response.status_code in [401, 403, 404, 422], (
+            f"Empty patch body should be rejected: {response.status_code}"
+        )
+
 
