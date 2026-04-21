@@ -2,7 +2,7 @@ name: Tournament Type Matrix (SRL-09..15 + Seed + E2E)
 
 on:
   pull_request:
-    branches: [main, develop, "feature/*", "fix/*"]
+    branches: [main, develop, "feature/*", "feat/*", "fix/*", "refactor/*"]
     paths:
       - 'app/api/api_v1/endpoints/tournaments/calculate_rankings.py'
       - 'app/services/tournament/ranking/**'

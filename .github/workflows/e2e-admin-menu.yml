@@ -2,7 +2,7 @@ name: E2E Admin Menu Restructure
 
 on:
   pull_request:
-    branches: [main, develop, "feature/*", "fix/*"]
+    branches: [main, develop, "feature/*", "feat/*", "fix/*", "refactor/*"]
     paths:
       - 'app/**'
       - 'app/templates/admin/**'

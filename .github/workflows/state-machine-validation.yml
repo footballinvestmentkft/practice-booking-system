@@ -2,7 +2,7 @@ name: State Machine Graph Validation
 
 on:
   pull_request:
-    branches: [ main, develop, feature/* ]
+    branches: [ main, develop, "feature/*", "feat/*", "fix/*", "refactor/*" ]
     paths:
       - 'app/services/tournament/status_validator.py'
       - 'tests/unit/tournament/test_state_machine.py'

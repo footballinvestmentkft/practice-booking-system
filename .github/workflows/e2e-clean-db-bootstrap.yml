@@ -6,7 +6,7 @@ name: Clean-DB Bootstrap + E2E Matrix
 
 on:
   pull_request:
-    branches: [main, develop, "feature/*", "fix/*"]
+    branches: [main, develop, "feature/*", "feat/*", "fix/*", "refactor/*"]
     paths:
       - 'scripts/bootstrap_clean.py'
       - 'scripts/validate_seed_state.py'

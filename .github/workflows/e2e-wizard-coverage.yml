@@ -2,7 +2,7 @@ name: E2E Wizard Coverage
 
 on:
   pull_request:
-    branches: [ main, develop, feature/* ]
+    branches: [ main, develop, "feature/*", "feat/*", "fix/*", "refactor/*" ]
     paths:
       - 'app/**'
       - 'tests/e2e/test_tournament_monitor*.py'

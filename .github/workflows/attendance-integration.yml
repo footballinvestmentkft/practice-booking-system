@@ -2,7 +2,7 @@ name: Attendance Feature Integration (ATT-01..06 + IND-ATT-01..04)
 
 on:
   pull_request:
-    branches: [main, develop, "feature/*", "fix/*"]
+    branches: [main, develop, "feature/*", "feat/*", "fix/*", "refactor/*"]
     paths:
       - 'app/models/team.py'
       - 'app/models/session.py'

@@ -2,7 +2,7 @@ name: Test Baseline Check
 
 on:
   pull_request:
-    branches: [ main, develop, feature/* ]
+    branches: [ main, develop, "feature/*", "feat/*", "fix/*", "refactor/*" ]
   push:
     branches: [ main, develop ]
   workflow_dispatch:  # manual trigger via GitHub UI → Actions → Run workflow

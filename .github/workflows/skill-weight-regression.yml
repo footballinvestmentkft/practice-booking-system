@@ -6,7 +6,7 @@ name: Skill Weight Pipeline — Regression Gate
 # Previous path-based filter removed to support branch protection rules.
 on:
   pull_request:
-    branches: [ main, develop, feature/* ]
+    branches: [ main, develop, "feature/*", "feat/*", "fix/*", "refactor/*" ]
     # REMOVED: paths filter (was blocking PRs that don't touch skill weight files)
     # Reason: Required checks must run on ALL PRs for GitHub branch protection
   push:

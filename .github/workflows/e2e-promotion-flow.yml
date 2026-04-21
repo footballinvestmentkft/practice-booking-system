@@ -2,7 +2,7 @@ name: E2E Promotion Flow (Club / CSV Import / Tournaments)
 
 on:
   pull_request:
-    branches: [main, develop, "feature/*", "fix/*"]
+    branches: [main, develop, "feature/*", "feat/*", "fix/*", "refactor/*"]
     paths:
       - 'app/**'
       - 'tests/e2e/admin_ui/test_promotion_flow_e2e.py'
