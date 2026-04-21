@@ -42,7 +42,7 @@ def _att(xp_earned=0, session_id=10, user_id=42):
 
 
 def _sess(sport_type="on_site", sess_id=10):
-    return SimpleNamespace(id=sess_id, sport_type=sport_type)
+    return SimpleNamespace(id=sess_id, sport_type=sport_type, semester_id=None)
 
 
 def _stats(total_xp=0, level=1):
@@ -522,22 +522,23 @@ class TestAwardXP:
         assert capsys.readouterr().out == ""
 
     def test_user_xp_balance_updated(self):
+        """Atomic SQL UPDATE is issued to increment users.xp_balance."""
         stats = _stats()
-        user = SimpleNamespace(xp_balance=100)
-        db = MagicMock()
-        db.query.return_value.filter.return_value.first.return_value = user
+        db = self._db()
         with patch(_PATCH_STATS, return_value=stats):
             award_xp(db, user_id=42, xp_amount=50)
-        assert user.xp_balance == 150
+        db.execute.assert_called_once()
+        sql_params = db.execute.call_args[0][1]
+        assert sql_params == {"delta": 50, "uid": 42}
 
     def test_none_xp_balance_treated_as_zero(self):
+        """When DB RETURNING yields NULL, balance falls back to 0 (no crash)."""
         stats = _stats()
-        user = SimpleNamespace(xp_balance=None)
-        db = MagicMock()
-        db.query.return_value.filter.return_value.first.return_value = user
+        db = self._db()
+        db.execute.return_value.scalar.return_value = None  # simulate NULL from DB
         with patch(_PATCH_STATS, return_value=stats):
             award_xp(db, user_id=42, xp_amount=50)
-        assert user.xp_balance == 50
+        assert stats.total_xp == 50  # stats still updated
 
     def test_no_user_xp_balance_update_skipped(self):
         """User query returns None → no xp_balance crash."""

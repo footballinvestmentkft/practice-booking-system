@@ -613,11 +613,11 @@ class TestAwardManualReward:
 
         assert result is True
 
-        # Verify XP was awarded
+        # Verify XP was awarded with correct kwargs (user_id/xp_amount, not user/amount)
         mock_award_xp.assert_called_once_with(
             db=test_db,
-            user=user,
-            amount=250,
+            user_id=user.id,
+            xp_amount=250,
             reason="Great sportsmanship"
         )
 

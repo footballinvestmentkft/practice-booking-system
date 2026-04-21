@@ -248,7 +248,7 @@ def award_manual_reward(
     
     # Award XP
     if xp_amount > 0:
-        award_xp(db=db, user=user, amount=xp_amount, reason=reason)
+        award_xp(db=db, user_id=user.id, xp_amount=xp_amount, reason=reason)
     
     # Award credits (user-level) - also handles negative amounts (penalties)
     if credits_amount != 0:
