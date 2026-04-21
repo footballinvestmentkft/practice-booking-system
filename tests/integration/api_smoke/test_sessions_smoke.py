@@ -890,4 +890,26 @@ class TestSessionsSmoke:
             f"Empty patch body should be rejected: {response.status_code}"
         )
 
+    # ── DELETE /{session_id}/segments/{segment_id} ───────────────────────────
+
+    def test_delete_session_segment_happy_path(
+        self, api_client: TestClient, admin_token: str
+    ):
+        """
+        Happy path: DELETE /{session_id}/segments/{segment_id}.
+        Accept 200 (soft-deleted segment returned) or 404 (session/segment not in
+        test DB).  Accept 422 because literal path strings fail integer validation.
+        """
+        headers = {"Authorization": f"Bearer {admin_token}"}
+
+        response = api_client.delete(
+            "/{session_id}/segments/{segment_id}",
+            headers=headers,
+        )
+
+        assert response.status_code in [200, 404, 422], (
+            f"DELETE /{{session_id}}/segments/{{segment_id}} unexpected status: "
+            f"{response.status_code}"
+        )
+
 

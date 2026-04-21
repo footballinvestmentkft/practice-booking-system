@@ -1,11 +1,13 @@
 """
 Session segment endpoints.
 
-POST  /api/v1/sessions/{session_id}/segments
-PATCH /api/v1/sessions/{session_id}/segments/{segment_id}
+POST   /api/v1/sessions/{session_id}/segments
+PATCH  /api/v1/sessions/{session_id}/segments/{segment_id}
+DELETE /api/v1/sessions/{session_id}/segments/{segment_id}
   — Admin or Instructor only.
   — Instructors may only operate on sessions they own (instructor_id == current user).
   — POST/PATCH return 409 if the (session_id, position) pair already exists.
+  — DELETE is a soft delete (is_active=False); idempotent — safe to repeat.
 """
 from typing import Any
 
@@ -158,6 +160,65 @@ def update_session_segment(
             detail=f"A segment at position {patch_data.position} already exists for this session.",
         )
 
+    db.commit()
+    db.refresh(segment)
+    return segment
+
+
+@router.delete(
+    "/{session_id}/segments/{segment_id}",
+    response_model=SessionSegmentRead,
+    status_code=status.HTTP_200_OK,
+    summary="Soft-delete a session segment",
+    tags=["session-segments"],
+)
+def delete_session_segment(
+    session_id: int,
+    segment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_or_instructor_user),
+) -> Any:
+    """
+    Soft-delete a segment by setting ``is_active=False``.
+
+    - **Admin**: may delete segments on any session.
+    - **Instructor**: may only delete segments on sessions they own.
+    - Idempotent: deleting an already-inactive segment returns 200 with no error.
+    - Segment results (``session_segment_results``) are preserved — no cascade delete.
+    """
+    session = (
+        db.query(SessionModel)
+        .filter(SessionModel.id == session_id)
+        .first()
+    )
+    if session is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session not found",
+        )
+
+    segment = (
+        db.query(SessionSegment)
+        .filter(
+            SessionSegment.id == segment_id,
+            SessionSegment.session_id == session_id,
+        )
+        .first()
+    )
+    if segment is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Segment not found",
+        )
+
+    if current_user.role == UserRole.INSTRUCTOR:
+        if session.instructor_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only delete segments on sessions you own.",
+            )
+
+    segment.is_active = False
     db.commit()
     db.refresh(segment)
     return segment

@@ -48313,6 +48313,62 @@
       }
     },
     "/api/v1/sessions/{session_id}/segments/{segment_id}": {
+      "delete": {
+        "description": "Soft-delete a segment by setting ``is_active=False``.\n\n- **Admin**: may delete segments on any session.\n- **Instructor**: may only delete segments on sessions they own.\n- Idempotent: deleting an already-inactive segment returns 200 with no error.\n- Segment results (``session_segment_results``) are preserved \u2014 no cascade delete.",
+        "operationId": "delete_session_segment_api_v1_sessions__session_id__segments__segment_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "segment_id",
+            "required": true,
+            "schema": {
+              "title": "Segment Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionSegmentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Soft-delete a session segment",
+        "tags": [
+          "sessions",
+          "session-segments"
+        ]
+      },
       "patch": {
         "description": "Partially update a segment on an existing session.\n\n- Only fields present in the request body are modified.\n- **Admin**: may update segments on any session.\n- **Instructor**: may only update segments on sessions they own.\n- ``null`` on ``duration_minutes`` or ``skill_targets`` clears the field.\n- Returns **409** if the new ``position`` conflicts with an existing segment.",
         "operationId": "update_session_segment_api_v1_sessions__session_id__segments__segment_id__patch",
