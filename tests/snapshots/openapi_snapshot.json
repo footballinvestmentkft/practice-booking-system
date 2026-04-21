@@ -15944,6 +15944,131 @@
         "title": "SessionList",
         "type": "object"
       },
+      "SessionSegmentCreate": {
+        "description": "Input schema for creating a single session segment.",
+        "properties": {
+          "duration_minutes": {
+            "anyOf": [
+              {
+                "maximum": 300.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Planned duration in minutes (informational only).",
+            "title": "Duration Minutes"
+          },
+          "label": {
+            "description": "Human-readable name for this drill/exercise.",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "position": {
+            "description": "Zero-based display order within the session. Must be unique per session.",
+            "maximum": 32767.0,
+            "minimum": 0.0,
+            "title": "Position",
+            "type": "integer"
+          },
+          "skill_targets": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Map of skill_key \u2192 weight. NULL = inherit from session game_preset at result time. All weights must be > 0.",
+            "title": "Skill Targets"
+          }
+        },
+        "required": [
+          "label",
+          "position"
+        ],
+        "title": "SessionSegmentCreate",
+        "type": "object"
+      },
+      "SessionSegmentRead": {
+        "description": "Output schema for a session segment.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "duration_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Minutes"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "integer"
+          },
+          "skill_targets": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skill Targets"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "session_id",
+          "position",
+          "label",
+          "is_active",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "SessionSegmentRead",
+        "type": "object"
+      },
       "SessionSummaryResponse": {
         "properties": {
           "correct_answers": {
@@ -48049,6 +48174,65 @@
         "tags": [
           "sessions",
           "game-results"
+        ]
+      }
+    },
+    "/api/v1/sessions/{session_id}/segments": {
+      "post": {
+        "description": "Add a single drill/exercise segment to an existing session.\n\n- **Admin**: may add segments to any session.\n- **Instructor**: may only add segments to sessions they own\n  (`session.instructor_id == current_user.id`).\n- Returns **409** if a segment at the given `position` already exists for this session.",
+        "operationId": "create_session_segment_api_v1_sessions__session_id__segments_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionSegmentCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionSegmentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create a session segment",
+        "tags": [
+          "sessions",
+          "session-segments"
         ]
       }
     },

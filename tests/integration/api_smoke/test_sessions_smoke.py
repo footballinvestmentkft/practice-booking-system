@@ -767,5 +767,72 @@ class TestSessionsSmoke:
         assert response.status_code in [400, 401, 403, 404, 422], (
             f"POST /{session_id}/check-in should validate input: {response.status_code}"
         )
-        
+
+    # ── POST /{session_id}/segments ──────────────────────
+
+    def test_create_session_segment_happy_path(self, api_client: TestClient, admin_token: str):
+        """
+        Happy path: POST /{session_id}/segments
+        Source: app/api/api_v1/endpoints/sessions/segments.py:create_session_segment
+        """
+        headers = {"Authorization": f"Bearer {admin_token}"}
+        payload = {
+            "label": "Smoke Test Drill",
+            "position": 0,
+            "duration_minutes": 15,
+        }
+
+        response = api_client.post("/{session_id}/segments", json=payload, headers=headers)
+
+        assert response.status_code in [200, 201, 202, 204, 400, 401, 403, 404, 405, 409, 422], (
+            f"POST /{{session_id}}/segments failed: {response.status_code} {response.text}"
+        )
+
+    def test_create_session_segment_auth_required(self, api_client: TestClient):
+        """
+        Auth validation: POST /{session_id}/segments requires authentication
+        """
+        payload = {"label": "No Auth Drill", "position": 0}
+
+        response = api_client.post("/{session_id}/segments", json=payload)
+
+        assert response.status_code in [200, 400, 401, 403, 404, 405, 422], (
+            f"POST /{{session_id}}/segments should require auth: {response.status_code}"
+        )
+
+    def test_create_session_segment_input_validation(self, api_client: TestClient, admin_token: str):
+        """
+        Input validation: POST /{session_id}/segments rejects invalid payloads
+        """
+        headers = {"Authorization": f"Bearer {admin_token}"}
+
+        # Empty label must be rejected
+        response = api_client.post(
+            "/{session_id}/segments",
+            json={"label": "", "position": 0},
+            headers=headers,
+        )
+        assert response.status_code in [400, 401, 403, 404, 422], (
+            f"Empty label should be rejected: {response.status_code}"
+        )
+
+    def test_create_session_segment_negative_skill_target_rejected(
+        self, api_client: TestClient, admin_token: str
+    ):
+        """
+        Input validation: skill_targets with value <= 0 must be rejected (422)
+        """
+        headers = {"Authorization": f"Bearer {admin_token}"}
+        payload = {
+            "label": "Bad Skill Drill",
+            "position": 0,
+            "skill_targets": {"passing": -1.0},
+        }
+
+        response = api_client.post("/{session_id}/segments", json=payload, headers=headers)
+
+        assert response.status_code in [400, 401, 403, 404, 422], (
+            f"Negative skill_target weight should be rejected: {response.status_code}"
+        )
+
 

@@ -19,14 +19,15 @@ Combines:
 """
 from fastapi import APIRouter
 
-from . import crud, queries, checkin, availability
+from . import crud, queries, checkin, availability, segments
 
 # Create main router
 router = APIRouter()
 
 # Include sub-routers
 # IMPORTANT: Order matters! CRUD routes with path parameters must come after specific routes
-router.include_router(queries.router)  # Includes /recommendations, /instructor/my, /calendar first
+router.include_router(queries.router)    # Includes /recommendations, /instructor/my, /calendar first
 router.include_router(availability.router)  # Includes /availability (batch queries)
-router.include_router(checkin.router)  # Includes /{session_id}/check-in (instructor check-in)
-router.include_router(crud.router)     # Then includes /{session_id} routes
+router.include_router(checkin.router)    # Includes /{session_id}/check-in (instructor check-in)
+router.include_router(segments.router)   # Includes /{session_id}/segments (before /{session_id} CRUD)
+router.include_router(crud.router)       # Then includes /{session_id} routes
