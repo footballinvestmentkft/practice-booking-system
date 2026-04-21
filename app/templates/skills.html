@@ -316,6 +316,16 @@
         return `<span class="skill-delta-zero">±0</span>`;
     }
 
+    function trainingMetaHtml(s) {
+        const td = s.training_delta || 0;
+        const ts = s.training_sessions || 0;
+        if (ts === 0) return '<span style="color:#bbb;">no training</span>';
+        const sign  = td > 0 ? '+' : '';
+        const color = td > 0.05 ? '#27ae60' : (td < -0.05 ? '#e74c3c' : '#95a5a6');
+        return `<span style="color:${color};">${sign}${td.toFixed(1)} training</span>`
+             + ` <span style="color:#bbb;">(${ts} session${ts !== 1 ? 's' : ''})</span>`;
+    }
+
     function renderStats(data) {
         const el = document.getElementById('skills-stats');
         el.innerHTML = `
@@ -396,6 +406,8 @@
                     <span>Baseline: ${s.baseline.toFixed(1)}</span>
                     <span>·</span>
                     <span>${s.tournament_count || 0} tournament${s.tournament_count !== 1 ? 's' : ''}</span>
+                    <span>·</span>
+                    <span>${trainingMetaHtml(s)}</span>
                     <span>·</span>
                     <span>${s.tier ? s.tier.toLowerCase() : 'beginner'}</span>
                 </div>
