@@ -155,6 +155,17 @@ class Session(Base):
         comment="Leg number within a multi-leg round robin (1-N). NULL for knockout/swiss/INDIVIDUAL_RANKING."
     )
 
+    game_preset_id = Column(
+        Integer,
+        ForeignKey("game_presets.id", name="fk_sessions_game_preset_id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+        comment=(
+            "Optional game preset for this session. "
+            "NULL for training sessions and pre-P3 tournament sessions."
+        ),
+    )
+
     tournament_match_number = Column(
         Integer,
         nullable=True,
@@ -285,6 +296,7 @@ class Session(Base):
     group = relationship("Group", back_populates="sessions")
     instructor = relationship("User", back_populates="taught_sessions")
     pitch = relationship("Pitch", back_populates="sessions")
+    game_preset = relationship("GamePreset", foreign_keys=[game_preset_id])
     bookings = relationship("Booking", back_populates="session")
     attendances = relationship("Attendance", back_populates="session")
     feedbacks = relationship("Feedback", back_populates="session")
