@@ -5,9 +5,12 @@ Handles all XP calculation, awarding, and stat updates.
 """
 
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, text
+from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timezone
 from typing import Optional
+
+from ...models.xp_transaction import XPTransaction
 
 from ...models.gamification import UserStats
 from ...models.attendance import Attendance
@@ -84,8 +87,35 @@ def award_attendance_xp(
 
     xp_earned = base_xp + instructor_xp + quiz_xp
 
+    # 1. Audit field on attendance record (unchanged behaviour)
     attendance.xp_earned = xp_earned
 
+    # 2. Atomic balance update — fixes the missing users.xp_balance write
+    new_balance = db.execute(
+        text(
+            "UPDATE users SET xp_balance = xp_balance + :delta "
+            "WHERE id = :uid RETURNING xp_balance"
+        ),
+        {"delta": xp_earned, "uid": attendance.user_id},
+    ).scalar() or 0
+
+    # 3. Ledger row — idempotency key is stable per attendance record
+    idempotency_key = f"attendance_xp_{attendance.id}"
+    sp = db.begin_nested()
+    db.add(XPTransaction(
+        user_id=attendance.user_id,
+        transaction_type="ATTENDANCE_XP",
+        amount=xp_earned,
+        balance_after=new_balance,
+        semester_id=session.semester_id,
+        idempotency_key=idempotency_key,
+    ))
+    try:
+        sp.commit()
+    except IntegrityError:
+        sp.rollback()  # Already awarded — safe to skip (re-run scenario)
+
+    # 4. UserStats aggregate — kept as-is; re-derivation from ledger is deferred to F2
     stats = get_or_create_user_stats(db, attendance.user_id)
     stats.total_xp += xp_earned
     stats.level = max(1, (stats.total_xp // 500) + 1)
@@ -151,21 +181,41 @@ def calculate_user_stats(db: Session, user_id: int) -> UserStats:
 
 def award_xp(db: Session, user_id: int, xp_amount: int, reason: str = "Quiz completion") -> UserStats:
     """Award XP to a user and update their stats"""
-    # Update UserStats for gamification
-    stats = get_or_create_user_stats(db, user_id)
+    # Atomic balance update — replaces ORM read-modify-write on users.xp_balance
+    new_balance = db.execute(
+        text(
+            "UPDATE users SET xp_balance = xp_balance + :delta "
+            "WHERE id = :uid RETURNING xp_balance"
+        ),
+        {"delta": xp_amount, "uid": user_id},
+    ).scalar() or 0
 
+    # Ledger row — timestamp-based key (award_xp is called for one-shot events)
+    idempotency_key = (
+        f"xp_{''.join(c for c in reason.lower() if c.isalnum() or c == '_')}"
+        f"_{user_id}_{int(datetime.now(timezone.utc).timestamp())}"
+    )
+    sp = db.begin_nested()
+    db.add(XPTransaction(
+        user_id=user_id,
+        transaction_type="GENERAL_XP_AWARD",
+        amount=xp_amount,
+        balance_after=new_balance,
+        description=reason,
+        idempotency_key=idempotency_key,
+    ))
+    try:
+        sp.commit()
+    except IntegrityError:
+        sp.rollback()
+
+    # UserStats aggregate — kept as-is; re-derivation from ledger is deferred to F2
+    stats = get_or_create_user_stats(db, user_id)
     stats.total_xp = (stats.total_xp or 0) + xp_amount
     new_level = max(1, stats.total_xp // 1000)
     level_up = new_level > stats.level
     stats.level = new_level
     stats.updated_at = datetime.now(timezone.utc)
-
-    # Also update User.xp_balance (primary XP balance)
-    from ...models.user import User
-    user = db.query(User).filter(User.id == user_id).first()
-    if user:
-        user.xp_balance = (user.xp_balance or 0) + xp_amount
-
     db.commit()
 
     if level_up:

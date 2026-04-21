@@ -16,43 +16,109 @@ DATABASE_URL = os.environ.get(
     "postgresql://postgres:postgres@localhost:5432/lfa_intern_system"
 )
 
-@pytest.mark.xfail(reason="Requires user_id=2 in dev DB; not present in test environment")
 def test_xp_transactions_constraint():
-    """Test that xp_transactions prevents duplicates on (user_id, semester_id, transaction_type)"""
+    """
+    Verify xp_transactions constraint state after migration 2026_04_20_0900.
+
+    uq_xp_transactions_user_semester_type was intentionally dropped — multiple rows
+    of the same (user_id, semester_id, transaction_type) must now be allowed (required
+    for training segment XP rows).
+
+    uq_xp_transaction_idempotency (partial UNIQUE on idempotency_key WHERE NOT NULL)
+    must still be present — it is the sole uniqueness guard for keyed transactions.
+
+    Self-contained: seeds a minimal test user for FK satisfaction, cleans up after.
+    Does not require a pre-seeded DB (runs in CI on a fresh migration).
+    """
     engine = create_engine(DATABASE_URL)
 
-    print("\n🧪 Testing xp_transactions unique constraint...")
+    # 1. Verify the old composite constraint is gone
+    with engine.connect() as conn:
+        row = conn.execute(text("""
+            SELECT constraint_name FROM information_schema.table_constraints
+            WHERE table_name = 'xp_transactions'
+              AND constraint_name = 'uq_xp_transactions_user_semester_type'
+        """)).fetchone()
+        assert row is None, (
+            "uq_xp_transactions_user_semester_type must be absent after migration 2026_04_20_0900"
+        )
 
+    # 2. Verify the partial idempotency index is still present
+    with engine.connect() as conn:
+        row = conn.execute(text("""
+            SELECT indexname FROM pg_indexes
+            WHERE tablename = 'xp_transactions'
+              AND indexname = 'uq_xp_transaction_idempotency'
+        """)).fetchone()
+        assert row is not None, (
+            "uq_xp_transaction_idempotency partial index must still be present"
+        )
+
+    # Seed a minimal test user to satisfy the FK on user_id (CI has no pre-seeded data).
+    # Only name/email/password_hash are required; all other columns have DB defaults.
+    _CI_EMAIL = "ci_xp_constraint_test@test.invalid"
     with engine.begin() as conn:
-        # Insert first transaction
-        conn.execute(text("""
-            INSERT INTO xp_transactions (user_id, transaction_type, amount, balance_after, semester_id, description)
-            VALUES (2, 'TEST_DUPLICATE', 100, 100, 1, 'Test duplicate prevention - first insert');
-        """))
-        print("✅ First XP transaction inserted successfully")
+        test_user_id = conn.execute(text("""
+            INSERT INTO users
+                (name, email, password_hash, role,
+                 payment_verified, credit_balance, credit_purchased,
+                 xp_balance, nda_accepted, parental_consent)
+            VALUES
+                ('CI XP Constraint Test', :email, 'dummy_hash_ci', 'STUDENT',
+                 false, 0, 0,
+                 0, false, false)
+            ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
+            RETURNING id
+        """), {"email": _CI_EMAIL}).scalar()
 
-        # Try to insert duplicate - should fail
-        try:
+    try:
+        # 3. Verify duplicate (user_id, semester_id, transaction_type) rows ARE now allowed.
+        # semester_id is nullable — use NULL to avoid needing a seeded semester row.
+        with engine.begin() as conn:
             conn.execute(text("""
-                INSERT INTO xp_transactions (user_id, transaction_type, amount, balance_after, semester_id, description)
-                VALUES (2, 'TEST_DUPLICATE', 100, 100, 1, 'Test duplicate prevention - second insert');
-            """))
-            print("❌ FAILURE: Duplicate XP transaction was allowed!")
-            return False
-        except IntegrityError as e:
-            if "uq_xp_transactions_user_semester_type" in str(e):
-                print(f"✅ Duplicate XP transaction correctly blocked by constraint")
-                # Rollback the transaction to clean up
-                raise  # Re-raise to trigger rollback
-            else:
-                print(f"❌ FAILURE: Wrong error: {e}")
-                raise
+                INSERT INTO xp_transactions
+                    (user_id, transaction_type, amount, balance_after, description)
+                VALUES (:uid, 'TEST_DUPLICATE_ALLOWED', 10, 10, 'first')
+            """), {"uid": test_user_id})
+            # This second insert must succeed (composite constraint is gone)
+            conn.execute(text("""
+                INSERT INTO xp_transactions
+                    (user_id, transaction_type, amount, balance_after, description)
+                VALUES (:uid, 'TEST_DUPLICATE_ALLOWED', 10, 10, 'second')
+            """), {"uid": test_user_id})
+        with engine.begin() as conn:
+            conn.execute(text(
+                "DELETE FROM xp_transactions WHERE transaction_type = 'TEST_DUPLICATE_ALLOWED';"
+            ))
 
-    # Clean up
-    with engine.begin() as conn:
-        conn.execute(text("DELETE FROM xp_transactions WHERE transaction_type = 'TEST_DUPLICATE';"))
-
-    return True
+        # 4. Verify duplicate idempotency_key rows are still blocked by the partial index
+        with engine.connect() as conn:
+            conn.execute(text("""
+                INSERT INTO xp_transactions
+                    (user_id, transaction_type, amount, balance_after, idempotency_key)
+                VALUES (:uid, 'TEST_IDEM', 10, 10, 'test_idem_key_pr_a')
+            """), {"uid": test_user_id})
+            conn.commit()
+            sp = conn.begin_nested()
+            try:
+                conn.execute(text("""
+                    INSERT INTO xp_transactions
+                        (user_id, transaction_type, amount, balance_after, idempotency_key)
+                    VALUES (:uid, 'TEST_IDEM', 10, 10, 'test_idem_key_pr_a')
+                """), {"uid": test_user_id})
+                pytest.fail("Duplicate idempotency_key must be blocked by uq_xp_transaction_idempotency")
+            except IntegrityError as e:
+                sp.rollback()
+                assert "uq_xp_transaction_idempotency" in str(e), (
+                    f"Wrong constraint triggered: {e}"
+                )
+            conn.execute(text(
+                "DELETE FROM xp_transactions WHERE transaction_type = 'TEST_IDEM';"
+            ))
+            conn.commit()
+    finally:
+        with engine.begin() as conn:
+            conn.execute(text("DELETE FROM users WHERE email = :email"), {"email": _CI_EMAIL})
 
 
 @pytest.mark.xfail(reason="Requires user_id=2 in dev DB; not present in test environment")
