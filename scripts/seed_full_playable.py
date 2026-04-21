@@ -8,6 +8,8 @@ Use this script after a DB reset to restore the full playable state:
   3. 4 report_* test users + LFA_FOOTBALL_PLAYER licenses
   4. 3 COMPLETED tournaments with EMA skill history
   5. 3 ENROLLMENT_OPEN tournaments + 2 camps (current enrollment)
+  6. 1 COMPLETED MINI_SEASON with 2 training sessions + 5 segments + attendance
+     → produces non-zero training_delta for all 4 report_* users in skill profile
 
 Placement matrix (creates realistic EMA progression per player):
   T1 league (Jan 2026):      940→1st  7b85→2nd  490c→3rd  9ab1→NULL
@@ -18,6 +20,7 @@ Result after run:
   - Login: report_490c3e64@t.com / Player1234!
   - /skills/history shows 3-tournament EMA chart
   - 3 tournaments + 2 camps open for enrollment
+  - GET /api/v1/skill-profile/{user_id} shows training_delta > 0, training_sessions=2
 
 IDEMPOTENT: checks before creating, safe to re-run.
 
@@ -44,11 +47,15 @@ from app.models.tournament_type import TournamentType
 from app.models.game_configuration import GameConfiguration
 from app.models.tournament_reward_config import TournamentRewardConfig
 from app.models.game_preset import GamePreset
+from app.models.session import Session as SessionModel, SessionType, EventCategory
+from app.models.session_segment import SessionSegment
+from app.models.attendance import Attendance, AttendanceStatus
 from app.core.security import get_password_hash
 from app.services.tournament.tournament_participation_service import (
     calculate_skill_points_for_placement,
     record_tournament_participation,
 )
+from app.services import segment_reward_service
 
 # ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -243,6 +250,60 @@ GAME_PRESETS = [
             },
             "format_config": {}, "simulation_config": {},
         },
+    },
+]
+
+
+# ── Phase 6 config ────────────────────────────────────────────────────────────
+# Fixed code for idempotency; dates are relative to today so the seed stays
+# "recent" regardless of when it is run.
+
+_TRAINING_DEMO_CODE = "MINI-TRAINING-DEMO-2026-Q1"
+
+_SEGMENT_SESSIONS = [
+    {
+        "title": "Passing & Movement Drills",
+        "date_offset_days": -14,
+        "base_xp": 60,
+        "segments": [
+            {
+                "position": 0,
+                "label": "Warm-up & Ball Control",
+                "duration_minutes": 10,
+                "skill_targets": {"passing": 1.0, "ball_control": 0.8},
+            },
+            {
+                "position": 1,
+                "label": "Passing Triangles",
+                "duration_minutes": 20,
+                "skill_targets": {"passing": 1.5, "vision": 0.5},
+            },
+            {
+                "position": 2,
+                "label": "Positional Play (small-sided)",
+                "duration_minutes": 15,
+                "skill_targets": {"positioning_off": 1.0, "tactical_awareness": 0.7},
+            },
+        ],
+    },
+    {
+        "title": "Shooting & Finishing Clinic",
+        "date_offset_days": -10,
+        "base_xp": 80,
+        "segments": [
+            {
+                "position": 0,
+                "label": "Shooting Technique",
+                "duration_minutes": 20,
+                "skill_targets": {"finishing": 1.5, "shot_power": 1.0},
+            },
+            {
+                "position": 1,
+                "label": "Clinical Finishing Drills",
+                "duration_minutes": 20,
+                "skill_targets": {"finishing": 1.2, "composure": 0.8, "positioning_off": 0.5},
+            },
+        ],
     },
 ]
 
@@ -655,6 +716,142 @@ def _seed_open_events(db: Session) -> None:
     db.commit()
 
 
+# ── Phase 6: Training segments demo ───────────────────────────────────────────
+
+def _seed_training_segments(db: Session, users: dict[str, User]) -> None:
+    """
+    Seed one completed MINI_SEASON with 2 training sessions and 5 segments.
+    Creates attendance (booking_id=None) for all 4 report_* users and invokes
+    award_session_segments via the real service path so that session_segment_results
+    and xp_transactions are populated.  Produces non-zero training_delta in
+    GET /api/v1/skill-profile/{user_id} for all 4 users after this runs.
+
+    Fully idempotent: each object is fetched before creation.
+    """
+    print("\n🎯 Phase 6: Training segments demo (training_delta seed)…")
+    today = date.today()
+
+    # ── 6a. Semester ──────────────────────────────────────────────────────────
+    semester = db.query(Semester).filter(Semester.code == _TRAINING_DEMO_CODE).first()
+    if not semester:
+        location = _get_or_create_location(db)
+        campus = _get_or_create_campus(db, location)
+        semester = Semester(
+            code=_TRAINING_DEMO_CODE,
+            name="Training Demo Mini Season — Q1 2026",
+            semester_category=SemesterCategory.MINI_SEASON,
+            status=SemesterStatus.COMPLETED,
+            age_group="YOUTH",
+            location_id=location.id,
+            campus_id=campus.id,
+            start_date=today - timedelta(days=21),
+            end_date=today - timedelta(days=7),
+            enrollment_cost=0,
+            specialization_type="LFA_FOOTBALL_PLAYER",
+        )
+        db.add(semester)
+        db.flush()
+        print(f"   ✅ Created semester: {semester.code!r} (id={semester.id})")
+    else:
+        print(f"   ⏭️  Semester exists: {_TRAINING_DEMO_CODE} (id={semester.id})")
+
+    # ── 6b. Sessions + segments ───────────────────────────────────────────────
+    seeded_sessions: list[SessionModel] = []
+    for sess_defn in _SEGMENT_SESSIONS:
+        sess = (
+            db.query(SessionModel)
+            .filter(
+                SessionModel.semester_id == semester.id,
+                SessionModel.title == sess_defn["title"],
+            )
+            .first()
+        )
+        if not sess:
+            d = today + timedelta(days=sess_defn["date_offset_days"])
+            sess = SessionModel(
+                title=sess_defn["title"],
+                date_start=datetime(d.year, d.month, d.day, 9, 0, 0),
+                date_end=datetime(d.year, d.month, d.day, 11, 0, 0),
+                session_type=SessionType.on_site,
+                event_category=EventCategory.TRAINING,
+                session_status="completed",
+                semester_id=semester.id,
+                campus_id=semester.campus_id,
+                location="Main Training Campus",
+                capacity=20,
+                base_xp=sess_defn["base_xp"],
+                sport_type="Football",
+                level="YOUTH",
+                credit_cost=0,
+                auto_generated=False,
+            )
+            db.add(sess)
+            db.flush()
+            print(f"   ✅ Created session: {sess.title!r} (id={sess.id}, base_xp={sess.base_xp})")
+        else:
+            print(f"   ⏭️  Session exists: {sess.title!r} (id={sess.id})")
+
+        for seg_defn in sess_defn["segments"]:
+            seg = (
+                db.query(SessionSegment)
+                .filter(
+                    SessionSegment.session_id == sess.id,
+                    SessionSegment.position == seg_defn["position"],
+                )
+                .first()
+            )
+            if not seg:
+                db.add(SessionSegment(
+                    session_id=sess.id,
+                    position=seg_defn["position"],
+                    label=seg_defn["label"],
+                    duration_minutes=seg_defn["duration_minutes"],
+                    skill_targets=seg_defn["skill_targets"],
+                    is_active=True,
+                ))
+                print(f"      ✅ Segment pos={seg_defn['position']}: {seg_defn['label']!r}")
+            else:
+                print(f"      ⏭️  Segment pos={seg_defn['position']} exists (id={seg.id})")
+
+        db.flush()
+        seeded_sessions.append(sess)
+
+    # ── 6c. Attendance + segment awards ──────────────────────────────────────
+    print(f"\n   🎓 Attendance + segment awards for {len(users)} report_* users…")
+    for email, user in users.items():
+        for sess in seeded_sessions:
+            att = (
+                db.query(Attendance)
+                .filter(
+                    Attendance.user_id == user.id,
+                    Attendance.session_id == sess.id,
+                    Attendance.booking_id.is_(None),
+                )
+                .first()
+            )
+            if not att:
+                att = Attendance(
+                    user_id=user.id,
+                    session_id=sess.id,
+                    booking_id=None,
+                    status=AttendanceStatus.present,
+                )
+                db.add(att)
+                db.flush()
+
+            results = segment_reward_service.award_session_segments(db, sess.id, att.id)
+            print(
+                f"      {email}  session={sess.id}  att={att.id}"
+                f"  → {len(results)} result(s)"
+            )
+
+    db.commit()
+    print(
+        f"\n   ✅ Phase 6 complete — {len(seeded_sessions)} sessions, "
+        f"5 segments, {len(users) * len(seeded_sessions)} attendance rows"
+    )
+
+
 # ── Summary ────────────────────────────────────────────────────────────────────
 
 def _print_summary(db: Session) -> None:
@@ -682,6 +879,13 @@ def _print_summary(db: Session) -> None:
     print(f"   ENROLLMENT_OPEN tournaments: {open_t}")
     print(f"   ENROLLMENT_OPEN camps     : {open_c}")
     print(f"   TournamentParticipation rows: {total_tp}")
+
+    from app.models.session_segment import SessionSegment
+    from app.models.session_segment_result import SessionSegmentResult
+    seg_count = db.query(SessionSegment).count()
+    result_count = db.query(SessionSegmentResult).count()
+    print(f"   SessionSegments in DB       : {seg_count}")
+    print(f"   SessionSegmentResults in DB : {result_count}")
     print()
     print("   Test users (password: Player1234!):")
     for email in PLAYERS:
@@ -699,13 +903,26 @@ def _print_summary(db: Session) -> None:
                 TournamentParticipation.user_id == u.id,
                 TournamentParticipation.skill_rating_delta.isnot(None),
             ).count()
-            print(f"   [{email}]  skills={fs}  participations={tp_count}  EMA_deltas={ema}")
+            tr_results = db.query(SessionSegmentResult).filter(
+                SessionSegmentResult.user_id == u.id
+            ).count()
+            training_sessions = db.query(
+                SessionSegmentResult.session_id
+            ).filter(
+                SessionSegmentResult.user_id == u.id
+            ).distinct().count()
+            print(
+                f"   [{email}]  skills={fs}  participations={tp_count}"
+                f"  EMA_deltas={ema}  seg_results={tr_results}"
+                f"  training_sessions={training_sessions}"
+            )
     print()
     print("   Journey:")
     print("     /login  →  report_490c3e64@t.com / Player1234!")
     print("     /dashboard  →  ENTER  →  /dashboard/lfa-football-player")
     print("     /skills/history  →  3-tournament EMA chart")
     print("     Available Events tab  →  3 tournaments + 2 camps")
+    print("     GET /api/v1/skill-profile/{user_id}  →  training_delta > 0, training_sessions=2")
     print("=" * 70)
 
 
@@ -731,6 +948,9 @@ def main() -> None:
 
         _seed_open_events(db)
         # _seed_open_events commits at the end
+
+        _seed_training_segments(db, users)
+        # _seed_training_segments commits at the end
 
         _print_summary(db)
 
