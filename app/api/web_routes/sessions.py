@@ -22,6 +22,8 @@ from ...models.attendance import Attendance, AttendanceHistory
 from ...models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 from ...models.quiz import Quiz, QuizQuestion, QuizAttempt, SessionQuiz
 from ...models.performance_review import InstructorSessionReview, StudentPerformanceReview
+from ...models.session_segment import SessionSegment
+from ...services.skill_progression._config import get_all_skill_keys
 from .student_features import _spec_ctx
 
 # Setup templates
@@ -545,6 +547,16 @@ async def session_details(
                     'student_results': student_results
                 })
 
+    session_segments = (
+        db.query(SessionSegment)
+        .filter(
+            SessionSegment.session_id == session_id,
+            SessionSegment.is_active == True,
+        )
+        .order_by(SessionSegment.position)
+        .all()
+    ) if is_instructor else []
+
     return templates.TemplateResponse(
         "session_details.html",
         {
@@ -561,7 +573,9 @@ async def session_details(
             "my_attendance": my_attendance,
             "my_instructor_review": my_instructor_review,
             "session_quizzes": session_quizzes,
-            "now": now
+            "now": now,
+            "session_segments": session_segments,
+            "all_skill_keys": get_all_skill_keys() if is_instructor else [],
         }
     )
 

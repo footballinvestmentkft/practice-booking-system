@@ -204,6 +204,90 @@ if (urlParams.get('error') === 'quiz_locked') {
                 </div>
             </div>
             {% endif %}
+        <!-- ── Segment Management (Instructor only) ───────────────────── -->
+        <div id="seg-mgmt" style="margin-top: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h3 style="margin: 0;">🏋️ Session Segments</h3>
+                <button id="seg-add-toggle" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.9rem;"
+                        onclick="segToggleForm()">+ Add Segment</button>
+            </div>
+
+            <!-- Segment list -->
+            <div id="seg-list">
+                {% if session_segments %}
+                {% for seg in session_segments %}
+                <div class="seg-row" id="seg-row-{{ seg.id }}"
+                     style="display:flex; align-items:center; gap:0.5rem; padding:0.6rem 0.75rem;
+                            background:#f8f9fa; border-radius:6px; margin-bottom:0.4rem;">
+                    <span style="min-width:1.8rem; font-weight:700; color:#667eea;">#{{ seg.position }}</span>
+                    <span style="flex:1; font-weight:600;">{{ seg.label }}</span>
+                    <span style="color:#888; font-size:0.85rem;">
+                        {% if seg.duration_minutes %}{{ seg.duration_minutes }} min{% endif %}
+                    </span>
+                    <span style="color:#888; font-size:0.82rem; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+                          title="{{ seg.skill_targets | tojson if seg.skill_targets else '' }}">
+                        {% if seg.skill_targets %}
+                            {{ seg.skill_targets.keys() | list | join(', ') }}
+                        {% else %}—{% endif %}
+                    </span>
+                    <button class="btn" style="font-size:0.78rem; padding:0.25rem 0.6rem; background:#f0f0f0; color:#333;"
+                            onclick="segStartEdit({{ seg.id }}, {{ seg.position }}, {{ seg.label | tojson }},
+                                     {{ seg.duration_minutes | tojson }}, {{ seg.skill_targets | tojson if seg.skill_targets else 'null' }})">
+                        Edit
+                    </button>
+                    <button class="btn" style="font-size:0.78rem; padding:0.25rem 0.6rem; background:#fde8e8; color:#c0392b;"
+                            onclick="segDelete({{ seg.id }}, {{ seg.label | tojson }})">
+                        Delete
+                    </button>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p id="seg-empty" style="color:#aaa; font-size:0.9rem; margin:0.5rem 0;">No segments yet.</p>
+                {% endif %}
+            </div>
+
+            <!-- Add / Edit form (hidden by default) -->
+            <div id="seg-form-wrap" style="display:none; margin-top:0.75rem; padding:1rem;
+                                           background:#fff; border:1px solid #e0e0e0; border-radius:8px;">
+                <input type="hidden" id="seg-edit-id" value="">
+                <div style="display:grid; grid-template-columns:80px 1fr 100px; gap:0.5rem; margin-bottom:0.5rem;">
+                    <div>
+                        <label style="font-size:0.8rem; color:#555;">Position *</label>
+                        <input id="seg-f-position" type="number" min="0" class="form-control"
+                               style="font-size:0.9rem;" placeholder="0">
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem; color:#555;">Label *</label>
+                        <input id="seg-f-label" type="text" maxlength="200" class="form-control"
+                               style="font-size:0.9rem;" placeholder="e.g. Warm-up Drills">
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem; color:#555;">Duration (min)</label>
+                        <input id="seg-f-duration" type="number" min="1" class="form-control"
+                               style="font-size:0.9rem;" placeholder="—">
+                    </div>
+                </div>
+
+                <!-- Skill targets -->
+                <div style="margin-bottom:0.5rem;">
+                    <label style="font-size:0.8rem; color:#555;">Skill Targets</label>
+                    <div id="seg-skill-rows" style="display:flex; flex-direction:column; gap:0.35rem; margin-top:0.3rem;"></div>
+                    <button type="button" onclick="segAddSkillRow(null, null)"
+                            style="margin-top:0.35rem; font-size:0.78rem; background:none; border:1px dashed #aaa;
+                                   border-radius:4px; padding:0.2rem 0.6rem; cursor:pointer; color:#667eea;">
+                        + Add skill target
+                    </button>
+                </div>
+
+                <div id="seg-form-error" style="display:none; color:#e74c3c; font-size:0.85rem; margin-bottom:0.4rem;"></div>
+                <div style="display:flex; gap:0.5rem;">
+                    <button class="btn btn-primary" style="font-size:0.85rem;" onclick="segSubmit()">Save</button>
+                    <button class="btn btn-secondary" style="font-size:0.85rem;" onclick="segCancelForm()">Cancel</button>
+                </div>
+            </div>
+        </div>
+        <!-- ── End Segment Management ──────────────────────────────────── -->
+
         {% else %}
             <!-- STUDENT VIEW -->
             <div id="booking-section" style="display: flex; gap: 0.5rem;">
@@ -1061,5 +1145,188 @@ if (urlParams.get('error') === 'quiz_locked') {
     </div>
     {% endif %}
 </div>
+
+{% if is_instructor %}
+<script>
+(function () {
+    'use strict';
+
+    const SESSION_ID  = {{ session.id }};
+    const API_BASE    = `/api/v1/sessions/${SESSION_ID}/segments`;
+    const SKILL_KEYS  = {{ all_skill_keys | tojson }};
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+
+    function showError(msg) {
+        const el = document.getElementById('seg-form-error');
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+
+    function hideError() {
+        document.getElementById('seg-form-error').style.display = 'none';
+    }
+
+    function getAuthHeaders() {
+        // Access token is stored as a cookie; fetch sends it automatically for same-origin.
+        return { 'Content-Type': 'application/json' };
+    }
+
+    // ── skill-target rows ─────────────────────────────────────────────────────
+
+    window.segAddSkillRow = function (key, weight) {
+        const container = document.getElementById('seg-skill-rows');
+        if (container.children.length >= 5) return;
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; gap:0.4rem; align-items:center;';
+        row.innerHTML = `
+            <select style="flex:2; font-size:0.85rem; border:1px solid #ccc; border-radius:4px; padding:0.25rem 0.4rem;">
+                <option value="">— select skill —</option>
+                ${SKILL_KEYS.map(k => `<option value="${k}" ${k === key ? 'selected' : ''}>${k.replace(/_/g, ' ')}</option>`).join('')}
+            </select>
+            <input type="number" step="0.1" min="0.1" value="${weight || ''}"
+                   style="width:70px; font-size:0.85rem; border:1px solid #ccc; border-radius:4px; padding:0.25rem 0.4rem;"
+                   placeholder="weight">
+            <button type="button" onclick="this.parentElement.remove()"
+                    style="background:none; border:none; color:#e74c3c; font-size:1rem; cursor:pointer;">✕</button>`;
+        container.appendChild(row);
+    };
+
+    function collectSkillTargets() {
+        const rows = document.querySelectorAll('#seg-skill-rows > div');
+        const result = {};
+        for (const row of rows) {
+            const sel = row.querySelector('select');
+            const inp = row.querySelector('input[type="number"]');
+            if (!sel.value) continue;
+            const w = parseFloat(inp.value);
+            if (!w || w <= 0) { showError(`Weight for "${sel.value}" must be > 0`); return null; }
+            result[sel.value] = w;
+        }
+        return Object.keys(result).length ? result : null;
+    }
+
+    // ── form open/close ───────────────────────────────────────────────────────
+
+    window.segToggleForm = function () {
+        document.getElementById('seg-edit-id').value = '';
+        document.getElementById('seg-f-position').value = '';
+        document.getElementById('seg-f-label').value = '';
+        document.getElementById('seg-f-duration').value = '';
+        document.getElementById('seg-skill-rows').innerHTML = '';
+        hideError();
+        document.getElementById('seg-form-wrap').style.display = 'block';
+        document.getElementById('seg-add-toggle').style.display = 'none';
+    };
+
+    window.segCancelForm = function () {
+        document.getElementById('seg-form-wrap').style.display = 'none';
+        document.getElementById('seg-add-toggle').style.display = '';
+        hideError();
+    };
+
+    window.segStartEdit = function (id, position, label, duration, skillTargets) {
+        document.getElementById('seg-edit-id').value = id;
+        document.getElementById('seg-f-position').value = position;
+        document.getElementById('seg-f-label').value = label;
+        document.getElementById('seg-f-duration').value = duration || '';
+        document.getElementById('seg-skill-rows').innerHTML = '';
+        if (skillTargets) {
+            Object.entries(skillTargets).forEach(([k, v]) => segAddSkillRow(k, v));
+        }
+        hideError();
+        document.getElementById('seg-form-wrap').style.display = 'block';
+        document.getElementById('seg-add-toggle').style.display = 'none';
+        document.getElementById('seg-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
+
+    // ── submit (add / edit) ───────────────────────────────────────────────────
+
+    window.segSubmit = async function () {
+        hideError();
+        const editId  = document.getElementById('seg-edit-id').value;
+        const position = document.getElementById('seg-f-position').value;
+        const label    = document.getElementById('seg-f-label').value.trim();
+        const duration = document.getElementById('seg-f-duration').value;
+
+        if (position === '') { showError('Position is required.'); return; }
+        if (!label)           { showError('Label is required.'); return; }
+
+        const skillTargets = collectSkillTargets();
+        if (skillTargets === null) return; // error already shown
+
+        const body = {
+            position: parseInt(position, 10),
+            label,
+            ...(duration ? { duration_minutes: parseInt(duration, 10) } : { duration_minutes: null }),
+            ...(skillTargets ? { skill_targets: skillTargets } : { skill_targets: null }),
+        };
+
+        try {
+            let resp;
+            if (editId) {
+                resp = await fetch(`${API_BASE}/${editId}`, {
+                    method: 'PATCH',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(body),
+                });
+            } else {
+                resp = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(body),
+                });
+            }
+
+            if (resp.status === 409) {
+                showError(`Position ${body.position} is already taken — choose another.`);
+                return;
+            }
+            if (!resp.ok) {
+                const data = await resp.json().catch(() => ({}));
+                showError(data.detail || 'Could not save. Please try again.');
+                return;
+            }
+
+            // Reload page to reflect updated list
+            window.location.reload();
+        } catch (_) {
+            showError('Could not save. Please try again.');
+        }
+    };
+
+    // ── delete ────────────────────────────────────────────────────────────────
+
+    window.segDelete = async function (id, label) {
+        if (!confirm(`Delete segment "${label}"? This cannot be undone.`)) return;
+        try {
+            const resp = await fetch(`${API_BASE}/${id}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders(),
+            });
+            if (!resp.ok) {
+                alert('Could not delete segment. Please try again.');
+                return;
+            }
+            const row = document.getElementById(`seg-row-${id}`);
+            if (row) row.remove();
+            // Show empty state if no rows left
+            if (!document.querySelector('.seg-row')) {
+                const empty = document.getElementById('seg-empty');
+                if (!empty) {
+                    const p = document.createElement('p');
+                    p.id = 'seg-empty';
+                    p.style.cssText = 'color:#aaa; font-size:0.9rem; margin:0.5rem 0;';
+                    p.textContent = 'No segments yet.';
+                    document.getElementById('seg-list').appendChild(p);
+                }
+            }
+        } catch (_) {
+            alert('Could not delete segment. Please try again.');
+        }
+    };
+})();
+</script>
+{% endif %}
 
 {% endblock %}

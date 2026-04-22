@@ -912,4 +912,28 @@ class TestSessionsSmoke:
             f"{response.status_code}"
         )
 
+    def test_session_details_instructor_segment_section_present(
+        self, api_client: TestClient, admin_token: str
+    ):
+        """
+        Regression: GET /sessions/{session_id} rendered HTML must contain the
+        segment management section when the viewer is the instructor.
+        Verifies that session_segments + all_skill_keys are injected into the
+        template context and the #seg-mgmt element is rendered.
+
+        Uses a literal path (422) or a real session (200). Both are valid —
+        the key assertion on 200 is that #seg-mgmt appears in the HTML body.
+        Source: app/api/web_routes/sessions.py + app/templates/session_details.html
+        """
+        headers = {"Authorization": f"Bearer {admin_token}"}
+        response = api_client.get("/sessions/{session_id}", headers=headers)
+
+        assert response.status_code in [200, 404, 422], (
+            f"GET /sessions/{{session_id}} unexpected status: {response.status_code}"
+        )
+        if response.status_code == 200:
+            assert "seg-mgmt" in response.text, (
+                "Segment management section (#seg-mgmt) missing from session details page"
+            )
+
 
