@@ -278,8 +278,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             # Enable XSS protection
             "X-XSS-Protection": "1; mode=block",
             
-            # Prevent page from being embedded in frames
-            "X-Frame-Options": "DENY",
+            # Allow same-origin iframe embedding (player card preview in dashboard)
+            "X-Frame-Options": "SAMEORIGIN",
             
             # Content Security Policy
             "Content-Security-Policy": self.csp_policy,
