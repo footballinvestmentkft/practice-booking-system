@@ -1,0 +1,442 @@
+{% extends "student_base.html" %}
+
+{% block title %}My Player Card — LFA{% endblock %}
+
+{# ── Spec header: utility bar only — mirrors /dashboard/lfa-football-player ── #}
+{% block student_header %}
+<div class="student-header spec-pg-hdr">
+    <div class="student-header-inner">
+        <a href="/dashboard" class="s-hdr-btn" title="Back to Hub">🏠</a>
+        <div class="student-brand">⚽ LFA Football Player</div>
+        <div class="student-header-actions">
+            <span class="credit-pill">💰 {{ user.credit_balance if user else 0 }}</span>
+            <a href="/credits" class="s-hdr-btn" title="Credits">💳</a>
+            <div class="badge-wrap">
+                <a href="/messages" class="s-hdr-btn" title="Messages" aria-label="Messages">✉️</a>
+                <span class="badge-dot" id="hdr-msg-badge">0</span>
+            </div>
+            <div class="badge-wrap">
+                <a href="/notifications" class="s-hdr-btn" title="Notifications" aria-label="Notifications">🔔</a>
+                <span class="badge-dot" id="hdr-notif-badge">0</span>
+            </div>
+            <a href="/profile" class="s-hdr-btn" title="Profile">👤</a>
+            <a href="/logout"  class="s-hdr-btn" title="Logout">🚪</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* ── Container ──────────────────────────────────────────────────────────── */
+    .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 1.25rem 2rem 2rem;
+    }
+    .page-title { font-size: 1.4rem; color: var(--app-text); margin: 0; }
+
+    /* ── Section block ───────────────────────────────────────────────────────── */
+    .section-block {
+        background: var(--app-card);
+        border-radius: 16px;
+        padding: 1.75rem 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        margin-bottom: 1.5rem;
+    }
+    .section-link { color: #667eea; font-size: 0.88rem; text-decoration: none; font-weight: 600; white-space: nowrap; }
+    .section-link:hover { text-decoration: underline; }
+
+    /* ── Player Card embed ────────────────────────────────────────────────────── */
+    .player-card-embed-wrap { border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.13); }
+    .player-card-embed-wrap iframe { display: block; width: 100%; border: none; }
+
+    /* ── Theme picker ─────────────────────────────────────────────────────────── */
+    .theme-picker { display: flex; align-items: center; gap: 0.45rem; flex-wrap: nowrap; }
+    .theme-dot {
+        width: 18px; height: 18px; border-radius: 50%; cursor: pointer;
+        border: 2px solid transparent; transition: border-color .15s, transform .15s;
+        position: relative; flex-shrink: 0;
+    }
+    .theme-dot:hover { transform: scale(1.2); }
+    .theme-dot.active { border-color: white; box-shadow: 0 0 0 2px rgba(255,255,255,0.35); }
+    .theme-dot.locked { opacity: 0.55; cursor: pointer; }
+    .theme-dot.locked:hover { transform: scale(1.15); opacity: 0.8; }
+    .theme-dot .lock-icon {
+        position: absolute; top: -5px; right: -5px;
+        font-size: 0.5rem; line-height: 1; pointer-events: none;
+    }
+
+    /* ── Variant picker ───────────────────────────────────────────────────────── */
+    .variant-picker { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .variant-btn {
+        font-size: 0.68rem; font-weight: 700; padding: 4px 10px; border-radius: 99px;
+        cursor: pointer; border: 1.5px solid transparent; transition: all .15s;
+        background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.65);
+        display: flex; align-items: center; gap: 0.3rem; white-space: nowrap;
+    }
+    .variant-btn:hover { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.88); }
+    .variant-btn.active {
+        background: rgba(102,126,234,0.2); border-color: rgba(102,126,234,0.6);
+        color: #a3b3f7;
+    }
+    .variant-btn.locked { opacity: 0.6; }
+    .variant-btn.unavailable { opacity: 0.55; cursor: pointer; }
+    .variant-btn.previewing {
+        border-color: rgba(102,126,234,0.35);
+        background: rgba(102,126,234,0.1);
+        color: rgba(163,179,247,0.8);
+    }
+    .variant-btn .var-cost { font-size: 0.6rem; opacity: 0.75; }
+
+    /* ── Player photo widget ─────────────────────────────────────────────── */
+    .player-photo-section {
+        margin: 1.25rem 0 0;
+        background: rgba(255,255,255,0.04);
+        border-radius: 12px;
+        padding: 1.1rem 1.25rem;
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+    .player-photo-section-title {
+        font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
+        letter-spacing: 0.1em; color: rgba(255,255,255,0.45); margin-bottom: 0.9rem;
+    }
+    .player-photo-body {
+        display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+    }
+    .player-photo-preview {
+        width: 96px; height: 96px; border-radius: 50%; object-fit: cover;
+        border: 3px solid rgba(255,255,255,0.2);
+    }
+    .player-photo-placeholder {
+        width: 96px; height: 96px; border-radius: 50%;
+        background: rgba(255,255,255,0.08); border: 2px dashed rgba(255,255,255,0.2);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2rem; color: rgba(255,255,255,0.3);
+    }
+    .player-photo-hint { font-size: 0.7rem; color: rgba(255,255,255,0.35); text-align: center; }
+    .player-photo-empty { font-size: 0.78rem; color: rgba(255,255,255,0.45); text-align: center; }
+    .btn-photo-upload-student {
+        cursor: pointer; font-size: 0.72rem; font-weight: 600;
+        padding: 6px 16px; border-radius: 99px;
+        background: rgba(102,126,234,0.7); color: white;
+        border: 1px solid rgba(102,126,234,0.4); transition: background 0.15s;
+    }
+    .btn-photo-upload-student:hover { background: rgba(102,126,234,1); }
+    .btn-photo-delete-student {
+        font-size: 0.7rem; padding: 5px 12px; border-radius: 99px;
+        background: rgba(220,53,69,0.4); border: none; color: rgba(255,255,255,0.8); cursor: pointer;
+    }
+    .btn-photo-delete-student:hover { background: rgba(220,53,69,0.7); }
+
+    /* ── Light mode overrides — system preference OR explicit .light class ─── */
+    @media (prefers-color-scheme: light) {
+        .variant-btn {
+            background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.72);
+            border-color: rgba(0,0,0,0.12);
+        }
+        .variant-btn:hover { background: rgba(0,0,0,0.10); color: rgba(0,0,0,0.9); }
+        .variant-btn.active {
+            background: rgba(102,126,234,0.15); border-color: rgba(102,126,234,0.5);
+            color: #3730a3;
+        }
+        .player-photo-section { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); }
+        .player-photo-section-title { color: rgba(0,0,0,0.45); }
+        .player-photo-hint, .player-photo-empty { color: rgba(0,0,0,0.45); }
+        .player-photo-placeholder {
+            background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.2);
+            color: rgba(0,0,0,0.3);
+        }
+        .btn-photo-delete-student { background: rgba(220,53,69,0.15); color: rgba(220,53,69,0.9); }
+        .btn-photo-delete-student:hover { background: rgba(220,53,69,0.25); }
+    }
+    .light .variant-btn {
+        background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.72);
+        border-color: rgba(0,0,0,0.12);
+    }
+    .light .variant-btn:hover { background: rgba(0,0,0,0.10); color: rgba(0,0,0,0.9); }
+    .light .variant-btn.active {
+        background: rgba(102,126,234,0.15); border-color: rgba(102,126,234,0.5);
+        color: #3730a3;
+    }
+    .light .player-photo-section { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); }
+    .light .player-photo-section-title { color: rgba(0,0,0,0.45); }
+    .light .player-photo-hint, .light .player-photo-empty { color: rgba(0,0,0,0.45); }
+    .light .player-photo-placeholder {
+        background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.2);
+        color: rgba(0,0,0,0.3);
+    }
+    .light .btn-photo-delete-student { background: rgba(220,53,69,0.15); color: rgba(220,53,69,0.9); }
+    .light .btn-photo-delete-student:hover { background: rgba(220,53,69,0.25); }
+
+    @media (max-width: 768px) { .container { padding: 1rem; } }
+</style>
+{% endblock %}
+
+{% block student_content %}
+
+{# ── Breadcrumb ─────────────────────────────────────────────────────────────── #}
+<nav class="s-breadcrumb" aria-label="Breadcrumb">
+    <a href="/dashboard" class="s-breadcrumb-item">🏠 Hub</a>
+    <span class="s-breadcrumb-sep">›</span>
+    <a href="/dashboard/lfa-football-player" class="s-breadcrumb-item">⚽ LFA Football Player</a>
+    <span class="s-breadcrumb-sep">›</span>
+    <span class="s-breadcrumb-item active">🪪 My Player Card</span>
+</nav>
+
+<div class="container">
+
+    <section class="section-block" style="padding: 1.25rem; margin-bottom: 1.5rem;">
+        <div style="margin-bottom: 0.75rem;">
+            <h2 class="page-title" style="margin-bottom: 0.6rem;">🪪 My Player Card</h2>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem;">
+                {# ── Theme picker ── #}
+                <div class="theme-picker" id="theme-picker">
+                    {% for t in card_themes %}
+                    <button class="theme-dot {% if t.id == active_card_theme %}active{% endif %} {% if not t.unlocked %}locked{% endif %}"
+                            style="background: {{ t.dot_color }};"
+                            title="{{ t.label }}{% if t.is_premium and not t.unlocked %} · 🔓 Unlock for {{ t.credit_cost }} CR{% endif %}"
+                            onclick="setCardTheme('{{ t.id }}', {{ 'true' if t.unlocked else 'false' }}, '{{ t.label }}', {{ t.credit_cost }})">
+                        {% if t.is_premium and not t.unlocked %}<span class="lock-icon">🔒</span>{% endif %}
+                    </button>
+                    {% endfor %}
+                </div>
+                <a href="/players/{{ user.id }}/card" target="_blank" class="section-link">🌐 Open full screen →</a>
+            </div>
+            {# ── Variant picker ── #}
+            {% if show_variant_picker and card_variants is defined %}
+            <div class="variant-picker" id="variant-picker">
+                {% for v in card_variants %}
+                <button class="variant-btn {% if v.id == active_card_variant %}active{% endif %} {% if not v.unlocked %}locked{% endif %} {% if not v.available %}unavailable{% endif %}"
+                        data-variant="{{ v.id }}"
+                        title="{{ v.description }}{% if not v.available %} · Preview only{% elif v.is_premium and not v.unlocked %} · Unlock for {{ v.credit_cost }} CR{% endif %}"
+                        onclick="{% if v.available %}setCardVariant('{{ v.id }}', {{ 'true' if v.unlocked else 'false' }}, '{{ v.label }}', {{ v.credit_cost }}){% else %}previewVariant('{{ v.id }}'){% endif %}">
+                    {% if not v.available %}⏳{% elif v.is_premium and not v.unlocked %}🔒{% endif %}
+                    {{ v.label }}
+                    {% if v.is_premium and not v.unlocked and v.available %}<span class="var-cost">{{ v.credit_cost }} CR</span>{% endif %}
+                    <a href="/players/{{ user.id }}/card?preview={{ v.id }}" target="_blank"
+                       onclick="event.stopPropagation();" title="Preview {{ v.label }} layout in new tab"
+                       style="font-size:0.6rem; opacity:0.6; text-decoration:none; color:inherit;">↗</a>
+                </button>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        <div class="player-card-embed-wrap">
+            <iframe id="player-card-iframe" src="/players/{{ user.id }}/card" height="920" scrolling="no"
+                    title="My Player Card"></iframe>
+        </div>
+    </section>
+
+    {# ── Photo upload sections ── #}
+    <div class="player-photo-section">
+        <div class="player-photo-section-title">⚽ Player Card Photo</div>
+        <div class="player-photo-body">
+            {% if user_license.player_card_photo_url %}
+            <img src="{{ user_license.player_card_photo_url }}"
+                 class="player-photo-preview" alt="Player card photo">
+            {% else %}
+            <div class="player-photo-placeholder">📷</div>
+            <p class="player-photo-empty">Még nincs profilkép — tölts fel egyet a kártyádhoz!</p>
+            {% endif %}
+            <label class="btn-photo-upload-student">
+                📷 Fotó feltöltése
+                <input type="file" accept="image/jpeg,image/png,image/webp"
+                       onchange="uploadMyPhoto(this)" hidden>
+            </label>
+            {% if user_license.player_card_photo_url %}
+            <button class="btn-photo-delete-student" onclick="deleteMyPhoto()">✕ Törlés</button>
+            {% endif %}
+            <p class="player-photo-hint">Max 2 MB · JPEG/PNG/WEBP · automatikus 400×400 vágás</p>
+        </div>
+    </div>
+
+    {# ── Compact BG photo (only when compact_bg is unlocked) ── #}
+    {% set _unlocked = user_license.unlocked_card_variants or [] %}
+    {% if 'compact_bg' in _unlocked %}
+    <div class="player-photo-section">
+        <div class="player-photo-section-title">🎨 Compact+BG — Background Photo</div>
+        <div class="player-photo-body">
+            {% if user_license.card_bg_compact_url %}
+            <img src="{{ user_license.card_bg_compact_url }}"
+                 class="player-photo-preview" alt="Compact BG photo">
+            {% else %}
+            <div class="player-photo-placeholder">🖼️</div>
+            <p class="player-photo-empty">Háttérkép hiányzik — tölts fel egyet!</p>
+            {% endif %}
+            <label class="btn-photo-upload-student">
+                🖼️ Háttér feltöltése
+                <input type="file" accept="image/jpeg,image/png,image/webp"
+                       onchange="uploadCompactBg(this)" hidden>
+            </label>
+            {% if user_license.card_bg_compact_url %}
+            <button class="btn-photo-delete-student" onclick="deleteCompactBg()">✕ Törlés</button>
+            {% endif %}
+            <p class="player-photo-hint">Max 8 MB · JPEG/PNG/WEBP · 800×800 px max</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {# ── Showcase BG photo (only when showcase_bg is unlocked) ── #}
+    {% if 'showcase_bg' in _unlocked %}
+    <div class="player-photo-section">
+        <div class="player-photo-section-title">🎨 Showcase+BG — Background Photo</div>
+        <div class="player-photo-body">
+            {% if user_license.card_bg_showcase_url %}
+            <img src="{{ user_license.card_bg_showcase_url }}"
+                 class="player-photo-preview" alt="Showcase BG photo">
+            {% else %}
+            <div class="player-photo-placeholder">🖼️</div>
+            <p class="player-photo-empty">Háttérkép hiányzik — tölts fel egyet!</p>
+            {% endif %}
+            <label class="btn-photo-upload-student">
+                🖼️ Háttér feltöltése
+                <input type="file" accept="image/jpeg,image/png,image/webp"
+                       onchange="uploadShowcaseBg(this)" hidden>
+            </label>
+            {% if user_license.card_bg_showcase_url %}
+            <button class="btn-photo-delete-student" onclick="deleteShowcaseBg()">✕ Törlés</button>
+            {% endif %}
+            <p class="player-photo-hint">Max 8 MB · JPEG/PNG/WEBP · 800×800 px max</p>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function unlockTheme(themeId, label, cost) {
+    if (!confirm(`Unlock "${label}" for ${cost} CR from your credit balance?`)) return;
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/unlock-theme', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+        body: JSON.stringify({ theme: themeId }),
+    });
+    const data = await r.json();
+    if (data.ok) { location.reload(); }
+    else { alert('❌ ' + (data.error || 'Could not unlock theme.')); }
+}
+
+async function setCardTheme(themeId, unlocked, label, cost) {
+    if (!unlocked) { await unlockTheme(themeId, label, cost); return; }
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/card-theme', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+        body: JSON.stringify({ theme: themeId }),
+    });
+    const data = await r.json();
+    if (data.ok) {
+        document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+        const active = document.querySelector(`.theme-dot[onclick*="'${themeId}'"]`);
+        if (active) active.classList.add('active');
+        const iframe = document.getElementById('player-card-iframe');
+        if (iframe) { iframe.src = iframe.src; }
+    } else { alert(data.error || 'Could not apply theme.'); }
+}
+
+async function unlockVariant(variantId, label, cost) {
+    if (!confirm(`Unlock "${label}" layout for ${cost} CR from your credit balance?`)) return;
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/unlock-variant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+        body: JSON.stringify({ variant: variantId }),
+    });
+    const data = await r.json();
+    if (data.ok) { location.reload(); }
+    else { alert('❌ ' + (data.error || 'Could not unlock variant.')); }
+}
+
+const _cardUserId = {{ user.id }};
+
+function previewVariant(variantId) {
+    const iframe = document.getElementById('player-card-iframe');
+    if (iframe) { iframe.src = `/players/${_cardUserId}/card?preview=${variantId}`; }
+    document.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('previewing'));
+    const btn = document.querySelector(`.variant-btn[data-variant="${variantId}"]`);
+    if (btn) btn.classList.add('previewing');
+}
+
+async function setCardVariant(variantId, unlocked, label, cost) {
+    if (!unlocked) { await unlockVariant(variantId, label, cost); return; }
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/card-variant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+        body: JSON.stringify({ variant: variantId }),
+    });
+    const data = await r.json();
+    if (data.ok) {
+        document.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('active', 'previewing'));
+        const active = document.querySelector(`.variant-btn[data-variant="${variantId}"]`);
+        if (active) active.classList.add('active');
+        const iframe = document.getElementById('player-card-iframe');
+        if (iframe) { iframe.src = `/players/${_cardUserId}/card`; }
+    } else { alert(data.error || 'Could not apply variant.'); }
+}
+
+async function uploadMyPhoto(input) {
+    if (!input.files[0]) return;
+    const fd = new FormData(); fd.append('file', input.files[0]);
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-photo', {
+        method: 'POST', body: fd, headers: { 'X-CSRF-Token': csrf }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload(); else alert('Hiba a feltöltésnél: ' + data.error);
+}
+async function deleteMyPhoto() {
+    if (!confirm('Törli a profilképet?')) return;
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-photo/delete', {
+        method: 'POST', headers: { 'X-CSRF-Token': csrf, 'Content-Type': 'application/json' }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload();
+}
+
+async function uploadCompactBg(input) {
+    if (!input.files[0]) return;
+    const fd = new FormData(); fd.append('file', input.files[0]);
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-photo-compact-bg', {
+        method: 'POST', body: fd, headers: { 'X-CSRF-Token': csrf }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload(); else alert('Hiba a feltöltésnél: ' + data.error);
+}
+async function deleteCompactBg() {
+    if (!confirm('Törli a Compact+BG háttérképet?')) return;
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-photo-compact-bg/delete', {
+        method: 'POST', headers: { 'X-CSRF-Token': csrf, 'Content-Type': 'application/json' }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload();
+}
+
+async function uploadShowcaseBg(input) {
+    if (!input.files[0]) return;
+    const fd = new FormData(); fd.append('file', input.files[0]);
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-photo-showcase-bg', {
+        method: 'POST', body: fd, headers: { 'X-CSRF-Token': csrf }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload(); else alert('Hiba a feltöltésnél: ' + data.error);
+}
+async function deleteShowcaseBg() {
+    if (!confirm('Törli a Showcase+BG háttérképet?')) return;
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-photo-showcase-bg/delete', {
+        method: 'POST', headers: { 'X-CSRF-Token': csrf, 'Content-Type': 'application/json' }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload();
+}
+</script>
+{% endblock %}

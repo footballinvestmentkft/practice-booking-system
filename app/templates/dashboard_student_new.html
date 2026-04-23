@@ -2,7 +2,7 @@
 
 {% block title %}{{ spec_config.name }} Dashboard - LFA{% endblock %}
 
-{# ── Custom spec header: floating slate card with spec nav ───────────────────── #}
+{# ── Spec header: utility bar only — navbar = global actions, mod-nav cards = feature nav ── #}
 {% block student_header %}
 <div class="student-header spec-pg-hdr">
     <div class="student-header-inner">
@@ -19,6 +19,14 @@
         <div class="student-header-actions">
             <span class="credit-pill">💰 {{ user.credit_balance if user else 0 }}</span>
             <a href="/credits" class="s-hdr-btn" title="Credits">💳</a>
+            <div class="badge-wrap">
+                <a href="/messages" class="s-hdr-btn" title="Messages" aria-label="Messages">✉️</a>
+                <span class="badge-dot" id="hdr-msg-badge">0</span>
+            </div>
+            <div class="badge-wrap">
+                <a href="/notifications" class="s-hdr-btn" title="Notifications" aria-label="Notifications">🔔</a>
+                <span class="badge-dot" id="hdr-notif-badge">0</span>
+            </div>
             <a href="/profile" class="s-hdr-btn" title="Profile">👤</a>
             <a href="/logout"  class="s-hdr-btn" title="Logout">🚪</a>
         </div>
@@ -30,8 +38,8 @@
 <style>
     /* spec-pg-hdr + mod-nav-* → student.css v5 */
 
-    /* ── Spec dashboard: 5-column override (sub-pages use 4-col from student.css) */
-    .mod-nav-grid { grid-template-columns: repeat(5, 1fr); }
+    /* ── Spec dashboard: 6-column override (sub-pages use 4-col from student.css) */
+    .mod-nav-grid { grid-template-columns: repeat(6, 1fr); }
     @media (max-width: 768px) { .mod-nav-grid { grid-template-columns: repeat(3, 1fr); } }
     @media (max-width: 480px) { .mod-nav-grid { grid-template-columns: repeat(3, 1fr); } }
 
@@ -39,11 +47,11 @@
     .container {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 1.25rem 2rem 2rem;
+        padding: 1.25rem 0.5rem 2rem;
     }
 
-    .page-title    { font-size: 1.4rem; color: #2d3748; margin: 0; }
-    .page-subtitle { color: #718096; font-size: 0.95rem; margin-bottom: 1.5rem; }
+    .page-title    { font-size: 1.4rem; color: var(--app-text); margin: 0; }
+    .page-subtitle { color: var(--app-text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; }
 
     .info-banner { background: #e6f7ff; border-left: 4px solid #1890ff; padding: 1rem 1.5rem; border-radius: 8px; margin-bottom: 2rem; }
     .info-banner p { color: #0050b3; margin: 0; }
@@ -57,7 +65,7 @@
     }
 
     .s-kpi-card {
-        background: white;
+        background: var(--app-card);
         border-radius: 8px;
         padding: 1.25rem 1.5rem;
         box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
@@ -71,16 +79,16 @@
     .s-kpi-row .s-kpi-card:nth-child(3) { border-top-color: #f59e0b; }
     .s-kpi-row .s-kpi-card:nth-child(4) { border-top-color: #4299e1; }
 
-    .s-kpi-val { font-size: 2rem; font-weight: 700; color: #2d3748; line-height: 1.1; }
+    .s-kpi-val { font-size: 2rem; font-weight: 700; color: var(--app-text); line-height: 1.1; }
     .s-kpi-row .s-kpi-card:nth-child(1) .s-kpi-val { color: #276749; }
     .s-kpi-row .s-kpi-card:nth-child(2) .s-kpi-val { color: #553c9a; }
     .s-kpi-row .s-kpi-card:nth-child(3) .s-kpi-val { color: #92400e; }
     .s-kpi-row .s-kpi-card:nth-child(4) .s-kpi-val { color: #2b6cb0; }
-    .s-kpi-lbl { font-size: 0.82rem; color: #718096; margin-top: 0.25rem; }
+    .s-kpi-lbl { font-size: 0.82rem; color: var(--app-text-muted); margin-top: 0.25rem; }
 
     /* ── Section block ───────────────────────────────────────────────────────── */
     .section-block {
-        background: white;
+        background: var(--app-card);
         border-radius: 16px;
         padding: 1.75rem 2rem;
         box-shadow: 0 4px 12px rgba(0,0,0,0.08);
@@ -90,34 +98,61 @@
     .section-link { color: #667eea; font-size: 0.88rem; text-decoration: none; font-weight: 600; white-space: nowrap; }
     .section-link:hover { text-decoration: underline; }
 
-    /* ── Skill Snapshot ──────────────────────────────────────────────────────── */
+    /* ── Skill Snapshot (fallback, no LFA license) ───────────────────────────── */
     .s-snapshot-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.65rem; }
-    .s-snap-label   { width: 130px; font-size: 0.85rem; color: #4a5568; text-transform: capitalize; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .s-snap-bar-wrap { flex: 1; height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden; }
+    .s-snap-label   { width: 130px; font-size: 0.85rem; color: var(--app-text-muted); text-transform: capitalize; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .s-snap-bar-wrap { flex: 1; height: 10px; background: var(--app-border); border-radius: 5px; overflow: hidden; }
     .s-snap-bar     { height: 100%; border-radius: 5px; transition: width 0.4s ease; }
-    .s-snap-val     { width: 38px; text-align: right; font-size: 0.82rem; font-weight: 600; color: #2d3748; flex-shrink: 0; }
+    .s-snap-val     { width: 38px; text-align: right; font-size: 0.82rem; font-weight: 600; color: var(--app-text); flex-shrink: 0; }
+
+    /* ── 2-column main layout ─────────────────────────────────────────────────── */
+    .dash-main-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 1.5rem;
+        align-items: start;
+        margin-bottom: 1.5rem;
+    }
+    .dash-right-col { display: flex; flex-direction: column; gap: 1.5rem; }
+    .dash-right-col .section-block { margin-bottom: 0; }
+    /* mod-nav + KPI inside right col */
+    .dash-right-col .mod-nav-section {
+        background: var(--app-card);
+        border-radius: 16px;
+        padding: 1.1rem 1.1rem 0.6rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        margin: 0;
+    }
+    .dash-right-col .s-kpi-row { margin-bottom: 0; }
+    @media (max-width: 1024px) {
+        .dash-main-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Player Card live preview (left column) ─────────────────────────────── */
+    .player-card-embed-wrap { border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.13); }
+    .player-card-embed-wrap iframe { display: block; width: 100%; border: none; }
 
     /* ── Last Result ─────────────────────────────────────────────────────────── */
-    .s-last-result-card { background: #f8faff; border-left: 4px solid #667eea; border-radius: 0 10px 10px 0; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-    .s-result-name     { font-weight: 700; color: #2d3748; font-size: 1rem; flex: 1; min-width: 140px; }
+    .s-last-result-card { background: var(--app-card); border-left: 4px solid #667eea; border-radius: 0 10px 10px 0; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .s-result-name     { font-weight: 700; color: var(--app-text); font-size: 1rem; flex: 1; min-width: 140px; }
     .s-placement-badge { padding: 0.3rem 0.8rem; border-radius: 20px; font-weight: 700; font-size: 0.85rem; white-space: nowrap; }
     .s-place-1     { background: #fff3cd; color: #856404; }
     .s-place-2     { background: #e2e3e5; color: #383d41; }
     .s-place-3     { background: #fde7c7; color: #7a4200; }
-    .s-place-other { background: #f8f9fa; color: #6c757d; }
-    .s-delta-pos   { color: #2ecc71; font-weight: 700; font-size: 0.95rem; }
-    .s-delta-neg   { color: #e74c3c; font-weight: 700; font-size: 0.95rem; }
-    .s-delta-zero  { color: #718096; font-size: 0.95rem; }
-    .s-result-meta { color: #718096; font-size: 0.82rem; }
+    .s-place-other { background: var(--app-card-alt); color: var(--app-text-muted); }
+    .s-delta-pos   { color: var(--app-success); font-weight: 700; font-size: 0.95rem; }
+    .s-delta-neg   { color: var(--app-error); font-weight: 700; font-size: 0.95rem; }
+    .s-delta-zero  { color: var(--app-text-muted); font-size: 0.95rem; }
+    .s-result-meta { color: var(--app-text-muted); font-size: 0.82rem; }
 
     /* ── Events (semester cards) ─────────────────────────────────────────────── */
     .cards-grid  { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
-    .spec-card   { background: white; border-radius: 16px; padding: 1.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: transform 0.3s, box-shadow 0.3s; position: relative; overflow: hidden; }
+    .spec-card   { background: var(--app-card); border-radius: 16px; padding: 1.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: transform 0.3s, box-shadow 0.3s; position: relative; overflow: hidden; }
     .spec-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
     .spec-icon   { font-size: 2.5rem; text-align: center; margin-bottom: 0.75rem; }
-    .spec-title  { font-size: 1.2rem; font-weight: 700; color: #2d3748; text-align: center; margin-bottom: 0.4rem; }
-    .spec-age    { text-align: center; color: #718096; font-size: 0.88rem; margin-bottom: 0.9rem; }
-    .spec-description { color: #4a5568; font-size: 0.93rem; line-height: 1.55; margin-bottom: 1.2rem; text-align: center; }
+    .spec-title  { font-size: 1.2rem; font-weight: 700; color: var(--app-text); text-align: center; margin-bottom: 0.4rem; }
+    .spec-age    { text-align: center; color: var(--app-text-muted); font-size: 0.88rem; margin-bottom: 0.9rem; }
+    .spec-description { color: var(--app-text-muted); font-size: 0.93rem; line-height: 1.55; margin-bottom: 1.2rem; text-align: center; }
     .spec-action { text-align: center; }
     .unlock-btn  { width: 100%; padding: 0.85rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 0.97rem; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
     .unlock-btn:hover    { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
@@ -150,45 +185,6 @@
         .mod-nav-title  { font-size: 0.76rem; }
     }
 
-    /* ── Player photo widget ─────────────────────────────────────────────── */
-    .player-photo-section {
-        margin: 1.25rem 0 0;
-        background: rgba(255,255,255,0.04);
-        border-radius: 12px;
-        padding: 1.1rem 1.25rem;
-        border: 1px solid rgba(255,255,255,0.08);
-    }
-    .player-photo-section-title {
-        font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
-        letter-spacing: 0.1em; color: rgba(255,255,255,0.45); margin-bottom: 0.9rem;
-    }
-    .player-photo-body {
-        display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
-    }
-    .player-photo-preview {
-        width: 96px; height: 96px; border-radius: 50%; object-fit: cover;
-        border: 3px solid rgba(255,255,255,0.2);
-    }
-    .player-photo-placeholder {
-        width: 96px; height: 96px; border-radius: 50%;
-        background: rgba(255,255,255,0.08); border: 2px dashed rgba(255,255,255,0.2);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 2rem; color: rgba(255,255,255,0.3);
-    }
-    .player-photo-hint { font-size: 0.7rem; color: rgba(255,255,255,0.35); text-align: center; }
-    .player-photo-empty { font-size: 0.78rem; color: rgba(255,255,255,0.45); text-align: center; }
-    .btn-photo-upload-student {
-        cursor: pointer; font-size: 0.72rem; font-weight: 600;
-        padding: 6px 16px; border-radius: 99px;
-        background: rgba(102,126,234,0.7); color: white;
-        border: 1px solid rgba(102,126,234,0.4); transition: background 0.15s;
-    }
-    .btn-photo-upload-student:hover { background: rgba(102,126,234,1); }
-    .btn-photo-delete-student {
-        font-size: 0.7rem; padding: 5px 12px; border-radius: 99px;
-        background: rgba(220,53,69,0.4); border: none; color: rgba(255,255,255,0.8); cursor: pointer;
-    }
-    .btn-photo-delete-student:hover { background: rgba(220,53,69,0.7); }
 </style>
 {% endblock %}
 
@@ -201,151 +197,161 @@
     <span class="s-breadcrumb-item active">{{ spec_config.icon if spec_config else '⚽' }} {{ spec_config.name if spec_config else 'LFA Football Player' }}</span>
 </nav>
 
-{# ── Module Navigation Cards ───────────────────────────────────────────────── #}
-{# All 5 targets have require_student_onboarding guard → redirect /dashboard    #}
-{# if user.onboarding_completed is False. (/sessions & /calendar use inline     #}
-{# equivalent check in sessions.py.)                                            #}
-<section class="mod-nav-section">
-    <div class="mod-nav-grid">
-        <a href="/sessions" class="mod-nav-card">
-            <span class="mod-nav-icon">📅</span>
-            <span class="mod-nav-title">Sessions</span>
-        </a>
-        <a href="/progress" class="mod-nav-card">
-            <span class="mod-nav-icon">📊</span>
-            <span class="mod-nav-title">Progress</span>
-        </a>
-        <a href="/skills" class="mod-nav-card">
-            <span class="mod-nav-icon">⚡</span>
-            <span class="mod-nav-title">Skills</span>
-        </a>
-        <a href="/achievements" class="mod-nav-card">
-            <span class="mod-nav-icon">🏆</span>
-            <span class="mod-nav-title">Achievements</span>
-        </a>
-        <a href="/calendar" class="mod-nav-card">
-            <span class="mod-nav-icon">📆</span>
-            <span class="mod-nav-title">Calendar</span>
-        </a>
-    </div>
-</section>
-
 <div class="container">
 
-    {# ── KPI Row ──────────────────────────────────────────────────────────────── #}
-    <div class="s-kpi-row">
-        <div class="s-kpi-card">
-            <div class="s-kpi-val" id="kpi-avg">—</div>
-            <div class="s-kpi-lbl">Avg Skill Level</div>
-        </div>
-        <div class="s-kpi-card">
-            <div class="s-kpi-val" id="kpi-tournaments">—</div>
-            <div class="s-kpi-lbl">Tournaments</div>
-        </div>
-        <div class="s-kpi-card">
-            <div class="s-kpi-val">{{ credit_balance }}</div>
-            <div class="s-kpi-lbl">Credits</div>
-        </div>
-        <div class="s-kpi-card">
-            <div class="s-kpi-val" style="font-size:1.2rem;">{{ age_category or '—' }}</div>
-            <div class="s-kpi-lbl">{{ age_range or 'Category' }}</div>
-        </div>
-    </div>
+    {# ── 2-column main grid ────────────────────────────────────────────────────── #}
+    <div class="dash-main-grid">
 
-    {# ── Skill Snapshot ───────────────────────────────────────────────────────── #}
-    <section class="section-block">
-        <div class="section-header">
-            <h2 class="page-title">📊 Skill Snapshot</h2>
-            <a href="/skills" class="section-link">View all 29 skills →</a>
-        </div>
-        <div id="s-snapshot">
-            <div class="s-loading"><span class="s-spinner"></span> Loading…</div>
-        </div>
-    </section>
-
-    {# ── Last Skill Event ─────────────────────────────────────────────────────── #}
-    <section class="section-block">
-        <div class="section-header">
-            <h2 class="page-title">📈 Last Skill Event</h2>
-            <a href="/skills/history?skill=passing" class="section-link">Full event history →</a>
-        </div>
-        <div id="s-last-result">
-            <div class="s-loading"><span class="s-spinner"></span> Loading…</div>
-        </div>
-    </section>
-
-    {# ── Available Events ─────────────────────────────────────────────────────── #}
-    <section class="section-block">
-        <div class="section-header">
-            <h2 class="page-title">⚽ Available Events</h2>
-        </div>
-        <p class="page-subtitle">Enroll in semesters to access training sessions and progress through your football development path.</p>
-
-        {% if available_semesters|length == 0 %}
-        <div class="info-banner" style="background: #fff7e6; border-color: #faad14;">
-            <p style="color: #ad6800;">⚠️ <strong>No track semesters available for your age group yet.</strong><br>
-            Check back later, or <a href="/profile" style="color: #ad6800; text-decoration: underline;">update your profile</a> if your age group is incorrect.</p>
-        </div>
+        {# LEFT: My Card teaser (LFA license) / Skill Snapshot fallback ────────── #}
+        {% if user_license %}
+        <section class="section-block" style="margin-bottom: 0; padding: 1.25rem 1.5rem 1.5rem;">
+            <div class="section-header" style="margin-bottom: 1rem;">
+                <h2 class="page-title">🪪 My Player Card</h2>
+                <a href="/dashboard/lfa-football-player/card-editor" class="section-link">✏️ Edit →</a>
+            </div>
+            <div class="player-card-embed-wrap">
+                <iframe src="/players/{{ user.id }}/card" height="680" scrolling="no" title="My Player Card"></iframe>
+            </div>
+        </section>
         {% else %}
-        <div class="info-banner">
-            <p><strong>💡 Available Semesters for {{ age_category_name }} ({{ age_range }})</strong><br>
-            {{ age_description }} — {{ available_semesters|length }} semester(s) available</p>
-        </div>
+        <section class="section-block" style="margin-bottom: 0;">
+            <div class="section-header">
+                <h2 class="page-title">📊 Skill Snapshot</h2>
+                <a href="/skills" class="section-link">View all 29 skills →</a>
+            </div>
+            <div id="s-snapshot">
+                <div class="s-loading"><span class="s-spinner"></span> Loading…</div>
+            </div>
+        </section>
         {% endif %}
 
-        <div class="cards-grid">
-            {% for semester in available_semesters %}
-            <div class="spec-card">
-                <div class="cost-badge">💰 {{ semester.enrollment_cost }} Credits</div>
-                <div class="spec-icon">⚽</div>
-                <h3 class="spec-title">{{ semester.name }}</h3>
-                <p class="spec-age">📅 {{ semester.start_date.strftime('%Y-%m-%d') }} — {{ semester.end_date.strftime('%Y-%m-%d') }}</p>
-                <p class="spec-description">
-                    <strong>Code:</strong> {{ semester.code }}<br>
-                    <strong>Status:</strong> {{ semester.status.value if semester.status else 'Unknown' }}
-                </p>
-                <div class="spec-action">
-                    {% if user.credit_balance < semester.enrollment_cost %}
-                        <button class="unlock-btn" disabled>❌ Insufficient Credits (Need {{ semester.enrollment_cost }})</button>
-                        <p style="margin-top: 0.5rem; font-size: 0.85rem;">
-                            <a href="/credits" style="color: #667eea; font-weight: 600;">Purchase credits →</a>
-                        </p>
-                    {% else %}
-                        <form method="POST" action="/semester/enroll">
-                            <input type="hidden" name="semester_id" value="{{ semester.id }}">
-                            <button type="submit" class="unlock-btn">🎓 Enroll Now ({{ semester.enrollment_cost }} credits)</button>
-                        </form>
-                    {% endif %}
+        {# RIGHT: nav + KPI + Last Skill Event + Available Events ──────────────── #}
+        <div class="dash-right-col">
+
+            {# ── Module Navigation ─────────────────────────────────────────────── #}
+            {# All targets have require_student_onboarding guard                   #}
+            <section class="mod-nav-section">
+                <div class="mod-nav-grid">
+                    <a href="/sessions" class="mod-nav-card">
+                        <span class="mod-nav-icon">📅</span>
+                        <span class="mod-nav-title">Sessions</span>
+                    </a>
+                    <a href="/progress" class="mod-nav-card">
+                        <span class="mod-nav-icon">📊</span>
+                        <span class="mod-nav-title">Progress</span>
+                    </a>
+                    <a href="/skills" class="mod-nav-card">
+                        <span class="mod-nav-icon">⚡</span>
+                        <span class="mod-nav-title">Skills</span>
+                    </a>
+                    <a href="/achievements" class="mod-nav-card">
+                        <span class="mod-nav-icon">🏆</span>
+                        <span class="mod-nav-title">Achievements</span>
+                    </a>
+                    <a href="/calendar" class="mod-nav-card">
+                        <span class="mod-nav-icon">📆</span>
+                        <span class="mod-nav-title">Calendar</span>
+                    </a>
+                    <a href="/dashboard/lfa-football-player/card-editor" class="mod-nav-card">
+                        <span class="mod-nav-icon">🪪</span>
+                        <span class="mod-nav-title">My Card</span>
+                    </a>
+                </div>
+            </section>
+
+            {# ── KPI Row ───────────────────────────────────────────────────────── #}
+            <div class="s-kpi-row">
+                <div class="s-kpi-card">
+                    <div class="s-kpi-val" id="kpi-avg">—</div>
+                    <div class="s-kpi-lbl">Avg Skill Level</div>
+                </div>
+                <div class="s-kpi-card">
+                    <div class="s-kpi-val" id="kpi-tournaments">—</div>
+                    <div class="s-kpi-lbl">Tournaments</div>
+                </div>
+                <div class="s-kpi-card">
+                    <div class="s-kpi-val">{{ credit_balance }}</div>
+                    <div class="s-kpi-lbl">Credits</div>
+                </div>
+                <div class="s-kpi-card">
+                    <div class="s-kpi-val" style="font-size:1.2rem;">{{ age_category or '—' }}</div>
+                    <div class="s-kpi-lbl">{{ age_range or 'Category' }}</div>
                 </div>
             </div>
-            {% endfor %}
-        </div>
-    </section>
 
-    <!-- ⚽ Player Card Photo (LFA Football Player only) -->
-    {% if user_license %}
-    <div class="player-photo-section">
-        <div class="player-photo-section-title">⚽ Player Card Photo</div>
-        <div class="player-photo-body">
-            {% if user_license.player_card_photo_url %}
-            <img src="{{ user_license.player_card_photo_url }}"
-                 class="player-photo-preview" alt="Player card photo">
-            {% else %}
-            <div class="player-photo-placeholder">📷</div>
-            <p class="player-photo-empty">Még nincs profilkép — tölts fel egyet a kártyádhoz!</p>
-            {% endif %}
-            <label class="btn-photo-upload-student">
-                📷 Fotó feltöltése
-                <input type="file" accept="image/jpeg,image/png,image/webp"
-                       onchange="uploadMyPhoto(this)" hidden>
-            </label>
-            {% if user_license.player_card_photo_url %}
-            <button class="btn-photo-delete-student" onclick="deleteMyPhoto()">✕ Törlés</button>
-            {% endif %}
-            <p class="player-photo-hint">Max 2 MB · JPEG/PNG/WEBP · automatikus 400×400 vágás</p>
-        </div>
-    </div>
-    {% endif %}
+            {# ── Skill Snapshot ───────────────────────────────────────────────── #}
+            <section class="section-block">
+                <div class="section-header">
+                    <h2 class="page-title">📊 Skill Snapshot</h2>
+                    <a href="/skills" class="section-link">View all 29 skills →</a>
+                </div>
+                <div id="s-snapshot">
+                    <div class="s-loading"><span class="s-spinner"></span> Loading…</div>
+                </div>
+            </section>
+
+            {# ── Last Skill Event ──────────────────────────────────────────────── #}
+            <section class="section-block">
+                <div class="section-header">
+                    <h2 class="page-title">📈 Last Skill Event</h2>
+                    <a href="/skills/history?skill=passing" class="section-link">Full event history →</a>
+                </div>
+                <div id="s-last-result">
+                    <div class="s-loading"><span class="s-spinner"></span> Loading…</div>
+                </div>
+            </section>
+
+            {# ── Available Events ──────────────────────────────────────────────── #}
+            <section class="section-block">
+                <div class="section-header">
+                    <h2 class="page-title">⚽ Available Events</h2>
+                </div>
+                <p class="page-subtitle">Enroll in semesters to access training sessions and progress through your football development path.</p>
+
+                {% if available_semesters|length == 0 %}
+                <div class="info-banner" style="background: #fff7e6; border-color: #faad14;">
+                    <p style="color: #ad6800;">⚠️ <strong>No track semesters available for your age group yet.</strong><br>
+                    Check back later, or <a href="/profile" style="color: #ad6800; text-decoration: underline;">update your profile</a> if your age group is incorrect.</p>
+                </div>
+                {% else %}
+                <div class="info-banner">
+                    <p><strong>💡 Available Semesters for {{ age_category_name }} ({{ age_range }})</strong><br>
+                    {{ age_description }} — {{ available_semesters|length }} semester(s) available</p>
+                </div>
+                {% endif %}
+
+                <div class="cards-grid">
+                    {% for semester in available_semesters %}
+                    <div class="spec-card">
+                        <div class="cost-badge">💰 {{ semester.enrollment_cost }} Credits</div>
+                        <div class="spec-icon">⚽</div>
+                        <h3 class="spec-title">{{ semester.name }}</h3>
+                        <p class="spec-age">📅 {{ semester.start_date.strftime('%Y-%m-%d') }} — {{ semester.end_date.strftime('%Y-%m-%d') }}</p>
+                        <p class="spec-description">
+                            <strong>Code:</strong> {{ semester.code }}<br>
+                            <strong>Status:</strong> {{ semester.status.value if semester.status else 'Unknown' }}
+                        </p>
+                        <div class="spec-action">
+                            {% if user.credit_balance < semester.enrollment_cost %}
+                                <button class="unlock-btn" disabled>❌ Insufficient Credits (Need {{ semester.enrollment_cost }})</button>
+                                <p style="margin-top: 0.5rem; font-size: 0.85rem;">
+                                    <a href="/credits" style="color: #667eea; font-weight: 600;">Purchase credits →</a>
+                                </p>
+                            {% else %}
+                                <form method="POST" action="/semester/enroll">
+                                    <input type="hidden" name="semester_id" value="{{ semester.id }}">
+                                    <button type="submit" class="unlock-btn">🎓 Enroll Now ({{ semester.enrollment_cost }} credits)</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+        </div>{# /.dash-right-col #}
+
+    </div>{# /.dash-main-grid #}
 
     <div class="footer-links">
         <a href="/dashboard">🏠 Hub</a>
@@ -387,17 +393,20 @@
             document.getElementById('kpi-tournaments').textContent =
                 data.total_tournaments !== undefined ? data.total_tournaments : '—';
 
+            // Fallback snapshot (only rendered when no LFA license)
+            const snapEl = document.getElementById('s-snapshot');
+            if (!snapEl) return;
+
             const sorted = Object.entries(data.skills || {})
                 .sort((a, b) => b[1].current_level - a[1].current_level)
                 .slice(0, 5);
 
             if (sorted.length === 0) {
-                document.getElementById('s-snapshot').innerHTML =
-                    '<p style="color:#a0aec0;font-size:0.9rem;">No skill data available yet.</p>';
+                snapEl.innerHTML = '<p style="color:#a0aec0;font-size:0.9rem;">No skill data available yet.</p>';
                 return;
             }
 
-            const rows = sorted.map(([key, s]) => {
+            snapEl.innerHTML = sorted.map(([key, s]) => {
                 const color = TIER_COLORS[s.tier] || '#667eea';
                 const width = barWidth(s.current_level);
                 return `<div class="s-snapshot-row">
@@ -409,13 +418,11 @@
                 </div>`;
             }).join('');
 
-            document.getElementById('s-snapshot').innerHTML = rows;
-
         } catch (err) {
             document.getElementById('kpi-avg').textContent = '—';
             document.getElementById('kpi-tournaments').textContent = '—';
-            document.getElementById('s-snapshot').innerHTML =
-                '<p style="color:#e74c3c;font-size:0.85rem;">Could not load skill data.</p>';
+            const snapEl = document.getElementById('s-snapshot');
+            if (snapEl) snapEl.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">Could not load skill data.</p>';
         }
     }
 
@@ -472,27 +479,4 @@
 })();
 </script>
 
-<script>
-async function uploadMyPhoto(input) {
-    if (!input.files[0]) return;
-    const fd = new FormData();
-    fd.append('file', input.files[0]);
-    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
-    const r = await fetch('/dashboard/lfa-player-photo', {
-        method: 'POST', body: fd, headers: { 'X-CSRF-Token': csrf }
-    });
-    const data = await r.json();
-    if (data.ok) location.reload();
-    else alert('Hiba a feltöltésnél: ' + data.error);
-}
-async function deleteMyPhoto() {
-    if (!confirm('Törli a profilképet?')) return;
-    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
-    const r = await fetch('/dashboard/lfa-player-photo/delete', {
-        method: 'POST', headers: { 'X-CSRF-Token': csrf, 'Content-Type': 'application/json' }
-    });
-    const data = await r.json();
-    if (data.ok) location.reload();
-}
-</script>
 {% endblock %}

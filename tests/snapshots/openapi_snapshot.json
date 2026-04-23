@@ -3490,6 +3490,34 @@
         "title": "Body_specialization_unlock_specialization_unlock_post",
         "type": "object"
       },
+      "Body_student_upload_compact_bg_photo_dashboard_lfa_player_photo_compact_bg_post": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_student_upload_compact_bg_photo_dashboard_lfa_player_photo_compact_bg_post",
+        "type": "object"
+      },
+      "Body_student_upload_landscape_photo_dashboard_lfa_player_photo_landscape_post": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_student_upload_landscape_photo_dashboard_lfa_player_photo_landscape_post",
+        "type": "object"
+      },
       "Body_student_upload_player_photo_dashboard_lfa_player_photo_post": {
         "properties": {
           "file": {
@@ -3502,6 +3530,34 @@
           "file"
         ],
         "title": "Body_student_upload_player_photo_dashboard_lfa_player_photo_post",
+        "type": "object"
+      },
+      "Body_student_upload_portrait_photo_dashboard_lfa_player_photo_portrait_post": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_student_upload_portrait_photo_dashboard_lfa_player_photo_portrait_post",
+        "type": "object"
+      },
+      "Body_student_upload_showcase_bg_photo_dashboard_lfa_player_photo_showcase_bg_post": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_student_upload_showcase_bg_photo_dashboard_lfa_player_photo_showcase_bg_post",
         "type": "object"
       },
       "Body_submit_quiz_quizzes__quiz_id__submit_post": {
@@ -20957,6 +21013,32 @@
           "max_level_reached"
         ],
         "title": "XPResponse",
+        "type": "object"
+      },
+      "_CardThemeRequest": {
+        "properties": {
+          "theme": {
+            "title": "Theme",
+            "type": "string"
+          }
+        },
+        "required": [
+          "theme"
+        ],
+        "title": "_CardThemeRequest",
+        "type": "object"
+      },
+      "_CardVariantRequest": {
+        "properties": {
+          "variant": {
+            "title": "Variant",
+            "type": "string"
+          }
+        },
+        "required": [
+          "variant"
+        ],
+        "title": "_CardVariantRequest",
         "type": "object"
       },
       "app__api__api_v1__endpoints__coach__licenses__LicenseCreate": {
@@ -55556,6 +55638,128 @@
         ]
       }
     },
+    "/dashboard/card-photo-focus": {
+      "post": {
+        "description": "Save photo focus point (X%, Y%) for a specific card variant.",
+        "operationId": "student_set_card_photo_focus_dashboard_card_photo_focus_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Student Set Card Photo Focus",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/card-theme": {
+      "post": {
+        "description": "Update the active colour theme for the authenticated student's player card.",
+        "operationId": "student_set_card_theme_dashboard_card_theme_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_CardThemeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Set Card Theme",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/card-variant": {
+      "post": {
+        "description": "Apply a card layout variant (must already be unlocked for premium variants).",
+        "operationId": "student_set_card_variant_dashboard_card_variant_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_CardVariantRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Set Card Variant",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/lfa-football-player/card-editor": {
+      "get": {
+        "description": "Dedicated sub-page for LFA Football Player card editing (Phase 1 extraction).",
+        "operationId": "lfa_player_card_editor_dashboard_lfa_football_player_card_editor_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Lfa Player Card Editor",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/dashboard/lfa-player-photo": {
       "post": {
         "operationId": "student_upload_player_photo_dashboard_lfa_player_photo_post",
@@ -55595,6 +55799,238 @@
         ]
       }
     },
+    "/dashboard/lfa-player-photo-compact-bg": {
+      "post": {
+        "operationId": "student_upload_compact_bg_photo_dashboard_lfa_player_photo_compact_bg_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_student_upload_compact_bg_photo_dashboard_lfa_player_photo_compact_bg_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Upload Compact Bg Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/lfa-player-photo-compact-bg/delete": {
+      "post": {
+        "operationId": "student_delete_compact_bg_photo_dashboard_lfa_player_photo_compact_bg_delete_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Student Delete Compact Bg Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/lfa-player-photo-landscape": {
+      "post": {
+        "operationId": "student_upload_landscape_photo_dashboard_lfa_player_photo_landscape_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_student_upload_landscape_photo_dashboard_lfa_player_photo_landscape_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Upload Landscape Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/lfa-player-photo-landscape/delete": {
+      "post": {
+        "operationId": "student_delete_landscape_photo_dashboard_lfa_player_photo_landscape_delete_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Student Delete Landscape Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/lfa-player-photo-portrait": {
+      "post": {
+        "operationId": "student_upload_portrait_photo_dashboard_lfa_player_photo_portrait_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_student_upload_portrait_photo_dashboard_lfa_player_photo_portrait_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Upload Portrait Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/lfa-player-photo-portrait/delete": {
+      "post": {
+        "operationId": "student_delete_portrait_photo_dashboard_lfa_player_photo_portrait_delete_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Student Delete Portrait Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/lfa-player-photo-showcase-bg": {
+      "post": {
+        "operationId": "student_upload_showcase_bg_photo_dashboard_lfa_player_photo_showcase_bg_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_student_upload_showcase_bg_photo_dashboard_lfa_player_photo_showcase_bg_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Upload Showcase Bg Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/lfa-player-photo-showcase-bg/delete": {
+      "post": {
+        "operationId": "student_delete_showcase_bg_photo_dashboard_lfa_player_photo_showcase_bg_delete_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Student Delete Showcase Bg Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/dashboard/lfa-player-photo/delete": {
       "post": {
         "operationId": "student_delete_player_photo_dashboard_lfa_player_photo_delete_post",
@@ -55609,6 +56045,86 @@
           }
         },
         "summary": "Student Delete Player Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/unlock-theme": {
+      "post": {
+        "description": "Unlock a premium card theme by spending credits.",
+        "operationId": "student_unlock_theme_dashboard_unlock_theme_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_CardThemeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Unlock Theme",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/unlock-variant": {
+      "post": {
+        "description": "Unlock a premium card layout variant by spending credits.",
+        "operationId": "student_unlock_variant_dashboard_unlock_variant_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_CardVariantRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Unlock Variant",
         "tags": [
           "web"
         ]
