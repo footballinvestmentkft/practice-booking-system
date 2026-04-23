@@ -22795,6 +22795,29 @@
         ]
       }
     },
+    "/adaptive-learning/session": {
+      "get": {
+        "description": "Server-rendered session page. JS bootstraps the question loop via AL-1 routes.",
+        "operationId": "adaptive_learning_session_page_adaptive_learning_session_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Adaptive Learning Session Page",
+        "tags": [
+          "web",
+          "adaptive-learning"
+        ]
+      }
+    },
     "/adaptive-learning/session/start": {
       "post": {
         "description": "Start a new adaptive learning session, or return the existing active one.",

@@ -1,4 +1,4 @@
-"""Adaptive Learning web routes — entry page + session lifecycle (AL-1 backend core)."""
+"""Adaptive Learning web routes — entry page, session page, session lifecycle (AL-2)."""
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Query, Request
@@ -65,6 +65,29 @@ async def adaptive_learning_page(
             "session_count": session_count,
             "recent_sessions": recent_sessions,
             "last_session": last_session,
+        },
+    )
+
+
+# ── Session page (AL-2) ───────────────────────────────────────────────────────
+
+@router.get("/adaptive-learning/session", response_class=HTMLResponse)
+async def adaptive_learning_session_page(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Server-rendered session page. JS bootstraps the question loop via AL-1 routes."""
+    guard = require_student_onboarding(user)
+    if guard:
+        return guard
+
+    return templates.TemplateResponse(
+        "adaptive_learning_session.html",
+        {
+            "request": request,
+            "user": user,
+            **_spec_ctx(user, db),
         },
     )
 

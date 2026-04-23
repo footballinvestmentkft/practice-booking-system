@@ -1,0 +1,584 @@
+{% extends "student_base.html" %}
+
+{% block title %}Adaptive Session - LFA{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '🧠' %}
+{% set _page_name = 'Adaptive Session' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .als-container {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    /* ── Phase panels ────────────────────────────────────────────────────────── */
+    .als-phase { display: none; }
+    .als-phase.active { display: block; }
+
+    /* ── Progress bar ────────────────────────────────────────────────────────── */
+    .als-progress-wrap {
+        background: #e9ecef;
+        border-radius: 6px;
+        height: 6px;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+    .als-progress-fill {
+        height: 100%;
+        background: #667eea;
+        border-radius: 6px;
+        transition: width 0.35s ease;
+    }
+    .als-progress-label {
+        font-size: 0.8rem;
+        color: var(--app-text-muted);
+        text-align: right;
+        margin-top: 0.3rem;
+        margin-bottom: 1.25rem;
+    }
+
+    /* ── Question card ───────────────────────────────────────────────────────── */
+    .als-question-card {
+        background: var(--app-card);
+        border-radius: 14px;
+        padding: 1.75rem 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        margin-bottom: 1.25rem;
+    }
+    .als-question-num {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #667eea;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.6rem;
+    }
+    .als-question-text {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--app-text);
+        line-height: 1.55;
+        margin: 0;
+    }
+
+    /* ── Answer options ──────────────────────────────────────────────────────── */
+    .als-options { display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 1rem; }
+
+    .als-option {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        background: var(--app-card);
+        border: 2px solid var(--app-border, #e2e8f0);
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+        cursor: pointer;
+        transition: border-color 0.15s, background 0.15s;
+        text-align: left;
+        width: 100%;
+        font-size: 0.97rem;
+        color: var(--app-text);
+    }
+    .als-option:hover:not(:disabled) {
+        border-color: #667eea;
+        background: #f0f4ff;
+    }
+    .als-option.selected  { border-color: #667eea; background: #eef2ff; }
+    .als-option.correct   { border-color: #27ae60; background: #d5f5e3; color: #1a5e35; }
+    .als-option.incorrect { border-color: #e74c3c; background: #fdecea; color: #7b241c; }
+    .als-option:disabled  { cursor: default; }
+
+    .als-option-letter {
+        flex-shrink: 0;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #f3f4f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #374151;
+    }
+    .als-option.correct   .als-option-letter { background: #27ae60; color: white; }
+    .als-option.incorrect .als-option-letter { background: #e74c3c; color: white; }
+    .als-option.selected  .als-option-letter { background: #667eea; color: white; }
+
+    /* ── Feedback overlay ────────────────────────────────────────────────────── */
+    .als-feedback {
+        border-radius: 10px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
+        font-size: 0.92rem;
+        line-height: 1.5;
+        display: none;
+    }
+    .als-feedback.correct   { background: #d5f5e3; border-left: 4px solid #27ae60; color: #1a5e35; }
+    .als-feedback.incorrect { background: #fdecea; border-left: 4px solid #e74c3c; color: #7b241c; }
+
+    .als-feedback-xp {
+        display: inline-block;
+        background: #6c3483;
+        color: white;
+        border-radius: 20px;
+        padding: 0.2rem 0.7rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        margin-left: 0.5rem;
+    }
+
+    .als-next-btn {
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.7rem 1.75rem;
+        font-size: 0.97rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.15s;
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+    .als-next-btn:hover { background: #5a67d8; }
+
+    /* ── XP running total ────────────────────────────────────────────────────── */
+    .als-xp-strip {
+        background: #f8f0ff;
+        border: 1px solid #e9d5ff;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #6c3483;
+        text-align: center;
+        margin-bottom: 1.25rem;
+    }
+
+    /* ── Resume notice ───────────────────────────────────────────────────────── */
+    .als-resume-notice {
+        background: #fff7ed;
+        border-left: 4px solid #f59e0b;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 0.88rem;
+        color: #92400e;
+        margin-bottom: 1.25rem;
+    }
+
+    /* ── Result screen ───────────────────────────────────────────────────────── */
+    .als-result-card {
+        background: var(--app-card);
+        border-radius: 16px;
+        padding: 2.25rem 2rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    .als-result-icon { font-size: 3.5rem; margin-bottom: 0.75rem; line-height: 1; }
+    .als-result-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--app-text);
+        margin: 0 0 0.35rem;
+    }
+    .als-result-sub {
+        font-size: 0.95rem;
+        color: var(--app-text-muted);
+        margin: 0 0 1.75rem;
+    }
+    .als-result-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.75rem;
+    }
+    @media (max-width: 480px) { .als-result-stats { grid-template-columns: repeat(2, 1fr); } }
+
+    .als-result-stat {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1rem;
+    }
+    .als-result-stat-val { font-size: 1.8rem; font-weight: 700; color: var(--app-text); }
+    .als-result-stat-lbl { font-size: 0.78rem; color: var(--app-text-muted); margin-top: 0.2rem; }
+
+    .als-result-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+    .als-result-actions a, .als-result-actions button {
+        padding: 0.65rem 1.4rem;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        border: none;
+    }
+    .als-btn-primary   { background: #667eea; color: white; }
+    .als-btn-secondary { background: #f3f4f6; color: #374151; }
+    .als-btn-primary:hover   { background: #5a67d8; }
+    .als-btn-secondary:hover { background: #e5e7eb; }
+
+    /* ── Loading / error ─────────────────────────────────────────────────────── */
+    .als-loading {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--app-text-muted);
+        font-size: 0.95rem;
+    }
+    .als-error-card {
+        background: #fdecea;
+        border-left: 4px solid #e74c3c;
+        border-radius: 10px;
+        padding: 1.25rem 1.5rem;
+        color: #7b241c;
+    }
+    .als-error-card h3 { margin: 0 0 0.5rem; font-size: 1rem; }
+    .als-error-retry {
+        margin-top: 0.75rem;
+        background: #e74c3c;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 0.5rem 1.25rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="als-container">
+
+    {# ── Loading phase ─────────────────────────────────────────────────────── #}
+    <div id="als-phase-loading" class="als-phase active als-loading">
+        ⏳ Starting your session…
+    </div>
+
+    {# ── Error phase ───────────────────────────────────────────────────────── #}
+    <div id="als-phase-error" class="als-phase">
+        <div class="als-error-card">
+            <h3>Something went wrong</h3>
+            <p id="als-error-msg" style="margin: 0; font-size: 0.9rem;"></p>
+            <button class="als-error-retry" onclick="alsInit()">Try Again</button>
+        </div>
+    </div>
+
+    {# ── Question phase ────────────────────────────────────────────────────── #}
+    <div id="als-phase-question" class="als-phase">
+        <div id="als-resume-notice" class="als-resume-notice" style="display:none;">
+            ⚠️ Continuing your active session from earlier.
+        </div>
+        <div id="als-xp-strip" class="als-xp-strip">⚡ 0 XP earned this session</div>
+        <div class="als-progress-wrap">
+            <div id="als-progress-fill" class="als-progress-fill" style="width:0%"></div>
+        </div>
+        <div id="als-progress-label" class="als-progress-label">Question 0 of 10</div>
+
+        <div class="als-question-card">
+            <div id="als-question-num" class="als-question-num">Question 1</div>
+            <p id="als-question-text" class="als-question-text"></p>
+        </div>
+
+        <div id="als-options" class="als-options"></div>
+
+        <div id="als-feedback" class="als-feedback"></div>
+
+        <button id="als-next-btn" class="als-next-btn" style="display:none;" onclick="alsNext()">
+            Next Question →
+        </button>
+    </div>
+
+    {# ── Result phase ──────────────────────────────────────────────────────── #}
+    <div id="als-phase-result" class="als-phase">
+        <div class="als-result-card">
+            <div id="als-result-icon" class="als-result-icon">🏅</div>
+            <h2 id="als-result-title" class="als-result-title">Session Complete</h2>
+            <p id="als-result-sub" class="als-result-sub"></p>
+            <div class="als-result-stats">
+                <div class="als-result-stat">
+                    <div id="als-res-xp" class="als-result-stat-val">0</div>
+                    <div class="als-result-stat-lbl">XP Earned</div>
+                </div>
+                <div class="als-result-stat">
+                    <div id="als-res-correct" class="als-result-stat-val">0</div>
+                    <div class="als-result-stat-lbl">Correct</div>
+                </div>
+                <div class="als-result-stat">
+                    <div id="als-res-accuracy" class="als-result-stat-val">0%</div>
+                    <div class="als-result-stat-lbl">Accuracy</div>
+                </div>
+            </div>
+            <div class="als-result-actions">
+                <button class="als-btn-primary" onclick="alsRestart()">🔄 Play Again</button>
+                <a href="/adaptive-learning" class="als-btn-secondary">← Back to Learning</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+    'use strict';
+
+    /* ── State ────────────────────────────────────────────────────────────────
+       All session state lives here. No localStorage, no globals.
+       exclude_ids is a client-side within-session dedup list — a temporary
+       compatibility layer. The server also deduplicates via user_question_performance
+       (1-hour window). This list gives explicit per-session dedup without requiring
+       a server-side question log table. Not a permanent API contract.
+    ─────────────────────────────────────────────────────────────────────────── */
+    var state = {
+        sessionId:   null,
+        questionNum: 0,
+        totalTarget: 10,
+        seenIds:     [],   // exclude_ids compat layer (see note above)
+        totalXp:     0,
+        correctCount:0,
+        phase:       'loading'
+    };
+
+    /* ── Phase management ──────────────────────────────────────────────────── */
+    function showPhase(name) {
+        ['loading','error','question','result'].forEach(function (p) {
+            var el = document.getElementById('als-phase-' + p);
+            if (el) el.classList.toggle('active', p === name);
+        });
+        state.phase = name;
+    }
+
+    function showError(msg) {
+        document.getElementById('als-error-msg').textContent = msg || 'Unknown error.';
+        showPhase('error');
+    }
+
+    /* ── Fetch helpers ─────────────────────────────────────────────────────── */
+    function post(url, body) {
+        return fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: body !== undefined ? JSON.stringify(body) : undefined,
+            credentials: 'same-origin'
+        }).then(function (r) {
+            if (r.status === 403) { window.location.href = '/specialization/lfa-player/onboarding'; return null; }
+            return r.json().then(function (data) { return {ok: r.ok, status: r.status, data: data}; });
+        });
+    }
+
+    function get(url) {
+        return fetch(url, {credentials: 'same-origin'})
+            .then(function (r) {
+                if (r.status === 403) { window.location.href = '/specialization/lfa-player/onboarding'; return null; }
+                return r.json().then(function (data) { return {ok: r.ok, status: r.status, data: data}; });
+            });
+    }
+
+    /* ── Progress ──────────────────────────────────────────────────────────── */
+    function updateProgress() {
+        var pct = Math.min(100, Math.round(state.questionNum / state.totalTarget * 100));
+        document.getElementById('als-progress-fill').style.width = pct + '%';
+        document.getElementById('als-progress-label').textContent =
+            'Question ' + state.questionNum + ' of ' + state.totalTarget;
+    }
+
+    function updateXpStrip() {
+        document.getElementById('als-xp-strip').textContent =
+            '⚡ ' + state.totalXp + ' XP earned this session';
+    }
+
+    /* ── Render question ───────────────────────────────────────────────────── */
+    function renderQuestion(data) {
+        state.questionNum += 1;
+        state.seenIds.push(data.id);
+
+        document.getElementById('als-question-num').textContent = 'Question ' + state.questionNum;
+        document.getElementById('als-question-text').textContent = data.text;
+
+        var letters = ['A','B','C','D','E'];
+        var optionsEl = document.getElementById('als-options');
+        optionsEl.innerHTML = '';
+
+        (data.options || []).forEach(function (opt, idx) {
+            var btn = document.createElement('button');
+            btn.className = 'als-option';
+            btn.dataset.optionId = opt.id;
+            btn.innerHTML =
+                '<span class="als-option-letter">' + (letters[idx] || idx + 1) + '</span>' +
+                '<span class="als-option-text"></span>';
+            btn.querySelector('.als-option-text').textContent = opt.text;
+            btn.addEventListener('click', function () { alsAnswer(data.id, opt.id, btn); });
+            optionsEl.appendChild(btn);
+        });
+
+        document.getElementById('als-feedback').style.display = 'none';
+        document.getElementById('als-feedback').className = 'als-feedback';
+        document.getElementById('als-next-btn').style.display = 'none';
+        updateProgress();
+        showPhase('question');
+    }
+
+    /* ── Submit answer ─────────────────────────────────────────────────────── */
+    function alsAnswer(questionId, selectedOptionId, clickedBtn) {
+        // Disable all options immediately to prevent double-submit
+        document.querySelectorAll('.als-option').forEach(function (b) { b.disabled = true; });
+        clickedBtn.classList.add('selected');
+
+        post('/adaptive-learning/session/' + state.sessionId + '/answer', {
+            question_id: questionId,
+            selected_option_id: selectedOptionId,
+            time_spent_seconds: 30
+        }).then(function (res) {
+            if (!res) return;
+            if (!res.ok) {
+                // Answer not recorded — re-enable and show inline notice
+                document.querySelectorAll('.als-option').forEach(function (b) { b.disabled = false; });
+                clickedBtn.classList.remove('selected');
+                var fb = document.getElementById('als-feedback');
+                fb.className = 'als-feedback incorrect';
+                fb.textContent = 'Answer not recorded — please try again.';
+                fb.style.display = 'block';
+                return;
+            }
+
+            var d = res.data;
+            state.totalXp += (d.xp_this_answer || 0);
+            if (d.correct) state.correctCount += 1;
+            updateXpStrip();
+
+            // Mark correct / incorrect options
+            document.querySelectorAll('.als-option').forEach(function (b) {
+                var oid = parseInt(b.dataset.optionId);
+                if (oid === d.correct_option_id) b.classList.add('correct');
+                else if (oid === selectedOptionId && !d.correct) b.classList.add('incorrect');
+            });
+
+            // Feedback panel
+            var fb = document.getElementById('als-feedback');
+            fb.className = 'als-feedback ' + (d.correct ? 'correct' : 'incorrect');
+            var xpBadge = '<span class="als-feedback-xp">+' + (d.xp_this_answer || 0) + ' XP</span>';
+            var msg = d.correct
+                ? ('✅ Correct!' + xpBadge)
+                : ('❌ Incorrect. Correct answer highlighted above.');
+            fb.innerHTML = msg;
+            if (d.explanation) {
+                var expEl = document.createElement('p');
+                expEl.style.cssText = 'margin:0.5rem 0 0; font-size:0.85rem; opacity:0.9;';
+                expEl.textContent = d.explanation;
+                fb.appendChild(expEl);
+            }
+            fb.style.display = 'block';
+
+            // Decide next action
+            if (state.questionNum >= state.totalTarget) {
+                document.getElementById('als-next-btn').textContent = 'Finish Session ✓';
+                document.getElementById('als-next-btn').onclick = alsComplete;
+            }
+            document.getElementById('als-next-btn').style.display = 'block';
+        }).catch(function () {
+            showError('Network error while recording answer. Please check your connection.');
+        });
+    }
+
+    /* ── Next question ─────────────────────────────────────────────────────── */
+    window.alsNext = function () {
+        document.getElementById('als-next-btn').style.display = 'none';
+        var excludeParam = state.seenIds.join(',');
+        get('/adaptive-learning/session/' + state.sessionId + '/next-question?exclude_ids=' + excludeParam)
+            .then(function (res) {
+                if (!res) return;
+                var d = res.data;
+                if (d.session_complete || !d.id) {
+                    alsComplete();
+                    return;
+                }
+                renderQuestion(d);
+            }).catch(function () {
+                showError('Could not load the next question. Please try again.');
+            });
+    };
+
+    /* ── Complete session ──────────────────────────────────────────────────── */
+    window.alsComplete = function () {
+        post('/adaptive-learning/session/' + state.sessionId + '/complete').then(function (res) {
+            var xp = state.totalXp;
+            var correct = state.correctCount;
+            var total = state.questionNum;
+            var accuracy = total > 0 ? Math.round(correct / total * 100) : 0;
+
+            if (res && res.ok) {
+                // Prefer server values when available
+                xp = res.data.xp_earned || xp;
+                correct = res.data.questions_correct !== undefined ? res.data.questions_correct : correct;
+                accuracy = res.data.accuracy_pct !== undefined ? res.data.accuracy_pct : accuracy;
+            }
+
+            showResult(xp, correct, total, accuracy);
+        }).catch(function () {
+            // Show result using client-accumulated state if /complete fails
+            var total = state.questionNum;
+            var accuracy = total > 0 ? Math.round(state.correctCount / total * 100) : 0;
+            showResult(state.totalXp, state.correctCount, total, accuracy);
+        });
+    };
+
+    /* ── Show result screen ────────────────────────────────────────────────── */
+    function showResult(xp, correct, total, accuracy) {
+        var icon = accuracy >= 80 ? '🏅' : accuracy >= 50 ? '⚡' : '📚';
+        var title = accuracy >= 80 ? 'Excellent work!' : accuracy >= 50 ? 'Good effort!' : 'Keep practising!';
+        var sub = correct + ' of ' + total + ' correct — ' + accuracy + '% accuracy';
+
+        document.getElementById('als-result-icon').textContent = icon;
+        document.getElementById('als-result-title').textContent = title;
+        document.getElementById('als-result-sub').textContent  = sub;
+        document.getElementById('als-res-xp').textContent       = xp;
+        document.getElementById('als-res-correct').textContent  = correct;
+        document.getElementById('als-res-accuracy').textContent = accuracy + '%';
+
+        showPhase('result');
+    }
+
+    /* ── Restart ───────────────────────────────────────────────────────────── */
+    window.alsRestart = function () {
+        state.sessionId    = null;
+        state.questionNum  = 0;
+        state.seenIds      = [];
+        state.totalXp      = 0;
+        state.correctCount = 0;
+        showPhase('loading');
+        alsInit();
+    };
+
+    /* ── Init ──────────────────────────────────────────────────────────────── */
+    window.alsInit = function () {
+        post('/adaptive-learning/session/start')
+            .then(function (res) {
+                if (!res) return;
+                if (!res.ok) {
+                    showError(res.data && res.data.error || 'Could not start session. Try again.');
+                    return;
+                }
+                state.sessionId   = res.data.session_id;
+                state.totalTarget = res.data.question_count || 10;
+
+                if (res.data.resumed) {
+                    document.getElementById('als-resume-notice').style.display = 'block';
+                }
+
+                alsNext();
+            }).catch(function () {
+                showError('Could not connect to the server. Please check your connection.');
+            });
+    };
+
+    alsInit();
+})();
+</script>
+{% endblock %}
