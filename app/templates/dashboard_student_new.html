@@ -10,11 +10,6 @@
         <div class="student-brand">{{ spec_config.icon }} {{ spec_config.name }}</div>
         <nav class="student-nav" id="student-nav" aria-label="Student navigation">
             <a href="/dashboard/lfa-football-player" class="nav-item active">⚽ LFA Player</a>
-            <a href="/sessions"     class="nav-item">📅 Sessions</a>
-            <a href="/progress"     class="nav-item">📊 Progress</a>
-            <a href="/skills"       class="nav-item">⚡ Skills</a>
-            <a href="/achievements" class="nav-item">🏆 Achievements</a>
-            <a href="/calendar"     class="nav-item">📆 Calendar</a>
         </nav>
         <div class="student-header-actions">
             <span class="credit-pill">💰 {{ user.credit_balance if user else 0 }}</span>
