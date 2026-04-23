@@ -50,7 +50,7 @@ Covers:
 
   SecurityHeadersMiddleware
     - X-Content-Type-Options: nosniff
-    - X-Frame-Options: DENY
+    - X-Frame-Options: SAMEORIGIN
     - X-XSS-Protection: 1; mode=block
     - Content-Security-Policy present
     - Strict-Transport-Security present
@@ -539,10 +539,10 @@ class TestSecurityHeadersMiddleware:
         response = self._dispatch()
         assert response.headers["X-Content-Type-Options"] == "nosniff"
 
-    def test_x_frame_options_deny(self):
-        """X-Frame-Options: DENY added."""
+    def test_x_frame_options_sameorigin(self):
+        """X-Frame-Options: SAMEORIGIN — allows same-origin iframe embedding."""
         response = self._dispatch()
-        assert response.headers["X-Frame-Options"] == "DENY"
+        assert response.headers["X-Frame-Options"] == "SAMEORIGIN"
 
     def test_x_xss_protection(self):
         """X-XSS-Protection header added."""
