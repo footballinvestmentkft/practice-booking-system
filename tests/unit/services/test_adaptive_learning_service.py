@@ -789,7 +789,8 @@ class TestGetCandidateQuestionsFallback:
         # Second query (category-only fallback) returns one question
         calls = [0]
         q_empty = MagicMock(); q_empty.filter.return_value = q_empty
-        q_empty.join.return_value = q_empty; q_empty.all.return_value = []
+        q_empty.join.return_value = q_empty; q_empty.outerjoin.return_value = q_empty
+        q_empty.all.return_value = []
         q_fallback = MagicMock(); q_fallback.filter.return_value = q_fallback
         q_fallback.join.return_value = q_fallback; q_fallback.all.return_value = [question]
         def _side(*args):
