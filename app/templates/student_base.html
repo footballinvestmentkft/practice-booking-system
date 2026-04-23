@@ -10,8 +10,7 @@
            <h1>Page content here</h1>
        {% endblock %}
 
-   Active page values: hub | lfa-player | sessions | progress | skills |
-                       achievements | calendar | credits
+   Active page values: hub | lfa-player | credits
 
    Context expected from route handler (at minimum):
        user       — User ORM object (for credit_balance, name, email, role)
@@ -39,23 +38,13 @@
         <button class="student-hamburger" id="student-hamburger-btn"
                 onclick="toggleStudentNav()" aria-label="Toggle navigation" aria-expanded="false">☰</button>
 
-        {# Nav links — show_spec_nav=False on hub-level pages (credits, profile, etc.) #}
+        {# Nav links — spec switching only; module navigation lives on dashboard cards #}
         <nav class="student-nav" id="student-nav" aria-label="Student navigation">
             <a href="/dashboard"
                class="nav-item{% if _active == 'hub' or p == '/dashboard' %} active{% endif %}">🏠 Hub</a>
             {% if show_spec_nav | default(true) %}
             <a href="/dashboard/lfa-football-player"
                class="nav-item{% if _active == 'lfa-player' or p.startswith('/dashboard/lfa') %} active{% endif %}">⚽ LFA Player</a>
-            <a href="/sessions"
-               class="nav-item{% if _active == 'sessions' or p.startswith('/sessions') %} active{% endif %}">📅 Sessions</a>
-            <a href="/progress"
-               class="nav-item{% if _active == 'progress' or p == '/progress' %} active{% endif %}">📊 Progress</a>
-            <a href="/skills"
-               class="nav-item{% if _active == 'skills' or p == '/skills' %} active{% endif %}">⚡ Skills</a>
-            <a href="/achievements"
-               class="nav-item{% if _active == 'achievements' or p == '/achievements' %} active{% endif %}">🏆 Achievements</a>
-            <a href="/calendar"
-               class="nav-item{% if _active == 'calendar' or p == '/calendar' %} active{% endif %}">📆 Calendar</a>
             {% endif %}
         </nav>
 
