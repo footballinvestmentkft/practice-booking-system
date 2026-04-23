@@ -43,11 +43,15 @@
     @media (max-width: 768px) { .mod-nav-grid { grid-template-columns: repeat(3, 1fr); } }
     @media (max-width: 480px) { .mod-nav-grid { grid-template-columns: repeat(3, 1fr); } }
 
+    /* ── Width overrides: break out of global max-width chain ───────────────── */
+    .main-content  { max-width: none; padding: 0; }
+    .student-main  { max-width: 1440px; padding: 0.75rem 1.5rem 1.5rem; }
+
     /* ── Container ────────────────────────────────────────────────────────────── */
     .container {
-        max-width: 1200px;
+        max-width: 1400px;
         margin: 0 auto;
-        padding: 1.25rem 0.5rem 2rem;
+        padding: 0 0 2rem;
     }
 
     .page-title    { font-size: 1.4rem; color: var(--app-text); margin: 0; }
@@ -105,30 +109,20 @@
     .s-snap-bar     { height: 100%; border-radius: 5px; transition: width 0.4s ease; }
     .s-snap-val     { width: 38px; text-align: right; font-size: 0.82rem; font-weight: 600; color: var(--app-text); flex-shrink: 0; }
 
-    /* ── 2-column main layout ─────────────────────────────────────────────────── */
-    .dash-main-grid {
-        display: grid;
-        grid-template-columns: 1.2fr 0.8fr;
-        gap: 1.5rem;
-        align-items: start;
-        margin-bottom: 1.5rem;
-    }
-    .dash-right-col { display: flex; flex-direction: column; gap: 1.5rem; }
-    .dash-right-col .section-block { margin-bottom: 0; }
-    /* mod-nav + KPI inside right col */
-    .dash-right-col .mod-nav-section {
+    /* ── Stacked hero layout ─────────────────────────────────────────────────── */
+    .dash-hero-block { padding: 1.25rem 1.5rem 1.5rem; }
+    .dash-hero-block .section-header { margin-bottom: 1rem; }
+
+    /* ── Standalone mod-nav section ──────────────────────────────────────────── */
+    .mod-nav-section {
         background: var(--app-card);
         border-radius: 16px;
         padding: 1.1rem 1.1rem 0.6rem;
         box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        margin: 0;
-    }
-    .dash-right-col .s-kpi-row { margin-bottom: 0; }
-    @media (max-width: 1024px) {
-        .dash-main-grid { grid-template-columns: 1fr; }
+        margin-bottom: 1.5rem;
     }
 
-    /* ── Player Card live preview (left column) ─────────────────────────────── */
+    /* ── Player Card live preview (hero, full-width) ─────────────────────────── */
     .player-card-embed-wrap { border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.13); }
     .player-card-embed-wrap iframe { display: block; width: 100%; border: none; }
 
@@ -199,159 +193,139 @@
 
 <div class="container">
 
-    {# ── 2-column main grid ────────────────────────────────────────────────────── #}
-    <div class="dash-main-grid">
+    {# ── Hero: My Player Card (LFA license, full-width) ───────────────────────── #}
+    {% if user_license %}
+    <section class="section-block dash-hero-block">
+        <div class="section-header">
+            <h2 class="page-title">🪪 My Player Card</h2>
+            <a href="/dashboard/lfa-football-player/card-editor" class="section-link">✏️ Edit →</a>
+        </div>
+        <div class="player-card-embed-wrap">
+            <iframe src="/players/{{ user.id }}/card" height="760" scrolling="no" title="My Player Card"></iframe>
+        </div>
+    </section>
+    {% endif %}
 
-        {# LEFT: My Card teaser (LFA license) / Skill Snapshot fallback ────────── #}
-        {% if user_license %}
-        <section class="section-block" style="margin-bottom: 0; padding: 1.25rem 1.5rem 1.5rem;">
-            <div class="section-header" style="margin-bottom: 1rem;">
-                <h2 class="page-title">🪪 My Player Card</h2>
-                <a href="/dashboard/lfa-football-player/card-editor" class="section-link">✏️ Edit →</a>
-            </div>
-            <div class="player-card-embed-wrap">
-                <iframe src="/players/{{ user.id }}/card" height="680" scrolling="no" title="My Player Card"></iframe>
-            </div>
-        </section>
+    {# ── Module Navigation (full-width, below card) ────────────────────────────── #}
+    {# All targets have require_student_onboarding guard                            #}
+    <section class="mod-nav-section">
+        <div class="mod-nav-grid">
+            <a href="/sessions" class="mod-nav-card">
+                <span class="mod-nav-icon">📅</span>
+                <span class="mod-nav-title">Sessions</span>
+            </a>
+            <a href="/progress" class="mod-nav-card">
+                <span class="mod-nav-icon">📊</span>
+                <span class="mod-nav-title">Progress</span>
+            </a>
+            <a href="/skills" class="mod-nav-card">
+                <span class="mod-nav-icon">⚡</span>
+                <span class="mod-nav-title">Skills</span>
+            </a>
+            <a href="/achievements" class="mod-nav-card">
+                <span class="mod-nav-icon">🏆</span>
+                <span class="mod-nav-title">Achievements</span>
+            </a>
+            <a href="/calendar" class="mod-nav-card">
+                <span class="mod-nav-icon">📆</span>
+                <span class="mod-nav-title">Calendar</span>
+            </a>
+            <a href="/dashboard/lfa-football-player/card-editor" class="mod-nav-card">
+                <span class="mod-nav-icon">🪪</span>
+                <span class="mod-nav-title">My Card</span>
+            </a>
+        </div>
+    </section>
+
+    {# ── KPI Row ───────────────────────────────────────────────────────────────── #}
+    <div class="s-kpi-row">
+        <div class="s-kpi-card">
+            <div class="s-kpi-val" id="kpi-avg">—</div>
+            <div class="s-kpi-lbl">Avg Skill Level</div>
+        </div>
+        <div class="s-kpi-card">
+            <div class="s-kpi-val" id="kpi-tournaments">—</div>
+            <div class="s-kpi-lbl">Tournaments</div>
+        </div>
+        <div class="s-kpi-card">
+            <div class="s-kpi-val">{{ credit_balance }}</div>
+            <div class="s-kpi-lbl">Credits</div>
+        </div>
+        <div class="s-kpi-card">
+            <div class="s-kpi-val" style="font-size:1.2rem;">{{ age_category or '—' }}</div>
+            <div class="s-kpi-lbl">{{ age_range or 'Category' }}</div>
+        </div>
+    </div>
+
+    {# ── Skill Snapshot ────────────────────────────────────────────────────────── #}
+    <section class="section-block">
+        <div class="section-header">
+            <h2 class="page-title">📊 Skill Snapshot</h2>
+            <a href="/skills" class="section-link">View all 29 skills →</a>
+        </div>
+        <div id="s-snapshot">
+            <div class="s-loading"><span class="s-spinner"></span> Loading…</div>
+        </div>
+    </section>
+
+    {# ── Last Skill Event ──────────────────────────────────────────────────────── #}
+    <section class="section-block">
+        <div class="section-header">
+            <h2 class="page-title">📈 Last Skill Event</h2>
+            <a href="/skills/history?skill=passing" class="section-link">Full event history →</a>
+        </div>
+        <div id="s-last-result">
+            <div class="s-loading"><span class="s-spinner"></span> Loading…</div>
+        </div>
+    </section>
+
+    {# ── Available Events ──────────────────────────────────────────────────────── #}
+    <section class="section-block">
+        <div class="section-header">
+            <h2 class="page-title">⚽ Available Events</h2>
+        </div>
+        <p class="page-subtitle">Enroll in semesters to access training sessions and progress through your football development path.</p>
+
+        {% if available_semesters|length == 0 %}
+        <div class="info-banner" style="background: #fff7e6; border-color: #faad14;">
+            <p style="color: #ad6800;">⚠️ <strong>No track semesters available for your age group yet.</strong><br>
+            Check back later, or <a href="/profile" style="color: #ad6800; text-decoration: underline;">update your profile</a> if your age group is incorrect.</p>
+        </div>
         {% else %}
-        <section class="section-block" style="margin-bottom: 0;">
-            <div class="section-header">
-                <h2 class="page-title">📊 Skill Snapshot</h2>
-                <a href="/skills" class="section-link">View all 29 skills →</a>
-            </div>
-            <div id="s-snapshot">
-                <div class="s-loading"><span class="s-spinner"></span> Loading…</div>
-            </div>
-        </section>
+        <div class="info-banner">
+            <p><strong>💡 Available Semesters for {{ age_category_name }} ({{ age_range }})</strong><br>
+            {{ age_description }} — {{ available_semesters|length }} semester(s) available</p>
+        </div>
         {% endif %}
 
-        {# RIGHT: nav + KPI + Last Skill Event + Available Events ──────────────── #}
-        <div class="dash-right-col">
-
-            {# ── Module Navigation ─────────────────────────────────────────────── #}
-            {# All targets have require_student_onboarding guard                   #}
-            <section class="mod-nav-section">
-                <div class="mod-nav-grid">
-                    <a href="/sessions" class="mod-nav-card">
-                        <span class="mod-nav-icon">📅</span>
-                        <span class="mod-nav-title">Sessions</span>
-                    </a>
-                    <a href="/progress" class="mod-nav-card">
-                        <span class="mod-nav-icon">📊</span>
-                        <span class="mod-nav-title">Progress</span>
-                    </a>
-                    <a href="/skills" class="mod-nav-card">
-                        <span class="mod-nav-icon">⚡</span>
-                        <span class="mod-nav-title">Skills</span>
-                    </a>
-                    <a href="/achievements" class="mod-nav-card">
-                        <span class="mod-nav-icon">🏆</span>
-                        <span class="mod-nav-title">Achievements</span>
-                    </a>
-                    <a href="/calendar" class="mod-nav-card">
-                        <span class="mod-nav-icon">📆</span>
-                        <span class="mod-nav-title">Calendar</span>
-                    </a>
-                    <a href="/dashboard/lfa-football-player/card-editor" class="mod-nav-card">
-                        <span class="mod-nav-icon">🪪</span>
-                        <span class="mod-nav-title">My Card</span>
-                    </a>
-                </div>
-            </section>
-
-            {# ── KPI Row ───────────────────────────────────────────────────────── #}
-            <div class="s-kpi-row">
-                <div class="s-kpi-card">
-                    <div class="s-kpi-val" id="kpi-avg">—</div>
-                    <div class="s-kpi-lbl">Avg Skill Level</div>
-                </div>
-                <div class="s-kpi-card">
-                    <div class="s-kpi-val" id="kpi-tournaments">—</div>
-                    <div class="s-kpi-lbl">Tournaments</div>
-                </div>
-                <div class="s-kpi-card">
-                    <div class="s-kpi-val">{{ credit_balance }}</div>
-                    <div class="s-kpi-lbl">Credits</div>
-                </div>
-                <div class="s-kpi-card">
-                    <div class="s-kpi-val" style="font-size:1.2rem;">{{ age_category or '—' }}</div>
-                    <div class="s-kpi-lbl">{{ age_range or 'Category' }}</div>
+        <div class="cards-grid">
+            {% for semester in available_semesters %}
+            <div class="spec-card">
+                <div class="cost-badge">💰 {{ semester.enrollment_cost }} Credits</div>
+                <div class="spec-icon">⚽</div>
+                <h3 class="spec-title">{{ semester.name }}</h3>
+                <p class="spec-age">📅 {{ semester.start_date.strftime('%Y-%m-%d') }} — {{ semester.end_date.strftime('%Y-%m-%d') }}</p>
+                <p class="spec-description">
+                    <strong>Code:</strong> {{ semester.code }}<br>
+                    <strong>Status:</strong> {{ semester.status.value if semester.status else 'Unknown' }}
+                </p>
+                <div class="spec-action">
+                    {% if user.credit_balance < semester.enrollment_cost %}
+                        <button class="unlock-btn" disabled>❌ Insufficient Credits (Need {{ semester.enrollment_cost }})</button>
+                        <p style="margin-top: 0.5rem; font-size: 0.85rem;">
+                            <a href="/credits" style="color: #667eea; font-weight: 600;">Purchase credits →</a>
+                        </p>
+                    {% else %}
+                        <form method="POST" action="/semester/enroll">
+                            <input type="hidden" name="semester_id" value="{{ semester.id }}">
+                            <button type="submit" class="unlock-btn">🎓 Enroll Now ({{ semester.enrollment_cost }} credits)</button>
+                        </form>
+                    {% endif %}
                 </div>
             </div>
-
-            {# ── Skill Snapshot ───────────────────────────────────────────────── #}
-            <section class="section-block">
-                <div class="section-header">
-                    <h2 class="page-title">📊 Skill Snapshot</h2>
-                    <a href="/skills" class="section-link">View all 29 skills →</a>
-                </div>
-                <div id="s-snapshot">
-                    <div class="s-loading"><span class="s-spinner"></span> Loading…</div>
-                </div>
-            </section>
-
-            {# ── Last Skill Event ──────────────────────────────────────────────── #}
-            <section class="section-block">
-                <div class="section-header">
-                    <h2 class="page-title">📈 Last Skill Event</h2>
-                    <a href="/skills/history?skill=passing" class="section-link">Full event history →</a>
-                </div>
-                <div id="s-last-result">
-                    <div class="s-loading"><span class="s-spinner"></span> Loading…</div>
-                </div>
-            </section>
-
-            {# ── Available Events ──────────────────────────────────────────────── #}
-            <section class="section-block">
-                <div class="section-header">
-                    <h2 class="page-title">⚽ Available Events</h2>
-                </div>
-                <p class="page-subtitle">Enroll in semesters to access training sessions and progress through your football development path.</p>
-
-                {% if available_semesters|length == 0 %}
-                <div class="info-banner" style="background: #fff7e6; border-color: #faad14;">
-                    <p style="color: #ad6800;">⚠️ <strong>No track semesters available for your age group yet.</strong><br>
-                    Check back later, or <a href="/profile" style="color: #ad6800; text-decoration: underline;">update your profile</a> if your age group is incorrect.</p>
-                </div>
-                {% else %}
-                <div class="info-banner">
-                    <p><strong>💡 Available Semesters for {{ age_category_name }} ({{ age_range }})</strong><br>
-                    {{ age_description }} — {{ available_semesters|length }} semester(s) available</p>
-                </div>
-                {% endif %}
-
-                <div class="cards-grid">
-                    {% for semester in available_semesters %}
-                    <div class="spec-card">
-                        <div class="cost-badge">💰 {{ semester.enrollment_cost }} Credits</div>
-                        <div class="spec-icon">⚽</div>
-                        <h3 class="spec-title">{{ semester.name }}</h3>
-                        <p class="spec-age">📅 {{ semester.start_date.strftime('%Y-%m-%d') }} — {{ semester.end_date.strftime('%Y-%m-%d') }}</p>
-                        <p class="spec-description">
-                            <strong>Code:</strong> {{ semester.code }}<br>
-                            <strong>Status:</strong> {{ semester.status.value if semester.status else 'Unknown' }}
-                        </p>
-                        <div class="spec-action">
-                            {% if user.credit_balance < semester.enrollment_cost %}
-                                <button class="unlock-btn" disabled>❌ Insufficient Credits (Need {{ semester.enrollment_cost }})</button>
-                                <p style="margin-top: 0.5rem; font-size: 0.85rem;">
-                                    <a href="/credits" style="color: #667eea; font-weight: 600;">Purchase credits →</a>
-                                </p>
-                            {% else %}
-                                <form method="POST" action="/semester/enroll">
-                                    <input type="hidden" name="semester_id" value="{{ semester.id }}">
-                                    <button type="submit" class="unlock-btn">🎓 Enroll Now ({{ semester.enrollment_cost }} credits)</button>
-                                </form>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </section>
-
-        </div>{# /.dash-right-col #}
-
-    </div>{# /.dash-main-grid #}
+            {% endfor %}
+        </div>
+    </section>
 
     <div class="footer-links">
         <a href="/dashboard">🏠 Hub</a>
