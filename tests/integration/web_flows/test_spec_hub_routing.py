@@ -235,7 +235,7 @@ class TestSpecDashboardOnboardingGuard:
         with _client(test_db, student) as c:
             r = c.get("/dashboard/lfa-football-player")
             assert r.status_code == 200
-            assert "Programs" in r.text
+            assert 'href="/events"' in r.text
 
 
 class TestWebFormEnrollmentGuard:
@@ -321,4 +321,4 @@ class TestLegacyEnrollmentSignal:
         with _client(test_db, student) as c:
             r = c.get("/dashboard/lfa-football-player")
             assert r.status_code == 200
-            assert "Programs" in r.text
+            assert 'href="/events"' in r.text

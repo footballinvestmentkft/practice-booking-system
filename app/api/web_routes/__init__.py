@@ -17,6 +17,8 @@ from . import (
     instructor,
     instructor_dashboard,
     programs,
+    events,
+    adaptive_learning,
     communications,
     teams,
     tournament_live,
@@ -45,6 +47,8 @@ router.include_router(instructor_dashboard.router)
 router.include_router(admin_router)
 router.include_router(tournaments_router)
 router.include_router(programs.router)       # 📅 MINI_SEASON / ACADEMY_SEASON student enrollment
+router.include_router(events.router)         # 📅 Events hub (/events)
+router.include_router(adaptive_learning.router)  # 🧠 Adaptive Learning entry point
 router.include_router(communications.router)
 router.include_router(teams.router)
 router.include_router(tournament_live.router)  # ✅ Live monitoring (WebSocket + admin page)

@@ -226,13 +226,18 @@ describe('A. Student Core Journey — Skill Progression', {
     cy.contains('h2', 'Skill Snapshot').should('be.visible');
     cy.contains('h2', 'Last Skill Event').should('be.visible');
 
-    // Events row: Programs / Camps / Tournaments cards must be present
-    cy.get('.mod-nav-card[href="/semesters/enroll"]').should('exist');
-    cy.get('.mod-nav-card[href="/camps"]').should('exist');
-    cy.get('.mod-nav-card[href="/tournaments"]').should('exist');
+    // 2×3 mod-nav: 6 primary domain cards must be present
+    cy.get('.mod-nav-card[href="/events"]').should('exist');
+    cy.get('.mod-nav-card[href="/dashboard/lfa-football-player/card-editor"]').should('exist');
+    cy.get('.mod-nav-card[href="/adaptive-learning"]').should('exist');
+    cy.get('.mod-nav-card[href="/skills/history?skill=passing"]').should('exist');
+    cy.get('.mod-nav-card[href="/calendar"]').should('exist');
+    cy.get('.mod-nav-card[href="/achievements"]').should('exist');
 
-    // Quick links in footer
-    cy.get('a[href="/skills/history?skill=passing"]').should('exist');
+    // Secondary nav in footer: Sessions / Progress / Skills accessible
+    cy.get('a[href="/sessions"]').should('exist');
+    cy.get('a[href="/progress"]').should('exist');
+    cy.get('a[href="/skills"]').should('exist');
 
     // Page must not show any server error
     cy.get('body').should('not.contain.text', 'Internal Server Error');
