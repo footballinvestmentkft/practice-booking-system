@@ -160,6 +160,11 @@
     .unlock-btn:disabled:hover { transform: none; box-shadow: none; }
     .cost-badge  { position: absolute; top: 1rem; right: 1rem; background: #ffd700; color: #2d3748; padding: 0.35rem 0.8rem; border-radius: 8px; font-weight: 700; font-size: 0.82rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
 
+    /* ── Footer ──────────────────────────────────────────────────────────────── */
+    .footer-links { text-align: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; }
+    .footer-links a { color: #667eea; text-decoration: none; margin: 0 1rem; font-weight: 600; }
+    .footer-links a:hover { text-decoration: underline; }
+
     /* ── Loading ─────────────────────────────────────────────────────────────── */
     .s-loading { color: #a0aec0; font-size: 0.9rem; padding: 0.5rem 0; }
 
@@ -348,7 +353,14 @@
 
     </div>{# /.dash-main-grid #}
 
-
+    <div class="footer-links">
+        <a href="/dashboard">🏠 Hub</a>
+        <a href="/skills">⚡ Skills</a>
+        <a href="/skills/history?skill=passing">📈 History</a>
+        <a href="/sessions">📅 Sessions</a>
+        <a href="/credits">💳 Credits</a>
+        <a href="/profile">👤 Profile</a>
+    </div>
 
 </div>
 {% endblock %}
