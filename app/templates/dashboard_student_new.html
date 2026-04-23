@@ -8,6 +8,14 @@
     <div class="student-header-inner">
         <a href="/dashboard" class="s-hdr-btn" title="Back to Hub">🏠</a>
         <div class="student-brand">{{ spec_config.icon }} {{ spec_config.name }}</div>
+        <nav class="student-nav" id="student-nav" aria-label="Student navigation">
+            <a href="/dashboard/lfa-football-player" class="nav-item active">⚽ LFA Player</a>
+            <a href="/sessions"     class="nav-item">📅 Sessions</a>
+            <a href="/progress"     class="nav-item">📊 Progress</a>
+            <a href="/skills"       class="nav-item">⚡ Skills</a>
+            <a href="/achievements" class="nav-item">🏆 Achievements</a>
+            <a href="/calendar"     class="nav-item">📆 Calendar</a>
+        </nav>
         <div class="student-header-actions">
             <span class="credit-pill">💰 {{ user.credit_balance if user else 0 }}</span>
             <a href="/credits" class="s-hdr-btn" title="Credits">💳</a>
@@ -265,6 +273,17 @@
                     <div class="s-kpi-lbl">{{ age_range or 'Category' }}</div>
                 </div>
             </div>
+
+            {# ── Skill Snapshot ───────────────────────────────────────────────── #}
+            <section class="section-block">
+                <div class="section-header">
+                    <h2 class="page-title">📊 Skill Snapshot</h2>
+                    <a href="/skills" class="section-link">View all 29 skills →</a>
+                </div>
+                <div id="s-snapshot">
+                    <div class="s-loading"><span class="s-spinner"></span> Loading…</div>
+                </div>
+            </section>
 
             {# ── Last Skill Event ──────────────────────────────────────────────── #}
             <section class="section-block">
