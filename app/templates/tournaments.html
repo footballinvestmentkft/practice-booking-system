@@ -1,8 +1,15 @@
-{% extends "base.html" %}
+{% extends "student_base.html" %}
 
 {% block title %}Tournaments - LFA Education Center{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
 
-{% block content %}
+{% block student_header %}
+{% set _page_icon = '🏆' %}
+{% set _page_name = 'Tournaments' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
 <style>
 .tournament-card {
     border-radius: 12px;
@@ -95,11 +102,34 @@
     flex-wrap: wrap;
     align-items: center;
 }
+.tournaments-container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 2rem;
+}
+.tournaments-page-footer {
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+    font-size: 0.9rem;
+}
+.tournaments-page-footer a {
+    color: #667eea;
+    text-decoration: none;
+    margin: 0 1rem;
+    font-weight: 600;
+}
+.tournaments-page-footer a:hover { text-decoration: underline; }
 </style>
+{% endblock %}
 
-<div class="welcome-section">
-    <h1>⚽ Tournaments</h1>
-    <p>Browse open tournaments and manage your participation</p>
+{% block student_content %}
+<div class="tournaments-container">
+
+<div style="margin-bottom: 1.5rem;">
+    <h1 style="font-size:1.6rem; font-weight:700; margin:0 0 0.3rem;">🏆 Tournaments</h1>
+    <p style="color:#7f8c8d; margin:0;">Browse open tournaments and manage your participation</p>
 </div>
 
 {% if flash %}
@@ -112,7 +142,7 @@
 {% endif %}
 
 {% if not tournaments %}
-<div class="card text-center" style="padding: 3rem;">
+<div class="card text-center" style="padding: 3rem; background:white; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.07);">
     <div style="font-size: 3rem; margin-bottom: 1rem;">🏆</div>
     <h3>No Open Tournaments</h3>
     <p style="color: #7f8c8d;">There are no tournaments open for enrollment right now. Check back later!</p>
@@ -221,4 +251,11 @@
 
 {% endif %}
 
+<div class="tournaments-page-footer">
+    <a href="/events">← All Events</a>
+    <a href="/sessions">📋 My Sessions</a>
+    <a href="/dashboard/lfa-football-player">⚽ Dashboard</a>
+</div>
+
+</div>
 {% endblock %}

@@ -1,0 +1,301 @@
+{% extends "student_base.html" %}
+
+{% block title %}Adaptive Learning - LFA{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '🧠' %}
+{% set _page_name = 'Adaptive Learning' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .al-container {
+        max-width: 780px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 2.5rem;
+    }
+
+    .al-header {
+        margin-bottom: 2rem;
+    }
+
+    .al-header h1 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: var(--app-text);
+        margin: 0 0 0.35rem;
+    }
+
+    .al-header p {
+        color: var(--app-text-muted);
+        font-size: 0.95rem;
+        margin: 0;
+    }
+
+    /* ── Stats block ────────────────────────────────────────────────────────── */
+    .al-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.75rem;
+    }
+
+    @media (max-width: 520px) {
+        .al-stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .al-stat-card {
+        background: var(--app-card);
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        text-align: center;
+        border-top: 3px solid #667eea;
+    }
+
+    .al-stat-card:nth-child(1) { border-top-color: #9b59b6; }
+    .al-stat-card:nth-child(2) { border-top-color: #2ecc71; }
+    .al-stat-card:nth-child(3) { border-top-color: #3498db; }
+
+    .al-stat-val {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--app-text);
+        line-height: 1.1;
+    }
+
+    .al-stat-card:nth-child(1) .al-stat-val { color: #6c3483; }
+    .al-stat-card:nth-child(2) .al-stat-val { color: #1e8449; }
+    .al-stat-card:nth-child(3) .al-stat-val { color: #1a5276; }
+
+    .al-stat-lbl {
+        font-size: 0.82rem;
+        color: var(--app-text-muted);
+        margin-top: 0.3rem;
+    }
+
+    /* ── CTA block ──────────────────────────────────────────────────────────── */
+    .al-cta-block {
+        background: var(--app-card);
+        border-radius: 14px;
+        padding: 1.75rem 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        margin-bottom: 1.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .al-cta-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--app-text);
+        margin: 0;
+    }
+
+    .al-cta-desc {
+        font-size: 0.9rem;
+        color: var(--app-text-muted);
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .al-cta-features {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        margin: 0;
+    }
+
+    .al-feature-chip {
+        background: #f0f4ff;
+        color: #3730a3;
+        border-radius: 20px;
+        padding: 0.3rem 0.85rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+
+    .al-cta-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #c7d2fe;
+        color: #3730a3;
+        border: 2px solid #a5b4fc;
+        border-radius: 8px;
+        padding: 0.7rem 1.5rem;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: not-allowed;
+        opacity: 0.7;
+        width: fit-content;
+    }
+
+    .al-cta-notice {
+        font-size: 0.82rem;
+        color: var(--app-text-muted);
+        background: #fafafa;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        margin: 0;
+    }
+
+    /* ── Recent sessions ────────────────────────────────────────────────────── */
+    .al-history-block {
+        background: var(--app-card);
+        border-radius: 14px;
+        padding: 1.5rem 1.75rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        margin-bottom: 1.75rem;
+    }
+
+    .al-history-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--app-text);
+        margin: 0 0 1rem;
+    }
+
+    .al-session-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.65rem 0;
+        border-bottom: 1px solid var(--app-border);
+        font-size: 0.88rem;
+        flex-wrap: wrap;
+    }
+
+    .al-session-row:last-child { border-bottom: none; }
+
+    .al-session-date { color: var(--app-text-muted); min-width: 90px; }
+    .al-session-cat  { font-weight: 600; color: var(--app-text); flex: 1; }
+    .al-session-score {
+        font-size: 0.82rem;
+        color: var(--app-text-muted);
+        white-space: nowrap;
+    }
+    .al-session-xp {
+        font-weight: 700;
+        color: #6c3483;
+        white-space: nowrap;
+    }
+
+    .al-empty {
+        color: var(--app-text-muted);
+        font-size: 0.9rem;
+        padding: 0.5rem 0;
+    }
+
+    /* ── Footer cross-links ─────────────────────────────────────────────────── */
+    .al-footer {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .al-footer a {
+        color: #667eea;
+        text-decoration: none;
+        margin: 0 1rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .al-footer a:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="al-container">
+
+    <div class="al-header">
+        <h1>🧠 Adaptive Learning</h1>
+        <p>Personalised question sessions that adapt to your level and reward XP based on performance.</p>
+    </div>
+
+    {# ── Stats ─────────────────────────────────────────────────────────────── #}
+    <div class="al-stats-grid">
+        <div class="al-stat-card">
+            <div class="al-stat-val">{{ total_xp }}</div>
+            <div class="al-stat-lbl">XP Earned</div>
+        </div>
+        <div class="al-stat-card">
+            <div class="al-stat-val">{{ session_count }}</div>
+            <div class="al-stat-lbl">Sessions Completed</div>
+        </div>
+        <div class="al-stat-card">
+            <div class="al-stat-val">
+                {% if last_session and last_session.started_at %}
+                    {{ last_session.started_at.strftime('%b %d') }}
+                {% else %}
+                    —
+                {% endif %}
+            </div>
+            <div class="al-stat-lbl">Last Session</div>
+        </div>
+    </div>
+
+    {# ── CTA block ─────────────────────────────────────────────────────────── #}
+    <div class="al-cta-block">
+        <p class="al-cta-title">🚀 Start Adaptive Session</p>
+        <p class="al-cta-desc">
+            Answer questions tailored to your current skill level across football knowledge categories.
+            The difficulty adapts in real-time — correct answers raise the bar, incorrect ones recalibrate it.
+        </p>
+        <div class="al-cta-features">
+            <span class="al-feature-chip">⚡ XP rewards</span>
+            <span class="al-feature-chip">🎯 Dynamic difficulty</span>
+            <span class="al-feature-chip">📊 Skill-linked questions</span>
+            <span class="al-feature-chip">⏱️ Timed sessions</span>
+        </div>
+        <button class="al-cta-btn" disabled title="Full adaptive engine coming soon">
+            🧠 Start Session
+        </button>
+        <p class="al-cta-notice">
+            The adaptive engine is being finalised. Your session history and XP are already tracked —
+            full question sessions will be unlocked in an upcoming update.
+        </p>
+    </div>
+
+    {# ── Recent sessions history ────────────────────────────────────────────── #}
+    <div class="al-history-block">
+        <h2 class="al-history-title">📋 Recent Sessions</h2>
+
+        {% if recent_sessions %}
+            {% for s in recent_sessions %}
+            <div class="al-session-row">
+                <span class="al-session-date">
+                    {{ s.started_at.strftime('%b %d, %Y') if s.started_at else '—' }}
+                </span>
+                <span class="al-session-cat">
+                    {{ s.category.value.replace('_', ' ').title() if s.category else '—' }}
+                </span>
+                <span class="al-session-score">
+                    {% if s.questions_presented and s.questions_presented > 0 %}
+                        {{ s.questions_correct or 0 }} / {{ s.questions_presented }} correct
+                    {% else %}
+                        —
+                    {% endif %}
+                </span>
+                <span class="al-session-xp">+{{ s.xp_earned or 0 }} XP</span>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="al-empty">No sessions yet — your history will appear here once sessions are available.</p>
+        {% endif %}
+    </div>
+
+    <div class="al-footer">
+        <a href="/dashboard/lfa-football-player">⚽ Dashboard</a>
+        <a href="/progress">📊 View Progress</a>
+        <a href="/skills/history?skill=passing">📈 Skill History</a>
+    </div>
+
+</div>
+{% endblock %}

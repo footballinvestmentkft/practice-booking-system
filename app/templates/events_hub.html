@@ -1,0 +1,205 @@
+{% extends "student_base.html" %}
+
+{% block title %}Events - LFA Education Center{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '📅' %}
+{% set _page_name = 'Events' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .events-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 2.5rem;
+    }
+
+    .events-header {
+        margin-bottom: 2rem;
+    }
+
+    .events-header h1 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: var(--app-text);
+        margin: 0 0 0.35rem;
+    }
+
+    .events-header p {
+        color: var(--app-text-muted);
+        font-size: 0.95rem;
+        margin: 0;
+    }
+
+    /* ── Active enrollment notice ───────────────────────────────────────────── */
+    .active-notice {
+        background: #e6f7ff;
+        border-left: 4px solid #1890ff;
+        border-radius: 8px;
+        padding: 0.85rem 1.25rem;
+        margin-bottom: 1.75rem;
+        font-size: 0.9rem;
+        color: #0050b3;
+    }
+
+    /* ── Category grid ──────────────────────────────────────────────────────── */
+    .event-cat-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+
+    @media (max-width: 520px) {
+        .event-cat-grid { grid-template-columns: 1fr; }
+    }
+
+    .event-cat-card {
+        display: flex;
+        flex-direction: column;
+        background: var(--app-card);
+        border-radius: 14px;
+        padding: 1.5rem 1.75rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        text-decoration: none;
+        color: inherit;
+        border-left: 5px solid var(--cat-color, #667eea);
+        transition: box-shadow 0.2s, transform 0.15s;
+    }
+
+    .event-cat-card:hover {
+        box-shadow: 0 6px 20px rgba(0,0,0,0.13);
+        transform: translateY(-2px);
+    }
+
+    .cat-icon { font-size: 2.2rem; margin-bottom: 0.6rem; line-height: 1; }
+
+    .cat-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--app-text);
+        margin: 0 0 0.3rem;
+    }
+
+    .cat-desc {
+        font-size: 0.85rem;
+        color: var(--app-text-muted);
+        margin: 0 0 1rem;
+        line-height: 1.45;
+    }
+
+    .cat-counter {
+        margin-top: auto;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--cat-color, #667eea);
+    }
+
+    .cat-counter.none { color: var(--app-text-muted); font-weight: 400; }
+
+    /* ── Footer secondary nav ───────────────────────────────────────────────── */
+    .events-footer {
+        text-align: center;
+        margin-top: 2.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .events-footer a {
+        color: #667eea;
+        text-decoration: none;
+        margin: 0 1rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .events-footer a:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="events-container">
+
+    <div class="events-header">
+        <h1>📅 Events</h1>
+        <p>Discover and join events — camps, tournaments, and academy programs.</p>
+    </div>
+
+    {% if my_active_enrollments > 0 %}
+    <div class="active-notice">
+        ✅ You have <strong>{{ my_active_enrollments }} active enrollment{{ 's' if my_active_enrollments != 1 }}</strong>.
+        <a href="/sessions" style="color:#1890ff; font-weight:600; margin-left:0.5rem;">View my sessions →</a>
+    </div>
+    {% endif %}
+
+    <div class="event-cat-grid">
+
+        {# ── Camps ─────────────────────────────────────────────────────────── #}
+        <a href="/camps" class="event-cat-card" style="--cat-color: #f39c12;">
+            <div class="cat-icon">🏕️</div>
+            <div class="cat-title">Camps</div>
+            <div class="cat-desc">Short-term intensive camps. Summer and winter programs with focused training sessions.</div>
+            <div class="cat-counter {% if camps_open == 0 %}none{% endif %}">
+                {% if camps_open > 0 %}
+                    {{ camps_open }} camp{{ 's' if camps_open != 1 }} open for enrollment
+                {% else %}
+                    No camps open right now
+                {% endif %}
+            </div>
+        </a>
+
+        {# ── Tournaments ──────────────────────────────────────────────────── #}
+        <a href="/tournaments" class="event-cat-card" style="--cat-color: #27ae60;">
+            <div class="cat-icon">🏆</div>
+            <div class="cat-title">Tournaments</div>
+            <div class="cat-desc">Competitive formats — head-to-head, group stage, and ranking-based tournaments.</div>
+            <div class="cat-counter {% if tournaments_open == 0 %}none{% endif %}">
+                {% if tournaments_open > 0 %}
+                    {{ tournaments_open }} tournament{{ 's' if tournaments_open != 1 }} open
+                {% else %}
+                    No tournaments open right now
+                {% endif %}
+            </div>
+        </a>
+
+        {# ── Academy Season ───────────────────────────────────────────────── #}
+        <a href="/semesters/enroll?category=ACADEMY_SEASON" class="event-cat-card" style="--cat-color: #3498db;">
+            <div class="cat-icon">🎓</div>
+            <div class="cat-title">Academy Season</div>
+            <div class="cat-desc">Full-length multi-month academy programs with structured skill development tracks.</div>
+            <div class="cat-counter {% if academy_available == 0 %}none{% endif %}">
+                {% if academy_available > 0 %}
+                    {{ academy_available }} program{{ 's' if academy_available != 1 }} available
+                {% else %}
+                    No programs available right now
+                {% endif %}
+            </div>
+        </a>
+
+        {# ── Mini Season ──────────────────────────────────────────────────── #}
+        <a href="/semesters/enroll?category=MINI_SEASON" class="event-cat-card" style="--cat-color: #9b59b6;">
+            <div class="cat-icon">🗓️</div>
+            <div class="cat-title">Mini Season</div>
+            <div class="cat-desc">Short academy seasons (4–8 weeks) for focused skill work between major programs.</div>
+            <div class="cat-counter {% if mini_available == 0 %}none{% endif %}">
+                {% if mini_available > 0 %}
+                    {{ mini_available }} program{{ 's' if mini_available != 1 }} available
+                {% else %}
+                    No programs available right now
+                {% endif %}
+            </div>
+        </a>
+
+    </div>
+
+    <div class="events-footer">
+        <a href="/dashboard/lfa-football-player">⚽ Dashboard</a>
+        <a href="/sessions">📋 My Sessions</a>
+        <a href="/progress">📊 Progress</a>
+        <a href="/calendar">📆 Calendar</a>
+    </div>
+
+</div>
+{% endblock %}

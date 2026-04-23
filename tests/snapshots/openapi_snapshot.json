@@ -22772,6 +22772,29 @@
         ]
       }
     },
+    "/adaptive-learning": {
+      "get": {
+        "description": "Adaptive Learning entry point \u2014 XP summary + disabled CTA until full engine lands.",
+        "operationId": "adaptive_learning_page_adaptive_learning_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Adaptive Learning Page",
+        "tags": [
+          "web",
+          "adaptive-learning"
+        ]
+      }
+    },
     "/admin/analytics": {
       "get": {
         "description": "Admin-only: Analytics and reports page",
@@ -56170,6 +56193,29 @@
         "summary": "Spec Dashboard",
         "tags": [
           "web"
+        ]
+      }
+    },
+    "/events": {
+      "get": {
+        "description": "Events hub \u2014 navigation hub for Camps, Tournaments, Academy Season, Mini Season.",
+        "operationId": "events_hub_events_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Events Hub",
+        "tags": [
+          "web",
+          "events"
         ]
       }
     },

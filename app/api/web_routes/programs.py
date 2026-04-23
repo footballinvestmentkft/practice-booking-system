@@ -13,8 +13,9 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+from typing import Optional
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, update as sql_update
 from sqlalchemy.exc import IntegrityError
@@ -67,16 +68,23 @@ async def semester_enroll_browse(
     request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
+    category: Optional[str] = Query(None, description="Filter by category: ACADEMY_SEASON or MINI_SEASON"),
 ):
     spec_value = user.specialization.value if user.specialization else None
     color = _SPEC_COLORS.get(spec_value, "#667eea")
+
+    # Resolve which categories to show based on optional ?category= param
+    if category and category in {"ACADEMY_SEASON", "MINI_SEASON"}:
+        cats = {SemesterCategory[category]}
+    else:
+        cats = _PROGRAM_CATEGORIES
 
     available = []
     if spec_value:
         available = (
             db.query(Semester)
             .filter(
-                Semester.semester_category.in_(_PROGRAM_CATEGORIES),
+                Semester.semester_category.in_(cats),
                 Semester.status.in_(_BROWSE_STATUSES),
                 Semester.specialization_type == spec_value,
             )
