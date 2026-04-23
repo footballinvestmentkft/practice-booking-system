@@ -225,7 +225,11 @@ describe('A. Student Core Journey — Skill Progression', {
     // Skill Snapshot + Last Result sections visible
     cy.contains('h2', 'Skill Snapshot').should('be.visible');
     cy.contains('h2', 'Last Skill Event').should('be.visible');
-    cy.contains('h2', 'Available Events').should('be.visible');
+
+    // Events row: Programs / Camps / Tournaments cards must be present
+    cy.get('.mod-nav-card[href="/semesters/enroll"]').should('exist');
+    cy.get('.mod-nav-card[href="/camps"]').should('exist');
+    cy.get('.mod-nav-card[href="/tournaments"]').should('exist');
 
     // Quick links in footer
     cy.get('a[href="/skills/history?skill=passing"]').should('exist');
