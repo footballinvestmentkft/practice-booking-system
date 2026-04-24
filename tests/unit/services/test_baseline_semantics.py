@@ -22,6 +22,7 @@ from app.models.license import UserLicense
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 _SKILL_KEY = "finishing"  # arbitrary canonical key
+_USER_ID = 42             # non-1 constant required by Hardcoded FK ID Guard
 
 
 def _mock_db(football_skills):
@@ -58,14 +59,14 @@ class TestNullFallback:
     def test_no_license_returns_all_60(self):
         """User with no active license → all 29 skills return DEFAULT_BASELINE = 60."""
         db = _mock_db_no_license()
-        result = get_baseline_skills(db, user_id=1)
+        result = get_baseline_skills(db, user_id=_USER_ID)
         assert all(v == 60.0 for v in result.values())
         assert len(result) == 29
 
     def test_empty_football_skills_returns_all_60(self):
         """License exists but football_skills is empty dict → DEFAULT_BASELINE = 60."""
         db = _mock_db({})
-        result = get_baseline_skills(db, user_id=1)
+        result = get_baseline_skills(db, user_id=_USER_ID)
         assert all(v == 60.0 for v in result.values())
 
     def test_none_football_skills_returns_all_60(self):
@@ -74,7 +75,7 @@ class TestNullFallback:
         lic.football_skills = None
         db = MagicMock()
         db.query.return_value.filter.return_value.first.return_value = lic
-        result = get_baseline_skills(db, user_id=1)
+        result = get_baseline_skills(db, user_id=_USER_ID)
         assert all(v == 60.0 for v in result.values())
 
 
@@ -123,14 +124,14 @@ class TestNewFormatRecord:
         """get_baseline_skills() must prefer system_baseline = 60 over any other field."""
         skills = self._new_skills(self_assessment=75.0)
         db = _mock_db(skills)
-        result = get_baseline_skills(db, user_id=1)
+        result = get_baseline_skills(db, user_id=_USER_ID)
         assert result[_SKILL_KEY] == 60.0
 
     def test_ema_anchor_is_60_not_self_assessment(self):
         """When system_baseline=60 and self_assessment=75, EMA anchor returned is 60."""
         skills = self._new_skills(self_assessment=75.0)
         db = _mock_db(skills)
-        result = get_baseline_skills(db, user_id=1)
+        result = get_baseline_skills(db, user_id=_USER_ID)
         for v in result.values():
             assert v == 60.0, f"Expected EMA anchor 60.0, got {v}"
 
@@ -145,7 +146,7 @@ class TestLegacyBackwardCompat:
         from app.skills_config import get_all_skill_keys
         flat_skills = {k: 72.0 for k in get_all_skill_keys()}
         db = _mock_db(flat_skills)
-        result = get_baseline_skills(db, user_id=1)
+        result = get_baseline_skills(db, user_id=_USER_ID)
         assert result["ball_control"] == 72.0
 
     def test_legacy_rich_dict_without_system_baseline(self):
@@ -156,7 +157,7 @@ class TestLegacyBackwardCompat:
             for k in get_all_skill_keys()
         }
         db = _mock_db(legacy_skills)
-        result = get_baseline_skills(db, user_id=1)
+        result = get_baseline_skills(db, user_id=_USER_ID)
         assert result["ball_control"] == 70.0
 
     def test_legacy_flat_63_preserved(self):
@@ -164,7 +165,7 @@ class TestLegacyBackwardCompat:
         from app.skills_config import get_all_skill_keys
         flat_skills = {k: 63.0 for k in get_all_skill_keys()}
         db = _mock_db(flat_skills)
-        result = get_baseline_skills(db, user_id=1)
+        result = get_baseline_skills(db, user_id=_USER_ID)
         assert all(v == 63.0 for v in result.values())
 
     def test_legacy_flat_68_preserved(self):
@@ -172,13 +173,13 @@ class TestLegacyBackwardCompat:
         from app.skills_config import get_all_skill_keys
         flat_skills = {k: 68.0 for k in get_all_skill_keys()}
         db = _mock_db(flat_skills)
-        result = get_baseline_skills(db, user_id=1)
+        result = get_baseline_skills(db, user_id=_USER_ID)
         assert all(v == 68.0 for v in result.values())
 
     def test_partial_record_missing_skill_falls_back_to_60(self):
         """A skill key absent from football_skills falls back to DEFAULT_BASELINE = 60."""
         db = _mock_db({"ball_control": 70.0})  # only one skill present
-        result = get_baseline_skills(db, user_id=1)
+        result = get_baseline_skills(db, user_id=_USER_ID)
         for key, val in result.items():
             if key == "ball_control":
                 assert val == 70.0
