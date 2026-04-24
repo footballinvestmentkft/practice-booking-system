@@ -1,5 +1,5 @@
 """
-Unit tests for AdaptiveLearningService (AL-1 backend core).
+Unit tests for AdaptiveLearningService (AL-1/AL-3 backend core).
 
 Scope:
   - end_session: GamificationService coupling removed — no external side-effects
@@ -7,14 +7,16 @@ Scope:
   - start_adaptive_session: creates session row, returns ORM object
   - record_answer correct/incorrect: increments session counts, returns xp_earned
   - _get_candidate_questions fallback: returns questions even when QuestionMetadata is absent
-  - _session_guard (route helper): returns 404 / 410 for invalid / completed sessions
+  - al_session_complete route (AL-3): XP ledger write, idempotency, SELECT FOR UPDATE guard
+  - al_session_start route (AL-3): category param validation, default, passthrough
 
 All tests use MagicMock DB — no real DB connection required.
 """
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import pytest
+from fastapi.testclient import TestClient
 
 from app.services.adaptive_learning import AdaptiveLearningService
 from app.models.quiz import (
@@ -216,3 +218,163 @@ class TestRecordAnswer:
         )
         assert session.questions_presented == 3
         assert session.questions_correct == 1  # unchanged
+
+
+# ── AL-3: al_session_start — category validation ──────────────────────────────
+
+_START_BASE = "app.api.web_routes.adaptive_learning"
+
+
+def _make_user(uid=99):
+    u = MagicMock()
+    u.id = uid
+    return u
+
+
+def _make_db_no_existing():
+    """DB mock that returns no active session (existing=None)."""
+    db = MagicMock()
+    q = MagicMock()
+    q.filter.return_value = q
+    q.order_by.return_value = q
+    q.first.return_value = None
+    db.query.return_value = q
+    return db
+
+
+class TestAl3SessionStart:
+    """Route-level tests for al_session_start category parameter."""
+
+    def _call_start(self, category_param, db=None, user=None):
+        import asyncio
+        from app.api.web_routes.adaptive_learning import al_session_start
+
+        db = db or _make_db_no_existing()
+        user = user or _make_user()
+        req = MagicMock()
+
+        with patch(f"{_START_BASE}.require_student_onboarding", return_value=None), \
+             patch(f"{_START_BASE}.AdaptiveLearningService") as MockSvc:
+
+            mock_session = MagicMock()
+            mock_session.id = 42
+            mock_session.session_start_time = None
+            MockSvc.return_value.start_adaptive_session.return_value = mock_session
+
+            response = asyncio.run(al_session_start(
+                request=req,
+                category=category_param,
+                db=db,
+                user=user,
+            ))
+            return response, MockSvc
+
+    def test_valid_category_passed_to_service(self):
+        response, MockSvc = self._call_start("SPORTS_PHYSIOLOGY")
+        assert response.status_code == 200
+        MockSvc.return_value.start_adaptive_session.assert_called_once()
+        args = MockSvc.return_value.start_adaptive_session.call_args[0]
+        assert args[1] == QuizCategory.SPORTS_PHYSIOLOGY
+
+    def test_default_category_is_lesson(self):
+        response, MockSvc = self._call_start("LESSON")
+        assert response.status_code == 200
+        args = MockSvc.return_value.start_adaptive_session.call_args[0]
+        assert args[1] == QuizCategory.LESSON
+
+    def test_invalid_category_returns_422(self):
+        response, _ = self._call_start("NONSENSE")
+        assert response.status_code == 422
+
+    def test_category_case_insensitive(self):
+        response, MockSvc = self._call_start("lesson")
+        assert response.status_code == 200
+        args = MockSvc.return_value.start_adaptive_session.call_args[0]
+        assert args[1] == QuizCategory.LESSON
+
+
+# ── AL-3: al_session_complete — XP ledger idempotency ────────────────────────
+
+_COMPLETE_BASE = "app.api.web_routes.adaptive_learning"
+
+
+def _make_active_session(session_id=1, xp_earned=80):
+    s = MagicMock(spec=AdaptiveLearningSession)
+    s.id = session_id
+    s.user_id = 99
+    s.ended_at = None
+    return s
+
+
+def _make_ended_session(session_id=1):
+    s = MagicMock(spec=AdaptiveLearningSession)
+    s.id = session_id
+    s.user_id = 99
+    s.ended_at = datetime(2026, 4, 24, 10, 0, 0, tzinfo=timezone.utc)
+    return s
+
+
+def _call_complete(session_id, db_session_obj, summary, xp_tx_exists=False):
+    import asyncio
+    from app.api.web_routes.adaptive_learning import al_session_complete
+
+    db = MagicMock()
+    # .with_for_update().first() returns the session object
+    db.query.return_value.filter.return_value.with_for_update.return_value.first.return_value = db_session_obj
+    # XPTransaction pre-check: second query chain
+    xp_tx_mock = MagicMock() if xp_tx_exists else None
+    db.query.return_value.filter.return_value.first.return_value = xp_tx_mock
+
+    user = _make_user(uid=99)
+    req = MagicMock()
+
+    with patch(f"{_COMPLETE_BASE}.require_student_onboarding", return_value=None), \
+         patch(f"{_COMPLETE_BASE}.AdaptiveLearningService") as MockSvc, \
+         patch(f"{_COMPLETE_BASE}.award_xp") as mock_award:
+
+        MockSvc.return_value.end_session.return_value = summary
+
+        response = asyncio.run(al_session_complete(
+            session_id=session_id,
+            request=req,
+            db=db,
+            user=user,
+        ))
+        return response, mock_award
+
+
+class TestAl3SessionComplete:
+    """Route-level tests for al_session_complete XP idempotency."""
+
+    def test_first_complete_awards_xp_once(self):
+        summary = {"questions_answered": 5, "correct_answers": 4, "xp_earned": 80}
+        response, mock_award = _call_complete(1, _make_active_session(xp_earned=80), summary)
+
+        assert response.status_code == 200
+        mock_award.assert_called_once()
+        call_kwargs = mock_award.call_args[1]
+        assert call_kwargs["idempotency_key"] == "adaptive_session_1_xp"
+        assert call_kwargs["transaction_type"] == "ADAPTIVE_LEARNING_XP"
+        assert call_kwargs["xp_amount"] == 80
+
+    def test_second_complete_returns_410(self):
+        summary = {"questions_answered": 5, "correct_answers": 4, "xp_earned": 80}
+        response, mock_award = _call_complete(1, _make_ended_session(), summary)
+
+        assert response.status_code == 410
+        mock_award.assert_not_called()
+
+    def test_existing_xp_transaction_skips_award_xp(self):
+        summary = {"questions_answered": 5, "correct_answers": 4, "xp_earned": 80}
+        response, mock_award = _call_complete(
+            1, _make_active_session(xp_earned=80), summary, xp_tx_exists=True
+        )
+        assert response.status_code == 200
+        mock_award.assert_not_called()
+
+    def test_zero_xp_skips_award_xp(self):
+        summary = {"questions_answered": 3, "correct_answers": 0, "xp_earned": 0}
+        response, mock_award = _call_complete(1, _make_active_session(xp_earned=0), summary)
+
+        assert response.status_code == 200
+        mock_award.assert_not_called()
