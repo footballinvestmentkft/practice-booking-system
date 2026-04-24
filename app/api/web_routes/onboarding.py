@@ -426,7 +426,7 @@ async def lfa_player_onboarding_submit(
         license.football_skills = football_skills
 
         # Store metadata in motivation_scores for backward compatibility
-        average_skill = sum(skills.values()) / len(skills) if skills else 50.0
+        average_skill = sum(skills.values()) / len(skills) if skills else SYSTEM_BASELINE
         license.motivation_scores = {
             "position": position,
             "goals": goals,
