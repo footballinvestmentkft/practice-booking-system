@@ -42,7 +42,6 @@ from app.models.tournament_type import TournamentType  # noqa: E402
 from app.models.user import User, UserRole  # noqa: E402
 from app.core.security import get_password_hash  # noqa: E402
 from app.skills_config import get_all_skill_keys  # noqa: E402
-from sqlalchemy.orm.attributes import flag_modified  # noqa: E402
 
 # ── Tournament type JSON files ────────────────────────────────────────────────
 _JSON_DIR = os.path.join(os.path.dirname(__file__), "..", "app", "tournament_types")
@@ -228,133 +227,6 @@ _GOALS = [
     "team_football", "fitness_health", "enjoy_game",
 ]
 
-# ── Adult demo skill profiles ─────────────────────────────────────────────────
-# 12 unique position-based profiles for LFA Adult bootstrap players.
-# Flat format (float values) consistent with bootstrap seed convention.
-# All 29 canonical keys present; each profile average is in [70, 74].
-# Values in canonical key order:
-#   ball_control, dribbling, finishing, shot_power, long_shots, volleys,
-#   crossing, passing, heading, tackle, marking, free_kicks, corners,
-#   penalties, positioning_off, positioning_def, vision, aggression,
-#   reactions, composure, consistency, tactical_awareness,
-#   acceleration, sprint_speed, agility, jumping, strength, stamina, balance
-
-_ADULT_SKILL_PROFILE_KEYS = [
-    "ball_control", "dribbling", "finishing", "shot_power", "long_shots", "volleys",
-    "crossing", "passing", "heading", "tackle", "marking", "free_kicks", "corners",
-    "penalties", "positioning_off", "positioning_def", "vision", "aggression",
-    "reactions", "composure", "consistency", "tactical_awareness",
-    "acceleration", "sprint_speed", "agility", "jumping", "strength", "stamina", "balance",
-]
-
-_ADULT_SKILL_PROFILES: dict[str, dict[str, float]] = {
-    # Robert Adams — STRIKER, pace/finishing specialist  (avg 71.86)
-    "lfa-adult-robert.adams@lfa.com": dict(zip(_ADULT_SKILL_PROFILE_KEYS, [
-        78, 78, 84, 82, 72, 72, 70, 70, 60, 52, 52, 70, 62, 78,
-        84, 58, 72, 72, 76, 72, 72, 72,
-        84, 84, 78, 68, 62, 74, 76,
-    ])),
-    # Michael Baker — MIDFIELDER, playmaker  (avg 72.34)
-    "lfa-adult-michael.baker@lfa.com": dict(zip(_ADULT_SKILL_PROFILE_KEYS, [
-        80, 76, 60, 60, 68, 64, 76, 86, 62, 68, 66, 76, 74, 72,
-        72, 68, 84, 66, 76, 82, 78, 84,
-        72, 70, 76, 64, 64, 76, 78,
-    ])),
-    # Christopher Cole — MIDFIELDER, creative/wide  (avg 71.38)
-    "lfa-adult-christopher.cole@lfa.com": dict(zip(_ADULT_SKILL_PROFILE_KEYS, [
-        82, 84, 64, 62, 68, 68, 82, 78, 58, 62, 60, 76, 76, 68,
-        74, 60, 80, 60, 74, 76, 70, 76,
-        80, 78, 84, 60, 58, 72, 80,
-    ])),
-    # Andrew Davis — DEFENDER, ball-playing CB  (avg 71.59)
-    "lfa-adult-andrew.davis@lfa.com": dict(zip(_ADULT_SKILL_PROFILE_KEYS, [
-        72, 66, 54, 54, 60, 60, 68, 76, 82, 84, 84, 66, 66, 64,
-        62, 86, 72, 76, 74, 76, 78, 78,
-        70, 70, 68, 80, 82, 74, 74,
-    ])),
-    # Jonathan Evans — DEFENDER, aerial CB  (avg 70.62)
-    "lfa-adult-jonathan.evans@lfa.com": dict(zip(_ADULT_SKILL_PROFILE_KEYS, [
-        68, 60, 54, 56, 58, 62, 64, 70, 88, 84, 82, 62, 64, 62,
-        60, 86, 68, 78, 74, 72, 78, 76,
-        68, 68, 66, 88, 86, 74, 72,
-    ])),
-    # Matthew Fisher — GOALKEEPER, shot-stopper  (avg 71.52)
-    "lfa-adult-matthew.fisher@lfa.com": dict(zip(_ADULT_SKILL_PROFILE_KEYS, [
-        64, 60, 56, 56, 60, 58, 62, 76, 76, 58, 60, 62, 60, 64,
-        60, 88, 82, 72, 90, 88, 86, 80,
-        72, 72, 82, 86, 84, 76, 84,
-    ])),
-    # Benjamin Gray — STRIKER, physical/target  (avg 72.14)
-    "lfa-adult-benjamin.gray@lfa.com": dict(zip(_ADULT_SKILL_PROFILE_KEYS, [
-        74, 66, 80, 80, 70, 76, 68, 70, 84, 54, 54, 68, 66, 76,
-        82, 60, 68, 78, 74, 70, 72, 72,
-        74, 74, 68, 84, 84, 74, 72,
-    ])),
-    # Nicholas Hall — MIDFIELDER, box-to-box  (avg 73.17)
-    "lfa-adult-nicholas.hall@lfa.com": dict(zip(_ADULT_SKILL_PROFILE_KEYS, [
-        76, 78, 66, 64, 66, 66, 72, 80, 68, 76, 72, 66, 66, 68,
-        74, 74, 76, 82, 80, 72, 74, 76,
-        78, 78, 76, 68, 72, 84, 74,
-    ])),
-    # Patrick Ingram — MIDFIELDER, pressing/high-intensity  (avg 72.34)
-    "lfa-adult-patrick.ingram@lfa.com": dict(zip(_ADULT_SKILL_PROFILE_KEYS, [
-        74, 76, 68, 64, 60, 64, 70, 76, 66, 80, 70, 64, 62, 66,
-        72, 76, 70, 84, 84, 66, 74, 74,
-        84, 82, 78, 66, 74, 82, 72,
-    ])),
-    # Richard Jenkins — DEFENDER, aggressive marker  (avg 71.45)
-    "lfa-adult-richard.jenkins@lfa.com": dict(zip(_ADULT_SKILL_PROFILE_KEYS, [
-        72, 64, 52, 52, 58, 58, 70, 76, 84, 86, 86, 64, 64, 62,
-        60, 86, 70, 86, 76, 70, 74, 76,
-        70, 70, 66, 84, 86, 74, 76,
-    ])),
-    # Stephen Knight — DEFENDER, disciplined/tactical  (avg 72.14)
-    "lfa-adult-stephen.knight@lfa.com": dict(zip(_ADULT_SKILL_PROFILE_KEYS, [
-        74, 66, 54, 54, 60, 60, 68, 76, 80, 82, 84, 68, 66, 66,
-        64, 88, 76, 72, 76, 80, 84, 82,
-        68, 68, 66, 80, 82, 74, 74,
-    ])),
-    # Timothy Lane — GOALKEEPER, sweeper-keeper  (avg 71.72)
-    "lfa-adult-timothy.lane@lfa.com": dict(zip(_ADULT_SKILL_PROFILE_KEYS, [
-        68, 64, 58, 58, 62, 60, 64, 80, 74, 60, 62, 64, 62, 66,
-        64, 86, 84, 68, 86, 86, 82, 82,
-        70, 70, 80, 82, 82, 74, 82,
-    ])),
-}
-
-
-def _validate_adult_profiles() -> None:
-    """Assert every adult profile has exactly the 29 canonical keys and avg in [70, 74]."""
-    valid_keys = set(get_all_skill_keys())
-    assert len(_ADULT_SKILL_PROFILES) == 12, (
-        f"Expected 12 adult profiles, got {len(_ADULT_SKILL_PROFILES)}"
-    )
-    for email, profile in _ADULT_SKILL_PROFILES.items():
-        pk = set(profile.keys())
-        extra = pk - valid_keys
-        missing = valid_keys - pk
-        assert not extra,   f"Adult profile {email}: unknown keys {extra}"
-        assert not missing, f"Adult profile {email}: missing keys {missing}"
-        avg = sum(profile.values()) / len(profile)
-        assert 70.0 <= avg <= 74.0, (
-            f"Adult profile {email}: average {avg:.2f} outside 70–74"
-        )
-
-
-def _is_uniform_flat(football_skills: dict, base_val: float) -> bool:
-    """Return True iff every value in football_skills is the plain float base_val.
-
-    Used to detect the original bootstrap seed state (all skills == 72.0 as bare floats)
-    so the backfill only fires for untouched demo users, not players with tournament history
-    or already-differentiated profiles.
-    """
-    if not football_skills:
-        return False
-    return all(
-        isinstance(v, (int, float)) and not isinstance(v, bool) and float(v) == base_val
-        for v in football_skills.values()
-    )
-
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -514,7 +386,6 @@ def _seed_users(db) -> tuple:
 
 def _seed_bootstrap_club(db) -> Club:
     """Create LFA_BOOTSTRAP_CLUB with 3 age-group teams × 12 UK-named LFA-licensed players."""
-    _validate_adult_profiles()
     all_keys = get_all_skill_keys()
     now = datetime.now()
 
@@ -553,7 +424,7 @@ def _seed_bootstrap_club(db) -> Club:
             _ok(f"  Team '{tdef['name']}' created (id={team.id})")
 
         skill_base = tdef["skill_base"]
-        is_adult = tdef["age_group_label"].lower() == "adult"
+        football_skills = {k: skill_base for k in all_keys}
         age_slug = tdef["age_group_label"].lower()  # "u15", "u18", "adult"
 
         for idx, (first, last) in enumerate(_PLAYERS[tdef["name"]]):
@@ -562,14 +433,6 @@ def _seed_bootstrap_club(db) -> Club:
             if not user:
                 position = _POSITIONS[idx % len(_POSITIONS)]
                 goals = _GOALS[idx % len(_GOALS)]
-
-                if is_adult:
-                    football_skills = _ADULT_SKILL_PROFILES[email]
-                    skill_avg = round(sum(football_skills.values()) / len(football_skills), 1)
-                else:
-                    football_skills = {k: skill_base for k in all_keys}
-                    skill_avg = skill_base
-
                 user = User(
                     name=f"{first} {last}",
                     first_name=first,
@@ -609,40 +472,16 @@ def _seed_bootstrap_club(db) -> Club:
                         "position": position,
                         "goals": goals,
                         "motivation": "",
-                        "average_skill_level": skill_avg,
+                        "average_skill_level": skill_base,
                         "onboarding_completed_at": now.isoformat(),
                     },
-                    average_motivation_score=skill_avg,
+                    average_motivation_score=skill_base,
                 )
                 db.add(lic)
                 db.flush()
                 _ok(f"    {first} {last} ({email})")
             else:
-                if is_adult:
-                    # Backfill: update uniform-flat-72.0 adult profiles to differentiated ones
-                    lic = db.query(UserLicense).filter(
-                        UserLicense.user_id == user.id,
-                        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
-                        UserLicense.is_active == True,
-                    ).first()
-                    if lic and _is_uniform_flat(lic.football_skills, 72.0):
-                        new_profile = _ADULT_SKILL_PROFILES[email]
-                        skill_avg = round(sum(new_profile.values()) / len(new_profile), 1)
-                        lic.football_skills = new_profile
-                        old_mscore = lic.motivation_scores or {}
-                        lic.motivation_scores = {
-                            **old_mscore,
-                            "average_skill_level": skill_avg,
-                        }
-                        lic.average_motivation_score = skill_avg
-                        flag_modified(lic, "football_skills")
-                        flag_modified(lic, "motivation_scores")
-                        db.flush()
-                        _ok(f"    {first} {last} — backfilled adult profile (avg={skill_avg})")
-                    else:
-                        _skip(f"    {first} {last} already exists")
-                else:
-                    _skip(f"    {first} {last} already exists")
+                _skip(f"    {first} {last} already exists")
 
             # Team membership
             member = db.query(TeamMember).filter(
