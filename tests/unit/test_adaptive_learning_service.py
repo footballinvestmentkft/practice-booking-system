@@ -87,7 +87,8 @@ class TestEndSession:
 
     def test_returns_correct_summary_dict(self):
         service, db = _make_service()
-        session = _mock_session(questions_presented=5, questions_correct=4, xp_earned=80)
+        # score = 4*2 - 5 = 3; xp = max(0, 3) * 10 = 30
+        session = _mock_session(questions_presented=5, questions_correct=4)
         db.query.return_value.filter.return_value.first.return_value = session
 
         result = service.end_session(session_id=1)
@@ -95,7 +96,8 @@ class TestEndSession:
         assert result["questions_answered"] == 5
         assert result["correct_answers"] == 4
         assert abs(result["success_rate"] - 0.8) < 0.001
-        assert result["xp_earned"] == 80
+        assert result["xp_earned"] == 30
+        assert result["score"] == 3
 
     def test_no_gamification_service_import_or_call(self):
         """GamificationService must not be imported or called in end_session."""
@@ -264,6 +266,7 @@ class TestAl3SessionStart:
             response = asyncio.run(al_session_start(
                 request=req,
                 category=category_param,
+                time_limit=180,
                 db=db,
                 user=user,
             ))

@@ -149,18 +149,32 @@
     }
     .als-next-btn:hover { background: #5a67d8; }
 
-    /* ── XP running total ────────────────────────────────────────────────────── */
-    .als-xp-strip {
-        background: #f8f0ff;
-        border: 1px solid #e9d5ff;
+    /* ── Score strip ─────────────────────────────────────────────────────────── */
+    .als-score-strip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #f0f4ff;
+        border: 1px solid #c7d2fe;
         border-radius: 8px;
         padding: 0.5rem 1rem;
         font-size: 0.85rem;
         font-weight: 600;
-        color: #6c3483;
-        text-align: center;
+        color: #3730a3;
         margin-bottom: 1.25rem;
     }
+    .als-score-val { font-size: 1rem; }
+    .als-score-val.positive { color: #15803d; }
+    .als-score-val.negative { color: #b91c1c; }
+
+    /* ── Countdown timer ────────────────────────────────────────────────────── */
+    .als-timer {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #3730a3;
+    }
+    .als-timer.warning { color: #b45309; }
+    .als-timer.critical { color: #b91c1c; }
 
     /* ── Resume notice ───────────────────────────────────────────────────────── */
     .als-resume-notice {
@@ -195,7 +209,7 @@
     }
     .als-result-stats {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         gap: 1rem;
         margin-bottom: 1.75rem;
     }
@@ -223,6 +237,28 @@
     .als-btn-secondary { background: #f3f4f6; color: #374151; }
     .als-btn-primary:hover   { background: #5a67d8; }
     .als-btn-secondary:hover { background: #e5e7eb; }
+
+    /* ── Time limit picker ───────────────────────────────────────────────────── */
+    .als-time-picker {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.25rem;
+    }
+    .als-time-btn {
+        flex: 1;
+        padding: 0.6rem 0.5rem;
+        border: 2px solid var(--app-border, #e2e8f0);
+        border-radius: 8px;
+        background: var(--app-card);
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--app-text);
+        cursor: pointer;
+        transition: border-color 0.15s, background 0.15s;
+        text-align: center;
+    }
+    .als-time-btn:hover { border-color: #667eea; background: #f0f4ff; }
+    .als-time-btn.selected { border-color: #4f46e5; background: #eef2ff; color: #3730a3; }
 
     /* ── Category picker ─────────────────────────────────────────────────────── */
     .als-picker-card {
@@ -320,6 +356,7 @@
             <p class="als-picker-title">🧠 Choose a category</p>
             <p class="als-picker-sub">Select a topic for your adaptive session.</p>
             <div class="als-cat-grid" id="als-cat-grid">
+
                 {% set cat_meta = {
                     'LESSON':           ('📖', 'Football Lessons',  'Rules, tactics, and game understanding'),
                     'SPORTS_PHYSIOLOGY':('💪', 'Sports Physiology', 'Conditioning, fitness, and the athletic body'),
@@ -342,7 +379,13 @@
                     </button>
                 {% endfor %}
             </div>
-            <button class="als-start-btn" onclick="alsStartFromPicker()">🚀 Start Session</button>
+            <p class="als-picker-sub" style="margin-top:1rem; margin-bottom:0.5rem;">⏱ Session duration</p>
+            <div class="als-time-picker" id="als-time-picker">
+                <button class="als-time-btn" data-seconds="60" onclick="alsTimeSelect(this)">1 min</button>
+                <button class="als-time-btn selected" data-seconds="180" onclick="alsTimeSelect(this)">3 min</button>
+                <button class="als-time-btn" data-seconds="300" onclick="alsTimeSelect(this)">5 min</button>
+            </div>
+            <button class="als-start-btn" id="als-start-btn" onclick="alsStartFromPicker()">🚀 Start Session</button>
         </div>
     </div>
 
@@ -365,7 +408,10 @@
         <div id="als-resume-notice" class="als-resume-notice" style="display:none;">
             ⚠️ Continuing your active session from earlier.
         </div>
-        <div id="als-xp-strip" class="als-xp-strip">⚡ 0 XP earned this session</div>
+        <div id="als-score-strip" class="als-score-strip">
+            <span>Score: <span id="als-score-val" class="als-score-val">0</span></span>
+            <span id="als-timer" class="als-timer">⏱ 3:00</span>
+        </div>
         <div class="als-progress-wrap">
             <div id="als-progress-fill" class="als-progress-fill" style="width:0%"></div>
         </div>
@@ -379,10 +425,7 @@
         <div id="als-options" class="als-options"></div>
 
         <div id="als-feedback" class="als-feedback"></div>
-
-        <button id="als-next-btn" class="als-next-btn" style="display:none;" onclick="alsNext()">
-            Next Question →
-        </button>
+        <div id="als-auto-advance" style="display:none; text-align:center; font-size:0.82rem; color:var(--app-text-muted); margin-top:0.5rem;">Next question in 1s…</div>
     </div>
 
     {# ── Result phase ──────────────────────────────────────────────────────── #}
@@ -392,6 +435,10 @@
             <h2 id="als-result-title" class="als-result-title">Session Complete</h2>
             <p id="als-result-sub" class="als-result-sub"></p>
             <div class="als-result-stats">
+                <div class="als-result-stat">
+                    <div id="als-res-score" class="als-result-stat-val">0</div>
+                    <div class="als-result-stat-lbl">Score</div>
+                </div>
                 <div class="als-result-stat">
                     <div id="als-res-xp" class="als-result-stat-val">0</div>
                     <div class="als-result-stat-lbl">XP Earned</div>
@@ -428,14 +475,19 @@
        a server-side question log table. Not a permanent API contract.
     ─────────────────────────────────────────────────────────────────────────── */
     var state = {
-        sessionId:    null,
-        questionNum:  0,
-        totalTarget:  10,
-        seenIds:      [],   // exclude_ids compat layer (see note above)
-        totalXp:      0,
-        correctCount: 0,
-        phase:        'category',
-        category:     'LESSON'
+        sessionId:          null,
+        questionNum:        0,
+        totalTarget:        10,
+        seenIds:            [],
+        score:              0,
+        correctCount:       0,
+        phase:              'category',
+        category:           'LESSON',
+        timeLimitSeconds:   180,
+        timerSecondsLeft:   180,
+        timerHandle:        null,
+        currentQuestionId:  null,
+        answerSubmitted:    false
     };
 
     /* ── Phase management ──────────────────────────────────────────────────── */
@@ -453,10 +505,15 @@
     }
 
     /* ── Fetch helpers ─────────────────────────────────────────────────────── */
+    function getCsrfToken() {
+        var m = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+        return m ? decodeURIComponent(m[1]) : '';
+    }
+
     function post(url, body) {
         return fetch(url, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken()},
             body: body !== undefined ? JSON.stringify(body) : undefined,
             credentials: 'same-origin'
         }).then(function (r) {
@@ -481,15 +538,55 @@
             'Question ' + state.questionNum + ' of ' + state.totalTarget;
     }
 
-    function updateXpStrip() {
-        document.getElementById('als-xp-strip').textContent =
-            '⚡ ' + state.totalXp + ' XP earned this session';
+    function updateScoreStrip() {
+        var el = document.getElementById('als-score-val');
+        if (!el) return;
+        el.textContent = (state.score >= 0 ? '+' : '') + state.score;
+        el.className = 'als-score-val' + (state.score > 0 ? ' positive' : state.score < 0 ? ' negative' : '');
+    }
+
+    /* ── Timer ─────────────────────────────────────────────────────────────── */
+    function _timerLabel(secs) {
+        var m = Math.floor(secs / 60);
+        var s = secs % 60;
+        return '⏱ ' + m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    function updateTimerDisplay() {
+        var el = document.getElementById('als-timer');
+        if (!el) return;
+        el.textContent = _timerLabel(state.timerSecondsLeft);
+        el.className = 'als-timer' +
+            (state.timerSecondsLeft <= 10 ? ' critical' : state.timerSecondsLeft <= 30 ? ' warning' : '');
+    }
+
+    function startTimer() {
+        stopTimer();
+        state.timerSecondsLeft = state.timeLimitSeconds;
+        updateTimerDisplay();
+        state.timerHandle = setInterval(function () {
+            state.timerSecondsLeft -= 1;
+            updateTimerDisplay();
+            if (state.timerSecondsLeft <= 0) {
+                stopTimer();
+                window.alsTimeout();
+            }
+        }, 1000);
+    }
+
+    function stopTimer() {
+        if (state.timerHandle !== null) {
+            clearInterval(state.timerHandle);
+            state.timerHandle = null;
+        }
     }
 
     /* ── Render question ───────────────────────────────────────────────────── */
     function renderQuestion(data) {
         state.questionNum += 1;
         state.seenIds.push(data.id);
+        state.currentQuestionId = data.id;
+        state.answerSubmitted = false;
 
         document.getElementById('als-question-num').textContent = 'Question ' + state.questionNum;
         document.getElementById('als-question-text').textContent = data.text;
@@ -512,27 +609,30 @@
 
         document.getElementById('als-feedback').style.display = 'none';
         document.getElementById('als-feedback').className = 'als-feedback';
-        document.getElementById('als-next-btn').style.display = 'none';
+        document.getElementById('als-auto-advance').style.display = 'none';
         updateProgress();
         showPhase('question');
     }
 
     /* ── Submit answer ─────────────────────────────────────────────────────── */
     function alsAnswer(questionId, selectedOptionId, clickedBtn) {
+        if (state.answerSubmitted) return;
+        state.answerSubmitted = true;
+
         // Disable all options immediately to prevent double-submit
         document.querySelectorAll('.als-option').forEach(function (b) { b.disabled = true; });
-        clickedBtn.classList.add('selected');
+        if (clickedBtn) clickedBtn.classList.add('selected');
 
         post('/adaptive-learning/session/' + state.sessionId + '/answer', {
             question_id: questionId,
             selected_option_id: selectedOptionId,
-            time_spent_seconds: 30
+            time_spent_seconds: state.timeLimitSeconds - state.timerSecondsLeft
         }).then(function (res) {
             if (!res) return;
             if (!res.ok) {
-                // Answer not recorded — re-enable and show inline notice
+                state.answerSubmitted = false;
                 document.querySelectorAll('.als-option').forEach(function (b) { b.disabled = false; });
-                clickedBtn.classList.remove('selected');
+                if (clickedBtn) clickedBtn.classList.remove('selected');
                 var fb = document.getElementById('als-feedback');
                 fb.className = 'als-feedback incorrect';
                 fb.textContent = 'Answer not recorded — please try again.';
@@ -541,9 +641,9 @@
             }
 
             var d = res.data;
-            state.totalXp += (d.xp_this_answer || 0);
+            state.score = (typeof d.score === 'number') ? d.score : state.score + (d.score_delta || 0);
             if (d.correct) state.correctCount += 1;
-            updateXpStrip();
+            updateScoreStrip();
 
             // Mark correct / incorrect options
             document.querySelectorAll('.als-option').forEach(function (b) {
@@ -555,11 +655,11 @@
             // Feedback panel
             var fb = document.getElementById('als-feedback');
             fb.className = 'als-feedback ' + (d.correct ? 'correct' : 'incorrect');
-            var xpBadge = '<span class="als-feedback-xp">+' + (d.xp_this_answer || 0) + ' XP</span>';
+            var deltaLabel = (d.score_delta >= 0 ? '+' : '') + (d.score_delta || 0);
             var msg = d.correct
-                ? ('✅ Correct!' + xpBadge)
-                : ('❌ Incorrect. Correct answer highlighted above.');
-            fb.innerHTML = msg;
+                ? ('✅ Correct! (' + deltaLabel + ')')
+                : ('❌ Incorrect. Correct answer highlighted. (' + deltaLabel + ')');
+            fb.textContent = msg;
             if (d.explanation) {
                 var expEl = document.createElement('p');
                 expEl.style.cssText = 'margin:0.5rem 0 0; font-size:0.85rem; opacity:0.9;';
@@ -568,20 +668,27 @@
             }
             fb.style.display = 'block';
 
-            // Decide next action
-            if (state.questionNum >= state.totalTarget) {
-                document.getElementById('als-next-btn').textContent = 'Finish Session ✓';
-                document.getElementById('als-next-btn').onclick = alsComplete;
-            }
-            document.getElementById('als-next-btn').style.display = 'block';
+            _scheduleNextAction();
         }).catch(function () {
             showError('Network error while recording answer. Please check your connection.');
         });
     }
 
+    function _scheduleNextAction() {
+        var adv = document.getElementById('als-auto-advance');
+        if (adv) adv.style.display = 'block';
+        setTimeout(function () {
+            if (adv) adv.style.display = 'none';
+            if (state.questionNum >= state.totalTarget) {
+                alsComplete();
+            } else {
+                alsNext();
+            }
+        }, 1000);
+    }
+
     /* ── Next question ─────────────────────────────────────────────────────── */
     window.alsNext = function () {
-        document.getElementById('als-next-btn').style.display = 'none';
         var excludeParam = state.seenIds.join(',');
         get('/adaptive-learning/session/' + state.sessionId + '/next-question?exclude_ids=' + excludeParam)
             .then(function (res) {
@@ -597,32 +704,57 @@
             });
     };
 
+    /* ── Session timeout ───────────────────────────────────────────────────── */
+    window.alsTimeout = function () {
+        stopTimer();
+        if (state.currentQuestionId !== null && !state.answerSubmitted) {
+            state.answerSubmitted = true;
+            document.querySelectorAll('.als-option').forEach(function (b) { b.disabled = true; });
+            post('/adaptive-learning/session/' + state.sessionId + '/answer', {
+                question_id: state.currentQuestionId,
+                timed_out: true,
+                time_spent_seconds: state.timeLimitSeconds
+            }).then(function (res) {
+                if (res && res.ok) {
+                    var d = res.data;
+                    state.score = (typeof d.score === 'number') ? d.score : state.score - 1;
+                    updateScoreStrip();
+                }
+                alsComplete();
+            }).catch(function () { alsComplete(); });
+        } else if (!state.answerSubmitted) {
+            alsComplete();
+        }
+    };
+
     /* ── Complete session ──────────────────────────────────────────────────── */
     window.alsComplete = function () {
+        stopTimer();
         post('/adaptive-learning/session/' + state.sessionId + '/complete').then(function (res) {
-            var xp = state.totalXp;
+            var score = state.score;
+            var xp = Math.max(0, score) * 10;
             var correct = state.correctCount;
             var total = state.questionNum;
             var accuracy = total > 0 ? Math.round(correct / total * 100) : 0;
 
             if (res && res.ok) {
-                // Prefer server values when available
-                xp = res.data.xp_earned || xp;
-                correct = res.data.questions_correct !== undefined ? res.data.questions_correct : correct;
-                accuracy = res.data.accuracy_pct !== undefined ? res.data.accuracy_pct : accuracy;
+                xp = (res.data.xp_earned !== undefined) ? res.data.xp_earned : xp;
+                score = (res.data.score !== undefined) ? res.data.score : score;
+                correct = (res.data.questions_correct !== undefined) ? res.data.questions_correct : correct;
+                accuracy = (res.data.accuracy_pct !== undefined) ? res.data.accuracy_pct : accuracy;
             }
 
-            showResult(xp, correct, total, accuracy);
+            showResult(score, xp, correct, total, accuracy);
         }).catch(function () {
-            // Show result using client-accumulated state if /complete fails
             var total = state.questionNum;
             var accuracy = total > 0 ? Math.round(state.correctCount / total * 100) : 0;
-            showResult(state.totalXp, state.correctCount, total, accuracy);
+            var xp = Math.max(0, state.score) * 10;
+            showResult(state.score, xp, state.correctCount, total, accuracy);
         });
     };
 
     /* ── Show result screen ────────────────────────────────────────────────── */
-    function showResult(xp, correct, total, accuracy) {
+    function showResult(score, xp, correct, total, accuracy) {
         var icon = accuracy >= 80 ? '🏅' : accuracy >= 50 ? '⚡' : '📚';
         var title = accuracy >= 80 ? 'Excellent work!' : accuracy >= 50 ? 'Good effort!' : 'Keep practising!';
         var sub = correct + ' of ' + total + ' correct — ' + accuracy + '% accuracy';
@@ -630,14 +762,15 @@
         document.getElementById('als-result-icon').textContent = icon;
         document.getElementById('als-result-title').textContent = title;
         document.getElementById('als-result-sub').textContent  = sub;
-        document.getElementById('als-res-xp').textContent       = xp;
-        document.getElementById('als-res-correct').textContent  = correct;
+        document.getElementById('als-res-score').textContent   = (score >= 0 ? '+' : '') + score;
+        document.getElementById('als-res-xp').textContent      = xp;
+        document.getElementById('als-res-correct').textContent = correct;
         document.getElementById('als-res-accuracy').textContent = accuracy + '%';
 
         showPhase('result');
     }
 
-    /* ── Category picker helpers ───────────────────────────────────────────── */
+    /* ── Category / time picker helpers ───────────────────────────────────── */
     window.alsCatSelect = function (btn) {
         document.querySelectorAll('.als-cat-btn').forEach(function (b) {
             b.classList.remove('selected');
@@ -646,20 +779,33 @@
         state.category = btn.dataset.cat;
     };
 
+    window.alsTimeSelect = function (btn) {
+        document.querySelectorAll('.als-time-btn').forEach(function (b) {
+            b.classList.remove('selected');
+        });
+        btn.classList.add('selected');
+        state.timeLimitSeconds = parseInt(btn.dataset.seconds, 10) || 180;
+    };
+
     window.alsStartFromPicker = function () {
-        var selected = document.querySelector('.als-cat-btn.selected');
-        if (selected) state.category = selected.dataset.cat;
+        var selectedCat = document.querySelector('.als-cat-btn.selected');
+        if (selectedCat) state.category = selectedCat.dataset.cat;
+        var selectedTime = document.querySelector('.als-time-btn.selected');
+        if (selectedTime) state.timeLimitSeconds = parseInt(selectedTime.dataset.seconds, 10) || 180;
         showPhase('loading');
         alsInit(state.category);
     };
 
     /* ── Restart ───────────────────────────────────────────────────────────── */
     window.alsRestart = function () {
-        state.sessionId    = null;
-        state.questionNum  = 0;
-        state.seenIds      = [];
-        state.totalXp      = 0;
-        state.correctCount = 0;
+        stopTimer();
+        state.sessionId         = null;
+        state.questionNum       = 0;
+        state.seenIds           = [];
+        state.score             = 0;
+        state.correctCount      = 0;
+        state.currentQuestionId = null;
+        state.answerSubmitted   = false;
         document.getElementById('als-resume-notice').style.display = 'none';
         showPhase('category');
     };
@@ -667,7 +813,9 @@
     /* ── Init ──────────────────────────────────────────────────────────────── */
     window.alsInit = function (category) {
         var cat = category || state.category || 'LESSON';
-        post('/adaptive-learning/session/start?category=' + encodeURIComponent(cat))
+        var url = '/adaptive-learning/session/start?category=' + encodeURIComponent(cat) +
+                  '&time_limit=' + state.timeLimitSeconds;
+        post(url)
             .then(function (res) {
                 if (!res) return;
                 if (!res.ok) {
@@ -678,9 +826,12 @@
                 state.totalTarget = res.data.question_count || 10;
 
                 if (res.data.resumed) {
+                    state.score = res.data.current_score || 0;
+                    updateScoreStrip();
                     document.getElementById('als-resume-notice').style.display = 'block';
                 }
 
+                startTimer();
                 alsNext();
             }).catch(function () {
                 showError('Could not connect to the server. Please check your connection.');

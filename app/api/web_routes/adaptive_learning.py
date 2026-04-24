@@ -127,10 +127,14 @@ def _session_guard(db: Session, session_id: int, user_id: int):
     return session, None
 
 
+_VALID_TIME_LIMITS = {60, 180, 300}
+
+
 @router.post("/adaptive-learning/session/start")
 async def al_session_start(
     request: Request,
     category: str = Query("LESSON", description="QuizCategory value for this session"),
+    time_limit: int = Query(180, description="Session time limit in seconds (60, 180, or 300)"),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
@@ -148,6 +152,12 @@ async def al_session_start(
             status_code=422,
         )
 
+    if time_limit not in _VALID_TIME_LIMITS:
+        return JSONResponse(
+            {"error": f"time_limit must be one of {sorted(_VALID_TIME_LIMITS)}"},
+            status_code=422,
+        )
+
     # Return existing active session rather than creating a duplicate
     existing = (
         db.query(AdaptiveLearningSession)
@@ -159,22 +169,27 @@ async def al_session_start(
         .first()
     )
     if existing:
+        current_score = (existing.questions_correct or 0) * 2 - (existing.questions_presented or 0)
         return JSONResponse({
             "session_id": existing.id,
             "question_count": 10,
             "started_at": existing.session_start_time.isoformat() if existing.session_start_time else None,
             "resumed": True,
+            "time_limit_seconds": time_limit,
+            "current_score": current_score,
         })
 
     service = AdaptiveLearningService(db)
     session = service.start_adaptive_session(
-        user.id, quiz_category, session_duration_seconds=600
+        user.id, quiz_category, session_duration_seconds=time_limit
     )
     return JSONResponse({
         "session_id": session.id,
         "question_count": 10,
         "started_at": session.session_start_time.isoformat() if session.session_start_time else None,
         "resumed": False,
+        "time_limit_seconds": time_limit,
+        "current_score": 0,
     })
 
 
@@ -253,33 +268,50 @@ async def al_session_answer(
     question_id: int = body.get("question_id")
     selected_option_id: int = body.get("selected_option_id")
     time_spent: float = float(body.get("time_spent_seconds", 30.0))
+    timed_out: bool = bool(body.get("timed_out", False))
 
-    if not question_id or not selected_option_id:
-        return JSONResponse({"error": "question_id and selected_option_id required"}, status_code=422)
+    if not question_id:
+        return JSONResponse({"error": "question_id required"}, status_code=422)
 
-    # Verify answer correctness — route owns this check (no quiz_attempts coupling)
-    option = (
-        db.query(QuizAnswerOption)
-        .filter(
-            QuizAnswerOption.id == selected_option_id,
-            QuizAnswerOption.question_id == question_id,
+    if timed_out:
+        is_correct = False
+        correct_option = (
+            db.query(QuizAnswerOption)
+            .filter(QuizAnswerOption.question_id == question_id, QuizAnswerOption.is_correct == True)
+            .first()
         )
-        .first()
-    )
-    if not option:
-        return JSONResponse({"error": "invalid option for this question"}, status_code=422)
+        explanation = (
+            db.query(QuizQuestion.explanation)
+            .filter(QuizQuestion.id == question_id)
+            .scalar()
+        ) or ""
+    else:
+        if not selected_option_id:
+            return JSONResponse({"error": "selected_option_id required"}, status_code=422)
 
-    is_correct = bool(option.is_correct)
-    correct_option = (
-        db.query(QuizAnswerOption)
-        .filter(QuizAnswerOption.question_id == question_id, QuizAnswerOption.is_correct == True)
-        .first()
-    )
-    explanation = (
-        db.query(QuizQuestion.explanation)
-        .filter(QuizQuestion.id == question_id)
-        .scalar()
-    ) or ""
+        # Verify answer correctness — route owns this check (no quiz_attempts coupling)
+        option = (
+            db.query(QuizAnswerOption)
+            .filter(
+                QuizAnswerOption.id == selected_option_id,
+                QuizAnswerOption.question_id == question_id,
+            )
+            .first()
+        )
+        if not option:
+            return JSONResponse({"error": "invalid option for this question"}, status_code=422)
+
+        is_correct = bool(option.is_correct)
+        correct_option = (
+            db.query(QuizAnswerOption)
+            .filter(QuizAnswerOption.question_id == question_id, QuizAnswerOption.is_correct == True)
+            .first()
+        )
+        explanation = (
+            db.query(QuizQuestion.explanation)
+            .filter(QuizQuestion.id == question_id)
+            .scalar()
+        ) or ""
 
     service = AdaptiveLearningService(db)
     result = service.record_answer(
@@ -292,9 +324,11 @@ async def al_session_answer(
 
     return JSONResponse({
         "correct": is_correct,
+        "timed_out": timed_out,
         "correct_option_id": correct_option.id if correct_option else None,
         "explanation": explanation,
-        "xp_this_answer": result.get("xp_earned", 0),
+        "score_delta": result.get("score_delta", -1 if not is_correct else 1),
+        "score": result.get("score", 0),
         "new_target_difficulty": result.get("new_target_difficulty"),
         "performance_trend": result.get("performance_trend"),
     })

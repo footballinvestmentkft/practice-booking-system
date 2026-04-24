@@ -483,23 +483,17 @@ class TestEndSession:
         session = MagicMock()
         session.questions_presented = 10
         session.questions_correct = 8
-        session.xp_earned = 100
         session.performance_trend = 0.5
         session.target_difficulty = 0.7
         session.user_id = 1
         _q(db, first=session)
-        # Patch the lazy GamificationService import
-        mock_gam = MagicMock()
-        mock_stats = MagicMock()
-        mock_stats.total_xp = 0
-        mock_gam.return_value.get_or_create_user_stats.return_value = mock_stats
-        # GamificationService is lazy-imported inside end_session; patch at source module
-        with patch("app.services.gamification.GamificationService", mock_gam):
-            result = svc.end_session(session_id=1)
+        result = svc.end_session(session_id=1)
+        # score = 8*2 - 10 = 6; xp = max(0, 6) * 10 = 60
         assert result["questions_answered"] == 10
         assert result["correct_answers"] == 8
         assert abs(result["success_rate"] - 0.8) < 1e-9
-        assert result["xp_earned"] == 100
+        assert result["xp_earned"] == 60
+        assert result["score"] == 6
 
 
 # ===========================================================================
@@ -514,16 +508,16 @@ class TestRecordAnswer:
         _q(db, first=None)
         with patch.object(svc, "_update_user_question_performance"):
             with patch.object(svc, "_update_question_metadata"):
-                with patch.object(svc, "_calculate_adaptive_xp", return_value=5):
-                    with patch.object(svc, "_get_mastery_update",
-                                      return_value={"mastery_level": 0.0,
-                                                    "success_rate": 0.0,
-                                                    "next_review": None}):
-                        result = svc.record_answer(
-                            user_id=42, session_id=99, question_id=1,
-                            is_correct=False, time_spent_seconds=30.0
-                        )
-        assert result["xp_earned"] == 5
+                with patch.object(svc, "_get_mastery_update",
+                                  return_value={"mastery_level": 0.0,
+                                                "success_rate": 0.0,
+                                                "next_review": None}):
+                    result = svc.record_answer(
+                        user_id=42, session_id=99, question_id=1,
+                        is_correct=False, time_spent_seconds=30.0
+                    )
+        assert result["score_delta"] == -1
+        assert result["score"] == 0
         assert result["new_target_difficulty"] is None
         assert result["performance_trend"] is None
 
@@ -632,7 +626,6 @@ class TestRecordAnswerSessionFound:
       L97: session found → questions_presented incremented
       L99: is_correct=True → questions_correct incremented
       L99: is_correct=False → questions_correct NOT incremented
-      L123: session found → xp_earned updated
     """
 
     def _run(self, is_correct):
@@ -642,13 +635,11 @@ class TestRecordAnswerSessionFound:
         session.questions_correct = 1
         session.performance_trend = 0.0
         session.target_difficulty = 0.5
-        session.xp_earned = 0
         _q(db, first=session)
         with patch.object(svc, "_calculate_performance_trend", return_value=0.1), \
              patch.object(svc, "_adjust_target_difficulty", return_value=0.55), \
              patch.object(svc, "_update_user_question_performance"), \
              patch.object(svc, "_update_question_metadata"), \
-             patch.object(svc, "_calculate_adaptive_xp", return_value=25), \
              patch.object(svc, "_get_mastery_update", return_value={}):
             result = svc.record_answer(
                 user_id=42, session_id=1, question_id=5,
@@ -658,14 +649,12 @@ class TestRecordAnswerSessionFound:
 
     def test_is_correct_true_increments_correct_count(self):
         result, session = self._run(True)
-        assert result["xp_earned"] == 25
-        # questions_correct should have been incremented
+        assert result["score_delta"] == 1
         assert session.questions_correct == 2  # 1 + 1
 
     def test_is_correct_false_does_not_increment_correct_count(self):
         result, session = self._run(False)
-        assert result["xp_earned"] == 25
-        # questions_correct stays at 1 (not incremented for wrong)
+        assert result["score_delta"] == -1
         assert session.questions_correct == 1
 
 

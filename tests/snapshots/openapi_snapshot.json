@@ -22834,6 +22834,18 @@
               "title": "Category",
               "type": "string"
             }
+          },
+          {
+            "description": "Session time limit in seconds (60, 180, or 300)",
+            "in": "query",
+            "name": "time_limit",
+            "required": false,
+            "schema": {
+              "default": 180,
+              "description": "Session time limit in seconds (60, 180, or 300)",
+              "title": "Time Limit",
+              "type": "integer"
+            }
           }
         ],
         "responses": {
