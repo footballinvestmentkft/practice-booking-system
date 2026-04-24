@@ -19,6 +19,7 @@ from ...models.specialization import SpecializationType
 from ...models.credit_transaction import CreditTransaction, TransactionType
 from ...utils.age_requirements import get_available_specializations
 from ...skills_config import SKILL_CATEGORIES, get_all_skill_keys
+from ...services.skill_progression import SYSTEM_BASELINE
 import logging
 
 # Setup templates
@@ -255,18 +256,22 @@ async def lfa_player_onboarding_web_submit(
         if not license:
             return JSONResponse(status_code=400, content={"error": "LFA Player license not found. Unlock the specialization first."})
 
-        # Write skills to football_skills JSONB column (engine-compatible format)
+        # Write skills to football_skills JSONB column (engine-compatible format).
+        # Business rule: visible starting level is always SYSTEM_BASELINE (60.0).
+        # Self-assessment is stored separately and must not become current_level.
         football_skills = {}
         for skill_key, baseline_value in skills.items():
             football_skills[skill_key] = {
-                "current_level": float(baseline_value),
-                "baseline":      float(baseline_value),
-                "total_delta":        0.0,
-                "tournament_delta":   0.0,
-                "assessment_delta":   0.0,
-                "last_updated":       datetime.now(timezone.utc).isoformat(),
-                "assessment_count":   0,
-                "tournament_count":   0,
+                "system_baseline":  SYSTEM_BASELINE,          # 60.0 — fixed for all new players
+                "self_assessment":  float(baseline_value),    # stored; not the visible level
+                "baseline":         SYSTEM_BASELINE,          # 60.0 — EMA anchor (backward compat)
+                "current_level":    SYSTEM_BASELINE,          # 60.0 — visible starting point
+                "total_delta":      0.0,
+                "tournament_delta": 0.0,
+                "assessment_delta": 0.0,
+                "last_updated":     datetime.now(timezone.utc).isoformat(),
+                "assessment_count": 0,
+                "tournament_count": 0,
             }
 
         average_skill = sum(float(v) for v in skills.values()) / len(skills)
@@ -400,18 +405,22 @@ async def lfa_player_onboarding_submit(
         if not license:
             raise ValueError("LFA Player license not found")
 
-        # NEW: Write skills directly to football_skills in engine-compatible format
+        # Write skills to football_skills in engine-compatible format.
+        # Business rule: visible starting level is always SYSTEM_BASELINE (60.0).
+        # Self-assessment is stored separately and must not become current_level.
         football_skills = {}
         for skill_key, baseline_value in skills.items():
             football_skills[skill_key] = {
-                "current_level": float(baseline_value),
-                "baseline": float(baseline_value),
-                "total_delta": 0.0,
+                "system_baseline":  SYSTEM_BASELINE,          # 60.0 — fixed for all new players
+                "self_assessment":  float(baseline_value),    # stored; not the visible level
+                "baseline":         SYSTEM_BASELINE,          # 60.0 — EMA anchor (backward compat)
+                "current_level":    SYSTEM_BASELINE,          # 60.0 — visible starting point
+                "total_delta":      0.0,
                 "tournament_delta": 0.0,
                 "assessment_delta": 0.0,
-                "last_updated": datetime.now(timezone.utc).isoformat(),
+                "last_updated":     datetime.now(timezone.utc).isoformat(),
                 "assessment_count": 0,
-                "tournament_count": 0
+                "tournament_count": 0,
             }
 
         license.football_skills = football_skills

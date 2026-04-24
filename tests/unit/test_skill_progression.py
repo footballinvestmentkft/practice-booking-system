@@ -7,7 +7,7 @@ Coverage targets (pure functions — no DB needed):
   calculate_skill_value_from_placement(...)                → float  (V3 EMA + V2 legacy paths)
 
 Constants:
-  MIN_SKILL_VALUE = 40.0   MAX_SKILL_CAP = 99.0   DEFAULT_BASELINE = 50.0
+  MIN_SKILL_VALUE = 40.0   MAX_SKILL_CAP = 99.0   DEFAULT_BASELINE = 60.0   SYSTEM_BASELINE = 60.0
 
 Tier thresholds:
   ≥ 95 → MASTER   ≥ 85 → ADVANCED   ≥ 70 → INTERMEDIATE   ≥ 50 → DEVELOPING   else → BEGINNER

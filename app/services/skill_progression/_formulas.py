@@ -15,7 +15,8 @@ from typing import Optional
 MIN_SKILL_VALUE  = 40.0   # Worst possible skill value (last place)
 MAX_SKILL_VALUE  = 100.0  # Best possible skill value (1st place) — used for percentile mapping
 MAX_SKILL_CAP    = 99.0   # Hard cap for final skill values (business rule)
-DEFAULT_BASELINE = 50.0   # Default if no onboarding data
+SYSTEM_BASELINE  = 60.0   # Fixed visible starting level for every new LFA Football Player
+DEFAULT_BASELINE = 60.0   # Fallback when football_skills is absent (equals SYSTEM_BASELINE)
 
 
 # ─── Formula functions ────────────────────────────────────────────────────────
