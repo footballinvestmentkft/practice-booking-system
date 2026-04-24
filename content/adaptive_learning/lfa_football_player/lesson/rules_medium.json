@@ -1,0 +1,155 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "quiz_title": "AL — Football Rules Medium",
+  "topic": "Laws of the Game",
+  "module": "Rules",
+  "questions": [
+    {
+      "text": "A player receives a second yellow card in the 70th minute. What is the consequence?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "Receiving a second yellow card in the same match automatically results in a red card and immediate dismissal from the field.",
+      "options": [
+        {"text": "The player receives a red card and is dismissed", "is_correct": true},
+        {"text": "The player receives only a warning", "is_correct": false},
+        {"text": "The player is suspended for the next match but stays on the field", "is_correct": false},
+        {"text": "Play is stopped and a penalty is awarded", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.35,
+        "concept_tags": ["rules", "cards", "discipline", "second_yellow"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Which of the following offences results in an indirect free kick (not a direct free kick)?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "Dangerous play (e.g. a high kick near an opponent) is penalised with an indirect free kick. Direct free kick offences include handball, tripping, and pushing.",
+      "options": [
+        {"text": "Dangerous play (e.g. a high kick near an opponent)", "is_correct": true},
+        {"text": "Handball", "is_correct": false},
+        {"text": "Tripping an opponent", "is_correct": false},
+        {"text": "Pushing an opponent", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "concept_tags": ["rules", "free_kick", "indirect", "offences"],
+        "average_time_seconds": 25.0
+      }
+    },
+    {
+      "text": "The goalkeeper distributes the ball from a goal kick. An attacking player is in the opponent's half. Is this player in an offside position?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "A player cannot be offside directly from a goal kick. Offside cannot be called when the ball is received directly from a goal kick, corner kick, or throw-in.",
+      "options": [
+        {"text": "No — a player cannot be offside directly from a goal kick", "is_correct": true},
+        {"text": "Yes — the offside rule always applies", "is_correct": false},
+        {"text": "Only if the player is in the penalty area", "is_correct": false},
+        {"text": "Only if the player was already offside before the kick", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.50,
+        "concept_tags": ["rules", "offside", "goal_kick"],
+        "average_time_seconds": 25.0
+      }
+    },
+    {
+      "text": "A player is in an offside position but the referee allows play to continue. Why might this be?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "Being in an offside position is not an offence in itself. A player is only penalised if they become actively involved in play — by touching the ball, interfering with an opponent, or gaining an advantage.",
+      "options": [
+        {"text": "The player did not actively participate in play at that moment", "is_correct": true},
+        {"text": "The offside rule does not apply in the defensive half", "is_correct": false},
+        {"text": "Offside is only given if the ball is shot at goal", "is_correct": false},
+        {"text": "The referee missed the call", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.55,
+        "concept_tags": ["rules", "offside", "active_play"],
+        "average_time_seconds": 28.0
+      }
+    },
+    {
+      "text": "How many metres must opposing players stand from the ball at a free kick before it is taken?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "All opposing players must be at least 9.15 metres (10 yards) from the ball until a free kick is taken.",
+      "options": [
+        {"text": "9.15 metres (10 yards)", "is_correct": true},
+        {"text": "5 metres", "is_correct": false},
+        {"text": "7 metres", "is_correct": false},
+        {"text": "11 metres", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "concept_tags": ["rules", "free_kick", "wall_distance"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "What condition must be met for a player to be in an offside position?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "A player is in an offside position if any part of their body (that can legally play the ball) is nearer to the opponents' goal line than both the ball and the second-to-last opponent.",
+      "options": [
+        {"text": "Nearer to the goal line than both the ball and the second-to-last opponent", "is_correct": true},
+        {"text": "Ahead of all defenders including the goalkeeper", "is_correct": false},
+        {"text": "Anywhere in the attacking half", "is_correct": false},
+        {"text": "Nearer to goal than only the last defender", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.55,
+        "concept_tags": ["rules", "offside", "position"],
+        "average_time_seconds": 28.0
+      }
+    },
+    {
+      "text": "When can a goalkeeper handle the ball with their hands inside their own penalty area?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "A goalkeeper may use their hands within their own penalty area, except when receiving a deliberate kick or throw-in from a teammate (back-pass rule).",
+      "options": [
+        {"text": "Any time except after a deliberate back-pass from a teammate's foot or throw-in", "is_correct": true},
+        {"text": "Only when the ball is played directly by the opposition", "is_correct": false},
+        {"text": "Whenever the ball is in the penalty area", "is_correct": false},
+        {"text": "Only during a goal kick", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.50,
+        "concept_tags": ["rules", "goalkeeper", "back_pass"],
+        "average_time_seconds": 25.0
+      }
+    },
+    {
+      "text": "A free kick is awarded inside the kicking team's own penalty area. What rule applies?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "When a free kick is taken inside the kicking team's own penalty area, all opposing players must be outside the penalty area and at least 9.15 m from the ball until it is in play.",
+      "options": [
+        {"text": "All opponents must be outside the penalty area until the ball is in play", "is_correct": true},
+        {"text": "The kick must be taken at least 5 metres outside the penalty area", "is_correct": false},
+        {"text": "The ball must be kicked directly out of the penalty area", "is_correct": false},
+        {"text": "The goalkeeper must take the kick", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "concept_tags": ["rules", "free_kick", "penalty_area"],
+        "average_time_seconds": 25.0
+      }
+    }
+  ]
+}

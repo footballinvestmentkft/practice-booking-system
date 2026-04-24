@@ -1,0 +1,191 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "quiz_title": "AL — Football Rules Easy",
+  "topic": "Laws of the Game",
+  "module": "Rules",
+  "questions": [
+    {
+      "text": "How many players are on the field for each team in a standard football match?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Each team fields 11 players, including the goalkeeper, for a total of 22 players on the pitch.",
+      "options": [
+        {"text": "11", "is_correct": true},
+        {"text": "10", "is_correct": false},
+        {"text": "12", "is_correct": false},
+        {"text": "9", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.10,
+        "cognitive_load": 0.10,
+        "concept_tags": ["rules", "team_size"],
+        "average_time_seconds": 10.0
+      }
+    },
+    {
+      "text": "How long is a standard football match (excluding extra time)?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "A standard match consists of two 45-minute halves, totalling 90 minutes of regulation time.",
+      "options": [
+        {"text": "90 minutes", "is_correct": true},
+        {"text": "80 minutes", "is_correct": false},
+        {"text": "100 minutes", "is_correct": false},
+        {"text": "60 minutes", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.10,
+        "cognitive_load": 0.10,
+        "concept_tags": ["rules", "match_duration"],
+        "average_time_seconds": 10.0
+      }
+    },
+    {
+      "text": "What happens when the ball completely crosses the goal line between the posts and under the crossbar?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "A goal is scored when the whole of the ball passes over the goal line, between the goalposts, and under the crossbar.",
+      "options": [
+        {"text": "A goal is scored", "is_correct": true},
+        {"text": "A corner kick is awarded", "is_correct": false},
+        {"text": "A free kick is awarded", "is_correct": false},
+        {"text": "Play continues", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "concept_tags": ["rules", "goal"],
+        "average_time_seconds": 12.0
+      }
+    },
+    {
+      "text": "Which card does a referee show to send a player off the field?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "A red card results in the player being dismissed from the match. A yellow card is a caution; two yellows equal a red.",
+      "options": [
+        {"text": "Red card", "is_correct": true},
+        {"text": "Yellow card", "is_correct": false},
+        {"text": "Blue card", "is_correct": false},
+        {"text": "Green card", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.10,
+        "cognitive_load": 0.10,
+        "concept_tags": ["rules", "cards", "discipline"],
+        "average_time_seconds": 10.0
+      }
+    },
+    {
+      "text": "What is awarded when an attacking player is fouled inside the opponent's penalty area?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "A penalty kick is awarded when a player commits a foul inside their own penalty area that would otherwise result in a direct free kick.",
+      "options": [
+        {"text": "A penalty kick", "is_correct": true},
+        {"text": "A corner kick", "is_correct": false},
+        {"text": "An indirect free kick", "is_correct": false},
+        {"text": "A throw-in", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.20,
+        "concept_tags": ["rules", "penalty", "foul"],
+        "average_time_seconds": 15.0
+      }
+    },
+    {
+      "text": "From where is a penalty kick taken?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Penalty kicks are taken from the penalty spot, which is 11 metres (12 yards) from the goal line and centred between the posts.",
+      "options": [
+        {"text": "The penalty spot, 11 metres from goal", "is_correct": true},
+        {"text": "The edge of the penalty area", "is_correct": false},
+        {"text": "The centre circle", "is_correct": false},
+        {"text": "The 6-yard box", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.20,
+        "concept_tags": ["rules", "penalty", "spot"],
+        "average_time_seconds": 15.0
+      }
+    },
+    {
+      "text": "When is a corner kick awarded?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "A corner kick is awarded when the ball wholly crosses the goal line (outside the goalposts) and was last touched by a defending player.",
+      "options": [
+        {"text": "When the ball goes out over the goal line last touched by a defender", "is_correct": true},
+        {"text": "When the ball goes out over the touchline", "is_correct": false},
+        {"text": "When an attacker shoots wide", "is_correct": false},
+        {"text": "When a goalkeeper saves the ball", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.25,
+        "concept_tags": ["rules", "corner_kick", "restart"],
+        "average_time_seconds": 18.0
+      }
+    },
+    {
+      "text": "What is the maximum number of substitutions allowed per team in a standard competitive match?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "IFAB rules allow up to 5 substitutions per team in competitive matches (introduced in 2020). Individual competitions may set their own limits.",
+      "options": [
+        {"text": "5", "is_correct": true},
+        {"text": "3", "is_correct": false},
+        {"text": "4", "is_correct": false},
+        {"text": "6", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "concept_tags": ["rules", "substitutions"],
+        "average_time_seconds": 15.0
+      }
+    },
+    {
+      "text": "What is a throw-in used to restart play?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "A throw-in is awarded to the opponents of the player who last touched the ball when the whole ball crosses the touchline.",
+      "options": [
+        {"text": "When the ball crosses the touchline", "is_correct": true},
+        {"text": "When the ball crosses the goal line", "is_correct": false},
+        {"text": "After a foul is committed", "is_correct": false},
+        {"text": "After a goal is scored", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.20,
+        "concept_tags": ["rules", "throw-in", "restart"],
+        "average_time_seconds": 15.0
+      }
+    },
+    {
+      "text": "Which official is primarily responsible for enforcing the laws of the game on the field?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "The referee is the primary match official on the field, responsible for enforcing the Laws of the Game and controlling the match.",
+      "options": [
+        {"text": "The referee", "is_correct": true},
+        {"text": "The assistant referee", "is_correct": false},
+        {"text": "The fourth official", "is_correct": false},
+        {"text": "The VAR operator", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.10,
+        "cognitive_load": 0.10,
+        "concept_tags": ["rules", "officials"],
+        "average_time_seconds": 10.0
+      }
+    }
+  ]
+}

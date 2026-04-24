@@ -1,0 +1,119 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "quiz_title": "AL — Football Tactics Medium",
+  "topic": "Formations and Systems of Play",
+  "module": "Tactics",
+  "questions": [
+    {
+      "text": "How does a 4-3-3 formation differ tactically from a 4-4-2 formation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "A 4-3-3 uses three forwards providing more width and direct attacking options compared to two strikers in a 4-4-2, but sacrifices a midfielder, reducing central midfield compactness.",
+      "options": [
+        {"text": "It uses three forwards instead of two, providing more attacking width but less midfield compactness", "is_correct": true},
+        {"text": "It uses five defenders and is purely defensive", "is_correct": false},
+        {"text": "It relies on one striker dropping deep to support two central midfielders", "is_correct": false},
+        {"text": "It has no difference — the numbering is different in different countries", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.45,
+        "concept_tags": ["tactics", "formation", "4-3-3", "4-4-2", "comparison"],
+        "average_time_seconds": 28.0
+      }
+    },
+    {
+      "text": "What tactical advantage does a high defensive line offer?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "A high defensive line compresses the space between the defence and midfield, reducing the opponent's room to play in and making it easier to press high. However, it is vulnerable to through balls behind the line.",
+      "options": [
+        {"text": "It compresses midfield space and supports an aggressive press", "is_correct": true},
+        {"text": "It protects against counter-attacks by staying deep", "is_correct": false},
+        {"text": "It allows defenders to act as extra attackers at set pieces", "is_correct": false},
+        {"text": "It makes the goalkeeper irrelevant since the defence is far forward", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.50,
+        "concept_tags": ["tactics", "defensive_line", "high_line", "pressing"],
+        "average_time_seconds": 28.0
+      }
+    },
+    {
+      "text": "What is a 'pivot' midfielder's primary role in possession?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "A pivot (or holding midfielder) acts as the base of midfield, receiving the ball from defenders, screening the back four, and distributing the ball simply to keep possession circulating.",
+      "options": [
+        {"text": "To screen the defence, receive short passes, and distribute calmly under pressure", "is_correct": true},
+        {"text": "To drive forward constantly and arrive in the box", "is_correct": false},
+        {"text": "To play wide and create crossing opportunities", "is_correct": false},
+        {"text": "To win all aerial duels in the opponent's half", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.50,
+        "concept_tags": ["tactics", "pivot", "midfielder", "possession"],
+        "average_time_seconds": 28.0
+      }
+    },
+    {
+      "text": "What is 'gegenpressing' (counter-pressing)?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "Gegenpressing is an immediate collective press to win the ball back within seconds of losing it, before the opponent can organise their attack. Associated with Jürgen Klopp's teams.",
+      "options": [
+        {"text": "Pressing the ball immediately after losing possession before the opponent organises", "is_correct": true},
+        {"text": "Pressing high up the field from kick-off for the first ten minutes", "is_correct": false},
+        {"text": "Sitting deep and pressing only in your own half", "is_correct": false},
+        {"text": "A German term for counter-attacking football", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.50,
+        "concept_tags": ["tactics", "gegenpressing", "counter_press", "transition"],
+        "average_time_seconds": 28.0
+      }
+    },
+    {
+      "text": "In a 3-5-2 formation, what are the key defensive responsibilities of the wing-backs?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "In a 3-5-2, the wing-backs must track back and form a back-five in defence, covering wide areas that would otherwise be exposed since only three central defenders are present.",
+      "options": [
+        {"text": "Track back to form a back-five and cover the wide defensive channels", "is_correct": true},
+        {"text": "Stay forward at all times to maintain the attacking overload", "is_correct": false},
+        {"text": "Play as central midfielders when out of possession", "is_correct": false},
+        {"text": "Double-mark the opponent's number 10 in the centre", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.50,
+        "concept_tags": ["tactics", "formation", "3-5-2", "wing_back", "defending"],
+        "average_time_seconds": 28.0
+      }
+    },
+    {
+      "text": "What does 'overloading one side' in an attacking buildup aim to achieve?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "By overloading one flank, the team draws the opponent's defensive block toward that side, creating numerical superiority there or leaving the weak side open for a quick switch of play.",
+      "options": [
+        {"text": "To create a numerical advantage on that flank or force the opponent to shift, leaving the other side open", "is_correct": true},
+        {"text": "To tire out the opponent's wide defender by repeated direct duels", "is_correct": false},
+        {"text": "To prevent the opponent from playing any balls through the centre", "is_correct": false},
+        {"text": "To keep possession away from the goalkeeper", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.55,
+        "concept_tags": ["tactics", "overload", "buildup", "switch_of_play"],
+        "average_time_seconds": 30.0
+      }
+    }
+  ]
+}

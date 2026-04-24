@@ -1,0 +1,119 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "quiz_title": "AL — Football Rules Hard",
+  "topic": "Laws of the Game",
+  "module": "Rules",
+  "questions": [
+    {
+      "text": "A player deliberately handles the ball, preventing a goal. The goalkeeper does the same and would otherwise have conceded. How does the law differ in these two cases?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "When a non-goalkeeper player deliberately handles the ball preventing a goal, they receive a red card (denial of a goal by handball). A goalkeeper doing the same inside their own penalty area receives a red card for denying an obvious goal-scoring opportunity, but a penalty is also awarded to the attackers.",
+      "options": [
+        {"text": "Both are red cards, but the goalkeeper incident also results in a penalty to the attackers", "is_correct": true},
+        {"text": "Both result in a penalty; the goalkeeper gets only a yellow card", "is_correct": false},
+        {"text": "Only the outfield player is sent off; the goalkeeper is protected by different rules", "is_correct": false},
+        {"text": "Both are yellow cards when the handball is in the penalty area", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.75,
+        "concept_tags": ["rules", "handball", "red_card", "goalkeeper", "DOGSO"],
+        "average_time_seconds": 40.0
+      }
+    },
+    {
+      "text": "A player kicks the ball against the referee, and the ball enters the goal. What is the correct decision?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Under IFAB 2019+ rules, if the ball strikes the referee and goes into the goal, play is stopped and a dropped ball is given to the goalkeeper of the team that last touched the ball. The goal does not stand.",
+      "options": [
+        {"text": "The goal is disallowed; a dropped ball is given to the goalkeeper", "is_correct": true},
+        {"text": "The goal stands because the referee is part of the field of play", "is_correct": false},
+        {"text": "A corner kick is awarded to the attacking team", "is_correct": false},
+        {"text": "An indirect free kick is given to the defending team", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.70,
+        "concept_tags": ["rules", "referee", "dropped_ball", "goal_disallowed"],
+        "average_time_seconds": 35.0
+      }
+    },
+    {
+      "text": "During a penalty shootout, a goalkeeper moves off their line early and the kick is missed. What does the referee award?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "If the goalkeeper moves off the line before the kick is taken and the kick is missed, the referee must caution the goalkeeper and order a retake — provided the encroachment was by the goalkeeper and no teammate encroached as well.",
+      "options": [
+        {"text": "A retake is ordered and the goalkeeper is cautioned", "is_correct": true},
+        {"text": "The kick stands as a miss — no retake is awarded", "is_correct": false},
+        {"text": "The goal is awarded to the attacking team", "is_correct": false},
+        {"text": "The goalkeeper is sent off and a retake is ordered", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.70,
+        "cognitive_load": 0.65,
+        "concept_tags": ["rules", "penalty_shootout", "goalkeeper_encroachment"],
+        "average_time_seconds": 35.0
+      }
+    },
+    {
+      "text": "A player is in their own half but plays a through ball to a teammate who is level with the last defender in the attacking half. Is the receiving player offside?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "A player is only in an offside position if any part of the body that can play the ball is nearer to the opponents' goal line than the second-to-last opponent. Being level with the last defender means the player is NOT in an offside position.",
+      "options": [
+        {"text": "No — being level with the last defender means not offside", "is_correct": true},
+        {"text": "Yes — the player must be behind the last defender", "is_correct": false},
+        {"text": "It depends on which foot the pass was made with", "is_correct": false},
+        {"text": "Yes — being level counts as offside under current IFAB rules", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.70,
+        "cognitive_load": 0.70,
+        "concept_tags": ["rules", "offside", "level_defender"],
+        "average_time_seconds": 35.0
+      }
+    },
+    {
+      "text": "A player taking a direct free kick touches the ball a second time before any other player. What is the restart?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "If the player who takes a free kick touches the ball a second time before any other player has touched it, an indirect free kick is awarded to the opposing team from where the infringement occurred.",
+      "options": [
+        {"text": "An indirect free kick to the opposing team", "is_correct": true},
+        {"text": "The goal is awarded if the ball crossed the line", "is_correct": false},
+        {"text": "A direct free kick to the opposing team", "is_correct": false},
+        {"text": "Play continues — double touch is only illegal from a penalty kick", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.65,
+        "cognitive_load": 0.65,
+        "concept_tags": ["rules", "free_kick", "double_touch", "indirect"],
+        "average_time_seconds": 30.0
+      }
+    },
+    {
+      "text": "Which of the following handball situations does NOT automatically result in a direct free kick or penalty under current IFAB rules?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Accidental handball by an attacker immediately before a teammate scores does result in the goal being disallowed, but accidental handball by a defender is only penalised if the ball was played directly towards goal or created a goal-scoring opportunity. Handball while falling where the arm is close to the body is typically not an offence.",
+      "options": [
+        {"text": "Accidental contact with the arm held close to the body while falling", "is_correct": true},
+        {"text": "A defender's arm extending unnaturally when struck by the ball", "is_correct": false},
+        {"text": "A goal scored directly via a player's hand or arm", "is_correct": false},
+        {"text": "An attacker handling the ball immediately before scoring", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.75,
+        "concept_tags": ["rules", "handball", "accidental", "IFAB"],
+        "average_time_seconds": 40.0
+      }
+    }
+  ]
+}

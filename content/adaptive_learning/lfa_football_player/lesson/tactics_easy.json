@@ -1,0 +1,155 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "quiz_title": "AL — Football Tactics Easy",
+  "topic": "Formations and Basic Principles",
+  "module": "Tactics",
+  "questions": [
+    {
+      "text": "In a 4-4-2 formation, how many defenders does the team use?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "In a 4-4-2 formation the first number represents the defenders, so there are 4 defenders, 4 midfielders, and 2 forwards.",
+      "options": [
+        {"text": "4", "is_correct": true},
+        {"text": "2", "is_correct": false},
+        {"text": "3", "is_correct": false},
+        {"text": "5", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "concept_tags": ["tactics", "formation", "4-4-2"],
+        "average_time_seconds": 12.0
+      }
+    },
+    {
+      "text": "What does the term 'pressing' mean in football tactics?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Pressing refers to a defensive tactic where a team collectively moves toward the ball-carrier to win back possession as quickly as possible, reducing the opponent's time and space.",
+      "options": [
+        {"text": "Applying pressure to win the ball back quickly as a team", "is_correct": true},
+        {"text": "A type of passing pattern played through the middle", "is_correct": false},
+        {"text": "Keeping possession while the team is ahead", "is_correct": false},
+        {"text": "A long-ball strategy aimed at the forwards", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.25,
+        "concept_tags": ["tactics", "pressing", "defending"],
+        "average_time_seconds": 18.0
+      }
+    },
+    {
+      "text": "What is the main purpose of a 'back four' in football?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "A back four refers to four defenders (usually two central defenders and two full-backs) whose primary role is to prevent the opposition from scoring.",
+      "options": [
+        {"text": "To defend and prevent the opposition from scoring", "is_correct": true},
+        {"text": "To create width and provide crosses", "is_correct": false},
+        {"text": "To control possession in midfield", "is_correct": false},
+        {"text": "To score goals from set pieces", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.20,
+        "concept_tags": ["tactics", "back_four", "defending"],
+        "average_time_seconds": 15.0
+      }
+    },
+    {
+      "text": "Which position is responsible for organising the team's defensive shape and communicating with other defenders?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "The central defender (centre-back) is primarily responsible for organising the defensive line, communicating with teammates, and clearing danger.",
+      "options": [
+        {"text": "Central defender (centre-back)", "is_correct": true},
+        {"text": "Goalkeeper", "is_correct": false},
+        {"text": "Defensive midfielder", "is_correct": false},
+        {"text": "Full-back", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.25,
+        "concept_tags": ["tactics", "centre_back", "defending", "communication"],
+        "average_time_seconds": 18.0
+      }
+    },
+    {
+      "text": "What does it mean when a team 'plays out from the back'?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Playing out from the back means building attacks by passing the ball out from the goalkeeper and defenders rather than hoofing the ball long up the field.",
+      "options": [
+        {"text": "Building attacks through short passes starting from the goalkeeper and defenders", "is_correct": true},
+        {"text": "Always playing long balls to the strikers", "is_correct": false},
+        {"text": "Keeping the ball in the opponent's half at all times", "is_correct": false},
+        {"text": "Clearing the ball whenever under pressure", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.25,
+        "concept_tags": ["tactics", "build_up", "playing_out_from_back"],
+        "average_time_seconds": 18.0
+      }
+    },
+    {
+      "text": "What is a 'counter-attack'?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "A counter-attack is a quick attacking move launched immediately after winning possession, exploiting the space left by the opposition who were attacking.",
+      "options": [
+        {"text": "A rapid attack after winning possession while the opponent is out of position", "is_correct": true},
+        {"text": "A slow, patient build-up attack", "is_correct": false},
+        {"text": "A defensive tactic used to protect a lead", "is_correct": false},
+        {"text": "A set-piece routine at corners", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.25,
+        "concept_tags": ["tactics", "counter_attack", "transition"],
+        "average_time_seconds": 18.0
+      }
+    },
+    {
+      "text": "What is the role of the 'false nine' in modern football?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "A false nine is a striker who drops deep into midfield to receive the ball, dragging centre-backs out of position and creating space for other attackers to run into.",
+      "options": [
+        {"text": "A striker who drops into midfield to create space for teammates", "is_correct": true},
+        {"text": "A goalkeeper numbered nine", "is_correct": false},
+        {"text": "A central midfielder who plays as an attacker", "is_correct": false},
+        {"text": "A winger who plays on the wrong side", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.35,
+        "concept_tags": ["tactics", "false_nine", "forward", "modern_football"],
+        "average_time_seconds": 22.0
+      }
+    },
+    {
+      "text": "What does 'width in attack' mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Width in attack means spreading the play across the full width of the pitch, forcing the defending team to stretch and creating gaps in the centre.",
+      "options": [
+        {"text": "Spreading play across the pitch to stretch the defence", "is_correct": true},
+        {"text": "Keeping all attackers in a narrow central channel", "is_correct": false},
+        {"text": "Playing with three strikers in a line", "is_correct": false},
+        {"text": "Avoiding the flanks to concentrate on the centre", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.30,
+        "concept_tags": ["tactics", "width", "attacking"],
+        "average_time_seconds": 18.0
+      }
+    }
+  ]
+}

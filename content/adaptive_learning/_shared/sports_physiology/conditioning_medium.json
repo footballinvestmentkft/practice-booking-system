@@ -1,0 +1,173 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "category": "SPORTS_PHYSIOLOGY",
+  "difficulty": "MEDIUM",
+  "quiz_title": "AL — Conditioning & Fitness Medium",
+  "topic": "Physical Conditioning Applied",
+  "module": "Conditioning",
+  "questions": [
+    {
+      "text": "What is VO2 max and why is it relevant for football players?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "VO2 max is the maximum rate at which the body can consume oxygen during intense exercise. A higher VO2 max means a player can sustain higher exercise intensities aerobically, which is vital for repeated high-intensity efforts across 90 minutes.",
+      "options": [
+        {"text": "The maximum oxygen uptake capacity, indicating a player's aerobic ceiling", "is_correct": true},
+        {"text": "The volume of air exhaled in one breath at rest", "is_correct": false},
+        {"text": "The peak lactate concentration in the blood during sprinting", "is_correct": false},
+        {"text": "The maximum number of sprints a player can complete before fatigue", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.50,
+        "concept_tags": ["physiology", "VO2_max", "aerobic_capacity"],
+        "average_time_seconds": 28.0
+      }
+    },
+    {
+      "text": "What is the 'lactate threshold' and how does it affect a player's performance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "The lactate threshold is the exercise intensity above which lactate accumulates faster than it can be cleared. Training above this threshold leads to rapid fatigue. A higher threshold means a player can sustain higher intensity without tiring as quickly.",
+      "options": [
+        {"text": "The intensity at which lactate builds up faster than it is cleared, causing fatigue", "is_correct": true},
+        {"text": "The point at which a player's muscles stop contracting", "is_correct": false},
+        {"text": "The maximum heart rate achievable during sprint training", "is_correct": false},
+        {"text": "The amount of lactic acid in urine after a match", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.55,
+        "concept_tags": ["physiology", "lactate_threshold", "fatigue", "intensity"],
+        "average_time_seconds": 30.0
+      }
+    },
+    {
+      "text": "What is periodisation in football conditioning?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "Periodisation is the systematic planning of training over a season — dividing it into phases (pre-season, in-season, off-season) with varying intensity and volume to ensure peak performance at key moments and prevent overtraining.",
+      "options": [
+        {"text": "Systematic variation of training load across a season to peak at the right times", "is_correct": true},
+        {"text": "Splitting the squad into groups and training each group periodically", "is_correct": false},
+        {"text": "Limiting training sessions to avoid fatigue throughout the season", "is_correct": false},
+        {"text": "Training only the weakest physical quality to improve balance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.55,
+        "concept_tags": ["physiology", "periodisation", "training_planning"],
+        "average_time_seconds": 28.0
+      }
+    },
+    {
+      "text": "Why is eccentric strength training particularly beneficial for footballers in injury prevention?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "Eccentric training (muscle lengthening under load) strengthens muscles during the deceleration phase, which is when hamstring and quad injuries commonly occur. It improves muscle stiffness and resilience against sudden force.",
+      "options": [
+        {"text": "It strengthens muscles during the lengthening phase, reducing risk of deceleration injuries", "is_correct": true},
+        {"text": "It builds maximum concentric strength faster than any other method", "is_correct": false},
+        {"text": "It is purely a rehabilitation technique with no preventive benefit", "is_correct": false},
+        {"text": "It reduces muscle mass to improve agility", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.55,
+        "concept_tags": ["physiology", "eccentric_training", "injury_prevention", "hamstring"],
+        "average_time_seconds": 30.0
+      }
+    },
+    {
+      "text": "What does DOMS stand for, and when does it typically peak after intense training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "DOMS stands for Delayed Onset Muscle Soreness. It typically peaks 24–72 hours after unaccustomed or intense exercise, caused by microscopic muscle damage and inflammation.",
+      "options": [
+        {"text": "Delayed Onset Muscle Soreness — peaks 24–72 hours after exercise", "is_correct": true},
+        {"text": "Direct Output Muscle Strength — peaks immediately after training", "is_correct": false},
+        {"text": "Dynamic Overload Muscle Stress — peaks 1 week after training", "is_correct": false},
+        {"text": "Delayed Oxygen Muscle Shortage — peaks 6 hours after exercise", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "concept_tags": ["physiology", "DOMS", "recovery", "muscle_soreness"],
+        "average_time_seconds": 25.0
+      }
+    },
+    {
+      "text": "What is the primary fuel source for high-intensity repeated sprinting in football?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "During repeated high-intensity sprints, muscle glycogen is the primary fuel source via anaerobic glycolysis. As glycogen depletes over the match, sprint quality deteriorates.",
+      "options": [
+        {"text": "Muscle glycogen (via anaerobic glycolysis)", "is_correct": true},
+        {"text": "Dietary fat stores", "is_correct": false},
+        {"text": "Protein from muscle breakdown", "is_correct": false},
+        {"text": "Blood glucose from the liver only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.50,
+        "concept_tags": ["physiology", "glycogen", "energy_systems", "sprinting"],
+        "average_time_seconds": 28.0
+      }
+    },
+    {
+      "text": "What is the purpose of a 'deload week' in a footballer's training programme?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "A deload week involves deliberately reducing training volume and/or intensity to allow the body to fully recover, consolidate adaptations, and prevent overtraining syndrome.",
+      "options": [
+        {"text": "To allow full recovery and consolidate training adaptations while preventing overtraining", "is_correct": true},
+        {"text": "To maximise training volume to the highest level of the season", "is_correct": false},
+        {"text": "To focus exclusively on tactical sessions without physical output", "is_correct": false},
+        {"text": "To test maximum strength levels before a major tournament", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.45,
+        "concept_tags": ["physiology", "deload", "recovery", "overtraining"],
+        "average_time_seconds": 25.0
+      }
+    },
+    {
+      "text": "How does heat and humidity affect a footballer's performance and what is the main physiological risk?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "In hot and humid conditions, the body redirects blood to the skin for cooling, competing with working muscles. Sweat rate increases rapidly. The main risks are dehydration and hyperthermia, which reduce endurance performance and can be dangerous.",
+      "options": [
+        {"text": "Increased sweating and blood diversion to the skin, risking dehydration and hyperthermia", "is_correct": true},
+        {"text": "Improved performance due to muscle warmth and reduced injury risk", "is_correct": false},
+        {"text": "Faster glycogen breakdown causing earlier performance gains", "is_correct": false},
+        {"text": "No physiological change — the body fully adapts within minutes", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.55,
+        "concept_tags": ["physiology", "heat", "hydration", "hyperthermia", "environment"],
+        "average_time_seconds": 30.0
+      }
+    },
+    {
+      "text": "What is 'neuromuscular fatigue' and how does it differ from metabolic fatigue in a football context?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "Neuromuscular fatigue is a reduction in the nervous system's ability to recruit motor units effectively (central/peripheral neural fatigue), distinct from metabolic fatigue (energy depletion, lactate build-up). In football, neuromuscular fatigue often explains declines in technique and decision-making late in a match beyond pure energy limitations.",
+      "options": [
+        {"text": "Neuromuscular fatigue is a reduction in neural drive to muscles, separate from energy depletion", "is_correct": true},
+        {"text": "They are the same — both refer to glycogen depletion in the muscle", "is_correct": false},
+        {"text": "Neuromuscular fatigue only occurs in goalkeepers due to lack of running", "is_correct": false},
+        {"text": "Metabolic fatigue is purely psychological, while neuromuscular is physical", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.60,
+        "concept_tags": ["physiology", "neuromuscular_fatigue", "metabolic_fatigue", "late_game"],
+        "average_time_seconds": 35.0
+      }
+    }
+  ]
+}

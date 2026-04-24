@@ -1,0 +1,191 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "category": "SPORTS_PHYSIOLOGY",
+  "difficulty": "EASY",
+  "quiz_title": "AL — Conditioning & Fitness Easy",
+  "topic": "Physical Conditioning Fundamentals",
+  "module": "Conditioning",
+  "questions": [
+    {
+      "text": "What does the term 'aerobic fitness' refer to in football?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Aerobic fitness refers to the ability of the cardiovascular and respiratory systems to supply oxygen to working muscles over a sustained period, underpinning a player's endurance throughout a 90-minute match.",
+      "options": [
+        {"text": "The ability to sustain effort over a long period using oxygen", "is_correct": true},
+        {"text": "Short explosive bursts of maximum speed", "is_correct": false},
+        {"text": "Flexibility and joint range of motion", "is_correct": false},
+        {"text": "Upper body strength for aerial challenges", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.20,
+        "concept_tags": ["physiology", "aerobic", "endurance"],
+        "average_time_seconds": 15.0
+      }
+    },
+    {
+      "text": "Why is warming up important before a football training session?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "A warm-up gradually increases heart rate, blood flow to muscles, and core temperature, reducing injury risk and preparing the neuromuscular system for more intense activity.",
+      "options": [
+        {"text": "To increase blood flow, raise muscle temperature, and reduce injury risk", "is_correct": true},
+        {"text": "To burn as many calories as possible before training", "is_correct": false},
+        {"text": "To stretch as far as possible before any movement", "is_correct": false},
+        {"text": "To give players time to socialise before the session begins", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.20,
+        "concept_tags": ["physiology", "warm_up", "injury_prevention"],
+        "average_time_seconds": 15.0
+      }
+    },
+    {
+      "text": "What is the recommended minimum daily water intake for an active football player during training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Active athletes typically need 2–3 litres or more per day depending on sweat loss. Adequate hydration maintains performance and prevents cramps and fatigue.",
+      "options": [
+        {"text": "At least 2–3 litres, increasing with sweat loss", "is_correct": true},
+        {"text": "0.5 litres — excess water causes cramps", "is_correct": false},
+        {"text": "1 litre — the standard for all adults", "is_correct": false},
+        {"text": "5 litres exactly, regardless of body weight", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.20,
+        "concept_tags": ["physiology", "hydration", "nutrition_basics"],
+        "average_time_seconds": 15.0
+      }
+    },
+    {
+      "text": "What physical quality allows a player to accelerate quickly over short distances?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Speed and power (explosive strength) allow a player to produce maximal force rapidly, enabling quick acceleration over short distances typical of sprints in football.",
+      "options": [
+        {"text": "Explosive power and speed", "is_correct": true},
+        {"text": "High aerobic capacity", "is_correct": false},
+        {"text": "Flexibility", "is_correct": false},
+        {"text": "Core stability", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.20,
+        "concept_tags": ["physiology", "speed", "power", "acceleration"],
+        "average_time_seconds": 15.0
+      }
+    },
+    {
+      "text": "What is meant by 'cooling down' after a football match?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "A cool-down involves light activity and stretching after intense exercise to gradually lower heart rate, reduce muscle soreness, and begin the recovery process.",
+      "options": [
+        {"text": "Light exercise and stretching to lower heart rate and begin recovery", "is_correct": true},
+        {"text": "Immediately sitting down and resting without any movement", "is_correct": false},
+        {"text": "Taking an ice bath for 30 minutes", "is_correct": false},
+        {"text": "Drinking cold water to lower core body temperature", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.20,
+        "concept_tags": ["physiology", "cool_down", "recovery"],
+        "average_time_seconds": 15.0
+      }
+    },
+    {
+      "text": "What is the approximate distance a top-level outfield footballer covers in a 90-minute match?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Elite outfield players typically cover between 10 and 13 kilometres per match, combining walking, jogging, running, and sprinting.",
+      "options": [
+        {"text": "10–13 kilometres", "is_correct": true},
+        {"text": "3–5 kilometres", "is_correct": false},
+        {"text": "20–25 kilometres", "is_correct": false},
+        {"text": "6–8 kilometres", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "concept_tags": ["physiology", "match_demands", "distance"],
+        "average_time_seconds": 18.0
+      }
+    },
+    {
+      "text": "What is 'muscle fatigue' in the context of a football match?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Muscle fatigue occurs when the working muscles can no longer maintain the required force output, typically due to depletion of energy stores (glycogen) and accumulation of metabolic by-products.",
+      "options": [
+        {"text": "The decline in muscle force output due to energy depletion and metabolic build-up", "is_correct": true},
+        {"text": "A muscle injury caused by a direct impact", "is_correct": false},
+        {"text": "The feeling of sleepiness after a long warm-up", "is_correct": false},
+        {"text": "Reduced flexibility caused by cold weather", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.30,
+        "concept_tags": ["physiology", "fatigue", "energy_systems"],
+        "average_time_seconds": 18.0
+      }
+    },
+    {
+      "text": "Why is sleep important for a football player's physical development?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "During sleep, the body releases growth hormone, repairs muscle tissue, consolidates motor learning, and restores energy stores — all critical for athletic development.",
+      "options": [
+        {"text": "Sleep promotes muscle repair, hormone release, and motor learning consolidation", "is_correct": true},
+        {"text": "Sleep only matters for mental focus, not physical recovery", "is_correct": false},
+        {"text": "Sleep reduces muscle mass if done excessively", "is_correct": false},
+        {"text": "Sleep has no direct impact on physical performance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.25,
+        "concept_tags": ["physiology", "sleep", "recovery", "development"],
+        "average_time_seconds": 18.0
+      }
+    },
+    {
+      "text": "What does 'resting heart rate' indicate about a player's fitness level?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "A lower resting heart rate typically indicates better cardiovascular efficiency — a well-trained heart pumps more blood per beat, so it does not need to beat as frequently at rest.",
+      "options": [
+        {"text": "A lower resting heart rate indicates better cardiovascular fitness", "is_correct": true},
+        {"text": "A higher resting heart rate indicates better fitness", "is_correct": false},
+        {"text": "Resting heart rate is unrelated to fitness", "is_correct": false},
+        {"text": "A resting heart rate above 100 bpm is normal for athletes", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.30,
+        "concept_tags": ["physiology", "heart_rate", "cardiovascular", "fitness"],
+        "average_time_seconds": 18.0
+      }
+    },
+    {
+      "text": "Which energy system is primarily used during a short, explosive sprint in football?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Short explosive sprints (0–10 seconds) rely primarily on the phosphocreatine (ATP-PCr) system, which provides immediate energy without requiring oxygen.",
+      "options": [
+        {"text": "The phosphocreatine (ATP-PCr) system", "is_correct": true},
+        {"text": "The aerobic oxidative system", "is_correct": false},
+        {"text": "The glycolytic lactic acid system", "is_correct": false},
+        {"text": "Fat oxidation", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.35,
+        "concept_tags": ["physiology", "energy_systems", "sprint", "ATP_PCr"],
+        "average_time_seconds": 22.0
+      }
+    }
+  ]
+}
