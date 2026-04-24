@@ -57,7 +57,7 @@ def _license(test_db: Session, user: User) -> UserLicense:
         max_achieved_level=1,
         started_at=datetime.now(timezone.utc),
         is_active=True,
-        # football_skills=None → baseline 50.0
+        # football_skills=None → baseline DEFAULT_BASELINE=60.0
     )
     test_db.add(lic)
     test_db.commit()
