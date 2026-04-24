@@ -289,13 +289,13 @@
         <div class="skill-item">
             <div class="skill-header">
                 <span class="skill-name">{{ skill.name_en }}</span>
-                <span class="skill-value" id="val-{{ skill.key }}">50</span>
+                <span class="skill-value" id="val-{{ skill.key }}">60</span>
             </div>
             <input
                 type="range"
                 class="skill-slider"
                 data-skill="{{ skill.key }}"
-                min="0" max="100" step="5" value="50"
+                min="0" max="100" step="5" value="60"
                 oninput="updateSkillValue('{{ skill.key }}', this.value)"
             >
         </div>

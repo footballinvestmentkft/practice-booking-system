@@ -516,13 +516,13 @@ class TestSkillDeltaPipeline:
 # ─── Class 5: Multi-seed variation (pure function, parametrized) ───────────────
 
 # Fixed baseline seeds for deterministic reproduction — NOT truly random.
-# These cover: below average, at average, above average, near clamp boundaries.
+# These cover: below average, at system default (60), above average, near clamp boundaries.
 _SEED_BASELINES = [
-    (41.5, "near_floor"),    # close to MIN_SKILL_VALUE (40)
-    (50.0, "default"),       # DEFAULT_BASELINE
-    (60.0, "average"),       # typical mid-level player
-    (75.0, "advanced"),      # above-average player
-    (97.5, "near_ceiling"),  # close to MAX_SKILL_CAP (99)
+    (41.5, "near_floor"),      # close to MIN_SKILL_VALUE (40)
+    (50.0, "below_average"),   # below system default; retained as formula regression seed
+    (60.0, "default"),         # DEFAULT_BASELINE / SYSTEM_BASELINE — every new player starts here
+    (75.0, "advanced"),        # above-average player
+    (97.5, "near_ceiling"),    # close to MAX_SKILL_CAP (99)
 ]
 
 # Variant used by test_step_ratio_consistent_across_seeds.
@@ -531,10 +531,10 @@ _SEED_BASELINES = [
 # effective slope, so the ratio diverges from step_dom/step_min. The ordering
 # invariant (dom_delta > agil_delta) remains valid and is asserted instead.
 _RATIO_SEED_BASELINES = [
-    pytest.param(41.5, "near_floor", id="near_floor"),
-    pytest.param(50.0, "default", id="default"),
-    pytest.param(60.0, "average", id="average"),
-    pytest.param(75.0, "advanced", id="advanced"),
+    pytest.param(41.5, "near_floor",   id="near_floor"),
+    pytest.param(50.0, "below_average", id="below_average"),
+    pytest.param(60.0, "default",      id="default"),
+    pytest.param(75.0, "advanced",     id="advanced"),
     pytest.param(97.5, "near_ceiling", id="near_ceiling"),
 ]
 
@@ -546,7 +546,7 @@ class TestMultiSeedVariation:
     Parametrized regression over multiple initial skill baselines.
     Verifies that ordering and clamp invariants hold across all seeds.
     CI runs all seeds — confirms the pipeline is not accidentally tuned
-    only to DEFAULT_BASELINE (50.0).
+    only to DEFAULT_BASELINE (60.0).
     """
 
     @pytest.mark.parametrize("prev,label", _SEED_BASELINES, ids=[l for _, l in _SEED_BASELINES])

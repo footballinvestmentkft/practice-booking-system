@@ -195,9 +195,9 @@ def test_prop_u05_no_existing_assessment_creates_new_row():
     new_row = db.add.call_args[0][0]
     assert isinstance(new_row, FootballSkillAssessment)
     assert new_row.skill_name == "dribbling"
-    # baseline = 50.0, delta = +5.0 → 55.0
-    assert new_row.percentage == 55.0
-    assert new_row.points_earned == 55
+    # baseline = 60.0 (DEFAULT_BASELINE), delta = +5.0 → 65.0
+    assert new_row.percentage == 65.0
+    assert new_row.points_earned == 65
     assert new_row.points_total == 100
     assert new_row.status == "ASSESSED"
     assert new_row.user_license_id == lic.id
@@ -336,7 +336,7 @@ def test_prop_u12_multiple_skills_all_processed():
     assert db.add.call_count == 2
     added_rows = [call[0][0] for call in db.add.call_args_list]
     skill_percentages = {r.skill_name: r.percentage for r in added_rows}
-    assert skill_percentages["dribbling"] == 52.0   # baseline 50 + 2.0
+    assert skill_percentages["dribbling"] == 62.0   # baseline 60 (DEFAULT_BASELINE) + 2.0
     assert skill_percentages["passing"] == 58.5     # 60.0 - 1.5
 
 
@@ -396,10 +396,10 @@ def test_prop_u15_get_skill_profile_populates_assessment_delta():
 
     _BASE_SP = "app.services.skill_progression_service"
 
-    # Mock assessment row: dribbling at 60.0% (baseline 50.0 → delta +10.0)
+    # Mock assessment row: dribbling at 70.0% (baseline 60.0 → delta +10.0)
     mock_assessment = MagicMock(spec=FootballSkillAssessment)
     mock_assessment.skill_name = "dribbling"
-    mock_assessment.percentage = 60.0
+    mock_assessment.percentage = 70.0
     mock_assessment.status = "ASSESSED"
     mock_assessment.id = 1
 
@@ -426,8 +426,8 @@ def test_prop_u15_get_skill_profile_populates_assessment_delta():
     with patch(f"{_BASE_SP}.get_all_skill_keys", return_value=["dribbling"]), \
          patch(f"{_BASE_SP}.calculate_tournament_skill_contribution", return_value={
              "dribbling": {
-                 "baseline": 50.0,
-                 "current_value": 50.0,
+                 "baseline": 60.0,
+                 "current_value": 60.0,
                  "contribution": 0.0,
                  "tournament_count": 0,
              }
@@ -437,7 +437,7 @@ def test_prop_u15_get_skill_profile_populates_assessment_delta():
     assert profile["total_assessments"] == 1
     skill = profile["skills"]["dribbling"]
     assert skill["assessment_count"] == 1
-    assert skill["assessment_delta"] == 10.0   # 60.0 - 50.0
+    assert skill["assessment_delta"] == 10.0   # 70.0 - 60.0
 
 
 # ── PROP-U-16 Idempotency guard: second call skips (no double-write) ──────────

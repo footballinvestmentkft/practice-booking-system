@@ -46,19 +46,24 @@ def get_baseline_skills(db: Session, user_id: int) -> Dict[str, float]:
         Dict of skill_key → baseline_value (0-100)
 
     ⚠️ FALLBACK BEHAVIOR FOR MISSING SKILLS:
-        If a skill is NOT found in UserLicense.football_skills, it defaults to DEFAULT_BASELINE (50.0).
+        If a skill is NOT found in UserLicense.football_skills, it defaults to DEFAULT_BASELINE (60.0).
         This is INTENTIONAL and handles cases where:
         - User completed onboarding with old skill set (before migration to 29 skills)
         - User's onboarding data is incomplete
         - New skills were added to system after user onboarding
 
-        The DEFAULT_BASELINE (50.0) represents "neutral" skill level - neither strong nor weak.
-        Tournament placements will then adjust this value up or down based on performance.
+        DEFAULT_BASELINE (60.0) = SYSTEM_BASELINE — the fixed visible starting level for every
+        new LFA Football Player.  Tournament placements adjust this value up or down.
+
+    Baseline priority for dict-format skills:
+        1. system_baseline  — new format; fixed 60.0 written at onboarding
+        2. baseline         — legacy format; may hold a self-assessment value for older records
+        3. DEFAULT_BASELINE — absolute fallback (60.0)
 
     Example:
         User has onboarding data: {"ball_control": 70, "dribbling": 65}
         System now has 29 skills total.
-        Result: {"ball_control": 70.0, "dribbling": 65.0, "speed": 50.0, ...other skills... → 50.0}
+        Result: {"ball_control": 70.0, "dribbling": 65.0, "speed": 60.0, ...other skills... → 60.0}
     """
     # Get active LFA_FOOTBALL_PLAYER license
     license = db.query(UserLicense).filter(
@@ -77,15 +82,17 @@ def get_baseline_skills(db: Session, user_id: int) -> Dict[str, float]:
 
     baseline_skills = {}
     for skill_key in get_all_skill_keys():
-        # ⚠️ FALLBACK: Missing skill defaults to DEFAULT_BASELINE (50.0)
-        # This is INTENTIONAL - allows graceful handling of skill migrations
         skill_value = license.football_skills.get(skill_key, DEFAULT_BASELINE)
 
         if isinstance(skill_value, dict):
-            # New format: {"baseline": 70, "current_level": 85, ...}
-            baseline_skills[skill_key] = float(skill_value.get("baseline", DEFAULT_BASELINE))
+            # Priority: system_baseline (new) → baseline (legacy) → DEFAULT_BASELINE
+            baseline_skills[skill_key] = float(
+                skill_value.get("system_baseline",
+                    skill_value.get("baseline", DEFAULT_BASELINE)
+                )
+            )
         else:
-            # Old format: {"ball_control": 70, ...}
+            # Flat scalar format: {"ball_control": 70.0, ...}
             baseline_skills[skill_key] = float(skill_value)
 
     return baseline_skills

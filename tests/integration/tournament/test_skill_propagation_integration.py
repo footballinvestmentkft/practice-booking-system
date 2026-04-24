@@ -20,10 +20,10 @@ Expected delta calculation (solo tournament, default inputs):
   total_players=1 → percentile=0.0 (guarded)
   placement_skill = 100.0 - 0.0 × (100.0 - 40.0) = 100.0
   step  = 0.20 × log(1+1.0) / log(2.0) = 0.20
-  raw_δ = 0.20 × (100.0 - 50.0) = 10.0
+  raw_δ = 0.20 × (100.0 - 60.0) = 8.0
   opp_factor=1.0 (no opponents), match_modifier=0.0 (no game sessions)
-  new_val = clamp(50.0 + 10.0, 40, 99) = 60.0
-  delta = round(60.0 - 50.0, 1) = 10.0
+  new_val = clamp(60.0 + 8.0, 40, 99) = 68.0
+  delta = round(68.0 - 60.0, 1) = 8.0
 """
 import uuid
 import pytest
@@ -44,8 +44,8 @@ from app.core.security import get_password_hash
 
 _BASE = "app.services.tournament.tournament_participation_service"
 
-_EXPECTED_DELTA = 10.0   # calculated above
-_EXPECTED_NEW_PCT = 60.0  # baseline 50.0 + delta 10.0
+_EXPECTED_DELTA = 8.0    # DEFAULT_BASELINE=60.0; step=0.20; placement_skill=100; delta=0.20*(100-60)=8
+_EXPECTED_NEW_PCT = 68.0  # baseline 60.0 + delta 8.0
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ def _license(test_db: Session, user: User) -> UserLicense:
         max_achieved_level=1,
         started_at=datetime.now(timezone.utc),
         is_active=True,
-        # football_skills=None → get_baseline_skills returns DEFAULT_BASELINE=50.0
+        # football_skills=None → get_baseline_skills returns DEFAULT_BASELINE=60.0
     )
     test_db.add(lic)
     test_db.commit()
@@ -118,7 +118,7 @@ def test_prop_i01_fresh_flow_creates_assessment(test_db: Session):
     Full pipeline: player 1st place → EMA delta computed → FootballSkillAssessment created.
 
     With default inputs (solo tournament, no prior tournaments, no game sessions):
-      delta = +10.0, new_pct = 60.0
+      delta = +8.0, new_pct = 68.0
     """
     player = _player(test_db)
     lic = _license(test_db, player)
@@ -162,7 +162,7 @@ def test_prop_i01_fresh_flow_creates_assessment(test_db: Session):
     assert a.assessed_by == player.id   # falls back to user_id (no assessed_by_id given)
     assert a.requires_validation is False
     assert a.notes is not None
-    assert "+10.0" in a.notes or "10.0" in a.notes
+    assert "+8.0" in a.notes or "8.0" in a.notes
 
 
 # ── PROP-I-02: Pre-existing ASSESSED → archived, new created ─────────────────
@@ -170,7 +170,7 @@ def test_prop_i01_fresh_flow_creates_assessment(test_db: Session):
 def test_prop_i02_existing_assessment_archived_and_replaced(test_db: Session):
     """
     Pre-existing ASSESSED assessment at 65.0% should be archived.
-    New assessment: new_pct = clamp(65.0 + 10.0, 40, 99) = 75.0.
+    New assessment: new_pct = clamp(65.0 + 8.0, 40, 99) = 73.0  (delta=8.0 from DEFAULT_BASELINE=60).
     """
     player = _player(test_db)
     lic = _license(test_db, player)
@@ -208,7 +208,7 @@ def test_prop_i02_existing_assessment_archived_and_replaced(test_db: Session):
     test_db.refresh(prior)
     assert prior.status == "ARCHIVED"
     assert prior.previous_status == "ASSESSED"
-    assert prior.archived_reason == "tournament_progression_delta=+10.0"
+    assert prior.archived_reason == "tournament_progression_delta=+8.0"
     assert prior.archived_at is not None
     assert prior.archived_by == player.id
 
@@ -224,7 +224,7 @@ def test_prop_i02_existing_assessment_archived_and_replaced(test_db: Session):
     )
     assert new_assessment is not None
     assert new_assessment.id != prior_id
-    assert new_assessment.percentage == pytest.approx(75.0, abs=0.15)  # 65.0 + 10.0
+    assert new_assessment.percentage == pytest.approx(73.0, abs=0.15)  # 65.0 + 8.0
 
 
 # ── PROP-I-03: No license → no assessment ────────────────────────────────────

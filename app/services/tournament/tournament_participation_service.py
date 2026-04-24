@@ -24,6 +24,7 @@ from app.models.license import UserLicense
 from app.models.xp_transaction import XPTransaction
 from app.schemas.reward_config import TournamentRewardConfig
 from app.config import settings
+from app.services.skill_progression import DEFAULT_BASELINE
 from app.services.notification_service import create_skill_tier_notification
 
 logger = logging.getLogger(__name__)
@@ -279,7 +280,7 @@ def update_skill_assessments(
             .first()
         )
 
-        current_pct = existing.percentage if existing else 50.0
+        current_pct = existing.percentage if existing else DEFAULT_BASELINE
         raw_new = current_pct + delta
         new_pct = round(max(40.0, min(99.0, raw_new)), 1)
         clamped = round(raw_new, 1) != new_pct

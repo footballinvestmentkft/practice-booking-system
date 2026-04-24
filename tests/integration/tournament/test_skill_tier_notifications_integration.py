@@ -6,12 +6,12 @@ Uses real PostgreSQL with SAVEPOINT isolation (test_db fixture).
 Tests call record_tournament_participation() and assert Notification rows.
 
 Expected baseline delta (solo 1st-place tournament, same as PROP-I-01):
-  old_pct=50.0 (no prior assessment), delta≈+10.0, new_pct=60.0
-  → 50 < 60 <= 60 → Intermediate threshold crossed
+  old_pct=60.0 (DEFAULT_BASELINE, no prior assessment), delta≈+8.0, new_pct=68.0
+  → 60 < 65 <= 68 → Intermediate threshold crossed  (threshold=65)
 
 TIER-I-01  flag=True, solo 1st place → 1 Notification row (type=skill_tier_reached)
 TIER-I-02  flag=False → 0 Notification rows created
-TIER-I-03  Two consecutive tournaments: 1st crosses 60, 2nd stays at 70 → 1 total
+TIER-I-03  Two consecutive tournaments: 1st crosses 65, 2nd stays at ~74 → 1 total
 TIER-I-04  Notification fields: title contains skill name, message contains tier+percentage
 """
 import uuid
@@ -57,7 +57,7 @@ def _license(test_db: Session, user: User) -> UserLicense:
         max_achieved_level=1,
         started_at=datetime.now(timezone.utc),
         is_active=True,
-        # football_skills=None → baseline 50.0
+        # football_skills=None → baseline DEFAULT_BASELINE=60.0
     )
     test_db.add(lic)
     test_db.commit()
@@ -120,7 +120,7 @@ def _notifications(test_db: Session, player: User) -> list:
 def test_tier_i01_flag_on_creates_notification(test_db: Session):
     """
     Full record_tournament_participation() flow with flag=True.
-    Expected: old_pct=50, delta≈+10, new_pct=60 → Intermediate crossed →
+    Expected: old_pct=60 (DEFAULT_BASELINE), delta≈+8, new_pct=68 → threshold 65 crossed →
     exactly 1 Notification row with type=SKILL_TIER_REACHED.
     """
     player = _player(test_db)
@@ -132,7 +132,7 @@ def test_tier_i01_flag_on_creates_notification(test_db: Session):
         mock_settings.ENABLE_TOURNAMENT_SKILL_PROPAGATION = True
         mock_settings.ENABLE_SKILL_TIER_NOTIFICATIONS = True
         mock_settings.SKILL_TIER_THRESHOLDS = {
-            60: "Intermediate", 75: "Advanced", 90: "Expert"
+            65: "Intermediate", 75: "Advanced", 90: "Expert"
         }
         _run_tournament(test_db, player, tournament)
 
@@ -154,7 +154,7 @@ def test_tier_i02_flag_off_no_notification(test_db: Session):
         mock_settings.ENABLE_TOURNAMENT_SKILL_PROPAGATION = True
         mock_settings.ENABLE_SKILL_TIER_NOTIFICATIONS = False
         mock_settings.SKILL_TIER_THRESHOLDS = {
-            60: "Intermediate", 75: "Advanced", 90: "Expert"
+            65: "Intermediate", 75: "Advanced", 90: "Expert"
         }
         _run_tournament(test_db, player, tournament)
 
@@ -166,9 +166,8 @@ def test_tier_i02_flag_off_no_notification(test_db: Session):
 
 def test_tier_i03_second_tournament_no_duplicate_notification(test_db: Session):
     """
-    Tournament 1: old=50, new=60 → Intermediate crossed → 1 notification.
-    Tournament 2: old=60, new≈70 → 60 not re-crossed (60.0 < 60 is False),
-                  75 not crossed (70 < 75) → 0 new notifications.
+    Tournament 1: old=60 (DEFAULT_BASELINE), new=68 → threshold 65 crossed → 1 notification.
+    Tournament 2: old=68, new≈74 → 65 not re-crossed (68 > 65 already), 75 not crossed → 0.
     Total: exactly 1 notification.
     """
     player = _player(test_db)
@@ -180,7 +179,7 @@ def test_tier_i03_second_tournament_no_duplicate_notification(test_db: Session):
     tournament_2 = _tournament(test_db)
     _skill_mapping(test_db, tournament_2, "dribbling")
 
-    mock_thresholds = {60: "Intermediate", 75: "Advanced", 90: "Expert"}
+    mock_thresholds = {65: "Intermediate", 75: "Advanced", 90: "Expert"}
 
     with patch(f"{_BASE}.settings") as mock_settings:
         mock_settings.ENABLE_TOURNAMENT_SKILL_PROPAGATION = True
@@ -220,7 +219,7 @@ def test_tier_i04_notification_fields_contain_expected_content(test_db: Session)
         mock_settings.ENABLE_TOURNAMENT_SKILL_PROPAGATION = True
         mock_settings.ENABLE_SKILL_TIER_NOTIFICATIONS = True
         mock_settings.SKILL_TIER_THRESHOLDS = {
-            60: "Intermediate", 75: "Advanced", 90: "Expert"
+            65: "Intermediate", 75: "Advanced", 90: "Expert"
         }
         _run_tournament(test_db, player, tournament)
 
@@ -234,8 +233,8 @@ def test_tier_i04_notification_fields_contain_expected_content(test_db: Session)
     assert "Intermediate" in notif.message, (
         f"Message should contain tier name 'Intermediate', got: {notif.message!r}"
     )
-    assert "60" in notif.message, (
-        f"Message should contain percentage '60', got: {notif.message!r}"
+    assert "68" in notif.message, (
+        f"Message should contain percentage '68', got: {notif.message!r}"
     )
     assert notif.related_semester_id == tournament.id, (
         f"related_semester_id should be {tournament.id}, got {notif.related_semester_id}"
