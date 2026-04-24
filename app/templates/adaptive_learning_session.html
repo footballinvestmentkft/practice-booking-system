@@ -224,6 +224,65 @@
     .als-btn-primary:hover   { background: #5a67d8; }
     .als-btn-secondary:hover { background: #e5e7eb; }
 
+    /* ── Category picker ─────────────────────────────────────────────────────── */
+    .als-picker-card {
+        background: var(--app-card);
+        border-radius: 14px;
+        padding: 1.75rem 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .als-picker-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--app-text);
+        margin: 0 0 0.35rem;
+    }
+    .als-picker-sub {
+        font-size: 0.88rem;
+        color: var(--app-text-muted);
+        margin: 0 0 1.25rem;
+    }
+    .als-cat-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        margin-bottom: 1.25rem;
+    }
+    .als-cat-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: var(--app-card);
+        border: 2px solid var(--app-border, #e2e8f0);
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+        cursor: pointer;
+        text-align: left;
+        width: 100%;
+        font-size: 0.97rem;
+        font-weight: 600;
+        color: var(--app-text);
+        transition: border-color 0.15s, background 0.15s;
+    }
+    .als-cat-btn:hover { border-color: #667eea; background: #f0f4ff; }
+    .als-cat-btn.selected { border-color: #4f46e5; background: #eef2ff; color: #3730a3; }
+    .als-cat-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .als-cat-label { font-weight: 700; }
+    .als-cat-desc  { font-size: 0.8rem; font-weight: 400; color: var(--app-text-muted); margin-top: 0.1rem; }
+    .als-start-btn {
+        background: #4f46e5;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.75rem;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        width: 100%;
+        transition: background 0.15s;
+    }
+    .als-start-btn:hover { background: #4338ca; }
+
     /* ── Loading / error ─────────────────────────────────────────────────────── */
     .als-loading {
         text-align: center;
@@ -255,8 +314,40 @@
 {% block student_content %}
 <div class="als-container">
 
+    {# ── Category picker phase ─────────────────────────────────────────────── #}
+    <div id="als-phase-category" class="als-phase active">
+        <div class="als-picker-card">
+            <p class="als-picker-title">🧠 Choose a category</p>
+            <p class="als-picker-sub">Select a topic for your adaptive session.</p>
+            <div class="als-cat-grid" id="als-cat-grid">
+                {% set cat_meta = {
+                    'LESSON':           ('📖', 'Football Lessons',  'Rules, tactics, and game understanding'),
+                    'SPORTS_PHYSIOLOGY':('💪', 'Sports Physiology', 'Conditioning, fitness, and the athletic body'),
+                    'GENERAL':          ('⚽', 'General Knowledge', 'Broad football topics'),
+                    'NUTRITION':        ('🥗', 'Nutrition',         'Diet and fuelling for performance'),
+                    'MARKETING':        ('📣', 'Marketing',         'Sports marketing and branding'),
+                    'ECONOMICS':        ('📈', 'Economics',         'Football business and finance'),
+                    'INFORMATICS':      ('💻', 'Informatics',       'Data and technology in football')
+                } %}
+                {% for cat in available_categories %}
+                    {% set icon, label, desc = cat_meta.get(cat.value, ('🎓', cat.value.replace('_',' ').title(), '')) %}
+                    <button class="als-cat-btn{% if cat.value == 'LESSON' %} selected{% endif %}"
+                            data-cat="{{ cat.value }}"
+                            onclick="alsCatSelect(this)">
+                        <span class="als-cat-icon">{{ icon }}</span>
+                        <span>
+                            <span class="als-cat-label">{{ label }}</span><br>
+                            <span class="als-cat-desc">{{ desc }}</span>
+                        </span>
+                    </button>
+                {% endfor %}
+            </div>
+            <button class="als-start-btn" onclick="alsStartFromPicker()">🚀 Start Session</button>
+        </div>
+    </div>
+
     {# ── Loading phase ─────────────────────────────────────────────────────── #}
-    <div id="als-phase-loading" class="als-phase active als-loading">
+    <div id="als-phase-loading" class="als-phase als-loading">
         ⏳ Starting your session…
     </div>
 
@@ -265,7 +356,7 @@
         <div class="als-error-card">
             <h3>Something went wrong</h3>
             <p id="als-error-msg" style="margin: 0; font-size: 0.9rem;"></p>
-            <button class="als-error-retry" onclick="alsInit()">Try Again</button>
+            <button class="als-error-retry" onclick="showPhase('category')">← Choose Category</button>
         </div>
     </div>
 
@@ -337,23 +428,24 @@
        a server-side question log table. Not a permanent API contract.
     ─────────────────────────────────────────────────────────────────────────── */
     var state = {
-        sessionId:   null,
-        questionNum: 0,
-        totalTarget: 10,
-        seenIds:     [],   // exclude_ids compat layer (see note above)
-        totalXp:     0,
-        correctCount:0,
-        phase:       'loading'
+        sessionId:    null,
+        questionNum:  0,
+        totalTarget:  10,
+        seenIds:      [],   // exclude_ids compat layer (see note above)
+        totalXp:      0,
+        correctCount: 0,
+        phase:        'category',
+        category:     'LESSON'
     };
 
     /* ── Phase management ──────────────────────────────────────────────────── */
-    function showPhase(name) {
-        ['loading','error','question','result'].forEach(function (p) {
+    window.showPhase = function (name) {
+        ['category','loading','error','question','result'].forEach(function (p) {
             var el = document.getElementById('als-phase-' + p);
             if (el) el.classList.toggle('active', p === name);
         });
         state.phase = name;
-    }
+    };
 
     function showError(msg) {
         document.getElementById('als-error-msg').textContent = msg || 'Unknown error.';
@@ -545,6 +637,22 @@
         showPhase('result');
     }
 
+    /* ── Category picker helpers ───────────────────────────────────────────── */
+    window.alsCatSelect = function (btn) {
+        document.querySelectorAll('.als-cat-btn').forEach(function (b) {
+            b.classList.remove('selected');
+        });
+        btn.classList.add('selected');
+        state.category = btn.dataset.cat;
+    };
+
+    window.alsStartFromPicker = function () {
+        var selected = document.querySelector('.als-cat-btn.selected');
+        if (selected) state.category = selected.dataset.cat;
+        showPhase('loading');
+        alsInit(state.category);
+    };
+
     /* ── Restart ───────────────────────────────────────────────────────────── */
     window.alsRestart = function () {
         state.sessionId    = null;
@@ -552,13 +660,14 @@
         state.seenIds      = [];
         state.totalXp      = 0;
         state.correctCount = 0;
-        showPhase('loading');
-        alsInit();
+        document.getElementById('als-resume-notice').style.display = 'none';
+        showPhase('category');
     };
 
     /* ── Init ──────────────────────────────────────────────────────────────── */
-    window.alsInit = function () {
-        post('/adaptive-learning/session/start')
+    window.alsInit = function (category) {
+        var cat = category || state.category || 'LESSON';
+        post('/adaptive-learning/session/start?category=' + encodeURIComponent(cat))
             .then(function (res) {
                 if (!res) return;
                 if (!res.ok) {
@@ -577,8 +686,6 @@
                 showError('Could not connect to the server. Please check your connection.');
             });
     };
-
-    alsInit();
 })();
 </script>
 {% endblock %}

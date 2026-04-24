@@ -22822,6 +22822,20 @@
       "post": {
         "description": "Start a new adaptive learning session, or return the existing active one.",
         "operationId": "al_session_start_adaptive_learning_session_start_post",
+        "parameters": [
+          {
+            "description": "QuizCategory value for this session",
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "default": "LESSON",
+              "description": "QuizCategory value for this session",
+              "title": "Category",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -22830,6 +22844,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "Al Session Start",
@@ -22883,7 +22907,7 @@
     },
     "/adaptive-learning/session/{session_id}/complete": {
       "post": {
-        "description": "Finalise the session and return the summary.",
+        "description": "Finalise the session and write XP to the ledger.",
         "operationId": "al_session_complete_adaptive_learning_session__session_id__complete_post",
         "parameters": [
           {

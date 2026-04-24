@@ -1,4 +1,4 @@
-"""Adaptive Learning web routes — entry page, session page, session lifecycle (AL-2)."""
+"""Adaptive Learning web routes — entry page, session page, session lifecycle (AL-3)."""
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Query, Request
@@ -9,9 +9,11 @@ from sqlalchemy.orm import Session
 
 from ...database import get_db
 from ...dependencies import get_current_user_web
-from ...models.quiz import AdaptiveLearningSession, QuizAnswerOption, QuizCategory, QuizQuestion
+from ...models.quiz import AdaptiveLearningSession, Quiz, QuizAnswerOption, QuizCategory, QuizQuestion
 from ...models.user import User
+from ...models.xp_transaction import XPTransaction
 from ...services.adaptive_learning import AdaptiveLearningService
+from ...services.gamification.xp_service import award_xp
 from .helpers import require_student_onboarding
 from .student_features import _spec_ctx
 
@@ -82,12 +84,21 @@ async def adaptive_learning_session_page(
     if guard:
         return guard
 
+    available_categories = (
+        db.query(Quiz.category)
+        .filter(Quiz.is_active == True)
+        .distinct()
+        .all()
+    )
+    category_values = [row[0] for row in available_categories]
+
     return templates.TemplateResponse(
         "adaptive_learning_session.html",
         {
             "request": request,
             "user": user,
             **_spec_ctx(user, db),
+            "available_categories": category_values,
         },
     )
 
@@ -119,6 +130,7 @@ def _session_guard(db: Session, session_id: int, user_id: int):
 @router.post("/adaptive-learning/session/start")
 async def al_session_start(
     request: Request,
+    category: str = Query("LESSON", description="QuizCategory value for this session"),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
@@ -126,6 +138,15 @@ async def al_session_start(
     guard = require_student_onboarding(user)
     if guard:
         return JSONResponse({"error": "onboarding required"}, status_code=403)
+
+    try:
+        quiz_category = QuizCategory[category.upper()]
+    except KeyError:
+        valid = [c.value for c in QuizCategory]
+        return JSONResponse(
+            {"error": f"invalid category {category!r}. Valid values: {valid}"},
+            status_code=422,
+        )
 
     # Return existing active session rather than creating a duplicate
     existing = (
@@ -146,9 +167,8 @@ async def al_session_start(
         })
 
     service = AdaptiveLearningService(db)
-    # GENERAL category — 2 questions; LESSON — 12 questions (most content available)
     session = service.start_adaptive_session(
-        user.id, QuizCategory.LESSON, session_duration_seconds=600
+        user.id, quiz_category, session_duration_seconds=600
     )
     return JSONResponse({
         "session_id": session.id,
@@ -287,26 +307,63 @@ async def al_session_complete(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
-    """Finalise the session and return the summary."""
+    """Finalise the session and write XP to the ledger."""
     guard = require_student_onboarding(user)
     if guard:
         return JSONResponse({"error": "onboarding required"}, status_code=403)
 
-    session, err = _session_guard(db, session_id, user.id)
-    if err:
-        return err
+    # SELECT FOR UPDATE serialises concurrent complete calls on the same session row.
+    # The first call proceeds; any concurrent duplicate blocks here, then sees
+    # ended_at IS NOT NULL and returns 410 — award_xp is never reached twice.
+    session = (
+        db.query(AdaptiveLearningSession)
+        .filter(
+            AdaptiveLearningSession.id == session_id,
+            AdaptiveLearningSession.user_id == user.id,
+        )
+        .with_for_update()
+        .first()
+    )
+    if not session:
+        return JSONResponse({"error": "session not found"}, status_code=404)
+    if session.ended_at is not None:
+        return JSONResponse(
+            {"error": "session already completed", "session_complete": True},
+            status_code=410,
+        )
 
     service = AdaptiveLearningService(db)
-    summary = service.end_session(session_id)
+    summary = service.end_session(session_id)  # sets ended_at, commits → releases lock
 
     presented = summary.get("questions_answered", 0)
     correct = summary.get("correct_answers", 0)
     accuracy_pct = round(correct / presented * 100, 1) if presented > 0 else 0.0
+    xp = summary.get("xp_earned") or 0
+
+    if xp > 0:
+        idempotency_key = f"adaptive_session_{session_id}_xp"
+        # Secondary guard: skip award_xp if a ledger row already exists for this key.
+        # Primary guard is the SELECT FOR UPDATE above; this catches any edge case
+        # where award_xp was called but end_session commit was delayed.
+        already_awarded = (
+            db.query(XPTransaction)
+            .filter(XPTransaction.idempotency_key == idempotency_key)
+            .first()
+        )
+        if not already_awarded:
+            award_xp(
+                db,
+                user_id=user.id,
+                xp_amount=xp,
+                reason=f"Adaptive Learning session #{session_id}",
+                idempotency_key=idempotency_key,
+                transaction_type="ADAPTIVE_LEARNING_XP",
+            )
 
     return JSONResponse({
         "session_id": session_id,
         "questions_presented": presented,
         "questions_correct": correct,
-        "xp_earned": summary.get("xp_earned") or 0,
+        "xp_earned": xp,
         "accuracy_pct": accuracy_pct,
     })
