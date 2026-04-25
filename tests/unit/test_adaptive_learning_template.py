@@ -242,6 +242,32 @@ class TestRecentIdsCooldown:
         assert "recentIds.join(',')" in html
 
 
+class TestNoFixedQuestionCount:
+    """'Question X of N' and fixed progress bar must not appear — system is time-based."""
+
+    def test_no_of_10_label(self):
+        html = _render_session_page()
+        assert "of 10" not in html, "'of 10' must not appear — fixed count UI removed"
+
+    def test_no_total_target_in_state(self):
+        html = _render_session_page()
+        assert "totalTarget" not in html, "totalTarget state field must be removed"
+
+    def test_no_progress_fill_bar(self):
+        html = _render_session_page()
+        assert "als-progress-fill" not in html, "fixed progress fill bar must be removed"
+
+    def test_question_counter_still_present(self):
+        html = _render_session_page()
+        assert "als-progress-label" in html, "question counter label must still exist"
+        assert "Question 0" in html, "counter starts at 0 in HTML"
+
+    def test_no_question_count_in_init(self):
+        html = _render_session_page()
+        assert "question_count" not in html or "totalTarget" not in html, \
+            "question_count must not drive UI logic"
+
+
 class TestFeedbackTiming:
     """Auto-advance delays must differ for correct vs wrong answers."""
 

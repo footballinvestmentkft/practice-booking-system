@@ -21,20 +21,7 @@
     .als-phase { display: none; }
     .als-phase.active { display: block; }
 
-    /* ── Progress bar ────────────────────────────────────────────────────────── */
-    .als-progress-wrap {
-        background: #e9ecef;
-        border-radius: 6px;
-        height: 6px;
-        margin-bottom: 1.5rem;
-        overflow: hidden;
-    }
-    .als-progress-fill {
-        height: 100%;
-        background: #667eea;
-        border-radius: 6px;
-        transition: width 0.35s ease;
-    }
+
     .als-progress-label {
         font-size: 0.8rem;
         color: var(--app-text-muted);
@@ -412,10 +399,7 @@
             <span>Score: <span id="als-score-val" class="als-score-val">0</span></span>
             <span id="als-timer" class="als-timer">⏱ 3:00</span>
         </div>
-        <div class="als-progress-wrap">
-            <div id="als-progress-fill" class="als-progress-fill" style="width:0%"></div>
-        </div>
-        <div id="als-progress-label" class="als-progress-label">Question 0 of 10</div>
+        <div id="als-progress-label" class="als-progress-label">Question 0</div>
 
         <div class="als-question-card">
             <div id="als-question-num" class="als-question-num">Question 1</div>
@@ -477,7 +461,7 @@
     var state = {
         sessionId:          null,
         questionNum:        0,
-        totalTarget:        10,
+
         recentIds:          [],
         score:              0,
         correctCount:       0,
@@ -532,10 +516,8 @@
 
     /* ── Progress ──────────────────────────────────────────────────────────── */
     function updateProgress() {
-        var pct = Math.min(100, Math.round(state.questionNum / state.totalTarget * 100));
-        document.getElementById('als-progress-fill').style.width = pct + '%';
         document.getElementById('als-progress-label').textContent =
-            'Question ' + state.questionNum + ' of ' + state.totalTarget;
+            'Question ' + state.questionNum;
     }
 
     function updateScoreStrip() {
@@ -684,11 +666,7 @@
         }
         setTimeout(function () {
             if (adv) adv.style.display = 'none';
-            if (state.questionNum >= state.totalTarget) {
-                alsComplete();
-            } else {
-                alsNext();
-            }
+            alsNext();
         }, delay);
     }
 
@@ -834,7 +812,6 @@
                     return;
                 }
                 state.sessionId   = res.data.session_id;
-                state.totalTarget = res.data.question_count || 10;
 
                 if (res.data.resumed) {
                     state.score = res.data.current_score || 0;
