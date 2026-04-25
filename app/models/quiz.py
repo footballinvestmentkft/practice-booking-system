@@ -40,6 +40,7 @@ class Quiz(Base):
     xp_reward = Column(Integer, nullable=False, default=50)  # XP jutalom sikeres kitöltésért
     passing_score = Column(Float, nullable=False, default=70.0)  # minimum pont százalékban
     language = Column(String(10), nullable=False, default='en')
+    module = Column(String(200), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -183,6 +184,10 @@ class AdaptiveLearningSession(Base):
     
     # Session language (ensures HU and EN questions never mix)
     language = Column(String(10), nullable=False, default='en')
+
+    # Module scope: comma-separated quiz IDs for the chosen module, or NULL for all
+    # quizzes in category+language. Written once at session start; never changes.
+    source_quiz_ids = Column(String(500), nullable=True)
 
     # Adaptive algorithm data
     target_difficulty = Column(Float, default=0.5)  # 0.0-1.0

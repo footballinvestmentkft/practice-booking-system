@@ -22882,6 +22882,18 @@
               "title": "Language",
               "type": "string"
             }
+          },
+          {
+            "description": "Comma-separated quiz IDs scoping this session to a specific module. Empty string means all quizzes in the selected category+language.",
+            "in": "query",
+            "name": "quiz_ids",
+            "required": false,
+            "schema": {
+              "default": "",
+              "description": "Comma-separated quiz IDs scoping this session to a specific module. Empty string means all quizzes in the selected category+language.",
+              "title": "Quiz Ids",
+              "type": "string"
+            }
           }
         ],
         "responses": {

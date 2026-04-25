@@ -22,12 +22,14 @@ class AdaptiveLearningService:
         category: QuizCategory,
         session_duration_seconds: int = 180,
         language: str = "hu",
+        source_quiz_ids: Optional[str] = None,
     ) -> AdaptiveLearningSession:
         """Új adaptív tanulási session indítása időkorláttal"""
         session = AdaptiveLearningSession(
             user_id=user_id,
             category=category,
             language=language,
+            source_quiz_ids=source_quiz_ids,
             target_difficulty=self._calculate_target_difficulty(user_id, category),
             performance_trend=0.0,
             session_time_limit_seconds=session_duration_seconds,
@@ -52,9 +54,15 @@ class AdaptiveLearningService:
         # Get user's performance data
         performance_data = self._get_user_performance_data(user_id, session.category)
         
+        # Parse module scope from session (None = all quizzes in category+language)
+        quiz_ids: Optional[List[int]] = None
+        if session.source_quiz_ids:
+            quiz_ids = [int(x) for x in session.source_quiz_ids.split(",") if x.strip()]
+
         # Select question based on adaptive algorithm
         candidate_questions = self._get_candidate_questions(
-            session.category, session.target_difficulty, language=session.language
+            session.category, session.target_difficulty,
+            language=session.language, quiz_ids=quiz_ids,
         )
         
         if not candidate_questions:
@@ -246,9 +254,18 @@ class AdaptiveLearningService:
         category: QuizCategory,
         target_difficulty: float,
         language: str = "hu",
+        quiz_ids: Optional[List[int]] = None,
     ) -> List[QuizQuestion]:
-        """Jelölt kérdések kiválasztása kategória, nehézség és nyelv alapján."""
+        """Jelölt kérdések kiválasztása kategória, nehézség, nyelv és modul alapján.
+
+        quiz_ids: ha meg van adva, csak ezekből a quizekből húz (modul-szűrés).
+        None esetén az összes quiz szóba jön a category+language kombinációban.
+        """
         difficulty_range = 0.2
+
+        base_filters = [Quiz.category == category, Quiz.language == language]
+        if quiz_ids:
+            base_filters.append(Quiz.id.in_(quiz_ids))
 
         # Try difficulty-filtered query (LEFT JOIN — metadata optional)
         questions = (
@@ -256,8 +273,7 @@ class AdaptiveLearningService:
             .join(Quiz)
             .outerjoin(QuestionMetadata, QuestionMetadata.question_id == QuizQuestion.id)
             .filter(
-                Quiz.category == category,
-                Quiz.language == language,
+                *base_filters,
                 and_(
                     QuestionMetadata.estimated_difficulty >= target_difficulty - difficulty_range,
                     QuestionMetadata.estimated_difficulty <= target_difficulty + difficulty_range,
@@ -266,12 +282,12 @@ class AdaptiveLearningService:
             .all()
         )
 
-        # Fall back to all questions in the category + language (no metadata required)
+        # Fall back to all questions in scope (no metadata difficulty filter)
         if not questions:
             questions = (
                 self.db.query(QuizQuestion)
                 .join(Quiz)
-                .filter(Quiz.category == category, Quiz.language == language)
+                .filter(*base_filters)
                 .all()
             )
 
