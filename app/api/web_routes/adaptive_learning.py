@@ -102,13 +102,16 @@ async def adaptive_learning_session_page(
     )
     category_values = [row[0] for row in available_categories]
 
-    # Build module map: {category_value: [{module, quiz_ids, question_count}, ...]}
-    # Only modules with >= MIN_QUESTIONS_PER_CATEGORY metadata-backed questions are exposed.
-    module_rows = (
+    # Build topic map: {category_value: [{module, topic, quiz_id, question_count}, ...]}
+    # 1 topic = 1 quiz = 1 selectable unit in the picker.
+    # module is the chapter-level visual grouper only — never a selection unit.
+    # Only topics with >= MIN_QUESTIONS_PER_CATEGORY metadata-backed questions are exposed.
+    topic_rows = (
         db.query(
             Quiz.category,
             Quiz.module,
-            func.array_agg(Quiz.id.distinct()).label("quiz_ids"),
+            Quiz.topic,
+            Quiz.id.label("quiz_id"),
             func.count(QuizQuestion.id).label("question_count"),
         )
         .join(QuizQuestion, QuizQuestion.quiz_id == Quiz.id)
@@ -116,18 +119,20 @@ async def adaptive_learning_session_page(
         .filter(
             Quiz.is_active == True,
             Quiz.language == language,
-            Quiz.module.isnot(None),
+            Quiz.topic.isnot(None),
         )
-        .group_by(Quiz.category, Quiz.module)
+        .group_by(Quiz.category, Quiz.module, Quiz.topic, Quiz.id)
         .having(func.count(QuizQuestion.id) >= MIN_QUESTIONS_PER_CATEGORY)
+        .order_by(Quiz.id)
         .all()
     )
-    available_modules: dict[str, list] = {}
-    for row in module_rows:
+    available_topics: dict[str, list] = {}
+    for row in topic_rows:
         cat_key = row.category.value
-        available_modules.setdefault(cat_key, []).append({
+        available_topics.setdefault(cat_key, []).append({
             "module": row.module,
-            "quiz_ids": sorted(row.quiz_ids),
+            "topic": row.topic,
+            "quiz_id": row.quiz_id,
             "question_count": row.question_count,
         })
 
@@ -138,7 +143,7 @@ async def adaptive_learning_session_page(
             "user": user,
             **_spec_ctx(user, db),
             "available_categories": category_values,
-            "available_modules": available_modules,
+            "available_topics": available_topics,
             "session_language": language,
         },
     )

@@ -331,14 +331,23 @@
     }
     .als-start-btn:hover { background: #4338ca; }
 
-    /* ── Module picker ───────────────────────────────────────────────────────── */
-    .als-module-grid {
+    /* ── Topic picker ────────────────────────────────────────────────────────── */
+    .als-topic-grid {
         display: flex;
         flex-direction: column;
         gap: 0.45rem;
         margin-bottom: 1.25rem;
     }
-    .als-module-btn {
+    .als-chapter-header {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--text-muted, #888);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.4rem 0.2rem 0.1rem;
+        margin-top: 0.4rem;
+    }
+    .als-topic-btn {
         display: flex;
         align-items: center;
         background: var(--app-card);
@@ -353,9 +362,9 @@
         color: var(--app-text);
         transition: border-color 0.15s, background 0.15s;
     }
-    .als-module-btn:hover { border-color: #667eea; background: #f0f4ff; }
-    .als-module-btn.selected { border-color: #4f46e5; background: #eef2ff; color: #3730a3; font-weight: 700; }
-    .als-module-btn-all { font-style: italic; }
+    .als-topic-btn:hover { border-color: #667eea; background: #f0f4ff; }
+    .als-topic-btn.selected { border-color: #4f46e5; background: #eef2ff; color: #3730a3; font-weight: 700; }
+    .als-topic-btn-all { font-style: italic; }
 
     /* ── Loading / error ─────────────────────────────────────────────────────── */
     .als-loading {
@@ -434,11 +443,11 @@
                     </p>
                 {% endif %}
             </div>
-            {# ── Module picker — populated by JS after category selection ─────── #}
+            {# ── Topic picker — populated by JS after category selection ──────── #}
             <div id="als-module-section" style="display:none;" data-testid="als-module-section">
                 <p class="als-picker-sub" style="margin-top:1rem; margin-bottom:0.5rem;">📚 Choose a topic</p>
-                <div class="als-module-grid" id="als-module-grid">
-                    {# alsUpdateModulePicker() fills this on category change #}
+                <div class="als-topic-grid" id="als-module-grid">
+                    {# alsUpdateTopicPicker() fills this on category change #}
                 </div>
             </div>
 
@@ -536,8 +545,8 @@
        a server-side question log table. Not a permanent API contract.
     ─────────────────────────────────────────────────────────────────────────── */
     // Available modules per category — injected server-side.
-    // Shape: {LESSON: [{module, quiz_ids, question_count}, ...], ...}
-    var availableModules = {{ (available_modules | default({})) | tojson | safe }};
+    // Shape: {LESSON: [{module, topic, quiz_id, question_count}, ...], ...}
+    var availableTopics = {{ (available_topics | default({})) | tojson | safe }};
 
     var state = {
         sessionId:          null,
@@ -552,7 +561,7 @@
         timerHandle:        null,
         currentQuestionId:  null,
         answerSubmitted:    false,
-        quizIds:            ''   // "" = full category; "849,850,..." = module scope
+        quizIds:            ''   // "" = full category; "849" = single topic quiz_id
     };
 
     /* ── Phase management ──────────────────────────────────────────────────── */
@@ -856,52 +865,72 @@
         showPhase('result');
     }
 
-    /* ── Module picker helpers ─────────────────────────────────────────────── */
-    window.alsUpdateModulePicker = function (cat) {
+    /* ── Topic picker helpers ──────────────────────────────────────────────── */
+    window.alsUpdateTopicPicker = function (cat) {
         var section = document.getElementById('als-module-section');
         var grid    = document.getElementById('als-module-grid');
         if (!section || !grid) return;
 
-        var modules = availableModules[cat] || [];
+        var topics = availableTopics[cat] || [];
 
-        // 0 or 1 module — no picker needed, reset scope to full category
-        if (modules.length <= 1) {
+        // 0 topics — no picker needed, reset scope to full category
+        if (topics.length === 0) {
             section.style.display = 'none';
             state.quizIds = '';
             return;
         }
 
-        // Build buttons dynamically
+        // Build UI dynamically
         grid.innerHTML = '';
 
+        // "All topics" button
         var allBtn = document.createElement('button');
-        allBtn.className = 'als-module-btn als-module-btn-all selected';
-        allBtn.dataset.quizIds = '';
-        allBtn.setAttribute('data-testid', 'als-module-all');
+        allBtn.className = 'als-topic-btn als-topic-btn-all selected';
+        allBtn.dataset.quizId = '';
+        allBtn.setAttribute('data-testid', 'als-topic-all');
         allBtn.textContent = '🗂 All topics';
-        allBtn.onclick = function () { alsModuleSelect(this); };
+        allBtn.onclick = function () { alsTopicSelect(this); };
         grid.appendChild(allBtn);
 
-        modules.forEach(function (m) {
-            var btn = document.createElement('button');
-            btn.className = 'als-module-btn';
-            btn.dataset.quizIds = m.quiz_ids.join(',');
-            btn.setAttribute('data-testid', 'als-module-' + m.module.toLowerCase().replace(/[\s/]+/g, '-'));
-            btn.textContent = '📖 ' + m.module + ' (' + m.question_count + ')';
-            btn.onclick = function () { alsModuleSelect(this); };
-            grid.appendChild(btn);
+        // Group by chapter (module) using insertion-order Map
+        var chapters = new Map();
+        topics.forEach(function (t) {
+            var ch = t.module || '';
+            if (!chapters.has(ch)) chapters.set(ch, []);
+            chapters.get(ch).push(t);
+        });
+
+        chapters.forEach(function (chTopics, chName) {
+            // Non-clickable chapter header
+            if (chName) {
+                var header = document.createElement('div');
+                header.className = 'als-chapter-header';
+                header.setAttribute('data-testid', 'als-chapter-' + chName.toLowerCase().replace(/[\s/]+/g, '-'));
+                header.textContent = chName;
+                grid.appendChild(header);
+            }
+
+            chTopics.forEach(function (t) {
+                var btn = document.createElement('button');
+                btn.className = 'als-topic-btn';
+                btn.dataset.quizId = String(t.quiz_id);
+                btn.setAttribute('data-testid', 'als-topic-' + t.quiz_id);
+                btn.textContent = '📖 ' + t.topic + ' (' + t.question_count + ')';
+                btn.onclick = function () { alsTopicSelect(this); };
+                grid.appendChild(btn);
+            });
         });
 
         state.quizIds = '';  // default: All topics
         section.style.display = '';
     };
 
-    window.alsModuleSelect = function (btn) {
-        document.querySelectorAll('.als-module-btn').forEach(function (b) {
+    window.alsTopicSelect = function (btn) {
+        document.querySelectorAll('.als-topic-btn').forEach(function (b) {
             b.classList.remove('selected');
         });
         btn.classList.add('selected');
-        state.quizIds = btn.dataset.quizIds || '';
+        state.quizIds = btn.dataset.quizId || '';
     };
 
     /* ── Category / time picker helpers ───────────────────────────────────── */
@@ -911,7 +940,7 @@
         });
         btn.classList.add('selected');
         state.category = btn.dataset.cat;
-        alsUpdateModulePicker(state.category);
+        alsUpdateTopicPicker(state.category);
     };
 
     window.alsTimeSelect = function (btn) {
@@ -927,9 +956,9 @@
         if (selectedCat) state.category = selectedCat.dataset.cat;
         var selectedTime = document.querySelector('.als-time-btn.selected');
         if (selectedTime) state.timeLimitSeconds = parseInt(selectedTime.dataset.seconds, 10) || 180;
-        // Capture module selection (defense-in-depth alongside state.quizIds)
-        var selectedModule = document.querySelector('.als-module-btn.selected');
-        state.quizIds = selectedModule ? (selectedModule.dataset.quizIds || '') : '';
+        // Capture topic selection (defense-in-depth alongside state.quizIds)
+        var selectedTopic = document.querySelector('.als-topic-btn.selected');
+        state.quizIds = selectedTopic ? (selectedTopic.dataset.quizId || '') : '';
         // Defense-in-depth: hide language switcher and module section immediately,
         // before showPhase('loading') fires, to prevent any race-condition interaction.
         var langSwitcher = document.getElementById('als-lang-switcher');
@@ -952,7 +981,7 @@
         state.answerSubmitted   = false;
         state.quizIds           = '';
         document.getElementById('als-resume-notice').style.display = 'none';
-        alsUpdateModulePicker(state.category);
+        alsUpdateTopicPicker(state.category);
         showPhase('category');
     };
 
@@ -988,7 +1017,7 @@
     };
 
     // Initialise module picker for the default category on page load
-    alsUpdateModulePicker(state.category);
+    alsUpdateTopicPicker(state.category);
 })();
 </script>
 {% endblock %}

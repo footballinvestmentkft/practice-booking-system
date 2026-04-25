@@ -40,7 +40,8 @@ class Quiz(Base):
     xp_reward = Column(Integer, nullable=False, default=50)  # XP jutalom sikeres kitöltésért
     passing_score = Column(Float, nullable=False, default=70.0)  # minimum pont százalékban
     language = Column(String(10), nullable=False, default='en')
-    module = Column(String(200), nullable=True)
+    module = Column(String(200), nullable=True)  # chapter — visual grouper only
+    topic = Column(String(300), nullable=True)   # primary selection unit (1 quiz = 1 topic)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
