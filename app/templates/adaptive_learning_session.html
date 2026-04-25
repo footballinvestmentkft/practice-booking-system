@@ -254,6 +254,31 @@
         padding: 1.75rem 2rem;
         box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
+    /* ── Language switcher (category phase only) ───────────────────────────── */
+    .als-lang-switcher {
+        display: flex;
+        gap: 0.4rem;
+        justify-content: flex-end;
+        margin-bottom: 1rem;
+    }
+    .als-lang-btn {
+        display: inline-block;
+        padding: 0.25rem 0.7rem;
+        border-radius: 6px;
+        border: 1.5px solid var(--app-border, #e2e8f0);
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: var(--app-text-muted);
+        text-decoration: none;
+        transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .als-lang-btn:hover { border-color: #667eea; color: #4f46e5; }
+    .als-lang-btn.active {
+        border-color: #4f46e5;
+        background: #eef2ff;
+        color: #3730a3;
+    }
     .als-picker-title {
         font-size: 1.15rem;
         font-weight: 700;
@@ -340,6 +365,17 @@
     {# ── Category picker phase ─────────────────────────────────────────────── #}
     <div id="als-phase-category" class="als-phase active">
         <div class="als-picker-card">
+            {# ── Language switcher — visible ONLY in category phase (JS enforced) ── #}
+            <div class="als-lang-switcher" id="als-lang-switcher" data-testid="als-lang-switcher">
+                <a href="?language=en"
+                   class="als-lang-btn{% if session_language == 'en' %} active{% endif %}"
+                   data-lang="en"
+                   data-testid="als-lang-en">EN</a>
+                <a href="?language=hu"
+                   class="als-lang-btn{% if session_language == 'hu' %} active{% endif %}"
+                   data-lang="hu"
+                   data-testid="als-lang-hu">HU</a>
+            </div>
             <p class="als-picker-title">🧠 Choose a category</p>
             <p class="als-picker-sub">Select a topic for your adaptive session.</p>
             <div class="als-cat-grid" id="als-cat-grid">
@@ -488,6 +524,10 @@
             if (el) el.classList.toggle('active', p === name);
         });
         state.phase = name;
+        // Language switcher is ONLY allowed in the category picker phase.
+        // This is the authoritative lock — it fires on every phase transition.
+        var langSwitcher = document.getElementById('als-lang-switcher');
+        if (langSwitcher) langSwitcher.style.display = (name === 'category') ? '' : 'none';
     };
 
     function showError(msg) {
@@ -797,6 +837,10 @@
         if (selectedCat) state.category = selectedCat.dataset.cat;
         var selectedTime = document.querySelector('.als-time-btn.selected');
         if (selectedTime) state.timeLimitSeconds = parseInt(selectedTime.dataset.seconds, 10) || 180;
+        // Defense-in-depth: hide the language switcher immediately on Start click,
+        // before showPhase('loading') fires, to prevent any race-condition interaction.
+        var langSwitcher = document.getElementById('als-lang-switcher');
+        if (langSwitcher) langSwitcher.style.display = 'none';
         showPhase('loading');
         alsInit(state.category);
     };

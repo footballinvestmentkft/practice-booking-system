@@ -50,7 +50,7 @@ def _fake_user():
     return _Request(), _User()
 
 
-def _render_session_page(categories=None):
+def _render_session_page(categories=None, session_language="en"):
     from app.models.quiz import QuizCategory
 
     if categories is None:
@@ -65,6 +65,7 @@ def _render_session_page(categories=None):
         spec_dashboard_url="/dashboard/lfa-football-player",
         spec_dashboard_icon="⚽",
         available_categories=categories,
+        session_language=session_language,
     )
 
 
@@ -366,3 +367,106 @@ class TestCategoryPickerThreshold:
         assert 'data-cat="SPORTS_PHYSIOLOGY"' in html
         assert 'data-cat="GENERAL"' in html
         assert 'data-cat="NUTRITION"' in html
+
+
+class TestLanguageSwitcherRendering:
+    """Language switcher renders correctly in the category picker phase."""
+
+    def test_switcher_element_present(self):
+        html = _render_session_page()
+        assert 'id="als-lang-switcher"' in html
+
+    def test_en_link_present_with_correct_href(self):
+        html = _render_session_page()
+        assert 'href="?language=en"' in html
+
+    def test_hu_link_present_with_correct_href(self):
+        html = _render_session_page()
+        assert 'href="?language=hu"' in html
+
+    def _btn_region(self, html, lang):
+        """Return the rendered <a> tag region for the given lang button."""
+        # The tag starts at href="?language=<lang>" and spans ~150 chars
+        # (href on one line, class on next, data-lang, data-testid, text content)
+        idx = html.index(f'href="?language={lang}"')
+        return html[idx:idx + 180]
+
+    def test_en_active_when_language_is_en(self):
+        html = _render_session_page(session_language="en")
+        assert 'active' in self._btn_region(html, 'en'), \
+            "EN link must have 'active' class when session_language='en'"
+        assert 'active' not in self._btn_region(html, 'hu'), \
+            "HU link must NOT have 'active' class when session_language='en'"
+
+    def test_hu_active_when_language_is_hu(self):
+        html = _render_session_page(session_language="hu")
+        assert 'active' not in self._btn_region(html, 'en'), \
+            "EN link must NOT have 'active' class when session_language='hu'"
+        assert 'active' in self._btn_region(html, 'hu'), \
+            "HU link must have 'active' class when session_language='hu'"
+
+    def test_data_testid_attributes_present(self):
+        html = _render_session_page()
+        assert 'data-testid="als-lang-switcher"' in html
+        assert 'data-testid="als-lang-en"' in html
+        assert 'data-testid="als-lang-hu"' in html
+
+    def test_switcher_inside_picker_card(self):
+        """Switcher div must appear before the category title inside .als-picker-card."""
+        html = _render_session_page()
+        # Use DOM-specific markers: data-testid attribute vs the rendered <p class="als-picker-title"> tag
+        switcher_idx = html.index('data-testid="als-lang-switcher"')
+        title_idx = html.index('class="als-picker-title"')
+        assert switcher_idx < title_idx, "Language switcher must appear before the picker title"
+
+    def test_switcher_present_with_empty_categories(self):
+        """Switcher must render even when no categories are available."""
+        html = _render_session_page(categories=[])
+        assert 'id="als-lang-switcher"' in html
+
+
+class TestLanguageSwitcherJsGuard:
+    """JS showPhase() guard hides switcher in non-category phases."""
+
+    def test_showphase_hides_switcher_in_loading(self):
+        html = _render_session_page()
+        assert "name === 'category'" in html, (
+            "showPhase must contain name === 'category' conditional for switcher visibility"
+        )
+
+    def test_show_phase_contains_als_lang_switcher_reference(self):
+        html = _render_session_page()
+        assert "als-lang-switcher" in html
+        # The showPhase function must reference the switcher element
+        showphase_start = html.index("window.showPhase")
+        showphase_end = html.index("};", showphase_start) + 2
+        showphase_body = html[showphase_start:showphase_end]
+        assert "als-lang-switcher" in showphase_body, (
+            "showPhase() must control als-lang-switcher visibility"
+        )
+
+    def test_als_start_from_picker_hides_switcher_immediately(self):
+        html = _render_session_page()
+        start_fn_start = html.index("window.alsStartFromPicker")
+        start_fn_end = html.index("};", start_fn_start) + 2
+        start_fn_body = html[start_fn_start:start_fn_end]
+        assert "als-lang-switcher" in start_fn_body, (
+            "alsStartFromPicker() must hide als-lang-switcher as defense-in-depth"
+        )
+
+    def test_switcher_hidden_in_non_category_phases_via_showphase(self):
+        """showPhase for non-category phases must set display='none' on switcher."""
+        html = _render_session_page()
+        showphase_start = html.index("window.showPhase")
+        showphase_end = html.index("};", showphase_start) + 2
+        showphase_body = html[showphase_start:showphase_end]
+        assert "display" in showphase_body and "none" in showphase_body, (
+            "showPhase() must set display:none on switcher for non-category phases"
+        )
+
+    def test_language_embedded_in_start_url(self):
+        """alsInit URL must include session_language for the selected language."""
+        html = _render_session_page(session_language="en")
+        assert '&language=en' in html or "session_language" in html, (
+            "alsInit URL must embed the session language"
+        )
