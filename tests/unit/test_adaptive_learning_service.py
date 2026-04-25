@@ -273,6 +273,7 @@ class TestAl3SessionStart:
                 request=req,
                 category=category_param,
                 time_limit=180,
+                language="en",
                 db=db,
                 user=user,
             ))
@@ -450,6 +451,7 @@ def _call_start_full(time_limit=180, db=None, user=None):
             request=req,
             category="LESSON",
             time_limit=time_limit,
+            language="en",
             db=db,
             user=user,
         ))
@@ -670,3 +672,137 @@ class TestGetNextQuestionEmptyPool:
         result = service.get_next_question(user_id=99, session_id=1)
 
         assert result is not None
+
+
+# ── Language validation — GET session page + POST /start ─────────────────────
+
+_SESSION_PAGE_BASE = "app.api.web_routes.adaptive_learning"
+
+
+def _call_session_page(language_param=None, db=None):
+    """Call the adaptive_learning_session_page handler directly."""
+    import asyncio
+    from app.api.web_routes.adaptive_learning import adaptive_learning_session_page
+
+    db = db or _make_db_no_existing()
+    user = _make_user()
+    req = MagicMock()
+
+    with patch(f"{_SESSION_PAGE_BASE}.require_student_onboarding", return_value=None), \
+         patch(f"{_SESSION_PAGE_BASE}._spec_ctx", return_value={}), \
+         patch(f"{_SESSION_PAGE_BASE}.templates") as mock_templates:
+
+        mock_templates.TemplateResponse.return_value = MagicMock()
+
+        kwargs = dict(request=req, db=db, user=user)
+        if language_param is not None:
+            kwargs["language"] = language_param
+
+        asyncio.run(adaptive_learning_session_page(**kwargs))
+
+        if mock_templates.TemplateResponse.called:
+            call_args = mock_templates.TemplateResponse.call_args
+            ctx = call_args[0][1] if call_args[0] else call_args[1].get("context", {})
+            return ctx
+        return {}
+
+
+class TestSessionPageLanguageParam:
+    """GET /adaptive-learning/session language query param wiring."""
+
+    def test_default_language_is_en(self):
+        ctx = _call_session_page()
+        assert ctx.get("session_language") == "en"
+
+    def test_explicit_en_uses_en(self):
+        ctx = _call_session_page(language_param="en")
+        assert ctx.get("session_language") == "en"
+
+    def test_explicit_hu_uses_hu(self):
+        ctx = _call_session_page(language_param="hu")
+        assert ctx.get("session_language") == "hu"
+
+    def test_unsupported_language_falls_back_to_en(self):
+        """Invalid language value is silently corrected to 'en' (no 422 on GET)."""
+        ctx = _call_session_page(language_param="fr")
+        assert ctx.get("session_language") == "en"
+
+    def test_en_and_hu_categories_are_independent(self):
+        """Each language gets its own DB query — they must not bleed into each other."""
+        ctx_en = _call_session_page(language_param="en")
+        ctx_hu = _call_session_page(language_param="hu")
+        assert ctx_en.get("session_language") == "en"
+        assert ctx_hu.get("session_language") == "hu"
+
+
+def _call_start_with_language(language: str, db=None):
+    import asyncio
+    from app.api.web_routes.adaptive_learning import al_session_start
+
+    db = db or _make_db_no_existing(question_count=15)
+    user = _make_user()
+    req = MagicMock()
+
+    with patch(f"{_START_BASE}.require_student_onboarding", return_value=None), \
+         patch(f"{_START_BASE}.AdaptiveLearningService") as MockSvc:
+
+        mock_session = MagicMock()
+        mock_session.id = 55
+        mock_session.session_start_time = datetime.now(timezone.utc)
+        MockSvc.return_value.start_adaptive_session.return_value = mock_session
+
+        response = asyncio.run(al_session_start(
+            request=req,
+            category="LESSON",
+            time_limit=180,
+            language=language,
+            db=db,
+            user=user,
+        ))
+        return response, MockSvc
+
+
+class TestStartRouteLanguageValidation:
+    """POST /adaptive-learning/session/start language parameter validation."""
+
+    def test_default_language_is_en_in_route_signature(self):
+        """Verify the route parameter default is 'en', not 'hu'."""
+        import inspect
+        from app.api.web_routes.adaptive_learning import al_session_start
+        sig = inspect.signature(al_session_start)
+        lang_param = sig.parameters["language"]
+        # FastAPI Query default: lang_param.default is a Query(...) FieldInfo object.
+        # The first positional arg to Query is the actual default value.
+        default_val = lang_param.default.default
+        assert default_val == "en", f"Expected 'en' default, got {default_val!r}"
+
+    def test_valid_en_accepted(self):
+        response, _ = _call_start_with_language("en")
+        assert response.status_code == 200
+
+    def test_valid_hu_accepted(self):
+        response, _ = _call_start_with_language("hu")
+        assert response.status_code == 200
+
+    def test_unsupported_language_returns_422(self):
+        response, MockSvc = _call_start_with_language("fr")
+        assert response.status_code == 422
+        MockSvc.return_value.start_adaptive_session.assert_not_called()
+
+    def test_unsupported_language_error_body(self):
+        response, _ = _call_start_with_language("de")
+        import json
+        data = json.loads(response.body)
+        assert "not supported" in data["error"].lower() or "de" in data["error"]
+
+    def test_en_language_passed_to_service(self):
+        response, MockSvc = _call_start_with_language("en")
+        assert response.status_code == 200
+        call_kwargs = MockSvc.return_value.start_adaptive_session.call_args[1]
+        assert call_kwargs.get("language") == "en"
+
+    def test_hu_language_passed_to_service(self):
+        response, MockSvc = _call_start_with_language("hu")
+        assert response.status_code == 200
+        call_kwargs = MockSvc.return_value.start_adaptive_session.call_args[1]
+        assert call_kwargs.get("language") == "hu"

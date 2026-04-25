@@ -820,7 +820,7 @@
         var cat = category || state.category || 'LESSON';
         var url = '/adaptive-learning/session/start?category=' + encodeURIComponent(cat) +
                   '&time_limit=' + state.timeLimitSeconds +
-                  '&language={{ session_language | default("hu") }}';
+                  '&language={{ session_language | default("en") }}';
         post(url)
             .then(function (res) {
                 if (!res) return;

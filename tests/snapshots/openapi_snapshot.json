@@ -22799,6 +22799,20 @@
       "get": {
         "description": "Server-rendered session page. JS bootstraps the question loop via AL-1 routes.",
         "operationId": "adaptive_learning_session_page_adaptive_learning_session_get",
+        "parameters": [
+          {
+            "description": "Session language ('en' or 'hu')",
+            "in": "query",
+            "name": "language",
+            "required": false,
+            "schema": {
+              "default": "en",
+              "description": "Session language ('en' or 'hu')",
+              "title": "Language",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -22809,6 +22823,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "Adaptive Learning Session Page",
@@ -22848,13 +22872,13 @@
             }
           },
           {
-            "description": "Session language ('hu' or 'en')",
+            "description": "Session language ('en' or 'hu')",
             "in": "query",
             "name": "language",
             "required": false,
             "schema": {
-              "default": "hu",
-              "description": "Session language ('hu' or 'en')",
+              "default": "en",
+              "description": "Session language ('en' or 'hu')",
               "title": "Language",
               "type": "string"
             }

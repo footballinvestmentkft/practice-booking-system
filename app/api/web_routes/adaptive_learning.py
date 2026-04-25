@@ -79,6 +79,7 @@ async def adaptive_learning_page(
 @router.get("/adaptive-learning/session", response_class=HTMLResponse)
 async def adaptive_learning_session_page(
     request: Request,
+    language: str = Query("en", description="Session language ('en' or 'hu')"),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
@@ -87,13 +88,14 @@ async def adaptive_learning_session_page(
     if guard:
         return guard
 
-    SESSION_LANGUAGE = "hu"
+    if language not in _VALID_LANGUAGES:
+        language = "en"
 
     available_categories = (
         db.query(Quiz.category)
         .join(QuizQuestion, QuizQuestion.quiz_id == Quiz.id)
         .join(QuestionMetadata, QuestionMetadata.question_id == QuizQuestion.id)
-        .filter(Quiz.is_active == True, Quiz.language == SESSION_LANGUAGE)
+        .filter(Quiz.is_active == True, Quiz.language == language)
         .group_by(Quiz.category)
         .having(func.count(QuizQuestion.id) >= MIN_QUESTIONS_PER_CATEGORY)
         .all()
@@ -107,7 +109,7 @@ async def adaptive_learning_session_page(
             "user": user,
             **_spec_ctx(user, db),
             "available_categories": category_values,
-            "session_language": SESSION_LANGUAGE,
+            "session_language": language,
         },
     )
 
@@ -137,6 +139,7 @@ def _session_guard(db: Session, session_id: int, user_id: int):
 
 
 _VALID_TIME_LIMITS = {60, 180, 300}
+_VALID_LANGUAGES = {"en", "hu"}
 
 
 @router.post("/adaptive-learning/session/start")
@@ -144,7 +147,7 @@ async def al_session_start(
     request: Request,
     category: str = Query("LESSON", description="QuizCategory value for this session"),
     time_limit: int = Query(180, description="Session time limit in seconds (60, 180, or 300)"),
-    language: str = Query("hu", description="Session language ('hu' or 'en')"),
+    language: str = Query("en", description="Session language ('en' or 'hu')"),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
@@ -165,6 +168,12 @@ async def al_session_start(
     if time_limit not in _VALID_TIME_LIMITS:
         return JSONResponse(
             {"error": f"time_limit must be one of {sorted(_VALID_TIME_LIMITS)}"},
+            status_code=422,
+        )
+
+    if language not in _VALID_LANGUAGES:
+        return JSONResponse(
+            {"error": f"language {language!r} is not supported. Valid values: {sorted(_VALID_LANGUAGES)}"},
             status_code=422,
         )
 
