@@ -411,6 +411,7 @@
         border: 1.5px solid var(--app-border);
         border-radius: 12px;
         overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
     }
     .als-module-card-header {
         background: var(--app-card-raised);
@@ -433,31 +434,43 @@
         background: var(--app-card);
         border: none;
         border-bottom: 1px solid var(--app-border);
-        padding: 0.7rem 1rem;
+        border-left: 3px solid transparent;
+        padding: 0.9rem 1rem 0.9rem calc(1rem - 3px);
         cursor: pointer;
         text-align: left;
         width: 100%;
         font-size: 0.9rem;
-        font-weight: 500;
+        font-weight: 600;
         color: var(--app-text);
-        transition: background 0.12s, color 0.12s;
+        transition: background 0.12s, color 0.12s, border-left-color 0.12s;
     }
     .als-topic-btn:last-child { border-bottom: none; }
-    .als-topic-btn:hover { background: var(--app-interactive-bg); }
+    .als-topic-btn:hover {
+        background: var(--app-interactive-bg);
+        border-left-color: var(--app-interactive-border);
+    }
     .als-topic-btn.selected {
         background: var(--app-interactive-bg-active);
         color: var(--app-interactive-text-active);
         font-weight: 700;
+        border-left-color: var(--app-interactive-border-active);
     }
     .als-topic-btn:focus-visible { outline: 2px solid var(--app-border-focus); outline-offset: -2px; }
     .als-topic-btn-count {
-        font-size: 0.75rem;
-        color: var(--app-text-muted);
-        font-weight: 400;
         flex-shrink: 0;
         margin-left: 0.5rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--app-text-muted);
+        background: var(--app-card-raised);
+        border-radius: 20px;
+        padding: 0.1rem 0.45rem;
+        white-space: nowrap;
     }
-    .als-topic-btn.selected .als-topic-btn-count { color: var(--app-interactive-text-active); opacity: 0.75; }
+    .als-topic-btn.selected .als-topic-btn-count {
+        background: var(--app-interactive-border-active);
+        color: white;
+    }
 
     /* ── All topics link ─────────────────────────────────────────────────────── */
     .als-all-topics-row {
@@ -540,8 +553,15 @@
             <p class="als-picker-title">🧠 Choose a category</p>
             <p class="als-picker-sub">Select a subject for your adaptive session.</p>
             <div class="als-cat-grid" id="als-cat-grid">
+                {% if session_language == 'hu' %}
+                    {% set _lesson_label = 'Tananyag' %}
+                    {% set _lesson_desc  = 'Edzéselmélet, taktika, szabályok, sporttudomány' %}
+                {% else %}
+                    {% set _lesson_label = 'LFA Curriculum' %}
+                    {% set _lesson_desc  = 'Training theory, tactics, rules, and sport science' %}
+                {% endif %}
                 {% set cat_meta = {
-                    'LESSON':           ('📖', 'Football Lessons',  'Rules, tactics, and game understanding'),
+                    'LESSON':           ('📖', _lesson_label,       _lesson_desc),
                     'SPORTS_PHYSIOLOGY':('💪', 'Sports Physiology', 'Conditioning, fitness, and the athletic body'),
                     'GENERAL':          ('⚽', 'General Knowledge', 'Broad football topics'),
                     'NUTRITION':        ('🥗', 'Nutrition',         'Diet and fuelling for performance'),
