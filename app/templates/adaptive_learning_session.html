@@ -425,7 +425,7 @@
         <div id="als-options" class="als-options"></div>
 
         <div id="als-feedback" class="als-feedback"></div>
-        <div id="als-auto-advance" style="display:none; text-align:center; font-size:0.82rem; color:var(--app-text-muted); margin-top:0.5rem;">Next question in 1s…</div>
+        <div id="als-auto-advance" style="display:none; text-align:center; font-size:0.82rem; color:var(--app-text-muted); margin-top:0.5rem;">Next question in 1.5s…</div>
     </div>
 
     {# ── Result phase ──────────────────────────────────────────────────────── #}
@@ -584,7 +584,7 @@
     /* ── Render question ───────────────────────────────────────────────────── */
     function renderQuestion(data) {
         state.questionNum += 1;
-        state.recentIds = [data.id, state.recentIds[0]].filter(Boolean);
+        state.recentIds = [data.id].concat(state.recentIds).slice(0, 5);
         state.currentQuestionId = data.id;
         state.answerSubmitted = false;
 
@@ -668,15 +668,20 @@
             }
             fb.style.display = 'block';
 
-            _scheduleNextAction();
+            var advanceDelay = d.correct ? 1500 : 3000;
+            _scheduleNextAction(advanceDelay);
         }).catch(function () {
             showError('Network error while recording answer. Please check your connection.');
         });
     }
 
-    function _scheduleNextAction() {
+    function _scheduleNextAction(delayMs) {
+        var delay = delayMs || 1500;
         var adv = document.getElementById('als-auto-advance');
-        if (adv) adv.style.display = 'block';
+        if (adv) {
+            adv.textContent = delay >= 3000 ? 'Next question in 3s…' : 'Next question in 1.5s…';
+            adv.style.display = 'block';
+        }
         setTimeout(function () {
             if (adv) adv.style.display = 'none';
             if (state.questionNum >= state.totalTarget) {
@@ -684,7 +689,7 @@
             } else {
                 alsNext();
             }
-        }, 1000);
+        }, delay);
     }
 
     /* ── Next question ─────────────────────────────────────────────────────── */

@@ -204,7 +204,7 @@ class TestTimeoutPhaseGuard:
 
 
 class TestRecentIdsCooldown:
-    """Client-side cooldown: seenIds replaced with recentIds (last-2 window)."""
+    """Client-side cooldown: seenIds replaced with recentIds (last-5 window)."""
 
     def test_recent_ids_state_initialized(self):
         """State must use recentIds, not seenIds."""
@@ -212,10 +212,13 @@ class TestRecentIdsCooldown:
         assert "recentIds" in html, "recentIds state field missing"
         assert "seenIds" not in html, "seenIds must be removed — replaced by recentIds"
 
-    def test_recent_ids_uses_last_two_logic(self):
-        """renderQuestion must keep only last 2 IDs via filter(Boolean)."""
+    def test_recent_ids_uses_last_five_logic(self):
+        """renderQuestion must keep last 5 IDs via slice(0, 5) — not the old 2-element filter(Boolean)."""
         html = _render_session_page()
-        assert "state.recentIds = [data.id, state.recentIds[0]].filter(Boolean)" in html
+        assert ".slice(0, 5)" in html, "last-5 cooldown (slice(0,5)) missing in renderQuestion"
+        # Must NOT still use the old last-2 pattern
+        assert "state.recentIds[0]].filter(Boolean)" not in html, \
+            "old last-2 filter(Boolean) still present — must use slice(0, 5)"
 
     def test_exclude_param_uses_recent_ids(self):
         """alsNext must pass recentIds (not seenIds) as exclude_ids."""
@@ -227,4 +230,51 @@ class TestRecentIdsCooldown:
         html = _render_session_page()
         assert "state.recentIds" in html
         # recentIds = [] must appear (init + restart both set it to [])
-        assert "recentIds:          []" in html or "recentIds: []" in html or "recentIds          :" in html or html.count("recentIds") >= 2
+        assert "recentIds:          []" in html or "recentIds: []" in html or html.count("recentIds") >= 2
+
+    def test_full_session_history_not_sent(self):
+        """exclude_ids must only contain recentIds, never a growing full-session history."""
+        html = _render_session_page()
+        # seenIds accumulation must not exist
+        assert "seenIds.push" not in html
+        assert "seenIds.join" not in html
+        # Only recentIds is used
+        assert "recentIds.join(',')" in html
+
+
+class TestFeedbackTiming:
+    """Auto-advance delays must differ for correct vs wrong answers."""
+
+    def test_correct_answer_uses_1500ms(self):
+        """Correct answer advance delay must be 1500ms."""
+        html = _render_session_page()
+        assert "1500" in html, "1500ms delay missing"
+
+    def test_wrong_answer_uses_3000ms(self):
+        """Wrong answer advance delay must be 3000ms."""
+        html = _render_session_page()
+        assert "3000" in html, "3000ms delay missing"
+
+    def test_delay_is_outcome_dependent(self):
+        """advanceDelay must branch on d.correct — correct path and wrong path must differ."""
+        html = _render_session_page()
+        # The delay logic must be conditional on d.correct
+        assert "d.correct" in html, "d.correct not referenced in delay logic"
+        assert "advanceDelay" in html, "advanceDelay variable missing"
+
+    def test_schedule_next_action_accepts_delay_param(self):
+        """_scheduleNextAction must accept a delay parameter, not hardcode 1000ms."""
+        html = _render_session_page()
+        assert "_scheduleNextAction(advanceDelay)" in html, \
+            "_scheduleNextAction must be called with advanceDelay argument"
+        # Old hardcoded 1-second call must be gone
+        assert "_scheduleNextAction();" not in html, \
+            "_scheduleNextAction() called without delay — hardcoded timing still present"
+
+    def test_auto_advance_label_shows_correct_duration(self):
+        """Auto-advance label must show '1.5s' or '3s', not the old '1s'."""
+        html = _render_session_page()
+        assert "1.5s" in html, "'1.5s' label missing from auto-advance"
+        assert "3s" in html, "'3s' label missing from auto-advance"
+        # Old 1-second label must be gone
+        assert "in 1s" not in html, "old 'in 1s' label still present"
