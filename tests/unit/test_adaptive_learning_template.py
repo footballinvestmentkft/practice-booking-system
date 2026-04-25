@@ -569,7 +569,7 @@ class TestTopicPhaseStructure:
         topic_start = html.index('id="als-phase-topic"')
         cat_phase_html = html[cat_start:topic_start]
         assert 'als-module-cards' not in cat_phase_html
-        assert 'als-topic-btn' not in cat_phase_html
+        assert 'als-topic-card' not in cat_phase_html
 
     def test_available_topics_embedded_as_js_variable(self):
         html = _render_session_page(available_topics=_TWO_TOPIC_DATA)
@@ -644,7 +644,7 @@ class TestTopicPickerJsWiring:
     def test_start_from_picker_reads_topic_selection(self):
         """alsStartFromPicker must read selected topic or all-topics button."""
         html = _render_session_page()
-        assert 'als-topic-btn' in html and 'quizIds' in html
+        assert 'als-topic-card' in html and 'quizIds' in html
 
     def test_alsRestart_goes_to_category_phase(self):
         """alsRestart must show category phase (not topic phase)."""
@@ -662,9 +662,9 @@ class TestTopicPickerJsWiring:
         assert 'quizIds' in restart_body
 
     def test_chapter_headers_are_non_clickable_divs(self):
-        """Module card headers must use div elements, not buttons."""
+        """Chapter title must use div elements, not buttons."""
         html = _render_session_page()
-        assert 'als-module-card-header' in html
+        assert 'als-chapter-title' in html
         assert "createElement('div')" in html or 'createElement("div")' in html
 
     def test_topic_buttons_use_single_quiz_id(self):
@@ -676,7 +676,7 @@ class TestTopicPickerJsWiring:
     def test_module_cards_grouped_by_chapter(self):
         """alsRenderTopicPhase must group topics by chapter (Map-based grouping)."""
         html = _render_session_page()
-        assert 'als-module-card' in html
+        assert 'als-chapter-group' in html
         assert 'chapters' in html or 'chName' in html
 
     def test_lang_switcher_hidden_in_topic_phase(self):

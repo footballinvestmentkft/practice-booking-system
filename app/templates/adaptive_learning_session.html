@@ -400,74 +400,77 @@
         margin: 0;
     }
 
-    /* ── Module cards ────────────────────────────────────────────────────────── */
-    .als-module-cards-grid {
+    /* ── Topic card system ───────────────────────────────────────────────────── */
+    .als-chapters-container {
         display: flex;
         flex-direction: column;
-        gap: 0.85rem;
+        gap: 1.25rem;
         margin-bottom: 1rem;
     }
-    .als-module-card {
-        border: 1.5px solid var(--app-border);
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-    }
-    .als-module-card-header {
-        background: var(--app-card-raised);
-        padding: 0.55rem 1rem;
-        font-size: 0.75rem;
-        font-weight: 700;
-        color: var(--app-text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        border-bottom: 1px solid var(--app-border);
-    }
-    .als-module-card-topics {
+    .als-chapter-group {
         display: flex;
         flex-direction: column;
+        gap: 0.55rem;
     }
-    .als-topic-btn {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+    .als-chapter-title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--app-text-muted);
+        padding: 0 0.25rem;
+    }
+    .als-topic-card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 0.65rem;
+    }
+    @media (max-width: 480px) { .als-topic-card-grid { grid-template-columns: 1fr; } }
+
+    .als-topic-card {
+        position: relative;
         background: var(--app-card);
-        border: none;
-        border-bottom: 1px solid var(--app-border);
-        border-left: 3px solid transparent;
-        padding: 0.9rem 1rem 0.9rem calc(1rem - 3px);
+        border: 2px solid var(--app-border);
+        border-radius: 12px;
+        padding: 1rem 3rem 1rem 1.1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
         cursor: pointer;
         text-align: left;
         width: 100%;
+        transition: box-shadow 0.18s, border-color 0.15s, transform 0.15s, background 0.15s;
+    }
+    .als-topic-card:hover {
+        border-color: var(--app-interactive-border);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+        transform: translateY(-1px);
+    }
+    .als-topic-card.selected {
+        border-color: var(--app-interactive-border-active);
+        background: var(--app-interactive-bg-active);
+        box-shadow: 0 4px 16px rgba(79,70,229,0.15);
+    }
+    .als-topic-card:focus-visible { outline: 2px solid var(--app-border-focus); outline-offset: 2px; }
+    .als-topic-card-title {
+        display: block;
         font-size: 0.9rem;
         font-weight: 600;
         color: var(--app-text);
-        transition: background 0.12s, color 0.12s, border-left-color 0.12s;
+        line-height: 1.4;
     }
-    .als-topic-btn:last-child { border-bottom: none; }
-    .als-topic-btn:hover {
-        background: var(--app-interactive-bg);
-        border-left-color: var(--app-interactive-border);
-    }
-    .als-topic-btn.selected {
-        background: var(--app-interactive-bg-active);
-        color: var(--app-interactive-text-active);
-        font-weight: 700;
-        border-left-color: var(--app-interactive-border-active);
-    }
-    .als-topic-btn:focus-visible { outline: 2px solid var(--app-border-focus); outline-offset: -2px; }
-    .als-topic-btn-count {
-        flex-shrink: 0;
-        margin-left: 0.5rem;
-        font-size: 0.72rem;
-        font-weight: 600;
-        color: var(--app-text-muted);
+    .als-topic-card.selected .als-topic-card-title { color: var(--app-interactive-text-active); }
+    .als-topic-card-count {
+        position: absolute;
+        top: 0.65rem;
+        right: 0.75rem;
         background: var(--app-card-raised);
-        border-radius: 20px;
-        padding: 0.1rem 0.45rem;
+        color: var(--app-text-muted);
+        border-radius: 12px;
+        padding: 0.15rem 0.5rem;
+        font-size: 0.7rem;
+        font-weight: 700;
         white-space: nowrap;
     }
-    .als-topic-btn.selected .als-topic-btn-count {
+    .als-topic-card.selected .als-topic-card-count {
         background: var(--app-interactive-border-active);
         color: white;
     }
@@ -601,7 +604,7 @@
             </div>
 
             {# Module cards — JS builds this container #}
-            <div id="als-module-cards" class="als-module-cards-grid" data-testid="als-module-cards">
+            <div id="als-module-cards" class="als-chapters-container" data-testid="als-module-cards">
                 {# alsRenderTopicPhase() fills this on category select #}
             </div>
 
@@ -1023,7 +1026,7 @@
         showPhase('result');
     }
 
-    /* ── Topic phase: render module cards ─────────────────────────────────── */
+    /* ── Topic phase: render chapter groups + topic cards ─────────────────── */
     window.alsRenderTopicPhase = function (cat) {
         var container = document.getElementById('als-module-cards');
         if (!container) return;
@@ -1040,48 +1043,49 @@
         });
 
         chapters.forEach(function (chTopics, chName) {
-            var card = document.createElement('div');
-            card.className = 'als-module-card';
-            card.setAttribute('data-testid', 'als-module-card-' + chName.toLowerCase().replace(/[\s/]+/g, '-'));
+            var group = document.createElement('div');
+            group.className = 'als-chapter-group';
+            group.setAttribute('data-testid', 'als-module-card-' + chName.toLowerCase().replace(/[\s/]+/g, '-'));
 
             if (chName) {
-                var hdr = document.createElement('div');
-                hdr.className = 'als-module-card-header';
-                hdr.setAttribute('data-testid', 'als-chapter-' + chName.toLowerCase().replace(/[\s/]+/g, '-'));
-                hdr.textContent = chName;
-                card.appendChild(hdr);
+                var titleEl = document.createElement('div');
+                titleEl.className = 'als-chapter-title';
+                titleEl.setAttribute('data-testid', 'als-chapter-' + chName.toLowerCase().replace(/[\s/]+/g, '-'));
+                titleEl.textContent = chName;
+                group.appendChild(titleEl);
             }
 
-            var topicsWrap = document.createElement('div');
-            topicsWrap.className = 'als-module-card-topics';
+            var grid = document.createElement('div');
+            grid.className = 'als-topic-card-grid';
 
             chTopics.forEach(function (t) {
-                var btn = document.createElement('button');
-                btn.className = 'als-topic-btn';
-                btn.dataset.quizId = String(t.quiz_id);
-                btn.setAttribute('data-testid', 'als-topic-' + t.quiz_id);
+                var card = document.createElement('button');
+                card.className = 'als-topic-card';
+                card.dataset.quizId = String(t.quiz_id);
+                card.setAttribute('data-testid', 'als-topic-' + t.quiz_id);
 
-                var label = document.createElement('span');
-                label.textContent = t.topic;
+                var titleSpan = document.createElement('span');
+                titleSpan.className = 'als-topic-card-title';
+                titleSpan.textContent = t.topic;
 
-                var count = document.createElement('span');
-                count.className = 'als-topic-btn-count';
-                count.textContent = t.question_count + ' Q';
+                var countSpan = document.createElement('span');
+                countSpan.className = 'als-topic-card-count';
+                countSpan.textContent = t.question_count + ' Q';
 
-                btn.appendChild(label);
-                btn.appendChild(count);
-                btn.onclick = function () { alsTopicSelect(this); };
-                topicsWrap.appendChild(btn);
+                card.appendChild(titleSpan);
+                card.appendChild(countSpan);
+                card.onclick = function () { alsTopicSelect(this); };
+                grid.appendChild(card);
             });
 
-            card.appendChild(topicsWrap);
-            container.appendChild(card);
+            group.appendChild(grid);
+            container.appendChild(group);
         });
     };
 
     window.alsTopicSelect = function (btn) {
-        // Deselect all topic buttons + the all-topics button
-        document.querySelectorAll('.als-topic-btn').forEach(function (b) {
+        // Deselect all topic cards + the all-topics button
+        document.querySelectorAll('.als-topic-card').forEach(function (b) {
             b.classList.remove('selected');
         });
         var allBtn = document.getElementById('als-all-topics-btn');
@@ -1101,7 +1105,7 @@
 
         // Reset topic selection to "All topics"
         state.quizIds = '';
-        document.querySelectorAll('.als-topic-btn').forEach(function (b) {
+        document.querySelectorAll('.als-topic-card').forEach(function (b) {
             b.classList.remove('selected');
         });
         var allBtn = document.getElementById('als-all-topics-btn');
@@ -1125,7 +1129,7 @@
         var selectedTime = document.querySelector('.als-time-btn.selected');
         if (selectedTime) state.timeLimitSeconds = parseInt(selectedTime.dataset.seconds, 10) || 180;
         // Defense-in-depth: read selected topic from DOM (alongside state.quizIds)
-        var selectedTopic = document.querySelector('.als-topic-btn.selected');
+        var selectedTopic = document.querySelector('.als-topic-card.selected');
         var allBtn = document.getElementById('als-all-topics-btn');
         if (selectedTopic) {
             state.quizIds = selectedTopic.dataset.quizId || '';
