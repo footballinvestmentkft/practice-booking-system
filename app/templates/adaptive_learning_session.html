@@ -803,7 +803,8 @@
     window.alsInit = function (category) {
         var cat = category || state.category || 'LESSON';
         var url = '/adaptive-learning/session/start?category=' + encodeURIComponent(cat) +
-                  '&time_limit=' + state.timeLimitSeconds;
+                  '&time_limit=' + state.timeLimitSeconds +
+                  '&language={{ session_language | default("hu") }}';
         post(url)
             .then(function (res) {
                 if (!res) return;

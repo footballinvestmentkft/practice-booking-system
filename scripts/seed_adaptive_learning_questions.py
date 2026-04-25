@@ -118,8 +118,15 @@ def _validate_question(q: dict[str, Any], idx: int) -> None:
         raise ValidationError(f"{prefix}.explanation must be non-empty")
 
     options = q.get("options")
-    if not isinstance(options, list) or len(options) != 4:
-        raise ValidationError(f"{prefix} must have exactly 4 options (got {len(options) if isinstance(options, list) else '?'})")
+    if not isinstance(options, list):
+        raise ValidationError(f"{prefix}.options must be a list")
+
+    expected_option_count = 2 if qtype_str == "TRUE_FALSE" else 4
+    if len(options) != expected_option_count:
+        raise ValidationError(
+            f"{prefix} ({qtype_str}) must have exactly {expected_option_count} options "
+            f"(got {len(options)})"
+        )
 
     correct_count = sum(1 for o in options if o.get("is_correct"))
     if correct_count != 1:
@@ -189,6 +196,7 @@ def _seed_file(db, data: dict[str, Any], path: Path, dry_run: bool) -> dict[str,
         description=f"{data.get('topic', '')} — {data.get('module', '')}",
         category=category,
         difficulty=difficulty,
+        language=data.get("language", "en"),
         time_limit_minutes=20,
         xp_reward=50,
         passing_score=70.0,
@@ -247,14 +255,22 @@ def main() -> None:
         action="store_true",
         help="Validate and report without writing to the database",
     )
+    parser.add_argument(
+        "--lang",
+        default=None,
+        help="Language filter, e.g. 'hu' or 'en'. If omitted, all languages are included.",
+    )
     args = parser.parse_args()
     spec = args.spec.upper()
     dry_run: bool = args.dry_run
+    lang_filter: str | None = args.lang.lower() if args.lang else None
 
     mode = "DRY RUN" if dry_run else "LIVE"
     print(f"\n{'='*60}")
     print(f"  Adaptive Learning Question Seeder  [{mode}]")
     print(f"  Spec: {spec}")
+    if lang_filter:
+        print(f"  Language filter: {lang_filter!r}")
     print(f"{'='*60}\n")
 
     files = _discover_files(spec)
@@ -280,6 +296,13 @@ def main() -> None:
         if spec not in data.get("specializations", []):
             print(f"  [SKIP] {path.relative_to(CONTENT_ROOT)} — spec {spec!r} not in specializations")
             continue
+
+        # Gate 3: language filter (optional)
+        if lang_filter is not None:
+            file_lang = data.get("language", "").lower()
+            if file_lang != lang_filter:
+                print(f"  [SKIP] {path.relative_to(CONTENT_ROOT)} — language {file_lang!r} != {lang_filter!r}")
+                continue
 
         try:
             _validate_file(data, path, spec)

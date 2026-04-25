@@ -1,0 +1,191 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "category": "NUTRITION",
+  "difficulty": "EASY",
+  "quiz_title": "AL — Athlete Nutrition Easy",
+  "topic": "Foundations of Sports Nutrition",
+  "module": "Nutrition",
+  "questions": [
+    {
+      "text": "Which macronutrient is the primary fuel source for high-intensity football activity such as sprinting and pressing?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Carbohydrates are the primary fuel for high-intensity exercise because they can be broken down rapidly via glycolysis (anaerobic) and oxidative phosphorylation (aerobic) to produce ATP. Fat oxidation is too slow to support maximal sprint efforts. Football involves repeated high-intensity bouts, making carbohydrate availability critical for maintaining performance throughout a match.",
+      "options": [
+        {"text": "Carbohydrates — the fastest-converting fuel for high-intensity efforts", "is_correct": true},
+        {"text": "Fats — the most energy-dense fuel stored in the body", "is_correct": false},
+        {"text": "Protein — broken down into amino acids for immediate energy use", "is_correct": false},
+        {"text": "Fibre — provides slow-release energy for sustained performance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.25,
+        "concept_tags": ["carbohydrates", "energy", "macronutrients", "high_intensity"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "How much fluid should a football player aim to drink in the 2–3 hours before a match to ensure good hydration?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Sports nutrition guidelines recommend drinking approximately 400–600 ml of fluid in the 2–3 hours before exercise to start well hydrated. Larger volumes too close to kick-off can cause gastrointestinal discomfort. Players should also monitor urine colour — pale yellow indicates adequate hydration.",
+      "options": [
+        {"text": "400–600 ml in the 2–3 hours before the match", "is_correct": true},
+        {"text": "2 litres in the final 30 minutes before kick-off", "is_correct": false},
+        {"text": "No fluid — drinking before exercise causes cramping", "is_correct": false},
+        {"text": "1 litre immediately after warm-up, just before kick-off", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "concept_tags": ["hydration", "pre_match", "fluid_intake", "performance"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "What is the recommended timing for a pre-match main meal to optimise energy availability for kick-off?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "The pre-match meal should ideally be consumed 3–4 hours before kick-off. This allows sufficient time for digestion and avoids gastrointestinal discomfort during the match. The meal should be carbohydrate-rich, moderate in protein, and low in fat and fibre to speed gastric emptying. A small carbohydrate snack 30–60 minutes before kick-off can top up blood glucose if needed.",
+      "options": [
+        {"text": "3–4 hours before kick-off to allow digestion", "is_correct": true},
+        {"text": "30 minutes before kick-off for maximum energy availability", "is_correct": false},
+        {"text": "7–8 hours before kick-off — eating closer than that impairs performance", "is_correct": false},
+        {"text": "Immediately after warm-up, just as the match is about to start", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "concept_tags": ["pre_match", "meal_timing", "nutrition", "digestion"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "After a match, why is it important to consume carbohydrates within 30–60 minutes of the final whistle?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Glycogen (the storage form of carbohydrate in muscle and liver) is significantly depleted during a 90-minute match. The 30–60 minutes immediately after exercise is a period of enhanced glycogen synthase activity — consuming carbohydrates in this window accelerates glycogen resynthesis. Delaying carbohydrate intake slows recovery, particularly important if the next training session or match is within 24–48 hours.",
+      "options": [
+        {"text": "To replenish muscle glycogen during the peak resynthesis window", "is_correct": true},
+        {"text": "To prevent excessive weight loss from fluid deficit during the match", "is_correct": false},
+        {"text": "Carbohydrates taken post-match convert directly to muscle tissue", "is_correct": false},
+        {"text": "Post-match carbohydrates prevent delayed onset muscle soreness (DOMS)", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.35,
+        "concept_tags": ["post_match", "glycogen", "recovery", "carbohydrates"],
+        "average_time_seconds": 25.0
+      }
+    },
+    {
+      "text": "Which macronutrient is most important for muscle repair and recovery after intense training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Protein provides the amino acids needed for muscle protein synthesis — the process by which damaged muscle fibres are repaired and new contractile proteins are built. Football players are recommended to consume 1.4–1.7 g of protein per kilogram of body weight per day, distributed across meals. Leucine-rich sources (chicken, fish, eggs, dairy) are particularly effective at stimulating muscle protein synthesis.",
+      "options": [
+        {"text": "Protein — provides amino acids for muscle repair and synthesis", "is_correct": true},
+        {"text": "Carbohydrates — broken down to rebuild muscle fibres directly", "is_correct": false},
+        {"text": "Fat — the primary structural component of muscle cell membranes", "is_correct": false},
+        {"text": "Fibre — reduces inflammation and speeds up muscle recovery", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.20,
+        "concept_tags": ["protein", "muscle_repair", "recovery", "amino_acids"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Which of the following signs most reliably indicates that a player is well hydrated before training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Urine colour is one of the simplest and most practical hydration indicators. Pale yellow or straw-coloured urine indicates adequate hydration. Dark yellow or amber urine signals dehydration. Clear, colourless urine may indicate over-hydration (hyponatraemia risk). Players are advised to monitor their urine colour in the morning as a daily hydration check.",
+      "options": [
+        {"text": "Pale yellow urine — the simplest practical hydration indicator", "is_correct": true},
+        {"text": "No thirst sensation in the 30 minutes before training begins", "is_correct": false},
+        {"text": "Normal body weight — within 0.5 kg of the previous day's pre-training weight", "is_correct": false},
+        {"text": "Clear, colourless urine — the more dilute the better", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "concept_tags": ["hydration", "urine_colour", "monitoring", "pre_training"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Why should a football player avoid eating a large high-fat meal (e.g. fried food) in the 3 hours before a match?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Fat slows gastric emptying significantly more than carbohydrates or protein. A high-fat meal eaten close to kick-off means food remains in the stomach during the match, increasing the risk of nausea, vomiting, and gastrointestinal discomfort during running. It also provides less readily-available energy than a carbohydrate-based meal for the high-intensity demands of football.",
+      "options": [
+        {"text": "Fat slows digestion, risking nausea and gut discomfort during the match", "is_correct": true},
+        {"text": "Fat causes immediate dehydration and reduces sprint capacity", "is_correct": false},
+        {"text": "High fat intake directly suppresses testosterone before competition", "is_correct": false},
+        {"text": "Fat is converted to lactic acid during high-intensity running", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.30,
+        "concept_tags": ["pre_match", "fat", "digestion", "gastric_emptying"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Caffeine is commonly used by athletes as an ergogenic aid. Which of the following best describes its primary performance-enhancing effect?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Caffeine's primary ergogenic mechanism is blocking adenosine receptors in the brain, which reduces perceived effort and fatigue, and increases alertness. This allows athletes to maintain higher intensities for longer before feeling tired. Caffeine is legal under WADA regulations (at any dose in competition, though urinary concentrations above 12 μg/mL were previously monitored). Effective doses are typically 3–6 mg/kg body weight.",
+      "options": [
+        {"text": "Blocks adenosine receptors, reducing perceived exertion and increasing alertness", "is_correct": true},
+        {"text": "Directly increases red blood cell production and oxygen-carrying capacity", "is_correct": false},
+        {"text": "Accelerates muscle glycogen resynthesis during exercise", "is_correct": false},
+        {"text": "Acts as an anabolic hormone that stimulates muscle protein synthesis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.40,
+        "concept_tags": ["caffeine", "ergogenic", "adenosine", "fatigue", "performance"],
+        "average_time_seconds": 25.0
+      }
+    },
+    {
+      "text": "During a match played in hot conditions, how does sweat loss primarily affect performance if not compensated?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Sweat loss leads to dehydration — a reduction in plasma volume. Research shows that losing just 2% of body weight through sweat impairs aerobic capacity and decision-making, with losses above 3% significantly impairing physical and cognitive performance. In hot conditions, sweat rates can reach 1–2.5 litres per hour in football players. Dehydration also increases perception of effort, making the same pace feel harder.",
+      "options": [
+        {"text": "Reduces plasma volume, impairing aerobic capacity and decision-making from ~2% body weight loss", "is_correct": true},
+        {"text": "Increases body temperature which directly boosts sprint speed", "is_correct": false},
+        {"text": "Causes immediate muscle cramping due to lactic acid concentration", "is_correct": false},
+        {"text": "Sweat loss has no measurable performance effect until 5% body weight is lost", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.35,
+        "concept_tags": ["dehydration", "sweat", "heat", "performance", "plasma_volume"],
+        "average_time_seconds": 25.0
+      }
+    },
+    {
+      "text": "A player asks whether to use an energy drink containing carbohydrates and electrolytes during a match. When is this most beneficial?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Carbohydrate-electrolyte sports drinks are most beneficial during matches lasting more than 60–70 minutes (which a 90-minute match clearly exceeds) when significant sweat and glycogen losses occur. Half-time is an ideal opportunity for carbohydrate top-up. The electrolytes (mainly sodium) help retain fluid and replace sweat losses. Plain water is sufficient for sessions under 60 minutes at moderate intensity.",
+      "options": [
+        {"text": "During matches over 60 minutes — particularly at half-time to replenish carbs and electrolytes", "is_correct": true},
+        {"text": "Only during pre-season training when intensity is lower and glycogen stores are larger", "is_correct": false},
+        {"text": "Never — sports drinks impair fat oxidation and should be replaced with water only", "is_correct": false},
+        {"text": "Only in the final 10 minutes when fatigue is at its peak", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.35,
+        "concept_tags": ["sports_drinks", "electrolytes", "carbohydrates", "match_nutrition"],
+        "average_time_seconds": 25.0
+      }
+    }
+  ]
+}

@@ -1,0 +1,272 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "quiz_title": "AL — Bevezetés - Testkulturális előzmények [HU]",
+  "topic": "Testkulturális előzmények",
+  "module": "Bevezetés",
+  "questions": [
+    {
+      "text": "Miért szükséges a jegyzet szerint áttekinteni a testkulturális előzményeket a fittség témájának megértéséhez?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A szöveg szerint a fittség és a fittségi rekreációs irányzat megértéséhez előzetesen körül kell járni a testkulturális előzményeket és a civilizációs fejlődés néhány problémáját.",
+      "options": [
+        {"text": "Mert a sportágak szabályrendszere csak így tanulható meg", "is_correct": false},
+        {"text": "Mert a fittség világjelenséggé vált irányzatának megértéséhez történeti és szemléleti előzményekre is szükség van", "is_correct": true},
+        {"text": "Mert a jegyzet kizárólag történettudományi megközelítést alkalmaz", "is_correct": false},
+        {"text": "Mert a modern sportnak nincs kapcsolata a korábbi testkultúrával", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.32,
+        "cognitive_load": 0.28,
+        "concept_tags": ["testkulturalis_elozmenyek", "fittseg_bevezetese", "torteneti_megkozelites"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "A fejezet szerint a bevezetés valójában inkább a témát fölvezető rész, mintsem pusztán rövid előszó.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "A szöveg kifejezetten úgy fogalmaz, hogy ez a fejezet több mint bevezetés, inkább a témát fölvezetni szándékozó rész.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.24,
+        "cognitive_load": 0.20,
+        "concept_tags": ["fejezet_funkcioja", "fittseg_bevezetese"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Melyik volt a sport egyik legkorábbi funkciója a szöveg szerint?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A szöveg szerint a sport kezdetben a vadászatra, majd fokozatosan a mindenkori harcászatra való felkészülés eszköze volt.",
+      "options": [
+        {"text": "Elsősorban szabadidős kikapcsolódás", "is_correct": false},
+        {"text": "Vadászatra való felkészülés", "is_correct": true},
+        {"text": "Nemzetközi kapcsolatok építése", "is_correct": false},
+        {"text": "Esztétikai önkifejezés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.26,
+        "cognitive_load": 0.22,
+        "concept_tags": ["sport_eredete", "vadaszat", "testkultura_funkcioja"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "A vadászatra való felkészülést a történeti fejlődés során mi követte a sport funkciójában?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A szöveg világosan jelzi a sorrendet: előbb vadászatra, majd fokozatosan harcászatra való felkészülés.",
+      "options": [
+        {"text": "Ünnepi látványosságként való megjelenés", "is_correct": false},
+        {"text": "Harcászatra való felkészülés", "is_correct": true},
+        {"text": "Ipari munkára nevelés", "is_correct": false},
+        {"text": "Egészségügyi rehabilitáció", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.29,
+        "cognitive_load": 0.24,
+        "concept_tags": ["sport_eredete", "harcaszat", "funkciovaltas"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Az ősi felnőtté avatási próbákban azt kellett bizonyítani, hogy az ifjú képes a megélhetéshez szükséges vadászatra és közössége megvédésére.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "A szöveg szerint ezekben a próbákban azt kellett igazolni, hogy az ifjú alkalmas a vadászatra, valamint családja, törzse, népe megvédésére.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.26,
+        "concept_tags": ["felnotteva_avatas", "kozossegvedelem", "vadaszat"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Miből származnak eredendően a sportok a szöveg megfogalmazása szerint?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A szerzők szerint a sportok eredendően az ősi felnőtté avatási próbákból származnak.",
+      "options": [
+        {"text": "A középkori udvari szórakozásból", "is_correct": false},
+        {"text": "Az ősi felnőtté avatási próbákból", "is_correct": true},
+        {"text": "A modern iskolai testnevelésből", "is_correct": false},
+        {"text": "Az ipari társadalom szabadidős szokásaiból", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.33,
+        "cognitive_load": 0.27,
+        "concept_tags": ["sport_eredete", "felnotteva_avatas", "testkulturalis_gyokerek"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Melyik összegzés felel meg legjobban a sportvetélkedők történeti szerepének az alfejezet alapján?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A szöveg szerint a sportvetélkedők és versengések az emberiség történetében a munkára és/vagy a harcra készülés eszközei voltak.",
+      "options": [
+        {"text": "Elsősorban vallási szertartások helyettesítői voltak", "is_correct": false},
+        {"text": "A munkára és/vagy a harcra készülés eszközei voltak", "is_correct": true},
+        {"text": "Kizárólag uralkodói reprezentációt szolgáltak", "is_correct": false},
+        {"text": "Mindig csak szórakoztató céljuk volt", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.36,
+        "cognitive_load": 0.31,
+        "concept_tags": ["sportvetelkedes", "munka_es_harc", "testkultura_funkcioja"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Melyik civilizációs közeg jelenik meg a szövegben az európai testkultúra klasszikus folytatásaként?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A szerzők szerint mindennek klasszikus folytatása az európai kultúrában az ókori Görögországban volt.",
+      "options": [
+        {"text": "Az ókori Róma", "is_correct": false},
+        {"text": "Az ókori Görögország", "is_correct": true},
+        {"text": "A reneszánsz Itália", "is_correct": false},
+        {"text": "A felvilágosodás kori Franciaország", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.31,
+        "cognitive_load": 0.25,
+        "concept_tags": ["okori_gorogorszag", "europai_testkultura", "klasszikus_folytatas"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "A szöveg szerint Spártában az ifjak katonai kiképzését és harcászati felkészítését az egész életvitelüknek alárendelték.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Az alfejezet kiemeli, hogy Spártában az ifjak katonai kiképzésének és harcászati felkészítésének az egész életvitelüket alárendelték.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.34,
+        "cognitive_load": 0.28,
+        "concept_tags": ["sparta", "katonai_kikepzes", "harcaszati_felkeszites"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Melyik állítás fejezi ki legpontosabban a spártai nevelésről szóló részlet lényegét?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A szöveg lényege az, hogy Spártában a társadalom a katonai alkalmasságot központi értékként kezelte, és ehhez igazította az ifjak életvitelét.",
+      "options": [
+        {"text": "A nevelés elsődleges célja a művészeti készségek fejlesztése volt", "is_correct": false},
+        {"text": "A katonai alkalmasság és harci felkészítés meghatározó társadalmi szempont volt", "is_correct": true},
+        {"text": "A testi nevelést teljesen elválasztották a társadalmi élettől", "is_correct": false},
+        {"text": "A testgyakorlás kizárólag ünnepi alkalmakkor kapott szerepet", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.43,
+        "cognitive_load": 0.39,
+        "concept_tags": ["sparta", "tarsadalmi_meghatarozottsag", "katonai_neveles"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "A szöveg alapján az újkori olimpiai játékok az antik görög kultúra nélkül nem is értelmezhetők.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "A szerzők kifejezetten úgy fogalmaznak, hogy az újkori olimpiai játékok az antik görög kultúra nélkül nem is értelmezhetők.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.27,
+        "cognitive_load": 0.21,
+        "concept_tags": ["ujkori_olimpia", "antik_gorog_orokseg", "olimpiai_hagyomany"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Milyen középkori mozgásformát emel ki a szöveg mint a harci felkészülést szolgáló tevékenységet?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A szöveg szerint a középkorban népünnepélynek számító lovagi, vagyis a harci felkészülést szolgáló vitézi tornák is jelen voltak.",
+      "options": [
+        {"text": "Céllövő vásári játékokat", "is_correct": false},
+        {"text": "Lovagi vagy vitézi tornákat", "is_correct": true},
+        {"text": "Iskolai atlétikai versenyeket", "is_correct": false},
+        {"text": "Modern csapatsport-bajnokságokat", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.29,
+        "concept_tags": ["kozepkor", "lovagi_torna", "harci_felkeszules"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "A középkori ünnepélyes vigalmakban a szöveg szerint helyet kaptak a játékos mozgásformák is.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "A szerzők egyértelműen jelzik, hogy a középkori ünnepélyes vigalmakban is megjelentek játékos mozgásformák.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.20,
+        "concept_tags": ["kozepkor", "jatekos_mozgasformak", "unnepelyes_vigalmak"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Melyik összefüggést hangsúlyozza leginkább ez az alfejezet a sport korai történetével kapcsolatban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az alfejezet egészének fő üzenete, hogy a sport korai formái gyakorlati, társadalmi és védelmi funkciókat töltöttek be, nem pusztán szórakozást szolgáltak.",
+      "options": [
+        {"text": "A sport korai formái elsősorban gazdasági haszonszerzésre irányultak", "is_correct": false},
+        {"text": "A sport korai formái szorosan kapcsolódtak a megélhetéshez, a munkához és a harchoz", "is_correct": true},
+        {"text": "A sport fejlődése független volt a társadalmi szükségletektől", "is_correct": false},
+        {"text": "A sport már kezdetektől főként rekreációs célokat szolgált", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "concept_tags": ["tarsadalmi_meghatarozottsag", "testkultura_funkcioja", "sport_torteneti_szerepe"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Melyik válasz foglalja össze a legpontosabban a 'Testkulturális előzmények' alfejezet fő gondolatát?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az alfejezet azt mutatja be, hogy a sport történeti gyökerei a vadászatban, a harcászati felkészülésben, a felnőtté avatási próbákban és a társadalmilag meghatározott mozgáskultúrában keresendők.",
+      "options": [
+        {"text": "A sport története lényegében a modern versenysport kialakulásával kezdődik", "is_correct": false},
+        {"text": "A sport történeti gyökerei a túléléshez, védelemhez, közösségi alkalmassághoz és társadalmi funkciókhoz kapcsolódnak", "is_correct": true},
+        {"text": "A testkultúra fejlődését kizárólag az olimpiai mozgalom alakította", "is_correct": false},
+        {"text": "A sport minden korszakban azonos funkciót töltött be", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "concept_tags": ["testkulturalis_elozmenyek", "sport_eredete", "osszefoglalo_megertes"],
+        "average_time_seconds": 20.0
+      }
+    }
+  ]
+}

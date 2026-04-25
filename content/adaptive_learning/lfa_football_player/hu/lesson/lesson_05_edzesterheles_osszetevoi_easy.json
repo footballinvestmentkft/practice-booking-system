@@ -1,0 +1,274 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "quiz_title": "AL — Edzéselmélet alapjai - Az edzésterhelés összetevői [HU]",
+  "topic": "Az edzésterhelés összetevői",
+  "module": "Edzéselmélet alapjai",
+  "questions": [
+    {
+      "text": "Mit jelent az edzésterjedelem (volume)?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A terjedelem az elvégzett munka mennyiségét jelenti, például ismétlések, idő vagy táv alapján.",
+      "options": [
+        {"text": "A terhelés erőssége", "is_correct": false},
+        {"text": "Az elvégzett munka mennyisége", "is_correct": true},
+        {"text": "A pihenőidő hossza", "is_correct": false},
+        {"text": "Az edzés gyakorisága", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "concept_tags": ["terjedelem"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Mit jelent az edzésintenzitás?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az intenzitás a terhelés erősségét, nehézségét jelenti.",
+      "options": [
+        {"text": "Az edzés időtartama", "is_correct": false},
+        {"text": "A terhelés erőssége", "is_correct": true},
+        {"text": "Az edzések száma", "is_correct": false},
+        {"text": "A regeneráció ideje", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.32,
+        "cognitive_load": 0.27,
+        "concept_tags": ["intenzitas"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "A nagyobb intenzitás mindig jobb edzést eredményez.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis, mert az optimális terheléshez az intenzitás és a többi tényező egyensúlya szükséges.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.30,
+        "concept_tags": ["intenzitas"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Mit jelent az edzéssűrűség?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A sűrűség a terhelés és pihenés arányát írja le.",
+      "options": [
+        {"text": "Az edzés hossza", "is_correct": false},
+        {"text": "A terhelés és pihenés aránya", "is_correct": true},
+        {"text": "Az ismétlések száma", "is_correct": false},
+        {"text": "A mozgás típusa", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.38,
+        "cognitive_load": 0.32,
+        "concept_tags": ["suruseg"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Mit jelent az edzésgyakoriság?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A gyakoriság az edzések ismétlődésének számát jelenti egy adott időszakban.",
+      "options": [
+        {"text": "Egy edzés hossza", "is_correct": false},
+        {"text": "Az edzések ismétlődése", "is_correct": true},
+        {"text": "A terhelés intenzitása", "is_correct": false},
+        {"text": "A pihenés ideje", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "concept_tags": ["gyakorisag"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "A terjedelem és az intenzitás egymástól független tényezők.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis, mert szoros kapcsolatban állnak és együtt határozzák meg a terhelést.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.36,
+        "concept_tags": ["terjedelem", "intenzitas"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Melyik tényező határozza meg leginkább a terhelés minőségét?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az intenzitás a terhelés minőségét jelenti.",
+      "options": [
+        {"text": "Terjedelem", "is_correct": false},
+        {"text": "Intenzitás", "is_correct": true},
+        {"text": "Gyakoriság", "is_correct": false},
+        {"text": "Pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.34,
+        "concept_tags": ["intenzitas"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Melyik tényező határozza meg leginkább a terhelés mennyiségét?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A terjedelem a mennyiségi oldalt írja le.",
+      "options": [
+        {"text": "Intenzitás", "is_correct": false},
+        {"text": "Terjedelem", "is_correct": true},
+        {"text": "Sűrűség", "is_correct": false},
+        {"text": "Gyakoriság", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.38,
+        "cognitive_load": 0.32,
+        "concept_tags": ["terjedelem"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "A túl nagy edzéssűrűség csökkentheti a regenerációt.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz, mert kevés pihenőidőt jelent.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.36,
+        "cognitive_load": 0.30,
+        "concept_tags": ["suruseg", "regeneracio"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Mi történik, ha túl magas a gyakoriság megfelelő pihenés nélkül?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Túlterhelés és teljesítménycsökkenés alakulhat ki.",
+      "options": [
+        {"text": "Gyors fejlődés", "is_correct": false},
+        {"text": "Túlterhelés", "is_correct": true},
+        {"text": "Nincs hatás", "is_correct": false},
+        {"text": "Automatikus regeneráció", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.36,
+        "concept_tags": ["gyakorisag", "tulterheles"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Melyik kombináció biztosítja az optimális edzéshatást?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az összetevők megfelelő egyensúlya szükséges.",
+      "options": [
+        {"text": "Maximális intenzitás", "is_correct": false},
+        {"text": "Összetevők egyensúlya", "is_correct": true},
+        {"text": "Minimális terhelés", "is_correct": false},
+        {"text": "Csak nagy terjedelem", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.38,
+        "concept_tags": ["optimalis_terheles"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "A terjedelem növelése mindig növeli az intenzitást is.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis, mert gyakran fordított kapcsolat van.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.40,
+        "concept_tags": ["terjedelem", "intenzitas"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Melyik tényező befolyásolja leginkább a regeneráció idejét?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az intenzitás nagy hatással van a regenerációra.",
+      "options": [
+        {"text": "Szín", "is_correct": false},
+        {"text": "Intenzitás", "is_correct": true},
+        {"text": "Helyszín", "is_correct": false},
+        {"text": "Zene", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.43,
+        "cognitive_load": 0.36,
+        "concept_tags": ["intenzitas", "regeneracio"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Mi az edzésterhelés szabályozásának célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az optimális fejlődés biztosítása.",
+      "options": [
+        {"text": "Fáradás növelése", "is_correct": false},
+        {"text": "Optimális adaptáció biztosítása", "is_correct": true},
+        {"text": "Edzés megszüntetése", "is_correct": false},
+        {"text": "Csak pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.41,
+        "cognitive_load": 0.34,
+        "concept_tags": ["szabalyozas"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Melyik tényező írja le az edzések időbeli eloszlását?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A gyakoriság határozza meg az edzések ismétlődését.",
+      "options": [
+        {"text": "Intenzitás", "is_correct": false},
+        {"text": "Gyakoriság", "is_correct": true},
+        {"text": "Terjedelem", "is_correct": false},
+        {"text": "Sűrűség", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.33,
+        "cognitive_load": 0.28,
+        "concept_tags": ["gyakorisag"],
+        "average_time_seconds": 20.0
+      }
+    }
+  ]
+}

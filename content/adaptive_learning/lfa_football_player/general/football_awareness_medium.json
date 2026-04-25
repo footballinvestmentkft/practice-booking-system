@@ -1,0 +1,191 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "category": "GENERAL",
+  "difficulty": "MEDIUM",
+  "quiz_title": "AL — Football Awareness Medium",
+  "topic": "Football Governance & Competition",
+  "module": "General",
+  "questions": [
+    {
+      "text": "How many teams participate in the UEFA Champions League group stage (format as of the 2022–23 season)?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "In the 2022–23 season, the Champions League group stage featured 32 teams divided into 8 groups of 4. From 2024–25, the competition moved to a new league phase format with 36 teams. The group stage question refers to the format that was in place for the 2022–23 season specifically.",
+      "options": [
+        {"text": "32 teams in 8 groups of 4", "is_correct": true},
+        {"text": "24 teams in 6 groups of 4", "is_correct": false},
+        {"text": "36 teams in 9 groups of 4", "is_correct": false},
+        {"text": "16 teams entering directly at the knockout round of 16", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "concept_tags": ["Champions_League", "competition_format", "UEFA", "group_stage"],
+        "average_time_seconds": 25.0
+      }
+    },
+    {
+      "text": "What is the standard length of a professional player transfer window in European football?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "Most European leagues operate two transfer windows per season: a summer window (approximately June to August, up to 12 weeks) and a winter window (approximately January, roughly 4 weeks). The exact dates vary by country and are set by each national association within FIFA guidelines. Players can only be registered with a new club during these windows.",
+      "options": [
+        {"text": "Summer: up to 12 weeks; Winter: approximately 4 weeks in January", "is_correct": true},
+        {"text": "Both windows are exactly 30 days regardless of the season", "is_correct": false},
+        {"text": "There is only one window per year, open in June–July exclusively", "is_correct": false},
+        {"text": "Windows are open year-round for clubs outside the top 5 leagues", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.50,
+        "concept_tags": ["transfers", "transfer_window", "governance", "registration"],
+        "average_time_seconds": 25.0
+      }
+    },
+    {
+      "text": "UEFA Financial Fair Play (FFP) regulations were primarily designed to achieve which goal?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "UEFA's Financial Fair Play regulations, introduced in 2011, require clubs to balance their spending with their revenues — broadly preventing clubs from spending significantly more than they earn from football operations. The aim is to ensure long-term financial sustainability and competitive balance, preventing clubs owned by wealthy investors from accumulating unsustainable losses indefinitely. FFP was later reformed into the UEFA Club Licensing and Financial Sustainability Regulations.",
+      "options": [
+        {"text": "Require clubs to balance spending with football revenues to ensure long-term sustainability", "is_correct": true},
+        {"text": "Cap player wages at a fixed percentage of the national average salary", "is_correct": false},
+        {"text": "Prevent any single investor from owning more than 50% of a club's shares", "is_correct": false},
+        {"text": "Limit transfer fees to €100 million per player to control inflation", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.55,
+        "concept_tags": ["FFP", "Financial_Fair_Play", "UEFA", "governance", "sustainability"],
+        "average_time_seconds": 30.0
+      }
+    },
+    {
+      "text": "The UEFA away goals rule was used to break ties in two-legged knockout ties. When was it abolished?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "UEFA abolished the away goals rule from the 2021–22 season onwards, after more than 55 years of use. The rule had been in place since 1965 and awarded an advantage to teams that scored in the opponent's stadium. UEFA decided it created unfair incentives and was particularly disadvantageous to home teams in the first leg.",
+      "options": [
+        {"text": "2021 — abolished ahead of the 2021–22 Champions League season", "is_correct": true},
+        {"text": "2018 — removed after the 2018 World Cup review", "is_correct": false},
+        {"text": "2016 — phased out across all UEFA competitions by 2016–17", "is_correct": false},
+        {"text": "2023 — still in use until then for Europa League only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.50,
+        "concept_tags": ["away_goals", "UEFA", "rule_change", "knockout"],
+        "average_time_seconds": 25.0
+      }
+    },
+    {
+      "text": "VAR (Video Assistant Referee) was used for the first time at a FIFA World Cup in which year?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "VAR was used for the first time at a FIFA World Cup at the 2018 tournament in Russia. Before that, it had been trialled in various domestic leagues and cup competitions. At the 2018 World Cup, VAR intervened in 335 incidents across 64 matches, with the most common reviews relating to goals and penalties.",
+      "options": [
+        {"text": "2018 — at the FIFA World Cup in Russia", "is_correct": true},
+        {"text": "2014 — introduced at the World Cup in Brazil as a pilot", "is_correct": false},
+        {"text": "2022 — first used at the World Cup in Qatar", "is_correct": false},
+        {"text": "2016 — introduced at the European Championship in France", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "concept_tags": ["VAR", "technology", "World_Cup", "2018"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "How are teams ranked within a UEFA Champions League group if they finish level on points?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "In the Champions League group stage, if teams are level on points, the first tiebreaker is head-to-head points between the tied teams, then head-to-head goal difference, then head-to-head goals scored. Only if still level after all head-to-head criteria are applied does overall goal difference and goals scored in all group games come into play. This differs from some domestic leagues that go directly to overall goal difference.",
+      "options": [
+        {"text": "Head-to-head points, then head-to-head goal difference, then head-to-head goals scored", "is_correct": true},
+        {"text": "Overall goal difference across all group games first", "is_correct": false},
+        {"text": "A play-off match on neutral ground between the level teams", "is_correct": false},
+        {"text": "UEFA coefficient ranking — the club with the higher historical coefficient advances", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.60,
+        "concept_tags": ["Champions_League", "tiebreaker", "head_to_head", "group_stage"],
+        "average_time_seconds": 30.0
+      }
+    },
+    {
+      "text": "How many teams will participate in the FIFA World Cup from 2026 onwards?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "Starting from the 2026 FIFA World Cup (hosted by USA, Canada, and Mexico), the tournament expanded from 32 to 48 teams. The new format features 12 groups of 4 teams, with the top two from each group and the 8 best third-placed teams advancing to a round of 32 knockout stage.",
+      "options": [
+        {"text": "48 teams — expanded from 32 starting at the 2026 World Cup", "is_correct": true},
+        {"text": "40 teams — a transitional format for 2026 only", "is_correct": false},
+        {"text": "36 teams — matching the new Champions League format", "is_correct": false},
+        {"text": "32 teams — unchanged from the 1998–2022 format", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "concept_tags": ["World_Cup", "FIFA", "2026", "format_expansion"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "What does a football club's 'UEFA coefficient' primarily determine?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "The UEFA club coefficient is calculated based on a club's results in UEFA competitions (Champions League, Europa League, Conference League) over the previous five seasons. It primarily determines seeding in UEFA competition draws — higher-coefficient clubs are seeded into more favourable pots, reducing the chance of meeting other strong teams early. It also determines which qualification round clubs enter.",
+      "options": [
+        {"text": "Seeding in UEFA competition draws and the qualifying round of entry", "is_correct": true},
+        {"text": "The club's permitted wage budget relative to league revenue", "is_correct": false},
+        {"text": "The number of home games allowed per season in European competition", "is_correct": false},
+        {"text": "The club's valuation for Financial Fair Play purposes", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.60,
+        "concept_tags": ["UEFA_coefficient", "seeding", "governance", "European_competition"],
+        "average_time_seconds": 30.0
+      }
+    },
+    {
+      "text": "Which governing body is responsible for the Laws of the Game in football worldwide?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "The International Football Association Board (IFAB) is the body responsible for determining and maintaining the Laws of the Game. Founded in 1886, IFAB consists of four British football associations (England, Scotland, Wales, and Northern Ireland) plus FIFA. Each British association holds one vote and FIFA holds four votes; changes to the laws require at least six votes (75%) to pass.",
+      "options": [
+        {"text": "IFAB — the International Football Association Board", "is_correct": true},
+        {"text": "FIFA — the Fédération Internationale de Football Association", "is_correct": false},
+        {"text": "UEFA — the Union of European Football Associations", "is_correct": false},
+        {"text": "The English Football Association, as the game's founding body", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.55,
+        "concept_tags": ["IFAB", "governance", "Laws_of_the_Game", "rules"],
+        "average_time_seconds": 25.0
+      }
+    },
+    {
+      "text": "In professional football, what is the primary purpose of an agent (player agent or intermediary)?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "A football agent (officially termed an intermediary under FIFA regulations) primarily represents players in contract negotiations with clubs and in transfer deals, working to secure favourable contract terms, wages, and transfer fees. Agents are also used by clubs to identify players. FIFA reintroduced a licensing system for agents in 2023 (Football Agent Regulations), capping commission fees and requiring agents to pass a certification exam.",
+      "options": [
+        {"text": "Represent players in contract and transfer negotiations to secure favourable terms", "is_correct": true},
+        {"text": "Manage a player's social media presence and commercial brand partnerships only", "is_correct": false},
+        {"text": "Advise clubs on training methods and player development programmes", "is_correct": false},
+        {"text": "Act as a referee between clubs during disciplinary proceedings", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "concept_tags": ["agents", "transfers", "contracts", "governance"],
+        "average_time_seconds": 20.0
+      }
+    }
+  ]
+}

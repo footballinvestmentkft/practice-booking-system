@@ -1,0 +1,155 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "category": "NUTRITION",
+  "difficulty": "MEDIUM",
+  "quiz_title": "AL — Athlete Nutrition Medium",
+  "topic": "Advanced Sports Nutrition",
+  "module": "Nutrition",
+  "questions": [
+    {
+      "text": "A football player trains twice daily during pre-season. How should carbohydrate intake be periodized across the day to support performance and recovery?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "Carbohydrate periodization means consuming higher carbohydrate amounts around training sessions (before and after) to support performance and glycogen recovery, and lower amounts during rest periods or sleep. For twice-daily training, this means a carbohydrate-rich breakfast before the morning session, a recovery meal after with carbs and protein, moderate intake at lunch, and carbohydrate-rich intake around the afternoon session. This approach maximises training quality while managing total caloric intake.",
+      "options": [
+        {"text": "Higher carbs around both training sessions; lower intake during rest periods between sessions", "is_correct": true},
+        {"text": "Even distribution across all meals regardless of training timing", "is_correct": false},
+        {"text": "Carbs only in the evening meal so they are stored as glycogen overnight", "is_correct": false},
+        {"text": "High fat during the day, carbs only in the immediate post-training window", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.55,
+        "concept_tags": ["carb_periodization", "training_nutrition", "glycogen", "pre_season"],
+        "average_time_seconds": 30.0
+      }
+    },
+    {
+      "text": "Iron deficiency (without anaemia) is common in football players. Which sign most commonly presents first in an iron-deficient player?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "Subclinical iron deficiency (reduced ferritin stores without anaemia) impairs aerobic capacity and causes early fatigue and reduced training tolerance before haemoglobin levels drop enough to diagnose anaemia. Female players are at particularly high risk due to menstrual losses. Regular ferritin monitoring is recommended, especially in players with restricted dietary intake or high training loads. Fatigue and reduced performance are the earliest functional signs.",
+      "options": [
+        {"text": "Unexplained fatigue and reduced aerobic performance despite normal haemoglobin", "is_correct": true},
+        {"text": "Sudden loss of muscle mass and strength within one week", "is_correct": false},
+        {"text": "Increased resting heart rate above 100 bpm as the first clinical sign", "is_correct": false},
+        {"text": "Pale skin immediately visible within days of iron levels dropping", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.60,
+        "concept_tags": ["iron", "micronutrients", "deficiency", "ferritin", "anaemia"],
+        "average_time_seconds": 30.0
+      }
+    },
+    {
+      "text": "Creatine monohydrate supplementation primarily benefits football players in which specific performance domain?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "Creatine monohydrate increases phosphocreatine stores in muscle, which directly enhances recovery between repeated short maximal sprints (the ATP-PCr system). It is most effective for high-intensity, short-duration repeated efforts — precisely what football involves. It does not significantly benefit prolonged aerobic performance. Creatine is legal under WADA regulations and is one of the most evidence-backed supplements in sports science.",
+      "options": [
+        {"text": "Repeated sprint capacity — faster phosphocreatine resynthesis between maximal efforts", "is_correct": true},
+        {"text": "Aerobic endurance — extends the time to exhaustion during steady-state running", "is_correct": false},
+        {"text": "Flexibility and joint range of motion through increased muscle hydration", "is_correct": false},
+        {"text": "Immune function — reduces the incidence of upper respiratory tract infections", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.55,
+        "concept_tags": ["creatine", "supplementation", "phosphocreatine", "sprint", "performance"],
+        "average_time_seconds": 30.0
+      }
+    },
+    {
+      "text": "A player's sweat contains significant sodium. What is the primary consequence of sodium loss during a long match in the heat, and how should it be addressed?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "Sodium is the primary electrolyte in extracellular fluid, and its loss through sweat during prolonged exercise in heat reduces plasma osmolality and fluid retention. Replacing fluids without sodium can cause hyponatraemia (dangerously low blood sodium), which is more serious than dehydration. Sodium also drives thirst and promotes rehydration. Sports drinks with 400–1100 mg sodium per litre, or salty foods post-match, are recommended for significant sweat losses.",
+      "options": [
+        {"text": "Reduced plasma osmolality impairing fluid retention — replace with sodium-containing drinks", "is_correct": true},
+        {"text": "Muscle cramps caused by electrical imbalance — replaced best by potassium alone", "is_correct": false},
+        {"text": "Sodium loss has no effect on performance — only water needs replacing", "is_correct": false},
+        {"text": "Increased blood pressure requiring players to avoid sodium entirely post-match", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.60,
+        "concept_tags": ["sodium", "electrolytes", "sweat", "hyponatraemia", "hydration"],
+        "average_time_seconds": 30.0
+      }
+    },
+    {
+      "text": "Which of the following supplements is on the WADA Prohibited List and must be avoided by professional football players in and out of competition?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "Recombinant erythropoietin (EPO) is prohibited at all times under the WADA Code as a peptide hormone that artificially increases red blood cell production and oxygen-carrying capacity. Creatine, vitamin D, and caffeine are all legal under WADA regulations at any dose in competition (caffeine was monitored until 2004 but is no longer on the prohibited list). Players must check all supplements against the WADA list and use third-party tested products.",
+      "options": [
+        {"text": "Recombinant EPO (erythropoietin) — prohibited at all times under WADA", "is_correct": true},
+        {"text": "Creatine monohydrate — prohibited above 5 g per day in competition", "is_correct": false},
+        {"text": "Caffeine — prohibited above 400 mg per day in competition", "is_correct": false},
+        {"text": "Vitamin D3 at therapeutic doses prescribed by a team doctor", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.55,
+        "concept_tags": ["WADA", "doping", "EPO", "prohibited_list", "supplements"],
+        "average_time_seconds": 30.0
+      }
+    },
+    {
+      "text": "Vitamin D deficiency is particularly common in football players training in northern European climates. What is the primary functional consequence relevant to athletic performance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "Vitamin D plays a critical role in calcium absorption, bone mineralisation, muscle function, and immune regulation. In athletes, vitamin D deficiency is associated with impaired muscle protein synthesis, reduced force production, increased stress fracture risk, and suppressed immune function leading to more frequent illness. Players in northern latitudes (especially those training indoors or in winter) are at highest risk. Supplementation of 1000–4000 IU/day is commonly recommended during low-sunlight periods.",
+      "options": [
+        {"text": "Impaired muscle function, reduced force production, and increased injury and illness risk", "is_correct": true},
+        {"text": "Excessive calcium absorption causing kidney stones and reduced sprint speed", "is_correct": false},
+        {"text": "Vitamin D deficiency only affects bone health, with no impact on muscle performance", "is_correct": false},
+        {"text": "Increased cortisol production, causing muscle breakdown in overtraining", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.60,
+        "concept_tags": ["vitamin_D", "micronutrients", "deficiency", "muscle_function", "immunity"],
+        "average_time_seconds": 30.0
+      }
+    },
+    {
+      "text": "During a congested fixture schedule with matches every 3–4 days, what nutritional strategy is most important for maintaining performance across the run of games?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "In congested fixture periods, glycogen recovery between matches is the primary nutritional priority because insufficient glycogen replenishment is the main reason performance declines across successive games. Achieving 8–10 g of carbohydrate per kg of body weight per day and consuming carbohydrates within 30–60 minutes post-match maximises recovery. Protein intake for muscle repair is secondary but also important. Hydration management and sleep quality are equally critical non-nutritional factors.",
+      "options": [
+        {"text": "Prioritise rapid glycogen recovery post-match with high carbohydrate intake (8–10 g/kg/day)", "is_correct": true},
+        {"text": "Increase fat intake to spare glycogen stores during the busy period", "is_correct": false},
+        {"text": "Reduce total caloric intake to lower body weight and improve power-to-weight ratio", "is_correct": false},
+        {"text": "Take protein supplements only — carbohydrate needs do not change during congested schedules", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.55,
+        "concept_tags": ["glycogen", "recovery", "congested_schedule", "carbohydrates", "performance"],
+        "average_time_seconds": 30.0
+      }
+    },
+    {
+      "text": "A player is advised to eat a 'gut-friendly' pre-match meal. Which food choice best meets this requirement?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 2,
+      "explanation": "A gut-friendly pre-match meal should be low in fat, low in fibre, low in lactose (if the player is sensitive), and moderate in protein — with the primary focus on easily digestible carbohydrates. White rice or white pasta, grilled chicken or fish, and a banana are classic choices that empty quickly from the stomach, minimise gastrointestinal symptoms, and provide carbohydrate for energy. High-fibre, high-fat, or novel foods close to a match increase the risk of bloating, cramping, and diarrhoea.",
+      "options": [
+        {"text": "White rice with grilled chicken — low fibre, low fat, easily digestible carbs", "is_correct": true},
+        {"text": "A large salad with chickpeas, avocado, and whole-grain bread", "is_correct": false},
+        {"text": "A full fry-up with eggs, bacon, and sausages 90 minutes before kick-off", "is_correct": false},
+        {"text": "A protein shake with full-fat milk and nuts 45 minutes before the match", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.45,
+        "concept_tags": ["pre_match", "gut_health", "digestion", "meal_choice", "fibre"],
+        "average_time_seconds": 25.0
+      }
+    }
+  ]
+}

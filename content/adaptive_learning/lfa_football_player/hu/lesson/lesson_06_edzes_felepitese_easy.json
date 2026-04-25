@@ -1,0 +1,256 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "quiz_title": "AL — Edzéselmélet alapjai - Az edzés felépítése [HU]",
+  "topic": "Az edzés felépítése (edzés részei)",
+  "module": "Edzéselmélet alapjai",
+  "questions": [
+    {
+      "text": "Mi a bemelegítés elsődleges célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A bemelegítés felkészíti a szervezetet a terhelésre, fokozza a keringést és az izomműködést.",
+      "options": [
+        {"text": "Fáradás kiváltása", "is_correct": false},
+        {"text": "A szervezet felkészítése a terhelésre", "is_correct": true},
+        {"text": "Edzés befejezése", "is_correct": false},
+        {"text": "Teljesítmény csökkentése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "concept_tags": ["bemelegites"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "A bemelegítés elhagyása növelheti a sérülésveszélyt.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz, mert a felkészületlen izmok és ízületek sérülékenyebbek.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.28,
+        "cognitive_load": 0.22,
+        "concept_tags": ["bemelegites", "serulesmegelozes"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Mi az edzés fő részének szerepe?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A fő rész tartalmazza a teljesítményfejlesztő terhelést.",
+      "options": [
+        {"text": "Pihenés biztosítása", "is_correct": false},
+        {"text": "Teljesítményfejlesztés", "is_correct": true},
+        {"text": "Regeneráció", "is_correct": false},
+        {"text": "Sérülések kezelése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.32,
+        "cognitive_load": 0.27,
+        "concept_tags": ["fo_resz"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Mi a levezetés célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A levezetés segíti a szervezet visszaállását és a regenerációt.",
+      "options": [
+        {"text": "Terhelés növelése", "is_correct": false},
+        {"text": "Regeneráció elősegítése", "is_correct": true},
+        {"text": "Új inger létrehozása", "is_correct": false},
+        {"text": "Fáradás fokozása", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "concept_tags": ["levezetes"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "A levezetés elhagyása nem befolyásolja a regenerációt.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis, mert a levezetés segíti a regenerációt.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.30,
+        "concept_tags": ["levezetes", "regeneracio"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Melyik sorrend helyes az edzés felépítésében?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A helyes sorrend: bemelegítés, fő rész, levezetés.",
+      "options": [
+        {"text": "Fő rész – bemelegítés – levezetés", "is_correct": false},
+        {"text": "Bemelegítés – fő rész – levezetés", "is_correct": true},
+        {"text": "Levezetés – fő rész – bemelegítés", "is_correct": false},
+        {"text": "Bemelegítés – levezetés – fő rész", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.28,
+        "cognitive_load": 0.23,
+        "concept_tags": ["edzes_felepitese"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Melyik hatás NEM jellemző a bemelegítésre?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A bemelegítés nem okoz fáradtságot, hanem felkészít.",
+      "options": [
+        {"text": "Keringés fokozása", "is_correct": false},
+        {"text": "Izmok felkészítése", "is_correct": false},
+        {"text": "Fáradás kiváltása", "is_correct": true},
+        {"text": "Ízületek mobilizálása", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.34,
+        "concept_tags": ["bemelegites"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "A fő rész során történik az edzés legnagyobb terhelése.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz, mert itt történik a teljesítményfejlesztés.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "concept_tags": ["fo_resz"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Melyik tényező segíti leginkább a sérülésmegelőzést?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A megfelelő bemelegítés csökkenti a sérülésveszélyt.",
+      "options": [
+        {"text": "Nagy intenzitás", "is_correct": false},
+        {"text": "Megfelelő bemelegítés", "is_correct": true},
+        {"text": "Rövid edzés", "is_correct": false},
+        {"text": "Gyakori pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.33,
+        "cognitive_load": 0.28,
+        "concept_tags": ["serulesmegelozes"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Mi történik a szervezetben bemelegítés során?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Fokozódik a keringés és az izomaktivitás.",
+      "options": [
+        {"text": "Leáll a keringés", "is_correct": false},
+        {"text": "Fokozódik a keringés", "is_correct": true},
+        {"text": "Csökken a hőmérséklet", "is_correct": false},
+        {"text": "Megszűnik az izomműködés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.34,
+        "cognitive_load": 0.28,
+        "concept_tags": ["bemelegites"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Az edzés felépítése befolyásolja az edzés hatékonyságát.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz, mert a struktúra meghatározza a hatást.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.29,
+        "cognitive_load": 0.24,
+        "concept_tags": ["edzes_felepitese"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Mi a levezetés egyik konkrét hatása?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Segíti a pulzus fokozatos csökkenését.",
+      "options": [
+        {"text": "Pulzus növelése", "is_correct": false},
+        {"text": "Pulzus csökkentése", "is_correct": true},
+        {"text": "Izomfeszülés növelése", "is_correct": false},
+        {"text": "Terhelés fokozása", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.36,
+        "cognitive_load": 0.30,
+        "concept_tags": ["levezetes"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Miért fontos a fokozatosság a bemelegítés során?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A fokozatosság segíti a biztonságos terhelésre való felkészülést.",
+      "options": [
+        {"text": "Gyors fáradás miatt", "is_correct": false},
+        {"text": "Biztonságos terhelés miatt", "is_correct": true},
+        {"text": "Edzés rövidítése miatt", "is_correct": false},
+        {"text": "Teljesítmény csökkentése miatt", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.38,
+        "cognitive_load": 0.32,
+        "concept_tags": ["bemelegites"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Mi az edzés felépítésének fő célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az optimális teljesítmény és biztonság biztosítása.",
+      "options": [
+        {"text": "Fáradás növelése", "is_correct": false},
+        {"text": "Optimális teljesítmény biztosítása", "is_correct": true},
+        {"text": "Edzés megszüntetése", "is_correct": false},
+        {"text": "Idő kitöltése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.34,
+        "concept_tags": ["edzes_felepitese"],
+        "average_time_seconds": 20.0
+      }
+    }
+  ]
+}

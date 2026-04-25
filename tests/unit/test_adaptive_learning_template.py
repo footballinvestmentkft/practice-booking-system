@@ -304,3 +304,65 @@ class TestFeedbackTiming:
         assert "3s" in html, "'3s' label missing from auto-advance"
         # Old 1-second label must be gone
         assert "in 1s" not in html, "old 'in 1s' label still present"
+
+
+class TestCategoryPickerThreshold:
+    """Category picker must only show categories passed by the route.
+    The route applies MIN_QUESTIONS_PER_CATEGORY=10 filter before rendering.
+    The template itself is agnostic — it renders whatever available_categories it receives.
+    These tests verify template behaviour for the pre-threshold (hidden) and post-threshold
+    (visible) states that the route produces."""
+
+    def test_general_hidden_when_not_in_available_categories(self):
+        """GENERAL must not appear in picker when route excludes it (< 10 metadata questions)."""
+        from app.models.quiz import QuizCategory
+        html = _render_session_page(categories=[QuizCategory.LESSON, QuizCategory.SPORTS_PHYSIOLOGY])
+        assert 'data-cat="GENERAL"' not in html, \
+            "GENERAL button rendered despite being excluded by route threshold"
+
+    def test_nutrition_hidden_when_not_in_available_categories(self):
+        """NUTRITION must not appear in picker when route excludes it (0 questions)."""
+        from app.models.quiz import QuizCategory
+        html = _render_session_page(categories=[QuizCategory.LESSON, QuizCategory.SPORTS_PHYSIOLOGY])
+        assert 'data-cat="NUTRITION"' not in html, \
+            "NUTRITION button rendered despite being excluded by route threshold"
+
+    def test_general_visible_after_threshold_met(self):
+        """GENERAL appears in picker once route includes it (≥ 10 metadata questions)."""
+        from app.models.quiz import QuizCategory
+        html = _render_session_page(
+            categories=[QuizCategory.LESSON, QuizCategory.SPORTS_PHYSIOLOGY, QuizCategory.GENERAL]
+        )
+        assert 'data-cat="GENERAL"' in html, \
+            "GENERAL button missing despite being included by route (threshold met)"
+
+    def test_nutrition_visible_after_threshold_met(self):
+        """NUTRITION appears in picker once route includes it (≥ 10 metadata questions)."""
+        from app.models.quiz import QuizCategory
+        html = _render_session_page(
+            categories=[QuizCategory.LESSON, QuizCategory.SPORTS_PHYSIOLOGY,
+                        QuizCategory.GENERAL, QuizCategory.NUTRITION]
+        )
+        assert 'data-cat="NUTRITION"' in html, \
+            "NUTRITION button missing despite being included by route (threshold met)"
+
+    def test_only_provided_categories_render(self):
+        """Template renders exactly the categories it receives — no extras added."""
+        from app.models.quiz import QuizCategory
+        html = _render_session_page(categories=[QuizCategory.LESSON])
+        assert 'data-cat="LESSON"' in html
+        assert 'data-cat="GENERAL"' not in html
+        assert 'data-cat="SPORTS_PHYSIOLOGY"' not in html
+        assert 'data-cat="NUTRITION"' not in html
+
+    def test_all_four_categories_visible_when_all_thresholds_met(self):
+        """When all four categories meet the threshold, all four buttons render."""
+        from app.models.quiz import QuizCategory
+        html = _render_session_page(
+            categories=[QuizCategory.LESSON, QuizCategory.SPORTS_PHYSIOLOGY,
+                        QuizCategory.GENERAL, QuizCategory.NUTRITION]
+        )
+        assert 'data-cat="LESSON"' in html
+        assert 'data-cat="SPORTS_PHYSIOLOGY"' in html
+        assert 'data-cat="GENERAL"' in html
+        assert 'data-cat="NUTRITION"' in html

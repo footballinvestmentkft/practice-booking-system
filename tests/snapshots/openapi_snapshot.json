@@ -22846,6 +22846,18 @@
               "title": "Time Limit",
               "type": "integer"
             }
+          },
+          {
+            "description": "Session language ('hu' or 'en')",
+            "in": "query",
+            "name": "language",
+            "required": false,
+            "schema": {
+              "default": "hu",
+              "description": "Session language ('hu' or 'en')",
+              "title": "Language",
+              "type": "string"
+            }
           }
         ],
         "responses": {

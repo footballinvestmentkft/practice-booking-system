@@ -1,0 +1,191 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "category": "SPORTS_PHYSIOLOGY",
+  "difficulty": "HARD",
+  "quiz_title": "AL — Conditioning & Fitness Hard",
+  "topic": "Advanced Physiology & Periodization",
+  "module": "Conditioning",
+  "questions": [
+    {
+      "text": "A player trains at high intensity for three consecutive weeks without adequate recovery. Which physiological state best describes the resulting condition if performance is significantly impaired and full recovery requires weeks to months?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Overtraining syndrome (OTS) is a neuroendocrine disorder characterised by performance decrements lasting weeks to months despite reduced training load. It is distinguished from functional overreaching (FOR) — which recovers in days — and non-functional overreaching (NFOR) — which recovers in weeks. OTS requires medical evaluation and often involves hormonal dysregulation, mood disturbances, and impaired immune function.",
+      "options": [
+        {"text": "Overtraining syndrome — neuroendocrine disorder requiring weeks to months for full recovery", "is_correct": true},
+        {"text": "Functional overreaching — expected adaptation that resolves within 72 hours of rest", "is_correct": false},
+        {"text": "Non-functional overreaching — performance drops that resolve fully within 24–48 hours", "is_correct": false},
+        {"text": "Acute fatigue — a normal post-session state that clears after one night's sleep", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.80,
+        "concept_tags": ["overtraining_syndrome", "OTS", "overreaching", "recovery", "neuroendocrine"],
+        "average_time_seconds": 45.0
+      }
+    },
+    {
+      "text": "The FIFA 11+ warm-up protocol is specifically designed to reduce the incidence of which type of injury in football players?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "The FIFA 11+ programme was developed by the FIFA Medical Assessment and Research Centre (F-MARC) and has been shown in randomised controlled trials to reduce ACL injuries by up to 50% and overall lower-limb injuries by 30–50%. It specifically targets knee, hamstring, and ankle injuries through progressive neuromuscular exercises, balance training, and eccentric strengthening. It does not specifically target upper-limb or concussion injuries.",
+      "options": [
+        {"text": "Knee and lower-limb injuries, particularly ACL tears and hamstring strains", "is_correct": true},
+        {"text": "Shoulder and upper-limb injuries from aerial challenges and falls", "is_correct": false},
+        {"text": "Concussions and head injuries from aerial and contact situations", "is_correct": false},
+        {"text": "Groin injuries exclusively, through targeted hip flexor activation", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.70,
+        "cognitive_load": 0.65,
+        "concept_tags": ["FIFA_11_plus", "ACL", "injury_prevention", "neuromuscular", "warm_up"],
+        "average_time_seconds": 35.0
+      }
+    },
+    {
+      "text": "In periodization theory, a 'microcycle' refers to which unit of training planning?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "In periodization, a microcycle is typically one week of training (5–10 days), a mesocycle is a block of 3–6 weeks, and a macrocycle is the full annual or seasonal plan. The microcycle is the smallest planning unit in which coaches organise daily sessions, recovery days, and competitive demands. Understanding these layers helps players interpret why training loads vary across a season.",
+      "options": [
+        {"text": "A single training week (5–10 days), the smallest planning unit", "is_correct": true},
+        {"text": "A 3–6 week training block with a specific physiological emphasis", "is_correct": false},
+        {"text": "The full season plan from pre-season through post-season", "is_correct": false},
+        {"text": "A single training session, including warm-up, main set, and cool-down", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.65,
+        "cognitive_load": 0.65,
+        "concept_tags": ["periodization", "microcycle", "mesocycle", "macrocycle", "training_planning"],
+        "average_time_seconds": 35.0
+      }
+    },
+    {
+      "text": "A player shows consistently low Heart Rate Variability (HRV) readings over several mornings despite normal sleep. What is the most appropriate training response?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "HRV is a proxy for autonomic nervous system balance; suppressed HRV over multiple days indicates accumulated fatigue or physiological stress. The appropriate response is to reduce training load (volume or intensity, or both) and prioritise recovery — not to train harder through the signal. Ignoring chronically suppressed HRV is associated with non-functional overreaching and increased injury risk. Acute single-day HRV drops are normal after hard sessions; sustained suppression is the warning sign.",
+      "options": [
+        {"text": "Reduce training load and prioritise recovery until HRV normalises", "is_correct": true},
+        {"text": "Increase training intensity to push through the fatigue adaptation", "is_correct": false},
+        {"text": "Maintain training load — HRV is not a reliable fatigue indicator", "is_correct": false},
+        {"text": "Switch to strength-only training and eliminate all aerobic work immediately", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.75,
+        "concept_tags": ["HRV", "heart_rate_variability", "recovery", "overreaching", "autonomic"],
+        "average_time_seconds": 40.0
+      }
+    },
+    {
+      "text": "Which training method is most effective for preventing hamstring strains in football players by specifically targeting eccentric strength?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "The Nordic hamstring curl (NHC) is the gold-standard eccentric hamstring exercise with the strongest evidence base for reducing hamstring strain injuries in football. Players kneel, anchor their ankles, and lower their body forward under hamstring control. Studies (e.g., Petersen et al., AJSM 2011) show NHC programmes reduce hamstring injuries by ~50%. It specifically targets eccentric strength at long muscle lengths — where hamstring injuries most commonly occur during high-speed running.",
+      "options": [
+        {"text": "Nordic hamstring curls, which develop eccentric strength at long muscle lengths", "is_correct": true},
+        {"text": "Leg press at high loads, which builds concentric quadriceps dominance", "is_correct": false},
+        {"text": "Static hamstring stretching for 30 seconds held twice daily", "is_correct": false},
+        {"text": "Sprint intervals at 95% maximum speed to stress and adapt hamstring tissue", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.70,
+        "concept_tags": ["nordic_hamstring", "eccentric", "hamstring_injury", "injury_prevention", "strength"],
+        "average_time_seconds": 40.0
+      }
+    },
+    {
+      "text": "During a football match, which energy system provides the majority of energy for repeated high-intensity sprints lasting 1–5 seconds?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Repeated short sprints of 1–5 seconds are predominantly fuelled by the phosphocreatine (PCr) system (also called the ATP-PCr or alactic anaerobic system). The PCr stores in muscle are rapidly replenished between sprints via aerobic metabolism during walking/jogging recovery periods. Glycolysis becomes more important for efforts lasting 6–30 seconds, while oxidative phosphorylation dominates submaximal continuous running.",
+      "options": [
+        {"text": "The phosphocreatine (PCr) system, rapidly resynthesised between sprints", "is_correct": true},
+        {"text": "Anaerobic glycolysis, producing lactate as the primary by-product", "is_correct": false},
+        {"text": "Oxidative phosphorylation via fat oxidation at maximal sprint intensity", "is_correct": false},
+        {"text": "The gluconeogenesis pathway, converting amino acids to glucose during effort", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.75,
+        "concept_tags": ["energy_systems", "phosphocreatine", "ATP_PCr", "sprint", "anaerobic"],
+        "average_time_seconds": 40.0
+      }
+    },
+    {
+      "text": "A player undergoes altitude training at 2,400 metres for three weeks. Which primary physiological adaptation explains the expected performance benefit at sea level after returning?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "At altitude, reduced partial pressure of oxygen stimulates the kidneys to release erythropoietin (EPO), which increases red blood cell (RBC) production and haemoglobin mass. After returning to sea level, the elevated RBC count and haemoglobin mass enhance oxygen-carrying capacity and delay fatigue during high-intensity efforts. This is the primary mechanism behind 'live high, train low' (LHTL) altitude strategies used in elite football.",
+      "options": [
+        {"text": "Increased erythropoietin production raises red blood cell count and haemoglobin mass", "is_correct": true},
+        {"text": "Reduced atmospheric pressure directly increases VO2max upon return to sea level", "is_correct": false},
+        {"text": "Muscle mitochondrial density doubles within three weeks at 2,400 metres", "is_correct": false},
+        {"text": "Dehydration at altitude concentrates the blood, permanently boosting oxygen delivery", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.80,
+        "concept_tags": ["altitude_training", "EPO", "haemoglobin", "red_blood_cells", "LHTL"],
+        "average_time_seconds": 45.0
+      }
+    },
+    {
+      "text": "Undulating periodization (UP) differs from traditional linear periodization (LP) primarily in which way?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Linear periodization progresses from high volume/low intensity to low volume/high intensity in a sustained unidirectional manner over weeks or months. Undulating periodization (also called non-linear periodization) varies training volume and intensity within the week (daily undulating) or week to week (weekly undulating). Research shows UP produces superior strength and power gains over the same period, and it fits football's weekly competitive schedule better than traditional LP.",
+      "options": [
+        {"text": "UP varies intensity and volume within the week or weekly; LP progresses in one direction over months", "is_correct": true},
+        {"text": "UP uses only bodyweight exercises; LP uses external loading throughout the block", "is_correct": false},
+        {"text": "LP allows training multiple physical qualities simultaneously; UP isolates one quality per block", "is_correct": false},
+        {"text": "UP increases total training volume each week; LP decreases it progressively towards competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.80,
+        "concept_tags": ["periodization", "undulating_periodization", "linear_periodization", "training_planning"],
+        "average_time_seconds": 45.0
+      }
+    },
+    {
+      "text": "A player's lactate threshold (LT1) occurs at approximately 2 mmol/L blood lactate. What does training below LT1 primarily develop?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Training below LT1 (the first lactate threshold, where lactate production first exceeds resting levels) develops the aerobic base — specifically mitochondrial density, fat oxidation capacity, and cardiac stroke volume. This zone is sometimes called 'Zone 1' or 'recovery/easy aerobic' training. It improves the ability to sustain lower-intensity effort for longer without accumulating fatigue. Training above LT2 (onset of blood lactate accumulation, OBLA, ~4 mmol/L) develops anaerobic capacity.",
+      "options": [
+        {"text": "Aerobic base — mitochondrial density, fat oxidation, and cardiac efficiency", "is_correct": true},
+        {"text": "Anaerobic capacity — the ability to sustain effort above OBLA for extended periods", "is_correct": false},
+        {"text": "Phosphocreatine resynthesis rate — the speed of recovery between maximal sprints", "is_correct": false},
+        {"text": "Fast-twitch muscle fibre recruitment — maximal power output during explosive efforts", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.80,
+        "concept_tags": ["lactate_threshold", "LT1", "aerobic_base", "mitochondria", "fat_oxidation"],
+        "average_time_seconds": 45.0
+      }
+    },
+    {
+      "text": "A player completes a demanding match on Sunday. Using a tapering approach for the following weekend's match, what is the recommended structure for the training week?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Standard tapering for a 7-day microcycle in professional football follows a predictable load pattern: Sunday = match, Monday = active recovery (very low), Tuesday = regeneration + tactical video, Wednesday = moderate intensity rebuild, Thursday = high-intensity training day (peak load of the week), Friday = reduced volume but maintained intensity, Saturday = light activation. This ensures peak neuromuscular readiness by match day without accumulated fatigue.",
+      "options": [
+        {"text": "Recovery Monday, rebuild Wednesday, peak intensity Thursday, light activation Friday–Saturday", "is_correct": true},
+        {"text": "High intensity Monday and Tuesday, complete rest Wednesday–Friday, match Saturday", "is_correct": false},
+        {"text": "Equal moderate loads Monday through Friday, complete rest Saturday", "is_correct": false},
+        {"text": "Peak intensity Tuesday, maintained load Wednesday–Friday, no Saturday session", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.75,
+        "concept_tags": ["tapering", "microcycle", "training_load", "recovery", "match_preparation"],
+        "average_time_seconds": 45.0
+      }
+    }
+  ]
+}

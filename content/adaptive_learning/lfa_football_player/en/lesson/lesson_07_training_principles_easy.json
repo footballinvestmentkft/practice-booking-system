@@ -1,0 +1,254 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "quiz_title": "AL — Fundamentals of Training Theory - Training Principles [EN]",
+  "topic": "Training Principles (Fundamental Principles)",
+  "module": "Fundamentals of Training Theory",
+  "questions": [
+    {
+      "text": "What does the principle of progressiveness mean in training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The load must be increased step by step for safe development.",
+      "options": [
+        {"text": "Immediate maximum load", "is_correct": false},
+        {"text": "Gradual increase of load", "is_correct": true},
+        {"text": "Only rest", "is_correct": false},
+        {"text": "Random training", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "concept_tags": ["progressiveness"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Too rapid an increase in load can lead to injury.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True, because the body cannot adapt adequately.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.28,
+        "cognitive_load": 0.22,
+        "concept_tags": ["progressiveness", "injury"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "What does the principle of regularity mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Regular training ensures the maintenance of adaptation.",
+      "options": [
+        {"text": "Infrequent training", "is_correct": false},
+        {"text": "Continuous, repeated training", "is_correct": true},
+        {"text": "A single training session", "is_correct": false},
+        {"text": "Random training", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.32,
+        "cognitive_load": 0.27,
+        "concept_tags": ["regularity"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Irregular training does not support development.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True, because repetition is required to maintain adaptation.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "concept_tags": ["regularity"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "What does the principle of individualisation mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Training must be tailored to the individual's abilities.",
+      "options": [
+        {"text": "The same training for everyone", "is_correct": false},
+        {"text": "Individually tailored training", "is_correct": true},
+        {"text": "Training only for competitive athletes", "is_correct": false},
+        {"text": "Training only for beginners", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.30,
+        "concept_tags": ["individualisation"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "What does the principle of specificity mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Training must be aligned with the desired performance.",
+      "options": [
+        {"text": "Random movement", "is_correct": false},
+        {"text": "Goal-oriented training", "is_correct": true},
+        {"text": "Only general training", "is_correct": false},
+        {"text": "Rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.38,
+        "cognitive_load": 0.32,
+        "concept_tags": ["specificity"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Training does not need to be aligned with the goal.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False, because according to the principle of specificity it must be goal-oriented.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.33,
+        "cognitive_load": 0.28,
+        "concept_tags": ["specificity"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "What does the principle of variety mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Variety supports motivation and adaptation.",
+      "options": [
+        {"text": "The same training every time", "is_correct": false},
+        {"text": "Varied training stimuli", "is_correct": true},
+        {"text": "Only rest", "is_correct": false},
+        {"text": "Stopping training", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.36,
+        "cognitive_load": 0.30,
+        "concept_tags": ["variety"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Monotonous training can reduce development.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True, because the effect of the stimulus decreases.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.34,
+        "cognitive_load": 0.28,
+        "concept_tags": ["variety"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "What is the role of consciousness in training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Conscious training is more effective and goal-oriented.",
+      "options": [
+        {"text": "It is not important", "is_correct": false},
+        {"text": "It supports effective training", "is_correct": true},
+        {"text": "It reduces performance", "is_correct": false},
+        {"text": "It is only important for coaches", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.29,
+        "concept_tags": ["consciousness"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "What happens if training is not individually tailored?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Non-optimal development or injury can result.",
+      "options": [
+        {"text": "Optimal development", "is_correct": false},
+        {"text": "Inadequate adaptation", "is_correct": true},
+        {"text": "No effect", "is_correct": false},
+        {"text": "Rapid development", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.34,
+        "concept_tags": ["individualisation"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Training principles help prevent injuries.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True, because they regulate the load.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "concept_tags": ["training_principles"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Which principle ensures the continuity of development?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Regularity ensures the maintenance of adaptation.",
+      "options": [
+        {"text": "Variety", "is_correct": false},
+        {"text": "Regularity", "is_correct": true},
+        {"text": "Specificity", "is_correct": false},
+        {"text": "Rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.36,
+        "cognitive_load": 0.30,
+        "concept_tags": ["regularity"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "What is the main goal of training principles?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "To ensure optimal development and safety.",
+      "options": [
+        {"text": "To stop training", "is_correct": false},
+        {"text": "To ensure optimal development", "is_correct": true},
+        {"text": "To increase fatigue", "is_correct": false},
+        {"text": "To compete", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.38,
+        "cognitive_load": 0.32,
+        "concept_tags": ["training_principles"],
+        "average_time_seconds": 20.0
+      }
+    }
+  ]
+}

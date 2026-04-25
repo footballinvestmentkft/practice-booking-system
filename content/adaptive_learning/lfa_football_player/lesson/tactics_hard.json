@@ -1,0 +1,191 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "quiz_title": "AL — Football Tactics Hard",
+  "topic": "Advanced Tactics",
+  "module": "Tactics",
+  "questions": [
+    {
+      "text": "In a high-press system, which situational trigger most reliably initiates the press after the opposition goalkeeper receives the ball?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "A backwards pass to the goalkeeper is one of the most reliable press triggers because the keeper is constrained by the back-pass rule (cannot handle it), is often less comfortable under pressure than outfield players, and the ball is travelling away from goal — giving the pressing team time and directional advantage. Teams like Klopp's Liverpool use this trigger explicitly.",
+      "options": [
+        {"text": "A backwards pass to the goalkeeper who cannot use their hands", "is_correct": true},
+        {"text": "Any time the opposition centre-back receives the ball facing their own goal", "is_correct": false},
+        {"text": "When the opposition right back overlaps and is beyond the halfway line", "is_correct": false},
+        {"text": "When the opposition goalkeeper takes more than three seconds to distribute", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.70,
+        "concept_tags": ["pressing", "high_press", "trigger", "back_pass_rule"],
+        "average_time_seconds": 40.0
+      }
+    },
+    {
+      "text": "A team defends in a mid-block with a 4-4-2 shape. The opposition plays into the half-spaces. Which player is primarily responsible for cutting off the half-space on the right side?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "In a 4-4-2 mid-block, the half-space (the channel between the centre and the wide area) on the right is primarily covered by the right central midfielder. The right winger sits wider to maintain width, while the right central midfielder tucks in to deny the half-space. This creates the compact block that forces the play wide or backwards.",
+      "options": [
+        {"text": "The right central midfielder, who tucks in to deny the channel", "is_correct": true},
+        {"text": "The right winger, who drops back to cover the channel", "is_correct": false},
+        {"text": "The right centre-back, who steps up aggressively out of the back four", "is_correct": false},
+        {"text": "The right back, who narrows towards the centre to cover the space", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.75,
+        "concept_tags": ["half_spaces", "mid_block", "4-4-2", "compactness", "defensive_shape"],
+        "average_time_seconds": 40.0
+      }
+    },
+    {
+      "text": "Positional play (juego de posición) prioritises which structural principle above all others when the team is in possession?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Positional play's core structural principle is occupying all five vertical corridors (wide left, half-space left, centre, half-space right, wide right) simultaneously. This forces the defensive block to spread, creating space between lines. Simply having width, numerical superiority, or high tempo alone does not define positional play — it is the intentional occupation of all corridors that creates the system's structure.",
+      "options": [
+        {"text": "Simultaneously occupying all five vertical corridors to stretch the defensive block", "is_correct": true},
+        {"text": "Maintaining a permanent numerical superiority in the central zone", "is_correct": false},
+        {"text": "Playing at maximum tempo to prevent the opposition from setting their shape", "is_correct": false},
+        {"text": "Keeping width on both flanks while concentrating passing options centrally", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.80,
+        "concept_tags": ["positional_play", "juego_de_posicion", "vertical_corridors", "half_spaces"],
+        "average_time_seconds": 45.0
+      }
+    },
+    {
+      "text": "A team's striker presses the opposition's left centre-back. The pressing team's left winger simultaneously cuts off the passing lane to the right back. What pressing principle does this describe?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "This describes 'pressing traps' — a coordinated press designed to force the ball into a predetermined zone by cutting off all safe outlets except one (usually wide). The striker applies direct pressure while the winger pre-positions to eliminate the safe pass, funnelling the ball wide where a second pressing wave can win it. This is distinct from pressing intensity (how much), pressing trigger (when), or a high defensive line (where).",
+      "options": [
+        {"text": "A coordinated pressing trap that funnels the ball into a targeted zone", "is_correct": true},
+        {"text": "A man-marking press where each player follows their direct opponent", "is_correct": false},
+        {"text": "A zonal press activated only when the ball is in the opposition half", "is_correct": false},
+        {"text": "A counter-press triggered immediately after losing possession", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.75,
+        "concept_tags": ["pressing_trap", "pressing", "coordination", "funneling"],
+        "average_time_seconds": 40.0
+      }
+    },
+    {
+      "text": "An inverted winger playing on the right side cuts inside. Which movement from a supporting midfielder best complements this action to maintain attacking width?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "When an inverted winger cuts inside from the right, they vacate the wide right channel. The right back (or in some systems a box-to-box midfielder who rotates) should make an overlapping run into the vacated space. This creates a 2v1 against the opposition left back — the winger threatens inside on their stronger foot while the overlapping run keeps the defender honest. A central midfielder pushing higher would crowd the centre, defeating the purpose.",
+      "options": [
+        {"text": "The right back makes an overlapping run into the vacated wide channel", "is_correct": true},
+        {"text": "The central midfielder pushes higher to overload the box centrally", "is_correct": false},
+        {"text": "The left winger moves centrally to create a 3-player central overload", "is_correct": false},
+        {"text": "The striker drops deep to create space for the winger's cut", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.70,
+        "cognitive_load": 0.70,
+        "concept_tags": ["inverted_winger", "overlap", "attacking_width", "movement"],
+        "average_time_seconds": 40.0
+      }
+    },
+    {
+      "text": "Gegenpressing (counter-pressing) aims to win the ball back within how many seconds of losing it, according to the approach pioneered by Jürgen Klopp?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Gegenpressing aims to win the ball within 5–6 seconds of losing it, exploiting the moment when the opposition is disorganised and pressing players are already close to the ball. After this window the opposition can reorganise and the pressing advantage is lost. Klopp has described this phase as 'the best playmaker in the world' — winning possession high up the pitch in disorganised defensive moments.",
+      "options": [
+        {"text": "5–6 seconds, before the opposition can reorganise after winning possession", "is_correct": true},
+        {"text": "2–3 seconds, exploiting the first touch the opposition takes", "is_correct": false},
+        {"text": "10–12 seconds, allowing the team to reset shape before pressing", "is_correct": false},
+        {"text": "3–4 seconds, only if at least four players are within 10 metres of the ball", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.65,
+        "cognitive_load": 0.60,
+        "concept_tags": ["gegenpressing", "counter_press", "transition", "klopp"],
+        "average_time_seconds": 35.0
+      }
+    },
+    {
+      "text": "A team plays a high defensive line. The opposition striker makes a diagonal run in behind. Which defensive adjustment best neutralises this threat without sacrificing line height?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Against diagonal runs in behind a high line, the most effective adjustment is for the offside trap to be applied collectively — the entire back four must step up simultaneously, timed to the pass being played. If one defender fails to step up, the trap breaks. Additionally, using a high-energy defensive midfielder who can drop to cover the space adds a layer of protection. Dropping the line entirely concedes the tactical advantage of the high block.",
+      "options": [
+        {"text": "The entire back four steps up simultaneously in a coordinated offside trap", "is_correct": true},
+        {"text": "The nearest centre-back tracks the run individually while the line holds", "is_correct": false},
+        {"text": "The defensive line drops to medium block depth to eliminate the space", "is_correct": false},
+        {"text": "The goalkeeper plays as an extra defender, sweeping balls played in behind", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.80,
+        "concept_tags": ["high_line", "offside_trap", "collective_defending", "coordination"],
+        "average_time_seconds": 45.0
+      }
+    },
+    {
+      "text": "In a 4-3-3 pressing 4-4-2 in possession, the pressing team's two forwards press the two centre-backs. Which player is primarily responsible for pressing the opposition's single pivot midfielder?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "In the classic 4-3-3 vs 4-4-2 pressing match-up, the pressing team's three-man midfield must deal with the opposition's two central midfielders and their pivoting connections. The number 10 (or the most advanced central midfielder) drops slightly to press the pivot. The two other central midfielders shadow the wider midfielders. Without this, the pivot receives freely and can distribute between the lines. This is why Guardiola's Barcelona used the '6 second rule' specifically for the pivot zone.",
+      "options": [
+        {"text": "The number 10 or most advanced central midfielder, who drops to shadow the pivot", "is_correct": true},
+        {"text": "One of the two forwards, who breaks from pressing the centre-backs", "is_correct": false},
+        {"text": "The defensive midfielder, who pushes forward leaving the backline exposed", "is_correct": false},
+        {"text": "The nearest wide midfielder, who cuts inside leaving the flank open", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.80,
+        "concept_tags": ["4-3-3", "4-4-2", "pivot", "pressing", "match_up"],
+        "average_time_seconds": 45.0
+      }
+    },
+    {
+      "text": "A deep defensive block (low block) is most effective against which type of attacking team?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "A low block is most effective against teams that rely on positional build-up and combinational play through the thirds, because it denies space between the lines and makes it difficult to play through. High-tempo counter-attacking teams and direct long-ball teams actually thrive against low blocks — they want space to exploit on the break or second balls to contest. A low block is specifically designed to limit positional, possession-based teams that need space to operate.",
+      "options": [
+        {"text": "Teams that build through positional play and need space between the lines", "is_correct": true},
+        {"text": "Teams that play direct long balls and rely on second-ball duels", "is_correct": false},
+        {"text": "Teams that specialise in counter-attacks and transition speed", "is_correct": false},
+        {"text": "Teams with physically dominant strikers who target aerial duels", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.70,
+        "cognitive_load": 0.70,
+        "concept_tags": ["low_block", "defensive_block", "positional_play", "tactical_matchup"],
+        "average_time_seconds": 40.0
+      }
+    },
+    {
+      "text": "When a team transitions from attack to defence after losing the ball in the opposition's half, what is the primary objective of the immediate transition press?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "The primary objective of the immediate transition press (gegenpressing) is to prevent the opposition from launching a dangerous counter-attack by winning the ball back before they can accelerate. The opposition is momentarily disorganised after winning possession, and the pressing team's players are already in advanced positions. The press buys time for the team to reorganise even if it doesn't immediately win the ball back.",
+      "options": [
+        {"text": "Disrupt the opposition's counter-attack while the team is out of defensive shape", "is_correct": true},
+        {"text": "Win the ball immediately in the first one or two seconds without exception", "is_correct": false},
+        {"text": "Force a foul to stop play and allow the team to reset its defensive shape", "is_correct": false},
+        {"text": "Maintain positional formation by having each player hold their attacking position", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.70,
+        "cognitive_load": 0.70,
+        "concept_tags": ["transition", "counter_press", "defensive_transition", "organisation"],
+        "average_time_seconds": 40.0
+      }
+    }
+  ]
+}

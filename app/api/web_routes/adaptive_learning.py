@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from ...database import get_db
 from ...dependencies import get_current_user_web
-from ...models.quiz import AdaptiveLearningSession, Quiz, QuizAnswerOption, QuizCategory, QuizQuestion
+from ...models.quiz import AdaptiveLearningSession, Quiz, QuizAnswerOption, QuizCategory, QuizQuestion, QuestionMetadata
 from ...models.user import User
 from ...models.xp_transaction import XPTransaction
 from ...services.adaptive_learning import AdaptiveLearningService
@@ -85,10 +85,16 @@ async def adaptive_learning_session_page(
     if guard:
         return guard
 
+    MIN_QUESTIONS_PER_CATEGORY = 10
+    SESSION_LANGUAGE = "hu"
+
     available_categories = (
         db.query(Quiz.category)
-        .filter(Quiz.is_active == True)
-        .distinct()
+        .join(QuizQuestion, QuizQuestion.quiz_id == Quiz.id)
+        .join(QuestionMetadata, QuestionMetadata.question_id == QuizQuestion.id)
+        .filter(Quiz.is_active == True, Quiz.language == SESSION_LANGUAGE)
+        .group_by(Quiz.category)
+        .having(func.count(QuizQuestion.id) >= MIN_QUESTIONS_PER_CATEGORY)
         .all()
     )
     category_values = [row[0] for row in available_categories]
@@ -100,6 +106,7 @@ async def adaptive_learning_session_page(
             "user": user,
             **_spec_ctx(user, db),
             "available_categories": category_values,
+            "session_language": SESSION_LANGUAGE,
         },
     )
 
@@ -136,6 +143,7 @@ async def al_session_start(
     request: Request,
     category: str = Query("LESSON", description="QuizCategory value for this session"),
     time_limit: int = Query(180, description="Session time limit in seconds (60, 180, or 300)"),
+    language: str = Query("hu", description="Session language ('hu' or 'en')"),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
@@ -197,7 +205,7 @@ async def al_session_start(
 
     service = AdaptiveLearningService(db)
     session = service.start_adaptive_session(
-        user.id, quiz_category, session_duration_seconds=time_limit
+        user.id, quiz_category, session_duration_seconds=time_limit, language=language
     )
     return JSONResponse({
         "session_id": session.id,

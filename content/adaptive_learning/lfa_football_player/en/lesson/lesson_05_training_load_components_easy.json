@@ -1,0 +1,274 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "quiz_title": "AL — Fundamentals of Training Theory - Components of Training Load [EN]",
+  "topic": "Components of Training Load",
+  "module": "Fundamentals of Training Theory",
+  "questions": [
+    {
+      "text": "What does training volume mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Volume refers to the quantity of work performed, for example by repetitions, time or distance.",
+      "options": [
+        {"text": "The intensity of the load", "is_correct": false},
+        {"text": "The quantity of work performed", "is_correct": true},
+        {"text": "The length of the rest period", "is_correct": false},
+        {"text": "The frequency of training", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "concept_tags": ["volume"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "What does training intensity mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Intensity refers to the strength or difficulty of the load.",
+      "options": [
+        {"text": "The duration of a training session", "is_correct": false},
+        {"text": "The strength of the load", "is_correct": true},
+        {"text": "The number of training sessions", "is_correct": false},
+        {"text": "The regeneration time", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.32,
+        "cognitive_load": 0.27,
+        "concept_tags": ["intensity"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Higher intensity always results in better training.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False, because optimal load requires a balance of intensity and the other components.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.30,
+        "concept_tags": ["intensity"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "What does training density mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Density describes the ratio of load to rest.",
+      "options": [
+        {"text": "The length of the training session", "is_correct": false},
+        {"text": "The ratio of load to rest", "is_correct": true},
+        {"text": "The number of repetitions", "is_correct": false},
+        {"text": "The type of movement", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.38,
+        "cognitive_load": 0.32,
+        "concept_tags": ["density"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "What does training frequency mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Frequency refers to the number of times training is repeated within a given period.",
+      "options": [
+        {"text": "The length of a single training session", "is_correct": false},
+        {"text": "The repetition of training sessions", "is_correct": true},
+        {"text": "The intensity of the load", "is_correct": false},
+        {"text": "The rest time", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "concept_tags": ["frequency"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Volume and intensity are independent components.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False, because they are closely related and together determine the load.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.36,
+        "concept_tags": ["volume", "intensity"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Which component primarily determines the quality of the load?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Intensity refers to the quality of the load.",
+      "options": [
+        {"text": "Volume", "is_correct": false},
+        {"text": "Intensity", "is_correct": true},
+        {"text": "Frequency", "is_correct": false},
+        {"text": "Rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.34,
+        "concept_tags": ["intensity"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Which component primarily determines the quantity of the load?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Volume describes the quantitative side.",
+      "options": [
+        {"text": "Intensity", "is_correct": false},
+        {"text": "Volume", "is_correct": true},
+        {"text": "Density", "is_correct": false},
+        {"text": "Frequency", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.38,
+        "cognitive_load": 0.32,
+        "concept_tags": ["volume"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Too high a training density can reduce regeneration.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True, because it means less rest time.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.36,
+        "cognitive_load": 0.30,
+        "concept_tags": ["density", "regeneration"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "What happens if frequency is too high without adequate rest?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Overtraining and a decline in performance can develop.",
+      "options": [
+        {"text": "Rapid development", "is_correct": false},
+        {"text": "Overtraining", "is_correct": true},
+        {"text": "No effect", "is_correct": false},
+        {"text": "Automatic regeneration", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.36,
+        "concept_tags": ["frequency", "overtraining"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Which combination ensures the optimal training effect?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The appropriate balance of all components is required.",
+      "options": [
+        {"text": "Maximum intensity", "is_correct": false},
+        {"text": "Balance of all components", "is_correct": true},
+        {"text": "Minimal load", "is_correct": false},
+        {"text": "High volume only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.38,
+        "concept_tags": ["optimal_load"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Increasing volume always increases intensity as well.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False, because there is often an inverse relationship between them.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.40,
+        "concept_tags": ["volume", "intensity"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Which component most influences regeneration time?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Intensity has a strong influence on regeneration.",
+      "options": [
+        {"text": "Colour", "is_correct": false},
+        {"text": "Intensity", "is_correct": true},
+        {"text": "Location", "is_correct": false},
+        {"text": "Music", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.43,
+        "cognitive_load": 0.36,
+        "concept_tags": ["intensity", "regeneration"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "What is the goal of regulating training load?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "To ensure optimal development.",
+      "options": [
+        {"text": "To increase fatigue", "is_correct": false},
+        {"text": "To ensure optimal adaptation", "is_correct": true},
+        {"text": "To stop training", "is_correct": false},
+        {"text": "Only rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.41,
+        "cognitive_load": 0.34,
+        "concept_tags": ["regulation"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Which component describes the temporal distribution of training sessions?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Frequency determines the repetition of training sessions.",
+      "options": [
+        {"text": "Intensity", "is_correct": false},
+        {"text": "Frequency", "is_correct": true},
+        {"text": "Volume", "is_correct": false},
+        {"text": "Density", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.33,
+        "cognitive_load": 0.28,
+        "concept_tags": ["frequency"],
+        "average_time_seconds": 20.0
+      }
+    }
+  ]
+}

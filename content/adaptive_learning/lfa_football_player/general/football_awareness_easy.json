@@ -1,0 +1,227 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "category": "GENERAL",
+  "difficulty": "EASY",
+  "quiz_title": "AL — Football Awareness Easy",
+  "topic": "Football Fundamentals",
+  "module": "General",
+  "questions": [
+    {
+      "text": "How many players does each team field on the pitch at the start of a standard football match?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Each team fields 11 players, including one goalkeeper. A minimum of 7 players is required for a match to continue under IFAB rules. The 11-a-side format is used from professional level down to most youth formats.",
+      "options": [
+        {"text": "11", "is_correct": true},
+        {"text": "10", "is_correct": false},
+        {"text": "12", "is_correct": false},
+        {"text": "9", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.10,
+        "concept_tags": ["basics", "team_size", "rules"],
+        "average_time_seconds": 10.0
+      }
+    },
+    {
+      "text": "How long is a standard adult football match, excluding extra time and penalty shootouts?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "A standard adult match consists of two 45-minute halves, giving 90 minutes of regular time. Additional time (stoppage time) is added by the referee at the end of each half to compensate for stoppages in play.",
+      "options": [
+        {"text": "90 minutes — two 45-minute halves", "is_correct": true},
+        {"text": "80 minutes — two 40-minute halves", "is_correct": false},
+        {"text": "100 minutes — two 50-minute halves", "is_correct": false},
+        {"text": "60 minutes — three 20-minute thirds", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.10,
+        "concept_tags": ["basics", "match_duration", "format"],
+        "average_time_seconds": 10.0
+      }
+    },
+    {
+      "text": "Which position is responsible for preventing the opposition from scoring by protecting the goal?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "The goalkeeper is the only player allowed to use their hands inside their own penalty area. They are the last line of defence and wear a different-coloured jersey to distinguish themselves from outfield players and match officials.",
+      "options": [
+        {"text": "Goalkeeper", "is_correct": true},
+        {"text": "Centre-back", "is_correct": false},
+        {"text": "Sweeper", "is_correct": false},
+        {"text": "Defensive midfielder", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.10,
+        "cognitive_load": 0.10,
+        "concept_tags": ["positions", "goalkeeper", "basics"],
+        "average_time_seconds": 10.0
+      }
+    },
+    {
+      "text": "In which year was the FIFA World Cup first held?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "The first FIFA World Cup was held in Uruguay in 1930. Uruguay won the tournament, defeating Argentina 4–2 in the final. The competition was held every four years thereafter, with breaks only during World War II (1942 and 1946).",
+      "options": [
+        {"text": "1930", "is_correct": true},
+        {"text": "1924", "is_correct": false},
+        {"text": "1938", "is_correct": false},
+        {"text": "1950", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "concept_tags": ["history", "World_Cup", "FIFA"],
+        "average_time_seconds": 15.0
+      }
+    },
+    {
+      "text": "Which country has won the most FIFA World Cup titles?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Brazil has won the FIFA World Cup five times (1958, 1962, 1970, 1994, 2002). They are the only nation to have participated in every World Cup and have produced legendary players including Pelé, Ronaldo, Ronaldinho, and Zico.",
+      "options": [
+        {"text": "Brazil — five titles", "is_correct": true},
+        {"text": "Germany — six titles", "is_correct": false},
+        {"text": "Italy — five titles equally", "is_correct": false},
+        {"text": "Argentina — four titles", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "concept_tags": ["history", "World_Cup", "Brazil"],
+        "average_time_seconds": 15.0
+      }
+    },
+    {
+      "text": "What is a 'hat-trick' in football?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "A hat-trick is when a single player scores three goals in one match. A 'perfect hat-trick' refers specifically to scoring with the left foot, right foot, and head in the same match. The term originates from cricket, where a bowler who took three wickets in three balls was awarded a hat.",
+      "options": [
+        {"text": "A player scoring three goals in a single match", "is_correct": true},
+        {"text": "A player scoring two goals and providing one assist in a match", "is_correct": false},
+        {"text": "A team scoring three goals without reply in any match period", "is_correct": false},
+        {"text": "A goalkeeper saving three penalty kicks in a shootout", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.15,
+        "concept_tags": ["terminology", "hat_trick", "goals"],
+        "average_time_seconds": 12.0
+      }
+    },
+    {
+      "text": "What colour card does a referee show to send a player off the pitch permanently?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "A red card results in a player being sent off and unable to be replaced. Red cards are shown for serious foul play, violent conduct, denying an obvious goal-scoring opportunity, or receiving a second yellow card in the same match. The red and yellow card system was introduced at the 1970 World Cup.",
+      "options": [
+        {"text": "Red card", "is_correct": true},
+        {"text": "Yellow card", "is_correct": false},
+        {"text": "Black card", "is_correct": false},
+        {"text": "Orange card", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.10,
+        "cognitive_load": 0.10,
+        "concept_tags": ["basics", "cards", "red_card", "rules"],
+        "average_time_seconds": 10.0
+      }
+    },
+    {
+      "text": "Real Madrid is based in which city?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Real Madrid C.F. is based in Madrid, Spain. Founded in 1902, they are the most successful club in UEFA Champions League history, with more than a dozen European Cup/Champions League titles. Their home ground is the Santiago Bernabéu Stadium.",
+      "options": [
+        {"text": "Madrid, Spain", "is_correct": true},
+        {"text": "Barcelona, Spain", "is_correct": false},
+        {"text": "Lisbon, Portugal", "is_correct": false},
+        {"text": "Milan, Italy", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.15,
+        "concept_tags": ["clubs", "Real_Madrid", "Spain"],
+        "average_time_seconds": 12.0
+      }
+    },
+    {
+      "text": "How many substitutes is a team typically allowed to make in a standard competitive professional match (as of 2022 IFAB rules)?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "IFAB permanently approved the use of up to five substitutions in a match (from 2022 onwards), with three substitution windows plus half time. This was introduced during the COVID-19 pandemic as a temporary measure and later made permanent, allowing teams to manage player workload more effectively.",
+      "options": [
+        {"text": "Five substitutions, in up to three substitution windows", "is_correct": true},
+        {"text": "Three substitutions with no restriction on timing", "is_correct": false},
+        {"text": "Seven substitutions across the full match", "is_correct": false},
+        {"text": "Four substitutions, one of which must be a goalkeeper", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.30,
+        "concept_tags": ["rules", "substitutions", "IFAB"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Which player is widely regarded as one of the greatest footballers of all time and played for clubs including FC Barcelona and Paris Saint-Germain?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "Lionel Messi is widely regarded as one of the greatest players of all time. He spent the majority of his career at FC Barcelona before moving to Paris Saint-Germain (PSG) in 2021 and later Inter Miami. He has won eight Ballon d'Or awards and the 2022 FIFA World Cup with Argentina.",
+      "options": [
+        {"text": "Lionel Messi", "is_correct": true},
+        {"text": "Cristiano Ronaldo", "is_correct": false},
+        {"text": "Neymar Jr.", "is_correct": false},
+        {"text": "Kylian Mbappé", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.15,
+        "concept_tags": ["players", "Messi", "Barcelona", "PSG"],
+        "average_time_seconds": 12.0
+      }
+    },
+    {
+      "text": "What is the name of the trophy awarded to the winner of the UEFA Champions League?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "The UEFA Champions League winner receives the UEFA Champions League Trophy, colloquially known as 'Big Ears' due to its distinctive large handles. The competition began in 1955 as the European Cup and was rebranded as the Champions League in 1992. Real Madrid, AC Milan, and Liverpool are among the most successful clubs in the competition.",
+      "options": [
+        {"text": "The UEFA Champions League Trophy (Big Ears)", "is_correct": true},
+        {"text": "The Europa League Cup", "is_correct": false},
+        {"text": "The Golden Cup", "is_correct": false},
+        {"text": "The Continental Shield", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "concept_tags": ["clubs", "Champions_League", "UEFA", "trophy"],
+        "average_time_seconds": 15.0
+      }
+    },
+    {
+      "text": "If a match is level after 90 minutes in a knockout competition, what typically happens next before a penalty shootout?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 1,
+      "explanation": "In knockout competitions, if the score is level after 90 minutes, the match goes to extra time — two additional 15-minute periods (30 minutes total). If still level after extra time, the match is decided by a penalty shootout. Some competitions previously used the 'golden goal' rule (first goal in extra time wins), but this is no longer used in major competitions.",
+      "options": [
+        {"text": "Extra time — two 15-minute periods (30 minutes total)", "is_correct": true},
+        {"text": "An immediate penalty shootout with no extra time", "is_correct": false},
+        {"text": "A coin toss to decide the winner", "is_correct": false},
+        {"text": "A replay match at the opposition's ground", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.20,
+        "concept_tags": ["format", "extra_time", "knockout", "shootout"],
+        "average_time_seconds": 15.0
+      }
+    }
+  ]
+}
