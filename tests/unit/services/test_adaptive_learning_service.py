@@ -834,7 +834,7 @@ class TestNoBlackoutRepetition:
              patch.object(svc, "_get_candidate_questions", return_value=candidates), \
              patch.object(svc, "_select_adaptive_question", return_value=selected) as mock_sel, \
              patch.object(svc, "_get_session_time_remaining", return_value=120):
-            result = svc.get_next_question(user_id=1, session_id=1)
+            result = svc.get_next_question(user_id=42, session_id=1)
         return result, mock_sel
 
     def test_wrong_answer_question_remains_in_pool(self):
@@ -894,7 +894,7 @@ class TestNoBlackoutRepetition:
              patch.object(svc, "_adjust_target_difficulty", return_value=0.5), \
              patch.object(svc, "_calculate_performance_trend", return_value=0.0):
             result = svc.record_answer(
-                user_id=1, session_id=1, question_id=99,
+                user_id=42, session_id=1, question_id=99,
                 is_correct=False, time_spent_seconds=10.0
             )
         assert result["score_delta"] == -1
@@ -911,7 +911,7 @@ class TestNoBlackoutRepetition:
              patch.object(svc, "_get_candidate_questions", return_value=[q]), \
              patch.object(svc, "_select_adaptive_question", return_value=q), \
              patch.object(svc, "_get_session_time_remaining", return_value=120):
-            svc.get_next_question(user_id=1, session_id=1)
+            svc.get_next_question(user_id=42, session_id=1)
         # Verify db.query was NOT called with UserQuestionPerformance as the sole arg
         blackout_calls = [
             call for call in db.query.call_args_list
