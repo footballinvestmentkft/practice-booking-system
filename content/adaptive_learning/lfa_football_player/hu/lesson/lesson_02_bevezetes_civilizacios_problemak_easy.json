@@ -1,0 +1,254 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "quiz_title": "AL — Bevezetés - Civilizációs fejlődés és életmód [HU]",
+  "topic": "A válasz a civilizációs fejlődés életmódra ható problémáira",
+  "module": "Bevezetés",
+  "questions": [
+    {
+      "text": "Mi jellemzi leginkább a civilizációs fejlődés hatását a mindennapi fizikai aktivitásra?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A technikai fejlődés következtében az emberi munka jelentős része gépesítetté vált, így a mindennapi fizikai aktivitás csökkent.",
+      "options": [
+        {"text": "A fizikai aktivitás folyamatos növekedése", "is_correct": false},
+        {"text": "A fizikai aktivitás jelentős csökkenése", "is_correct": true},
+        {"text": "A fizikai aktivitás változatlansága", "is_correct": false},
+        {"text": "A fizikai aktivitás kizárólag sportban jelenik meg", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "concept_tags": ["civilizacios_fejlodes", "mozgascsokkenes"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "A modern technikai fejlődés növelte a mindennapi fizikai terhelést.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis, mert a technikai fejlődés csökkentette a fizikai munkavégzés szükségességét.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.28,
+        "cognitive_load": 0.22,
+        "concept_tags": ["technikai_fejlodes", "mozgascsokkenes"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Mi vezetett a mozgásszegény életmód kialakulásához?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A gépesítés és az ülő jellegű munkák elterjedése csökkentette a napi fizikai aktivitást.",
+      "options": [
+        {"text": "A sportolási lehetőségek növekedése", "is_correct": false},
+        {"text": "A gépesítés és ülő munkavégzés elterjedése", "is_correct": true},
+        {"text": "A természetközeli életmód erősödése", "is_correct": false},
+        {"text": "A fizikai munka növekedése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.30,
+        "concept_tags": ["mozgaszegeny_eletmod", "gepesites"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "A mozgásszegény életmód hosszú távon egészségügyi problémákhoz vezethet.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz, mert a fizikai aktivitás hiánya növeli a krónikus betegségek kockázatát.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.20,
+        "concept_tags": ["egeszseg", "mozgaszegeny_eletmod"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Milyen problémára ad választ a fittség irányzata?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A fittség irányzata a mozgásszegény életmód negatív hatásaira adott válasz.",
+      "options": [
+        {"text": "A sportversenyek hiányára", "is_correct": false},
+        {"text": "A mozgásszegény életmód következményeire", "is_correct": true},
+        {"text": "A gazdasági fejlődés lassulására", "is_correct": false},
+        {"text": "A társadalmi egyenlőtlenségekre", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.38,
+        "cognitive_load": 0.32,
+        "concept_tags": ["fittseg", "valaszreakcio"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Melyik állítás írja le legjobban a rekreáció szerepét a modern társadalomban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A rekreáció tudatos mozgást jelent, amely segít fenntartani az egészséget a mozgásszegény életmód mellett.",
+      "options": [
+        {"text": "Csak szórakozás", "is_correct": false},
+        {"text": "Tudatos egészségmegőrző tevékenység", "is_correct": true},
+        {"text": "Versenysport egyik formája", "is_correct": false},
+        {"text": "Kizárólag gyermekek számára fontos", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.36,
+        "concept_tags": ["rekreacio", "egeszsegmegorzes"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "A modern ember számára a mozgás már nem automatikus része a mindennapoknak.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz, mert a fizikai aktivitás jelentős része kiesett a napi rutinból.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.27,
+        "cognitive_load": 0.21,
+        "concept_tags": ["modern_eletmod", "mozgas"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Miért vált szükségessé a tudatos mozgás a modern életmódban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Mert a mindennapi életből hiányzik a természetes fizikai terhelés.",
+      "options": [
+        {"text": "Mert több a szabadidő", "is_correct": false},
+        {"text": "Mert hiányzik a természetes mozgás", "is_correct": true},
+        {"text": "Mert kötelezővé tették", "is_correct": false},
+        {"text": "Mert csökkent a sport jelentősége", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.34,
+        "concept_tags": ["tudatos_mozgas", "modern_eletmod"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "A civilizációs fejlődés egyik következménye a fizikai aktivitás automatizált pótlása.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis, mert a mozgást nem automatikusan pótoljuk, hanem tudatosan kell beépíteni.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.38,
+        "concept_tags": ["civilizacios_fejlodes", "mozgaspotlas"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Melyik következmény NEM jellemző a mozgásszegény életmódra?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A mozgásszegény életmód nem növeli, hanem csökkenti a fizikai teljesítőképességet.",
+      "options": [
+        {"text": "Egészségromlás", "is_correct": false},
+        {"text": "Fizikai teljesítőképesség növekedése", "is_correct": true},
+        {"text": "Krónikus betegségek kockázata", "is_correct": false},
+        {"text": "Mozgáshiány", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.42,
+        "concept_tags": ["mozgaszegeny_eletmod", "egeszseg"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Mi a modern életmód egyik alapvető ellentmondása?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A modern élet csökkenti a fizikai aktivitást, miközben növeli annak szükségességét.",
+      "options": [
+        {"text": "Túl sok mozgás", "is_correct": false},
+        {"text": "Kevés mozgás, de nagyobb szükség lenne rá", "is_correct": true},
+        {"text": "Sport teljes hiánya", "is_correct": false},
+        {"text": "Folyamatos fizikai terhelés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.45,
+        "concept_tags": ["ellentmondas", "modern_eletmod"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "A rekreációs mozgásformák célja a teljesítmény maximalizálása.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis, mert a rekreáció célja elsősorban az egészségmegőrzés és a regeneráció.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.37,
+        "cognitive_load": 0.30,
+        "concept_tags": ["rekreacio", "cel"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Melyik tényező járult hozzá leginkább a fizikai aktivitás csökkenéséhez?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A technikai fejlődés és gépesítés váltotta ki a legnagyobb változást.",
+      "options": [
+        {"text": "Kulturális hagyományok", "is_correct": false},
+        {"text": "Technikai fejlődés és gépesítés", "is_correct": true},
+        {"text": "Sportesemények száma", "is_correct": false},
+        {"text": "Iskolai testnevelés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.33,
+        "cognitive_load": 0.27,
+        "concept_tags": ["technikai_fejlodes", "gepesites"],
+        "average_time_seconds": 20.0
+      }
+    },
+    {
+      "text": "Mi a fittség fogalmának egyik legfontosabb szerepe a modern társadalomban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A fittség segít ellensúlyozni a mozgásszegény életmód negatív hatásait.",
+      "options": [
+        {"text": "Versenysport fejlesztése", "is_correct": false},
+        {"text": "Mozgáshiány kompenzálása", "is_correct": true},
+        {"text": "Gazdasági növekedés", "is_correct": false},
+        {"text": "Technikai fejlődés gyorsítása", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.41,
+        "cognitive_load": 0.34,
+        "concept_tags": ["fittseg", "kompenzacio"],
+        "average_time_seconds": 20.0
+      }
+    }
+  ]
+}

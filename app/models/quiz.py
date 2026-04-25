@@ -39,6 +39,7 @@ class Quiz(Base):
     time_limit_minutes = Column(Integer, nullable=False, default=15)  # időkorlát percekben
     xp_reward = Column(Integer, nullable=False, default=50)  # XP jutalom sikeres kitöltésért
     passing_score = Column(Float, nullable=False, default=70.0)  # minimum pont százalékban
+    language = Column(String(10), nullable=False, default='en')
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -180,6 +181,9 @@ class AdaptiveLearningSession(Base):
     questions_correct = Column(Integer, default=0)
     xp_earned = Column(Integer, default=0)
     
+    # Session language (ensures HU and EN questions never mix)
+    language = Column(String(10), nullable=False, default='en')
+
     # Adaptive algorithm data
     target_difficulty = Column(Float, default=0.5)  # 0.0-1.0
     performance_trend = Column(Float, default=0.0)  # -1.0 to 1.0

@@ -16,12 +16,18 @@ class AdaptiveLearningService:
     
     def __init__(self, db: Session):
         self.db = db
-    def start_adaptive_session(self, user_id: int, category: QuizCategory, 
-                               session_duration_seconds: int = 180) -> AdaptiveLearningSession:
+    def start_adaptive_session(
+        self,
+        user_id: int,
+        category: QuizCategory,
+        session_duration_seconds: int = 180,
+        language: str = "hu",
+    ) -> AdaptiveLearningSession:
         """Új adaptív tanulási session indítása időkorláttal"""
         session = AdaptiveLearningSession(
             user_id=user_id,
             category=category,
+            language=language,
             target_difficulty=self._calculate_target_difficulty(user_id, category),
             performance_trend=0.0,
             session_time_limit_seconds=session_duration_seconds,
@@ -47,7 +53,9 @@ class AdaptiveLearningService:
         performance_data = self._get_user_performance_data(user_id, session.category)
         
         # Select question based on adaptive algorithm
-        candidate_questions = self._get_candidate_questions(session.category, session.target_difficulty)
+        candidate_questions = self._get_candidate_questions(
+            session.category, session.target_difficulty, language=session.language
+        )
         
         if not candidate_questions:
             return None
@@ -233,17 +241,23 @@ class AdaptiveLearningService:
                              p.next_review_at <= datetime.now(timezone.utc)]
         }
     
-    def _get_candidate_questions(self, category: QuizCategory, target_difficulty: float) -> List[QuizQuestion]:
-        """Jelölt kérdések kiválasztása kategória és nehézség alapján"""
+    def _get_candidate_questions(
+        self,
+        category: QuizCategory,
+        target_difficulty: float,
+        language: str = "hu",
+    ) -> List[QuizQuestion]:
+        """Jelölt kérdések kiválasztása kategória, nehézség és nyelv alapján."""
         difficulty_range = 0.2
 
-        # Try difficulty-filtered query using available metadata (LEFT JOIN — metadata optional)
+        # Try difficulty-filtered query (LEFT JOIN — metadata optional)
         questions = (
             self.db.query(QuizQuestion)
             .join(Quiz)
             .outerjoin(QuestionMetadata, QuestionMetadata.question_id == QuizQuestion.id)
             .filter(
                 Quiz.category == category,
+                Quiz.language == language,
                 and_(
                     QuestionMetadata.estimated_difficulty >= target_difficulty - difficulty_range,
                     QuestionMetadata.estimated_difficulty <= target_difficulty + difficulty_range,
@@ -252,12 +266,12 @@ class AdaptiveLearningService:
             .all()
         )
 
-        # Fall back to all questions in the category (no metadata required)
+        # Fall back to all questions in the category + language (no metadata required)
         if not questions:
             questions = (
                 self.db.query(QuizQuestion)
                 .join(Quiz)
-                .filter(Quiz.category == category)
+                .filter(Quiz.category == category, Quiz.language == language)
                 .all()
             )
 
