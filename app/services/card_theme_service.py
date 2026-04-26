@@ -149,8 +149,9 @@ def unlock_theme(db, user, user_license, theme_id: str) -> None:
         idempotency_key=f"theme_unlock_{user.id}_{theme_id}",
     )
 
-    # Update unlocked themes list (same outer transaction)
+    # Update unlocked themes list and auto-apply (same outer transaction = one commit)
     unlocked.append(theme_id)
     user_license.unlocked_card_themes = unlocked
+    user_license.card_theme = theme_id
 
     db.commit()

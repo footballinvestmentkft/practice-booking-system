@@ -155,6 +155,9 @@ def unlock_variant(db, user, user_license, variant_id: str) -> None:
         idempotency_key=f"variant_unlock_{user.id}_{variant_id}",
     )
 
+    # Update unlocked variants list and auto-apply (same outer transaction = one commit)
     unlocked.append(variant_id)
     user_license.unlocked_card_variants = unlocked
+    user_license.card_variant = variant_id
+
     db.commit()

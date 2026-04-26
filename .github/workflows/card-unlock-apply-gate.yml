@@ -1,0 +1,97 @@
+name: Card Unlock+Apply Gate
+
+# ── Purpose ────────────────────────────────────────────────────────────────────
+# Validates the card theme/variant unlock-and-auto-apply flow.
+#
+# Blocks merge if:
+#   - unlock_theme does NOT set card_theme in the same commit      (split-brain)
+#   - unlock_variant does NOT set card_variant in the same commit  (split-brain)
+#   - Already-unlocked items re-charge the user                    (idempotency)
+#   - Free themes/variants trigger CreditService.deduct()          (overcharge)
+#   - apply_theme / apply_variant independent flows regress        (standalone)
+#
+# No DB required — all 17 tests use MagicMock.
+# Runtime: < 15 s on cold runner.
+# ──────────────────────────────────────────────────────────────────────────────
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'app/services/card_theme_service.py'
+      - 'app/services/card_variant_service.py'
+      - 'app/services/credit_service.py'
+      - 'app/api/web_routes/dashboard.py'
+      - 'tests/unit/test_card_unlock_apply.py'
+      - '.github/workflows/card-unlock-apply-gate.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'app/services/card_theme_service.py'
+      - 'app/services/card_variant_service.py'
+      - 'app/services/credit_service.py'
+      - 'app/api/web_routes/dashboard.py'
+      - 'tests/unit/test_card_unlock_apply.py'
+      - '.github/workflows/card-unlock-apply-gate.yml'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual trigger'
+        required: false
+        default: 'manual verification'
+
+jobs:
+  card-unlock-apply:
+    name: Card Unlock+Apply (unlock→active, idempotent, no split-brain)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write minimal .env (no DB needed)
+        run: |
+          cat > .env <<'EOF'
+          DATABASE_URL=postgresql://ci:ci@localhost:5432/ci_db
+          SECRET_KEY=ci-card-unlock-gate-key
+          ENVIRONMENT=test
+          TESTING=true
+          DEBUG=false
+          ENABLE_RATE_LIMITING=false
+          EOF
+
+      - name: Run card unlock+apply tests
+        run: |
+          PYTHONPATH=. pytest tests/unit/test_card_unlock_apply.py \
+            -v --tb=short -ra \
+            --durations=5
+
+      - name: Gate summary
+        if: always()
+        run: |
+          echo "══════════════════════════════════════════════════════"
+          echo " Card Unlock+Apply Gate — Summary"
+          echo "══════════════════════════════════════════════════════"
+          echo " TestUnlockThemeAutoApply  — unlock sets card_theme in same commit"
+          echo " TestUnlockVariantAutoApply — unlock sets card_variant in same commit"
+          echo " TestApplyStandalone        — apply works independently post-unlock"
+          echo ""
+          echo " Key invariants:"
+          echo "   unlock_theme:   unlocked_list + card_theme SET in ONE db.commit()"
+          echo "   unlock_variant: unlocked_list + card_variant SET in ONE db.commit()"
+          echo "   Free items: CreditService.deduct() never called"
+          echo "   Idempotent: already-unlocked items skip charge + commit"
+          echo ""
+          echo " No DB required. All 17 tests use MagicMock."
+          echo " Add regression tests here for any future card-unlock regressions."
+          echo "══════════════════════════════════════════════════════"

@@ -9,13 +9,22 @@ Business Invariant: One credit transaction per idempotency_key
 
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import text
 from typing import Optional, Literal
 from datetime import datetime
 import logging
 
 from ..models.credit_transaction import CreditTransaction
+from ..models.user import User
 
 logger = logging.getLogger(__name__)
+
+
+class InsufficientCreditsError(Exception):
+    def __init__(self, required: int, available: int):
+        self.required = required
+        self.available = available
+        super().__init__(f"Insufficient credits: required {required}, available {available}")
 
 
 class CreditService:
@@ -132,6 +141,54 @@ class CreditService:
                 # Other integrity error - re-raise
                 logger.error(f"❌ IntegrityError creating credit transaction: {e}")
                 raise
+
+    def deduct(
+        self,
+        user: User,
+        amount: int,
+        transaction_type: str,
+        description: str,
+        idempotency_key: str,
+    ) -> CreditTransaction:
+        """
+        Atomically deduct credits from a user's balance.
+
+        Uses a SAVEPOINT so the caller owns the outer transaction (no commit here).
+
+        Raises:
+            InsufficientCreditsError: if user has fewer credits than amount
+        """
+        with self.db.begin_nested():
+            result = self.db.execute(
+                text(
+                    "UPDATE users SET credit_balance = credit_balance - :amount "
+                    "WHERE id = :uid AND credit_balance >= :amount "
+                    "RETURNING credit_balance"
+                ),
+                {"amount": amount, "uid": user.id},
+            ).fetchone()
+
+            if result is None:
+                self.db.refresh(user)
+                raise InsufficientCreditsError(required=amount, available=user.credit_balance)
+
+            new_balance = result[0]
+            transaction, _ = self.create_transaction(
+                user_id=user.id,
+                user_license_id=None,
+                transaction_type=transaction_type,
+                amount=-amount,
+                balance_after=new_balance,
+                description=description,
+                idempotency_key=idempotency_key,
+            )
+
+        user.credit_balance = new_balance
+        logger.info(
+            f"💳 Deducted {amount} credits from user {user.id}: "
+            f"balance {new_balance + amount} → {new_balance} ({transaction_type})"
+        )
+        return transaction
 
     @staticmethod
     def generate_idempotency_key(
