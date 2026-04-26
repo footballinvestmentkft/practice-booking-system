@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzésmódszerek",
+  "topic": "A gyorsaság fejlesztésének módszerei",
+  "quiz_title": "AL — Edzésmódszerek - A gyorsaság fejlesztésének módszerei [HU]",
+  "description": "A gyorsaság típusai és fejlesztésének alapelvei, módszerei.",
+  "questions": [
+    {
+      "text": "Mit nevezünk gyorsaságnak?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A gyorsaság a mozgás minél rövidebb idő alatt történő végrehajtásának képessége.",
+      "options": [
+        {"text": "Hosszú idejű mozgás", "is_correct": false},
+        {"text": "Gyors végrehajtás képessége", "is_correct": true},
+        {"text": "Erőkifejtés képessége", "is_correct": false},
+        {"text": "Pihenési képesség", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["gyorsasag"]
+      }
+    },
+    {
+      "text": "Melyik tartozik a gyorsaság típusai közé?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A reakciógyorsaság a gyorsaság egyik alapvető típusa.",
+      "options": [
+        {"text": "Állóképesség", "is_correct": false},
+        {"text": "Reakciógyorsaság", "is_correct": true},
+        {"text": "Hajlékonyság", "is_correct": false},
+        {"text": "Erő", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["gyorsasag_tipusok"]
+      }
+    },
+    {
+      "text": "Mi jellemzi a gyorsasági edzést?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Rövid ideig tartó maximális intenzitás.",
+      "options": [
+        {"text": "Hosszú, alacsony intenzitás", "is_correct": false},
+        {"text": "Rövid, maximális intenzitás", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Folyamatos terhelés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["gyorsasagi_edzes"]
+      }
+    },
+    {
+      "text": "Miért fontos a pihenőidő gyorsasági edzésnél?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A gyorsaság csak kipihent állapotban fejleszthető hatékonyan.",
+      "options": [
+        {"text": "Nincs jelentősége", "is_correct": false},
+        {"text": "Biztosítja a teljes regenerációt", "is_correct": true},
+        {"text": "Csak időkitöltés", "is_correct": false},
+        {"text": "Csökkenti a terhelést", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["pihenoido"]
+      }
+    },
+    {
+      "text": "A gyorsaság fejlesztése szorosan kapcsolódik az idegrendszerhez.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert az idegrendszer irányítja a gyors reakciókat.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["idegrendszer"]
+      }
+    },
+    {
+      "text": "Mi befolyásolja a gyorsasági teljesítményt?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A technika jelentősen befolyásolja a végrehajtás sebességét.",
+      "options": [
+        {"text": "Csak erő", "is_correct": false},
+        {"text": "Technika", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Csak időtartam", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["technika"]
+      }
+    },
+    {
+      "text": "Mi történik fáradt állapotban a gyorsasággal?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A fáradás rontja a gyorsasági teljesítményt.",
+      "options": [
+        {"text": "Javul", "is_correct": false},
+        {"text": "Romlik", "is_correct": true},
+        {"text": "Nem változik", "is_correct": false},
+        {"text": "Maximális lesz", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["faradas"]
+      }
+    },
+    {
+      "text": "A gyorsasági edzés gyakran alacsony intenzitású.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert maximális intenzitás szükséges.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["intenzitas"]
+      }
+    },
+    {
+      "text": "Milyen gyakorlatok jellemzőek gyorsaságfejlesztésre?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Rövid sprint és reakciógyakorlatok.",
+      "options": [
+        {"text": "Hosszú futás", "is_correct": false},
+        {"text": "Rövid sprint", "is_correct": true},
+        {"text": "Nyújtás", "is_correct": false},
+        {"text": "Meditáció", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["gyakorlatok"]
+      }
+    },
+    {
+      "text": "A gyorsaság fejlesztése más képességekkel kombinálható.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert komplex edzés szükséges.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["kombinalas"]
+      }
+    }
+  ]
+}

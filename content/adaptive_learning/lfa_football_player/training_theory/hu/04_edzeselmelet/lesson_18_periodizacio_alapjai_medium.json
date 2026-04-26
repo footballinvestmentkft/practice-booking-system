@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzéselmélet",
+  "topic": "A periodizáció alapjai",
+  "quiz_title": "AL — Edzéselmélet - A periodizáció alapjai [HU]",
+  "description": "Az edzésidőszakok felosztása és a periodizáció szerepe a teljesítményfejlesztésben.",
+  "questions": [
+    {
+      "text": "Mit nevezünk periodizációnak?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A periodizáció az edzés hosszú távú tervezése különböző időszakokra bontva.",
+      "options": [
+        {"text": "Egyetlen edzés megtervezése", "is_correct": false},
+        {"text": "Edzésidőszakok rendszerbe szervezése", "is_correct": true},
+        {"text": "Csak pihenőidő beosztása", "is_correct": false},
+        {"text": "Verseny lebonyolítása", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["periodizacio"]
+      }
+    },
+    {
+      "text": "Mi a makrociklus?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A makrociklus a hosszú távú, általában éves edzéstervezési egység.",
+      "options": [
+        {"text": "Napi edzés", "is_correct": false},
+        {"text": "Hosszú távú edzési ciklus", "is_correct": true},
+        {"text": "Heti edzésterv", "is_correct": false},
+        {"text": "Egy gyakorlat", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["makrociklus"]
+      }
+    },
+    {
+      "text": "Mi a mezociklus?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A mezociklus több hetes edzésblokkokból áll.",
+      "options": [
+        {"text": "Egy nap", "is_correct": false},
+        {"text": "Több hetes edzési egység", "is_correct": true},
+        {"text": "Egy év", "is_correct": false},
+        {"text": "Egy edzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["mezociklus"]
+      }
+    },
+    {
+      "text": "Mi a mikrociklus?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A mikrociklus rövid, általában heti edzési egység.",
+      "options": [
+        {"text": "Éves terv", "is_correct": false},
+        {"text": "Heti edzésciklus", "is_correct": true},
+        {"text": "Egy hónap", "is_correct": false},
+        {"text": "Versenyidőszak", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 42,
+        "concept_tags": ["mikrociklus"]
+      }
+    },
+    {
+      "text": "Mi a felkészülési időszak célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az alapok fejlesztése és a forma kialakítása.",
+      "options": [
+        {"text": "Pihenés", "is_correct": false},
+        {"text": "Alapozás és fejlesztés", "is_correct": true},
+        {"text": "Versenyzés", "is_correct": false},
+        {"text": "Regeneráció", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 42,
+        "concept_tags": ["felkeszulesi_idoszak"]
+      }
+    },
+    {
+      "text": "Mi a versenyidőszak fő célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A csúcsteljesítmény elérése és fenntartása.",
+      "options": [
+        {"text": "Pihenés", "is_correct": false},
+        {"text": "Csúcsteljesítmény", "is_correct": true},
+        {"text": "Új alapok kialakítása", "is_correct": false},
+        {"text": "Terhelés növelése folyamatosan", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["versenyidoszak"]
+      }
+    },
+    {
+      "text": "Mi az átmeneti időszak szerepe?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A regeneráció és feltöltődés biztosítása.",
+      "options": [
+        {"text": "Maximális terhelés", "is_correct": false},
+        {"text": "Pihenés és regeneráció", "is_correct": true},
+        {"text": "Versenyzés", "is_correct": false},
+        {"text": "Technikai tanulás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 42,
+        "concept_tags": ["atmeneti_idoszak"]
+      }
+    },
+    {
+      "text": "A periodizáció célja a csúcsteljesítmény időzítése.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, a megfelelő időben kell elérni a legjobb formát.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 25,
+        "concept_tags": ["periodizacio"]
+      }
+    },
+    {
+      "text": "Mit jelent a terhelés hullámzása?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A terhelés tudatos változtatása az időszakok során.",
+      "options": [
+        {"text": "Állandó terhelés", "is_correct": false},
+        {"text": "Változó terhelés", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Csak intenzitás növelés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["terheles_hullamzas"]
+      }
+    },
+    {
+      "text": "A periodizáció segít elkerülni a túlterhelést.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert strukturáltan osztja el a terhelést.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 25,
+        "concept_tags": ["periodizacio"]
+      }
+    }
+  ]
+}

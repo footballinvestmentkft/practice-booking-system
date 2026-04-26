@@ -1,0 +1,277 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Fundamentals of Training Theory",
+  "topic": "Classification of Motor Abilities",
+  "quiz_title": "AL — Fundamentals of Training Theory - Motor Abilities [EN]",
+  "description": "The classification and basic concepts of motor abilities: strength, endurance, speed, flexibility, and coordination.",
+  "questions": [
+    {
+      "text": "What are motor abilities?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Motor abilities are the physical and coordinative capacities that underlie movement performance.",
+      "options": [
+        {"text": "Mental abilities only", "is_correct": false},
+        {"text": "Abilities that determine movement performance", "is_correct": true},
+        {"text": "They appear only in athletes", "is_correct": false},
+        {"text": "Muscular strength only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "average_time_seconds": 25,
+        "concept_tags": ["motor_abilities"]
+      }
+    },
+    {
+      "text": "Which of the following belongs to the basic motor abilities?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Strength is one of the fundamental motor abilities.",
+      "options": [
+        {"text": "Motivation", "is_correct": false},
+        {"text": "Strength", "is_correct": true},
+        {"text": "Luck", "is_correct": false},
+        {"text": "Communication", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.28,
+        "cognitive_load": 0.23,
+        "average_time_seconds": 25,
+        "concept_tags": ["motor_abilities"]
+      }
+    },
+    {
+      "text": "What does strength mean as a motor ability?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Strength is the ability of the muscles to produce force.",
+      "options": [
+        {"text": "The ability to move quickly", "is_correct": false},
+        {"text": "The ability of muscles to produce force", "is_correct": true},
+        {"text": "Sustained movement over time", "is_correct": false},
+        {"text": "Accuracy of movement", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.32,
+        "cognitive_load": 0.27,
+        "average_time_seconds": 25,
+        "concept_tags": ["strength"]
+      }
+    },
+    {
+      "text": "What does endurance mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Endurance is the ability to sustain prolonged physical load.",
+      "options": [
+        {"text": "Brief force exertion", "is_correct": false},
+        {"text": "The ability to sustain prolonged load", "is_correct": true},
+        {"text": "Accuracy of movement", "is_correct": false},
+        {"text": "Fast reaction", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "average_time_seconds": 25,
+        "concept_tags": ["endurance"]
+      }
+    },
+    {
+      "text": "What does speed mean as a motor ability?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Speed is the ability to execute movements rapidly.",
+      "options": [
+        {"text": "Sustained long-duration performance", "is_correct": false},
+        {"text": "Rapid execution of movements", "is_correct": true},
+        {"text": "Exertion of force", "is_correct": false},
+        {"text": "Extensibility of muscles", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "average_time_seconds": 25,
+        "concept_tags": ["speed"]
+      }
+    },
+    {
+      "text": "What does flexibility mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Flexibility refers to the range of motion available at the joints.",
+      "options": [
+        {"text": "Increasing strength", "is_correct": false},
+        {"text": "Joint range of motion", "is_correct": true},
+        {"text": "Increasing speed", "is_correct": false},
+        {"text": "Increasing endurance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.28,
+        "cognitive_load": 0.23,
+        "average_time_seconds": 25,
+        "concept_tags": ["flexibility"]
+      }
+    },
+    {
+      "text": "What does coordination mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Coordination is the ability to harmonise movements.",
+      "options": [
+        {"text": "Muscular strength", "is_correct": false},
+        {"text": "Harmonisation of movements", "is_correct": true},
+        {"text": "Speed", "is_correct": false},
+        {"text": "Endurance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "average_time_seconds": 25,
+        "concept_tags": ["coordination"]
+      }
+    },
+    {
+      "text": "Motor abilities function independently of one another.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False, because they interact with one another.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.30,
+        "average_time_seconds": 20,
+        "concept_tags": ["motor_interaction"]
+      }
+    },
+    {
+      "text": "Which ability most supports precise movement execution?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Coordination ensures accurate and harmonised movement.",
+      "options": [
+        {"text": "Strength", "is_correct": false},
+        {"text": "Coordination", "is_correct": true},
+        {"text": "Endurance", "is_correct": false},
+        {"text": "Flexibility", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.36,
+        "cognitive_load": 0.30,
+        "average_time_seconds": 30,
+        "concept_tags": ["coordination"]
+      }
+    },
+    {
+      "text": "Which ability is most important for sustained sporting performance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Endurance enables the body to withstand prolonged physical load.",
+      "options": [
+        {"text": "Speed", "is_correct": false},
+        {"text": "Endurance", "is_correct": true},
+        {"text": "Coordination", "is_correct": false},
+        {"text": "Flexibility", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.32,
+        "cognitive_load": 0.27,
+        "average_time_seconds": 25,
+        "concept_tags": ["endurance"]
+      }
+    },
+    {
+      "text": "Developing strength does not influence other motor abilities.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False, because the motor abilities interact with one another.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.34,
+        "average_time_seconds": 20,
+        "concept_tags": ["strength", "interaction"]
+      }
+    },
+    {
+      "text": "Which ability most contributes to increasing range of motion?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Flexibility determines the range of motion available at the joints.",
+      "options": [
+        {"text": "Strength", "is_correct": false},
+        {"text": "Flexibility", "is_correct": true},
+        {"text": "Speed", "is_correct": false},
+        {"text": "Coordination", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "average_time_seconds": 25,
+        "concept_tags": ["flexibility"]
+      }
+    },
+    {
+      "text": "Which ability is most important for explosive movements?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Both speed and strength matter, but speed is the key factor in explosive movements.",
+      "options": [
+        {"text": "Endurance", "is_correct": false},
+        {"text": "Speed", "is_correct": true},
+        {"text": "Flexibility", "is_correct": false},
+        {"text": "Coordination", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.35,
+        "average_time_seconds": 35,
+        "concept_tags": ["speed"]
+      }
+    },
+    {
+      "text": "What is the goal of developing motor abilities?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "To improve movement performance and increase sport-specific applicability.",
+      "options": [
+        {"text": "To provide rest", "is_correct": false},
+        {"text": "To develop performance", "is_correct": true},
+        {"text": "To reduce movement", "is_correct": false},
+        {"text": "To stop competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.34,
+        "cognitive_load": 0.28,
+        "average_time_seconds": 28,
+        "concept_tags": ["motor_abilities"]
+      }
+    },
+    {
+      "text": "The development of motor abilities is identical across all sports.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False, because sport-specific differences exist.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.38,
+        "cognitive_load": 0.32,
+        "average_time_seconds": 20,
+        "concept_tags": ["specificity"]
+      }
+    }
+  ]
+}

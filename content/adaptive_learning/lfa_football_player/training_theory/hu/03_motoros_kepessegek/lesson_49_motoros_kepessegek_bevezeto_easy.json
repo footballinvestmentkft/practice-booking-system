@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Motoros képességek",
+  "topic": "Motoros képességek — Bevezető",
+  "quiz_title": "AL — Motoros képességek - Bevezető [HU]",
+  "description": "A motoros képességek alapfogalmainak áttekintése: erő, állóképesség, gyorsaság, hajlékonyság és koordináció.",
+  "questions": [
+    {
+      "text": "Mi a motoros képesség?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A motoros képesség az emberi test mozgásban megnyilvánuló testi tulajdonsága, amely edzéssel fejleszthető.",
+      "options": [
+        {"text": "A szervezet pihenési állapota", "is_correct": false},
+        {"text": "A mozgásban megnyilvánuló testi tulajdonság", "is_correct": true},
+        {"text": "Kizárólag genetikai adottság", "is_correct": false},
+        {"text": "Az edzésterv neve", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["motoros_kepesseg", "definicio"]
+      }
+    },
+    {
+      "text": "Melyik motoros képesség biztosítja a hosszan tartó munkavégzést?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az állóképesség teszi lehetővé, hogy a sportoló tartósan, a fáradással szemben ellenállva teljesítsen.",
+      "options": [
+        {"text": "Erő", "is_correct": false},
+        {"text": "Állóképesség", "is_correct": true},
+        {"text": "Gyorsaság", "is_correct": false},
+        {"text": "Hajlékonyság", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["allokepesseg"]
+      }
+    },
+    {
+      "text": "Mi az erő fő szerepe a mozgásban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az erő az izom azon képessége, hogy ellenállást győzzön le vagy fejtszen ki.",
+      "options": [
+        {"text": "A mozgások összehangolása", "is_correct": false},
+        {"text": "Az ellenállás legyőzése izomerővel", "is_correct": true},
+        {"text": "A mozgásamplitúdó növelése", "is_correct": false},
+        {"text": "A mozgás sebességének csökkentése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 35,
+        "concept_tags": ["ero"]
+      }
+    },
+    {
+      "text": "A hajlékonyság az ízületi mozgásamplitúdóval függ össze.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. A hajlékonyság az ízületek és izmok mozgásterjedelmének képessége.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["hajlekonysag"]
+      }
+    },
+    {
+      "text": "Mi a gyorsaság motoros képességként?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A gyorsaság az a képesség, amellyel a sportoló mozgásait a lehető legrövidebb idő alatt hajtja végre.",
+      "options": [
+        {"text": "A hosszú ideig tartó erőkifejtés", "is_correct": false},
+        {"text": "A mozgás elvégzésének sebessége", "is_correct": true},
+        {"text": "Az ízületek hajlíthatósága", "is_correct": false},
+        {"text": "A mozgások koordináltsága", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["gyorsasag"]
+      }
+    },
+    {
+      "text": "Melyik képesség felel a mozgások összehangolásáért?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A koordináció biztosítja, hogy a különböző izomcsoportok összehangoltan, a kívánt mozgásmintának megfelelően működjenek.",
+      "options": [
+        {"text": "Erő", "is_correct": false},
+        {"text": "Állóképesség", "is_correct": false},
+        {"text": "Koordináció", "is_correct": true},
+        {"text": "Gyorsaság", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["koordinacio"]
+      }
+    },
+    {
+      "text": "A motoros képességek edzéssel fejleszthetők.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. Bár az öröklött adottságok szerepet játszanak, a motoros képességek rendszeres edzéssel szignifikánsan javíthatók.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["fejleszthetoseg"]
+      }
+    },
+    {
+      "text": "Melyik motoros képesség jellemzi leginkább a labdarúgóban a sprint elvégzésének képességét?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A sprint maximális sebességű futás, amely elsősorban a gyorsaság képességét veszi igénybe.",
+      "options": [
+        {"text": "Hajlékonyság", "is_correct": false},
+        {"text": "Állóképesség", "is_correct": false},
+        {"text": "Gyorsaság", "is_correct": true},
+        {"text": "Koordináció", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 38,
+        "concept_tags": ["gyorsasag", "labdarugas"]
+      }
+    },
+    {
+      "text": "Az állóképesség és az erő teljesen egymástól független képességek.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis. A motoros képességek összefüggnek egymással; például az erő alapozza az erő-állóképességet.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.22,
+        "average_time_seconds": 28,
+        "concept_tags": ["kepessegek_kapcsolata"]
+      }
+    },
+    {
+      "text": "Miért fontos a hajlékonyság a sportolók számára?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A megfelelő hajlékonyság csökkenti a sérülés kockázatát és lehetővé teszi a hatékony, teljes amplitúdójú mozgásvégrehajtást.",
+      "options": [
+        {"text": "Növeli a sprint sebességét közvetlenül", "is_correct": false},
+        {"text": "Csökkenti a sérüléskockázatot és növeli a mozgásamplitúdót", "is_correct": true},
+        {"text": "Helyettesíti az erőfejlesztést", "is_correct": false},
+        {"text": "Javítja az anaerob állóképességet", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.22,
+        "average_time_seconds": 38,
+        "concept_tags": ["hajlekonysag", "serulesmegelozes"]
+      }
+    }
+  ]
+}

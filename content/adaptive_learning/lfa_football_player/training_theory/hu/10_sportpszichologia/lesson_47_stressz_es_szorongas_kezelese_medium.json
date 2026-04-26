@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Sportpszichológia",
+  "topic": "Stressz és szorongás kezelése",
+  "quiz_title": "AL — Sportpszichológia - Stressz és szorongás kezelése [HU]",
+  "description": "A stressz és szorongás hatása a teljesítményre és kezelési lehetőségei.",
+  "questions": [
+    {
+      "text": "Mit nevezünk stressznek?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A stressz a szervezet válasza a kihívásokra.",
+      "options": [
+        {"text": "Pihenési állapot", "is_correct": false},
+        {"text": "Válasz a kihívásokra", "is_correct": true},
+        {"text": "Edzésprogram", "is_correct": false},
+        {"text": "Versenyforma", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["stressz"]
+      }
+    },
+    {
+      "text": "Melyik a pozitív stressz példája?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A pozitív stressz serkenti a teljesítményt.",
+      "options": [
+        {"text": "Szorongás", "is_correct": false},
+        {"text": "Motiváló izgalom", "is_correct": true},
+        {"text": "Félelem", "is_correct": false},
+        {"text": "Kimerültség", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["pozitiv_stressz"]
+      }
+    },
+    {
+      "text": "Mit nevezünk szorongásnak?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A szorongás a túlzott stressz egyik formája.",
+      "options": [
+        {"text": "Nyugalom", "is_correct": false},
+        {"text": "Túlzott stressz érzése", "is_correct": true},
+        {"text": "Pihenés", "is_correct": false},
+        {"text": "Motiváció", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["szorongas"]
+      }
+    },
+    {
+      "text": "Hogyan hat a túlzott stressz a teljesítményre?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Rontja a teljesítményt és növeli a hibák számát.",
+      "options": [
+        {"text": "Javítja", "is_correct": false},
+        {"text": "Rontja", "is_correct": true},
+        {"text": "Nincs hatása", "is_correct": false},
+        {"text": "Maximalizálja", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["stressz_hatas"]
+      }
+    },
+    {
+      "text": "Az optimális izgalmi szint segíti a teljesítményt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert megfelelő aktiváció szükséges a csúcsteljesítményhez.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["izgalmi_szint"]
+      }
+    },
+    {
+      "text": "Melyik segít a stressz kezelésében?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A légzőgyakorlatok csökkentik a stresszt.",
+      "options": [
+        {"text": "Stressz növelése", "is_correct": false},
+        {"text": "Légzőgyakorlatok", "is_correct": true},
+        {"text": "Pihenés elhagyása", "is_correct": false},
+        {"text": "Versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["legzes"]
+      }
+    },
+    {
+      "text": "Mi a relaxáció célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A feszültség csökkentése és nyugalmi állapot elérése.",
+      "options": [
+        {"text": "Feszültség növelése", "is_correct": false},
+        {"text": "Feszültség csökkentése", "is_correct": true},
+        {"text": "Teljesítmény csökkentése", "is_correct": false},
+        {"text": "Verseny elkerülése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["relaxacio"]
+      }
+    },
+    {
+      "text": "A stressz mindig negatív hatású.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert lehet pozitív, serkentő hatása is.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["stressz"]
+      }
+    },
+    {
+      "text": "Mi segít a versenyhelyzet kezelésében?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A mentális felkészülés növeli az önkontrollt.",
+      "options": [
+        {"text": "Felkészületlenség", "is_correct": false},
+        {"text": "Mentális felkészülés", "is_correct": true},
+        {"text": "Pihenés hiánya", "is_correct": false},
+        {"text": "Stressz növelése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["mentalis_felkeszules"]
+      }
+    },
+    {
+      "text": "Az önkontroll segít a stressz kezelésében.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert tudatos szabályozást tesz lehetővé.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["onkontroll"]
+      }
+    }
+  ]
+}

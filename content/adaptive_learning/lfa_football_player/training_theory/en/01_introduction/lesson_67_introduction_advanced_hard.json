@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "module": "Introduction",
+  "topic": "Introduction — Advanced",
+  "quiz_title": "AL — Introduction - Advanced [EN]",
+  "description": "In-depth analysis of physical culture and sport: the critical social role of physical education and sport, sport sociology perspectives, sport as a health policy instrument, and the dilemmas of professionalisation.",
+  "questions": [
+    {
+      "text": "Why is sport as a health policy instrument alone insufficient to address the civilisation-related diseases caused by sedentary lifestyles?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Sport as an individual activity cannot address structural causes (occupational sitting, transport habits, built environment). Effective health policy requires structural changes: active transport infrastructure, workplace movement opportunities, and equitable access to sport — not only individual responsibility.",
+      "options": [
+        {"text": "Because sport is only effective in young people", "is_correct": false},
+        {"text": "Because structural causes (sedentary occupations, transport, unequal access) cannot be addressed through individual sport participation", "is_correct": true},
+        {"text": "Sport is ineffective for improving health", "is_correct": false},
+        {"text": "Only competitive sport is effective; recreation is not", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": ["health_policy", "structural_causes", "sport_limitations"]
+      }
+    },
+    {
+      "text": "Sport's value system (fair play, fair competition) is strengthened by the influence of commercial professionalisation.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "False. Commercial professionalisation and the growing financial stakes of media sport create tension with sport's traditional values (fair play, the amateur ideal) — doping scandals, match-fixing, and financial fair play problems all point to the distorting effects of commercial pressure.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 45,
+        "concept_tags": ["professionalisation", "fair_play", "sport_values"]
+      }
+    },
+    {
+      "text": "What does the 'Sport for All' movement mean and what social problem does it seek to address?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "The 'Sport for All' movement aims to ensure equal access — sport should not be restricted to the elite and the talented, but accessible to everyone. Key social problems addressed: economic barriers to sport, gender inequality, and the exclusion of people with disabilities.",
+      "options": [
+        {"text": "It is exclusively about democratising Olympic sport", "is_correct": false},
+        {"text": "Ensuring equal access to sport for all social groups — overcoming economic, gender, and disability barriers", "is_correct": true},
+        {"text": "Abolishing competition in sport", "is_correct": false},
+        {"text": "A funding model for professional sport", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 60,
+        "concept_tags": ["sport_for_all", "equal_access", "sport_policy"]
+      }
+    },
+    {
+      "text": "What sport-sociological explanation can be given for why socioeconomic status strongly determines sport participation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "According to Bourdieu's theory, sport is tied to cultural and economic capital: high-status sports (golf, fencing, horse riding) reflect the cultural codes of elite groups, while mass sports (football, boxing) are linked to working-class cultural habitus. Sport is not capital-neutral — sport participation reproduces social structure.",
+      "options": [
+        {"text": "Sport participation is determined exclusively by genetic ability", "is_correct": false},
+        {"text": "Sport is tied to cultural and economic capital (Bourdieu) — sport participation reproduces social structure", "is_correct": true},
+        {"text": "Socioeconomic status does not influence sporting habits", "is_correct": false},
+        {"text": "Sport provides equal opportunities for all social classes", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.85,
+        "cognitive_load": 0.83,
+        "average_time_seconds": 70,
+        "concept_tags": ["sport_sociology", "Bourdieu", "social_inequality"]
+      }
+    },
+    {
+      "text": "The compulsory nature of physical education in schools contradicts sport's voluntary value system.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "False. This is a contested question, but physical education is pedagogical in nature, not competitive sport. Compulsory PE serves a public good function (health, movement, socialisation) that the market cannot provide — making it a pedagogically justified requirement, not a contradiction with voluntary sport.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 50,
+        "concept_tags": ["school_physical_education", "compulsory", "autonomy"]
+      }
+    },
+    {
+      "text": "What is the primary ethical problem of doping in the context of sport?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Doping fundamentally undermines the ethical basis of sport — fair competition — by artificially modifying the competitive situation. Secondary problems include health risks, the role-model effect on young athletes, and the spread of a 'dirty competition' culture.",
+      "options": [
+        {"text": "It is exclusively a health problem; no ethical issue arises", "is_correct": false},
+        {"text": "It undermines the basis of fair competition — artificially distorting competitive equality", "is_correct": true},
+        {"text": "It only represents a problem in professional sport; it is ethically neutral at the amateur level", "is_correct": false},
+        {"text": "Doping is only dangerous to the athlete and does not affect competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 58,
+        "concept_tags": ["doping", "fair_competition", "ethics"]
+      }
+    },
+    {
+      "text": "How does media sport (television broadcasting, sponsorship) influence the development of football?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Media sport has an ambivalent effect on football: positive (global reach, funding, talent development opportunities), but also negative (schedules aligned to TV broadcasts, fixture congestion, commercial interests overriding sporting content, athletes as products).",
+      "options": [
+        {"text": "It has exclusively positive effects — providing funding and viewership", "is_correct": false},
+        {"text": "Ambivalent: brings funding and reach, but also schedule distortion, commercial pressure, and the athlete-as-product problem", "is_correct": true},
+        {"text": "Media sport does not influence football", "is_correct": false},
+        {"text": "Exclusively negative — it completely destroys sport's value system", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": ["media_sport", "sponsorship", "football"]
+      }
+    },
+    {
+      "text": "Sport always provides identical health benefits regardless of intensity and type.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "False. Health benefits are intensity- and type-dependent: extreme-intensity sport (e.g., ultra-marathoners, elite athletes) may in some cases carry cardiovascular risks. Moderate-intensity regular exercise shows the best health profile — the dose-response relationship is not linear but U-shaped.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 45,
+        "concept_tags": ["sport_health_effects", "dose_response", "intensity"]
+      }
+    },
+    {
+      "text": "What is the fundamental idea of Olympism and how is it reflected in the modern Olympic movement?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Olympism, according to Coubertin's original vision, means sport as an instrument of human perfection and peace between nations — competition is secondary; participation, fair play, and human development are primary. In the modern Olympic movement, this vision is in constant tension with commercial pressure, professionalisation, and political manipulation.",
+      "options": [
+        {"text": "Olympism is exclusively about improving sporting techniques", "is_correct": false},
+        {"text": "Sport as an instrument of human perfection and peace — Coubertin's vision, in tension with commercial pressure in the modern Olympics", "is_correct": true},
+        {"text": "Olympism represents the principle of maximum performance", "is_correct": false},
+        {"text": "Olympism is a ruleset applying exclusively to amateur athletes", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["Olympism", "Coubertin", "Olympic_ideal"]
+      }
+    },
+    {
+      "text": "Football's global popularity can be attributed exclusively to sporting performance factors.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "False. Football's global spread is the result of complex cultural, economic, and political factors: colonial expansion (British influence), low infrastructure requirements (only a ball needed), cultural identity and national pride, media sport, and global migration processes — sporting performance is only one factor.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["football_globalisation", "cultural_factors"]
+      }
+    }
+  ]
+}

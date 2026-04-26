@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Load and Performance",
+  "topic": "Load and Performance — Introduction",
+  "quiz_title": "AL — Load and Performance - Introduction [EN]",
+  "description": "Overview of the fundamental concepts of physical load and performance: physiological effects, fatigue, regeneration, overtraining, and performance measurement.",
+  "questions": [
+    {
+      "text": "What is the effect of physical load on the body?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Physical load triggers physiological changes in the body (e.g., increases in heart rate, breathing rate, and metabolic activity) that lead to adaptation.",
+      "options": [
+        {"text": "It causes fatigue exclusively", "is_correct": false},
+        {"text": "It triggers physiological changes in the body", "is_correct": true},
+        {"text": "It has no effect on the body", "is_correct": false},
+        {"text": "It reduces the work of the heart", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["physical_load", "physiological_effects"]
+      }
+    },
+    {
+      "text": "Fatigue reduces athletic performance.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True. Fatigue is a reduction in the muscles' capacity to produce work, which has a direct negative impact on sports performance.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["fatigue"]
+      }
+    },
+    {
+      "text": "What is regeneration?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Regeneration is the body's process of returning to its pre-training state and preparing for the next training session.",
+      "options": [
+        {"text": "The intense finishing phase of a training session", "is_correct": false},
+        {"text": "The body's return to its pre-training state", "is_correct": true},
+        {"text": "The warm-up before competition", "is_correct": false},
+        {"text": "An increase in training load", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["regeneration"]
+      }
+    },
+    {
+      "text": "Which of the following is the most characteristic sign of overtraining?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Persistent performance decline despite adequate rest is the classic sign of overtraining syndrome.",
+      "options": [
+        {"text": "Brief, one-day fatigue", "is_correct": false},
+        {"text": "Persistent performance decline and fatigue", "is_correct": true},
+        {"text": "A decrease in heart rate during exercise", "is_correct": false},
+        {"text": "An increase in appetite", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 38,
+        "concept_tags": ["overtraining"]
+      }
+    },
+    {
+      "text": "What is the purpose of performance measurement?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The purpose of performance measurement is to objectively determine the athlete's current condition so that the training plan can be modified in a targeted manner.",
+      "options": [
+        {"text": "To penalise the athlete for a poor result", "is_correct": false},
+        {"text": "To objectively determine the athlete's current condition", "is_correct": true},
+        {"text": "To guarantee the prediction of competition results", "is_correct": false},
+        {"text": "To decide when to end a training session", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["performance_measurement"]
+      }
+    },
+    {
+      "text": "Adequate rest is an integral part of the training plan.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True. Rest is an essential component of the training process; without it, adaptation and development cannot occur.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["rest"]
+      }
+    },
+    {
+      "text": "What influences athletic performance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Performance is determined by both inherited traits (genetics) and acquired fitness — not by either factor alone.",
+      "options": [
+        {"text": "Only inherited genetic traits", "is_correct": false},
+        {"text": "Both inherited traits and acquired fitness", "is_correct": true},
+        {"text": "Only the volume of training", "is_correct": false},
+        {"text": "Only nutrition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 38,
+        "concept_tags": ["performance_factors"]
+      }
+    },
+    {
+      "text": "Overload can lead to injury in the long term.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True. Chronic overload — when the body does not receive sufficient recovery time — leads to injury and the development of overtraining syndrome.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["overload", "injury"]
+      }
+    },
+    {
+      "text": "What is the difference between fatigue and overtraining?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Fatigue is a short-term condition that resolves with one or two days of rest. Overtraining is a prolonged state that is difficult to reverse over weeks or months.",
+      "options": [
+        {"text": "There is no difference between them", "is_correct": false},
+        {"text": "Overtraining is a prolonged, harder-to-reverse condition", "is_correct": true},
+        {"text": "Fatigue is more serious than overtraining", "is_correct": false},
+        {"text": "Only overtraining reduces performance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.22,
+        "average_time_seconds": 40,
+        "concept_tags": ["fatigue", "overtraining"]
+      }
+    },
+    {
+      "text": "Performance is determined exclusively by genetic factors.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False. Although genetics play a role, fitness level, nutrition, sleep, and mental preparation are equally determining factors.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["performance_factors"]
+      }
+    }
+  ]
+}

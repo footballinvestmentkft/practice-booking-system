@@ -1,0 +1,275 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Fundamentals of Training Theory",
+  "topic": "The Relationship Between Training Load and Adaptation",
+  "quiz_title": "AL — Fundamentals of Training Theory - Load and Adaptation [EN]",
+  "description": "The principles of training load, adaptation, and supercompensation in training theory.",
+  "questions": [
+    {
+      "text": "What does training load mean in training theory?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Training load is the physical and psychological stimulus applied to the body that induces adaptation.",
+      "options": [
+        {"text": "Rest", "is_correct": false},
+        {"text": "A stimulus applied to the body", "is_correct": true},
+        {"text": "A decrease in performance", "is_correct": false},
+        {"text": "Interruption of training", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "average_time_seconds": 25,
+        "concept_tags": ["load"]
+      }
+    },
+    {
+      "text": "Training load always has a negative effect on the body.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False, because when applied at the appropriate level, training load induces development.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 20,
+        "concept_tags": ["load"]
+      }
+    },
+    {
+      "text": "What is the essence of adaptation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Adaptation is the body's adjustment to training load.",
+      "options": [
+        {"text": "An increase in fatigue", "is_correct": false},
+        {"text": "Adjustment to training load", "is_correct": true},
+        {"text": "A decrease in performance", "is_correct": false},
+        {"text": "Cessation of movement", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.32,
+        "cognitive_load": 0.27,
+        "average_time_seconds": 25,
+        "concept_tags": ["adaptation"]
+      }
+    },
+    {
+      "text": "What happens with too low a training load?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "An insufficient stimulus produces no adaptation and therefore no development.",
+      "options": [
+        {"text": "Rapid development", "is_correct": false},
+        {"text": "No significant development", "is_correct": true},
+        {"text": "Overtraining", "is_correct": false},
+        {"text": "Injury", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.38,
+        "cognitive_load": 0.32,
+        "average_time_seconds": 32,
+        "concept_tags": ["underload"]
+      }
+    },
+    {
+      "text": "What happens with excessively high training load without adequate rest?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Overtraining develops, which can lead to a decrease in performance.",
+      "options": [
+        {"text": "Optimal development", "is_correct": false},
+        {"text": "Overtraining and decline", "is_correct": true},
+        {"text": "No change", "is_correct": false},
+        {"text": "Automatic regeneration", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.36,
+        "average_time_seconds": 35,
+        "concept_tags": ["overtraining"]
+      }
+    },
+    {
+      "text": "Regeneration is one of the prerequisites for adaptation.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True, because development occurs during the recovery phase.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "average_time_seconds": 20,
+        "concept_tags": ["regeneration"]
+      }
+    },
+    {
+      "text": "What does supercompensation mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "During supercompensation, the body develops beyond its initial level following regeneration.",
+      "options": [
+        {"text": "A decrease in performance", "is_correct": false},
+        {"text": "Development beyond the initial level", "is_correct": true},
+        {"text": "Cessation of movement", "is_correct": false},
+        {"text": "Permanent fatigue", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["supercompensation"]
+      }
+    },
+    {
+      "text": "When is it optimal to apply the next training load for maximum development?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "New load should be applied during the supercompensation phase.",
+      "options": [
+        {"text": "Immediately after training", "is_correct": false},
+        {"text": "During supercompensation", "is_correct": true},
+        {"text": "At complete exhaustion", "is_correct": false},
+        {"text": "Randomly", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 40,
+        "concept_tags": ["supercompensation", "timing"]
+      }
+    },
+    {
+      "text": "Training too frequently without regeneration leads to development.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False, because it leads to overtraining and a decrease in performance.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.34,
+        "average_time_seconds": 20,
+        "concept_tags": ["overtraining"]
+      }
+    },
+    {
+      "text": "What is required for continuous development?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Appropriately dosed load and rest ensure development.",
+      "options": [
+        {"text": "Maximum load only", "is_correct": false},
+        {"text": "A balance between load and regeneration", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Absence of movement", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.30,
+        "average_time_seconds": 30,
+        "concept_tags": ["load", "regeneration"]
+      }
+    },
+    {
+      "text": "What is the key principle of the performance curve?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Performance decreases after training load, then rises during regeneration.",
+      "options": [
+        {"text": "Continuous increase", "is_correct": false},
+        {"text": "Decrease followed by increase", "is_correct": true},
+        {"text": "No change", "is_correct": false},
+        {"text": "Immediate increase", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.41,
+        "average_time_seconds": 40,
+        "concept_tags": ["performance_curve"]
+      }
+    },
+    {
+      "text": "Adaptation only manifests in the short term.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False, because adaptation is a long-term process.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.33,
+        "cognitive_load": 0.27,
+        "average_time_seconds": 20,
+        "concept_tags": ["adaptation"]
+      }
+    },
+    {
+      "text": "What is the essence of the stimulus–response relationship?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Training load is the stimulus; adaptation is the response.",
+      "options": [
+        {"text": "Rest is the stimulus", "is_correct": false},
+        {"text": "Load is the stimulus, adaptation is the response", "is_correct": true},
+        {"text": "There is no relationship", "is_correct": false},
+        {"text": "It is purely a psychological process", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.44,
+        "cognitive_load": 0.38,
+        "average_time_seconds": 38,
+        "concept_tags": ["stimulus_response"]
+      }
+    },
+    {
+      "text": "What happens if the next training load is applied too late?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The supercompensation effect is lost and the baseline level is restored.",
+      "options": [
+        {"text": "Maximum development", "is_correct": false},
+        {"text": "Diminished effect", "is_correct": true},
+        {"text": "Overtraining", "is_correct": false},
+        {"text": "Immediate increase", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["timing"]
+      }
+    },
+    {
+      "text": "What ensures optimal training adaptation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The optimal ratio of load, timing, and rest.",
+      "options": [
+        {"text": "Maximum load", "is_correct": false},
+        {"text": "The optimal balance of load and rest", "is_correct": true},
+        {"text": "Regeneration only", "is_correct": false},
+        {"text": "Interruption of training", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.46,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["adaptation", "optimal_training"]
+      }
+    }
+  ]
+}

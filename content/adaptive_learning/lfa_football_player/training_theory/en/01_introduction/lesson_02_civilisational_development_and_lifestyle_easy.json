@@ -1,0 +1,255 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Introduction",
+  "topic": "Responding to the Lifestyle Problems of Civilisational Development",
+  "quiz_title": "AL — Introduction - Civilisational Development and Lifestyle [EN]",
+  "description": "The impact of civilisational development on lifestyle, the emergence of physical inactivity, and fitness as a response.",
+  "questions": [
+    {
+      "text": "What most characterises the effect of civilisational development on everyday physical activity?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "As a result of technological progress, a significant portion of human labour became mechanised, leading to a reduction in everyday physical activity.",
+      "options": [
+        {"text": "A continuous increase in physical activity", "is_correct": false},
+        {"text": "A significant decrease in physical activity", "is_correct": true},
+        {"text": "No change in physical activity", "is_correct": false},
+        {"text": "Physical activity appearing exclusively in sport", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "average_time_seconds": 25,
+        "concept_tags": ["civilisational_development", "movement_decrease"]
+      }
+    },
+    {
+      "text": "Modern technological development increased everyday physical exertion.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False, because technological development reduced the necessity of physical labour.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.28,
+        "cognitive_load": 0.22,
+        "average_time_seconds": 20,
+        "concept_tags": ["technological_development", "movement_decrease"]
+      }
+    },
+    {
+      "text": "What led to the emergence of a physically inactive lifestyle?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The spread of mechanisation and sedentary work reduced daily physical activity.",
+      "options": [
+        {"text": "An increase in opportunities for sport", "is_correct": false},
+        {"text": "The spread of mechanisation and sedentary work", "is_correct": true},
+        {"text": "A strengthening of nature-oriented lifestyles", "is_correct": false},
+        {"text": "An increase in physical labour", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.30,
+        "average_time_seconds": 30,
+        "concept_tags": ["sedentary_lifestyle", "mechanisation"]
+      }
+    },
+    {
+      "text": "A physically inactive lifestyle can lead to health problems in the long term.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True, because the absence of physical activity increases the risk of chronic disease.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 20,
+        "concept_tags": ["health", "sedentary_lifestyle"]
+      }
+    },
+    {
+      "text": "What problem does the fitness movement respond to?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The fitness movement is a response to the negative effects of a physically inactive lifestyle.",
+      "options": [
+        {"text": "The lack of sports competitions", "is_correct": false},
+        {"text": "The consequences of a physically inactive lifestyle", "is_correct": true},
+        {"text": "The slowdown of economic development", "is_correct": false},
+        {"text": "Social inequalities", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.38,
+        "cognitive_load": 0.32,
+        "average_time_seconds": 32,
+        "concept_tags": ["fitness", "response"]
+      }
+    },
+    {
+      "text": "Which statement best describes the role of recreation in modern society?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Recreation represents intentional movement that helps maintain health alongside a physically inactive lifestyle.",
+      "options": [
+        {"text": "Purely entertainment", "is_correct": false},
+        {"text": "A deliberate health-preserving activity", "is_correct": true},
+        {"text": "A form of competitive sport", "is_correct": false},
+        {"text": "Important only for children", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.36,
+        "average_time_seconds": 35,
+        "concept_tags": ["recreation", "health_preservation"]
+      }
+    },
+    {
+      "text": "For modern people, movement is no longer an automatic part of everyday life.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True, because a significant portion of physical activity has dropped out of the daily routine.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.27,
+        "cognitive_load": 0.21,
+        "average_time_seconds": 20,
+        "concept_tags": ["modern_lifestyle", "movement"]
+      }
+    },
+    {
+      "text": "Why has intentional exercise become necessary in modern life?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Because natural physical exertion is absent from everyday life.",
+      "options": [
+        {"text": "Because there is more leisure time", "is_correct": false},
+        {"text": "Because natural movement is absent", "is_correct": true},
+        {"text": "Because it has been made compulsory", "is_correct": false},
+        {"text": "Because the importance of sport has declined", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.34,
+        "average_time_seconds": 32,
+        "concept_tags": ["intentional_exercise", "modern_lifestyle"]
+      }
+    },
+    {
+      "text": "One consequence of civilisational development is the automatic replacement of physical activity.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False, because movement is not automatically replaced — it must be deliberately incorporated.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.38,
+        "average_time_seconds": 20,
+        "concept_tags": ["civilisational_development", "movement_replacement"]
+      }
+    },
+    {
+      "text": "Which of the following is NOT a typical consequence of a physically inactive lifestyle?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A physically inactive lifestyle does not increase but rather decreases physical performance capacity.",
+      "options": [
+        {"text": "Deterioration of health", "is_correct": false},
+        {"text": "Increase in physical performance capacity", "is_correct": true},
+        {"text": "Risk of chronic disease", "is_correct": false},
+        {"text": "Movement deficiency", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 40,
+        "concept_tags": ["sedentary_lifestyle", "health"]
+      }
+    },
+    {
+      "text": "What is one fundamental contradiction of modern lifestyle?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Modern life reduces physical activity while simultaneously increasing the need for it.",
+      "options": [
+        {"text": "Too much movement", "is_correct": false},
+        {"text": "Little movement, yet greater need for it", "is_correct": true},
+        {"text": "Complete absence of sport", "is_correct": false},
+        {"text": "Continuous physical exertion", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 45,
+        "concept_tags": ["contradiction", "modern_lifestyle"]
+      }
+    },
+    {
+      "text": "The goal of recreational physical activities is to maximise performance.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False, because the primary goal of recreation is health preservation and regeneration.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.37,
+        "cognitive_load": 0.30,
+        "average_time_seconds": 20,
+        "concept_tags": ["recreation", "goal"]
+      }
+    },
+    {
+      "text": "Which factor contributed most to the decline in physical activity?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Technological progress and mechanisation brought about the greatest change.",
+      "options": [
+        {"text": "Cultural traditions", "is_correct": false},
+        {"text": "Technological progress and mechanisation", "is_correct": true},
+        {"text": "Number of sporting events", "is_correct": false},
+        {"text": "School physical education", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.33,
+        "cognitive_load": 0.27,
+        "average_time_seconds": 28,
+        "concept_tags": ["technological_development", "mechanisation"]
+      }
+    },
+    {
+      "text": "What is one of the most important roles of the concept of fitness in modern society?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Fitness helps counteract the negative effects of a physically inactive lifestyle.",
+      "options": [
+        {"text": "Development of competitive sport", "is_correct": false},
+        {"text": "Compensating for movement deficiency", "is_correct": true},
+        {"text": "Economic growth", "is_correct": false},
+        {"text": "Accelerating technological development", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.41,
+        "cognitive_load": 0.34,
+        "average_time_seconds": 35,
+        "concept_tags": ["fitness", "compensation"]
+      }
+    }
+  ]
+}

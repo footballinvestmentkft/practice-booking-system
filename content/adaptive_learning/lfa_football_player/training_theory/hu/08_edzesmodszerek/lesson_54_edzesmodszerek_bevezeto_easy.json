@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Edzésmódszerek",
+  "topic": "Edzésmódszerek — Bevezető",
+  "quiz_title": "AL — Edzésmódszerek - Bevezető [HU]",
+  "description": "Az edzésmódszerek alapfogalmainak áttekintése: állóképesség, erő, gyorsaság, hajlékonyság és koordináció fejlesztésének alapelvei.",
+  "questions": [
+    {
+      "text": "Mi az edzésmódszer?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az edzésmódszer az edzéscél eléréséhez alkalmazott tervszerű eljárás, amely meghatározza, hogyan szervezzük meg és adagoljuk a terhelést.",
+      "options": [
+        {"text": "Az edzőterem neve", "is_correct": false},
+        {"text": "Az edzéscél eléréséhez alkalmazott tervszerű eljárás", "is_correct": true},
+        {"text": "A sportoló táplálkozási rendje", "is_correct": false},
+        {"text": "A versenyrendszer szabályai", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["edzesmodszer", "definicio"]
+      }
+    },
+    {
+      "text": "Az állóképesség fejlesztésének egyik alapmódszere a folyamatos futás.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. A tartós, egyenletes tempójú futás (folyamatos módszer) az aerob állóképesség alapvető fejlesztési eszköze.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["allokepesseg_fejlesztes"]
+      }
+    },
+    {
+      "text": "Mi az intervallum-edzés lényege?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az intervallum-edzés felváltva alkalmaz intenzív terhelési és részleges pihenési szakaszokat, így egyszerre fejleszti az aerob és anaerob kapacitást.",
+      "options": [
+        {"text": "Egyenletes, hosszú futás pihenő nélkül", "is_correct": false},
+        {"text": "Felváltva intenzív terhelési és részleges pihenési szakaszok", "is_correct": true},
+        {"text": "Kizárólag erőgyakorlatok végzése", "is_correct": false},
+        {"text": "Maximális erőkifejtés hosszú időn át", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["intervallum_edzes"]
+      }
+    },
+    {
+      "text": "Az erőfejlesztés alapmódszere a fokozatosan növekvő ellenállással végzett edzés.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. A progresszív terhelésnövelés (pl. súlyok emelése) az izomzat folyamatos adaptációját váltja ki, így az erő fejlődik.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["erofejlesztes"]
+      }
+    },
+    {
+      "text": "Melyik módszer fejleszti leginkább a reakciógyorsaságot?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A reakciógyorsaság fejlesztésére jelzésre induló rövid, maximális intenzitású futások és sporttechnikai feladatok alkalmasak, amelyek gyors döntéshozatalt igényelnek.",
+      "options": [
+        {"text": "Hosszú, lassú futás", "is_correct": false},
+        {"text": "Jelzésre induló rövid, maximális intenzitású feladatok", "is_correct": true},
+        {"text": "Statikus nyújtás", "is_correct": false},
+        {"text": "Súlyzós erőfejlesztés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 35,
+        "concept_tags": ["gyorsasag_fejlesztes", "reakciogyor"]
+      }
+    },
+    {
+      "text": "Milyen típusú nyújtással fejleszthető leginkább a hajlékonyság?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A hajlékonyság fejlesztésének leghatékonyabb módszere a statikus nyújtás: a pozíció kitartása 20–30 másodpercig növeli az ízületi mozgásterjedelmet.",
+      "options": [
+        {"text": "Rövid, lendületes rúgásokkal", "is_correct": false},
+        {"text": "Kitartott statikus nyújtással", "is_correct": true},
+        {"text": "Súlyzós edzéssel", "is_correct": false},
+        {"text": "Sprint futással", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["hajlekonysag_fejlesztes"]
+      }
+    },
+    {
+      "text": "A koordináció fejlesztésére összetett, változatos mozgásfeladatok alkalmasak.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. A koordináció komplex feladatokkal (labdás gyakorlatok, létraedzés, egyensúlyi feladatok) fejleszthető hatékonyan, mert ezek több izomcsoport összehangolt munkáját igénylik.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["koordinacio_fejlesztes"]
+      }
+    },
+    {
+      "text": "Miért fontos a megfelelő edzésmódszer megválasztása?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A megfelelő módszer megválasztása biztosítja, hogy a terhelés pontosan a kívánt képességet célozza meg — helytelen módszerrel a kívánt fejlődés nem érhető el.",
+      "options": [
+        {"text": "Hogy az edzés minél hosszabb legyen", "is_correct": false},
+        {"text": "Hogy a terhelés pontosan a kívánt képességet célozza meg", "is_correct": true},
+        {"text": "Hogy a sportoló ne fáradjon el", "is_correct": false},
+        {"text": "Hogy a verseny hamarabb befejeződjön", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["modszervalasztas"]
+      }
+    },
+    {
+      "text": "Mi a körmódszer (circuit training) lényege?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A körmódszer során különböző gyakorlatállomásokat hajtanak végre egymás után rövid pihenőkkel, így egyszerre fejleszti az erőt, az állóképességet és a koordinációt.",
+      "options": [
+        {"text": "Egyetlen gyakorlat ismételt végrehajtása", "is_correct": false},
+        {"text": "Különböző gyakorlatállomások sorban elvégzése rövid pihenőkkel", "is_correct": true},
+        {"text": "Kizárólag futógyakorlatok végzése", "is_correct": false},
+        {"text": "Statikus nyújtó pozíciók sorozata", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 38,
+        "concept_tags": ["kormodszer", "circuit_training"]
+      }
+    },
+    {
+      "text": "Minden edzésmódszer alkalmas minden képesség fejlesztésére.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis. Minden módszer meghatározott képességekre hat leginkább (pl. intervallum → aerob/anaerob, statikus nyújtás → hajlékonyság). A helyes módszerválasztás az edzéstervezés alapja.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["modszer_specifikus"]
+      }
+    }
+  ]
+}

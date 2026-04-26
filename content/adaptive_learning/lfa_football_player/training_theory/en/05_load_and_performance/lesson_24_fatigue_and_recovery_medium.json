@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Load and Performance",
+  "topic": "The Process of Fatigue and Recovery",
+  "quiz_title": "AL — Load and Performance - The Process of Fatigue and Recovery [EN]",
+  "description": "Types and causes of fatigue and the role of recovery in training adaptation.",
+  "questions": [
+    {
+      "text": "What is fatigue in training theory?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Fatigue is the temporary decrease in performance capacity resulting from physical or mental loading.",
+      "options": [
+        {"text": "A lasting increase in performance", "is_correct": false},
+        {"text": "A temporary decrease in performance", "is_correct": true},
+        {"text": "The process of muscle growth", "is_correct": false},
+        {"text": "A state of rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["fatigue"]
+      }
+    },
+    {
+      "text": "Which type of fatigue is associated with the nervous system?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Central fatigue is associated with the functioning of the nervous system.",
+      "options": [
+        {"text": "Peripheral fatigue", "is_correct": false},
+        {"text": "Central fatigue", "is_correct": true},
+        {"text": "Muscular fatigue", "is_correct": false},
+        {"text": "Metabolic fatigue", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["central_fatigue"]
+      }
+    },
+    {
+      "text": "What characterises peripheral fatigue?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Peripheral fatigue is associated with processes occurring within the muscles.",
+      "options": [
+        {"text": "Of nervous system origin", "is_correct": false},
+        {"text": "Processes at the muscle level", "is_correct": true},
+        {"text": "A psychological phenomenon", "is_correct": false},
+        {"text": "Only a mental state", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["peripheral_fatigue"]
+      }
+    },
+    {
+      "text": "Fatigue is always a harmful phenomenon and must be avoided.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because fatigue can be one of the triggers of adaptation.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 25,
+        "concept_tags": ["fatigue", "adaptation"]
+      }
+    },
+    {
+      "text": "What is the fundamental goal of recovery?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "During recovery the body restores the changes caused by training load.",
+      "options": [
+        {"text": "Reducing performance", "is_correct": false},
+        {"text": "Restoring the body", "is_correct": true},
+        {"text": "Increasing training load", "is_correct": false},
+        {"text": "Breaking down muscle tissue", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["recovery"]
+      }
+    },
+    {
+      "text": "Which of the following belongs to active recovery?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Active recovery involves light movement that supports restoration.",
+      "options": [
+        {"text": "Complete rest", "is_correct": false},
+        {"text": "Light movement", "is_correct": true},
+        {"text": "Competing", "is_correct": false},
+        {"text": "Maximum loading", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["active_recovery"]
+      }
+    },
+    {
+      "text": "What characterises passive recovery?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Passive recovery means rest without movement.",
+      "options": [
+        {"text": "Light movement", "is_correct": false},
+        {"text": "Complete rest", "is_correct": true},
+        {"text": "Training", "is_correct": false},
+        {"text": "Competition situation", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["passive_recovery"]
+      }
+    },
+    {
+      "text": "The quality of recovery influences the development of performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because effective adaptation cannot occur without adequate recovery.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["recovery", "adaptation"]
+      }
+    },
+    {
+      "text": "What can happen with insufficient recovery?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Insufficient recovery can lead to overtraining and a decline in performance.",
+      "options": [
+        {"text": "Rapid development", "is_correct": false},
+        {"text": "Overtraining", "is_correct": true},
+        {"text": "Complete recovery", "is_correct": false},
+        {"text": "Increase in performance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["overtraining"]
+      }
+    },
+    {
+      "text": "What is the relationship between fatigue and recovery?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Recovery follows fatigue and restores — and develops — the body.",
+      "options": [
+        {"text": "They are independent of each other", "is_correct": false},
+        {"text": "Recovery follows fatigue and compensates for it", "is_correct": true},
+        {"text": "Fatigue eliminates recovery", "is_correct": false},
+        {"text": "Both are the same process", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["fatigue", "recovery"]
+      }
+    }
+  ]
+}

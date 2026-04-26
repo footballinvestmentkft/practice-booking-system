@@ -1,0 +1,328 @@
+{
+  "schema_version": "1.0",
+  "specializations": [
+    "LFA_FOOTBALL_PLAYER"
+  ],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "module": "Edzés és sport",
+  "topic": "Edzés és sport — Haladó",
+  "quiz_title": "AL — Edzés és sport - Haladó [HU]",
+  "description": "Az edzés és sport mélyebb összefüggéseinek elemzése: Long-Term Athlete Development (LTAD), sport-specifikus edzésmodellezés, relatív életkor-effektus, sérülésprevenciós mechanizmusok és a kettős karriertámogatás.",
+  "questions": [
+    {
+      "text": "Mi a Long-Term Athlete Development (LTAD) modell alapgondolata?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Az LTAD-modell azt mondja ki, hogy az atlétikai fejlődés életkorhoz kötött, érzékeny fázisokra (szenzitív periódusokra) épül. A nem megfelelő időpontban alkalmazott edzéstartalom (pl. túl korai specializáció) rontja a hosszú távú fejlődési potenciált.",
+      "options": [
+        {
+          "text": "Minden sportoló azonos életkorban éri el csúcsformáját",
+          "is_correct": false
+        },
+        {
+          "text": "Az atlétikai fejlődés életkorhoz kötött szenzitív periódusokra épül — nem megfelelő időzítés rontja a hosszú távú potenciált",
+          "is_correct": true
+        },
+        {
+          "text": "A korai specializáció mindig a legjobb út a sportsikerhez",
+          "is_correct": false
+        },
+        {
+          "text": "Az LTAD kizárólag felnőtt sportolókra vonatkozik",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 60,
+        "concept_tags": [
+          "LTAD",
+          "szenzitiv_periodus",
+          "utanpotlas"
+        ]
+      }
+    },
+    {
+      "text": "Mi a relatív életkor-effektus (RAE) és hogyan befolyásolja az utánpótlás-kiválasztást?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A RAE azt jelenti, hogy az éves korosztályos csoportokban a kiválasztási ciklus elején született (pl. januárban) gyerekek fizikailag érettebbek, jobb teljesítményt mutatnak és nagyobb eséllyel kerülnek akadémiákra — holott a különbség fejlődési tempó, nem tehetség. Ez torzítja az utánpótlás-kiválasztást.",
+      "options": [
+        {
+          "text": "Az idősebb felnőtt sportolók előnye a fiatalabbakkal szemben",
+          "is_correct": false
+        },
+        {
+          "text": "Az éves ciklus elején születetteknek fejlődési érettségi előnye van — ez torzítja az utánpótlás-kiválasztást",
+          "is_correct": true
+        },
+        {
+          "text": "Genetikai életkori korlát a teljesítménynövekedésre",
+          "is_correct": false
+        },
+        {
+          "text": "A RAE kizárólag nőknél érvényes",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.8,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": [
+          "RAE",
+          "kivalasztas",
+          "utanpotlas"
+        ]
+      }
+    },
+    {
+      "text": "A labdarúgó-akadémiai korai specializáció hosszú távon mindig jobb eredményt hoz, mint az általános sportolás.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Hamis. Kutatások szerint a fiatal korban diverzifikált sportolás (multi-sport) jobb hosszú távú atletikus fejlődést eredményez: szélesebb motoros repertoár, alacsonyabb kiégési kockázat és kevesebb overuse-sérülés jellemzi. A 12 éves kor előtti korai specializáció ezzel szemben növeli a korai lemorzsolódás és a repetitív stresszsérülések kockázatát — az LTAD-modell is a késői specializációt támogatja.",
+      "options": [
+        {
+          "text": "Igaz",
+          "is_correct": false
+        },
+        {
+          "text": "Hamis",
+          "is_correct": true
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": [
+          "korai_specializacio",
+          "multisport",
+          "LTAD"
+        ]
+      }
+    },
+    {
+      "text": "Miért vezet az ACL sérülések megelőzésében a neuromuscularis edzés (pl. FIFA 11+) hatékony eredményt?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Az ACL sérülések nagy része nem kontakt-sérülés: hibás landolás, hirtelen irányváltás közben fordul elő. A FIFA 11+ és hasonló neuromuscularis protokollok a térdrögzítő izmok összehangolását, egyensúlyt és a helyes biomechanikai mintákat fejlesztik — csökkentve a mechanikai kockázatot.",
+      "options": [
+        {
+          "text": "Mert erősebbé teszi az ACL szalagot közvetlenül",
+          "is_correct": false
+        },
+        {
+          "text": "Fejleszti a térdrögzítő izmok koordinációját, egyensúlyt és helyes biomechanikai mintákat — csökkenti a nem-kontakt sérülés kockázatát",
+          "is_correct": true
+        },
+        {
+          "text": "Mert felgyorsítja a sérülés utáni gyógyulást",
+          "is_correct": false
+        },
+        {
+          "text": "Kizárólag a nyújtást javítja",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.8,
+        "average_time_seconds": 65,
+        "concept_tags": [
+          "ACL_prevencio",
+          "FIFA11plus",
+          "neuromuscularis"
+        ]
+      }
+    },
+    {
+      "text": "Mi a sport-specifikus edzésmodellezés lényege labdarúgóknál?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A sport-specifikus edzésmodellezés azt jelenti, hogy az edzésingereket (intenzitás, időtartam, mozgásminták) a labdarúgás valós játékterhelési profiljához igazítják — pl. a 5-90 méteres sprintek, irányváltások és labdás technikai elemek mérkőzés-közeli körülmények között való edzése.",
+      "options": [
+        {
+          "text": "Kizárólag taktikai gyakorlatok végzése",
+          "is_correct": false
+        },
+        {
+          "text": "Az edzésingerek mérkőzés-specifikus terhelési profilhoz igazítása — mozgásminták, intenzitás és időtartam tekintetében",
+          "is_correct": true
+        },
+        {
+          "text": "Általános kondicionálás labda nélkül",
+          "is_correct": false
+        },
+        {
+          "text": "A verseny teljes szimulálása minden edzésen",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 60,
+        "concept_tags": [
+          "sport_specifikus_edzes",
+          "terheles_profil"
+        ]
+      }
+    },
+    {
+      "text": "Hogyan hat a versenyterhelés (match load) a labdarúgó heti edzéstervezésére?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A versenyterhelés integrálódik a heti mikrociklusba: a mérkőzés utáni 1-2 nap regeneráció, majd fokozatos terhelésnövelés, majd meccs előtti napokban csökkentett intenzitás (tapering). Ez a heti ciklus a labdarúgás sajátos terhelés-regeneráció ritmusát tükrözi.",
+      "options": [
+        {
+          "text": "A versenyterhelést az edzéstervtől függetlenül kell kezelni",
+          "is_correct": false
+        },
+        {
+          "text": "A meccs integrálódik a heti mikrociklusba — meccs utáni regeneráció, fokozatos növelés, meccs előtti tapering",
+          "is_correct": true
+        },
+        {
+          "text": "Verseny után azonnal maximális intenzitású edzés javasolt",
+          "is_correct": false
+        },
+        {
+          "text": "A versenyterhelést csak kéthetes ciklusban kell figyelembe venni",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.8,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": [
+          "meccs_terheles",
+          "mikrociklus",
+          "tapering"
+        ]
+      }
+    },
+    {
+      "text": "A kettős karrier (dual career) csak az amatőr sportolók problémája.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Hamis. Az utánpótlás és junior labdarúgók kettős karrierje (sport + tanulmányok) komplex időgazdálkodási és pszichológiai kihívást jelent, amely hatással van az edzésterhelés tűrésére, a stresszre és a hosszú távú fejlődésre. Az akadémiai rendszerek egyre inkább integrálják a kettős karriertámogatást.",
+      "options": [
+        {
+          "text": "Igaz",
+          "is_correct": false
+        },
+        {
+          "text": "Hamis",
+          "is_correct": true
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.72,
+        "cognitive_load": 0.7,
+        "average_time_seconds": 40,
+        "concept_tags": [
+          "kettos_karrier",
+          "utanpotlas"
+        ]
+      }
+    },
+    {
+      "text": "Melyik biomechanikai tényező jelzi leginkább a sérülési kockázatot sprintelés közben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A hamstring sérülések nagy részénél megfigyelhető a lendítő fázisban (swing phase) a térd maximális fleksziójakor fellépő excentrikus terhelés. A gyenge excentrikus hamstring erő (Nordic curl teszt) a legerősebb biomechanikai kockázati tényező.",
+      "options": [
+        {
+          "text": "A sprintsebesség abszolút értéke",
+          "is_correct": false
+        },
+        {
+          "text": "A gyenge excentrikus hamstring erő a lendítő fázisban",
+          "is_correct": true
+        },
+        {
+          "text": "Az edzőcipő típusa",
+          "is_correct": false
+        },
+        {
+          "text": "A sprintre fordított össz-távolság",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.83,
+        "cognitive_load": 0.82,
+        "average_time_seconds": 65,
+        "concept_tags": [
+          "hamstring_serules",
+          "excentrikus",
+          "serulesi_kockazat"
+        ]
+      }
+    },
+    {
+      "text": "Mi az edzés-verseny arány optimális tartományának meghatározásában a legnagyobb kihívás?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Hamis. A labdarúgás globális elterjedtsége komplex kulturális, gazdasági és politikai tényezők eredménye: brit gyarmati terjeszkedés, az alacsony infrastruktúra-igény (csak labda kell), a kulturális és nemzeti identitással való összefonódás, a médiasport és a globális migrációs folyamatok mind szerepet játszanak — a sportteljesítmény csak egy a sok tényező közül.",
+      "options": [
+        {
+          "text": "Az edzőtermi kapacitás limitáltsága",
+          "is_correct": false
+        },
+        {
+          "text": "Az egyéni különbségek (regeneráció, stressztűrés, edzettség) miatt nincs univerzális optimum",
+          "is_correct": true
+        },
+        {
+          "text": "A versenynaptár kiszámíthatatlansága",
+          "is_correct": false
+        },
+        {
+          "text": "A taktikai tervek változékonysága",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.8,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 60,
+        "concept_tags": [
+          "edzes_verseny_arany",
+          "egyeni_kulonbsegek"
+        ]
+      }
+    },
+    {
+      "text": "A small-sided games (SSG) hatékonyabb labdarúgás-specifikus aerob edzést nyújthat, mint a hagyományos intervallum-futás.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Igaz. Kutatások szerint a megfelelően tervezett SSG (kis területen játszott mérkőzések) hasonló vagy magasabb intenzitású aerob stimulust adhatnak, mint a hagyományos intervallum-futás — miközben egyszerre fejlesztik a taktikai és technikai képességeket is.",
+      "options": [
+        {
+          "text": "Igaz",
+          "is_correct": true
+        },
+        {
+          "text": "Hamis",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 45,
+        "concept_tags": [
+          "SSG",
+          "small_sided_games",
+          "aerob_terheles"
+        ]
+      }
+    }
+  ]
+}

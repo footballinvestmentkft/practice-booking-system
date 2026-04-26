@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "module": "Fundamentals of Training Theory",
+  "topic": "Fundamentals of Training Theory — Advanced",
+  "quiz_title": "AL — Fundamentals of Training Theory - Advanced [EN]",
+  "description": "In-depth analysis of the fundamentals of training theory: molecular level of adaptation mechanisms, conflicts between training principles, optimisation of training load components, and the limits of individualisation.",
+  "questions": [
+    {
+      "text": "What is the correct order of training load components by short-term injury risk?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A sudden increase in volume is the greatest short-term injury risk factor (based on ACWR theory), exceeding an increase in intensity. An acute rise in intensity (e.g., adding sprints) is also risky, but volume represents cumulative mechanical stress. The effects of density and duration are more indirect.",
+      "options": [
+        {"text": "Intensity > Volume > Density > Duration", "is_correct": false},
+        {"text": "Sudden volume increase > Intensity increase > Density > Duration", "is_correct": true},
+        {"text": "Duration > Density > Intensity > Volume", "is_correct": false},
+        {"text": "All components pose equal risk", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["training_load_components", "injury_risk", "ACWR"]
+      }
+    },
+    {
+      "text": "The principle of specificity and the principle of variety are in contradiction with each other.",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "False — the contradiction is apparent. Specificity determines the direction of adaptation (the developed ability must be linked to the sport), while variety aims to prevent adaptation plateaus. The resolution: variety operates within specific abilities (e.g., different ball-based exercises targeting the same ability).",
+      "options": [
+        {"text": "True — the two principles cannot be applied simultaneously", "is_correct": false},
+        {"text": "False — the apparent contradiction can be resolved: variety operates within specific abilities", "is_correct": true},
+        {"text": "True — the principle of variety overrides specificity", "is_correct": false},
+        {"text": "False — the two principles are entirely independent of each other", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 55,
+        "concept_tags": ["specificity_principle", "variety_principle", "conflict"]
+      }
+    },
+    {
+      "text": "What molecular mechanism is responsible for mitochondrial biogenesis induced by aerobic training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Aerobic training activates AMPK (AMP-activated protein kinase) through the sensing of energy deficit. AMPK activates the PGC-1α transcriptional co-activator, which induces mitochondrial biogenesis — increasing mitochondrial number and oxidative capacity. This is the key mechanism of aerobic adaptation.",
+      "options": [
+        {"text": "mTOR activation through protein synthesis", "is_correct": false},
+        {"text": "AMPK activation → PGC-1α → mitochondrial biogenesis", "is_correct": true},
+        {"text": "IGF-1 secretion from the pancreas", "is_correct": false},
+        {"text": "Direct reduction of cortisol levels", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.88,
+        "cognitive_load": 0.87,
+        "average_time_seconds": 70,
+        "concept_tags": ["AMPK", "PGC_1alpha", "mitochondrial_biogenesis", "aerobic_adaptation"]
+      }
+    },
+    {
+      "text": "When does progressive load increase lead to a detraining-like state rather than supercompensation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "When the rate of progressive load increase exceeds the body's regenerative capacity — meaning the next training stimulus reaches the athlete at the peak of fatigue rather than at the peak of supercompensation — accumulated fatigue develops. This leads to functional overreaching, then non-functional overreaching and a performance-reducing state.",
+      "options": [
+        {"text": "When load increase is too slow and does not reach the threshold", "is_correct": false},
+        {"text": "When the rate of load increase exceeds regenerative capacity — the next stimulus hits at peak fatigue, not at supercompensation", "is_correct": true},
+        {"text": "When the athlete rests more than 3 days between training sessions", "is_correct": false},
+        {"text": "When volume is increased without reducing intensity", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.83,
+        "cognitive_load": 0.82,
+        "average_time_seconds": 65,
+        "concept_tags": ["progressive_overload_limit", "overreaching", "supercompensation"]
+      }
+    },
+    {
+      "text": "What is the significance of 'individual response variability' in sports training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Individual response variability means that the same training programme elicits significantly different adaptive responses in different athletes (due to genetic polymorphisms, microbiome, epigenetics, and lifestyle factors). This is a fundamental limitation of the effectiveness of 'one-size-fits-all programmes' and provides the scientific justification for individualised training.",
+      "options": [
+        {"text": "The difference in training order between two athletes", "is_correct": false},
+        {"text": "The same training programme elicits significantly different adaptive responses in different athletes — this is the scientific basis for individualisation", "is_correct": true},
+        {"text": "The amount of variety in training (how many different methods are used)", "is_correct": false},
+        {"text": "An athlete's performance fluctuation from competition to competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.83,
+        "cognitive_load": 0.82,
+        "average_time_seconds": 65,
+        "concept_tags": ["individual_variability", "individualisation", "genetics"]
+      }
+    },
+    {
+      "text": "Skipping the warm-up part of a training session significantly increases the risk of acute injury during training.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "True. Training without warm-up loads cold, stiff muscle tissue — viscoelastic properties are not optimal (tendons and muscles are less elastic and less resistant to sudden mechanical stress). Research has demonstrated a 50–70% reduction in injury risk with an appropriate warm-up compared to training without one.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.72,
+        "cognitive_load": 0.70,
+        "average_time_seconds": 42,
+        "concept_tags": ["warm_up", "injury_risk", "viscoelastic"]
+      }
+    },
+    {
+      "text": "How does training load relate to immune function as a function of intensity?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "The relationship is J-shaped (inverted J-model): moderate-intensity regular exercise improves immune function (reduced illness risk), while extreme-intensity or volume training causes a temporary immunosuppressive state (open window) — the 3–72 hours after competition is the most vulnerable period.",
+      "options": [
+        {"text": "The more training, the better the immune function", "is_correct": false},
+        {"text": "J-shaped relationship: moderate exercise improves immunity; extreme intensity/volume causes temporary immunosuppression (open window)", "is_correct": true},
+        {"text": "Training does not affect immune function", "is_correct": false},
+        {"text": "All forms of sport equally weaken the immune system", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["immune_function", "J_shaped", "open_window"]
+      }
+    },
+    {
+      "text": "What is the difference between acute and chronic training adaptation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Acute adaptation is an immediate, reversible physiological response (elevated heart rate, increased circulation, lactate rise) — occurring during and within a few hours of training. Chronic adaptation is a lasting structural and functional change (increased mitochondrial capacity, hypertrophy, vascular adaptation) — the result of weeks to months of regular training.",
+      "options": [
+        {"text": "There is no difference — both are the same adaptation", "is_correct": false},
+        {"text": "Acute: immediate reversible physiological response; chronic: lasting structural-functional change from regular training", "is_correct": true},
+        {"text": "Acute adaptation is more lasting than chronic adaptation", "is_correct": false},
+        {"text": "Chronic adaptation can only be achieved through strength training", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 60,
+        "concept_tags": ["acute_adaptation", "chronic_adaptation"]
+      }
+    },
+    {
+      "text": "What is the essence of the 'fitness-fatigue model' (the training paradox)?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "According to the fitness-fatigue model, training simultaneously creates a fitness effect and a fatigue effect. Actual performance = fitness − fatigue. Immediate performance before competition may decrease because fatigue masks fitness — this is why the purpose of tapering (load reduction) is to remove fatigue so that fitness can be expressed.",
+      "options": [
+        {"text": "The greater the fitness, the worse the performance", "is_correct": false},
+        {"text": "Training simultaneously creates fitness and fatigue — actual performance = fitness − fatigue; tapering removes fatigue to reveal fitness", "is_correct": true},
+        {"text": "A trained athlete never gets fatigued", "is_correct": false},
+        {"text": "The fitness-fatigue model applies exclusively to strength training", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.85,
+        "cognitive_load": 0.83,
+        "average_time_seconds": 70,
+        "concept_tags": ["fitness_fatigue_model", "taper", "training_paradox"]
+      }
+    },
+    {
+      "text": "Training principles (progressivity, specificity, variety, regularity) are hierarchical — one is always more important than the others.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "False. Training principles are complementary, not hierarchical — they operate with different weighting depending on context. Different principles may be prioritised in different phases of the season (e.g., regularity and specificity during a congested fixture period; progressivity and variety during the preparatory phase).",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 45,
+        "concept_tags": ["training_principles_hierarchy", "context_dependent"]
+      }
+    }
+  ]
+}

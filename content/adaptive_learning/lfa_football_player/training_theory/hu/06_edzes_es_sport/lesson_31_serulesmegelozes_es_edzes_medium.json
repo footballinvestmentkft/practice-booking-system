@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzés és sport",
+  "topic": "Sérülésmegelőzés és edzés",
+  "quiz_title": "AL — Edzés és sport - Sérülésmegelőzés és edzés [HU]",
+  "description": "A sportbeli sérülések típusai, okai és megelőzésének alapelvei.",
+  "questions": [
+    {
+      "text": "Mit nevezünk sportsérülésnek?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A sportsérülés a mozgás során fellépő szöveti károsodás.",
+      "options": [
+        {"text": "Csak fáradás", "is_correct": false},
+        {"text": "Szöveti károsodás sport közben", "is_correct": true},
+        {"text": "Pihenési állapot", "is_correct": false},
+        {"text": "Teljesítménynövekedés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["serules"]
+      }
+    },
+    {
+      "text": "Melyik tartozik az akut sérülések közé?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az akut sérülések hirtelen, egy esemény következtében alakulnak ki.",
+      "options": [
+        {"text": "Izomfáradás", "is_correct": false},
+        {"text": "Rándulás", "is_correct": true},
+        {"text": "Túlterheléses fájdalom", "is_correct": false},
+        {"text": "Krónikus gyulladás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["akut_serules"]
+      }
+    },
+    {
+      "text": "Mi jellemzi a túlterheléses sérüléseket?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Ismétlődő terhelés hatására alakulnak ki idővel.",
+      "options": [
+        {"text": "Hirtelen keletkeznek", "is_correct": false},
+        {"text": "Fokozatosan alakulnak ki", "is_correct": true},
+        {"text": "Azonnal elmúlnak", "is_correct": false},
+        {"text": "Csak versenyen jelentkeznek", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["tulterheleses_serules"]
+      }
+    },
+    {
+      "text": "A helyes technika csökkenti a sérülésveszélyt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert a helyes kivitelezés kisebb terhelést jelent a szervezet számára.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["technika"]
+      }
+    },
+    {
+      "text": "Mi az egyik legfontosabb sérülésmegelőző tényező?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A bemelegítés előkészíti az izmokat és ízületeket.",
+      "options": [
+        {"text": "Pihenés elhagyása", "is_correct": false},
+        {"text": "Megfelelő bemelegítés", "is_correct": true},
+        {"text": "Maximális terhelés", "is_correct": false},
+        {"text": "Versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["bemelegites"]
+      }
+    },
+    {
+      "text": "Mi növeli a sérülés kockázatát?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A túlzott terhelés és nem megfelelő pihenés növeli a kockázatot.",
+      "options": [
+        {"text": "Megfelelő regeneráció", "is_correct": false},
+        {"text": "Túlzott terhelés", "is_correct": true},
+        {"text": "Helyes technika", "is_correct": false},
+        {"text": "Fokozatosság", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["tulterheles"]
+      }
+    },
+    {
+      "text": "A regeneráció szerepet játszik a sérülések megelőzésében.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert segíti a szervezet helyreállítását.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["regeneracio"]
+      }
+    },
+    {
+      "text": "Mi a sérülésmegelőzés egyik alapelve?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A fokozatos terhelés segít elkerülni a túlterhelést.",
+      "options": [
+        {"text": "Hirtelen terhelés", "is_correct": false},
+        {"text": "Fokozatosság", "is_correct": true},
+        {"text": "Pihenés elhagyása", "is_correct": false},
+        {"text": "Csak versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["fokozatossag"]
+      }
+    },
+    {
+      "text": "Mi a sérülések egyik gyakori oka?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A nem megfelelő terheléselosztás gyakori ok.",
+      "options": [
+        {"text": "Megfelelő edzés", "is_correct": false},
+        {"text": "Helytelen terhelés", "is_correct": true},
+        {"text": "Megfelelő technika", "is_correct": false},
+        {"text": "Pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["okok"]
+      }
+    },
+    {
+      "text": "A tudatos edzéstervezés csökkenti a sérülések kockázatát.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert szabályozza a terhelést és regenerációt.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["edzestervezes"]
+      }
+    }
+  ]
+}

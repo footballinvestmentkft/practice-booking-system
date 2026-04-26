@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Training Methods",
+  "topic": "Foundations of Training Methods",
+  "quiz_title": "AL — Training Methods - Foundations of Training Methods [EN]",
+  "description": "The concept, types, and role of training methods in developing athletic performance.",
+  "questions": [
+    {
+      "text": "What is a training method?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A training method is the way in which training tasks are executed.",
+      "options": [
+        {"text": "Training time only", "is_correct": false},
+        {"text": "The way training tasks are executed", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Competition format", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["training_method"]
+      }
+    },
+    {
+      "text": "What determines the selection of a training method?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The goal of training determines which method is applied.",
+      "options": [
+        {"text": "Weather only", "is_correct": false},
+        {"text": "The goal of training", "is_correct": true},
+        {"text": "The coach's mood only", "is_correct": false},
+        {"text": "Competition only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["method_selection"]
+      }
+    },
+    {
+      "text": "What characterises general training methods?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "General methods develop multiple abilities and are not sport-specific.",
+      "options": [
+        {"text": "They are specific to one sport only", "is_correct": false},
+        {"text": "They develop multiple abilities", "is_correct": true},
+        {"text": "They are used for competition only", "is_correct": false},
+        {"text": "They develop technique only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["general_methods"]
+      }
+    },
+    {
+      "text": "What characterises specific training methods?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Specific methods are tailored to the requirements of the given sport.",
+      "options": [
+        {"text": "They are identical across all sports", "is_correct": false},
+        {"text": "They are tailored to the sport", "is_correct": true},
+        {"text": "They serve only for rest", "is_correct": false},
+        {"text": "They do not develop performance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["specific_methods"]
+      }
+    },
+    {
+      "text": "Training methods can be combined.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because multiple methods are often applied together.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["combination"]
+      }
+    },
+    {
+      "text": "What is the relationship between load and method?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The method determines the nature of the load.",
+      "options": [
+        {"text": "There is no relationship", "is_correct": false},
+        {"text": "The method influences the load", "is_correct": true},
+        {"text": "Only rest matters", "is_correct": false},
+        {"text": "Only intensity matters", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["load"]
+      }
+    },
+    {
+      "text": "What is the role of training methods?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "They support targeted ability development.",
+      "options": [
+        {"text": "They have no role", "is_correct": false},
+        {"text": "Achieving developmental goals", "is_correct": true},
+        {"text": "They serve rest only", "is_correct": false},
+        {"text": "They are only needed for competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["development"]
+      }
+    },
+    {
+      "text": "Training methods are identical for every athlete.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because they are tailored to the individual and the sport.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["individual"]
+      }
+    },
+    {
+      "text": "What influences the practical application of methods?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The characteristics of the sport are the determining factor.",
+      "options": [
+        {"text": "The coach's mood only", "is_correct": false},
+        {"text": "The requirements of the sport", "is_correct": true},
+        {"text": "Weather only", "is_correct": false},
+        {"text": "Competition only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["sport"]
+      }
+    },
+    {
+      "text": "Selecting the appropriate training method improves performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it enables targeted development.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["performance"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "module": "Training Programming",
+  "topic": "Training Programming — Advanced",
+  "quiz_title": "AL — Training Programming - Advanced [EN]",
+  "description": "In-depth analysis of training programming interrelationships: load management models, GPS-based monitoring, block periodisation vs. undulating periodisation, the acute:chronic workload ratio, and individualised programme design.",
+  "questions": [
+    {
+      "text": "What is the acute:chronic workload ratio (ACWR) and why is it relevant in injury prevention?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "The ACWR is the ratio of the past 1 week's load to the average load of the past 4 weeks. A value between 0.8–1.3 is the 'sweet zone' — associated with lower injury risk. An ACWR above 1.5 indicates a sudden spike in load, which significantly increases the probability of injury.",
+      "options": [
+        {"text": "The ratio of minutes spent training to rest days", "is_correct": false},
+        {"text": "Last week's load divided by the 4-week average — 0.8–1.3 is optimal, >1.5 is high injury risk", "is_correct": true},
+        {"text": "The ratio of maximum sprint speed to average sprint speed", "is_correct": false},
+        {"text": "The ratio of time spent training versus competing", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["ACWR", "load_management", "injury_prevention"]
+      }
+    },
+    {
+      "text": "How does block periodisation differ from traditional (linear) periodisation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Block periodisation uses concentrated 2–4-week blocks focused on one or two abilities in sequence (accumulation → transformation → realisation), while linear periodisation develops multiple abilities in parallel simultaneously, with load gradually increasing.",
+      "options": [
+        {"text": "There is no difference; only the names differ", "is_correct": false},
+        {"text": "Block: concentrated 2–4-week focused blocks in sequence; linear: parallel ability development with progressively increasing load", "is_correct": true},
+        {"text": "Block periodisation can only be applied for strength development", "is_correct": false},
+        {"text": "Linear periodisation is always more effective", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": ["block_periodisation", "linear_periodisation"]
+      }
+    },
+    {
+      "text": "GPS-based load monitoring alone is sufficient to optimise the training programme.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "False. GPS data (distance covered, sprint distances, acceleration counts) measure external load — what the athlete did. Internal load (RPE, HRV, lactate, heart rate) shows how the body responded to it. Combining both provides the complete load picture: identical external load can elicit very different internal responses on different days.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["GPS_monitoring", "external_internal_load"]
+      }
+    },
+    {
+      "text": "Which load variable is the best indicator of cumulative fatigue between matches in footballers?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "The accumulated high-speed running (HSR >19.8 km/h) and sprint (>25.2 km/h) distance is the best indicator because these are the most sensitive markers of neuromuscular fatigue — more so than total distance covered.",
+      "options": [
+        {"text": "Total distance covered", "is_correct": false},
+        {"text": "Accumulated high-speed running (HSR) and sprint distance", "is_correct": true},
+        {"text": "Number of matches in the season", "is_correct": false},
+        {"text": "Number of ball touches", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.83,
+        "cognitive_load": 0.82,
+        "average_time_seconds": 65,
+        "concept_tags": ["HSR", "fatigue_accumulation", "GPS"]
+      }
+    },
+    {
+      "text": "What is the optimal duration of the pre-competition taper for footballers?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "For footballers, the optimal taper is generally 5–7 days: volume decreases (by 20–50%), but intensity remains high. A shorter taper is insufficient for neuromuscular freshness; a longer taper carries the risk of detraining.",
+      "options": [
+        {"text": "1–2 days — only rest on the day before competition", "is_correct": false},
+        {"text": "5–7 days — reduced volume, maintained intensity", "is_correct": true},
+        {"text": "3–4 weeks of complete rest", "is_correct": false},
+        {"text": "Tapering is not necessary for footballers", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 58,
+        "concept_tags": ["taper", "pre_competition", "load_reduction"]
+      }
+    },
+    {
+      "text": "Why is training programming problematic during a congested fixture period for footballers?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "During congested fixture periods (e.g., 3 matches in 10 days), there is barely enough time for adaptive training work. The training programme must then focus on maintaining performance and preventing injury rather than development — requiring a different priority order and periodisation approach.",
+      "options": [
+        {"text": "There is no problem; matches replace training", "is_correct": false},
+        {"text": "There is no time for adaptive training work — the goal becomes performance maintenance and injury prevention", "is_correct": true},
+        {"text": "During congested periods, training volume should be increased", "is_correct": false},
+        {"text": "Only tactical training can be applied", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 60,
+        "concept_tags": ["congested_fixture", "load_management"]
+      }
+    },
+    {
+      "text": "Objective measurement of current fitness level is indispensable for individualised training programming.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "True. The basis of individualisation is knowing each athlete's starting point — the same load elicits completely different adaptive effects in athletes at different fitness levels. Without objective measurement (tests, biomarkers, GPS), individualisation remains subjective estimation.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.72,
+        "cognitive_load": 0.70,
+        "average_time_seconds": 40,
+        "concept_tags": ["individualisation", "performance_measurement"]
+      }
+    },
+    {
+      "text": "What is the typical duration of a mesocycle and what determines its content?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A mesocycle typically lasts 3–6 weeks (3–4 microcycles). Its content is determined by the current phase of the macrocycle: a preparatory period mesocycle focuses on general physical foundation, while a competitive phase mesocycle targets specific preparation.",
+      "options": [
+        {"text": "1–2 days, a single training unit", "is_correct": false},
+        {"text": "3–6 weeks — content determined by the macrocycle's current phase (preparatory, competitive)", "is_correct": true},
+        {"text": "6–12 months, the full season", "is_correct": false},
+        {"text": "It can only last exactly 4 weeks", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 55,
+        "concept_tags": ["mesocycle", "periodisation_cycles"]
+      }
+    },
+    {
+      "text": "Why is it recommended to separate sessions developing two different abilities (e.g., strength + endurance) within a single day?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Due to the interference effect: concurrent strength and endurance training activates opposing cellular signalling pathways (mTOR for strength, AMPK for endurance). This reduces the efficiency of strength adaptation — ideally at least 6 hours' separation or separate days are recommended.",
+      "options": [
+        {"text": "Because coaches can manage separate sessions more easily", "is_correct": false},
+        {"text": "Due to the interference effect — opposing cellular signalling pathways are activated, reducing strength adaptation", "is_correct": true},
+        {"text": "Combined training enhances both abilities", "is_correct": false},
+        {"text": "There is no scientific basis for separation", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.85,
+        "cognitive_load": 0.83,
+        "average_time_seconds": 70,
+        "concept_tags": ["interference_effect", "strength_endurance_combined"]
+      }
+    },
+    {
+      "text": "The absence of feedback in a training programme leads to a static, non-improvable system.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "True. Without feedback (monitoring, tests, analysis of competition results, GPS data), the training programme cannot respond to the athlete's current state, progress, or regression. The plan becomes static and loses its adaptivity — this is especially critical during a long season where the athlete's load profile and fitness level are continuously changing.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.72,
+        "cognitive_load": 0.70,
+        "average_time_seconds": 40,
+        "concept_tags": ["feedback", "adaptive_programming"]
+      }
+    }
+  ]
+}

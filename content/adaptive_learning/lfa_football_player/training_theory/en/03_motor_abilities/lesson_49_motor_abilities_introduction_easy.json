@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Motor Abilities",
+  "topic": "Motor Abilities — Introduction",
+  "quiz_title": "AL — Motor Abilities - Introduction [EN]",
+  "description": "Overview of the fundamental concepts of motor abilities: strength, endurance, speed, flexibility, and coordination.",
+  "questions": [
+    {
+      "text": "What is a motor ability?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A motor ability is a physical property of the human body manifested in movement, which can be developed through training.",
+      "options": [
+        {"text": "The resting state of the body", "is_correct": false},
+        {"text": "A physical property manifested in movement", "is_correct": true},
+        {"text": "An exclusively genetic trait", "is_correct": false},
+        {"text": "The name of a training plan", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["motor_ability", "definition"]
+      }
+    },
+    {
+      "text": "Which motor ability enables sustained physical performance over time?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Endurance enables the athlete to perform continuously while resisting fatigue.",
+      "options": [
+        {"text": "Strength", "is_correct": false},
+        {"text": "Endurance", "is_correct": true},
+        {"text": "Speed", "is_correct": false},
+        {"text": "Flexibility", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["endurance"]
+      }
+    },
+    {
+      "text": "What is the primary role of strength in movement?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Strength is the muscle's ability to overcome or exert resistance.",
+      "options": [
+        {"text": "Coordinating movements", "is_correct": false},
+        {"text": "Overcoming resistance through muscular force", "is_correct": true},
+        {"text": "Increasing range of motion", "is_correct": false},
+        {"text": "Reducing movement speed", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 35,
+        "concept_tags": ["strength"]
+      }
+    },
+    {
+      "text": "Flexibility is related to joint range of motion.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True. Flexibility is the ability of joints and muscles to move through their full range of motion.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["flexibility"]
+      }
+    },
+    {
+      "text": "What is speed as a motor ability?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Speed is the ability to perform movements in the shortest possible time.",
+      "options": [
+        {"text": "Prolonged force production", "is_correct": false},
+        {"text": "The rate at which movements are executed", "is_correct": true},
+        {"text": "Joint flexibility", "is_correct": false},
+        {"text": "The coordination of movements", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["speed"]
+      }
+    },
+    {
+      "text": "Which ability is responsible for the coordination of movements?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Coordination ensures that different muscle groups work together in harmony, producing the desired movement pattern.",
+      "options": [
+        {"text": "Strength", "is_correct": false},
+        {"text": "Endurance", "is_correct": false},
+        {"text": "Coordination", "is_correct": true},
+        {"text": "Speed", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["coordination"]
+      }
+    },
+    {
+      "text": "Motor abilities can be developed through training.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True. Although genetic traits play a role, motor abilities can be significantly improved through regular training.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["trainability"]
+      }
+    },
+    {
+      "text": "Which motor ability best characterises a football player's capacity to perform a sprint?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A sprint is a maximal-speed run that primarily draws on speed as the motor ability.",
+      "options": [
+        {"text": "Flexibility", "is_correct": false},
+        {"text": "Endurance", "is_correct": false},
+        {"text": "Speed", "is_correct": true},
+        {"text": "Coordination", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 38,
+        "concept_tags": ["speed", "football"]
+      }
+    },
+    {
+      "text": "Endurance and strength are completely independent motor abilities.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False. Motor abilities are interconnected; for example, strength forms the foundation of strength-endurance.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.22,
+        "average_time_seconds": 28,
+        "concept_tags": ["ability_interactions"]
+      }
+    },
+    {
+      "text": "Why is flexibility important for athletes?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Adequate flexibility reduces injury risk and enables efficient, full-amplitude movement execution.",
+      "options": [
+        {"text": "It directly increases sprint speed", "is_correct": false},
+        {"text": "It reduces injury risk and increases range of motion", "is_correct": true},
+        {"text": "It replaces strength training", "is_correct": false},
+        {"text": "It improves anaerobic endurance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.22,
+        "average_time_seconds": 38,
+        "concept_tags": ["flexibility", "injury_prevention"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Regeneráció és életmód",
+  "topic": "Fáradás és túlterhelés",
+  "quiz_title": "AL — Regeneráció és életmód - Fáradás és túlterhelés [HU]",
+  "description": "A fáradás típusai, a túlterhelés kialakulása és megelőzése.",
+  "questions": [
+    {
+      "text": "Mit nevezünk fáradásnak?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A fáradás átmeneti teljesítménycsökkenés, amely terhelés hatására alakul ki.",
+      "options": [
+        {"text": "Teljesítménynövekedés", "is_correct": false},
+        {"text": "Átmeneti teljesítménycsökkenés", "is_correct": true},
+        {"text": "Pihenési állapot", "is_correct": false},
+        {"text": "Versenyforma", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["faradas"]
+      }
+    },
+    {
+      "text": "Melyik tartozik a fáradás típusai közé?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A fáradás lehet fizikai és mentális.",
+      "options": [
+        {"text": "Technikai fáradás", "is_correct": false},
+        {"text": "Mentális fáradás", "is_correct": true},
+        {"text": "Időbeli fáradás", "is_correct": false},
+        {"text": "Környezeti fáradás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["faradas_tipusai"]
+      }
+    },
+    {
+      "text": "Mi jellemzi az akut fáradást?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az akut fáradás rövid távú és gyorsan megszűnik regenerációval.",
+      "options": [
+        {"text": "Hosszú ideig tart", "is_correct": false},
+        {"text": "Rövid ideig tart", "is_correct": true},
+        {"text": "Nem múlik el", "is_correct": false},
+        {"text": "Mindig sérüléssel jár", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["akut_faradas"]
+      }
+    },
+    {
+      "text": "Mi jellemzi a krónikus fáradást?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Hosszabb ideig fennálló, nem megfelelő regeneráció miatt kialakuló állapot.",
+      "options": [
+        {"text": "Gyorsan megszűnik", "is_correct": false},
+        {"text": "Hosszú ideig fennáll", "is_correct": true},
+        {"text": "Nincs hatása", "is_correct": false},
+        {"text": "Csak edzés közben jelentkezik", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["kronikus_faradas"]
+      }
+    },
+    {
+      "text": "Mit nevezünk túlterhelésnek?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A túlterhelés akkor alakul ki, ha a terhelés meghaladja a regenerációs képességet.",
+      "options": [
+        {"text": "Megfelelő edzés", "is_correct": false},
+        {"text": "Túl nagy terhelés regeneráció nélkül", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Versenyhelyzet", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["tulterheles"]
+      }
+    },
+    {
+      "text": "A túlterhelés oka lehet a nem megfelelő regeneráció.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert a regeneráció hiánya felhalmozódó fáradáshoz vezet.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["regeneracio"]
+      }
+    },
+    {
+      "text": "Melyik a túlterhelés egyik tünete?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A teljesítmény csökkenése gyakori tünet.",
+      "options": [
+        {"text": "Teljesítménynövekedés", "is_correct": false},
+        {"text": "Teljesítménycsökkenés", "is_correct": true},
+        {"text": "Nincs változás", "is_correct": false},
+        {"text": "Csak pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["tunetek"]
+      }
+    },
+    {
+      "text": "A túlterhelés növelheti a sérülésveszélyt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert a szervezet nem tud megfelelően regenerálódni.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["serules"]
+      }
+    },
+    {
+      "text": "Mi a túlterhelés megelőzésének egyik módja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az edzés és pihenés egyensúlyának biztosítása.",
+      "options": [
+        {"text": "Terhelés növelése", "is_correct": false},
+        {"text": "Edzés-pihenés egyensúly", "is_correct": true},
+        {"text": "Pihenés elhagyása", "is_correct": false},
+        {"text": "Csak verseny", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["megelozes"]
+      }
+    },
+    {
+      "text": "A megfelelő regeneráció segít megelőzni a túlterhelést.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert biztosítja a szervezet helyreállását.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["regeneracio"]
+      }
+    }
+  ]
+}

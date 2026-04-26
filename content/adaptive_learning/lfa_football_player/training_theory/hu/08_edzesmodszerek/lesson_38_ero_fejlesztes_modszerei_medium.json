@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzésmódszerek",
+  "topic": "Az erő fejlesztésének módszerei",
+  "quiz_title": "AL — Edzésmódszerek - Az erő fejlesztésének módszerei [HU]",
+  "description": "Az erőfejlesztés alapelvei, módszerei és gyakorlati alkalmazása.",
+  "questions": [
+    {
+      "text": "Mit nevezünk erőnek sportélettani értelemben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az erő az izomzat képessége, hogy ellenállást legyőzzön vagy megtartson.",
+      "options": [
+        {"text": "Gyors mozgás képessége", "is_correct": false},
+        {"text": "Ellenállás legyőzésének képessége", "is_correct": true},
+        {"text": "Hosszú idejű mozgás", "is_correct": false},
+        {"text": "Pihenési képesség", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["ero"]
+      }
+    },
+    {
+      "text": "Melyik tartozik az erő típusai közé?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az erő különböző formákban jelenik meg, például maximális erő.",
+      "options": [
+        {"text": "Gyorsaság", "is_correct": false},
+        {"text": "Maximális erő", "is_correct": true},
+        {"text": "Koordináció", "is_correct": false},
+        {"text": "Hajlékonyság", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["ero_tipusai"]
+      }
+    },
+    {
+      "text": "Mi jellemzi a maximális erő fejlesztését?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Nagy súlyokkal és alacsony ismétlésszámmal történik.",
+      "options": [
+        {"text": "Kis súly, sok ismétlés", "is_correct": false},
+        {"text": "Nagy súly, kevés ismétlés", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Folyamatos futás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["maximalis_ero"]
+      }
+    },
+    {
+      "text": "Mi jellemzi az állóképességi erő fejlesztését?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Kisebb súlyokkal és több ismétléssel történik.",
+      "options": [
+        {"text": "Nagy súly, kevés ismétlés", "is_correct": false},
+        {"text": "Kis súly, sok ismétlés", "is_correct": true},
+        {"text": "Csak maximális terhelés", "is_correct": false},
+        {"text": "Csak gyors mozgás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["allokepessegi_ero"]
+      }
+    },
+    {
+      "text": "A pihenőidő befolyásolja az erőfejlesztést.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert a regeneráció szükséges az alkalmazkodáshoz.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["pihenoido"]
+      }
+    },
+    {
+      "text": "Mi az ismétléses módszer?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az ismétléses módszer adott számú ismétlések végrehajtását jelenti.",
+      "options": [
+        {"text": "Egyetlen ismétlés", "is_correct": false},
+        {"text": "Többszöri ismétlés végrehajtása", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Futás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["ismetleses"]
+      }
+    },
+    {
+      "text": "Mit jelent a progresszív terhelés erőfejlesztésben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A terhelés fokozatos növelését jelenti.",
+      "options": [
+        {"text": "Terhelés csökkentése", "is_correct": false},
+        {"text": "Fokozatos növelés", "is_correct": true},
+        {"text": "Változatlan terhelés", "is_correct": false},
+        {"text": "Csak pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["progresszio"]
+      }
+    },
+    {
+      "text": "Az ismétlésszám befolyásolja az edzés hatását.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert más hatást vált ki különböző ismétlésszám.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["ismetles"]
+      }
+    },
+    {
+      "text": "Mi jellemzi a dinamikus erőfejlesztést?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Gyors, robbanékony mozgások végrehajtása.",
+      "options": [
+        {"text": "Lassú mozgás", "is_correct": false},
+        {"text": "Robbanékony végrehajtás", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Csak nyújtás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["gyorsero"]
+      }
+    },
+    {
+      "text": "Az erő fejlesztése több módszer kombinációjával történhet.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert különböző erőtípusokat fejlesztünk.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["kombinalas"]
+      }
+    }
+  ]
+}

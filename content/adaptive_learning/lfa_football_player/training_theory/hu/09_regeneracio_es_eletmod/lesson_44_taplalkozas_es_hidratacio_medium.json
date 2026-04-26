@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Regeneráció és életmód",
+  "topic": "Táplálkozás és hidratáció",
+  "quiz_title": "AL — Regeneráció és életmód - Táplálkozás és hidratáció [HU]",
+  "description": "A megfelelő táplálkozás és folyadékbevitel szerepe a sportteljesítményben.",
+  "questions": [
+    {
+      "text": "Mi a táplálkozás fő szerepe sportolóknál?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A táplálkozás biztosítja az energiát és a regenerációhoz szükséges tápanyagokat.",
+      "options": [
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Energia és tápanyag biztosítása", "is_correct": true},
+        {"text": "Csak hidratáció", "is_correct": false},
+        {"text": "Versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["taplalkozas"]
+      }
+    },
+    {
+      "text": "Melyik makrotápanyag az elsődleges energiaforrás edzés során?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A szénhidrátok gyorsan felhasználható energiát biztosítanak.",
+      "options": [
+        {"text": "Fehérje", "is_correct": false},
+        {"text": "Szénhidrát", "is_correct": true},
+        {"text": "Vitamin", "is_correct": false},
+        {"text": "Ásványi anyag", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["szenhidrat"]
+      }
+    },
+    {
+      "text": "Mi a fehérjék fő szerepe?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A fehérjék az izomépítéshez és regenerációhoz szükségesek.",
+      "options": [
+        {"text": "Energia biztosítása elsődlegesen", "is_correct": false},
+        {"text": "Izomépítés és regeneráció", "is_correct": true},
+        {"text": "Hidratáció", "is_correct": false},
+        {"text": "Vitaminellátás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["feherje"]
+      }
+    },
+    {
+      "text": "Mit nevezünk hidratációnak?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A hidratáció a megfelelő folyadékbevitel biztosítása.",
+      "options": [
+        {"text": "Edzés", "is_correct": false},
+        {"text": "Folyadékbevitel biztosítása", "is_correct": true},
+        {"text": "Táplálkozás", "is_correct": false},
+        {"text": "Pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["hidratacio"]
+      }
+    },
+    {
+      "text": "A dehidratáció rontja a sportteljesítményt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert csökkenti a fizikai és mentális teljesítményt.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["dehidrataltsag"]
+      }
+    },
+    {
+      "text": "Mi az energiaegyensúly?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az energiafelvétel és energiafelhasználás egyensúlya.",
+      "options": [
+        {"text": "Csak kalória bevitel", "is_correct": false},
+        {"text": "Bevitel és felhasználás egyensúlya", "is_correct": true},
+        {"text": "Csak edzés", "is_correct": false},
+        {"text": "Csak pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["energia"]
+      }
+    },
+    {
+      "text": "Mi történik dehidratáció esetén?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A folyadékhiány csökkenti a teljesítményt.",
+      "options": [
+        {"text": "Teljesítmény nő", "is_correct": false},
+        {"text": "Teljesítmény csökken", "is_correct": true},
+        {"text": "Nincs változás", "is_correct": false},
+        {"text": "Csak pihenés történik", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["dehidrataltsag"]
+      }
+    },
+    {
+      "text": "A megfelelő folyadékbevitel segíti a regenerációt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert támogatja a szervezet működését.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["hidratacio"]
+      }
+    },
+    {
+      "text": "Mi jellemzi az edzés utáni táplálkozást?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A regenerációt támogató tápanyagbevitel.",
+      "options": [
+        {"text": "Nincs szükség étkezésre", "is_correct": false},
+        {"text": "Regeneráció támogatása", "is_correct": true},
+        {"text": "Csak folyadék", "is_correct": false},
+        {"text": "Csak verseny", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["edzes_utani_taplalkozas"]
+      }
+    },
+    {
+      "text": "A megfelelő táplálkozás javítja a sportteljesítményt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert biztosítja a szükséges energiát és tápanyagokat.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["teljesitmeny"]
+      }
+    }
+  ]
+}

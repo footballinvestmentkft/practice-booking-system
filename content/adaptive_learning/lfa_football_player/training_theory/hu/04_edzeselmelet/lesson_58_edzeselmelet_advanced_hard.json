@@ -1,0 +1,326 @@
+{
+  "schema_version": "1.0",
+  "specializations": [
+    "LFA_FOOTBALL_PLAYER"
+  ],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "module": "Edzéselmélet",
+  "topic": "Edzéselmélet — Haladó",
+  "quiz_title": "AL — Edzéselmélet - Haladó [HU]",
+  "description": "Az edzéselmélet mélyebb összefüggéseinek elemzése: adaptációs mechanizmusok, szuperkompenzáció kritikus tényezői, periodizációs modellek összehasonlítása és a specificitás elv haladó alkalmazása.",
+  "questions": [
+    {
+      "text": "Mi a funkcionális overreaching és miben különbözik a nonfunkcionális overreachingtől?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A funkcionális overreaching szándékos rövid távú túlterhelés, amely megfelelő regeneráció után szuperkompenzációhoz vezet — az edzésprogramozás tervezett eszköze. A nonfunkcionális overreaching ellenőrizetlen, és hetek alatt nehezen visszafordítható teljesítménycsökkentést okoz — ez a túledzés (overtraining syndrome) közvetlen előstádiuma, amelyből a felépülés akár hónapokat vehet igénybe.",
+      "options": [
+        {
+          "text": "Nincs különbség, mindkettő túledzés",
+          "is_correct": false
+        },
+        {
+          "text": "Funkcionális: tervezett, szuperkompenzációhoz vezet; nonfunkcionális: ellenőrizetlen, hetekig tartó visszaesés",
+          "is_correct": true
+        },
+        {
+          "text": "A funkcionális overreaching károsabb a szervezetnek",
+          "is_correct": false
+        },
+        {
+          "text": "Mindkettő pihenéssel 1-2 nap alatt rendezhető",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.8,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": [
+          "overreaching",
+          "tuledzes",
+          "szuperkompenzacio"
+        ]
+      }
+    },
+    {
+      "text": "A szuperkompenzáció ablaka zárul, ha a következő edzésinger nem érkezik meg időben.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Igaz. A szuperkompenzációs csúcs után — ha az újabb edzésinger nem érkezik meg időben — a szervezet visszatér az edzés előtti szintre (involutio). A helyes időzítés ezért az adaptáció kulcsa: a túl korai inger fáradáshalmozódást, a túl késői inger adaptáció-veszteséget okoz. Ez a szuperkompenzáció időfüggő ablaka.",
+      "options": [
+        {
+          "text": "Igaz",
+          "is_correct": true
+        },
+        {
+          "text": "Hamis",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.72,
+        "cognitive_load": 0.7,
+        "average_time_seconds": 45,
+        "concept_tags": [
+          "szuperkompenzacio",
+          "ablak",
+          "involutio"
+        ]
+      }
+    },
+    {
+      "text": "Melyik periodizációs modell alkalmasabb a labdarúgók számára a hosszú versenyidőszak alatt?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A hullámzó (undulating) periodizáció — amely hétről hétre vagy naponként változtatja a terhelési paramétereket — alkalmasabb a labdarúgóknak, akiknek hosszú versenyidőszak alatt folyamatos edzésstimulust kell fenntartaniuk, miközben versenyről versenyre teljesíteniük kell.",
+      "options": [
+        {
+          "text": "Lineáris periodizáció, mert egyszerűbb kezelni",
+          "is_correct": false
+        },
+        {
+          "text": "Hullámzó (undulating) periodizáció a folyamatos stimulus és versenyteljesítmény egyidejű fenntartása miatt",
+          "is_correct": true
+        },
+        {
+          "text": "Kizárólag blokkperiodizáció",
+          "is_correct": false
+        },
+        {
+          "text": "Periodizáció nem szükséges labdarúgóknál",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.8,
+        "average_time_seconds": 65,
+        "concept_tags": [
+          "periodizacios_modellek",
+          "undulating",
+          "labdarugas"
+        ]
+      }
+    },
+    {
+      "text": "Mi a SAID-elv és hogyan alkalmazandó az edzéstervezésben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A SAID-elv (Specific Adaptation to Imposed Demands) szerint a szervezet pontosan ahhoz az ingerhez alkalmazkodik, amelyet kap. Az edzéstervezésben ez azt jelenti, hogy az edzéstartalom mozgásmintáinak, energiarendszereinek és intenzitásának a versenykövetelményeket kell tükröznie.",
+      "options": [
+        {
+          "text": "Az edzések sorrendjének véletlenszerű meghatározása",
+          "is_correct": false
+        },
+        {
+          "text": "A szervezet pontosan a kapott ingerhez alkalmazkodik — az edzésnek a versenykörülményeket kell tükröznie",
+          "is_correct": true
+        },
+        {
+          "text": "Az edzésterv naponta változtatható anélkül, hogy ez hatást gyakorolna",
+          "is_correct": false
+        },
+        {
+          "text": "Az általános edzés mindig felülmúlja a specifikusat",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 60,
+        "concept_tags": [
+          "SAID_elv",
+          "specifikusság",
+          "adaptacio"
+        ]
+      }
+    },
+    {
+      "text": "Mi a detraining (deedzés) és mikor következik be?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A detraining a szerzett edzettségi adaptációk visszafordulása az edzésstimulus megszűnésekor vagy drasztikus csökkentésekor. Az aerob kapacitás már 2-3 hét inaktivitás után csökkenni kezd, az erőadaptációk lassabban vesznek el (4-6 hét).",
+      "options": [
+        {
+          "text": "Az edzés intenzitásának növelése",
+          "is_correct": false
+        },
+        {
+          "text": "Az edzettségi adaptációk visszafordulása az edzésstimulus megszűnésekor",
+          "is_correct": true
+        },
+        {
+          "text": "Kizárólag idős sportolóknál fordul elő",
+          "is_correct": false
+        },
+        {
+          "text": "A detraining nem befolyásolja az erőadaptációkat",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 55,
+        "concept_tags": [
+          "detraining",
+          "adaptacio_visszafordulasa"
+        ]
+      }
+    },
+    {
+      "text": "Hogyan határozza meg a terhelés-pihenő arány az adaptáció irányát?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Ha a pihenőidő túl rövid, a fáradás halmozódik és az adaptáció gátolt (túlterhelés felé tart). Ha túl hosszú, a szuperkompenzáció lecseng. Az optimális arány módszerfüggő: erőedzésnél 1:3-1:5, állóképességnél 1:1-1:2 munkaszünet arány jellemző.",
+      "options": [
+        {
+          "text": "A terhelés-pihenő aránynak nincs hatása az adaptáció irányára",
+          "is_correct": false
+        },
+        {
+          "text": "Optimális arány szuperkompenzációhoz vezet; túl rövid pihenő → fáradáshalmozódás; túl hosszú → adaptáció lecseng",
+          "is_correct": true
+        },
+        {
+          "text": "Minél hosszabb a pihenő, annál jobb az adaptáció",
+          "is_correct": false
+        },
+        {
+          "text": "Minden sportágnál azonos a terhelés-pihenő arány",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.83,
+        "cognitive_load": 0.82,
+        "average_time_seconds": 70,
+        "concept_tags": [
+          "terheles_piheno_arany",
+          "adaptacio"
+        ]
+      }
+    },
+    {
+      "text": "A cross-training (keresztedzés) mindig növeli a sportági specifikus teljesítményt.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Hamis. A keresztedzés általános kondicionálást nyújt és segíthet a regenerációban, de nem helyettesítheti a sportágspecifikus edzést az adaptáció szempontjából. A SAID-elv értelmében az idegrendszeri és strukturális adaptáció pontosan ahhoz az ingerhez kötődik, amelyet kap — más mozgásmintáknál kialakult adaptáció csak részben transzferálódik.",
+      "options": [
+        {
+          "text": "Igaz",
+          "is_correct": false
+        },
+        {
+          "text": "Hamis",
+          "is_correct": true
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": [
+          "cross_training",
+          "specifikusság"
+        ]
+      }
+    },
+    {
+      "text": "Melyik tényező határozza meg leginkább a szuperkompenzáció amplitúdóját?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A szuperkompenzáció amplitúdóját az edzésinger nagysága (a terhelés és az aktuális edzettségi szint különbsége) határozza meg leginkább — nem az edzés puszta mennyisége. Az edzett sportolónak nagyobb ingerre van szüksége ugyanolyan adaptációhoz.",
+      "options": [
+        {
+          "text": "Kizárólag az edzés időtartama",
+          "is_correct": false
+        },
+        {
+          "text": "Az inger nagysága — a terhelés és az aktuális edzettségi szint különbsége",
+          "is_correct": true
+        },
+        {
+          "text": "A sportoló kora",
+          "is_correct": false
+        },
+        {
+          "text": "A táplálékkiegészítők mennyisége",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.8,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 60,
+        "concept_tags": [
+          "szuperkompenzacio_amplitudo",
+          "edzettsegiiszint"
+        ]
+      }
+    },
+    {
+      "text": "Mi a GAS-modell (General Adaptation Syndrome) és hogyan kapcsolódik az edzéselmélethez?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Selye GAS-modellje három fázist ír le: alarm (akut stresszreakció), rezisztencia (adaptáció), kimerülés (tartós stressz → összeomlás). Az edzéselmélet erre épül: a terhelés alarm-fázist vált ki, a pihenő alatt rezisztencia alakul ki (szuperkompenzáció), a kimerülési fázis a túledzésnek felel meg.",
+      "options": [
+        {
+          "text": "A GAS-modell kizárólag pszichológiai stresszre vonatkozik",
+          "is_correct": false
+        },
+        {
+          "text": "Alarm → rezisztencia (adaptáció) → kimerülés — az edzéselmélet terhelés-pihenő-szuperkompenzáció ciklusa erre épül",
+          "is_correct": true
+        },
+        {
+          "text": "A modell szerint a kimerülés a legjobb adaptációs fázis",
+          "is_correct": false
+        },
+        {
+          "text": "A GAS-modell nem alkalmazható a sportban",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.85,
+        "cognitive_load": 0.83,
+        "average_time_seconds": 70,
+        "concept_tags": [
+          "GAS_modell",
+          "selye",
+          "adaptacios_fazisok"
+        ]
+      }
+    },
+    {
+      "text": "Azonos edzésterhelés mellett a kezdő sportoló gyorsabban adaptálódik, mint az edzett sportoló.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Igaz. Az edzés csak akkor vezet fejlődéshez, ha a szervezet alkalmazkodik az ingerre — az adaptáció a fejlődés biológiai alapja. Adaptáció nélkül az edzés fáradtságot okoz, de strukturális vagy funkcionális fejlődést nem. Ez az elv az edzéselmélet egyik alapaxiómája, amelyre a periodizáció és a terheléstervezés épül.",
+      "options": [
+        {
+          "text": "Igaz",
+          "is_correct": true
+        },
+        {
+          "text": "Hamis",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.72,
+        "cognitive_load": 0.7,
+        "average_time_seconds": 45,
+        "concept_tags": [
+          "adaptacios_rata",
+          "kezdo_vs_edzett"
+        ]
+      }
+    }
+  ]
+}

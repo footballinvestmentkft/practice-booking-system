@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Training Methods",
+  "topic": "Methods of Strength Development",
+  "quiz_title": "AL — Training Methods - Methods of Strength Development [EN]",
+  "description": "The principles, methods, and practical application of strength development.",
+  "questions": [
+    {
+      "text": "What is strength in the sports physiology sense?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Strength is the ability of the musculature to overcome or maintain resistance.",
+      "options": [
+        {"text": "The ability for fast movement", "is_correct": false},
+        {"text": "The ability to overcome resistance", "is_correct": true},
+        {"text": "Prolonged movement", "is_correct": false},
+        {"text": "The ability to rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["strength"]
+      }
+    },
+    {
+      "text": "Which belongs to the types of strength?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Strength appears in various forms, such as maximal strength.",
+      "options": [
+        {"text": "Speed", "is_correct": false},
+        {"text": "Maximal strength", "is_correct": true},
+        {"text": "Coordination", "is_correct": false},
+        {"text": "Flexibility", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["strength_types"]
+      }
+    },
+    {
+      "text": "What characterises maximal strength development?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "It involves heavy loads and a low number of repetitions.",
+      "options": [
+        {"text": "Light load, many repetitions", "is_correct": false},
+        {"text": "Heavy load, few repetitions", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Continuous running", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["maximal_strength"]
+      }
+    },
+    {
+      "text": "What characterises strength endurance development?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "It involves lighter loads and a higher number of repetitions.",
+      "options": [
+        {"text": "Heavy load, few repetitions", "is_correct": false},
+        {"text": "Light load, many repetitions", "is_correct": true},
+        {"text": "Maximum load only", "is_correct": false},
+        {"text": "Fast movement only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["strength_endurance"]
+      }
+    },
+    {
+      "text": "Rest periods influence strength development.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because recovery is necessary for adaptation.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["rest_period"]
+      }
+    },
+    {
+      "text": "What is the repetition method?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The repetition method involves performing a defined number of repetitions.",
+      "options": [
+        {"text": "A single repetition", "is_correct": false},
+        {"text": "Performing multiple repetitions", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Running", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["repetition"]
+      }
+    },
+    {
+      "text": "What does progressive loading mean in strength development?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "It means gradually increasing the load.",
+      "options": [
+        {"text": "Reducing the load", "is_correct": false},
+        {"text": "Gradual increase", "is_correct": true},
+        {"text": "Unchanged load", "is_correct": false},
+        {"text": "Rest only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["progression"]
+      }
+    },
+    {
+      "text": "The number of repetitions influences the training effect.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because different numbers of repetitions produce different effects.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["repetitions"]
+      }
+    },
+    {
+      "text": "What characterises dynamic strength development?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Execution of fast, explosive movements.",
+      "options": [
+        {"text": "Slow movement", "is_correct": false},
+        {"text": "Explosive execution", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Stretching only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["speed_strength"]
+      }
+    },
+    {
+      "text": "Strength development can be achieved through a combination of methods.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because different types of strength are developed.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["combination"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Recovery and Lifestyle",
+  "topic": "Foundations of Recovery",
+  "quiz_title": "AL — Recovery and Lifestyle - Foundations of Recovery [EN]",
+  "description": "The process, types, and role of recovery in athletic performance.",
+  "questions": [
+    {
+      "text": "What is recovery?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Recovery is the body's restoration process following physical load.",
+      "options": [
+        {"text": "Executing training", "is_correct": false},
+        {"text": "Restoration of the body", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Competing", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["recovery"]
+      }
+    },
+    {
+      "text": "What is the role of recovery in training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Adaptation and development occur during recovery.",
+      "options": [
+        {"text": "Stopping training", "is_correct": false},
+        {"text": "Ensuring development", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Competition only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["adaptation"]
+      }
+    },
+    {
+      "text": "What is the relationship between fatigue and recovery?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Recovery reduces fatigue and restores the body.",
+      "options": [
+        {"text": "There is no relationship", "is_correct": false},
+        {"text": "Recovery reduces fatigue", "is_correct": true},
+        {"text": "Fatigue increases performance", "is_correct": false},
+        {"text": "Only training matters", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["fatigue"]
+      }
+    },
+    {
+      "text": "What is active recovery?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Recovery through light movement.",
+      "options": [
+        {"text": "Complete rest", "is_correct": false},
+        {"text": "Light movement", "is_correct": true},
+        {"text": "Maximum load", "is_correct": false},
+        {"text": "Competing", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["active_recovery"]
+      }
+    },
+    {
+      "text": "What is passive recovery?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Recovery through rest.",
+      "options": [
+        {"text": "Movement", "is_correct": false},
+        {"text": "Rest", "is_correct": true},
+        {"text": "Training", "is_correct": false},
+        {"text": "Competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["passive_recovery"]
+      }
+    },
+    {
+      "text": "Sleep plays an important role in recovery.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because restorative processes occur during sleep.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["sleep"]
+      }
+    },
+    {
+      "text": "Why is adequate nutrition important during recovery?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Nutrients support the body's restoration.",
+      "options": [
+        {"text": "It has no role", "is_correct": false},
+        {"text": "It restores the body", "is_correct": true},
+        {"text": "It is only needed for training", "is_correct": false},
+        {"text": "It is only needed for competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["nutrition"]
+      }
+    },
+    {
+      "text": "Hydration influences recovery.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because fluid balance is important for bodily function.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["hydration"]
+      }
+    },
+    {
+      "text": "What happens with insufficient recovery?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Overtraining and a decline in performance can develop.",
+      "options": [
+        {"text": "Performance increases", "is_correct": false},
+        {"text": "Overtraining develops", "is_correct": true},
+        {"text": "There is no effect", "is_correct": false},
+        {"text": "Only rest occurs", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["overtraining"]
+      }
+    },
+    {
+      "text": "Adequate recovery improves performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it supports adaptation.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["performance"]
+      }
+    }
+  ]
+}

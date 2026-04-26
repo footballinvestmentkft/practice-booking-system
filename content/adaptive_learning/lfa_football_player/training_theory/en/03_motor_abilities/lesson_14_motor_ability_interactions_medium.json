@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Motor Abilities",
+  "topic": "Interactions and Complex Development of Motor Abilities",
+  "quiz_title": "AL — Motor Abilities - Interactions and Complex Development [EN]",
+  "description": "The interrelationships between motor abilities and their integrated development in training theory.",
+  "questions": [
+    {
+      "text": "What characterises the relationship between motor abilities?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Motor abilities interact with one another rather than functioning independently.",
+      "options": [
+        {"text": "They are completely independent", "is_correct": false},
+        {"text": "They interact with one another", "is_correct": true},
+        {"text": "They are mutually exclusive", "is_correct": false},
+        {"text": "They do not influence each other", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["interaction"]
+      }
+    },
+    {
+      "text": "What is the relationship between strength and speed?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Together they constitute explosiveness (speed-strength).",
+      "options": [
+        {"text": "There is no relationship", "is_correct": false},
+        {"text": "They combine in explosiveness", "is_correct": true},
+        {"text": "They are mutually exclusive", "is_correct": false},
+        {"text": "They only relate to endurance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["speed_strength"]
+      }
+    },
+    {
+      "text": "Coordination plays a role in the functioning of every motor ability.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it ensures the harmonisation of movements.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["coordination"]
+      }
+    },
+    {
+      "text": "What is one characteristic of complex movements?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "They are based on the simultaneous operation of multiple abilities.",
+      "options": [
+        {"text": "They require only one ability", "is_correct": false},
+        {"text": "They require the cooperation of multiple abilities", "is_correct": true},
+        {"text": "They require no coordination", "is_correct": false},
+        {"text": "They require endurance only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["complex_movement"]
+      }
+    },
+    {
+      "text": "Why is the combined development of abilities important?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Because sporting performance is the combination of multiple abilities.",
+      "options": [
+        {"text": "It is not important", "is_correct": false},
+        {"text": "Performance is complex in nature", "is_correct": true},
+        {"text": "It only saves time", "is_correct": false},
+        {"text": "It is only necessary for beginners", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["complex_development"]
+      }
+    },
+    {
+      "text": "What characterises sport-specific development?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The development of abilities is tailored to the demands of the sport.",
+      "options": [
+        {"text": "It is identical across all sports", "is_correct": false},
+        {"text": "It is tailored to the specific sport", "is_correct": true},
+        {"text": "It involves strength development only", "is_correct": false},
+        {"text": "It involves endurance only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["specificity"]
+      }
+    },
+    {
+      "text": "Developing motor abilities in isolation is always more effective than integrated development.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because complex development is often more effective.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.52,
+        "average_time_seconds": 25,
+        "concept_tags": ["complex_development"]
+      }
+    },
+    {
+      "text": "What is the purpose of a performance profile?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "To identify the athlete's strengths and areas requiring development.",
+      "options": [
+        {"text": "To stop training", "is_correct": false},
+        {"text": "To map out abilities", "is_correct": true},
+        {"text": "To compete", "is_correct": false},
+        {"text": "To increase rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["performance_profile"]
+      }
+    },
+    {
+      "text": "Which relationship holds true between endurance and strength?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Strength endurance is the combination of both qualities.",
+      "options": [
+        {"text": "There is no relationship", "is_correct": false},
+        {"text": "They combine", "is_correct": true},
+        {"text": "They are mutually exclusive", "is_correct": false},
+        {"text": "They only relate to speed", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["strength_endurance"]
+      }
+    },
+    {
+      "text": "Complex training supports adaptation to real sport situations.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because sport situations require multiple abilities simultaneously.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["complex_development"]
+      }
+    }
+  ]
+}

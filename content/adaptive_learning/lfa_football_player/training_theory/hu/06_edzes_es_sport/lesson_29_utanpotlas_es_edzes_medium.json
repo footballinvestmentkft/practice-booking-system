@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzés és sport",
+  "topic": "Utánpótlás-nevelés és edzés sajátosságai",
+  "quiz_title": "AL — Edzés és sport - Utánpótlás-nevelés és edzés sajátosságai [HU]",
+  "description": "Az utánpótláskorú sportolók edzésének alapelvei és sajátosságai.",
+  "questions": [
+    {
+      "text": "Mit jelent az utánpótlás-nevelés a sportban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az utánpótlás-nevelés a fiatal sportolók hosszú távú fejlesztését jelenti.",
+      "options": [
+        {"text": "Csak versenyzés", "is_correct": false},
+        {"text": "Fiatal sportolók fejlesztése", "is_correct": true},
+        {"text": "Csak edzők képzése", "is_correct": false},
+        {"text": "Pihenés biztosítása", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["utanpotlas"]
+      }
+    },
+    {
+      "text": "Miért fontos az életkori sajátosságok figyelembevétele?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A különböző életkorok eltérő fejlődési lehetőségeket és terhelhetőséget jelentenek.",
+      "options": [
+        {"text": "Nincs jelentősége", "is_correct": false},
+        {"text": "Eltérő fejlődési sajátosságok miatt", "is_correct": true},
+        {"text": "Csak az edző miatt", "is_correct": false},
+        {"text": "Csak versenyek miatt", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["eletkori_sajatossagok"]
+      }
+    },
+    {
+      "text": "A fiatal sportolók terhelhetősége megegyezik a felnőttekével.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert a fiatalok terhelhetősége eltérő és alacsonyabb.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["terhelhetoseg"]
+      }
+    },
+    {
+      "text": "Mi a játék szerepe az utánpótlás-edzésben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A játék segíti a motivációt és a tanulást.",
+      "options": [
+        {"text": "Nincs szerepe", "is_correct": false},
+        {"text": "Motiváció és tanulás támogatása", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Csak verseny", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["jatek"]
+      }
+    },
+    {
+      "text": "Mi a fő cél utánpótláskorban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A hosszú távú fejlődés megalapozása.",
+      "options": [
+        {"text": "Azonnali győzelem", "is_correct": false},
+        {"text": "Hosszú távú fejlődés", "is_correct": true},
+        {"text": "Csak versenyzés", "is_correct": false},
+        {"text": "Csak erőfejlesztés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["ltad"]
+      }
+    },
+    {
+      "text": "Miért fontos a motiváció utánpótláskorban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A motiváció fenntartja a részvételt és a fejlődést.",
+      "options": [
+        {"text": "Nincs szerepe", "is_correct": false},
+        {"text": "Segíti a fejlődést és részvételt", "is_correct": true},
+        {"text": "Csak verseny miatt fontos", "is_correct": false},
+        {"text": "Csak edző miatt fontos", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["motivacio"]
+      }
+    },
+    {
+      "text": "A túlterhelés különösen veszélyes fiatal korban.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert a fejlődő szervezet érzékenyebb.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["tulterheles"]
+      }
+    },
+    {
+      "text": "Mit jelent a hosszú távú fejlesztés elve?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A sportoló fejlődését hosszú időtávon tervezzük.",
+      "options": [
+        {"text": "Azonnali eredmény", "is_correct": false},
+        {"text": "Hosszú távú fejlődés tervezése", "is_correct": true},
+        {"text": "Csak rövid edzések", "is_correct": false},
+        {"text": "Csak versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["ltad"]
+      }
+    },
+    {
+      "text": "Mi az edző szerepe utánpótlásban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az edző irányítja a fejlődést és támogatja a sportolót.",
+      "options": [
+        {"text": "Csak verseny szervezése", "is_correct": false},
+        {"text": "Fejlődés irányítása és támogatása", "is_correct": true},
+        {"text": "Csak edzés végrehajtása", "is_correct": false},
+        {"text": "Csak pihenés biztosítása", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["edzo_szerepe"]
+      }
+    },
+    {
+      "text": "Utánpótláskorban a játékosság fontosabb lehet, mint a teljesítmény.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert a fejlődés és motiváció elsődleges.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 25,
+        "concept_tags": ["utanpotlas"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Motor Abilities",
+  "topic": "Flexibility and Its Types",
+  "quiz_title": "AL — Motor Abilities - Flexibility and Its Types [EN]",
+  "description": "The concept of flexibility, its types, and its role in performance and injury prevention.",
+  "questions": [
+    {
+      "text": "What is flexibility?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Flexibility is the magnitude of the range of motion available at the joints.",
+      "options": [
+        {"text": "Muscular strength", "is_correct": false},
+        {"text": "Joint range of motion", "is_correct": true},
+        {"text": "Speed", "is_correct": false},
+        {"text": "Endurance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["flexibility"]
+      }
+    },
+    {
+      "text": "What most determines flexibility?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The extensibility of muscles and connective tissues.",
+      "options": [
+        {"text": "Heart rate", "is_correct": false},
+        {"text": "The extensibility of muscles", "is_correct": true},
+        {"text": "Body weight", "is_correct": false},
+        {"text": "Speed", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 40,
+        "concept_tags": ["flexibility"]
+      }
+    },
+    {
+      "text": "What is active flexibility?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Movement produced by the athlete's own muscular effort.",
+      "options": [
+        {"text": "Movement produced with external assistance", "is_correct": false},
+        {"text": "Movement produced by one's own muscular effort", "is_correct": true},
+        {"text": "Static holding", "is_correct": false},
+        {"text": "Rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 42,
+        "concept_tags": ["active_flexibility"]
+      }
+    },
+    {
+      "text": "What is passive flexibility?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Movement produced by an external force or with assistance.",
+      "options": [
+        {"text": "Movement produced by one's own muscular effort", "is_correct": false},
+        {"text": "Movement produced with external assistance", "is_correct": true},
+        {"text": "Rapid movement", "is_correct": false},
+        {"text": "Static strength", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 42,
+        "concept_tags": ["passive_flexibility"]
+      }
+    },
+    {
+      "text": "What characterises static stretching?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Stretching performed by holding a position for an extended period.",
+      "options": [
+        {"text": "Rapid movement", "is_correct": false},
+        {"text": "Stretching held in a fixed position", "is_correct": true},
+        {"text": "Force production", "is_correct": false},
+        {"text": "Running", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 40,
+        "concept_tags": ["static_stretching"]
+      }
+    },
+    {
+      "text": "What characterises dynamic stretching?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Stretching exercises performed through movement.",
+      "options": [
+        {"text": "Holding without movement", "is_correct": false},
+        {"text": "Stretching performed through movement", "is_correct": true},
+        {"text": "Rest", "is_correct": false},
+        {"text": "Strength development", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 40,
+        "concept_tags": ["dynamic_stretching"]
+      }
+    },
+    {
+      "text": "Flexibility generally decreases with age.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, joint range of motion tends to decrease with age.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["flexibility"]
+      }
+    },
+    {
+      "text": "Which factors influence flexibility?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Age, sex, and training status all have an influence.",
+      "options": [
+        {"text": "Body weight only", "is_correct": false},
+        {"text": "Age and training status", "is_correct": true},
+        {"text": "Height only", "is_correct": false},
+        {"text": "Heart rate only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["factors"]
+      }
+    },
+    {
+      "text": "What is one of the main roles of flexibility?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "It supports injury prevention.",
+      "options": [
+        {"text": "Increasing strength", "is_correct": false},
+        {"text": "Injury prevention", "is_correct": true},
+        {"text": "Increasing heart rate", "is_correct": false},
+        {"text": "Reducing body weight", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 42,
+        "concept_tags": ["injury_prevention"]
+      }
+    },
+    {
+      "text": "Flexibility has no effect on sporting performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because range of motion and movement efficiency depend on it.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 25,
+        "concept_tags": ["performance"]
+      }
+    }
+  ]
+}

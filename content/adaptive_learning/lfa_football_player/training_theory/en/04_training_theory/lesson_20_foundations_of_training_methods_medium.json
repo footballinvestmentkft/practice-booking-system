@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Training Theory",
+  "topic": "Foundations of Training Methods",
+  "quiz_title": "AL — Training Theory - Foundations of Training Methods [EN]",
+  "description": "Types of training methods and their application in training planning.",
+  "questions": [
+    {
+      "text": "What is a training method?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A training method is the practical procedure by which the training goal is achieved.",
+      "options": [
+        {"text": "Only the manner of rest", "is_correct": false},
+        {"text": "The procedure by which the training goal is achieved", "is_correct": true},
+        {"text": "A single exercise", "is_correct": false},
+        {"text": "A competition format", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["training_method"]
+      }
+    },
+    {
+      "text": "What characterises the continuous method?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Uninterrupted, steady-state loading without breaks.",
+      "options": [
+        {"text": "Loading with intervals of rest", "is_correct": false},
+        {"text": "Uninterrupted loading", "is_correct": true},
+        {"text": "Maximum intensity only", "is_correct": false},
+        {"text": "Competition situation", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["continuous_method"]
+      }
+    },
+    {
+      "text": "What characterises the interval method?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Alternation of loading and rest periods.",
+      "options": [
+        {"text": "Continuous loading", "is_correct": false},
+        {"text": "Alternation of load and rest", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Competition situation", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["interval_method"]
+      }
+    },
+    {
+      "text": "What is the essence of the repetition method?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "High-intensity repetitions with complete rest intervals between them.",
+      "options": [
+        {"text": "Continuous loading", "is_correct": false},
+        {"text": "Repetitions with complete rest", "is_correct": true},
+        {"text": "Low intensity only", "is_correct": false},
+        {"text": "Competition situation", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["repetition_method"]
+      }
+    },
+    {
+      "text": "What does the competition method mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Training performed under conditions similar to competition.",
+      "options": [
+        {"text": "Rest", "is_correct": false},
+        {"text": "Training performed in competition-like conditions", "is_correct": true},
+        {"text": "Low intensity", "is_correct": false},
+        {"text": "Continuous method", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["competition_method"]
+      }
+    },
+    {
+      "text": "The selection of training methods is independent of the training goal.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because the method must always be aligned with the goal.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["training_method"]
+      }
+    },
+    {
+      "text": "Which method most effectively develops endurance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The continuous method is effective for developing endurance.",
+      "options": [
+        {"text": "Repetition method", "is_correct": false},
+        {"text": "Continuous method", "is_correct": true},
+        {"text": "Competition method", "is_correct": false},
+        {"text": "Static method", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["endurance", "continuous_method"]
+      }
+    },
+    {
+      "text": "Which method uses high intensity with complete rest intervals?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The repetition method is of this nature.",
+      "options": [
+        {"text": "Continuous method", "is_correct": false},
+        {"text": "Repetition method", "is_correct": true},
+        {"text": "Interval method", "is_correct": false},
+        {"text": "Competition method", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["repetition_method"]
+      }
+    },
+    {
+      "text": "The interval method always involves complete rest.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because incomplete rest is characteristic of the interval method.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 25,
+        "concept_tags": ["interval_method"]
+      }
+    },
+    {
+      "text": "What determines the selection of a training method?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The training goal, sport discipline, and individual characteristics.",
+      "options": [
+        {"text": "The coach's decision only", "is_correct": false},
+        {"text": "Goal, sport discipline, and individual differences", "is_correct": true},
+        {"text": "Weather only", "is_correct": false},
+        {"text": "Intensity only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["training_method"]
+      }
+    }
+  ]
+}

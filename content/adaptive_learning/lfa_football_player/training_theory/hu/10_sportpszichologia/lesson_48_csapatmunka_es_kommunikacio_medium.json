@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Sportpszichológia",
+  "topic": "Csapatmunka és kommunikáció",
+  "quiz_title": "AL — Sportpszichológia - Csapatmunka és kommunikáció [HU]",
+  "description": "A csapatmunka és kommunikáció szerepe a sportteljesítményben.",
+  "questions": [
+    {
+      "text": "Mit nevezünk csapatmunkának?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A csapatmunka az egyének együttműködése közös cél érdekében.",
+      "options": [
+        {"text": "Egyéni munka", "is_correct": false},
+        {"text": "Közös célért való együttműködés", "is_correct": true},
+        {"text": "Versenyzés", "is_correct": false},
+        {"text": "Pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["csapatmunka"]
+      }
+    },
+    {
+      "text": "Mi a kommunikáció?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Információk átadása és megosztása.",
+      "options": [
+        {"text": "Pihenés", "is_correct": false},
+        {"text": "Információcsere", "is_correct": true},
+        {"text": "Edzés", "is_correct": false},
+        {"text": "Verseny", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["kommunikacio"]
+      }
+    },
+    {
+      "text": "Melyik a verbális kommunikáció példája?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A beszéd verbális kommunikáció.",
+      "options": [
+        {"text": "Testbeszéd", "is_correct": false},
+        {"text": "Beszéd", "is_correct": true},
+        {"text": "Mimika", "is_correct": false},
+        {"text": "Mozgás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["verbalis"]
+      }
+    },
+    {
+      "text": "Melyik a nonverbális kommunikáció példája?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A testbeszéd nonverbális kommunikáció.",
+      "options": [
+        {"text": "Beszéd", "is_correct": false},
+        {"text": "Testbeszéd", "is_correct": true},
+        {"text": "Írás", "is_correct": false},
+        {"text": "Parancs", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["nonverbalis"]
+      }
+    },
+    {
+      "text": "A csapatkohézió javítja a teljesítményt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert az együttműködés erősebb.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["kohezio"]
+      }
+    },
+    {
+      "text": "Mi a szerepek jelentősége a csapatban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A szerepek segítik a feladatok hatékony elosztását.",
+      "options": [
+        {"text": "Nincs jelentőségük", "is_correct": false},
+        {"text": "Feladatok elosztása", "is_correct": true},
+        {"text": "Csak verseny", "is_correct": false},
+        {"text": "Csak pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["szerepek"]
+      }
+    },
+    {
+      "text": "Mi a konfliktuskezelés célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A problémák megoldása és együttműködés fenntartása.",
+      "options": [
+        {"text": "Konfliktus növelése", "is_correct": false},
+        {"text": "Problémák megoldása", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["konfliktus"]
+      }
+    },
+    {
+      "text": "A vezető szerepe fontos a csapat működésében.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert irányítja és motiválja a csapatot.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["vezeto"]
+      }
+    },
+    {
+      "text": "Mi segíti az együttműködést?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A jó kommunikáció és bizalom alapfeltétel.",
+      "options": [
+        {"text": "Kommunikáció hiánya", "is_correct": false},
+        {"text": "Bizalom és kommunikáció", "is_correct": true},
+        {"text": "Egyéni munka", "is_correct": false},
+        {"text": "Versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["egyuttmukodes"]
+      }
+    },
+    {
+      "text": "A hatékony kommunikáció javítja a csapat teljesítményét.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert segíti az együttműködést.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["kommunikacio"]
+      }
+    }
+  ]
+}

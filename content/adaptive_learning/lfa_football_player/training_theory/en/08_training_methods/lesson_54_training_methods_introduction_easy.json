@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Training Methods",
+  "topic": "Training Methods — Introduction",
+  "quiz_title": "AL — Training Methods - Introduction [EN]",
+  "description": "Overview of the fundamental concepts of training methods: principles for developing endurance, strength, speed, flexibility, and coordination.",
+  "questions": [
+    {
+      "text": "What is a training method?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A training method is a systematic procedure applied to achieve a training goal, defining how the load is organised and administered.",
+      "options": [
+        {"text": "The name of the training facility", "is_correct": false},
+        {"text": "A systematic procedure applied to achieve a training goal", "is_correct": true},
+        {"text": "The athlete's nutritional plan", "is_correct": false},
+        {"text": "The rules of the competition system", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["training_method", "definition"]
+      }
+    },
+    {
+      "text": "Continuous running is one of the basic methods for developing endurance.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True. Sustained running at a steady pace (the continuous method) is a fundamental tool for developing aerobic endurance.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["endurance_development"]
+      }
+    },
+    {
+      "text": "What is the essence of interval training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Interval training alternates intense work phases with partial recovery phases, thereby developing both aerobic and anaerobic capacity simultaneously.",
+      "options": [
+        {"text": "Steady, long-distance running without rest", "is_correct": false},
+        {"text": "Alternating intense work phases with partial recovery phases", "is_correct": true},
+        {"text": "Performing strength exercises exclusively", "is_correct": false},
+        {"text": "Maximal effort sustained over a long duration", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["interval_training"]
+      }
+    },
+    {
+      "text": "The basic method for strength development is training with progressively increasing resistance.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True. Progressive overload (e.g., increasing weights) continuously triggers muscular adaptation, thereby developing strength.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["strength_development"]
+      }
+    },
+    {
+      "text": "Which method best develops reaction speed?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Reaction speed is best developed through short, maximal-intensity sprints initiated on a signal and sport-specific tasks that require rapid decision-making.",
+      "options": [
+        {"text": "Long, slow running", "is_correct": false},
+        {"text": "Short, maximal-intensity tasks initiated on a signal", "is_correct": true},
+        {"text": "Static stretching", "is_correct": false},
+        {"text": "Weighted strength training", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 35,
+        "concept_tags": ["speed_development", "reaction_speed"]
+      }
+    },
+    {
+      "text": "What type of stretching most effectively develops flexibility?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The most effective method for developing flexibility is static stretching: holding a position for 20–30 seconds increases joint range of motion.",
+      "options": [
+        {"text": "Short, swinging kicks", "is_correct": false},
+        {"text": "Sustained static stretching", "is_correct": true},
+        {"text": "Weighted training", "is_correct": false},
+        {"text": "Sprint running", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["flexibility_development"]
+      }
+    },
+    {
+      "text": "Complex and varied movement tasks are suitable for developing coordination.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True. Coordination can be effectively developed through complex tasks (ball exercises, ladder drills, balance tasks) because these require the coordinated work of multiple muscle groups.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["coordination_development"]
+      }
+    },
+    {
+      "text": "Why is choosing the appropriate training method important?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Choosing the appropriate method ensures that the load precisely targets the desired ability — with the wrong method, the desired development cannot be achieved.",
+      "options": [
+        {"text": "So that the training session is as long as possible", "is_correct": false},
+        {"text": "So that the load precisely targets the desired ability", "is_correct": true},
+        {"text": "So that the athlete does not get tired", "is_correct": false},
+        {"text": "So that the competition ends sooner", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["method_selection"]
+      }
+    },
+    {
+      "text": "What is the essence of circuit training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "In circuit training, different exercise stations are performed in sequence with short rest periods, simultaneously developing strength, endurance, and coordination.",
+      "options": [
+        {"text": "Repeated execution of a single exercise", "is_correct": false},
+        {"text": "Different exercise stations performed in sequence with short rest periods", "is_correct": true},
+        {"text": "Performing running exercises exclusively", "is_correct": false},
+        {"text": "A series of static stretching positions", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 38,
+        "concept_tags": ["circuit_training"]
+      }
+    },
+    {
+      "text": "Every training method is suitable for developing every ability.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False. Each method primarily affects specific abilities (e.g., interval training → aerobic/anaerobic; static stretching → flexibility). Correct method selection is the foundation of training design.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["method_specificity"]
+      }
+    }
+  ]
+}

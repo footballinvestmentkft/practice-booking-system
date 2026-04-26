@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzéselmélet",
+  "topic": "Az edzésmódszerek alapjai",
+  "quiz_title": "AL — Edzéselmélet - Az edzésmódszerek alapjai [HU]",
+  "description": "Az edzésmódszerek típusai és alkalmazásuk az edzéstervezésben.",
+  "questions": [
+    {
+      "text": "Mit nevezünk edzésmódszernek?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az edzésmódszer az a gyakorlati eljárás, amellyel az edzés célját megvalósítjuk.",
+      "options": [
+        {"text": "Csak a pihenés módja", "is_correct": false},
+        {"text": "Az edzés célját megvalósító eljárás", "is_correct": true},
+        {"text": "Egyetlen gyakorlat", "is_correct": false},
+        {"text": "Versenyforma", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["edzesmodszer"]
+      }
+    },
+    {
+      "text": "Mi jellemzi a folyamatos módszert?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Megszakítás nélküli, egyenletes terhelés jellemzi.",
+      "options": [
+        {"text": "Szünetekkel végzett terhelés", "is_correct": false},
+        {"text": "Megszakítás nélküli terhelés", "is_correct": true},
+        {"text": "Csak maximális intenzitás", "is_correct": false},
+        {"text": "Versenyhelyzet", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["folyamatos_modszer"]
+      }
+    },
+    {
+      "text": "Mi jellemzi az intervall módszert?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Terhelés és pihenés váltakozása jellemzi.",
+      "options": [
+        {"text": "Folyamatos terhelés", "is_correct": false},
+        {"text": "Terhelés-pihenés váltakozás", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Versenyhelyzet", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["intervall"]
+      }
+    },
+    {
+      "text": "Mi az ismétléses módszer lényege?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Magas intenzitású ismétlések teljes pihenőkkel.",
+      "options": [
+        {"text": "Folyamatos terhelés", "is_correct": false},
+        {"text": "Ismétlések teljes pihenőkkel", "is_correct": true},
+        {"text": "Csak alacsony intenzitás", "is_correct": false},
+        {"text": "Versenyhelyzet", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["ismetleses"]
+      }
+    },
+    {
+      "text": "Mit jelent a versenymódszer?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A versenyhelyzethez hasonló körülmények között végzett edzés.",
+      "options": [
+        {"text": "Pihenés", "is_correct": false},
+        {"text": "Versenyhelyzetben végzett edzés", "is_correct": true},
+        {"text": "Alacsony intenzitás", "is_correct": false},
+        {"text": "Folyamatos módszer", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["versenymodszer"]
+      }
+    },
+    {
+      "text": "Az edzésmódszerek kiválasztása független az edzéscéltól.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert mindig a célhoz kell igazítani.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["edzesmodszer"]
+      }
+    },
+    {
+      "text": "Melyik módszer fejleszti leginkább az állóképességet?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A folyamatos módszer hatékony az állóképesség fejlesztésében.",
+      "options": [
+        {"text": "Ismétléses", "is_correct": false},
+        {"text": "Folyamatos", "is_correct": true},
+        {"text": "Verseny", "is_correct": false},
+        {"text": "Statikus", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["allokepesseg", "folyamatos_modszer"]
+      }
+    },
+    {
+      "text": "Melyik módszer alkalmaz magas intenzitást teljes pihenővel?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az ismétléses módszer ilyen jellegű.",
+      "options": [
+        {"text": "Folyamatos", "is_correct": false},
+        {"text": "Ismétléses", "is_correct": true},
+        {"text": "Intervall", "is_correct": false},
+        {"text": "Verseny", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["ismetleses"]
+      }
+    },
+    {
+      "text": "Az intervall módszerben mindig teljes pihenő van.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert részleges pihenő jellemző.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 25,
+        "concept_tags": ["intervall"]
+      }
+    },
+    {
+      "text": "Mi határozza meg az edzésmódszer kiválasztását?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az edzés célja, sportág és egyéni adottságok.",
+      "options": [
+        {"text": "Csak az edző döntése", "is_correct": false},
+        {"text": "Cél, sportág és egyéni különbségek", "is_correct": true},
+        {"text": "Csak időjárás", "is_correct": false},
+        {"text": "Csak intenzitás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["edzesmodszer"]
+      }
+    }
+  ]
+}

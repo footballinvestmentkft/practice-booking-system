@@ -1,0 +1,277 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Motoros képességek",
+  "topic": "A koordináció fajtái",
+  "quiz_title": "AL — Motoros képességek - A koordináció fajtái [HU]",
+  "description": "A koordináció fogalma, típusai és szerepe a mozgástanulásban és sportteljesítményben.",
+  "questions": [
+    {
+      "text": "Mit nevezünk koordinációnak a motoros képességek rendszerében?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A koordináció a mozgások pontos, célszerű és összehangolt végrehajtásának képessége.",
+      "options": [
+        {"text": "Az izmok maximális erőkifejtésének képessége", "is_correct": false},
+        {"text": "A mozgások összehangolt végrehajtásának képessége", "is_correct": true},
+        {"text": "A hosszú ideig tartó terhelés elviselése", "is_correct": false},
+        {"text": "Az ízületi mozgástartomány nagysága", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["koordinacio", "motoros_kepessegek"]
+      }
+    },
+    {
+      "text": "Melyik tényező játszik központi szerepet a koordináció működésében?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A koordináció alapja az idegrendszer irányító és szabályozó működése.",
+      "options": [
+        {"text": "Idegrendszeri szabályozás", "is_correct": true},
+        {"text": "Csonttömeg növekedése", "is_correct": false},
+        {"text": "Passzív pihenés", "is_correct": false},
+        {"text": "Zsírraktárak mennyisége", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["koordinacio", "idegrendszer"]
+      }
+    },
+    {
+      "text": "Melyik tartozik a koordinációs képességek közé?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az egyensúlyozó képesség a koordinációs képességek egyik fontos formája.",
+      "options": [
+        {"text": "Maximális erő", "is_correct": false},
+        {"text": "Egyensúlyozó képesség", "is_correct": true},
+        {"text": "Aerob állóképesség", "is_correct": false},
+        {"text": "Izomhipertrófia", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 40,
+        "concept_tags": ["egyensuly", "koordinacio"]
+      }
+    },
+    {
+      "text": "Mit jelent a ritmusérzék a mozgáskoordinációban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A ritmusérzék a mozgások időbeli szervezésének és ütemezésének képessége.",
+      "options": [
+        {"text": "A mozgások időbeli ütemezésének képessége", "is_correct": true},
+        {"text": "A maximális sebesség elérése", "is_correct": false},
+        {"text": "A hajlékonyság növelése", "is_correct": false},
+        {"text": "A pihenőidők csökkentése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["ritmuserzek", "koordinacio"]
+      }
+    },
+    {
+      "text": "Mi jellemzi a térbeli tájékozódó képességet?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A térbeli tájékozódó képesség segíti a test és a mozgás helyzetének érzékelését a térben.",
+      "options": [
+        {"text": "A test helyzetének és mozgásának érzékelése a térben", "is_correct": true},
+        {"text": "Az izmok tartós munkavégzése", "is_correct": false},
+        {"text": "A légzőrendszer kapacitása", "is_correct": false},
+        {"text": "Az energiafelhasználás csökkentése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["terbeli_tajekozodas", "koordinacio"]
+      }
+    },
+    {
+      "text": "Mi a reakcióképesség lényege?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A reakcióképesség az ingerekre adott gyors és megfelelő mozgásválasz képessége.",
+      "options": [
+        {"text": "Ingerre adott gyors és megfelelő válasz", "is_correct": true},
+        {"text": "Hosszú távú terhelés elviselése", "is_correct": false},
+        {"text": "Izomtömeg növelése", "is_correct": false},
+        {"text": "Statikus testhelyzet fenntartása kizárólag", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["reakciokepesseg", "koordinacio"]
+      }
+    },
+    {
+      "text": "A koordináció fejlesztése különösen fontos a mozgástanulás korai szakaszában.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz. A koordináció segíti az új mozgásminták kialakítását, pontosítását és automatizálását.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.46,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["mozgas_tanulas", "koordinacio"]
+      }
+    },
+    {
+      "text": "Miért fontos a koordináció a sportteljesítmény szempontjából?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A jó koordináció hatékonyabb, pontosabb és gazdaságosabb mozgásvégrehajtást tesz lehetővé.",
+      "options": [
+        {"text": "Mert önmagában helyettesíti az erőt", "is_correct": false},
+        {"text": "Mert pontosabb és gazdaságosabb mozgást tesz lehetővé", "is_correct": true},
+        {"text": "Mert megszünteti a fáradást", "is_correct": false},
+        {"text": "Mert kizárólag állóképességi sportokban fontos", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["teljesitmeny", "koordinacio"]
+      }
+    },
+    {
+      "text": "Melyik gyakorlat segíti leginkább a koordináció fejlesztését?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A változatos, irányváltással és döntési helyzettel járó gyakorlatok jól fejlesztik a koordinációt.",
+      "options": [
+        {"text": "Mindig azonos tempójú, monoton futás", "is_correct": false},
+        {"text": "Változatos irányváltásos és reakciógyakorlatok", "is_correct": true},
+        {"text": "Csak maximális súlyemelés", "is_correct": false},
+        {"text": "Csak passzív nyújtás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.58,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 48,
+        "concept_tags": ["koordinacio_fejlesztese", "reakciokepesseg"]
+      }
+    },
+    {
+      "text": "Melyik állítás írja le legpontosabban a koordináció és technika kapcsolatát?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A koordináció a technikai végrehajtás idegrendszeri és mozgásszabályozási alapja.",
+      "options": [
+        {"text": "A koordináció és technika teljesen független egymástól", "is_correct": false},
+        {"text": "A koordináció a technikai végrehajtás fontos alapja", "is_correct": true},
+        {"text": "A technika kizárólag erő kérdése", "is_correct": false},
+        {"text": "A koordináció csak kezdőknél számít", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.52,
+        "average_time_seconds": 50,
+        "concept_tags": ["technika", "koordinacio"]
+      }
+    },
+    {
+      "text": "A koordinációs képességek fejlesztése csak gyermekkorban lehetséges.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis. Gyermekkorban különösen jól fejleszthetők, de később is javíthatók megfelelő gyakorlással.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["fejleszthetoseg", "koordinacio"]
+      }
+    },
+    {
+      "text": "Miért romolhat a koordináció fáradás hatására?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Fáradáskor romlik az idegrendszeri szabályozás és a mozgások pontossága.",
+      "options": [
+        {"text": "Mert a koordináció nem függ az idegrendszertől", "is_correct": false},
+        {"text": "Mert csökken a mozgásszabályozás pontossága", "is_correct": true},
+        {"text": "Mert nő az ízületi mozgástartomány", "is_correct": false},
+        {"text": "Mert a sportoló automatikusan gyorsabb lesz", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.62,
+        "cognitive_load": 0.55,
+        "average_time_seconds": 52,
+        "concept_tags": ["faradas", "koordinacio", "idegrendszer"]
+      }
+    },
+    {
+      "text": "Melyik koordinációs képesség kapcsolódik leginkább a testhelyzet megtartásához és visszanyeréséhez?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az egyensúlyozó képesség a testhelyzet stabilizálásában és visszanyerésében játszik szerepet.",
+      "options": [
+        {"text": "Egyensúlyozó képesség", "is_correct": true},
+        {"text": "Maximális erő", "is_correct": false},
+        {"text": "Aerob kapacitás", "is_correct": false},
+        {"text": "Izomállóképesség", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.43,
+        "average_time_seconds": 42,
+        "concept_tags": ["egyensuly", "koordinacio"]
+      }
+    },
+    {
+      "text": "Melyik állítás helyes a koordináció sportágspecifikus jellegéről?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A koordináció általános alapokra épül, de sportágspecifikus mozgásmintákban jelenik meg igazán.",
+      "options": [
+        {"text": "A koordináció minden sportágban teljesen azonos", "is_correct": false},
+        {"text": "A koordináció sportágspecifikus mozgásmintákban is megjelenik", "is_correct": true},
+        {"text": "A koordináció csak labdajátékokban fontos", "is_correct": false},
+        {"text": "A koordináció nem fejleszthető sportági gyakorlatokkal", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.62,
+        "cognitive_load": 0.54,
+        "average_time_seconds": 52,
+        "concept_tags": ["sportag_specifikus", "koordinacio"]
+      }
+    },
+    {
+      "text": "A koordináció fejlesztése hozzájárulhat a sérülések megelőzéséhez.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz. A jobb mozgáskontroll és egyensúly csökkentheti a hibás mozdulatokból eredő sérüléskockázatot.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.47,
+        "average_time_seconds": 25,
+        "concept_tags": ["serulesmegelozes", "koordinacio"]
+      }
+    }
+  ]
+}

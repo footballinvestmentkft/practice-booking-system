@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Terhelés és teljesítmény",
+  "topic": "A teljesítmény és annak mérése",
+  "quiz_title": "AL — Terhelés és teljesítmény - A teljesítmény és annak mérése [HU]",
+  "description": "A sportteljesítmény fogalma, összetevői és mérési módszerei.",
+  "questions": [
+    {
+      "text": "Mit nevezünk teljesítménynek sportélettani értelemben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A teljesítmény az a képesség, amellyel egy adott feladatot végrehajtunk meghatározott feltételek mellett.",
+      "options": [
+        {"text": "Csak fizikai erő", "is_correct": false},
+        {"text": "Feladat végrehajtásának képessége", "is_correct": true},
+        {"text": "Csak gyorsaság", "is_correct": false},
+        {"text": "Pihenési állapot", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["teljesitmeny"]
+      }
+    },
+    {
+      "text": "Melyik tartozik a fizikai teljesítmény összetevői közé?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A fizikai teljesítményt több motoros képesség határozza meg, például erő és állóképesség.",
+      "options": [
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Erő és állóképesség", "is_correct": true},
+        {"text": "Csak pszichológia", "is_correct": false},
+        {"text": "Csak technika", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["teljesitmeny", "motoros_kepessegek"]
+      }
+    },
+    {
+      "text": "Mit jelent a maximális teljesítmény?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A maximális teljesítmény a sportoló legnagyobb elérhető teljesítményszintje adott körülmények között.",
+      "options": [
+        {"text": "Közepes intenzitás", "is_correct": false},
+        {"text": "Legnagyobb elérhető teljesítmény", "is_correct": true},
+        {"text": "Legalacsonyabb teljesítmény", "is_correct": false},
+        {"text": "Pihenési állapot", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["maximalis_teljesitmeny"]
+      }
+    },
+    {
+      "text": "Mi a szubmaximális teljesítmény?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A maximálisnál alacsonyabb intenzitáson végzett teljesítmény.",
+      "options": [
+        {"text": "Maximális teljesítmény", "is_correct": false},
+        {"text": "Maximális alatti teljesítmény", "is_correct": true},
+        {"text": "Pihenés", "is_correct": false},
+        {"text": "Verseny", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["szubmaximalis_teljesitmeny"]
+      }
+    },
+    {
+      "text": "A teljesítményt csak fizikai tényezők befolyásolják.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert pszichés és technikai tényezők is szerepet játszanak.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 25,
+        "concept_tags": ["teljesitmeny"]
+      }
+    },
+    {
+      "text": "Melyik tartozik az objektív mérési módszerek közé?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az időmérés objektív, számszerű adatot ad.",
+      "options": [
+        {"text": "Fáradtság érzése", "is_correct": false},
+        {"text": "Időmérés", "is_correct": true},
+        {"text": "Motiváció", "is_correct": false},
+        {"text": "Hangulat", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["objektiv_meres"]
+      }
+    },
+    {
+      "text": "Melyik tartozik a szubjektív értékeléshez?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A szubjektív értékelés az egyéni érzéseken alapul.",
+      "options": [
+        {"text": "Pulzusmérés", "is_correct": false},
+        {"text": "Fáradtság érzete", "is_correct": true},
+        {"text": "Sebesség", "is_correct": false},
+        {"text": "Időeredmény", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["szubjektiv"]
+      }
+    },
+    {
+      "text": "A rendszeres tesztelés segíti a fejlődés nyomon követését.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert objektív visszajelzést ad a teljesítményről.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["teszt"]
+      }
+    },
+    {
+      "text": "Mi a teljesítménymérés egyik fő célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A fejlődés nyomon követése és az edzésprogram optimalizálása.",
+      "options": [
+        {"text": "Edzés megszüntetése", "is_correct": false},
+        {"text": "Fejlődés nyomon követése", "is_correct": true},
+        {"text": "Csak versenyzés", "is_correct": false},
+        {"text": "Pihenés növelése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["teljesitmeny"]
+      }
+    },
+    {
+      "text": "A teljesítmény mérése nem szükséges az edzésprogramban.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert nélkülözhetetlen a fejlődés értékeléséhez.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["teljesitmeny"]
+      }
+    }
+  ]
+}

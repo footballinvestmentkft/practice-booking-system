@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Sportpszichológia",
+  "topic": "Sportpszichológia — Bevezető",
+  "quiz_title": "AL — Sportpszichológia - Bevezető [HU]",
+  "description": "A sportpszichológia alapfogalmainak áttekintése: motiváció, célkitűzés, koncentráció, stresszkezelés és csapatmunka.",
+  "questions": [
+    {
+      "text": "Mi a sportpszichológia fő területe?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A sportpszichológia a sportteljesítményt befolyásoló mentális és pszichológiai tényezőkkel foglalkozik: motiváció, koncentráció, stresszkezelés és csapatdinamika.",
+      "options": [
+        {"text": "Az izmok anatómiájának vizsgálata", "is_correct": false},
+        {"text": "A sportteljesítményt befolyásoló mentális és pszichológiai tényezők", "is_correct": true},
+        {"text": "A táplálkozás megtervezése", "is_correct": false},
+        {"text": "A versenyszabályok értelmezése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 30,
+        "concept_tags": ["sportpszichologia", "definicio"]
+      }
+    },
+    {
+      "text": "A motiváció befolyásolja az edzés hatékonyságát.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. A belső motiváció (pl. fejlődési vágy) és a külső motiváció (pl. jutalom, elismertség) egyaránt meghatározza az edzési erőfeszítés mértékét és minőségét.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["motivacio"]
+      }
+    },
+    {
+      "text": "Mi a célkitűzés szerepe a sportban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A konkrét, mérhető és elérhető célok irányvonalat adnak az edzésnek, növelik a motivációt és lehetővé teszik a fejlődés nyomon követését.",
+      "options": [
+        {"text": "A verseny eredményének garantálása", "is_correct": false},
+        {"text": "Irányvonal adása, motiváció növelése és fejlődés nyomon követése", "is_correct": true},
+        {"text": "Az edzésnapló helyettesítése", "is_correct": false},
+        {"text": "A fáradás csökkentése közvetlenül", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["celkituzes"]
+      }
+    },
+    {
+      "text": "Mi a koncentráció szerepe a sporttevékenységben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A koncentráció a figyelem tudatos irányítása a releváns ingerekre: verseny közben a labda, a társ és az ellenfél mozgásának követése a hatékony döntéshozatal alapja.",
+      "options": [
+        {"text": "Az edzés gyorsabb befejezése", "is_correct": false},
+        {"text": "A figyelem irányítása a releváns ingerekre a hatékony döntéshozatal érdekében", "is_correct": true},
+        {"text": "A stressz teljes megszüntetése", "is_correct": false},
+        {"text": "A fizikai erő növelése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["koncentracio"]
+      }
+    },
+    {
+      "text": "A versenydrukk mindig negatívan hat a teljesítményre.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis. A mérsékelt stressz (arousal) serkenti a teljesítményt — az optimális izgalmi szint javítja a fókuszt és a reakciókészséget. Csak a túlzott stressz csökkenti a teljesítményt.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 28,
+        "concept_tags": ["stressz", "teljesitmeny"]
+      }
+    },
+    {
+      "text": "Mi a belső motiváció jellemzője?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A belső motiváció a tevékenység maga iránti érdeklődésből és örömből fakad (pl. a fejlődés élvezete), nem külső jutalmaktól függ.",
+      "options": [
+        {"text": "Pénzdíjak és jutalmak elérése", "is_correct": false},
+        {"text": "A tevékenység iránti belső érdeklődés és öröm", "is_correct": true},
+        {"text": "A szurkolók elismerése", "is_correct": false},
+        {"text": "A csapatból való kizárás elkerülése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["belso_motivacio"]
+      }
+    },
+    {
+      "text": "A csapatmunka pszichológiai tényezői befolyásolják a csapatteljesítményt.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. A csapatkohézió, a bizalom, a kommunikáció és a közös célok mind pszichológiai tényezők, amelyek erősen meghatározzák a csapat együttes teljesítményét.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["csapatmunka", "kohezio"]
+      }
+    },
+    {
+      "text": "Mi a mentális felkészítés célja a sportban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A mentális felkészítés célja, hogy a sportoló a versenyhelyzetekben is optimálisan teljesítsen: képes legyen kezelni a nyomást, fókuszálni és mentálisan rugalmasan reagálni.",
+      "options": [
+        {"text": "A fizikai edzés csökkentése", "is_correct": false},
+        {"text": "Optimális teljesítmény elérése nyomás alatt is", "is_correct": true},
+        {"text": "A verseny elkerülése", "is_correct": false},
+        {"text": "A motiváció teljes kikapcsolása", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["mentalis_felkeszites"]
+      }
+    },
+    {
+      "text": "Melyik a hatékony stresszkezelés egyik eszköze sportban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A mélylégzés (relaxációs technikák) csökkenti az autonóm idegrendszer stresszreakcióját, így segíti a sportoló megnyugvását verseny előtt vagy nyomásos helyzetekben.",
+      "options": [
+        {"text": "A versenyről való visszalépés", "is_correct": false},
+        {"text": "Relaxációs technikák, pl. mélylégzés", "is_correct": true},
+        {"text": "Az edzés mellőzése stresszes időszakban", "is_correct": false},
+        {"text": "A szurkolóktól való elzárkózás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 38,
+        "concept_tags": ["stresszkezeles", "relaxacio"]
+      }
+    },
+    {
+      "text": "A sportpszichológiai felkészítés csak profi sportolóknak szükséges.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis. A mentális képességek (motiváció, koncentráció, stresszkezelés) fejlesztése minden szinten hasznos — amatőr és utánpótlás sportolóknak éppúgy, mint profik számára.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["mentalis_kepessegek", "szintek"]
+      }
+    }
+  ]
+}

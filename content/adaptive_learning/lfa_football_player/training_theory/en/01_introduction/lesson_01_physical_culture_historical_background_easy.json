@@ -1,0 +1,273 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Introduction",
+  "topic": "Physical Culture: Historical Background",
+  "quiz_title": "AL — Introduction - Physical Culture: Historical Background [EN]",
+  "description": "The historical roots of physical culture as an introduction to training theory: the origins of sport, its social functions, and cultural embeddedness.",
+  "questions": [
+    {
+      "text": "According to the text, why is it necessary to review the historical background of physical culture in order to understand the topic of fitness?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The text states that understanding fitness and the fitness recreation movement requires first examining the historical background of physical culture and several problems of civilisational development.",
+      "options": [
+        {"text": "Because the rules of individual sports can only be learned this way", "is_correct": false},
+        {"text": "Because understanding fitness as a global phenomenon requires historical and conceptual context", "is_correct": true},
+        {"text": "Because the text applies an exclusively historiographical approach", "is_correct": false},
+        {"text": "Because modern sport has no connection to earlier physical culture", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.32,
+        "cognitive_load": 0.28,
+        "average_time_seconds": 30,
+        "concept_tags": ["physical_culture_background", "fitness_introduction", "historical_approach"]
+      }
+    },
+    {
+      "text": "According to the chapter, the introduction is actually more of a lead-in to the topic rather than a mere short preface.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "The text explicitly states that this chapter is more than an introduction — it is intended as a section that leads into the topic.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.24,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 20,
+        "concept_tags": ["chapter_function", "fitness_introduction"]
+      }
+    },
+    {
+      "text": "According to the text, which was one of the earliest functions of sport?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The text states that sport initially served as a means of preparation for hunting, and gradually for warfare.",
+      "options": [
+        {"text": "Primarily leisure and recreation", "is_correct": false},
+        {"text": "Preparation for hunting", "is_correct": true},
+        {"text": "Building international relations", "is_correct": false},
+        {"text": "Aesthetic self-expression", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.26,
+        "cognitive_load": 0.22,
+        "average_time_seconds": 25,
+        "concept_tags": ["sport_origins", "hunting", "physical_culture_function"]
+      }
+    },
+    {
+      "text": "In the historical development of sport's function, what followed preparation for hunting?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The text clearly indicates the sequence: first preparation for hunting, then gradually preparation for warfare.",
+      "options": [
+        {"text": "Appearance as festive spectacle", "is_correct": false},
+        {"text": "Preparation for warfare", "is_correct": true},
+        {"text": "Education for industrial labour", "is_correct": false},
+        {"text": "Medical rehabilitation", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.29,
+        "cognitive_load": 0.24,
+        "average_time_seconds": 25,
+        "concept_tags": ["sport_origins", "warfare", "functional_shift"]
+      }
+    },
+    {
+      "text": "In ancient initiation rites, young people had to demonstrate their ability to hunt for survival and to defend their community.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "According to the text, in these trials the young person had to prove fitness for hunting and for defending their family, tribe, or people.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.26,
+        "average_time_seconds": 22,
+        "concept_tags": ["initiation_rites", "community_defence", "hunting"]
+      }
+    },
+    {
+      "text": "According to the text, what are sports originally derived from?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The authors state that sports are originally derived from ancient initiation rites.",
+      "options": [
+        {"text": "Medieval courtly entertainment", "is_correct": false},
+        {"text": "Ancient initiation rites", "is_correct": true},
+        {"text": "Modern school physical education", "is_correct": false},
+        {"text": "The leisure customs of industrial society", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.33,
+        "cognitive_load": 0.27,
+        "average_time_seconds": 30,
+        "concept_tags": ["sport_origins", "initiation_rites", "physical_culture_roots"]
+      }
+    },
+    {
+      "text": "Which summary best reflects the historical role of athletic competitions according to the subchapter?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The text states that athletic competitions throughout human history were instruments of preparation for work and/or warfare.",
+      "options": [
+        {"text": "They primarily served as substitutes for religious ceremonies", "is_correct": false},
+        {"text": "They were instruments of preparation for work and/or warfare", "is_correct": true},
+        {"text": "They exclusively served the representation of rulers", "is_correct": false},
+        {"text": "They always served purely entertainment purposes", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.36,
+        "cognitive_load": 0.31,
+        "average_time_seconds": 32,
+        "concept_tags": ["athletic_competition", "work_and_warfare", "physical_culture_function"]
+      }
+    },
+    {
+      "text": "Which civilisational context does the text present as the classical continuation of European physical culture?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The authors state that the classical continuation of all this in European culture was found in Ancient Greece.",
+      "options": [
+        {"text": "Ancient Rome", "is_correct": false},
+        {"text": "Ancient Greece", "is_correct": true},
+        {"text": "Renaissance Italy", "is_correct": false},
+        {"text": "Enlightenment-era France", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.31,
+        "cognitive_load": 0.25,
+        "average_time_seconds": 28,
+        "concept_tags": ["ancient_greece", "european_physical_culture", "classical_continuation"]
+      }
+    },
+    {
+      "text": "According to the text, in Sparta the entire way of life of young men was subordinated to their military training and combat preparation.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "The subchapter emphasises that in Sparta, the entire way of life of young men was subordinated to their military training and combat preparation.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.34,
+        "cognitive_load": 0.28,
+        "average_time_seconds": 22,
+        "concept_tags": ["sparta", "military_training", "combat_preparation"]
+      }
+    },
+    {
+      "text": "Which statement most accurately expresses the essence of the passage about Spartan education?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The core message of the text is that in Sparta, society treated military fitness as a central value and organised young men's way of life accordingly.",
+      "options": [
+        {"text": "The primary goal of education was the development of artistic skills", "is_correct": false},
+        {"text": "Military fitness and combat preparation were defining social priorities", "is_correct": true},
+        {"text": "Physical education was entirely separated from social life", "is_correct": false},
+        {"text": "Physical exercise was given a role only on ceremonial occasions", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.43,
+        "cognitive_load": 0.39,
+        "average_time_seconds": 38,
+        "concept_tags": ["sparta", "social_determinism", "military_education"]
+      }
+    },
+    {
+      "text": "According to the text, the modern Olympic Games cannot be understood without ancient Greek culture.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "The authors explicitly state that the modern Olympic Games cannot be understood without ancient Greek culture.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.27,
+        "cognitive_load": 0.21,
+        "average_time_seconds": 20,
+        "concept_tags": ["modern_olympics", "ancient_greek_heritage", "olympic_tradition"]
+      }
+    },
+    {
+      "text": "Which medieval form of movement does the text highlight as serving combat preparation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The text states that in the Middle Ages, knightly or chivalric tournaments — popular public events serving combat preparation — were also present.",
+      "options": [
+        {"text": "Target-shooting fairground games", "is_correct": false},
+        {"text": "Knightly or chivalric tournaments", "is_correct": true},
+        {"text": "School athletic competitions", "is_correct": false},
+        {"text": "Modern team sport championships", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.29,
+        "average_time_seconds": 32,
+        "concept_tags": ["middle_ages", "chivalric_tournament", "combat_preparation"]
+      }
+    },
+    {
+      "text": "According to the text, playful forms of movement also featured in medieval festive celebrations.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "The authors clearly indicate that playful forms of movement also appeared in medieval festive celebrations.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 20,
+        "concept_tags": ["middle_ages", "playful_movement", "festive_celebrations"]
+      }
+    },
+    {
+      "text": "Which connection does this subchapter emphasise most strongly regarding the early history of sport?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The main message of the subchapter is that early forms of sport served practical, social, and defensive functions — not merely entertainment.",
+      "options": [
+        {"text": "Early forms of sport were primarily aimed at economic gain", "is_correct": false},
+        {"text": "Early forms of sport were closely linked to subsistence, labour, and warfare", "is_correct": true},
+        {"text": "The development of sport was independent of social needs", "is_correct": false},
+        {"text": "Sport served recreational purposes from the very beginning", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 42,
+        "concept_tags": ["social_determinism", "physical_culture_function", "sport_historical_role"]
+      }
+    },
+    {
+      "text": "Which answer most accurately summarises the main idea of the 'Physical Culture: Historical Background' subchapter?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The subchapter demonstrates that the historical roots of sport lie in hunting, combat preparation, initiation rites, and socially determined movement culture.",
+      "options": [
+        {"text": "The history of sport essentially begins with the emergence of modern competitive sport", "is_correct": false},
+        {"text": "The historical roots of sport are linked to survival, defence, community fitness, and social functions", "is_correct": true},
+        {"text": "The development of physical culture was shaped exclusively by the Olympic movement", "is_correct": false},
+        {"text": "Sport has fulfilled the same function in every era", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 45,
+        "concept_tags": ["physical_culture_background", "sport_origins", "summary_comprehension"]
+      }
+    }
+  ]
+}

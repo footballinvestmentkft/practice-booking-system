@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Motor Abilities",
+  "topic": "Endurance and Its Types",
+  "quiz_title": "AL — Motor Abilities - Endurance and Its Types [EN]",
+  "description": "The concept of endurance, its types, and physiological foundations in training theory.",
+  "questions": [
+    {
+      "text": "What is endurance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Endurance is the ability to sustain prolonged physical load and to delay the onset of fatigue.",
+      "options": [
+        {"text": "The ability to move quickly", "is_correct": false},
+        {"text": "The ability to maintain performance over a long period", "is_correct": true},
+        {"text": "Maximal force production", "is_correct": false},
+        {"text": "Accuracy of movement", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["endurance"]
+      }
+    },
+    {
+      "text": "What characterises aerobic endurance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Aerobic endurance is based on energy production in the presence of oxygen.",
+      "options": [
+        {"text": "Energy production without oxygen", "is_correct": false},
+        {"text": "Operation using oxygen", "is_correct": true},
+        {"text": "Short-duration maximal load", "is_correct": false},
+        {"text": "Increasing muscle tension", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["aerobic"]
+      }
+    },
+    {
+      "text": "What characterises anaerobic endurance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Anaerobic endurance is based on energy production without oxygen.",
+      "options": [
+        {"text": "Oxygen is required", "is_correct": false},
+        {"text": "Energy production without oxygen", "is_correct": true},
+        {"text": "Long-duration low-intensity effort", "is_correct": false},
+        {"text": "Rest only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["anaerobic"]
+      }
+    },
+    {
+      "text": "Which of the following belongs to short-term endurance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Short-term endurance covers loads lasting from a few seconds up to approximately one minute.",
+      "options": [
+        {"text": "Marathon running", "is_correct": false},
+        {"text": "400 m running", "is_correct": true},
+        {"text": "Walking", "is_correct": false},
+        {"text": "Cycling tour", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.52,
+        "average_time_seconds": 50,
+        "concept_tags": ["short_term_endurance"]
+      }
+    },
+    {
+      "text": "Which example belongs to long-term endurance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Long-term endurance is associated with loads lasting more than ten minutes.",
+      "options": [
+        {"text": "Sprint", "is_correct": false},
+        {"text": "Marathon running", "is_correct": true},
+        {"text": "Weightlifting", "is_correct": false},
+        {"text": "Jumping", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["long_term_endurance"]
+      }
+    },
+    {
+      "text": "The aerobic and anaerobic energy systems function completely independently of each other.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because the two systems work together in varying proportions.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 25,
+        "concept_tags": ["energy_systems"]
+      }
+    },
+    {
+      "text": "What happens during fatigue?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Performance decreases as the body becomes exhausted.",
+      "options": [
+        {"text": "Performance increases", "is_correct": false},
+        {"text": "Performance decreases", "is_correct": true},
+        {"text": "Nothing happens", "is_correct": false},
+        {"text": "Automatic regeneration occurs", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 40,
+        "concept_tags": ["fatigue"]
+      }
+    },
+    {
+      "text": "What most determines the level of endurance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The capacity of the cardiovascular and respiratory systems is of key importance.",
+      "options": [
+        {"text": "Muscular strength alone", "is_correct": false},
+        {"text": "The cardiovascular and respiratory systems", "is_correct": true},
+        {"text": "Coordination alone", "is_correct": false},
+        {"text": "Flexibility alone", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["cardiovascular", "respiratory"]
+      }
+    },
+    {
+      "text": "Which statement is true about the relationship between endurance and strength?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Strength endurance is the combination of both qualities.",
+      "options": [
+        {"text": "There is no relationship", "is_correct": false},
+        {"text": "They combine", "is_correct": true},
+        {"text": "They are opposing qualities", "is_correct": false},
+        {"text": "They are mutually exclusive", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 50,
+        "concept_tags": ["interaction"]
+      }
+    },
+    {
+      "text": "Endurance can only be developed through long training sessions.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because shorter high-intensity sessions also develop endurance.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.65,
+        "cognitive_load": 0.55,
+        "average_time_seconds": 25,
+        "concept_tags": ["training"]
+      }
+    }
+  ]
+}

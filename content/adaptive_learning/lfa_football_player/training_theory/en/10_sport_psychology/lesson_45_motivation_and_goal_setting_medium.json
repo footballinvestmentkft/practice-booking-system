@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Sport Psychology",
+  "topic": "Motivation and Goal-Setting",
+  "quiz_title": "AL — Sport Psychology - Motivation and Goal-Setting [EN]",
+  "description": "Types of motivation, the role of goal-setting, and their effect on athletic performance.",
+  "questions": [
+    {
+      "text": "What is motivation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Motivation is the internal or external driving force that prompts action.",
+      "options": [
+        {"text": "A resting state", "is_correct": false},
+        {"text": "A force that prompts action", "is_correct": true},
+        {"text": "A training programme", "is_correct": false},
+        {"text": "Peak competitive form", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["motivation"]
+      }
+    },
+    {
+      "text": "Which is an example of intrinsic motivation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Intrinsic motivation derives from the enjoyment of the activity itself.",
+      "options": [
+        {"text": "Winning a prize", "is_correct": false},
+        {"text": "The joy of movement", "is_correct": true},
+        {"text": "External recognition", "is_correct": false},
+        {"text": "Financial reward", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["intrinsic_motivation"]
+      }
+    },
+    {
+      "text": "Which is an example of extrinsic motivation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Extrinsic motivation is linked to rewards or recognition.",
+      "options": [
+        {"text": "Enjoyment of training", "is_correct": false},
+        {"text": "Winning a prize", "is_correct": true},
+        {"text": "Sense of joy", "is_correct": false},
+        {"text": "Curiosity", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["extrinsic_motivation"]
+      }
+    },
+    {
+      "text": "What is the role of goal-setting?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Goal-setting gives direction to development.",
+      "options": [
+        {"text": "Providing rest", "is_correct": false},
+        {"text": "Guiding development", "is_correct": true},
+        {"text": "Stopping training", "is_correct": false},
+        {"text": "Avoiding competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["goal_setting"]
+      }
+    },
+    {
+      "text": "What does SMART goal-setting mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The goal should be specific, measurable, achievable, relevant, and time-bound.",
+      "options": [
+        {"text": "Any kind of goal", "is_correct": false},
+        {"text": "A well-defined goal", "is_correct": true},
+        {"text": "Long-term goals only", "is_correct": false},
+        {"text": "Short-term goals only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["smart"]
+      }
+    },
+    {
+      "text": "Motivation influences athletic performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it affects effort and perseverance.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["performance"]
+      }
+    },
+    {
+      "text": "What helps maintain motivation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Realistic and achievable goals increase motivation.",
+      "options": [
+        {"text": "Absence of goals", "is_correct": false},
+        {"text": "Achievable goals", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Abandoning training", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["motivation"]
+      }
+    },
+    {
+      "text": "Properly managing failure supports development.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it represents an opportunity for learning.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["failure"]
+      }
+    },
+    {
+      "text": "What is the role of self-confidence in sport?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Self-confidence increases performance and perseverance.",
+      "options": [
+        {"text": "It has no role", "is_correct": false},
+        {"text": "Increasing performance", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Stopping training", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["self_confidence"]
+      }
+    },
+    {
+      "text": "Well-defined goals improve commitment.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because they provide direction and motivation.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["goal_setting"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Load and Performance",
+  "topic": "Factors Influencing Performance",
+  "quiz_title": "AL — Load and Performance - Factors Influencing Performance [EN]",
+  "description": "The system of internal and external factors that determine sporting performance.",
+  "questions": [
+    {
+      "text": "Which of the following belongs to internal factors?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Internal factors are rooted in the individual's body and inherent characteristics.",
+      "options": [
+        {"text": "Temperature", "is_correct": false},
+        {"text": "Genetic predispositions", "is_correct": true},
+        {"text": "Weather", "is_correct": false},
+        {"text": "Equipment", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["internal_factors"]
+      }
+    },
+    {
+      "text": "Which of the following is an example of an external factor?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Environmental influences are counted as external factors.",
+      "options": [
+        {"text": "Motivation", "is_correct": false},
+        {"text": "Temperature", "is_correct": true},
+        {"text": "Muscular strength", "is_correct": false},
+        {"text": "Endurance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["external_factors"]
+      }
+    },
+    {
+      "text": "What is the role of genetic predispositions?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The genetic background fundamentally determines performance potential.",
+      "options": [
+        {"text": "It has no effect", "is_correct": false},
+        {"text": "It provides the foundation for performance", "is_correct": true},
+        {"text": "It is only a psychological effect", "is_correct": false},
+        {"text": "It is only an external factor", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["genetics"]
+      }
+    },
+    {
+      "text": "Motivation, as a psychological factor, influences performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because mental state has a direct effect on performance.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["psychological"]
+      }
+    },
+    {
+      "text": "How does training status influence performance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Better training status enables higher performance.",
+      "options": [
+        {"text": "It reduces performance", "is_correct": false},
+        {"text": "It increases performance", "is_correct": true},
+        {"text": "It has no effect", "is_correct": false},
+        {"text": "It only has a short-term effect", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["training_status"]
+      }
+    },
+    {
+      "text": "Which factor is related to nutrition?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Adequate nutrient intake is fundamental to performance.",
+      "options": [
+        {"text": "Muscular strength", "is_correct": false},
+        {"text": "Energy supply", "is_correct": true},
+        {"text": "Motivation", "is_correct": false},
+        {"text": "Technique", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["nutrition"]
+      }
+    },
+    {
+      "text": "The quality of recovery has an effect on performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because recovery ensures adaptation.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["recovery"]
+      }
+    },
+    {
+      "text": "Which external factor can influence performance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Environmental factors can have a significant effect on performance.",
+      "options": [
+        {"text": "Genetics", "is_correct": false},
+        {"text": "Altitude (above sea level)", "is_correct": true},
+        {"text": "Motivation", "is_correct": false},
+        {"text": "Muscle fibre type", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["external_factors"]
+      }
+    },
+    {
+      "text": "What characterises the factors influencing performance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "They operate in a complex system, interacting with one another.",
+      "options": [
+        {"text": "They are independent of each other", "is_correct": false},
+        {"text": "They interact with one another", "is_correct": true},
+        {"text": "Only one factor matters", "is_correct": false},
+        {"text": "Only external factors are important", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["complex_system"]
+      }
+    },
+    {
+      "text": "Technical and tactical factors do not influence physical performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because these significantly influence the effectiveness of performance.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 25,
+        "concept_tags": ["technique", "tactics"]
+      }
+    }
+  ]
+}

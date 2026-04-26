@@ -1,0 +1,277 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Motor Abilities",
+  "topic": "Types of Coordination",
+  "quiz_title": "AL — Motor Abilities - Types of Coordination [EN]",
+  "description": "The concept of coordination, its types, and its role in motor learning and sporting performance.",
+  "questions": [
+    {
+      "text": "What is coordination within the system of motor abilities?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Coordination is the ability to execute movements in a precise, purposeful, and harmonised manner.",
+      "options": [
+        {"text": "The ability of muscles to produce maximal force", "is_correct": false},
+        {"text": "The ability to execute movements in a harmonised manner", "is_correct": true},
+        {"text": "The ability to sustain prolonged physical load", "is_correct": false},
+        {"text": "The magnitude of joint range of motion", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["coordination", "motor_abilities"]
+      }
+    },
+    {
+      "text": "Which factor plays a central role in the functioning of coordination?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Coordination is based on the controlling and regulating function of the nervous system.",
+      "options": [
+        {"text": "Neural regulation", "is_correct": true},
+        {"text": "Increase in bone mass", "is_correct": false},
+        {"text": "Passive rest", "is_correct": false},
+        {"text": "Amount of fat stores", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["coordination", "nervous_system"]
+      }
+    },
+    {
+      "text": "Which of the following belongs to the coordinative abilities?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Balance ability is one of the important forms of coordinative abilities.",
+      "options": [
+        {"text": "Maximal strength", "is_correct": false},
+        {"text": "Balance ability", "is_correct": true},
+        {"text": "Aerobic endurance", "is_correct": false},
+        {"text": "Muscle hypertrophy", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 40,
+        "concept_tags": ["balance", "coordination"]
+      }
+    },
+    {
+      "text": "What does rhythm sense mean in movement coordination?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Rhythm sense is the ability to organise and time movements temporally.",
+      "options": [
+        {"text": "The ability to organise and time movements temporally", "is_correct": true},
+        {"text": "Achieving maximal speed", "is_correct": false},
+        {"text": "Increasing flexibility", "is_correct": false},
+        {"text": "Reducing rest periods", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["rhythm_sense", "coordination"]
+      }
+    },
+    {
+      "text": "What characterises spatial orientation ability?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Spatial orientation ability supports the perception of the body's position and movement in space.",
+      "options": [
+        {"text": "The perception of the body's position and movement in space", "is_correct": true},
+        {"text": "Sustained muscular work", "is_correct": false},
+        {"text": "Respiratory system capacity", "is_correct": false},
+        {"text": "Reducing energy expenditure", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["spatial_orientation", "coordination"]
+      }
+    },
+    {
+      "text": "What is the essence of reactive ability?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Reactive ability is the capacity to respond to stimuli with a rapid and appropriate movement response.",
+      "options": [
+        {"text": "A rapid and appropriate response to a stimulus", "is_correct": true},
+        {"text": "Sustaining long-duration load", "is_correct": false},
+        {"text": "Increasing muscle mass", "is_correct": false},
+        {"text": "Maintaining a static posture exclusively", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["reactive_ability", "coordination"]
+      }
+    },
+    {
+      "text": "Developing coordination is particularly important in the early stages of motor learning.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True. Coordination supports the formation, refinement, and automation of new movement patterns.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.46,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["motor_learning", "coordination"]
+      }
+    },
+    {
+      "text": "Why is coordination important for sporting performance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Good coordination enables more efficient, precise, and economical movement execution.",
+      "options": [
+        {"text": "Because it substitutes for strength on its own", "is_correct": false},
+        {"text": "Because it enables more precise and economical movement", "is_correct": true},
+        {"text": "Because it eliminates fatigue", "is_correct": false},
+        {"text": "Because it is only important in endurance sports", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["performance", "coordination"]
+      }
+    },
+    {
+      "text": "Which type of exercise most effectively develops coordination?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Varied exercises involving direction changes and decision-making situations develop coordination well.",
+      "options": [
+        {"text": "Monotonous running at a constant pace", "is_correct": false},
+        {"text": "Varied direction-change and reaction exercises", "is_correct": true},
+        {"text": "Maximal weightlifting only", "is_correct": false},
+        {"text": "Passive stretching only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.58,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 48,
+        "concept_tags": ["coordination_development", "reactive_ability"]
+      }
+    },
+    {
+      "text": "Which statement most accurately describes the relationship between coordination and technique?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Coordination is the neural and movement-regulation foundation of technical execution.",
+      "options": [
+        {"text": "Coordination and technique are completely independent", "is_correct": false},
+        {"text": "Coordination is an important foundation of technical execution", "is_correct": true},
+        {"text": "Technique is solely a matter of strength", "is_correct": false},
+        {"text": "Coordination only matters for beginners", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.52,
+        "average_time_seconds": 50,
+        "concept_tags": ["technique", "coordination"]
+      }
+    },
+    {
+      "text": "Coordinative abilities can only be developed during childhood.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False. They are especially well developed in childhood, but can also be improved later with appropriate practice.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["trainability", "coordination"]
+      }
+    },
+    {
+      "text": "Why can coordination deteriorate under the influence of fatigue?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Fatigue impairs neural regulation and the precision of movements.",
+      "options": [
+        {"text": "Because coordination does not depend on the nervous system", "is_correct": false},
+        {"text": "Because the precision of movement regulation decreases", "is_correct": true},
+        {"text": "Because joint range of motion increases", "is_correct": false},
+        {"text": "Because the athlete automatically becomes faster", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.62,
+        "cognitive_load": 0.55,
+        "average_time_seconds": 52,
+        "concept_tags": ["fatigue", "coordination", "nervous_system"]
+      }
+    },
+    {
+      "text": "Which coordinative ability is most closely related to maintaining and regaining body posture?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Balance ability plays a role in stabilising and regaining body posture.",
+      "options": [
+        {"text": "Balance ability", "is_correct": true},
+        {"text": "Maximal strength", "is_correct": false},
+        {"text": "Aerobic capacity", "is_correct": false},
+        {"text": "Muscular endurance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.43,
+        "average_time_seconds": 42,
+        "concept_tags": ["balance", "coordination"]
+      }
+    },
+    {
+      "text": "Which statement is correct regarding the sport-specific nature of coordination?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Coordination is built on general foundations but is truly expressed in sport-specific movement patterns.",
+      "options": [
+        {"text": "Coordination is completely identical across all sports", "is_correct": false},
+        {"text": "Coordination also manifests in sport-specific movement patterns", "is_correct": true},
+        {"text": "Coordination is only important in ball games", "is_correct": false},
+        {"text": "Coordination cannot be developed through sport-specific exercises", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.62,
+        "cognitive_load": 0.54,
+        "average_time_seconds": 52,
+        "concept_tags": ["sport_specific", "coordination"]
+      }
+    },
+    {
+      "text": "Developing coordination can contribute to injury prevention.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True. Better movement control and balance can reduce the risk of injury resulting from faulty movements.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.47,
+        "average_time_seconds": 25,
+        "concept_tags": ["injury_prevention", "coordination"]
+      }
+    }
+  ]
+}

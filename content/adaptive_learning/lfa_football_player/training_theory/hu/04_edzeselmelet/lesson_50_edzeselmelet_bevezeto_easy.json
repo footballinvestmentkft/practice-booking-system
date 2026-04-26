@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Edzéselmélet",
+  "topic": "Edzéselmélet — Bevezető",
+  "quiz_title": "AL — Edzéselmélet - Bevezető [HU]",
+  "description": "Az edzéselmélet alapfogalmainak áttekintése: adaptáció, szuperkompenzáció, periodizáció, edzésterhelés és edzéstervezés.",
+  "questions": [
+    {
+      "text": "Mi az adaptáció az edzés kontextusában?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az adaptáció a szervezet alkalmazkodása az edzésterheléshez: a szervek és rendszerek megerősödnek az ismétlődő ingerekre adott válaszként.",
+      "options": [
+        {"text": "A sportoló pihenési állapota", "is_correct": false},
+        {"text": "A szervezet alkalmazkodása az edzésterheléshez", "is_correct": true},
+        {"text": "Az edzésterv neve", "is_correct": false},
+        {"text": "A verseny előtti felkészülés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["adaptacio"]
+      }
+    },
+    {
+      "text": "A szuperkompenzáció az edzés utáni teljesítménynövekedés jelensége.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. A szuperkompenzáció során a szervezet a regeneráció után magasabb szintre emelkedik, mint az edzés előtt volt.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["szuperkommpenzacio"]
+      }
+    },
+    {
+      "text": "Mi a periodizáció célja az edzéstervezésben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A periodizáció az edzésmunka tudatos, tervszerű időbeli elosztása annak érdekében, hogy a sportoló a megfelelő időpontban érje el csúcsformáját.",
+      "options": [
+        {"text": "Minden nap azonos intenzitású edzés végzése", "is_correct": false},
+        {"text": "Az edzésmunka tervszerű időbeli elosztása", "is_correct": true},
+        {"text": "A pihenőnapok elhagyása", "is_correct": false},
+        {"text": "Az edzésmódszerek egyszerűsítése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 35,
+        "concept_tags": ["periodizacio"]
+      }
+    },
+    {
+      "text": "Melyik az edzésterhelés egyik fő összetevője?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az edzésterhelés fő összetevői: intenzitás, volumen, sűrűség és terjedelem. Az intenzitás a terhelés erősségét jelöli.",
+      "options": [
+        {"text": "Az edzőterem mérete", "is_correct": false},
+        {"text": "Az edzés intenzitása", "is_correct": true},
+        {"text": "A sportoló neve", "is_correct": false},
+        {"text": "Az edzés helyszíne", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["edzesterheles"]
+      }
+    },
+    {
+      "text": "Mi az edzéstervezés fő célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az edzéstervezés célja a fejlődés rendszeres, tervszerű elérése a terhelés és a pihenő tudatos elosztásával.",
+      "options": [
+        {"text": "Minél több edzés végrehajtása", "is_correct": false},
+        {"text": "A fejlődés rendszeres, tervszerű elérése", "is_correct": true},
+        {"text": "Az edzés minél rövidebbre csökkentése", "is_correct": false},
+        {"text": "A verseny elkerülése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["edzestervezes"]
+      }
+    },
+    {
+      "text": "Az edzés kontrollálásához visszacsatolásra van szükség.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. A visszacsatolás (pl. edzésnapló, tesztek) lehetővé teszi a terv módosítását az elért eredmények alapján.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["visszacsatolas"]
+      }
+    },
+    {
+      "text": "Mi az edzéselvek szerepe?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az edzéselvek (pl. fokozatosság, specificitás, változatosság) biztosítják a tervszerű és hatékony edzésmunka tudományos alapját.",
+      "options": [
+        {"text": "Az edzés tetszőleges végrehajtását írják elő", "is_correct": false},
+        {"text": "Az edzés hatékonyságának és biztonságának biztosítása", "is_correct": true},
+        {"text": "A versenyeredmények közvetlen meghatározása", "is_correct": false},
+        {"text": "Az edzésterv helyettesítése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 38,
+        "concept_tags": ["edzeselvek"]
+      }
+    },
+    {
+      "text": "A szuperkompenzáció megjelenéséhez pihenőidőszak szükséges.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. A pihenő alatt zajlik az adaptáció; pihenő nélkül a szuperkompenzáció nem alakulhat ki.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 25,
+        "concept_tags": ["szuperkompenzacio", "piheno"]
+      }
+    },
+    {
+      "text": "Mi az edzésmódszer?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az edzésmódszer az edzéscél eléréséhez alkalmazott tervszerű eljárás, amely meghatározza, hogyan szervezzük meg a terhelést.",
+      "options": [
+        {"text": "Az edzés helyszínének neve", "is_correct": false},
+        {"text": "Az edzéscél eléréséhez alkalmazott tervszerű eljárás", "is_correct": true},
+        {"text": "A versenyszabályzat", "is_correct": false},
+        {"text": "A sportoló táplálkozási terve", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 35,
+        "concept_tags": ["edzesmodszer"]
+      }
+    },
+    {
+      "text": "Adaptáció nélkül nem lehetséges tartós teljesítménynövekedés.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. Az edzés csak akkor vezet fejlődéshez, ha a szervezet alkalmazkodik az ingerre — az adaptáció a fejlődés biológiai alapja.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 25,
+        "concept_tags": ["adaptacio", "fejlodes"]
+      }
+    }
+  ]
+}

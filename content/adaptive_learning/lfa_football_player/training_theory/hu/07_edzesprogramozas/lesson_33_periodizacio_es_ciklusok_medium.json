@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzésprogramozás",
+  "topic": "Periodizáció és ciklusok",
+  "quiz_title": "AL — Edzésprogramozás - Periodizáció és ciklusok [HU]",
+  "description": "A periodizáció rendszere, ciklusai és szerepe a sportteljesítmény optimalizálásában.",
+  "questions": [
+    {
+      "text": "Mit jelent a periodizáció az edzéselméletben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A periodizáció az edzésfolyamat időbeli felosztása és tudatos tervezése ciklusokban.",
+      "options": [
+        {"text": "Véletlenszerű edzés", "is_correct": false},
+        {"text": "Edzés időbeli rendszerezése ciklusokra bontva", "is_correct": true},
+        {"text": "Csak napi edzés", "is_correct": false},
+        {"text": "Pihenés megszervezése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["periodizacio"]
+      }
+    },
+    {
+      "text": "Mi a periodizáció fő célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A teljesítmény optimalizálása és a csúcsforma időzítése.",
+      "options": [
+        {"text": "Edzés csökkentése", "is_correct": false},
+        {"text": "Teljesítmény optimalizálása", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Verseny elkerülése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["periodizacio"]
+      }
+    },
+    {
+      "text": "Mit nevezünk makrociklusnak?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A makrociklus hosszú időszakot (pl. egy szezont vagy évet) foglal magában.",
+      "options": [
+        {"text": "Napi edzés", "is_correct": false},
+        {"text": "Hosszú távú ciklus (pl. év)", "is_correct": true},
+        {"text": "Heti edzés", "is_correct": false},
+        {"text": "Egy edzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["makrociklus"]
+      }
+    },
+    {
+      "text": "Mi a mezociklus jellemzője?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A mezociklus több hetes időszak, amely egy adott célt szolgál.",
+      "options": [
+        {"text": "Egy nap", "is_correct": false},
+        {"text": "Több hetes ciklus", "is_correct": true},
+        {"text": "Egy év", "is_correct": false},
+        {"text": "Egy edzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["mezociklus"]
+      }
+    },
+    {
+      "text": "Mit jelent a mikrociklus?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A mikrociklus általában egy hét edzésfolyamatát jelenti.",
+      "options": [
+        {"text": "Egy év", "is_correct": false},
+        {"text": "Egy hét", "is_correct": true},
+        {"text": "Egy hónap", "is_correct": false},
+        {"text": "Egy verseny", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["mikrociklus"]
+      }
+    },
+    {
+      "text": "A ciklusok egymástól függetlenül működnek.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert egymásra épülnek és összefüggnek.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 25,
+        "concept_tags": ["ciklusok"]
+      }
+    },
+    {
+      "text": "Miért fontos a terhelés változtatása?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A változó terhelés segíti az adaptációt és megelőzi a túlterhelést.",
+      "options": [
+        {"text": "Nincs jelentősége", "is_correct": false},
+        {"text": "Segíti az alkalmazkodást", "is_correct": true},
+        {"text": "Csak pihenés miatt fontos", "is_correct": false},
+        {"text": "Csak verseny miatt fontos", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["terheles_valtoztatas"]
+      }
+    },
+    {
+      "text": "Mi a csúcsforma időzítésének célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A legjobb teljesítmény elérése a megfelelő időpontban.",
+      "options": [
+        {"text": "Edzés csökkentése", "is_correct": false},
+        {"text": "Maximális teljesítmény adott időben", "is_correct": true},
+        {"text": "Pihenés növelése", "is_correct": false},
+        {"text": "Verseny elkerülése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["csucsforma"]
+      }
+    },
+    {
+      "text": "A pihenőidő nem fontos a ciklusokban.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert a regeneráció kulcsfontosságú.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 25,
+        "concept_tags": ["regeneracio"]
+      }
+    },
+    {
+      "text": "A periodizáció segíti a teljesítmény hosszú távú fejlődését.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert strukturált fejlődést biztosít.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["periodizacio"]
+      }
+    }
+  ]
+}

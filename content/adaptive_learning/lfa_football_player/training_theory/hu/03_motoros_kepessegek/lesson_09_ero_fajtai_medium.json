@@ -1,0 +1,279 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Motoros képességek",
+  "topic": "Az erő és fajtái",
+  "quiz_title": "AL — Motoros képességek - Az erő és fajtái [HU]",
+  "description": "Az erő fogalma, típusai és izomműködési formái az edzéselméletben.",
+  "questions": [
+    {
+      "text": "Mit jelent az erő az edzéselméletben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az erő az izom azon képessége, hogy ellenállással szemben feszülést hozzon létre.",
+      "options": [
+        {"text": "Gyors mozgás képessége", "is_correct": false},
+        {"text": "Izom erőkifejtő képessége", "is_correct": true},
+        {"text": "Hosszú ideig tartó mozgás", "is_correct": false},
+        {"text": "Mozgás pontossága", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["ero"]
+      }
+    },
+    {
+      "text": "Mit nevezünk maximális erőnek?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A maximális erő az a legnagyobb erőkifejtés, amelyet az izom képes kifejteni.",
+      "options": [
+        {"text": "Gyors erőkifejtés", "is_correct": false},
+        {"text": "Legnagyobb kifejthető erő", "is_correct": true},
+        {"text": "Hosszú ideig tartó erőkifejtés", "is_correct": false},
+        {"text": "Ismételt erőkifejtés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["maximalis_ero"]
+      }
+    },
+    {
+      "text": "Mi jellemzi a gyorsasági erőt?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A gyorsasági erő az erőkifejtés gyorsaságával párosul.",
+      "options": [
+        {"text": "Hosszú ideig tartó erőkifejtés", "is_correct": false},
+        {"text": "Gyors erőkifejtés", "is_correct": true},
+        {"text": "Minimális erő", "is_correct": false},
+        {"text": "Statikus tartás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["gyorsasagi_ero"]
+      }
+    },
+    {
+      "text": "Mit jelent az állóképességi erő?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az állóképességi erő a hosszan tartó erőkifejtés képessége.",
+      "options": [
+        {"text": "Maximális erőkifejtés", "is_correct": false},
+        {"text": "Hosszú ideig tartó erőkifejtés", "is_correct": true},
+        {"text": "Gyors mozgás", "is_correct": false},
+        {"text": "Izom nyújtása", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 42,
+        "concept_tags": ["allokepessegi_ero"]
+      }
+    },
+    {
+      "text": "Mi a különbség az abszolút és relatív erő között?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az abszolút erő a teljes erőkifejtés, a relatív erő a testtömeghez viszonyított erő.",
+      "options": [
+        {"text": "Nincs különbség", "is_correct": false},
+        {"text": "Testtömeghez viszonyított vs teljes erő", "is_correct": true},
+        {"text": "Csak időtartamban különböznek", "is_correct": false},
+        {"text": "Csak sportágfüggő", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.55,
+        "average_time_seconds": 50,
+        "concept_tags": ["relativ_ero", "abszolut_ero"]
+      }
+    },
+    {
+      "text": "Mit jelent a koncentrikus izomműködés?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Koncentrikus működésnél az izom összehúzódik és rövidül.",
+      "options": [
+        {"text": "Izom nyúlik", "is_correct": false},
+        {"text": "Izom rövidül", "is_correct": true},
+        {"text": "Izom nem változik", "is_correct": false},
+        {"text": "Izom kikapcsol", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["koncentrikus"]
+      }
+    },
+    {
+      "text": "Mit jelent az excentrikus izomműködés?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Excentrikus működésnél az izom feszülés közben nyúlik.",
+      "options": [
+        {"text": "Izom rövidül", "is_correct": false},
+        {"text": "Izom nyúlik feszülés közben", "is_correct": true},
+        {"text": "Izom pihen", "is_correct": false},
+        {"text": "Izom nem dolgozik", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.58,
+        "cognitive_load": 0.52,
+        "average_time_seconds": 48,
+        "concept_tags": ["excentrikus"]
+      }
+    },
+    {
+      "text": "Mit jelent a statikus (izometriás) izomműködés?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az izom feszül, de hossza nem változik.",
+      "options": [
+        {"text": "Izom rövidül", "is_correct": false},
+        {"text": "Izom hossza nem változik", "is_correct": true},
+        {"text": "Izom nyúlik", "is_correct": false},
+        {"text": "Izom nem aktív", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["izometrikus"]
+      }
+    },
+    {
+      "text": "A maximális erő minden sportágban azonos mértékben fontos.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert sportágspecifikus az erő szerepe.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 25,
+        "concept_tags": ["specifikussag"]
+      }
+    },
+    {
+      "text": "Melyik sportágban kiemelten fontos a relatív erő?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A saját testsúly mozgatása miatt pl. torna sportágakban fontos.",
+      "options": [
+        {"text": "Súlyemelés", "is_correct": false},
+        {"text": "Torna", "is_correct": true},
+        {"text": "Maraton", "is_correct": false},
+        {"text": "Úszás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.65,
+        "cognitive_load": 0.55,
+        "average_time_seconds": 55,
+        "concept_tags": ["relativ_ero", "sportag"]
+      }
+    },
+    {
+      "text": "Melyik erőtípus fontos sprinteknél?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A gyorsasági erő szükséges robbanékony mozgásokhoz.",
+      "options": [
+        {"text": "Állóképességi erő", "is_correct": false},
+        {"text": "Gyorsasági erő", "is_correct": true},
+        {"text": "Statikus erő", "is_correct": false},
+        {"text": "Minimális erő", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["gyorsasagi_ero"]
+      }
+    },
+    {
+      "text": "Az erő fejlesztése csak az izomrendszert érinti.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert idegrendszeri alkalmazkodás is történik.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.65,
+        "cognitive_load": 0.55,
+        "average_time_seconds": 25,
+        "concept_tags": ["adaptacio"]
+      }
+    },
+    {
+      "text": "Mi jellemzi leginkább az állóképességi erőt?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Ismételt vagy tartós erőkifejtés.",
+      "options": [
+        {"text": "Egyszeri maximális erő", "is_correct": false},
+        {"text": "Tartós erőkifejtés", "is_correct": true},
+        {"text": "Gyors reakció", "is_correct": false},
+        {"text": "Mozgás pontosság", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["allokepessegi_ero"]
+      }
+    },
+    {
+      "text": "Melyik kapcsolat igaz az erő és gyorsaság között?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A gyorsasági erő a kettő kombinációja.",
+      "options": [
+        {"text": "Nincs kapcsolat", "is_correct": false},
+        {"text": "Összekapcsolódnak robbanékonyságban", "is_correct": true},
+        {"text": "Ellentétesek", "is_correct": false},
+        {"text": "Függetlenek", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.52,
+        "average_time_seconds": 50,
+        "concept_tags": ["gyorsasagi_ero"]
+      }
+    },
+    {
+      "text": "Mi az erőfejlesztés fő célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A teljesítmény növelése és sportági alkalmazhatóság javítása.",
+      "options": [
+        {"text": "Fáradás növelése", "is_correct": false},
+        {"text": "Teljesítmény növelése", "is_correct": true},
+        {"text": "Mozgás csökkentése", "is_correct": false},
+        {"text": "Pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 40,
+        "concept_tags": ["ero"]
+      }
+    }
+  ]
+}

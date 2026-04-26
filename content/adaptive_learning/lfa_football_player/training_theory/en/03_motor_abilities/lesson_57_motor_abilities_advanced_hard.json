@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "module": "Motor Abilities",
+  "topic": "Motor Abilities — Advanced",
+  "quiz_title": "AL — Motor Abilities - Advanced [EN]",
+  "description": "In-depth analysis of motor ability interrelationships: the force-velocity curve, neuromuscular mechanisms, ability transfer, and football-specific applications.",
+  "questions": [
+    {
+      "text": "What is the fundamental relationship described by the force-velocity curve?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "The force-velocity curve shows an inverse relationship: the greater the resistance (force output), the slower the movement, and vice versa. Maximum force is measured at zero velocity, and maximum velocity at zero force. This relationship is also known as the Hill equation and is traceable to the kinetics of muscle proteins (myosin-actin interaction).",
+      "options": [
+        {"text": "Greater force yields greater velocity", "is_correct": false},
+        {"text": "Inverse relationship: greater force produces lower velocity and vice versa", "is_correct": true},
+        {"text": "Force and velocity are independent of each other", "is_correct": false},
+        {"text": "It only applies at maximal force output", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.72,
+        "cognitive_load": 0.70,
+        "average_time_seconds": 55,
+        "concept_tags": ["force_velocity_curve", "neuromuscular"]
+      }
+    },
+    {
+      "text": "Which muscle fibre type is dominant during sprinting in football, and why?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Sprinting primarily recruits Type II/b (fast-twitch, glycolytic) muscle fibres, which are capable of rapid, powerful contractions although they fatigue quickly. In football, the short explosive sprint efforts load this fibre type. Type I (slow, oxidative) fibres dominate during sustained running, so developing both fibre types is necessary in footballers.",
+      "options": [
+        {"text": "Type I (slow, oxidative) fibres because they are fatigue-resistant", "is_correct": false},
+        {"text": "Type II/b (fast-twitch, glycolytic) fibres for explosive force production", "is_correct": true},
+        {"text": "Both fibre types equally", "is_correct": false},
+        {"text": "Cardiac muscle fibres exclusively", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 60,
+        "concept_tags": ["muscle_fibres", "sprint", "football"]
+      }
+    },
+    {
+      "text": "The neurological basis for the level of coordination ability is related to the myelination of the nervous system.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "True. The thickness of the myelin sheath determines the conduction velocity of nerve impulses (saltatory conduction in myelinated axons, up to 70–120 m/s). Better myelination results in faster nerve conduction, enabling more precise and rapid motor control and coordination. Repeated, targeted movement learning stimulates myelination — this is the neuroplasticity-based mechanism underlying coordination development.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["coordination", "neurology", "myelination"]
+      }
+    },
+    {
+      "text": "How does a footballer's aerobic capacity affect sprint performance in the second half of a match?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Higher aerobic capacity accelerates ATP-CP resynthesis between successive sprint efforts: the oxidative system replenishes phosphocreatine stores more rapidly during recovery. This allows footballers with superior aerobic fitness to maintain sprint speed and frequency throughout the second half, whereas players with lower aerobic capacity show progressive sprint deterioration.",
+      "options": [
+        {"text": "Aerobic capacity does not affect sprint performance", "is_correct": false},
+        {"text": "Higher aerobic capacity enables faster ATP-CP resynthesis, maintaining sprint performance", "is_correct": true},
+        {"text": "High aerobic capacity reduces sprint speed", "is_correct": false},
+        {"text": "Sprint performance depends exclusively on muscle mass", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": ["aerobic_capacity", "sprint", "atp_cp"]
+      }
+    },
+    {
+      "text": "What is the stretch-shortening cycle (SSC) and how does it relate to explosiveness in football?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "The SSC is the sequence of eccentric-concentric muscle contractions: the muscle first lengthens (elastic energy is stored in the tendon and muscle), then rapidly shortens. This mechanism is the basis of plyometric force and determines footballers' rapid changes of direction and jumps. Through the SSC, a muscle can exert 20–40% more force than with a pure concentric contraction.",
+      "options": [
+        {"text": "A technique applied only during static stretching", "is_correct": false},
+        {"text": "A sequence of eccentric-concentric muscle contractions that stores and releases elastic energy", "is_correct": true},
+        {"text": "The basic mechanism of endurance training", "is_correct": false},
+        {"text": "The resting state of muscle fibres", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["SSC", "plyometrics", "explosiveness"]
+      }
+    },
+    {
+      "text": "Why does strength gained from heavy squatting not directly transfer to football-specific sprint performance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Motor transfer depends on the specificity of neural programming. Heavy squatting uses a different movement pattern, joint angle, and velocity than sprinting — the nervous system cannot automatically transfer the reinforced force-production pattern to the running movement.",
+      "options": [
+        {"text": "Because squatting only develops the upper body", "is_correct": false},
+        {"text": "Due to movement pattern specificity — neural adaptation does not automatically transfer to a different movement", "is_correct": true},
+        {"text": "Because squatting reduces squatting strength", "is_correct": false},
+        {"text": "Transfer is always direct and perfect", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.85,
+        "cognitive_load": 0.83,
+        "average_time_seconds": 70,
+        "concept_tags": ["transfer", "specificity", "squat_sprint"]
+      }
+    },
+    {
+      "text": "When developing strength-endurance, raising the lactate threshold is more effective than increasing maximal strength.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "True, when targeting strength-endurance. Raising the lactate threshold allows the muscle to work for longer without anaerobic accumulation — this is more relevant than sheer maximal strength for the intense phases of football.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 50,
+        "concept_tags": ["strength_endurance", "lactate_threshold"]
+      }
+    },
+    {
+      "text": "Which coordination ability is most advantageous for executing ball techniques in tight spaces?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Kinaesthetic differentiation — the skill of fine-tuning muscle tension and movement amplitude — enables precise touches for passes and dribbles in confined spaces. This is so-called tactile-kinaesthetic feedback, provided by muscle spindles and Golgi tendon organs, and can be developed through targeted technical training.",
+      "options": [
+        {"text": "Balance ability", "is_correct": false},
+        {"text": "Kinaesthetic differentiation — the ability to fine-tune movement", "is_correct": true},
+        {"text": "Reaction ability", "is_correct": false},
+        {"text": "Rhythmisation ability", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 60,
+        "concept_tags": ["kinaesthetic_differentiation", "coordination", "technique"]
+      }
+    },
+    {
+      "text": "How does fatigue affect coordination ability, and why is this critical for footballers?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Under fatigue, neural control precision decreases (reduced synchronisation between motor units), proprioceptive feedback slows, and the accuracy of movement patterns deteriorates — in footballers, this increases the risk of errant passes and injuries at the end of the match.",
+      "options": [
+        {"text": "Fatigue does not affect coordination, only strength", "is_correct": false},
+        {"text": "Fatigue impairs neural precision and proprioception — increasing the risk of errors and injury", "is_correct": true},
+        {"text": "Fatigue improves coordination due to adaptation", "is_correct": false},
+        {"text": "Coordination is exclusively genetic and independent of fatigue", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["fatigue", "coordination", "injury_mechanism"]
+      }
+    },
+    {
+      "text": "Developing maximal strength always reduces speed in football players.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "False. At appropriate loading ratios, developing maximal strength can improve speed, because stronger muscles operate more efficiently in the explosive range of the force-velocity curve — provided that training does not lead to excessive increases in muscle mass.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["maximal_strength", "speed", "relationship"]
+      }
+    }
+  ]
+}

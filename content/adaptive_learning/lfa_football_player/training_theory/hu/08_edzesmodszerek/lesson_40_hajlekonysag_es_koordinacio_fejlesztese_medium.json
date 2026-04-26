@@ -1,0 +1,277 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzésmódszerek",
+  "topic": "A hajlékonyság és koordináció fejlesztése",
+  "quiz_title": "AL — Edzésmódszerek - A hajlékonyság és koordináció fejlesztése [HU]",
+  "description": "A hajlékonyság és koordináció fejlesztésének módszerei, szerepe a mozgástanulásban, teljesítményben és sérülésmegelőzésben.",
+  "questions": [
+    {
+      "text": "Mit nevezünk hajlékonyságnak az edzéselméletben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A hajlékonyság az ízületek mozgástartományának és az izmok nyújthatóságának képessége.",
+      "options": [
+        {"text": "Az izmok maximális erőkifejtése", "is_correct": false},
+        {"text": "Az ízületi mozgástartomány és nyújthatóság képessége", "is_correct": true},
+        {"text": "A hosszú ideig tartó terhelés elviselése", "is_correct": false},
+        {"text": "A gyors reakció képessége", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["hajlekonysag", "motoros_kepessegek"]
+      }
+    },
+    {
+      "text": "Mit nevezünk koordinációnak?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A koordináció a mozgások pontos, célszerű és összehangolt végrehajtásának képessége.",
+      "options": [
+        {"text": "A mozgások összehangolt végrehajtásának képessége", "is_correct": true},
+        {"text": "Az ízületek passzív lazítása", "is_correct": false},
+        {"text": "Az izmok tömegének növelése", "is_correct": false},
+        {"text": "A maximális oxigénfelvétel növelése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["koordinacio", "motoros_kepessegek"]
+      }
+    },
+    {
+      "text": "Melyik módszer jellemző a statikus nyújtásra?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Statikus nyújtásnál a sportoló egy nyújtott helyzetet meghatározott ideig megtart.",
+      "options": [
+        {"text": "Nyújtott pozíció megtartása", "is_correct": true},
+        {"text": "Gyors, robbanékony ismétlések végzése", "is_correct": false},
+        {"text": "Maximális súlyok emelése", "is_correct": false},
+        {"text": "Versenyszerű sprintelés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["statikus_nyujtas", "hajlekonysag"]
+      }
+    },
+    {
+      "text": "Mi jellemzi a dinamikus nyújtást?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A dinamikus nyújtás kontrollált mozgásokkal készíti elő az izmokat és ízületeket a terhelésre.",
+      "options": [
+        {"text": "Mozgás közben végzett, kontrollált nyújtás", "is_correct": true},
+        {"text": "Teljes mozdulatlanság hosszú ideig", "is_correct": false},
+        {"text": "Csak passzív pihenés", "is_correct": false},
+        {"text": "Kizárólag erőfejlesztő módszer", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.43,
+        "average_time_seconds": 42,
+        "concept_tags": ["dinamikus_nyujtas", "hajlekonysag"]
+      }
+    },
+    {
+      "text": "Mikor célszerűbb dinamikus nyújtást alkalmazni?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A dinamikus nyújtás különösen bemelegítésben hasznos, mert aktiválja a mozgásrendszert.",
+      "options": [
+        {"text": "Bemelegítés során, terhelés előtt", "is_correct": true},
+        {"text": "Csak teljes pihenőnapon", "is_correct": false},
+        {"text": "Mindig maximális fáradás után", "is_correct": false},
+        {"text": "Csak verseny után, mozgás nélkül", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["dinamikus_nyujtas", "bemelegites"]
+      }
+    },
+    {
+      "text": "Mikor lehet hasznosabb a statikus nyújtás?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A statikus nyújtás gyakran az edzés végén vagy külön mobilitási blokkban hasznos a mozgástartomány fejlesztésére.",
+      "options": [
+        {"text": "Edzés végén vagy külön mobilitási fejlesztésként", "is_correct": true},
+        {"text": "Sprintverseny rajtja előtt közvetlenül, hosszú ideig", "is_correct": false},
+        {"text": "Maximális erőkifejtés közben", "is_correct": false},
+        {"text": "Csak labdajáték közben", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.58,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["statikus_nyujtas", "levezetes"]
+      }
+    },
+    {
+      "text": "A hajlékonyság fejlesztése hozzájárulhat a sérülések megelőzéséhez.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz. A megfelelő mozgástartomány segítheti a helyes technikai végrehajtást és csökkentheti a túlzott szöveti terhelést.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 25,
+        "concept_tags": ["hajlekonysag", "serulesmegelozes"]
+      }
+    },
+    {
+      "text": "A koordináció fejlesztése elsősorban az idegrendszeri szabályozás javításához kapcsolódik.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz. A koordináció alapja az idegrendszer mozgásszabályozó, érzékelő és összehangoló működése.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["koordinacio", "idegrendszer"]
+      }
+    },
+    {
+      "text": "Melyik gyakorlat fejleszti leginkább a koordinációt?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A változatos, döntési helyzeteket és irányváltásokat tartalmazó gyakorlatok fejlesztik legjobban a koordinációt.",
+      "options": [
+        {"text": "Változatos irányváltásos és reakciógyakorlatok", "is_correct": true},
+        {"text": "Mindig azonos tempójú monoton futás", "is_correct": false},
+        {"text": "Csak passzív ülés", "is_correct": false},
+        {"text": "Csak maximális súlyemelés technikai elem nélkül", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["koordinacio_fejlesztese", "reakciokepesseg"]
+      }
+    },
+    {
+      "text": "Miért fontos a változatosság a koordináció fejlesztésében?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A változatos ingerek új mozgásmegoldásokra kényszerítik az idegrendszert, így javítják a mozgásszabályozást.",
+      "options": [
+        {"text": "Mert új mozgáshelyzetekhez való alkalmazkodást fejleszt", "is_correct": true},
+        {"text": "Mert mindig csökkenti az edzésidőt", "is_correct": false},
+        {"text": "Mert teljesen kiváltja az erőfejlesztést", "is_correct": false},
+        {"text": "Mert megszünteti a regeneráció szükségességét", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.52,
+        "average_time_seconds": 45,
+        "concept_tags": ["valtozatossag", "koordinacio"]
+      }
+    },
+    {
+      "text": "Melyik állítás írja le helyesen a hajlékonyság és technika kapcsolatát?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A megfelelő hajlékonyság lehetővé teszi a technikai elemek szükséges mozgástartományban történő végrehajtását.",
+      "options": [
+        {"text": "A hajlékonyság segítheti a technikai végrehajtást", "is_correct": true},
+        {"text": "A hajlékonyság mindig rontja a technikát", "is_correct": false},
+        {"text": "A technika kizárólag erő kérdése", "is_correct": false},
+        {"text": "A hajlékonyság csak elméleti fogalom", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.58,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["hajlekonysag", "technika"]
+      }
+    },
+    {
+      "text": "Miért romolhat a koordináció fáradás hatására?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Fáradáskor romlik az idegrendszeri szabályozás, a figyelem és a mozgások pontossága.",
+      "options": [
+        {"text": "Mert csökken a mozgásszabályozás pontossága", "is_correct": true},
+        {"text": "Mert a koordináció nem függ az idegrendszertől", "is_correct": false},
+        {"text": "Mert a fáradás mindig javítja a technikát", "is_correct": false},
+        {"text": "Mert nő a passzív hajlékonyság", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.62,
+        "cognitive_load": 0.55,
+        "average_time_seconds": 45,
+        "concept_tags": ["faradas", "koordinacio", "idegrendszer"]
+      }
+    },
+    {
+      "text": "A koordinációs gyakorlatokat célszerű mindig teljes fáradás után végezni.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis. A pontos mozgástanulást és mozgásszabályozást igénylő feladatokat célszerű friss vagy kevésbé fáradt állapotban végezni.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.52,
+        "average_time_seconds": 25,
+        "concept_tags": ["koordinacio", "faradas", "edzesstruktura"]
+      }
+    },
+    {
+      "text": "Melyik sorrend a legcélszerűbb egy edzésen belül, ha technikai-koordinációs fejlesztés is cél?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A koordinációs és technikai feladatok gyakran az edzés elején hatékonyabbak, amikor az idegrendszer kevésbé fáradt.",
+      "options": [
+        {"text": "Koordinációs-technikai feladatok az edzés elején", "is_correct": true},
+        {"text": "Koordináció kizárólag teljes kimerülés után", "is_correct": false},
+        {"text": "Technika mindig a levezetés után", "is_correct": false},
+        {"text": "A sorrendnek nincs jelentősége", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.62,
+        "cognitive_load": 0.55,
+        "average_time_seconds": 45,
+        "concept_tags": ["koordinacio", "edzesstruktura", "technika"]
+      }
+    },
+    {
+      "text": "Melyik állítás helyes a hajlékonyság fejlesztéséről?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A hajlékonyság fejlesztése rendszerességet, fokozatosságot és a sportág igényeihez illesztett módszerválasztást igényel.",
+      "options": [
+        {"text": "Rendszeres, fokozatos és célhoz igazított fejlesztést igényel", "is_correct": true},
+        {"text": "Egyszeri nyújtással tartósan kialakítható", "is_correct": false},
+        {"text": "Csak verseny után fejleszthető", "is_correct": false},
+        {"text": "Nem függ a sportág mozgásigényeitől", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.58,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["hajlekonysag_fejlesztese", "fokozatossag"]
+      }
+    }
+  ]
+}

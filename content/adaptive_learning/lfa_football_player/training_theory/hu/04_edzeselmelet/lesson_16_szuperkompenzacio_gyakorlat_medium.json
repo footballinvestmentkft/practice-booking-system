@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzéselmélet",
+  "topic": "A szuperkompenzáció gyakorlati alkalmazása",
+  "quiz_title": "AL — Edzéselmélet - A szuperkompenzáció gyakorlati alkalmazása [HU]",
+  "description": "A szuperkompenzáció elvének alkalmazása az edzéstervezésben és terhelés időzítésében.",
+  "questions": [
+    {
+      "text": "Mit mutat a szuperkompenzációs görbe?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A teljesítmény változását a terhelés és regeneráció során.",
+      "options": [
+        {"text": "Pulzus változását", "is_correct": false},
+        {"text": "Teljesítményszint alakulását", "is_correct": true},
+        {"text": "Testsúly változását", "is_correct": false},
+        {"text": "Izomtömeg növekedést", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["szuperkompenzacio"]
+      }
+    },
+    {
+      "text": "Mi történik túl korai újraterhelés esetén?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A szervezet még nem regenerálódott, így teljesítménycsökkenés léphet fel.",
+      "options": [
+        {"text": "Maximális fejlődés", "is_correct": false},
+        {"text": "Túlterhelés és visszaesés", "is_correct": true},
+        {"text": "Nincs hatás", "is_correct": false},
+        {"text": "Gyors regeneráció", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["idozites"]
+      }
+    },
+    {
+      "text": "Mi történik túl késői terhelés esetén?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A szuperkompenzáció hatása csökken, a fejlődés kisebb lesz.",
+      "options": [
+        {"text": "Maximális fejlődés", "is_correct": false},
+        {"text": "Hatás csökkenése", "is_correct": true},
+        {"text": "Túlterhelés", "is_correct": false},
+        {"text": "Sérülés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["idozites"]
+      }
+    },
+    {
+      "text": "Mikor ideális a következő edzés időzítése?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A szuperkompenzáció csúcspontján.",
+      "options": [
+        {"text": "Fáradás közben", "is_correct": false},
+        {"text": "Szuperkompenzáció csúcsán", "is_correct": true},
+        {"text": "Edzés előtt", "is_correct": false},
+        {"text": "Pihenés elején", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["szuperkompenzacio"]
+      }
+    },
+    {
+      "text": "A regeneráció minősége befolyásolja a szuperkompenzációt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, a jobb regeneráció jobb adaptációt eredményez.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 25,
+        "concept_tags": ["regeneracio"]
+      }
+    },
+    {
+      "text": "Miért fontos az edzések megfelelő időzítése?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A fejlődés maximalizálása érdekében.",
+      "options": [
+        {"text": "Időkitöltés miatt", "is_correct": false},
+        {"text": "Teljesítmény optimalizálása", "is_correct": true},
+        {"text": "Pihenés csökkentése", "is_correct": false},
+        {"text": "Verseny miatt", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["edzestervezes"]
+      }
+    },
+    {
+      "text": "Mi befolyásolja a szuperkompenzáció időtartamát?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az egyéni adottságok és a terhelés mértéke.",
+      "options": [
+        {"text": "Csak életkor", "is_correct": false},
+        {"text": "Egyéni különbségek és terhelés", "is_correct": true},
+        {"text": "Csak testsúly", "is_correct": false},
+        {"text": "Csak időjárás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["egyeni_kulonbsegek"]
+      }
+    },
+    {
+      "text": "Minden sportolónál azonos a szuperkompenzáció ideje.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert egyéni különbségek vannak.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["egyeni_kulonbsegek"]
+      }
+    },
+    {
+      "text": "Mi a mikrociklus szerepe az edzésben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Rövid távú edzéstervezési egység.",
+      "options": [
+        {"text": "Éves terv", "is_correct": false},
+        {"text": "Rövid edzési ciklus", "is_correct": true},
+        {"text": "Versenyidőszak", "is_correct": false},
+        {"text": "Pihenőidő", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["mikrociklus"]
+      }
+    },
+    {
+      "text": "A szuperkompenzáció figyelmen kívül hagyása csökkenti a fejlődést.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert nem optimális az edzésidőzítés.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["szuperkompenzacio"]
+      }
+    }
+  ]
+}

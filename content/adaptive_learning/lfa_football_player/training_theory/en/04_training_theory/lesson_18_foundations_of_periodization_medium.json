@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Training Theory",
+  "topic": "Foundations of Periodization",
+  "quiz_title": "AL — Training Theory - Foundations of Periodization [EN]",
+  "description": "The division of training periods and the role of periodization in performance development.",
+  "questions": [
+    {
+      "text": "What is periodization?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Periodization is the long-term planning of training by dividing it into distinct periods.",
+      "options": [
+        {"text": "Planning a single training session", "is_correct": false},
+        {"text": "Organising training periods into a structured system", "is_correct": true},
+        {"text": "Scheduling rest time only", "is_correct": false},
+        {"text": "Organising competitions", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["periodization"]
+      }
+    },
+    {
+      "text": "What is a macrocycle?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A macrocycle is the long-term training planning unit, typically covering one year.",
+      "options": [
+        {"text": "A daily training session", "is_correct": false},
+        {"text": "A long-term training cycle", "is_correct": true},
+        {"text": "A weekly training plan", "is_correct": false},
+        {"text": "A single exercise", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["macrocycle"]
+      }
+    },
+    {
+      "text": "What is a mesocycle?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A mesocycle consists of several-week training blocks.",
+      "options": [
+        {"text": "One day", "is_correct": false},
+        {"text": "A several-week training unit", "is_correct": true},
+        {"text": "One year", "is_correct": false},
+        {"text": "A single training session", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["mesocycle"]
+      }
+    },
+    {
+      "text": "What is a microcycle?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A microcycle is a short training unit, typically one week in duration.",
+      "options": [
+        {"text": "An annual plan", "is_correct": false},
+        {"text": "A weekly training cycle", "is_correct": true},
+        {"text": "One month", "is_correct": false},
+        {"text": "The competition period", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 42,
+        "concept_tags": ["microcycle"]
+      }
+    },
+    {
+      "text": "What is the goal of the preparatory period?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Building the foundations and developing physical condition.",
+      "options": [
+        {"text": "Rest", "is_correct": false},
+        {"text": "Foundation building and development", "is_correct": true},
+        {"text": "Competing", "is_correct": false},
+        {"text": "Recovery", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 42,
+        "concept_tags": ["preparatory_period"]
+      }
+    },
+    {
+      "text": "What is the main goal of the competition period?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Achieving and maintaining peak performance.",
+      "options": [
+        {"text": "Rest", "is_correct": false},
+        {"text": "Peak performance", "is_correct": true},
+        {"text": "Establishing new foundations", "is_correct": false},
+        {"text": "Continuously increasing training load", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["competition_period"]
+      }
+    },
+    {
+      "text": "What is the role of the transition period?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Providing recovery and regeneration.",
+      "options": [
+        {"text": "Maximum training load", "is_correct": false},
+        {"text": "Rest and recovery", "is_correct": true},
+        {"text": "Competing", "is_correct": false},
+        {"text": "Technical learning", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 42,
+        "concept_tags": ["transition_period"]
+      }
+    },
+    {
+      "text": "The goal of periodization is to time peak performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because peak form must be achieved at the right moment.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 25,
+        "concept_tags": ["periodization"]
+      }
+    },
+    {
+      "text": "What does load undulation mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The deliberate variation of training load across different periods.",
+      "options": [
+        {"text": "Constant load", "is_correct": false},
+        {"text": "Varying load", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Increasing intensity only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["load_undulation"]
+      }
+    },
+    {
+      "text": "Periodization helps prevent overtraining.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it distributes training load in a structured manner.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 25,
+        "concept_tags": ["periodization"]
+      }
+    }
+  ]
+}

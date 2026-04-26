@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Regeneráció és életmód",
+  "topic": "Regeneráció és életmód — Bevezető",
+  "quiz_title": "AL — Regeneráció és életmód - Bevezető [HU]",
+  "description": "A regeneráció és életmód alapfogalmainak áttekintése: pihenés, fáradás, alvás, táplálkozás és hidratáció szerepe a sportteljesítményben.",
+  "questions": [
+    {
+      "text": "Mi a regeneráció szerepe a sportban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A regeneráció a szervezet azon folyamata, amelynek során visszaáll az edzés előtti állapotba, és felkészül a következő terhelésre — enélkül nem jöhet létre fejlődés.",
+      "options": [
+        {"text": "Az edzés intenzitásának növelése", "is_correct": false},
+        {"text": "A szervezet visszaállása és felkészülése a következő terhelésre", "is_correct": true},
+        {"text": "A fáradás maximalizálása", "is_correct": false},
+        {"text": "A versenyteljesítmény csökkentése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 30,
+        "concept_tags": ["regeneracio", "definicio"]
+      }
+    },
+    {
+      "text": "Az alvás a regeneráció egyik legfontosabb eszköze.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. Alvás közben a szervezet helyreállítja az izmokat, feldolgozza a tanultakat és szabályozza a hormonrendszert — ezért a sportolóknak legalább 7–9 óra alvás szükséges.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["alvas", "regeneracio"]
+      }
+    },
+    {
+      "text": "Miért fontos a megfelelő hidratáció edzés közben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A megfelelő folyadékpótlás fenntartja a testi teljesítőképességet, szabályozza a testhőmérsékletet és megelőzi a dehidratáció miatti teljesítménycsökkentő hatást.",
+      "options": [
+        {"text": "A súly növelése érdekében", "is_correct": false},
+        {"text": "A teljesítőképesség fenntartása és a testhőmérséklet szabályozása", "is_correct": true},
+        {"text": "Az edzés hosszabbá tétele", "is_correct": false},
+        {"text": "Az izomzat azonnali növelése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["hidracio"]
+      }
+    },
+    {
+      "text": "Mi a táplálkozás szerepe a sportoló életmódjában?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A megfelelő táplálkozás biztosítja az edzéshez szükséges energiát, tápanyagokat az izomépítéshez és a regenerációhoz, valamint a szervezet általános egészségét.",
+      "options": [
+        {"text": "Csak a testsúly csökkentésére szolgál", "is_correct": false},
+        {"text": "Energiát és tápanyagokat biztosít az edzéshez, regenerációhoz és egészséghez", "is_correct": true},
+        {"text": "Az edzés helyettesítésére alkalmas", "is_correct": false},
+        {"text": "Kizárólag versenynapon fontos", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["taplalkozas"]
+      }
+    },
+    {
+      "text": "A pihenőnapok az edzésterv szükségtelen részei.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis. A pihenőnapok a szuperkompenzáció kialakulásához szükségesek; az adaptáció és a fejlődés csak megfelelő pihenővel jöhet létre.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["piheno", "regeneracio"]
+      }
+    },
+    {
+      "text": "Melyik életmódbeli tényező befolyásolja a sportteljesítményt?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A sportteljesítményt komplex életmódbeli tényezők határozzák meg: alvás, táplálkozás, hidratáció, stressz és a szociális környezet egyaránt hatással van a regenerációra és a fejlődésre.",
+      "options": [
+        {"text": "Kizárólag az edzés mennyisége", "is_correct": false},
+        {"text": "Alvás, táplálkozás, hidratáció, stressz és szociális környezet együtt", "is_correct": true},
+        {"text": "Csak a genetika", "is_correct": false},
+        {"text": "Kizárólag a táplálkozás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["eletmod_tenyezoi"]
+      }
+    },
+    {
+      "text": "Mi a fáradás jele az edzés után?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A fáradás az edzés természetes velejárója: csökkent teljesítmény, izomfájdalom és nehezített koncentráció jellemzi. Ez normális jelenség, amely pihenéssel elmúlik.",
+      "options": [
+        {"text": "A teljesítmény azonnali növekedése", "is_correct": false},
+        {"text": "Csökkent teljesítmény, izomfájdalom és nehezített koncentráció", "is_correct": true},
+        {"text": "Az éhségérzet megszűnése", "is_correct": false},
+        {"text": "A pulzusszám azonnali normalizálódása", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["faradas", "jelei"]
+      }
+    },
+    {
+      "text": "Az edzés utáni fehérjebevitel segíti az izomregenerációt.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. Az edzés utáni fehérjebevitel (pl. 20–40 g) az izomfehérje szintézisét serkenti, elősegítve az izmok helyreállítását és növekedését.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["feherje", "regeneracio"]
+      }
+    },
+    {
+      "text": "Hány óra alvás ajánlott naponta a sportolóknak az optimális regeneráció érdekében?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Sportolóknak általában 7–9 óra alvás ajánlott, ami az alap 7–8 óra felnőttkori ajánlásnál valamivel több — a fokozott fizikai terhelés és az izomszintézis folyamata miatt a regenerációhoz több alvás szükséges.",
+      "options": [
+        {"text": "3–4 óra elegendő", "is_correct": false},
+        {"text": "7–9 óra", "is_correct": true},
+        {"text": "12 óránál több szükséges", "is_correct": false},
+        {"text": "Az alvás mennyisége nem befolyásolja a regenerációt", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 28,
+        "concept_tags": ["alvas", "regeneracio", "ajanlott_mennyiseg"]
+      }
+    },
+    {
+      "text": "A stressz és az életmód nem befolyásolja a sportoló regenerációját.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis. A pszichológiai stressz, a rossz alvás és a nem megfelelő életmód lassítja a regenerációt, és rontja az edzésen elért adaptáció mértékét.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["stressz", "regeneracio"]
+      }
+    }
+  ]
+}

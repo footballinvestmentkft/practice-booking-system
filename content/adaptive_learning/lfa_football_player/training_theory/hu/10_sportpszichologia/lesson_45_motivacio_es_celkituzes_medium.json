@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Sportpszichológia",
+  "topic": "Motiváció és célkitűzés",
+  "quiz_title": "AL — Sportpszichológia - Motiváció és célkitűzés [HU]",
+  "description": "A motiváció típusai, a célkitűzés szerepe és hatása a sportteljesítményre.",
+  "questions": [
+    {
+      "text": "Mit nevezünk motivációnak?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A motiváció az a belső vagy külső hajtóerő, amely cselekvésre ösztönöz.",
+      "options": [
+        {"text": "Pihenési állapot", "is_correct": false},
+        {"text": "Cselekvésre ösztönző erő", "is_correct": true},
+        {"text": "Edzésprogram", "is_correct": false},
+        {"text": "Versenyforma", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["motivacio"]
+      }
+    },
+    {
+      "text": "Melyik a belső motiváció példája?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A belső motiváció a tevékenység öröméből fakad.",
+      "options": [
+        {"text": "Díj megszerzése", "is_correct": false},
+        {"text": "Mozgás öröme", "is_correct": true},
+        {"text": "Külső elismerés", "is_correct": false},
+        {"text": "Pénzjutalom", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["belso_motivacio"]
+      }
+    },
+    {
+      "text": "Melyik a külső motiváció példája?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A külső motiváció jutalmakhoz vagy elismeréshez kapcsolódik.",
+      "options": [
+        {"text": "Edzés élvezete", "is_correct": false},
+        {"text": "Díj megszerzése", "is_correct": true},
+        {"text": "Örömérzés", "is_correct": false},
+        {"text": "Kíváncsiság", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["kulso_motivacio"]
+      }
+    },
+    {
+      "text": "Mi a célkitűzés szerepe?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A célkitűzés irányt ad a fejlődésnek.",
+      "options": [
+        {"text": "Pihenés biztosítása", "is_correct": false},
+        {"text": "Fejlődés irányítása", "is_correct": true},
+        {"text": "Edzés megszüntetése", "is_correct": false},
+        {"text": "Verseny elkerülése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["celkituzes"]
+      }
+    },
+    {
+      "text": "Mit jelent a SMART célkitűzés?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A cél legyen specifikus, mérhető, elérhető, releváns és időhöz kötött.",
+      "options": [
+        {"text": "Bármilyen cél", "is_correct": false},
+        {"text": "Jól meghatározott cél", "is_correct": true},
+        {"text": "Csak hosszú távú cél", "is_correct": false},
+        {"text": "Csak rövid távú cél", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["smart"]
+      }
+    },
+    {
+      "text": "A motiváció befolyásolja a sportteljesítményt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert hatással van az erőfeszítésre és kitartásra.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["teljesitmeny"]
+      }
+    },
+    {
+      "text": "Mi segíti a motiváció fenntartását?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A reális és elérhető célok növelik a motivációt.",
+      "options": [
+        {"text": "Célok hiánya", "is_correct": false},
+        {"text": "Elérhető célok", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Edzés elhagyása", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["motivacio"]
+      }
+    },
+    {
+      "text": "A kudarc megfelelő kezelése segíti a fejlődést.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert tanulási lehetőséget jelent.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["kudarc"]
+      }
+    },
+    {
+      "text": "Mi az önbizalom szerepe sportban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az önbizalom növeli a teljesítményt és kitartást.",
+      "options": [
+        {"text": "Nincs szerepe", "is_correct": false},
+        {"text": "Teljesítmény növelése", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Edzés megszüntetése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["onbizalom"]
+      }
+    },
+    {
+      "text": "A jól meghatározott célok javítják az elköteleződést.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert irányt és motivációt adnak.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["celkituzes"]
+      }
+    }
+  ]
+}

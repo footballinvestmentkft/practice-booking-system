@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzéselmélet",
+  "topic": "Az edzés alapelvei",
+  "quiz_title": "AL — Edzéselmélet - Az edzés alapelvei [HU]",
+  "description": "Az edzés alapelveinek szerepe és alkalmazása a hatékony edzésben.",
+  "questions": [
+    {
+      "text": "Mit nevezünk edzéselvnek?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az edzéselvek általános szabályok, amelyek irányítják az edzés felépítését.",
+      "options": [
+        {"text": "Egy gyakorlat", "is_correct": false},
+        {"text": "Általános edzésszabály", "is_correct": true},
+        {"text": "Versenyforma", "is_correct": false},
+        {"text": "Pihenőidő", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["edzeselvek"]
+      }
+    },
+    {
+      "text": "Mit jelent a tudatosság elve?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az edzés tudatos, célorientált végrehajtása.",
+      "options": [
+        {"text": "Véletlenszerű edzés", "is_correct": false},
+        {"text": "Tudatos végrehajtás", "is_correct": true},
+        {"text": "Pihenés", "is_correct": false},
+        {"text": "Versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["tudatossag"]
+      }
+    },
+    {
+      "text": "Mit jelent a fokozatosság elve?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A terhelés fokozatos növelése a fejlődés érdekében.",
+      "options": [
+        {"text": "Hirtelen terhelésnövelés", "is_correct": false},
+        {"text": "Fokozatos terhelésnövelés", "is_correct": true},
+        {"text": "Terhelés csökkentése", "is_correct": false},
+        {"text": "Állandó terhelés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["fokozatossag"]
+      }
+    },
+    {
+      "text": "A rendszeresség elve azt jelenti, hogy az edzést rendszeresen kell végezni.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert a fejlődéshez folyamatos terhelés szükséges.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["rendszeresseg"]
+      }
+    },
+    {
+      "text": "Mit jelent a specifikusság elve?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az edzés a sportág követelményeihez igazodik.",
+      "options": [
+        {"text": "Általános edzés", "is_correct": false},
+        {"text": "Sportágspecifikus fejlesztés", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Véletlenszerű terhelés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["specifikussag"]
+      }
+    },
+    {
+      "text": "Mit jelent az egyéni különbségek elve?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az edzés alkalmazkodik az egyéni adottságokhoz.",
+      "options": [
+        {"text": "Mindenki ugyanúgy edz", "is_correct": false},
+        {"text": "Egyéni adottságok figyelembevétele", "is_correct": true},
+        {"text": "Csak edző döntése", "is_correct": false},
+        {"text": "Csak életkor számít", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["egyeni_kulonbsegek"]
+      }
+    },
+    {
+      "text": "A variabilitás elve azt jelenti, hogy az edzést változatosan kell végezni.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert a változatosság segíti az alkalmazkodást.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["variabilitas"]
+      }
+    },
+    {
+      "text": "Mit jelent a terhelés–pihenés egyensúlya?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A megfelelő arány biztosítja a fejlődést.",
+      "options": [
+        {"text": "Csak terhelés", "is_correct": false},
+        {"text": "Terhelés és pihenés egyensúlya", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Verseny", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["regeneracio"]
+      }
+    },
+    {
+      "text": "Mi a tartósság elve?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A megszerzett képességek hosszú távú fenntartása.",
+      "options": [
+        {"text": "Gyors fejlődés", "is_correct": false},
+        {"text": "Hosszú távú fenntartás", "is_correct": true},
+        {"text": "Pihenés", "is_correct": false},
+        {"text": "Versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["tartossag"]
+      }
+    },
+    {
+      "text": "Az edzéselvek betartása növeli az edzés hatékonyságát.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert ezek biztosítják a megfelelő felépítést.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["edzeselvek"]
+      }
+    }
+  ]
+}

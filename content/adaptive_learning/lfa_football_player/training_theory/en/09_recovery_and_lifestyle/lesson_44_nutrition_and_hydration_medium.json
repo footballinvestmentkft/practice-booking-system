@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Recovery and Lifestyle",
+  "topic": "Nutrition and Hydration",
+  "quiz_title": "AL — Recovery and Lifestyle - Nutrition and Hydration [EN]",
+  "description": "The role of adequate nutrition and fluid intake in athletic performance.",
+  "questions": [
+    {
+      "text": "What is the main role of nutrition for athletes?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Nutrition provides the energy and nutrients required for recovery.",
+      "options": [
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Providing energy and nutrients", "is_correct": true},
+        {"text": "Hydration only", "is_correct": false},
+        {"text": "Competing", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["nutrition"]
+      }
+    },
+    {
+      "text": "Which macronutrient is the primary energy source during training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Carbohydrates provide rapidly available energy.",
+      "options": [
+        {"text": "Protein", "is_correct": false},
+        {"text": "Carbohydrates", "is_correct": true},
+        {"text": "Vitamins", "is_correct": false},
+        {"text": "Minerals", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["carbohydrates"]
+      }
+    },
+    {
+      "text": "What is the main role of protein?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Proteins are necessary for muscle building and recovery.",
+      "options": [
+        {"text": "Primarily providing energy", "is_correct": false},
+        {"text": "Muscle building and recovery", "is_correct": true},
+        {"text": "Hydration", "is_correct": false},
+        {"text": "Vitamin supply", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["protein"]
+      }
+    },
+    {
+      "text": "What is hydration?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Hydration is ensuring adequate fluid intake.",
+      "options": [
+        {"text": "Training", "is_correct": false},
+        {"text": "Ensuring fluid intake", "is_correct": true},
+        {"text": "Nutrition", "is_correct": false},
+        {"text": "Rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["hydration"]
+      }
+    },
+    {
+      "text": "Dehydration impairs athletic performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it reduces both physical and mental performance.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["dehydration"]
+      }
+    },
+    {
+      "text": "What is energy balance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The balance between energy intake and energy expenditure.",
+      "options": [
+        {"text": "Calorie intake only", "is_correct": false},
+        {"text": "The balance between intake and expenditure", "is_correct": true},
+        {"text": "Training only", "is_correct": false},
+        {"text": "Rest only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["energy"]
+      }
+    },
+    {
+      "text": "What happens in the case of dehydration?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Fluid deficit reduces performance.",
+      "options": [
+        {"text": "Performance increases", "is_correct": false},
+        {"text": "Performance decreases", "is_correct": true},
+        {"text": "No change occurs", "is_correct": false},
+        {"text": "Only rest takes place", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["dehydration"]
+      }
+    },
+    {
+      "text": "Adequate fluid intake supports recovery.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it supports bodily function.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["hydration"]
+      }
+    },
+    {
+      "text": "What characterises post-training nutrition?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Nutrient intake that supports recovery.",
+      "options": [
+        {"text": "No food is needed", "is_correct": false},
+        {"text": "Supporting recovery", "is_correct": true},
+        {"text": "Fluids only", "is_correct": false},
+        {"text": "Competition only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["post_training_nutrition"]
+      }
+    },
+    {
+      "text": "Adequate nutrition improves athletic performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it provides the necessary energy and nutrients.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["performance"]
+      }
+    }
+  ]
+}

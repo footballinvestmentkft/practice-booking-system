@@ -1,0 +1,273 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Fundamentals of Training Theory",
+  "topic": "The Concept and Interpretation of Training",
+  "quiz_title": "AL — Fundamentals of Training Theory - The Concept of Training [EN]",
+  "description": "The definition, purpose, and fundamental physiological relationships of training.",
+  "questions": [
+    {
+      "text": "What is one of the most important characteristics of training according to its professional definition?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Training is a conscious, planned, and systematic activity aimed at developing performance.",
+      "options": [
+        {"text": "Occasional movement", "is_correct": false},
+        {"text": "A conscious and planned activity", "is_correct": true},
+        {"text": "Movement performed only in competition", "is_correct": false},
+        {"text": "A process equivalent to rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "average_time_seconds": 25,
+        "concept_tags": ["training_concept", "intentionality"]
+      }
+    },
+    {
+      "text": "Training is a spontaneous, unplanned activity.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False, because training is always a consciously planned and directed process.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 20,
+        "concept_tags": ["training_concept"]
+      }
+    },
+    {
+      "text": "What is the primary goal of training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The goal of training is to develop performance capacity and induce adaptation.",
+      "options": [
+        {"text": "Entertainment", "is_correct": false},
+        {"text": "Development of performance capacity", "is_correct": true},
+        {"text": "Increasing fatigue", "is_correct": false},
+        {"text": "Filling time", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.32,
+        "cognitive_load": 0.27,
+        "average_time_seconds": 25,
+        "concept_tags": ["training_goal", "performance"]
+      }
+    },
+    {
+      "text": "What does adaptation mean in training theory?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Adaptation is the body's adjustment to training load.",
+      "options": [
+        {"text": "The elimination of training load", "is_correct": false},
+        {"text": "The body's adjustment to training load", "is_correct": true},
+        {"text": "A decrease in performance", "is_correct": false},
+        {"text": "The absence of rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.38,
+        "cognitive_load": 0.33,
+        "average_time_seconds": 32,
+        "concept_tags": ["adaptation"]
+      }
+    },
+    {
+      "text": "The body does not change during training.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False, because the very purpose of training is to induce adaptation.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.28,
+        "cognitive_load": 0.22,
+        "average_time_seconds": 20,
+        "concept_tags": ["adaptation"]
+      }
+    },
+    {
+      "text": "What is required for adaptation to occur?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Adaptation requires a balance between adequate training load and rest.",
+      "options": [
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Load only", "is_correct": false},
+        {"text": "A balance between load and rest", "is_correct": true},
+        {"text": "Complete absence of movement", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.34,
+        "average_time_seconds": 32,
+        "concept_tags": ["load", "rest", "adaptation"]
+      }
+    },
+    {
+      "text": "Excessive training load without rest can have a negative effect on performance.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True, because without regeneration, overtraining can develop.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.29,
+        "average_time_seconds": 20,
+        "concept_tags": ["load", "overtraining"]
+      }
+    },
+    {
+      "text": "How can training be understood as a process?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Training is a long-term, progressively structured process.",
+      "options": [
+        {"text": "A one-time event", "is_correct": false},
+        {"text": "A continuous, long-term process", "is_correct": true},
+        {"text": "A random activity", "is_correct": false},
+        {"text": "A short-term effect", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.37,
+        "cognitive_load": 0.30,
+        "average_time_seconds": 30,
+        "concept_tags": ["training_process"]
+      }
+    },
+    {
+      "text": "Training produces only physical effects.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False, because training also has mental and psychological effects.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.38,
+        "average_time_seconds": 20,
+        "concept_tags": ["training_effects"]
+      }
+    },
+    {
+      "text": "What ensures the effectiveness of training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Regularity and intentionality are key to training effectiveness.",
+      "options": [
+        {"text": "Random execution", "is_correct": false},
+        {"text": "Regularity and intentionality", "is_correct": true},
+        {"text": "The greatest possible load", "is_correct": false},
+        {"text": "The least possible rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.34,
+        "cognitive_load": 0.28,
+        "average_time_seconds": 28,
+        "concept_tags": ["regularity", "intentionality"]
+      }
+    },
+    {
+      "text": "Which statement is true about the relationship between training and performance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The goal of training is to increase performance through appropriate load and regeneration.",
+      "options": [
+        {"text": "Training decreases performance", "is_correct": false},
+        {"text": "Training increases performance under appropriate conditions", "is_correct": true},
+        {"text": "Training has no effect on performance", "is_correct": false},
+        {"text": "Training only has a short-term effect", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.41,
+        "cognitive_load": 0.35,
+        "average_time_seconds": 35,
+        "concept_tags": ["performance", "training_goal"]
+      }
+    },
+    {
+      "text": "The effects of training appear immediately and permanently without rest.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False, because regeneration is necessary for development to occur.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.36,
+        "average_time_seconds": 20,
+        "concept_tags": ["rest", "adaptation"]
+      }
+    },
+    {
+      "text": "What happens in the body as a result of appropriate training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The body adapts, which leads to improvement in performance.",
+      "options": [
+        {"text": "Performance decreases", "is_correct": false},
+        {"text": "Adaptation and development occur", "is_correct": true},
+        {"text": "No change occurs", "is_correct": false},
+        {"text": "Only fatigue appears", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.39,
+        "cognitive_load": 0.33,
+        "average_time_seconds": 32,
+        "concept_tags": ["adaptation", "development"]
+      }
+    },
+    {
+      "text": "What distinguishes training from simple physical activity?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Training is conscious, goal-directed, and systematic, whereas physical activity can be spontaneous.",
+      "options": [
+        {"text": "Intensity", "is_correct": false},
+        {"text": "Intentionality and goal-directedness", "is_correct": true},
+        {"text": "Type of movement", "is_correct": false},
+        {"text": "Location", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 40,
+        "concept_tags": ["training_concept", "distinction"]
+      }
+    },
+    {
+      "text": "Which concept is most closely associated with the long-term effects of training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Adaptation ensures long-term development.",
+      "options": [
+        {"text": "Fatigue", "is_correct": false},
+        {"text": "Adaptation", "is_correct": true},
+        {"text": "Chance", "is_correct": false},
+        {"text": "Interruption", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.44,
+        "cognitive_load": 0.38,
+        "average_time_seconds": 38,
+        "concept_tags": ["adaptation", "long_term_effect"]
+      }
+    }
+  ]
+}

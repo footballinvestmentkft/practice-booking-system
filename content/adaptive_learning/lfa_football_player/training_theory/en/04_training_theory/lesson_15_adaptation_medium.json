@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Training Theory",
+  "topic": "The Mechanism of Training Effect (Adaptation)",
+  "quiz_title": "AL — Training Theory - The Mechanism of Training Effect [EN]",
+  "description": "Foundations of adaptation, supercompensation, and the relationship between training load and recovery.",
+  "questions": [
+    {
+      "text": "What is adaptation in training theory?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Adaptation is the body's adjustment to training load.",
+      "options": [
+        {"text": "The onset of fatigue", "is_correct": false},
+        {"text": "Adjustment to training load", "is_correct": true},
+        {"text": "The process of rest", "is_correct": false},
+        {"text": "A decrease in performance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["adaptation"]
+      }
+    },
+    {
+      "text": "What is the essence of supercompensation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The body reaches a higher performance level following recovery.",
+      "options": [
+        {"text": "A decrease in performance", "is_correct": false},
+        {"text": "Achieving a higher performance level", "is_correct": true},
+        {"text": "Maintaining a constant level", "is_correct": false},
+        {"text": "Increasing fatigue", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["supercompensation"]
+      }
+    },
+    {
+      "text": "Insufficient rest inhibits adaptation.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because development cannot occur without recovery.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 25,
+        "concept_tags": ["recovery"]
+      }
+    },
+    {
+      "text": "What happens with excessively low training load?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Adequate adaptation does not develop.",
+      "options": [
+        {"text": "Rapid development", "is_correct": false},
+        {"text": "No meaningful development", "is_correct": true},
+        {"text": "Overtraining", "is_correct": false},
+        {"text": "Injury", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["training_load"]
+      }
+    },
+    {
+      "text": "What is the role of overload?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Providing the stimulus necessary for development.",
+      "options": [
+        {"text": "Providing rest", "is_correct": false},
+        {"text": "The stimulus necessary for development", "is_correct": true},
+        {"text": "Eliminating fatigue", "is_correct": false},
+        {"text": "Reducing performance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["overload"]
+      }
+    },
+    {
+      "text": "Excessive training load can lead to overtraining.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, when adequate recovery is absent.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 25,
+        "concept_tags": ["overtraining"]
+      }
+    },
+    {
+      "text": "What is the role of fatigue in training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "It is the consequence of training load that triggers adaptation.",
+      "options": [
+        {"text": "It has no role", "is_correct": false},
+        {"text": "A state that triggers adaptation", "is_correct": true},
+        {"text": "An exclusively negative phenomenon", "is_correct": false},
+        {"text": "Recovery", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["fatigue"]
+      }
+    },
+    {
+      "text": "When does supercompensation occur?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Following adequate recovery.",
+      "options": [
+        {"text": "During training load", "is_correct": false},
+        {"text": "After recovery", "is_correct": true},
+        {"text": "Before rest", "is_correct": false},
+        {"text": "At the peak of fatigue", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["supercompensation"]
+      }
+    },
+    {
+      "text": "Training too frequently can impede development.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because insufficient recovery time is available.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["recovery"]
+      }
+    },
+    {
+      "text": "What characterises long-term adaptation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The development of lasting physiological changes in the body.",
+      "options": [
+        {"text": "It is short-lived", "is_correct": false},
+        {"text": "Lasting change", "is_correct": true},
+        {"text": "An immediate effect", "is_correct": false},
+        {"text": "Fatigue only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["long_term_adaptation"]
+      }
+    }
+  ]
+}

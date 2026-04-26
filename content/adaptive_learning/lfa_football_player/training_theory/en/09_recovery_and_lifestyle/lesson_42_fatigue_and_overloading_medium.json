@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Recovery and Lifestyle",
+  "topic": "Fatigue and Overloading",
+  "quiz_title": "AL — Recovery and Lifestyle - Fatigue and Overloading [EN]",
+  "description": "Types of fatigue, the development of overloading, and its prevention.",
+  "questions": [
+    {
+      "text": "What is fatigue?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Fatigue is a temporary decline in performance capacity resulting from physical load.",
+      "options": [
+        {"text": "An increase in performance", "is_correct": false},
+        {"text": "A temporary decline in performance", "is_correct": true},
+        {"text": "A resting state", "is_correct": false},
+        {"text": "Peak competitive form", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["fatigue"]
+      }
+    },
+    {
+      "text": "Which belongs to the types of fatigue?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Fatigue can be physical or mental.",
+      "options": [
+        {"text": "Technical fatigue", "is_correct": false},
+        {"text": "Mental fatigue", "is_correct": true},
+        {"text": "Temporal fatigue", "is_correct": false},
+        {"text": "Environmental fatigue", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["fatigue_types"]
+      }
+    },
+    {
+      "text": "What characterises acute fatigue?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Acute fatigue is short-term and resolves quickly with recovery.",
+      "options": [
+        {"text": "It lasts a long time", "is_correct": false},
+        {"text": "It lasts a short time", "is_correct": true},
+        {"text": "It does not resolve", "is_correct": false},
+        {"text": "It always involves injury", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["acute_fatigue"]
+      }
+    },
+    {
+      "text": "What characterises chronic fatigue?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A condition that persists over a longer period due to inadequate recovery.",
+      "options": [
+        {"text": "It resolves quickly", "is_correct": false},
+        {"text": "It persists over a long time", "is_correct": true},
+        {"text": "It has no effect", "is_correct": false},
+        {"text": "It only appears during training", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["chronic_fatigue"]
+      }
+    },
+    {
+      "text": "What is overloading?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Overloading occurs when the training load exceeds the body's recovery capacity.",
+      "options": [
+        {"text": "Appropriate training", "is_correct": false},
+        {"text": "Excessive load without recovery", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "A competition situation", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["overloading"]
+      }
+    },
+    {
+      "text": "Inadequate recovery can be a cause of overloading.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because the lack of recovery leads to accumulated fatigue.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["recovery"]
+      }
+    },
+    {
+      "text": "Which is one symptom of overloading?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Decline in performance is a common symptom.",
+      "options": [
+        {"text": "Increase in performance", "is_correct": false},
+        {"text": "Decline in performance", "is_correct": true},
+        {"text": "No change", "is_correct": false},
+        {"text": "Rest only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["symptoms"]
+      }
+    },
+    {
+      "text": "Overloading can increase the risk of injury.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because the body cannot recover adequately.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["injury"]
+      }
+    },
+    {
+      "text": "What is one way to prevent overloading?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Ensuring the balance between training and rest.",
+      "options": [
+        {"text": "Increasing load", "is_correct": false},
+        {"text": "Balance between training and rest", "is_correct": true},
+        {"text": "Skipping rest", "is_correct": false},
+        {"text": "Competition only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["prevention"]
+      }
+    },
+    {
+      "text": "Adequate recovery helps prevent overloading.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it ensures the body's restoration.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["recovery"]
+      }
+    }
+  ]
+}

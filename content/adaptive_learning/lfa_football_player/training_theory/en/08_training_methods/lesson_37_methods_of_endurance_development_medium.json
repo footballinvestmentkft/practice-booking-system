@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Training Methods",
+  "topic": "Methods of Endurance Development",
+  "quiz_title": "AL — Training Methods - Methods of Endurance Development [EN]",
+  "description": "The main methods of endurance development and their application.",
+  "questions": [
+    {
+      "text": "What is endurance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Endurance is the ability to sustain prolonged physical load.",
+      "options": [
+        {"text": "Short-duration exertion", "is_correct": false},
+        {"text": "The ability to sustain prolonged load", "is_correct": true},
+        {"text": "Speed only", "is_correct": false},
+        {"text": "The ability to rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["endurance"]
+      }
+    },
+    {
+      "text": "Which method is characterised by steady-state loading?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "In the continuous method, the load remains constant.",
+      "options": [
+        {"text": "Interval method", "is_correct": false},
+        {"text": "Continuous method", "is_correct": true},
+        {"text": "Repetition method", "is_correct": false},
+        {"text": "Maximal method", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["continuous_method"]
+      }
+    },
+    {
+      "text": "What characterises the interval method?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The interval method consists of alternating high- and low-intensity phases.",
+      "options": [
+        {"text": "Continuous load", "is_correct": false},
+        {"text": "Alternating intensity", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Maximum load only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["interval"]
+      }
+    },
+    {
+      "text": "What does the repetition method mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The repetition method is based on repeated runs over defined distances.",
+      "options": [
+        {"text": "Continuous running", "is_correct": false},
+        {"text": "Running repeated segments", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Speed development only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["repetition_method"]
+      }
+    },
+    {
+      "text": "Endurance training develops the circulatory system.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it improves the function of the cardiovascular system.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["circulation"]
+      }
+    },
+    {
+      "text": "What determines training intensity?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Intensity refers to the magnitude of the load.",
+      "options": [
+        {"text": "Length of training", "is_correct": false},
+        {"text": "Magnitude of the load", "is_correct": true},
+        {"text": "Rest period", "is_correct": false},
+        {"text": "Type of training", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["intensity"]
+      }
+    },
+    {
+      "text": "What is the role of heart rate monitoring?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Heart rate helps regulate intensity.",
+      "options": [
+        {"text": "It has no role", "is_correct": false},
+        {"text": "Regulating intensity", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "It is only important in competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["heart_rate"]
+      }
+    },
+    {
+      "text": "Aerobic load is lower in intensity and lasts longer.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because the aerobic system enables longer-duration work.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["aerobic"]
+      }
+    },
+    {
+      "text": "What characterises anaerobic load?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "High-intensity, short-duration load.",
+      "options": [
+        {"text": "Low intensity", "is_correct": false},
+        {"text": "High intensity, short duration", "is_correct": true},
+        {"text": "Long duration", "is_correct": false},
+        {"text": "Rest only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["anaerobic"]
+      }
+    },
+    {
+      "text": "Endurance development can be achieved through a combination of different methods.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because different energy systems are developed.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["combination"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "module": "Edzésmódszerek",
+  "topic": "Edzésmódszerek — Haladó",
+  "quiz_title": "AL — Edzésmódszerek - Haladó [HU]",
+  "description": "Az edzésmódszerek mélyebb összefüggéseinek elemzése: HIIT mechanizmusai, pliometrikus edzés elvei, excentrikus módszerek, RPE-alapú terhelésmeghatározás és a módszerek specifikus alkalmazása labdarúgóknál.",
+  "questions": [
+    {
+      "text": "Miért hatékonyabb a HIIT (High-Intensity Interval Training) az aerob kapacitás fejlesztésére rövid idő alatt, mint az LISS (Low-Intensity Steady State)?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A HIIT maximális intenzitású erőfeszítést vált ki, amely magas VO2-igényt generál és EPOC-t (Excess Post-exercise Oxygen Consumption) indukál. A sejtszintű jelzési mechanizmusok (PGC-1α, mitokondriális biogenezis) erősebben aktiválódnak, mint alacsony intenzitású munkánál — így rövidebb idő alatt nagyobb aerob adaptáció érhető el.",
+      "options": [
+        {"text": "Mert hosszabb időt tölt a sportoló az edzőteremben", "is_correct": false},
+        {"text": "Maximális intenzitású erőfeszítés erősebb sejtszintű jelzési aktivációt (PGC-1α, mitokondriális biogenezis) és EPOC-ot indukál", "is_correct": true},
+        {"text": "A HIIT kizárólag anaerob kapacitást fejleszt", "is_correct": false},
+        {"text": "Az LISS hatékonyabb, a HIIT nem javítja az aerob kapacitást", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.83,
+        "cognitive_load": 0.82,
+        "average_time_seconds": 70,
+        "concept_tags": ["HIIT", "LISS", "aerob_adaptacio", "EPOC"]
+      }
+    },
+    {
+      "text": "Mi a pliometrikus edzés legfontosabb biztonsági feltétele fiatal sportolóknál?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A pliometrikus edzés intenzív excentrikus terhelést jelent, amely a fejlődő vázizomrendszerre és inakra erős mechanikai stresszt helyez. Fiatal sportolóknál (növekedési lemezek még nyitottak) az alapfeltétel az elegendő szintű alap erőháttér — általánosan elfogadott küszöb: 1.5× testsúly guggolás előtt kezdve az intenzív pliometriát.",
+      "options": [
+        {"text": "A sportoló életkora nem számít, csak a motiváció", "is_correct": false},
+        {"text": "Elegendő alap erőháttér (kb. 1.5× testsúly guggolás) szükséges az intenzív pliometria megkezdéséhez", "is_correct": true},
+        {"text": "Pliometria fiatal sportolóknál teljesen tiltott", "is_correct": false},
+        {"text": "Csak megfelelő cipő szükséges biztonsági feltételként", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": ["pliometria", "biztonság", "fiatal_sportolok"]
+      }
+    },
+    {
+      "text": "Az excentrikus edzés nagyobb izomhipetrófiát és erőnövekedést válthat ki, mint a koncentrikus edzés.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Igaz. Az excentrikus (nyúló) izommunka azonos terhelésnél nagyobb mechanikai stresszt generál (kevesebb motoros egység aktív, de ugyanolyan erőt fejtenek ki), ami erősebb hipertrófiás ingert és nagyobb erőnövekedést eredményez, mint a koncentrikus fázis.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["excentrikus_edzes", "hipertrofia", "ero"]
+      }
+    },
+    {
+      "text": "Hogyan alkalmazzák az RPE-t (Rate of Perceived Exertion) az autoregulált edzésmódszerben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Az autoregulált edzésben az RPE-t arra használják, hogy a sportoló napról napra az aktuális állapotához igazítsa a terhelési súlyt vagy ismétlésszámot. Pl. ha a cél RPE=8 (2 ismétlés maradt tartalékban), a sportoló addig növeli a súlyt, amíg eléri ezt az érzést — így a terhelés mindig az aktuális kapacitáshoz igazodik.",
+      "options": [
+        {"text": "Az RPE csak a verseny utáni értékelésre szolgál", "is_correct": false},
+        {"text": "A sportoló az aktuális RPE-jéhez igazítja a terhelést napról napra — így a program önszabályozóvá válik", "is_correct": true},
+        {"text": "Az RPE csak csoportos edzésen alkalmazható", "is_correct": false},
+        {"text": "Az autoregulált edzés nem igényli az RPE használatát", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 60,
+        "concept_tags": ["RPE", "autoregulalt_edzes"]
+      }
+    },
+    {
+      "text": "Melyik intervallum-edzési protokoll a leghatékonyabb a labdarúgók aerob-anaerob kapacitásának egyidejű fejlesztésére?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A 4×4 perces, 90-95% HRmax intenzitású intervallum-protokoll (Helgerud et al.) labdarúgóknál igazoltan javítja a VO2max-ot és a laktát-küszöböt is. A mérkőzésspecifikus 1:1 vagy 2:1 munkaszünet-arányú rövidebb intervallumok (pl. 10s/20s, 15s/15s) jobban illeszkednek a labdarúgás terhelési profiljához.",
+      "options": [
+        {"text": "Kizárólag 30 perces egyenletes futás", "is_correct": false},
+        {"text": "4×4 perces 90-95% HRmax interjó, vagy 1:1/2:1 munkaszünet-arányú rövid intervallumok", "is_correct": true},
+        {"text": "Maximális erőkifejtés 60 percen át", "is_correct": false},
+        {"text": "Kizárólag statikus nyújtás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.83,
+        "cognitive_load": 0.82,
+        "average_time_seconds": 65,
+        "concept_tags": ["intervallum_protokoll", "VO2max", "labdarugas"]
+      }
+    },
+    {
+      "text": "Mi a Nordic Hamstring Curl (NHC) módszer mechanizmusa és miért alkalmazzák labdarúgóknál?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Az NHC maximális excentrikus terhelést helyez a hamstring izmokra a térd extenzió lassításakor. Ez növeli a hamstring excentrikus erőprodukcióját és a fascicle hosszát — mindkettő a legfontosabb védőfaktor a hamstring húzódás ellen, amely a labdarúgók leggyakoribb sérüléstípusa.",
+      "options": [
+        {"text": "Egy koordinációs feladat az egyensúly fejlesztéséhez", "is_correct": false},
+        {"text": "Maximális excentrikus hamstring terhelés — növeli az excentrikus erőt és fascicle hosszt, csökkentve a hamstring sérülés kockázatát", "is_correct": true},
+        {"text": "Az NHC kizárólag rehabilitációs célra alkalmas", "is_correct": false},
+        {"text": "Egy aerob állóképességi módszer", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["nordic_hamstring", "excentrikus", "serules_prevencio"]
+      }
+    },
+    {
+      "text": "Az edzésmódszereket egymástól teljesen függetlenül, tetszőleges sorrendben lehet alkalmazni a legjobb eredmény érdekében.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Hamis. Az edzésmódszerek sorrendje kritikus: pl. az erőedzésnek az állóképességi edzés előtt kell állnia (az interferencia-hatás minimalizálása érdekében), a pliometria maximális figyelem és friss idegrendszer mellettoptimális, és az excentrikus terhelés magas DOMS-t okoz, ami befolyásolja a következő napok edzhetőségét.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["modszerek_sorrendje", "interferencia"]
+      }
+    },
+    {
+      "text": "Melyik erőedzési módszer a leghatékonyabb a labdarúgók robbanékonyságának fejlesztéséhez?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A kontrasztos edzés (complex training) — nehéz súlyzós erőgyakorlat (pl. guggolás 85% 1RM) után azonnal pliometrikus feladat (pl. ugrás) — kihasználja a post-activation potentiation (PAP) effektust: az előző nehéz terhelés átmenetileg fokozza az idegrendszeri aktivációt, ami robbanékonyabb mozgást eredményez.",
+      "options": [
+        {"text": "Kizárólag magas ismétlésszámú, alacsony súlyú edzés", "is_correct": false},
+        {"text": "Kontrasztos (complex) edzés — PAP effektust kihasználva súlyzós + pliometrikus feladatok kombinálása", "is_correct": true},
+        {"text": "Statikus nyújtás maximális terhelés után", "is_correct": false},
+        {"text": "Az erőedzés nem befolyásolja a robbanékonyságot", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.85,
+        "cognitive_load": 0.83,
+        "average_time_seconds": 70,
+        "concept_tags": ["complex_training", "PAP", "robbekonysag"]
+      }
+    },
+    {
+      "text": "Mi az edzésmódszer progressziójának helyes iránya a kezdőktől a haladókig?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A progresszió helyes iránya: általánostól a specifikus felé, egyszerűtől az összetett felé, alacsony intenzitástól a magas felé, stabil felülettől az instabilig. Kezdőknél az alap mozgásminták és az általános kondicionálás elsajátítása megelőzi a sporágspecifikus terhelési módszereket.",
+      "options": [
+        {"text": "Haladóktól a kezdők felé — először a legkomplexebb módszert kell tanulni", "is_correct": false},
+        {"text": "Általánostól a specifikusig, egyszerűtől az összetettig, alacsony intenzitástól a magasig", "is_correct": true},
+        {"text": "A módszer nem progresszív — mindenki azonos protokollt követ", "is_correct": false},
+        {"text": "A progresszió kizárólag az intenzitás növeléséből áll", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 58,
+        "concept_tags": ["modszer_progresszio", "kezdo_halado"]
+      }
+    },
+    {
+      "text": "A DOMS (Delayed Onset Muscle Soreness) csak fizikai kényelmetlenséget jelent, edzésteljesítményre nincs hatása.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Hamis. A DOMS — különösen excentrikus edzés után — csökkenti az erőtermelési kapacitást, rontja a proprioceptív visszacsatolást és a mozgáskoordinációt, növeli a sérülési kockázatot, és befolyásolja a következő edzés minőségét. Ezért az edzésütemezésnél figyelembe kell venni a várható DOMS-t.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["DOMS", "edzestelhjesitmeny", "excentrikus"]
+      }
+    }
+  ]
+}

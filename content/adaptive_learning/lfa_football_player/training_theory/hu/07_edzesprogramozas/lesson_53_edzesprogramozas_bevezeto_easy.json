@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Edzésprogramozás",
+  "topic": "Edzésprogramozás — Bevezető",
+  "quiz_title": "AL — Edzésprogramozás - Bevezető [HU]",
+  "description": "Az edzésprogramozás alapfogalmainak áttekintése: edzéstervezés, periodizáció, ciklusok, terhelésszabályozás és visszacsatolás.",
+  "questions": [
+    {
+      "text": "Mi az edzésprogramozás?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az edzésprogramozás az edzésmunka tudatos, előre tervezett megszervezése, amely meghatározza a terhelés tartalmát, mennyiségét és időbeli elosztását.",
+      "options": [
+        {"text": "Az edzés spontán végrehajtása", "is_correct": false},
+        {"text": "Az edzésmunka tudatos, előre tervezett megszervezése", "is_correct": true},
+        {"text": "Az edzőtermi gépek beprogramozása", "is_correct": false},
+        {"text": "A versenynaptár összeállítása", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["edzesprogramozas", "definicio"]
+      }
+    },
+    {
+      "text": "A periodizáció az edzésmunka időbeli elosztását jelenti.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. A periodizáció az edzésszezon különböző fázisokra (makrociklus, mezociklus, mikrociklus) osztásának módszere a csúcsteljesítmény tervszerű elérése érdekében.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["periodizacio"]
+      }
+    },
+    {
+      "text": "Mi a mikrociklus az edzésprogramozásban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A mikrociklus az edzésterv legrövidebb ismétlődő egysége, általában 1 hétnyi edzésmunkát jelöl.",
+      "options": [
+        {"text": "Az egész szezon edzésterve", "is_correct": false},
+        {"text": "Az edzésterv legrövidebb, általában heti egysége", "is_correct": true},
+        {"text": "Egy hónapos edzésblokk", "is_correct": false},
+        {"text": "Egyetlen edzésegység", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["mikrociklus"]
+      }
+    },
+    {
+      "text": "Mi a makrociklus?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A makrociklus a periodizáció legnagyobb egysége, amely általában egy teljes felkészülési időszakot vagy szezont fog át.",
+      "options": [
+        {"text": "Egyetlen edzéshét", "is_correct": false},
+        {"text": "Egy teljes felkészülési időszak vagy szezon", "is_correct": true},
+        {"text": "Két egymást követő edzés", "is_correct": false},
+        {"text": "Egy hónapos edzésblokk", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["makrociklus"]
+      }
+    },
+    {
+      "text": "A terhelésszabályozás az edzésprogramozás lényeges eleme.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. A terhelés tudatos növelése, csökkentése és változtatása (hullámzó terhelés) biztosítja a folyamatos fejlődést és megelőzi a túledzést.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["terheleszabályozas"]
+      }
+    },
+    {
+      "text": "Miért fontos a visszacsatolás az edzésprogramozásban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A visszacsatolás (edzésnapló, tesztek, mérések) lehetővé teszi a terv folyamatos módosítását a sportoló aktuális állapotának megfelelően.",
+      "options": [
+        {"text": "Csak a versenyeredmény rögzítésére szolgál", "is_correct": false},
+        {"text": "Lehetővé teszi a terv folyamatos módosítását az aktuális állapot alapján", "is_correct": true},
+        {"text": "Az edzés hosszát határozza meg", "is_correct": false},
+        {"text": "Automatikusan elvégzi az edzéseket", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["visszacsatolas"]
+      }
+    },
+    {
+      "text": "Mi az edzésciklus hullámzó terhelésének célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A hullámzó (változó) terhelés felváltva növeli és csökkenti az edzésstresszt, így biztosítva a regenerációt és a szuperkompenzációt a folyamatos fejlődés érdekében.",
+      "options": [
+        {"text": "A sportoló megterhelésének maximalizálása", "is_correct": false},
+        {"text": "A regeneráció és a szuperkompenzáció biztosítása fejlődés közben", "is_correct": true},
+        {"text": "Az edzésmunka csökkentése", "is_correct": false},
+        {"text": "A pihenőnapok elhagyása", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 38,
+        "concept_tags": ["hullamo_terheles", "szuperkompenzacio"]
+      }
+    },
+    {
+      "text": "Az edzésprogram csak a fizikai terhelést tartalmazza.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis. Az edzésprogram a fizikai terhelésen kívül magában foglalja a regenerációs periódusokat, a mentális felkészítést és a taktikai-technikai elemeket is.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["edzesprogram_tartalma"]
+      }
+    },
+    {
+      "text": "Mi az előkészítő időszak fő feladata a szezon tervezésében?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az előkészítő időszak célja az általános és speciális fizikai alapok megteremtése a versenyidőszak előtt, amikor a terhelés magas, a versenyek száma alacsony.",
+      "options": [
+        {"text": "A versenycsúcs elérése", "is_correct": false},
+        {"text": "Az általános és speciális fizikai alapok megteremtése", "is_correct": true},
+        {"text": "A pihenés maximalizálása", "is_correct": false},
+        {"text": "A taktikai rendszer véglegesítése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 38,
+        "concept_tags": ["elokeszito_idoszak"]
+      }
+    },
+    {
+      "text": "Az edzésprogramot minden sportoló számára egyformán kell tervezni.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis. Az edzésprogramot az egyéni adottságokhoz, edzettségi szinthez, életkorhoz és célokhoz kell igazítani — az individualizáció az edzésprogramozás alapelve.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["individualizacio"]
+      }
+    }
+  ]
+}

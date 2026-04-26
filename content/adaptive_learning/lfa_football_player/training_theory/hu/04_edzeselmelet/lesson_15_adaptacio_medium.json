@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzéselmélet",
+  "topic": "Az edzés hatásmechanizmusa (adaptáció)",
+  "quiz_title": "AL — Edzéselmélet - Az edzés hatásmechanizmusa [HU]",
+  "description": "Az adaptáció, szuperkompenzáció és a terhelés-regeneráció kapcsolatának alapjai.",
+  "questions": [
+    {
+      "text": "Mit nevezünk adaptációnak az edzéselméletben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az adaptáció a szervezet alkalmazkodása a terheléshez.",
+      "options": [
+        {"text": "Fáradás kialakulása", "is_correct": false},
+        {"text": "Alkalmazkodás a terheléshez", "is_correct": true},
+        {"text": "Pihenés folyamata", "is_correct": false},
+        {"text": "Teljesítmény csökkenése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["adaptacio"]
+      }
+    },
+    {
+      "text": "Mi a szuperkompenzáció lényege?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A szervezet a regeneráció után magasabb szintre jut.",
+      "options": [
+        {"text": "Teljesítmény csökkenése", "is_correct": false},
+        {"text": "Magasabb teljesítményszint elérése", "is_correct": true},
+        {"text": "Állandó szint fenntartása", "is_correct": false},
+        {"text": "Fáradás növelése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["szuperkompenzacio"]
+      }
+    },
+    {
+      "text": "A megfelelő pihenés hiánya gátolja az adaptációt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert a regeneráció nélkül nincs fejlődés.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 25,
+        "concept_tags": ["regeneracio"]
+      }
+    },
+    {
+      "text": "Mi történik túl alacsony terhelés esetén?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Nem alakul ki megfelelő adaptáció.",
+      "options": [
+        {"text": "Gyors fejlődés", "is_correct": false},
+        {"text": "Nincs érdemi fejlődés", "is_correct": true},
+        {"text": "Túlterhelés", "is_correct": false},
+        {"text": "Sérülés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["terheles"]
+      }
+    },
+    {
+      "text": "Mi a túlterhelés (overload) szerepe?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A fejlődéshez szükséges inger biztosítása.",
+      "options": [
+        {"text": "Pihenés biztosítása", "is_correct": false},
+        {"text": "Fejlődéshez szükséges inger", "is_correct": true},
+        {"text": "Fáradás megszüntetése", "is_correct": false},
+        {"text": "Teljesítmény csökkentése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["overload"]
+      }
+    },
+    {
+      "text": "A túlzott terhelés túlterheléshez (overtraining) vezethet.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, ha nincs megfelelő regeneráció.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 25,
+        "concept_tags": ["overtraining"]
+      }
+    },
+    {
+      "text": "Mi a fáradás szerepe az edzésben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A terhelés következménye, amely adaptációt indít el.",
+      "options": [
+        {"text": "Nincs szerepe", "is_correct": false},
+        {"text": "Adaptációt kiváltó állapot", "is_correct": true},
+        {"text": "Csak negatív jelenség", "is_correct": false},
+        {"text": "Regeneráció", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["faradas"]
+      }
+    },
+    {
+      "text": "Mikor alakul ki szuperkompenzáció?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A megfelelő regeneráció után.",
+      "options": [
+        {"text": "Terhelés közben", "is_correct": false},
+        {"text": "Regeneráció után", "is_correct": true},
+        {"text": "Pihenés előtt", "is_correct": false},
+        {"text": "Fáradás csúcsán", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["szuperkompenzacio"]
+      }
+    },
+    {
+      "text": "A túl gyakori edzés gátolhatja a fejlődést.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert nincs elegendő regeneráció.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["regeneracio"]
+      }
+    },
+    {
+      "text": "Mi a hosszú távú adaptáció jellemzője?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Tartós szervezeti változások kialakulása.",
+      "options": [
+        {"text": "Rövid ideig tart", "is_correct": false},
+        {"text": "Tartós változás", "is_correct": true},
+        {"text": "Azonnali hatás", "is_correct": false},
+        {"text": "Csak fáradás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["hosszu_adaptacio"]
+      }
+    }
+  ]
+}

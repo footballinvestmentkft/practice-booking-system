@@ -1,0 +1,277 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Training Methods",
+  "topic": "Development of Flexibility and Coordination",
+  "quiz_title": "AL — Training Methods - Development of Flexibility and Coordination [EN]",
+  "description": "Methods for developing flexibility and coordination, their role in motor learning, performance, and injury prevention.",
+  "questions": [
+    {
+      "text": "What is flexibility in training theory?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Flexibility is the ability to move joints through their range of motion and to stretch muscles.",
+      "options": [
+        {"text": "Maximal force production of muscles", "is_correct": false},
+        {"text": "The ability of joint range of motion and muscle extensibility", "is_correct": true},
+        {"text": "The ability to sustain prolonged load", "is_correct": false},
+        {"text": "The ability to react quickly", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["flexibility", "motor_abilities"]
+      }
+    },
+    {
+      "text": "What is coordination?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Coordination is the ability to execute movements accurately, purposefully, and in a coordinated manner.",
+      "options": [
+        {"text": "The ability to execute movements in a coordinated manner", "is_correct": true},
+        {"text": "Passive relaxation of joints", "is_correct": false},
+        {"text": "Increasing muscle mass", "is_correct": false},
+        {"text": "Increasing maximal oxygen uptake", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["coordination", "motor_abilities"]
+      }
+    },
+    {
+      "text": "Which method is characteristic of static stretching?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "In static stretching, the athlete holds a stretched position for a defined period.",
+      "options": [
+        {"text": "Holding a stretched position", "is_correct": true},
+        {"text": "Performing fast, explosive repetitions", "is_correct": false},
+        {"text": "Lifting maximal loads", "is_correct": false},
+        {"text": "Competitive sprinting", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["static_stretching", "flexibility"]
+      }
+    },
+    {
+      "text": "What characterises dynamic stretching?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Dynamic stretching prepares muscles and joints for load through controlled movements.",
+      "options": [
+        {"text": "Controlled stretching performed during movement", "is_correct": true},
+        {"text": "Complete stillness for a long time", "is_correct": false},
+        {"text": "Passive rest only", "is_correct": false},
+        {"text": "An exclusively strength-building method", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.43,
+        "average_time_seconds": 42,
+        "concept_tags": ["dynamic_stretching", "flexibility"]
+      }
+    },
+    {
+      "text": "When is it more appropriate to use dynamic stretching?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Dynamic stretching is particularly useful during warm-up because it activates the movement system.",
+      "options": [
+        {"text": "During warm-up, before the load", "is_correct": true},
+        {"text": "Only on complete rest days", "is_correct": false},
+        {"text": "Always after maximal fatigue", "is_correct": false},
+        {"text": "Only after competition, without movement", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["dynamic_stretching", "warm_up"]
+      }
+    },
+    {
+      "text": "When can static stretching be more beneficial?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Static stretching is often useful at the end of training or in a dedicated mobility block to develop range of motion.",
+      "options": [
+        {"text": "At the end of training or as dedicated mobility development", "is_correct": true},
+        {"text": "Directly before a sprint race start, held for a long time", "is_correct": false},
+        {"text": "During maximal exertion", "is_correct": false},
+        {"text": "Only during ball games", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.58,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["static_stretching", "cool_down"]
+      }
+    },
+    {
+      "text": "Developing flexibility can contribute to injury prevention.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True. Adequate range of motion can support correct technical execution and reduce excessive tissue stress.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 25,
+        "concept_tags": ["flexibility", "injury_prevention"]
+      }
+    },
+    {
+      "text": "Developing coordination is primarily related to improving nervous system regulation.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True. Coordination is based on the motor control, sensory, and integrative functions of the nervous system.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["coordination", "nervous_system"]
+      }
+    },
+    {
+      "text": "Which exercise best develops coordination?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Varied exercises involving decision-making situations and changes of direction best develop coordination.",
+      "options": [
+        {"text": "Varied direction-change and reaction exercises", "is_correct": true},
+        {"text": "Monotonous running at constant pace", "is_correct": false},
+        {"text": "Passive sitting only", "is_correct": false},
+        {"text": "Maximal weightlifting without technical elements", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["coordination_development", "reactive_ability"]
+      }
+    },
+    {
+      "text": "Why is variety important in coordination development?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Varied stimuli force the nervous system to find new movement solutions, thereby improving motor control.",
+      "options": [
+        {"text": "Because it develops adaptation to new movement situations", "is_correct": true},
+        {"text": "Because it always reduces training time", "is_correct": false},
+        {"text": "Because it completely replaces strength training", "is_correct": false},
+        {"text": "Because it eliminates the need for recovery", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.52,
+        "average_time_seconds": 45,
+        "concept_tags": ["variety", "coordination"]
+      }
+    },
+    {
+      "text": "Which statement correctly describes the relationship between flexibility and technique?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Adequate flexibility enables technical elements to be executed through the required range of motion.",
+      "options": [
+        {"text": "Flexibility can support technical execution", "is_correct": true},
+        {"text": "Flexibility always impairs technique", "is_correct": false},
+        {"text": "Technique is exclusively a matter of strength", "is_correct": false},
+        {"text": "Flexibility is only a theoretical concept", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.58,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["flexibility", "technique"]
+      }
+    },
+    {
+      "text": "Why can coordination deteriorate under the effect of fatigue?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "When fatigued, nervous system regulation, attention, and movement accuracy all deteriorate.",
+      "options": [
+        {"text": "Because the precision of motor control decreases", "is_correct": true},
+        {"text": "Because coordination is independent of the nervous system", "is_correct": false},
+        {"text": "Because fatigue always improves technique", "is_correct": false},
+        {"text": "Because passive flexibility increases", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.62,
+        "cognitive_load": 0.55,
+        "average_time_seconds": 45,
+        "concept_tags": ["fatigue", "coordination", "nervous_system"]
+      }
+    },
+    {
+      "text": "Coordination exercises should always be performed after full fatigue.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False. Tasks requiring precise motor learning and control should be performed in a fresh or less fatigued state.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.52,
+        "average_time_seconds": 25,
+        "concept_tags": ["coordination", "fatigue", "training_structure"]
+      }
+    },
+    {
+      "text": "What is the most appropriate sequence within a training session when technical-coordinative development is also a goal?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Coordinative and technical tasks are often more effective at the beginning of training, when the nervous system is less fatigued.",
+      "options": [
+        {"text": "Coordinative-technical tasks at the beginning of training", "is_correct": true},
+        {"text": "Coordination exclusively after complete exhaustion", "is_correct": false},
+        {"text": "Technique always after cool-down", "is_correct": false},
+        {"text": "The sequence is of no significance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.62,
+        "cognitive_load": 0.55,
+        "average_time_seconds": 45,
+        "concept_tags": ["coordination", "training_structure", "technique"]
+      }
+    },
+    {
+      "text": "Which statement is correct about flexibility development?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Flexibility development requires regularity, progressiveness, and method selection tailored to the demands of the sport.",
+      "options": [
+        {"text": "It requires regular, progressive, and goal-oriented development", "is_correct": true},
+        {"text": "It can be established permanently with a single stretching session", "is_correct": false},
+        {"text": "It can only be developed after competition", "is_correct": false},
+        {"text": "It does not depend on the movement demands of the sport", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.58,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["flexibility_development", "progressiveness"]
+      }
+    }
+  ]
+}

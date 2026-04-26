@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "module": "Regeneráció és életmód",
+  "topic": "Regeneráció és életmód — Haladó",
+  "quiz_title": "AL — Regeneráció és életmód - Haladó [HU]",
+  "description": "A regeneráció és életmód mélyebb összefüggéseinek elemzése: alvás fiziológiája, cirkadián ritmuszavarok, táplálkozás időzítése, regenerációs modalitások összehasonlítása és a kortizol-tesztoszteron arány mint regenerációs marker.",
+  "questions": [
+    {
+      "text": "Miért kritikus a REM-alvás a sportolók számára és mikor következik be a legtöbb REM-fázis?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A REM (Rapid Eye Movement) alvás során konszolidálódnak a motoros memóriák (mozgásminták, technikai tanulás) és zajlik a pszichológiai feldolgozás. A legtöbb REM-fázis az éjszaka második felében (6-8 óra alvás után) következik be — ezért a csonkított alvás (4-5 h) aránytalanul rontja a technikai-taktikai teljesítményt.",
+      "options": [
+        {"text": "A REM-alvás az izomépítés elsődleges fázisa, első óráknál fordul elő", "is_correct": false},
+        {"text": "REM = motoros memória-konszolidáció, az éjszaka második felében koncentrálódik — csonkított alvás aránytalanul rontja a technikai teljesítményt", "is_correct": true},
+        {"text": "A REM-fázisnak nincs sporttudományos relevanciája", "is_correct": false},
+        {"text": "A REM az éjszaka első óráiban a legtöbb", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["REM_alvas", "motoros_memoria", "alvas_fiziologia"]
+      }
+    },
+    {
+      "text": "Hogyan befolyásolja a cirkadián ritmus a labdarúgók teljesítményét estei meccseken?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A legtöbb ember cirkadián csúcsa délután 3-7 óra körül van: ekkor a legmagasabb a testhőmérséklet, a reakcióidő a leggyorsabb és az izomteljesítmény a csúcson van. Az esti meccsek (19-21 óra) közel esnek ehhez — emiatt az esti versenyeken átlagosan jobb teljesítmény mérhető, mint reggeli meccseken.",
+      "options": [
+        {"text": "A cirkadián ritmus nem befolyásolja az esti teljesítményt", "is_correct": false},
+        {"text": "A cirkadián csúcs (15-19h) közel van az esti meccsekhez — magasabb testhőmérséklet, gyorsabb reakció, jobb izomteljesítmény", "is_correct": true},
+        {"text": "Esti meccseken mindig rosszabb a teljesítmény", "is_correct": false},
+        {"text": "A cirkadián ritmus csak alvásra hat, sportteljesítményre nem", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": ["circadian_ritmus", "teljesitmeny_napszak"]
+      }
+    },
+    {
+      "text": "A fehérjebevitelnek az edzés utáni 30 perces 'anabolikus ablakban' kell megtörténnie az optimális izomépítéshez.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Részben igaz, de az újabb kutatások szerint az 'anabolikus ablak' tágabb (2-3 óra), és az össznapi fehérjebevitel (1.6-2.2 g/kg) mennyisége fontosabb, mint a pontos időzítés — kivéve, ha az edzések között <6 óra van, ahol az azonnali bevitel kritikussá válik.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 50,
+        "concept_tags": ["anabolikus_ablak", "feherje_idozites"]
+      }
+    },
+    {
+      "text": "Mi a kortizol:tesztoszteron arány és milyen regenerációs állapotot jelez, ha az arány emelkedik?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A kortizol:tesztoszteron (C:T) arány a katabolikus és anabolikus hormonok egyensúlyát jelzi. Emelkedő arány (magas kortizol + alacsony tesztoszteron) tartós stresszt, elégtelen regenerációt jelez — a funkcionális overreaching és túledzés korai biomarkere lehet.",
+      "options": [
+        {"text": "Az arány emelkedése jobb anabolikus állapotot jelez", "is_correct": false},
+        {"text": "Emelkedő C:T arány: katabolikus dominancia, tartós stressz, elégtelen regeneráció — overreaching/túledzés biomarkere", "is_correct": true},
+        {"text": "A kortizol:tesztoszteron aránynak nincs sporttudományos alkalmazása", "is_correct": false},
+        {"text": "A magas kortizol mindig jobb edzésteljesítményt jelez", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.83,
+        "cognitive_load": 0.82,
+        "average_time_seconds": 70,
+        "concept_tags": ["kortizol_tesztoszteron", "hormonalis_marker", "regeneracio"]
+      }
+    },
+    {
+      "text": "Melyik regenerációs modalitás mutatja a legerősebb tudományos bizonyítékot a csökkent izomfájdalomra és gyorsabb teljesítmény-helyreállásra?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A hideg vizes merítés (Cold Water Immersion, CWI) — különösen 10-15°C, 10-15 perc — mutatja a legerősebb bizonyítékot a DOMS csökkentésére és a rövid távú teljesítmény-helyreállás gyorsítására (vazokonstrinkció → csökkent gyulladás, laktát klírensz). Azonban rendszeres alkalmazása hosszú távon blokkolhatja a hypertrófiás adaptációt.",
+      "options": [
+        {"text": "Szauna (meleg vizes kezelés)", "is_correct": false},
+        {"text": "Hideg vizes merítés (CWI) — erős DOMS-csökkentés és gyors teljesítmény-helyreállás, de rendszeres alkalmazás gátolja hipertrófiát", "is_correct": true},
+        {"text": "Statikus nyújtás", "is_correct": false},
+        {"text": "Masszázs", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["CWI", "regeneracios_modalitasok", "DOMS"]
+      }
+    },
+    {
+      "text": "Mi a glikogén-újratöltés optimális stratégiája egy labdarúgón meccs után, ha 48 órán belül ismét versenyezni kell?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Gyors glikogén-újratöltéshez meccs után azonnali (0-30 perc) magas GI-jű szénhidrátbevitel szükséges (1-1.2 g/kg/h), majd az első 4-6 órában folytatni kell. A fehérje (20-40 g) egyidejű bevitele fokozza az inzulinválaszt és segíti az izomszintézist. 48 óra alatt a teljes újratöltéshez ~8-10 g/kg/nap szénhidrátbevitel szükséges.",
+      "options": [
+        {"text": "Zsírdominált étrend meccs után a lassú felszívódás miatt", "is_correct": false},
+        {"text": "Azonnali magas GI-jű szénhidrát (1-1.2 g/kg/h) + fehérje az első 4-6 órában, napi 8-10 g/kg szénhidrát összesen", "is_correct": true},
+        {"text": "Böjt az első 24 órában, majd egyetlen nagy étkezés", "is_correct": false},
+        {"text": "A táplálkozás időzítése nem befolyásolja a glikogén-újratöltést", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.85,
+        "cognitive_load": 0.83,
+        "average_time_seconds": 70,
+        "concept_tags": ["glikogen_ujratoltes", "taplalkozas_idozites", "meccs_utan"]
+      }
+    },
+    {
+      "text": "A melatonin szedése időzóna-váltás (jet lag) után segíthet a cirkadián ritmus gyorsabb helyreállításában.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Igaz. A melatonin exogén bevitele az új időzóna szerinti lefekvési időre segít szinkronizálni a belső biológiai órát. Labdarúgóknál a tengerentúli versenykörülményekben bizonyított alkalmazás — de csak a helyi éjszaka időpontjában adva hatékony.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["melatonin", "jet_lag", "circadian"]
+      }
+    },
+    {
+      "text": "Miért veszélyes a krónikus alváshiány a labdarúgók sérüléskockázatára nézve?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Krónikus alváshiány (<6 óra/éj) szignifikánsan növeli a sérüléskockázatot: romlik a proprioceptív visszacsatolás, lassul a reakcióidő, csökken a kognitív döntéshozatal minősége és nő az ízületi/izom túlterhelés valószínűsége — egy tanulmány szerint 1.7×-es sérüléskockázat-növekedést mutatott ki.",
+      "options": [
+        {"text": "Kizárólag a fizikai fáradtság növeli a sérüléskockázatot, alváshiány nem", "is_correct": false},
+        {"text": "Romlik a propriocepcio, reakcióidő, döntéshozatal — ~1.7× magasabb sérüléskockázat", "is_correct": true},
+        {"text": "Az alváshiány csak a mentális teljesítményt befolyásolja", "is_correct": false},
+        {"text": "Az alváshiány fejleszti az alkalmazkodóképességet", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 60,
+        "concept_tags": ["alvas_hianY", "serulesi_kockazat"]
+      }
+    },
+    {
+      "text": "Mi az alkohol hatása a sportolók regenerációjára?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Az alkohol komplex negatív hatással van a regenerációra: gátolja a fehérjeszintézist (izomépítés lassul), rontja az alvás minőségét (REM-fázist csökkenti), fokozza a dehidratációt és interferál a glikogén-újratöltéssel — mindezek 48-72 óra regenerációt lassítanak meccs után.",
+      "options": [
+        {"text": "Mérsékelt alkohol nem befolyásolja a regenerációt", "is_correct": false},
+        {"text": "Gátolja fehérjeszintézist, rontja alvásminőséget (REM csökkentés), fokozza dehidratációt, lassítja glikogén-újratöltést", "is_correct": true},
+        {"text": "Az alkohol javítja az elalvást, ezért segíti a regenerációt", "is_correct": false},
+        {"text": "Az alkohol csak mentálisan hat, fizikailag nem", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 60,
+        "concept_tags": ["alkohol", "regeneracio", "feherje_szintezis"]
+      }
+    },
+    {
+      "text": "A kontraszt-fürdő (váltakozó meleg-hideg) regenerációban megbízhatóan jobb, mint a hideg vizes merítés önmagában.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Hamis. A meta-analízisek szerint a kontrasztfürdő és a CWI hatékonysága hasonló a DOMS csökkentésére és a teljesítmény-helyreállásra. Egyik sem egyértelműen jobb — mindkettő szignifikánsan jobb a passzív pihenésnél, de az egyéni tolerancia és preferencia is szerepet játszik.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 45,
+        "concept_tags": ["kontrast_furdo", "CWI", "regeneracios_modalitas_osszehasonlitas"]
+      }
+    }
+  ]
+}

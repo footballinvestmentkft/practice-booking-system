@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzésmódszerek",
+  "topic": "Az állóképesség fejlesztésének módszerei",
+  "quiz_title": "AL — Edzésmódszerek - Az állóképesség fejlesztésének módszerei [HU]",
+  "description": "Az állóképesség fejlesztésének fő módszerei és azok alkalmazása.",
+  "questions": [
+    {
+      "text": "Mit nevezünk állóképességnek?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az állóképesség a hosszan tartó terhelés elviselésének képessége.",
+      "options": [
+        {"text": "Rövid idejű erőkifejtés", "is_correct": false},
+        {"text": "Hosszú ideig tartó terhelés elviselése", "is_correct": true},
+        {"text": "Csak gyorsaság", "is_correct": false},
+        {"text": "Pihenési képesség", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["allokepesseg"]
+      }
+    },
+    {
+      "text": "Melyik módszer jellemző az egyenletes terhelésre?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A folyamatos módszer során a terhelés egyenletes.",
+      "options": [
+        {"text": "Intervallum módszer", "is_correct": false},
+        {"text": "Folyamatos módszer", "is_correct": true},
+        {"text": "Résztávos módszer", "is_correct": false},
+        {"text": "Maximális módszer", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["folyamatos_modszer"]
+      }
+    },
+    {
+      "text": "Mi jellemzi az intervallum módszert?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az intervallum módszer váltakozó terhelésű szakaszokból áll.",
+      "options": [
+        {"text": "Folyamatos terhelés", "is_correct": false},
+        {"text": "Váltakozó intenzitás", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Csak maximális terhelés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["intervallum"]
+      }
+    },
+    {
+      "text": "Mit jelent a résztávos módszer?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A résztávos módszer meghatározott távok ismétlésén alapul.",
+      "options": [
+        {"text": "Folyamatos futás", "is_correct": false},
+        {"text": "Ismételt szakaszok futása", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Csak gyorsaságfejlesztés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["resztavos"]
+      }
+    },
+    {
+      "text": "Az állóképességi edzés fejleszti a keringési rendszert.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert javítja a szív és érrendszer működését.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["keringes"]
+      }
+    },
+    {
+      "text": "Mi határozza meg az edzés intenzitását?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az intenzitás a terhelés erőssége.",
+      "options": [
+        {"text": "Edzés hossza", "is_correct": false},
+        {"text": "Terhelés erőssége", "is_correct": true},
+        {"text": "Pihenőidő", "is_correct": false},
+        {"text": "Edzés típusa", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["intenzitas"]
+      }
+    },
+    {
+      "text": "Mi a pulzuskontroll szerepe?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A pulzus segít az intenzitás szabályozásában.",
+      "options": [
+        {"text": "Nincs szerepe", "is_correct": false},
+        {"text": "Intenzitás szabályozása", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Csak versenyen fontos", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["pulzus"]
+      }
+    },
+    {
+      "text": "Az aerob terhelés alacsonyabb intenzitású, hosszabb ideig tart.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert az aerob rendszer hosszabb idejű munkát tesz lehetővé.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["aerob"]
+      }
+    },
+    {
+      "text": "Mi jellemzi az anaerob terhelést?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Magas intenzitású, rövid ideig tartó terhelés.",
+      "options": [
+        {"text": "Alacsony intenzitás", "is_correct": false},
+        {"text": "Magas intenzitás, rövid idő", "is_correct": true},
+        {"text": "Hosszú időtartam", "is_correct": false},
+        {"text": "Csak pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["anaerob"]
+      }
+    },
+    {
+      "text": "Az állóképesség fejlesztése különböző módszerek kombinációjával történhet.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert különböző rendszereket fejlesztünk.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["kombinalas"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzéselmélet",
+  "topic": "Az edzés hatékonyságának ellenőrzése (kontroll)",
+  "quiz_title": "AL — Edzéselmélet - Az edzés hatékonyságának ellenőrzése [HU]",
+  "description": "Az edzéskontroll módszerei, szerepe és alkalmazása a teljesítmény fejlesztésében.",
+  "questions": [
+    {
+      "text": "Mit nevezünk edzéskontrollnak?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az edzés hatékonyságának folyamatos mérése és értékelése.",
+      "options": [
+        {"text": "Csak edzés végrehajtása", "is_correct": false},
+        {"text": "Teljesítmény mérése és értékelése", "is_correct": true},
+        {"text": "Pihenés biztosítása", "is_correct": false},
+        {"text": "Versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["edzeskontroll"]
+      }
+    },
+    {
+      "text": "Melyik tartozik az objektív mérési módszerek közé?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az objektív mérés konkrét számokkal mérhető (pl. idő, pulzus).",
+      "options": [
+        {"text": "Fáradtság érzése", "is_correct": false},
+        {"text": "Pulzusmérés", "is_correct": true},
+        {"text": "Motiváció", "is_correct": false},
+        {"text": "Hangulat", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["objektiv_meres"]
+      }
+    },
+    {
+      "text": "Melyik tartozik a szubjektív visszajelzések közé?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A szubjektív visszajelzések érzéseken alapulnak.",
+      "options": [
+        {"text": "Időeredmény", "is_correct": false},
+        {"text": "Fáradtság érzete", "is_correct": true},
+        {"text": "Pulzus", "is_correct": false},
+        {"text": "Sebesség", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["szubjektiv"]
+      }
+    },
+    {
+      "text": "Mi a teljesítménytesztek célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A sportoló aktuális állapotának felmérése.",
+      "options": [
+        {"text": "Pihenés biztosítása", "is_correct": false},
+        {"text": "Állapot felmérése", "is_correct": true},
+        {"text": "Edzés csökkentése", "is_correct": false},
+        {"text": "Versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["teszt"]
+      }
+    },
+    {
+      "text": "Az edzéskontroll segíti az edzésprogram módosítását.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert visszacsatolást ad a hatékonyságról.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["visszacsatolas"]
+      }
+    },
+    {
+      "text": "Mi a rövid távú kontroll célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az aktuális edzés hatásának nyomon követése.",
+      "options": [
+        {"text": "Éves fejlődés mérése", "is_correct": false},
+        {"text": "Aktuális állapot követése", "is_correct": true},
+        {"text": "Verseny szervezése", "is_correct": false},
+        {"text": "Pihenés biztosítása", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["rovid_kontroll"]
+      }
+    },
+    {
+      "text": "Mi a hosszú távú kontroll célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A fejlődés trendjének vizsgálata.",
+      "options": [
+        {"text": "Egy edzés értékelése", "is_correct": false},
+        {"text": "Hosszú távú fejlődés követése", "is_correct": true},
+        {"text": "Pihenés mérése", "is_correct": false},
+        {"text": "Versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["hosszu_kontroll"]
+      }
+    },
+    {
+      "text": "Az edzéskontroll csak objektív mérésekből áll.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert szubjektív visszajelzések is fontosak.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["edzeskontroll"]
+      }
+    },
+    {
+      "text": "Mi történik, ha nincs megfelelő edzéskontroll?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Nem látható a fejlődés és hibák maradhatnak.",
+      "options": [
+        {"text": "Gyors fejlődés", "is_correct": false},
+        {"text": "Fejlődés követhetetlenné válik", "is_correct": true},
+        {"text": "Automatikus javulás", "is_correct": false},
+        {"text": "Pihenés nő", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["hiba"]
+      }
+    },
+    {
+      "text": "Az edzéskontroll segíti a hibák felismerését.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert visszajelzést ad a teljesítményről.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["hiba"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Edzés és sport",
+  "topic": "Edzés és sport — Bevezető",
+  "quiz_title": "AL — Edzés és sport - Bevezető [HU]",
+  "description": "Az edzés és sport kapcsolatának alapfogalmainak áttekintése: bemelegítés, levezetés, sportági specifikusság, utánpótlás-nevelés és sérülésmegelőzés.",
+  "questions": [
+    {
+      "text": "Mi a bemelegítés célja edzés előtt?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A bemelegítés fokozatosan előkészíti a szervezetet a terhelésre: emeli a testhőmérsékletet, növeli a vérkeringést az izmokban és csökkenti a sérüléskockázatot.",
+      "options": [
+        {"text": "A fáradtság gyorsabb beálltának elősegítése", "is_correct": false},
+        {"text": "A szervezet fokozatos előkészítése a terhelésre", "is_correct": true},
+        {"text": "A versenyeredmény közvetlen javítása", "is_correct": false},
+        {"text": "Az edzés idejének rövidítése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 30,
+        "concept_tags": ["bemelegites"]
+      }
+    },
+    {
+      "text": "A levezetés az edzés befejező szakasza, amely segíti a regenerációt.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. A levezetés fokozatosan csökkenti a terhelést, segíti a laktát eltávolítását és gyorsítja a regenerációt.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["levezetes"]
+      }
+    },
+    {
+      "text": "Mit jelent a sportági specifikusság az edzésben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A sportági specifikusság azt jelenti, hogy az edzés tartalmát és módszereit az adott sport követelményeihez igazítják, így a fejlesztés közvetlenül a versenyszituációkhoz kapcsolódik.",
+      "options": [
+        {"text": "Minden sportban azonos edzésmódszerek alkalmazása", "is_correct": false},
+        {"text": "Az edzés tartalmának az adott sporthoz igazítása", "is_correct": true},
+        {"text": "Kizárólag általános kondicionálás végzése", "is_correct": false},
+        {"text": "A legintenzívebb edzésmódszer alkalmazása", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["sportagi_specifikusság"]
+      }
+    },
+    {
+      "text": "Mi az utánpótlás-nevelés fő célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az utánpótlás-nevelés fő célja a fiatal sportolók hosszú távú fejlesztése, amely magában foglalja a technikai, fizikai és mentális alapok lerakását.",
+      "options": [
+        {"text": "Azonnal versenyeredményeket elérni", "is_correct": false},
+        {"text": "A fiatal sportolók hosszú távú fejlesztése", "is_correct": true},
+        {"text": "A felnőtt edzésmódszerek azonnali alkalmazása", "is_correct": false},
+        {"text": "A lehető legtöbb edzést teljesíteni", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["utanpotlas"]
+      }
+    },
+    {
+      "text": "A sérülésmegelőzés az edzésterv részét képezi.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. A tudatos edzéstervezés — beleértve a megfelelő terhelés-pihenő arányt, a bemelegítést és a nyújtást — a sérülések megelőzésének alapja.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["serulesmegelozes"]
+      }
+    },
+    {
+      "text": "Melyik képességek kombinációja jellemzi leginkább a labdarúgást?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A labdarúgás komplex sportág, amelyben az aerob állóképesség, a gyorsaság, az erő és a koordináció egyaránt meghatározó szerepet játszik — nem egyetlen képesség dominál.",
+      "options": [
+        {"text": "Kizárólag a gyorsaság", "is_correct": false},
+        {"text": "Több képesség kombinációja: állóképesség, gyorsaság, erő, koordináció", "is_correct": true},
+        {"text": "Kizárólag az állóképesség", "is_correct": false},
+        {"text": "Kizárólag az erő", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["labdarugas", "kepessegek"]
+      }
+    },
+    {
+      "text": "Mi a különbség az általános és a speciális edzés között?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az általános edzés az alap fizikai képességeket fejleszti (pl. futás, erő), míg a speciális edzés közvetlenül a sportág mozgásaihoz kapcsolódik (pl. labdás gyakorlatok labdarúgásban).",
+      "options": [
+        {"text": "Nincs köztük különbség", "is_correct": false},
+        {"text": "Az általános alap képességeket, a speciális sportágspecifikus mozgásokat fejleszt", "is_correct": true},
+        {"text": "A speciális edzés mindig intenzívebb", "is_correct": false},
+        {"text": "Az általános edzés csak felnőtteknek való", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 38,
+        "concept_tags": ["altalanos_edzes", "specialis_edzes"]
+      }
+    },
+    {
+      "text": "A fiatal sportolóknak ugyanolyan intenzív edzést kell végezniük, mint a felnőtteknek.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis. A fiatal sportolók fejlődő szervezete eltérő terhelést igényel; az utánpótlás-edzés életkorhoz igazított, fokozatos terhelésre épül.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["utanpotlas", "eletkor"]
+      }
+    },
+    {
+      "text": "Mi az edzés és a verseny kapcsolata?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az edzés a versenyteljesítmény elérésének eszköze: a tervezett terhelések és fejlesztések a versenyhelyzetek követelményeihez igazodnak.",
+      "options": [
+        {"text": "A verseny és az edzés egymástól teljesen független", "is_correct": false},
+        {"text": "Az edzés a versenyteljesítmény elérését készíti elő", "is_correct": true},
+        {"text": "A verseny helyettesíti az edzést", "is_correct": false},
+        {"text": "Az edzés célja a verseny elkerülése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["edzes_verseny_kapcsolat"]
+      }
+    },
+    {
+      "text": "A dinamikus nyújtás bemelegítésre, a statikus nyújtás levezetésre ajánlott.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. Bemelegítés előtt a dinamikus (mozgásalapú) nyújtás készíti elő az izmokat, levezetéskor a statikus (kitartott pozíciók) segíti a regenerációt.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 28,
+        "concept_tags": ["nyujtas", "bemelegites", "levezetes"]
+      }
+    }
+  ]
+}

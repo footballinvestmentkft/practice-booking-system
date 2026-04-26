@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Training Theory",
+  "topic": "Training Programme Planning",
+  "quiz_title": "AL — Training Theory - Training Programme Planning [EN]",
+  "description": "The structure of a training programme, its planning principles, and practical application.",
+  "questions": [
+    {
+      "text": "What is a training programme?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A training programme is a pre-planned, goal-oriented training process.",
+      "options": [
+        {"text": "A single training session", "is_correct": false},
+        {"text": "A consciously structured training plan", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "A competition schedule", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["training_programme"]
+      }
+    },
+    {
+      "text": "What is the first step in training planning?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Defining goals forms the foundation of the entire training programme.",
+      "options": [
+        {"text": "Executing the training session", "is_correct": false},
+        {"text": "Defining goals", "is_correct": true},
+        {"text": "Rest", "is_correct": false},
+        {"text": "Competing", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["goal_setting"]
+      }
+    },
+    {
+      "text": "A training programme must always cover a long time horizon.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because both short-term and long-term planning are necessary.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["planning"]
+      }
+    },
+    {
+      "text": "What does the principle of progression mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The gradual increase of training load to promote development.",
+      "options": [
+        {"text": "Reducing training load", "is_correct": false},
+        {"text": "Gradual increase of training load", "is_correct": true},
+        {"text": "Constant training load", "is_correct": false},
+        {"text": "Increasing rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["progression"]
+      }
+    },
+    {
+      "text": "Why is the principle of progressiveness important?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "It helps avoid overtraining and ensures continued development.",
+      "options": [
+        {"text": "For faster competition results", "is_correct": false},
+        {"text": "To prevent injuries and ensure development", "is_correct": true},
+        {"text": "To save time", "is_correct": false},
+        {"text": "For rest purposes", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["progressiveness"]
+      }
+    },
+    {
+      "text": "What influences the design of a training programme?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Individual characteristics and goals determine the programme.",
+      "options": [
+        {"text": "Weather only", "is_correct": false},
+        {"text": "Individual differences and goals", "is_correct": true},
+        {"text": "Age only", "is_correct": false},
+        {"text": "The coach's decision only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["individual_differences"]
+      }
+    },
+    {
+      "text": "A training programme does not need to be modified.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because continuous adjustment is necessary for ongoing development.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["training_programme"]
+      }
+    },
+    {
+      "text": "What is the role of feedback in training planning?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "It supports the fine-tuning of the training programme.",
+      "options": [
+        {"text": "It has no role", "is_correct": false},
+        {"text": "Programme adjustment", "is_correct": true},
+        {"text": "Measurement only", "is_correct": false},
+        {"text": "Rest only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["feedback"]
+      }
+    },
+    {
+      "text": "What is one common mistake in training planning?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Increasing training load too rapidly can lead to injury.",
+      "options": [
+        {"text": "Progressiveness", "is_correct": false},
+        {"text": "Increasing load too rapidly", "is_correct": true},
+        {"text": "Rest", "is_correct": false},
+        {"text": "Goal setting", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["common_mistake"]
+      }
+    },
+    {
+      "text": "The goal of a training programme is to develop performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, the primary goal of training planning is development.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["performance"]
+      }
+    }
+  ]
+}

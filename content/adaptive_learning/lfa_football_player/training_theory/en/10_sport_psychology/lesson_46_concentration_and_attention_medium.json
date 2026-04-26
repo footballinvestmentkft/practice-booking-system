@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Sport Psychology",
+  "topic": "Concentration and Attention",
+  "quiz_title": "AL — Sport Psychology - Concentration and Attention [EN]",
+  "description": "The role, types, and development of attention and concentration in sport.",
+  "questions": [
+    {
+      "text": "What is attention?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Attention is the selection and processing of information received from the environment.",
+      "options": [
+        {"text": "Rest", "is_correct": false},
+        {"text": "Selection of information", "is_correct": true},
+        {"text": "A training programme", "is_correct": false},
+        {"text": "Competing", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["attention"]
+      }
+    },
+    {
+      "text": "What is concentration?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Concentration is the sustained, goal-directed maintenance of attention.",
+      "options": [
+        {"text": "Rest", "is_correct": false},
+        {"text": "Sustained maintenance of attention", "is_correct": true},
+        {"text": "Executing movement", "is_correct": false},
+        {"text": "Thinking only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["concentration"]
+      }
+    },
+    {
+      "text": "Which belongs to the types of attention?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Attention can be external or internal.",
+      "options": [
+        {"text": "Strength", "is_correct": false},
+        {"text": "External attention", "is_correct": true},
+        {"text": "Endurance", "is_correct": false},
+        {"text": "Speed", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["attention_types"]
+      }
+    },
+    {
+      "text": "What characterises internal attention?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "It is directed towards one's own movement and sensations.",
+      "options": [
+        {"text": "Monitoring the environment", "is_correct": false},
+        {"text": "Monitoring one's own movement", "is_correct": true},
+        {"text": "Focusing on competition only", "is_correct": false},
+        {"text": "Rest only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["internal_attention"]
+      }
+    },
+    {
+      "text": "What can disrupt concentration?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Both external and internal distractors can disrupt concentration.",
+      "options": [
+        {"text": "Goal-setting", "is_correct": false},
+        {"text": "Distracting factors", "is_correct": true},
+        {"text": "Motivation", "is_correct": false},
+        {"text": "Rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["distractors"]
+      }
+    },
+    {
+      "text": "Concentration improves performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it enables more accurate execution.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["performance"]
+      }
+    },
+    {
+      "text": "What is mental focus?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The conscious direction of attention towards a specific task.",
+      "options": [
+        {"text": "Rest", "is_correct": false},
+        {"text": "Directing attention", "is_correct": true},
+        {"text": "Executing movement", "is_correct": false},
+        {"text": "Competing", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["focus"]
+      }
+    },
+    {
+      "text": "Attention can be developed through practice.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it can be improved through mental training.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["development"]
+      }
+    },
+    {
+      "text": "What supports the development of concentration?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Regular mental practice improves focus.",
+      "options": [
+        {"text": "Abandoning training", "is_correct": false},
+        {"text": "Mental exercises", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Competing", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["mental_training"]
+      }
+    },
+    {
+      "text": "Adequate attention supports decision-making in sport.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it enables more accurate information processing.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["decision"]
+      }
+    }
+  ]
+}

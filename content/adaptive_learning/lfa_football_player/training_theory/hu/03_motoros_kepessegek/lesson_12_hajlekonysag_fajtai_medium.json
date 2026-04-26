@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Motoros képességek",
+  "topic": "A hajlékonyság és fajtái",
+  "quiz_title": "AL — Motoros képességek - A hajlékonyság és fajtái [HU]",
+  "description": "A hajlékonyság fogalma, típusai és szerepe a teljesítményben és sérülésmegelőzésben.",
+  "questions": [
+    {
+      "text": "Mit nevezünk hajlékonyságnak?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A hajlékonyság az ízületek mozgástartományának nagysága.",
+      "options": [
+        {"text": "Izomerő", "is_correct": false},
+        {"text": "Ízületi mozgástartomány", "is_correct": true},
+        {"text": "Gyorsaság", "is_correct": false},
+        {"text": "Állóképesség", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["hajlekonysag"]
+      }
+    },
+    {
+      "text": "Mi határozza meg leginkább a hajlékonyságot?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az izmok és kötőszövetek nyújthatósága.",
+      "options": [
+        {"text": "Pulzus", "is_correct": false},
+        {"text": "Izmok nyújthatósága", "is_correct": true},
+        {"text": "Testsúly", "is_correct": false},
+        {"text": "Gyorsaság", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 40,
+        "concept_tags": ["hajlekonysag"]
+      }
+    },
+    {
+      "text": "Mit jelent az aktív hajlékonyság?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A mozgást saját izomerővel hozzuk létre.",
+      "options": [
+        {"text": "Külső segítséggel végzett mozgás", "is_correct": false},
+        {"text": "Saját izomerővel végzett mozgás", "is_correct": true},
+        {"text": "Statikus tartás", "is_correct": false},
+        {"text": "Pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 42,
+        "concept_tags": ["aktiv_hajlekonysag"]
+      }
+    },
+    {
+      "text": "Mit jelent a passzív hajlékonyság?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Külső erő vagy segítség által létrehozott mozgás.",
+      "options": [
+        {"text": "Saját izomerővel végzett mozgás", "is_correct": false},
+        {"text": "Külső segítséggel végzett mozgás", "is_correct": true},
+        {"text": "Gyors mozgás", "is_correct": false},
+        {"text": "Statikus erő", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 42,
+        "concept_tags": ["passziv_hajlekonysag"]
+      }
+    },
+    {
+      "text": "Mi jellemzi a statikus nyújtást?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Hosszabb ideig tartott pozícióban történő nyújtás.",
+      "options": [
+        {"text": "Gyors mozgás", "is_correct": false},
+        {"text": "Helyben tartott nyújtás", "is_correct": true},
+        {"text": "Erőkifejtés", "is_correct": false},
+        {"text": "Futás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 40,
+        "concept_tags": ["statikus_nyujtas"]
+      }
+    },
+    {
+      "text": "Mi jellemzi a dinamikus nyújtást?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Mozgás közben végzett nyújtó gyakorlatok.",
+      "options": [
+        {"text": "Mozgás nélküli tartás", "is_correct": false},
+        {"text": "Mozgással végzett nyújtás", "is_correct": true},
+        {"text": "Pihenés", "is_correct": false},
+        {"text": "Izomerő fejlesztés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 40,
+        "concept_tags": ["dinamikus_nyujtas"]
+      }
+    },
+    {
+      "text": "A hajlékonyság életkorral általában csökken.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, az ízületek mozgástartománya csökkenhet életkorral.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["hajlekonysag"]
+      }
+    },
+    {
+      "text": "Melyik tényező befolyásolja a hajlékonyságot?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az életkor, nem és edzettség is hatással van.",
+      "options": [
+        {"text": "Csak testsúly", "is_correct": false},
+        {"text": "Életkor és edzettség", "is_correct": true},
+        {"text": "Csak magasság", "is_correct": false},
+        {"text": "Csak pulzus", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["tenyezok"]
+      }
+    },
+    {
+      "text": "Mi a hajlékonyság egyik fő szerepe?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Segíti a sérülések megelőzését.",
+      "options": [
+        {"text": "Erő növelése", "is_correct": false},
+        {"text": "Sérülések megelőzése", "is_correct": true},
+        {"text": "Pulzus növelése", "is_correct": false},
+        {"text": "Testsúly csökkentése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 42,
+        "concept_tags": ["serulesmegelozes"]
+      }
+    },
+    {
+      "text": "A hajlékonyság nincs hatással a sportteljesítményre.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert a mozgástartomány és hatékonyság függ tőle.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 25,
+        "concept_tags": ["teljesitmeny"]
+      }
+    }
+  ]
+}

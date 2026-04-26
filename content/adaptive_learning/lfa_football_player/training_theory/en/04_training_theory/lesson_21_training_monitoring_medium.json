@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Training Theory",
+  "topic": "Monitoring Training Effectiveness",
+  "quiz_title": "AL — Training Theory - Monitoring Training Effectiveness [EN]",
+  "description": "Methods of training monitoring, its role, and application in performance development.",
+  "questions": [
+    {
+      "text": "What is training monitoring?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The ongoing measurement and evaluation of training effectiveness.",
+      "options": [
+        {"text": "Executing training only", "is_correct": false},
+        {"text": "Measuring and evaluating performance", "is_correct": true},
+        {"text": "Providing rest", "is_correct": false},
+        {"text": "Competing", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["training_monitoring"]
+      }
+    },
+    {
+      "text": "Which of the following belongs to objective measurement methods?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Objective measurement uses concrete numerical values (e.g. time, heart rate).",
+      "options": [
+        {"text": "Perceived fatigue", "is_correct": false},
+        {"text": "Heart rate measurement", "is_correct": true},
+        {"text": "Motivation", "is_correct": false},
+        {"text": "Mood", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["objective_measurement"]
+      }
+    },
+    {
+      "text": "Which of the following belongs to subjective feedback?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Subjective feedback is based on feelings and perceptions.",
+      "options": [
+        {"text": "Time result", "is_correct": false},
+        {"text": "Perceived fatigue", "is_correct": true},
+        {"text": "Heart rate", "is_correct": false},
+        {"text": "Speed", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["subjective_feedback"]
+      }
+    },
+    {
+      "text": "What is the purpose of performance tests?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "To assess the athlete's current condition.",
+      "options": [
+        {"text": "To provide rest", "is_correct": false},
+        {"text": "To assess current condition", "is_correct": true},
+        {"text": "To reduce training", "is_correct": false},
+        {"text": "To compete", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["performance_test"]
+      }
+    },
+    {
+      "text": "Training monitoring supports the modification of the training programme.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it provides feedback on effectiveness.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["feedback"]
+      }
+    },
+    {
+      "text": "What is the goal of short-term monitoring?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Tracking the effect of the current training session.",
+      "options": [
+        {"text": "Measuring annual development", "is_correct": false},
+        {"text": "Tracking current condition", "is_correct": true},
+        {"text": "Organising competition", "is_correct": false},
+        {"text": "Providing rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["short_term_monitoring"]
+      }
+    },
+    {
+      "text": "What is the goal of long-term monitoring?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Examining the trend of development over time.",
+      "options": [
+        {"text": "Evaluating a single training session", "is_correct": false},
+        {"text": "Tracking long-term development", "is_correct": true},
+        {"text": "Measuring rest", "is_correct": false},
+        {"text": "Competing", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["long_term_monitoring"]
+      }
+    },
+    {
+      "text": "Training monitoring consists of objective measurements only.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because subjective feedback is also important.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["training_monitoring"]
+      }
+    },
+    {
+      "text": "What happens when training monitoring is inadequate?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Development becomes untraceable and errors may persist.",
+      "options": [
+        {"text": "Rapid development", "is_correct": false},
+        {"text": "Development becomes untraceable", "is_correct": true},
+        {"text": "Automatic improvement", "is_correct": false},
+        {"text": "Rest increases", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["error"]
+      }
+    },
+    {
+      "text": "Training monitoring supports the identification of errors.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it provides feedback on performance.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["error"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "module": "Training Methods",
+  "topic": "Training Methods — Advanced",
+  "quiz_title": "AL — Training Methods - Advanced [EN]",
+  "description": "In-depth analysis of training method interrelationships: HIIT mechanisms, principles of plyometric training, eccentric methods, RPE-based load prescription, and the specific application of methods in football.",
+  "questions": [
+    {
+      "text": "Why is HIIT (High-Intensity Interval Training) more effective than LISS (Low-Intensity Steady State) for developing aerobic capacity in a short time?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "HIIT elicits maximal-intensity effort, which generates high VO2 demand and induces EPOC (Excess Post-exercise Oxygen Consumption). Cellular signalling mechanisms (PGC-1α, mitochondrial biogenesis) are activated more strongly than during low-intensity work — enabling greater aerobic adaptation to be achieved in less time.",
+      "options": [
+        {"text": "Because the athlete spends more time in the gym", "is_correct": false},
+        {"text": "Maximal-intensity effort induces stronger cellular signalling (PGC-1α, mitochondrial biogenesis) and EPOC", "is_correct": true},
+        {"text": "HIIT exclusively develops anaerobic capacity", "is_correct": false},
+        {"text": "LISS is more effective; HIIT does not improve aerobic capacity", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.83,
+        "cognitive_load": 0.82,
+        "average_time_seconds": 70,
+        "concept_tags": ["HIIT", "LISS", "aerobic_adaptation", "EPOC"]
+      }
+    },
+    {
+      "text": "What is the most important safety prerequisite for plyometric training in young athletes?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Plyometric training involves intense eccentric loading that places strong mechanical stress on the developing musculoskeletal system and tendons. In young athletes (with growth plates still open), the prerequisite is a sufficient baseline strength foundation — a widely accepted threshold is being able to squat 1.5× body weight before beginning intensive plyometrics.",
+      "options": [
+        {"text": "The athlete's age is irrelevant; only motivation matters", "is_correct": false},
+        {"text": "A sufficient strength base (~1.5× body weight squat) is required before beginning intensive plyometrics", "is_correct": true},
+        {"text": "Plyometrics are completely prohibited for young athletes", "is_correct": false},
+        {"text": "Only appropriate footwear is required as a safety prerequisite", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": ["plyometrics", "safety", "young_athletes"]
+      }
+    },
+    {
+      "text": "Eccentric training can produce greater muscle hypertrophy and strength gains than concentric training.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "True. Eccentric (lengthening) muscle work generates greater mechanical stress at the same load (fewer motor units are active but produce the same force), which results in a stronger hypertrophic stimulus and greater strength gains than the concentric phase.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["eccentric_training", "hypertrophy", "strength"]
+      }
+    },
+    {
+      "text": "How is RPE (Rate of Perceived Exertion) applied in autoregulated training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "In autoregulated training, RPE is used to allow the athlete to adjust the training load or repetition count day to day in line with their current state. For example, if the target is RPE=8 (2 reps in reserve), the athlete increases the weight until they reach that perception — ensuring the load is always aligned with current capacity.",
+      "options": [
+        {"text": "RPE serves only for post-competition evaluation", "is_correct": false},
+        {"text": "The athlete adjusts the load to their current RPE day by day — making the programme self-regulating", "is_correct": true},
+        {"text": "RPE can only be applied in group training", "is_correct": false},
+        {"text": "Autoregulated training does not require RPE", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 60,
+        "concept_tags": ["RPE", "autoregulated_training"]
+      }
+    },
+    {
+      "text": "Which interval training protocol is most effective for simultaneously developing both aerobic and anaerobic capacity in footballers?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "The 4×4-minute protocol at 90–95% HRmax (Helgerud et al.) has been demonstrated to improve both VO2max and the lactate threshold in footballers. Shorter match-specific intervals with 1:1 or 2:1 work-to-rest ratios (e.g., 10s/20s, 15s/15s) better match the intermittent load profile of football.",
+      "options": [
+        {"text": "30 minutes of steady-state running exclusively", "is_correct": false},
+        {"text": "4×4-minute intervals at 90–95% HRmax, or short intervals with 1:1/2:1 work-to-rest ratios", "is_correct": true},
+        {"text": "Maximal effort sustained for 60 minutes", "is_correct": false},
+        {"text": "Static stretching only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.83,
+        "cognitive_load": 0.82,
+        "average_time_seconds": 65,
+        "concept_tags": ["interval_protocol", "VO2max", "football"]
+      }
+    },
+    {
+      "text": "What is the mechanism of the Nordic Hamstring Curl (NHC) method and why is it used in football?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "The NHC places maximal eccentric load on the hamstring muscles during deceleration of knee extension. This increases eccentric hamstring force production and fascicle length — both of which are the most important protective factors against hamstring strains, the most common injury type in football.",
+      "options": [
+        {"text": "A coordination task for developing balance", "is_correct": false},
+        {"text": "Maximal eccentric hamstring loading — increases eccentric strength and fascicle length, reducing hamstring injury risk", "is_correct": true},
+        {"text": "The NHC is only suitable for rehabilitation", "is_correct": false},
+        {"text": "An aerobic endurance method", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["nordic_hamstring_curl", "eccentric", "injury_prevention"]
+      }
+    },
+    {
+      "text": "Training methods can be applied independently of each other and in any order to achieve the best results.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "False. The order of training methods is critical: for example, strength training should precede endurance training (to minimise the interference effect); plyometrics is optimal with a fresh nervous system and maximum attentiveness; and eccentric loading causes high DOMS that affects trainability in the following days.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["method_sequencing", "interference"]
+      }
+    },
+    {
+      "text": "Which strength training method is most effective for developing explosiveness in footballers?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Complex training — a heavy strength exercise (e.g., squat at 85% 1RM) immediately followed by a plyometric task (e.g., a jump) — exploits the post-activation potentiation (PAP) effect: the preceding heavy load transiently enhances neural activation, resulting in more explosive movement.",
+      "options": [
+        {"text": "High-repetition, low-weight training exclusively", "is_correct": false},
+        {"text": "Complex training — combining weighted + plyometric tasks by exploiting the PAP effect", "is_correct": true},
+        {"text": "Static stretching after maximal loading", "is_correct": false},
+        {"text": "Strength training does not affect explosiveness", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.85,
+        "cognitive_load": 0.83,
+        "average_time_seconds": 70,
+        "concept_tags": ["complex_training", "PAP", "explosiveness"]
+      }
+    },
+    {
+      "text": "What is the correct direction of method progression from beginner to advanced athletes?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "The correct direction of progression is: from general to specific, from simple to complex, from low intensity to high, and from stable surfaces to unstable. In beginners, mastering basic movement patterns and general conditioning precedes sport-specific loading methods.",
+      "options": [
+        {"text": "From advanced to beginner — the most complex method should be learned first", "is_correct": false},
+        {"text": "From general to specific, from simple to complex, from low intensity to high", "is_correct": true},
+        {"text": "Methods are not progressive — everyone follows the same protocol", "is_correct": false},
+        {"text": "Progression consists solely of increasing intensity", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 58,
+        "concept_tags": ["method_progression", "beginner_to_advanced"]
+      }
+    },
+    {
+      "text": "DOMS (Delayed Onset Muscle Soreness) represents only physical discomfort and has no effect on training performance.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "False. DOMS — especially after eccentric training — reduces force production capacity, impairs proprioceptive feedback and movement coordination, increases injury risk, and affects the quality of subsequent training sessions. Therefore, anticipated DOMS must be taken into account when scheduling training.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["DOMS", "training_performance", "eccentric"]
+      }
+    }
+  ]
+}

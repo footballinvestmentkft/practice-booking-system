@@ -1,0 +1,257 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Fundamentals of Training Theory",
+  "topic": "Structure of a Training Session",
+  "quiz_title": "AL — Fundamentals of Training Theory - Structure of a Training Session [EN]",
+  "description": "The parts of a training session: warm-up, main part, and cool-down — their roles and significance.",
+  "questions": [
+    {
+      "text": "What is the primary purpose of the warm-up?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The warm-up prepares the body for training load by increasing circulation and muscle activation.",
+      "options": [
+        {"text": "To induce fatigue", "is_correct": false},
+        {"text": "To prepare the body for training load", "is_correct": true},
+        {"text": "To end the training session", "is_correct": false},
+        {"text": "To reduce performance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "average_time_seconds": 25,
+        "concept_tags": ["warm_up"]
+      }
+    },
+    {
+      "text": "Skipping the warm-up can increase the risk of injury.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True, because unprepared muscles and joints are more susceptible to injury.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.28,
+        "cognitive_load": 0.22,
+        "average_time_seconds": 20,
+        "concept_tags": ["warm_up", "injury_prevention"]
+      }
+    },
+    {
+      "text": "What is the role of the main part of a training session?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The main part contains the performance-developing training load.",
+      "options": [
+        {"text": "To provide rest", "is_correct": false},
+        {"text": "To develop performance", "is_correct": true},
+        {"text": "To facilitate regeneration", "is_correct": false},
+        {"text": "To treat injuries", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.32,
+        "cognitive_load": 0.27,
+        "average_time_seconds": 25,
+        "concept_tags": ["main_part"]
+      }
+    },
+    {
+      "text": "What is the purpose of the cool-down?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The cool-down helps the body return to its resting state and facilitates regeneration.",
+      "options": [
+        {"text": "To increase training load", "is_correct": false},
+        {"text": "To facilitate regeneration", "is_correct": true},
+        {"text": "To create a new training stimulus", "is_correct": false},
+        {"text": "To increase fatigue", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "average_time_seconds": 25,
+        "concept_tags": ["cool_down"]
+      }
+    },
+    {
+      "text": "Skipping the cool-down has no effect on regeneration.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False, because the cool-down actively supports regeneration.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.30,
+        "average_time_seconds": 20,
+        "concept_tags": ["cool_down", "regeneration"]
+      }
+    },
+    {
+      "text": "Which sequence is correct for the structure of a training session?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The correct sequence is: warm-up, main part, cool-down.",
+      "options": [
+        {"text": "Main part – warm-up – cool-down", "is_correct": false},
+        {"text": "Warm-up – main part – cool-down", "is_correct": true},
+        {"text": "Cool-down – main part – warm-up", "is_correct": false},
+        {"text": "Warm-up – cool-down – main part", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.28,
+        "cognitive_load": 0.23,
+        "average_time_seconds": 25,
+        "concept_tags": ["session_structure"]
+      }
+    },
+    {
+      "text": "Which effect is NOT characteristic of the warm-up?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The warm-up does not cause fatigue — it prepares the body.",
+      "options": [
+        {"text": "Increased circulation", "is_correct": false},
+        {"text": "Muscle preparation", "is_correct": false},
+        {"text": "Inducing fatigue", "is_correct": true},
+        {"text": "Joint mobilisation", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.34,
+        "average_time_seconds": 32,
+        "concept_tags": ["warm_up"]
+      }
+    },
+    {
+      "text": "The greatest training load occurs during the main part of the session.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True, because performance development takes place in the main part.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "average_time_seconds": 20,
+        "concept_tags": ["main_part"]
+      }
+    },
+    {
+      "text": "Which factor most contributes to injury prevention?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "An adequate warm-up reduces the risk of injury.",
+      "options": [
+        {"text": "High intensity", "is_correct": false},
+        {"text": "An adequate warm-up", "is_correct": true},
+        {"text": "Short training duration", "is_correct": false},
+        {"text": "Frequent rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.33,
+        "cognitive_load": 0.28,
+        "average_time_seconds": 28,
+        "concept_tags": ["injury_prevention"]
+      }
+    },
+    {
+      "text": "What happens in the body during the warm-up?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Circulation and muscle activity increase.",
+      "options": [
+        {"text": "Circulation stops", "is_correct": false},
+        {"text": "Circulation increases", "is_correct": true},
+        {"text": "Body temperature decreases", "is_correct": false},
+        {"text": "Muscle activity ceases", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.34,
+        "cognitive_load": 0.28,
+        "average_time_seconds": 28,
+        "concept_tags": ["warm_up"]
+      }
+    },
+    {
+      "text": "The structure of a training session influences its effectiveness.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True, because the structure determines the training effect.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.29,
+        "cognitive_load": 0.24,
+        "average_time_seconds": 20,
+        "concept_tags": ["session_structure"]
+      }
+    },
+    {
+      "text": "What is one concrete effect of the cool-down?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "It facilitates a gradual decrease in heart rate.",
+      "options": [
+        {"text": "Increasing heart rate", "is_correct": false},
+        {"text": "Decreasing heart rate", "is_correct": true},
+        {"text": "Increasing muscle tension", "is_correct": false},
+        {"text": "Intensifying training load", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.36,
+        "cognitive_load": 0.30,
+        "average_time_seconds": 30,
+        "concept_tags": ["cool_down"]
+      }
+    },
+    {
+      "text": "Why is gradual progression important during the warm-up?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Gradual progression enables safe preparation for training load.",
+      "options": [
+        {"text": "To cause rapid fatigue", "is_correct": false},
+        {"text": "To ensure safe loading", "is_correct": true},
+        {"text": "To shorten the training session", "is_correct": false},
+        {"text": "To reduce performance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.38,
+        "cognitive_load": 0.32,
+        "average_time_seconds": 32,
+        "concept_tags": ["warm_up"]
+      }
+    },
+    {
+      "text": "What is the main goal of the training session structure?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "To ensure optimal performance and safety.",
+      "options": [
+        {"text": "To increase fatigue", "is_correct": false},
+        {"text": "To ensure optimal performance", "is_correct": true},
+        {"text": "To stop training", "is_correct": false},
+        {"text": "To fill time", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.34,
+        "average_time_seconds": 32,
+        "concept_tags": ["session_structure"]
+      }
+    }
+  ]
+}

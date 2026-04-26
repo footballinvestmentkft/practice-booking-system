@@ -1,0 +1,324 @@
+{
+  "schema_version": "1.0",
+  "specializations": [
+    "LFA_FOOTBALL_PLAYER"
+  ],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "module": "Edzésprogramozás",
+  "topic": "Edzésprogramozás — Haladó",
+  "quiz_title": "AL — Edzésprogramozás - Haladó [HU]",
+  "description": "Az edzésprogramozás mélyebb összefüggéseinek elemzése: terhelés-menedzsment modellek, GPS-alapú monitorozás, blokkperiodizáció vs. hullámzó periodizáció, akut:krónikus terhelési arány és az egyéniesített programtervezés.",
+  "questions": [
+    {
+      "text": "Mi az akut:krónikus terhelési arány (ACWR) és miért releváns a sérülésprevencióban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Az ACWR az elmúlt 1 hét terhelésének az elmúlt 4 hét átlagos terheléséhez viszonyított aránya. 0.8-1.3 közötti érték az 'édes zóna' — kisebb sérüléskockázattal jár. Az 1.5 feletti ACWR a terhelés hirtelen emelkedését jelzi, ami szignifikánsan növeli a sérülés valószínűségét.",
+      "options": [
+        {
+          "text": "Az edzésen töltött percek és a pihenőnapok aránya",
+          "is_correct": false
+        },
+        {
+          "text": "Az elmúlt heti terhelés osztva a 4 hetes átlaggal — 0.8-1.3 az optimum, >1.5 magas sérüléskockázat",
+          "is_correct": true
+        },
+        {
+          "text": "A maximális sprint és az átlag sprint sebességének aránya",
+          "is_correct": false
+        },
+        {
+          "text": "Az edzésen és versenyen töltött idő aránya",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.8,
+        "average_time_seconds": 65,
+        "concept_tags": [
+          "ACWR",
+          "terheles_menedzsment",
+          "serulesprevenció"
+        ]
+      }
+    },
+    {
+      "text": "Miben különbözik a blokkperiodizáció a hagyományos (lineáris) periodizációtól?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A blokkperiodizáció koncentrált, egy-két képességre fókuszáló 2-4 hetes blokkokat alkalmaz egymás után (akkumuláció → transzformáció → realizáció), míg a lineáris periodizáció párhuzamosan fejleszt több képességet egyidejűleg, a terhelést fokozatosan növelve.",
+      "options": [
+        {
+          "text": "Nincs különbség, csak az elnevezés eltérő",
+          "is_correct": false
+        },
+        {
+          "text": "Blokk: koncentrált 2-4 hetes fókuszú blokkok sorozata; lineáris: párhuzamos képességfejlesztés fokozatosan növekvő terheléssel",
+          "is_correct": true
+        },
+        {
+          "text": "A blokkperiodizáció csak erőfejlesztésre alkalmazható",
+          "is_correct": false
+        },
+        {
+          "text": "A lineáris periodizáció mindig hatékonyabb",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.8,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": [
+          "blokk_periodizacio",
+          "linearis_periodizacio"
+        ]
+      }
+    },
+    {
+      "text": "A GPS-alapú terhelés-monitorozás önmagában elegendő az edzésprogram optimalizálásához.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Hamis. A GPS-adatok (megtett távolság, sprint-távolságok, gyorsulások száma) a külső terhelést mérik — azt, hogy mit csinált a sportoló. A belső terhelés (RPE, HRV, laktátszint, szívfrekvencia) azt mutatja, hogyan reagált rá a szervezet. A kettő kombinálása adja a teljes terhelési képet: azonos külső terhelés nagyon eltérő belső választ válthat ki különböző napokon.",
+      "options": [
+        {
+          "text": "Igaz",
+          "is_correct": false
+        },
+        {
+          "text": "Hamis",
+          "is_correct": true
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": [
+          "GPS_monitorozas",
+          "kulso_belso_terheles"
+        ]
+      }
+    },
+    {
+      "text": "Melyik terhelési változó a legjobb mutatója a labdarúgóknál a meccsek közötti fáradáshalmozódásnak?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A magas intenzitású futás (high-speed running, HSR >19.8 km/h) és a sprint (>25.2 km/h) felhalmozott távolsága a legjobb mutató, mert ezek a neuromuszkuláris fáradás legérzékenyebb jelzői — jobban, mint az össz-távolság.",
+      "options": [
+        {
+          "text": "Az össz-megtett távolság",
+          "is_correct": false
+        },
+        {
+          "text": "A magas intenzitású futás (HSR) és sprint felhalmozott távolsága",
+          "is_correct": true
+        },
+        {
+          "text": "A meccsek száma a szezonban",
+          "is_correct": false
+        },
+        {
+          "text": "A labdaérintések száma",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.83,
+        "cognitive_load": 0.82,
+        "average_time_seconds": 65,
+        "concept_tags": [
+          "HSR",
+          "faradashalmozodas",
+          "GPS"
+        ]
+      }
+    },
+    {
+      "text": "Mi a taper (terhelés-csökkentés) optimális időtartama labdarúgóknál verseny előtt?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A labdarúgóknál az optimális taper általában 5-7 nap: az volumen csökken (20-50%-kal), de az intenzitás magas marad. Ennél rövidebb taper nem elegendő a neuromuszkuláris frisseséghez, ennél hosszabb deredzés kockázatával jár.",
+      "options": [
+        {
+          "text": "1-2 nap, csak a verseny előtti napon pihenés",
+          "is_correct": false
+        },
+        {
+          "text": "5-7 nap — csökkentett volumen, megtartott intenzitás",
+          "is_correct": true
+        },
+        {
+          "text": "3-4 hét teljes pihenés",
+          "is_correct": false
+        },
+        {
+          "text": "A taper nem szükséges labdarúgóknál",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 58,
+        "concept_tags": [
+          "taper",
+          "verseny_elott",
+          "terheles_csokentes"
+        ]
+      }
+    },
+    {
+      "text": "Miért problematikus a labdarúgóknál a sűrű versenyperiódusban (congested fixture period) az edzésprogram?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Sűrű versenyperiódusban (pl. 3 meccs/10 nap) alig marad idő az adaptáló edzésmunkára. Az edzésprogramnak ilyenkor a teljesítmény fenntartása és sérülésmegelőzés a célja, nem a fejlődés — ez más prioritási sorrendet és periodizációt igényel.",
+      "options": [
+        {
+          "text": "Nincs probléma, a meccsek helyettesítik az edzést",
+          "is_correct": false
+        },
+        {
+          "text": "Nincs idő adaptáló edzésmunkára — a cél teljesítmény-fenntartás és sérülésmegelőzés lesz",
+          "is_correct": true
+        },
+        {
+          "text": "Sűrű versenyperiódusban fokozni kell az edzéstérfogatot",
+          "is_correct": false
+        },
+        {
+          "text": "Kizárólag taktikai edzés alkalmazható",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.8,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 60,
+        "concept_tags": [
+          "congested_fixture",
+          "terheles_menedzsment"
+        ]
+      }
+    },
+    {
+      "text": "Az egyéniesített edzésprogramozáshoz elengedhetetlen az aktuális edzettségi szint objektív mérése.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Igaz. Az egyéniesítés alapja az egyéni kiindulópont ismerete — azonos terhelés különböző edzettségi szintű sportolóknál teljesen eltérő adaptációs hatást vált ki. Objektív mérés (tesztek, biomarkerek, GPS) nélkül az egyéniesítés szubjektív becslés marad.",
+      "options": [
+        {
+          "text": "Igaz",
+          "is_correct": true
+        },
+        {
+          "text": "Hamis",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.72,
+        "cognitive_load": 0.7,
+        "average_time_seconds": 40,
+        "concept_tags": [
+          "egyeniesites",
+          "teljesitmenymeres"
+        ]
+      }
+    },
+    {
+      "text": "Mi a mezociklus tipikus hossza és mi határozza meg a tartalmát?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A mezociklus általában 3-6 hétig tart (3-4 mikrociklus). Tartalmát a makrociklus aktuális fázisa határozza meg: az előkészítő időszak mezociklusa általános fizikai alapozásra, a verseny előtti kompetitív fázis specifikus felkészítésre irányul.",
+      "options": [
+        {
+          "text": "1-2 nap, egyetlen edzéssegység",
+          "is_correct": false
+        },
+        {
+          "text": "3-6 hét — tartalmát a makrociklus aktuális fázisa (előkészítő, kompetitív) határozza meg",
+          "is_correct": true
+        },
+        {
+          "text": "6-12 hónap, teljes szezon",
+          "is_correct": false
+        },
+        {
+          "text": "Kizárólag 4 hétig tarthat",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 55,
+        "concept_tags": [
+          "mezociklus",
+          "periodizacio_ciklusai"
+        ]
+      }
+    },
+    {
+      "text": "Miért ajánlott a két különböző képességet fejlesztő edzés szétválasztása (pl. erő + állóképesség) egy napon belül?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Az interference effect (interferencia-hatás) miatt: az egyidejű erő- és állóképességi edzés aktivál egymással ellentétes sejtes jelzési útvonalakat (mTOR az erőhöz, AMPK az állóképességhez). Ez csökkenti az erőadaptáció hatékonyságát — ideális esetben legalább 6 óra szünet vagy külön nap ajánlott.",
+      "options": [
+        {
+          "text": "Mert az edzők jobban tudják kezelni a különálló edzéseket",
+          "is_correct": false
+        },
+        {
+          "text": "Az interferencia-hatás miatt — ellentétes sejtes jelzési útvonalak aktiválódnak, csökkentve az erőadaptációt",
+          "is_correct": true
+        },
+        {
+          "text": "Az együttes edzés fokozza mindkét képességet",
+          "is_correct": false
+        },
+        {
+          "text": "Nincs tudományos alap a szétválasztásra",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.85,
+        "cognitive_load": 0.83,
+        "average_time_seconds": 70,
+        "concept_tags": [
+          "interference_effect",
+          "ero_allokepesseg_egyutt"
+        ]
+      }
+    },
+    {
+      "text": "A visszacsatolás hiánya az edzésprogramban statikus, fejleszthetetlen rendszerhez vezet.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Igaz. Visszacsatolás (monitoring, tesztek, versenyeredmények elemzése, GPS-adatok) nélkül az edzésprogram nem tud reagálni a sportoló aktuális állapotára, haladására vagy visszaesésére. A terv statikussá válik és elveszíti az adaptivitását — ez különösen kritikus hosszú szezonban, ahol a sportoló terhelési profilja és edzettségi szintje folyamatosan változik.",
+      "options": [
+        {
+          "text": "Igaz",
+          "is_correct": true
+        },
+        {
+          "text": "Hamis",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.72,
+        "cognitive_load": 0.7,
+        "average_time_seconds": 40,
+        "concept_tags": [
+          "visszacsatolas",
+          "adaptiv_programozas"
+        ]
+      }
+    }
+  ]
+}

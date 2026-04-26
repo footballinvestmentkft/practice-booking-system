@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Load and Performance",
+  "topic": "The Phenomena of Overload and Overtraining",
+  "quiz_title": "AL — Load and Performance - Overload and Overtraining [EN]",
+  "description": "The concept, causes, symptoms, and prevention of overload and overtraining in training theory.",
+  "questions": [
+    {
+      "text": "What does overload mean in training theory?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Overload is the stimulus required for development, which exceeds the habitual training level.",
+      "options": [
+        {"text": "An exclusively negative state", "is_correct": false},
+        {"text": "The training load that triggers development", "is_correct": true},
+        {"text": "Complete rest", "is_correct": false},
+        {"text": "A competition situation", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["overload"]
+      }
+    },
+    {
+      "text": "What is overtraining?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Overtraining is a chronic condition resulting from excessive load and insufficient recovery.",
+      "options": [
+        {"text": "A single hard training session", "is_correct": false},
+        {"text": "A chronic state of excessive load", "is_correct": true},
+        {"text": "Absence of rest for one day", "is_correct": false},
+        {"text": "A pre-competition state", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["overtraining"]
+      }
+    },
+    {
+      "text": "Overload is always a harmful phenomenon.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because when applied appropriately it is the basis for development.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 25,
+        "concept_tags": ["overload"]
+      }
+    },
+    {
+      "text": "What is one of the main causes of overtraining?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Excessive training load combined with insufficient recovery leads to overtraining.",
+      "options": [
+        {"text": "Low intensity only", "is_correct": false},
+        {"text": "Excessive load and insufficient rest", "is_correct": true},
+        {"text": "Appropriate training only", "is_correct": false},
+        {"text": "Rest only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["overtraining", "recovery"]
+      }
+    },
+    {
+      "text": "Which symptom may indicate overtraining?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Sustained decline in performance is a typical sign of overtraining.",
+      "options": [
+        {"text": "Increase in performance", "is_correct": false},
+        {"text": "Sustained decline in performance", "is_correct": true},
+        {"text": "Rapid recovery", "is_correct": false},
+        {"text": "Increase in motivation", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["symptoms", "overtraining"]
+      }
+    },
+    {
+      "text": "Which psychological symptom is characteristic of overtraining?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Decreased motivation is a common psychological symptom.",
+      "options": [
+        {"text": "Increased motivation", "is_correct": false},
+        {"text": "Decreased motivation", "is_correct": true},
+        {"text": "Enhanced concentration", "is_correct": false},
+        {"text": "Complete calm", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["psychological_symptoms"]
+      }
+    },
+    {
+      "text": "Overtraining always improves performance in the short term.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because in the longer term it leads to a decline in performance.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 25,
+        "concept_tags": ["overtraining"]
+      }
+    },
+    {
+      "text": "What is one key to preventing overtraining?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The appropriate balance between training load and recovery.",
+      "options": [
+        {"text": "Maximum loading", "is_correct": false},
+        {"text": "Balance between load and rest", "is_correct": true},
+        {"text": "Complete cessation of training", "is_correct": false},
+        {"text": "Competition only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["prevention", "recovery"]
+      }
+    },
+    {
+      "text": "What happens in chronic overtraining?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The body persistently fails to adapt adequately.",
+      "options": [
+        {"text": "Rapid development", "is_correct": false},
+        {"text": "Persistent impairment of adaptation", "is_correct": true},
+        {"text": "Complete recovery", "is_correct": false},
+        {"text": "Performance remains stable", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["overtraining"]
+      }
+    },
+    {
+      "text": "Appropriate training planning helps prevent overtraining.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it regulates the ratio of load to rest.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["training_planning"]
+      }
+    }
+  ]
+}

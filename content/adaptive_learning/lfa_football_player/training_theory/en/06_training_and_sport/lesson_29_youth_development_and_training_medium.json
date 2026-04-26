@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Training and Sport",
+  "topic": "Youth Development and the Characteristics of Training",
+  "quiz_title": "AL — Training and Sport - Youth Development and the Characteristics of Training [EN]",
+  "description": "The principles and characteristics of training for youth athletes.",
+  "questions": [
+    {
+      "text": "What does youth development mean in sport?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Youth development refers to the long-term development of young athletes.",
+      "options": [
+        {"text": "Competition only", "is_correct": false},
+        {"text": "Development of young athletes", "is_correct": true},
+        {"text": "Coach education only", "is_correct": false},
+        {"text": "Providing rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["youth_development"]
+      }
+    },
+    {
+      "text": "Why is it important to take age-specific characteristics into account?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Different age groups present different developmental opportunities and load tolerances.",
+      "options": [
+        {"text": "It has no significance", "is_correct": false},
+        {"text": "Because of differing developmental characteristics", "is_correct": true},
+        {"text": "Only because of the coach", "is_correct": false},
+        {"text": "Only because of competitions", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["age_specific_characteristics"]
+      }
+    },
+    {
+      "text": "Young athletes have the same load tolerance as adults.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because the load tolerance of young athletes is different and lower.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["load_tolerance"]
+      }
+    },
+    {
+      "text": "What is the role of play in youth training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Play supports motivation and learning.",
+      "options": [
+        {"text": "It has no role", "is_correct": false},
+        {"text": "Supporting motivation and learning", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Competition only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["play"]
+      }
+    },
+    {
+      "text": "What is the primary goal during youth development?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Laying the foundations for long-term development.",
+      "options": [
+        {"text": "Immediate victory", "is_correct": false},
+        {"text": "Long-term development", "is_correct": true},
+        {"text": "Competition only", "is_correct": false},
+        {"text": "Strength development only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["ltad"]
+      }
+    },
+    {
+      "text": "Why is motivation important during youth development?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Motivation maintains participation and supports development.",
+      "options": [
+        {"text": "It has no role", "is_correct": false},
+        {"text": "It supports development and participation", "is_correct": true},
+        {"text": "It is only important for competitions", "is_correct": false},
+        {"text": "It is only important for coaches", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["motivation"]
+      }
+    },
+    {
+      "text": "Overloading is particularly dangerous at a young age.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because the developing body is more sensitive.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["overloading"]
+      }
+    },
+    {
+      "text": "What does the principle of long-term development mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The athlete's development is planned over a long time horizon.",
+      "options": [
+        {"text": "Immediate results", "is_correct": false},
+        {"text": "Planning development over the long term", "is_correct": true},
+        {"text": "Short training sessions only", "is_correct": false},
+        {"text": "Competition only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["ltad"]
+      }
+    },
+    {
+      "text": "What is the role of the coach in youth development?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The coach guides development and supports the athlete.",
+      "options": [
+        {"text": "Organising competitions only", "is_correct": false},
+        {"text": "Guiding and supporting development", "is_correct": true},
+        {"text": "Executing training sessions only", "is_correct": false},
+        {"text": "Providing rest only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["coach_role"]
+      }
+    },
+    {
+      "text": "During youth development, playfulness can be more important than performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because development and motivation are the primary objectives.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 25,
+        "concept_tags": ["youth_development"]
+      }
+    }
+  ]
+}

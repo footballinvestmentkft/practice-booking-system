@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Sport Psychology",
+  "topic": "Teamwork and Communication",
+  "quiz_title": "AL — Sport Psychology - Teamwork and Communication [EN]",
+  "description": "The role of teamwork and communication in athletic performance.",
+  "questions": [
+    {
+      "text": "What is teamwork?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Teamwork is the cooperation of individuals towards a shared goal.",
+      "options": [
+        {"text": "Individual work", "is_correct": false},
+        {"text": "Cooperation towards a shared goal", "is_correct": true},
+        {"text": "Competing", "is_correct": false},
+        {"text": "Rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["teamwork"]
+      }
+    },
+    {
+      "text": "What is communication?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The transmission and sharing of information.",
+      "options": [
+        {"text": "Rest", "is_correct": false},
+        {"text": "Exchange of information", "is_correct": true},
+        {"text": "Training", "is_correct": false},
+        {"text": "Competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["communication"]
+      }
+    },
+    {
+      "text": "Which is an example of verbal communication?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Speech is verbal communication.",
+      "options": [
+        {"text": "Body language", "is_correct": false},
+        {"text": "Speech", "is_correct": true},
+        {"text": "Facial expression", "is_correct": false},
+        {"text": "Movement", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["verbal"]
+      }
+    },
+    {
+      "text": "Which is an example of non-verbal communication?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Body language is non-verbal communication.",
+      "options": [
+        {"text": "Speech", "is_correct": false},
+        {"text": "Body language", "is_correct": true},
+        {"text": "Writing", "is_correct": false},
+        {"text": "Command", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["non_verbal"]
+      }
+    },
+    {
+      "text": "Team cohesion improves performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because cooperation becomes stronger.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["cohesion"]
+      }
+    },
+    {
+      "text": "What is the significance of roles within a team?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Roles support the effective distribution of tasks.",
+      "options": [
+        {"text": "They have no significance", "is_correct": false},
+        {"text": "Distribution of tasks", "is_correct": true},
+        {"text": "Competition only", "is_correct": false},
+        {"text": "Rest only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["roles"]
+      }
+    },
+    {
+      "text": "What is the goal of conflict management?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Solving problems and maintaining cooperation.",
+      "options": [
+        {"text": "Increasing conflict", "is_correct": false},
+        {"text": "Solving problems", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Competing", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["conflict"]
+      }
+    },
+    {
+      "text": "The role of the leader is important in the functioning of the team.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because the leader directs and motivates the team.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["leader"]
+      }
+    },
+    {
+      "text": "What supports cooperation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Good communication and trust are prerequisites.",
+      "options": [
+        {"text": "Lack of communication", "is_correct": false},
+        {"text": "Trust and communication", "is_correct": true},
+        {"text": "Individual work", "is_correct": false},
+        {"text": "Competing", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["cooperation"]
+      }
+    },
+    {
+      "text": "Effective communication improves team performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it supports cooperation.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["communication"]
+      }
+    }
+  ]
+}

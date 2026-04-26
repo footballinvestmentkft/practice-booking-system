@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzés és sport",
+  "topic": "A bemelegítés és levezetés szerepe",
+  "quiz_title": "AL — Edzés és sport - A bemelegítés és levezetés szerepe [HU]",
+  "description": "A bemelegítés és levezetés szerepe, hatásai és alkalmazása az edzésben.",
+  "questions": [
+    {
+      "text": "Mi a bemelegítés fő célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A bemelegítés felkészíti a szervezetet a terhelésre.",
+      "options": [
+        {"text": "Pihenés biztosítása", "is_correct": false},
+        {"text": "Szervezet felkészítése a terhelésre", "is_correct": true},
+        {"text": "Edzés lezárása", "is_correct": false},
+        {"text": "Izomleépítés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["bemelegites"]
+      }
+    },
+    {
+      "text": "Mi történik a pulzussal bemelegítés során?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A pulzusszám fokozatosan emelkedik.",
+      "options": [
+        {"text": "Csökken", "is_correct": false},
+        {"text": "Emelkedik", "is_correct": true},
+        {"text": "Nem változik", "is_correct": false},
+        {"text": "Leáll", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["keringes"]
+      }
+    },
+    {
+      "text": "Mi az általános bemelegítés célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az egész szervezet aktiválása.",
+      "options": [
+        {"text": "Csak egy izomcsoport aktiválása", "is_correct": false},
+        {"text": "Teljes test aktiválása", "is_correct": true},
+        {"text": "Pihenés", "is_correct": false},
+        {"text": "Csak technika gyakorlása", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["altalanos_bemelegites"]
+      }
+    },
+    {
+      "text": "Mi a specifikus bemelegítés szerepe?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A sportágspecifikus mozgások előkészítése.",
+      "options": [
+        {"text": "Pihenés", "is_correct": false},
+        {"text": "Sportágspecifikus felkészítés", "is_correct": true},
+        {"text": "Edzés lezárása", "is_correct": false},
+        {"text": "Teljes regeneráció", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["specifikus_bemelegites"]
+      }
+    },
+    {
+      "text": "A bemelegítés csökkenti a sérülésveszélyt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert előkészíti az izmokat és ízületeket.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["serulesmegelozes"]
+      }
+    },
+    {
+      "text": "Mi a levezetés célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A szervezet fokozatos visszaállítása nyugalmi állapotba.",
+      "options": [
+        {"text": "Terhelés növelése", "is_correct": false},
+        {"text": "Visszatérés nyugalmi állapotba", "is_correct": true},
+        {"text": "Versenyzés", "is_correct": false},
+        {"text": "Izomnövelés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["levezetes"]
+      }
+    },
+    {
+      "text": "Melyik segíti a regenerációt edzés után?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A levezetés támogatja a regenerációt.",
+      "options": [
+        {"text": "Teljes megállás", "is_correct": false},
+        {"text": "Levezetés", "is_correct": true},
+        {"text": "Maximális terhelés", "is_correct": false},
+        {"text": "Versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["regeneracio"]
+      }
+    },
+    {
+      "text": "A levezetés elhagyható, mert nincs jelentősége.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert fontos a regenerációhoz.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["levezetes"]
+      }
+    },
+    {
+      "text": "Milyen hatása van a bemelegítésnek az izmokra?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Növeli az izmok rugalmasságát és működési hatékonyságát.",
+      "options": [
+        {"text": "Csökkenti a rugalmasságot", "is_correct": false},
+        {"text": "Növeli a rugalmasságot", "is_correct": true},
+        {"text": "Nem hat az izmokra", "is_correct": false},
+        {"text": "Leállítja az izomműködést", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["izmok"]
+      }
+    },
+    {
+      "text": "A bemelegítés javíthatja a teljesítményt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert optimális állapotba hozza a szervezetet.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["teljesitmeny"]
+      }
+    }
+  ]
+}

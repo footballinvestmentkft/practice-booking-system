@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "module": "Recovery and Lifestyle",
+  "topic": "Recovery and Lifestyle — Advanced",
+  "quiz_title": "AL — Recovery and Lifestyle - Advanced [EN]",
+  "description": "In-depth analysis of recovery and lifestyle interrelationships: sleep physiology, circadian rhythm disruption, nutritional timing, comparison of recovery modalities, and the cortisol:testosterone ratio as a recovery marker.",
+  "questions": [
+    {
+      "text": "Why is REM sleep critical for athletes, and when do most REM phases occur?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "During REM (Rapid Eye Movement) sleep, motor memories (movement patterns, technical learning) are consolidated and psychological processing occurs. Most REM phases occur in the second half of the night (after 6–8 hours of sleep) — which is why truncated sleep (4–5 h) disproportionately impairs technical-tactical performance.",
+      "options": [
+        {"text": "REM sleep is the primary phase for muscle building and occurs in the first hours", "is_correct": false},
+        {"text": "REM = motor memory consolidation, concentrated in the second half of the night — truncated sleep disproportionately impairs technical performance", "is_correct": true},
+        {"text": "REM sleep has no sports science relevance", "is_correct": false},
+        {"text": "Most REM occurs in the first hours of the night", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["REM_sleep", "motor_memory", "sleep_physiology"]
+      }
+    },
+    {
+      "text": "How does the circadian rhythm affect footballers' performance in evening matches?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Most people's circadian peak is in the afternoon (approximately 15:00–19:00 h): body temperature is at its highest, reaction time is fastest, and muscle performance is at its peak. Evening matches (19:00–21:00 h) fall close to this window — which is why measurably better performance is typically observed in evening compared to morning matches.",
+      "options": [
+        {"text": "The circadian rhythm does not affect evening performance", "is_correct": false},
+        {"text": "The circadian peak (15–19h) is close to evening matches — higher body temperature, faster reaction, better muscle performance", "is_correct": true},
+        {"text": "Performance is always worse in evening matches", "is_correct": false},
+        {"text": "The circadian rhythm only affects sleep, not sports performance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": ["circadian_rhythm", "performance_time_of_day"]
+      }
+    },
+    {
+      "text": "Protein intake must occur within the 30-minute post-exercise 'anabolic window' for optimal muscle building.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Partially true, but newer research indicates the 'anabolic window' is broader (2–3 hours), and total daily protein intake (1.6–2.2 g/kg) is more important than precise timing — except when less than 6 hours separates training sessions, where immediate intake becomes critical.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 50,
+        "concept_tags": ["anabolic_window", "protein_timing"]
+      }
+    },
+    {
+      "text": "What is the cortisol:testosterone ratio and what recovery state does an elevated ratio indicate?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "The cortisol:testosterone (C:T) ratio indicates the balance between catabolic and anabolic hormones. A rising ratio (high cortisol + low testosterone) signals chronic stress and insufficient recovery — it can be an early biomarker of functional overreaching and overtraining.",
+      "options": [
+        {"text": "An elevated ratio indicates a better anabolic state", "is_correct": false},
+        {"text": "Elevated C:T ratio: catabolic dominance, chronic stress, insufficient recovery — biomarker of overreaching/overtraining", "is_correct": true},
+        {"text": "The cortisol:testosterone ratio has no sports science application", "is_correct": false},
+        {"text": "High cortisol always indicates better training performance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.83,
+        "cognitive_load": 0.82,
+        "average_time_seconds": 70,
+        "concept_tags": ["cortisol_testosterone", "hormonal_marker", "recovery"]
+      }
+    },
+    {
+      "text": "Which recovery modality shows the strongest scientific evidence for reduced muscle soreness and faster performance restoration?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Cold Water Immersion (CWI) — particularly at 10–15°C for 10–15 minutes — shows the strongest evidence for DOMS reduction and acceleration of short-term performance recovery (vasoconstriction → reduced inflammation, lactate clearance). However, regular use may chronically blunt hypertrophic adaptation.",
+      "options": [
+        {"text": "Sauna (hot water treatment)", "is_correct": false},
+        {"text": "Cold Water Immersion (CWI) — strong DOMS reduction and rapid performance recovery, but regular use inhibits hypertrophy", "is_correct": true},
+        {"text": "Static stretching", "is_correct": false},
+        {"text": "Massage", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["CWI", "recovery_modalities", "DOMS"]
+      }
+    },
+    {
+      "text": "What is the optimal glycogen replenishment strategy for a footballer when they must compete again within 48 hours?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "For rapid glycogen replenishment, immediate (0–30 min) post-match intake of high-GI carbohydrates (1–1.2 g/kg/h) is required, followed by continuation in the first 4–6 hours. Concurrent protein intake (20–40 g) enhances the insulin response and supports muscle synthesis. Full replenishment within 48 hours requires approximately 8–10 g/kg/day of carbohydrates.",
+      "options": [
+        {"text": "Fat-dominant diet post-match for slower absorption", "is_correct": false},
+        {"text": "Immediate high-GI carbohydrate (1–1.2 g/kg/h) + protein in the first 4–6 hours, 8–10 g/kg carbohydrate daily total", "is_correct": true},
+        {"text": "Fasting for the first 24 hours, then one large meal", "is_correct": false},
+        {"text": "Nutritional timing does not affect glycogen replenishment", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.85,
+        "cognitive_load": 0.83,
+        "average_time_seconds": 70,
+        "concept_tags": ["glycogen_replenishment", "nutritional_timing", "post_match"]
+      }
+    },
+    {
+      "text": "Taking melatonin after a time zone change (jet lag) can help re-synchronise the circadian rhythm more rapidly.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "True. Exogenous melatonin intake at the bedtime of the new time zone helps synchronise the internal biological clock. Its use has been demonstrated in footballers competing abroad — but it is only effective when taken at the local night-time.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["melatonin", "jet_lag", "circadian"]
+      }
+    },
+    {
+      "text": "Why is chronic sleep deprivation dangerous in terms of injury risk for footballers?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Chronic sleep deprivation (<6 h/night) significantly increases injury risk: proprioceptive feedback deteriorates, reaction time slows, the quality of cognitive decision-making declines, and the probability of joint/muscle overload rises — one study found a 1.7× increase in injury risk.",
+      "options": [
+        {"text": "Only physical fatigue increases injury risk, not sleep deprivation", "is_correct": false},
+        {"text": "Impaired proprioception, reaction time, and decision-making — ~1.7× higher injury risk", "is_correct": true},
+        {"text": "Sleep deprivation only affects mental performance", "is_correct": false},
+        {"text": "Sleep deprivation improves adaptability", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 60,
+        "concept_tags": ["sleep_deprivation", "injury_risk"]
+      }
+    },
+    {
+      "text": "What is the effect of alcohol on an athlete's recovery?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Alcohol has a complex negative effect on recovery: it inhibits protein synthesis (slowing muscle building), impairs sleep quality (reducing REM phases), increases dehydration, and interferes with glycogen replenishment — all of which slow recovery by 48–72 hours after a match.",
+      "options": [
+        {"text": "Moderate alcohol does not affect recovery", "is_correct": false},
+        {"text": "Inhibits protein synthesis, impairs sleep quality (REM reduction), increases dehydration, slows glycogen replenishment", "is_correct": true},
+        {"text": "Alcohol improves sleep onset and therefore aids recovery", "is_correct": false},
+        {"text": "Alcohol only affects mental state, not physical recovery", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 60,
+        "concept_tags": ["alcohol", "recovery", "protein_synthesis"]
+      }
+    },
+    {
+      "text": "Contrast bathing (alternating hot-cold) is reliably better than cold water immersion alone for recovery.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "False. According to meta-analyses, contrast bathing and CWI are similarly effective at reducing DOMS and restoring performance. Neither is clearly superior — both are significantly better than passive rest, but individual tolerance and preference also play a role.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 45,
+        "concept_tags": ["contrast_bathing", "CWI", "recovery_modality_comparison"]
+      }
+    }
+  ]
+}

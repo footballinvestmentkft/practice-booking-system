@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "module": "Load and Performance",
+  "topic": "Load and Performance — Advanced",
+  "quiz_title": "AL — Load and Performance - Advanced [EN]",
+  "description": "In-depth analysis of load and performance interrelationships: energy system interactions, lactate dynamics, optimisation of load parameters, and critical evaluation of performance measurement methods.",
+  "questions": [
+    {
+      "text": "How does the proportion of energy systems change during a football match?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "In football, the aerobic system supplies approximately 85–90% of energy (sustained running, active recovery). The anaerobic alactic (ATP-CP) system dominates during explosive sprints, while the lactic acid system predominates during 10–30 second intense phases — all three systems operate simultaneously and in a complementary fashion.",
+      "options": [
+        {"text": "Only the aerobic system operates during a match", "is_correct": false},
+        {"text": "The aerobic system provides ~85–90% of energy; ATP-CP supplements during sprints, lactic system during intense phases", "is_correct": true},
+        {"text": "The lactic acid system covers the majority of energy needs", "is_correct": false},
+        {"text": "The ATP-CP system is the only energy source during sprints", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 65,
+        "concept_tags": ["energy_systems", "football", "aerobic_anaerobic"]
+      }
+    },
+    {
+      "text": "What is the precise physiological definition of the lactate threshold and why is it relevant for footballers?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "The lactate threshold is the intensity at which blood lactate concentration begins to rise exponentially (typically at 4 mmol/L, though individually variable). In footballers, a higher lactate threshold allows them to sustain intense phases following repeated sprints without accumulating excessive lactate.",
+      "options": [
+        {"text": "The intensity at which the athlete becomes exhausted", "is_correct": false},
+        {"text": "The intensity at which blood lactate begins to rise exponentially — a higher threshold means greater capacity for intense loading", "is_correct": true},
+        {"text": "50% of maximum heart rate", "is_correct": false},
+        {"text": "The point at which the aerobic system shuts down", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": ["lactate_threshold", "VO2max", "football"]
+      }
+    },
+    {
+      "text": "VO2max alone fully determines a footballer's endurance performance.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "False. VO2max marks an upper ceiling, but endurance performance is also determined by the lactate threshold, running economy (oxygen cost at a given speed), and tactical decision-making. Two players with identical VO2max values may differ significantly in performance.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["VO2max", "endurance", "complexity"]
+      }
+    },
+    {
+      "text": "What is the limitation of the RPE (Rate of Perceived Exertion) scale in load monitoring?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "RPE is based on subjective self-assessment and is therefore sensitive to the athlete's motivation, psychological state, and experience. Novice athletes may underestimate the load; in a euphoric state, actual physiological stress may diverge substantially from perceived exertion.",
+      "options": [
+        {"text": "RPE is inaccurate because it does not measure heart rate", "is_correct": false},
+        {"text": "Subjective assessment — motivation, psychological state, and experience can distort it from actual physiological load", "is_correct": true},
+        {"text": "RPE cannot be applied to footballers", "is_correct": false},
+        {"text": "RPE always overestimates actual load", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 60,
+        "concept_tags": ["RPE", "load_monitoring", "subjectivity"]
+      }
+    },
+    {
+      "text": "Which performance test is more appropriate for measuring footballers' aerobic capacity, and why?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "The Yo-Yo Intermittent Recovery Test (Yo-Yo IR1/IR2) better models the intermittent load profile of football (sprints + active recovery periods) than the steady-pace Cooper test, which primarily assesses continuous aerobic capacity.",
+      "options": [
+        {"text": "The Cooper 12-minute run, because it is simpler to administer", "is_correct": false},
+        {"text": "The Yo-Yo Intermittent Recovery Test, because it models the intermittent load profile of football", "is_correct": true},
+        {"text": "A maximal strength test (1RM squat)", "is_correct": false},
+        {"text": "Both tests are equally suitable", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 60,
+        "concept_tags": ["yoyo_test", "performance_measurement", "football_specific"]
+      }
+    },
+    {
+      "text": "How do temperature and humidity affect sports performance and perceived exertion?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "In high temperature and humidity, thermoregulatory blood flow competes with working muscles' blood flow, increases heart rate at a given output, accelerates glycogen use, and reduces cognitive performance — all resulting in lower effective output at the same RPE.",
+      "options": [
+        {"text": "Temperature does not affect sports performance", "is_correct": false},
+        {"text": "Heat + humidity: higher heart rate, faster glycogen depletion, reduced cognitive performance at the same RPE", "is_correct": true},
+        {"text": "High temperature always improves performance", "is_correct": false},
+        {"text": "Only low temperature affects sports performance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["temperature", "performance", "thermoregulation"]
+      }
+    },
+    {
+      "text": "A higher HRV (Heart Rate Variability) value generally indicates a better state of recovery.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "True. Higher HRV indicates parasympathetic nervous system dominance (resting state, efficient recovery), while low HRV indicates sympathetic dominance, stress, fatigue, or overtraining. Morning HRV measurement (orthostatic test or 5-minute supine measurement) is an objective, non-invasive biomarker of recovery status in athlete monitoring.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["HRV", "recovery_monitoring"]
+      }
+    },
+    {
+      "text": "What is the most critical methodological requirement of performance measurement?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Standardisation (identical conditions: time of day, nutrition, rest period, previous day's load, temperature) is the most critical methodological requirement. Without it, measured values cannot be compared across time points — external variables can mask actual performance changes and lead the coach to incorrect conclusions about training effectiveness.",
+      "options": [
+        {"text": "The more expensive the measurement device, the more reliable the result", "is_correct": false},
+        {"text": "Ensuring standardised conditions (time of day, nutrition, rest, temperature)", "is_correct": true},
+        {"text": "Measurement must always be conducted during competition", "is_correct": false},
+        {"text": "Measuring multiple athletes simultaneously", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 58,
+        "concept_tags": ["performance_measurement_methodology", "standardisation"]
+      }
+    },
+    {
+      "text": "Why is the relationship between load and performance growth non-linear?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "The load-performance relationship is non-linear because: (1) biological adaptation operates with diminishing returns (the fitter the athlete, the less they gain from an identical load), (2) excessive load is performance-reducing, and (3) the individual biological ceiling is genetically limited.",
+      "options": [
+        {"text": "Because precise measurements cannot be made in the gym", "is_correct": false},
+        {"text": "Diminishing returns, performance decline at overload, and genetic ceiling — all three factors together", "is_correct": true},
+        {"text": "The relationship is linear; we simply measure it poorly", "is_correct": false},
+        {"text": "Nutrition makes it non-linear", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.83,
+        "cognitive_load": 0.82,
+        "average_time_seconds": 70,
+        "concept_tags": ["load_performance_non_linear", "diminishing_returns"]
+      }
+    },
+    {
+      "text": "The creatine phosphate (CP) store can be fully depleted during a 10-second maximal sprint.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "True. During maximal intensity effort, the CP store is largely depleted within approximately 6–10 seconds. This explains why sprint performance declines after 6–8 seconds, and why 3–5 minutes of full rest is required for maximal CP resynthesis.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["creatine_phosphate", "ATP_CP", "sprint_energy"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,191 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Motoros képességek",
+  "topic": "A gyorsaság és fajtái",
+  "quiz_title": "AL — Motoros képességek - A gyorsaság és fajtái [HU]",
+  "description": "A gyorsaság fogalma, típusai és idegrendszeri alapjai az edzéselméletben.",
+  "questions": [
+    {
+      "text": "Mit nevezünk gyorsaságnak az edzéselméletben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A gyorsaság a mozgások minél rövidebb idő alatt történő végrehajtásának képessége.",
+      "options": [
+        {"text": "Hosszú idejű teljesítmény", "is_correct": false},
+        {"text": "Gyors mozgásvégrehajtás képessége", "is_correct": true},
+        {"text": "Erőkifejtés képessége", "is_correct": false},
+        {"text": "Mozgástartomány növelése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["gyorsasag"]
+      }
+    },
+    {
+      "text": "Mit jelent az egyszerű reakcióidő?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Egy ismert ingerre adott gyors válaszidő.",
+      "options": [
+        {"text": "Több inger közötti választás", "is_correct": false},
+        {"text": "Egy ismert ingerre adott válasz", "is_correct": true},
+        {"text": "Hosszú mozgás", "is_correct": false},
+        {"text": "Erőkifejtés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["reakcioido"]
+      }
+    },
+    {
+      "text": "Mi jellemzi a választásos reakcióidőt?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Több inger közül kell kiválasztani a megfelelő reakciót.",
+      "options": [
+        {"text": "Egy ingerre adott válasz", "is_correct": false},
+        {"text": "Több inger közötti döntés", "is_correct": true},
+        {"text": "Hosszú idejű mozgás", "is_correct": false},
+        {"text": "Izomfeszülés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["reakcioido"]
+      }
+    },
+    {
+      "text": "Mit jelent a mozdulatgyorsaság?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Egyetlen mozdulat gyors végrehajtása.",
+      "options": [
+        {"text": "Hosszú mozgássorozat", "is_correct": false},
+        {"text": "Egy mozdulat gyors végrehajtása", "is_correct": true},
+        {"text": "Erő növelése", "is_correct": false},
+        {"text": "Pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 42,
+        "concept_tags": ["mozdulatgyorsasag"]
+      }
+    },
+    {
+      "text": "Mit jelent a ciklikus mozgásgyorsaság?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Ismétlődő mozgások gyors végrehajtása (pl. futás).",
+      "options": [
+        {"text": "Egyszeri mozdulat", "is_correct": false},
+        {"text": "Ismétlődő mozgások gyors végrehajtása", "is_correct": true},
+        {"text": "Statikus tartás", "is_correct": false},
+        {"text": "Lassú mozgás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["mozgasgyorsasag"]
+      }
+    },
+    {
+      "text": "Mit jelent az aciklikus mozgásgyorsaság?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Nem ismétlődő mozgások gyors végrehajtása.",
+      "options": [
+        {"text": "Ismétlődő mozgás", "is_correct": false},
+        {"text": "Nem ismétlődő mozgás", "is_correct": true},
+        {"text": "Pihenés", "is_correct": false},
+        {"text": "Statikus erő", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["mozgasgyorsasag"]
+      }
+    },
+    {
+      "text": "A gyorsaság főként idegrendszeri meghatározottságú.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, a gyorsaság nagyrészt idegrendszeri tényezőktől függ.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 25,
+        "concept_tags": ["idegrendszer"]
+      }
+    },
+    {
+      "text": "Mi jellemzi a gyorsasági állóképességet?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A gyors mozgás fenntartása hosszabb ideig.",
+      "options": [
+        {"text": "Csak maximális erő", "is_correct": false},
+        {"text": "Gyors mozgás fenntartása", "is_correct": true},
+        {"text": "Lassú mozgás", "is_correct": false},
+        {"text": "Statikus tartás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.58,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 48,
+        "concept_tags": ["gyorsasagi_allokepesseg"]
+      }
+    },
+    {
+      "text": "Mi korlátozza leginkább a gyorsaság fejlesztését?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az idegrendszeri adottságok jelentős korlátot jelentenek.",
+      "options": [
+        {"text": "Izomtömeg", "is_correct": false},
+        {"text": "Idegrendszeri adottságok", "is_correct": true},
+        {"text": "Hajlékonyság", "is_correct": false},
+        {"text": "Testsúly", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.52,
+        "average_time_seconds": 50,
+        "concept_tags": ["idegrendszer"]
+      }
+    },
+    {
+      "text": "Mi a kapcsolat a gyorsaság és az erő között?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A gyorsasági erő a két képesség kombinációja.",
+      "options": [
+        {"text": "Nincs kapcsolat", "is_correct": false},
+        {"text": "Robbanékonyságban kapcsolódnak", "is_correct": true},
+        {"text": "Ellentétesek", "is_correct": false},
+        {"text": "Függetlenek", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.52,
+        "average_time_seconds": 50,
+        "concept_tags": ["gyorsasagi_ero"]
+      }
+    }
+  ]
+}

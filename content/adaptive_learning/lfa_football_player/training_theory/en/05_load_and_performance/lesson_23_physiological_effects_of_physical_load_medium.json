@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Load and Performance",
+  "topic": "Physiological Effects of Physical Load",
+  "quiz_title": "AL — Load and Performance - Physiological Effects of Physical Load [EN]",
+  "description": "Acute and chronic physiological effects of physical load and their role in performance development.",
+  "questions": [
+    {
+      "text": "What is an acute physiological effect during physical load?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "An acute physiological effect is the immediate bodily response occurring during or directly after loading.",
+      "options": [
+        {"text": "Adaptation developing over months", "is_correct": false},
+        {"text": "An immediate, short-term bodily response", "is_correct": true},
+        {"text": "A psychological change only", "is_correct": false},
+        {"text": "A permanent structural transformation", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.46,
+        "cognitive_load": 0.41,
+        "average_time_seconds": 38,
+        "concept_tags": ["acute_effect", "physiological_response", "physical_load"]
+      }
+    },
+    {
+      "text": "Which phenomenon is a typical acute response to physical load?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "An increase in heart rate and respiratory rate is one of the most characteristic immediate physiological responses to loading.",
+      "options": [
+        {"text": "Increase in heart rate and respiratory rate", "is_correct": true},
+        {"text": "Immediate increase in bone mass", "is_correct": false},
+        {"text": "Sustained decrease in resting metabolism", "is_correct": false},
+        {"text": "Increase in the number of muscle fibres", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.44,
+        "cognitive_load": 0.39,
+        "average_time_seconds": 38,
+        "concept_tags": ["acute_effect", "cardiovascular_response", "respiratory_response"]
+      }
+    },
+    {
+      "text": "Regular physical training can improve the efficiency of the cardiovascular system in the long term.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True. Regular training induces chronic adaptation that improves the function of the heart and vascular system.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.37,
+        "average_time_seconds": 25,
+        "concept_tags": ["chronic_effect", "cardiovascular_system", "adaptation"]
+      }
+    },
+    {
+      "text": "What most characterises chronic physiological effects?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Chronic effects are adaptations that develop over a longer period as a result of repeated loading.",
+      "options": [
+        {"text": "They disappear immediately when loading ceases", "is_correct": false},
+        {"text": "Adaptations that develop over a longer period", "is_correct": true},
+        {"text": "They are associated with a single loading session only", "is_correct": false},
+        {"text": "They do not influence performance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.49,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 42,
+        "concept_tags": ["chronic_effect", "adaptation", "training_effect"]
+      }
+    },
+    {
+      "text": "Which system responds directly to physical load with increased activity?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The cardiovascular and respiratory systems immediately increase their activity to ensure oxygen and nutrient supply to the muscles.",
+      "options": [
+        {"text": "The cardiovascular and respiratory systems", "is_correct": true},
+        {"text": "The digestive system only", "is_correct": false},
+        {"text": "The integumentary system only", "is_correct": false},
+        {"text": "The skeletal system exclusively", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["cardiovascular_system", "respiratory_system", "acute_effect"]
+      }
+    },
+    {
+      "text": "What is one fundamental effect of physical load on the muscular system?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Physical load increases the demand on muscle work, and with regular training the muscles adapt to this loading.",
+      "options": [
+        {"text": "Complete cessation of muscle function", "is_correct": false},
+        {"text": "Increased muscle work and adaptation", "is_correct": true},
+        {"text": "Loss of muscle tone", "is_correct": false},
+        {"text": "Only the joints respond", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.47,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["muscular_system", "adaptation", "load_effect"]
+      }
+    },
+    {
+      "text": "Fatigue is exclusively a negative phenomenon and has no role in training adaptation.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False. Fatigue is a natural consequence of training load and, with adequate recovery, can be part of the adaptation process.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.56,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 25,
+        "concept_tags": ["fatigue", "adaptation", "recovery"]
+      }
+    },
+    {
+      "text": "Why does the intensity of breathing increase during physical load?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Because the body's oxygen demand increases and there is a greater need to expel carbon dioxide.",
+      "options": [
+        {"text": "Because the muscles' energy demand decreases", "is_correct": false},
+        {"text": "Because oxygen demand and the need for gas exchange increase", "is_correct": true},
+        {"text": "Because the lungs switch to rest mode", "is_correct": false},
+        {"text": "Because heart rate decreases", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 42,
+        "concept_tags": ["respiratory_system", "oxygen_demand", "acute_effect"]
+      }
+    },
+    {
+      "text": "Which statement most accurately describes the physiological role of recovery?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "During recovery the body restores equilibrium, and this is when the foundation for further adaptation is established.",
+      "options": [
+        {"text": "Recovery means passive rest only", "is_correct": false},
+        {"text": "Recovery is the foundation of restoration and adaptation", "is_correct": true},
+        {"text": "Recovery reduces the long-term effect of training", "is_correct": false},
+        {"text": "Recovery is only a psychological phenomenon", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.54,
+        "cognitive_load": 0.47,
+        "average_time_seconds": 45,
+        "concept_tags": ["recovery", "adaptation", "restoration"]
+      }
+    },
+    {
+      "text": "What is one characteristic metabolic response during physical load?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Energy expenditure and metabolic activity increase during loading so the body can meet the demands of work.",
+      "options": [
+        {"text": "Energy expenditure decreases", "is_correct": false},
+        {"text": "Energy expenditure increases", "is_correct": true},
+        {"text": "Metabolism stops", "is_correct": false},
+        {"text": "Muscle oxygen demand ceases", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["metabolism", "energy_expenditure", "acute_effect"]
+      }
+    }
+  ]
+}

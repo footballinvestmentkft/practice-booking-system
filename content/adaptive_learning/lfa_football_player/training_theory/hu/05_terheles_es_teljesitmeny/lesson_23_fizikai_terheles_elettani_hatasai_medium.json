@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Terhelés és teljesítmény",
+  "topic": "A fizikai terhelés élettani hatásai",
+  "quiz_title": "AL — Terhelés és teljesítmény - A fizikai terhelés élettani hatásai [HU]",
+  "description": "A fizikai terhelés akut és krónikus élettani hatásai, valamint ezek szerepe a teljesítményfejlesztésben.",
+  "questions": [
+    {
+      "text": "Mit nevezünk akut élettani hatásnak fizikai terhelés során?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az akut élettani hatás a terhelés közben vagy közvetlenül utána jelentkező azonnali szervezeti válasz.",
+      "options": [
+        {"text": "Hónapok alatt kialakuló alkalmazkodás", "is_correct": false},
+        {"text": "Azonnali, rövid távú szervezeti válasz", "is_correct": true},
+        {"text": "Csak pszichológiai változás", "is_correct": false},
+        {"text": "Maradandó szerkezeti átalakulás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.46,
+        "cognitive_load": 0.41,
+        "average_time_seconds": 38,
+        "concept_tags": ["akut_hatas", "elettani_valasz", "fizikai_terheles"]
+      }
+    },
+    {
+      "text": "Melyik jelenség tipikus akut válasz fizikai terhelés hatására?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A pulzusszám és a légzésszám emelkedése az egyik legjellemzőbb azonnali élettani válasz terheléskor.",
+      "options": [
+        {"text": "Pulzusszám és légzésszám emelkedése", "is_correct": true},
+        {"text": "Csonttömeg azonnali növekedése", "is_correct": false},
+        {"text": "Nyugalmi anyagcsere tartós csökkenése", "is_correct": false},
+        {"text": "Izomrostok számának növekedése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.44,
+        "cognitive_load": 0.39,
+        "average_time_seconds": 38,
+        "concept_tags": ["akut_hatas", "keringesi_valasz", "legzesi_valasz"]
+      }
+    },
+    {
+      "text": "A rendszeres fizikai terhelés hosszú távon javíthatja a keringési rendszer hatékonyságát.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz. A rendszeres edzés krónikus adaptációt vált ki, amely javítja a szív és az érrendszer működését.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.37,
+        "average_time_seconds": 25,
+        "concept_tags": ["kronikus_hatas", "keringesi_rendszer", "adaptacio"]
+      }
+    },
+    {
+      "text": "Mi jellemzi leginkább a krónikus élettani hatásokat?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A krónikus hatások ismételt terhelések következtében, hosszabb idő alatt kialakuló alkalmazkodások.",
+      "options": [
+        {"text": "Azonnal megszűnnek a terhelés befejezésekor", "is_correct": false},
+        {"text": "Hosszabb idő alatt kialakuló alkalmazkodások", "is_correct": true},
+        {"text": "Csak egyszeri terheléshez kapcsolódnak", "is_correct": false},
+        {"text": "Nem befolyásolják a teljesítményt", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.49,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 42,
+        "concept_tags": ["kronikus_hatas", "adaptacio", "edzeshatas"]
+      }
+    },
+    {
+      "text": "Melyik rendszer reagál közvetlenül a fizikai terhelésre fokozott működéssel?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A keringési és légzőrendszer azonnal fokozott működéssel reagál, hogy biztosítsa az izmok oxigén- és tápanyagellátását.",
+      "options": [
+        {"text": "Keringési és légzőrendszer", "is_correct": true},
+        {"text": "Csak az emésztőrendszer", "is_correct": false},
+        {"text": "Csak a bőrrendszer", "is_correct": false},
+        {"text": "Kizárólag a csontrendszer", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["keringesi_rendszer", "legzesi_rendszer", "akut_hatas"]
+      }
+    },
+    {
+      "text": "Mi a fizikai terhelés egyik alapvető hatása az izomrendszerre?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A fizikai terhelés fokozza az izommunka igényét, és rendszeres edzés mellett az izmok alkalmazkodnak ehhez a terheléshez.",
+      "options": [
+        {"text": "Az izomműködés teljes leállása", "is_correct": false},
+        {"text": "Az izommunka fokozódása és alkalmazkodása", "is_correct": true},
+        {"text": "Az izomtónus megszűnése", "is_correct": false},
+        {"text": "Csak az ízületek reagálnak", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.47,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["izomrendszer", "adaptacio", "terheles_hatas"]
+      }
+    },
+    {
+      "text": "A fáradás kizárólag negatív jelenség, és nincs szerepe az edzésadaptációban.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis. A fáradás a terhelés természetes következménye, és megfelelő regeneráció mellett az alkalmazkodási folyamat része lehet.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.56,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 25,
+        "concept_tags": ["faradas", "adaptacio", "regeneracio"]
+      }
+    },
+    {
+      "text": "Miért nő meg a légzés intenzitása fizikai terhelés alatt?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Mert a szervezet oxigénigénye nő, és fokozódik a szén-dioxid leadásának szükségessége.",
+      "options": [
+        {"text": "Mert csökken az izmok energiaigénye", "is_correct": false},
+        {"text": "Mert nő az oxigénigény és a gázcsere szükségessége", "is_correct": true},
+        {"text": "Mert a tüdő pihenő üzemmódba kapcsol", "is_correct": false},
+        {"text": "Mert a pulzusszám csökken", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 42,
+        "concept_tags": ["legzesi_rendszer", "oxigenigeny", "akut_hatas"]
+      }
+    },
+    {
+      "text": "Melyik állítás írja le legpontosabban a regeneráció élettani szerepét?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A regeneráció során a szervezet helyreállítja az egyensúlyt, és ekkor alapozódik meg a további alkalmazkodás.",
+      "options": [
+        {"text": "A regeneráció csak passzív pihenést jelent", "is_correct": false},
+        {"text": "A regeneráció a helyreállítás és alkalmazkodás alapja", "is_correct": true},
+        {"text": "A regeneráció csökkenti az edzés hosszú távú hatását", "is_correct": false},
+        {"text": "A regeneráció csak pszichológiai jelenség", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.54,
+        "cognitive_load": 0.47,
+        "average_time_seconds": 45,
+        "concept_tags": ["regeneracio", "adaptacio", "helyreallitas"]
+      }
+    },
+    {
+      "text": "Mi az anyagcsere egyik jellemző reakciója fizikai terhelés során?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A terhelés alatt fokozódik az energiafelhasználás és az anyagcsere-aktivitás, hogy a szervezet fedezni tudja a munkavégzés igényeit.",
+      "options": [
+        {"text": "Az energiafelhasználás csökken", "is_correct": false},
+        {"text": "Az energiafelhasználás fokozódik", "is_correct": true},
+        {"text": "Az anyagcsere leáll", "is_correct": false},
+        {"text": "Az izmok oxigénigénye megszűnik", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["anyagcsere", "energiafelhasznalas", "akut_hatas"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Training Programming",
+  "topic": "Periodization and Cycles",
+  "quiz_title": "AL — Training Programming - Periodization and Cycles [EN]",
+  "description": "The system of periodization, its cycles, and their role in optimising athletic performance.",
+  "questions": [
+    {
+      "text": "What does periodization mean in training theory?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Periodization is the temporal division and conscious planning of the training process into cycles.",
+      "options": [
+        {"text": "Random training", "is_correct": false},
+        {"text": "Systematic organisation of training into cycles", "is_correct": true},
+        {"text": "Daily training only", "is_correct": false},
+        {"text": "Organising rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["periodization"]
+      }
+    },
+    {
+      "text": "What is the main goal of periodization?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Optimising performance and timing peak form.",
+      "options": [
+        {"text": "Reducing training", "is_correct": false},
+        {"text": "Optimising performance", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Avoiding competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["periodization"]
+      }
+    },
+    {
+      "text": "What is a macrocycle?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The macrocycle covers a long period (e.g. a season or year).",
+      "options": [
+        {"text": "A daily training session", "is_correct": false},
+        {"text": "A long-term cycle (e.g. a year)", "is_correct": true},
+        {"text": "A weekly training plan", "is_correct": false},
+        {"text": "A single training session", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["macrocycle"]
+      }
+    },
+    {
+      "text": "What characterises a mesocycle?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A mesocycle is a multi-week period serving a specific goal.",
+      "options": [
+        {"text": "One day", "is_correct": false},
+        {"text": "A multi-week cycle", "is_correct": true},
+        {"text": "One year", "is_correct": false},
+        {"text": "A single training session", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["mesocycle"]
+      }
+    },
+    {
+      "text": "What does a microcycle mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A microcycle typically represents one week of the training process.",
+      "options": [
+        {"text": "One year", "is_correct": false},
+        {"text": "One week", "is_correct": true},
+        {"text": "One month", "is_correct": false},
+        {"text": "One competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["microcycle"]
+      }
+    },
+    {
+      "text": "Training cycles operate independently of one another.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because they build upon each other and are interconnected.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 25,
+        "concept_tags": ["cycles"]
+      }
+    },
+    {
+      "text": "Why is varying the load important?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Varying load supports adaptation and prevents overloading.",
+      "options": [
+        {"text": "It has no significance", "is_correct": false},
+        {"text": "It supports adaptation", "is_correct": true},
+        {"text": "It is only important for rest", "is_correct": false},
+        {"text": "It is only important for competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["load_variation"]
+      }
+    },
+    {
+      "text": "What is the purpose of timing peak form?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Achieving maximum performance at the right moment.",
+      "options": [
+        {"text": "Reducing training", "is_correct": false},
+        {"text": "Maximum performance at the right time", "is_correct": true},
+        {"text": "Increasing rest", "is_correct": false},
+        {"text": "Avoiding competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["peak_form"]
+      }
+    },
+    {
+      "text": "Rest periods are not important within training cycles.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because recovery is of key importance.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 25,
+        "concept_tags": ["recovery"]
+      }
+    },
+    {
+      "text": "Periodization supports the long-term development of performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it provides structured development.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["periodization"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Terhelés és teljesítmény",
+  "topic": "A teljesítményt befolyásoló tényezők",
+  "quiz_title": "AL — Terhelés és teljesítmény - A teljesítményt befolyásoló tényezők [HU]",
+  "description": "A sportteljesítményt meghatározó belső és külső tényezők rendszere.",
+  "questions": [
+    {
+      "text": "Melyik tartozik a belső tényezők közé?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A belső tényezők az egyén szervezetében és adottságaiban gyökereznek.",
+      "options": [
+        {"text": "Hőmérséklet", "is_correct": false},
+        {"text": "Genetikai adottságok", "is_correct": true},
+        {"text": "Időjárás", "is_correct": false},
+        {"text": "Felszerelés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["belso_tenyezok"]
+      }
+    },
+    {
+      "text": "Melyik példa külső tényező?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A környezeti hatások külső tényezőknek számítanak.",
+      "options": [
+        {"text": "Motiváció", "is_correct": false},
+        {"text": "Hőmérséklet", "is_correct": true},
+        {"text": "Izomerő", "is_correct": false},
+        {"text": "Állóképesség", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["kulso_tenyezok"]
+      }
+    },
+    {
+      "text": "Milyen szerepe van a genetikai adottságoknak?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A genetikai háttér alapvetően meghatározza a teljesítmény potenciált.",
+      "options": [
+        {"text": "Nincs hatása", "is_correct": false},
+        {"text": "Alapot ad a teljesítményhez", "is_correct": true},
+        {"text": "Csak pszichés hatás", "is_correct": false},
+        {"text": "Csak külső tényező", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["genetika"]
+      }
+    },
+    {
+      "text": "A motiváció pszichés tényezőként befolyásolja a teljesítményt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert a mentális állapot közvetlen hatással van a teljesítményre.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["psziches"]
+      }
+    },
+    {
+      "text": "Hogyan befolyásolja az edzettségi állapot a teljesítményt?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A jobb edzettség magasabb teljesítményt tesz lehetővé.",
+      "options": [
+        {"text": "Csökkenti a teljesítményt", "is_correct": false},
+        {"text": "Növeli a teljesítményt", "is_correct": true},
+        {"text": "Nincs hatása", "is_correct": false},
+        {"text": "Csak rövid távon hat", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["edzettseg"]
+      }
+    },
+    {
+      "text": "Melyik tényező kapcsolódik a táplálkozáshoz?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A megfelelő tápanyagbevitel alapvető a teljesítményhez.",
+      "options": [
+        {"text": "Izomerő", "is_correct": false},
+        {"text": "Energiaellátás", "is_correct": true},
+        {"text": "Motiváció", "is_correct": false},
+        {"text": "Technika", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["taplalkozas"]
+      }
+    },
+    {
+      "text": "A regeneráció minősége hatással van a teljesítményre.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert a regeneráció biztosítja az alkalmazkodást.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["regeneracio"]
+      }
+    },
+    {
+      "text": "Melyik külső tényező befolyásolhatja a teljesítményt?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A környezeti tényezők jelentős hatással lehetnek a teljesítményre.",
+      "options": [
+        {"text": "Genetika", "is_correct": false},
+        {"text": "Magasság (tengerszint feletti)", "is_correct": true},
+        {"text": "Motiváció", "is_correct": false},
+        {"text": "Izomrost típus", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["kulso_tenyezok"]
+      }
+    },
+    {
+      "text": "Mi jellemzi a teljesítményt befolyásoló tényezőket?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Ezek komplex rendszerben, egymással kölcsönhatásban működnek.",
+      "options": [
+        {"text": "Egymástól függetlenek", "is_correct": false},
+        {"text": "Egymással kölcsönhatásban állnak", "is_correct": true},
+        {"text": "Csak egy tényező számít", "is_correct": false},
+        {"text": "Csak külső tényezők fontosak", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["komplex_rendszer"]
+      }
+    },
+    {
+      "text": "A technikai és taktikai tényezők nem befolyásolják a fizikai teljesítményt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert ezek jelentősen befolyásolják a teljesítmény hatékonyságát.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 25,
+        "concept_tags": ["technika", "taktika"]
+      }
+    }
+  ]
+}

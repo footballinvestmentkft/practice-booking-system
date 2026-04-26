@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "module": "Training and Sport",
+  "topic": "Training and Sport — Advanced",
+  "quiz_title": "AL — Training and Sport - Advanced [EN]",
+  "description": "In-depth analysis of the interrelationships between training and sport: Long-Term Athlete Development (LTAD), sport-specific training modelling, the relative age effect, injury prevention mechanisms, and dual career support.",
+  "questions": [
+    {
+      "text": "What is the fundamental premise of the Long-Term Athlete Development (LTAD) model?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "The LTAD model holds that athletic development is built on age-related sensitive phases (sensitive periods). Training content applied at the wrong time (e.g., overly early specialisation) reduces long-term developmental potential.",
+      "options": [
+        {"text": "Every athlete reaches peak form at the same age", "is_correct": false},
+        {"text": "Athletic development is built on age-related sensitive periods — mistimed training reduces long-term potential", "is_correct": true},
+        {"text": "Early specialisation is always the best route to sporting success", "is_correct": false},
+        {"text": "LTAD applies exclusively to adult athletes", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 60,
+        "concept_tags": ["LTAD", "sensitive_period", "youth_development"]
+      }
+    },
+    {
+      "text": "What is the Relative Age Effect (RAE) and how does it bias talent selection in youth football?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "The RAE means that in annual cohort groups, children born early in the selection cycle (e.g., in January) are physically more mature, display better performance, and have a greater chance of being selected for academies — even though the difference reflects developmental timing, not talent. This distorts youth talent identification.",
+      "options": [
+        {"text": "The advantage that older adult athletes have over younger ones", "is_correct": false},
+        {"text": "Those born early in the annual cycle have a developmental maturity advantage — this distorts youth talent selection", "is_correct": true},
+        {"text": "A genetic age-related ceiling on performance improvement", "is_correct": false},
+        {"text": "The RAE applies exclusively to female athletes", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": ["RAE", "talent_selection", "youth_development"]
+      }
+    },
+    {
+      "text": "Early specialisation in a football academy always produces better long-term outcomes than multi-sport participation.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "False. Research shows that diversified multi-sport participation in early childhood yields better long-term athletic development: a wider motor repertoire, lower burnout risk, and fewer overuse injuries. Early specialisation before the age of 12 increases the risk of early dropout and repetitive stress injuries — the LTAD model also supports late specialisation.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["early_specialisation", "multisport", "LTAD"]
+      }
+    },
+    {
+      "text": "Why does neuromuscular training (e.g., FIFA 11+) produce effective results in ACL injury prevention?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "The majority of ACL injuries are non-contact in nature, occurring during faulty landings and sudden changes of direction. The FIFA 11+ and similar neuromuscular protocols develop the coordination of knee-stabilising muscles, balance, and correct biomechanical patterns — thereby reducing mechanical risk.",
+      "options": [
+        {"text": "Because it directly strengthens the ACL ligament", "is_correct": false},
+        {"text": "It develops knee-stabilising muscle coordination, balance, and correct biomechanical patterns — reducing non-contact injury risk", "is_correct": true},
+        {"text": "Because it accelerates post-injury recovery", "is_correct": false},
+        {"text": "It exclusively improves flexibility", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["ACL_prevention", "FIFA11plus", "neuromuscular"]
+      }
+    },
+    {
+      "text": "What is the essence of sport-specific training modelling for footballers?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Sport-specific training modelling means aligning training stimuli (intensity, duration, movement patterns) to football's actual match load profile — e.g., training the 5–90 metre sprints, direction changes, and ball-technical elements under match-like conditions.",
+      "options": [
+        {"text": "Performing tactical exercises exclusively", "is_correct": false},
+        {"text": "Aligning training stimuli to the match-specific load profile — in terms of movement patterns, intensity, and duration", "is_correct": true},
+        {"text": "General conditioning without the ball", "is_correct": false},
+        {"text": "Fully simulating competition at every training session", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 60,
+        "concept_tags": ["sport_specific_training", "load_profile"]
+      }
+    },
+    {
+      "text": "How does match load affect a footballer's weekly training planning?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Match load is integrated into the weekly microcycle: the 1–2 days following the match are for recovery, then load gradually increases, before reduced intensity (tapering) in the days leading to the next match. This weekly cycle reflects the specific load-recovery rhythm of football.",
+      "options": [
+        {"text": "Match load should be managed independently of the training plan", "is_correct": false},
+        {"text": "The match is integrated into the weekly microcycle — post-match recovery, progressive increase, pre-match tapering", "is_correct": true},
+        {"text": "Maximum-intensity training is recommended immediately after competition", "is_correct": false},
+        {"text": "Match load should only be accounted for in a two-week cycle", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": ["match_load", "microcycle", "tapering"]
+      }
+    },
+    {
+      "text": "Dual career (sport combined with studies) is only a problem for amateur athletes.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "False. The dual career of youth and junior footballers (sport + education) presents a complex time-management and psychological challenge that impacts training load tolerance, stress, and long-term development. Academy systems increasingly integrate dual career support.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.72,
+        "cognitive_load": 0.70,
+        "average_time_seconds": 40,
+        "concept_tags": ["dual_career", "youth_development"]
+      }
+    },
+    {
+      "text": "Which biomechanical factor is the strongest predictor of injury risk during sprinting?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "The majority of hamstring injuries occur during the eccentric loading at maximum knee flexion in the swing phase. Weak eccentric hamstring strength (Nordic curl test) is the strongest biomechanical risk factor.",
+      "options": [
+        {"text": "The absolute sprint speed value", "is_correct": false},
+        {"text": "Weak eccentric hamstring strength during the swing phase", "is_correct": true},
+        {"text": "The type of training shoe", "is_correct": false},
+        {"text": "Total distance covered at sprint speed", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.83,
+        "cognitive_load": 0.82,
+        "average_time_seconds": 65,
+        "concept_tags": ["hamstring_injury", "eccentric", "injury_risk"]
+      }
+    },
+    {
+      "text": "What is the greatest challenge in determining the optimal training-to-competition ratio?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Individual differences (recovery capacity, stress tolerance, fitness level) mean there is no universal optimum. The same ratio may lead to overtraining in one athlete and underloading in another — personalised monitoring is therefore essential.",
+      "options": [
+        {"text": "Limited gym capacity", "is_correct": false},
+        {"text": "Individual differences (recovery, stress tolerance, fitness) mean no universal optimum exists", "is_correct": true},
+        {"text": "The unpredictability of the competition calendar", "is_correct": false},
+        {"text": "The variability of tactical plans", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 60,
+        "concept_tags": ["training_competition_ratio", "individual_differences"]
+      }
+    },
+    {
+      "text": "Small-sided games (SSG) can provide more effective football-specific aerobic training than traditional interval running.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "True. Research shows that well-designed SSG (matches played on small pitches) can produce a similar or higher-intensity aerobic stimulus than traditional interval running — while simultaneously developing tactical and technical skills.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 45,
+        "concept_tags": ["SSG", "small_sided_games", "aerobic_load"]
+      }
+    }
+  ]
+}

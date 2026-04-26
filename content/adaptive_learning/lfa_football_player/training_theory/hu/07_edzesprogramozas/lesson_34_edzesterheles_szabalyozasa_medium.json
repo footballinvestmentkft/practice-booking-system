@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzésprogramozás",
+  "topic": "Az edzésterhelés szabályozása",
+  "quiz_title": "AL — Edzésprogramozás - Az edzésterhelés szabályozása [HU]",
+  "description": "Az edzésterhelés összetevői, adagolása és szabályozása a hatékony fejlődés érdekében.",
+  "questions": [
+    {
+      "text": "Mit nevezünk edzésterhelésnek?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az edzésterhelés a szervezetet érő fizikai és pszichés inger összessége.",
+      "options": [
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "A szervezetet érő edzésinger", "is_correct": true},
+        {"text": "Csak verseny", "is_correct": false},
+        {"text": "Csak technikai gyakorlás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["edzesterheles"]
+      }
+    },
+    {
+      "text": "Melyik NEM tartozik a terhelés alapvető összetevői közé?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az intenzitás, időtartam és gyakoriság tartozik ide, a motiváció nem közvetlen terhelési összetevő.",
+      "options": [
+        {"text": "Intenzitás", "is_correct": false},
+        {"text": "Időtartam", "is_correct": false},
+        {"text": "Motiváció", "is_correct": true},
+        {"text": "Gyakoriság", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["terheles_osszetevoi"]
+      }
+    },
+    {
+      "text": "Mit jelent az intenzitás az edzésterhelésben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az intenzitás a terhelés erősségét jelenti.",
+      "options": [
+        {"text": "Edzés hossza", "is_correct": false},
+        {"text": "Terhelés erőssége", "is_correct": true},
+        {"text": "Edzések száma", "is_correct": false},
+        {"text": "Pihenőidő", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["intenzitas"]
+      }
+    },
+    {
+      "text": "Mit jelent az időtartam az edzésterhelésben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az időtartam az edzés hossza.",
+      "options": [
+        {"text": "Terhelés erőssége", "is_correct": false},
+        {"text": "Edzés hossza", "is_correct": true},
+        {"text": "Edzések száma", "is_correct": false},
+        {"text": "Motiváció", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["idotartam"]
+      }
+    },
+    {
+      "text": "Mit jelent a gyakoriság?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A gyakoriság az edzések ismétlődésének száma.",
+      "options": [
+        {"text": "Edzés hossza", "is_correct": false},
+        {"text": "Edzések száma", "is_correct": true},
+        {"text": "Terhelés erőssége", "is_correct": false},
+        {"text": "Pihenőidő", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["gyakorisag"]
+      }
+    },
+    {
+      "text": "A progresszív terhelés azt jelenti, hogy a terhelést fokozatosan növeljük.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert így biztosítható az alkalmazkodás.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["progressziv_terheles"]
+      }
+    },
+    {
+      "text": "Miért fontos az egyénre szabott terhelés?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az egyéni különbségek miatt minden sportoló másképp reagál a terhelésre.",
+      "options": [
+        {"text": "Nincs jelentősége", "is_correct": false},
+        {"text": "Különböző reakciók miatt", "is_correct": true},
+        {"text": "Csak edző miatt", "is_correct": false},
+        {"text": "Csak verseny miatt", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["egyeni_terheles"]
+      }
+    },
+    {
+      "text": "A terhelés és regeneráció egyensúlya nem fontos.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert kulcsfontosságú a fejlődéshez.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 25,
+        "concept_tags": ["regeneracio"]
+      }
+    },
+    {
+      "text": "Mi segíti a terhelés szabályozását a gyakorlatban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A visszajelzések segítenek az edzés finomhangolásában.",
+      "options": [
+        {"text": "Véletlen edzés", "is_correct": false},
+        {"text": "Objektív és szubjektív visszajelzések", "is_correct": true},
+        {"text": "Csak verseny", "is_correct": false},
+        {"text": "Csak pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["monitoring"]
+      }
+    },
+    {
+      "text": "A helytelen terhelésszabályozás fejlődés hiányához vezethet.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert nem biztosít megfelelő ingert az alkalmazkodáshoz.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["terheles"]
+      }
+    }
+  ]
+}

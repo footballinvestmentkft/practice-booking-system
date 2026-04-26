@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "module": "Training Theory",
+  "topic": "Training Theory — Advanced",
+  "quiz_title": "AL — Training Theory - Advanced [EN]",
+  "description": "In-depth analysis of training theory interrelationships: adaptation mechanisms, critical factors of supercompensation, comparison of periodisation models, and advanced application of the specificity principle.",
+  "questions": [
+    {
+      "text": "What is functional overreaching and how does it differ from non-functional overreaching?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Functional overreaching is deliberate short-term overloading that, following adequate recovery, leads to supercompensation — it is a planned tool of training programming. Non-functional overreaching is uncontrolled and causes performance decrements that are difficult to reverse over weeks — it is the direct precursor of overtraining syndrome, from which recovery may take months.",
+      "options": [
+        {"text": "There is no difference; both are overtraining", "is_correct": false},
+        {"text": "Functional: planned, leads to supercompensation; non-functional: uncontrolled, weeks-long performance decline", "is_correct": true},
+        {"text": "Functional overreaching is more harmful to the body", "is_correct": false},
+        {"text": "Both can be resolved with 1-2 days of rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": ["overreaching", "overtraining", "supercompensation"]
+      }
+    },
+    {
+      "text": "The supercompensation window closes if the next training stimulus does not arrive in time.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "True. After the supercompensation peak — if the next training stimulus does not arrive in time — the body returns to its pre-training level (involution). Correct timing is therefore the key to adaptation: a stimulus that arrives too early causes fatigue accumulation; one that arrives too late causes adaptation loss. This is the time-dependent window of supercompensation.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.72,
+        "cognitive_load": 0.70,
+        "average_time_seconds": 45,
+        "concept_tags": ["supercompensation", "window", "involution"]
+      }
+    },
+    {
+      "text": "Which periodisation model is more appropriate for footballers during the long competitive season?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Undulating periodisation — which varies loading parameters week to week or day to day — is more suitable for footballers, who must maintain a continuous training stimulus during a long competitive season while performing from match to match.",
+      "options": [
+        {"text": "Linear periodisation, because it is simpler to manage", "is_correct": false},
+        {"text": "Undulating periodisation, to simultaneously maintain continuous stimulus and competition performance", "is_correct": true},
+        {"text": "Block periodisation exclusively", "is_correct": false},
+        {"text": "Periodisation is not necessary for footballers", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["periodisation_models", "undulating", "football"]
+      }
+    },
+    {
+      "text": "What is the SAID principle and how should it be applied in training design?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "The SAID principle (Specific Adaptation to Imposed Demands) states that the body adapts precisely to the stimulus it receives. In training design, this means that the movement patterns, energy systems, and intensity of training content must mirror the demands of competition.",
+      "options": [
+        {"text": "The random determination of training sequence", "is_correct": false},
+        {"text": "The body adapts precisely to the stimulus received — training must mirror competition demands", "is_correct": true},
+        {"text": "The training plan can be changed daily without effect", "is_correct": false},
+        {"text": "General training always surpasses specific training", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 60,
+        "concept_tags": ["SAID_principle", "specificity", "adaptation"]
+      }
+    },
+    {
+      "text": "What is detraining and when does it occur?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Detraining is the reversal of acquired fitness adaptations when the training stimulus ceases or is drastically reduced. Aerobic capacity begins to decline after just 2–3 weeks of inactivity, while strength adaptations are lost more slowly (4–6 weeks).",
+      "options": [
+        {"text": "An increase in training intensity", "is_correct": false},
+        {"text": "The reversal of fitness adaptations when the training stimulus ceases", "is_correct": true},
+        {"text": "It only occurs in elderly athletes", "is_correct": false},
+        {"text": "Detraining does not affect strength adaptations", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 55,
+        "concept_tags": ["detraining", "adaptation_reversal"]
+      }
+    },
+    {
+      "text": "How does the load-to-rest ratio determine the direction of adaptation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "If rest is too short, fatigue accumulates and adaptation is inhibited (heading toward overload). If too long, supercompensation declines. The optimal ratio is method-dependent: for strength training, work-to-rest ratios of 1:3–1:5 are typical; for endurance, 1:1–1:2.",
+      "options": [
+        {"text": "The load-to-rest ratio has no effect on the direction of adaptation", "is_correct": false},
+        {"text": "Optimal ratio → supercompensation; too short rest → fatigue accumulation; too long → adaptation declines", "is_correct": true},
+        {"text": "The longer the rest, the better the adaptation", "is_correct": false},
+        {"text": "The load-to-rest ratio is identical for all sports", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.83,
+        "cognitive_load": 0.82,
+        "average_time_seconds": 70,
+        "concept_tags": ["load_rest_ratio", "adaptation"]
+      }
+    },
+    {
+      "text": "Cross-training always enhances sport-specific performance.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "False. Cross-training provides general conditioning and can aid recovery, but it cannot replace sport-specific training in terms of adaptation. Under the SAID principle, neural and structural adaptation is tied precisely to the stimulus received — adaptation acquired in different movement patterns only partially transfers.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["cross_training", "specificity"]
+      }
+    },
+    {
+      "text": "What factor most determines the amplitude of supercompensation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "The amplitude of supercompensation is determined above all by the magnitude of the training stimulus — the difference between the load and the athlete's current fitness level — not merely by training volume. A well-trained athlete requires a greater stimulus to achieve the same degree of adaptation.",
+      "options": [
+        {"text": "Only the duration of the training session", "is_correct": false},
+        {"text": "The magnitude of the stimulus — the difference between load and current fitness level", "is_correct": true},
+        {"text": "The athlete's age", "is_correct": false},
+        {"text": "The quantity of nutritional supplements", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 60,
+        "concept_tags": ["supercompensation_amplitude", "fitness_level"]
+      }
+    },
+    {
+      "text": "What is the GAS model (General Adaptation Syndrome) and how does it relate to training theory?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Selye's GAS model describes three phases: alarm (acute stress reaction), resistance (adaptation), and exhaustion (prolonged stress → collapse). Training theory is built on this: the training load triggers the alarm phase; during rest, resistance develops (supercompensation); the exhaustion phase corresponds to overtraining.",
+      "options": [
+        {"text": "The GAS model applies only to psychological stress", "is_correct": false},
+        {"text": "Alarm → resistance (adaptation) → exhaustion — training theory's load-rest-supercompensation cycle is built on this", "is_correct": true},
+        {"text": "According to the model, exhaustion is the optimal adaptation phase", "is_correct": false},
+        {"text": "The GAS model cannot be applied in sport", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.85,
+        "cognitive_load": 0.83,
+        "average_time_seconds": 70,
+        "concept_tags": ["GAS_model", "Selye", "adaptation_phases"]
+      }
+    },
+    {
+      "text": "At an identical training load, a novice athlete adapts faster than a trained athlete.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "True. Training leads to development only if the body adapts to the stimulus — adaptation is the biological basis of improvement. Without adaptation, training causes fatigue but no structural or functional development. Novice athletes respond strongly to relatively modest stimuli; highly trained athletes require substantially greater loads to elicit the same adaptive response.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.72,
+        "cognitive_load": 0.70,
+        "average_time_seconds": 45,
+        "concept_tags": ["adaptation_rate", "novice_vs_trained"]
+      }
+    }
+  ]
+}

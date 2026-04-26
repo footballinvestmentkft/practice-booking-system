@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzéselmélet",
+  "topic": "Az edzésterhelés összetevői (intenzitás, volumen, sűrűség)",
+  "quiz_title": "AL — Edzéselmélet - Az edzésterhelés összetevői [HU]",
+  "description": "Az intenzitás, volumen és sűrűség szerepe az edzésterhelés meghatározásában.",
+  "questions": [
+    {
+      "text": "Mit nevezünk edzésterhelésnek?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az edzés során a szervezetet érő fizikai és pszichés ingerek összessége.",
+      "options": [
+        {"text": "Csak a pihenés ideje", "is_correct": false},
+        {"text": "A szervezetet érő edzésinger", "is_correct": true},
+        {"text": "Csak a futás ideje", "is_correct": false},
+        {"text": "Csak az edzés hossza", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["edzesterheles"]
+      }
+    },
+    {
+      "text": "Mit jelent az intenzitás az edzésben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az intenzitás a terhelés erősségét jelenti.",
+      "options": [
+        {"text": "Edzés hossza", "is_correct": false},
+        {"text": "Terhelés erőssége", "is_correct": true},
+        {"text": "Pihenőidő", "is_correct": false},
+        {"text": "Gyakorlat típusa", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["intenzitas"]
+      }
+    },
+    {
+      "text": "Mit jelent a volumen az edzésben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A volumen az elvégzett munka mennyisége.",
+      "options": [
+        {"text": "Terhelés erőssége", "is_correct": false},
+        {"text": "Munka mennyisége", "is_correct": true},
+        {"text": "Pihenés ideje", "is_correct": false},
+        {"text": "Sebesség", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["volumen"]
+      }
+    },
+    {
+      "text": "Mit jelent a sűrűség az edzésben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A munka és pihenés arányát jelenti.",
+      "options": [
+        {"text": "Edzés hossza", "is_correct": false},
+        {"text": "Munka-pihenés arány", "is_correct": true},
+        {"text": "Sebesség", "is_correct": false},
+        {"text": "Izomerő", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["suruseg"]
+      }
+    },
+    {
+      "text": "Az intenzitás és a volumen egymással összefügg.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert általában fordított kapcsolat van közöttük.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 25,
+        "concept_tags": ["intenzitas", "volumen"]
+      }
+    },
+    {
+      "text": "Mi történik túl magas intenzitás esetén?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Fokozott fáradás és sérülésveszély léphet fel.",
+      "options": [
+        {"text": "Gyors regeneráció", "is_correct": false},
+        {"text": "Fáradás és túlterhelés", "is_correct": true},
+        {"text": "Nincs hatás", "is_correct": false},
+        {"text": "Csak állóképesség nő", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["intenzitas"]
+      }
+    },
+    {
+      "text": "Mi történik túl nagy volumen esetén?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Túlterhelés és kimerülés alakulhat ki.",
+      "options": [
+        {"text": "Gyors fejlődés", "is_correct": false},
+        {"text": "Kimerülés és túlterhelés", "is_correct": true},
+        {"text": "Nincs hatás", "is_correct": false},
+        {"text": "Csak gyorsaság nő", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["volumen"]
+      }
+    },
+    {
+      "text": "Miért fontos a terhelés egyénre szabása?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Mert az egyéni különbségek befolyásolják az adaptációt.",
+      "options": [
+        {"text": "Nem fontos", "is_correct": false},
+        {"text": "Egyéni különbségek miatt", "is_correct": true},
+        {"text": "Csak verseny miatt", "is_correct": false},
+        {"text": "Időspórolás miatt", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["egyeni_kulonbsegek"]
+      }
+    },
+    {
+      "text": "Az edzésterhelés mindenkinél azonos kell legyen.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert egyénre szabott kell legyen.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["egyeni_kulonbsegek"]
+      }
+    },
+    {
+      "text": "Mi határozza meg az edzés hatékonyságát?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az intenzitás, volumen és sűrűség megfelelő kombinációja.",
+      "options": [
+        {"text": "Csak intenzitás", "is_correct": false},
+        {"text": "Terhelési paraméterek kombinációja", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Csak volumen", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["edzesterheles"]
+      }
+    }
+  ]
+}

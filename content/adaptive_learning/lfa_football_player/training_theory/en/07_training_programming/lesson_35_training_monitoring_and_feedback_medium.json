@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Training Programming",
+  "topic": "Training Monitoring and Feedback",
+  "quiz_title": "AL — Training Programming - Training Monitoring and Feedback [EN]",
+  "description": "The tools and goals of training monitoring, and the role of feedback in performance development.",
+  "questions": [
+    {
+      "text": "What does training monitoring mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Training monitoring is the continuous tracking of the athlete's condition and performance.",
+      "options": [
+        {"text": "Skipping training", "is_correct": false},
+        {"text": "Continuous tracking of performance", "is_correct": true},
+        {"text": "Competition only", "is_correct": false},
+        {"text": "Providing rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["monitoring"]
+      }
+    },
+    {
+      "text": "What is the main goal of training monitoring?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Optimising development and avoiding overloading.",
+      "options": [
+        {"text": "Reducing training", "is_correct": false},
+        {"text": "Optimising development", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Increasing competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["monitoring"]
+      }
+    },
+    {
+      "text": "Which is an objective measurement method?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Heart rate measurement provides objective, numerical data.",
+      "options": [
+        {"text": "Perceived fatigue", "is_correct": false},
+        {"text": "Heart rate measurement", "is_correct": true},
+        {"text": "Motivation", "is_correct": false},
+        {"text": "Mood", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["objective"]
+      }
+    },
+    {
+      "text": "Which belongs to subjective feedback?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The athlete's own sensations are subjective feedback.",
+      "options": [
+        {"text": "Heart rate", "is_correct": false},
+        {"text": "Perceived fatigue", "is_correct": true},
+        {"text": "Speed", "is_correct": false},
+        {"text": "Time result", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["subjective"]
+      }
+    },
+    {
+      "text": "A training diary helps track development.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it organises data and makes it retrievable.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["training_diary"]
+      }
+    },
+    {
+      "text": "What is the role of feedback?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Feedback enables the modification of training.",
+      "options": [
+        {"text": "Stopping training", "is_correct": false},
+        {"text": "Fine-tuning training", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Increasing competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["feedback"]
+      }
+    },
+    {
+      "text": "Monitoring can help recognise overloading.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it signals excessive load on the body.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["overloading"]
+      }
+    },
+    {
+      "text": "What happens based on the feedback?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The training programme can be modified.",
+      "options": [
+        {"text": "No change occurs", "is_correct": false},
+        {"text": "Modification of training", "is_correct": true},
+        {"text": "Training ceases", "is_correct": false},
+        {"text": "Rest only takes place", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["training_modification"]
+      }
+    },
+    {
+      "text": "Why is data analysis important?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Data helps identify trends.",
+      "options": [
+        {"text": "It has no role", "is_correct": false},
+        {"text": "Identifying trends", "is_correct": true},
+        {"text": "Only for storage", "is_correct": false},
+        {"text": "Only for competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["analysis"]
+      }
+    },
+    {
+      "text": "Monitoring supports long-term development.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it provides continuous feedback.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["development"]
+      }
+    }
+  ]
+}

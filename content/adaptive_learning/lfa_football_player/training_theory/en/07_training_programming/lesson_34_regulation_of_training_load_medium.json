@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Training Programming",
+  "topic": "Regulation of Training Load",
+  "quiz_title": "AL — Training Programming - Regulation of Training Load [EN]",
+  "description": "The components, dosage, and regulation of training load for effective development.",
+  "questions": [
+    {
+      "text": "What is training load?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Training load is the sum of physical and psychological stimuli experienced by the body.",
+      "options": [
+        {"text": "Rest only", "is_correct": false},
+        {"text": "The training stimulus experienced by the body", "is_correct": true},
+        {"text": "Competition only", "is_correct": false},
+        {"text": "Technical practice only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["training_load"]
+      }
+    },
+    {
+      "text": "Which does NOT belong to the basic components of load?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Intensity, duration, and frequency belong here; motivation is not a direct load component.",
+      "options": [
+        {"text": "Intensity", "is_correct": false},
+        {"text": "Duration", "is_correct": false},
+        {"text": "Motivation", "is_correct": true},
+        {"text": "Frequency", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["load_components"]
+      }
+    },
+    {
+      "text": "What does intensity mean in training load?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Intensity refers to the magnitude of the load.",
+      "options": [
+        {"text": "Duration of training", "is_correct": false},
+        {"text": "Magnitude of the load", "is_correct": true},
+        {"text": "Number of training sessions", "is_correct": false},
+        {"text": "Rest period", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["intensity"]
+      }
+    },
+    {
+      "text": "What does duration mean in training load?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Duration refers to the length of the training session.",
+      "options": [
+        {"text": "Magnitude of the load", "is_correct": false},
+        {"text": "Length of training", "is_correct": true},
+        {"text": "Number of training sessions", "is_correct": false},
+        {"text": "Motivation", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["duration"]
+      }
+    },
+    {
+      "text": "What does frequency mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Frequency refers to the number of repeated training sessions.",
+      "options": [
+        {"text": "Length of training", "is_correct": false},
+        {"text": "Number of training sessions", "is_correct": true},
+        {"text": "Magnitude of the load", "is_correct": false},
+        {"text": "Rest period", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["frequency"]
+      }
+    },
+    {
+      "text": "Progressive loading means gradually increasing the training load.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because this is how adaptation can be ensured.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["progressive_loading"]
+      }
+    },
+    {
+      "text": "Why is individualised loading important?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Because of individual differences, each athlete responds differently to the load.",
+      "options": [
+        {"text": "It has no significance", "is_correct": false},
+        {"text": "Because of differing responses", "is_correct": true},
+        {"text": "Only because of the coach", "is_correct": false},
+        {"text": "Only because of competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["individual_loading"]
+      }
+    },
+    {
+      "text": "The balance between load and recovery is not important.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because it is of key importance for development.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 25,
+        "concept_tags": ["recovery"]
+      }
+    },
+    {
+      "text": "What supports load regulation in practice?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Feedback helps in the fine-tuning of training.",
+      "options": [
+        {"text": "Random training", "is_correct": false},
+        {"text": "Objective and subjective feedback", "is_correct": true},
+        {"text": "Competition only", "is_correct": false},
+        {"text": "Rest only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["monitoring"]
+      }
+    },
+    {
+      "text": "Incorrect load regulation can lead to a lack of development.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it does not provide a sufficient stimulus for adaptation.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["load"]
+      }
+    }
+  ]
+}

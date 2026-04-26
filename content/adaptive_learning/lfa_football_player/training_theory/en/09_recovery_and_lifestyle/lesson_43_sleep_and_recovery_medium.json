@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Recovery and Lifestyle",
+  "topic": "The Role of Sleep in Recovery",
+  "quiz_title": "AL — Recovery and Lifestyle - The Role of Sleep in Recovery [EN]",
+  "description": "The importance of sleep, its processes, and its effect on athletic performance.",
+  "questions": [
+    {
+      "text": "What is one of the most important roles of sleep?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The body's recovery takes place during sleep.",
+      "options": [
+        {"text": "Executing training", "is_correct": false},
+        {"text": "Ensuring recovery", "is_correct": true},
+        {"text": "Competing", "is_correct": false},
+        {"text": "Reducing performance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["sleep"]
+      }
+    },
+    {
+      "text": "What happens in the body during sleep?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Restorative and recovery processes take place.",
+      "options": [
+        {"text": "Load increases", "is_correct": false},
+        {"text": "Recovery takes place", "is_correct": true},
+        {"text": "Performance deteriorates", "is_correct": false},
+        {"text": "No change occurs", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["recovery"]
+      }
+    },
+    {
+      "text": "What is the role of hormonal processes during sleep?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "They support muscle building and restoration.",
+      "options": [
+        {"text": "Executing training", "is_correct": false},
+        {"text": "Supporting restoration", "is_correct": true},
+        {"text": "Reducing performance", "is_correct": false},
+        {"text": "Stopping rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["hormones"]
+      }
+    },
+    {
+      "text": "Sleep deprivation impairs performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it reduces concentration and reaction time.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["sleep_deprivation"]
+      }
+    },
+    {
+      "text": "What is one consequence of sleep deprivation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Reaction time and concentration decrease.",
+      "options": [
+        {"text": "Increase in performance", "is_correct": false},
+        {"text": "Decrease in concentration", "is_correct": true},
+        {"text": "Increase in speed", "is_correct": false},
+        {"text": "Increase in strength", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["sleep_deprivation"]
+      }
+    },
+    {
+      "text": "What is the role of mental recovery?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "It supports the restoration of concentration and decision-making.",
+      "options": [
+        {"text": "Physical effects only", "is_correct": false},
+        {"text": "Restoring mental functions", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Competing", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["mental_recovery"]
+      }
+    },
+    {
+      "text": "Sleep has an effect on reaction time.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because being well-rested influences rapid reactions.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["reaction_time"]
+      }
+    },
+    {
+      "text": "What is the generally recommended optimal sleep duration for athletes?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "7–9 hours of sleep is generally recommended.",
+      "options": [
+        {"text": "3–4 hours", "is_correct": false},
+        {"text": "7–9 hours", "is_correct": true},
+        {"text": "12–14 hours", "is_correct": false},
+        {"text": "No sleep is needed", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["sleep_duration"]
+      }
+    },
+    {
+      "text": "What helps improve sleep quality?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A regular sleep routine improves sleep quality.",
+      "options": [
+        {"text": "Irregular sleep", "is_correct": false},
+        {"text": "A regular sleep routine", "is_correct": true},
+        {"text": "Always training late in the evening", "is_correct": false},
+        {"text": "Continuous wakefulness", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["sleep_quality"]
+      }
+    },
+    {
+      "text": "Adequate sleep improves athletic performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it supports recovery and concentration.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["performance"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Training and Sport",
+  "topic": "Injury Prevention and Training",
+  "quiz_title": "AL — Training and Sport - Injury Prevention and Training [EN]",
+  "description": "Types, causes, and basic principles of injury prevention in sport.",
+  "questions": [
+    {
+      "text": "What is a sports injury?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A sports injury is tissue damage occurring during physical activity.",
+      "options": [
+        {"text": "Fatigue only", "is_correct": false},
+        {"text": "Tissue damage during sport", "is_correct": true},
+        {"text": "A resting state", "is_correct": false},
+        {"text": "An increase in performance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["injury"]
+      }
+    },
+    {
+      "text": "Which of the following is an acute injury?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Acute injuries arise suddenly as the result of a single event.",
+      "options": [
+        {"text": "Muscle fatigue", "is_correct": false},
+        {"text": "Sprain", "is_correct": true},
+        {"text": "Overuse pain", "is_correct": false},
+        {"text": "Chronic inflammation", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["acute_injury"]
+      }
+    },
+    {
+      "text": "What characterises overuse injuries?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "They develop gradually over time due to repetitive loading.",
+      "options": [
+        {"text": "They arise suddenly", "is_correct": false},
+        {"text": "They develop gradually", "is_correct": true},
+        {"text": "They resolve immediately", "is_correct": false},
+        {"text": "They only appear in competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["overuse_injury"]
+      }
+    },
+    {
+      "text": "Correct technique reduces the risk of injury.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because correct execution places less stress on the body.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["technique"]
+      }
+    },
+    {
+      "text": "What is one of the most important injury prevention factors?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Proper warm-up prepares muscles and joints.",
+      "options": [
+        {"text": "Skipping rest", "is_correct": false},
+        {"text": "Proper warm-up", "is_correct": true},
+        {"text": "Maximum load", "is_correct": false},
+        {"text": "Competing", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["warm_up"]
+      }
+    },
+    {
+      "text": "What increases the risk of injury?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Excessive load and inadequate rest increase the risk.",
+      "options": [
+        {"text": "Adequate recovery", "is_correct": false},
+        {"text": "Excessive load", "is_correct": true},
+        {"text": "Correct technique", "is_correct": false},
+        {"text": "Progressive loading", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["overloading"]
+      }
+    },
+    {
+      "text": "Recovery plays a role in injury prevention.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it supports the body's restoration.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["recovery"]
+      }
+    },
+    {
+      "text": "What is one basic principle of injury prevention?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Progressive loading helps avoid overloading.",
+      "options": [
+        {"text": "Sudden loading", "is_correct": false},
+        {"text": "Progressiveness", "is_correct": true},
+        {"text": "Skipping rest", "is_correct": false},
+        {"text": "Competition only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["progressiveness"]
+      }
+    },
+    {
+      "text": "What is one common cause of injuries?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Improper load distribution is a frequent cause.",
+      "options": [
+        {"text": "Appropriate training", "is_correct": false},
+        {"text": "Incorrect loading", "is_correct": true},
+        {"text": "Correct technique", "is_correct": false},
+        {"text": "Rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["causes"]
+      }
+    },
+    {
+      "text": "Conscious training planning reduces the risk of injuries.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it regulates load and recovery.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["training_planning"]
+      }
+    }
+  ]
+}

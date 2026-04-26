@@ -1,0 +1,329 @@
+{
+  "schema_version": "1.0",
+  "specializations": [
+    "LFA_FOOTBALL_PLAYER"
+  ],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "module": "Motoros képességek",
+  "topic": "Motoros képességek — Haladó",
+  "quiz_title": "AL — Motoros képességek - Haladó [HU]",
+  "description": "A motoros képességek mélyebb összefüggéseinek elemzése: erő-sebesség görbe, neuromuscularis mechanizmusok, képességek transzferje és labdarúgás-specifikus alkalmazások.",
+  "questions": [
+    {
+      "text": "Mi az erő-sebesség görbe alapvető összefüggése?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Az erő-sebesség görbe fordított arányosságot mutat: minél nagyobb az ellenállás (erőkifejtés), annál lassabb a mozgás, és fordítva. A maximális erő nulla sebességnél, a maximális sebesség nulla erőnél mérhető. Ezt az összefüggést Hill-egyenletnek is nevezik, és az izomfehérjék (miozin-aktin kölcsönhatás) kinetikájára vezethető vissza.",
+      "options": [
+        {
+          "text": "Nagyobb erőnél nagyobb sebesség érhető el",
+          "is_correct": false
+        },
+        {
+          "text": "Fordított arányosság: nagyobb erőnél kisebb sebesség és fordítva",
+          "is_correct": true
+        },
+        {
+          "text": "Az erő és sebesség egymástól független",
+          "is_correct": false
+        },
+        {
+          "text": "Csak maximális erőkifejtésnél érvényes",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.72,
+        "cognitive_load": 0.7,
+        "average_time_seconds": 55,
+        "concept_tags": [
+          "ero_sebesseg_gorbe",
+          "neuromuscularis"
+        ]
+      }
+    },
+    {
+      "text": "Melyik izomrosttípus domináns a labdarúgásban végzett sprinteknél, és miért?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A sprint elsősorban a II/b (gyors, glikolitikus) izomrostokat veszi igénybe, amelyek képesek gyors, erős összehúzódásra, bár gyorsan fáradnak. A labdarúgásban a rövid, robbanékony sprintegységek ezt a rosttípust terhelik. Az I-es (lassú, oxidatív) rostok a tartós futás alatt dominánsak, ezért a labdarúgókban mindkét rosttípus fejlesztése szükséges.",
+      "options": [
+        {
+          "text": "I-es típusú (lassú, oxidatív) rostok, mert kitartóak",
+          "is_correct": false
+        },
+        {
+          "text": "II/b típusú (gyors, glikolitikus) rostok a robbanékony erőkifejtés miatt",
+          "is_correct": true
+        },
+        {
+          "text": "Mindkét rosttípus egyforma arányban",
+          "is_correct": false
+        },
+        {
+          "text": "Kizárólag a szívizomrostok",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 60,
+        "concept_tags": [
+          "izomrostok",
+          "sprint",
+          "labdarugas"
+        ]
+      }
+    },
+    {
+      "text": "A koordinációs képesség fejlettségének neurológiai alapja az idegrendszer myelinizációjával függ össze.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Igaz. A mielinburok vastagsága meghatározza az idegimpulzus terjedési sebességét (myelinizált axonoknál szaltatorikus vezetés, akár 70-120 m/s). A jobb mielinizáció gyorsabb idegvezetést eredményez, ami pontosabb, gyorsabb motoros vezérlést és koordinációt tesz lehetővé. Az ismétlődő, célzott mozgástanulás serkenti a mielinizációt — ez a koordinációfejlesztés neuroplaszticitáson alapuló mechanizmusa.",
+      "options": [
+        {
+          "text": "Igaz",
+          "is_correct": true
+        },
+        {
+          "text": "Hamis",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": [
+          "koordinacio",
+          "neurologia",
+          "mielinizacio"
+        ]
+      }
+    },
+    {
+      "text": "Hogyan befolyásolja a labdarúgó aerob kapacitása a sprintteljesítményét egy meccs második felében?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A magasabb aerob kapacitás felgyorsítja az ATP-PCr reszintézist az egymást követő sprintek között: az oxidatív rendszer gyorsabban tölti fel a foszfokreatin-raktárakat a pihenési fázisban. Ez lehetővé teszi, hogy a jobb aerob állapotban lévő labdarúgók fenntartsák sprintsebességüket és -frekvenciájukat a mérkőzés második felében is, míg az alacsonyabb aerob kapacitású játékosok progresszív sprintteljesítmény-csökkentést mutatnak.",
+      "options": [
+        {
+          "text": "Az aerob kapacitás nem befolyásolja a sprintteljesítményt",
+          "is_correct": false
+        },
+        {
+          "text": "Magasabb aerob kapacitás gyorsabb ATP-CP regenerációt biztosít, fenntartva a sprintteljesítményt",
+          "is_correct": true
+        },
+        {
+          "text": "A magas aerob kapacitás csökkenti a sprintsebességet",
+          "is_correct": false
+        },
+        {
+          "text": "A sprintteljesítmény kizárólag izomtömegtől függ",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.8,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": [
+          "aerob_kapacitas",
+          "sprint",
+          "atp_cp"
+        ]
+      }
+    },
+    {
+      "text": "Mi a stretch-shortening cycle (SSC) és hogyan kapcsolódik a labdarúgók robbanékonyságához?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Az SSC az izom excentrikus-koncentrikus összehúzódásának sorozata: az izom először megnyúlik (energia raktározódik az ínban és az izomban), majd gyorsan összehúzódik. Ez a mechanizmus a pliometrikus erő alapja, és meghatározza a labdarúgók gyors irányváltásait és ugrásait.",
+      "options": [
+        {
+          "text": "Kizárólag statikus nyújtáskor alkalmazott technika",
+          "is_correct": false
+        },
+        {
+          "text": "Excentrikus-koncentrikus izommunka sorozata, amely rugalmas energiát tárol és felszabadít",
+          "is_correct": true
+        },
+        {
+          "text": "Az állóképességi edzés alapmechanizmusa",
+          "is_correct": false
+        },
+        {
+          "text": "Az izomrostok pihenési állapota",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.8,
+        "average_time_seconds": 65,
+        "concept_tags": [
+          "SSC",
+          "pliometria",
+          "robbekonysag"
+        ]
+      }
+    },
+    {
+      "text": "Miért nem transzferálódik közvetlenül a nagy súllyal végzett guggolás ereje labdarúgás-specifikus sprintteljesítménnyé?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A motorikus transzfer az idegrendszeri programozás specificitásán múlik. A súlyos guggolás más mozgásmintát, izületi szöget és sebességet alkalmaz, mint a sprint — az idegrendszer nem tudja automatikusan átvitelni a megerősödött erőkifejtési mintát a futásmozgásra.",
+      "options": [
+        {
+          "text": "Mert a guggolás csak felső testet fejleszt",
+          "is_correct": false
+        },
+        {
+          "text": "A mozgásminta specificitása miatt — az idegrendszeri adaptáció nem transzferál automatikusan más mozgásba",
+          "is_correct": true
+        },
+        {
+          "text": "Mert a guggolás csökkenti a guggolási erőt",
+          "is_correct": false
+        },
+        {
+          "text": "A transzfer mindig közvetlen és tökéletes",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.85,
+        "cognitive_load": 0.83,
+        "average_time_seconds": 70,
+        "concept_tags": [
+          "transzfer",
+          "specifikusság",
+          "guggolas_sprint"
+        ]
+      }
+    },
+    {
+      "text": "Az erő-állóképesség fejlesztésekor a laktát-küszöb emelése célszerűbb, mint a maximális erő növelése.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Igaz, az erő-állóképességet célzó fejlesztésnél. A laktát-küszöb emelése lehetővé teszi, hogy az izom hosszabb ideig dolgozzon anaerob felhalmozódás nélkül — ez a labdarúgás intenzív fázisaiban relevánsabb, mint a puszta maximális erő.",
+      "options": [
+        {
+          "text": "Igaz",
+          "is_correct": true
+        },
+        {
+          "text": "Hamis",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 50,
+        "concept_tags": [
+          "ero_allokepesseg",
+          "laktatkuszob"
+        ]
+      }
+    },
+    {
+      "text": "Melyik koordinációs képesség a legelőnyösebb a szűk térben történő labdás technikák végrehajtásánál?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A kinesztetikus differenciálás képessége — az izomfeszültség és mozgásamplitúdó finomhangolásának készsége — teszi lehetővé a pontos érintéssel végzett passzokat és cselezéseket szűk térben. Ez az ún. taktilis-kinesztetikus visszacsatolás, amelyet a muscularis orsók és Golgi-ín szervek biztosítanak, és célzott technikai edzéssel fejleszthető.",
+      "options": [
+        {
+          "text": "Egyensúlyozó képesség",
+          "is_correct": false
+        },
+        {
+          "text": "Kinesztetikus differenciálás — a mozgás finomhangolásának képessége",
+          "is_correct": true
+        },
+        {
+          "text": "Reakciókészség",
+          "is_correct": false
+        },
+        {
+          "text": "Ritmizálási képesség",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.8,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 60,
+        "concept_tags": [
+          "kinesztetikus_diferencialing",
+          "koordinacio",
+          "technika"
+        ]
+      }
+    },
+    {
+      "text": "Hogyan hat a fáradás a koordinációs képességre és miért kritikus ez labdarúgóknál?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Fáradás hatására az idegi vezérlés pontossága csökken (kisebb szinkronizáció a motoros egységek között), a proprioceptív visszacsatolás lassul és a mozgásminták pontossága romlik — labdarúgóknál ez növeli a hibás passzok és sérülések kockázatát a meccs végén.",
+      "options": [
+        {
+          "text": "Fáradás nem befolyásolja a koordinációt, csak az erőt",
+          "is_correct": false
+        },
+        {
+          "text": "Fáradásban romlik az idegi pontosság és propriocepcció — nő a hiba- és sérülés kockázat",
+          "is_correct": true
+        },
+        {
+          "text": "Fáradás javítja a koordinációt az adaptáció miatt",
+          "is_correct": false
+        },
+        {
+          "text": "A koordináció kizárólag genetikai tényező, fáradástól független",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.8,
+        "average_time_seconds": 65,
+        "concept_tags": [
+          "faradas",
+          "koordinacio",
+          "szeulesmechhanizmus"
+        ]
+      }
+    },
+    {
+      "text": "A maximális erő fejlesztése mindig rontja a gyorsaságot labdarúgóknál.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Hamis. Megfelelő terhelési arányoknál a maximális erő fejlesztése javíthatja a gyorsaságot, mert az erősebb izmok az erő-sebesség görbe robbanékony tartományában is hatékonyabban működnek — feltéve, hogy az edzés nem vezet indokolatlan izomtömeg-növekedéshez.",
+      "options": [
+        {
+          "text": "Igaz",
+          "is_correct": false
+        },
+        {
+          "text": "Hamis",
+          "is_correct": true
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": [
+          "max_ero",
+          "gyorsasag",
+          "kapcsolat"
+        ]
+      }
+    }
+  ]
+}

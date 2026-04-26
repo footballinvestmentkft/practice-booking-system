@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzésmódszerek",
+  "topic": "Az edzésmódszerek alapjai",
+  "quiz_title": "AL — Edzésmódszerek - Az edzésmódszerek alapjai [HU]",
+  "description": "Az edzésmódszerek fogalma, típusai és szerepe a sportteljesítmény fejlesztésében.",
+  "questions": [
+    {
+      "text": "Mit nevezünk edzésmódszernek?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az edzésmódszer az a mód, ahogyan az edzésfeladatokat végrehajtjuk.",
+      "options": [
+        {"text": "Csak edzésidő", "is_correct": false},
+        {"text": "Az edzés végrehajtásának módja", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Versenyforma", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["edzesmodszer"]
+      }
+    },
+    {
+      "text": "Mi határozza meg az edzésmódszer kiválasztását?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az edzés célja határozza meg, hogy milyen módszert alkalmazunk.",
+      "options": [
+        {"text": "Csak időjárás", "is_correct": false},
+        {"text": "Edzés célja", "is_correct": true},
+        {"text": "Csak edző hangulata", "is_correct": false},
+        {"text": "Csak verseny", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["modszer_valasztas"]
+      }
+    },
+    {
+      "text": "Mi jellemzi az általános edzésmódszereket?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az általános módszerek több képességet fejlesztenek, nem sportágspecifikusak.",
+      "options": [
+        {"text": "Csak egy sportágra jellemzőek", "is_correct": false},
+        {"text": "Több képességet fejlesztenek", "is_correct": true},
+        {"text": "Csak versenyre használják", "is_correct": false},
+        {"text": "Csak technikát fejlesztenek", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["altalanos_modszerek"]
+      }
+    },
+    {
+      "text": "Mi jellemzi a specifikus edzésmódszereket?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A specifikus módszerek az adott sportág követelményeihez igazodnak.",
+      "options": [
+        {"text": "Minden sportágban azonosak", "is_correct": false},
+        {"text": "Sportághoz igazodnak", "is_correct": true},
+        {"text": "Csak pihenésre szolgálnak", "is_correct": false},
+        {"text": "Nem fejlesztenek teljesítményt", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["specifikus_modszerek"]
+      }
+    },
+    {
+      "text": "Az edzésmódszerek kombinálhatók.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert gyakran több módszert együtt alkalmazunk.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["kombinalas"]
+      }
+    },
+    {
+      "text": "Mi a kapcsolat a terhelés és a módszer között?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A módszer meghatározza a terhelés jellegét.",
+      "options": [
+        {"text": "Nincs kapcsolat", "is_correct": false},
+        {"text": "A módszer befolyásolja a terhelést", "is_correct": true},
+        {"text": "Csak pihenés számít", "is_correct": false},
+        {"text": "Csak intenzitás számít", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["terheles"]
+      }
+    },
+    {
+      "text": "Mi az edzésmódszerek szerepe?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Segítik a célzott képességfejlesztést.",
+      "options": [
+        {"text": "Nincs szerepük", "is_correct": false},
+        {"text": "Fejlesztési célok megvalósítása", "is_correct": true},
+        {"text": "Csak pihenést szolgálják", "is_correct": false},
+        {"text": "Csak versenyhez kellenek", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["fejlesztes"]
+      }
+    },
+    {
+      "text": "Az edzésmódszerek minden sportoló esetében azonosak.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert egyénre és sportágra szabottak.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["egyeni"]
+      }
+    },
+    {
+      "text": "Mi befolyásolja a módszerek gyakorlati alkalmazását?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A sportág sajátosságai meghatározóak.",
+      "options": [
+        {"text": "Csak edző hangulata", "is_correct": false},
+        {"text": "Sportág követelményei", "is_correct": true},
+        {"text": "Csak időjárás", "is_correct": false},
+        {"text": "Csak verseny", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["sportag"]
+      }
+    },
+    {
+      "text": "A megfelelő edzésmódszer kiválasztása javítja a teljesítményt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert célzott fejlesztést tesz lehetővé.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["teljesitmeny"]
+      }
+    }
+  ]
+}

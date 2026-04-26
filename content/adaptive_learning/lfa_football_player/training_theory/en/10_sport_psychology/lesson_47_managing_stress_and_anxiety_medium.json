@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Sport Psychology",
+  "topic": "Managing Stress and Anxiety",
+  "quiz_title": "AL — Sport Psychology - Managing Stress and Anxiety [EN]",
+  "description": "The effect of stress and anxiety on performance and the options for managing them.",
+  "questions": [
+    {
+      "text": "What is stress?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Stress is the body's response to challenges.",
+      "options": [
+        {"text": "A resting state", "is_correct": false},
+        {"text": "A response to challenges", "is_correct": true},
+        {"text": "A training programme", "is_correct": false},
+        {"text": "Peak competitive form", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["stress"]
+      }
+    },
+    {
+      "text": "Which is an example of positive stress?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Positive stress stimulates performance.",
+      "options": [
+        {"text": "Anxiety", "is_correct": false},
+        {"text": "Motivating excitement", "is_correct": true},
+        {"text": "Fear", "is_correct": false},
+        {"text": "Exhaustion", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["positive_stress"]
+      }
+    },
+    {
+      "text": "What is anxiety?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Anxiety is one form of excessive stress.",
+      "options": [
+        {"text": "Calmness", "is_correct": false},
+        {"text": "A feeling of excessive stress", "is_correct": true},
+        {"text": "Rest", "is_correct": false},
+        {"text": "Motivation", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["anxiety"]
+      }
+    },
+    {
+      "text": "How does excessive stress affect performance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "It impairs performance and increases the number of errors.",
+      "options": [
+        {"text": "It improves it", "is_correct": false},
+        {"text": "It impairs it", "is_correct": true},
+        {"text": "It has no effect", "is_correct": false},
+        {"text": "It maximises it", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["stress_effect"]
+      }
+    },
+    {
+      "text": "An optimal arousal level supports performance.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because adequate activation is required for peak performance.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["arousal_level"]
+      }
+    },
+    {
+      "text": "What helps manage stress?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Breathing exercises reduce stress.",
+      "options": [
+        {"text": "Increasing stress", "is_correct": false},
+        {"text": "Breathing exercises", "is_correct": true},
+        {"text": "Skipping rest", "is_correct": false},
+        {"text": "Competing", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["breathing"]
+      }
+    },
+    {
+      "text": "What is the goal of relaxation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Reducing tension and achieving a calm state.",
+      "options": [
+        {"text": "Increasing tension", "is_correct": false},
+        {"text": "Reducing tension", "is_correct": true},
+        {"text": "Reducing performance", "is_correct": false},
+        {"text": "Avoiding competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["relaxation"]
+      }
+    },
+    {
+      "text": "Stress always has a negative effect.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because it can also have a positive, stimulating effect.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["stress"]
+      }
+    },
+    {
+      "text": "What helps manage competitive situations?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Mental preparation increases self-control.",
+      "options": [
+        {"text": "Being unprepared", "is_correct": false},
+        {"text": "Mental preparation", "is_correct": true},
+        {"text": "Lack of rest", "is_correct": false},
+        {"text": "Increasing stress", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["mental_preparation"]
+      }
+    },
+    {
+      "text": "Self-control helps manage stress.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it enables conscious regulation.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["self_control"]
+      }
+    }
+  ]
+}

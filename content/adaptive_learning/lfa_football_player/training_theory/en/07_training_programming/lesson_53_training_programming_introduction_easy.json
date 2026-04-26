@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Training Programming",
+  "topic": "Training Programming — Introduction",
+  "quiz_title": "AL — Training Programming - Introduction [EN]",
+  "description": "Overview of the fundamental concepts of training programming: training planning, periodisation, cycles, load regulation, and feedback.",
+  "questions": [
+    {
+      "text": "What is training programming?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Training programming is the deliberate, pre-planned organisation of training work, defining the content, volume, and temporal distribution of the load.",
+      "options": [
+        {"text": "The spontaneous execution of training", "is_correct": false},
+        {"text": "The deliberate, pre-planned organisation of training work", "is_correct": true},
+        {"text": "Programming gym equipment", "is_correct": false},
+        {"text": "Compiling the competition calendar", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["training_programming", "definition"]
+      }
+    },
+    {
+      "text": "Periodisation refers to the temporal distribution of training work.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True. Periodisation is the method of dividing the training season into different phases (macrocycle, mesocycle, microcycle) in order to systematically achieve peak performance.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["periodisation"]
+      }
+    },
+    {
+      "text": "What is a microcycle in training programming?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A microcycle is the shortest repeating unit of the training plan, typically representing one week of training work.",
+      "options": [
+        {"text": "The training plan for the entire season", "is_correct": false},
+        {"text": "The shortest, typically weekly unit of the training plan", "is_correct": true},
+        {"text": "A one-month training block", "is_correct": false},
+        {"text": "A single training session", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["microcycle"]
+      }
+    },
+    {
+      "text": "What is a macrocycle?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A macrocycle is the largest unit of periodisation, typically encompassing a complete preparation period or season.",
+      "options": [
+        {"text": "A single training week", "is_correct": false},
+        {"text": "A complete preparation period or season", "is_correct": true},
+        {"text": "Two consecutive training sessions", "is_correct": false},
+        {"text": "A one-month training block", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["macrocycle"]
+      }
+    },
+    {
+      "text": "Load regulation is an essential element of training programming.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True. The deliberate increase, decrease, and variation of load (undulating load) ensures continuous development and prevents overtraining.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["load_regulation"]
+      }
+    },
+    {
+      "text": "Why is feedback important in training programming?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Feedback (training diaries, tests, measurements) allows the plan to be continuously modified in accordance with the athlete's current condition.",
+      "options": [
+        {"text": "It is used only to record competition results", "is_correct": false},
+        {"text": "It allows continuous modification of the plan based on current condition", "is_correct": true},
+        {"text": "It determines the length of the training session", "is_correct": false},
+        {"text": "It automatically carries out training sessions", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["feedback"]
+      }
+    },
+    {
+      "text": "What is the purpose of undulating load in a training cycle?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Undulating (variable) load alternately increases and decreases training stress, thereby ensuring regeneration and supercompensation for continuous development.",
+      "options": [
+        {"text": "To maximise the athlete's stress", "is_correct": false},
+        {"text": "To ensure regeneration and supercompensation during development", "is_correct": true},
+        {"text": "To reduce training workload", "is_correct": false},
+        {"text": "To eliminate rest days", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 38,
+        "concept_tags": ["undulating_load", "supercompensation"]
+      }
+    },
+    {
+      "text": "A training programme contains only physical load.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False. A training programme encompasses not only physical load but also recovery periods, mental preparation, and tactical and technical elements.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["training_programme_content"]
+      }
+    },
+    {
+      "text": "What is the main task of the preparatory period in season planning?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The purpose of the preparatory period is to establish the general and specific physical foundations before the competitive season, when load is high and the number of competitions is low.",
+      "options": [
+        {"text": "Reaching the competitive peak", "is_correct": false},
+        {"text": "Establishing the general and specific physical foundations", "is_correct": true},
+        {"text": "Maximising rest", "is_correct": false},
+        {"text": "Finalising the tactical system", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 38,
+        "concept_tags": ["preparatory_period"]
+      }
+    },
+    {
+      "text": "A training programme must be planned identically for every athlete.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False. The training programme must be adapted to individual characteristics, fitness level, age, and goals — individualisation is a fundamental principle of training programming.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["individualisation"]
+      }
+    }
+  ]
+}

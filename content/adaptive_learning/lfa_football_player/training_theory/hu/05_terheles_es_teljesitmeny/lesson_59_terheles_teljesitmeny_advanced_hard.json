@@ -1,0 +1,328 @@
+{
+  "schema_version": "1.0",
+  "specializations": [
+    "LFA_FOOTBALL_PLAYER"
+  ],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "module": "Terhelés és teljesítmény",
+  "topic": "Terhelés és teljesítmény — Haladó",
+  "quiz_title": "AL — Terhelés és teljesítmény - Haladó [HU]",
+  "description": "A terhelés és teljesítmény mélyebb összefüggéseinek elemzése: energiarendszerek kölcsönhatása, laktát-dinamika, terhelési paraméterek optimalizálása és teljesítménymérési módszerek kritikus értékelése.",
+  "questions": [
+    {
+      "text": "Hogyan változik az energiarendszerek aránya egy labdarúgó-meccs során?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Labdarúgásban az aerob rendszer fedezi az energia kb. 85-90%-át (tartós futás, aktív pihenés). Az anaerob alaktacid (ATP-CP) rendszer a robbanékony sprinteknél, a laktacid rendszer az 10-30 másodperces intenzív fázisoknál dominál — mindhárom rendszer szimultán és egymást kiegészítve működik.",
+      "options": [
+        {
+          "text": "Kizárólag az aerob rendszer működik meccs közben",
+          "is_correct": false
+        },
+        {
+          "text": "Az aerob rendszer adja az energia ~85-90%-át, a sprinteknél ATP-CP, intenzív fázisoknál laktacid rendszer egészíti ki",
+          "is_correct": true
+        },
+        {
+          "text": "A laktacid rendszer fedezi az energia nagy részét",
+          "is_correct": false
+        },
+        {
+          "text": "Az ATP-CP rendszer az egyetlen energiaforrás sprinteknél",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 65,
+        "concept_tags": [
+          "energiarendszerek",
+          "labdarugas",
+          "aerob_anaerob"
+        ]
+      }
+    },
+    {
+      "text": "Mi a laktát-küszöb pontos fiziológiai meghatározása és miért releváns labdarúgóknál?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A laktát-küszöb az az intenzitás, amelynél a vér laktátszintje exponenciálisan emelkedni kezd (általában 4 mmol/L, de egyénenként változó). Labdarúgóknál a magasabb laktát-küszöb lehetővé teszi, hogy az ismétlődő sprintek utáni intenzív szakaszokat is laktátfelhalmozódás nélkül teljesítsék.",
+      "options": [
+        {
+          "text": "Az az intenzitás, ahol a sportoló elfárad",
+          "is_correct": false
+        },
+        {
+          "text": "Az intenzitás, ahol a vér laktátszintje exponenciálisan emelkedni kezd — magasabb küszöb = több intenzív terhelés bírása",
+          "is_correct": true
+        },
+        {
+          "text": "A maximális pulzusszám 50%-a",
+          "is_correct": false
+        },
+        {
+          "text": "Az aerob rendszer leállásának pontja",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.8,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": [
+          "laktatkuszob",
+          "VO2max",
+          "labdarugas"
+        ]
+      }
+    },
+    {
+      "text": "A VO2max önmagában teljes mértékben meghatározza a labdarúgó állóképességi teljesítményét.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Hamis. A VO2max egy felső korlátot jelöl, de az állóképességi teljesítményt a laktát-küszöb, a futásgazdaságosság (oxigénigény adott sebességnél) és a taktikai döntéshozatal is meghatározza. Két azonos VO2max-szal rendelkező játékos teljesítménye eltérhet.",
+      "options": [
+        {
+          "text": "Igaz",
+          "is_correct": false
+        },
+        {
+          "text": "Hamis",
+          "is_correct": true
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": [
+          "VO2max",
+          "allokepesseg",
+          "komplexitas"
+        ]
+      }
+    },
+    {
+      "text": "Mi az RPE (Rate of Perceived Exertion) skála korlátja terhelés-monitorozásban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Az RPE szubjektív önértékelésen alapul, ezért érzékenyen függ a sportoló motivációjától, pszichológiai állapotától és tapasztalatától. Kezdő sportolók alábecsülhetik a terhelést, eufóriás állapotban a valós élettani stressz eltér az érzett terheléstől.",
+      "options": [
+        {
+          "text": "Az RPE pontatlan, mert nem méri a pulzust",
+          "is_correct": false
+        },
+        {
+          "text": "Szubjektív értékelés — motiváció, pszichológiai állapot és tapasztalat torzíthatja a valós élettani terheléstől",
+          "is_correct": true
+        },
+        {
+          "text": "Az RPE nem alkalmazható labdarúgóknál",
+          "is_correct": false
+        },
+        {
+          "text": "Az RPE mindig felülbecsüli a tényleges terhelést",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.8,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 60,
+        "concept_tags": [
+          "RPE",
+          "terheles_monitorozas",
+          "szubjektivitas"
+        ]
+      }
+    },
+    {
+      "text": "Melyik teljesítményteszt alkalmasabb labdarúgók aerob kapacitásának mérésére és miért?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A Yo-Yo Intermittent Recovery Test (Yo-Yo IR1/IR2) jobban modellezi a labdarúgás intervallumos terhelési profilját (sprintek + aktív pihenők), mint az egyenletes tempójú Cooper-teszt, amely főként a folyamatos aerob kapacitást vizsgálja.",
+      "options": [
+        {
+          "text": "Cooper 12 perces futás, mert egyszerűbb elvégezni",
+          "is_correct": false
+        },
+        {
+          "text": "Yo-Yo Intermittent Recovery Test, mert a labdarúgás intervallumos terhelési profilját modellezi",
+          "is_correct": true
+        },
+        {
+          "text": "Maximális erőteszt (1RM guggolás)",
+          "is_correct": false
+        },
+        {
+          "text": "Mindkét teszt egyformán alkalmas",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 60,
+        "concept_tags": [
+          "yoyo_teszt",
+          "teljesitmenymeres",
+          "labdarugas_specifikus"
+        ]
+      }
+    },
+    {
+      "text": "Hogyan befolyásolja a hőmérséklet és a páratartalom a sportteljesítményt és a terhelés-érzékelést?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Magas hőmérséklet és páratartalom esetén a termoregulációs véráramlás verseng a dolgozó izmok véráramlásával, növeli a szívfrekvenciát azonos teljesítményen, gyorsítja a glikogén-felhasználást és csökkenti a kognitív teljesítményt — mindez azonos RPE-nél alacsonyabb effektív teljesítményt eredményez.",
+      "options": [
+        {
+          "text": "A hőmérséklet nem befolyásolja a sportteljesítményt",
+          "is_correct": false
+        },
+        {
+          "text": "Hő + páratartalom: magasabb pulzus, gyorsabb glikogén-fogyás, csökkent kognitív teljesítmény azonos RPE-nél",
+          "is_correct": true
+        },
+        {
+          "text": "A magas hőmérséklet mindig javítja a teljesítményt",
+          "is_correct": false
+        },
+        {
+          "text": "Csak az alacsony hőmérséklet befolyásolja a sportteljesítményt",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.8,
+        "average_time_seconds": 65,
+        "concept_tags": [
+          "homerseklet",
+          "teljesitmeny",
+          "termoregulaciio"
+        ]
+      }
+    },
+    {
+      "text": "A HRV (Heart Rate Variability) magasabb értéke általában jobb regenerációs állapotot jelez.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Igaz. A magasabb HRV a paraszimpatikus idegrendszer dominanciáját jelzi (nyugalmi állapot, hatékony regeneráció), míg az alacsony HRV szimpatikus dominanciát, stresszt, fáradtságot vagy túledzést jelöl. A HRV reggeli mérése (ortosztatikus teszt vagy 5 perces fekvő mérés) a regenerációs állapot objektív, non-invazív biomarkere a sportolók monitorozásában.",
+      "options": [
+        {
+          "text": "Igaz",
+          "is_correct": true
+        },
+        {
+          "text": "Hamis",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": [
+          "HRV",
+          "regeneracio_monitorozas"
+        ]
+      }
+    },
+    {
+      "text": "Mi a teljesítménymérés legkritikusabb módszertani követelménye?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A standardizálás (azonos körülmények: napszak, táplálkozás, pihenőidő, előző nap terhelése, hőmérséklet) a legkritikusabb módszertani követelmény. Enélkül a mért értékek nem hasonlíthatók össze időpontok között — a külső változók elfedhetik a valós teljesítményváltozást, és az edző rossz következtetéseket vonhat le az edzéshatékonyságra nézve.",
+      "options": [
+        {
+          "text": "Minél drágább a mérőeszköz, annál megbízhatóbb az eredmény",
+          "is_correct": false
+        },
+        {
+          "text": "Standardizált körülmények biztosítása (napszak, táplálkozás, pihenő, hőmérséklet)",
+          "is_correct": true
+        },
+        {
+          "text": "A mérést mindig verseny közben kell elvégezni",
+          "is_correct": false
+        },
+        {
+          "text": "Több sportoló egyidejű mérése",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 58,
+        "concept_tags": [
+          "teljesitmenymeres_metodologia",
+          "standardizalas"
+        ]
+      }
+    },
+    {
+      "text": "Miért nem lineáris a terhelés és a teljesítmény növekedésének kapcsolata?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A terhelés-teljesítmény kapcsolat nem lineáris, mert: (1) a biológiai adaptáció csökkenő megtérüléssel működik (minél edzettebb a sportoló, annál kevesebbet nyer azonos terhelésből), (2) a túlzott terhelés teljesítménycsökkentő, (3) az egyéni biológiai plafon genetikailag korlátozott.",
+      "options": [
+        {
+          "text": "Mert az edzőteremben nem lehet pontos méréseket végezni",
+          "is_correct": false
+        },
+        {
+          "text": "Csökkenő megtérülés, túlterhelésnél visszaesés, genetikai plafon — mindhárom tényező miatt",
+          "is_correct": true
+        },
+        {
+          "text": "A kapcsolat lineáris, csak rosszul mérjük",
+          "is_correct": false
+        },
+        {
+          "text": "A táplálkozás teszi nem-lineárissá",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.83,
+        "cognitive_load": 0.82,
+        "average_time_seconds": 70,
+        "concept_tags": [
+          "terheles_teljesitmeny_nem_linearis",
+          "csokkeno_megteres"
+        ]
+      }
+    },
+    {
+      "text": "A kreatinin-foszfát (CP) raktár egy 10 másodperces maximális sprint alatt teljes mértékben kiürülhet.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Igaz. Maximális intenzitású erőfeszítésnél a CP-raktár kb. 6-10 másodperc alatt nagyrészt kiürül. Ez magyarázza, miért csökken a sprint teljesítménye 6-8 másodperc után, és miért szükséges 3-5 perces teljes pihenő a maximális CP-újratöltéshez.",
+      "options": [
+        {
+          "text": "Igaz",
+          "is_correct": true
+        },
+        {
+          "text": "Hamis",
+          "is_correct": false
+        }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": [
+          "kreatin_foszfat",
+          "ATP_CP",
+          "sprint_energia"
+        ]
+      }
+    }
+  ]
+}

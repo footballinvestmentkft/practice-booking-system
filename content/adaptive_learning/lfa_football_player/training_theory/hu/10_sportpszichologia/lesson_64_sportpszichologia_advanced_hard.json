@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "module": "Sportpszichológia",
+  "topic": "Sportpszichológia — Haladó",
+  "quiz_title": "AL — Sportpszichológia - Haladó [HU]",
+  "description": "A sportpszichológia mélyebb összefüggéseinek elemzése: flow-állapot, choking mechanizmus, csapatkohézió dinamikája, mentális toughness mérése és a self-determination theory alkalmazása sportban.",
+  "questions": [
+    {
+      "text": "Mi a 'flow' állapot Csikszentmihalyi elméletében és mikor lép fel legvalószínűbben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A flow az optimális teljesítmény pszichológiai állapota: teljes bevonódás, belső motiváció, az idő érzékelésének elvesztése. Akkor lép fel a legvalószínűbben, ha a feladat nehézsége és a sportoló képessége egyensúlyban van — ha a kihívás meghaladja a képességet, szorongás; ha elmarad, unalom alakul ki.",
+      "options": [
+        {"text": "Kizárólag könnyű feladatoknál, amikor nincs stressz", "is_correct": false},
+        {"text": "Amikor a feladat nehézsége és a sportoló képessége egyensúlyban van", "is_correct": true},
+        {"text": "Kizárólag csapatjátékban, egyéni sportban nem fordul elő", "is_correct": false},
+        {"text": "A flow-t kizárólag genetikai tényezők határozzák meg", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 60,
+        "concept_tags": ["flow", "csikszentmihalyi", "optimalis_teljesitmeny"]
+      }
+    },
+    {
+      "text": "Mi a 'choking under pressure' (nyomás alatti összeomlás) pszichológiai mechanizmusa?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A choking legelfogadottabb magyarázata az explicit monitoring hipotézis: nyomás alatt a sportoló tudatosan figyeli az automatizált mozgásokat (amelyek normálisan tudatosság nélkül futnak le), ami megzavarja az automatizált végrehajtást — hasonlóan ahhoz, mint amikor egy profijáros elkezd tudatosan gondolni a lépéseire.",
+      "options": [
+        {"text": "A sportoló fizikailag elfárad a verseny döntő pillanatában", "is_correct": false},
+        {"text": "Explicit monitoring: a sportoló tudatosan figyeli az automatizált mozgásokat, megzavarva a végrehajtást", "is_correct": true},
+        {"text": "A choking kizárólag gyenge sportolóknál fordul elő", "is_correct": false},
+        {"text": "A nyomás csökkenti az izomerőt közvetlenül", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["choking", "explicit_monitoring", "nyomas"]
+      }
+    },
+    {
+      "text": "A Self-Determination Theory (SDT) szerint a külső jutalmak mindig növelik a sportolók motivációját.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Hamis. Az SDT szerint a külső jutalmak (kontrollálónak érzékelt) csökkenthetik a belső motivációt (crowding-out effect). A kompetencia, autonómia és kapcsolódás alapszükségleteinek kielégítése fenntartható belső motivációhoz vezet — a jutalmak hatása azon múlik, informáló vagy kontrolláló üzenetként értelmezi-e a sportoló.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 50,
+        "concept_tags": ["SDT", "kulso_jutalom", "belso_motivacio", "crowding_out"]
+      }
+    },
+    {
+      "text": "Mi a csapatkohézió két dimenziója és hogyan különböznek a sportteljesítmény szempontjából?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A csapatkohéziónak két fő dimenziója van: (1) feladatkohézió — a közös célért való együttdolgozás mértéke, (2) szociális kohézió — a csapattagok személyes kapcsolatainak szorossága. A kutatások szerint a feladatkohézió erősebben korrelál a csapatteljesítménnyel, mint a szociális kohézió — a 'barátok csapata' nem mindig a leghatékonyabb.",
+      "options": [
+        {"text": "A kohéziónak nincs dimenziója, egységes fogalom", "is_correct": false},
+        {"text": "Feladatkohézió (közös cél) és szociális kohézió (személyes kapcsolat) — a feladatkohézió erősebben hat a teljesítményre", "is_correct": true},
+        {"text": "A szociális kohézió mindig erősebbem hat a teljesítményre", "is_correct": false},
+        {"text": "A kohézió kizárólag az edző által befolyásolható", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": ["csapatkohezio", "feladat_szocialis", "csapatdinamika"]
+      }
+    },
+    {
+      "text": "Melyik mentális toughness (mentális erő) dimenzió a leginkább edzésre alkalmas?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A 4C-modell (Control, Commitment, Challenge, Confidence) szerint a 'Commitment' (elkötelezettség) a leginkább fejleszthető dimenzió edzéssel: a célkitűzés, a tervek betartása és a felelősség-vállalás strukturált fejlesztéssel javítható — ellentétben a 'Control' dimenziójának egyes aspektusaival, amelyek temperamentumfüggők.",
+      "options": [
+        {"text": "A Confidence (önbizalom) nem fejleszthető", "is_correct": false},
+        {"text": "A Commitment (elkötelezettség) — célkitűzés, tervbetartás és felelősségvállalás strukturált fejlesztéssel javítható", "is_correct": true},
+        {"text": "A mentális toughness egyáltalán nem fejleszthető", "is_correct": false},
+        {"text": "Kizárólag a Challenge dimenzió fejleszthető", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.83,
+        "cognitive_load": 0.82,
+        "average_time_seconds": 65,
+        "concept_tags": ["mentalis_toughness", "4C_modell", "commitment"]
+      }
+    },
+    {
+      "text": "Mi a imagery (mentális képalkotás) hatásmechanizmusa a sportteljesítményre?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A mentális képalkotás (imagery) az agy motoros kérgét és cerebellumát aktiválja — szinte azonos idegrendszeri mintázatot vált ki, mint a valós mozgás végrehajtása. Ez erősíti a motoros mintákat, javítja a taktikai döntéshozatalt és csökkenti a verseny-szorongást.",
+      "options": [
+        {"text": "Az imagery kizárólag relaxációs célokat szolgál", "is_correct": false},
+        {"text": "Aktiválja a motoros kérget és cerebellumot — megerősíti a motoros mintákat, javítja taktikai döntéshozatalt", "is_correct": true},
+        {"text": "Az imagery hatástalan, mert nem jár fizikai mozgással", "is_correct": false},
+        {"text": "Az imagery kizárólag sérülés utáni rehabilitációban alkalmazható", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["imagery", "mentalis_kepalkotes", "motoros_korts"]
+      }
+    },
+    {
+      "text": "A pre-performance routine (verseny előtti rituálé) azért hatékony, mert babonás hite csökkenti a szorongást.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Hamis. A pre-performance routine hatékonysága nem babonán alapul, hanem pszichológiai mechanizmusokon: (1) attentionfókuszálás a releváns ingerekre, (2) arousal-szabályozás, (3) automatizálás — a rutinok kivitelezése csökkenti a tudatos feldolgozás terhelését és elősegíti az optimális aktivációs szint elérését.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["pre_performance_routine", "arousal_szabalyozas"]
+      }
+    },
+    {
+      "text": "Mi a 'social loafing' (szociális henyélés) és hogyan akadályozható meg labdarúgócsapatban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A social loafing az az egyéni teljesítménycsökkentés, amely akkor lép fel, amikor a csapattag úgy érzi, hogy egyéni hozzájárulása nem mérhető vagy nem számít. Labdarúgócsapatban mérsékelhető egyéni teljesítmény-elvárások tisztázásával, pozícióspecifikus metrikák nyomon követésével és a csapattagok egyéni felelősségének hangsúlyozásával.",
+      "options": [
+        {"text": "Sportolók lassú mozgása elfáradás miatt", "is_correct": false},
+        {"text": "Csoportmunkában csökkentett egyéni erőfeszítés — mérsékelhető egyéni mérőszámokkal és egyértelmű felelősség-meghatározással", "is_correct": true},
+        {"text": "A csapat szociális kohéziójának teljes hiánya", "is_correct": false},
+        {"text": "Az edző jelenléte mindig megakadályozza a social loafingot", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 60,
+        "concept_tags": ["social_loafing", "csapatdinamika", "egyeni_felelosseg"]
+      }
+    },
+    {
+      "text": "Hogyan alkalmazható a kognitív újraértelmezés (cognitive reappraisal) a verseny-szorongás kezelésére?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A kognitív újraértelmezés a szorongás fiziológiai jeleit (szívdobogás, izzadás) nem veszélyként, hanem felkészültség jeleként értelmezi át ('I am excited' vs 'I am anxious'). Kutatások szerint ez hatékonyabb, mint a megnyugvás megkísérlése, mert a fiziológiai arousal csökkentése nehéz — az értelmezés megváltoztatása viszont elérhető.",
+      "options": [
+        {"text": "A szorongásos tünetek elnyomása mély légzéssel", "is_correct": false},
+        {"text": "A szorongás fiziológiai jeleit felkészültség jeleként értelmezni át — hatékonyabb, mint a megnyugvást erőltetni", "is_correct": true},
+        {"text": "A verseny előtti teljes relaxáció elérése", "is_correct": false},
+        {"text": "A versenyhelyzetből való visszalépés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["kognitiv_ujraertelmezses", "szorongas_kezeles", "arousal"]
+      }
+    },
+    {
+      "text": "A csapat méretének növekedésével automatikusan javul a csapatteljesítmény.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Hamis. A Ringelmann-effektus szerint a csapat méretének növekedésével az egyéni teljesítmény hozzájárulása csökken (social loafing növekszik). Emellett a kommunikáció és koordináció komplexitása nő — a méret és teljesítmény kapcsolata fordított U-alakú: egy optimális csapatméret létezik.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["Ringelmann_effektus", "csapatmeret", "teljesitmeny"]
+      }
+    }
+  ]
+}

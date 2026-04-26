@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzés és sport",
+  "topic": "Sportágspecifikus edzés",
+  "quiz_title": "AL — Edzés és sport - Sportágspecifikus edzés [HU]",
+  "description": "A sportágspecifikus edzés elve, célja és alkalmazása a teljesítményfejlesztésben.",
+  "questions": [
+    {
+      "text": "Mit jelent a sportágspecifikus edzés?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A sportágspecifikus edzés az adott sportág követelményeihez igazított edzés.",
+      "options": [
+        {"text": "Általános edzés minden sportágnak", "is_correct": false},
+        {"text": "Sportághoz igazított edzés", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["sportag_specifikus_edzes"]
+      }
+    },
+    {
+      "text": "Melyik elv érvényesül leginkább a sportágspecifikus edzésben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A specifikusság elve meghatározza az edzés tartalmát.",
+      "options": [
+        {"text": "Fokozatosság", "is_correct": false},
+        {"text": "Specifikusság", "is_correct": true},
+        {"text": "Pihenés", "is_correct": false},
+        {"text": "Variabilitás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["specifikussag"]
+      }
+    },
+    {
+      "text": "Mit kell figyelembe venni sportágspecifikus edzésnél?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A sportág követelményei határozzák meg az edzés tartalmát.",
+      "options": [
+        {"text": "Csak életkort", "is_correct": false},
+        {"text": "Sportág követelményeit", "is_correct": true},
+        {"text": "Csak időjárást", "is_correct": false},
+        {"text": "Csak edző véleményét", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["sportag"]
+      }
+    },
+    {
+      "text": "A sportágspecifikus edzés minden sportágban azonos.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert minden sportág különböző követelményeket támaszt.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["sportag_specifikus_edzes"]
+      }
+    },
+    {
+      "text": "Mi a mozgásminták szerepe?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A mozgásminták segítik a hatékony és automatizált végrehajtást.",
+      "options": [
+        {"text": "Nincs szerepük", "is_correct": false},
+        {"text": "Mozgás végrehajtásának hatékonysága", "is_correct": true},
+        {"text": "Csak pihenéshez kellenek", "is_correct": false},
+        {"text": "Csak versenyen fontosak", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["mozgasmintak"]
+      }
+    },
+    {
+      "text": "Mit fejleszt a technikai edzés?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A technikai edzés a mozgás pontos végrehajtását fejleszti.",
+      "options": [
+        {"text": "Csak erőt", "is_correct": false},
+        {"text": "Mozgás kivitelezését", "is_correct": true},
+        {"text": "Csak állóképességet", "is_correct": false},
+        {"text": "Csak gyorsaságot", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["technika"]
+      }
+    },
+    {
+      "text": "Mi a taktikai elemek szerepe?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A taktikai elemek a döntéshozatalt és a játékhelyzetek kezelését segítik.",
+      "options": [
+        {"text": "Mozgás végrehajtása", "is_correct": false},
+        {"text": "Döntéshozatal segítése", "is_correct": true},
+        {"text": "Csak erőfejlesztés", "is_correct": false},
+        {"text": "Csak pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["taktika"]
+      }
+    },
+    {
+      "text": "A sportágspecifikus edzés figyelembe veszi az adott sportág mozgásait.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert a mozgásminták kulcsfontosságúak.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["sportag_specifikus_edzes"]
+      }
+    },
+    {
+      "text": "Mi a különbség az általános és specifikus edzés között?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az általános edzés alapokat fejleszt, a specifikus a sportágra fókuszál.",
+      "options": [
+        {"text": "Nincs különbség", "is_correct": false},
+        {"text": "Általános vs. sportágra szabott fejlesztés", "is_correct": true},
+        {"text": "Csak intenzitás különbözik", "is_correct": false},
+        {"text": "Csak időtartam különbözik", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["altalanos_vs_specifikus"]
+      }
+    },
+    {
+      "text": "A sportágspecifikus edzés közvetlenül javítja a versenyteljesítményt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert a sportág követelményeire épül.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 25,
+        "concept_tags": ["sportag_specifikus_edzes"]
+      }
+    }
+  ]
+}

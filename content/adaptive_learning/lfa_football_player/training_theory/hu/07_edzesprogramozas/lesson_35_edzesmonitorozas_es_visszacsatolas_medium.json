@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzésprogramozás",
+  "topic": "Edzésmonitorozás és visszacsatolás",
+  "quiz_title": "AL — Edzésprogramozás - Edzésmonitorozás és visszacsatolás [HU]",
+  "description": "Az edzésmonitorozás eszközei, céljai és a visszacsatolás szerepe a teljesítményfejlesztésben.",
+  "questions": [
+    {
+      "text": "Mit jelent az edzésmonitorozás?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az edzésmonitorozás a sportoló állapotának és teljesítményének folyamatos nyomon követése.",
+      "options": [
+        {"text": "Edzés elhagyása", "is_correct": false},
+        {"text": "Teljesítmény folyamatos nyomon követése", "is_correct": true},
+        {"text": "Csak versenyzés", "is_correct": false},
+        {"text": "Pihenés biztosítása", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["monitorozas"]
+      }
+    },
+    {
+      "text": "Mi az edzésmonitorozás fő célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A fejlődés optimalizálása és a túlterhelés elkerülése.",
+      "options": [
+        {"text": "Edzés csökkentése", "is_correct": false},
+        {"text": "Fejlődés optimalizálása", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Verseny növelése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["monitorozas"]
+      }
+    },
+    {
+      "text": "Melyik objektív mérési módszer?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A pulzusmérés objektív, számszerű adatot ad.",
+      "options": [
+        {"text": "Fáradtság érzete", "is_correct": false},
+        {"text": "Pulzusmérés", "is_correct": true},
+        {"text": "Motiváció", "is_correct": false},
+        {"text": "Hangulat", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["objektiv"]
+      }
+    },
+    {
+      "text": "Melyik tartozik a szubjektív visszajelzések közé?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A sportoló saját érzései szubjektív visszajelzések.",
+      "options": [
+        {"text": "Pulzus", "is_correct": false},
+        {"text": "Fáradtság érzete", "is_correct": true},
+        {"text": "Sebesség", "is_correct": false},
+        {"text": "Időeredmény", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["szubjektiv"]
+      }
+    },
+    {
+      "text": "Az edzésnapló segíti a fejlődés követését.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert rendszerezi az adatokat és visszakereshetővé teszi.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["edzesnaplo"]
+      }
+    },
+    {
+      "text": "Mi a visszacsatolás szerepe?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A visszacsatolás lehetővé teszi az edzés módosítását.",
+      "options": [
+        {"text": "Edzés megszüntetése", "is_correct": false},
+        {"text": "Edzés finomhangolása", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Verseny növelése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["visszacsatolas"]
+      }
+    },
+    {
+      "text": "A monitorozás segíthet a túlterhelés felismerésében.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert jelzi a szervezet túlzott terhelését.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["tulterheles"]
+      }
+    },
+    {
+      "text": "Mi történik a visszajelzések alapján?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az edzésprogram módosítható.",
+      "options": [
+        {"text": "Nincs változás", "is_correct": false},
+        {"text": "Edzés módosítása", "is_correct": true},
+        {"text": "Edzés megszűnik", "is_correct": false},
+        {"text": "Csak pihenés történik", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["edzesmodositas"]
+      }
+    },
+    {
+      "text": "Miért fontos az adatok elemzése?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az adatok segítenek a trendek felismerésében.",
+      "options": [
+        {"text": "Nincs szerepe", "is_correct": false},
+        {"text": "Trendek felismerése", "is_correct": true},
+        {"text": "Csak tárolás miatt", "is_correct": false},
+        {"text": "Csak verseny miatt", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["elemzes"]
+      }
+    },
+    {
+      "text": "A monitorozás segíti a hosszú távú fejlődést.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert folyamatos visszajelzést biztosít.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["fejlodes"]
+      }
+    }
+  ]
+}

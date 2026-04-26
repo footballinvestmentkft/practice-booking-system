@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Motoros képességek",
+  "topic": "A motoros képességek kapcsolata és komplex fejlesztése",
+  "quiz_title": "AL — Motoros képességek - Kapcsolatok és komplex fejlesztés [HU]",
+  "description": "A motoros képességek közötti összefüggések és integrált fejlesztésük az edzéselméletben.",
+  "questions": [
+    {
+      "text": "Mi jellemzi a motoros képességek kapcsolatát?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A motoros képességek kölcsönhatásban működnek, nem különállóan.",
+      "options": [
+        {"text": "Teljesen függetlenek", "is_correct": false},
+        {"text": "Kölcsönhatásban állnak", "is_correct": true},
+        {"text": "Egymást kizárják", "is_correct": false},
+        {"text": "Nem befolyásolják egymást", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["kapcsolat"]
+      }
+    },
+    {
+      "text": "Milyen kapcsolat van az erő és gyorsaság között?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A kettő együtt alkotja a robbanékonyságot (gyorsasági erő).",
+      "options": [
+        {"text": "Nincs kapcsolat", "is_correct": false},
+        {"text": "Robbanékonyságban kapcsolódnak", "is_correct": true},
+        {"text": "Egymást kizárják", "is_correct": false},
+        {"text": "Csak állóképességhez kapcsolódnak", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["gyorsasagi_ero"]
+      }
+    },
+    {
+      "text": "A koordináció minden motoros képesség működésében szerepet játszik.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert a mozgások összehangolását biztosítja.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["koordinacio"]
+      }
+    },
+    {
+      "text": "Mi a komplex mozgások egyik jellemzője?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Több képesség együttes működésén alapulnak.",
+      "options": [
+        {"text": "Csak egy képességet igényelnek", "is_correct": false},
+        {"text": "Több képesség együttműködése", "is_correct": true},
+        {"text": "Nem igényelnek koordinációt", "is_correct": false},
+        {"text": "Csak állóképességet igényelnek", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["komplex_mozgas"]
+      }
+    },
+    {
+      "text": "Miért fontos a képességek együttes fejlesztése?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Mert a sportteljesítmény több képesség kombinációja.",
+      "options": [
+        {"text": "Nem fontos", "is_correct": false},
+        {"text": "A teljesítmény komplex jellegű", "is_correct": true},
+        {"text": "Csak időt takarít meg", "is_correct": false},
+        {"text": "Csak kezdőknek szükséges", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["komplex_fejlesztes"]
+      }
+    },
+    {
+      "text": "Mi jellemzi a sportágspecifikus fejlesztést?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A képességek fejlesztése a sportág igényeihez igazodik.",
+      "options": [
+        {"text": "Minden sportágban azonos", "is_correct": false},
+        {"text": "Sportághoz igazított", "is_correct": true},
+        {"text": "Csak erőfejlesztés", "is_correct": false},
+        {"text": "Csak állóképesség", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["specifikussag"]
+      }
+    },
+    {
+      "text": "A motoros képességek külön fejlesztése mindig hatékonyabb, mint az integrált.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert a komplex fejlesztés gyakran hatékonyabb.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.52,
+        "average_time_seconds": 25,
+        "concept_tags": ["komplex_fejlesztes"]
+      }
+    },
+    {
+      "text": "Mi a teljesítményprofil célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A sportoló erősségeinek és fejlesztendő területeinek meghatározása.",
+      "options": [
+        {"text": "Edzés megszüntetése", "is_correct": false},
+        {"text": "Képességek feltérképezése", "is_correct": true},
+        {"text": "Versenyzés", "is_correct": false},
+        {"text": "Pihenés növelése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["teljesitmenyprofil"]
+      }
+    },
+    {
+      "text": "Melyik kapcsolat igaz az állóképesség és erő között?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az állóképességi erő a kettő kombinációja.",
+      "options": [
+        {"text": "Nincs kapcsolat", "is_correct": false},
+        {"text": "Összekapcsolódnak", "is_correct": true},
+        {"text": "Egymást kizárják", "is_correct": false},
+        {"text": "Csak gyorsasággal kapcsolódik", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["allokepessegi_ero"]
+      }
+    },
+    {
+      "text": "A komplex edzés segíti a valós sporthelyzetekhez való alkalmazkodást.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert a sporthelyzetek több képességet igényelnek egyszerre.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["komplex_fejlesztes"]
+      }
+    }
+  ]
+}

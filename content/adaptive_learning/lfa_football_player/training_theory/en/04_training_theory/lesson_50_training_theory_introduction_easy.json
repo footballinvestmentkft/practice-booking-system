@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Training Theory",
+  "topic": "Training Theory — Introduction",
+  "quiz_title": "AL — Training Theory - Introduction [EN]",
+  "description": "Overview of the fundamental concepts of training theory: adaptation, supercompensation, periodisation, training load, and training planning.",
+  "questions": [
+    {
+      "text": "What is adaptation in the context of training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Adaptation is the body's adjustment to training load: organs and systems are strengthened in response to repeated stimuli.",
+      "options": [
+        {"text": "The athlete's resting state", "is_correct": false},
+        {"text": "The body's adjustment to training load", "is_correct": true},
+        {"text": "The name of the training plan", "is_correct": false},
+        {"text": "Pre-competition preparation", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["adaptation"]
+      }
+    },
+    {
+      "text": "Supercompensation is the phenomenon of performance improvement following training.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True. During supercompensation, the body rises to a higher level after recovery than it was before the training stimulus.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["supercompensation"]
+      }
+    },
+    {
+      "text": "What is the purpose of periodisation in training planning?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Periodisation is the systematic, planned distribution of training work over time so that the athlete reaches peak form at the right moment.",
+      "options": [
+        {"text": "Performing the same intensity every day", "is_correct": false},
+        {"text": "The planned distribution of training work over time", "is_correct": true},
+        {"text": "Eliminating rest days", "is_correct": false},
+        {"text": "Simplifying training methods", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 35,
+        "concept_tags": ["periodisation"]
+      }
+    },
+    {
+      "text": "Which is one of the main components of training load?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The main components of training load are intensity, volume, density, and duration. Intensity indicates the magnitude of the load.",
+      "options": [
+        {"text": "The size of the gym", "is_correct": false},
+        {"text": "Training intensity", "is_correct": true},
+        {"text": "The athlete's name", "is_correct": false},
+        {"text": "The training venue", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["training_load"]
+      }
+    },
+    {
+      "text": "What is the main goal of training planning?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The goal of training planning is to achieve regular, systematic development through the conscious distribution of load and rest.",
+      "options": [
+        {"text": "To complete as many sessions as possible", "is_correct": false},
+        {"text": "To achieve regular, systematic development", "is_correct": true},
+        {"text": "To shorten sessions as much as possible", "is_correct": false},
+        {"text": "To avoid competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["training_planning"]
+      }
+    },
+    {
+      "text": "Feedback is required to control training.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True. Feedback (e.g., training diaries, tests) enables the plan to be modified based on results achieved.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["feedback"]
+      }
+    },
+    {
+      "text": "What is the role of training principles?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Training principles (e.g., progressiveness, specificity, variety) provide the scientific foundation for systematic and effective training.",
+      "options": [
+        {"text": "They prescribe arbitrary execution of training", "is_correct": false},
+        {"text": "To ensure training effectiveness and safety", "is_correct": true},
+        {"text": "To directly determine competition results", "is_correct": false},
+        {"text": "To replace the training plan", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 38,
+        "concept_tags": ["training_principles"]
+      }
+    },
+    {
+      "text": "A rest period is required for supercompensation to occur.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True. Adaptation takes place during rest; without recovery, supercompensation cannot develop.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 25,
+        "concept_tags": ["supercompensation", "rest"]
+      }
+    },
+    {
+      "text": "What is a training method?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A training method is a systematic procedure applied to achieve a training goal, defining how the load is organised.",
+      "options": [
+        {"text": "The name of the training venue", "is_correct": false},
+        {"text": "A systematic procedure applied to achieve a training goal", "is_correct": true},
+        {"text": "The competition rulebook", "is_correct": false},
+        {"text": "The athlete's nutritional plan", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 35,
+        "concept_tags": ["training_method"]
+      }
+    },
+    {
+      "text": "Sustained performance improvement is not possible without adaptation.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True. Training only leads to development if the body adapts to the stimulus — adaptation is the biological basis of improvement.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 25,
+        "concept_tags": ["adaptation", "development"]
+      }
+    }
+  ]
+}

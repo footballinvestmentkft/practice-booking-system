@@ -1,0 +1,275 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Edzéselmélet alapjai",
+  "topic": "A terhelés és alkalmazkodás (adaptáció) összefüggése",
+  "quiz_title": "AL — Edzéselmélet alapjai - Terhelés és adaptáció [HU]",
+  "description": "A terhelés, alkalmazkodás és szuperkompenzáció alapelvei az edzéselméletben.",
+  "questions": [
+    {
+      "text": "Mit jelent a terhelés az edzéselméletben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A terhelés a szervezetet érő fizikai és pszichés inger, amely alkalmazkodást vált ki.",
+      "options": [
+        {"text": "Pihenés", "is_correct": false},
+        {"text": "A szervezetet érő inger", "is_correct": true},
+        {"text": "Teljesítménycsökkenés", "is_correct": false},
+        {"text": "Edzés megszakítása", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "average_time_seconds": 25,
+        "concept_tags": ["terheles"]
+      }
+    },
+    {
+      "text": "A terhelés mindig negatív hatású a szervezetre.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis, mert megfelelő mértékben alkalmazva fejlődést idéz elő.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 20,
+        "concept_tags": ["terheles"]
+      }
+    },
+    {
+      "text": "Mi az adaptáció lényege?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az adaptáció a szervezet alkalmazkodása a terheléshez.",
+      "options": [
+        {"text": "Fáradás növekedése", "is_correct": false},
+        {"text": "Alkalmazkodás a terheléshez", "is_correct": true},
+        {"text": "Teljesítmény csökkenése", "is_correct": false},
+        {"text": "Mozgás megszüntetése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.32,
+        "cognitive_load": 0.27,
+        "average_time_seconds": 25,
+        "concept_tags": ["adaptacio"]
+      }
+    },
+    {
+      "text": "Mi történik túl alacsony terhelés esetén?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Alacsony inger esetén nincs adaptáció, így nincs fejlődés.",
+      "options": [
+        {"text": "Gyors fejlődés", "is_correct": false},
+        {"text": "Nincs jelentős fejlődés", "is_correct": true},
+        {"text": "Túlterhelés", "is_correct": false},
+        {"text": "Sérülés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.38,
+        "cognitive_load": 0.32,
+        "average_time_seconds": 32,
+        "concept_tags": ["alulterheles"]
+      }
+    },
+    {
+      "text": "Mi történik túl magas terhelés esetén megfelelő pihenés nélkül?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Túlterhelés alakul ki, ami teljesítménycsökkenéshez vezethet.",
+      "options": [
+        {"text": "Optimális fejlődés", "is_correct": false},
+        {"text": "Túlterhelés és visszaesés", "is_correct": true},
+        {"text": "Nincs változás", "is_correct": false},
+        {"text": "Automatikus regeneráció", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.36,
+        "average_time_seconds": 35,
+        "concept_tags": ["tulterheles"]
+      }
+    },
+    {
+      "text": "A regeneráció az adaptáció egyik feltétele.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz, mert a fejlődés a pihenési fázisban történik.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "average_time_seconds": 20,
+        "concept_tags": ["regeneracio"]
+      }
+    },
+    {
+      "text": "Mit jelent a szuperkompenzáció?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A szuperkompenzáció során a szervezet a kiindulási szint fölé fejlődik regeneráció után.",
+      "options": [
+        {"text": "Teljesítmény csökkenése", "is_correct": false},
+        {"text": "Kiindulási szint fölé történő fejlődés", "is_correct": true},
+        {"text": "Mozgás megszüntetése", "is_correct": false},
+        {"text": "Állandó fáradás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["szuperkompenzacio"]
+      }
+    },
+    {
+      "text": "Mikor érdemes a következő edzést elvégezni optimális fejlődéshez?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A szuperkompenzáció fázisában érdemes új terhelést adni.",
+      "options": [
+        {"text": "Azonnal edzés után", "is_correct": false},
+        {"text": "Szuperkompenzáció idején", "is_correct": true},
+        {"text": "Teljes kimerültségkor", "is_correct": false},
+        {"text": "Véletlenszerűen", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 40,
+        "concept_tags": ["szuperkompenzacio", "idozites"]
+      }
+    },
+    {
+      "text": "A túl gyakori edzés regeneráció nélkül fejlődést eredményez.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis, mert túlterheléshez és teljesítménycsökkenéshez vezet.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.34,
+        "average_time_seconds": 20,
+        "concept_tags": ["tulterheles"]
+      }
+    },
+    {
+      "text": "Mi szükséges a folyamatos fejlődéshez?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A megfelelően adagolt terhelés és pihenés biztosítja a fejlődést.",
+      "options": [
+        {"text": "Csak nagy terhelés", "is_correct": false},
+        {"text": "Terhelés és regeneráció egyensúlya", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Mozgás hiánya", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.30,
+        "average_time_seconds": 30,
+        "concept_tags": ["terheles", "regeneracio"]
+      }
+    },
+    {
+      "text": "Mi a teljesítménygörbe lényege?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A teljesítmény a terhelés után csökken, majd regeneráció során nő.",
+      "options": [
+        {"text": "Folyamatos növekedés", "is_correct": false},
+        {"text": "Csökkenés majd növekedés", "is_correct": true},
+        {"text": "Változatlanság", "is_correct": false},
+        {"text": "Azonnali növekedés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.41,
+        "average_time_seconds": 40,
+        "concept_tags": ["teljesitmenygorbe"]
+      }
+    },
+    {
+      "text": "Az adaptáció csak rövid távon jelentkezik.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis, mert hosszú távú folyamat.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.33,
+        "cognitive_load": 0.27,
+        "average_time_seconds": 20,
+        "concept_tags": ["adaptacio"]
+      }
+    },
+    {
+      "text": "Mi az inger-válasz kapcsolat lényege?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A terhelés inger, az adaptáció pedig válasz.",
+      "options": [
+        {"text": "A pihenés inger", "is_correct": false},
+        {"text": "A terhelés inger, az adaptáció válasz", "is_correct": true},
+        {"text": "Nincs kapcsolat", "is_correct": false},
+        {"text": "Csak pszichés folyamat", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.44,
+        "cognitive_load": 0.38,
+        "average_time_seconds": 38,
+        "concept_tags": ["inger_valasz"]
+      }
+    },
+    {
+      "text": "Mi történik, ha túl későn adjuk a következő terhelést?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A szuperkompenzáció hatása elveszik, visszaáll az alap szint.",
+      "options": [
+        {"text": "Maximális fejlődés", "is_correct": false},
+        {"text": "Hatás csökkenése", "is_correct": true},
+        {"text": "Túlterhelés", "is_correct": false},
+        {"text": "Azonnali növekedés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["idozites"]
+      }
+    },
+    {
+      "text": "Mi biztosítja az optimális edzésadaptációt?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A megfelelő időzítés, terhelés és pihenés egyensúlya.",
+      "options": [
+        {"text": "Maximális terhelés", "is_correct": false},
+        {"text": "Terhelés és pihenés optimális aránya", "is_correct": true},
+        {"text": "Csak regeneráció", "is_correct": false},
+        {"text": "Edzés megszakítása", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.46,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["adaptacio", "optimalis_edzes"]
+      }
+    }
+  ]
+}

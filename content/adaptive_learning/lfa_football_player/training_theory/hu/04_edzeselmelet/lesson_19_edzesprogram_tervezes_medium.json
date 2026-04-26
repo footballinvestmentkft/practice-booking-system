@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzéselmélet",
+  "topic": "Az edzésprogram tervezése",
+  "quiz_title": "AL — Edzéselmélet - Az edzésprogram tervezése [HU]",
+  "description": "Az edzésprogram felépítése, tervezési elvei és gyakorlati alkalmazása.",
+  "questions": [
+    {
+      "text": "Mit nevezünk edzésprogramnak?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az edzésprogram egy előre megtervezett, célorientált edzésfolyamat.",
+      "options": [
+        {"text": "Egyetlen edzés", "is_correct": false},
+        {"text": "Tudatosan felépített edzésterv", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Versenyprogram", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["edzesprogram"]
+      }
+    },
+    {
+      "text": "Mi az edzéstervezés első lépése?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A célok meghatározása alapozza meg a teljes edzésprogramot.",
+      "options": [
+        {"text": "Edzés végrehajtása", "is_correct": false},
+        {"text": "Célok meghatározása", "is_correct": true},
+        {"text": "Pihenés", "is_correct": false},
+        {"text": "Versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["celmeghatarozas"]
+      }
+    },
+    {
+      "text": "Az edzésprogramnak mindig hosszú távra kell szólnia.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert rövid és hosszú távú tervezés is szükséges.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["tervezes"]
+      }
+    },
+    {
+      "text": "Mit jelent a progresszió elve?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A terhelés fokozatos növelése a fejlődés érdekében.",
+      "options": [
+        {"text": "Terhelés csökkentése", "is_correct": false},
+        {"text": "Fokozatos terhelésnövelés", "is_correct": true},
+        {"text": "Állandó terhelés", "is_correct": false},
+        {"text": "Pihenés növelése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["progresszio"]
+      }
+    },
+    {
+      "text": "Miért fontos a fokozatosság elve?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Segít elkerülni a túlterhelést és biztosítja a fejlődést.",
+      "options": [
+        {"text": "Gyorsabb verseny miatt", "is_correct": false},
+        {"text": "Sérülések elkerülése és fejlődés", "is_correct": true},
+        {"text": "Időspórolás", "is_correct": false},
+        {"text": "Pihenés miatt", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["fokozatossag"]
+      }
+    },
+    {
+      "text": "Mi befolyásolja az edzésprogram kialakítását?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az egyéni adottságok és célok határozzák meg.",
+      "options": [
+        {"text": "Csak időjárás", "is_correct": false},
+        {"text": "Egyéni különbségek és célok", "is_correct": true},
+        {"text": "Csak életkor", "is_correct": false},
+        {"text": "Csak edző döntése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["egyeni_kulonbsegek"]
+      }
+    },
+    {
+      "text": "Az edzésprogramot nem szükséges módosítani.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert a fejlődéshez folyamatos igazítás szükséges.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["edzesprogram"]
+      }
+    },
+    {
+      "text": "Mi a visszacsatolás szerepe az edzéstervezésben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Segít az edzésprogram finomhangolásában.",
+      "options": [
+        {"text": "Nincs szerepe", "is_correct": false},
+        {"text": "Program módosítása", "is_correct": true},
+        {"text": "Csak mérés", "is_correct": false},
+        {"text": "Csak pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["visszacsatolas"]
+      }
+    },
+    {
+      "text": "Mi az egyik gyakori hiba az edzéstervezésben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A túl gyors terhelésnövelés sérüléshez vezethet.",
+      "options": [
+        {"text": "Fokozatosság", "is_correct": false},
+        {"text": "Túl gyors terhelésnövelés", "is_correct": true},
+        {"text": "Pihenés", "is_correct": false},
+        {"text": "Célkitűzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["hiba"]
+      }
+    },
+    {
+      "text": "Az edzésprogram célja a teljesítmény fejlesztése.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, az edzéstervezés fő célja a fejlődés.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["teljesitmeny"]
+      }
+    }
+  ]
+}

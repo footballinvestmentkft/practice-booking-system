@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Fundamentals of Training Theory",
+  "topic": "Fundamentals of Training Theory — Intermediate",
+  "quiz_title": "AL — Fundamentals of Training Theory - Intermediate [EN]",
+  "description": "Deeper analysis of the fundamentals of training theory: mechanisms of load-adaptation interaction, the interplay of training load components, application of training principles, and the physiological rationale for session structure.",
+  "questions": [
+    {
+      "text": "Why is continuously increasing training load insufficient to ensure ongoing development?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Continuously increasing load will sooner or later exceed the body's regenerative capacity — supercompensation fails to occur, and overreaching or overtraining may develop. Alternating between load and recovery is necessary to ensure adaptation.",
+      "options": [
+        {"text": "Because the body has unlimited adaptive capacity", "is_correct": false},
+        {"text": "Because continuous increase exceeds regenerative capacity — overreaching and overtraining may develop", "is_correct": true},
+        {"text": "Because gym capacity is limited", "is_correct": false},
+        {"text": "Development always requires a constant, unchanged load", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.43,
+        "average_time_seconds": 42,
+        "concept_tags": ["load_increase", "regeneration", "adaptation"]
+      }
+    },
+    {
+      "text": "Training intensity and volume are inversely related.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True. During high-intensity training (e.g., maximal sprints, maximal strength effort), fewer repetitions and shorter total volume are possible — the body cannot sustain maximal intensity for extended periods. At lower intensities, volume can be increased.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.43,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 32,
+        "concept_tags": ["intensity", "volume", "inverse_relationship"]
+      }
+    },
+    {
+      "text": "Which training principle specifies that load must be increased gradually?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The principle of progressivity (progressive overload) prescribes that load must be increased systematically and gradually — neither too slowly (providing no adaptive stimulus) nor too rapidly (risking injury and overloading).",
+      "options": [
+        {"text": "The principle of specificity", "is_correct": false},
+        {"text": "The principle of progressivity (progressive overload)", "is_correct": true},
+        {"text": "The principle of variety", "is_correct": false},
+        {"text": "The principle of regularity", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["progressivity_principle", "training_principles"]
+      }
+    },
+    {
+      "text": "What is density as a component of training load?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Density is the ratio of work to rest within a training session — it determines the proportion of work and rest intervals. High density = short rest periods; low density = long rest periods.",
+      "options": [
+        {"text": "The number of training days per week", "is_correct": false},
+        {"text": "The ratio of work to rest within a training session", "is_correct": true},
+        {"text": "The maximum training intensity", "is_correct": false},
+        {"text": "The speed of movement execution", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["density", "training_load_components"]
+      }
+    },
+    {
+      "text": "Why is warm-up physiologically necessary?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Warm-up increases core body temperature (improving enzyme efficiency), enhances muscle blood flow (oxygen and nutrient delivery), reduces tendon and joint stiffness, and accelerates neural conduction velocity — all of which reduce injury risk and improve performance.",
+      "options": [
+        {"text": "It has exclusively psychological effects", "is_correct": false},
+        {"text": "Rising core temperature, enhanced blood flow, reduced tendon stiffness, and faster neural conduction — reduces injury risk", "is_correct": true},
+        {"text": "It effectively extends total training time", "is_correct": false},
+        {"text": "It is only necessary before competition, not during training", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 45,
+        "concept_tags": ["warm_up", "physiological_rationale"]
+      }
+    },
+    {
+      "text": "Violating the principle of regularity leads to loss of fitness (detraining).",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True. Without regular, repeated training stimuli, acquired adaptations are reversed — aerobic capacity begins to decline within 2–3 weeks, and strength adaptations reverse somewhat more slowly but also regress.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 32,
+        "concept_tags": ["regularity_principle", "detraining"]
+      }
+    },
+    {
+      "text": "What does the principle of training specificity mean for footballers?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The principle of specificity states that training content must match the specific demands of football (sprints, change of direction, ball-handling techniques, tactical decision-making) — general conditioning is a necessary foundation but cannot replace sport-specific work.",
+      "options": [
+        {"text": "Every footballer must follow an identical training plan", "is_correct": false},
+        {"text": "Training content is aligned with the specific demands of football — sprints, change of direction, ball-handling techniques", "is_correct": true},
+        {"text": "Specificity applies exclusively to intensity", "is_correct": false},
+        {"text": "Specific training makes general conditioning unnecessary", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["specificity_principle", "football"]
+      }
+    },
+    {
+      "text": "What is the threshold value of a training stimulus and why is it important?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The threshold is the minimum load level that elicits an adaptive response from the body. Load below the threshold does not trigger adaptation; load above the threshold does. The threshold is individual and rises with increasing fitness level.",
+      "options": [
+        {"text": "The maximum applicable training load level", "is_correct": false},
+        {"text": "The minimum load level that elicits an adaptive response — rises with fitness level", "is_correct": true},
+        {"text": "The injury threshold", "is_correct": false},
+        {"text": "The maximum number of training days per week", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["threshold", "adaptation", "training_stimulus"]
+      }
+    },
+    {
+      "text": "The purpose of the main part of a training session is to achieve the session's primary training goals.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True. Training session structure: warm-up (introductory part) → main part (primary goals: strength, endurance, technique, etc.) → cool-down (closing part: active recovery, stretching, evaluation). The main part contains the most intense and purposeful training tasks.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.38,
+        "average_time_seconds": 30,
+        "concept_tags": ["session_structure", "main_part"]
+      }
+    },
+    {
+      "text": "How does the principle of variety relate to long-term training effectiveness?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The principle of variety serves to prevent monotony and habituation: repeated identical stimuli lead to diminishing adaptive responses. Varying methods, intensity, volume, and content maintains the adaptive response and reduces the risk of motivational loss.",
+      "options": [
+        {"text": "Variety causes confusion and reduces performance", "is_correct": false},
+        {"text": "It prevents diminishing adaptation (monotony) and maintains motivation and adaptive response", "is_correct": true},
+        {"text": "Variety has only psychological effects", "is_correct": false},
+        {"text": "The principle of variety contradicts the principle of specificity", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["variety_principle", "monotony_prevention"]
+      }
+    }
+  ]
+}

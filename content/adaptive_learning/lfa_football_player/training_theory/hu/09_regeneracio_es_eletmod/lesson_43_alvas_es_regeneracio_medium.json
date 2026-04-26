@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Regeneráció és életmód",
+  "topic": "Az alvás szerepe a regenerációban",
+  "quiz_title": "AL — Regeneráció és életmód - Az alvás szerepe a regenerációban [HU]",
+  "description": "Az alvás jelentősége, folyamatai és hatása a sportteljesítményre.",
+  "questions": [
+    {
+      "text": "Mi az alvás egyik legfontosabb szerepe?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az alvás alatt történik a szervezet regenerációja.",
+      "options": [
+        {"text": "Edzés végrehajtása", "is_correct": false},
+        {"text": "Regeneráció biztosítása", "is_correct": true},
+        {"text": "Versenyzés", "is_correct": false},
+        {"text": "Teljesítmény csökkentése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["alvas"]
+      }
+    },
+    {
+      "text": "Mi történik alvás közben a szervezetben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Helyreállító és regeneráló folyamatok zajlanak.",
+      "options": [
+        {"text": "Terhelés nő", "is_correct": false},
+        {"text": "Regeneráció zajlik", "is_correct": true},
+        {"text": "Teljesítmény romlik", "is_correct": false},
+        {"text": "Nincs változás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["regeneracio"]
+      }
+    },
+    {
+      "text": "Mi a hormonális folyamatok szerepe alvás alatt?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Segítik az izomépítést és helyreállítást.",
+      "options": [
+        {"text": "Edzés végrehajtása", "is_correct": false},
+        {"text": "Helyreállítás támogatása", "is_correct": true},
+        {"text": "Teljesítmény csökkentése", "is_correct": false},
+        {"text": "Pihenés megszüntetése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["hormonok"]
+      }
+    },
+    {
+      "text": "Az alváshiány rontja a teljesítményt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert csökkenti a koncentrációt és reakcióidőt.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["alvashiany"]
+      }
+    },
+    {
+      "text": "Mi az alváshiány egyik következménye?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Csökken a reakcióidő és koncentráció.",
+      "options": [
+        {"text": "Teljesítménynövekedés", "is_correct": false},
+        {"text": "Koncentráció csökkenése", "is_correct": true},
+        {"text": "Gyorsaság növekedése", "is_correct": false},
+        {"text": "Erő növekedése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["alvashiany"]
+      }
+    },
+    {
+      "text": "Mi a mentális regeneráció szerepe?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Segíti a koncentráció és döntéshozatal helyreállítását.",
+      "options": [
+        {"text": "Csak fizikai hatás", "is_correct": false},
+        {"text": "Mentális funkciók helyreállítása", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["mentalis_regeneracio"]
+      }
+    },
+    {
+      "text": "Az alvás hatással van a reakcióidőre.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert a kipihentség befolyásolja a gyors reakciókat.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["reakcioido"]
+      }
+    },
+    {
+      "text": "Mi az optimális alvásidő sportolóknál általában?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Általában 7–9 óra alvás javasolt.",
+      "options": [
+        {"text": "3–4 óra", "is_correct": false},
+        {"text": "7–9 óra", "is_correct": true},
+        {"text": "12–14 óra", "is_correct": false},
+        {"text": "Nincs szükség alvásra", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["alvasido"]
+      }
+    },
+    {
+      "text": "Mi segíti az alvásminőség javítását?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A rendszeres alvási rutin javítja az alvás minőségét.",
+      "options": [
+        {"text": "Rendszertelen alvás", "is_correct": false},
+        {"text": "Rendszeres alvási rutin", "is_correct": true},
+        {"text": "Késő esti edzés mindig", "is_correct": false},
+        {"text": "Folyamatos ébrenlét", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["alvasminoseg"]
+      }
+    },
+    {
+      "text": "A megfelelő alvás javítja a sportteljesítményt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert segíti a regenerációt és koncentrációt.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["teljesitmeny"]
+      }
+    }
+  ]
+}

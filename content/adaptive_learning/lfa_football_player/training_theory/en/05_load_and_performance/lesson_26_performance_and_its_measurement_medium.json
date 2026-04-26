@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Load and Performance",
+  "topic": "Performance and Its Measurement",
+  "quiz_title": "AL — Load and Performance - Performance and Its Measurement [EN]",
+  "description": "The concept of sporting performance, its components, and methods of measurement.",
+  "questions": [
+    {
+      "text": "What is performance in the sports physiology sense?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Performance is the capacity to execute a given task under defined conditions.",
+      "options": [
+        {"text": "Physical strength only", "is_correct": false},
+        {"text": "The capacity to execute a task", "is_correct": true},
+        {"text": "Speed only", "is_correct": false},
+        {"text": "A resting state", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["performance"]
+      }
+    },
+    {
+      "text": "Which of the following belongs to the components of physical performance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Physical performance is determined by multiple motor abilities, such as strength and endurance.",
+      "options": [
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Strength and endurance", "is_correct": true},
+        {"text": "Psychology only", "is_correct": false},
+        {"text": "Technique only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["performance", "motor_abilities"]
+      }
+    },
+    {
+      "text": "What is maximal performance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Maximal performance is the highest performance level an athlete can achieve under given conditions.",
+      "options": [
+        {"text": "Medium intensity", "is_correct": false},
+        {"text": "The highest achievable performance", "is_correct": true},
+        {"text": "The lowest performance", "is_correct": false},
+        {"text": "A resting state", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["maximal_performance"]
+      }
+    },
+    {
+      "text": "What is submaximal performance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Performance executed at an intensity below maximal.",
+      "options": [
+        {"text": "Maximal performance", "is_correct": false},
+        {"text": "Performance below maximal", "is_correct": true},
+        {"text": "Rest", "is_correct": false},
+        {"text": "Competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["submaximal_performance"]
+      }
+    },
+    {
+      "text": "Performance is influenced by physical factors only.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because psychological and technical factors also play a role.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 25,
+        "concept_tags": ["performance"]
+      }
+    },
+    {
+      "text": "Which of the following belongs to objective measurement methods?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Time measurement provides objective, numerical data.",
+      "options": [
+        {"text": "Perceived fatigue", "is_correct": false},
+        {"text": "Time measurement", "is_correct": true},
+        {"text": "Motivation", "is_correct": false},
+        {"text": "Mood", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["objective_measurement"]
+      }
+    },
+    {
+      "text": "Which of the following belongs to subjective assessment?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Subjective assessment is based on individual perceptions.",
+      "options": [
+        {"text": "Heart rate measurement", "is_correct": false},
+        {"text": "Perceived fatigue", "is_correct": true},
+        {"text": "Speed", "is_correct": false},
+        {"text": "Time result", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["subjective_assessment"]
+      }
+    },
+    {
+      "text": "Regular testing supports the tracking of development.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because it provides objective feedback on performance.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["testing"]
+      }
+    },
+    {
+      "text": "What is one main goal of performance measurement?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Tracking development and optimising the training programme.",
+      "options": [
+        {"text": "Stopping training", "is_correct": false},
+        {"text": "Tracking development", "is_correct": true},
+        {"text": "Competing only", "is_correct": false},
+        {"text": "Increasing rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["performance"]
+      }
+    },
+    {
+      "text": "Performance measurement is not necessary in a training programme.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because it is indispensable for evaluating development.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["performance"]
+      }
+    }
+  ]
+}

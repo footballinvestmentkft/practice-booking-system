@@ -1,0 +1,273 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Edzéselmélet alapjai",
+  "topic": "Az edzés fogalma és értelmezése",
+  "quiz_title": "AL — Edzéselmélet alapjai - Az edzés fogalma [HU]",
+  "description": "Az edzés definíciója, célja és alapvető élettani összefüggései.",
+  "questions": [
+    {
+      "text": "Mi az edzés egyik legfontosabb jellemzője a szakmai meghatározás szerint?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az edzés tudatos, tervszerű és rendszeres tevékenység, amely a teljesítmény fejlesztésére irányul.",
+      "options": [
+        {"text": "Alkalomszerű mozgás", "is_correct": false},
+        {"text": "Tudatos és tervszerű tevékenység", "is_correct": true},
+        {"text": "Csak versenyeken végzett mozgás", "is_correct": false},
+        {"text": "Pihenéssel egyenértékű folyamat", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.25,
+        "average_time_seconds": 25,
+        "concept_tags": ["edzes_fogalma", "tudatossag"]
+      }
+    },
+    {
+      "text": "Az edzés spontán, előre nem tervezett tevékenység.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis, mert az edzés mindig tudatosan megtervezett és irányított folyamat.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 20,
+        "concept_tags": ["edzes_fogalma"]
+      }
+    },
+    {
+      "text": "Mi az edzés elsődleges célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az edzés célja a teljesítőképesség fejlesztése és az alkalmazkodás kiváltása.",
+      "options": [
+        {"text": "Szórakoztatás", "is_correct": false},
+        {"text": "Teljesítőképesség fejlesztése", "is_correct": true},
+        {"text": "Fáradtság növelése", "is_correct": false},
+        {"text": "Időkitöltés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.32,
+        "cognitive_load": 0.27,
+        "average_time_seconds": 25,
+        "concept_tags": ["edzes_celja", "teljesitmeny"]
+      }
+    },
+    {
+      "text": "Mit jelent az adaptáció az edzéselméletben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az adaptáció a szervezet alkalmazkodása a terheléshez.",
+      "options": [
+        {"text": "A terhelés megszüntetését", "is_correct": false},
+        {"text": "A szervezet alkalmazkodását a terheléshez", "is_correct": true},
+        {"text": "A teljesítmény csökkenését", "is_correct": false},
+        {"text": "A pihenés hiányát", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.38,
+        "cognitive_load": 0.33,
+        "average_time_seconds": 32,
+        "concept_tags": ["adaptacio"]
+      }
+    },
+    {
+      "text": "Az edzés során a szervezet nem változik.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis, mert az edzés célja éppen az alkalmazkodás kiváltása.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.28,
+        "cognitive_load": 0.22,
+        "average_time_seconds": 20,
+        "concept_tags": ["adaptacio"]
+      }
+    },
+    {
+      "text": "Mi szükséges az adaptáció kialakulásához?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az adaptációhoz megfelelő terhelés és pihenés egyensúlya szükséges.",
+      "options": [
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Csak terhelés", "is_correct": false},
+        {"text": "Terhelés és pihenés egyensúlya", "is_correct": true},
+        {"text": "Teljes mozgáshiány", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.34,
+        "average_time_seconds": 32,
+        "concept_tags": ["terheles", "pihenes", "adaptacio"]
+      }
+    },
+    {
+      "text": "A túlzott terhelés pihenés nélkül negatív hatással lehet a teljesítményre.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz, mert regeneráció nélkül túlterhelés alakulhat ki.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.29,
+        "average_time_seconds": 20,
+        "concept_tags": ["terheles", "tulterheles"]
+      }
+    },
+    {
+      "text": "Milyen folyamatként értelmezhető az edzés?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az edzés egy hosszú távú, folyamatosan felépített folyamat.",
+      "options": [
+        {"text": "Egyszeri esemény", "is_correct": false},
+        {"text": "Folyamatos, hosszú távú folyamat", "is_correct": true},
+        {"text": "Véletlenszerű tevékenység", "is_correct": false},
+        {"text": "Rövid ideig tartó hatás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.37,
+        "cognitive_load": 0.30,
+        "average_time_seconds": 30,
+        "concept_tags": ["edzes_folyamat"]
+      }
+    },
+    {
+      "text": "Az edzés csak fizikai hatásokat vált ki.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis, mert mentális és pszichés hatásai is vannak.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.38,
+        "average_time_seconds": 20,
+        "concept_tags": ["edzes_hatasai"]
+      }
+    },
+    {
+      "text": "Mi biztosítja az edzés hatékonyságát?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A rendszeresség és tudatosság kulcsfontosságú az edzés hatékonyságában.",
+      "options": [
+        {"text": "Véletlenszerű végrehajtás", "is_correct": false},
+        {"text": "Rendszeresség és tudatosság", "is_correct": true},
+        {"text": "Minél nagyobb terhelés", "is_correct": false},
+        {"text": "Minél kevesebb pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.34,
+        "cognitive_load": 0.28,
+        "average_time_seconds": 28,
+        "concept_tags": ["rendszeresseg", "tudatossag"]
+      }
+    },
+    {
+      "text": "Melyik állítás igaz az edzés és teljesítmény kapcsolatára?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az edzés célja a teljesítmény növelése, megfelelő terheléssel és regenerációval.",
+      "options": [
+        {"text": "Az edzés csökkenti a teljesítményt", "is_correct": false},
+        {"text": "Az edzés növeli a teljesítményt megfelelő körülmények között", "is_correct": true},
+        {"text": "Az edzés nincs hatással a teljesítményre", "is_correct": false},
+        {"text": "Az edzés csak rövid távon hat", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.41,
+        "cognitive_load": 0.35,
+        "average_time_seconds": 35,
+        "concept_tags": ["teljesitmeny", "edzes_celja"]
+      }
+    },
+    {
+      "text": "Az edzés hatása azonnal és tartósan jelentkezik pihenés nélkül.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis, mert a fejlődéshez regeneráció szükséges.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.36,
+        "average_time_seconds": 20,
+        "concept_tags": ["pihenes", "adaptacio"]
+      }
+    },
+    {
+      "text": "Mi történik megfelelő edzés hatására a szervezetben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A szervezet alkalmazkodik, ami teljesítményjavuláshoz vezet.",
+      "options": [
+        {"text": "Teljesítmény csökken", "is_correct": false},
+        {"text": "Alkalmazkodás és fejlődés történik", "is_correct": true},
+        {"text": "Nem történik változás", "is_correct": false},
+        {"text": "Csak fáradás jelentkezik", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.39,
+        "cognitive_load": 0.33,
+        "average_time_seconds": 32,
+        "concept_tags": ["adaptacio", "fejlodes"]
+      }
+    },
+    {
+      "text": "Mi különbözteti meg az edzést az egyszerű fizikai aktivitástól?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az edzés tudatos, célirányos és rendszeres, míg a fizikai aktivitás lehet spontán.",
+      "options": [
+        {"text": "Az intenzitás", "is_correct": false},
+        {"text": "A tudatosság és célirányosság", "is_correct": true},
+        {"text": "A mozgás típusa", "is_correct": false},
+        {"text": "A helyszín", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 40,
+        "concept_tags": ["edzes_fogalma", "kulonbseg"]
+      }
+    },
+    {
+      "text": "Melyik fogalom áll legszorosabb kapcsolatban az edzés hosszú távú hatásával?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Az adaptáció biztosítja a hosszú távú fejlődést.",
+      "options": [
+        {"text": "Fáradás", "is_correct": false},
+        {"text": "Adaptáció", "is_correct": true},
+        {"text": "Véletlen", "is_correct": false},
+        {"text": "Megszakítás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.44,
+        "cognitive_load": 0.38,
+        "average_time_seconds": 38,
+        "concept_tags": ["adaptacio", "hosszutavu_hatas"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,279 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Motor Abilities",
+  "topic": "Strength and Its Types",
+  "quiz_title": "AL — Motor Abilities - Strength and Its Types [EN]",
+  "description": "The concept of strength, its types, and forms of muscular action in training theory.",
+  "questions": [
+    {
+      "text": "What does strength mean in training theory?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Strength is the ability of the muscles to generate tension against resistance.",
+      "options": [
+        {"text": "The ability to move quickly", "is_correct": false},
+        {"text": "The ability of muscles to produce force", "is_correct": true},
+        {"text": "Sustained movement over time", "is_correct": false},
+        {"text": "Accuracy of movement", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["strength"]
+      }
+    },
+    {
+      "text": "What is maximal strength?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Maximal strength is the greatest force output the muscles are capable of producing.",
+      "options": [
+        {"text": "Rapid force production", "is_correct": false},
+        {"text": "The greatest producible force", "is_correct": true},
+        {"text": "Sustained force production over time", "is_correct": false},
+        {"text": "Repeated force production", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["maximal_strength"]
+      }
+    },
+    {
+      "text": "What characterises speed-strength?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Speed-strength combines force production with rapidity of execution.",
+      "options": [
+        {"text": "Sustained force production over time", "is_correct": false},
+        {"text": "Rapid force production", "is_correct": true},
+        {"text": "Minimal force", "is_correct": false},
+        {"text": "Static holding", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["speed_strength"]
+      }
+    },
+    {
+      "text": "What does strength endurance mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Strength endurance is the ability to sustain force production over a prolonged period.",
+      "options": [
+        {"text": "Maximal force production", "is_correct": false},
+        {"text": "Sustained force production over time", "is_correct": true},
+        {"text": "Rapid movement", "is_correct": false},
+        {"text": "Muscle stretching", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.44,
+        "average_time_seconds": 42,
+        "concept_tags": ["strength_endurance"]
+      }
+    },
+    {
+      "text": "What is the difference between absolute and relative strength?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Absolute strength is total force output; relative strength is force output in relation to body mass.",
+      "options": [
+        {"text": "There is no difference", "is_correct": false},
+        {"text": "Relative to body mass vs total force output", "is_correct": true},
+        {"text": "They differ only in duration", "is_correct": false},
+        {"text": "It depends solely on the sport", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.55,
+        "average_time_seconds": 50,
+        "concept_tags": ["relative_strength", "absolute_strength"]
+      }
+    },
+    {
+      "text": "What does concentric muscle action mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "In concentric action the muscle contracts and shortens.",
+      "options": [
+        {"text": "The muscle lengthens", "is_correct": false},
+        {"text": "The muscle shortens", "is_correct": true},
+        {"text": "The muscle length does not change", "is_correct": false},
+        {"text": "The muscle switches off", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["concentric"]
+      }
+    },
+    {
+      "text": "What does eccentric muscle action mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "In eccentric action the muscle lengthens while under tension.",
+      "options": [
+        {"text": "The muscle shortens", "is_correct": false},
+        {"text": "The muscle lengthens while under tension", "is_correct": true},
+        {"text": "The muscle rests", "is_correct": false},
+        {"text": "The muscle does not work", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.58,
+        "cognitive_load": 0.52,
+        "average_time_seconds": 48,
+        "concept_tags": ["eccentric"]
+      }
+    },
+    {
+      "text": "What does static (isometric) muscle action mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The muscle generates tension but its length does not change.",
+      "options": [
+        {"text": "The muscle shortens", "is_correct": false},
+        {"text": "The muscle length does not change", "is_correct": true},
+        {"text": "The muscle lengthens", "is_correct": false},
+        {"text": "The muscle is inactive", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["isometric"]
+      }
+    },
+    {
+      "text": "Maximal strength is equally important across all sports.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because the role of strength is sport-specific.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 25,
+        "concept_tags": ["specificity"]
+      }
+    },
+    {
+      "text": "In which sport is relative strength particularly important?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "In gymnastics, for example, moving one's own bodyweight makes relative strength a key factor.",
+      "options": [
+        {"text": "Weightlifting", "is_correct": false},
+        {"text": "Gymnastics", "is_correct": true},
+        {"text": "Marathon running", "is_correct": false},
+        {"text": "Swimming", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.65,
+        "cognitive_load": 0.55,
+        "average_time_seconds": 55,
+        "concept_tags": ["relative_strength", "sport"]
+      }
+    },
+    {
+      "text": "Which type of strength is most important for sprinting?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Speed-strength is required for explosive movements.",
+      "options": [
+        {"text": "Strength endurance", "is_correct": false},
+        {"text": "Speed-strength", "is_correct": true},
+        {"text": "Static strength", "is_correct": false},
+        {"text": "Minimal strength", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["speed_strength"]
+      }
+    },
+    {
+      "text": "Strength development affects only the muscular system.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because neural adaptation also occurs.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.65,
+        "cognitive_load": 0.55,
+        "average_time_seconds": 25,
+        "concept_tags": ["adaptation"]
+      }
+    },
+    {
+      "text": "What most characterises strength endurance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Repeated or sustained force production over time.",
+      "options": [
+        {"text": "A single maximal effort", "is_correct": false},
+        {"text": "Sustained force production", "is_correct": true},
+        {"text": "Rapid reaction", "is_correct": false},
+        {"text": "Movement precision", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["strength_endurance"]
+      }
+    },
+    {
+      "text": "Which relationship holds true between strength and speed?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Speed-strength is the combination of both qualities.",
+      "options": [
+        {"text": "There is no relationship", "is_correct": false},
+        {"text": "They combine in explosive actions", "is_correct": true},
+        {"text": "They are opposing qualities", "is_correct": false},
+        {"text": "They are independent", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.52,
+        "average_time_seconds": 50,
+        "concept_tags": ["speed_strength"]
+      }
+    },
+    {
+      "text": "What is the main goal of strength development?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "To increase performance and improve sport-specific applicability.",
+      "options": [
+        {"text": "To increase fatigue", "is_correct": false},
+        {"text": "To increase performance", "is_correct": true},
+        {"text": "To reduce movement", "is_correct": false},
+        {"text": "To rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 40,
+        "concept_tags": ["strength"]
+      }
+    }
+  ]
+}

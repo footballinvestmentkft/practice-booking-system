@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Training Methods",
+  "topic": "Methods of Speed Development",
+  "quiz_title": "AL — Training Methods - Methods of Speed Development [EN]",
+  "description": "The types of speed and the principles and methods of speed development.",
+  "questions": [
+    {
+      "text": "What is speed?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Speed is the ability to execute movement in the shortest possible time.",
+      "options": [
+        {"text": "Prolonged movement", "is_correct": false},
+        {"text": "The ability for rapid execution", "is_correct": true},
+        {"text": "The ability to exert force", "is_correct": false},
+        {"text": "The ability to rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["speed"]
+      }
+    },
+    {
+      "text": "Which belongs to the types of speed?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Reaction speed is one of the fundamental types of speed.",
+      "options": [
+        {"text": "Endurance", "is_correct": false},
+        {"text": "Reaction speed", "is_correct": true},
+        {"text": "Flexibility", "is_correct": false},
+        {"text": "Strength", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["speed_types"]
+      }
+    },
+    {
+      "text": "What characterises speed training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Short-duration maximal intensity.",
+      "options": [
+        {"text": "Long, low intensity", "is_correct": false},
+        {"text": "Short, maximal intensity", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Continuous load", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["speed_training"]
+      }
+    },
+    {
+      "text": "Why is rest period important in speed training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Speed can only be developed effectively when fully rested.",
+      "options": [
+        {"text": "It has no significance", "is_correct": false},
+        {"text": "It ensures full recovery", "is_correct": true},
+        {"text": "It is only a time-filler", "is_correct": false},
+        {"text": "It reduces load", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["rest_period"]
+      }
+    },
+    {
+      "text": "Speed development is closely related to the nervous system.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because the nervous system controls rapid reactions.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["nervous_system"]
+      }
+    },
+    {
+      "text": "What influences speed performance?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Technique significantly influences the speed of execution.",
+      "options": [
+        {"text": "Strength only", "is_correct": false},
+        {"text": "Technique", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Duration only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["technique"]
+      }
+    },
+    {
+      "text": "What happens to speed when fatigued?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Fatigue impairs speed performance.",
+      "options": [
+        {"text": "It improves", "is_correct": false},
+        {"text": "It deteriorates", "is_correct": true},
+        {"text": "It does not change", "is_correct": false},
+        {"text": "It becomes maximal", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["fatigue"]
+      }
+    },
+    {
+      "text": "Speed training is often low-intensity.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because maximal intensity is required.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["intensity"]
+      }
+    },
+    {
+      "text": "What exercises are typical for speed development?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Short sprints and reaction exercises.",
+      "options": [
+        {"text": "Long-distance running", "is_correct": false},
+        {"text": "Short sprints", "is_correct": true},
+        {"text": "Stretching", "is_correct": false},
+        {"text": "Meditation", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["exercises"]
+      }
+    },
+    {
+      "text": "Speed development can be combined with other abilities.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because complex training is required.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["combination"]
+      }
+    }
+  ]
+}

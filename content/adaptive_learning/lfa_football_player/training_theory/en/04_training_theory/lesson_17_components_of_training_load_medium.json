@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Training Theory",
+  "topic": "Components of Training Load (Intensity, Volume, Density)",
+  "quiz_title": "AL — Training Theory - Components of Training Load [EN]",
+  "description": "The role of intensity, volume, and density in determining training load.",
+  "questions": [
+    {
+      "text": "What is training load?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The totality of physical and psychological stimuli applied to the body during training.",
+      "options": [
+        {"text": "The duration of rest only", "is_correct": false},
+        {"text": "The training stimulus applied to the body", "is_correct": true},
+        {"text": "The duration of running only", "is_correct": false},
+        {"text": "The length of the training session only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["training_load"]
+      }
+    },
+    {
+      "text": "What does intensity mean in training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Intensity refers to the magnitude of the training load.",
+      "options": [
+        {"text": "The length of the training session", "is_correct": false},
+        {"text": "The magnitude of the load", "is_correct": true},
+        {"text": "Rest duration", "is_correct": false},
+        {"text": "The type of exercise", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["intensity"]
+      }
+    },
+    {
+      "text": "What does volume mean in training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Volume refers to the quantity of work performed.",
+      "options": [
+        {"text": "The magnitude of the load", "is_correct": false},
+        {"text": "The quantity of work performed", "is_correct": true},
+        {"text": "The duration of rest", "is_correct": false},
+        {"text": "Speed", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["volume"]
+      }
+    },
+    {
+      "text": "What does density mean in training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Density refers to the ratio of work to rest.",
+      "options": [
+        {"text": "The length of the training session", "is_correct": false},
+        {"text": "The ratio of work to rest", "is_correct": true},
+        {"text": "Speed", "is_correct": false},
+        {"text": "Muscular strength", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["density"]
+      }
+    },
+    {
+      "text": "Intensity and volume are interrelated.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because an inverse relationship generally exists between them.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 25,
+        "concept_tags": ["intensity", "volume"]
+      }
+    },
+    {
+      "text": "What happens with excessively high intensity?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Increased fatigue and risk of injury may occur.",
+      "options": [
+        {"text": "Rapid recovery", "is_correct": false},
+        {"text": "Fatigue and overtraining", "is_correct": true},
+        {"text": "No effect", "is_correct": false},
+        {"text": "Only endurance increases", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["intensity"]
+      }
+    },
+    {
+      "text": "What happens with excessively high volume?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Overtraining and exhaustion may develop.",
+      "options": [
+        {"text": "Rapid development", "is_correct": false},
+        {"text": "Exhaustion and overtraining", "is_correct": true},
+        {"text": "No effect", "is_correct": false},
+        {"text": "Only speed increases", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["volume"]
+      }
+    },
+    {
+      "text": "Why is individualising training load important?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Because individual differences influence adaptation.",
+      "options": [
+        {"text": "It is not important", "is_correct": false},
+        {"text": "Because of individual differences", "is_correct": true},
+        {"text": "Only for competition purposes", "is_correct": false},
+        {"text": "To save time", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["individual_differences"]
+      }
+    },
+    {
+      "text": "Training load must be identical for all athletes.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because it must be individually tailored.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["individual_differences"]
+      }
+    },
+    {
+      "text": "What determines training effectiveness?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The appropriate combination of intensity, volume, and density.",
+      "options": [
+        {"text": "Intensity only", "is_correct": false},
+        {"text": "The combination of load parameters", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Volume only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["training_load"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Edzéselmélet alapjai",
+  "topic": "Edzéselmélet alapjai — Középszint",
+  "quiz_title": "AL — Edzéselmélet alapjai - Középszint [HU]",
+  "description": "Az edzéselmélet alapjainak mélyebb elemzése: terhelés-adaptáció mechanizmusai, az edzésterhelés összetevőinek kölcsönhatása, edzéselvek alkalmazása és az edzés felépítésének élettani indoklása.",
+  "questions": [
+    {
+      "text": "Miért nem elegendő az edzésterhelés folyamatos növelése a fejlődés biztosításához?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A folyamatosan növekvő terhelés előbb-utóbb meghaladja a szervezet regenerációs kapacitását — a szuperkompenzáció elmarad, és overreaching vagy túledzés alakulhat ki. Az adaptáció biztosításához terhelés és regeneráció váltakozása szükséges.",
+      "options": [
+        {"text": "Mert a szervezet végtelen adaptációs kapacitással rendelkezik", "is_correct": false},
+        {"text": "Mert a folyamatos növelés meghaladja a regenerációs kapacitást — overreaching és túledzés alakulhat ki", "is_correct": true},
+        {"text": "Mert az edzésterem kapacitása korlátozott", "is_correct": false},
+        {"text": "A fejlődéshez mindig azonos terhelés szükséges", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.43,
+        "average_time_seconds": 42,
+        "concept_tags": ["terheles_noveles", "regeneracio", "adaptacio"]
+      }
+    },
+    {
+      "text": "Az edzésterhelés intenzitása és volumene fordított arányban állnak egymással.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz. Magas intenzitású edzésnél (pl. maximális sprint, maximális erő) kevesebb ismétlés, rövidebb össz-térfogat lehetséges — a szervezet nem tud hosszú ideig maximális intenzitással dolgozni. Alacsonyabb intenzitásnál a volumen megnövelhető.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.43,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 32,
+        "concept_tags": ["intenzitas", "volumen", "kapcsolat"]
+      }
+    },
+    {
+      "text": "Melyik edzéselv mondja ki, hogy a terhelést fokozatosan kell növelni?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A progresszivitás elve (fokozatosság elve) írja elő, hogy a terhelést szisztematikusan, fokozatosan kell növelni — sem túl lassan (nem ad adaptációs ingert), sem túl gyorsan (sérülés, túlterhelés kockázata).",
+      "options": [
+        {"text": "Specificitás elve", "is_correct": false},
+        {"text": "Progresszivitás (fokozatosság) elve", "is_correct": true},
+        {"text": "Változatosság elve", "is_correct": false},
+        {"text": "Rendszeresség elve", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["progresszivitas_elve", "edzeselvek"]
+      }
+    },
+    {
+      "text": "Mi a sűrűség (density) az edzésterhelés összetevőjeként?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A sűrűség az edzésmunka és a pihenőidők aránya egy edzésegységen belül — meghatározza, hogy a pihenők és a munka milyen arányban váltják egymást. Magas sűrűség = rövid pihenők; alacsony sűrűség = hosszú pihenők.",
+      "options": [
+        {"text": "Az edzésnapok száma egy héten belül", "is_correct": false},
+        {"text": "Az edzésmunka és pihenőidők aránya egy edzésegységen belül", "is_correct": true},
+        {"text": "Az edzésintenzitás maximuma", "is_correct": false},
+        {"text": "A mozgásvégrehajtás sebessége", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["suruseg", "edzesterheles_osszetevoi"]
+      }
+    },
+    {
+      "text": "Miért szükséges a bemelegítés élettani szempontból?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A bemelegítés növeli a core testhőmérsékletet (jobb enzimhatékonyság), fokozza az izomzat vérellátását (O₂ és tápanyag-szállítás), csökkenti az ín és ízület merevségét, és fokozza az idegrendszeri ingervezetési sebességet — mindezek csökkentik a sérüléskockázatot és javítják a teljesítményt.",
+      "options": [
+        {"text": "Kizárólag pszichológiai hatása van", "is_correct": false},
+        {"text": "Testhőmérséklet emelkedés, fokozott vérellátás, csökkent ínmerevség és gyorsabb idegvezetés — csökkenti sérüléskockázatot", "is_correct": true},
+        {"text": "Az edzés idejét növeli hatékonyan", "is_correct": false},
+        {"text": "Csak verseny előtt szükséges, edzésen nem", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 45,
+        "concept_tags": ["bemelegites", "elettani_indoklas"]
+      }
+    },
+    {
+      "text": "A rendszeresség elvének megsértése az edzettség elvesztéséhez (detraining) vezet.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz. A rendszeres, ismétlődő edzésingerek hiányában a szerzett adaptáció visszafordul — az aerob kapacitás 2-3 héten belül csökkeni kezd, az erőadaptációk valamivel lassabban, de szintén visszafordulnak.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 32,
+        "concept_tags": ["rendszeresseg_elve", "detraining"]
+      }
+    },
+    {
+      "text": "Mit jelent az edzés specificitásának elve a labdarúgóknál?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A specificitás elve szerint az edzéstartalom a labdarúgás sajátos követelményeihez (sprintek, irányváltások, labdás technikák, taktikai döntéshozatal) kell hogy igazodjon — az általános kondicionálás szükséges alap, de nem helyettesítheti a sportágspecifikus munkát.",
+      "options": [
+        {"text": "Minden labdarúgónak azonos edzéstervet kell követnie", "is_correct": false},
+        {"text": "Az edzéstartalom a labdarúgás specifikus követelményeihez igazodik — sprintek, irányváltások, labdás technikák", "is_correct": true},
+        {"text": "A specificitás kizárólag az intenzitásra vonatkozik", "is_correct": false},
+        {"text": "A specifikus edzés feleslegessé teszi az általános kondicionálást", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["specifikusság_elve", "labdarugas"]
+      }
+    },
+    {
+      "text": "Mi a terhelési inger küszöbértéke (threshold) és miért fontos?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A küszöbérték az a minimális terhelési szint, amely adaptációs választ vált ki a szervezetből. A küszöb alatti terhelés nem indít el adaptációt; a küszöb feletti adaptációt vált ki. A küszöb egyénenként eltérő és az edzettségi szinttel együtt emelkedik.",
+      "options": [
+        {"text": "A maximálisan alkalmazható terhelési szint", "is_correct": false},
+        {"text": "A minimális terhelési szint, amely adaptációs választ vált ki — edzettséggel emelkedik", "is_correct": true},
+        {"text": "A sérülési határérték", "is_correct": false},
+        {"text": "Az edzésnapok maximális száma hetente", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 45,
+        "concept_tags": ["kuszoberteck", "adaptacio", "edzesiinger"]
+      }
+    },
+    {
+      "text": "Az edzés fő részének (főrész) célja az edzéssel kitűzött célok elérése.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz. Az edzés felépítése: bevezető (bemelegítés) → főrész (fő célok: erő, állóképesség, technika stb.) → befejező rész (levezetés, nyújtás, értékelés). A főrész tartalmazza az edzés legintenzívebb, legcélirányosabb feladatait.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.38,
+        "average_time_seconds": 30,
+        "concept_tags": ["edzes_felepitese", "foresz"]
+      }
+    },
+    {
+      "text": "Hogyan kapcsolódik a változatosság elve az edzés hosszú távú hatékonyságához?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A változatosság elve a monotónia és az alkalmazkodás (szokás) megelőzésére szolgál: azonos ingerek ismétlése csökkentő hatású adaptációhoz vezet. A módszerek, intenzitás, volumen és tartalom váltakoztatása fenntartja az adaptációs választ és csökkenti a motivációvesztés kockázatát.",
+      "options": [
+        {"text": "A változatosság zavart okoz és csökkenti a teljesítményt", "is_correct": false},
+        {"text": "Megelőzi az adaptáció csökkenését (monotónia) és fenntartja a motivációt és az adaptációs választ", "is_correct": true},
+        {"text": "A változatosság csak pszichológiai hatással bír", "is_correct": false},
+        {"text": "A változatosság elve ellentmond a specificitás elvének", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["valtozatossag_elve", "monotonia_megelozes"]
+      }
+    }
+  ]
+}

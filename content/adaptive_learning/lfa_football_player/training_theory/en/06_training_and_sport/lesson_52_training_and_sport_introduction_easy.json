@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Training and Sport",
+  "topic": "Training and Sport — Introduction",
+  "quiz_title": "AL — Training and Sport - Introduction [EN]",
+  "description": "Overview of the fundamental concepts relating training to sport: warm-up, cool-down, sport-specific training, youth development, and injury prevention.",
+  "questions": [
+    {
+      "text": "What is the purpose of a warm-up before training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The warm-up gradually prepares the body for exercise: it raises body temperature, increases blood flow to the muscles, and reduces the risk of injury.",
+      "options": [
+        {"text": "To accelerate the onset of fatigue", "is_correct": false},
+        {"text": "To gradually prepare the body for exercise", "is_correct": true},
+        {"text": "To directly improve competition results", "is_correct": false},
+        {"text": "To shorten the training session", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 30,
+        "concept_tags": ["warm_up"]
+      }
+    },
+    {
+      "text": "The cool-down is the closing phase of training that supports regeneration.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True. The cool-down gradually reduces exercise intensity, aids in lactate removal, and speeds up recovery.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["cool_down"]
+      }
+    },
+    {
+      "text": "What does sport-specificity mean in training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Sport-specificity means that the content and methods of training are adapted to the demands of the given sport, so that development is directly linked to match situations.",
+      "options": [
+        {"text": "Applying identical training methods in every sport", "is_correct": false},
+        {"text": "Adapting training content to the requirements of the given sport", "is_correct": true},
+        {"text": "Performing only general conditioning work", "is_correct": false},
+        {"text": "Applying the most intense training method available", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["sport_specificity"]
+      }
+    },
+    {
+      "text": "What is the primary goal of youth development in sport?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "The primary goal of youth development is the long-term development of young athletes, encompassing the laying of technical, physical, and mental foundations.",
+      "options": [
+        {"text": "To achieve immediate competition results", "is_correct": false},
+        {"text": "The long-term development of young athletes", "is_correct": true},
+        {"text": "The immediate application of adult training methods", "is_correct": false},
+        {"text": "To complete as many training sessions as possible", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["youth_development"]
+      }
+    },
+    {
+      "text": "Injury prevention is an integral part of the training plan.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True. Deliberate training planning — including appropriate load-rest ratios, warm-up, and stretching — is the foundation of injury prevention.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["injury_prevention"]
+      }
+    },
+    {
+      "text": "Which combination of abilities best characterises football?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Football is a complex sport in which aerobic endurance, speed, strength, and coordination all play a decisive role — no single ability dominates.",
+      "options": [
+        {"text": "Speed exclusively", "is_correct": false},
+        {"text": "A combination of abilities: endurance, speed, strength, and coordination", "is_correct": true},
+        {"text": "Endurance exclusively", "is_correct": false},
+        {"text": "Strength exclusively", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["football", "abilities"]
+      }
+    },
+    {
+      "text": "What is the difference between general and specific training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "General training develops basic physical abilities (e.g., running, strength), while specific training is directly linked to the movements of the sport (e.g., ball exercises in football).",
+      "options": [
+        {"text": "There is no difference between them", "is_correct": false},
+        {"text": "General training develops basic abilities; specific training develops sport-specific movements", "is_correct": true},
+        {"text": "Specific training is always more intense", "is_correct": false},
+        {"text": "General training is only for adults", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 38,
+        "concept_tags": ["general_training", "specific_training"]
+      }
+    },
+    {
+      "text": "Young athletes should train at the same intensity as adult athletes.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "False. The developing body of young athletes requires different loading; youth training is built on age-appropriate, gradual load progression.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["youth_development", "age"]
+      }
+    },
+    {
+      "text": "What is the relationship between training and competition?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "Training is the means for achieving competition performance: the planned loads and development work are aligned with the demands of match situations.",
+      "options": [
+        {"text": "Competition and training are entirely independent of each other", "is_correct": false},
+        {"text": "Training prepares the athlete to achieve competition performance", "is_correct": true},
+        {"text": "Competition replaces training", "is_correct": false},
+        {"text": "The goal of training is to avoid competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["training_competition_relationship"]
+      }
+    },
+    {
+      "text": "Dynamic stretching is recommended for warm-up and static stretching for cool-down.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "True. Before training, dynamic (movement-based) stretching prepares the muscles; during cool-down, static (held positions) stretching aids regeneration.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 28,
+        "concept_tags": ["stretching", "warm_up", "cool_down"]
+      }
+    }
+  ]
+}

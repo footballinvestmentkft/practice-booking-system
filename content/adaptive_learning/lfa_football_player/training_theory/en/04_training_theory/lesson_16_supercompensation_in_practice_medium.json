@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Training Theory",
+  "topic": "Practical Application of Supercompensation",
+  "quiz_title": "AL — Training Theory - Practical Application of Supercompensation [EN]",
+  "description": "Applying the principle of supercompensation in training planning and load timing.",
+  "questions": [
+    {
+      "text": "What does the supercompensation curve show?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The change in performance level during training load and recovery.",
+      "options": [
+        {"text": "Changes in heart rate", "is_correct": false},
+        {"text": "The development of performance level", "is_correct": true},
+        {"text": "Changes in body weight", "is_correct": false},
+        {"text": "Increase in muscle mass", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["supercompensation"]
+      }
+    },
+    {
+      "text": "What happens when the next training load is applied too early?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The body has not yet recovered, so a decline in performance may occur.",
+      "options": [
+        {"text": "Maximum development", "is_correct": false},
+        {"text": "Overtraining and performance decline", "is_correct": true},
+        {"text": "No effect", "is_correct": false},
+        {"text": "Rapid recovery", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["timing"]
+      }
+    },
+    {
+      "text": "What happens when the next training load is applied too late?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The supercompensation effect diminishes and development is reduced.",
+      "options": [
+        {"text": "Maximum development", "is_correct": false},
+        {"text": "Diminished effect", "is_correct": true},
+        {"text": "Overtraining", "is_correct": false},
+        {"text": "Injury", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["timing"]
+      }
+    },
+    {
+      "text": "When is the ideal timing for the next training session?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "At the peak of supercompensation.",
+      "options": [
+        {"text": "During fatigue", "is_correct": false},
+        {"text": "At the peak of supercompensation", "is_correct": true},
+        {"text": "Before training", "is_correct": false},
+        {"text": "At the start of rest", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["supercompensation"]
+      }
+    },
+    {
+      "text": "The quality of recovery influences supercompensation.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because better recovery leads to better adaptation.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 25,
+        "concept_tags": ["recovery"]
+      }
+    },
+    {
+      "text": "Why is appropriate timing of training sessions important?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "In order to maximise development.",
+      "options": [
+        {"text": "To fill time", "is_correct": false},
+        {"text": "To optimise performance", "is_correct": true},
+        {"text": "To reduce rest", "is_correct": false},
+        {"text": "For competition purposes", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["training_planning"]
+      }
+    },
+    {
+      "text": "What influences the duration of supercompensation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Individual characteristics and the magnitude of training load.",
+      "options": [
+        {"text": "Age only", "is_correct": false},
+        {"text": "Individual differences and training load", "is_correct": true},
+        {"text": "Body weight only", "is_correct": false},
+        {"text": "Weather only", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["individual_differences"]
+      }
+    },
+    {
+      "text": "The timing of supercompensation is identical for all athletes.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False, because individual differences exist.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["individual_differences"]
+      }
+    },
+    {
+      "text": "What is the role of a microcycle in training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A short-term training planning unit.",
+      "options": [
+        {"text": "Annual plan", "is_correct": false},
+        {"text": "A short training cycle", "is_correct": true},
+        {"text": "Competition period", "is_correct": false},
+        {"text": "Rest period", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["microcycle"]
+      }
+    },
+    {
+      "text": "Disregarding supercompensation reduces development.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because training timing is then suboptimal.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["supercompensation"]
+      }
+    }
+  ]
+}

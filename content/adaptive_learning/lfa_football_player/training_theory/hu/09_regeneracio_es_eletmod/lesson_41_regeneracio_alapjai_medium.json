@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Regeneráció és életmód",
+  "topic": "A regeneráció alapjai",
+  "quiz_title": "AL — Regeneráció és életmód - A regeneráció alapjai [HU]",
+  "description": "A regeneráció folyamata, típusai és szerepe a sportteljesítményben.",
+  "questions": [
+    {
+      "text": "Mit nevezünk regenerációnak?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A regeneráció a szervezet helyreállási folyamata terhelés után.",
+      "options": [
+        {"text": "Edzés végrehajtása", "is_correct": false},
+        {"text": "Szervezet helyreállása", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["regeneracio"]
+      }
+    },
+    {
+      "text": "Mi a regeneráció szerepe az edzésben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A regeneráció során történik az alkalmazkodás és fejlődés.",
+      "options": [
+        {"text": "Edzés megszüntetése", "is_correct": false},
+        {"text": "Fejlődés biztosítása", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Csak verseny", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["adaptacio"]
+      }
+    },
+    {
+      "text": "Mi a kapcsolat a fáradás és regeneráció között?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A regeneráció csökkenti a fáradást és helyreállítja a szervezetet.",
+      "options": [
+        {"text": "Nincs kapcsolat", "is_correct": false},
+        {"text": "A regeneráció csökkenti a fáradást", "is_correct": true},
+        {"text": "A fáradás növeli a teljesítményt", "is_correct": false},
+        {"text": "Csak edzés számít", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["faradas"]
+      }
+    },
+    {
+      "text": "Mi az aktív regeneráció?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Könnyű mozgással történő regeneráció.",
+      "options": [
+        {"text": "Teljes pihenés", "is_correct": false},
+        {"text": "Könnyű mozgás", "is_correct": true},
+        {"text": "Maximális terhelés", "is_correct": false},
+        {"text": "Versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["aktiv_regeneracio"]
+      }
+    },
+    {
+      "text": "Mi a passzív regeneráció?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Pihenéssel történő regeneráció.",
+      "options": [
+        {"text": "Mozgás", "is_correct": false},
+        {"text": "Pihenés", "is_correct": true},
+        {"text": "Edzés", "is_correct": false},
+        {"text": "Verseny", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["passziv_regeneracio"]
+      }
+    },
+    {
+      "text": "Az alvás fontos szerepet játszik a regenerációban.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert az alvás alatt zajlanak helyreállító folyamatok.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["alvas"]
+      }
+    },
+    {
+      "text": "Miért fontos a megfelelő táplálkozás regeneráció során?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A tápanyagok segítik a szervezet helyreállását.",
+      "options": [
+        {"text": "Nincs szerepe", "is_correct": false},
+        {"text": "Helyreállítja a szervezetet", "is_correct": true},
+        {"text": "Csak edzéshez kell", "is_correct": false},
+        {"text": "Csak versenyhez kell", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["taplalkozas"]
+      }
+    },
+    {
+      "text": "A hidratáció befolyásolja a regenerációt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert a folyadék egyensúly fontos a működéshez.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["hidratacio"]
+      }
+    },
+    {
+      "text": "Mi történik elégtelen regeneráció esetén?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Túlterhelés és teljesítménycsökkenés alakulhat ki.",
+      "options": [
+        {"text": "Teljesítmény nő", "is_correct": false},
+        {"text": "Túlterhelés alakul ki", "is_correct": true},
+        {"text": "Nincs hatás", "is_correct": false},
+        {"text": "Csak pihenés történik", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["tulterheles"]
+      }
+    },
+    {
+      "text": "A megfelelő regeneráció javítja a teljesítményt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert támogatja az alkalmazkodást.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["teljesitmeny"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "EASY",
+  "module": "Terhelés és teljesítmény",
+  "topic": "Terhelés és teljesítmény — Bevezető",
+  "quiz_title": "AL — Terhelés és teljesítmény - Bevezető [HU]",
+  "description": "A fizikai terhelés és teljesítmény alapfogalmainak áttekintése: élettani hatások, fáradás, regeneráció, túlterhelés és teljesítménymérés.",
+  "questions": [
+    {
+      "text": "Mi a fizikai terhelés hatása a szervezetre?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A fizikai terhelés élettani változásokat indít el a szervezetben (pl. pulzus-, légzés- és anyagcserenövekedés), amelyek adaptációhoz vezetnek.",
+      "options": [
+        {"text": "Kizárólag fáradtságot okoz", "is_correct": false},
+        {"text": "Élettani változásokat indít el a szervezetben", "is_correct": true},
+        {"text": "Semmilyen hatása nincs", "is_correct": false},
+        {"text": "Csökkenti a szív munkáját", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["fizikai_terheles", "elettani_hatas"]
+      }
+    },
+    {
+      "text": "A fáradás csökkenti a teljesítményt.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. A fáradás az izommunkavégző képesség csökkenése, ami közvetlen negatív hatással van a sportteljesítményre.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["faradas"]
+      }
+    },
+    {
+      "text": "Mi a regeneráció?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A regeneráció a szervezet azon folyamata, amelynek során visszaáll a terhelés előtti állapotba, és felkészül a következő edzésre.",
+      "options": [
+        {"text": "Az edzés intenzív befejező szakasza", "is_correct": false},
+        {"text": "A szervezet visszaállása a terhelés előtti állapotba", "is_correct": true},
+        {"text": "A verseny előtti bemelegítés", "is_correct": false},
+        {"text": "Az edzésterhelés növelése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["regeneracio"]
+      }
+    },
+    {
+      "text": "Melyik jelzi leginkább a túledzést?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A tartós teljesítménycsökkenés pihenés ellenére a túledzés (overtraining) klasszikus jele.",
+      "options": [
+        {"text": "Rövid, egy napos fáradtság", "is_correct": false},
+        {"text": "Tartós teljesítménycsökkenés és fáradtság", "is_correct": true},
+        {"text": "A pulzus csökkenése edzés közben", "is_correct": false},
+        {"text": "Az étvágy növekedése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 38,
+        "concept_tags": ["tuledzes"]
+      }
+    },
+    {
+      "text": "Mi a teljesítménymérés célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A teljesítménymérés célja a sportoló aktuális állapotának objektív meghatározása, hogy az edzésterv célzottan módosítható legyen.",
+      "options": [
+        {"text": "A sportoló megbüntetése gyenge eredményért", "is_correct": false},
+        {"text": "Az aktuális állapot objektív meghatározása", "is_correct": true},
+        {"text": "A versenyeredmény előrejelzése garantáltan", "is_correct": false},
+        {"text": "Az edzés befejezésének eldöntése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.20,
+        "cognitive_load": 0.18,
+        "average_time_seconds": 35,
+        "concept_tags": ["teljesitmenymeres"]
+      }
+    },
+    {
+      "text": "A megfelelő pihenés részét képezi az edzéstervnek.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. A pihenő az edzésfolyamat szerves része; enélkül az adaptáció és a fejlődés nem jöhet létre.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.15,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["piheno"]
+      }
+    },
+    {
+      "text": "Mi befolyásolja az atlétikai teljesítményt?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A teljesítményt öröklött adottságok (genetika) és a megszerzett edzettség egyaránt meghatározzák — nem csak az egyik tényező.",
+      "options": [
+        {"text": "Kizárólag az öröklött genetikai adottságok", "is_correct": false},
+        {"text": "Öröklött adottságok és edzettség egyaránt", "is_correct": true},
+        {"text": "Kizárólag az edzés mennyisége", "is_correct": false},
+        {"text": "Csak a táplálkozás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.22,
+        "cognitive_load": 0.20,
+        "average_time_seconds": 38,
+        "concept_tags": ["teljesitmeny_tenyezoi"]
+      }
+    },
+    {
+      "text": "A túlterhelés hosszú távon sérüléshez vezethet.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Igaz. A krónikus túlterhelés — amikor a szervezet nem kap elegendő regenerációs időt — sérülések és túledzés kialakulásához vezet.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["tulterheles", "serules"]
+      }
+    },
+    {
+      "text": "Mi a különbség a fáradás és a túledzés között?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 5,
+      "explanation": "A fáradás rövid távú, egy-két nap pihenővel rendezhetű állapot. A túledzés hosszan tartó, hetek-hónapok alatt nehezen visszafordítható.",
+      "options": [
+        {"text": "Nincs közöttük különbség", "is_correct": false},
+        {"text": "A túledzés hosszabb ideig tartó, nehezebben visszafordítható állapot", "is_correct": true},
+        {"text": "A fáradás komolyabb, mint a túledzés", "is_correct": false},
+        {"text": "Csak a túledzés csökkenti a teljesítményt", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.22,
+        "average_time_seconds": 40,
+        "concept_tags": ["faradas", "tuledzes"]
+      }
+    },
+    {
+      "text": "A teljesítményt kizárólag genetikai tényezők határozzák meg.",
+      "type": "TRUE_FALSE",
+      "points": 5,
+      "explanation": "Hamis. Bár a genetika szerepet játszik, az edzettség, a táplálkozás, az alvás és a mentális felkészültség szintén meghatározó tényezők.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.18,
+        "cognitive_load": 0.15,
+        "average_time_seconds": 25,
+        "concept_tags": ["teljesitmeny_tenyezoi"]
+      }
+    }
+  ]
+}

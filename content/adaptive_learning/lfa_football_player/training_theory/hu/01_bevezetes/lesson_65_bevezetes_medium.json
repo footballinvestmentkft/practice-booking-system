@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Bevezetés",
+  "topic": "Bevezetés — Középszint",
+  "quiz_title": "AL — Bevezetés - Középszint [HU]",
+  "description": "A testkultúra és sport összefüggéseinek mélyebb elemzése: testnevelés társadalmi funkciói, civilizációs ártalmak és a sport kompenzációs szerepe, élsport és tömegsport különbségei.",
+  "questions": [
+    {
+      "text": "Miben különbözik a testnevelés és a sport fogalma?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A testnevelés szervezett, pedagógiai célú testi nevelési folyamat (főként az oktatási rendszerben), míg a sport versenyszerű, eredményorientált fizikai tevékenység, amelynek célja a teljesítmény maximalizálása.",
+      "options": [
+        {"text": "Nincs különbség, azonos fogalmak", "is_correct": false},
+        {"text": "Testnevelés: pedagógiai folyamat; sport: versenyszerű, teljesítményorientált tevékenység", "is_correct": true},
+        {"text": "A testnevelés csak felnőttekre vonatkozik", "is_correct": false},
+        {"text": "A sport kizárólag professzionális sportolók tevékenysége", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 42,
+        "concept_tags": ["testnevelés", "sport", "fogalmak"]
+      }
+    },
+    {
+      "text": "A civilizációs ártalmak (pl. mozgáshiány) kezelésének elsődleges eszköze a sport és a rendszeres testmozgás.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz. A hipokinézia (mozgáshiányos életmód) okozta szív- és érrendszeri, mozgásszervi és anyagcsere-problémák kompenzálásának leghatékonyabb eszköze a rendszeres fizikai aktivitás — ez a sport és testnevelés egyik legfontosabb társadalmi funkciója.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.38,
+        "average_time_seconds": 32,
+        "concept_tags": ["civilizacios_artalmak", "kompenzacios_funkció"]
+      }
+    },
+    {
+      "text": "Mi a testkultúra fogalma és mit foglal magában?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A testkultúra az emberi kultúra azon része, amely a test fejlesztésére, gondozására és teljesítőképességének megőrzésére irányul — magában foglalja a testnevelést, a sportot, a higiénét és az egészséges életmóddal kapcsolatos szokásokat.",
+      "options": [
+        {"text": "Kizárólag a versenysport területe", "is_correct": false},
+        {"text": "Az emberi kultúra testfejlesztésre, gondozásra és teljesítőképesség-megőrzésre irányuló része", "is_correct": true},
+        {"text": "Csak az iskolai testnevelés tantárgy tartalma", "is_correct": false},
+        {"text": "A sportteljesítmény statisztikai mérése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 42,
+        "concept_tags": ["testkultura", "definicio"]
+      }
+    },
+    {
+      "text": "Melyik nem tipikus civilizációs ártalomnak tekinthető?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A fizikai túlterhelés (overtraining) a sportelmélet területéhez tartozó probléma, nem civilizációs ártalomnak minősül. A mozgáshiány, elhízás, tartásproblémák és szív-érrendszeri betegségek az ülő életmódhoz köthető tipikus civilizációs ártalmak.",
+      "options": [
+        {"text": "Mozgáshiányos életmód (hipokinézia)", "is_correct": false},
+        {"text": "Fizikai túlterhelésből fakadó overtraining", "is_correct": true},
+        {"text": "Ülőmunkából eredő tartásproblémák", "is_correct": false},
+        {"text": "Elhízás és metabolikus szindróma", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 45,
+        "concept_tags": ["civilizacios_artalmak", "azonositas"]
+      }
+    },
+    {
+      "text": "Mi a különbség az élsport és a tömegsport között célkitűzés szempontjából?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az élsport fő célja a maximális sportteljesítmény elérése versenykörülmények között; a tömegsport célja az egészségmegőrzés, rekreáció és szociális közösségteremtés — általában nem versenyorientált.",
+      "options": [
+        {"text": "Nincs különbség, mindkettő versenyorientált", "is_correct": false},
+        {"text": "Élsport: maximális teljesítmény elérése; tömegsport: egészség, rekreáció, közösségteremtés", "is_correct": true},
+        {"text": "A tömegsport intenzívebb, mint az élsport", "is_correct": false},
+        {"text": "Az élsport kizárólag fiataloknak szól", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 42,
+        "concept_tags": ["elsport", "tomeg_sport", "celkituzesek"]
+      }
+    },
+    {
+      "text": "A sport és a testnevelés egészségre gyakorolt hatása kizárólag fizikai természetű.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis. A rendszeres sportolás bizonyítottan javítja a mentális egészséget is: csökkenti a depresszió és szorongás kockázatát, javítja az önértékelést és a kognitív funkciókat — az egészséget komplex (fizikai, mentális, szociális) jelenségként kell értelmezni.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 32,
+        "concept_tags": ["egeszsegre_hatas", "mentalis_egeszseg"]
+      }
+    },
+    {
+      "text": "Mi a hipokinézia és milyen következményekkel jár?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A hipokinézia a fizikai aktivitás hiányát jelöli, amelyet az ülő életmód terjeszt. Következményei: szív- és érrendszeri betegségek, elhízás, csontritkulás, izomsorvadás, kognitív teljesítmény csökkentése és anyagcsere-betegségek.",
+      "options": [
+        {"text": "Túl intenzív mozgás következtében kialakuló fáradás", "is_correct": false},
+        {"text": "Mozgáshiány — következménye: szív- és érrendszeri betegségek, elhízás, csontritkulás és anyagcsere-zavarok", "is_correct": true},
+        {"text": "Sportsérülés típusa", "is_correct": false},
+        {"text": "A sport hiperkinetikus formája", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 42,
+        "concept_tags": ["hipokinezia", "kovetkezmenyek"]
+      }
+    },
+    {
+      "text": "A sport nevelési funkciója abban áll, hogy fejleszti a karaktert, az együttműködést és a fair play szellemét.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz. A sport nevelési értéke régóta elismert: a szabálykövetés, a győzelem és vereség elfogadása, a csapatmunka és az önfegyelem mind olyan értékek, amelyeket a sporttevékenység közvetít.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.38,
+        "average_time_seconds": 32,
+        "concept_tags": ["sport_nevelesi_funkcioja", "fair_play"]
+      }
+    },
+    {
+      "text": "Miért tekinthető a rekreációs sport a munkaképesség fenntartásának eszközeként?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A rekreációs sport pihenést és aktív regenerációt biztosít a szellemi és fizikai munkát végzők számára: csökkenti a stresszt, javítja a vérkeringést, és a mozgás okozta endorfin-felszabadulás javítja a hangulatot és a koncentrációképességet — ezáltal fenntartja a hosszú távú munkaképességet.",
+      "options": [
+        {"text": "Mert minden sportoló profi szintre képes eljutni rekreáció által", "is_correct": false},
+        {"text": "Stresszcsökkentés, aktív regeneráció és endorfin-felszabadulás révén fenntartja a munkaképességet", "is_correct": true},
+        {"text": "A rekreáció kizárólag pihenés, nem mozgás", "is_correct": false},
+        {"text": "A sport rontja a szellemi teljesítményt a fizikai fáradtság miatt", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 45,
+        "concept_tags": ["rekreacio", "munkakepesseg", "kompenzacio"]
+      }
+    },
+    {
+      "text": "A testkultúra fejlettségét egy társadalomban kizárólag az olimpiai érmek száma határozza meg.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis. A testkultúra fejlettsége komplex mutatón alapul: a tömegsport elterjedtsége, az aktív életmódot folytatók aránya, a sportinfrastruktúra elérhetősége és az egészségi állapot mutatói együttesen jellemzik — az olimpiai érmek az élsport szintjét mutatják.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 35,
+        "concept_tags": ["testkultura_fejlettsege", "tarsadalom"]
+      }
+    }
+  ]
+}

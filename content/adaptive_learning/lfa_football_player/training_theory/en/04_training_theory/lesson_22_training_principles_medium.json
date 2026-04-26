@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Training Theory",
+  "topic": "Training Principles",
+  "quiz_title": "AL — Training Theory - Training Principles [EN]",
+  "description": "The role and application of training principles in effective training.",
+  "questions": [
+    {
+      "text": "What is a training principle?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Training principles are general rules that guide the structuring of training.",
+      "options": [
+        {"text": "A single exercise", "is_correct": false},
+        {"text": "A general training rule", "is_correct": true},
+        {"text": "A competition format", "is_correct": false},
+        {"text": "A rest period", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["training_principles"]
+      }
+    },
+    {
+      "text": "What does the principle of conscious awareness mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Conscious, goal-oriented execution of training.",
+      "options": [
+        {"text": "Random training", "is_correct": false},
+        {"text": "Conscious execution", "is_correct": true},
+        {"text": "Rest", "is_correct": false},
+        {"text": "Competing", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["conscious_awareness"]
+      }
+    },
+    {
+      "text": "What does the principle of progressiveness mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The gradual increase of training load to promote development.",
+      "options": [
+        {"text": "Sudden increase of load", "is_correct": false},
+        {"text": "Gradual increase of training load", "is_correct": true},
+        {"text": "Reducing training load", "is_correct": false},
+        {"text": "Constant training load", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["progressiveness"]
+      }
+    },
+    {
+      "text": "The principle of regularity means that training must be performed on a regular basis.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because continuous training load is necessary for development.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["regularity"]
+      }
+    },
+    {
+      "text": "What does the principle of specificity mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Training is aligned with the requirements of the sport.",
+      "options": [
+        {"text": "General training", "is_correct": false},
+        {"text": "Sport-specific development", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Random loading", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["specificity"]
+      }
+    },
+    {
+      "text": "What does the principle of individual differences mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Training is adapted to individual characteristics.",
+      "options": [
+        {"text": "Everyone trains in the same way", "is_correct": false},
+        {"text": "Taking individual characteristics into account", "is_correct": true},
+        {"text": "Only the coach's decision matters", "is_correct": false},
+        {"text": "Only age matters", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["individual_differences"]
+      }
+    },
+    {
+      "text": "The principle of variability means that training must be performed with variety.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because variety supports adaptation.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 25,
+        "concept_tags": ["variability"]
+      }
+    },
+    {
+      "text": "What does the balance between load and rest mean?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The appropriate ratio ensures development.",
+      "options": [
+        {"text": "Load only", "is_correct": false},
+        {"text": "Balance between load and rest", "is_correct": true},
+        {"text": "Rest only", "is_correct": false},
+        {"text": "Competition", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["recovery"]
+      }
+    },
+    {
+      "text": "What is the principle of permanence?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The long-term maintenance of acquired abilities.",
+      "options": [
+        {"text": "Rapid development", "is_correct": false},
+        {"text": "Long-term maintenance", "is_correct": true},
+        {"text": "Rest", "is_correct": false},
+        {"text": "Competing", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["permanence"]
+      }
+    },
+    {
+      "text": "Adhering to training principles increases training effectiveness.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True, because they ensure appropriate structure.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["training_principles"]
+      }
+    }
+  ]
+}

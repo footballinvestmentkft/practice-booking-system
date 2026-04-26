@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "module": "Edzéselmélet alapjai",
+  "topic": "Edzéselmélet alapjai — Haladó",
+  "quiz_title": "AL — Edzéselmélet alapjai - Haladó [HU]",
+  "description": "Az edzéselmélet alapjainak mélyebb elemzése: adaptációs mechanizmusok molekuláris szintje, edzéselvek konfliktusai, az edzésterhelés összetevőinek optimalizálása és az egyénesítés korlátai.",
+  "questions": [
+    {
+      "text": "Mi az edzésterhelés összetevőinek helyes fontossági sorrendje rövid távú sérüléskockázat szempontjából?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A volumen hirtelen növelése a legnagyobb rövid távú sérüléskockázat-tényező (ACWR-elmélet alapján), megelőzve az intenzitás növelését. Az intenzitás akut emelése (pl. sprint hozzáadása) szintén kockázatos, de a volumen kumulatív mechanikai stresszt jelent. A sűrűség és a terjedelem hatása közvetettebb.",
+      "options": [
+        {"text": "Intenzitás > Volumen > Sűrűség > Terjedelem", "is_correct": false},
+        {"text": "Volumen hirtelen növelése > Intenzitás emelése > Sűrűség > Terjedelem", "is_correct": true},
+        {"text": "Terjedelem > Sűrűség > Intenzitás > Volumen", "is_correct": false},
+        {"text": "Minden összetevő azonos kockázatot jelent", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["edzesterheles_osszetevoi", "serulesi_kockazat", "ACWR"]
+      }
+    },
+    {
+      "text": "A specificitás elve és a változatosság elve egymással ellentmondásban van.",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Részben, de az ellentmondás látszólagos. A specificitás az adaptáció irányát határozza meg (a fejlesztett képesség a sportághoz kell hogy kötődjön), a változatosság az adaptáció elakadásának (plateaunak) megelőzését célozza. A megoldás: a változatosság a specifikus képességeken belül érvényesül (pl. különböző labdás gyakorlatok azonos képességre).",
+      "options": [
+        {"text": "Igaz — a két elv nem alkalmazható egyszerre", "is_correct": false},
+        {"text": "Hamis — a látszólagos ellentmondás feloldható: a változatosság a specifikus képességeken belül érvényesül", "is_correct": true},
+        {"text": "Igaz — a változatosság elve felülírja a specificitást", "is_correct": false},
+        {"text": "Hamis — a két elv teljesen független egymástól", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 55,
+        "concept_tags": ["specifikusság_elve", "valtozatossag_elve", "konfliktus"]
+      }
+    },
+    {
+      "text": "Milyen molekuláris mechanizmus felelős az aerob edzés hatására kialakuló mitokondriális biogenezisért?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Az aerob edzés AMPK (AMP-aktivált protein-kináz) aktivációt vált ki az energiahiány érzékelésén keresztül. Az AMPK aktiválja a PGC-1α transzkripciós ko-faktort, amely mitokondriális biogenezist indukál — növeli a mitokondriális számot és az oxidatív kapacitást. Ez az aerob adaptáció kulcsmechanizmusa.",
+      "options": [
+        {"text": "mTOR aktiváció fehérjeszintézisen keresztül", "is_correct": false},
+        {"text": "AMPK aktiváció → PGC-1α → mitokondriális biogenezis", "is_correct": true},
+        {"text": "IGF-1 szekréció a hasnyálmirigyből", "is_correct": false},
+        {"text": "Kortizol-szint csökkentése közvetlenül", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.88,
+        "cognitive_load": 0.87,
+        "average_time_seconds": 70,
+        "concept_tags": ["AMPK", "PGC_1alfa", "mitokondrialis_biogenezis", "aerob_adaptacio"]
+      }
+    },
+    {
+      "text": "Mikor vezet a progresszív terhelésnövelés a szuperkompenzáció helyett detraining-szerű állapothoz?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Ha a progresszív terhelésnövelés üteme meghaladja a szervezet regenerációs kapacitását — vagyis a következő edzésinger a fáradás csúcsán éri a sportolót, nem a szuperkompenzáció csúcsán — akkor akkumulált fáradás alakul ki. Ez funkcionális overreachinghez, majd nonfunkcionális overreachinghez és teljesítménycsökkentő állapothoz vezet.",
+      "options": [
+        {"text": "Ha a terhelésnövelés túl lassú és nem éri el a küszöböt", "is_correct": false},
+        {"text": "Ha a terhelésnövelés üteme meghaladja a regenerációs kapacitást — a fáradáson, nem szuperkompenzáción éri az újabb inger", "is_correct": true},
+        {"text": "Ha a sportoló több mint 3 napot pihen a két edzés között", "is_correct": false},
+        {"text": "Ha az intenzitás csökkentése nélkül növelik a volumenet", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.83,
+        "cognitive_load": 0.82,
+        "average_time_seconds": 65,
+        "concept_tags": ["progresszio_hatar", "overreaching", "szuperkompenzacio"]
+      }
+    },
+    {
+      "text": "Mi az 'individual response variability' (egyéni válaszvarianciának) sportedzésbeli jelentősége?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Az egyéni válaszvariancia azt jelenti, hogy azonos edzésprogram különböző sportolóknál szignifikánsan eltérő adaptációs választ vált ki (genetikai polimorfizmusok, mikrobiom, epigenetika, életmódfaktorok miatt). Ez alapvető korlátja az 'egységes programok' hatékonyságának és az egyéniesített edzés szükségességét indokolja.",
+      "options": [
+        {"text": "Két sportoló közötti edzéssorrend-különbség", "is_correct": false},
+        {"text": "Azonos edzésprogram szignifikánsan eltérő adaptációs választ vált ki különböző sportolóknál — ez az egyéniesítés tudományos alapja", "is_correct": true},
+        {"text": "Az edzés variabilitásának mennyisége (hány különböző módszert alkalmaznak)", "is_correct": false},
+        {"text": "A sportoló teljesítménybeli ingadozása versenyről versenyre", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.83,
+        "cognitive_load": 0.82,
+        "average_time_seconds": 65,
+        "concept_tags": ["egyeni_variabilitas", "egyeniesites", "genetika"]
+      }
+    },
+    {
+      "text": "Az edzés bevezető (bemelegítő) részének elhagyása szignifikánsan növeli az edzés közbeni akut sérülési kockázatot.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Igaz. A bemelegítés nélküli terhelés hideg, merev izomzatot ér — a viszkoelasztikus tulajdonságok nem optimálisak (az ín és izom kevésbé rugalmas és kevésbé ellenálló az hirtelen mechanikai terhelésre). Kutatások 50-70%-os sérülésrizikó-csökkentést mutattak ki megfelelő bemelegítéssel szemben.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.72,
+        "cognitive_load": 0.70,
+        "average_time_seconds": 42,
+        "concept_tags": ["bemelegites", "serulesi_kockazat", "viszkoelasztikus"]
+      }
+    },
+    {
+      "text": "Hogyan függ össze az edzésterhelés és az immunfunkció az intenzitás függvényében?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A kapcsolat J-alakú (inverted J-modell): mérsékelt intenzitású rendszeres testmozgás javítja az immunfunkciót (csökkentett megbetegedési kockázat), míg az extrém intenzitású vagy volumenű edzés átmenetileg immunszuppresszív állapotot (open window) okoz — a verseny utáni 3-72 óra a leginkább veszélyeztetett időszak.",
+      "options": [
+        {"text": "Minél több edzés, annál jobb az immunfunkció", "is_correct": false},
+        {"text": "J-alakú összefüggés: mérsékelt edzés javítja, extrém intenzitás/volumen átmeneti immunszuppressziót okoz (open window)", "is_correct": true},
+        {"text": "Az edzés nem befolyásolja az immunfunkciót", "is_correct": false},
+        {"text": "A sport minden formája egyformán gyengíti az immunrendszert", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["immunfunkcio", "J_alaku", "open_window"]
+      }
+    },
+    {
+      "text": "Mi a különbség az akut és a krónikus edzésadaptáció között?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Az akut adaptáció azonnal bekövetkező, reverzibilis élettani válasz (emelt pulzus, fokozott vérkeringés, laktát-emelkedés) — ez az edzés alatt és utáni pár óra alatt zajlik. A krónikus adaptáció tartós strukturális és funkcionális változás (megnövekedett mitokondriális kapacitás, hipertrófia, vaszkuláris adaptáció) — hetekig-hónapokig tartó rendszeres edzés eredménye.",
+      "options": [
+        {"text": "Nincs különbség — mindkettő ugyanaz az adaptáció", "is_correct": false},
+        {"text": "Akut: azonnal bekövetkező reverzibilis élettani válasz; krónikus: tartós strukturális-funkcionális változás rendszeres edzés hatására", "is_correct": true},
+        {"text": "Az akut adaptáció tartósabb, mint a krónikus", "is_correct": false},
+        {"text": "A krónikus adaptáció csak erőedzéssel érhető el", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 60,
+        "concept_tags": ["akut_adaptacio", "kronikus_adaptacio"]
+      }
+    },
+    {
+      "text": "Mi az 'edzettségi paradoxon' (fitness-fatigue model) lényege?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A fitness-fatigue modell szerint az edzés párhuzamosan hoz létre edzettségi (fitness) és fáradtsági (fatigue) hatást. A tényleges teljesítmény = edzettség - fáradtság. Az azonnali teljesítmény verseny előtt csökkenhet, mert a fáradtság elfedi az edzettséget — ezért a taper (terheléscsökkentés) feladata a fáradtság eltávolítása, hogy az edzettség megmutatkozzon.",
+      "options": [
+        {"text": "Minél nagyobb az edzettség, annál rosszabb a teljesítmény", "is_correct": false},
+        {"text": "Edzés egyidejűleg hoz létre edzettséget és fáradtságot — valós teljesítmény = edzettség - fáradtság; a taper a fáradtságot távolítja el", "is_correct": true},
+        {"text": "Az edzett sportoló sosem fárad el", "is_correct": false},
+        {"text": "A fitness-fatigue modell kizárólag erőedzésre vonatkozik", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.85,
+        "cognitive_load": 0.83,
+        "average_time_seconds": 70,
+        "concept_tags": ["fitness_fatigue_model", "taper", "edzettsegiparadoxon"]
+      }
+    },
+    {
+      "text": "Az edzéselvek (progresszivitás, specificitás, változatosság, rendszeresség) hierarchikusak — egyik mindig fontosabb a másiknál.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Hamis. Az edzéselvek komplementerek, nem hierarchikusak — kontextusfüggő módon érvényesülnek különböző súlyossággal. A szezon különböző fázisaiban más-más elvnek adható prioritás (pl. sűrű versenyidőszakban a rendszeresség és specificitás, előkészítőben a progresszivitás és változatosság).",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "average_time_seconds": 45,
+        "concept_tags": ["edzeselvek_hierarchia", "kontextusfuggo"]
+      }
+    }
+  ]
+}

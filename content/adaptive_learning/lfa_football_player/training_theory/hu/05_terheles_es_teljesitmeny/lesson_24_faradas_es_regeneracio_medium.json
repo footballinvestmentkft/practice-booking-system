@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Terhelés és teljesítmény",
+  "topic": "A fáradás és regeneráció folyamata",
+  "quiz_title": "AL — Terhelés és teljesítmény - A fáradás és regeneráció folyamata [HU]",
+  "description": "A fáradás típusai, okai és a regeneráció szerepe az edzésadaptációban.",
+  "questions": [
+    {
+      "text": "Mit nevezünk fáradásnak az edzéselméletben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A fáradás a teljesítőképesség átmeneti csökkenése fizikai vagy mentális terhelés hatására.",
+      "options": [
+        {"text": "Teljesítmény tartós növekedése", "is_correct": false},
+        {"text": "Átmeneti teljesítménycsökkenés", "is_correct": true},
+        {"text": "Izomnövekedés folyamata", "is_correct": false},
+        {"text": "Pihenés állapota", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["faradas"]
+      }
+    },
+    {
+      "text": "Melyik típusú fáradás kapcsolódik az idegrendszerhez?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A központi fáradás az idegrendszer működéséhez kapcsolódik.",
+      "options": [
+        {"text": "Perifériás fáradás", "is_correct": false},
+        {"text": "Központi fáradás", "is_correct": true},
+        {"text": "Izomfáradás", "is_correct": false},
+        {"text": "Anyagcsere fáradás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["kozponti_faradas"]
+      }
+    },
+    {
+      "text": "Mi jellemzi a perifériás fáradást?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A perifériás fáradás az izmokban zajló folyamatokhoz kapcsolódik.",
+      "options": [
+        {"text": "Idegrendszeri eredetű", "is_correct": false},
+        {"text": "Izomszintű folyamatok", "is_correct": true},
+        {"text": "Pszichológiai jelenség", "is_correct": false},
+        {"text": "Csak mentális állapot", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["periferias_faradas"]
+      }
+    },
+    {
+      "text": "A fáradás mindig káros jelenség, és kerülni kell.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert a fáradás az adaptáció egyik kiváltó tényezője lehet.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 25,
+        "concept_tags": ["faradas", "adaptacio"]
+      }
+    },
+    {
+      "text": "Mi a regeneráció alapvető célja?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A regeneráció során a szervezet helyreállítja a terhelés okozta változásokat.",
+      "options": [
+        {"text": "Teljesítmény csökkentése", "is_correct": false},
+        {"text": "Szervezet helyreállítása", "is_correct": true},
+        {"text": "Terhelés növelése", "is_correct": false},
+        {"text": "Izomleépítés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["regeneracio"]
+      }
+    },
+    {
+      "text": "Melyik tartozik az aktív regenerációhoz?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az aktív regeneráció könnyű mozgást jelent, amely segíti a helyreállítást.",
+      "options": [
+        {"text": "Teljes pihenés", "is_correct": false},
+        {"text": "Könnyű mozgás", "is_correct": true},
+        {"text": "Versenyzés", "is_correct": false},
+        {"text": "Maximális terhelés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["aktiv_regeneracio"]
+      }
+    },
+    {
+      "text": "Mi jellemzi a passzív regenerációt?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A passzív regeneráció pihenést jelent, mozgás nélkül.",
+      "options": [
+        {"text": "Könnyű mozgás", "is_correct": false},
+        {"text": "Teljes pihenés", "is_correct": true},
+        {"text": "Edzés", "is_correct": false},
+        {"text": "Versenyhelyzet", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["passziv_regeneracio"]
+      }
+    },
+    {
+      "text": "A regeneráció minősége befolyásolja a teljesítmény fejlődését.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert a megfelelő regeneráció nélkül nincs hatékony adaptáció.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["regeneracio", "adaptacio"]
+      }
+    },
+    {
+      "text": "Mi történhet elégtelen regeneráció esetén?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Elégtelen regeneráció túlterheléshez és teljesítménycsökkenéshez vezethet.",
+      "options": [
+        {"text": "Gyors fejlődés", "is_correct": false},
+        {"text": "Túlterhelés", "is_correct": true},
+        {"text": "Teljes regeneráció", "is_correct": false},
+        {"text": "Teljesítmény növekedése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["tulterheles"]
+      }
+    },
+    {
+      "text": "Mi a kapcsolat a fáradás és a regeneráció között?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A regeneráció a fáradás után helyreállítja és fejleszti a szervezetet.",
+      "options": [
+        {"text": "Függetlenek egymástól", "is_correct": false},
+        {"text": "A regeneráció a fáradást követi és kompenzálja", "is_correct": true},
+        {"text": "A fáradás megszünteti a regenerációt", "is_correct": false},
+        {"text": "Mindkettő azonos folyamat", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["faradas", "regeneracio"]
+      }
+    }
+  ]
+}

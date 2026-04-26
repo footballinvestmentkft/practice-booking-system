@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "en",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Introduction",
+  "topic": "Introduction — Intermediate",
+  "quiz_title": "AL — Introduction - Intermediate [EN]",
+  "description": "Deeper analysis of the interrelationships between physical culture and sport: social functions of physical education, civilisation-related health problems and sport's compensatory role, and differences between elite and mass sport.",
+  "questions": [
+    {
+      "text": "How do the concepts of physical education and sport differ?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Physical education is an organised, pedagogically oriented process of physical development (primarily within the education system), while sport is a competitive, performance-oriented physical activity whose goal is to maximise performance.",
+      "options": [
+        {"text": "There is no difference; they are the same concept", "is_correct": false},
+        {"text": "Physical education: a pedagogical process; sport: competitive, performance-oriented activity", "is_correct": true},
+        {"text": "Physical education applies only to adults", "is_correct": false},
+        {"text": "Sport is exclusively the activity of professional athletes", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 42,
+        "concept_tags": ["physical_education", "sport", "concepts"]
+      }
+    },
+    {
+      "text": "Sport and regular physical activity are the primary means of addressing civilisation-related health problems (e.g., physical inactivity).",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True. Regular physical activity is the most effective means of compensating for cardiovascular, musculoskeletal, and metabolic problems caused by hypokinesia (a physically inactive lifestyle) — this is one of the most important social functions of sport and physical education.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.38,
+        "average_time_seconds": 32,
+        "concept_tags": ["civilisation_health_problems", "compensatory_function"]
+      }
+    },
+    {
+      "text": "What is the concept of physical culture and what does it encompass?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Physical culture is that part of human culture directed towards the development, care, and maintenance of the body's performance capacity — encompassing physical education, sport, hygiene, and health-related lifestyle habits.",
+      "options": [
+        {"text": "Exclusively the domain of competitive sport", "is_correct": false},
+        {"text": "The part of human culture directed at body development, care, and maintenance of performance capacity", "is_correct": true},
+        {"text": "Only the content of the school physical education subject", "is_correct": false},
+        {"text": "The statistical measurement of sports performance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 42,
+        "concept_tags": ["physical_culture", "definition"]
+      }
+    },
+    {
+      "text": "Which of the following is NOT typically considered a civilisation-related health problem?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Physical overloading (overtraining) belongs to the domain of sports science, not civilisation-related health problems. Physical inactivity, obesity, postural problems, and cardiovascular diseases are typical civilisation-related problems associated with a sedentary lifestyle.",
+      "options": [
+        {"text": "Physically inactive lifestyle (hypokinesia)", "is_correct": false},
+        {"text": "Overtraining resulting from physical overloading", "is_correct": true},
+        {"text": "Postural problems resulting from sedentary work", "is_correct": false},
+        {"text": "Obesity and metabolic syndrome", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 45,
+        "concept_tags": ["civilisation_health_problems", "identification"]
+      }
+    },
+    {
+      "text": "What is the difference between elite sport and mass sport in terms of objectives?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "The primary goal of elite sport is to achieve maximum sports performance under competitive conditions; the goal of mass sport is health preservation, recreation, and social community-building — generally not competition-oriented.",
+      "options": [
+        {"text": "There is no difference; both are competition-oriented", "is_correct": false},
+        {"text": "Elite sport: achieving maximum performance; mass sport: health, recreation, community-building", "is_correct": true},
+        {"text": "Mass sport is more intensive than elite sport", "is_correct": false},
+        {"text": "Elite sport is exclusively for young people", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 42,
+        "concept_tags": ["elite_sport", "mass_sport", "objectives"]
+      }
+    },
+    {
+      "text": "The health effects of sport and physical education are exclusively physical in nature.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False. Regular physical activity demonstrably improves mental health as well: it reduces the risk of depression and anxiety, improves self-esteem and cognitive functions — health must be understood as a complex (physical, mental, social) phenomenon.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.42,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 32,
+        "concept_tags": ["health_effects", "mental_health"]
+      }
+    },
+    {
+      "text": "What is hypokinesia and what are its consequences?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Hypokinesia denotes a lack of physical activity, which is perpetuated by a sedentary lifestyle. Its consequences include cardiovascular disease, obesity, osteoporosis, muscle atrophy, reduced cognitive performance, and metabolic disorders.",
+      "options": [
+        {"text": "Fatigue resulting from excessively intense physical activity", "is_correct": false},
+        {"text": "Physical inactivity — consequences: cardiovascular disease, obesity, osteoporosis, and metabolic disorders", "is_correct": true},
+        {"text": "A type of sports injury", "is_correct": false},
+        {"text": "A hyperkinetic form of sport", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 42,
+        "concept_tags": ["hypokinesia", "consequences"]
+      }
+    },
+    {
+      "text": "Sport's educational function lies in developing character, cooperation, and the spirit of fair play.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "True. The educational value of sport has long been recognised: following rules, accepting victory and defeat, teamwork, and self-discipline are all values transmitted through sports participation.",
+      "options": [
+        {"text": "True", "is_correct": true},
+        {"text": "False", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.40,
+        "cognitive_load": 0.38,
+        "average_time_seconds": 32,
+        "concept_tags": ["sport_educational_function", "fair_play"]
+      }
+    },
+    {
+      "text": "Why can recreational sport be considered a means of maintaining work capacity?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Recreational sport provides rest and active recovery for those engaged in mental and physical work: it reduces stress, improves blood circulation, and the endorphin release caused by movement improves mood and concentration — thereby maintaining long-term work capacity.",
+      "options": [
+        {"text": "Because every athlete can reach professional level through recreation", "is_correct": false},
+        {"text": "Through stress reduction, active recovery, and endorphin release, it maintains work capacity", "is_correct": true},
+        {"text": "Recreation is exclusively rest, not movement", "is_correct": false},
+        {"text": "Sport reduces mental performance due to physical fatigue", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 45,
+        "concept_tags": ["recreation", "work_capacity", "compensation"]
+      }
+    },
+    {
+      "text": "The level of physical culture in a society is determined exclusively by the number of Olympic medals.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "False. The level of physical culture is based on a complex indicator: the prevalence of mass sport, the proportion of people living an active lifestyle, the accessibility of sports infrastructure, and health indicators all characterise it together — Olympic medals reflect only the level of elite sport.",
+      "options": [
+        {"text": "True", "is_correct": false},
+        {"text": "False", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 35,
+        "concept_tags": ["physical_culture_level", "society"]
+      }
+    }
+  ]
+}

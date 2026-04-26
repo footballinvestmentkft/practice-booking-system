@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Sportpszichológia",
+  "topic": "Koncentráció és figyelem",
+  "quiz_title": "AL — Sportpszichológia - Koncentráció és figyelem [HU]",
+  "description": "A figyelem és koncentráció szerepe, típusai és fejlesztése a sportban.",
+  "questions": [
+    {
+      "text": "Mit nevezünk figyelemnek?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A figyelem a környezetből érkező információk kiválasztása és feldolgozása.",
+      "options": [
+        {"text": "Pihenés", "is_correct": false},
+        {"text": "Információk kiválasztása", "is_correct": true},
+        {"text": "Edzésprogram", "is_correct": false},
+        {"text": "Versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["figyelem"]
+      }
+    },
+    {
+      "text": "Mit nevezünk koncentrációnak?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A koncentráció a figyelem tartós, célirányos fenntartása.",
+      "options": [
+        {"text": "Pihenés", "is_correct": false},
+        {"text": "Figyelem tartós fenntartása", "is_correct": true},
+        {"text": "Mozgás végrehajtása", "is_correct": false},
+        {"text": "Csak gondolkodás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["koncentracio"]
+      }
+    },
+    {
+      "text": "Melyik tartozik a figyelem típusai közé?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A figyelem lehet külső vagy belső.",
+      "options": [
+        {"text": "Erő", "is_correct": false},
+        {"text": "Külső figyelem", "is_correct": true},
+        {"text": "Állóképesség", "is_correct": false},
+        {"text": "Gyorsaság", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["figyelem_tipusok"]
+      }
+    },
+    {
+      "text": "Mi jellemzi a belső figyelmet?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A saját mozgásra és érzésekre irányul.",
+      "options": [
+        {"text": "Környezet figyelése", "is_correct": false},
+        {"text": "Saját mozgás figyelése", "is_correct": true},
+        {"text": "Csak versenyre figyelés", "is_correct": false},
+        {"text": "Csak pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["belso_figyelem"]
+      }
+    },
+    {
+      "text": "Mi zavarhatja a koncentrációt?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Külső és belső zavaró tényezők egyaránt.",
+      "options": [
+        {"text": "Célkitűzés", "is_correct": false},
+        {"text": "Zavaró tényezők", "is_correct": true},
+        {"text": "Motiváció", "is_correct": false},
+        {"text": "Pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["zavaro_tenyezok"]
+      }
+    },
+    {
+      "text": "A koncentráció javítja a teljesítményt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert pontosabb végrehajtást tesz lehetővé.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["teljesitmeny"]
+      }
+    },
+    {
+      "text": "Mi a mentális fókusz?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A figyelem tudatos irányítása egy adott feladatra.",
+      "options": [
+        {"text": "Pihenés", "is_correct": false},
+        {"text": "Figyelem irányítása", "is_correct": true},
+        {"text": "Mozgás végrehajtása", "is_correct": false},
+        {"text": "Versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["fokusz"]
+      }
+    },
+    {
+      "text": "A figyelem fejleszthető gyakorlással.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert mentális tréninggel javítható.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["fejlesztes"]
+      }
+    },
+    {
+      "text": "Mi segíti a koncentráció fejlesztését?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A rendszeres mentális gyakorlás javítja a fókuszt.",
+      "options": [
+        {"text": "Edzés elhagyása", "is_correct": false},
+        {"text": "Mentális gyakorlatok", "is_correct": true},
+        {"text": "Csak pihenés", "is_correct": false},
+        {"text": "Versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["mentalis_trening"]
+      }
+    },
+    {
+      "text": "A megfelelő figyelem segíti a döntéshozatalt sportban.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert pontosabb információfeldolgozást tesz lehetővé.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["dontes"]
+      }
+    }
+  ]
+}

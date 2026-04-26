@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Terhelés és teljesítmény",
+  "topic": "A túlterhelés és túledzés jelensége",
+  "quiz_title": "AL — Terhelés és teljesítmény - A túlterhelés és túledzés jelensége [HU]",
+  "description": "A túlterhelés és túledzés fogalma, okai, tünetei és megelőzése az edzéselméletben.",
+  "questions": [
+    {
+      "text": "Mit jelent a túlterhelés (overload) az edzéselméletben?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A túlterhelés a fejlődéshez szükséges inger, amely meghaladja a megszokott terhelési szintet.",
+      "options": [
+        {"text": "Csak negatív állapot", "is_correct": false},
+        {"text": "A fejlődést kiváltó terhelés", "is_correct": true},
+        {"text": "Teljes pihenés", "is_correct": false},
+        {"text": "Versenyhelyzet", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 38,
+        "concept_tags": ["overload"]
+      }
+    },
+    {
+      "text": "Mit nevezünk túledzésnek (overtraining)?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A túledzés a túlzott terhelés és elégtelen regeneráció következtében kialakuló krónikus állapot.",
+      "options": [
+        {"text": "Egyetlen kemény edzés", "is_correct": false},
+        {"text": "Krónikus túlterheltségi állapot", "is_correct": true},
+        {"text": "Pihenés hiánya egy napig", "is_correct": false},
+        {"text": "Verseny előtti állapot", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["overtraining"]
+      }
+    },
+    {
+      "text": "A túlterhelés mindig káros jelenség.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert megfelelő alkalmazás esetén a fejlődés alapja.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 25,
+        "concept_tags": ["overload"]
+      }
+    },
+    {
+      "text": "Mi a túledzés egyik fő oka?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A túl nagy terhelés és elégtelen regeneráció együtt vezet túledzéshez.",
+      "options": [
+        {"text": "Csak alacsony intenzitás", "is_correct": false},
+        {"text": "Túlzott terhelés és kevés pihenés", "is_correct": true},
+        {"text": "Csak megfelelő edzés", "is_correct": false},
+        {"text": "Csak pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["overtraining", "regeneracio"]
+      }
+    },
+    {
+      "text": "Melyik tünet utalhat túledzésre?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A tartós teljesítménycsökkenés tipikus jele a túledzésnek.",
+      "options": [
+        {"text": "Teljesítmény növekedése", "is_correct": false},
+        {"text": "Tartós teljesítménycsökkenés", "is_correct": true},
+        {"text": "Gyors regeneráció", "is_correct": false},
+        {"text": "Motiváció növekedése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["tunetek", "overtraining"]
+      }
+    },
+    {
+      "text": "Melyik pszichés tünet jellemző túledzés esetén?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A motiváció csökkenése gyakori pszichés tünet.",
+      "options": [
+        {"text": "Motiváció növekedése", "is_correct": false},
+        {"text": "Motiváció csökkenése", "is_correct": true},
+        {"text": "Fokozott koncentráció", "is_correct": false},
+        {"text": "Teljes nyugalom", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["psziches_tunetek"]
+      }
+    },
+    {
+      "text": "A túledzés rövid távon mindig javítja a teljesítményt.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert hosszabb távon teljesítménycsökkenéshez vezet.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 25,
+        "concept_tags": ["overtraining"]
+      }
+    },
+    {
+      "text": "Mi a túledzés megelőzésének egyik kulcsa?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A megfelelő terhelés és regeneráció egyensúlya.",
+      "options": [
+        {"text": "Maximális terhelés", "is_correct": false},
+        {"text": "Terhelés és pihenés egyensúlya", "is_correct": true},
+        {"text": "Edzés teljes elhagyása", "is_correct": false},
+        {"text": "Csak versenyzés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["megelozes", "regeneracio"]
+      }
+    },
+    {
+      "text": "Mi történik krónikus túledzés esetén?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A szervezet tartósan nem képes megfelelően alkalmazkodni.",
+      "options": [
+        {"text": "Gyors fejlődés", "is_correct": false},
+        {"text": "Tartós alkalmazkodási zavar", "is_correct": true},
+        {"text": "Teljes regeneráció", "is_correct": false},
+        {"text": "Teljesítmény stabil marad", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["overtraining"]
+      }
+    },
+    {
+      "text": "A megfelelő edzéstervezés segít megelőzni a túledzést.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Igaz, mert szabályozza a terhelés és pihenés arányát.",
+      "options": [
+        {"text": "Igaz", "is_correct": true},
+        {"text": "Hamis", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 25,
+        "concept_tags": ["edzestervezes"]
+      }
+    }
+  ]
+}

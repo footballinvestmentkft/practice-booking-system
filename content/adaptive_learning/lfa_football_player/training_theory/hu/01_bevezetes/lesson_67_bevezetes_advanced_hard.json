@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "HARD",
+  "module": "Bevezetés",
+  "topic": "Bevezetés — Haladó",
+  "quiz_title": "AL — Bevezetés - Haladó [HU]",
+  "description": "A testkultúra és sport mélyebb összefüggéseinek elemzése: testnevelés és sport kritikus társadalmi szerepe, sportszociológiai megközelítések, a sport mint egészségpolitikai eszköz, és a professzionalizálódás dilemmái.",
+  "questions": [
+    {
+      "text": "Miért nem elegendő a sport mint egészségpolitikai eszköz önmagában az ülő életmód okozta civilizációs betegségek kezelésére?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A sport mint egyéni tevékenység nem képes kezelni a strukturális okokat (munkahelyi ülés, közlekedési szokások, épített környezet). Hatékony egészségpolitikához strukturális változások szükségesek: aktív közlekedés infrastruktúrája, munkhelyi mozgáslehetőségek és sporthoz való egyenlő hozzáférés — nem csak egyéni felelősség.",
+      "options": [
+        {"text": "Mert a sport kizárólag fiataloknál hatékony", "is_correct": false},
+        {"text": "Mert a strukturális okok (ülő munkakörök, közlekedés, egyenlőtlen hozzáférés) egyéni sporttevékenységgel nem kezelhetők", "is_correct": true},
+        {"text": "A sport hatástalan az egészség javítására", "is_correct": false},
+        {"text": "Csak a kompetitív sport hatékony, a rekreáció nem", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": ["egeszsegpolitika", "strukturalis_okok", "sport_korlátai"]
+      }
+    },
+    {
+      "text": "A sport értékrendszere (fair play, fair verseny) az üzleti professzionalizáció hatására erősödik.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Hamis. Az üzleti professzionalizáció és a médiasport növekvő pénzügyi tétjei feszültséget teremtenek a sport tradicionális értékrendjével (fair play, amatőrizmus eszménye) — doppingbotrányok, match-fixing és pénzügyi fair play problémák mind a kereskedelmi nyomás torzító hatásaira utalnak.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true }
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 45,
+        "concept_tags": ["professzionalizacio", "fair_play", "sporteszmeny"]
+      }
+    },
+    {
+      "text": "Mit jelent a 'sport for all' mozgalom és milyen társadalmi problémát kíván megoldani?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A 'Sport for All' (Mindenki sportja) mozgalom az egyenlő hozzáférés biztosítását célozza — a sport nem csak az elitre és a tehetségesekre korlátozódjon, hanem mindenki számára elérhető legyen. Főbb társadalmi problémák: sport gazdasági akadályai, nemek közötti egyenlőtlenség, fogyatékossággal élők kizárása.",
+      "options": [
+        {"text": "Kizárólag az olimpiai sport demokratizálásáról szól", "is_correct": false},
+        {"text": "A sport egyenlő hozzáférésének biztosítása minden társadalmi réteg számára — gazdasági, nemi és fogyatékossági akadályok leküzdése", "is_correct": true},
+        {"text": "A versengés megszüntetése a sportban", "is_correct": false},
+        {"text": "A profi sport finanszírozási modellje", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 60,
+        "concept_tags": ["sport_for_all", "egyenlo_hozzaferes", "sportpolitika"]
+      }
+    },
+    {
+      "text": "Milyen sportszociológiai magyarázat adható arra, hogy a szocioökonómiai státusz erősen meghatározza a sportági részvételt?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Bourdieu elmélete szerint a sport kulturális és gazdasági tőkéhez kötött: magas státuszú sportágak (golf, vívás, lovaglás) elit rétegek kulturális kódjait tükrözik, míg a tömegsportágak (futball, ökölvívás) a munkásosztály kulturális habitusakhoz köthetők. A sport nem tőkesemleges — a sportági részvétel a társadalmi struktúrát reprodukálja.",
+      "options": [
+        {"text": "A sportági részvételt kizárólag a genetikai képességek határozzák meg", "is_correct": false},
+        {"text": "A sport kulturális és gazdasági tőkéhez kötött (Bourdieu) — a sportági részvétel a társadalmi struktúrát reprodukálja", "is_correct": true},
+        {"text": "A szocioökonómiai státusz nem befolyásolja a sportolási szokásokat", "is_correct": false},
+        {"text": "A sport egyenlő esélyeket biztosít minden társadalmi osztálynak", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.85,
+        "cognitive_load": 0.83,
+        "average_time_seconds": 70,
+        "concept_tags": ["sportszociologia", "bourdieu", "tarsadalmi_egyenlotlenseg"]
+      }
+    },
+    {
+      "text": "A testnevelés kötelező jellege az iskolában ellentmond a sport önkéntes alapú értékrendjének.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Ez vitatott kérdés. Érv mellette: a kötelező jelleg és a belső motiváció valóban feszültségben állhat (SDT-elmélet: kontrolláló kontextus csökkenti az autonómiát). Ellenérv: az iskolai testnevelés társadalmi funkcióját (egészség, mozgás, szocializáció) nem tudja a piac biztosítani — a kötelező jelleg a közjó érdekét szolgálja. Hamis a kérdés, mert a testnevelés pedagógiai, nem versenyszerű sport.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 50,
+        "concept_tags": ["iskolai_testneveles", "kotelezo_jelleg", "autonomia"]
+      }
+    },
+    {
+      "text": "Mi a dopinghasználat legfőbb etikai problémája a sport kontextusában?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A dopinghasználat alapvetően a sport etikai alapját — a fair versenyt — rombolja le, amennyiben mesterségesen módosítja a versenyhelyzetet. Másodlagos problémák: egészségkockázat, fiatal sportolókra gyakorolt modellhatás, a 'szennyes versenyzés' kultúrájának terjedése.",
+      "options": [
+        {"text": "Kizárólag egészségügyi probléma, etikai kérdés nem merül fel", "is_correct": false},
+        {"text": "A fair verseny alapját rombolja le — mesterségesen módosítja a versenyegyenlőséget", "is_correct": true},
+        {"text": "Csak profi sportban jelent problémát, amatőr szinten etikailag semleges", "is_correct": false},
+        {"text": "A doping kizárólag a sportolóra veszélyes, a versenyre nem hat", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 58,
+        "concept_tags": ["doping", "fair_verseny", "etika"]
+      }
+    },
+    {
+      "text": "Hogyan befolyásolja a médiasport (televíziós közvetítések, szponzoráció) a labdarúgás fejlődését?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "A médiasport ambivalens hatással van a labdarúgásra: pozitív (globális elérhetőség, finanszírozás, utánpótlás-fejlesztés lehetősége), de negatív is (ütemterv a tévéközvetítéshez igazítva, a versenynaptár sűrítése, kereskedelmi érdekek a sporttartalom felett, sportolók mint termékek).",
+      "options": [
+        {"text": "Kizárólag pozitív hatással van — finanszírozást és nézettséget biztosít", "is_correct": false},
+        {"text": "Ambivalens: finanszírozást és nézettséget, de menetrend-torzítást, kereskedelmi nyomást és a sportoló mint termék problémáját hozza", "is_correct": true},
+        {"text": "A médiasport nem befolyásolja a labdarúgást", "is_correct": false},
+        {"text": "Kizárólag negatív — a sport értékrendjét rombolja le teljesen", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "average_time_seconds": 65,
+        "concept_tags": ["mediasport", "szponzoracio", "labdarugas"]
+      }
+    },
+    {
+      "text": "A sporttevékenység mindig azonos egészségügyi előnyöket biztosít, függetlenül az intenzitástól és típustól.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Hamis. Az egészségügyi előnyök intenzitás- és típusfüggők: extrém intenzitású sport (pl. ultramaratonisták, élsportolók) egyes esetekben kardiovaszkuláris kockázatot is hordozhat. A mérsékelt intenzitású, rendszeres testmozgás mutatja a legjobb egészségügyi profilt — a dózis-hatás összefüggés nem lineáris, hanem U-alakú.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "average_time_seconds": 45,
+        "concept_tags": ["sport_egeszsegügyi_hatás", "dosis_hatas", "intenzitas"]
+      }
+    },
+    {
+      "text": "Mi az olympizmus alapeszméje és hogyan tükröződik a modern olimpiai mozgalomban?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 15,
+      "explanation": "Az olympizmus Coubertin eredeti víziója szerint a sport az emberi tökéletesítés és a nemzetek közötti béke eszköze — a verseny másodlagos, a részvétel, a fair play és az emberi fejlődés az elsődleges. A modern olimpiai mozgalomban ez a kereskedelmi nyomással, professzionalizációval és politikai manipulációval folyamatos feszültségben van.",
+      "options": [
+        {"text": "Az olympizmus kizárólag a sporttechnikák fejlesztéséről szól", "is_correct": false},
+        {"text": "A sport mint az emberi tökéletesítés és béke eszköze — Coubertin víziója, amely a modern olimpián kereskedelmi nyomással feszültségben áll", "is_correct": true},
+        {"text": "Az olympizmus a maximális teljesítmény-elvet jelenti", "is_correct": false},
+        {"text": "Az olympizmus kizárólag amatőr sportolókra vonatkozó szabályrendszer", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "average_time_seconds": 65,
+        "concept_tags": ["olympizmus", "coubertin", "olimpiai_eszmeny"]
+      }
+    },
+    {
+      "text": "A labdarúgás globális népszerűsége kizárólag sportteljesítményi szempontokra vezethető vissza.",
+      "type": "TRUE_FALSE",
+      "points": 15,
+      "explanation": "Hamis. A labdarúgás globális elterjedtsége komplex kulturális, gazdasági és politikai tényezők eredménye: gyarmati terjeszkedés (brit hatás), alacsony infrastruktúra-igény (csak labda kell), kulturális identitás és nemzeti büszkeség, médiasport, globális migrációs folyamatok — a sportteljesítmény csak egy tényező.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "average_time_seconds": 45,
+        "concept_tags": ["labdarugas_globalizacio", "kulturalis_tenyezok"]
+      }
+    }
+  ]
+}

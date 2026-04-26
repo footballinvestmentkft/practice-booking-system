@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "language": "hu",
+  "category": "LESSON",
+  "difficulty": "MEDIUM",
+  "module": "Motoros képességek",
+  "topic": "Az állóképesség és fajtái",
+  "quiz_title": "AL — Motoros képességek - Az állóképesség és fajtái [HU]",
+  "description": "Az állóképesség fogalma, típusai és élettani alapjai az edzéselméletben.",
+  "questions": [
+    {
+      "text": "Mit nevezünk állóképességnek?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az állóképesség a hosszan tartó terhelés fenntartásának és a fáradás késleltetésének képessége.",
+      "options": [
+        {"text": "Gyors mozgás képessége", "is_correct": false},
+        {"text": "Hosszú ideig tartó teljesítmény fenntartása", "is_correct": true},
+        {"text": "Maximális erőkifejtés", "is_correct": false},
+        {"text": "Mozgás pontossága", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.45,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 38,
+        "concept_tags": ["allokepesseg"]
+      }
+    },
+    {
+      "text": "Mi jellemzi az aerob állóképességet?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az aerob állóképesség oxigén jelenlétében történő energiatermelésen alapul.",
+      "options": [
+        {"text": "Oxigén nélküli energiatermelés", "is_correct": false},
+        {"text": "Oxigén felhasználásával történő működés", "is_correct": true},
+        {"text": "Rövid idejű maximális terhelés", "is_correct": false},
+        {"text": "Izomfeszülés növelése", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.50,
+        "cognitive_load": 0.45,
+        "average_time_seconds": 42,
+        "concept_tags": ["aerob"]
+      }
+    },
+    {
+      "text": "Mi jellemzi az anaerob állóképességet?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az anaerob állóképesség oxigén nélküli energiatermelésen alapul.",
+      "options": [
+        {"text": "Oxigén jelenléte szükséges", "is_correct": false},
+        {"text": "Oxigén nélküli energiatermelés", "is_correct": true},
+        {"text": "Hosszú idejű alacsony intenzitás", "is_correct": false},
+        {"text": "Csak pihenés", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.52,
+        "cognitive_load": 0.46,
+        "average_time_seconds": 42,
+        "concept_tags": ["anaerob"]
+      }
+    },
+    {
+      "text": "Melyik tartozik a rövid idejű állóképességhez?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Rövid idejű állóképesség néhány másodperctől kb. 1 percig tartó terhelés.",
+      "options": [
+        {"text": "Maraton futás", "is_correct": false},
+        {"text": "400 m futás", "is_correct": true},
+        {"text": "Gyaloglás", "is_correct": false},
+        {"text": "Kerékpártúra", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.52,
+        "average_time_seconds": 50,
+        "concept_tags": ["rovid_allokepesseg"]
+      }
+    },
+    {
+      "text": "Melyik példa tartozik a hosszú idejű állóképességhez?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A hosszú idejű állóképesség több mint 10 perces terhelésekhez kapcsolódik.",
+      "options": [
+        {"text": "Sprint", "is_correct": false},
+        {"text": "Maraton futás", "is_correct": true},
+        {"text": "Súlyemelés", "is_correct": false},
+        {"text": "Ugrás", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["hosszu_allokepesseg"]
+      }
+    },
+    {
+      "text": "Az aerob és anaerob rendszerek egymástól teljesen függetlenül működnek.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert a két rendszer együtt működik különböző arányban.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 25,
+        "concept_tags": ["energia_rendszerek"]
+      }
+    },
+    {
+      "text": "Mi történik fáradás során?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A teljesítmény csökken, mert a szervezet kimerül.",
+      "options": [
+        {"text": "Teljesítmény nő", "is_correct": false},
+        {"text": "Teljesítmény csökken", "is_correct": true},
+        {"text": "Semmi nem történik", "is_correct": false},
+        {"text": "Automatikus regeneráció", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.48,
+        "cognitive_load": 0.42,
+        "average_time_seconds": 40,
+        "concept_tags": ["faradas"]
+      }
+    },
+    {
+      "text": "Mi határozza meg az állóképesség szintjét leginkább?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "A keringési és légzőrendszer teljesítménye kulcsfontosságú.",
+      "options": [
+        {"text": "Csak izomerő", "is_correct": false},
+        {"text": "Keringési és légzőrendszer", "is_correct": true},
+        {"text": "Csak koordináció", "is_correct": false},
+        {"text": "Csak hajlékonyság", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.55,
+        "cognitive_load": 0.48,
+        "average_time_seconds": 45,
+        "concept_tags": ["keringes", "legzes"]
+      }
+    },
+    {
+      "text": "Melyik állítás igaz az állóképesség és erő kapcsolatára?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 10,
+      "explanation": "Az állóképességi erő a két képesség kombinációja.",
+      "options": [
+        {"text": "Nincs kapcsolat", "is_correct": false},
+        {"text": "Összekapcsolódnak", "is_correct": true},
+        {"text": "Ellentétesek", "is_correct": false},
+        {"text": "Egymást kizárják", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.60,
+        "cognitive_load": 0.50,
+        "average_time_seconds": 50,
+        "concept_tags": ["kapcsolat"]
+      }
+    },
+    {
+      "text": "Az állóképesség fejlesztése csak hosszú edzésekkel lehetséges.",
+      "type": "TRUE_FALSE",
+      "points": 10,
+      "explanation": "Hamis, mert intenzív rövidebb edzések is fejlesztik.",
+      "options": [
+        {"text": "Igaz", "is_correct": false},
+        {"text": "Hamis", "is_correct": true}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.65,
+        "cognitive_load": 0.55,
+        "average_time_seconds": 25,
+        "concept_tags": ["edzes"]
+      }
+    }
+  ]
+}
