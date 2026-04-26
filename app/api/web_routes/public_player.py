@@ -3,7 +3,10 @@ Public player card web routes — no authentication required.
 """
 from datetime import date
 
-from fastapi import APIRouter, Depends, Request
+import os
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -26,10 +29,15 @@ _POS_COLORS = {
 }
 
 
+_TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "templates")
+_FALLBACK_TEMPLATE = "public/player_card.html"
+
+
 @router.get("/players/{user_id}/card", response_class=HTMLResponse)
 def public_player_card(
     request: Request,
     user_id: int,
+    preview: Optional[str] = Query(None),
     db: Session = Depends(get_db),
 ):
     user = db.query(User).filter(
@@ -142,7 +150,26 @@ def public_player_card(
         "skills": skills_data,
     }
 
-    return templates.TemplateResponse(request, "public/player_card.html", {
+    # ── Theme resolution ──────────────────────────────────────────────────────
+    from app.services.card_theme_service import get_theme as _get_theme
+    from app.services.card_variant_service import get_variant as _get_variant, VARIANTS as _VARIANTS
+
+    card_theme_id = lfa_license.card_theme or "default"
+    theme = _get_theme(card_theme_id)  # falls back to "default" for unknown IDs
+
+    # Variant: ?preview= overrides DB value (preview only, not persisted)
+    card_variant_id = lfa_license.card_variant or "fifa"
+    if preview and preview in _VARIANTS:
+        card_variant_id = preview
+    variant = _get_variant(card_variant_id)  # falls back to "fifa" for unknown IDs
+
+    # Template selection: use variant.template if the file exists, else fallback
+    template_path = _FALLBACK_TEMPLATE
+    candidate = os.path.join(_TEMPLATES_DIR, variant.template)
+    if os.path.isfile(candidate):
+        template_path = variant.template
+
+    return templates.TemplateResponse(request, template_path, {
         "player": player,
         "overall": overall,
         "tier_label": tier_label,
@@ -155,4 +182,7 @@ def public_player_card(
         "photo_url": lfa_license.player_card_photo_url,
         "last_skill_delta": last_skill_delta,
         "participations_history": participations_history,
+        "theme": theme,
+        "card_theme_id": theme.id,
+        "card_variant_id": variant.id,
     })

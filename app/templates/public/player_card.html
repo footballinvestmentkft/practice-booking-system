@@ -7,6 +7,12 @@
     <meta property="og:title" content="{{ player.name }} — LFA Player Card">
     <meta property="og:description" content="{{ player.position }} · {{ player.nationality }} · {{ tier_label }} {{ overall }}">
 <style>
+:root {
+    --card-panel-bg: {{ theme.panel_bg if theme is defined else 'linear-gradient(155deg, #1a2744 0%, #2a3a5c 60%, #1e3a4a 100%)' }};
+    --card-body-bg:  {{ theme.body_bg  if theme is defined else '#1a202c' }};
+    --card-tab-bg:   {{ theme.tab_bg   if theme is defined else '#2d3748' }};
+    --card-accent:   {{ theme.accent   if theme is defined else '#667eea' }};
+}
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { overflow-x: hidden; }
 body {
@@ -40,7 +46,7 @@ body {
     grid-template-columns: 170px 1fr;
 }
 .fifa-left {
-    background: linear-gradient(155deg, #1a2744 0%, #2a3a5c 60%, #1e3a4a 100%);
+    background: var(--card-panel-bg);
     padding: 1.5rem 1rem;
     display: flex; flex-direction: column;
     align-items: center; gap: 0.5rem; text-align: center;
@@ -89,7 +95,7 @@ body {
 
 /* ── Skills section ───────────────────────────────────────── */
 .skills-section {
-    background: #1a202c;
+    background: var(--card-body-bg);
     padding: 1.1rem 1.1rem;
 }
 .skills-title {
@@ -118,7 +124,7 @@ body {
 /* ── Tab bar ─────────────────────────────────────────────── */
 .tab-bar {
     display: flex;
-    background: #2d3748;
+    background: var(--card-tab-bg);
     border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .tab-btn {
@@ -133,10 +139,10 @@ body {
     border-bottom: 2px solid transparent;
     transition: color .15s, border-color .15s;
 }
-.tab-btn.active { color: #fff; border-bottom-color: #667eea; }
+.tab-btn.active { color: #fff; border-bottom-color: var(--card-accent); }
 
 /* ── Events section ──────────────────────────────────────── */
-.events-section { background: #1a202c; padding: 0.75rem 1rem; }
+.events-section { background: var(--card-body-bg); padding: 0.75rem 1rem; }
 .ev-row {
     display: flex;
     align-items: flex-start;

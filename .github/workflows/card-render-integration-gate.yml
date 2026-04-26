@@ -1,0 +1,99 @@
+name: Card Render Integration Gate
+
+# ── Purpose ────────────────────────────────────────────────────────────────────
+# Validates that the public player card render path correctly wires up
+# card_theme / card_variant from the DB to the template CSS layer.
+#
+# Blocks merge if:
+#   - Theme CSS custom property values diverge from card_theme_service registry
+#   - Unknown theme/variant IDs are not falling back to default/fifa
+#   - ?preview= param override logic breaks
+#   - Template file selection (fallback to player_card.html) regresses
+#
+# No DB required — all 21 tests use service registries directly (pure logic).
+# Runtime: < 15 s on cold runner.
+# ──────────────────────────────────────────────────────────────────────────────
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'app/api/web_routes/public_player.py'
+      - 'app/templates/public/player_card.html'
+      - 'app/templates/dashboard_card_editor.html'
+      - 'app/services/card_theme_service.py'
+      - 'app/services/card_variant_service.py'
+      - 'tests/unit/test_card_render_integration.py'
+      - '.github/workflows/card-render-integration-gate.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'app/api/web_routes/public_player.py'
+      - 'app/templates/public/player_card.html'
+      - 'app/templates/dashboard_card_editor.html'
+      - 'app/services/card_theme_service.py'
+      - 'app/services/card_variant_service.py'
+      - 'tests/unit/test_card_render_integration.py'
+      - '.github/workflows/card-render-integration-gate.yml'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual trigger'
+        required: false
+        default: 'manual verification'
+
+jobs:
+  card-render-integration:
+    name: Card Render Integration (theme CSS vars + variant routing + fallback)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write minimal .env (no DB needed)
+        run: |
+          cat > .env <<'EOF'
+          DATABASE_URL=postgresql://ci:ci@localhost:5432/ci_db
+          SECRET_KEY=ci-card-render-gate-key
+          ENVIRONMENT=test
+          TESTING=true
+          DEBUG=false
+          ENABLE_RATE_LIMITING=false
+          EOF
+
+      - name: Run card render integration tests
+        run: |
+          PYTHONPATH=. pytest tests/unit/test_card_render_integration.py \
+            -v --tb=short -ra \
+            --durations=5
+
+      - name: Gate summary
+        if: always()
+        run: |
+          echo "══════════════════════════════════════════════════════"
+          echo " Card Render Integration Gate — Summary"
+          echo "══════════════════════════════════════════════════════"
+          echo " TestThemeResolution       — CSS vars match service registry"
+          echo " TestVariantResolution     — fallback + preview param override"
+          echo " TestTemplateSelection     — file-exists check + fallback"
+          echo " TestCSSCustomPropertyValues — exact hex values per theme"
+          echo ""
+          echo " Key invariants:"
+          echo "   card_theme from DB → :root CSS vars in rendered card"
+          echo "   ?preview= overrides variant without persisting to DB"
+          echo "   Missing variant templates → fallback to player_card.html"
+          echo "   Unknown IDs → default/fifa fallback (never KeyError)"
+          echo ""
+          echo " No DB required. All 21 tests use pure service registry logic."
+          echo "══════════════════════════════════════════════════════"

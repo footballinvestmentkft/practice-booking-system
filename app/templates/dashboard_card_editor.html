@@ -307,55 +307,68 @@
 
 {% block scripts %}
 <script>
+function _csrf() {
+    return (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+}
+function _cardIframeSrc() {
+    return `/players/${_cardUserId}/card?_t=${Date.now()}`;
+}
+
 async function unlockTheme(themeId, label, cost) {
     if (!confirm(`Unlock "${label}" for ${cost} CR from your credit balance?`)) return;
-    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
-    const r = await fetch('/dashboard/unlock-theme', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
-        body: JSON.stringify({ theme: themeId }),
-    });
-    const data = await r.json();
-    if (data.ok) { location.reload(); }
-    else { alert('❌ ' + (data.error || 'Could not unlock theme.')); }
+    try {
+        const r = await fetch('/dashboard/unlock-theme', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf() },
+            body: JSON.stringify({ theme: themeId }),
+        });
+        if (r.status === 403) { alert('Session expired — reloading page.'); location.reload(); return; }
+        const data = await r.json();
+        if (data.ok) { location.reload(); }
+        else { alert('❌ ' + (data.error || 'Could not unlock theme.')); }
+    } catch(e) { alert('Network error. Please try again.'); }
 }
 
 async function setCardTheme(themeId, unlocked, label, cost) {
     if (!unlocked) { await unlockTheme(themeId, label, cost); return; }
-    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
-    const r = await fetch('/dashboard/card-theme', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
-        body: JSON.stringify({ theme: themeId }),
-    });
-    const data = await r.json();
-    if (data.ok) {
-        document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
-        const active = document.querySelector(`.theme-dot[onclick*="'${themeId}'"]`);
-        if (active) active.classList.add('active');
-        const iframe = document.getElementById('player-card-iframe');
-        if (iframe) { iframe.src = iframe.src; }
-    } else { alert(data.error || 'Could not apply theme.'); }
+    try {
+        const r = await fetch('/dashboard/card-theme', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf() },
+            body: JSON.stringify({ theme: themeId }),
+        });
+        if (r.status === 403) { alert('Session expired — reloading page.'); location.reload(); return; }
+        const data = await r.json();
+        if (data.ok) {
+            document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+            const active = document.querySelector(`.theme-dot[onclick*="'${themeId}'"]`);
+            if (active) active.classList.add('active');
+            const iframe = document.getElementById('player-card-iframe');
+            if (iframe) { iframe.src = _cardIframeSrc(); }
+        } else { alert(data.error || 'Could not apply theme.'); }
+    } catch(e) { alert('Network error. Please try again.'); }
 }
 
 async function unlockVariant(variantId, label, cost) {
     if (!confirm(`Unlock "${label}" layout for ${cost} CR from your credit balance?`)) return;
-    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
-    const r = await fetch('/dashboard/unlock-variant', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
-        body: JSON.stringify({ variant: variantId }),
-    });
-    const data = await r.json();
-    if (data.ok) { location.reload(); }
-    else { alert('❌ ' + (data.error || 'Could not unlock variant.')); }
+    try {
+        const r = await fetch('/dashboard/unlock-variant', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf() },
+            body: JSON.stringify({ variant: variantId }),
+        });
+        if (r.status === 403) { alert('Session expired — reloading page.'); location.reload(); return; }
+        const data = await r.json();
+        if (data.ok) { location.reload(); }
+        else { alert('❌ ' + (data.error || 'Could not unlock variant.')); }
+    } catch(e) { alert('Network error. Please try again.'); }
 }
 
 const _cardUserId = {{ user.id }};
 
 function previewVariant(variantId) {
     const iframe = document.getElementById('player-card-iframe');
-    if (iframe) { iframe.src = `/players/${_cardUserId}/card?preview=${variantId}`; }
+    if (iframe) { iframe.src = `/players/${_cardUserId}/card?preview=${variantId}&_t=${Date.now()}`; }
     document.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('previewing'));
     const btn = document.querySelector(`.variant-btn[data-variant="${variantId}"]`);
     if (btn) btn.classList.add('previewing');
@@ -363,20 +376,22 @@ function previewVariant(variantId) {
 
 async function setCardVariant(variantId, unlocked, label, cost) {
     if (!unlocked) { await unlockVariant(variantId, label, cost); return; }
-    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
-    const r = await fetch('/dashboard/card-variant', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
-        body: JSON.stringify({ variant: variantId }),
-    });
-    const data = await r.json();
-    if (data.ok) {
-        document.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('active', 'previewing'));
-        const active = document.querySelector(`.variant-btn[data-variant="${variantId}"]`);
-        if (active) active.classList.add('active');
-        const iframe = document.getElementById('player-card-iframe');
-        if (iframe) { iframe.src = `/players/${_cardUserId}/card`; }
-    } else { alert(data.error || 'Could not apply variant.'); }
+    try {
+        const r = await fetch('/dashboard/card-variant', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf() },
+            body: JSON.stringify({ variant: variantId }),
+        });
+        if (r.status === 403) { alert('Session expired — reloading page.'); location.reload(); return; }
+        const data = await r.json();
+        if (data.ok) {
+            document.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('active', 'previewing'));
+            const active = document.querySelector(`.variant-btn[data-variant="${variantId}"]`);
+            if (active) active.classList.add('active');
+            const iframe = document.getElementById('player-card-iframe');
+            if (iframe) { iframe.src = _cardIframeSrc(); }
+        } else { alert(data.error || 'Could not apply variant.'); }
+    } catch(e) { alert('Network error. Please try again.'); }
 }
 
 async function uploadMyPhoto(input) {
