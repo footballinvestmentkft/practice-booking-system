@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from ...database import get_db
 from ...dependencies import get_current_user_web
-from ...models.quiz import AdaptiveLearningSession, Quiz, QuizAnswerOption, QuizCategory, QuizQuestion, QuestionMetadata
+from ...models.quiz import AdaptiveLearningSession, Quiz, QuizAnswerOption, QuizCategory, QuizDifficulty, QuizQuestion, QuestionMetadata
 from ...models.user import User
 from ...models.xp_transaction import XPTransaction
 from ...services.adaptive_learning import AdaptiveLearningService
@@ -112,6 +112,7 @@ async def adaptive_learning_session_page(
             Quiz.module,
             Quiz.topic,
             Quiz.id.label("quiz_id"),
+            Quiz.difficulty,
             func.count(QuizQuestion.id).label("question_count"),
         )
         .join(QuizQuestion, QuizQuestion.quiz_id == Quiz.id)
@@ -121,7 +122,7 @@ async def adaptive_learning_session_page(
             Quiz.language == language,
             Quiz.topic.isnot(None),
         )
-        .group_by(Quiz.category, Quiz.module, Quiz.topic, Quiz.id)
+        .group_by(Quiz.category, Quiz.module, Quiz.topic, Quiz.id, Quiz.difficulty)
         .having(func.count(QuizQuestion.id) >= MIN_QUESTIONS_PER_CATEGORY)
         .order_by(Quiz.id)
         .all()
@@ -134,7 +135,53 @@ async def adaptive_learning_session_page(
             "topic": row.topic,
             "quiz_id": row.quiz_id,
             "question_count": row.question_count,
+            "difficulty": row.difficulty.value,
         })
+
+    # Deterministic difficulty ordering: EASY → MEDIUM → HARD within every category.
+    # Ensures JS receives topics already sorted so each module's diffGroups bucket
+    # is populated in the correct order regardless of DB insertion order.
+    _DIFF_SORT = {"EASY": 0, "MEDIUM": 1, "HARD": 2}
+    for cat_key in available_topics:
+        available_topics[cat_key].sort(key=lambda t: _DIFF_SORT.get(t["difficulty"], 9))
+
+    # Progression lock: which modules have at least one completed EASY session?
+    # Deterministic: same DB state → same result. Idempotent: safe to recompute.
+    # Only single-topic sessions (source_quiz_ids = one integer) contribute;
+    # "all topics" sessions (empty source_quiz_ids) are excluded by design.
+    completed_rows = (
+        db.query(AdaptiveLearningSession.source_quiz_ids)
+        .filter(
+            AdaptiveLearningSession.user_id == user.id,
+            AdaptiveLearningSession.language == language,
+            AdaptiveLearningSession.ended_at.isnot(None),
+            AdaptiveLearningSession.questions_presented > 0,
+            AdaptiveLearningSession.source_quiz_ids.isnot(None),
+            AdaptiveLearningSession.source_quiz_ids != "",
+        )
+        .all()
+    )
+    completed_quiz_ids: set[int] = set()
+    for row in completed_rows:
+        for part in row[0].split(","):
+            part = part.strip()
+            if part.isdigit():
+                completed_quiz_ids.add(int(part))
+
+    easy_completed_modules: list[str] = []
+    if completed_quiz_ids:
+        easy_rows = (
+            db.query(Quiz.module)
+            .filter(
+                Quiz.id.in_(completed_quiz_ids),
+                Quiz.difficulty == QuizDifficulty.EASY,
+                Quiz.is_active == True,
+                Quiz.module.isnot(None),
+            )
+            .distinct()
+            .all()
+        )
+        easy_completed_modules = [r[0] for r in easy_rows if r[0]]
 
     return templates.TemplateResponse(
         "adaptive_learning_session.html",
@@ -145,6 +192,7 @@ async def adaptive_learning_session_page(
             "available_categories": category_values,
             "available_topics": available_topics,
             "session_language": language,
+            "easy_completed_modules": easy_completed_modules,
         },
     )
 
@@ -350,13 +398,12 @@ async def al_session_next_question(
     exclude_ids: str = Query(
         "",
         description=(
-            # Compatibility layer: client passes comma-separated IDs of questions already shown
-            # this session. The service deduplicates via user_question_performance (1-hour window),
-            # but that window can be exhausted in short sessions with few questions.
-            # exclude_ids gives the AL-2 UI explicit within-session dedup without a server-side
-            # session question log table. Not used by the service directly — handled here at the
-            # route level to avoid requiring a new DB table in AL-1.
-            "Comma-separated question IDs already shown this session (client-tracked)"
+            # Full within-session dedup: client sends ALL question IDs shown this session
+            # (unbounded seenIds list). Route enforces that the same question_id cannot
+            # recur within a session. When the candidate pool is exhausted → session_complete.
+            # Implemented at route level so it can be moved to service level without interface
+            # changes — the exclude_ids param is already threaded through.
+            "Comma-separated question IDs already shown this session (client-tracked, unbounded)"
         ),
     ),
 ):
@@ -369,7 +416,7 @@ async def al_session_next_question(
     if err:
         return err
 
-    # Parse client-tracked exclude list
+    # Parse client-tracked exclude list (all IDs seen this session — unbounded).
     seen_ids: set[int] = set()
     if exclude_ids.strip():
         try:
@@ -378,21 +425,33 @@ async def al_session_next_question(
             seen_ids = set()
 
     service = AdaptiveLearningService(db)
-    result = service.get_next_question(user.id, session_id)
 
-    if result is None:
-        # Bare None should not happen (service returns structured dict), but guard defensively.
-        return JSONResponse({"session_complete": True, "reason": "no_questions"})
-
-    if result.get("session_complete"):
+    if not seen_ids:
+        # First question of the session — no dedup needed.
+        result = service.get_next_question(user.id, session_id)
+        if result is None:
+            return JSONResponse({"session_complete": True, "reason": "no_questions"})
         return JSONResponse(result)
 
-    # Route-level within-session dedup: if service returned an already-seen question,
-    # attempt one more call to get a different one (single retry — no recursion).
-    if seen_ids and result.get("id") in seen_ids:
-        retry = service.get_next_question(user.id, session_id)
-        if retry and not retry.get("session_complete") and retry.get("id") not in seen_ids:
-            result = retry
+    # With a non-empty seen list: ask the service up to _DEDUP_MAX_ATTEMPTS times.
+    # Each call samples independently (random.choice inside service), so repeated calls
+    # can return a different candidate. Once every candidate is exhausted the pool
+    # signals session_complete (no_questions) or all attempts land on seen IDs.
+    # This loop is O(attempts × query_cost) — safe for realistic pool sizes (10–100 Qs).
+    # Moving exclude_ids into the service/query layer is a drop-in future optimisation.
+    _DEDUP_MAX_ATTEMPTS = 6
+    result = None
+    for _ in range(_DEDUP_MAX_ATTEMPTS):
+        candidate = service.get_next_question(user.id, session_id)
+        if candidate is None or candidate.get("session_complete"):
+            return JSONResponse({"session_complete": True, "reason": "no_questions"})
+        if candidate.get("id") not in seen_ids:
+            result = candidate
+            break
+
+    if result is None:
+        # All attempts returned already-seen questions → pool exhausted for this session.
+        return JSONResponse({"session_complete": True, "reason": "pool_exhausted"})
 
     return JSONResponse(result)
 

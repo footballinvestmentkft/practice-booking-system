@@ -23022,13 +23022,13 @@
             }
           },
           {
-            "description": "Comma-separated question IDs already shown this session (client-tracked)",
+            "description": "Comma-separated question IDs already shown this session (client-tracked, unbounded)",
             "in": "query",
             "name": "exclude_ids",
             "required": false,
             "schema": {
               "default": "",
-              "description": "Comma-separated question IDs already shown this session (client-tracked)",
+              "description": "Comma-separated question IDs already shown this session (client-tracked, unbounded)",
               "title": "Exclude Ids",
               "type": "string"
             }
@@ -57326,6 +57326,22 @@
             "schema": {
               "title": "User Id",
               "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "preview",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Preview"
             }
           }
         ],
