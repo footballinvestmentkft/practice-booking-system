@@ -35,6 +35,8 @@ _RENDER_CONTEXT = {
     "skill_categories": [],
     "teams_info": [],
     "photo_url": None,
+    "portrait_photo_url": None,
+    "landscape_photo_url": None,
     "last_skill_delta": {},
     "participations_history": [],
     "theme": get_theme("default"),
@@ -44,6 +46,10 @@ _RENDER_CONTEXT = {
     "compact_bg_url": None,
     "showcase_bg_url": None,
     "compact_photo_position": "left",
+    "compact_focus_x": 50,
+    "compact_focus_y": 100,
+    "showcase_focus_x": 50,
+    "showcase_focus_y": 50,
 }
 
 
@@ -341,3 +347,166 @@ class TestThemeVariantCombinations:
         except Exception as e:
             pytest.fail(f"showcase_bg with bg URL raised {type(e).__name__}: {e}")
         assert "example.com/bg2.jpg" in html
+
+
+# ── Image pipeline DOM assertions ─────────────────────────────────────────────
+
+class TestImagePipelineDOMAssertions:
+    """
+    Validates the image pipeline wiring:
+      - compact/compact_bg use portrait_photo_url (not photo_url)
+      - showcase/showcase_bg use landscape_photo_url (not photo_url)
+      - FIFA uses photo_url (original)
+      - focus points applied as inline style object-position on <img>
+      - BG URL correctly passed as background-image inline style
+      - z-index declarations present in BG variant CSS
+    """
+
+    _PORTRAIT_URL = "/static/uploads/lfa_player_photos/1_portrait.png"
+    _LANDSCAPE_URL = "/static/uploads/lfa_player_photos/1_landscape.png"
+    _ORIG_URL = "/static/uploads/lfa_player_photos/1_orig_12345.png"
+    _COMPACT_BG = "/static/uploads/lfa_player_photos/1_bg_compact.png"
+    _SHOWCASE_BG = "/static/uploads/lfa_player_photos/1_bg_showcase.png"
+
+    @pytest.fixture(scope="class")
+    def jinja_env(self):
+        return Environment(loader=FileSystemLoader(_TEMPLATES_DIR))
+
+    def _ctx(self, **overrides):
+        return {
+            **_RENDER_CONTEXT,
+            "portrait_photo_url": self._PORTRAIT_URL,
+            "landscape_photo_url": self._LANDSCAPE_URL,
+            "photo_url": self._ORIG_URL,
+            **overrides,
+        }
+
+    # ── Photo source: correct crop per variant ────────────────────────────────
+
+    def test_compact_uses_portrait_url(self, jinja_env):
+        html = jinja_env.get_template("public/player_card_compact.html").render(**self._ctx())
+        assert self._PORTRAIT_URL in html, "compact must use portrait_photo_url"
+        assert self._LANDSCAPE_URL not in html, "compact must NOT use landscape_photo_url"
+        assert self._ORIG_URL not in html, "compact must NOT use original photo_url"
+
+    def test_compact_bg_uses_portrait_url(self, jinja_env):
+        html = jinja_env.get_template("public/player_card_compact_bg.html").render(
+            **self._ctx(compact_bg_url=self._COMPACT_BG)
+        )
+        assert self._PORTRAIT_URL in html, "compact_bg must use portrait_photo_url"
+        assert self._COMPACT_BG in html, "compact_bg must include compact_bg_url as background"
+        assert self._LANDSCAPE_URL not in html, "compact_bg must NOT use landscape_photo_url"
+
+    def test_showcase_uses_landscape_url(self, jinja_env):
+        html = jinja_env.get_template("public/player_card_showcase.html").render(**self._ctx())
+        assert self._LANDSCAPE_URL in html, "showcase must use landscape_photo_url"
+        assert self._PORTRAIT_URL not in html, "showcase must NOT use portrait_photo_url"
+        assert self._ORIG_URL not in html, "showcase must NOT use original photo_url"
+
+    def test_showcase_bg_uses_landscape_url(self, jinja_env):
+        html = jinja_env.get_template("public/player_card_showcase_bg.html").render(
+            **self._ctx(showcase_bg_url=self._SHOWCASE_BG)
+        )
+        assert self._LANDSCAPE_URL in html, "showcase_bg must use landscape_photo_url"
+        assert self._SHOWCASE_BG in html, "showcase_bg must include showcase_bg_url as background"
+        assert self._PORTRAIT_URL not in html, "showcase_bg must NOT use portrait_photo_url"
+
+    def test_fifa_uses_orig_photo_url(self, jinja_env):
+        html = jinja_env.get_template("public/player_card_fifa.html").render(**self._ctx())
+        assert self._ORIG_URL in html, "FIFA must use original photo_url"
+
+    def test_compact_falls_back_to_orig_when_portrait_missing(self, jinja_env):
+        """When portrait_photo_url is None, compact falls back to player_card_photo_url."""
+        ctx = {**self._ctx(), "portrait_photo_url": None}
+        html = jinja_env.get_template("public/player_card_compact.html").render(**ctx)
+        # portrait is None → initials placeholder rendered, not the orig URL
+        assert self._PORTRAIT_URL not in html
+        assert "cmp-photo-initials" in html
+
+    def test_showcase_falls_back_to_orig_when_landscape_missing(self, jinja_env):
+        """When landscape_photo_url is None, showcase falls back to player_card_photo_url."""
+        ctx = {**self._ctx(), "landscape_photo_url": None}
+        html = jinja_env.get_template("public/player_card_showcase.html").render(**ctx)
+        assert self._LANDSCAPE_URL not in html
+        assert "sc-banner-initials" in html
+
+    # ── Focus point object-position ───────────────────────────────────────────
+
+    def test_compact_focus_point_in_img_style(self, jinja_env):
+        ctx = self._ctx(compact_focus_x=30, compact_focus_y=75)
+        html = jinja_env.get_template("public/player_card_compact.html").render(**ctx)
+        assert "object-position: 30% 75%" in html, (
+            "compact img must have inline object-position from compact_focus_x/y"
+        )
+
+    def test_compact_bg_focus_point_in_img_style(self, jinja_env):
+        ctx = self._ctx(compact_focus_x=20, compact_focus_y=80)
+        html = jinja_env.get_template("public/player_card_compact_bg.html").render(**ctx)
+        assert "object-position: 20% 80%" in html, (
+            "compact_bg img must have inline object-position from compact_focus_x/y"
+        )
+
+    def test_showcase_focus_point_in_img_style(self, jinja_env):
+        ctx = self._ctx(showcase_focus_x=60, showcase_focus_y=40)
+        html = jinja_env.get_template("public/player_card_showcase.html").render(**ctx)
+        assert "object-position: 60% 40%" in html, (
+            "showcase img must have inline object-position from showcase_focus_x/y"
+        )
+
+    def test_showcase_bg_focus_point_in_img_style(self, jinja_env):
+        ctx = self._ctx(showcase_focus_x=70, showcase_focus_y=30, showcase_bg_url=self._SHOWCASE_BG)
+        html = jinja_env.get_template("public/player_card_showcase_bg.html").render(**ctx)
+        assert "object-position: 70% 30%" in html, (
+            "showcase_bg img must have inline object-position from showcase_focus_x/y"
+        )
+
+    def test_compact_default_focus_is_center_bottom(self, jinja_env):
+        """Default compact focus (50/100) must produce center-bottom equivalent."""
+        ctx = self._ctx(compact_focus_x=50, compact_focus_y=100)
+        html = jinja_env.get_template("public/player_card_compact.html").render(**ctx)
+        assert "object-position: 50% 100%" in html
+
+    def test_showcase_default_focus_is_center(self, jinja_env):
+        """Default showcase focus (50/50) must produce center-center equivalent."""
+        ctx = self._ctx(showcase_focus_x=50, showcase_focus_y=50)
+        html = jinja_env.get_template("public/player_card_showcase.html").render(**ctx)
+        assert "object-position: 50% 50%" in html
+
+    # ── z-index explicit stacking ─────────────────────────────────────────────
+
+    def test_compact_bg_has_explicit_z_index(self, jinja_env):
+        html = jinja_env.get_template("public/player_card_compact_bg.html").render(**self._ctx())
+        assert "z-index: 1" in html, "compact_bg must declare z-index:1 for player photo layer"
+        assert "z-index: 2" in html, "compact_bg must declare z-index:2 for overlay/badge"
+
+    def test_showcase_bg_has_explicit_z_index(self, jinja_env):
+        html = jinja_env.get_template("public/player_card_showcase_bg.html").render(
+            **self._ctx(showcase_bg_url=self._SHOWCASE_BG)
+        )
+        assert "z-index: 1" in html, "showcase_bg must declare z-index:1 for player photo layer"
+        assert "z-index: 2" in html, "showcase_bg must declare z-index:2 for overlay"
+
+    # ── BG variant: background-image inline style ─────────────────────────────
+
+    def test_compact_bg_background_image_style(self, jinja_env):
+        ctx = self._ctx(compact_bg_url=self._COMPACT_BG)
+        html = jinja_env.get_template("public/player_card_compact_bg.html").render(**ctx)
+        assert f"background-image: url('{self._COMPACT_BG}')" in html
+
+    def test_showcase_bg_background_image_style(self, jinja_env):
+        ctx = self._ctx(showcase_bg_url=self._SHOWCASE_BG)
+        html = jinja_env.get_template("public/player_card_showcase_bg.html").render(**ctx)
+        assert f"background-image: url('{self._SHOWCASE_BG}')" in html
+
+    def test_compact_bg_no_background_when_url_missing(self, jinja_env):
+        ctx = self._ctx(compact_bg_url=None)
+        html = jinja_env.get_template("public/player_card_compact_bg.html").render(**ctx)
+        # No inline background-image style should appear on the photo column div
+        assert 'style="background-image:' not in html
+        assert "style=\"background-image: url(" not in html
+
+    def test_showcase_bg_no_background_when_url_missing(self, jinja_env):
+        ctx = self._ctx(showcase_bg_url=None)
+        html = jinja_env.get_template("public/player_card_showcase_bg.html").render(**ctx)
+        assert 'style="background-image:' not in html
+        assert "style=\"background-image: url(" not in html
