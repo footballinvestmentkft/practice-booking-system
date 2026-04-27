@@ -24,19 +24,25 @@ body { background: var(--card-page-bg); }
     overflow: hidden;
 }
 .sc-banner img {
+    /* z-index 1: landscape player photo above CSS background-image (z-index 0) */
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 1;
     width: 100%; height: 100%;
     object-fit: contain;
-    object-position: center center;
-    display: block;
+    /* object-position set via inline style from showcase_focus_x/y */
+    /* object-fit:contain keeps BG visible in letterboxed areas — intentional */
 }
 .sc-banner-initials {
-    width: 100%; height: 100%;
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 1;
     display: flex; align-items: center; justify-content: center;
     font-size: 6rem; font-weight: 900; color: rgba(255,255,255,0.35);
     letter-spacing: -0.02em;
 }
 .sc-banner-overlay {
+    /* z-index 2: gradient overlay above player photo and BG */
     position: absolute; bottom: 0; left: 0; right: 0;
+    z-index: 2;
     padding: 2.5rem 1.25rem 0.6rem;
     background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
 }
