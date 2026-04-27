@@ -172,10 +172,11 @@ body { background: var(--card-page-bg); }
 {% block content %}
 <div class="card-wrap">
 
-    {# ── Banner — 16:9, custom background-image applied as CSS, player PNG on top ── #}
+    {# ── Banner — 16:9, showcase BG + landscape player PNG on top ── #}
     <div class="sc-banner"{% if showcase_bg_url %} style="background-image: url('{{ showcase_bg_url }}');"{% endif %}>
-        {% if photo_url %}
-            <img src="{{ photo_url }}" alt="{{ player.name }}">
+        {% if landscape_photo_url %}
+            <img src="{{ landscape_photo_url }}" alt="{{ player.name }}"
+                 style="object-position: {{ showcase_focus_x }}% {{ showcase_focus_y }}%;">
         {% else %}
             <div class="sc-banner-initials">{{ initials }}</div>
         {% endif %}

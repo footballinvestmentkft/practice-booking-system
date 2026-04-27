@@ -171,10 +171,11 @@ body { background: var(--card-page-bg); }
     {# ── HEADER: photo sidebar + identity (side by side) ── #}
     <div class="cmp-header photo-{{ compact_photo_position }}">
 
-        {# Background image applied as CSS background-image — player PNG sits on top naturally #}
+        {# Background image applied as CSS background-image — portrait player PNG sits on top #}
         <div class="cmp-photo-col"{% if compact_bg_url %} style="background-image: url('{{ compact_bg_url }}');"{% endif %}>
-            {% if photo_url %}
-                <img src="{{ photo_url }}" alt="{{ player.name }}">
+            {% if portrait_photo_url %}
+                <img src="{{ portrait_photo_url }}" alt="{{ player.name }}"
+                     style="object-position: {{ compact_focus_x }}% {{ compact_focus_y }}%;">
             {% else %}
                 <div class="cmp-photo-initials">{{ initials }}</div>
             {% endif %}

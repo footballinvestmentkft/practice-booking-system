@@ -183,6 +183,13 @@ def public_player_card(
         if os.path.isfile(fifa_candidate):
             template_path = "public/player_card_fifa.html"
 
+    # Photo URL resolution per variant family:
+    #   FIFA/compact → portrait crop (falls back to original uncropped)
+    #   showcase     → landscape crop (falls back to original uncropped)
+    _orig_url      = lfa_license.player_card_photo_url
+    _portrait_url  = lfa_license.card_photo_portrait_url or _orig_url
+    _landscape_url = lfa_license.card_photo_landscape_url or _orig_url
+
     return templates.TemplateResponse(request, template_path, {
         "player": player,
         "overall": overall,
@@ -193,7 +200,10 @@ def public_player_card(
         "pos_color": _POS_COLORS.get(position, "#667eea"),
         "skill_categories": SKILL_CATEGORIES,
         "teams_info": teams_info,
-        "photo_url": lfa_license.player_card_photo_url,
+        # photo_url kept for FIFA (original, uncropped)
+        "photo_url": _orig_url,
+        "portrait_photo_url": _portrait_url,   # compact / compact_bg
+        "landscape_photo_url": _landscape_url, # showcase / showcase_bg
         "last_skill_delta": last_skill_delta,
         "participations_history": participations_history,
         "theme": theme,
@@ -204,4 +214,9 @@ def public_player_card(
         "compact_bg_url": lfa_license.card_bg_compact_url,
         "showcase_bg_url": lfa_license.card_bg_showcase_url,
         "compact_photo_position": lfa_license.card_compact_photo_position or "left",
+        # Focus points default to match original CSS (compact: center bottom = 50/100, showcase: center = 50/50)
+        "compact_focus_x": lfa_license.card_compact_focus_x if lfa_license.card_compact_focus_x is not None else 50,
+        "compact_focus_y": lfa_license.card_compact_focus_y if lfa_license.card_compact_focus_y is not None else 100,
+        "showcase_focus_x": lfa_license.card_showcase_focus_x if lfa_license.card_showcase_focus_x is not None else 50,
+        "showcase_focus_y": lfa_license.card_showcase_focus_y if lfa_license.card_showcase_focus_y is not None else 50,
     })
