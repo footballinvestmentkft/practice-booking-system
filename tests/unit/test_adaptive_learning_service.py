@@ -664,7 +664,7 @@ class TestGetNextQuestionEmptyPool:
 
         assert result is not None, "must not return bare None"
         assert result.get("session_complete") is True
-        assert result.get("reason") == "no_questions"
+        assert result.get("reason") == "pool_exhausted"
 
     def test_empty_pool_does_not_return_bare_none(self):
         service, db = self._make_db_empty_pool()
