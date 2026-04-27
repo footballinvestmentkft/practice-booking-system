@@ -198,5 +198,10 @@ def public_player_card(
         "participations_history": participations_history,
         "theme": theme,
         "card_theme_id": theme.id,
+        "card_theme": theme.id,           # base template: <body class="theme-{{ card_theme }}">
         "card_variant_id": variant.id,
+        # variant-specific context
+        "compact_bg_url": getattr(lfa_license, "card_bg_compact_url", None),
+        "showcase_bg_url": getattr(lfa_license, "card_bg_showcase_url", None),
+        "compact_photo_position": getattr(lfa_license, "card_compact_photo_position", "left"),
     })
