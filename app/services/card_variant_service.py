@@ -81,10 +81,18 @@ VARIANTS: dict[str, VariantDefinition] = {
         credit_cost=400,
         template="public/player_card_atlas.html",
     ),
+    "pulse": VariantDefinition(
+        id="pulse",
+        label="Pulse",
+        description="Radar skill chart with animated OVR ring, pulse effects, and HUD aesthetic.",
+        is_premium=True,
+        credit_cost=600,
+        template="public/player_card_pulse.html",
+    ),
 }
 
 # Display order for the dashboard picker (free first, then premium)
-VARIANT_ORDER = ["fifa", "compact", "compact_bg", "showcase", "showcase_bg", "atlas"]
+VARIANT_ORDER = ["fifa", "compact", "compact_bg", "showcase", "showcase_bg", "atlas", "pulse"]
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
