@@ -1,0 +1,670 @@
+{% extends "public/player_card_base.html" %}
+
+{% block extra_styles %}
+<style>
+/* ── Atlas variant: vertical hero + stat strip + 3-tab (Skills/Events/Profile) ── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--card-page-bg); }
+
+.card-wrap {
+    max-width: min(560px, calc(100vw - 1.5rem));
+    border-radius: 18px; overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.65);
+    border: 1px solid var(--card-border);
+}
+
+/* ── Hero zone ── */
+.atl-hero {
+    background: var(--card-panel-bg);
+    position: relative;
+    padding: 1.4rem 1.1rem 0;
+    overflow: hidden;
+    min-height: 190px;
+}
+
+/* Giant OVR watermark — purely decorative */
+.atl-ovr-watermark {
+    position: absolute; right: -0.5rem; top: -1rem;
+    font-size: 11rem; font-weight: 900;
+    color: rgba(255,255,255,0.045);
+    line-height: 1; letter-spacing: -0.04em;
+    user-select: none; pointer-events: none;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Top row: avatar + name block + OVR */
+.atl-top-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+    position: relative; z-index: 1;
+}
+
+.atl-avatar {
+    width: 68px; height: 68px; border-radius: 13px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.55rem; font-weight: 900; color: white;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--card-accent) 25%, transparent);
+    border: 2px solid color-mix(in srgb, var(--card-accent) 45%, transparent);
+    box-shadow: 0 4px 16px color-mix(in srgb, var(--card-accent) 22%, transparent);
+    overflow: hidden;
+}
+.atl-avatar img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+}
+
+.atl-name-block {
+    flex: 1; min-width: 0;
+    padding-top: 0.05rem;
+}
+
+.atl-name {
+    font-size: 1.45rem; font-weight: 800; color: white;
+    line-height: 1.1; margin-bottom: 0.28rem;
+    overflow-wrap: break-word;
+}
+
+.atl-badges {
+    display: flex; flex-wrap: wrap;
+    gap: 0.3rem; align-items: center;
+    margin-bottom: 0.35rem;
+}
+
+.atl-pos-badge {
+    display: inline-block; padding: 2px 9px;
+    border-radius: 5px; font-size: 0.6rem; font-weight: 800;
+    color: white; text-transform: uppercase; letter-spacing: 0.08em;
+}
+
+.atl-tier-badge {
+    display: inline-block; padding: 2px 9px;
+    border-radius: 5px; font-size: 0.6rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.08em;
+}
+
+.atl-club-pills {
+    display: flex; flex-wrap: wrap; gap: 0.3rem;
+}
+.atl-club-pill {
+    font-size: 0.63rem; font-weight: 600;
+    color: var(--card-pill-text);
+    background: var(--card-pill-bg);
+    border: 1px solid var(--card-pill-border);
+    border-radius: 99px; padding: 2px 8px;
+    overflow-wrap: anywhere;
+}
+
+/* OVR block (right side of top row) */
+.atl-ovr-block { text-align: right; flex-shrink: 0; }
+.atl-ovr-num {
+    font-size: 3.5rem; font-weight: 900;
+    color: white; line-height: 1;
+}
+.atl-ovr-label {
+    font-size: 0.52rem; font-weight: 800;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.1em; text-transform: uppercase;
+}
+
+/* Stat strip — 4 col grid below top row */
+.atl-stat-strip {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    margin-top: 1.1rem;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 0.8rem 0 0.9rem;
+    position: relative; z-index: 1;
+}
+.atl-stat { text-align: center; }
+.atl-stat-label {
+    font-size: 0.53rem; font-weight: 700;
+    color: rgba(255,255,255,0.38);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 0.18rem;
+}
+.atl-stat-value {
+    font-size: 0.8rem; font-weight: 700;
+    color: rgba(255,255,255,0.9);
+}
+
+/* ── Tab bar ── */
+.tab-bar {
+    display: flex;
+    background: var(--card-tab-bg);
+    border-bottom: 1px solid var(--card-tab-border);
+}
+.tab-btn {
+    flex: 1; padding: 0.58rem 0.25rem;
+    background: none; border: none;
+    color: var(--card-text-tab);
+    font-size: 0.78rem; font-weight: 700;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color .15s, border-color .15s, background .15s;
+    letter-spacing: 0.02em;
+}
+.tab-btn.active {
+    color: var(--card-text-primary);
+    border-bottom-color: var(--card-accent);
+    background: color-mix(in srgb, var(--card-accent) 8%, transparent);
+}
+
+/* ── Skills section ── */
+.skills-section {
+    background: var(--card-body-bg);
+    padding: 0.85rem 0.9rem;
+}
+.skills-title {
+    font-size: 0.59rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.13em; color: var(--card-text-faint);
+    margin-bottom: 0.75rem;
+}
+
+/* Category summary row — kattintható */
+.atl-cat-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0.45rem; margin-bottom: 0.85rem;
+}
+.atl-cat-btn {
+    background: var(--card-cat-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px; padding: 0.5rem 0.35rem;
+    cursor: pointer; transition: all .15s; text-align: center;
+    font-family: inherit;
+}
+.atl-cat-btn.active {
+    background: color-mix(in srgb, var(--card-accent) 12%, transparent);
+    border-color: color-mix(in srgb, var(--card-accent) 45%, transparent);
+}
+.atl-cat-emoji { font-size: 1rem; margin-bottom: 0.18rem; }
+.atl-cat-name {
+    font-size: 0.55rem; font-weight: 700;
+    color: var(--card-text-muted); text-transform: uppercase;
+    letter-spacing: 0.06em; margin-bottom: 0.15rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.atl-cat-btn.active .atl-cat-name { color: var(--card-accent); }
+.atl-cat-avg {
+    font-size: 1.1rem; font-weight: 900;
+    color: var(--card-text-primary);
+}
+.atl-cat-btn.active .atl-cat-avg { color: var(--card-accent); }
+
+/* Skill list grid */
+.skill-cats {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0.55rem;
+}
+.skill-cats.single-col { grid-template-columns: 1fr; }
+.skill-cat { background: var(--card-cat-bg); border-radius: 10px; padding: 0.6rem 0.7rem; min-width: 0; }
+.skill-cat-name {
+    font-size: 0.56rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--card-text-muted); margin-bottom: 0.42rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.skill-row { display: flex; align-items: center; gap: 0.3rem; margin-bottom: 0.24rem; }
+.skill-row:last-child { margin-bottom: 0; }
+.skill-name { font-size: 0.6rem; color: var(--card-text-secondary); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.skill-val  { font-size: 0.62rem; font-weight: 700; width: 24px; text-align: right; flex-shrink: 0; }
+.skill-up   { font-size: 0.56rem; font-weight: 900; width: 9px; flex-shrink: 0; line-height: 1; }
+.skill-bar-bg   { flex: 1 1 0; max-width: 50px; height: 4px; background: var(--card-bar-bg); border-radius: 2px; }
+.skill-bar-fill { height: 100%; border-radius: 2px; }
+
+/* Back button */
+.atl-cat-back {
+    margin-top: 0.65rem; width: 100%; padding: 0.42rem;
+    background: transparent; border: 1px solid var(--card-border);
+    border-radius: 8px; color: var(--card-text-faint);
+    font-size: 0.7rem; font-weight: 600; cursor: pointer;
+    font-family: inherit; transition: all .15s;
+}
+.atl-cat-back:hover { color: var(--card-text-secondary); }
+
+/* ── Events section ── */
+.events-section { background: var(--card-body-bg); padding: 0.75rem 0.9rem; }
+.ev-row {
+    display: flex; align-items: flex-start;
+    gap: 0.6rem; padding: 0.5rem 0;
+    border-bottom: 1px solid var(--card-ev-border);
+}
+.ev-row:last-child { border-bottom: none; }
+.ev-rank { min-width: 1.9rem; font-size: 1rem; text-align: center; padding-top: 0.04rem; }
+.ev-body { flex: 1; min-width: 0; }
+.ev-name { margin-bottom: 0.18rem; }
+.ev-link { color: var(--card-text-primary); font-size: 0.8rem; font-weight: 700; text-decoration: none; }
+.ev-link:hover { text-decoration: underline; }
+.ev-rewards { display: flex; gap: 0.25rem; margin-bottom: 0.18rem; flex-wrap: wrap; }
+.ev-badge { font-size: 0.63rem; font-weight: 700; padding: 1px 6px; border-radius: 99px; }
+.ev-badge.xp { background: var(--card-badge-xp-bg); color: var(--card-badge-xp-text); }
+.ev-badge.cr { background: var(--card-badge-cr-bg); color: var(--card-badge-cr-text); }
+.ev-skills { display: flex; flex-wrap: wrap; gap: 0.2rem; }
+.ev-skill-pill { font-size: 0.61rem; padding: 1px 5px; border-radius: 99px; }
+.ev-skill-pill.up { background: var(--card-pill-up-bg); color: var(--card-pill-up-text); }
+.ev-skill-pill.dn { background: var(--card-pill-dn-bg); color: var(--card-pill-dn-text); }
+.ev-empty { text-align: center; color: var(--card-text-faint); font-size: 0.78rem; padding: 1.5rem 0; }
+
+/* ── Profile section ── */
+.profile-section { background: var(--card-body-bg); padding: 0.9rem; }
+.profile-title {
+    font-size: 0.59rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.13em; color: var(--card-text-faint);
+    margin-bottom: 0.7rem;
+}
+.profile-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0.5rem; margin-bottom: 0.8rem;
+}
+.profile-field {
+    background: var(--card-cat-bg); border-radius: 9px;
+    padding: 0.5rem 0.65rem;
+}
+.profile-label {
+    font-size: 0.55rem; font-weight: 700;
+    color: var(--card-text-muted); text-transform: uppercase;
+    letter-spacing: 0.07em; margin-bottom: 0.18rem;
+}
+.profile-value {
+    font-size: 0.8rem; font-weight: 700;
+    color: var(--card-text-primary); overflow-wrap: break-word;
+}
+
+/* License block */
+.atl-license-block {
+    border-radius: 11px; padding: 0.8rem 0.9rem;
+    margin-bottom: 0.5rem;
+    background: color-mix(in srgb, var(--card-accent) 7%, transparent);
+    border: 1px solid color-mix(in srgb, var(--card-accent) 22%, transparent);
+}
+.atl-license-title {
+    font-size: 0.57rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.13em; margin-bottom: 0.6rem;
+    color: var(--card-accent); opacity: 0.82;
+}
+.atl-license-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem;
+}
+.atl-license-field { text-align: center; }
+.atl-license-label {
+    font-size: 0.53rem; font-weight: 700;
+    color: var(--card-accent); opacity: 0.65;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    margin-bottom: 0.15rem;
+}
+.atl-license-value {
+    font-size: 0.82rem; font-weight: 800;
+    color: var(--card-text-primary);
+}
+
+/* XP + Motivation row */
+.atl-stat-cards {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+.atl-stat-card {
+    background: var(--card-cat-bg); border-radius: 9px;
+    padding: 0.55rem 0.7rem;
+}
+.atl-stat-card.full { grid-column: 1 / -1; }
+.atl-stat-card-label {
+    font-size: 0.55rem; font-weight: 700;
+    color: var(--card-text-muted); text-transform: uppercase;
+    letter-spacing: 0.07em; margin-bottom: 0.18rem;
+}
+.atl-stat-card-value {
+    font-size: 1.2rem; font-weight: 900;
+    color: var(--card-accent);
+}
+.atl-stat-card-value.text {
+    font-size: 0.82rem; font-weight: 700;
+    color: var(--card-text-primary);
+}
+.atl-stat-card-unit {
+    font-size: 0.62rem; margin-left: 3px; opacity: 0.65;
+}
+
+/* ── Footer ── */
+.atl-footer {
+    background: var(--card-tab-bg);
+    border-top: 1px solid var(--card-border);
+    padding: 0.45rem 0.9rem;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.atl-footer-brand {
+    font-size: 0.56rem; font-weight: 700;
+    color: var(--card-text-faint); letter-spacing: 0.1em; text-transform: uppercase;
+}
+.atl-footer-variant {
+    font-size: 0.56rem; font-weight: 700;
+    color: var(--card-accent); opacity: 0.6; letter-spacing: 0.08em;
+}
+
+/* ── Responsive ── */
+@media (max-width: 400px) {
+    .atl-ovr-watermark { font-size: 8rem; }
+    .atl-name { font-size: 1.2rem; }
+    .atl-ovr-num { font-size: 2.8rem; }
+    .atl-cat-grid { grid-template-columns: repeat(2, 1fr); }
+    .skill-cats { grid-template-columns: 1fr; }
+    .profile-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 320px) {
+    .atl-top-row { flex-wrap: wrap; }
+    .atl-ovr-block { width: 100%; text-align: left; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card-wrap">
+
+    {# ── HERO ZONE ── #}
+    <div class="atl-hero">
+        <div class="atl-ovr-watermark">{{ overall | round(0) | int }}</div>
+
+        <div class="atl-top-row">
+            <div class="atl-avatar">
+                {% if portrait_photo_url %}
+                    <img src="{{ portrait_photo_url }}" alt="{{ player.name }}">
+                {% else %}
+                    {{ initials }}
+                {% endif %}
+            </div>
+
+            <div class="atl-name-block">
+                <div class="atl-name">{{ player.name }}</div>
+                <div class="atl-badges">
+                    {% if player.position and player.position != "Unknown" %}
+                    <span class="atl-pos-badge" style="background: {{ pos_color }};">{{ player.position }}</span>
+                    {% endif %}
+                    <span class="atl-tier-badge"
+                          style="color: {{ tier_color }}; border: 1px solid {{ tier_color }}44; background: {{ tier_color }}1a;">
+                        {{ tier_label }}
+                    </span>
+                </div>
+                {% if teams_info %}
+                <div class="atl-club-pills">
+                    {% for t in teams_info %}
+                    <span class="atl-club-pill">🏟 {{ t.team_name }}{% if t.club_name %} · {{ t.club_name }}{% endif %}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="atl-ovr-block">
+                <div class="atl-ovr-num">{{ overall | round(0) | int }}</div>
+                <div class="atl-ovr-label">OVR</div>
+            </div>
+        </div>
+
+        <div class="atl-stat-strip">
+            <div class="atl-stat">
+                <div class="atl-stat-label">Nationality</div>
+                <div class="atl-stat-value">{{ player.nationality or "—" }}</div>
+            </div>
+            <div class="atl-stat">
+                <div class="atl-stat-label">Age Group</div>
+                <div class="atl-stat-value">{{ player.age_group }}</div>
+            </div>
+            <div class="atl-stat">
+                <div class="atl-stat-label">Events</div>
+                <div class="atl-stat-value">{{ player.total_tournaments }}</div>
+            </div>
+            <div class="atl-stat">
+                <div class="atl-stat-label">XP</div>
+                <div class="atl-stat-value">{{ xp_balance | default(0) | int }}✦</div>
+            </div>
+        </div>
+    </div>{# /atl-hero #}
+
+    {# ── TAB BAR ── #}
+    <div class="tab-bar">
+        <button class="tab-btn active" id="btn-skills"  onclick="atlSwitchTab('skills')">⚽ Skills</button>
+        <button class="tab-btn"        id="btn-events"  onclick="atlSwitchTab('events')">🏆 Events</button>
+        <button class="tab-btn"        id="btn-profile" onclick="atlSwitchTab('profile')">👤 Profile</button>
+    </div>
+
+    {# ── SKILLS TAB ── #}
+    {% if skill_categories %}
+    <div class="skills-section" id="tab-skills">
+        <div class="skills-title">Football Skills — {{ overall | round(0) | int }} OVR</div>
+
+        <div class="atl-cat-grid" id="atl-cat-grid">
+            {% for cat in skill_categories %}
+            {% set cat_sum = namespace(total=0, count=0) %}
+            {% for skill in cat.skills %}
+                {% set sval = player.skills.get(skill.key, {}).get('current_level', 50) | round(0) | int %}
+                {% set cat_sum.total = cat_sum.total + sval %}
+                {% set cat_sum.count = cat_sum.count + 1 %}
+            {% endfor %}
+            {% set cat_avg = (cat_sum.total / cat_sum.count) | round(0) | int if cat_sum.count > 0 else 50 %}
+            <button class="atl-cat-btn" id="catbtn-{{ cat.key }}"
+                    onclick="atlFilterCat('{{ cat.key }}')">
+                <div class="atl-cat-emoji">{{ cat.emoji }}</div>
+                <div class="atl-cat-name">{{ cat.name_en }}</div>
+                <div class="atl-cat-avg">{{ cat_avg }}</div>
+            </button>
+            {% endfor %}
+        </div>
+
+        <div class="skill-cats" id="atl-skill-cats">
+            {% for cat in skill_categories %}
+            <div class="skill-cat" data-cat="{{ cat.key }}">
+                <div class="skill-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
+                {% for skill in cat.skills %}
+                {% set sdata  = player.skills.get(skill.key, {}) %}
+                {% set sval   = sdata.get('current_level', 50) | round(1) %}
+                {% set fill   = [sval, 100] | min %}
+                {% set sdelta = last_skill_delta.get(skill.key, 0) %}
+                {% if sdelta > 0 %}
+                    {% set bar_color   = 'var(--card-skill-up)' %}
+                    {% set val_color   = 'var(--card-skill-up)' %}
+                    {% set arrow       = '↑' %}
+                    {% set arrow_color = 'var(--card-skill-up)' %}
+                {% elif sdelta < 0 %}
+                    {% set bar_color   = 'var(--card-skill-dn)' %}
+                    {% set val_color   = 'var(--card-skill-dn)' %}
+                    {% set arrow       = '↓' %}
+                    {% set arrow_color = 'var(--card-skill-dn)' %}
+                {% else %}
+                    {% set bar_color   = 'var(--card-bar-neutral)' %}
+                    {% set val_color   = 'var(--card-val-neutral)' %}
+                    {% set arrow       = '↑' %}
+                    {% set arrow_color = 'transparent' %}
+                {% endif %}
+                <div class="skill-row">
+                    <span class="skill-name">{{ skill.name_en }}</span>
+                    <div class="skill-bar-bg">
+                        <div class="skill-bar-fill" style="width:{{ fill }}%; background:{{ bar_color }};"></div>
+                    </div>
+                    <span class="skill-val" style="color:{{ val_color }};">{{ sval }}</span>
+                    <span class="skill-up" style="color:{{ arrow_color }};">{{ arrow }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <button class="atl-cat-back" id="atl-cat-back" style="display:none;"
+                onclick="atlFilterCat(null)">← All categories</button>
+    </div>
+    {% endif %}
+
+    {# ── EVENTS TAB ── #}
+    <div class="events-section" id="tab-events" style="display:none;">
+        {% if participations_history %}
+            {% for ev in participations_history %}
+            <div class="ev-row">
+                <div class="ev-rank">
+                    {% if ev.placement == 1 %}🥇
+                    {% elif ev.placement == 2 %}🥈
+                    {% elif ev.placement == 3 %}🥉
+                    {% elif ev.placement %}#{{ ev.placement }}
+                    {% else %}—{% endif %}
+                </div>
+                <div class="ev-body">
+                    <div class="ev-name">
+                        <a href="/events/{{ ev.event_id }}" class="ev-link">{{ ev.event_name }}</a>
+                    </div>
+                    <div class="ev-rewards">
+                        {% if ev.xp_awarded %}<span class="ev-badge xp">+{{ ev.xp_awarded }} XP</span>{% endif %}
+                        {% if ev.credits_awarded %}<span class="ev-badge cr">+{{ ev.credits_awarded }} CR</span>{% endif %}
+                    </div>
+                    {% if ev.top_skills %}
+                    <div class="ev-skills">
+                        {% for sk, delta in ev.top_skills %}
+                        <span class="ev-skill-pill {% if delta > 0 %}up{% else %}dn{% endif %}">
+                            {{ sk.replace('_',' ') }} {{ '+' if delta > 0 else '' }}{{ delta | round(1) }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="ev-empty">No tournament data yet.</div>
+        {% endif %}
+    </div>
+
+    {# ── PROFILE TAB ── #}
+    <div class="profile-section" id="tab-profile" style="display:none;">
+        <div class="profile-title">Player Profile</div>
+
+        <div class="profile-grid">
+            <div class="profile-field">
+                <div class="profile-label">Full Name</div>
+                <div class="profile-value">{{ player.name }}</div>
+            </div>
+            {% if player_nickname %}
+            <div class="profile-field">
+                <div class="profile-label">Nickname</div>
+                <div class="profile-value">{{ player_nickname }}</div>
+            </div>
+            {% endif %}
+            <div class="profile-field">
+                <div class="profile-label">Age</div>
+                <div class="profile-value">{{ player_age ~ " years" if player_age else "—" }}</div>
+            </div>
+            <div class="profile-field">
+                <div class="profile-label">Gender</div>
+                <div class="profile-value">{{ player_gender or "—" }}</div>
+            </div>
+            <div class="profile-field">
+                <div class="profile-label">Nationality</div>
+                <div class="profile-value">{{ player.nationality or "—" }}</div>
+            </div>
+            <div class="profile-field">
+                <div class="profile-label">Location</div>
+                <div class="profile-value">{{ player_location or "—" }}</div>
+            </div>
+            <div class="profile-field">
+                <div class="profile-label">Height</div>
+                <div class="profile-value">{{ player_height_cm ~ " cm" if player_height_cm else "—" }}</div>
+            </div>
+            <div class="profile-field">
+                <div class="profile-label">Weight</div>
+                <div class="profile-value">{{ player_weight_kg ~ " kg" if player_weight_kg else "—" }}</div>
+            </div>
+            <div class="profile-field">
+                <div class="profile-label">Preferred Foot</div>
+                <div class="profile-value">{{ player_preferred_foot or "—" }}</div>
+            </div>
+            <div class="profile-field">
+                <div class="profile-label">Position</div>
+                <div class="profile-value">{{ player.position or "—" }}</div>
+            </div>
+        </div>
+
+        <div class="atl-license-block">
+            <div class="atl-license-title">LFA License</div>
+            <div class="atl-license-grid">
+                <div class="atl-license-field">
+                    <div class="atl-license-label">Level</div>
+                    <div class="atl-license-value">Lv. {{ license_current_level | default("—") }}</div>
+                </div>
+                <div class="atl-license-field">
+                    <div class="atl-license-label">Peak</div>
+                    <div class="atl-license-value">Lv. {{ license_max_level | default("—") }}</div>
+                </div>
+                <div class="atl-license-field">
+                    <div class="atl-license-label">Since</div>
+                    <div class="atl-license-value">{{ license_started | default("—") }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="atl-stat-cards">
+            <div class="atl-stat-card">
+                <div class="atl-stat-card-label">Total XP</div>
+                <div class="atl-stat-card-value">
+                    {{ xp_balance | default(0) | int }}<span class="atl-stat-card-unit">✦</span>
+                </div>
+            </div>
+            {% if motivation_score %}
+            <div class="atl-stat-card">
+                <div class="atl-stat-card-label">Motivation</div>
+                <div class="atl-stat-card-value">
+                    {{ motivation_score | round(1) }}<span class="atl-stat-card-unit">/5</span>
+                </div>
+            </div>
+            {% endif %}
+            <div class="atl-stat-card full">
+                <div class="atl-stat-card-label">Member Since</div>
+                <div class="atl-stat-card-value text">{{ member_since | default("—") }}</div>
+            </div>
+        </div>
+    </div>
+
+    {# ── FOOTER ── #}
+    <div class="atl-footer">
+        <span class="atl-footer-brand">LFA Education Center</span>
+        <span class="atl-footer-variant">ATLAS</span>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function atlSwitchTab(name) {
+    const tabs   = ['skills', 'events', 'profile'];
+    const panels = ['tab-skills', 'tab-events', 'tab-profile'];
+    tabs.forEach((t, i) => {
+        const btn   = document.getElementById('btn-' + t);
+        const panel = document.getElementById(panels[i]);
+        const active = t === name;
+        btn.classList.toggle('active', active);
+        if (panel) panel.style.display = active ? '' : 'none';
+    });
+}
+
+let _atlActiveCat = null;
+
+function atlFilterCat(catKey) {
+    const cats      = document.querySelectorAll('.skill-cat');
+    const catBtns   = document.querySelectorAll('.atl-cat-btn');
+    const skillGrid = document.getElementById('atl-skill-cats');
+    const backBtn   = document.getElementById('atl-cat-back');
+
+    _atlActiveCat = catKey;
+
+    if (!catKey) {
+        cats.forEach(el => el.style.display = '');
+        catBtns.forEach(el => el.classList.remove('active'));
+        skillGrid.classList.remove('single-col');
+        backBtn.style.display = 'none';
+    } else {
+        cats.forEach(el => {
+            el.style.display = el.dataset.cat === catKey ? '' : 'none';
+        });
+        catBtns.forEach(el => {
+            el.classList.toggle('active', el.id === 'catbtn-' + catKey);
+        });
+        skillGrid.classList.add('single-col');
+        backBtn.style.display = '';
+    }
+}
+</script>
+{% endblock %}

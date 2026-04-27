@@ -219,4 +219,18 @@ def public_player_card(
         "compact_focus_y": lfa_license.card_compact_focus_y if lfa_license.card_compact_focus_y is not None else 100,
         "showcase_focus_x": lfa_license.card_showcase_focus_x if lfa_license.card_showcase_focus_x is not None else 50,
         "showcase_focus_y": lfa_license.card_showcase_focus_y if lfa_license.card_showcase_focus_y is not None else 50,
+        # Atlas Profile tab context
+        "player_nickname":       user.nickname,
+        "player_age":            user.age,
+        "player_gender":         user.gender,
+        "player_location":       user.current_location or user.country,
+        "license_current_level": lfa_license.current_level,
+        "license_max_level":     lfa_license.max_achieved_level,
+        "license_started":       lfa_license.started_at.strftime("%Y. %b. %d.") if lfa_license.started_at else None,
+        "motivation_score":      lfa_license.average_motivation_score,
+        "member_since":          user.created_at.strftime("%Y. %B") if user.created_at else None,
+        "xp_balance":            user.xp_balance,
+        "player_height_cm":      (lfa_license.motivation_scores or {}).get("height_cm"),
+        "player_weight_kg":      (lfa_license.motivation_scores or {}).get("weight_kg"),
+        "player_preferred_foot": (lfa_license.motivation_scores or {}).get("preferred_foot"),
     })
