@@ -12,6 +12,36 @@
     --card-body-bg:  {{ theme.body_bg  if theme is defined else '#1a202c' }};
     --card-tab-bg:   {{ theme.tab_bg   if theme is defined else '#2d3748' }};
     --card-accent:   {{ theme.accent   if theme is defined else '#667eea' }};
+    /* Right panel tokens — FIFA right panel is always white regardless of theme */
+    --card-right-bg:       #ffffff;
+    --card-right-text:     #1a202c;
+    --card-right-subtext:  #718096;
+    --card-right-value:    #2d3748;
+    --card-pill-bg:        #f0f4ff;
+    --card-pill-border:    #e2e8f0;
+    --card-pill-text:      #4a5568;
+    /* Dark panel text tokens */
+    --card-text-primary:   rgba(255,255,255,0.88);
+    --card-text-secondary: rgba(255,255,255,0.60);
+    --card-text-muted:     rgba(255,255,255,0.40);
+    --card-text-faint:     rgba(255,255,255,0.35);
+    --card-text-tab:       rgba(255,255,255,0.50);
+    --card-tab-border:     rgba(255,255,255,0.08);
+    /* Skill tokens */
+    --card-cat-bg:         rgba(255,255,255,0.04);
+    --card-bar-bg:         rgba(255,255,255,0.08);
+    --card-bar-neutral:    rgba(255,255,255,0.12);
+    --card-val-neutral:    rgba(255,255,255,0.85);
+    --card-ev-border:      rgba(255,255,255,0.05);
+    /* Badge / pill tokens */
+    --card-badge-xp-bg:    rgba(102,126,234,0.20);
+    --card-badge-xp-text:  #a3bffa;
+    --card-badge-cr-bg:    rgba(72,187,120,0.15);
+    --card-badge-cr-text:  #9ae6b4;
+    --card-pill-up-bg:     rgba(72,187,120,0.15);
+    --card-pill-up-text:   #9ae6b4;
+    --card-pill-dn-bg:     rgba(252,129,129,0.15);
+    --card-pill-dn-text:   #feb2b2;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { overflow-x: hidden; }
@@ -34,7 +64,7 @@ body {
 }
 .card-wrap {
     width: 100%;
-    max-width: min(680px, calc(100vw - 1.5rem));
+    max-width: min(820px, calc(100vw - 1.5rem));
     border-radius: 14px; overflow: hidden;
     box-shadow: 0 12px 48px rgba(0,0,0,0.55);
     border: 1px solid rgba(255,255,255,0.06);
@@ -64,13 +94,13 @@ body {
     white-space: nowrap;
 }
 .fifa-right {
-    background: #ffffff;
+    background: var(--card-right-bg);
     padding: 1.25rem 1.25rem 1rem;
     display: flex; flex-direction: column; gap: 0.7rem;
     min-width: 0; /* prevent grid blowout */
 }
 .fifa-name {
-    font-size: 1.45rem; font-weight: 800; color: #1a202c; line-height: 1.1;
+    font-size: 1.45rem; font-weight: 800; color: var(--card-right-text); line-height: 1.1;
     overflow-wrap: break-word; word-break: break-word;
 }
 .fifa-pos-badge {
@@ -83,12 +113,12 @@ body {
     gap: 0.5rem 0.75rem;
 }
 .id-field { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.id-label { font-size: 0.6rem; font-weight: 700; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.07em; }
-.id-value { font-size: 0.84rem; font-weight: 700; color: #2d3748; overflow-wrap: break-word; }
+.id-label { font-size: 0.6rem; font-weight: 700; color: var(--card-right-subtext); text-transform: uppercase; letter-spacing: 0.07em; }
+.id-value { font-size: 0.84rem; font-weight: 700; color: var(--card-right-value); overflow-wrap: break-word; }
 .fifa-club-pills { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .club-pill {
-    font-size: 0.7rem; font-weight: 600; color: #4a5568;
-    background: #f0f4ff; border: 1px solid #e2e8f0;
+    font-size: 0.7rem; font-weight: 600; color: var(--card-pill-text);
+    background: var(--card-pill-bg); border: 1px solid var(--card-pill-border);
     border-radius: 99px; padding: 3px 9px;
     overflow-wrap: anywhere;
 }
@@ -100,46 +130,50 @@ body {
 }
 .skills-title {
     font-size: 0.63rem; font-weight: 800; text-transform: uppercase;
-    letter-spacing: 0.13em; color: rgba(255,255,255,0.35);
+    letter-spacing: 0.13em; color: var(--card-text-faint);
     margin-bottom: 0.85rem;
 }
 .skill-cats {
     display: grid; grid-template-columns: repeat(4, 1fr);
     gap: 0.65rem;
 }
-.skill-cat { background: rgba(255,255,255,0.04); border-radius: 9px; padding: 0.65rem; min-width: 0; }
+.skill-cat { background: var(--card-cat-bg); border-radius: 9px; padding: 0.65rem; min-width: 0; }
 .skill-cat-name {
     font-size: 0.58rem; font-weight: 800; text-transform: uppercase;
-    letter-spacing: 0.09em; color: rgba(255,255,255,0.4); margin-bottom: 0.45rem;
+    letter-spacing: 0.09em; color: var(--card-text-muted); margin-bottom: 0.45rem;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .skill-row { display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.3rem; }
 .skill-row:last-child { margin-bottom: 0; }
-.skill-name { font-size: 0.62rem; color: rgba(255,255,255,0.6); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.skill-name { font-size: 0.62rem; color: var(--card-text-secondary); flex: 1; min-width: 0; overflow-wrap: break-word; line-height: 1.3; }
 .skill-val { font-size: 0.67rem; font-weight: 700; width: 28px; text-align: right; flex-shrink: 0; }
 .skill-up { font-size: 0.6rem; color: #48bb78; font-weight: 900; flex-shrink: 0; line-height: 1; }
-.skill-bar-bg { flex: 0 1 36px; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; }
+.skill-bar-bg { flex: 0 0 22px; height: 5px; background: var(--card-bar-bg); border-radius: 3px; }
 .skill-bar-fill { height: 100%; border-radius: 2px; }
 
 /* ── Tab bar ─────────────────────────────────────────────── */
 .tab-bar {
     display: flex;
     background: var(--card-tab-bg);
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid var(--card-tab-border);
 }
 .tab-btn {
     flex: 1;
     padding: 0.55rem 1rem;
     background: none;
     border: none;
-    color: rgba(255,255,255,0.5);
+    color: var(--card-text-tab);
     font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
     border-bottom: 2px solid transparent;
-    transition: color .15s, border-color .15s;
+    transition: color .15s, border-color .15s, background .15s;
 }
-.tab-btn.active { color: #fff; border-bottom-color: var(--card-accent); }
+.tab-btn.active {
+    color: var(--card-text-primary);
+    border-bottom-color: var(--card-accent);
+    background: color-mix(in srgb, var(--card-accent) 8%, transparent);
+}
 
 /* ── Events section ──────────────────────────────────────── */
 .events-section { background: var(--card-body-bg); padding: 0.75rem 1rem; }
@@ -148,13 +182,13 @@ body {
     align-items: flex-start;
     gap: 0.75rem;
     padding: 0.55rem 0;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid var(--card-ev-border);
 }
 .ev-row:last-child { border-bottom: none; }
 .ev-rank { min-width: 2rem; font-size: 1.1rem; text-align: center; padding-top: 0.05rem; }
 .ev-body { flex: 1; min-width: 0; }
 .ev-name { margin-bottom: 0.2rem; }
-.ev-link { color: rgba(255,255,255,0.88); font-size: 0.82rem; font-weight: 600; text-decoration: none; }
+.ev-link { color: var(--card-text-primary); font-size: 0.82rem; font-weight: 600; text-decoration: none; }
 .ev-link:hover { text-decoration: underline; }
 .ev-rewards { display: flex; gap: 0.3rem; margin-bottom: 0.25rem; flex-wrap: wrap; }
 .ev-badge { font-size: 0.68rem; font-weight: 700; padding: 1px 6px; border-radius: 99px; }
@@ -164,7 +198,7 @@ body {
 .ev-skill-pill { font-size: 0.65rem; padding: 1px 6px; border-radius: 99px; }
 .ev-skill-pill.up { background: rgba(72,187,120,0.15); color: #9ae6b4; }
 .ev-skill-pill.dn { background: rgba(252,129,129,0.15); color: #feb2b2; }
-.ev-empty { text-align: center; color: rgba(255,255,255,0.3); font-size: 0.8rem; padding: 2rem 0; }
+.ev-empty { text-align: center; color: var(--card-text-faint); font-size: 0.8rem; padding: 2rem 0; }
 
 /* ── Responsive ─────────────────────────────────────────────
    Breakpoints:
@@ -218,7 +252,7 @@ body {
             {% else %}
             <div class="fifa-avatar" style="background: {{ avatar_bg }};">{{ initials }}</div>
             {% endif %}
-            <div class="fifa-overall">{{ overall }}</div>
+            <div class="fifa-overall">{{ overall | round(0) | int }}</div>
             <span class="fifa-tier" style="background: {{ tier_color }};">{{ tier_label }}</span>
         </div>
         <div class="fifa-right">
@@ -263,7 +297,7 @@ body {
     <!-- Skills tab -->
     {% if skill_categories %}
     <div class="skills-section" id="tab-skills">
-        <div class="skills-title">Football Skills — {{ overall }} OVR</div>
+        <div class="skills-title">Football Skills — {{ overall | round(0) | int }} OVR</div>
         <div class="skill-cats">
             {% for cat in skill_categories %}
             <div class="skill-cat">
@@ -282,8 +316,8 @@ body {
                     {% set bar_color = '#fc8181' %}
                     {% set val_color = '#fc8181' %}
                 {% else %}
-                    {% set bar_color = 'rgba(255,255,255,0.12)' %}
-                    {% set val_color = 'rgba(255,255,255,0.85)' %}
+                    {% set bar_color = 'var(--card-bar-neutral)' %}
+                    {% set val_color = 'var(--card-val-neutral)' %}
                 {% endif %}
                 <div class="skill-row">
                     <span class="skill-name">{{ skill.name_en }}</span>
@@ -333,7 +367,7 @@ body {
             </div>
             {% endfor %}
         {% else %}
-            <div class="ev-empty">Még nincs tornaadat.</div>
+            <div class="ev-empty">No tournament data yet.</div>
         {% endif %}
     </div>
 

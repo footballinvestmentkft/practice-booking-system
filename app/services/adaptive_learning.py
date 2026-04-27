@@ -38,7 +38,9 @@ class AdaptiveLearningService:
         self.db.refresh(session)
         return session
     
-    def get_next_question(self, user_id: int, session_id: int) -> Optional[Dict]:
+    def get_next_question(
+        self, user_id: int, session_id: int, exclude_ids: set[int] | None = None
+    ) -> Optional[Dict]:
         """Következő kérdés kiválasztása adaptív algoritmussal és időkorlát ellenőrzés"""
         session = self.db.query(AdaptiveLearningSession).filter(
             AdaptiveLearningSession.id == session_id
@@ -48,29 +50,36 @@ class AdaptiveLearningService:
         # Check if session time limit has expired
         if self._is_session_time_expired(session):
             return {"session_complete": True, "reason": "time_expired"}
-            
+
         # Get user's performance data
         performance_data = self._get_user_performance_data(user_id, session.category)
-        
+
         # Select question based on adaptive algorithm
         candidate_questions = self._get_candidate_questions(
             session.category, session.target_difficulty, language=session.language
         )
-        
-        if not candidate_questions:
-            return {"session_complete": True, "reason": "no_questions"}
 
-        available_questions = candidate_questions
-            
+        if not candidate_questions:
+            return {"session_complete": True, "reason": "pool_exhausted"}
+
+        # Exclude already-seen questions at service level, before adaptive selection.
+        available_questions = (
+            [q for q in candidate_questions if q.id not in exclude_ids]
+            if exclude_ids
+            else candidate_questions
+        )
+        if not available_questions:
+            return {"session_complete": True, "reason": "all_seen"}
+
         # Apply adaptive selection algorithm
         selected_question = self._select_adaptive_question(
-            available_questions, 
-            performance_data, 
+            available_questions,
+            performance_data,
             session
         )
-        
+
         if not selected_question:
-            return {"session_complete": True, "reason": "no_questions"}
+            return {"session_complete": True, "reason": "pool_exhausted"}
         
         # Return question with session info
         return {

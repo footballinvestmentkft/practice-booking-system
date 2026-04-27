@@ -222,8 +222,12 @@ async def al_session_start(
             existing.ended_at = datetime.now(timezone.utc)
             db.commit()
         else:
-            # Valid unexpired session — update time limit to match user's current choice
+            # Valid unexpired session — update time limit to match user's current choice.
+            # If elapsed time already exceeds the new (shorter) limit, reset the clock so
+            # the first next-question call doesn't immediately expire the session.
             existing.session_time_limit_seconds = time_limit
+            if elapsed >= time_limit:
+                existing.session_start_time = datetime.now(timezone.utc)
             db.commit()
             current_score = (existing.questions_correct or 0) * 2 - (existing.questions_presented or 0)
             return JSONResponse({
@@ -287,21 +291,11 @@ async def al_session_next_question(
             seen_ids = set()
 
     service = AdaptiveLearningService(db)
-    result = service.get_next_question(user.id, session_id)
+    result = service.get_next_question(user.id, session_id, exclude_ids=seen_ids or None)
 
     if result is None:
         # Bare None should not happen (service returns structured dict), but guard defensively.
-        return JSONResponse({"session_complete": True, "reason": "no_questions"})
-
-    if result.get("session_complete"):
-        return JSONResponse(result)
-
-    # Route-level within-session dedup: if service returned an already-seen question,
-    # attempt one more call to get a different one (single retry — no recursion).
-    if seen_ids and result.get("id") in seen_ids:
-        retry = service.get_next_question(user.id, session_id)
-        if retry and not retry.get("session_complete") and retry.get("id") not in seen_ids:
-            result = retry
+        return JSONResponse({"session_complete": True, "reason": "pool_exhausted"})
 
     return JSONResponse(result)
 

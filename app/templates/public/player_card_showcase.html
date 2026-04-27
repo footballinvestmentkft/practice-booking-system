@@ -24,8 +24,8 @@ body { background: var(--card-page-bg); }
 .sc-banner img {
     width: 100%; height: 100%;
     object-fit: contain;
-    object-position: center center;
     display: block;
+    /* object-position set via inline style from showcase_focus_x/y */
 }
 .sc-banner-initials {
     width: 100%; height: 100%;
@@ -103,7 +103,11 @@ body { background: var(--card-page-bg); }
     border-bottom: 2px solid transparent;
     transition: color .15s, border-color .15s;
 }
-.tab-btn.active { color: var(--card-text-primary); border-bottom-color: var(--card-accent); }
+.tab-btn.active {
+    color: var(--card-text-primary);
+    border-bottom-color: var(--card-accent);
+    background: color-mix(in srgb, var(--card-accent) 8%, transparent);
+}
 
 /* ── Skills section ── */
 .skills-section {
@@ -130,7 +134,7 @@ body { background: var(--card-page-bg); }
 .skill-name { font-size: 0.62rem; color: var(--card-text-secondary); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .skill-val { font-size: 0.67rem; font-weight: 700; width: 28px; text-align: right; flex-shrink: 0; }
 .skill-up { font-size: 0.6rem; font-weight: 900; flex-shrink: 0; line-height: 1; }
-.skill-bar-bg { flex: 0 1 36px; height: 4px; background: var(--card-bar-bg); border-radius: 2px; }
+.skill-bar-bg { flex: 1 1 0; max-width: 56px; height: 5px; background: var(--card-bar-bg); border-radius: 3px; }
 .skill-bar-fill { height: 100%; border-radius: 2px; }
 
 /* ── Events section ── */
@@ -170,10 +174,11 @@ body { background: var(--card-page-bg); }
 {% block content %}
 <div class="card-wrap">
 
-    {# ── Banner — 16:9, object-position from saved focus point ── #}
+    {# ── Banner — 16:9, landscape crop preferred ── #}
     <div class="sc-banner">
-        {% if photo_url %}
-            <img src="{{ photo_url }}" alt="{{ player.name }}">
+        {% if landscape_photo_url %}
+            <img src="{{ landscape_photo_url }}" alt="{{ player.name }}"
+                 style="object-position: {{ showcase_focus_x }}% {{ showcase_focus_y }}%;">
         {% else %}
             <div class="sc-banner-initials">{{ initials }}</div>
         {% endif %}

@@ -33,19 +33,24 @@ body { background: var(--card-page-bg); }
     min-height: 180px;
 }
 .cmp-photo-col img {
+    /* z-index 1: player photo above CSS background-image (z-index 0) */
     position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 1;
     width: 100%; height: 100%;
     object-fit: contain;
-    object-position: center bottom;
     display: block;
+    /* object-position set via inline style from compact_focus_x/y */
 }
 .cmp-photo-initials {
     position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 1;
     display: flex; align-items: center; justify-content: center;
     font-size: 3.5rem; font-weight: 900; color: rgba(255,255,255,0.45);
 }
 .cmp-ovr-badge {
+    /* z-index 2: overlay above player photo */
     position: absolute; bottom: 0; left: 0; right: 0;
+    z-index: 2;
     padding: 1.5rem 0.4rem 0.55rem;
     background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 100%);
     text-align: center;
@@ -103,7 +108,11 @@ body { background: var(--card-page-bg); }
     border-bottom: 2px solid transparent;
     transition: color .15s, border-color .15s;
 }
-.tab-btn.active { color: var(--card-text-primary); border-bottom-color: var(--card-accent); }
+.tab-btn.active {
+    color: var(--card-text-primary);
+    border-bottom-color: var(--card-accent);
+    background: color-mix(in srgb, var(--card-accent) 8%, transparent);
+}
 
 /* ── Skills section — full card width, 4-col grid ── */
 .skills-section {
@@ -131,7 +140,7 @@ body { background: var(--card-page-bg); }
 .skill-name { font-size: 0.62rem; color: var(--card-text-secondary); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .skill-val { font-size: 0.63rem; font-weight: 700; width: 26px; text-align: right; flex-shrink: 0; }
 .skill-up { font-size: 0.58rem; font-weight: 900; flex-shrink: 0; line-height: 1; }
-.skill-bar-bg { flex: 0 1 36px; height: 3px; background: var(--card-bar-bg); border-radius: 2px; }
+.skill-bar-bg { flex: 1 1 0; max-width: 44px; height: 4px; background: var(--card-bar-bg); border-radius: 2px; }
 .skill-bar-fill { height: 100%; border-radius: 2px; }
 
 /* ── Events section — full card width ── */
@@ -159,7 +168,7 @@ body { background: var(--card-page-bg); }
 
 /* ── Responsive ── */
 @media (max-width: 320px) {
-    .cmp-photo-col { flex: 0 0 120px; }
+    .cmp-photo-col { flex: 0 0 120px; min-height: 150px; }
     .cmp-name { font-size: 1rem; }
 }
 </style>
@@ -171,10 +180,11 @@ body { background: var(--card-page-bg); }
     {# ── HEADER: photo sidebar + identity (side by side) ── #}
     <div class="cmp-header photo-{{ compact_photo_position }}">
 
-        {# Background image applied as CSS background-image — player PNG sits on top naturally #}
+        {# Background image applied as CSS background-image — portrait player PNG sits on top #}
         <div class="cmp-photo-col"{% if compact_bg_url %} style="background-image: url('{{ compact_bg_url }}');"{% endif %}>
-            {% if photo_url %}
-                <img src="{{ photo_url }}" alt="{{ player.name }}">
+            {% if portrait_photo_url %}
+                <img src="{{ portrait_photo_url }}" alt="{{ player.name }}"
+                     style="object-position: {{ compact_focus_x }}% {{ compact_focus_y }}%;">
             {% else %}
                 <div class="cmp-photo-initials">{{ initials }}</div>
             {% endif %}

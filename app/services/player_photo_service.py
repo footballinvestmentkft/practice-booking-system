@@ -2,9 +2,16 @@
 LFA Football Player card photo service.
 
 Stores spec-specific photos in app/static/uploads/lfa_player_photos/:
-  {user_id}_orig_{epoch}.png — card photo (full-figure, aspect-ratio preserved, alpha kept)
-  {user_id}_portrait.png     — variant portrait photo (9:16, alpha preserved)
-  {user_id}_landscape.png    — variant landscape photo (16:9, alpha preserved)
+  {user_id}_orig_{epoch}.png          — card photo (full-figure, aspect-ratio preserved, alpha kept)
+  {user_id}_portrait_{epoch}.png      — variant portrait photo (9:16, alpha preserved)
+  {user_id}_landscape_{epoch}.png     — variant landscape photo (16:9, alpha preserved)
+  {user_id}_bg_compact_{epoch}.png    — compact-variant background (800×800 max, alpha preserved)
+  {user_id}_bg_showcase_{epoch}.png   — showcase-variant background (800×800 max, alpha preserved)
+
+Every upload writes a NEW epoch-timestamped filename, so the URL always changes.
+This guarantees browser/CDN cache-busting: the old URL is never reused.
+
+Old timestamped files and legacy fixed-name files are deleted before each save.
 
 All slots are completely separate from any global User avatar/profile picture.
 """
@@ -34,7 +41,7 @@ def save_player_photo(file_bytes: bytes, content_type: str, user_id: int) -> str
     so background-removed PNGs render transparently on the card.
 
     Filename: {user_id}_orig_{epoch}.png — unique per upload (cache-bust),
-    _orig_ prefix avoids collisions with _portrait.png/_landscape.png.
+    _orig_ prefix avoids collisions with variant filenames.
     """
     if content_type not in ALLOWED_MIME:
         raise ValueError(f"Nem támogatott képformátum: {content_type}. Elfogadott: JPEG, PNG, WEBP")
@@ -71,12 +78,12 @@ def save_player_photo(file_bytes: bytes, content_type: str, user_id: int) -> str
 def delete_player_photo(user_id: int) -> None:
     """Remove card photo files for this user (_orig_ prefix only). Silent no-op if missing.
 
-    Explicitly does NOT touch _portrait.png or _landscape.png — those are
-    managed by delete_portrait_photo()/delete_landscape_photo() separately.
+    Explicitly does NOT touch variant photo files (_portrait_*, _landscape_*, _bg_*).
+    Those are managed by their own delete functions.
     """
     if not PHOTO_DIR.exists():
         return
-    # New-style PNG card photos
+    # Current-style epoch-timestamped PNG card photos
     for f in PHOTO_DIR.glob(f"{user_id}_orig_*.png"):
         f.unlink()
     # Old-style timestamped JPEG card photos (digit-only suffix, e.g. 42_1712345678.jpg)
@@ -93,6 +100,22 @@ def delete_player_photo(user_id: int) -> None:
 # ── Variant photo helpers ──────────────────────────────────────────────────
 
 
+def _delete_variant_files(user_id: int, suffix: str) -> None:
+    """Delete all timestamped and legacy fixed-name files for a given variant suffix.
+
+    Deletes:
+      {user_id}_{suffix}_{epoch}.png  — current-style timestamped files (all of them)
+      {user_id}_{suffix}.png          — legacy fixed-name file (no timestamp)
+    """
+    if not PHOTO_DIR.exists():
+        return
+    for f in PHOTO_DIR.glob(f"{user_id}_{suffix}_*.png"):
+        f.unlink()
+    legacy = PHOTO_DIR / f"{user_id}_{suffix}.png"
+    if legacy.exists():
+        legacy.unlink()
+
+
 def _save_variant_photo(
     file_bytes: bytes,
     content_type: str,
@@ -101,15 +124,16 @@ def _save_variant_photo(
     suffix: str,
     max_bytes: int = MAX_BYTES,
 ) -> str:
-    """
-    Save a PNG for a card variant.
+    """Save a PNG for a card variant with a unique epoch-timestamped filename.
+
+    Every call produces a new URL ({user_id}_{suffix}_{epoch}.png), guaranteeing
+    that browser and CDN caches never serve a stale image after re-upload.
+
+    Old timestamped files and the legacy fixed-name file are deleted before saving.
 
     Strategy: fit (no aggressive crop). The uploaded PNG is already a prepared
     cutout — we preserve the full image by fitting it inside target_size with
     thumbnail() (aspect-ratio-safe). Alpha channel is preserved throughout.
-    Only a mild soft-crop is applied if one dimension is more than 10% larger
-    than the target ratio after fit — in practice this is a no-op for properly
-    prepared cutouts.
 
     Returns the static URL.
     """
@@ -131,10 +155,15 @@ def _save_variant_photo(
     img.thumbnail(target_size, Image.LANCZOS)
 
     PHOTO_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = PHOTO_DIR / f"{user_id}_{suffix}.png"
+
+    # Delete all previous files for this slot before writing the new one
+    _delete_variant_files(user_id, suffix)
+
+    ts = int(time.time())
+    out_path = PHOTO_DIR / f"{user_id}_{suffix}_{ts}.png"
     img.save(out_path, "PNG", optimize=True)
 
-    return f"/static/uploads/lfa_player_photos/{user_id}_{suffix}.png"
+    return f"/static/uploads/lfa_player_photos/{user_id}_{suffix}_{ts}.png"
 
 
 def save_portrait_photo(file_bytes: bytes, content_type: str, user_id: int) -> str:
@@ -143,10 +172,8 @@ def save_portrait_photo(file_bytes: bytes, content_type: str, user_id: int) -> s
 
 
 def delete_portrait_photo(user_id: int) -> None:
-    """Remove portrait PNG if it exists."""
-    path = PHOTO_DIR / f"{user_id}_portrait.png"
-    if path.exists():
-        path.unlink()
+    """Remove all portrait PNG files (timestamped + legacy). Silent no-op if missing."""
+    _delete_variant_files(user_id, "portrait")
 
 
 def save_landscape_photo(file_bytes: bytes, content_type: str, user_id: int) -> str:
@@ -155,10 +182,8 @@ def save_landscape_photo(file_bytes: bytes, content_type: str, user_id: int) -> 
 
 
 def delete_landscape_photo(user_id: int) -> None:
-    """Remove landscape PNG if it exists."""
-    path = PHOTO_DIR / f"{user_id}_landscape.png"
-    if path.exists():
-        path.unlink()
+    """Remove all landscape PNG files (timestamped + legacy). Silent no-op if missing."""
+    _delete_variant_files(user_id, "landscape")
 
 
 # ── Variant background photo helpers ──────────────────────────────────────────
@@ -172,10 +197,8 @@ def save_compact_bg_photo(file_bytes: bytes, content_type: str, user_id: int) ->
 
 
 def delete_compact_bg_photo(user_id: int) -> None:
-    """Remove compact background PNG if it exists."""
-    path = PHOTO_DIR / f"{user_id}_bg_compact.png"
-    if path.exists():
-        path.unlink()
+    """Remove all compact background PNG files (timestamped + legacy). Silent no-op if missing."""
+    _delete_variant_files(user_id, "bg_compact")
 
 
 def save_showcase_bg_photo(file_bytes: bytes, content_type: str, user_id: int) -> str:
@@ -184,7 +207,5 @@ def save_showcase_bg_photo(file_bytes: bytes, content_type: str, user_id: int) -
 
 
 def delete_showcase_bg_photo(user_id: int) -> None:
-    """Remove showcase background PNG if it exists."""
-    path = PHOTO_DIR / f"{user_id}_bg_showcase.png"
-    if path.exists():
-        path.unlink()
+    """Remove all showcase background PNG files (timestamped + legacy). Silent no-op if missing."""
+    _delete_variant_files(user_id, "bg_showcase")

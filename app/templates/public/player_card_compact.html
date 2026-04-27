@@ -34,8 +34,8 @@ body { background: var(--card-page-bg); }
     position: absolute; top: 0; left: 0; right: 0; bottom: 0;
     width: 100%; height: 100%;
     object-fit: contain;
-    object-position: center bottom;
     display: block;
+    /* object-position set via inline style from compact_focus_x/y */
 }
 .cmp-photo-initials {
     position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -101,7 +101,11 @@ body { background: var(--card-page-bg); }
     border-bottom: 2px solid transparent;
     transition: color .15s, border-color .15s;
 }
-.tab-btn.active { color: var(--card-text-primary); border-bottom-color: var(--card-accent); }
+.tab-btn.active {
+    color: var(--card-text-primary);
+    border-bottom-color: var(--card-accent);
+    background: color-mix(in srgb, var(--card-accent) 8%, transparent);
+}
 
 /* ── Skills section — full card width, 4-col grid ── */
 .skills-section {
@@ -129,7 +133,7 @@ body { background: var(--card-page-bg); }
 .skill-name { font-size: 0.62rem; color: var(--card-text-secondary); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .skill-val { font-size: 0.63rem; font-weight: 700; width: 26px; text-align: right; flex-shrink: 0; }
 .skill-up { font-size: 0.58rem; font-weight: 900; flex-shrink: 0; line-height: 1; }
-.skill-bar-bg { flex: 0 1 36px; height: 3px; background: var(--card-bar-bg); border-radius: 2px; }
+.skill-bar-bg { flex: 1 1 0; max-width: 44px; height: 4px; background: var(--card-bar-bg); border-radius: 2px; }
 .skill-bar-fill { height: 100%; border-radius: 2px; }
 
 /* ── Events section — full card width ── */
@@ -157,7 +161,7 @@ body { background: var(--card-page-bg); }
 
 /* ── Responsive ── */
 @media (max-width: 320px) {
-    .cmp-photo-col { flex: 0 0 120px; }
+    .cmp-photo-col { flex: 0 0 120px; min-height: 150px; }
     .cmp-name { font-size: 1rem; }
 }
 </style>
@@ -170,8 +174,9 @@ body { background: var(--card-page-bg); }
     <div class="cmp-header photo-{{ compact_photo_position }}">
 
         <div class="cmp-photo-col">
-            {% if photo_url %}
-                <img src="{{ photo_url }}" alt="{{ player.name }}">
+            {% if portrait_photo_url %}
+                <img src="{{ portrait_photo_url }}" alt="{{ player.name }}"
+                     style="object-position: {{ compact_focus_x }}% {{ compact_focus_y }}%;">
             {% else %}
                 <div class="cmp-photo-initials">{{ initials }}</div>
             {% endif %}

@@ -44,7 +44,7 @@
     /* Right panel (header: name, identity grid, club pills) */
     --card-right-bg:      #ffffff;
     --card-right-text:    #1a202c;
-    --card-right-subtext: #a0aec0;
+    --card-right-subtext: #718096;
     --card-right-value:   #2d3748;
     --card-pill-bg:       #f0f4ff;
     --card-pill-border:   #e2e8f0;
@@ -67,7 +67,7 @@
         --card-tab-border:     rgba(0,0,0,0.08);
         --card-ev-border:      rgba(0,0,0,0.06);
         --card-text-primary:   rgba(0,0,0,0.85);
-        --card-text-secondary: rgba(0,0,0,0.55);
+        --card-text-secondary: rgba(0,0,0,0.72);
         --card-text-muted:     rgba(0,0,0,0.40);
         --card-text-faint:     rgba(0,0,0,0.30);
         --card-text-tab:       rgba(0,0,0,0.45);
@@ -84,7 +84,7 @@
         --card-pill-dn-text:   #c53030;
         --card-right-bg:       #ffffff;
         --card-right-text:     #1a202c;
-        --card-right-subtext:  #a0aec0;
+        --card-right-subtext:  #718096;
         --card-right-value:    #2d3748;
         --card-pill-bg:        #f0f4ff;
         --card-pill-border:    #e2e8f0;
@@ -106,6 +106,22 @@
     --card-pill-bg:       rgba(0,212,255,0.08);
     --card-pill-border:   rgba(0,212,255,0.18);
     --card-pill-text:     rgba(0,212,255,0.80);
+    /* Force dark text palette — overrides @media light :root so this theme
+       stays readable on dark backgrounds in light system mode */
+    --card-text-primary:   rgba(255,255,255,0.88);
+    --card-text-secondary: rgba(255,255,255,0.60);
+    --card-text-muted:     rgba(255,255,255,0.40);
+    --card-text-faint:     rgba(255,255,255,0.35);
+    --card-text-tab:       rgba(255,255,255,0.50);
+    --card-val-neutral:    rgba(255,255,255,0.85);
+    --card-badge-xp-bg:    rgba(102,126,234,0.20);
+    --card-badge-xp-text:  #a3bffa;
+    --card-badge-cr-bg:    rgba(72,187,120,0.15);
+    --card-badge-cr-text:  #9ae6b4;
+    --card-pill-up-bg:     rgba(72,187,120,0.15);
+    --card-pill-up-text:   #9ae6b4;
+    --card-pill-dn-bg:     rgba(252,129,129,0.15);
+    --card-pill-dn-text:   #feb2b2;
 }
 .theme-gold {
     --card-panel-bg:  linear-gradient(155deg, #3d2200 0%, #5c3500 60%, #3d2200 100%);
@@ -120,9 +136,21 @@
     --card-pill-bg:       rgba(246,173,60,0.10);
     --card-pill-border:   rgba(246,173,60,0.25);
     --card-pill-text:     rgba(246,173,60,0.90);
-    /* Contrast fixes: faint text was ~2.5:1 on very dark gold bg → raised */
-    --card-val-neutral:   rgba(255,255,255,0.68);
-    --card-text-faint:    rgba(255,255,255,0.48);
+    /* Force dark text palette — immune to @media light :root */
+    --card-text-primary:   rgba(255,255,255,0.88);
+    --card-text-secondary: rgba(255,255,255,0.60);
+    --card-text-muted:     rgba(255,255,255,0.40);
+    --card-text-faint:     rgba(255,255,255,0.48);
+    --card-text-tab:       rgba(255,255,255,0.50);
+    --card-val-neutral:    rgba(255,255,255,0.68);
+    --card-badge-xp-bg:    rgba(102,126,234,0.20);
+    --card-badge-xp-text:  #a3bffa;
+    --card-badge-cr-bg:    rgba(72,187,120,0.15);
+    --card-badge-cr-text:  #9ae6b4;
+    --card-pill-up-bg:     rgba(72,187,120,0.15);
+    --card-pill-up-text:   #9ae6b4;
+    --card-pill-dn-bg:     rgba(252,129,129,0.15);
+    --card-pill-dn-text:   #feb2b2;
 }
 .theme-emerald {
     --card-panel-bg:  linear-gradient(155deg, #0a2d0a 0%, #144d1e 60%, #0a2d14 100%);
@@ -137,9 +165,21 @@
     --card-pill-bg:       rgba(76,222,130,0.08);
     --card-pill-border:   rgba(76,222,130,0.22);
     --card-pill-text:     rgba(76,222,130,0.85);
-    /* Contrast fixes: faint text was ~2.5:1 on very dark green bg → raised */
-    --card-val-neutral:   rgba(255,255,255,0.68);
-    --card-text-faint:    rgba(255,255,255,0.48);
+    /* Force dark text palette — immune to @media light :root */
+    --card-text-primary:   rgba(255,255,255,0.88);
+    --card-text-secondary: rgba(255,255,255,0.60);
+    --card-text-muted:     rgba(255,255,255,0.40);
+    --card-text-faint:     rgba(255,255,255,0.48);
+    --card-text-tab:       rgba(255,255,255,0.50);
+    --card-val-neutral:    rgba(255,255,255,0.68);
+    --card-badge-xp-bg:    rgba(102,126,234,0.20);
+    --card-badge-xp-text:  #a3bffa;
+    --card-badge-cr-bg:    rgba(72,187,120,0.15);
+    --card-badge-cr-text:  #9ae6b4;
+    --card-pill-up-bg:     rgba(72,187,120,0.15);
+    --card-pill-up-text:   #9ae6b4;
+    --card-pill-dn-bg:     rgba(252,129,129,0.15);
+    --card-pill-dn-text:   #feb2b2;
 }
 .theme-crimson {
     --card-panel-bg:  linear-gradient(155deg, #3d0a0a 0%, #5c1414 60%, #3d0a14 100%);
@@ -154,11 +194,23 @@
     --card-pill-bg:       rgba(255,107,107,0.08);
     --card-pill-border:   rgba(255,107,107,0.22);
     --card-pill-text:     rgba(255,107,107,0.85);
-    /* Contrast fixes: red-on-dark-red was ~1.5:1 → raised to readable levels */
-    --card-skill-dn:      #ffb3b3;
-    --card-skill-up:      #68d391;
-    --card-val-neutral:   rgba(255,255,255,0.65);
-    --card-text-faint:    rgba(255,255,255,0.38);
+    /* Force dark text palette — immune to @media light :root */
+    --card-text-primary:   rgba(255,255,255,0.88);
+    --card-text-secondary: rgba(255,255,255,0.60);
+    --card-text-muted:     rgba(255,255,255,0.40);
+    --card-text-faint:     rgba(255,255,255,0.38);
+    --card-text-tab:       rgba(255,255,255,0.50);
+    --card-skill-dn:       #ffb3b3;
+    --card-skill-up:       #68d391;
+    --card-val-neutral:    rgba(255,255,255,0.65);
+    --card-badge-xp-bg:    rgba(102,126,234,0.20);
+    --card-badge-xp-text:  #a3bffa;
+    --card-badge-cr-bg:    rgba(72,187,120,0.15);
+    --card-badge-cr-text:  #9ae6b4;
+    --card-pill-up-bg:     rgba(72,187,120,0.15);
+    --card-pill-up-text:   #9ae6b4;
+    --card-pill-dn-bg:     rgba(252,129,129,0.15);
+    --card-pill-dn-text:   #feb2b2;
 }
 .theme-arctic {
     --card-body-bg:        #f7fafc;
@@ -172,7 +224,7 @@
     --card-tab-border:     rgba(0,0,0,0.08);
     --card-ev-border:      rgba(0,0,0,0.06);
     --card-text-primary:   rgba(0,0,0,0.85);
-    --card-text-secondary: rgba(0,0,0,0.55);
+    --card-text-secondary: rgba(0,0,0,0.72);
     --card-text-muted:     rgba(0,0,0,0.40);
     --card-text-faint:     rgba(0,0,0,0.30);
     --card-text-tab:       rgba(0,0,0,0.45);

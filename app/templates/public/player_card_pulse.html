@@ -1,0 +1,874 @@
+{% extends "public/player_card_base.html" %}
+
+{% block extra_styles %}
+<style>
+/* ── Pulse variant: SVG radar + OVR ring + pulse animations ─────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--card-page-bg); font-family: 'DM Mono', 'SF Mono', 'Fira Mono', monospace, system-ui; }
+
+.card-wrap {
+    max-width: min(520px, calc(100vw - 1.5rem));
+    border-radius: 20px; overflow: hidden;
+    box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--card-accent) 18%, transparent),
+        0 32px 80px rgba(0,0,0,0.8),
+        0 0 60px color-mix(in srgb, var(--card-accent) 5%, transparent);
+}
+
+/* ── Hero zone ── */
+.pls-hero {
+    background: var(--card-panel-bg);
+    position: relative;
+    overflow: hidden;
+    padding-bottom: 0.5rem;
+}
+
+/* Scanline — moving light strip */
+.pls-scanline {
+    position: absolute; top: 0; left: 0; right: 0; height: 2px; z-index: 3;
+    background: linear-gradient(90deg, transparent, var(--card-accent), transparent);
+    opacity: 0.6;
+    animation: plsScanline 4s linear infinite;
+    pointer-events: none;
+}
+@keyframes plsScanline {
+    0%   { transform: translateY(-4px); opacity: 0; }
+    10%  { opacity: 0.6; }
+    90%  { opacity: 0.6; }
+    100% { transform: translateY(600px); opacity: 0; }
+}
+
+/* Corner marks — HUD aesthetic */
+.pls-corner {
+    position: absolute; width: 14px; height: 14px; z-index: 4; pointer-events: none;
+    border-color: color-mix(in srgb, var(--card-accent) 55%, transparent);
+    border-style: solid;
+}
+.pls-corner-tl { top: 10px; left: 10px;  border-width: 2px 0 0 2px; }
+.pls-corner-tr { top: 10px; right: 10px; border-width: 2px 2px 0 0; }
+.pls-corner-bl { bottom: 10px; left: 10px;  border-width: 0 0 2px 2px; }
+.pls-corner-br { bottom: 10px; right: 10px; border-width: 0 2px 2px 0; }
+
+/* Player info row */
+.pls-player-row {
+    display: flex; align-items: center;
+    gap: 0.85rem;
+    padding: 1.25rem 1.25rem 0.5rem;
+    position: relative; z-index: 2;
+}
+
+.pls-avatar {
+    width: 62px; height: 62px; border-radius: 50%; flex-shrink: 0;
+    background: color-mix(in srgb, var(--card-accent) 18%, transparent);
+    border: 2px solid var(--card-accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; font-weight: 900; color: white;
+    box-shadow:
+        0 0 20px color-mix(in srgb, var(--card-accent) 45%, transparent),
+        inset 0 0 12px color-mix(in srgb, var(--card-accent) 12%, transparent);
+    overflow: hidden;
+}
+.pls-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
+.pls-name-block { flex: 1; min-width: 0; }
+.pls-name {
+    font-size: 1.35rem; font-weight: 900; color: white;
+    line-height: 1.05; margin-bottom: 0.28rem; letter-spacing: -0.01em;
+    overflow-wrap: break-word;
+}
+.pls-badges { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; margin-bottom: 0.3rem; }
+.pls-pos-badge {
+    display: inline-block; padding: 2px 9px; border-radius: 4px;
+    font-size: 0.58rem; font-weight: 800; color: white;
+    text-transform: uppercase; letter-spacing: 0.1em;
+}
+.pls-tier-badge {
+    display: inline-block; padding: 2px 9px; border-radius: 4px;
+    font-size: 0.58rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.1em;
+}
+.pls-team-line {
+    font-size: 0.62rem; font-weight: 700;
+    color: color-mix(in srgb, var(--card-accent) 80%, white);
+    letter-spacing: 0.05em;
+}
+
+.pls-mini-stats { text-align: right; flex-shrink: 0; }
+.pls-mini-stat-label {
+    font-size: 0.5rem; font-weight: 700;
+    color: rgba(255,255,255,0.3); letter-spacing: 0.1em;
+    text-transform: uppercase; margin-bottom: 2px;
+}
+.pls-mini-stat-val {
+    font-size: 1.3rem; font-weight: 900; color: rgba(255,255,255,0.9); line-height: 1;
+}
+.pls-mini-xp {
+    font-size: 0.5rem; font-weight: 700;
+    color: color-mix(in srgb, var(--card-accent) 70%, transparent);
+    letter-spacing: 0.1em; margin-top: 4px;
+}
+
+/* SVG zone */
+.pls-svg-zone { display: flex; justify-content: center; position: relative; z-index: 2; }
+.pls-svg-zone svg { width: 100%; max-width: 300px; display: block; overflow: visible; }
+
+/* Pulse rings — CSS animation on SVG circles */
+.pulse-ring {
+    fill: none;
+    stroke: var(--card-accent);
+    stroke-width: 2;
+    transform-origin: 140px 140px;
+}
+.pulse-ring-1 { animation: plsPulseRing 2.5s ease-out 0s infinite; }
+.pulse-ring-2 { animation: plsPulseRing 2.5s ease-out 0.83s infinite; }
+.pulse-ring-3 { animation: plsPulseRing 2.5s ease-out 1.66s infinite; }
+
+@keyframes plsPulseRing {
+    0%   { opacity: 0.55; stroke-width: 2; }
+    60%  { opacity: 0.12; stroke-width: 10; }
+    100% { opacity: 0;    stroke-width: 18; }
+}
+
+/* OVR ring */
+.pls-ovr-ring-track { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 3; }
+.pls-ovr-ring {
+    fill: none;
+    stroke: var(--card-accent);
+    stroke-width: 3.5;
+    stroke-linecap: round;
+    stroke-dasharray: 703.72;
+    stroke-dashoffset: 703.72;
+    transition: stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Radar elements */
+.pls-radar-grid-diamond {
+    fill: none;
+    stroke: rgba(255,255,255,0.05);
+    stroke-width: 0.5;
+    stroke-dasharray: 3,3;
+}
+.pls-radar-grid-outer {
+    fill: none;
+    stroke: color-mix(in srgb, var(--card-accent) 18%, transparent);
+    stroke-width: 1;
+}
+.pls-radar-axis { stroke: rgba(255,255,255,0.07); stroke-width: 0.8; }
+
+.pls-radar-fill {
+    stroke: var(--card-accent);
+    stroke-width: 1.8;
+    opacity: 0;
+    transition: opacity 0.7s 0.4s;
+}
+.pls-radar-fill.visible { opacity: 1; }
+
+.pls-radar-dot {
+    fill: var(--card-accent);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.pls-radar-dot.visible { opacity: 1; }
+
+/* OVR text glow pulse */
+.pls-ovr-text { animation: plsOvrGlow 3s ease-in-out infinite; }
+@keyframes plsOvrGlow {
+    0%, 100% { opacity: 0.88; }
+    50%       { opacity: 1; }
+}
+
+/* Hero bottom strip */
+.pls-hero-strip {
+    display: flex; justify-content: center; gap: 2rem;
+    padding: 0 1.25rem 1rem;
+    position: relative; z-index: 2;
+}
+.pls-strip-item { text-align: center; }
+.pls-strip-label {
+    font-size: 0.5rem; font-weight: 700;
+    color: rgba(255,255,255,0.3); letter-spacing: 0.12em; margin-bottom: 2px;
+    text-transform: uppercase;
+}
+.pls-strip-val {
+    font-size: 0.72rem; font-weight: 800;
+    color: rgba(255,255,255,0.75); letter-spacing: 0.04em;
+}
+
+/* ── Tab bar ── */
+.tab-bar {
+    display: flex;
+    background: var(--card-tab-bg);
+    border-bottom: 1px solid color-mix(in srgb, var(--card-accent) 12%, transparent);
+}
+.tab-btn {
+    flex: 1; padding: 0.62rem 0.25rem;
+    background: none; border: none;
+    color: var(--card-text-tab);
+    font-size: 0.76rem; font-weight: 700;
+    font-family: inherit; cursor: pointer;
+    border-bottom: 2px solid transparent;
+    letter-spacing: 0.04em;
+    transition: color .15s, border-color .15s, background .15s, text-shadow .15s;
+}
+.tab-btn.active {
+    color: var(--card-text-primary);
+    border-bottom-color: var(--card-accent);
+    background: color-mix(in srgb, var(--card-accent) 10%, transparent);
+    text-shadow: 0 0 12px color-mix(in srgb, var(--card-accent) 70%, transparent);
+}
+
+/* ── Skills section ── */
+.pls-skills-section { background: var(--card-body-bg); padding: 0.9rem; }
+
+/* Category filter pills */
+.pls-cat-pills { display: flex; gap: 0.4rem; margin-bottom: 0.85rem; flex-wrap: wrap; }
+.pls-cat-pill {
+    padding: 3px 10px; border-radius: 99px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: transparent;
+    color: var(--card-text-muted);
+    font-size: 0.62rem; font-weight: 700;
+    font-family: inherit; cursor: pointer;
+    transition: all .15s;
+    letter-spacing: 0.03em;
+}
+.pls-cat-pill.active {
+    border-color: color-mix(in srgb, var(--card-accent) 60%, transparent);
+    background: color-mix(in srgb, var(--card-accent) 14%, transparent);
+    color: var(--card-accent);
+}
+
+/* Category sections */
+.pls-cat-section { margin-bottom: 0.65rem; }
+.pls-cat-section:last-child { margin-bottom: 0; }
+.pls-cat-header {
+    display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.45rem;
+}
+.pls-cat-header-line {
+    height: 1px; flex: 1;
+    background: color-mix(in srgb, var(--card-accent) 18%, transparent);
+}
+.pls-cat-header-label {
+    font-size: 0.56rem; font-weight: 800;
+    color: color-mix(in srgb, var(--card-accent) 65%, transparent);
+    letter-spacing: 0.12em; text-transform: uppercase;
+}
+
+/* Skill rows — glowing bars */
+.pls-skill-row {
+    display: flex; align-items: center;
+    gap: 0.45rem; margin-bottom: 0.28rem;
+}
+.pls-skill-row:last-child { margin-bottom: 0; }
+.pls-skill-name {
+    font-size: 0.62rem; color: var(--card-text-secondary);
+    width: 100px; flex-shrink: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    letter-spacing: 0.01em;
+}
+.pls-skill-bar-bg {
+    flex: 1; height: 5px;
+    background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;
+}
+.pls-skill-bar-fill { height: 100%; border-radius: 3px; }
+.pls-skill-val {
+    font-size: 0.65rem; font-weight: 800;
+    width: 22px; text-align: right; flex-shrink: 0;
+    font-variant-numeric: tabular-nums; letter-spacing: -0.01em;
+}
+.pls-skill-arrow {
+    width: 10px; flex-shrink: 0;
+    font-size: 0.58rem; font-weight: 900;
+}
+
+/* ── Events section ── */
+.events-section { background: var(--card-body-bg); padding: 0.75rem 0.9rem; }
+.ev-row {
+    display: flex; align-items: flex-start;
+    gap: 0.6rem; padding: 0.5rem 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--card-accent) 8%, var(--card-ev-border));
+}
+.ev-row:last-child { border-bottom: none; }
+.ev-rank { min-width: 1.9rem; font-size: 1rem; text-align: center; padding-top: 0.04rem; }
+.ev-body { flex: 1; min-width: 0; }
+.ev-name { margin-bottom: 0.18rem; }
+.ev-link { color: var(--card-text-primary); font-size: 0.78rem; font-weight: 700; text-decoration: none; }
+.ev-link:hover { text-decoration: underline; }
+.ev-rewards { display: flex; gap: 0.25rem; margin-bottom: 0.18rem; flex-wrap: wrap; }
+.ev-badge { font-size: 0.63rem; font-weight: 700; padding: 1px 6px; border-radius: 99px; }
+.ev-badge.xp { background: var(--card-badge-xp-bg); color: var(--card-badge-xp-text); }
+.ev-badge.cr { background: var(--card-badge-cr-bg); color: var(--card-badge-cr-text); }
+.ev-skills { display: flex; flex-wrap: wrap; gap: 0.2rem; }
+.ev-skill-pill { font-size: 0.6rem; padding: 1px 5px; border-radius: 99px; }
+.ev-skill-pill.up { background: var(--card-pill-up-bg); color: var(--card-pill-up-text); }
+.ev-skill-pill.dn { background: var(--card-pill-dn-bg); color: var(--card-pill-dn-text); }
+.ev-empty { text-align: center; color: var(--card-text-faint); font-size: 0.78rem; padding: 1.5rem 0; }
+
+/* ── Profile section ── */
+.pls-profile-section { background: var(--card-body-bg); padding: 0.9rem; }
+.pls-data-label {
+    font-size: 0.56rem; font-weight: 800;
+    color: color-mix(in srgb, var(--card-accent) 55%, transparent);
+    letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.65rem;
+}
+.pls-profile-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0.5rem; margin-bottom: 0.8rem;
+}
+.pls-profile-field {
+    background: color-mix(in srgb, var(--card-accent) 5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--card-accent) 10%, transparent);
+    border-radius: 8px; padding: 0.45rem 0.6rem;
+}
+.pls-field-label {
+    font-size: 0.5rem; font-weight: 700;
+    color: color-mix(in srgb, var(--card-accent) 60%, transparent);
+    letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 3px;
+}
+.pls-field-value {
+    font-size: 0.78rem; font-weight: 700;
+    color: var(--card-text-primary); letter-spacing: 0.01em;
+    overflow-wrap: break-word;
+}
+.pls-license-block {
+    background: color-mix(in srgb, var(--card-accent) 7%, transparent);
+    border: 1px solid color-mix(in srgb, var(--card-accent) 20%, transparent);
+    border-radius: 10px; padding: 0.7rem 0.9rem; margin-bottom: 0.5rem;
+}
+.pls-license-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.3rem; }
+.pls-license-cell { text-align: center; }
+.pls-license-cell-label {
+    font-size: 0.5rem; font-weight: 700;
+    color: color-mix(in srgb, var(--card-accent) 60%, transparent);
+    letter-spacing: 0.1em; margin-bottom: 3px;
+}
+.pls-license-cell-val { font-size: 0.82rem; font-weight: 800; color: var(--card-text-primary); }
+.pls-stat-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.pls-stat-card {
+    background: color-mix(in srgb, var(--card-accent) 5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--card-accent) 10%, transparent);
+    border-radius: 8px; padding: 0.55rem 0.7rem;
+}
+.pls-stat-card.full { grid-column: 1 / -1; }
+.pls-stat-card-label {
+    font-size: 0.5rem; font-weight: 700;
+    color: color-mix(in srgb, var(--card-accent) 60%, transparent);
+    letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 3px;
+}
+.pls-stat-card-val {
+    font-size: 1.2rem; font-weight: 900; color: var(--card-accent);
+    text-shadow: 0 0 14px color-mix(in srgb, var(--card-accent) 55%, transparent);
+    letter-spacing: -0.01em;
+}
+.pls-stat-card-val.text { font-size: 0.8rem; font-weight: 700; color: var(--card-text-primary); text-shadow: none; }
+.pls-stat-unit { font-size: 0.62rem; margin-left: 3px; opacity: 0.6; }
+
+/* ── Footer ── */
+.pls-footer {
+    background: var(--card-tab-bg);
+    border-top: 1px solid color-mix(in srgb, var(--card-accent) 10%, transparent);
+    padding: 0.42rem 0.9rem;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.pls-footer-brand {
+    font-size: 0.52rem; font-weight: 700;
+    color: var(--card-text-faint); letter-spacing: 0.12em; text-transform: uppercase;
+}
+.pls-footer-variant {
+    font-size: 0.52rem; font-weight: 800;
+    color: color-mix(in srgb, var(--card-accent) 60%, transparent);
+    letter-spacing: 0.14em;
+    text-shadow: 0 0 8px color-mix(in srgb, var(--card-accent) 35%, transparent);
+}
+
+/* ── Responsive ── */
+@media (max-width: 420px) {
+    .pls-name { font-size: 1.15rem; }
+    .pls-avatar { width: 54px; height: 54px; font-size: 1.2rem; }
+    .pls-skill-name { width: 80px; }
+    .pls-profile-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 340px) {
+    .pls-player-row { flex-wrap: wrap; }
+    .pls-mini-stats { width: 100%; text-align: left; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── PRE-COMPUTE: category averages + radar points ───────────────────────── #}
+{# skill_categories order: [0]=Outfield, [1]=Set Pieces, [2]=Mental, [3]=Physical #}
+{# Radar axes: Outfield=top, Mental=right, Physical=bottom, SetPieces=left       #}
+
+{% set cat_avgs = namespace(outfield=50, set_pieces=50, mental=50, physical=50) %}
+{% for cat in skill_categories %}
+    {% set ns = namespace(total=0.0, count=0) %}
+    {% for sk in cat.skills %}
+        {% set ns.total = ns.total + player.skills.get(sk.key, {}).get('current_level', 50) %}
+        {% set ns.count = ns.count + 1 %}
+    {% endfor %}
+    {% set avg = (ns.total / ns.count) | round(0) | int if ns.count > 0 else 50 %}
+    {% if cat.key == "outfield" %}{% set cat_avgs.outfield = avg %}
+    {% elif cat.key == "set_pieces" %}{% set cat_avgs.set_pieces = avg %}
+    {% elif cat.key == "mental" %}{% set cat_avgs.mental = avg %}
+    {% elif cat.key == "physical" %}{% set cat_avgs.physical = avg %}
+    {% endif %}
+{% endfor %}
+
+{# Radar point coordinates (CX=140, CY=140, MAX_R=80) #}
+{% set r_of = (cat_avgs.outfield  / 100.0) * 80 %}
+{% set r_me = (cat_avgs.mental    / 100.0) * 80 %}
+{% set r_ph = (cat_avgs.physical  / 100.0) * 80 %}
+{% set r_sp = (cat_avgs.set_pieces/ 100.0) * 80 %}
+
+{# Radar polygon: top → right → bottom → left #}
+{% set radar_poly = "140," ~ (140 - r_of) ~ " " ~ (140 + r_me) ~ ",140 140," ~ (140 + r_ph) ~ " " ~ (140 - r_sp) ~ ",140" %}
+
+{# OVR ring: circumference=703.72, offset = circ * (1 - overall/100) #}
+{% set ovr_target_offset = 703.72 * (1 - (overall | round(0) | int) / 100) %}
+
+<div class="card-wrap">
+
+    {# ── HERO + RADAR ZONE ── #}
+    <div class="pls-hero">
+
+        {# Scanline #}
+        <div class="pls-scanline"></div>
+
+        {# Corner marks #}
+        <div class="pls-corner pls-corner-tl"></div>
+        <div class="pls-corner pls-corner-tr"></div>
+        <div class="pls-corner pls-corner-bl"></div>
+        <div class="pls-corner pls-corner-br"></div>
+
+        {# Player info row #}
+        <div class="pls-player-row">
+            <div class="pls-avatar">
+                {% if portrait_photo_url %}
+                    <img src="{{ portrait_photo_url }}" alt="{{ player.name }}">
+                {% else %}
+                    {{ initials }}
+                {% endif %}
+            </div>
+
+            <div class="pls-name-block">
+                <div class="pls-name">{{ player.name }}</div>
+                <div class="pls-badges">
+                    {% if player.position and player.position != "Unknown" %}
+                    <span class="pls-pos-badge" style="background: {{ pos_color }};">{{ player.position }}</span>
+                    {% endif %}
+                    <span class="pls-tier-badge"
+                          style="color: {{ tier_color }}; border: 1px solid {{ tier_color }}55; background: {{ tier_color }}1a;">
+                        {{ tier_label }}
+                    </span>
+                </div>
+                {% if teams_info %}
+                <div class="pls-team-line">🏟 {{ teams_info[0].team_name }}</div>
+                {% endif %}
+            </div>
+
+            <div class="pls-mini-stats">
+                <div class="pls-mini-stat-label">Events</div>
+                <div class="pls-mini-stat-val">{{ player.total_tournaments }}</div>
+                <div class="pls-mini-xp">XP {{ (xp_balance | default(0) | int) | string }}</div>
+            </div>
+        </div>
+
+        {# SVG: pulse rings + OVR ring + radar #}
+        <div class="pls-svg-zone">
+            <svg viewBox="0 0 280 280" aria-hidden="true">
+                <defs>
+                    <filter id="pls-glow" x="-60%" y="-60%" width="220%" height="220%">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+                        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                    <filter id="pls-glow-strong" x="-80%" y="-80%" width="260%" height="260%">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blur"/>
+                        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                    <radialGradient id="pls-radar-grad" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%"   stop-color="{{ theme.accent }}" stop-opacity="0.28"/>
+                        <stop offset="100%" stop-color="{{ theme.accent }}" stop-opacity="0.05"/>
+                    </radialGradient>
+                </defs>
+
+                {# Pulse rings (3 layers, staggered via CSS class) #}
+                <circle class="pulse-ring pulse-ring-1" cx="140" cy="140" r="112"/>
+                <circle class="pulse-ring pulse-ring-2" cx="140" cy="140" r="112"/>
+                <circle class="pulse-ring pulse-ring-3" cx="140" cy="140" r="112"/>
+
+                {# OVR ring track #}
+                <circle class="pls-ovr-ring-track" cx="140" cy="140" r="112"/>
+
+                {# OVR ring progress — JS animates stroke-dashoffset after load #}
+                <circle id="pls-ovr-ring" class="pls-ovr-ring"
+                        cx="140" cy="140" r="112"
+                        transform="rotate(-90 140 140)"
+                        data-target-offset="{{ ovr_target_offset | round(2) }}"
+                        filter="url(#pls-glow)"/>
+
+                {# Radar grid — inner diamonds (33%, 66%) #}
+                <polygon class="pls-radar-grid-diamond"
+                         points="140,113.6 166.4,140 140,166.4 113.6,140"/>
+                <polygon class="pls-radar-grid-diamond"
+                         points="140,87.2 192.8,140 140,192.8 87.2,140"/>
+                {# Outer diamond at 100% #}
+                <polygon class="pls-radar-grid-outer"
+                         points="140,60 220,140 140,220 60,140"/>
+
+                {# Radar axes #}
+                <line class="pls-radar-axis" x1="140" y1="140" x2="140" y2="60"/>
+                <line class="pls-radar-axis" x1="140" y1="140" x2="220" y2="140"/>
+                <line class="pls-radar-axis" x1="140" y1="140" x2="140" y2="220"/>
+                <line class="pls-radar-axis" x1="140" y1="140" x2="60"  y2="140"/>
+
+                {# Radar fill polygon — JS adds .visible class to fade in #}
+                <polygon id="pls-radar-fill" class="pls-radar-fill"
+                         points="{{ radar_poly }}"
+                         fill="url(#pls-radar-grad)"
+                         filter="url(#pls-glow)"/>
+
+                {# Radar dots #}
+                <circle id="pls-dot-top"    class="pls-radar-dot" cx="140" cy="{{ (140 - r_of) | round(2) }}" r="4" filter="url(#pls-glow-strong)"/>
+                <circle id="pls-dot-right"  class="pls-radar-dot" cx="{{ (140 + r_me) | round(2) }}" cy="140" r="4" filter="url(#pls-glow-strong)"/>
+                <circle id="pls-dot-bottom" class="pls-radar-dot" cx="140" cy="{{ (140 + r_ph) | round(2) }}" r="4" filter="url(#pls-glow-strong)"/>
+                <circle id="pls-dot-left"   class="pls-radar-dot" cx="{{ (140 - r_sp) | round(2) }}" cy="140" r="4" filter="url(#pls-glow-strong)"/>
+
+                {# Category labels — outside the OVR ring #}
+                {# Top: Outfield #}
+                <text x="140" y="118" text-anchor="middle"
+                      fill="rgba(255,255,255,0.45)" font-size="7.5" font-weight="700"
+                      letter-spacing="1.5" font-family="monospace">OUTFIELD</text>
+                <text x="140" y="107" text-anchor="middle"
+                      fill="{{ theme.accent }}" font-size="13" font-weight="900"
+                      font-family="monospace" filter="url(#pls-glow)">{{ cat_avgs.outfield }}</text>
+
+                {# Right: Mental #}
+                <text x="225" y="136" text-anchor="start"
+                      fill="rgba(255,255,255,0.45)" font-size="7.5" font-weight="700"
+                      letter-spacing="1.5" font-family="monospace">MENTAL</text>
+                <text x="225" y="150" text-anchor="start"
+                      fill="{{ theme.accent }}" font-size="13" font-weight="900"
+                      font-family="monospace" filter="url(#pls-glow)">{{ cat_avgs.mental }}</text>
+
+                {# Bottom: Physical #}
+                <text x="140" y="232" text-anchor="middle"
+                      fill="rgba(255,255,255,0.45)" font-size="7.5" font-weight="700"
+                      letter-spacing="1.5" font-family="monospace">PHYSICAL</text>
+                <text x="140" y="245" text-anchor="middle"
+                      fill="{{ theme.accent }}" font-size="13" font-weight="900"
+                      font-family="monospace" filter="url(#pls-glow)">{{ cat_avgs.physical }}</text>
+
+                {# Left: Set Pieces #}
+                <text x="55" y="136" text-anchor="end"
+                      fill="rgba(255,255,255,0.45)" font-size="7.5" font-weight="700"
+                      letter-spacing="1.5" font-family="monospace">SET PCS</text>
+                <text x="55" y="150" text-anchor="end"
+                      fill="{{ theme.accent }}" font-size="13" font-weight="900"
+                      font-family="monospace" filter="url(#pls-glow)">{{ cat_avgs.set_pieces }}</text>
+
+                {# OVR number — center #}
+                <text id="pls-ovr-text" class="pls-ovr-text"
+                      x="140" y="132" text-anchor="middle"
+                      fill="white" font-size="36" font-weight="900"
+                      font-family="monospace" letter-spacing="-1"
+                      filter="url(#pls-glow)">{{ overall | round(0) | int }}</text>
+                <text x="140" y="148" text-anchor="middle"
+                      fill="{{ theme.accent }}" font-size="8.5" font-weight="800"
+                      font-family="monospace" letter-spacing="4" opacity="0.85">OVERALL</text>
+                <text x="140" y="162" text-anchor="middle"
+                      fill="rgba(255,255,255,0.3)" font-size="7" font-weight="700"
+                      font-family="monospace" letter-spacing="2">{{ tier_label }}</text>
+            </svg>
+        </div>
+
+        {# Hero bottom strip #}
+        <div class="pls-hero-strip">
+            {% if player.nationality %}
+            <div class="pls-strip-item">
+                <div class="pls-strip-label">NAT</div>
+                <div class="pls-strip-val">{{ player.nationality }}</div>
+            </div>
+            {% endif %}
+            <div class="pls-strip-item">
+                <div class="pls-strip-label">GRP</div>
+                <div class="pls-strip-val">{{ player.age_group }}</div>
+            </div>
+        </div>
+
+    </div>{# /pls-hero #}
+
+    {# ── TAB BAR ── #}
+    <div class="tab-bar">
+        <button class="tab-btn active" id="btn-skills"  onclick="plsSwitchTab('skills')">⚽ Skills</button>
+        <button class="tab-btn"        id="btn-events"  onclick="plsSwitchTab('events')">🏆 Events</button>
+        <button class="tab-btn"        id="btn-profile" onclick="plsSwitchTab('profile')">👤 Profile</button>
+    </div>
+
+    {# ── SKILLS TAB ── #}
+    {% if skill_categories %}
+    <div class="pls-skills-section" id="tab-skills">
+
+        {# Category filter pills #}
+        <div class="pls-cat-pills">
+            <button class="pls-cat-pill active" id="pill-all"
+                    onclick="plsFilterCat(null)" data-cat="">ALL</button>
+            {% for cat in skill_categories %}
+            <button class="pls-cat-pill" id="pill-{{ cat.key }}"
+                    onclick="plsFilterCat('{{ cat.key }}')" data-cat="{{ cat.key }}">
+                {{ cat.emoji }} {{ cat.name_en }}
+            </button>
+            {% endfor %}
+        </div>
+
+        {# Skill sections per category #}
+        {% for cat in skill_categories %}
+        {% set ns_h = namespace(total=0.0, count=0) %}
+        {% for sk in cat.skills %}
+            {% set ns_h.total = ns_h.total + player.skills.get(sk.key, {}).get('current_level', 50) %}
+            {% set ns_h.count = ns_h.count + 1 %}
+        {% endfor %}
+        {% set h_avg = (ns_h.total / ns_h.count) | round(0) | int if ns_h.count > 0 else 50 %}
+
+        <div class="pls-cat-section" data-cat="{{ cat.key }}">
+            <div class="pls-cat-header">
+                <div class="pls-cat-header-line"></div>
+                <span class="pls-cat-header-label">{{ cat.emoji }} {{ cat.name_en }} · {{ h_avg }}</span>
+                <div class="pls-cat-header-line"></div>
+            </div>
+
+            {% for skill in cat.skills %}
+            {% set sdata  = player.skills.get(skill.key, {}) %}
+            {% set sval   = sdata.get('current_level', 50) | round(1) %}
+            {% set fill   = [sval, 100] | min %}
+            {% set sdelta = last_skill_delta.get(skill.key, 0) %}
+            {% if sdelta > 0 %}
+                {% set bar_color  = 'var(--card-skill-up)' %}
+                {% set val_color  = 'var(--card-skill-up)' %}
+                {% set glow_color = '#48bb7855' %}
+                {% set arrow      = '↑' %}
+                {% set arrow_color= 'var(--card-skill-up)' %}
+            {% elif sdelta < 0 %}
+                {% set bar_color  = 'var(--card-skill-dn)' %}
+                {% set val_color  = 'var(--card-skill-dn)' %}
+                {% set glow_color = '#fc818155' %}
+                {% set arrow      = '↓' %}
+                {% set arrow_color= 'var(--card-skill-dn)' %}
+            {% else %}
+                {% set bar_color  = 'var(--card-bar-neutral)' %}
+                {% set val_color  = 'var(--card-val-neutral)' %}
+                {% set glow_color = 'transparent' %}
+                {% set arrow      = '·' %}
+                {% set arrow_color= 'var(--card-text-faint)' %}
+            {% endif %}
+            <div class="pls-skill-row">
+                <span class="pls-skill-name">{{ skill.name_en }}</span>
+                <div class="pls-skill-bar-bg">
+                    <div class="pls-skill-bar-fill"
+                         style="width: {{ fill }}%; background: {{ bar_color }}; box-shadow: 0 0 8px {{ glow_color }};"></div>
+                </div>
+                <span class="pls-skill-val" style="color: {{ val_color }};">{{ sval | round(0) | int }}</span>
+                <span class="pls-skill-arrow" style="color: {{ arrow_color }};">{{ arrow }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+
+    </div>
+    {% endif %}
+
+    {# ── EVENTS TAB ── #}
+    <div class="events-section" id="tab-events" style="display:none;">
+        {% if participations_history %}
+            {% for ev in participations_history %}
+            <div class="ev-row">
+                <div class="ev-rank">
+                    {% if ev.placement == 1 %}🥇
+                    {% elif ev.placement == 2 %}🥈
+                    {% elif ev.placement == 3 %}🥉
+                    {% elif ev.placement %}#{{ ev.placement }}
+                    {% else %}—{% endif %}
+                </div>
+                <div class="ev-body">
+                    <div class="ev-name">
+                        <a href="/events/{{ ev.event_id }}" class="ev-link">{{ ev.event_name }}</a>
+                    </div>
+                    <div class="ev-rewards">
+                        {% if ev.xp_awarded %}<span class="ev-badge xp">+{{ ev.xp_awarded }} XP</span>{% endif %}
+                        {% if ev.credits_awarded %}<span class="ev-badge cr">+{{ ev.credits_awarded }} CR</span>{% endif %}
+                    </div>
+                    {% if ev.top_skills %}
+                    <div class="ev-skills">
+                        {% for sk, delta in ev.top_skills %}
+                        <span class="ev-skill-pill {% if delta > 0 %}up{% else %}dn{% endif %}">
+                            {{ sk.replace('_',' ') }} {{ '+' if delta > 0 else '' }}{{ delta | round(1) }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="ev-empty">No tournament data yet.</div>
+        {% endif %}
+    </div>
+
+    {# ── PROFILE TAB ── #}
+    <div class="pls-profile-section" id="tab-profile" style="display:none;">
+
+        <div class="pls-data-label">// PLAYER DATA</div>
+        <div class="pls-profile-grid">
+            <div class="pls-profile-field">
+                <div class="pls-field-label">FULL NAME</div>
+                <div class="pls-field-value">{{ player.name }}</div>
+            </div>
+            {% if player_nickname %}
+            <div class="pls-profile-field">
+                <div class="pls-field-label">NICKNAME</div>
+                <div class="pls-field-value">{{ player_nickname }}</div>
+            </div>
+            {% endif %}
+            <div class="pls-profile-field">
+                <div class="pls-field-label">AGE</div>
+                <div class="pls-field-value">{{ player_age ~ " years" if player_age else "—" }}</div>
+            </div>
+            <div class="pls-profile-field">
+                <div class="pls-field-label">GENDER</div>
+                <div class="pls-field-value">{{ player_gender or "—" }}</div>
+            </div>
+            <div class="pls-profile-field">
+                <div class="pls-field-label">NATIONALITY</div>
+                <div class="pls-field-value">{{ player.nationality or "—" }}</div>
+            </div>
+            <div class="pls-profile-field">
+                <div class="pls-field-label">LOCATION</div>
+                <div class="pls-field-value">{{ player_location or "—" }}</div>
+            </div>
+            <div class="pls-profile-field">
+                <div class="pls-field-label">HEIGHT</div>
+                <div class="pls-field-value">{{ player_height_cm ~ " cm" if player_height_cm else "—" }}</div>
+            </div>
+            <div class="pls-profile-field">
+                <div class="pls-field-label">WEIGHT</div>
+                <div class="pls-field-value">{{ player_weight_kg ~ " kg" if player_weight_kg else "—" }}</div>
+            </div>
+            <div class="pls-profile-field">
+                <div class="pls-field-label">PREF. FOOT</div>
+                <div class="pls-field-value">{{ player_preferred_foot or "—" }}</div>
+            </div>
+            <div class="pls-profile-field">
+                <div class="pls-field-label">POSITION</div>
+                <div class="pls-field-value">{{ player.position or "—" }}</div>
+            </div>
+        </div>
+
+        <div class="pls-data-label">// LICENSE</div>
+        <div class="pls-license-block">
+            <div class="pls-license-grid">
+                <div class="pls-license-cell">
+                    <div class="pls-license-cell-label">LEVEL</div>
+                    <div class="pls-license-cell-val">Lv. {{ license_current_level | default("—") }}</div>
+                </div>
+                <div class="pls-license-cell">
+                    <div class="pls-license-cell-label">PEAK</div>
+                    <div class="pls-license-cell-val">Lv. {{ license_max_level | default("—") }}</div>
+                </div>
+                <div class="pls-license-cell">
+                    <div class="pls-license-cell-label">SINCE</div>
+                    <div class="pls-license-cell-val">{{ license_started | default("—") }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pls-stat-cards">
+            <div class="pls-stat-card">
+                <div class="pls-stat-card-label">TOTAL XP</div>
+                <div class="pls-stat-card-val">{{ xp_balance | default(0) | int }}<span class="pls-stat-unit">✦</span></div>
+            </div>
+            {% if motivation_score %}
+            <div class="pls-stat-card">
+                <div class="pls-stat-card-label">MOTIVATION</div>
+                <div class="pls-stat-card-val">{{ motivation_score | round(1) }}<span class="pls-stat-unit">/5</span></div>
+            </div>
+            {% endif %}
+            <div class="pls-stat-card full">
+                <div class="pls-stat-card-label">MEMBER SINCE</div>
+                <div class="pls-stat-card-val text">{{ member_since | default("—") }}</div>
+            </div>
+        </div>
+
+    </div>
+
+    {# ── FOOTER ── #}
+    <div class="pls-footer">
+        <span class="pls-footer-brand">LFA Education Center</span>
+        <span class="pls-footer-variant">PULSE ◈</span>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Tab switching ────────────────────────────────────────────────────────
+function plsSwitchTab(name) {
+    ['skills','events','profile'].forEach(function(t) {
+        var panelId = 'tab-' + t;
+        var panel = document.getElementById(panelId);
+        var btn   = document.getElementById('btn-' + t);
+        var active = t === name;
+        if (btn) btn.classList.toggle('active', active);
+        if (panel) panel.style.display = active ? '' : 'none';
+    });
+}
+
+// ── Category filter ──────────────────────────────────────────────────────
+function plsFilterCat(catKey) {
+    var sections = document.querySelectorAll('.pls-cat-section');
+    var pills    = document.querySelectorAll('.pls-cat-pill');
+    sections.forEach(function(s) {
+        s.style.display = (!catKey || s.dataset.cat === catKey) ? '' : 'none';
+    });
+    pills.forEach(function(p) {
+        p.classList.toggle('active', p.dataset.cat === catKey);
+    });
+    var allPill = document.getElementById('pill-all');
+    if (allPill) allPill.classList.toggle('active', !catKey);
+}
+
+// ── SVG draw-in animations ───────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+
+    // OVR ring: animate stroke-dashoffset to target value
+    var ring = document.getElementById('pls-ovr-ring');
+    if (ring) {
+        var target = parseFloat(ring.getAttribute('data-target-offset') || '703.72');
+        requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+                ring.style.strokeDashoffset = target;
+            });
+        });
+    }
+
+    // Radar polygon + dots: fade in with stagger
+    setTimeout(function() {
+        var fill = document.getElementById('pls-radar-fill');
+        if (fill) fill.classList.add('visible');
+    }, 300);
+
+    var dotIds = ['pls-dot-top', 'pls-dot-right', 'pls-dot-bottom', 'pls-dot-left'];
+    dotIds.forEach(function(id, i) {
+        setTimeout(function() {
+            var dot = document.getElementById(id);
+            if (dot) {
+                dot.style.transition = 'opacity 0.3s';
+                dot.classList.add('visible');
+            }
+        }, 500 + i * 80);
+    });
+
+});
+</script>
+{% endblock %}

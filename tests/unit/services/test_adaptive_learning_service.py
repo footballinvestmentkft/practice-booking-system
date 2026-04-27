@@ -560,7 +560,7 @@ class TestGetNextQuestion:
             result = svc.get_next_question(user_id=42, session_id=1)
         assert result == {"session_complete": True, "reason": "time_expired"}
 
-    def test_no_candidate_questions_returns_session_complete(self):
+    def test_no_candidate_questions_returns_pool_exhausted(self):
         svc, db = _svc()
         session = MagicMock()
         _q(db, first=session)
@@ -570,7 +570,7 @@ class TestGetNextQuestion:
             result = svc.get_next_question(user_id=42, session_id=1)
         assert result is not None
         assert result.get("session_complete") is True
-        assert result.get("reason") == "no_questions"
+        assert result.get("reason") == "pool_exhausted"
 
     def test_all_candidates_available_without_blackout(self):
         """All candidate questions are passed to adaptive selection — no 1-hour blackout applied."""
@@ -591,8 +591,8 @@ class TestGetNextQuestion:
         assert question in candidates_passed
         assert result["id"] == 7
 
-    def test_no_selected_question_returns_no_questions_dict(self):
-        """_select_adaptive_question returns None → no_questions dict."""
+    def test_no_selected_question_returns_pool_exhausted_dict(self):
+        """_select_adaptive_question returns None → pool_exhausted dict."""
         svc, db = _svc()
         session = MagicMock()
         _q(db, first=session, all_=[])   # recent questions → empty
@@ -601,7 +601,7 @@ class TestGetNextQuestion:
              patch.object(svc, "_get_candidate_questions", return_value=[MagicMock()]), \
              patch.object(svc, "_select_adaptive_question", return_value=None):
             result = svc.get_next_question(user_id=42, session_id=1)
-        assert result == {"session_complete": True, "reason": "no_questions"}
+        assert result == {"session_complete": True, "reason": "pool_exhausted"}
 
 
 # ===========================================================================
@@ -920,3 +920,122 @@ class TestNoBlackoutRepetition:
             if call == ((UserQuestionPerformance,), {})
         ]
         assert blackout_calls == [], "1-hour blackout query must not be issued"
+
+
+# ===========================================================================
+# AL Stability Fix — 5 mandatory tests (BUG-1 + BUG-2)
+# ===========================================================================
+
+@pytest.mark.unit
+class TestGetNextQuestionDedup:
+    """BUG-1: exclude_ids must be filtered at service level before adaptive selection."""
+
+    def _make_q(self, qid):
+        q = MagicMock()
+        q.id = qid
+        q.question_text = f"Q{qid}"
+        q.answer_options = []
+        q.question_type = None
+        return q
+
+    def _base_patches(self, svc, candidates, selected):
+        return [
+            patch.object(svc, "_is_session_time_expired", return_value=False),
+            patch.object(svc, "_get_user_performance_data", return_value={
+                "weak_concepts": [], "strong_concepts": [], "due_for_review": []
+            }),
+            patch.object(svc, "_get_candidate_questions", return_value=candidates),
+            patch.object(svc, "_select_adaptive_question", return_value=selected),
+            patch.object(svc, "_get_session_time_remaining", return_value=55),
+            patch.object(svc, "_get_question_difficulty", return_value=0.5),
+        ]
+
+    def test_empty_pool_returns_pool_exhausted_no_exception(self):
+        """Empty candidate list → pool_exhausted reason, no exception raised."""
+        svc, db = _svc()
+        _q(db, first=MagicMock())
+        with patch.object(svc, "_is_session_time_expired", return_value=False), \
+             patch.object(svc, "_get_user_performance_data", return_value={
+                 "weak_concepts": [], "strong_concepts": [], "due_for_review": []
+             }), \
+             patch.object(svc, "_get_candidate_questions", return_value=[]):
+            result = svc.get_next_question(user_id=42, session_id=1)
+        assert result is not None
+        assert result.get("session_complete") is True
+        assert result.get("reason") == "pool_exhausted"
+
+    def test_exclude_ids_filters_before_selection(self):
+        """exclude_ids={1,2} with only Q1/Q2 in pool → all_seen, never calls selection."""
+        svc, db = _svc()
+        q1, q2 = self._make_q(1), self._make_q(2)
+        _q(db, first=MagicMock())
+        with patch.object(svc, "_is_session_time_expired", return_value=False), \
+             patch.object(svc, "_get_user_performance_data", return_value={
+                 "weak_concepts": [], "strong_concepts": [], "due_for_review": []
+             }), \
+             patch.object(svc, "_get_candidate_questions", return_value=[q1, q2]), \
+             patch.object(svc, "_select_adaptive_question") as mock_select:
+            result = svc.get_next_question(user_id=42, session_id=1, exclude_ids={1, 2})
+        assert result is not None
+        assert result.get("session_complete") is True
+        assert result.get("reason") == "all_seen"
+        mock_select.assert_not_called()
+
+    def test_exclude_ids_never_returns_seen_question(self):
+        """With 3 candidates and exclude_ids={1}, returned question must not be Q1."""
+        svc, db = _svc()
+        q1, q2, q3 = self._make_q(1), self._make_q(2), self._make_q(3)
+        _q(db, first=MagicMock())
+        # Run 50 times to catch probabilistic failures
+        for _ in range(50):
+            with patch.object(svc, "_is_session_time_expired", return_value=False), \
+                 patch.object(svc, "_get_user_performance_data", return_value={
+                     "weak_concepts": [], "strong_concepts": [], "due_for_review": []
+                 }), \
+                 patch.object(svc, "_get_candidate_questions", return_value=[q1, q2, q3]), \
+                 patch.object(svc, "_get_session_time_remaining", return_value=55), \
+                 patch.object(svc, "_get_question_difficulty", return_value=0.5):
+                result = svc.get_next_question(user_id=42, session_id=1, exclude_ids={1})
+            assert result is not None
+            assert not result.get("session_complete"), "Should have returned a question"
+            assert result.get("id") != 1, f"Returned excluded Q1 in iteration"
+
+    def test_pool_exhausted_returns_session_complete(self):
+        """All candidates excluded → session_complete: True with all_seen reason."""
+        svc, db = _svc()
+        q1 = self._make_q(1)
+        _q(db, first=MagicMock())
+        with patch.object(svc, "_is_session_time_expired", return_value=False), \
+             patch.object(svc, "_get_user_performance_data", return_value={
+                 "weak_concepts": [], "strong_concepts": [], "due_for_review": []
+             }), \
+             patch.object(svc, "_get_candidate_questions", return_value=[q1]):
+            result = svc.get_next_question(user_id=42, session_id=1, exclude_ids={1})
+        assert result["session_complete"] is True
+        assert result["reason"] == "all_seen"
+
+    def test_weak_due_mismatch_falls_back_to_all_candidates(self):
+        """No weak/due matches in candidates → random selection from full pool, no exception."""
+        svc, db = _svc()
+        q5 = self._make_q(5)
+        _q(db, first=MagicMock())
+
+        perf_q1 = MagicMock()
+        perf_q1.question_id = 1
+        perf_q1.mastery_level = 0.1  # weak
+        perf_q1.next_review_at = None
+
+        with patch.object(svc, "_is_session_time_expired", return_value=False), \
+             patch.object(svc, "_get_user_performance_data", return_value={
+                 "weak_concepts": [perf_q1],   # Q1 is weak
+                 "strong_concepts": [],
+                 "due_for_review": [],
+             }), \
+             patch.object(svc, "_get_candidate_questions", return_value=[q5]), \
+             patch.object(svc, "_get_session_time_remaining", return_value=55), \
+             patch.object(svc, "_get_question_difficulty", return_value=0.5):
+            # Q1 is weak but not in candidates (only Q5) → must fall back to random(candidates)
+            result = svc.get_next_question(user_id=42, session_id=1)
+        assert result is not None
+        assert not result.get("session_complete"), "Should return Q5 as fallback"
+        assert result.get("id") == 5
