@@ -261,6 +261,37 @@ body.export-mode .events-section { display: none !important; }
     .skill-cats { grid-template-columns: 1fr; }
     .fifa-name { font-size: 1.05rem; }
 }
+
+/* ── Sprint C: Landscape layout ─────────────────────────────────────────── */
+/* Left panel: split header (identity). Right panel: skills grid.           */
+body.export-mode.platform-facebook-landscape .fifa-header,
+body.export-mode.platform-og .fifa-header {
+    flex: 0 0 320px;
+    height: 100%;
+    align-self: stretch;
+}
+body.export-mode.platform-facebook-landscape .fifa-left,
+body.export-mode.platform-og .fifa-left,
+body.export-mode.platform-facebook-landscape .fifa-right,
+body.export-mode.platform-og .fifa-right { min-height: 100%; }
+body.export-mode.platform-facebook-landscape .skills-section,
+body.export-mode.platform-og .skills-section {
+    flex: 1; height: 100%; overflow: hidden;
+}
+body.export-mode.platform-facebook-landscape .skill-cats,
+body.export-mode.platform-og .skill-cats { grid-template-columns: 1fr 1fr; }
+
+/* ── Sprint D: Banner layout ─────────────────────────────────────────────── */
+body.export-mode.platform-banner-custom .fifa-header {
+    flex: 1;
+    height: 100%;
+    align-self: stretch;
+    grid-template-columns: 200px 1fr;
+}
+body.export-mode.platform-banner-custom .fifa-left  { min-height: 100%; justify-content: center; }
+body.export-mode.platform-banner-custom .fifa-right { min-height: 100%; justify-content: center; }
+body.export-mode.platform-banner-custom .fifa-overall { font-size: 5rem; }
+body.export-mode.platform-banner-custom .fifa-name    { font-size: 2.4rem; }
 </style>
 </head>
 <body class="{% if platform_class %}{{ platform_class }}{% endif %}{% if export_mode %} export-mode{% endif %}">

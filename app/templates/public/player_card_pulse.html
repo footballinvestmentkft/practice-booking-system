@@ -392,6 +392,44 @@ body { background: var(--card-page-bg); font-family: 'DM Mono', 'SF Mono', 'Fira
     .pls-player-row { flex-wrap: wrap; }
     .pls-mini-stats { width: 100%; text-align: left; }
 }
+
+/* ── Sprint C: Landscape layout ─────────────────────────────────────────── */
+/* Left panel: hero zone (player row + radar SVG). Right panel: skills.     */
+body.export-mode.platform-facebook-landscape .pls-hero,
+body.export-mode.platform-og .pls-hero {
+    flex: 0 0 360px;
+    height: 100%;
+    overflow: hidden;
+}
+body.export-mode.platform-facebook-landscape .pls-svg-zone svg,
+body.export-mode.platform-og .pls-svg-zone svg {
+    max-width: 220px;
+}
+body.export-mode.platform-facebook-landscape .skills-section,
+body.export-mode.platform-og .skills-section {
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* ── Sprint D: Banner layout ─────────────────────────────────────────────── */
+/* Radar SVG hidden; player row + hero strip fill the banner height.        */
+body.export-mode.platform-banner-custom .pls-hero {
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+}
+body.export-mode.platform-banner-custom .pls-svg-zone      { display: none !important; }
+body.export-mode.platform-banner-custom .pls-corner-marks  { display: none !important; }
+body.export-mode.platform-banner-custom .pls-player-row {
+    padding: 1.5rem 2rem;
+    flex: 1;
+    height: 100%;
+    align-items: center;
+}
+body.export-mode.platform-banner-custom .pls-name    { font-size: 2.4rem; }
+body.export-mode.platform-banner-custom .pls-overall { font-size: 4.5rem; }
+body.export-mode.platform-banner-custom .pls-avatar  { width: 90px; height: 90px; font-size: 2rem; }
 </style>
 {% endblock %}
 

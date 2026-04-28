@@ -301,6 +301,22 @@ body.export-mode .tab-bar        { display: none !important; }
 body.export-mode .skills-section { display: block !important; }
 body.export-mode .events-section { display: none !important; }
 
+/* ── Sprint C: Landscape layout (LANDSCAPE strategy) ────────────────────── */
+/* card-wrap switches to row flex; variant templates split left/right panels. */
+body.export-mode.platform-facebook-landscape .card-wrap,
+body.export-mode.platform-og .card-wrap {
+    flex-direction: row;
+    align-items: stretch;
+}
+
+/* ── Sprint D: Banner layout (BANNER strategy) ───────────────────────────── */
+/* card-wrap row flex; skills hidden — only the identity header is shown.    */
+body.export-mode.platform-banner-custom .card-wrap {
+    flex-direction: row;
+    align-items: stretch;
+}
+body.export-mode.platform-banner-custom .skills-section { display: none !important; }
+
 {% block extra_styles %}{% endblock %}
 </style>
 </head>

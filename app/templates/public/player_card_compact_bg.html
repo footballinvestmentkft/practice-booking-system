@@ -171,6 +171,40 @@ body { background: var(--card-page-bg); }
     .cmp-photo-col { flex: 0 0 120px; min-height: 150px; }
     .cmp-name { font-size: 1rem; }
 }
+
+/* ── Sprint C: Landscape layout ─────────────────────────────────────────── */
+body.export-mode.platform-facebook-landscape .cmp-header,
+body.export-mode.platform-og .cmp-header {
+    flex-direction: column;
+    flex: 0 0 280px;
+    height: 100%;
+    min-height: unset;
+    border-bottom: none;
+}
+body.export-mode.platform-facebook-landscape .cmp-photo-col,
+body.export-mode.platform-og .cmp-photo-col { flex: 1 1 auto; min-height: unset; }
+body.export-mode.platform-facebook-landscape .cmp-identity,
+body.export-mode.platform-og .cmp-identity  { flex: 0 0 auto; border-bottom: none; }
+body.export-mode.platform-facebook-landscape .skills-section,
+body.export-mode.platform-og .skills-section { flex: 1; overflow: hidden; }
+body.export-mode.platform-facebook-landscape .skill-cats,
+body.export-mode.platform-og .skill-cats    { grid-template-columns: 1fr; }
+
+/* ── Sprint D: Banner layout ─────────────────────────────────────────────── */
+body.export-mode.platform-banner-custom .cmp-header {
+    flex: 1; height: 100%; min-height: unset; border-bottom: none;
+}
+body.export-mode.platform-banner-custom .cmp-photo-col {
+    flex: 0 0 220px; height: 100%; min-height: unset;
+}
+body.export-mode.platform-banner-custom .cmp-identity {
+    flex: 1; display: flex; flex-direction: column; justify-content: center;
+    padding: 1rem 2rem; border-bottom: none;
+}
+body.export-mode.platform-banner-custom .cmp-name    { font-size: 2.4rem; line-height: 1.1; margin-bottom: 0.5rem; }
+body.export-mode.platform-banner-custom .cmp-overall { font-size: 4.5rem; }
+body.export-mode.platform-banner-custom .cmp-tier    { font-size: 0.7rem; }
+body.export-mode.platform-banner-custom .cmp-meta-row { font-size: 0.85rem; }
 </style>
 {% endblock %}
 

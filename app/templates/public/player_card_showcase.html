@@ -168,6 +168,51 @@ body { background: var(--card-page-bg); }
 @media (max-width: 380px) {
     .skill-cats { grid-template-columns: 1fr; }
 }
+
+/* ── Sprint C: Landscape layout ─────────────────────────────────────────── */
+/* Three-column row: [banner photo] | [hero identity] | [skills]            */
+body.export-mode.platform-facebook-landscape .sc-banner,
+body.export-mode.platform-og .sc-banner {
+    flex: 0 0 280px;
+    height: 100%;
+    aspect-ratio: unset !important;
+    align-self: stretch;
+}
+body.export-mode.platform-facebook-landscape .sc-hero,
+body.export-mode.platform-og .sc-hero {
+    flex: 0 0 260px;
+    height: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    overflow: hidden;
+    padding: 1.25rem 1rem;
+    border-bottom: none;
+}
+body.export-mode.platform-facebook-landscape .skills-section,
+body.export-mode.platform-og .skills-section {
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+}
+body.export-mode.platform-facebook-landscape .skill-cats,
+body.export-mode.platform-og .skill-cats {
+    grid-template-columns: 1fr 1fr;
+}
+
+/* ── Sprint D: Banner layout ─────────────────────────────────────────────── */
+/* Hide internal 16:9 banner; hero fills full width as identity strip.       */
+body.export-mode.platform-banner-custom .sc-banner { display: none !important; }
+body.export-mode.platform-banner-custom .sc-hero {
+    flex: 1;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    padding: 1rem 2.5rem;
+    border-bottom: none;
+}
+body.export-mode.platform-banner-custom .sc-name    { font-size: 2.4rem; margin-bottom: 0.6rem; }
+body.export-mode.platform-banner-custom .sc-overall { font-size: 5rem; }
+body.export-mode.platform-banner-custom .sc-tier    { font-size: 0.75rem; }
 </style>
 {% endblock %}
 
