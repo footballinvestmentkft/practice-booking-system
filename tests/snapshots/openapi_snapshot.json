@@ -57456,6 +57456,22 @@
               ],
               "title": "Preview"
             }
+          },
+          {
+            "in": "query",
+            "name": "platform",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Platform"
+            }
           }
         ],
         "responses": {
@@ -57481,6 +57497,57 @@
           }
         },
         "summary": "Public Player Card",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/players/{user_id}/card/export": {
+      "get": {
+        "description": "Export a player card as a PNG at a social-media canvas size.\n\nAuth: authenticated users may only export their own card.\nAdmins may export any player's card.\nRate limit: 5 exports per 60 s per user+IP.",
+        "operationId": "export_player_card_players__user_id__card_export_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "title": "User Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "platform",
+            "required": false,
+            "schema": {
+              "default": "square",
+              "title": "Platform",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Player Card",
         "tags": [
           "web"
         ]
