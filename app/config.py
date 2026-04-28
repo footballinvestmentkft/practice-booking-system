@@ -166,6 +166,10 @@ class Settings(BaseSettings):
     APP_NAME: str = "GānCuju™© Education Center"
     DEBUG: bool = True
     API_V1_STR: str = "/api/v1"
+    # Internal loopback port used by the card export service when constructing
+    # the render URL for headless Playwright screenshots. Must match the port
+    # uvicorn is started on. Override via APP_INTERNAL_PORT env var.
+    APP_INTERNAL_PORT: int = 8000
 
     # Initial Admin - SECURE: Must use environment variables in production
     ADMIN_EMAIL: str = os.getenv("ADMIN_EMAIL", "admin@company.com" if is_testing() else "")

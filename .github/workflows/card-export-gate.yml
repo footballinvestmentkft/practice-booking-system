@@ -1,0 +1,126 @@
+name: Card Export Gate
+
+# ── Purpose ────────────────────────────────────────────────────────────────────
+# Validates the player card PNG export endpoint:
+#   - Platform whitelist validation (valid → 200, invalid → 422, default → 422)
+#   - Auth + ownership (student own card OK, student other card → 403, admin → 200)
+#   - Rate limiting (6th request → 429)
+#   - Error handling (Playwright timeout → 504)
+#   - PNG output: magic bytes, correct dimensions per platform
+#   - Playwright/Chromium binary smoke test (browser can launch + screenshot)
+#
+# No DB required — get_db and get_current_user_web are mocked via
+# FastAPI dependency_overrides. _sync_take_screenshot is mocked with
+# fixture PNGs; only the chromium smoke test launches a real browser.
+#
+# Runtime: < 90 s on cold runner (Playwright install ~40 s, tests ~15 s).
+# ──────────────────────────────────────────────────────────────────────────────
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'app/api/web_routes/public_player.py'
+      - 'app/services/card_export_service.py'
+      - 'app/services/card_platform_service.py'
+      - 'app/config.py'
+      - 'tests/unit/test_card_export.py'
+      - '.github/workflows/card-export-gate.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'app/api/web_routes/public_player.py'
+      - 'app/services/card_export_service.py'
+      - 'app/services/card_platform_service.py'
+      - 'app/config.py'
+      - 'tests/unit/test_card_export.py'
+      - '.github/workflows/card-export-gate.yml'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual trigger'
+        required: false
+        default: 'manual verification'
+
+jobs:
+  card-export-gate:
+    name: Card Export Gate (PNG export + Playwright smoke)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright Chromium binary
+        run: python -m playwright install chromium --with-deps
+
+      - name: Write minimal .env (no DB needed — deps are mocked)
+        run: |
+          cat > .env <<'EOF'
+          DATABASE_URL=postgresql://ci:ci@localhost:5432/ci_db
+          SECRET_KEY=ci-card-export-gate-key-not-for-production
+          ENVIRONMENT=test
+          TESTING=true
+          DEBUG=false
+          ENABLE_RATE_LIMITING=false
+          APP_INTERNAL_PORT=8000
+          EOF
+
+      - name: Run card export unit tests
+        run: |
+          PYTHONPATH=. pytest tests/unit/test_card_export.py \
+            -v --tb=short -ra \
+            --durations=10 \
+            -m unit
+
+      - name: Gate summary
+        if: always()
+        run: |
+          echo "══════════════════════════════════════════════════════════"
+          echo " Card Export Gate — Summary"
+          echo "══════════════════════════════════════════════════════════"
+          echo ""
+          echo " Happy path"
+          echo "   EX-01..05  all 5 platforms → 200 image/png"
+          echo "   EX-06      missing platform → default square → 200"
+          echo "   EX-12      admin exports any player → 200"
+          echo ""
+          echo " Validation"
+          echo "   EX-07      invalid platform → 422"
+          echo "   EX-08      'default' platform → 422 (not an export target)"
+          echo "   EX-09      player not found → 404"
+          echo "   EX-10      no active LFA license → 404"
+          echo "   EX-11      student exports other player → 403"
+          echo ""
+          echo " Response headers"
+          echo "   EX-13      Content-Disposition filename correct"
+          echo "   EX-14      Cache-Control: no-store"
+          echo "   content-type: image/png"
+          echo ""
+          echo " PNG output"
+          echo "   EX-17      dimensions: square=1080x1080, landscape=1920x1080, story=1080x1920"
+          echo "   EX-18      PNG magic bytes \\x89PNG"
+          echo "   EX-19      player without photo → still returns PNG"
+          echo ""
+          echo " Error paths"
+          echo "   EX-15      Playwright timeout → 504"
+          echo "   EX-16      rate limit (6th request) → 429"
+          echo ""
+          echo " Playwright environment"
+          echo "   chromium_can_launch_and_screenshot → browser launches, 200x200 PNG OK"
+          echo ""
+          echo " Security invariants:"
+          echo "   render_url built server-side from int user_id + whitelist platform only"
+          echo "   'default' preset has no canvas size → 422 before Playwright is called"
+          echo "   rate_key = user_id:client_ip — per-user+IP, not global"
+          echo "══════════════════════════════════════════════════════════"

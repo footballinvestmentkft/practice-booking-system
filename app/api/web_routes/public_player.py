@@ -1,6 +1,10 @@
 """
-Public player card web routes — no authentication required.
+Public player card web routes.
+
+  GET /players/{user_id}/card          — public, no auth
+  GET /players/{user_id}/card/export   — auth required, returns PNG
 """
+import asyncio
 from datetime import date
 import logging
 import os
@@ -8,16 +12,17 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-from fastapi import APIRouter, Depends, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_db
-from app.models.user import User
+from app.dependencies import get_current_user_web, get_db
+from app.models.user import User, UserRole
 from app.models.license import UserLicense
 from app.models.team import Team, TeamMember
 from app.models.club import Club
+from app.services import card_export_service as _export_svc
 from app.skills_config import SKILL_CATEGORIES
 
 router = APIRouter()
@@ -40,6 +45,7 @@ def public_player_card(
     request: Request,
     user_id: int,
     preview: Optional[str] = Query(None),
+    platform: Optional[str] = Query(None),
     db: Session = Depends(get_db),
 ):
     user = db.query(User).filter(
@@ -190,6 +196,10 @@ def public_player_card(
     _portrait_url  = lfa_license.card_photo_portrait_url or _orig_url
     _landscape_url = lfa_license.card_photo_landscape_url or _orig_url
 
+    # ── Platform preset resolution (stateless — never persisted) ─────────────
+    from app.services.card_platform_service import get_preset as _get_preset
+    platform_preset = _get_preset(platform)
+
     return templates.TemplateResponse(request, template_path, {
         "player": player,
         "overall": overall,
@@ -210,6 +220,8 @@ def public_player_card(
         "card_theme_id": theme.id,
         "card_theme": theme.id,           # base template: <body class="theme-{{ card_theme }}">
         "card_variant_id": variant.id,
+        "platform_class": platform_preset.css_class,
+        "platform_id":    platform_preset.id,
         # variant-specific context
         "compact_bg_url": lfa_license.card_bg_compact_url,
         "showcase_bg_url": lfa_license.card_bg_showcase_url,
@@ -234,3 +246,83 @@ def public_player_card(
         "player_weight_kg":      (lfa_license.motivation_scores or {}).get("weight_kg"),
         "player_preferred_foot": (lfa_license.motivation_scores or {}).get("preferred_foot"),
     })
+
+
+# ── Export endpoint ───────────────────────────────────────────────────────────
+
+@router.get("/players/{user_id}/card/export")
+async def export_player_card(
+    request: Request,
+    user_id: int,
+    platform: str = Query("square"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+):
+    """Export a player card as a PNG at a social-media canvas size.
+
+    Auth: authenticated users may only export their own card.
+    Admins may export any player's card.
+    Rate limit: 5 exports per 60 s per user+IP.
+    """
+    from app.config import settings
+
+    # Ownership check
+    if current_user.id != user_id and current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="You can only export your own card")
+
+    # Platform validation — only registered canvas sizes are accepted
+    if platform not in _export_svc.CANVAS_SIZES:
+        valid = list(_export_svc.CANVAS_SIZES)
+        raise HTTPException(
+            status_code=422,
+            detail=f"Unsupported export platform: {platform!r}. Valid values: {valid}",
+        )
+
+    # Rate limit: 5 exports / 60 s per (user_id, client_ip)
+    client_ip = request.client.host if request.client else "unknown"
+    rate_key = f"{current_user.id}:{client_ip}"
+    if not _export_svc.check_export_rate_limit(rate_key):
+        raise HTTPException(
+            status_code=429,
+            detail="Export rate limit exceeded (5 per minute). Please wait before exporting again.",
+        )
+
+    # Validate target user + active LFA Player license
+    target_user = db.query(User).filter(
+        User.id == user_id, User.is_active == True
+    ).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Player not found")
+
+    target_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user_id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if not target_license:
+        raise HTTPException(status_code=404, detail="No active LFA Player license")
+
+    # Render URL — constructed server-side only; no user-controlled string
+    render_url = (
+        f"http://127.0.0.1:{settings.APP_INTERNAL_PORT}"
+        f"/players/{user_id}/card?platform={platform}"
+    )
+
+    # Screenshot runs in a thread so it does not block the event loop
+    try:
+        png_bytes = await asyncio.to_thread(
+            _export_svc._sync_take_screenshot, render_url, platform
+        )
+    except _export_svc.CardExportTimeoutError:
+        raise HTTPException(status_code=504, detail="Card render timed out")
+
+    filename = f"lfa_card_{user_id}_{platform}.png"
+    return Response(
+        content=png_bytes,
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-store",
+            "X-Export-Platform": platform,
+        },
+    )

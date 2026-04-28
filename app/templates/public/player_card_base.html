@@ -262,10 +262,44 @@ body {
     margin-bottom: 1.25rem; text-align: center;
 }
 
+/* ── Platform preset overrides ──────────────────────────────────────────── */
+/* Applied via <body class="platform-*"> — constrains card-wrap aspect ratio  */
+/* only; no internal layout changes. overflow:hidden is required.             */
+.platform-square .card-wrap {
+    width: min(400px, 100vw);
+    max-width: none;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+}
+.platform-story .card-wrap {
+    width: min(360px, 100vw);
+    max-width: none;
+    aspect-ratio: 9 / 16;
+    overflow: hidden;
+}
+.platform-landscape .card-wrap {
+    width: min(640px, 100vw);
+    max-width: none;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+}
+.platform-banner .card-wrap {
+    width: min(720px, 100vw);
+    max-width: none;
+    aspect-ratio: 3 / 1;
+    overflow: hidden;
+}
+.platform-og .card-wrap {
+    width: min(600px, 100vw);
+    max-width: none;
+    aspect-ratio: 1.91 / 1;
+    overflow: hidden;
+}
+
 {% block extra_styles %}{% endblock %}
 </style>
 </head>
-<body class="theme-{{ card_theme }}">
+<body class="theme-{{ card_theme }}{% if platform_class %} {{ platform_class }}{% endif %}">
 
 <div class="page-brand">⚽ LFA Education Center — Player Card</div>
 
