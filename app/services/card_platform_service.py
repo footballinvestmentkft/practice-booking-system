@@ -1,11 +1,28 @@
 """Player card platform preset definitions.
 
-A platform preset constrains the card-wrap to a specific aspect ratio so the
-card can be screenshotted at an exact social-media canvas size without JS or
-server-side image generation. The preset is purely a CSS class injected at
-render time — it is never persisted to the database.
+Each preset carries:
+  - id / label / css_class / description  — display + rendering metadata
+  - layout_strategy                        — drives internal layout reflow in templates
+
+LayoutStrategy drives CSS classes added to <body> (via platform_class) so templates
+can apply different internal layouts per strategy without JS.
+
+Layout strategies
+-----------------
+NATIVE    — default preview; no viewport constraint; normal card proportions
+PORTRAIT  — 1:1 / 4:5 / 9:16 canvases; column layout fills full viewport height
+LANDSCAPE — ~2:1 canvases; two-column layout (identity left | skills right)
+BANNER    — 3:1 canvas; identity-first strip; skills/events hidden
 """
 from dataclasses import dataclass
+from enum import Enum
+
+
+class LayoutStrategy(str, Enum):
+    NATIVE    = "native"
+    PORTRAIT  = "portrait"
+    LANDSCAPE = "landscape"
+    BANNER    = "banner"
 
 
 @dataclass(frozen=True)
@@ -14,26 +31,60 @@ class PlatformPresetDefinition:
     label: str
     css_class: str
     description: str
+    layout_strategy: LayoutStrategy
 
 
 PLATFORM_PRESETS: dict[str, PlatformPresetDefinition] = {
     "default": PlatformPresetDefinition(
-        "default", "Default", "", "Native card proportions"
+        "default", "Default", "", "Native card proportions", LayoutStrategy.NATIVE
     ),
-    "square": PlatformPresetDefinition(
-        "square", "Square (1:1)", "platform-square", "Instagram post, 1080×1080"
+    "instagram_square": PlatformPresetDefinition(
+        "instagram_square", "Instagram Square",
+        "platform-instagram-square",
+        "Instagram Feed · 1080×1080",
+        LayoutStrategy.PORTRAIT,
     ),
-    "story": PlatformPresetDefinition(
-        "story", "Story (9:16)", "platform-story", "Instagram / TikTok story"
+    "instagram_portrait": PlatformPresetDefinition(
+        "instagram_portrait", "Instagram Portrait",
+        "platform-instagram-portrait",
+        "Instagram Feed · 1080×1350",
+        LayoutStrategy.PORTRAIT,
     ),
-    "landscape": PlatformPresetDefinition(
-        "landscape", "Landscape (16:9)", "platform-landscape", "Twitter / YouTube banner"
+    "instagram_story": PlatformPresetDefinition(
+        "instagram_story", "Instagram Story",
+        "platform-instagram-story",
+        "Instagram Story · 1080×1920",
+        LayoutStrategy.PORTRAIT,
     ),
-    "banner": PlatformPresetDefinition(
-        "banner", "Banner (3:1)", "platform-banner", "Facebook cover"
+    "tiktok": PlatformPresetDefinition(
+        "tiktok", "TikTok",
+        "platform-tiktok",
+        "TikTok · 1080×1920",
+        LayoutStrategy.PORTRAIT,
+    ),
+    "facebook_square": PlatformPresetDefinition(
+        "facebook_square", "Facebook Square",
+        "platform-facebook-square",
+        "Facebook Post · 1080×1080",
+        LayoutStrategy.PORTRAIT,
+    ),
+    "facebook_landscape": PlatformPresetDefinition(
+        "facebook_landscape", "Facebook Landscape",
+        "platform-facebook-landscape",
+        "Facebook / OG · 1200×630",
+        LayoutStrategy.LANDSCAPE,
     ),
     "og": PlatformPresetDefinition(
-        "og", "OG (1.91:1)", "platform-og", "Open Graph / LinkedIn"
+        "og", "Open Graph",
+        "platform-og",
+        "Open Graph / LinkedIn · 1200×630",
+        LayoutStrategy.LANDSCAPE,
+    ),
+    "banner_custom": PlatformPresetDefinition(
+        "banner_custom", "Banner",
+        "platform-banner-custom",
+        "Facebook Cover · 1500×500",
+        LayoutStrategy.BANNER,
     ),
 }
 

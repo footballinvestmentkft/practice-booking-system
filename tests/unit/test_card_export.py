@@ -3,25 +3,28 @@ Unit tests — GET /players/{user_id}/card/export
 ================================================
 
 Coverage:
-  EX-01  valid platform (square) → 200, image/png, PNG magic bytes
-  EX-02  valid platform (story)  → 200
-  EX-03  valid platform (landscape) → 200
-  EX-04  valid platform (banner) → 200
-  EX-05  valid platform (og)     → 200
-  EX-06  missing platform param  → defaults to "square", 200
-  EX-07  invalid platform        → 422
+  EX-01  valid platform (instagram_square) → 200, image/png, PNG magic bytes
+  EX-02  valid platform (instagram_story)  → 200
+  EX-03  valid platform (facebook_landscape) → 200
+  EX-04  valid platform (banner_custom)    → 200
+  EX-05  valid platform (og)               → 200
+  EX-06  missing platform param → defaults to "instagram_square", 200
+  EX-07  invalid platform       → 422
   EX-08  "default" platform (not exportable) → 422
-  EX-09  player not found        → 404
-  EX-10  no active LFA license   → 404
+  EX-09  player not found       → 404
+  EX-10  no active LFA license  → 404
   EX-11  student exports other player → 403
   EX-12  admin exports any player → 200
   EX-13  Content-Disposition filename correct
   EX-14  Cache-Control: no-store header present
   EX-15  Playwright timeout → 504
-  EX-16  rate limit exceeded     → 429
-  EX-17  PNG dimensions correct (square = 1080×1080)
+  EX-16  rate limit exceeded    → 429
+  EX-17  PNG dimensions correct (instagram_square = 1080×1080)
   EX-18  PNG magic bytes present
   EX-19  player without photo still returns PNG
+  EX-20  instagram_portrait returns correct dimensions (1080×1350)
+  EX-21  tiktok returns correct dimensions (1080×1920)
+  EX-22  facebook_square returns correct dimensions (1080×1080)
 
 Mock strategy:
   - get_current_user_web → MagicMock user (no DB, no cookie)
@@ -56,7 +59,7 @@ def _make_png(width: int, height: int) -> bytes:
 
 # Pre-built PNG bytes for each canvas size
 _PNG: dict[str, bytes] = {k: _make_png(*v) for k, v in CANVAS_SIZES.items()}
-_PNG_DEFAULT = _PNG["square"]
+_PNG_DEFAULT = _PNG["instagram_square"]
 
 _PNG_MAGIC = b"\x89PNG"
 
@@ -123,7 +126,7 @@ def _clear_overrides(app):
 
 # ── Helper: execute one export request with all mocks in place ────────────────
 
-def _export(client, platform: str | None = "square", user_id: int = 4,
+def _export(client, platform: str | None = "instagram_square", user_id: int = 4,
             current_user=None, db=None, png_bytes: bytes | None = None):
     from app.main import app
 
@@ -135,7 +138,7 @@ def _export(client, platform: str | None = "square", user_id: int = 4,
             target_license=_make_license(),
         )
     if png_bytes is None:
-        png_bytes = _PNG.get(platform or "square", _PNG_DEFAULT)
+        png_bytes = _PNG.get(platform or "instagram_square", _PNG_DEFAULT)
 
     _setup_overrides(app, current_user, db)
     try:
@@ -154,34 +157,34 @@ def _export(client, platform: str | None = "square", user_id: int = 4,
 @pytest.mark.unit
 class TestExportHappyPath:
 
-    def test_ex01_square_returns_200(self, client):
-        r = _export(client, "square")
+    def test_ex01_instagram_square_returns_200(self, client):
+        r = _export(client, "instagram_square")
         assert r.status_code == 200
 
-    def test_ex02_story_returns_200(self, client):
-        r = _export(client, "story")
+    def test_ex02_instagram_story_returns_200(self, client):
+        r = _export(client, "instagram_story")
         assert r.status_code == 200
 
-    def test_ex03_landscape_returns_200(self, client):
-        r = _export(client, "landscape")
+    def test_ex03_facebook_landscape_returns_200(self, client):
+        r = _export(client, "facebook_landscape")
         assert r.status_code == 200
 
-    def test_ex04_banner_returns_200(self, client):
-        r = _export(client, "banner")
+    def test_ex04_banner_custom_returns_200(self, client):
+        r = _export(client, "banner_custom")
         assert r.status_code == 200
 
     def test_ex05_og_returns_200(self, client):
         r = _export(client, "og")
         assert r.status_code == 200
 
-    def test_ex06_missing_platform_defaults_to_square(self, client):
-        """No ?platform= param → defaults to square → 200."""
+    def test_ex06_missing_platform_defaults_to_instagram_square(self, client):
+        """No ?platform= param → defaults to instagram_square → 200."""
         r = _export(client, platform=None)
         assert r.status_code == 200
 
     def test_ex12_admin_exports_any_player(self, client):
         admin = _make_user(user_id=1, role=UserRole.ADMIN)
-        r = _export(client, "square", user_id=4, current_user=admin)
+        r = _export(client, "instagram_square", user_id=4, current_user=admin)
         assert r.status_code == 200
 
 
@@ -213,7 +216,7 @@ class TestExportValidation:
         app.dependency_overrides[get_db] = lambda: db
         try:
             with patch("app.services.card_export_service._sync_take_screenshot"):
-                r = client.get("/players/4/card/export?platform=square")
+                r = client.get("/players/4/card/export?platform=instagram_square")
         finally:
             _clear_overrides(app)
 
@@ -236,7 +239,7 @@ class TestExportValidation:
         app.dependency_overrides[get_db] = lambda: db
         try:
             with patch("app.services.card_export_service._sync_take_screenshot"):
-                r = client.get("/players/4/card/export?platform=square")
+                r = client.get("/players/4/card/export?platform=instagram_square")
         finally:
             _clear_overrides(app)
 
@@ -244,7 +247,7 @@ class TestExportValidation:
 
     def test_ex11_student_exports_other_player_returns_403(self, client):
         student = _make_user(user_id=99, role=UserRole.STUDENT)
-        r = _export(client, "square", user_id=4, current_user=student)
+        r = _export(client, "instagram_square", user_id=4, current_user=student)
         assert r.status_code == 403
 
 
@@ -254,18 +257,18 @@ class TestExportValidation:
 class TestExportHeaders:
 
     def test_ex13_content_disposition_filename(self, client):
-        r = _export(client, "square", user_id=4)
+        r = _export(client, "instagram_square", user_id=4)
         assert r.status_code == 200
         cd = r.headers.get("content-disposition", "")
-        assert 'filename="lfa_card_4_square.png"' in cd
+        assert 'filename="lfa_card_4_instagram_square.png"' in cd
 
     def test_ex14_cache_control_no_store(self, client):
-        r = _export(client, "square")
+        r = _export(client, "instagram_square")
         assert r.status_code == 200
         assert r.headers.get("cache-control") == "no-store"
 
     def test_content_type_is_image_png(self, client):
-        r = _export(client, "square")
+        r = _export(client, "instagram_square")
         assert r.status_code == 200
         assert r.headers["content-type"] == "image/png"
 
@@ -276,27 +279,57 @@ class TestExportHeaders:
 class TestExportPngOutput:
 
     def test_ex18_png_magic_bytes(self, client):
-        r = _export(client, "square")
+        r = _export(client, "instagram_square")
         assert r.status_code == 200
         assert r.content[:4] == _PNG_MAGIC
 
-    def test_ex17_png_dimensions_square(self, client):
-        r = _export(client, "square")
+    def test_ex17_png_dimensions_instagram_square(self, client):
+        r = _export(client, "instagram_square")
         assert r.status_code == 200
         img = Image.open(io.BytesIO(r.content))
         assert img.size == (1080, 1080)
 
-    def test_png_dimensions_landscape(self, client):
-        r = _export(client, "landscape")
+    def test_ex20_png_dimensions_instagram_portrait(self, client):
+        r = _export(client, "instagram_portrait")
         assert r.status_code == 200
         img = Image.open(io.BytesIO(r.content))
-        assert img.size == (1920, 1080)
+        assert img.size == (1080, 1350)
 
-    def test_png_dimensions_story(self, client):
-        r = _export(client, "story")
+    def test_ex21_png_dimensions_tiktok(self, client):
+        r = _export(client, "tiktok")
         assert r.status_code == 200
         img = Image.open(io.BytesIO(r.content))
         assert img.size == (1080, 1920)
+
+    def test_ex22_png_dimensions_facebook_square(self, client):
+        r = _export(client, "facebook_square")
+        assert r.status_code == 200
+        img = Image.open(io.BytesIO(r.content))
+        assert img.size == (1080, 1080)
+
+    def test_png_dimensions_facebook_landscape(self, client):
+        r = _export(client, "facebook_landscape")
+        assert r.status_code == 200
+        img = Image.open(io.BytesIO(r.content))
+        assert img.size == (1200, 630)
+
+    def test_png_dimensions_og(self, client):
+        r = _export(client, "og")
+        assert r.status_code == 200
+        img = Image.open(io.BytesIO(r.content))
+        assert img.size == (1200, 630)
+
+    def test_png_dimensions_instagram_story(self, client):
+        r = _export(client, "instagram_story")
+        assert r.status_code == 200
+        img = Image.open(io.BytesIO(r.content))
+        assert img.size == (1080, 1920)
+
+    def test_png_dimensions_banner_custom(self, client):
+        r = _export(client, "banner_custom")
+        assert r.status_code == 200
+        img = Image.open(io.BytesIO(r.content))
+        assert img.size == (1500, 500)
 
     def test_ex19_player_without_photo_returns_png(self, client):
         """A player with no photo_url still renders (initials fallback)."""
@@ -316,8 +349,8 @@ class TestExportPngOutput:
         app.dependency_overrides[get_db] = lambda: db
         try:
             with patch("app.services.card_export_service._sync_take_screenshot",
-                       return_value=_PNG["square"]):
-                r = client.get("/players/4/card/export?platform=square")
+                       return_value=_PNG["instagram_square"]):
+                r = client.get("/players/4/card/export?platform=instagram_square")
         finally:
             _clear_overrides(app)
 
@@ -348,7 +381,7 @@ class TestExportErrorPaths:
         try:
             with patch("app.services.card_export_service._sync_take_screenshot",
                        side_effect=CardExportTimeoutError("timeout")):
-                r = client.get("/players/4/card/export?platform=square")
+                r = client.get("/players/4/card/export?platform=instagram_square")
         finally:
             _clear_overrides(app)
 
@@ -371,19 +404,37 @@ class TestExportErrorPaths:
             )
 
         app.dependency_overrides[get_current_user_web] = _auth
-        # get_db must return a fresh mock each call (side_effect exhausted otherwise)
         app.dependency_overrides[get_db] = _fresh_db
         try:
             with patch("app.services.card_export_service._sync_take_screenshot",
-                       return_value=_PNG["square"]):
+                       return_value=_PNG["instagram_square"]):
                 for _ in range(5):
-                    r = client.get("/players/4/card/export?platform=square")
+                    r = client.get("/players/4/card/export?platform=instagram_square")
                     assert r.status_code == 200, f"Expected 200 on warmup, got {r.status_code}"
-                r = client.get("/players/4/card/export?platform=square")
+                r = client.get("/players/4/card/export?platform=instagram_square")
         finally:
             _clear_overrides(app)
 
         assert r.status_code == 429
+
+
+# ── Canvas size registry test ─────────────────────────────────────────────────
+
+@pytest.mark.unit
+class TestCanvasSizeRegistry:
+
+    def test_all_presets_have_canvas_size(self):
+        """Every non-default preset in card_platform_service must have a CANVAS_SIZES entry."""
+        from app.services.card_platform_service import PLATFORM_PRESETS, LayoutStrategy
+        for pid, preset in PLATFORM_PRESETS.items():
+            if preset.layout_strategy == LayoutStrategy.NATIVE:
+                assert pid not in CANVAS_SIZES, f"'default' must not be in CANVAS_SIZES"
+            else:
+                assert pid in CANVAS_SIZES, f"Preset {pid!r} missing from CANVAS_SIZES"
+
+    def test_canvas_sizes_all_positive(self):
+        for pid, (w, h) in CANVAS_SIZES.items():
+            assert w > 0 and h > 0, f"{pid}: dimensions must be positive"
 
 
 # ── Playwright Chromium smoke test ────────────────────────────────────────────

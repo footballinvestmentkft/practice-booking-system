@@ -11,13 +11,18 @@ from threading import Lock
 
 logger = logging.getLogger(__name__)
 
-# Social canvas sizes — "default" is intentionally absent (not an export target)
+# Social canvas sizes — keyed by platform preset id.
+# "default" is intentionally absent (not an export target).
+# Dimensions match each platform's recommended export resolution.
 CANVAS_SIZES: dict[str, tuple[int, int]] = {
-    "square":    (1080, 1080),
-    "story":     (1080, 1920),
-    "landscape": (1920, 1080),
-    "banner":    (1500,  500),
-    "og":        (1200,  630),
+    "instagram_square":   (1080, 1080),
+    "instagram_portrait": (1080, 1350),
+    "instagram_story":    (1080, 1920),
+    "tiktok":             (1080, 1920),
+    "facebook_square":    (1080, 1080),
+    "facebook_landscape": (1200,  630),
+    "og":                 (1200,  630),
+    "banner_custom":      (1500,  500),
 }
 
 _GOTO_TIMEOUT_MS = 10_000  # 10 s — generous vs. measured 0.6 s

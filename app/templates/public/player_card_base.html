@@ -262,44 +262,49 @@ body {
     margin-bottom: 1.25rem; text-align: center;
 }
 
-/* ── Platform preset overrides ──────────────────────────────────────────── */
-/* Applied via <body class="platform-*"> — constrains card-wrap aspect ratio  */
-/* only; no internal layout changes. overflow:hidden is required.             */
-.platform-square .card-wrap {
-    width: min(400px, 100vw);
-    max-width: none;
-    aspect-ratio: 1 / 1;
+/* ── Platform preset overrides — PREVIEW mode (card editor iframe) ───────── */
+/* Applied via body.platform-* CSS class when ?export=1 is NOT set.          */
+/* Constrains the card-wrap to an aspect-ratio preview box inside the editor. */
+.platform-instagram-square .card-wrap,
+.platform-facebook-square .card-wrap  { width: min(400px, 100vw); max-width: none; aspect-ratio: 1/1; overflow: hidden; }
+.platform-instagram-portrait .card-wrap { width: min(360px, 100vw); max-width: none; aspect-ratio: 4/5; overflow: hidden; }
+.platform-instagram-story .card-wrap,
+.platform-tiktok .card-wrap           { width: min(260px, 100vw); max-width: none; aspect-ratio: 9/16; overflow: hidden; }
+.platform-facebook-landscape .card-wrap,
+.platform-og .card-wrap               { width: min(600px, 100vw); max-width: none; aspect-ratio: 1.91/1; overflow: hidden; }
+.platform-banner-custom .card-wrap    { width: min(720px, 100vw); max-width: none; aspect-ratio: 3/1; overflow: hidden; }
+
+/* ── Sprint A: Export canvas fill ────────────────────────────────────────── */
+/* .export-mode is added by the route only when ?export=1.                   */
+/* The Playwright viewport is set to the exact canvas size; body + card-wrap  */
+/* must fill it completely so the screenshot clip captures the full card.     */
+body.export-mode {
+    padding: 0;
+    margin: 0;
+    align-items: stretch;
+    justify-content: flex-start;
     overflow: hidden;
 }
-.platform-story .card-wrap {
-    width: min(360px, 100vw);
-    max-width: none;
-    aspect-ratio: 9 / 16;
+body.export-mode .page-brand { display: none; }
+body.export-mode .card-wrap {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    border-radius: 0;
     overflow: hidden;
 }
-.platform-landscape .card-wrap {
-    width: min(640px, 100vw);
-    max-width: none;
-    aspect-ratio: 16 / 9;
-    overflow: hidden;
-}
-.platform-banner .card-wrap {
-    width: min(720px, 100vw);
-    max-width: none;
-    aspect-ratio: 3 / 1;
-    overflow: hidden;
-}
-.platform-og .card-wrap {
-    width: min(600px, 100vw);
-    max-width: none;
-    aspect-ratio: 1.91 / 1;
-    overflow: hidden;
-}
+
+/* ── Sprint B: Deterministic export content ─────────────────────────────── */
+/* Tab bar is interactive UI — not needed in static PNG export.              */
+/* Skills section is primary; events section is suppressed in export.        */
+body.export-mode .tab-bar        { display: none !important; }
+body.export-mode .skills-section { display: block !important; }
+body.export-mode .events-section { display: none !important; }
 
 {% block extra_styles %}{% endblock %}
 </style>
 </head>
-<body class="theme-{{ card_theme }}{% if platform_class %} {{ platform_class }}{% endif %}">
+<body class="theme-{{ card_theme }}{% if platform_class %} {{ platform_class }}{% endif %}{% if export_mode %} export-mode{% endif %}">
 
 <div class="page-brand">⚽ LFA Education Center — Player Card</div>
 

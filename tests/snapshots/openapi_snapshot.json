@@ -57472,6 +57472,23 @@
               ],
               "title": "Platform"
             }
+          },
+          {
+            "in": "query",
+            "name": "export",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": false,
+              "title": "Export"
+            }
           }
         ],
         "responses": {
@@ -57521,7 +57538,7 @@
             "name": "platform",
             "required": false,
             "schema": {
-              "default": "square",
+              "default": "instagram_square",
               "title": "Platform",
               "type": "string"
             }

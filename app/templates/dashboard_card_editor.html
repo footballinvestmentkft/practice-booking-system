@@ -257,12 +257,15 @@
             {% endif %}
             {# ── Platform picker ── #}
             <div class="platform-picker" id="platform-picker">
-                <button class="platform-btn active" data-platform="default" onclick="setPlatform('default')" title="Native card proportions">Default</button>
-                <button class="platform-btn" data-platform="square"    onclick="setPlatform('square')"    title="Instagram post · 1080×1080">Square</button>
-                <button class="platform-btn" data-platform="story"     onclick="setPlatform('story')"     title="Instagram / TikTok story · 1080×1920">Story</button>
-                <button class="platform-btn" data-platform="landscape" onclick="setPlatform('landscape')" title="Twitter / YouTube · 1920×1080">Landscape</button>
-                <button class="platform-btn" data-platform="banner"    onclick="setPlatform('banner')"    title="Facebook cover · 1500×500">Banner</button>
-                <button class="platform-btn" data-platform="og"        onclick="setPlatform('og')"        title="Open Graph / LinkedIn · 1200×630">OG</button>
+                <button class="platform-btn active" data-platform="default"            onclick="setPlatform('default')"            title="Native card proportions">Default</button>
+                <button class="platform-btn" data-platform="instagram_square"          onclick="setPlatform('instagram_square')"          title="Instagram Feed · 1080×1080">IG Square</button>
+                <button class="platform-btn" data-platform="instagram_portrait"        onclick="setPlatform('instagram_portrait')"        title="Instagram Feed · 1080×1350">IG Portrait</button>
+                <button class="platform-btn" data-platform="instagram_story"           onclick="setPlatform('instagram_story')"           title="Instagram Story · 1080×1920">IG Story</button>
+                <button class="platform-btn" data-platform="tiktok"                    onclick="setPlatform('tiktok')"                    title="TikTok · 1080×1920">TikTok</button>
+                <button class="platform-btn" data-platform="facebook_square"           onclick="setPlatform('facebook_square')"           title="Facebook Post · 1080×1080">FB Square</button>
+                <button class="platform-btn" data-platform="facebook_landscape"        onclick="setPlatform('facebook_landscape')"        title="Facebook / OG · 1200×630">FB Landscape</button>
+                <button class="platform-btn" data-platform="og"                        onclick="setPlatform('og')"                        title="Open Graph / LinkedIn · 1200×630">OG</button>
+                <button class="platform-btn" data-platform="banner_custom"             onclick="setPlatform('banner_custom')"             title="Facebook Cover · 1500×500">Banner</button>
             </div>
         </div>
         <div class="player-card-embed-wrap">
@@ -427,7 +430,7 @@ function setPlatform(platformId) {
 }
 
 async function exportCard() {
-    const platform = _currentPlatform === 'default' ? 'square' : _currentPlatform;
+    const platform = _currentPlatform === 'default' ? 'instagram_square' : _currentPlatform;
     const btn = document.getElementById('btn-export-card');
     const origText = btn.textContent;
     btn.disabled = true;

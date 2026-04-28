@@ -40,6 +40,32 @@ body {
     border: 1px solid rgba(255,255,255,0.06);
 }
 
+/* ── Platform preset overrides — PREVIEW mode ────────────────────────────── */
+/* TODO: migrate this template to extend player_card_base.html so platform   */
+/* CSS is inherited from the central source (E2 standalone fix).              */
+.platform-instagram-square .card-wrap,
+.platform-facebook-square .card-wrap  { width: min(400px, 100vw); max-width: none; aspect-ratio: 1/1; overflow: hidden; }
+.platform-instagram-portrait .card-wrap { width: min(360px, 100vw); max-width: none; aspect-ratio: 4/5; overflow: hidden; }
+.platform-instagram-story .card-wrap,
+.platform-tiktok .card-wrap           { width: min(260px, 100vw); max-width: none; aspect-ratio: 9/16; overflow: hidden; }
+.platform-facebook-landscape .card-wrap,
+.platform-og .card-wrap               { width: min(600px, 100vw); max-width: none; aspect-ratio: 1.91/1; overflow: hidden; }
+.platform-banner-custom .card-wrap    { width: min(720px, 100vw); max-width: none; aspect-ratio: 3/1; overflow: hidden; }
+
+/* ── Sprint A+B: Export canvas fill + deterministic content ──────────────── */
+body.export-mode {
+    padding: 0; margin: 0; align-items: stretch;
+    justify-content: flex-start; overflow: hidden;
+}
+body.export-mode .page-brand { display: none; }
+body.export-mode .card-wrap  {
+    width: 100vw !important; height: 100vh !important;
+    max-width: none !important; border-radius: 0; overflow: hidden;
+}
+body.export-mode .tab-bar        { display: none !important; }
+body.export-mode .skills-section { display: block !important; }
+body.export-mode .events-section { display: none !important; }
+
 /* ── Split header ─────────────────────────────────────────── */
 .fifa-header {
     display: grid;
@@ -203,7 +229,7 @@ body {
 }
 </style>
 </head>
-<body>
+<body class="{% if platform_class %}{{ platform_class }}{% endif %}{% if export_mode %} export-mode{% endif %}">
 
 <div class="page-brand">⚽ LFA Education Center — Player Card</div>
 

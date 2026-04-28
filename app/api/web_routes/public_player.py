@@ -46,6 +46,7 @@ def public_player_card(
     user_id: int,
     preview: Optional[str] = Query(None),
     platform: Optional[str] = Query(None),
+    export: Optional[bool] = Query(default=False),
     db: Session = Depends(get_db),
 ):
     user = db.query(User).filter(
@@ -222,6 +223,7 @@ def public_player_card(
         "card_variant_id": variant.id,
         "platform_class": platform_preset.css_class,
         "platform_id":    platform_preset.id,
+        "export_mode":    bool(export),
         # variant-specific context
         "compact_bg_url": lfa_license.card_bg_compact_url,
         "showcase_bg_url": lfa_license.card_bg_showcase_url,
@@ -254,7 +256,7 @@ def public_player_card(
 async def export_player_card(
     request: Request,
     user_id: int,
-    platform: str = Query("square"),
+    platform: str = Query("instagram_square"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user_web),
 ):
@@ -305,7 +307,7 @@ async def export_player_card(
     # Render URL — constructed server-side only; no user-controlled string
     render_url = (
         f"http://127.0.0.1:{settings.APP_INTERNAL_PORT}"
-        f"/players/{user_id}/card?platform={platform}"
+        f"/players/{user_id}/card?platform={platform}&export=1"
     )
 
     # Screenshot runs in a thread so it does not block the event loop
