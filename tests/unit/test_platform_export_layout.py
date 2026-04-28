@@ -291,3 +291,118 @@ class TestPlaywrightCanvasFill:
     @pytest.mark.parametrize("platform_id", _BANNER_PLATFORMS)
     def test_pl05_banner_canvas_fill(self, platform_id):
         self._check_canvas_fill(platform_id)
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(not _playwright_and_server_available(), reason=_PLAYWRIGHT_REASON)
+class TestPlaywrightP0ComponentSizing:
+    """P0 export component scaling tests.
+
+    Verify that clamp()-based sizing rules scale OVR, photo, and skill bar
+    elements relative to the viewport — replacing preview-size fixed px values.
+
+    Tests use the compact card variant (default in _make_license()).
+
+    PL-07  OVR font-size >= 5% of viewport width (portrait/square)
+    PL-08  Photo column width >= 25% of viewport width (portrait/square)
+    PL-09  Skill bar width > 44px (max-width constraint removed)
+    PL-10  Body does not scroll in export mode (scrollHeight <= viewport height)
+    PL-11  Last content element bottom >= 50% viewport height (portrait/square)
+           NOTE: 85% target is a P1 gate; P0 sets 50% as baseline
+    """
+
+    def _open_card(self, platform_id: str, variant: str = "compact"):
+        """Return (page, browser, w, h) for the given platform export URL."""
+        from playwright.sync_api import sync_playwright
+        from app.config import settings
+
+        w, h = CANVAS_SIZES[platform_id]
+        url = (
+            f"http://127.0.0.1:{settings.APP_INTERNAL_PORT}"
+            f"/players/7/card?platform={platform_id}&export=1"
+        )
+        pw = sync_playwright().__enter__()
+        browser = pw.chromium.launch(headless=True)
+        page = browser.new_page(viewport={"width": w, "height": h})
+        page.goto(url, wait_until="networkidle", timeout=15_000)
+        return page, browser, pw, w, h
+
+    def test_pl07_ovr_font_size_min_5pct_vw(self):
+        """OVR number font-size must be >= 5% of viewport width on instagram_square."""
+        page, browser, pw, vw, _vh = self._open_card("instagram_square")
+        try:
+            fs_px = page.eval_on_selector(
+                ".cmp-overall",
+                "el => parseFloat(window.getComputedStyle(el).fontSize)"
+            )
+            min_px = vw * 0.05
+            assert fs_px >= min_px, (
+                f"OVR font-size {fs_px:.1f}px < 5% of {vw}px viewport ({min_px:.1f}px)"
+            )
+        finally:
+            browser.close()
+            pw.__exit__(None, None, None)
+
+    def test_pl08_photo_col_min_25pct_vw(self):
+        """Photo column width must be >= 25% of viewport width on instagram_square."""
+        page, browser, pw, vw, _vh = self._open_card("instagram_square")
+        try:
+            col_w = page.eval_on_selector(
+                ".cmp-photo-col",
+                "el => el.getBoundingClientRect().width"
+            )
+            min_px = vw * 0.25
+            assert col_w >= min_px, (
+                f"Photo column {col_w:.1f}px < 25% of {vw}px viewport ({min_px:.1f}px)"
+            )
+        finally:
+            browser.close()
+            pw.__exit__(None, None, None)
+
+    def test_pl09_skill_bar_wider_than_44px(self):
+        """Skill bar width must exceed 44px (max-width constraint removed)."""
+        page, browser, pw, _vw, _vh = self._open_card("instagram_square")
+        try:
+            bar_w = page.eval_on_selector(
+                ".skill-bar-bg",
+                "el => el.getBoundingClientRect().width"
+            )
+            assert bar_w > 44, (
+                f"Skill bar width {bar_w:.1f}px not wider than 44px fixed constraint"
+            )
+        finally:
+            browser.close()
+            pw.__exit__(None, None, None)
+
+    def test_pl10_no_body_scroll_in_export(self):
+        """body.scrollHeight must not exceed viewport height (no overflow scroll)."""
+        page, browser, pw, _vw, vh = self._open_card("instagram_square")
+        try:
+            scroll_h = page.evaluate("document.body.scrollHeight")
+            assert scroll_h <= vh + 4, (
+                f"body.scrollHeight={scroll_h}px exceeds viewport height {vh}px"
+            )
+        finally:
+            browser.close()
+            pw.__exit__(None, None, None)
+
+    @pytest.mark.parametrize("platform_id", ["instagram_square", "instagram_portrait"])
+    def test_pl11_last_content_element_reaches_50pct_height(self, platform_id):
+        """Last visible content element bottom >= 50% viewport height (P0 baseline).
+
+        The 85% target (full canvas fill, no dead space) is a P1 gate.
+        """
+        page, browser, pw, _vw, vh = self._open_card(platform_id)
+        try:
+            bottom = page.eval_on_selector(
+                ".skills-section",
+                "el => el.getBoundingClientRect().bottom"
+            )
+            min_bottom = vh * 0.50
+            assert bottom >= min_bottom, (
+                f"{platform_id}: skills-section bottom {bottom:.1f}px "
+                f"< 50% of viewport height {vh}px ({min_bottom:.1f}px)"
+            )
+        finally:
+            browser.close()
+            pw.__exit__(None, None, None)

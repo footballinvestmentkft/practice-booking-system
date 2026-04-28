@@ -427,9 +427,15 @@ body.export-mode.platform-banner-custom .pls-player-row {
     height: 100%;
     align-items: center;
 }
-body.export-mode.platform-banner-custom .pls-name    { font-size: 2.4rem; }
-body.export-mode.platform-banner-custom .pls-overall { font-size: 4.5rem; }
-body.export-mode.platform-banner-custom .pls-avatar  { width: 90px; height: 90px; font-size: 2rem; }
+body.export-mode.platform-banner-custom .pls-name   { font-size: var(--ex-font-name); }
+body.export-mode.platform-banner-custom .pls-avatar { width: var(--ex-avatar-w); height: var(--ex-avatar-w); font-size: 2rem; }
+
+/* ── P0: Export component scaling ──────────────────────────────────────── */
+body.export-mode .pls-avatar { width: var(--ex-avatar-w); height: var(--ex-avatar-w); }
+body.export-mode .pls-name   { font-size: var(--ex-font-name); }
+body.export-mode .pls-svg-zone svg { max-width: clamp(380px, 45vw, 560px); }
+body.export-mode .pls-skill-name,
+body.export-mode .pls-skill-val  { font-size: var(--ex-font-skill); }
 </style>
 {% endblock %}
 

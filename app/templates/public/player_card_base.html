@@ -317,6 +317,47 @@ body.export-mode.platform-banner-custom .card-wrap {
 }
 body.export-mode.platform-banner-custom .skills-section { display: none !important; }
 
+/* ── P0: Export scaling — CSS custom properties ──────────────────────────── */
+/* Strictly scoped to body.export-mode; editor preview is unaffected.        */
+body.export-mode {
+    --ex-font-ovr:    clamp(3rem, 7vw, 10rem);
+    --ex-font-name:   clamp(1.5rem, 3.5vw, 5rem);
+    --ex-font-meta:   clamp(0.7rem, 1.1vw, 1.4rem);
+    --ex-font-skill:  clamp(0.75rem, 1.1vw, 1.5rem);
+    --ex-photo-w:     clamp(180px, 28vw, 440px);
+    --ex-avatar-w:    clamp(80px, 10vw, 200px);
+}
+/* Story / TikTok: 1080×1920 — tall canvas, larger type relative to 9:16 width */
+body.export-mode.platform-instagram-story,
+body.export-mode.platform-tiktok {
+    --ex-font-ovr:   clamp(5rem, 9vw, 11rem);
+    --ex-font-name:  clamp(2.5rem, 5vw, 6rem);
+    --ex-font-meta:  clamp(0.9rem, 1.5vw, 1.8rem);
+    --ex-font-skill: clamp(0.9rem, 1.4vw, 1.8rem);
+    --ex-photo-w:    clamp(220px, 35vw, 500px);
+    --ex-avatar-w:   clamp(120px, 14vw, 260px);
+}
+/* Landscape: 1200×630 — moderate scale, photo column is layout-determined */
+body.export-mode.platform-facebook-landscape,
+body.export-mode.platform-og {
+    --ex-font-ovr:   clamp(2.5rem, 5.5vw, 7rem);
+    --ex-font-name:  clamp(1.2rem, 2.5vw, 3.5rem);
+    --ex-font-meta:  clamp(0.6rem, 0.9vw, 1.2rem);
+    --ex-font-skill: clamp(0.65rem, 0.9vw, 1.2rem);
+    --ex-photo-w:    clamp(140px, 22vw, 320px);
+    --ex-avatar-w:   clamp(60px, 7vw, 140px);
+}
+/* Banner: 1500×500 — wide horizontal strip */
+body.export-mode.platform-banner-custom {
+    --ex-font-ovr:  clamp(3rem, 6vw, 8rem);
+    --ex-font-name: clamp(1.5rem, 3vw, 4rem);
+    --ex-font-meta: clamp(0.65rem, 1vw, 1.3rem);
+    --ex-photo-w:   clamp(120px, 15vw, 280px);
+    --ex-avatar-w:  clamp(60px, 8vw, 160px);
+}
+/* Remove skill bar max-width constraint so bars fill available column width */
+body.export-mode .skill-bar-bg { max-width: none !important; }
+
 {% block extra_styles %}{% endblock %}
 </style>
 </head>

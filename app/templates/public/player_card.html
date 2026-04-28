@@ -232,6 +232,7 @@ body.export-mode .events-section { display: none !important; }
 body.export-mode.platform-facebook-landscape .fifa-header,
 body.export-mode.platform-og .fifa-header {
     flex: 0 0 300px; height: 100%; align-self: stretch;
+    grid-template-columns: 150px 1fr;
 }
 body.export-mode.platform-facebook-landscape .fifa-left,
 body.export-mode.platform-og .fifa-left,
@@ -246,12 +247,39 @@ body.export-mode.platform-og .skill-cats { grid-template-columns: 1fr 1fr; }
 
 /* ── Sprint D: Banner layout ─────────────────────────────────────────────── */
 body.export-mode.platform-banner-custom .fifa-header {
-    flex: 1; height: 100%; align-self: stretch; grid-template-columns: 180px 1fr;
+    flex: 1; height: 100%; align-self: stretch;
+    grid-template-columns: var(--ex-photo-w) 1fr;
 }
 body.export-mode.platform-banner-custom .fifa-left  { min-height: 100%; justify-content: center; }
 body.export-mode.platform-banner-custom .fifa-right { min-height: 100%; justify-content: center; }
-body.export-mode.platform-banner-custom .fifa-overall { font-size: 5rem; }
-body.export-mode.platform-banner-custom .fifa-name    { font-size: 2.4rem; }
+body.export-mode.platform-banner-custom .fifa-overall { font-size: var(--ex-font-ovr); }
+body.export-mode.platform-banner-custom .fifa-name    { font-size: var(--ex-font-name); }
+
+/* ── P0: Export scaling ──────────────────────────────────────────────────── */
+body.export-mode {
+    --ex-font-ovr:   clamp(3rem, 7vw, 10rem);
+    --ex-font-name:  clamp(1.5rem, 3.5vw, 5rem);
+    --ex-font-skill: clamp(0.75rem, 1.1vw, 1.5rem);
+    --ex-photo-w:    clamp(180px, 28vw, 440px);
+}
+body.export-mode.platform-instagram-story,
+body.export-mode.platform-tiktok {
+    --ex-font-ovr:   clamp(5rem, 9vw, 11rem);
+    --ex-font-name:  clamp(2.5rem, 5vw, 6rem);
+    --ex-font-skill: clamp(0.9rem, 1.4vw, 1.8rem);
+    --ex-photo-w:    clamp(220px, 35vw, 500px);
+}
+body.export-mode.platform-banner-custom {
+    --ex-font-ovr:  clamp(3rem, 6vw, 8rem);
+    --ex-font-name: clamp(1.5rem, 3vw, 4rem);
+    --ex-photo-w:   clamp(150px, 17vw, 300px);
+}
+body.export-mode .fifa-header   { grid-template-columns: var(--ex-photo-w) 1fr; }
+body.export-mode .fifa-overall  { font-size: var(--ex-font-ovr); }
+body.export-mode .fifa-name     { font-size: var(--ex-font-name); }
+body.export-mode .skill-name,
+body.export-mode .skill-val     { font-size: var(--ex-font-skill); }
+body.export-mode .skill-bar-bg  { flex: 1 1 0 !important; max-width: none !important; }
 </style>
 </head>
 <body class="{% if platform_class %}{{ platform_class }}{% endif %}{% if export_mode %} export-mode{% endif %}">

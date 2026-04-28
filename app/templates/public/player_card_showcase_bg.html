@@ -210,9 +210,16 @@ body.export-mode.platform-banner-custom .sc-hero {
     flex: 1; height: 100%; flex-direction: column;
     justify-content: center; padding: 1rem 2.5rem; border-bottom: none;
 }
-body.export-mode.platform-banner-custom .sc-name    { font-size: 2.4rem; margin-bottom: 0.6rem; }
-body.export-mode.platform-banner-custom .sc-overall { font-size: 5rem; }
+body.export-mode.platform-banner-custom .sc-name    { font-size: var(--ex-font-name); margin-bottom: 0.6rem; }
+body.export-mode.platform-banner-custom .sc-overall { font-size: var(--ex-font-ovr); }
 body.export-mode.platform-banner-custom .sc-tier    { font-size: 0.75rem; }
+
+/* ── P0: Export component scaling ──────────────────────────────────────── */
+body.export-mode .sc-overall  { font-size: var(--ex-font-ovr); }
+body.export-mode .sc-name     { font-size: var(--ex-font-name); }
+body.export-mode .sc-meta-row { font-size: var(--ex-font-meta); }
+body.export-mode .skill-name,
+body.export-mode .skill-val   { font-size: var(--ex-font-skill); }
 </style>
 {% endblock %}
 

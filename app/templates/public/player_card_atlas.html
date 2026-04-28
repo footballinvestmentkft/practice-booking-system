@@ -400,8 +400,16 @@ body.export-mode.platform-banner-custom .atl-stat-strip {
     flex-shrink: 0;
 }
 body.export-mode.platform-banner-custom .atl-ovr-watermark { display: none; }
-body.export-mode.platform-banner-custom .atl-name   { font-size: 2.2rem; }
-body.export-mode.platform-banner-custom .atl-ovr-num { font-size: 4rem; }
+body.export-mode.platform-banner-custom .atl-name    { font-size: var(--ex-font-name); }
+body.export-mode.platform-banner-custom .atl-ovr-num { font-size: var(--ex-font-ovr); }
+body.export-mode.platform-banner-custom .atl-avatar  { width: var(--ex-avatar-w); height: var(--ex-avatar-w); }
+
+/* ── P0: Export component scaling ──────────────────────────────────────── */
+body.export-mode .atl-avatar  { width: var(--ex-avatar-w); height: var(--ex-avatar-w); border-radius: 13px; }
+body.export-mode .atl-ovr-num { font-size: var(--ex-font-ovr); }
+body.export-mode .atl-name    { font-size: var(--ex-font-name); }
+body.export-mode .skill-name,
+body.export-mode .skill-val   { font-size: var(--ex-font-skill); }
 </style>
 {% endblock %}
 

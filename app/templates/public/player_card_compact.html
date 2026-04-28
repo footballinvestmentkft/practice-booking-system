@@ -216,10 +216,20 @@ body.export-mode.platform-banner-custom .cmp-identity {
     padding: 1rem 2rem;
     border-bottom: none;
 }
-body.export-mode.platform-banner-custom .cmp-name    { font-size: 2.4rem; line-height: 1.1; margin-bottom: 0.5rem; }
-body.export-mode.platform-banner-custom .cmp-overall { font-size: 4.5rem; }
+body.export-mode.platform-banner-custom .cmp-photo-col { flex: 0 0 var(--ex-photo-w); height: 100%; min-height: unset; }
+body.export-mode.platform-banner-custom .cmp-name    { font-size: var(--ex-font-name); line-height: 1.1; margin-bottom: 0.5rem; }
+body.export-mode.platform-banner-custom .cmp-overall { font-size: var(--ex-font-ovr); }
 body.export-mode.platform-banner-custom .cmp-tier    { font-size: 0.7rem; }
-body.export-mode.platform-banner-custom .cmp-meta-row { font-size: 0.85rem; }
+body.export-mode.platform-banner-custom .cmp-meta-row { font-size: var(--ex-font-meta); }
+
+/* ── P0: Export component scaling ──────────────────────────────────────── */
+/* Sprint C/D rules (3 class selectors) override these (2 class selectors). */
+body.export-mode .cmp-photo-col { flex: 0 0 var(--ex-photo-w); }
+body.export-mode .cmp-overall   { font-size: var(--ex-font-ovr); }
+body.export-mode .cmp-name      { font-size: var(--ex-font-name); }
+body.export-mode .cmp-meta-row  { font-size: var(--ex-font-meta); }
+body.export-mode .skill-name,
+body.export-mode .skill-val     { font-size: var(--ex-font-skill); }
 </style>
 {% endblock %}
 
