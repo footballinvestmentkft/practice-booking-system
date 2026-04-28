@@ -1,0 +1,228 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "category": "NUTRITION",
+  "difficulty": "HARD",
+  "quiz_title": "AL — Athlete Nutrition - Elite Nutrition Periodization [EN]",
+  "language": "en",
+  "topic": "Elite Nutrition Periodization",
+  "module": "Athlete Nutrition",
+  "questions": [
+    {
+      "text": "Based on current sports science research, at which training intensity does the train-low strategy (training with low carbohydrate availability) produce the greatest metabolic adaptation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Research by Hansen et al. (2005) and Burke et al. (2017) demonstrates that training in a glycogen-depleted state at low-to-moderate intensities produces stronger AMPK activation and PGC-1α signalling, driving greater mitochondrial biogenesis and fat oxidative enzyme upregulation than training with full glycogen availability. At high-intensity intervals (HIIT), glycogen depletion impairs performance quality and blunts the training stimulus, making train-low counterproductive in those sessions. The strategy should be applied selectively to low-intensity, high-volume sessions.",
+      "options": [
+        {"text": "Low-intensity, high-volume aerobic training — where fat oxidation and mitochondrial adaptation are the primary goals", "is_correct": true},
+        {"text": "High-intensity interval training (HIIT) — where glycogen depletion maximises the metabolic stress and adaptation signal", "is_correct": false},
+        {"text": "Maximal sprint loading — where the phosphocreatine system benefits from carbohydrate restriction", "is_correct": false},
+        {"text": "All training types equally — the adaptation occurs regardless of session type when carbohydrate is restricted", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "concept_tags": ["train_low", "carb_periodization", "AMPK", "mitochondrial_adaptation", "exercise_intensity"],
+        "average_time_seconds": 40.0
+      }
+    },
+    {
+      "text": "What is the primary metabolic mechanism through which the sleep-low protocol (evening training followed by overnight carbohydrate restriction) may produce stronger adaptation compared to immediate post-training carbohydrate recovery?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "The sleep-low protocol extends the window of low glycogen availability across the overnight period and into the following morning's session. Based on the principles established by Hansen et al. and subsequent research, sustained AMPK activation during this extended depletion window drives stronger PGC-1α signalling and mitochondrial biogenesis than occurs with immediate carbohydrate restoration. The mechanism is the prolonged glycogen-depleted state — not fat storage prevention or anabolic signalling. Individual response variability exists, but the mechanistic basis is well-established.",
+      "options": [
+        {"text": "The extended glycogen-depleted window (training + overnight) sustains AMPK activation, driving stronger PGC-1α signalling and mitochondrial adaptation", "is_correct": true},
+        {"text": "Prevention of fat storage during sleep — the absence of an insulin spike reduces anabolic processes and forces fat oxidation", "is_correct": false},
+        {"text": "Reduced cortisol levels during overnight sleep cycles, which limits muscle protein breakdown", "is_correct": false},
+        {"text": "Optimised protein synthesis through the anabolic window created by restricted overnight energy intake", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "concept_tags": ["sleep_low", "AMPK", "PGC1_alpha", "glycogen_depletion", "mitochondrial_biogenesis"],
+        "average_time_seconds": 42.0
+      }
+    },
+    {
+      "text": "In female athletes experiencing relative energy deficiency (RED-S), which hormonal disruption typically appears earliest in the clinical progression — often before menstrual irregularity becomes visible?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Research by Loucks and colleagues demonstrates that LH pulsatility decreases within days of low energy availability in female athletes. This leads to a shortened luteal phase and reduced progesterone — a subclinical stage where the menstrual cycle may appear outwardly normal but the hormonal profile is already compromised. Amenorrhoea represents an advanced stage of the same process. Elevated cortisol and suppressed thyroid hormones can also occur in RED-S, but suppression of the LH pulse and luteal phase shortening are the most consistently documented early hormonal signs. This question applies specifically to female athletes.",
+      "options": [
+        {"text": "Suppressed LH pulsatility leading to a shortened luteal phase and reduced progesterone — while the menstrual cycle appears outwardly normal", "is_correct": true},
+        {"text": "Complete amenorrhoea (cessation of menstruation) — this is the first clinical sign that typically prompts intervention", "is_correct": false},
+        {"text": "Persistently elevated cortisol as the primary hormonal response to sustained negative energy balance", "is_correct": false},
+        {"text": "Hypothyroidism (reduced T3/T4) — metabolic slowing is the first hormonal response to low energy availability", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "concept_tags": ["RED_S", "female_athlete", "LH_pulsatility", "luteal_phase", "energy_availability", "hormonal_disruption"],
+        "average_time_seconds": 42.0
+      }
+    },
+    {
+      "text": "Based on current evidence, what is the recommended protein intake per meal to maximally stimulate muscle protein synthesis, and what is the most important design principle beyond the per-meal amount?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Research by Moore et al. (2009) and Churchward-Venne et al. (2012) indicates that approximately 2–3 g of leucine per serving — corresponding to roughly 20–30 g of high-quality protein sources such as chicken, eggs, or dairy — is required to maximally activate the mTORC1 pathway and stimulate muscle protein synthesis (MPS). Consuming more protein in a single serving does not produce a proportionally greater acute MPS response, as excess amino acids are oxidised. Distributing intake across approximately four daily meals, each meeting the leucine threshold, optimises 24-hour MPS more effectively than consuming the same total protein in fewer, larger servings.",
+      "options": [
+        {"text": "Approximately 20–30 g of high-quality protein per meal (~2–3 g leucine), distributed across around four meals daily", "is_correct": true},
+        {"text": "As much protein as possible per meal — there is no saturation point and more always produces greater MPS", "is_correct": false},
+        {"text": "Around 10 g per meal is sufficient — the leucine threshold is lower than commonly believed and the body uses small amounts efficiently", "is_correct": false},
+        {"text": "Only the post-training meal protein intake matters; the distribution of other meals is irrelevant to MPS", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.73,
+        "cognitive_load": 0.70,
+        "concept_tags": ["leucine_threshold", "MPS", "protein_distribution", "meal_frequency", "muscle_protein_synthesis"],
+        "average_time_seconds": 38.0
+      }
+    },
+    {
+      "text": "Which statement most accurately describes the mechanism of beta-alanine supplementation and its most relevant performance benefit for football players?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Beta-alanine supplementation elevates intramuscular carnosine concentrations. Carnosine acts as an intracellular buffer against hydrogen ion (H+) accumulation during high-intensity exercise. This mechanism is most effective for repeated efforts lasting approximately 1–4 minutes. In football, where players perform multiple sprint bouts and the quality of these efforts tends to decline in the final 20–25 minutes of a match, beta-alanine may help maintain sprint quality in that late-game window. The benefit does not extend to single maximal sprints of 10–30 metres, where the ATP-PCr system dominates and carnosine buffering is not the limiting factor.",
+      "options": [
+        {"text": "It elevates intramuscular carnosine, buffering H+ ions during repeated high-intensity efforts — which may help maintain sprint quality in the final stages of a match", "is_correct": true},
+        {"text": "It directly improves single maximal sprint time by activating the phosphocreatine resynthesis system", "is_correct": false},
+        {"text": "It acts as an antioxidant, reducing exercise-induced muscle damage markers and delayed onset muscle soreness (DOMS)", "is_correct": false},
+        {"text": "It slows glycogen utilisation, extending the sustainable duration of maximal sprint efforts", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.73,
+        "cognitive_load": 0.72,
+        "concept_tags": ["beta_alanine", "carnosine", "H_ion_buffering", "repeated_sprint", "fatigue_resistance"],
+        "average_time_seconds": 38.0
+      }
+    },
+    {
+      "text": "Based on the research evidence, at which exercise intensity range does dietary nitrate (e.g. beetroot juice) produce the most measurable performance benefit?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Research from the Jones laboratory and subsequent studies consistently demonstrates that dietary nitrate improves exercise performance primarily at sub-maximal, moderate aerobic intensities (approximately 60–70% VO₂max) by reducing the oxygen cost of exercise through improved mitochondrial efficiency. At maximal sprint intensities, the ATP-PCr and glycolytic pathways dominate, and the marginal benefit of improved oxygen efficiency is substantially reduced. In football, this translates to aerobic recovery phases between sprints, where cumulative oxygen efficiency gains can be meaningful across a 90-minute match.",
+      "options": [
+        {"text": "Sub-maximal, moderate aerobic intensity — where the reduction in oxygen cost of exercise is most measurable", "is_correct": true},
+        {"text": "Maximal sprint intensity — where the greatest oxygen demand makes the nitrate effect proportionally largest", "is_correct": false},
+        {"text": "Exclusively during post-exercise recovery phases, where vasodilation accelerates nutrient delivery", "is_correct": false},
+        {"text": "Exclusively at altitude, where low partial pressure of oxygen exponentially amplifies the nitrate response", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.73,
+        "cognitive_load": 0.70,
+        "concept_tags": ["dietary_nitrate", "beetroot_juice", "nitric_oxide", "submaximal_exercise", "oxygen_efficiency"],
+        "average_time_seconds": 38.0
+      }
+    },
+    {
+      "text": "Based on current evidence consensus (including the IOC Sports Nutrition Consensus), which supplement has the weakest evidence for additional performance benefit in athletes who already meet their protein targets through whole food sources?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Creatine monohydrate, caffeine, beta-alanine, and sodium bicarbonate are supported by strong, consistent evidence for performance improvement in appropriate contexts, and are among the most robustly classified supplements in current sports nutrition consensus documents. BCAAs (branched-chain amino acids) show inconsistent results in athletes who already achieve adequate protein intake from whole foods — in this context, extra BCAA intake does not provide meaningful additional muscle protein synthesis stimulus beyond simply meeting total protein targets. BCAAs may be of more use in protein-insufficient states or during caloric restriction, but this does not represent the typical well-nourished professional footballer.",
+      "options": [
+        {"text": "BCAAs (branched-chain amino acids) — evidence for additional performance benefit is inconsistent in athletes who already meet their protein targets from whole food sources", "is_correct": true},
+        {"text": "Creatine monohydrate — evidence for repeated sprint capacity and strength adaptation is strong and consistent", "is_correct": false},
+        {"text": "Caffeine — its fatigue-reducing and performance-enhancing effects are extensively documented", "is_correct": false},
+        {"text": "Sodium bicarbonate — its buffering effect at moderate-to-high intensity repeated efforts is consistently documented", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.77,
+        "cognitive_load": 0.75,
+        "concept_tags": ["BCAA", "IOC_consensus", "evidence_based_supplements", "protein_sufficiency", "supplement_classification"],
+        "average_time_seconds": 40.0
+      }
+    },
+    {
+      "text": "Which intervention has the strongest evidence base for reducing exercise-induced gastrointestinal symptoms (cramping, nausea, diarrhoea) during running in athletes?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Research from Jeukendrup and colleagues demonstrates that progressively increasing carbohydrate and fluid intake during training runs over several weeks — known as 'gut training' — is the most consistently supported approach for reducing exercise-induced GI symptoms. This practice appears to upregulate intestinal carbohydrate transporters (including SGLT1), improving absorption capacity and reducing symptom frequency during competition. A gluten-free diet is appropriate for athletes with confirmed coeliac disease but has no evidence-based benefit for GI symptom reduction in athletes without this diagnosis. Probiotic evidence is promising but remains strain-specific and inconsistent across athlete populations.",
+      "options": [
+        {"text": "Progressive gut training — systematically increasing carbohydrate and fluid intake during training sessions over several weeks", "is_correct": true},
+        {"text": "A gluten-free diet — recommended for athletes without diagnosed coeliac disease to reduce intestinal permeability and GI symptoms", "is_correct": false},
+        {"text": "A specific Lactobacillus probiotic strain — consistently shown to eliminate exercise-induced GI symptoms across athlete populations", "is_correct": false},
+        {"text": "A 12-hour fast before every competition — an empty stomach minimises GI loading during the event", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "concept_tags": ["gut_training", "GI_distress", "CHO_tolerance", "SGLT1", "intestinal_adaptation"],
+        "average_time_seconds": 38.0
+      }
+    },
+    {
+      "text": "A player lost 1.5 kg of body weight through sweat during a match. Another match is scheduled 6 hours later. What rehydration strategy is indicated, and what is the key risk if it is executed incorrectly?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "ACSM rehydration guidelines recommend replacing 150% of sweat-induced body weight loss when the next exercise bout occurs within 4–8 hours. The additional 50% beyond the body weight deficit accounts for ongoing urinary losses that continue after sweat stops. The critical requirement is that the fluid must contain sodium (sports drinks or water with food). Replacing 150% of losses with plain water dilutes plasma sodium, which can cause hyponatraemia — a potentially serious condition of dangerously low blood sodium that impairs neuromuscular function.",
+      "options": [
+        {"text": "Replace 150% of the sweat loss using sodium-containing fluid — the sodium content prevents the plasma dilution that could cause hyponatraemia", "is_correct": true},
+        {"text": "Replacing 100% of the loss is sufficient — consuming additional fluid beyond the body weight deficit provides no documented benefit", "is_correct": false},
+        {"text": "Replace 150% of the loss using plain water — sodium replacement is the role of food, not the drink", "is_correct": false},
+        {"text": "The rehydration volume should match the body weight deficit on a 1:1 basis — anything above this ratio is contraindicated", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.77,
+        "cognitive_load": 0.75,
+        "concept_tags": ["rehydration_protocol", "sweat_loss", "hyponatraemia", "sodium", "congested_schedule"],
+        "average_time_seconds": 38.0
+      }
+    },
+    {
+      "text": "Why and how does a football player's iron requirement change during an altitude training camp (approximately 2000–2500 m), and what is the practical implication for preparation?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "At altitude, hypoxia stimulates EPO release, which drives accelerated red blood cell production (erythropoiesis). This process significantly increases the demand for iron as a substrate for haemoglobin synthesis. Research by Gore and Stray-Gundersen indicates that athletes with low pre-altitude ferritin stores (below approximately 35 µg/L) are at high risk of developing functional iron deficiency during the camp, which can blunt the intended altitude adaptation — the very purpose of the training block. Ferritin screening before the camp and, where indicated, medically supervised oral iron supplementation are therefore standard preparatory steps.",
+      "options": [
+        {"text": "Hypoxia stimulates EPO production, driving increased erythropoiesis and significantly raising iron demand for haemoglobin synthesis; low pre-camp ferritin may impair adaptation", "is_correct": true},
+        {"text": "Iron requirement decreases because reduced oxygen utilisation at altitude lowers the demand for haemoglobin synthesis", "is_correct": false},
+        {"text": "Iron requirement does not change significantly — only carbohydrate and fluid needs increase at altitude", "is_correct": false},
+        {"text": "Iron supplementation is contraindicated at altitude because increased blood viscosity raises cardiovascular risk", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "concept_tags": ["altitude_training", "EPO", "erythropoiesis", "iron_demand", "ferritin"],
+        "average_time_seconds": 40.0
+      }
+    },
+    {
+      "text": "Among well-nourished football players training in a temperate climate, which supplement intervention has the most consistent evidence base for reducing upper respiratory tract infection (URTI) frequency?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Evidence consistently supports vitamin D supplementation for reducing URTI frequency and severity in athletes who are vitamin D deficient — a common finding in players training in northern climates or predominantly indoors during winter. Adequate vitamin D supports multiple aspects of immune function. High-dose vitamin C (1–2 g/day) does not show consistent URTI-reducing effects in well-nourished athletes training in temperate conditions, although benefits have been observed in specific contexts of extreme physical stress or cold exposure. Probiotic evidence is promising but remains highly strain-specific. Echinacea trials in athletic populations have not produced consistent results.",
+      "options": [
+        {"text": "Vitamin D supplementation in players who are vitamin D deficient — consistently shown to reduce URTI incidence and severity", "is_correct": true},
+        {"text": "High-dose vitamin C (1–2 g/day) — meta-analyses consistently demonstrate URTI reduction in well-nourished footballers training in temperate climates", "is_correct": false},
+        {"text": "Zinc supplementation — blocks rhinovirus cell attachment and is consistently recommended for all football players", "is_correct": false},
+        {"text": "Echinacea extract — the majority of controlled trials in athletic populations have consistently confirmed its effectiveness", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.76,
+        "concept_tags": ["vitamin_D", "URTI", "immune_function", "immunonutrition", "evidence_context"],
+        "average_time_seconds": 40.0
+      }
+    },
+    {
+      "text": "Based on current research, in which specific performance domain does periodised carbohydrate intake (train-low strategies) show a clear advantage over consistently high carbohydrate availability during long-term training?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Burke et al. (2017, 2018) and related research demonstrate that periodised carbohydrate strategies produce significantly greater improvements in mitochondrial enzyme activity (citrate synthase, β-HAD) and fat oxidative capacity compared to consistently high carbohydrate availability. However, VO₂max improvements and time-trial performance are not consistently superior, and high-intensity sprint performance can actually be impaired when training is routinely conducted in a glycogen-limited state. The practical implication is that train-low is a targeted tool for specific low-intensity sessions — not a blanket replacement for high carbohydrate availability across all training.",
+      "options": [
+        {"text": "Mitochondrial enzyme activity and fat oxidative capacity — but VO₂max and sprint performance are not consistently better and may be worse", "is_correct": true},
+        {"text": "VO₂max and maximal aerobic capacity — periodised carbohydrate intake consistently produces superior VO₂max improvements", "is_correct": false},
+        {"text": "Sprint performance and explosiveness — glycogen-limited training drives stronger ATP-PCr system adaptation", "is_correct": false},
+        {"text": "All measured performance parameters improve — periodised carbohydrate intake comprehensively outperforms high carbohydrate availability", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.82,
+        "cognitive_load": 0.80,
+        "concept_tags": ["carb_periodization", "mitochondrial_adaptation", "fat_oxidation", "VO2max", "sprint_performance"],
+        "average_time_seconds": 42.0
+      }
+    }
+  ]
+}

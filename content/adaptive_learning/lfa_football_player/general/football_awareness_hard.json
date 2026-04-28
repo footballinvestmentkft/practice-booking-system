@@ -1,0 +1,228 @@
+{
+  "schema_version": "1.0",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "category": "GENERAL",
+  "difficulty": "HARD",
+  "quiz_title": "AL — Football Awareness - Football Governance & Global Structures [EN]",
+  "language": "en",
+  "topic": "Football Governance & Global Structures",
+  "module": "Football Awareness",
+  "questions": [
+    {
+      "text": "Who has the authority to determine the format of the UEFA Champions League competition?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "UEFA has autonomous decision-making authority over its own competitions, including the Champions League format. FIFA, through IFAB, governs the Laws of the Game — but does not have operational authority over UEFA competition formats. The 2024/25 Champions League format change (from group stage to league phase) was a unilateral UEFA decision, illustrating this institutional autonomy in practice.",
+      "options": [
+        {"text": "UEFA — it has sole authority over the format of its own competitions, with no FIFA approval required", "is_correct": true},
+        {"text": "FIFA — as the global governing body of football, it approves all major competition formats", "is_correct": false},
+        {"text": "A joint annual vote of all UEFA member associations determines the competition format each season", "is_correct": false},
+        {"text": "IFAB — as the sole rule-making body in football, it sets the framework for all competitions", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.72,
+        "cognitive_load": 0.68,
+        "concept_tags": ["UEFA_governance", "FIFA", "competition_format", "institutional_autonomy", "IFAB"],
+        "average_time_seconds": 38.0
+      }
+    },
+    {
+      "text": "Under UEFA's current financial regulatory framework (PSR), what is the typical first-tier response when a club exceeds the financial thresholds for the first time in UEFA competitions?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "UEFA's financial regulations apply a graduated sanction approach. Under the current framework, the first-tier response to a minor or first-time breach typically involves a financial settlement and/or conditional restrictions — not an immediate transfer ban or competition exclusion. More severe sanctions (including transfer embargoes and exclusion from UEFA competitions) are reserved for serious or repeated violations. It is important to note that points deductions are a domestic league instrument (used for example in the English Premier League) and are not part of UEFA's own sanction toolkit.",
+      "options": [
+        {"text": "A financial settlement and/or conditional restrictions — the first step in UEFA's graduated sanction approach under the current framework", "is_correct": true},
+        {"text": "An immediate and total transfer ban for the following two UEFA registration periods", "is_correct": false},
+        {"text": "A points deduction in the club's next UEFA competition group or league phase", "is_correct": false},
+        {"text": "Immediate exclusion from all ongoing UEFA competitions mid-season", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.73,
+        "concept_tags": ["UEFA_PSR", "financial_regulations", "sanctions", "graduated_approach", "compliance"],
+        "average_time_seconds": 42.0
+      }
+    },
+    {
+      "text": "Under the general provisions of the FIFA Regulations on the Status and Transfer of Players (RSTP), can a club register a contract-free (free agent) striker after the domestic transfer window has closed?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Under the FIFA RSTP general provisions, registration windows apply to free agents as well as contracted transfers. The term 'free transfer' refers only to the absence of a transfer fee — it does not exempt the player from the registration period requirement. Clubs cannot register a free agent striker outside an open registration window. Emergency provisions exist within FIFA RSTP, but these are strictly limited in scope and do not apply to outfield positions such as striker.",
+      "options": [
+        {"text": "No — under FIFA RSTP general provisions, registration windows apply to free agents as well as contracted transfers", "is_correct": true},
+        {"text": "Yes, at any time — the transfer window rule applies only to contracted transfers, not free agents", "is_correct": false},
+        {"text": "Yes, but only if the club submits an emergency application citing an active goalkeeper shortage", "is_correct": false},
+        {"text": "Yes, but the player cannot appear in a match until five days after registration is confirmed", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.73,
+        "cognitive_load": 0.70,
+        "concept_tags": ["transfer_window", "free_agent", "RSTP", "registration_period", "FIFA_regulations"],
+        "average_time_seconds": 38.0
+      }
+    },
+    {
+      "text": "What is the UEFA club coefficient primarily based on, and how is it used in Champions League competition?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "The UEFA club coefficient is calculated exclusively from results achieved in UEFA competitions over the previous five seasons — wins, draws, and advancement bonuses. Domestic league performance has no influence on this figure. The coefficient is used to determine seeding positions in UEFA competition draws and to establish access rights. A club that wins its domestic league but has poor recent UEFA results may be placed in a lower seeding pot than a club that finished lower domestically but performed well in European competition.",
+      "options": [
+        {"text": "Results in UEFA competitions over the previous five seasons — used to determine seeding positions in UEFA draws", "is_correct": true},
+        {"text": "The current domestic league position combined with the previous season's final standing", "is_correct": false},
+        {"text": "The national association's UEFA ranking combined with the club's market value", "is_correct": false},
+        {"text": "A FIFA World Ranking-adjusted metric based on the club's national team players' UEFA performance", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.70,
+        "cognitive_load": 0.68,
+        "concept_tags": ["club_coefficient", "UEFA_seeding", "competition_results", "Champions_League", "5_season_window"],
+        "average_time_seconds": 38.0
+      }
+    },
+    {
+      "text": "According to IFAB Laws of the Game, which four categories of match situations can be reviewed by the Video Assistant Referee (VAR)?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "IFAB Laws of the Game define exactly four reviewable VAR categories: goal/no goal decisions, penalty/no penalty decisions, direct red card offences, and mistaken identity (the wrong player being cautioned or sent off). Yellow cards, offside decisions without a goal, and throw-in procedures are outside VAR's scope. The referee retains sole discretion in these situations. This precise limitation exists to avoid excessive interruptions and preserve the flow of the game.",
+      "options": [
+        {"text": "Goal/no goal — penalty/no penalty — direct red card offence — mistaken identity (wrong player sanctioned)", "is_correct": true},
+        {"text": "Goal/no goal — yellow card — offside — penalty/no penalty", "is_correct": false},
+        {"text": "All situations inside the penalty area and any red card incident anywhere on the pitch", "is_correct": false},
+        {"text": "Goal/no goal — offside — direct red card — legal/illegal throw-in", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.73,
+        "cognitive_load": 0.70,
+        "concept_tags": ["VAR", "review_categories", "IFAB", "match_officials", "Laws_of_the_Game"],
+        "average_time_seconds": 38.0
+      }
+    },
+    {
+      "text": "In a match equipped with both Goal Line Technology (GLT) and VAR, the ball reaches the goal line. Which system has sole authority to determine whether the ball fully crossed the line?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Goal Line Technology is the sole definitive system for determining whether the ball has fully crossed the goal line. It automatically transmits a signal to the referee's watch within one second. VAR reviews events surrounding a goal — such as offside in the build-up or a foul before the finish — but does not have authority over, or visibility into, the GLT's goal/no-goal determination. The two systems operate in separate domains and are complementary, not competing.",
+      "options": [
+        {"text": "GLT — it automatically and exclusively determines whether the ball crossed the line; VAR reviews only the preceding situation", "is_correct": true},
+        {"text": "VAR — it has authority to review all aspects of every goal situation, including whether the ball crossed the line", "is_correct": false},
+        {"text": "The referee decides; both systems serve only an advisory function", "is_correct": false},
+        {"text": "If GLT and VAR produce conflicting outputs, the VAR decision takes precedence", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.70,
+        "cognitive_load": 0.68,
+        "concept_tags": ["GLT", "VAR", "goal_line_technology", "referee_decision", "match_technology"],
+        "average_time_seconds": 35.0
+      }
+    },
+    {
+      "text": "Under UEFA competition regulations, do yellow cards accumulated during one phase of the Champions League automatically carry over and affect a player's suspension eligibility in the next competition phase?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "UEFA competition regulations include a booking amnesty at the boundary between competition phases. Yellow cards accumulated in an earlier phase are cleared and do not carry forward into the next phase. This prevents a player from being suspended in, for example, a knockout match due to bookings received during the league phase. Yellow cards accumulated within the knockout rounds do continue to accumulate within that stage. This rule applies within the UEFA Champions League structure and may differ from domestic league booking accumulation rules.",
+      "options": [
+        {"text": "No — UEFA regulations include a booking amnesty at the transition between competition phases; yellow cards from an earlier phase are cleared", "is_correct": true},
+        {"text": "Yes — all accumulated yellow cards carry forward throughout the entire Champions League season", "is_correct": false},
+        {"text": "Only if the two yellow cards were received in consecutive matches, not in the same match", "is_correct": false},
+        {"text": "There is no automatic rule; UEFA's Disciplinary Body reviews each case individually and decides whether to carry bookings forward", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.73,
+        "cognitive_load": 0.70,
+        "concept_tags": ["yellow_card", "booking_amnesty", "UEFA_regulations", "suspension", "competition_phases"],
+        "average_time_seconds": 40.0
+      }
+    },
+    {
+      "text": "According to the core principles of FIFA's current football agent regulations, can an agent simultaneously represent both the player and the buying club in the same transfer transaction?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "Under FIFA's current football agent regulatory framework, dual representation — where a single agent acts for both the player and the buying club in the same transaction — is not outright prohibited, but it is conditional. Both parties (the player and the club) must provide prior, documented written consent acknowledging the potential conflict of interest. This transparency-based approach has been a consistent principle across successive versions of FIFA's agent regulations. Note: specific fee caps and other procedural provisions in the current framework are subject to ongoing regulatory and legal review in various jurisdictions.",
+      "options": [
+        {"text": "Yes, but only if both parties — the player and the club — provide prior documented written consent", "is_correct": true},
+        {"text": "Strictly prohibited — an agent must represent only one party in any given transaction due to conflict of interest", "is_correct": false},
+        {"text": "Automatically permitted as long as the agent's total fee does not exceed the market-standard rate", "is_correct": false},
+        {"text": "Permitted, but the agent must formally resign the mandate for one party before contracts are signed", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.75,
+        "cognitive_load": 0.72,
+        "concept_tags": ["FIFA_agent_regulations", "dual_representation", "informed_consent", "transfer_process", "player_representation"],
+        "average_time_seconds": 40.0
+      }
+    },
+    {
+      "text": "A player receives a red card during a Champions League match. The player's national federation wishes to open its own disciplinary investigation into the same incident. According to UEFA's disciplinary regulations, which organisation has authority over this matter?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "UEFA's disciplinary regulations grant UEFA exclusive jurisdiction over disciplinary matters arising during its own competitions. A national federation cannot open a parallel disciplinary investigation into the same incident that occurred in a UEFA competition. This principle protects players from being sanctioned twice for the same event. Criminal law can apply independently if the incident meets the legal threshold, but within the domain of football discipline, the UEFA disciplinary process is the authoritative one for UEFA competition incidents.",
+      "options": [
+        {"text": "UEFA has exclusive disciplinary jurisdiction; the national federation cannot open a parallel investigation into the same incident", "is_correct": true},
+        {"text": "The national federation, because the player holds a domestic licence and competes in the domestic league", "is_correct": false},
+        {"text": "Both organisations may act simultaneously; the stricter sanction will be applied", "is_correct": false},
+        {"text": "FIFA, as the supreme governing body, decides all cases that cross federation boundaries", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "concept_tags": ["UEFA_jurisdiction", "domestic_federation", "disciplinary_authority", "competition_governance", "exclusive_competence"],
+        "average_time_seconds": 40.0
+      }
+    },
+    {
+      "text": "Under FIFA RSTP provisions, how is the solidarity contribution distributed when a professional player is transferred internationally?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "FIFA RSTP Article 21 establishes the solidarity contribution mechanism: when a professional player is transferred internationally, 5% of the total transfer compensation is distributed as a solidarity payment to the clubs that trained the player between the ages of 12 and 23. The distribution is proportional to the number of years the player spent at each club during that period. This amount is deducted by the buying club from the transfer fee and distributed directly — the selling club receives the remaining 95% and is not the recipient of the solidarity contribution.",
+      "options": [
+        {"text": "Clubs that trained the player between ages 12 and 23 — distributed proportionally to the years spent at each club", "is_correct": true},
+        {"text": "The selling club receives the full solidarity contribution as the organisation facilitating the transfer", "is_correct": false},
+        {"text": "Split 50/50 between the selling club and the player's national association", "is_correct": false},
+        {"text": "Only the club where the player trained between ages 16 and 18 is entitled to receive the full solidarity payment", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.80,
+        "cognitive_load": 0.78,
+        "concept_tags": ["solidarity_payment", "RSTP", "training_compensation", "player_development", "transfer_fee_distribution"],
+        "average_time_seconds": 40.0
+      }
+    },
+    {
+      "text": "In a Champions League match, which organisation conducts the doping tests and makes the initial disciplinary decision, and what is WADA's precise role in this process?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "UEFA operates its own anti-doping programme under the UEFA Anti-Doping Regulations, which are compliant with the WADA Code. UEFA conducts testing at its competitions using WADA-accredited laboratories, and UEFA's anti-doping review panel makes the initial disciplinary decision. WADA's role is structural: it sets the World Anti-Doping Code, accredits testing laboratories, and retains the right to appeal decisions to the Court of Arbitration for Sport (CAS). WADA does not conduct testing directly — it oversees and monitors national anti-doping organisations and sports federations.",
+      "options": [
+        {"text": "UEFA conducts the testing and makes the initial decision; WADA sets the Code, accredits laboratories, and retains an appeal right to CAS — but does not test directly", "is_correct": true},
+        {"text": "WADA conducts the testing directly in all UEFA competitions as the sole global anti-doping enforcement body", "is_correct": false},
+        {"text": "The player's national federation conducts the test, because the player falls under their jurisdiction by nationality", "is_correct": false},
+        {"text": "FIFA conducts the testing for all UEFA competitions, as UEFA anti-doping rules must ultimately be approved by FIFA", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.73,
+        "cognitive_load": 0.70,
+        "concept_tags": ["WADA", "anti_doping", "testing_authority", "UEFA_doping", "laboratory_accreditation"],
+        "average_time_seconds": 38.0
+      }
+    },
+    {
+      "text": "Under current regulations, what is the fundamental difference between the UEFA and Premier League homegrown player definitions?",
+      "type": "MULTIPLE_CHOICE",
+      "points": 3,
+      "explanation": "The UEFA homegrown player rule is nationality-agnostic: any player trained for at least three years between the ages of 15 and 21 at the registering club or another club within the same national association qualifies as homegrown, regardless of their passport. A Brazilian player trained in France qualifies as homegrown on a French club's UEFA squad list. The Premier League's homegrown definition requires the player to hold English or Welsh nationality in addition to meeting the training period requirement. Under current regulations, the same Brazilian player would not qualify as homegrown in the Premier League.",
+      "options": [
+        {"text": "The UEFA definition is nationality-agnostic (training location is decisive); the Premier League requires English or Welsh nationality", "is_correct": true},
+        {"text": "The UEFA and Premier League definitions are identical — in both systems, the player's association nationality is the deciding factor", "is_correct": false},
+        {"text": "The Premier League accepts any EU citizen as homegrown; UEFA only recognises players from the registering club's own national association", "is_correct": false},
+        {"text": "Both systems require five years of training, but UEFA uses ages 15–20 and the Premier League uses ages 16–21", "is_correct": false}
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.78,
+        "cognitive_load": 0.75,
+        "concept_tags": ["homegrown_player", "UEFA_squad_rules", "Premier_League", "nationality_requirement", "training_based_definition"],
+        "average_time_seconds": 42.0
+      }
+    }
+  ]
+}
