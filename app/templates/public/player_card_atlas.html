@@ -410,6 +410,118 @@ body.export-mode .atl-ovr-num { font-size: var(--ex-font-ovr); }
 body.export-mode .atl-name    { font-size: var(--ex-font-name); }
 body.export-mode .skill-name,
 body.export-mode .skill-val   { font-size: var(--ex-font-skill); }
+
+/* ── IG Square: Atlas-specifikus export layout (1080×1080) ───────────────── */
+/* Szigorú scope: body.export-mode.platform-instagram-square ONLY.           */
+
+/* card-wrap legyen flex column → skills-section flex:1 működjön             */
+body.export-mode.platform-instagram-square .card-wrap {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Hero: max-height rögzítve, ne nyomja össze a skills zónát                */
+body.export-mode.platform-instagram-square .atl-hero {
+    max-height: 26vw;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+/* Hero elemek: proportionális scaling 1080px-en                             */
+body.export-mode.platform-instagram-square .atl-pos-badge,
+body.export-mode.platform-instagram-square .atl-tier-badge {
+    font-size: clamp(0.65rem, 1.1vw, 1.5rem);
+    padding: 3px 12px;
+}
+body.export-mode.platform-instagram-square .atl-club-pill {
+    font-size: clamp(0.6rem, 1vw, 1.3rem);
+}
+body.export-mode.platform-instagram-square .atl-stat-value {
+    font-size: clamp(0.9rem, 1.3vw, 1.7rem);
+}
+body.export-mode.platform-instagram-square .atl-stat-label {
+    font-size: clamp(0.5rem, 0.8vw, 1rem);
+}
+
+/* Redundáns / dekoratív elemek elrejtése square exportban                   */
+body.export-mode.platform-instagram-square .atl-cat-grid      { display: none !important; }
+body.export-mode.platform-instagram-square .atl-ovr-watermark { display: none !important; }
+body.export-mode.platform-instagram-square .atl-footer        { display: none !important; }
+
+/* Skills section: kitölti a fennmaradó canvas magasságot                    */
+body.export-mode.platform-instagram-square .skills-section {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 1.2vw;
+}
+body.export-mode.platform-instagram-square .skills-title {
+    font-size: clamp(0.7rem, 0.9vw, 1.1rem);
+    margin-bottom: 1vw;
+    flex-shrink: 0;
+}
+
+/* 2×2 skill grid: egyenlő cellák, kitölti a rendelkezésre álló teret        */
+body.export-mode.platform-instagram-square .skill-cats {
+    flex: 1;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 1fr;
+    gap: 1vw;
+    overflow: hidden;
+}
+
+/* Skill cat cella: flex column, tartalom kitölti a cellát                   */
+body.export-mode.platform-instagram-square .skill-cat {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 1.2vw;
+    border-radius: 10px;
+}
+body.export-mode.platform-instagram-square .skill-cat-name {
+    flex-shrink: 0;
+    font-size: clamp(0.7rem, 1.1vw, 1.4rem);
+    margin-bottom: 0.8vw;
+}
+
+/* Skill sorok: rugalmasan töltik a cellát, max-height a szórás ellen         */
+body.export-mode.platform-instagram-square .skill-row {
+    flex: 1;
+    min-height: 0;
+    max-height: 7.5vw;   /* ~81px — ritka kategorik esetén korlát */
+    display: flex;
+    align-items: center;
+    gap: 0.5vw;
+    margin-bottom: 0;
+}
+
+/* Max 6 sor / kategória — 7. sortól kontrollált rejtés (nem clipping)       */
+/* skill-cat child 1 = cat-name, child 2..7 = skill-row 1..6, 8+ hidden     */
+body.export-mode.platform-instagram-square .skill-cat > .skill-row:nth-child(n+8) {
+    display: none !important;
+}
+
+/* Font, bar méretezés 1080px-en                                             */
+body.export-mode.platform-instagram-square .skill-name {
+    font-size: clamp(0.9rem, 1.4vw, 1.8rem);
+}
+body.export-mode.platform-instagram-square .skill-val {
+    font-size: clamp(0.9rem, 1.4vw, 1.8rem);
+    width: 2.8vw;
+    flex-shrink: 0;
+}
+body.export-mode.platform-instagram-square .skill-up {
+    font-size: clamp(0.6rem, 1vw, 1.2rem);
+    width: 1.2vw;
+    flex-shrink: 0;
+}
+body.export-mode.platform-instagram-square .skill-bar-bg {
+    flex: 1 1 0;
+    max-width: none !important;
+    height: clamp(4px, 0.6vw, 8px);
+}
 </style>
 {% endblock %}
 
