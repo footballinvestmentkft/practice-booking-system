@@ -24,6 +24,10 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 router = APIRouter(tags=["adaptive-learning"])
 
 MIN_QUESTIONS_PER_CATEGORY = 10
+MIN_QUESTIONS_PER_MODULE = 10
+
+# Quiz title prefixes that are test/seed artifacts — never exposed as AL modules
+_EXCLUDED_MODULE_PATTERNS = ["Virtual Quiz%", "Smoke Test Quiz%", "E2E UI Quiz%"]
 
 
 @router.get("/adaptive-learning", response_class=HTMLResponse)
@@ -110,8 +114,121 @@ async def adaptive_learning_session_page(
             **_spec_ctx(user, db),
             "available_categories": category_values,
             "session_language": language,
+            "available_topics": {},
+            "easy_completed_modules": [],
         },
     )
+
+
+# ── Module discovery (AL-3) ──────────────────────────────────────────────────
+
+def _module_exclusion_filters():
+    """SQLAlchemy NOT LIKE filters for test/seed quiz artifacts."""
+    from sqlalchemy import not_
+    return [not_(Quiz.title.like(p)) for p in _EXCLUDED_MODULE_PATTERNS]
+
+
+@router.get("/adaptive-learning/available-categories")
+async def al_available_categories(
+    language: str = Query("en", description="Session language ('en' or 'hu')"),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Return all QuizCategory values with has_content flags for the given language."""
+    guard = require_student_onboarding(user)
+    if guard:
+        return JSONResponse({"error": "onboarding required"}, status_code=403)
+
+    if language not in _VALID_LANGUAGES:
+        return JSONResponse(
+            {"error": f"language {language!r} is not supported. Valid values: {sorted(_VALID_LANGUAGES)}"},
+            status_code=422,
+        )
+
+    # Count valid AL questions per category for this language
+    rows = (
+        db.query(Quiz.category, func.count(QuizQuestion.id).label("q_count"))
+        .join(QuizQuestion, QuizQuestion.quiz_id == Quiz.id)
+        .filter(
+            Quiz.is_active == True,
+            Quiz.language == language,
+            Quiz.title.like("AL — % - %"),
+            *_module_exclusion_filters(),
+        )
+        .group_by(Quiz.category)
+        .having(func.count(QuizQuestion.id) >= MIN_QUESTIONS_PER_MODULE)
+        .all()
+    )
+    content_map = {row.category: row.q_count for row in rows}
+
+    categories = []
+    for cat in QuizCategory:
+        q_count = content_map.get(cat, 0)
+        categories.append({
+            "value": cat.value,
+            "has_content": q_count >= MIN_QUESTIONS_PER_MODULE,
+            "question_count": q_count,
+        })
+
+    return JSONResponse({"categories": categories, "language": language})
+
+
+@router.get("/adaptive-learning/modules")
+async def al_modules(
+    language: str = Query("en", description="Session language ('en' or 'hu')"),
+    category: str = Query("LESSON", description="QuizCategory value"),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Return available modules (quiz title prefixes) for a language + category."""
+    guard = require_student_onboarding(user)
+    if guard:
+        return JSONResponse({"error": "onboarding required"}, status_code=403)
+
+    if language not in _VALID_LANGUAGES:
+        return JSONResponse(
+            {"error": f"language {language!r} is not supported. Valid values: {sorted(_VALID_LANGUAGES)}"},
+            status_code=422,
+        )
+
+    try:
+        quiz_category = QuizCategory[category.upper()]
+    except KeyError:
+        valid = [c.value for c in QuizCategory]
+        return JSONResponse(
+            {"error": f"invalid category {category!r}. Valid values: {valid}"},
+            status_code=422,
+        )
+
+    # Extract module prefix = everything before the first ' - ' in the title
+    prefix_expr = func.split_part(Quiz.title, " - ", 1)
+    rows = (
+        db.query(prefix_expr.label("module_prefix"), func.count(QuizQuestion.id).label("q_count"))
+        .join(QuizQuestion, QuizQuestion.quiz_id == Quiz.id)
+        .filter(
+            Quiz.is_active == True,
+            Quiz.language == language,
+            Quiz.category == quiz_category,
+            Quiz.title.like("AL — % - %"),
+            *_module_exclusion_filters(),
+        )
+        .group_by(prefix_expr)
+        .having(func.count(QuizQuestion.id) >= MIN_QUESTIONS_PER_MODULE)
+        .order_by(prefix_expr)
+        .all()
+    )
+
+    modules = []
+    for row in rows:
+        prefix = row.module_prefix
+        display = prefix.removeprefix("AL — ") if prefix.startswith("AL — ") else prefix
+        modules.append({
+            "module_prefix": prefix,
+            "display_name": display,
+            "question_count": row.q_count,
+        })
+
+    return JSONResponse({"modules": modules, "language": language, "category": category.upper()})
 
 
 # ── Session lifecycle (AL-1) ──────────────────────────────────────────────────
@@ -146,15 +263,29 @@ _VALID_LANGUAGES = {"en", "hu"}
 async def al_session_start(
     request: Request,
     category: str = Query("LESSON", description="QuizCategory value for this session"),
+    module_prefix: str = Query(..., description="Quiz title prefix identifying the module (required)"),
     time_limit: int = Query(180, description="Session time limit in seconds (60, 180, or 300)"),
     language: str = Query("en", description="Session language ('en' or 'hu')"),
+    force_new: bool = Query(False, description="Retire any active session and create a fresh one"),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
-    """Start a new adaptive learning session, or return the existing active one."""
+    """Start a new adaptive learning session scoped to a specific module.
+
+    Decision matrix:
+      - No active session                                      → CREATE  (resumed=false)
+      - Active session, expired                               → retire  → CREATE
+      - Active session, force_new=true                        → retire  → CREATE  (previous_session_retired=true)
+      - Active session, any of lang/cat/module differs        → retire  → CREATE  (previous_session_retired=true)
+      - Active session, exact lang+cat+module match           → RESUME             (resumed=true)
+    """
     guard = require_student_onboarding(user)
     if guard:
         return JSONResponse({"error": "onboarding required"}, status_code=403)
+
+    if not module_prefix or not module_prefix.strip():
+        return JSONResponse({"error": "module_prefix is required"}, status_code=422)
+    module_prefix = module_prefix.strip()
 
     try:
         quiz_category = QuizCategory[category.upper()]
@@ -177,32 +308,31 @@ async def al_session_start(
             status_code=422,
         )
 
-    # Reject categories that have fewer than the minimum number of active questions
-    # for the requested language. This prevents sessions that immediately complete 0/0.
-    question_count = (
+    # Validate module_prefix exists with enough questions for this category + language
+    module_q_count = (
         db.query(func.count(QuizQuestion.id))
         .join(Quiz, Quiz.id == QuizQuestion.quiz_id)
         .filter(
             Quiz.category == quiz_category,
             Quiz.language == language,
             Quiz.is_active == True,
+            Quiz.title.like(f"{module_prefix} -%"),
+            *_module_exclusion_filters(),
         )
         .scalar()
     ) or 0
-    if question_count < MIN_QUESTIONS_PER_CATEGORY:
+    if module_q_count < MIN_QUESTIONS_PER_MODULE:
         return JSONResponse(
             {
                 "error": (
-                    f"category {category!r} has insufficient questions for language {language!r} "
-                    f"({question_count} available, {MIN_QUESTIONS_PER_CATEGORY} required)"
+                    f"module {module_prefix!r} not found or has insufficient questions "
+                    f"for category {category!r} / language {language!r} "
+                    f"({module_q_count} available, {MIN_QUESTIONS_PER_MODULE} required)"
                 )
             },
             status_code=422,
         )
 
-    # Return existing active session rather than creating a duplicate.
-    # If the existing session is already server-side expired, retire it first so
-    # the user gets a fresh session rather than an immediately-terminal resume.
     existing = (
         db.query(AdaptiveLearningSession)
         .filter(
@@ -212,45 +342,76 @@ async def al_session_start(
         .order_by(AdaptiveLearningSession.id.desc())
         .first()
     )
+
+    prior_retired = False
+
     if existing:
         elapsed = 0.0
         if existing.session_start_time and existing.session_time_limit_seconds:
             elapsed = (datetime.now(timezone.utc) - existing.session_start_time).total_seconds()
 
         if existing.session_time_limit_seconds and elapsed >= existing.session_time_limit_seconds:
-            # Stale expired session — retire it and fall through to create a new one
+            # Expired — retire silently, fall through to CREATE
             existing.ended_at = datetime.now(timezone.utc)
             db.commit()
+
+        elif force_new:
+            existing.ended_at = datetime.now(timezone.utc)
+            db.commit()
+            prior_retired = True
+
+        elif (existing.category != quiz_category
+              or existing.language != language
+              or existing.module_prefix != module_prefix):
+            # Any mismatch (category / language / module) → auto-retire, no prompt
+            existing.ended_at = datetime.now(timezone.utc)
+            db.commit()
+            prior_retired = True
+
         else:
-            # Valid unexpired session — update time limit to match user's current choice.
-            # If elapsed time already exceeds the new (shorter) limit, reset the clock so
-            # the first next-question call doesn't immediately expire the session.
+            # EXACT match on language + category + module → RESUME
             existing.session_time_limit_seconds = time_limit
             if elapsed >= time_limit:
                 existing.session_start_time = datetime.now(timezone.utc)
             db.commit()
+            elapsed_after = (datetime.now(timezone.utc) - existing.session_start_time).total_seconds()
+            time_remaining = max(0, int(existing.session_time_limit_seconds - elapsed_after))
             current_score = (existing.questions_correct or 0) * 2 - (existing.questions_presented or 0)
             return JSONResponse({
                 "session_id": existing.id,
-                "question_count": 10,
-                "started_at": existing.session_start_time.isoformat() if existing.session_start_time else None,
                 "resumed": True,
+                "force_new": False,
+                "previous_session_retired": False,
+                "category": existing.category.value,
+                "module_prefix": existing.module_prefix,
+                "language": existing.language,
+                "started_at": existing.session_start_time.isoformat() if existing.session_start_time else None,
                 "time_limit_seconds": time_limit,
+                "time_remaining_seconds": time_remaining,
                 "current_score": current_score,
                 "questions_presented": existing.questions_presented or 0,
             })
 
     service = AdaptiveLearningService(db)
     session = service.start_adaptive_session(
-        user.id, quiz_category, session_duration_seconds=time_limit, language=language
+        user.id, quiz_category,
+        session_duration_seconds=time_limit,
+        language=language,
+        module_prefix=module_prefix,
     )
     return JSONResponse({
         "session_id": session.id,
-        "question_count": 10,
-        "started_at": session.session_start_time.isoformat() if session.session_start_time else None,
         "resumed": False,
+        "force_new": force_new,
+        "previous_session_retired": prior_retired,
+        "category": quiz_category.value,
+        "module_prefix": module_prefix,
+        "language": language,
+        "started_at": session.session_start_time.isoformat() if session.session_start_time else None,
         "time_limit_seconds": time_limit,
+        "time_remaining_seconds": time_limit,
         "current_score": 0,
+        "questions_presented": 0,
     })
 
 

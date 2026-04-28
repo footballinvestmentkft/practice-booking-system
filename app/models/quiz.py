@@ -184,6 +184,10 @@ class AdaptiveLearningSession(Base):
     # Session language (ensures HU and EN questions never mix)
     language = Column(String(10), nullable=False, default='en')
 
+    # Module scoping — quiz title prefix (e.g. 'AL — Edzéselmélet')
+    # NULL on legacy sessions; required for all new sessions via v2 flow
+    module_prefix = Column(String(200), nullable=True)
+
     # Adaptive algorithm data
     target_difficulty = Column(Float, default=0.5)  # 0.0-1.0
     performance_trend = Column(Float, default=0.0)  # -1.0 to 1.0

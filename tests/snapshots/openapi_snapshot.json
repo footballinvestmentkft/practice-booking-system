@@ -22795,6 +22795,108 @@
         ]
       }
     },
+    "/adaptive-learning/available-categories": {
+      "get": {
+        "description": "Return all QuizCategory values with has_content flags for the given language.",
+        "operationId": "al_available_categories_adaptive_learning_available_categories_get",
+        "parameters": [
+          {
+            "description": "Session language ('en' or 'hu')",
+            "in": "query",
+            "name": "language",
+            "required": false,
+            "schema": {
+              "default": "en",
+              "description": "Session language ('en' or 'hu')",
+              "title": "Language",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Al Available Categories",
+        "tags": [
+          "web",
+          "adaptive-learning"
+        ]
+      }
+    },
+    "/adaptive-learning/modules": {
+      "get": {
+        "description": "Return available modules (quiz title prefixes) for a language + category.",
+        "operationId": "al_modules_adaptive_learning_modules_get",
+        "parameters": [
+          {
+            "description": "Session language ('en' or 'hu')",
+            "in": "query",
+            "name": "language",
+            "required": false,
+            "schema": {
+              "default": "en",
+              "description": "Session language ('en' or 'hu')",
+              "title": "Language",
+              "type": "string"
+            }
+          },
+          {
+            "description": "QuizCategory value",
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "default": "LESSON",
+              "description": "QuizCategory value",
+              "title": "Category",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Al Modules",
+        "tags": [
+          "web",
+          "adaptive-learning"
+        ]
+      }
+    },
     "/adaptive-learning/session": {
       "get": {
         "description": "Server-rendered session page. JS bootstraps the question loop via AL-1 routes.",
@@ -22844,7 +22946,7 @@
     },
     "/adaptive-learning/session/start": {
       "post": {
-        "description": "Start a new adaptive learning session, or return the existing active one.",
+        "description": "Start a new adaptive learning session scoped to a specific module.\n\nDecision matrix:\n  - No active session                                      \u2192 CREATE  (resumed=false)\n  - Active session, expired                               \u2192 retire  \u2192 CREATE\n  - Active session, force_new=true                        \u2192 retire  \u2192 CREATE  (previous_session_retired=true)\n  - Active session, any of lang/cat/module differs        \u2192 retire  \u2192 CREATE  (previous_session_retired=true)\n  - Active session, exact lang+cat+module match           \u2192 RESUME             (resumed=true)",
         "operationId": "al_session_start_adaptive_learning_session_start_post",
         "parameters": [
           {
@@ -22856,6 +22958,17 @@
               "default": "LESSON",
               "description": "QuizCategory value for this session",
               "title": "Category",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Quiz title prefix identifying the module (required)",
+            "in": "query",
+            "name": "module_prefix",
+            "required": true,
+            "schema": {
+              "description": "Quiz title prefix identifying the module (required)",
+              "title": "Module Prefix",
               "type": "string"
             }
           },
@@ -22881,6 +22994,18 @@
               "description": "Session language ('en' or 'hu')",
               "title": "Language",
               "type": "string"
+            }
+          },
+          {
+            "description": "Retire any active session and create a fresh one",
+            "in": "query",
+            "name": "force_new",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Retire any active session and create a fresh one",
+              "title": "Force New",
+              "type": "boolean"
             }
           }
         ],

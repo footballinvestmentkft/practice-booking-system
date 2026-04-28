@@ -21,7 +21,6 @@
     .als-phase { display: none; }
     .als-phase.active { display: block; }
 
-
     .als-progress-label {
         font-size: 0.8rem;
         color: var(--app-text-muted);
@@ -29,6 +28,228 @@
         margin-top: 0.3rem;
         margin-bottom: 1.25rem;
     }
+
+    /* ── Language switcher ───────────────────────────────────────────────────── */
+    .als-lang-switcher {
+        display: flex;
+        gap: 0.4rem;
+        justify-content: flex-end;
+        margin-bottom: 1rem;
+    }
+    .als-lang-btn {
+        display: inline-block;
+        padding: 0.25rem 0.7rem;
+        border-radius: 6px;
+        border: 1.5px solid var(--app-border, #e2e8f0);
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: var(--app-text-muted);
+        background: transparent;
+        cursor: pointer;
+        transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .als-lang-btn:hover { border-color: #667eea; color: #4f46e5; }
+    .als-lang-btn.active { border-color: #4f46e5; background: #eef2ff; color: #3730a3; }
+
+    /* ── Picker card (shared by category + module) ──────────────────────────── */
+    .als-picker-card {
+        background: var(--app-card);
+        border-radius: 14px;
+        padding: 1.75rem 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .als-picker-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--app-text);
+        margin: 0 0 0.35rem;
+    }
+    .als-picker-sub {
+        font-size: 0.88rem;
+        color: var(--app-text-muted);
+        margin: 0 0 1.25rem;
+    }
+
+    /* ── Back nav ────────────────────────────────────────────────────────────── */
+    .als-back-nav {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--app-text-muted);
+        cursor: pointer;
+        margin-bottom: 1rem;
+        background: none;
+        border: none;
+        padding: 0;
+    }
+    .als-back-nav:hover { color: #4f46e5; }
+
+    /* ── Category grid ───────────────────────────────────────────────────────── */
+    .als-cat-grid { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.25rem; }
+    .als-cat-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: var(--app-card);
+        border: 2px solid var(--app-border, #e2e8f0);
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+        cursor: pointer;
+        text-align: left;
+        width: 100%;
+        font-size: 0.97rem;
+        font-weight: 600;
+        color: var(--app-text);
+        transition: border-color 0.15s, background 0.15s, opacity 0.15s;
+    }
+    .als-cat-btn:hover:not([data-empty="true"]) { border-color: #667eea; background: #f0f4ff; }
+    .als-cat-btn.selected { border-color: #4f46e5; background: #eef2ff; color: #3730a3; }
+    .als-cat-btn[data-empty="true"] { opacity: 0.45; cursor: not-allowed; }
+    .als-cat-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .als-cat-label { font-weight: 700; }
+    .als-cat-desc  { font-size: 0.8rem; font-weight: 400; color: var(--app-text-muted); margin-top: 0.1rem; }
+    .als-cat-badge {
+        margin-left: auto;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.15rem 0.5rem;
+        border-radius: 20px;
+        background: #f3f4f6;
+        color: #9ca3af;
+        white-space: nowrap;
+    }
+
+    /* ── Module grid ─────────────────────────────────────────────────────────── */
+    .als-module-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+    }
+    @media (max-width: 480px) { .als-module-grid { grid-template-columns: 1fr; } }
+
+    .als-module-btn {
+        position: relative;
+        background: var(--app-card);
+        border: 2px solid var(--app-border, #e2e8f0);
+        border-radius: 10px;
+        padding: 1rem;
+        cursor: pointer;
+        text-align: left;
+        font-size: 0.93rem;
+        font-weight: 600;
+        color: var(--app-text);
+        transition: border-color 0.15s, background 0.15s;
+        min-height: 72px;
+    }
+    .als-module-btn:hover { border-color: #667eea; background: #f0f4ff; }
+    .als-module-btn.selected { border-color: #4f46e5; background: #eef2ff; color: #3730a3; }
+    .als-module-btn.selected::after {
+        content: '✓';
+        position: absolute;
+        top: 0.4rem;
+        right: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 900;
+        background: #4f46e5;
+        color: white;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+    }
+    .als-module-name { display: block; margin-bottom: 0.3rem; }
+    .als-module-count { font-size: 0.75rem; font-weight: 400; color: var(--app-text-muted); }
+
+    /* ── Module skeleton ─────────────────────────────────────────────────────── */
+    .als-module-skeleton {
+        background: #f3f4f6;
+        border-radius: 10px;
+        height: 72px;
+        animation: als-pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes als-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+
+    /* ── Difficulty section header (groups EASY / MEDIUM / HARD in picker) ───── */
+    .als-diff-section-header {
+        grid-column: 1 / -1;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--app-text-muted);
+        padding: 0.15rem 0 0.35rem;
+        border-bottom: 1px solid var(--app-border, #e2e8f0);
+        margin-bottom: 0.1rem;
+    }
+
+    /* ── Empty module state ──────────────────────────────────────────────────── */
+    .als-module-empty {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 2rem 1rem;
+        color: var(--app-text-muted);
+        font-size: 0.92rem;
+    }
+
+    /* ── Time limit picker ───────────────────────────────────────────────────── */
+    .als-time-picker { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; }
+    .als-time-btn {
+        flex: 1;
+        padding: 0.6rem 0.5rem;
+        border: 2px solid var(--app-border, #e2e8f0);
+        border-radius: 8px;
+        background: var(--app-card);
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--app-text);
+        cursor: pointer;
+        transition: border-color 0.15s, background 0.15s;
+        text-align: center;
+    }
+    .als-time-btn:hover { border-color: #667eea; background: #f0f4ff; }
+    .als-time-btn.selected { border-color: #4f46e5; background: #eef2ff; color: #3730a3; }
+
+    /* ── Start / Next buttons ────────────────────────────────────────────────── */
+    .als-start-btn {
+        background: #4f46e5;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.75rem;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        width: 100%;
+        transition: background 0.15s, opacity 0.15s;
+    }
+    .als-start-btn:hover:not(:disabled) { background: #4338ca; }
+    .als-start-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .als-next-cat-btn {
+        background: #4f46e5;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.75rem;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 0.5rem;
+        transition: background 0.15s, opacity 0.15s;
+    }
+    .als-next-cat-btn:hover:not(:disabled) { background: #4338ca; }
+    .als-next-cat-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
     /* ── Question card ───────────────────────────────────────────────────────── */
     .als-question-card {
@@ -54,9 +275,31 @@
         margin: 0;
     }
 
+    /* ── Breadcrumb ──────────────────────────────────────────────────────────── */
+    .als-breadcrumb {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--app-text-muted);
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        flex-wrap: wrap;
+    }
+    .als-breadcrumb-sep { opacity: 0.5; }
+    .als-lang-badge {
+        display: inline-block;
+        padding: 0.1rem 0.45rem;
+        border-radius: 4px;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
     /* ── Answer options ──────────────────────────────────────────────────────── */
     .als-options { display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 1rem; }
-
     .als-option {
         display: flex;
         align-items: flex-start;
@@ -72,27 +315,18 @@
         font-size: 0.97rem;
         color: var(--app-text);
     }
-    .als-option:hover:not(:disabled) {
-        border-color: #667eea;
-        background: #f0f4ff;
-    }
+    .als-option:hover:not(:disabled) { border-color: #667eea; background: #f0f4ff; }
     .als-option.selected  { border-color: #667eea; background: #eef2ff; }
     .als-option.correct   { border-color: #27ae60; background: #d5f5e3; color: #1a5e35; }
     .als-option.incorrect { border-color: #e74c3c; background: #fdecea; color: #7b241c; }
     .als-option:disabled  { cursor: default; }
-
     .als-option-letter {
         flex-shrink: 0;
-        width: 26px;
-        height: 26px;
+        width: 26px; height: 26px;
         border-radius: 50%;
         background: #f3f4f6;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.78rem;
-        font-weight: 700;
-        color: #374151;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.78rem; font-weight: 700; color: #374151;
     }
     .als-option.correct   .als-option-letter { background: #27ae60; color: white; }
     .als-option.incorrect .als-option-letter { background: #e74c3c; color: white; }
@@ -109,32 +343,6 @@
     }
     .als-feedback.correct   { background: #d5f5e3; border-left: 4px solid #27ae60; color: #1a5e35; }
     .als-feedback.incorrect { background: #fdecea; border-left: 4px solid #e74c3c; color: #7b241c; }
-
-    .als-feedback-xp {
-        display: inline-block;
-        background: #6c3483;
-        color: white;
-        border-radius: 20px;
-        padding: 0.2rem 0.7rem;
-        font-size: 0.8rem;
-        font-weight: 700;
-        margin-left: 0.5rem;
-    }
-
-    .als-next-btn {
-        background: #667eea;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 0.7rem 1.75rem;
-        font-size: 0.97rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: background 0.15s;
-        width: 100%;
-        margin-top: 0.5rem;
-    }
-    .als-next-btn:hover { background: #5a67d8; }
 
     /* ── Score strip ─────────────────────────────────────────────────────────── */
     .als-score-strip {
@@ -153,26 +361,62 @@
     .als-score-val { font-size: 1rem; }
     .als-score-val.positive { color: #15803d; }
     .als-score-val.negative { color: #b91c1c; }
-
-    /* ── Countdown timer ────────────────────────────────────────────────────── */
-    .als-timer {
-        font-size: 0.85rem;
-        font-weight: 700;
-        color: #3730a3;
-    }
-    .als-timer.warning { color: #b45309; }
+    .als-timer { font-size: 0.85rem; font-weight: 700; color: #3730a3; }
+    .als-timer.warning  { color: #b45309; }
     .als-timer.critical { color: #b91c1c; }
 
-    /* ── Resume notice ───────────────────────────────────────────────────────── */
-    .als-resume-notice {
-        background: #fff7ed;
+    /* ── Resume prompt phase ─────────────────────────────────────────────────── */
+    .als-resume-card {
+        background: var(--app-card);
+        border-radius: 14px;
+        padding: 1.75rem 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         border-left: 4px solid #f59e0b;
-        border-radius: 8px;
-        padding: 0.75rem 1rem;
-        font-size: 0.88rem;
-        color: #92400e;
-        margin-bottom: 1.25rem;
     }
+    .als-resume-title { font-size: 1.1rem; font-weight: 700; color: var(--app-text); margin: 0 0 0.5rem; }
+    .als-resume-meta  { font-size: 0.9rem; color: var(--app-text-muted); margin: 0 0 1.5rem; }
+    .als-resume-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .als-resume-btn-continue {
+        flex: 1; background: #4f46e5; color: white; border: none;
+        border-radius: 8px; padding: 0.75rem 1.25rem;
+        font-size: 0.97rem; font-weight: 700; cursor: pointer; transition: background 0.15s;
+    }
+    .als-resume-btn-continue:hover { background: #4338ca; }
+    .als-resume-btn-new {
+        flex: 1; background: #f3f4f6; color: #374151;
+        border: 2px solid #e2e8f0; border-radius: 8px;
+        padding: 0.75rem 1.25rem; font-size: 0.97rem; font-weight: 700;
+        cursor: pointer; transition: background 0.15s, border-color 0.15s;
+    }
+    .als-resume-btn-new:hover { background: #e5e7eb; border-color: #d1d5db; }
+
+    /* ── Pool empty phase ────────────────────────────────────────────────────── */
+    .als-pool-empty-card {
+        background: var(--app-card);
+        border-radius: 14px;
+        padding: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        text-align: center;
+    }
+    .als-pool-empty-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+    .als-pool-empty-title { font-size: 1.15rem; font-weight: 700; color: var(--app-text); margin: 0 0 0.5rem; }
+    .als-pool-empty-sub   { font-size: 0.9rem; color: var(--app-text-muted); margin: 0 0 1.5rem; }
+    .als-pool-empty-stats { font-size: 0.85rem; color: var(--app-text-muted); margin-bottom: 1.5rem; }
+    .als-pool-empty-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+    .als-pool-btn-end {
+        background: #4f46e5; color: white; border: none;
+        border-radius: 8px; padding: 0.65rem 1.4rem;
+        font-size: 0.95rem; font-weight: 600; cursor: pointer;
+        transition: background 0.15s;
+    }
+    .als-pool-btn-end:hover { background: #4338ca; }
+    .als-pool-btn-module {
+        background: #f3f4f6; color: #374151; border: 2px solid #e2e8f0;
+        border-radius: 8px; padding: 0.65rem 1.4rem;
+        font-size: 0.95rem; font-weight: 600; cursor: pointer;
+        transition: background 0.15s;
+    }
+    .als-pool-btn-module:hover { background: #e5e7eb; }
 
     /* ── Result screen ───────────────────────────────────────────────────────── */
     .als-result-card {
@@ -182,18 +426,9 @@
         box-shadow: 0 4px 16px rgba(0,0,0,0.1);
         text-align: center;
     }
-    .als-result-icon { font-size: 3.5rem; margin-bottom: 0.75rem; line-height: 1; }
-    .als-result-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--app-text);
-        margin: 0 0 0.35rem;
-    }
-    .als-result-sub {
-        font-size: 0.95rem;
-        color: var(--app-text-muted);
-        margin: 0 0 1.75rem;
-    }
+    .als-result-icon  { font-size: 3.5rem; margin-bottom: 0.75rem; line-height: 1; }
+    .als-result-title { font-size: 1.5rem; font-weight: 700; color: var(--app-text); margin: 0 0 0.35rem; }
+    .als-result-sub   { font-size: 0.95rem; color: var(--app-text-muted); margin: 0 0 1.75rem; }
     .als-result-stats {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -201,143 +436,22 @@
         margin-bottom: 1.75rem;
     }
     @media (max-width: 480px) { .als-result-stats { grid-template-columns: repeat(2, 1fr); } }
-
-    .als-result-stat {
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 1rem;
-    }
+    .als-result-stat { background: #f8f9fa; border-radius: 10px; padding: 1rem; }
     .als-result-stat-val { font-size: 1.8rem; font-weight: 700; color: var(--app-text); }
     .als-result-stat-lbl { font-size: 0.78rem; color: var(--app-text-muted); margin-top: 0.2rem; }
-
     .als-result-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
     .als-result-actions a, .als-result-actions button {
-        padding: 0.65rem 1.4rem;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        font-weight: 600;
-        text-decoration: none;
-        cursor: pointer;
-        border: none;
+        padding: 0.65rem 1.4rem; border-radius: 8px;
+        font-size: 0.95rem; font-weight: 600; text-decoration: none;
+        cursor: pointer; border: none;
     }
     .als-btn-primary   { background: #667eea; color: white; }
     .als-btn-secondary { background: #f3f4f6; color: #374151; }
     .als-btn-primary:hover   { background: #5a67d8; }
     .als-btn-secondary:hover { background: #e5e7eb; }
 
-    /* ── Time limit picker ───────────────────────────────────────────────────── */
-    .als-time-picker {
-        display: flex;
-        gap: 0.5rem;
-        margin-bottom: 1.25rem;
-    }
-    .als-time-btn {
-        flex: 1;
-        padding: 0.6rem 0.5rem;
-        border: 2px solid var(--app-border, #e2e8f0);
-        border-radius: 8px;
-        background: var(--app-card);
-        font-size: 0.88rem;
-        font-weight: 600;
-        color: var(--app-text);
-        cursor: pointer;
-        transition: border-color 0.15s, background 0.15s;
-        text-align: center;
-    }
-    .als-time-btn:hover { border-color: #667eea; background: #f0f4ff; }
-    .als-time-btn.selected { border-color: #4f46e5; background: #eef2ff; color: #3730a3; }
-
-    /* ── Category picker ─────────────────────────────────────────────────────── */
-    .als-picker-card {
-        background: var(--app-card);
-        border-radius: 14px;
-        padding: 1.75rem 2rem;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-    /* ── Language switcher (category phase only) ───────────────────────────── */
-    .als-lang-switcher {
-        display: flex;
-        gap: 0.4rem;
-        justify-content: flex-end;
-        margin-bottom: 1rem;
-    }
-    .als-lang-btn {
-        display: inline-block;
-        padding: 0.25rem 0.7rem;
-        border-radius: 6px;
-        border: 1.5px solid var(--app-border, #e2e8f0);
-        font-size: 0.78rem;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        color: var(--app-text-muted);
-        text-decoration: none;
-        transition: border-color 0.15s, color 0.15s, background 0.15s;
-    }
-    .als-lang-btn:hover { border-color: #667eea; color: #4f46e5; }
-    .als-lang-btn.active {
-        border-color: #4f46e5;
-        background: #eef2ff;
-        color: #3730a3;
-    }
-    .als-picker-title {
-        font-size: 1.15rem;
-        font-weight: 700;
-        color: var(--app-text);
-        margin: 0 0 0.35rem;
-    }
-    .als-picker-sub {
-        font-size: 0.88rem;
-        color: var(--app-text-muted);
-        margin: 0 0 1.25rem;
-    }
-    .als-cat-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 0.6rem;
-        margin-bottom: 1.25rem;
-    }
-    .als-cat-btn {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        background: var(--app-card);
-        border: 2px solid var(--app-border, #e2e8f0);
-        border-radius: 10px;
-        padding: 0.85rem 1rem;
-        cursor: pointer;
-        text-align: left;
-        width: 100%;
-        font-size: 0.97rem;
-        font-weight: 600;
-        color: var(--app-text);
-        transition: border-color 0.15s, background 0.15s;
-    }
-    .als-cat-btn:hover { border-color: #667eea; background: #f0f4ff; }
-    .als-cat-btn.selected { border-color: #4f46e5; background: #eef2ff; color: #3730a3; }
-    .als-cat-icon { font-size: 1.4rem; flex-shrink: 0; }
-    .als-cat-label { font-weight: 700; }
-    .als-cat-desc  { font-size: 0.8rem; font-weight: 400; color: var(--app-text-muted); margin-top: 0.1rem; }
-    .als-start-btn {
-        background: #4f46e5;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 0.75rem 1.75rem;
-        font-size: 1rem;
-        font-weight: 700;
-        cursor: pointer;
-        width: 100%;
-        transition: background 0.15s;
-    }
-    .als-start-btn:hover { background: #4338ca; }
-
     /* ── Loading / error ─────────────────────────────────────────────────────── */
-    .als-loading {
-        text-align: center;
-        padding: 3rem 1rem;
-        color: var(--app-text-muted);
-        font-size: 0.95rem;
-    }
+    .als-loading { text-align: center; padding: 3rem 1rem; color: var(--app-text-muted); font-size: 0.95rem; }
     .als-error-card {
         background: #fdecea;
         border-left: 4px solid #e74c3c;
@@ -347,14 +461,9 @@
     }
     .als-error-card h3 { margin: 0 0 0.5rem; font-size: 1rem; }
     .als-error-retry {
-        margin-top: 0.75rem;
-        background: #e74c3c;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 0.5rem 1.25rem;
-        font-weight: 600;
-        cursor: pointer;
+        margin-top: 0.75rem; background: #e74c3c; color: white;
+        border: none; border-radius: 6px; padding: 0.5rem 1.25rem;
+        font-weight: 600; cursor: pointer;
     }
 </style>
 {% endblock %}
@@ -365,7 +474,7 @@
     {# ── Category picker phase ─────────────────────────────────────────────── #}
     <div id="als-phase-category" class="als-phase active">
         <div class="als-picker-card">
-            {# ── Language switcher — visible ONLY in category phase (JS enforced) ── #}
+            {# Language switcher — href reload; JS intercepts and switches without reload #}
             <div class="als-lang-switcher" id="als-lang-switcher" data-testid="als-lang-switcher">
                 <a href="?language=en"
                    class="als-lang-btn{% if session_language == 'en' %} active{% endif %}"
@@ -376,13 +485,14 @@
                    data-lang="hu"
                    data-testid="als-lang-hu">HU</a>
             </div>
-            <p class="als-picker-title">🧠 Choose a category</p>
-            <p class="als-picker-sub">Select a topic for your adaptive session.</p>
-            <div class="als-cat-grid" id="als-cat-grid">
+            <p class="als-picker-title" id="als-cat-title">🧠 Choose a category</p>
+            <p class="als-picker-sub">Select a topic area for your adaptive session.</p>
 
+            <div class="als-cat-grid" id="als-cat-grid">
+                {# Server-rendered initial buttons — JS updates with has_content flags #}
                 {% set cat_meta = {
-                    'LESSON':           ('📖', 'Football Lessons',  'Rules, tactics, and game understanding'),
-                    'SPORTS_PHYSIOLOGY':('💪', 'Sports Physiology', 'Conditioning, fitness, and the athletic body'),
+                    'LESSON':           ('📖', 'Football Lessons',  'Rules, tactics, game understanding'),
+                    'SPORTS_PHYSIOLOGY':('💪', 'Sports Physiology', 'Conditioning, fitness, athletic body'),
                     'GENERAL':          ('⚽', 'General Knowledge', 'Broad football topics'),
                     'NUTRITION':        ('🥗', 'Nutrition',         'Diet and fuelling for performance'),
                     'MARKETING':        ('📣', 'Marketing',         'Sports marketing and branding'),
@@ -392,7 +502,7 @@
                 {% if available_categories %}
                     {% for cat in available_categories %}
                         {% set icon, label, desc = cat_meta.get(cat.value, ('🎓', cat.value.replace('_',' ').title(), '')) %}
-                        <button class="als-cat-btn{% if cat.value == 'LESSON' %} selected{% endif %}"
+                        <button class="als-cat-btn{% if loop.first %} selected{% endif %}"
                                 data-cat="{{ cat.value }}"
                                 onclick="alsCatSelect(this)">
                             <span class="als-cat-icon">{{ icon }}</span>
@@ -408,14 +518,33 @@
                     </p>
                 {% endif %}
             </div>
+
+            <button class="als-next-cat-btn" id="als-next-cat-btn"
+                    onclick="alsShowModules()" disabled>
+                Next: Choose Module →
+            </button>
+        </div>
+    </div>
+
+    {# ── Module picker phase ───────────────────────────────────────────────── #}
+    <div id="als-phase-module" class="als-phase">
+        <div class="als-picker-card">
+            <button class="als-back-nav" onclick="alsBackToCategory()">← <span id="als-back-cat-label">Back</span></button>
+            <p class="als-picker-title">📚 Choose a module</p>
+            <p class="als-picker-sub" id="als-module-sub">Loading modules…</p>
+
+            <div class="als-module-grid" id="als-module-grid">
+                {# Rendered by alsRenderModuleGrid() #}
+            </div>
+
             <p class="als-picker-sub" style="margin-top:1rem; margin-bottom:0.5rem;">⏱ Session duration</p>
             <div class="als-time-picker" id="als-time-picker">
                 <button class="als-time-btn" data-seconds="60" onclick="alsTimeSelect(this)">1 min</button>
                 <button class="als-time-btn selected" data-seconds="180" onclick="alsTimeSelect(this)">3 min</button>
                 <button class="als-time-btn" data-seconds="300" onclick="alsTimeSelect(this)">5 min</button>
             </div>
-            <button class="als-start-btn" id="als-start-btn" onclick="alsStartFromPicker()"
-                    {% if not available_categories %}disabled style="opacity:0.5;cursor:not-allowed;"{% endif %}>🚀 Start Session</button>
+            <button class="als-start-btn" id="als-start-btn"
+                    onclick="alsStartFromPicker()" disabled>🚀 Start Session</button>
         </div>
     </div>
 
@@ -433,11 +562,21 @@
         </div>
     </div>
 
+    {# ── Resume prompt phase ──────────────────────────────────────────────── #}
+    <div id="als-phase-resume" class="als-phase">
+        <div class="als-resume-card">
+            <p class="als-resume-title">⚠️ Active Session Found</p>
+            <p class="als-resume-meta" id="als-resume-meta">You have an unfinished session in progress.</p>
+            <div class="als-resume-actions">
+                <button class="als-resume-btn-continue" onclick="alsResumeContinue()">▶ Continue Session</button>
+                <button class="als-resume-btn-new" onclick="alsResumeNew()">🔄 Start New Session</button>
+            </div>
+        </div>
+    </div>
+
     {# ── Question phase ────────────────────────────────────────────────────── #}
     <div id="als-phase-question" class="als-phase">
-        <div id="als-resume-notice" class="als-resume-notice" style="display:none;">
-            ⚠️ Continuing your active session from earlier.
-        </div>
+        <div id="als-breadcrumb" class="als-breadcrumb"></div>
         <div id="als-score-strip" class="als-score-strip">
             <span>Score: <span id="als-score-val" class="als-score-val">0</span></span>
             <span id="als-timer" class="als-timer">⏱ 3:00</span>
@@ -450,9 +589,24 @@
         </div>
 
         <div id="als-options" class="als-options"></div>
-
         <div id="als-feedback" class="als-feedback"></div>
-        <div id="als-auto-advance" style="display:none; text-align:center; font-size:0.82rem; color:var(--app-text-muted); margin-top:0.5rem;">Next question in 1.5s…</div>
+        <div id="als-auto-advance" style="display:none; text-align:center; font-size:0.82rem; color:var(--app-text-muted); margin-top:0.5rem;">
+            Next question in 1.5s…
+        </div>
+    </div>
+
+    {# ── Pool empty phase ──────────────────────────────────────────────────── #}
+    <div id="als-phase-pool-empty" class="als-phase">
+        <div class="als-pool-empty-card">
+            <div class="als-pool-empty-icon">📭</div>
+            <h2 class="als-pool-empty-title">No More Questions</h2>
+            <p class="als-pool-empty-sub">You've seen all available questions in this module for this session.</p>
+            <p class="als-pool-empty-stats" id="als-pool-empty-stats"></p>
+            <div class="als-pool-empty-actions">
+                <button class="als-pool-btn-end" onclick="alsPoolEndSession()">🏁 End Session</button>
+                <button class="als-pool-btn-module" onclick="alsPoolChooseModule()">← Choose Module</button>
+            </div>
+        </div>
     </div>
 
     {# ── Result phase ──────────────────────────────────────────────────────── #}
@@ -494,40 +648,87 @@
 (function () {
     'use strict';
 
+    /* ── Static meta ──────────────────────────────────────────────────────────
+       Category display data keyed by QuizCategory value, for both languages.
+    ─────────────────────────────────────────────────────────────────────────── */
+    var CAT_META = {
+        en: {
+            LESSON:           { icon: '📖', label: 'Football Lessons',   desc: 'Rules, tactics, game understanding' },
+            SPORTS_PHYSIOLOGY:{ icon: '💪', label: 'Sports Physiology',  desc: 'Conditioning, fitness, athletic body' },
+            GENERAL:          { icon: '⚽', label: 'General Knowledge',  desc: 'Broad football topics' },
+            NUTRITION:        { icon: '🥗', label: 'Nutrition',          desc: 'Diet and fuelling for performance' },
+            MARKETING:        { icon: '📣', label: 'Marketing',          desc: 'Sports marketing and branding' },
+            ECONOMICS:        { icon: '📈', label: 'Economics',          desc: 'Football business and finance' },
+            INFORMATICS:      { icon: '💻', label: 'Informatics',        desc: 'Data and technology in football' }
+        },
+        hu: {
+            LESSON:           { icon: '📖', label: 'Edzésleckék',        desc: 'Szabályok, taktika, játékértés' },
+            SPORTS_PHYSIOLOGY:{ icon: '💪', label: 'Sportélettan',       desc: 'Edzettség, fittség, sportoló test' },
+            GENERAL:          { icon: '⚽', label: 'Általános ismeretek',desc: 'Széles körű futball témák' },
+            NUTRITION:        { icon: '🥗', label: 'Táplálkozás',        desc: 'Diéta és teljesítménytáplálás' },
+            MARKETING:        { icon: '📣', label: 'Marketing',          desc: 'Sportmarketing és márkaépítés' },
+            ECONOMICS:        { icon: '📈', label: 'Közgazdaságtan',     desc: 'Futbalbiznisz és pénzügyek' },
+            INFORMATICS:      { icon: '💻', label: 'Informatika',        desc: 'Adat és technológia a futballban' }
+        }
+    };
+
+    /* ── Difficulty ordering (EASY → MEDIUM → HARD) ──────────────────────────
+       Used to sort and group modules in the picker.
+    ─────────────────────────────────────────────────────────────────────────── */
+    var _DIFF_ORDER = { EASY: 0, MEDIUM: 1, HARD: 2 };
+
+    /* Localised labels for each difficulty tier */
+    var _DIFF_LABELS = {
+        en: { EASY: 'Easy', MEDIUM: 'Medium', HARD: 'Hard' },
+        hu: { EASY: 'Alapszint', MEDIUM: 'Középszint', HARD: 'Haladó' }
+    };
+
+    /* ── Server-injected topic data ───────────────────────────────────────────
+       availableTopics: {category: [{module, topic, quiz_id, question_count, difficulty}]}
+       Available topics per category, pre-sorted EASY→MEDIUM→HARD by the route.
+    ─────────────────────────────────────────────────────────────────────────── */
+    var availableTopics = {{ available_topics | default({}) | tojson }};
+
+    /* ── Server-injected progression data ────────────────────────────────────
+       List of module_prefix strings where the user already completed EASY level.
+       Injected by the server so MEDIUM modules can unlock immediately on load.
+    ─────────────────────────────────────────────────────────────────────────── */
+    var easyCompletedModules = {{ easy_completed_modules | default([]) | tojson }};
+
     /* ── State ────────────────────────────────────────────────────────────────
        All session state lives here. No localStorage, no globals.
-       exclude_ids is a client-side within-session dedup list — a temporary
-       compatibility layer. The server also deduplicates via user_question_performance
-       (1-hour window). This list gives explicit per-session dedup without requiring
-       a server-side question log table. Not a permanent API contract.
     ─────────────────────────────────────────────────────────────────────────── */
     var state = {
+        language:           '{{ session_language | default("en") }}',
+        category:           null,   // QuizCategory string | null
+        module:             null,   // {prefix, displayName, questionCount} | null
+        timeLimitSeconds:   180,
+
         sessionId:          null,
         questionNum:        0,
-
         recentIds:          [],
         score:              0,
         correctCount:       0,
         phase:              'category',
-        category:           'LESSON',
-        timeLimitSeconds:   180,
         timerSecondsLeft:   180,
         timerHandle:        null,
         currentQuestionId:  null,
-        answerSubmitted:    false
+        answerSubmitted:    false,
+
+        poolEmptyData:      null,   // {score, xp, correct, total} for pool_empty phase
+        timeRemainingSecs:  null,   // from server on resume
     };
 
     /* ── Phase management ──────────────────────────────────────────────────── */
     window.showPhase = function (name) {
-        ['category','loading','error','question','result'].forEach(function (p) {
+        ['category','module','loading','error','resume','question','pool-empty','result'].forEach(function (p) {
             var el = document.getElementById('als-phase-' + p);
             if (el) el.classList.toggle('active', p === name);
         });
         state.phase = name;
-        // Language switcher is ONLY allowed in the category picker phase.
-        // This is the authoritative lock — it fires on every phase transition.
-        var langSwitcher = document.getElementById('als-lang-switcher');
-        if (langSwitcher) langSwitcher.style.display = (name === 'category') ? '' : 'none';
+        // Language switcher visible only in category phase
+        var ls = document.getElementById('als-lang-switcher');
+        if (ls) ls.style.display = (name === 'category') ? '' : 'none';
     };
 
     function showError(msg) {
@@ -561,10 +762,238 @@
             });
     }
 
-    /* ── Progress ──────────────────────────────────────────────────────────── */
+    /* ── Language switcher ─────────────────────────────────────────────────── */
+    window.alsSetLanguage = function (lang) {
+        if (lang === state.language) return;
+        state.language = lang;
+        // Update pill active states
+        document.querySelectorAll('.als-lang-btn').forEach(function (b) {
+            b.classList.toggle('active', b.dataset.lang === lang);
+        });
+        // Reset module selection
+        state.module = null;
+        if (state.phase === 'category') {
+            // Re-load category availability for new language
+            state.category = null;
+            document.getElementById('als-next-cat-btn').disabled = true;
+            alsLoadCategories();
+        } else if (state.phase === 'module') {
+            // Reload modules for new language (category stays)
+            alsLoadModules();
+        }
+    };
+
+    /* ── Category availability ─────────────────────────────────────────────── */
+    function alsLoadCategories() {
+        get('/adaptive-learning/available-categories?language=' + state.language)
+            .then(function (res) {
+                if (!res || !res.ok) return;
+                alsRenderCategoryGrid(res.data.categories);
+            })
+            .catch(function () { /* silently keep existing grid */ });
+    }
+
+    function alsRenderCategoryGrid(categories) {
+        var grid = document.getElementById('als-cat-grid');
+        if (!grid) return;
+        var meta = CAT_META[state.language] || CAT_META['en'];
+        grid.innerHTML = '';
+        categories.forEach(function (cat) {
+            var m = meta[cat.value] || { icon: '🎓', label: cat.value, desc: '' };
+            var isEmpty = !cat.has_content;
+            var btn = document.createElement('button');
+            btn.className = 'als-cat-btn';
+            btn.dataset.cat = cat.value;
+            btn.dataset.empty = isEmpty ? 'true' : 'false';
+            if (isEmpty) btn.disabled = true;
+            btn.onclick = isEmpty ? null : function () { alsCatSelect(btn); };
+            btn.innerHTML =
+                '<span class="als-cat-icon">' + m.icon + '</span>' +
+                '<span>' +
+                  '<span class="als-cat-label">' + m.label + '</span><br>' +
+                  '<span class="als-cat-desc">' + m.desc + '</span>' +
+                '</span>' +
+                (isEmpty ? '<span class="als-cat-badge">no content</span>' : '');
+            grid.appendChild(btn);
+        });
+    }
+
+    /* ── Category selection ────────────────────────────────────────────────── */
+    window.alsCatSelect = function (btn) {
+        if (btn.dataset.empty === 'true') return;
+        document.querySelectorAll('.als-cat-btn').forEach(function (b) { b.classList.remove('selected'); });
+        btn.classList.add('selected');
+        state.category = btn.dataset.cat;
+        state.module = null;
+        document.getElementById('als-next-cat-btn').disabled = false;
+    };
+
+    /* ── Category → Module transition ─────────────────────────────────────── */
+    window.alsShowModules = function () {
+        if (!state.category) return;
+        var meta = (CAT_META[state.language] || CAT_META['en'])[state.category];
+        var label = meta ? meta.label : state.category;
+        document.getElementById('als-back-cat-label').textContent = label;
+        showPhase('module');
+        alsLoadModules();
+    };
+
+    window.alsBackToCategory = function () {
+        state.module = null;
+        document.getElementById('als-start-btn').disabled = true;
+        showPhase('category');
+    };
+
+    /* ── Module loading ────────────────────────────────────────────────────── */
+    function alsLoadModules() {
+        var grid = document.getElementById('als-module-grid');
+        if (!grid) return;
+        // Show skeleton
+        grid.innerHTML = '';
+        for (var i = 0; i < 4; i++) {
+            var sk = document.createElement('div');
+            sk.className = 'als-module-skeleton';
+            grid.appendChild(sk);
+        }
+        document.getElementById('als-module-sub').textContent = 'Loading modules…';
+        document.getElementById('als-start-btn').disabled = true;
+
+        get('/adaptive-learning/modules?language=' + state.language + '&category=' + state.category)
+            .then(function (res) {
+                if (!res || !res.ok) {
+                    alsRenderModuleGrid([]);
+                    return;
+                }
+                alsRenderModuleGrid(res.data.modules);
+            })
+            .catch(function () { alsRenderModuleGrid([]); });
+    }
+
+    function alsRenderModuleGrid(modules) {
+        var grid = document.getElementById('als-module-grid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        if (!modules || modules.length === 0) {
+            var empty = document.createElement('div');
+            empty.className = 'als-module-empty';
+            empty.innerHTML = '📭 No modules available for this category and language.<br>' +
+                              '<small>Try switching language or choosing a different category.</small>';
+            grid.appendChild(empty);
+            document.getElementById('als-module-sub').textContent = 'No modules available.';
+            return;
+        }
+
+        document.getElementById('als-module-sub').textContent = modules.length + ' module' + (modules.length !== 1 ? 's' : '') + ' available';
+
+        modules.forEach(function (mod) {
+            var btn = document.createElement('button');
+            btn.className = 'als-module-btn';
+            btn.dataset.prefix = mod.module_prefix;
+            btn.dataset.displayName = mod.display_name;
+            btn.dataset.count = mod.question_count;
+            btn.innerHTML =
+                '<span class="als-module-name">' + mod.display_name + '</span>' +
+                '<span class="als-module-count">' + mod.question_count + ' questions</span>';
+            btn.onclick = function () { alsModuleSelect(btn); };
+            grid.appendChild(btn);
+        });
+    }
+
+    /* ── Module selection ──────────────────────────────────────────────────── */
+    window.alsModuleSelect = function (btn) {
+        document.querySelectorAll('.als-module-btn').forEach(function (b) { b.classList.remove('selected'); });
+        btn.classList.add('selected');
+        state.module = {
+            prefix:       btn.dataset.prefix,
+            displayName:  btn.dataset.displayName,
+            questionCount: parseInt(btn.dataset.count, 10)
+        };
+        document.getElementById('als-start-btn').disabled = false;
+    };
+
+    /* ── Time picker ───────────────────────────────────────────────────────── */
+    window.alsTimeSelect = function (btn) {
+        document.querySelectorAll('.als-time-btn').forEach(function (b) { b.classList.remove('selected'); });
+        btn.classList.add('selected');
+        state.timeLimitSeconds = parseInt(btn.dataset.seconds, 10) || 180;
+    };
+
+    /* ── Start from picker ─────────────────────────────────────────────────── */
+    window.alsStartFromPicker = function () {
+        if (!state.language || !state.category || !state.module) return;
+        // Defense-in-depth: hide the language switcher before showPhase fires
+        var langSwitcher = document.getElementById('als-lang-switcher');
+        if (langSwitcher) langSwitcher.style.display = 'none';
+        showPhase('loading');
+        alsInit();
+    };
+
+    /* ── Init (session start API) ──────────────────────────────────────────── */
+    window.alsInit = function () {
+        var url = '/adaptive-learning/session/start' +
+                  '?category=' + encodeURIComponent(state.category) +
+                  '&module_prefix=' + encodeURIComponent(state.module.prefix) +
+                  '&time_limit=' + state.timeLimitSeconds +
+                  '&language={{ session_language | default("en") }}';
+        post(url)
+            .then(function (res) {
+                if (!res) return;
+                if (!res.ok) {
+                    showError(res.data && res.data.error || 'Could not start session. Try again.');
+                    return;
+                }
+                state.sessionId = res.data.session_id;
+
+                if (res.data.resumed) {
+                    // Exact lang+cat+module match — show resume prompt
+                    state.score = res.data.current_score || 0;
+                    state.timeRemainingSecs = res.data.time_remaining_seconds || state.timeLimitSeconds;
+                    updateScoreStrip();
+                    var meta = document.getElementById('als-resume-meta');
+                    if (meta) {
+                        var lang = (res.data.language || state.language).toUpperCase();
+                        var modName = res.data.module_prefix
+                            ? res.data.module_prefix.replace(/^AL — /, '')
+                            : state.module.displayName;
+                        var q = res.data.questions_presented || 0;
+                        var sc = res.data.current_score || 0;
+                        var remaining = Math.round((res.data.time_remaining_seconds || 0) / 60 * 10) / 10;
+                        meta.textContent = modName + ' · ' + lang + ' · ' +
+                                           q + ' question' + (q !== 1 ? 's' : '') + ' answered' +
+                                           ' · Score: ' + (sc >= 0 ? '+' : '') + sc +
+                                           ' · ~' + remaining + ' min left';
+                    }
+                    showPhase('resume');
+                    return;
+                }
+
+                // New session — start immediately
+                updateBreadcrumb();
+                startTimer(state.timeLimitSeconds);
+                alsNext();
+            }).catch(function () {
+                showError('Could not connect to the server. Please check your connection.');
+            });
+    };
+
+    /* ── Breadcrumb ────────────────────────────────────────────────────────── */
+    function updateBreadcrumb() {
+        var el = document.getElementById('als-breadcrumb');
+        if (!el) return;
+        var meta = (CAT_META[state.language] || CAT_META['en'])[state.category];
+        var catLabel = meta ? (meta.icon + ' ' + meta.label) : state.category;
+        var modLabel = state.module ? state.module.displayName : '';
+        var lang = state.language ? state.language.toUpperCase() : '';
+        el.innerHTML =
+            '<span>' + catLabel + '</span>' +
+            (modLabel ? '<span class="als-breadcrumb-sep">›</span><span>' + modLabel + '</span>' : '') +
+            (lang ? '<span class="als-breadcrumb-sep">·</span><span class="als-lang-badge">' + lang + '</span>' : '');
+    }
+
+    /* ── Progress / score ──────────────────────────────────────────────────── */
     function updateProgress() {
-        document.getElementById('als-progress-label').textContent =
-            'Question ' + state.questionNum;
+        document.getElementById('als-progress-label').textContent = 'Question ' + state.questionNum;
     }
 
     function updateScoreStrip() {
@@ -589,9 +1018,9 @@
             (state.timerSecondsLeft <= 10 ? ' critical' : state.timerSecondsLeft <= 30 ? ' warning' : '');
     }
 
-    function startTimer() {
+    function startTimer(seconds) {
         stopTimer();
-        state.timerSecondsLeft = state.timeLimitSeconds;
+        state.timerSecondsLeft = seconds !== undefined ? seconds : state.timeLimitSeconds;
         updateTimerDisplay();
         state.timerHandle = setInterval(function () {
             state.timerSecondsLeft -= 1;
@@ -648,7 +1077,6 @@
         if (state.answerSubmitted) return;
         state.answerSubmitted = true;
 
-        // Disable all options immediately to prevent double-submit
         document.querySelectorAll('.als-option').forEach(function (b) { b.disabled = true; });
         if (clickedBtn) clickedBtn.classList.add('selected');
 
@@ -674,14 +1102,12 @@
             if (d.correct) state.correctCount += 1;
             updateScoreStrip();
 
-            // Mark correct / incorrect options
             document.querySelectorAll('.als-option').forEach(function (b) {
                 var oid = parseInt(b.dataset.optionId);
                 if (oid === d.correct_option_id) b.classList.add('correct');
                 else if (oid === selectedOptionId && !d.correct) b.classList.add('incorrect');
             });
 
-            // Feedback panel
             var fb = document.getElementById('als-feedback');
             fb.className = 'als-feedback ' + (d.correct ? 'correct' : 'incorrect');
             var deltaLabel = (d.score_delta >= 0 ? '+' : '') + (d.score_delta || 0);
@@ -705,16 +1131,15 @@
     }
 
     function _scheduleNextAction(delayMs) {
-        var delay = delayMs || 1500;
         var adv = document.getElementById('als-auto-advance');
         if (adv) {
-            adv.textContent = delay >= 3000 ? 'Next question in 3s…' : 'Next question in 1.5s…';
+            adv.textContent = delayMs >= 3000 ? 'Next question in 3s…' : 'Next question in 1.5s…';
             adv.style.display = 'block';
         }
         setTimeout(function () {
             if (adv) adv.style.display = 'none';
             alsNext();
-        }, delay);
+        }, delayMs);
     }
 
     /* ── Next question ─────────────────────────────────────────────────────── */
@@ -725,29 +1150,75 @@
                 if (!res) return;
                 var d = res.data;
                 if (d.session_complete) {
-                    if (d.reason === 'no_questions') {
-                        showError('No questions are available for this category yet. Please choose a different category.');
-                        showPhase('category');
+                    if (d.reason === 'pool_exhausted' || d.reason === 'all_seen' || d.reason === 'no_questions') {
+                        alsHandlePoolExhausted();
                         return;
                     }
                     alsComplete();
                     return;
                 }
-                if (!d.id) {
-                    alsComplete();
-                    return;
-                }
+                if (!d.id) { alsComplete(); return; }
                 renderQuestion(d);
             }).catch(function () {
                 showError('Could not load the next question. Please try again.');
             });
     };
 
+    /* ── Pool exhausted ────────────────────────────────────────────────────── */
+    function alsHandlePoolExhausted() {
+        stopTimer();
+        // Complete the session server-side first, then show pool_empty UI
+        post('/adaptive-learning/session/' + state.sessionId + '/complete')
+            .then(function (res) {
+                var xp = Math.max(0, state.score) * 10;
+                var correct = state.correctCount;
+                var total = state.questionNum;
+                if (res && res.ok) {
+                    xp     = (res.data.xp_earned      !== undefined) ? res.data.xp_earned      : xp;
+                    correct= (res.data.questions_correct !== undefined) ? res.data.questions_correct: correct;
+                    total  = (res.data.questions_presented !== undefined) ? res.data.questions_presented: total;
+                }
+                state.poolEmptyData = { score: state.score, xp: xp, correct: correct, total: total };
+                var stats = document.getElementById('als-pool-empty-stats');
+                if (stats) {
+                    stats.textContent = 'Questions answered: ' + total + '   Score: ' +
+                                        (state.score >= 0 ? '+' : '') + state.score;
+                }
+                showPhase('pool-empty');
+            })
+            .catch(function () {
+                // Even on network error, show pool_empty with local data
+                state.poolEmptyData = { score: state.score, xp: 0, correct: state.correctCount, total: state.questionNum };
+                showPhase('pool-empty');
+            });
+    }
+
+    window.alsPoolEndSession = function () {
+        if (!state.poolEmptyData) { showPhase('result'); return; }
+        var d = state.poolEmptyData;
+        var accuracy = d.total > 0 ? Math.round(d.correct / d.total * 100) : 0;
+        showResult(d.score, d.xp, d.correct, d.total, accuracy);
+    };
+
+    window.alsPoolChooseModule = function () {
+        stopTimer();
+        state.sessionId          = null;
+        state.score              = 0;
+        state.questionNum        = 0;
+        state.recentIds          = [];
+        state.correctCount       = 0;
+        state.currentQuestionId  = null;
+        state.answerSubmitted    = false;
+        state.poolEmptyData      = null;
+        state.module             = null;
+        document.getElementById('als-start-btn').disabled = true;
+        showPhase('module');
+        alsLoadModules();
+    };
+
     /* ── Session timeout ───────────────────────────────────────────────────── */
     window.alsTimeout = function () {
         stopTimer();
-        // Guard: only fire completion logic when a question is actively being shown.
-        // Prevents spurious alsComplete() calls during picker/loading/between-question states.
         if (state.phase !== 'question') return;
 
         if (state.currentQuestionId !== null && !state.answerSubmitted) {
@@ -765,10 +1236,6 @@
                 }
                 alsComplete();
             }).catch(function () { alsComplete(); });
-        } else if (!state.answerSubmitted) {
-            // Phase is 'question' but currentQuestionId is null — between questions.
-            // Do not complete; let alsNext() finish loading the next question.
-            // Timer has already stopped; session will proceed to natural end.
         }
     };
 
@@ -776,116 +1243,95 @@
     window.alsComplete = function () {
         stopTimer();
         post('/adaptive-learning/session/' + state.sessionId + '/complete').then(function (res) {
-            var score = state.score;
-            var xp = Math.max(0, score) * 10;
-            var correct = state.correctCount;
-            var total = state.questionNum;
+            var score    = state.score;
+            var xp       = Math.max(0, score) * 10;
+            var correct  = state.correctCount;
+            var total    = state.questionNum;
             var accuracy = total > 0 ? Math.round(correct / total * 100) : 0;
 
             if (res && res.ok) {
-                xp = (res.data.xp_earned !== undefined) ? res.data.xp_earned : xp;
-                score = (res.data.score !== undefined) ? res.data.score : score;
-                correct = (res.data.questions_correct !== undefined) ? res.data.questions_correct : correct;
-                accuracy = (res.data.accuracy_pct !== undefined) ? res.data.accuracy_pct : accuracy;
+                xp       = (res.data.xp_earned          !== undefined) ? res.data.xp_earned          : xp;
+                score    = (res.data.score               !== undefined) ? res.data.score               : score;
+                correct  = (res.data.questions_correct   !== undefined) ? res.data.questions_correct   : correct;
+                accuracy = (res.data.accuracy_pct        !== undefined) ? res.data.accuracy_pct        : accuracy;
             }
-
             showResult(score, xp, correct, total, accuracy);
         }).catch(function () {
-            var total = state.questionNum;
+            var total    = state.questionNum;
             var accuracy = total > 0 ? Math.round(state.correctCount / total * 100) : 0;
-            var xp = Math.max(0, state.score) * 10;
-            showResult(state.score, xp, state.correctCount, total, accuracy);
+            showResult(state.score, Math.max(0, state.score) * 10, state.correctCount, total, accuracy);
         });
     };
 
     /* ── Show result screen ────────────────────────────────────────────────── */
     function showResult(score, xp, correct, total, accuracy) {
-        var icon = accuracy >= 80 ? '🏅' : accuracy >= 50 ? '⚡' : '📚';
+        var icon  = accuracy >= 80 ? '🏅' : accuracy >= 50 ? '⚡' : '📚';
         var title = accuracy >= 80 ? 'Excellent work!' : accuracy >= 50 ? 'Good effort!' : 'Keep practising!';
-        var sub = correct + ' of ' + total + ' correct — ' + accuracy + '% accuracy';
+        var sub   = correct + ' of ' + total + ' correct — ' + accuracy + '% accuracy';
 
-        document.getElementById('als-result-icon').textContent = icon;
-        document.getElementById('als-result-title').textContent = title;
-        document.getElementById('als-result-sub').textContent  = sub;
-        document.getElementById('als-res-score').textContent   = (score >= 0 ? '+' : '') + score;
-        document.getElementById('als-res-xp').textContent      = xp;
-        document.getElementById('als-res-correct').textContent = correct;
-        document.getElementById('als-res-accuracy').textContent = accuracy + '%';
-
+        document.getElementById('als-result-icon').textContent    = icon;
+        document.getElementById('als-result-title').textContent   = title;
+        document.getElementById('als-result-sub').textContent     = sub;
+        document.getElementById('als-res-score').textContent      = (score >= 0 ? '+' : '') + score;
+        document.getElementById('als-res-xp').textContent         = xp;
+        document.getElementById('als-res-correct').textContent    = correct;
+        document.getElementById('als-res-accuracy').textContent   = accuracy + '%';
         showPhase('result');
     }
 
-    /* ── Category / time picker helpers ───────────────────────────────────── */
-    window.alsCatSelect = function (btn) {
-        document.querySelectorAll('.als-cat-btn').forEach(function (b) {
-            b.classList.remove('selected');
-        });
-        btn.classList.add('selected');
-        state.category = btn.dataset.cat;
+    /* ── Resume prompt handlers ────────────────────────────────────────────── */
+    window.alsResumeContinue = function () {
+        updateBreadcrumb();
+        startTimer(state.timeRemainingSecs || state.timeLimitSeconds);
+        alsNext();
     };
 
-    window.alsTimeSelect = function (btn) {
-        document.querySelectorAll('.als-time-btn').forEach(function (b) {
-            b.classList.remove('selected');
-        });
-        btn.classList.add('selected');
-        state.timeLimitSeconds = parseInt(btn.dataset.seconds, 10) || 180;
-    };
-
-    window.alsStartFromPicker = function () {
-        var selectedCat = document.querySelector('.als-cat-btn.selected');
-        if (selectedCat) state.category = selectedCat.dataset.cat;
-        var selectedTime = document.querySelector('.als-time-btn.selected');
-        if (selectedTime) state.timeLimitSeconds = parseInt(selectedTime.dataset.seconds, 10) || 180;
-        // Defense-in-depth: hide the language switcher immediately on Start click,
-        // before showPhase('loading') fires, to prevent any race-condition interaction.
-        var langSwitcher = document.getElementById('als-lang-switcher');
-        if (langSwitcher) langSwitcher.style.display = 'none';
+    window.alsResumeNew = function () {
         showPhase('loading');
-        alsInit(state.category);
+        var url = '/adaptive-learning/session/start' +
+                  '?category=' + encodeURIComponent(state.category) +
+                  '&module_prefix=' + encodeURIComponent(state.module.prefix) +
+                  '&time_limit=' + state.timeLimitSeconds +
+                  '&language=' + encodeURIComponent(state.language) +
+                  '&force_new=true';
+        post(url).then(function (res) {
+            if (!res) return;
+            if (!res.ok) {
+                showError(res.data && res.data.error || 'Could not start session. Try again.');
+                return;
+            }
+            state.sessionId = res.data.session_id;
+            state.score = 0;
+            updateScoreStrip();
+            updateBreadcrumb();
+            startTimer(state.timeLimitSeconds);
+            alsNext();
+        }).catch(function () {
+            showError('Could not connect to the server. Please check your connection.');
+        });
     };
 
-    /* ── Restart ───────────────────────────────────────────────────────────── */
+    /* ── Restart (from result screen) ─────────────────────────────────────── */
     window.alsRestart = function () {
         stopTimer();
-        state.sessionId         = null;
-        state.questionNum       = 0;
-        state.recentIds         = [];
-        state.score             = 0;
-        state.correctCount      = 0;
-        state.currentQuestionId = null;
-        state.answerSubmitted   = false;
-        document.getElementById('als-resume-notice').style.display = 'none';
-        showPhase('category');
+        state.sessionId          = null;
+        state.questionNum        = 0;
+        state.recentIds          = [];
+        state.score              = 0;
+        state.correctCount       = 0;
+        state.currentQuestionId  = null;
+        state.answerSubmitted    = false;
+        state.poolEmptyData      = null;
+        // Keep language + category + module — go back to module picker
+        state.module             = null;
+        document.getElementById('als-start-btn').disabled = true;
+        showPhase('module');
+        alsLoadModules();
     };
 
-    /* ── Init ──────────────────────────────────────────────────────────────── */
-    window.alsInit = function (category) {
-        var cat = category || state.category || 'LESSON';
-        var url = '/adaptive-learning/session/start?category=' + encodeURIComponent(cat) +
-                  '&time_limit=' + state.timeLimitSeconds +
-                  '&language={{ session_language | default("en") }}';
-        post(url)
-            .then(function (res) {
-                if (!res) return;
-                if (!res.ok) {
-                    showError(res.data && res.data.error || 'Could not start session. Try again.');
-                    return;
-                }
-                state.sessionId   = res.data.session_id;
+    /* ── Bootstrap ─────────────────────────────────────────────────────────── */
+    alsLoadCategories();
 
-                if (res.data.resumed) {
-                    state.score = res.data.current_score || 0;
-                    updateScoreStrip();
-                    document.getElementById('als-resume-notice').style.display = 'block';
-                }
-
-                startTimer();
-                alsNext();
-            }).catch(function () {
-                showError('Could not connect to the server. Please check your connection.');
-            });
-    };
 })();
 </script>
 {% endblock %}

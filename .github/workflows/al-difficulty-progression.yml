@@ -1,0 +1,87 @@
+name: AL Difficulty Progression Gate
+
+# ── Purpose ────────────────────────────────────────────────────────────────────
+# Validates the Adaptive Learning difficulty-hierarchy feature (EASY→MEDIUM→HARD).
+#
+# Blocks merge if:
+#   - Any topic dict is missing a valid `difficulty` key                     (Schema)
+#   - `_DIFF_SORT` produces out-of-order topics within a category            (Ordering)
+#   - Duplicate (module, topic, difficulty) exists within a category         (Dedup)
+#   - Template no longer renders the JS/CSS needed for the picker            (Template)
+#
+# No DB required — all tests are pure data/logic or Jinja2 template renders.
+# Runtime: < 15 s on cold runner.
+# ──────────────────────────────────────────────────────────────────────────────
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'app/api/web_routes/adaptive_learning.py'
+      - 'app/templates/adaptive_learning_session.html'
+      - 'tests/unit/test_al_difficulty_progression.py'
+      - '.github/workflows/al-difficulty-progression.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'app/api/web_routes/adaptive_learning.py'
+      - 'app/templates/adaptive_learning_session.html'
+      - 'tests/unit/test_al_difficulty_progression.py'
+      - '.github/workflows/al-difficulty-progression.yml'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual trigger'
+        required: false
+        default: 'manual verification'
+
+jobs:
+  al-difficulty-progression:
+    name: AL Difficulty Progression (schema + ordering + dedup + template)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write minimal .env (no DB needed)
+        run: |
+          cat > .env <<'EOF'
+          DATABASE_URL=postgresql://ci:ci@localhost:5432/ci_db
+          SECRET_KEY=ci-al-difficulty-gate-key
+          ENVIRONMENT=test
+          TESTING=true
+          DEBUG=false
+          ENABLE_RATE_LIMITING=false
+          EOF
+
+      - name: Run AL difficulty progression tests
+        run: |
+          PYTHONPATH=. pytest tests/unit/test_al_difficulty_progression.py \
+            -v --tb=short -ra \
+            --durations=5
+
+      - name: Gate summary
+        if: always()
+        run: |
+          echo "══════════════════════════════════════════════════════"
+          echo " AL Difficulty Progression Gate — Summary"
+          echo "══════════════════════════════════════════════════════"
+          echo " TestDifficultyFieldSchema  — difficulty key + valid EASY/MEDIUM/HARD"
+          echo " TestDifficultyOrdering     — EASY→MEDIUM→HARD, idempotent, all preserved"
+          echo " TestNoDuplicateTopics      — no (module, topic, diff) duplicate per category"
+          echo " TestDifficultyInTemplate   — JS/CSS variables present in rendered HTML"
+          echo ""
+          echo " No DB required. All tests are pure logic or Jinja2 renders."
+          echo " Add new content invariants to test_al_difficulty_progression.py."
+          echo "══════════════════════════════════════════════════════"

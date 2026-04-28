@@ -236,8 +236,9 @@ def _make_user(uid=99):
 def _make_db_no_existing(question_count: int = 15):
     """DB mock that returns no active session (existing=None).
 
-    question_count controls what the MIN_QUESTIONS_PER_CATEGORY guard sees via .scalar().
+    question_count controls what the module validation guard sees via .scalar().
     Default 15 (above threshold) so existing tests continue to pass.
+    Two sequential queries: (1) module count scalar, (2) existing session first.
     """
     db = MagicMock()
     q = MagicMock()
@@ -246,6 +247,7 @@ def _make_db_no_existing(question_count: int = 15):
     q.order_by.return_value = q
     q.scalar.return_value = question_count
     q.first.return_value = None
+    # Both queries share the same chainable mock — scalar() and first() both work
     db.query.return_value = q
     return db
 
@@ -272,8 +274,10 @@ class TestAl3SessionStart:
             response = asyncio.run(al_session_start(
                 request=req,
                 category=category_param,
+                module_prefix="AL — Training Theory",
                 time_limit=180,
                 language="en",
+                force_new=False,
                 db=db,
                 user=user,
             ))
@@ -401,10 +405,16 @@ def _make_existing_session(
     time_limit_seconds=180,
     questions_presented=3,
     questions_correct=2,
+    category=None,
+    language="en",
+    module_prefix="AL — Training Theory",
 ):
     """Build a mock existing (unfinished) AdaptiveLearningSession."""
     s = MagicMock()
     s.id = session_id
+    s.category = category if category is not None else QuizCategory.LESSON
+    s.language = language
+    s.module_prefix = module_prefix
     s.session_start_time = datetime.now(timezone.utc) - timedelta(seconds=started_seconds_ago)
     s.session_time_limit_seconds = time_limit_seconds
     s.questions_presented = questions_presented
@@ -450,8 +460,10 @@ def _call_start_full(time_limit=180, db=None, user=None):
         response = asyncio.run(al_session_start(
             request=req,
             category="LESSON",
+            module_prefix="AL — Training Theory",
             time_limit=time_limit,
             language="en",
+            force_new=False,
             db=db,
             user=user,
         ))
@@ -584,8 +596,10 @@ def _call_start_with_count(question_count: int, category: str = "LESSON", time_l
         response = asyncio.run(al_session_start(
             request=req,
             category=category,
+            module_prefix="AL — Edzéselmélet",
             time_limit=time_limit,
             language="hu",
+            force_new=False,
             db=db,
             user=user,
         ))
@@ -754,8 +768,10 @@ def _call_start_with_language(language: str, db=None):
         response = asyncio.run(al_session_start(
             request=req,
             category="LESSON",
+            module_prefix="AL — Training Theory",
             time_limit=180,
             language=language,
+            force_new=False,
             db=db,
             user=user,
         ))
