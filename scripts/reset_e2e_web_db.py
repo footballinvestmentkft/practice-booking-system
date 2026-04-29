@@ -46,7 +46,7 @@ from app.models.campus import Campus
 from app.models.pitch import Pitch
 from app.models.session import Session as SessionModel, SessionType
 from app.models.booking import Booking, BookingStatus
-from app.models.attendance import Attendance
+from app.models.attendance import Attendance, AttendanceHistory
 from app.models.quiz import (
     Quiz, QuizQuestion, QuizAnswerOption, QuizAttempt, QuizUserAnswer,
     QuizCategory, QuizDifficulty, QuestionType,
@@ -57,6 +57,10 @@ from app.models.invitation_code import InvitationCode
 from app.models.license import UserLicense
 from app.models.tournament_achievement import TournamentParticipation
 from app.models.tournament_reward_config import TournamentRewardConfig
+from app.models.feedback import Feedback
+from app.models.performance_review import StudentPerformanceReview, InstructorSessionReview
+from app.models.notification import Notification
+from app.models.project import ProjectEnrollmentQuiz
 from app.core.security import get_password_hash
 
 TZ = ZoneInfo("Europe/Budapest")
@@ -115,8 +119,27 @@ _E2E_INV_CODE = "INV-E2E-TEST01"
 
 def _truncate_transactional_data(db) -> None:
     """Remove all transactional E2E data (bookings, attendance, quiz attempts, etc.)."""
+    # Resolve E2E session IDs first so child-table deletes can be filtered
+    _e2e_session_ids = [
+        r[0] for r in db.query(SessionModel.id).filter(SessionModel.title.like("E2E%")).all()
+    ]
+
+    # Delete FK children of quiz_attempts before quiz_attempts
+    db.query(ProjectEnrollmentQuiz).delete(synchronize_session=False)
     db.query(QuizUserAnswer).delete(synchronize_session=False)
     db.query(QuizAttempt).delete(synchronize_session=False)
+
+    # Delete FK children of bookings before bookings
+    if _e2e_session_ids:
+        db.query(Notification).filter(
+            Notification.related_session_id.in_(_e2e_session_ids)
+        ).delete(synchronize_session=False)
+    db.query(Notification).filter(
+        Notification.related_booking_id.isnot(None)
+    ).delete(synchronize_session=False)
+
+    # Delete FK children of attendance before attendance (attendance_history)
+    db.query(AttendanceHistory).delete(synchronize_session=False)
     db.query(Attendance).delete(synchronize_session=False)
     db.query(Booking).delete(synchronize_session=False)
     db.query(CreditTransaction).delete(synchronize_session=False)
@@ -129,6 +152,19 @@ def _truncate_transactional_data(db) -> None:
             ))
         )
     ).delete(synchronize_session=False)
+
+    # Delete FK children of sessions before sessions
+    if _e2e_session_ids:
+        db.query(Feedback).filter(
+            Feedback.session_id.in_(_e2e_session_ids)
+        ).delete(synchronize_session=False)
+        db.query(InstructorSessionReview).filter(
+            InstructorSessionReview.session_id.in_(_e2e_session_ids)
+        ).delete(synchronize_session=False)
+        db.query(StudentPerformanceReview).filter(
+            StudentPerformanceReview.session_id.in_(_e2e_session_ids)
+        ).delete(synchronize_session=False)
+
     db.query(SessionModel).filter(
         SessionModel.title.like("E2E%")
     ).delete(synchronize_session=False)
@@ -839,9 +875,10 @@ def scenario_semester_scheduling(db) -> list[str]:
 
     semester = db.query(Semester).filter(Semester.code == _SCHED_CODE).first()
     if semester:
-        semester.start_date = start_date
-        semester.end_date   = end_date
-        semester.status     = SemesterStatus.ONGOING
+        semester.start_date       = start_date
+        semester.end_date         = end_date
+        semester.status           = SemesterStatus.ONGOING
+        semester.semester_category = SemesterCategory.MINI_SEASON
         db.flush()
     else:
         semester = Semester(
