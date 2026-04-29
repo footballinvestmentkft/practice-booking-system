@@ -21015,6 +21015,19 @@
         "title": "XPResponse",
         "type": "object"
       },
+      "_CardPlatformRequest": {
+        "properties": {
+          "platform": {
+            "title": "Platform",
+            "type": "string"
+          }
+        },
+        "required": [
+          "platform"
+        ],
+        "title": "_CardPlatformRequest",
+        "type": "object"
+      },
       "_CardThemeRequest": {
         "properties": {
           "theme": {
@@ -56055,6 +56068,46 @@
           }
         },
         "summary": "Student Set Card Photo Focus",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/card-platform": {
+      "post": {
+        "description": "Save the player's preferred public card platform.",
+        "operationId": "student_set_card_platform_dashboard_card_platform_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_CardPlatformRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Set Card Platform",
         "tags": [
           "web"
         ]
