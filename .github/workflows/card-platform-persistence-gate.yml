@@ -1,0 +1,109 @@
+name: Card Platform Persistence Gate
+
+# ── Purpose ────────────────────────────────────────────────────────────────────
+# Validates the public_card_platform save/load pipeline:
+#
+#   CP-01  POST /dashboard/card-platform with valid platform → saves to DB
+#   CP-02  POST /dashboard/card-platform with "default"     → stores NULL
+#   CP-03  POST /dashboard/card-platform unknown platform   → 422
+#   CP-04  POST /dashboard/card-platform no LFA license     → 404
+#   CP-05  Public card: saved platform used when no URL param
+#   CP-06  Public card: URL param overrides saved platform
+#   CP-07  Public card: NULL saved platform → default behaviour
+#   CP-08  Public card: export template selected when platform has a bucket
+#   CP-01+ All platforms in PLATFORM_PRESETS accepted by endpoint
+#
+# No DB required — all Layer 1 tests use MagicMock.
+# Layer 2 (Playwright PP-01..07) are skipped when no live server is present.
+# Runtime: < 30 s on cold runner.
+# ──────────────────────────────────────────────────────────────────────────────
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'app/models/license.py'
+      - 'app/api/web_routes/dashboard.py'
+      - 'app/services/card_platform_service.py'
+      - 'app/api/web_routes/public_player.py'
+      - 'tests/unit/test_card_platform_persistence.py'
+      - 'alembic/versions/*add_public_card_platform*'
+      - '.github/workflows/card-platform-persistence-gate.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'app/models/license.py'
+      - 'app/api/web_routes/dashboard.py'
+      - 'app/services/card_platform_service.py'
+      - 'app/api/web_routes/public_player.py'
+      - 'tests/unit/test_card_platform_persistence.py'
+      - 'alembic/versions/*add_public_card_platform*'
+      - '.github/workflows/card-platform-persistence-gate.yml'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual trigger'
+        required: false
+        default: 'manual verification'
+
+jobs:
+  card-platform-persistence:
+    name: Card Platform Persistence (save/load pipeline — CP-01..08)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write minimal .env (no DB needed — all tests use MagicMock)
+        run: |
+          cat > .env <<'EOF'
+          DATABASE_URL=postgresql://ci:ci@localhost:5432/ci_db
+          SECRET_KEY=ci-card-platform-persistence-gate-key
+          ENVIRONMENT=test
+          TESTING=true
+          DEBUG=false
+          ENABLE_RATE_LIMITING=false
+          APP_INTERNAL_PORT=8000
+          EOF
+
+      - name: Run card platform persistence tests
+        run: |
+          PYTHONPATH=. pytest tests/unit/test_card_platform_persistence.py \
+            -v --tb=short -ra \
+            --durations=5
+
+      - name: Gate summary
+        if: always()
+        run: |
+          echo "══════════════════════════════════════════════════════════"
+          echo " Card Platform Persistence Gate — Summary"
+          echo "══════════════════════════════════════════════════════════"
+          echo ""
+          echo " Endpoint (POST /dashboard/card-platform)"
+          echo "   CP-01  valid platform → saved to DB + committed"
+          echo "   CP-02  'default' → stored as NULL (backward-compat)"
+          echo "   CP-03  unknown platform → 422, no commit"
+          echo "   CP-04  no LFA license → 404"
+          echo "   CP-01+ all PLATFORM_PRESETS keys accepted"
+          echo ""
+          echo " Platform precedence (public_player_card route)"
+          echo "   CP-05  saved platform used when no ?platform= param"
+          echo "   CP-06  URL ?platform= overrides saved platform"
+          echo "   CP-07  NULL saved platform → resolves to 'default'"
+          echo "   CP-08  instagram_square → export template file exists"
+          echo ""
+          echo " Layer 2 (Playwright PP-01..07): skipped — no live server"
+          echo ""
+          echo " No DB required. All Layer 1 tests use MagicMock."
+          echo "══════════════════════════════════════════════════════════"
