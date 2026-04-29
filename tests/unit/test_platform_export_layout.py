@@ -37,6 +37,12 @@ Tests:
   EX-20  FIFA × facebook_landscape export HTML has .ex-skill-cats
   EX-21  FIFA × facebook_landscape export uses landscape_photo_url variable
   EX-22  FIFA × og uses the same landscape export template (ex-card present)
+  EX-23  FIFA × banner_custom uses dedicated export template (ex-card present)
+  EX-24  FIFA × banner_custom export HTML has no tab-bar
+  EX-25  FIFA × banner_custom export HTML has no card-wrap
+  EX-26  FIFA × banner_custom export HTML has .ex-skill-cats
+  EX-27  FIFA × banner_custom export uses landscape_photo_url variable
+  EX-28  FIFA × banner_custom uses banner template, not landscape template (420px left panel)
 """
 from __future__ import annotations
 
@@ -698,4 +704,71 @@ class TestFifaLandscapeExport:
         assert html, "Export returned empty response for og"
         assert "ex-card" in html, (
             "Landscape export template not used for og — expected .ex-card root element"
+        )
+
+
+@pytest.mark.unit
+class TestFifaBannerExport:
+    """Static tests for FIFA Classic × Banner Custom dedicated export template.
+
+    EX-23  FIFA × banner_custom uses dedicated export template (ex-card present)
+    EX-24  FIFA × banner_custom export HTML has no tab-bar
+    EX-25  FIFA × banner_custom export HTML has no card-wrap (editor chrome)
+    EX-26  FIFA × banner_custom export HTML has .ex-skill-cats (2×2 grid)
+    EX-27  FIFA × banner_custom export uses landscape_photo_url variable (landscape-first fallback)
+    EX-28  FIFA × banner_custom uses banner template, not landscape template (420px left panel)
+    """
+
+    def _get_fifa_export_html(self, client, platform: str) -> str:
+        from app.main import app
+        from app.dependencies import get_db
+
+        db = _mock_db(user=_make_user(), license_=_make_license(card_variant="fifa"))
+        app.dependency_overrides[get_db] = lambda: db
+        try:
+            r = client.get(f"/players/7/card?platform={platform}&export=1")
+            return r.text if r.status_code == 200 else ""
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+
+    def test_ex23_fifa_banner_uses_export_template(self, client):
+        """FIFA × Banner Custom export must render the dedicated export template."""
+        html = self._get_fifa_export_html(client, "banner_custom")
+        assert html, "Export returned empty response for banner_custom"
+        assert "ex-card" in html, (
+            "Dedicated banner export template not used — expected .ex-card root element"
+        )
+
+    def test_ex24_no_tab_bar_in_banner_export(self, client):
+        """Banner export template must not contain a tab-bar."""
+        html = self._get_fifa_export_html(client, "banner_custom")
+        assert html, "Export returned empty response for banner_custom"
+        assert "tab-bar" not in html, "tab-bar found in banner export template HTML"
+
+    def test_ex25_no_card_wrap_in_banner_export(self, client):
+        """Banner export template must not contain a card-wrap (editor chrome)."""
+        html = self._get_fifa_export_html(client, "banner_custom")
+        assert html, "Export returned empty response for banner_custom"
+        assert "card-wrap" not in html, "card-wrap found in banner export template HTML"
+
+    def test_ex26_skill_cats_grid_present_in_banner(self, client):
+        """Banner export template must contain the 2×2 skill category grid."""
+        html = self._get_fifa_export_html(client, "banner_custom")
+        assert html, "Export returned empty response for banner_custom"
+        assert "ex-skill-cats" in html, ".ex-skill-cats not found in banner export HTML"
+
+    def test_ex27_landscape_photo_url_in_banner(self, client):
+        """Banner export template must reference landscape_photo_url (landscape-first fallback)."""
+        html = self._get_fifa_export_html(client, "banner_custom")
+        assert html, "Export returned empty response for banner_custom"
+        assert "landscape_photo_url" in html, (
+            "landscape_photo_url not referenced in banner export template"
+        )
+
+    def test_ex28_banner_not_landscape_template(self, client):
+        """Banner template must have the banner-specific 420px left panel, not landscape's 360px."""
+        html = self._get_fifa_export_html(client, "banner_custom")
+        assert html, "Export returned empty response for banner_custom"
+        assert "0 0 420px" in html, (
+            "Banner-specific 420px left panel not found — landscape template (360px) may have loaded"
         )
