@@ -43,9 +43,9 @@ def _make_user(user_id: int = 7) -> MagicMock:
     return u
 
 
-def _make_license() -> MagicMock:
+def _make_license(card_variant: str = "compact") -> MagicMock:
     lic = MagicMock()
-    lic.card_variant = "compact"
+    lic.card_variant = card_variant
     lic.specialization_type = "LFA_FOOTBALL_PLAYER"
     lic.is_active = True
     lic.onboarding_completed = False  # skips get_skill_profile
@@ -252,11 +252,18 @@ class TestPlaywrightCanvasFill:
                 page = browser.new_page(viewport={"width": w, "height": h})
                 page.goto(url, wait_until="networkidle", timeout=15_000)
 
-                # card-wrap must fill the viewport exactly
-                rect = page.eval_on_selector(
-                    ".card-wrap",
-                    "el => { const r = el.getBoundingClientRect(); "
-                    "return {w: r.width, h: r.height, x: r.x, y: r.y}; }"
+                # Root card element must fill the viewport exactly.
+                # Dedicated export templates use .ex-card; editor templates use .card-wrap.
+                rect = page.evaluate(
+                    "() => { "
+                    "  const el = document.querySelector('.ex-card, .card-wrap'); "
+                    "  if (!el) return null; "
+                    "  const r = el.getBoundingClientRect(); "
+                    "  return {w: r.width, h: r.height, x: r.x, y: r.y}; "
+                    "}"
+                )
+                assert rect is not None, (
+                    f"{platform_id}: neither .ex-card nor .card-wrap found in rendered HTML"
                 )
 
                 assert rect["x"] == pytest.approx(0, abs=1), (
@@ -266,10 +273,10 @@ class TestPlaywrightCanvasFill:
                     f"{platform_id}: card-wrap top offset {rect['y']}px (expected 0)"
                 )
                 assert rect["w"] == pytest.approx(w, abs=2), (
-                    f"{platform_id}: card-wrap width {rect['w']}px vs viewport {w}px"
+                    f"{platform_id}: root card width {rect['w']}px vs viewport {w}px"
                 )
                 assert rect["h"] == pytest.approx(h, abs=2), (
-                    f"{platform_id}: card-wrap height {rect['h']}px vs viewport {h}px"
+                    f"{platform_id}: root card height {rect['h']}px vs viewport {h}px"
                 )
 
                 # body must not be wider than viewport (no horizontal scroll strip)
@@ -312,12 +319,15 @@ class TestPlaywrightP0ComponentSizing:
            NOTE: 85% target is a P1 gate; P0 sets 50% as baseline
     """
 
-    # Combined selectors — first match wins across all card variants
+    # Combined selectors — first match wins across all card variants and templates.
+    # ex- prefixed classes are from dedicated export templates (export render layer).
     _OVR_SELECTOR = (
-        ".cmp-overall, .atl-ovr-num, .sc-overall, .pls-ovr-text, .fifa-overall"
+        ".ex-ovr-num, .cmp-overall, .atl-ovr-num, .sc-overall, .pls-ovr-text, .fifa-overall"
     )
-    # Photo *column* selectors: only variants where photo is a dedicated width column.
-    # Atlas/showcase/pulse use full-bleed hero backgrounds — PL-08 skips for those.
+    # Photo column: only variants with a dedicated width column.
+    # Editor templates: .cmp-photo-col (compact) or .fifa-left (FIFA).
+    # Export templates (.ex-*) use a circular avatar, not a column — PL-08 skips for those.
+    # Atlas/showcase/pulse use full-bleed hero backgrounds — also skip.
     _PHOTO_COL_SELECTOR = ".cmp-photo-col, .fifa-left"
 
     def _open_card(self, platform_id: str):
@@ -377,13 +387,17 @@ class TestPlaywrightP0ComponentSizing:
             pw.stop()
 
     def test_pl09_skill_bar_wider_than_44px(self):
-        """Skill bar width must exceed 44px (max-width constraint removed)."""
+        """Skill bar width must exceed 44px (max-width constraint removed).
+
+        Export templates use .ex-bar-bg; editor templates use .skill-bar-bg.
+        """
         page, browser, pw, _vw, _vh = self._open_card("instagram_square")
         try:
-            bar_w = page.eval_on_selector(
-                ".skill-bar-bg",
-                "el => el.getBoundingClientRect().width"
+            bar_w = page.evaluate(
+                "() => { const el = document.querySelector('.ex-bar-bg, .skill-bar-bg');"
+                " return el ? el.getBoundingClientRect().width : null; }"
             )
+            assert bar_w is not None, "No skill bar element found"
             assert bar_w > 44, (
                 f"Skill bar width {bar_w:.1f}px not wider than 44px fixed constraint"
             )
@@ -412,15 +426,98 @@ class TestPlaywrightP0ComponentSizing:
         """
         page, browser, pw, _vw, vh = self._open_card(platform_id)
         try:
-            bottom = page.eval_on_selector(
-                ".skills-section",
-                "el => el.getBoundingClientRect().bottom"
+            bottom = page.evaluate(
+                "() => { const el = document.querySelector('.ex-skills, .skills-section');"
+                " return el ? el.getBoundingClientRect().bottom : null; }"
             )
+            assert bottom is not None, "No skills section element found"
             min_bottom = vh * 0.50
             assert bottom >= min_bottom, (
-                f"{platform_id}: skills-section bottom {bottom:.1f}px "
+                f"{platform_id}: skills section bottom {bottom:.1f}px "
                 f"< 50% of viewport height {vh}px ({min_bottom:.1f}px)"
             )
         finally:
             browser.close()
             pw.stop()
+
+
+# ── Export Render Layer: static HTML checks ───────────────────────────────────
+
+@pytest.mark.unit
+class TestExportRenderLayerStatic:
+    """Static (non-Playwright) tests for the export render layer.
+
+    EX-01  FIFA × instagram_square uses the dedicated export template (ex-card present)
+    EX-02  FIFA × instagram_square export HTML has no tab-bar
+    EX-03  FIFA × instagram_square export HTML has no events-section
+    EX-04  FIFA × instagram_square export HTML has .ex-skill-cats (2×2 grid container)
+    EX-05  Non-FIFA variant (compact) still uses editor template for instagram_square
+    EX-06  FIFA × instagram_portrait still falls back to editor template (no export template yet)
+    """
+
+    def _get_fifa_export_html(self, client, platform: str = "instagram_square") -> str:
+        from app.main import app
+        from app.dependencies import get_db
+
+        db = _mock_db(user=_make_user(), license_=_make_license(card_variant="fifa"))
+        app.dependency_overrides[get_db] = lambda: db
+        try:
+            r = client.get(f"/players/7/card?platform={platform}&export=1")
+            return r.text if r.status_code == 200 else ""
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+
+    def test_ex01_fifa_square_uses_export_template(self, client):
+        """FIFA × IG Square export must render the dedicated export template."""
+        html = self._get_fifa_export_html(client, "instagram_square")
+        assert html, "Export returned empty response"
+        assert "ex-card" in html, (
+            "Dedicated export template not used — expected .ex-card root element"
+        )
+
+    def test_ex02_no_tab_bar_in_export(self, client):
+        """Export template must not contain a tab-bar."""
+        html = self._get_fifa_export_html(client, "instagram_square")
+        assert html, "Export returned empty response"
+        assert "tab-bar" not in html, "tab-bar found in export template HTML"
+
+    def test_ex03_no_events_section_in_export(self, client):
+        """Export template must not contain an events section."""
+        html = self._get_fifa_export_html(client, "instagram_square")
+        assert html, "Export returned empty response"
+        assert "events-section" not in html, "events-section found in export template HTML"
+
+    def test_ex04_skill_cats_grid_present(self, client):
+        """Export template must contain the 2x2 skill category grid container."""
+        html = self._get_fifa_export_html(client, "instagram_square")
+        assert html, "Export returned empty response"
+        assert "ex-skill-cats" in html, ".ex-skill-cats grid container not found in export HTML"
+
+    def test_ex05_compact_variant_uses_editor_template(self, client):
+        """Compact variant has no export template yet — must use editor path (no .ex-card)."""
+        from app.main import app
+        from app.dependencies import get_db
+
+        db = _mock_db(user=_make_user(), license_=_make_license(card_variant="compact"))
+        app.dependency_overrides[get_db] = lambda: db
+        try:
+            r = client.get("/players/7/card?platform=instagram_square&export=1")
+            html = r.text if r.status_code == 200 else ""
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+
+        assert html, "Export returned empty response for compact variant"
+        assert "ex-card" not in html, (
+            "Compact variant should use editor template, not export template"
+        )
+
+    def test_ex06_fifa_portrait_falls_back_to_editor(self, client):
+        """FIFA x instagram_portrait has no export template — must fall back to editor path."""
+        html = self._get_fifa_export_html(client, "instagram_portrait")
+        assert html, "Export returned empty response for instagram_portrait"
+        assert "ex-card" not in html, (
+            "IG Portrait should use editor template fallback, not export template"
+        )
+        assert "export-mode" in html, (
+            "Editor template fallback must still include export-mode class on body"
+        )

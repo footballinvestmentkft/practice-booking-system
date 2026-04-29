@@ -39,6 +39,20 @@ _POS_COLORS = {
 _TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "templates")
 _FALLBACK_TEMPLATE = "public/player_card.html"
 
+# Export render layer: platform → format bucket for dedicated export templates.
+# Template path resolved as: public/export/{bucket}/{card_variant_id}.html
+# Falls back to existing editor template + export-mode class if no file found.
+_EXPORT_FORMAT_BUCKETS: dict[str, str] = {
+    "instagram_square":   "square",
+    "facebook_square":    "square",
+    "instagram_portrait": "portrait",
+    "instagram_story":    "story",
+    "tiktok":             "story",
+    "facebook_landscape": "landscape",
+    "og":                 "landscape",
+    "banner_custom":      "banner",
+}
+
 
 @router.get("/players/{user_id}/card", response_class=HTMLResponse)
 def public_player_card(
@@ -200,6 +214,16 @@ def public_player_card(
     # ── Platform preset resolution (stateless — never persisted) ─────────────
     from app.services.card_platform_service import get_preset as _get_preset
     platform_preset = _get_preset(platform)
+
+    # ── Export render layer ──────────────────────────────────────────────────
+    # Prefer a dedicated export template when one exists for this combination.
+    # Lookup key: public/export/{format_bucket}/{card_variant_id}.html
+    # No match → unchanged template_path → existing editor template + export-mode class.
+    if export and platform_preset.id in _EXPORT_FORMAT_BUCKETS:
+        _fmt = _EXPORT_FORMAT_BUCKETS[platform_preset.id]
+        _exp_tpl = f"public/export/{_fmt}/{card_variant_id}.html"
+        if os.path.isfile(os.path.join(_TEMPLATES_DIR, _exp_tpl)):
+            template_path = _exp_tpl
 
     return templates.TemplateResponse(request, template_path, {
         "player": player,
