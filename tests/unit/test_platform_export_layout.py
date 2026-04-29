@@ -20,6 +20,11 @@ Tests:
   PL-04  all CANVAS_SIZES platforms render 200 on card route
   PL-05  card-wrap fills viewport width/height (Playwright, skipped if absent)
   PL-06  no body background strip outside card-wrap (Playwright)
+  EX-06  FIFA × instagram_portrait uses dedicated export template (ex-card present)
+  EX-07  FIFA × instagram_portrait export HTML has no tab-bar
+  EX-08  FIFA × instagram_portrait export HTML has no card-wrap
+  EX-09  FIFA × instagram_portrait export HTML has .ex-skill-cats
+  EX-10  FIFA × instagram_portrait export uses portrait_photo_url variable
 """
 from __future__ import annotations
 
@@ -417,11 +422,11 @@ class TestPlaywrightP0ComponentSizing:
             browser.close()
             pw.stop()
 
-    @pytest.mark.parametrize("platform_id", ["instagram_square"])
+    @pytest.mark.parametrize("platform_id", ["instagram_square", "instagram_portrait"])
     def test_pl11_last_content_element_reaches_50pct_height(self, platform_id):
         """Last visible content element bottom >= 50% viewport height (P0 baseline).
 
-        instagram_portrait removed until IG Portrait canvas-fill layout is implemented.
+        Both instagram_square and instagram_portrait use dedicated export templates.
         The 85% target (full canvas fill, no dead space) is a P1 gate.
         """
         page, browser, pw, _vw, vh = self._open_card(platform_id)
@@ -452,7 +457,11 @@ class TestExportRenderLayerStatic:
     EX-03  FIFA × instagram_square export HTML has no events-section
     EX-04  FIFA × instagram_square export HTML has .ex-skill-cats (2×2 grid container)
     EX-05  Non-FIFA variant (compact) still uses editor template for instagram_square
-    EX-06  FIFA × instagram_portrait still falls back to editor template (no export template yet)
+    EX-06  FIFA × instagram_portrait uses dedicated export template (ex-card present)
+    EX-07  FIFA × instagram_portrait export HTML has no tab-bar
+    EX-08  FIFA × instagram_portrait export HTML has no card-wrap
+    EX-09  FIFA × instagram_portrait export HTML has .ex-skill-cats
+    EX-10  FIFA × instagram_portrait export uses portrait_photo_url variable
     """
 
     def _get_fifa_export_html(self, client, platform: str = "instagram_square") -> str:
@@ -511,13 +520,36 @@ class TestExportRenderLayerStatic:
             "Compact variant should use editor template, not export template"
         )
 
-    def test_ex06_fifa_portrait_falls_back_to_editor(self, client):
-        """FIFA x instagram_portrait has no export template — must fall back to editor path."""
+    def test_ex06_fifa_portrait_uses_export_template(self, client):
+        """FIFA × IG Portrait export must render the dedicated export template."""
         html = self._get_fifa_export_html(client, "instagram_portrait")
         assert html, "Export returned empty response for instagram_portrait"
-        assert "ex-card" not in html, (
-            "IG Portrait should use editor template fallback, not export template"
+        assert "ex-card" in html, (
+            "Dedicated portrait export template not used — expected .ex-card root element"
         )
-        assert "export-mode" in html, (
-            "Editor template fallback must still include export-mode class on body"
+
+    def test_ex07_no_tab_bar_in_portrait_export(self, client):
+        """Portrait export template must not contain a tab-bar."""
+        html = self._get_fifa_export_html(client, "instagram_portrait")
+        assert html, "Export returned empty response for instagram_portrait"
+        assert "tab-bar" not in html, "tab-bar found in portrait export template HTML"
+
+    def test_ex08_no_card_wrap_in_portrait_export(self, client):
+        """Portrait export template must not contain a card-wrap (editor chrome)."""
+        html = self._get_fifa_export_html(client, "instagram_portrait")
+        assert html, "Export returned empty response for instagram_portrait"
+        assert "card-wrap" not in html, "card-wrap found in portrait export template HTML"
+
+    def test_ex09_skill_cats_grid_present_in_portrait(self, client):
+        """Portrait export template must contain the 2×2 skill category grid."""
+        html = self._get_fifa_export_html(client, "instagram_portrait")
+        assert html, "Export returned empty response for instagram_portrait"
+        assert "ex-skill-cats" in html, ".ex-skill-cats not found in portrait export HTML"
+
+    def test_ex10_portrait_photo_url_used_in_portrait(self, client):
+        """Portrait export template must reference portrait_photo_url (portrait crop)."""
+        html = self._get_fifa_export_html(client, "instagram_portrait")
+        assert html, "Export returned empty response for instagram_portrait"
+        assert "portrait_photo_url" in html, (
+            "portrait_photo_url not referenced in portrait export template"
         )

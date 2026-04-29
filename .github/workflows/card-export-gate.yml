@@ -24,7 +24,9 @@ on:
       - 'app/services/card_export_service.py'
       - 'app/services/card_platform_service.py'
       - 'app/config.py'
+      - 'app/templates/public/export/**'
       - 'tests/unit/test_card_export.py'
+      - 'tests/unit/test_platform_export_layout.py'
       - '.github/workflows/card-export-gate.yml'
   pull_request:
     branches: [main, develop]
@@ -33,7 +35,9 @@ on:
       - 'app/services/card_export_service.py'
       - 'app/services/card_platform_service.py'
       - 'app/config.py'
+      - 'app/templates/public/export/**'
       - 'tests/unit/test_card_export.py'
+      - 'tests/unit/test_platform_export_layout.py'
       - '.github/workflows/card-export-gate.yml'
   workflow_dispatch:
     inputs:
@@ -81,6 +85,7 @@ jobs:
       - name: Run card export unit tests
         run: |
           PYTHONPATH=. pytest tests/unit/test_card_export.py \
+                              tests/unit/test_platform_export_layout.py \
             -v --tb=short -ra \
             --durations=10 \
             -m unit
