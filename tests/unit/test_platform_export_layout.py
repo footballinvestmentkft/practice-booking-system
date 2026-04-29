@@ -31,6 +31,12 @@ Tests:
   EX-14  FIFA × instagram_story export HTML has .ex-skill-cats
   EX-15  FIFA × instagram_story export uses portrait_photo_url variable
   EX-16  FIFA × tiktok uses the same story export template (ex-card present)
+  EX-17  FIFA × facebook_landscape uses dedicated export template (ex-card present)
+  EX-18  FIFA × facebook_landscape export HTML has no tab-bar
+  EX-19  FIFA × facebook_landscape export HTML has no card-wrap
+  EX-20  FIFA × facebook_landscape export HTML has .ex-skill-cats
+  EX-21  FIFA × facebook_landscape export uses landscape_photo_url variable
+  EX-22  FIFA × og uses the same landscape export template (ex-card present)
 """
 from __future__ import annotations
 
@@ -625,4 +631,71 @@ class TestFifaStoryExport:
         assert html, "Export returned empty response for tiktok"
         assert "ex-card" in html, (
             "Story export template not used for tiktok — expected .ex-card root element"
+        )
+
+
+@pytest.mark.unit
+class TestFifaLandscapeExport:
+    """Static tests for FIFA Classic × Landscape dedicated export template.
+
+    EX-17  FIFA × facebook_landscape uses dedicated export template (ex-card present)
+    EX-18  FIFA × facebook_landscape export HTML has no tab-bar
+    EX-19  FIFA × facebook_landscape export HTML has no card-wrap (editor chrome)
+    EX-20  FIFA × facebook_landscape export HTML has .ex-skill-cats (2×2 grid)
+    EX-21  FIFA × facebook_landscape export uses landscape_photo_url variable
+    EX-22  FIFA × og uses the same landscape export template (ex-card present)
+    """
+
+    def _get_fifa_export_html(self, client, platform: str) -> str:
+        from app.main import app
+        from app.dependencies import get_db
+
+        db = _mock_db(user=_make_user(), license_=_make_license(card_variant="fifa"))
+        app.dependency_overrides[get_db] = lambda: db
+        try:
+            r = client.get(f"/players/7/card?platform={platform}&export=1")
+            return r.text if r.status_code == 200 else ""
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+
+    def test_ex17_fifa_landscape_uses_export_template(self, client):
+        """FIFA × FB Landscape export must render the dedicated export template."""
+        html = self._get_fifa_export_html(client, "facebook_landscape")
+        assert html, "Export returned empty response for facebook_landscape"
+        assert "ex-card" in html, (
+            "Dedicated landscape export template not used — expected .ex-card root element"
+        )
+
+    def test_ex18_no_tab_bar_in_landscape_export(self, client):
+        """Landscape export template must not contain a tab-bar."""
+        html = self._get_fifa_export_html(client, "facebook_landscape")
+        assert html, "Export returned empty response for facebook_landscape"
+        assert "tab-bar" not in html, "tab-bar found in landscape export template HTML"
+
+    def test_ex19_no_card_wrap_in_landscape_export(self, client):
+        """Landscape export template must not contain a card-wrap (editor chrome)."""
+        html = self._get_fifa_export_html(client, "facebook_landscape")
+        assert html, "Export returned empty response for facebook_landscape"
+        assert "card-wrap" not in html, "card-wrap found in landscape export template HTML"
+
+    def test_ex20_skill_cats_grid_present_in_landscape(self, client):
+        """Landscape export template must contain the 2×2 skill category grid."""
+        html = self._get_fifa_export_html(client, "facebook_landscape")
+        assert html, "Export returned empty response for facebook_landscape"
+        assert "ex-skill-cats" in html, ".ex-skill-cats not found in landscape export HTML"
+
+    def test_ex21_landscape_photo_url_in_landscape(self, client):
+        """Landscape export template must reference landscape_photo_url (landscape crop first)."""
+        html = self._get_fifa_export_html(client, "facebook_landscape")
+        assert html, "Export returned empty response for facebook_landscape"
+        assert "landscape_photo_url" in html, (
+            "landscape_photo_url not referenced in landscape export template"
+        )
+
+    def test_ex22_og_uses_landscape_export_template(self, client):
+        """OG shares the landscape bucket — must render the same dedicated export template."""
+        html = self._get_fifa_export_html(client, "og")
+        assert html, "Export returned empty response for og"
+        assert "ex-card" in html, (
+            "Landscape export template not used for og — expected .ex-card root element"
         )
