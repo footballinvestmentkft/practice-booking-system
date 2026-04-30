@@ -64,6 +64,9 @@ _VIDEO_FPS_NOTE = "~25 fps (CDP screencast default, not user-configurable via Pl
 # preset "fast": ~2× faster encode than "medium" with ~5% file-size penalty.
 #   Good for server-side on-demand generation of 5 s clips.
 # yuv420p: mandatory — iOS and Instagram reject 4:4:4 (yuv444p) chroma.
+# bt709 color tags: Playwright VP8 has no declared color space; without explicit tags
+#   FFmpeg defaults to bt470bg (PAL), which macOS/iOS players misinterpret → color shift.
+#   Tags: -colorspace bt709 -color_primaries bt709 -color_trc bt709 -color_range tv
 # movflags +faststart: relocates moov atom to file start for progressive web playback.
 # Silent AAC audio track (lavfi anullsrc, 64 kbps): improves compatibility on
 #   platforms that reject video-only MP4 (e.g. some Instagram upload paths).
@@ -193,7 +196,8 @@ def _sync_record_video(  # pragma: no cover
     animation block — this function does not add that param itself.
 
     Raises:
-        CardVideoRecordError: if recording times out or produces no WebM file
+        CardVideoRecordError: if recording times out, render URL returns an error
+                              status code, or produces no WebM file.
         ValueError: if platform has no registered canvas size
     """
     import pathlib
@@ -207,6 +211,8 @@ def _sync_record_video(  # pragma: no cover
     from playwright.sync_api import sync_playwright
     from playwright.sync_api import TimeoutError as _PWTimeout
 
+    logger.info("video recording started — url=%s platform=%s duration_s=%s", render_url, platform, duration_s)
+
     try:
         with tempfile.TemporaryDirectory() as tmp_dir:
             with sync_playwright() as p:
@@ -217,7 +223,22 @@ def _sync_record_video(  # pragma: no cover
                     record_video_size={"width": w, "height": h},
                 )
                 page = context.new_page()
-                page.goto(render_url, wait_until="networkidle", timeout=_VIDEO_TIMEOUT_MS)
+                response = page.goto(render_url, wait_until="networkidle", timeout=_VIDEO_TIMEOUT_MS)
+
+                # Guard: if the render URL returns an error page (404/500/etc.)
+                # Playwright would silently record the white error page and return
+                # it as a "successful" WebM.  Fail fast instead.
+                http_status = response.status if response else 0
+                logger.info(
+                    "video render URL responded — status=%s url=%s",
+                    http_status, render_url,
+                )
+                if http_status >= 400:
+                    raise CardVideoRecordError(
+                        f"Render URL returned HTTP {http_status} — "
+                        f"check user ID, license, and template for {render_url!r}"
+                    )
+
                 # Font readiness: await document.fonts.ready so DM Mono (Google
                 # Fonts CDN) is fully loaded before recording begins.
                 # page.evaluate() awaits the returned Promise in Playwright sync API.
@@ -233,6 +254,8 @@ def _sync_record_video(  # pragma: no cover
             webm_files = list(pathlib.Path(tmp_dir).glob("*.webm"))
             if not webm_files:
                 raise CardVideoRecordError("No WebM file produced by Playwright")
+            webm_size = webm_files[0].stat().st_size
+            logger.info("video recording complete — webm_size=%s bytes", webm_size)
             return webm_files[0].read_bytes()
     except _PWTimeout as exc:
         raise CardVideoRecordError(str(exc)) from exc
@@ -278,6 +301,12 @@ def _webm_to_mp4(webm_bytes: bytes) -> bytes:  # pragma: no cover
             "-crf",        str(_FFMPEG_CRF),
             "-preset",     _FFMPEG_PRESET,
             "-pix_fmt",    "yuv420p",
+            # Color space: explicit bt709 tags prevent macOS/iOS misreading VP8's
+            # undeclared color space as bt470bg (PAL), which shifts perceived colors.
+            "-colorspace",        "bt709",
+            "-color_primaries",   "bt709",
+            "-color_trc",         "bt709",
+            "-color_range",       "tv",
             # Audio: AAC, 64 kbps, ends when video ends
             "-c:a",        "aac",
             "-b:a",        "64k",

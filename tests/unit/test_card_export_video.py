@@ -28,6 +28,7 @@ Coverage:
   VX-23  MP4 response body contains ftyp box at offset 4 (ISO Base Media magic)
   VX-24  FFmpeg failure → falls back to WebM + X-Export-Fallback: ffmpeg-failed header
   VX-25  unsupported format (avi) → 422
+  VX-26  _sync_record_video source contains HTTP status guard (raises CardVideoRecordError on ≥400)
 
 Mock strategy:
   - get_current_user_web → MagicMock user (no DB, no cookie)
@@ -474,3 +475,39 @@ class TestMp4Export:
             format="avi",
         )
         assert r.status_code == 422
+
+
+# ── Tests: render URL HTTP guard ──────────────────────────────────────────────
+
+@pytest.mark.unit
+class TestRenderUrlHttpGuard:
+    """VX-26: _sync_record_video must raise CardVideoRecordError when the render
+    URL returns HTTP ≥ 400 instead of silently recording the white error page.
+
+    Since _sync_record_video requires a live Playwright browser (# pragma: no cover),
+    we verify the guard is present via source inspection.  The endpoint-level
+    behaviour (CardVideoRecordError → 504) is already covered by VX-09.
+    """
+
+    def test_vx26_sync_record_video_has_http_status_guard(self):
+        """_sync_record_video source must contain the HTTP ≥ 400 guard.
+
+        This is the structural invariant that prevents Playwright from silently
+        recording a white error page when the render URL returns 404 or 500.
+        """
+        import inspect
+        from app.services import card_export_service as _svc
+
+        src = inspect.getsource(_svc._sync_record_video)
+        assert "http_status >= 400" in src, (
+            "_sync_record_video must raise CardVideoRecordError when render URL "
+            "returns HTTP >= 400 — missing guard means white error pages are "
+            "silently recorded and returned as valid video"
+        )
+        assert "CardVideoRecordError" in src, (
+            "_sync_record_video must raise CardVideoRecordError on HTTP error, "
+            "not return silently"
+        )
+        assert "response.status" in src, (
+            "_sync_record_video must capture the HTTP response status from page.goto()"
+        )

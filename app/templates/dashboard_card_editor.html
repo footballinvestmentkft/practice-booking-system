@@ -290,6 +290,10 @@
             <button id="btn-export-video" class="btn-export-card btn-export-video"
                     style="display:none;" onclick="exportCardVideo()"
                     title="Download animated MP4 video (5s, H.264) — compatible with iOS and Instagram">▶ Download MP4</button>
+            {# DEBUG: raw WebM download — inspect before FFmpeg conversion #}
+            <button id="btn-export-webm-debug" class="btn-export-card btn-export-video"
+                    style="display:none;" onclick="exportCardWebmDebug()"
+                    title="[DEBUG] Download raw WebM — use to verify Playwright recording before MP4 conversion">⬇ WebM (debug)</button>
         </div>
     </section>
 
@@ -499,10 +503,17 @@ function _isVideoCapable() {
 
 function _updateVideoButtonVisibility() {
     const btn = document.getElementById('btn-export-video');
-    if (!btn) return;
-    const capable = _isVideoCapable();
-    btn.style.display = capable ? '' : 'none';
-    btn.disabled = !capable;
+    if (btn) {
+        const capable = _isVideoCapable();
+        btn.style.display = capable ? '' : 'none';
+        btn.disabled = !capable;
+    }
+    const dbg = document.getElementById('btn-export-webm-debug');
+    if (dbg) {
+        const capable = _isVideoCapable();
+        dbg.style.display = capable ? '' : 'none';
+        dbg.disabled = !capable;
+    }
 }
 
 async function _savePlatform(platformId) {
@@ -599,6 +610,34 @@ async function exportCardVideo() {
         URL.revokeObjectURL(url);
     } catch(e) {
         alert('Video export failed — please try again.');
+    } finally {
+        btn.textContent = origText;
+        btn.disabled = false;
+    }
+}
+
+async function exportCardWebmDebug() {
+    if (!_isVideoCapable()) return;
+    const btn = document.getElementById('btn-export-webm-debug');
+    const origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Recording… (5s)';
+    try {
+        const r = await fetch(
+            `/players/${_cardUserId}/card/export/video?platform=${_currentPlatform}&format=webm&duration=5`
+        );
+        if (r.status === 429) { alert('Rate limit — wait a moment and retry.'); return; }
+        if (!r.ok) { alert(`WebM debug export failed — HTTP ${r.status}`); return; }
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `lfa_card_${_cardUserId}_${_currentPlatform}_raw.webm`;
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch(e) {
+        alert('WebM debug export failed — see console.');
+        console.error(e);
     } finally {
         btn.textContent = origText;
         btn.disabled = false;

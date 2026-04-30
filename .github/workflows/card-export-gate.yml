@@ -164,6 +164,7 @@ jobs:
           echo "   VX-23  MP4 bytes[4:8] == ftyp (ISO Base Media magic)"
           echo "   VX-24  FFmpeg failure → 200 webm fallback + X-Export-Fallback: ffmpeg-failed"
           echo "   VX-25  format=avi → 422 (avi not in _SUPPORTED_VIDEO_FORMATS)"
+          echo "   VX-26  _sync_record_video has HTTP ≥400 guard (raises CardVideoRecordError)"
           echo ""
           echo " Animated template isolation — FIFA × Square"
           echo "   EX-32  square/fifa.html source has animated_mode branch"
