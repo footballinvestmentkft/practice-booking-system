@@ -7,6 +7,9 @@ Creates 100 student accounts (load-user-0001..0100@lfa.com) with:
   - role: STUDENT
   - credit_balance: 50,000
   - UserLicense(LFA_FOOTBALL_PLAYER, is_active=True)
+  - Realistic profile fields (nationality, gender, country) for visual QA
+  - motivation_scores with position/goals/motivation/average_skill_level
+  - football_skills baseline at 60 for all 29 skill keys
 
 Also creates (if not already present):
   - 1 MINI_SEASON ONGOING semester for enrollment tasks
@@ -14,6 +17,7 @@ Also creates (if not already present):
     if available, to avoid FK complexity)
 
 Idempotent: safe to run multiple times — skips existing records.
+Backfills profile/skill fields on existing load users if they are missing.
 
 Outputs (printed to stdout for use by run_phase63_load.sh):
   LOAD_SEMESTER_ID={id}
@@ -45,6 +49,26 @@ USER_PASSWORD = "LoadTest1234!"
 CREDIT_BALANCE = 50_000    # enough for 500 enrollments at cost=100 each
 ENROLL_COST    = 100
 
+# Realistic profile defaults — used for QA-visible player card rendering.
+# All load users get the same values; differentiation is not needed for load testing.
+_NATIONALITY = "Hungarian"
+_GENDER      = "Male"
+_COUNTRY     = "Hungary"
+_POSITION    = "MIDFIELDER"
+
+# 29 skill keys — baseline at 60 for all.
+# Mirrors SKILL_CATEGORIES key list; kept inline to avoid circular import risk.
+_SKILL_KEYS = [
+    "ball_control", "dribbling", "finishing", "shot_power", "long_shots",
+    "volleys", "crossing", "passing", "heading", "tackle", "marking",
+    "free_kicks", "corners", "penalties",
+    "positioning_off", "positioning_def", "vision", "aggression",
+    "reactions", "composure", "consistency", "tactical_awareness",
+    "acceleration", "sprint_speed", "agility", "jumping",
+    "strength", "stamina", "balance",
+]
+_SKILL_BASELINE = 60.0
+
 SEMESTER_CODE = "LOAD-TEST-MINI-01"
 SEMESTER_NAME = "Load Test MINI_SEASON (Phase 6.3)"
 
@@ -58,7 +82,14 @@ def _ensure_user(db, i: int) -> User:
         # Ensure sufficient credits for the load test
         if user.credit_balance < CREDIT_BALANCE // 2:
             user.credit_balance = CREDIT_BALANCE
-            db.flush()
+        # Backfill profile fields if missing (prior seed runs omitted these)
+        if not user.nationality:
+            user.nationality = _NATIONALITY
+        if not user.gender:
+            user.gender = _GENDER
+        if not user.country:
+            user.country = _COUNTRY
+        db.flush()
         return user
 
     user = User(
@@ -70,10 +101,38 @@ def _ensure_user(db, i: int) -> User:
         is_active      = True,
         specialization = "LFA_FOOTBALL_PLAYER",
         date_of_birth  = date(2000, 1, 1),  # skip age-verification on login
+        nationality    = _NATIONALITY,
+        gender         = _GENDER,
+        country        = _COUNTRY,
     )
     db.add(user)
     db.flush()
     return user
+
+
+def _build_motivation_scores() -> dict:
+    return {
+        "position":               _POSITION,
+        "goals":                  "improve_skills",
+        "motivation":             "",
+        "average_skill_level":    _SKILL_BASELINE,
+        "onboarding_completed_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+def _build_football_skills() -> dict:
+    now = datetime.now(timezone.utc).isoformat()
+    return {
+        key: {
+            "baseline":         _SKILL_BASELINE,
+            "current_level":    _SKILL_BASELINE,
+            "tournament_delta": 0.0,
+            "total_delta":      0.0,
+            "tournament_count": 0,
+            "last_updated":     now,
+        }
+        for key in _SKILL_KEYS
+    }
 
 
 def _ensure_license(db, user: User) -> UserLicense:
@@ -88,17 +147,28 @@ def _ensure_license(db, user: User) -> UserLicense:
     if lic:
         if not lic.is_active:
             lic.is_active = True
-            db.flush()
+        # Backfill motivation_scores + football_skills if missing
+        if not lic.motivation_scores:
+            lic.motivation_scores = _build_motivation_scores()
+            from sqlalchemy.orm.attributes import flag_modified
+            flag_modified(lic, "motivation_scores")
+        if not lic.football_skills:
+            lic.football_skills = _build_football_skills()
+            from sqlalchemy.orm.attributes import flag_modified
+            flag_modified(lic, "football_skills")
+        db.flush()
         return lic
 
     lic = UserLicense(
-        user_id           = user.id,
-        specialization_type = "LFA_FOOTBALL_PLAYER",
-        is_active         = True,
-        started_at        = datetime.now(timezone.utc),
+        user_id              = user.id,
+        specialization_type  = "LFA_FOOTBALL_PLAYER",
+        is_active            = True,
+        started_at           = datetime.now(timezone.utc),
         onboarding_completed = True,
-        payment_verified  = True,
-        credit_balance    = 0,
+        payment_verified     = True,
+        credit_balance       = 0,
+        motivation_scores    = _build_motivation_scores(),
+        football_skills      = _build_football_skills(),
     )
     db.add(lic)
     db.flush()

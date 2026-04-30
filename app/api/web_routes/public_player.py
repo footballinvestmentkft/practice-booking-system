@@ -230,9 +230,10 @@ def public_player_card(
         if os.path.isfile(os.path.join(_TEMPLATES_DIR, _exp_tpl)):
             template_path = _exp_tpl
 
-    # facebook_post browser-preview: same standalone export template as PNG
-    # Single source of truth — no separate preview template to avoid visual drift
-    if not export and platform_preset.id == "facebook_post" and card_variant_id == "fifa":
+    # Landscape FIFA browser-preview: use the same standalone export template as PNG.
+    # Covers facebook_post, facebook_landscape, og — all map to the landscape bucket.
+    # Single source of truth — no separate preview template to avoid visual drift.
+    if not export and platform_preset.id in {"facebook_post", "facebook_landscape", "og"} and card_variant_id == "fifa":
         _fb_tpl = "public/export/landscape/fifa.html"
         if os.path.isfile(os.path.join(_TEMPLATES_DIR, _fb_tpl)):
             template_path = _fb_tpl
