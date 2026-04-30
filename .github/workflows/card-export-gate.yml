@@ -74,6 +74,9 @@ jobs:
       - name: Install Playwright Chromium binary
         run: python -m playwright install chromium --with-deps
 
+      - name: Install FFmpeg (required for MP4 post-processing)
+        run: sudo apt-get install -y ffmpeg
+
       - name: Write minimal .env (no DB needed — deps are mocked)
         run: |
           cat > .env <<'EOF'
@@ -131,7 +134,7 @@ jobs:
           echo " Playwright environment"
           echo "   chromium_can_launch_and_screenshot → browser launches, 200x200 PNG OK"
           echo ""
-          echo " Video export — FIFA × Square"
+          echo " Video export — FIFA × Square (WebM)"
           echo "   VX-01  fifa + instagram_square → 200 video/webm"
           echo "   VX-02  fifa + instagram_portrait → 422 (not animated capable)"
           echo "   VX-03  compact + instagram_square → 422"
@@ -145,16 +148,22 @@ jobs:
           echo "   VX-11  no active LFA license → 404"
           echo "   VX-12  WebM magic bytes in response"
           echo "   VX-13  PNG render_url never contains animated=1"
-          echo "   VX-14  unsupported format → 422"
+          echo "   VX-14  unsupported format (avi) → 422"
           echo "   VX-15  unsupported duration → 422"
           echo "   VX-16  Content-Disposition + Cache-Control headers correct"
           echo "   VX-17  is_animated_capable() → True for fifa+sq and pulse+sq only"
           echo "   VX-18  registry: exactly {(fifa,sq),(pulse,sq)}"
           echo ""
-          echo " Video export — Pulse × Square"
+          echo " Video export — Pulse × Square (WebM)"
           echo "   VX-19  pulse + instagram_square → 200 video/webm"
           echo "   VX-20  pulse + instagram_portrait → 422"
           echo "   VX-21  pulse + instagram_story → 422"
+          echo ""
+          echo " Video export — MP4 (H.264/AAC via FFmpeg)"
+          echo "   VX-22  format=mp4 → 200 video/mp4 (FFmpeg mocked)"
+          echo "   VX-23  MP4 bytes[4:8] == ftyp (ISO Base Media magic)"
+          echo "   VX-24  FFmpeg failure → 200 webm fallback + X-Export-Fallback: ffmpeg-failed"
+          echo "   VX-25  format=avi → 422 (avi not in _SUPPORTED_VIDEO_FORMATS)"
           echo ""
           echo " Animated template isolation — FIFA × Square"
           echo "   EX-32  square/fifa.html source has animated_mode branch"

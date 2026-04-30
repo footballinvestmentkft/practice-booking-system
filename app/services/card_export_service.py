@@ -57,6 +57,19 @@ _PRE_ROLL_MS = 400
 # To change fps: replace record_video_dir approach with CDP screencast directly.
 _VIDEO_FPS_NOTE = "~25 fps (CDP screencast default, not user-configurable via Playwright API)"
 
+# ── FFmpeg MP4 encoding settings ──────────────────────────────────────────────
+# libx264 CRF 22: visually lossless for animated cards at 1080p.
+#   Lower value = better quality, larger file.  Range: 18 (near-lossless) → 28.
+#   CRF 22 was chosen as the balanced default; adjust here only.
+# preset "fast": ~2× faster encode than "medium" with ~5% file-size penalty.
+#   Good for server-side on-demand generation of 5 s clips.
+# yuv420p: mandatory — iOS and Instagram reject 4:4:4 (yuv444p) chroma.
+# movflags +faststart: relocates moov atom to file start for progressive web playback.
+# Silent AAC audio track (lavfi anullsrc, 64 kbps): improves compatibility on
+#   platforms that reject video-only MP4 (e.g. some Instagram upload paths).
+_FFMPEG_CRF    = 22
+_FFMPEG_PRESET = "fast"
+
 
 class CardExportTimeoutError(Exception):
     """Raised when Playwright page load exceeds _GOTO_TIMEOUT_MS."""
@@ -64,6 +77,10 @@ class CardExportTimeoutError(Exception):
 
 class CardVideoRecordError(Exception):
     """Raised when Playwright video recording fails or produces no output."""
+
+
+class CardMp4ConvertError(Exception):
+    """Raised when FFmpeg WebM→MP4 conversion fails or the binary is absent."""
 
 
 # ── PNG rate limiter: 5 exports / 60 s per rate_key ──────────────────────────
@@ -219,3 +236,76 @@ def _sync_record_video(  # pragma: no cover
             return webm_files[0].read_bytes()
     except _PWTimeout as exc:
         raise CardVideoRecordError(str(exc)) from exc
+
+
+def _webm_to_mp4(webm_bytes: bytes) -> bytes:  # pragma: no cover
+    """Convert WebM bytes to MP4 (H.264/AAC) using FFmpeg.
+
+    Encoding pipeline:
+      - libx264, CRF=_FFMPEG_CRF, preset=_FFMPEG_PRESET
+      - yuv420p: mandatory for iOS + Instagram compatibility (4:2:0 chroma subsampling)
+      - movflags=+faststart: moov atom at file start for web streaming
+      - Silent AAC stereo track (lavfi anullsrc, 64 kbps): improves upload
+        compatibility on platforms that reject video-only MP4
+      - -shortest: output duration matches the video stream
+
+    Called via asyncio.to_thread from the async export endpoint.
+
+    Raises:
+        CardMp4ConvertError: if the ffmpeg binary is absent, returns non-zero,
+                             times out (>60 s), or produces no output file.
+    """
+    import pathlib
+    import subprocess
+    import tempfile
+    from contextlib import ExitStack
+
+    with tempfile.TemporaryDirectory() as tmp:
+        in_path  = pathlib.Path(tmp) / "input.webm"
+        out_path = pathlib.Path(tmp) / "output.mp4"
+        in_path.write_bytes(webm_bytes)
+
+        cmd = [
+            "ffmpeg", "-y",
+            "-i",          str(in_path),
+            # Silent audio source for platform compatibility
+            "-f",          "lavfi",
+            "-i",          "anullsrc=channel_layout=stereo:sample_rate=44100",
+            "-map",        "0:v:0",
+            "-map",        "1:a:0",
+            # Video: H.264, quality/speed settings documented in _FFMPEG_CRF / _FFMPEG_PRESET
+            "-c:v",        "libx264",
+            "-crf",        str(_FFMPEG_CRF),
+            "-preset",     _FFMPEG_PRESET,
+            "-pix_fmt",    "yuv420p",
+            # Audio: AAC, 64 kbps, ends when video ends
+            "-c:a",        "aac",
+            "-b:a",        "64k",
+            "-shortest",
+            # Container: progressive web playback
+            "-movflags",   "+faststart",
+            str(out_path),
+        ]
+
+        try:
+            subprocess.run(
+                cmd,
+                check=True,
+                capture_output=True,  # suppresses ffmpeg progress noise in logs
+                timeout=60,
+            )
+        except FileNotFoundError as exc:
+            raise CardMp4ConvertError(
+                "ffmpeg binary not found — install ffmpeg (apt: ffmpeg, brew: ffmpeg)"
+            ) from exc
+        except subprocess.CalledProcessError as exc:
+            raise CardMp4ConvertError(
+                f"ffmpeg exited with code {exc.returncode}"
+            ) from exc
+        except subprocess.TimeoutExpired as exc:
+            raise CardMp4ConvertError("ffmpeg timed out after 60 s") from exc
+
+        if not out_path.exists() or out_path.stat().st_size == 0:
+            raise CardMp4ConvertError("ffmpeg produced no output file")
+
+        return out_path.read_bytes()

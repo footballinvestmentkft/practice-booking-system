@@ -364,7 +364,7 @@ async def export_player_card(
 
 # ── Animated video export endpoint ───────────────────────────────────────────
 
-_SUPPORTED_VIDEO_FORMATS   = {"webm"}
+_SUPPORTED_VIDEO_FORMATS   = {"webm", "mp4"}
 _SUPPORTED_VIDEO_DURATIONS = {5}
 
 
@@ -378,10 +378,17 @@ async def export_player_card_video(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user_web),
 ):
-    """Export an animated player card as a WebM video.
+    """Export an animated player card as a video file.
 
     Only available for (variant, platform) pairs in ANIMATED_EXPORT_CAPABLE.
-    MVP: format=webm, duration=5, platform=instagram_square, variant=fifa only.
+
+    Supported formats:
+      - webm: raw Playwright CDP screencast output (~25 fps, VP8/VP9). Works on
+              Chrome and Android; NOT supported on iOS or Instagram upload.
+      - mp4:  WebM post-processed via FFmpeg (libx264, CRF 22, yuv420p,
+              movflags+faststart, silent AAC). Requires ffmpeg binary on server.
+              If FFmpeg fails the response falls back to WebM with header
+              X-Export-Fallback: ffmpeg-failed.
 
     Auth: authenticated users may only export their own card.
     Admins may export any player's card.
@@ -473,15 +480,33 @@ async def export_player_card_video(
     except _export_svc.CardVideoRecordError:
         raise HTTPException(status_code=504, detail="Card video render timed out or failed")
 
-    filename = f"lfa_card_{user_id}_{platform}_animated.webm"
+    # MP4 post-processing: WebM → FFmpeg → MP4 when format=mp4.
+    # On CardMp4ConvertError (missing binary or encode failure) we fall back to
+    # WebM and set X-Export-Fallback so clients can detect the degradation.
+    output_bytes      = webm_bytes
+    output_format     = "webm"
+    output_media_type = "video/webm"
+    fallback_headers: dict[str, str] = {}
+
+    if format == "mp4":
+        try:
+            output_bytes      = await asyncio.to_thread(_export_svc._webm_to_mp4, webm_bytes)
+            output_format     = "mp4"
+            output_media_type = "video/mp4"
+        except _export_svc.CardMp4ConvertError as exc:
+            logger.warning("MP4 conversion failed, falling back to WebM: %s", exc)
+            fallback_headers = {"X-Export-Fallback": "ffmpeg-failed"}
+
+    filename = f"lfa_card_{user_id}_{platform}_animated.{output_format}"
     return Response(
-        content=webm_bytes,
-        media_type="video/webm",
+        content=output_bytes,
+        media_type=output_media_type,
         headers={
             "Content-Disposition": f'attachment; filename="{filename}"',
             "Cache-Control": "no-store",
             "X-Export-Platform": platform,
-            "X-Export-Format": "webm",
+            "X-Export-Format": output_format,
             "X-Export-Duration": str(duration),
+            **fallback_headers,
         },
     )

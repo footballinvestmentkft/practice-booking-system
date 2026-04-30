@@ -24,11 +24,16 @@ Coverage:
   VX-19  pulse + instagram_square → 200 video/webm (new animated-capable pair)
   VX-20  pulse + instagram_portrait → 422 (pulse not capable on portrait)
   VX-21  pulse + instagram_story → 422 (pulse not capable on story)
+  VX-22  format=mp4 → 200 video/mp4 (FFmpeg conversion mocked)
+  VX-23  MP4 response body contains ftyp box at offset 4 (ISO Base Media magic)
+  VX-24  FFmpeg failure → falls back to WebM + X-Export-Fallback: ffmpeg-failed header
+  VX-25  unsupported format (avi) → 422
 
 Mock strategy:
   - get_current_user_web → MagicMock user (no DB, no cookie)
   - get_db              → MagicMock session returning preset user/license mocks
   - _export_svc._sync_record_video → returns fixture WebM bytes (no Playwright)
+  - _export_svc._webm_to_mp4      → returns fixture MP4 bytes (no FFmpeg)
   - video rate counters reset between tests via reset_video_rate_counters()
 """
 from __future__ import annotations
@@ -42,6 +47,7 @@ from fastapi.testclient import TestClient
 from app.models.user import UserRole
 from app.services.card_export_service import (
     ANIMATED_EXPORT_CAPABLE,
+    CardMp4ConvertError,
     CardVideoRecordError,
     is_animated_capable,
     reset_rate_counters,
@@ -52,6 +58,12 @@ from app.services.card_export_service import (
 # Minimal valid WebM magic bytes (EBML header start).
 _WEBM_MAGIC = b"\x1a\x45\xdf\xa3"
 _WEBM_FIXTURE = _WEBM_MAGIC + b"\x00" * 64  # stub payload
+
+# ── MP4 fixture ───────────────────────────────────────────────────────────────
+# Minimal ISO Base Media File Format header: 4-byte box size + "ftyp" atom type.
+# bytes[4:8] == b"ftyp" is the reliable magic-bytes check for MP4/ISOBMFF files.
+_MP4_MAGIC   = b"ftyp"
+_MP4_FIXTURE = b"\x00\x00\x00\x18" + _MP4_MAGIC + b"mp42" + b"\x00\x00\x00\x00" + b"mp42isom" + b"\x00" * 32
 
 
 # ── Mock helpers ──────────────────────────────────────────────────────────────
@@ -124,7 +136,14 @@ def _video_export(
     webm_bytes: bytes = _WEBM_FIXTURE,
     format: str = "webm",
     duration: int = 5,
+    mp4_bytes: bytes | None = None,
 ):
+    """Make a video export request with Playwright and (optionally) FFmpeg mocked.
+
+    mp4_bytes: when set, also mocks _webm_to_mp4 to return these bytes.
+               Required for format=mp4 happy-path tests so no real FFmpeg is needed.
+    """
+    from contextlib import ExitStack
     from app.main import app
 
     if current_user is None:
@@ -137,12 +156,20 @@ def _video_export(
 
     _setup_overrides(app, current_user, db)
     try:
-        with patch("app.services.card_export_service._sync_record_video",
-                   return_value=webm_bytes):
-            url = (
-                f"/players/{user_id}/card/export/video"
-                f"?platform={platform}&format={format}&duration={duration}"
-            )
+        url = (
+            f"/players/{user_id}/card/export/video"
+            f"?platform={platform}&format={format}&duration={duration}"
+        )
+        with ExitStack() as stack:
+            stack.enter_context(patch(
+                "app.services.card_export_service._sync_record_video",
+                return_value=webm_bytes,
+            ))
+            if mp4_bytes is not None:
+                stack.enter_context(patch(
+                    "app.services.card_export_service._webm_to_mp4",
+                    return_value=mp4_bytes,
+                ))
             return client.get(url)
     finally:
         _clear_overrides(app)
@@ -211,9 +238,9 @@ class TestVideoExportCapabilityGating:
         assert r.status_code == 422
 
     def test_vx14_unsupported_format_returns_422(self, client):
-        """format=mp4 is not supported in MVP → 422."""
+        """format=avi is not supported → 422 (webm and mp4 are the only valid formats)."""
         r = _video_export(client, platform="instagram_square", card_variant="fifa",
-                          format="mp4")
+                          format="avi")
         assert r.status_code == 422
 
     def test_vx15_unsupported_duration_returns_422(self, client):
@@ -369,4 +396,81 @@ class TestPulseVideoExport:
     def test_vx21_pulse_story_returns_422(self, client):
         """pulse + instagram_story is not animated-capable → 422."""
         r = _video_export(client, platform="instagram_story", card_variant="pulse")
+        assert r.status_code == 422
+
+
+# ── Tests: MP4 export ─────────────────────────────────────────────────────────
+
+@pytest.mark.unit
+class TestMp4Export:
+    """MP4 export tests — FFmpeg post-processing path.
+
+    VX-22  format=mp4 → 200 video/mp4 (FFmpeg conversion mocked)
+    VX-23  MP4 response body: ftyp box at bytes[4:8] (ISO Base Media magic)
+    VX-24  FFmpeg failure → 200 video/webm (WebM fallback) + X-Export-Fallback header
+    VX-25  unsupported format (avi) → 422
+    """
+
+    def test_vx22_mp4_format_returns_200_video_mp4(self, client):
+        """format=mp4 with FFmpeg mocked must return 200 video/mp4."""
+        r = _video_export(
+            client, platform="instagram_square", card_variant="fifa",
+            format="mp4", mp4_bytes=_MP4_FIXTURE,
+        )
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("video/mp4")
+
+    def test_vx23_mp4_magic_bytes_ftyp_at_offset_4(self, client):
+        """MP4 response bytes[4:8] must equal b'ftyp' (ISO Base Media File Format marker)."""
+        r = _video_export(
+            client, platform="instagram_square", card_variant="fifa",
+            format="mp4", mp4_bytes=_MP4_FIXTURE,
+        )
+        assert r.status_code == 200
+        assert r.content[4:8] == _MP4_MAGIC, (
+            f"Expected ftyp at bytes[4:8], got {r.content[4:8]!r}"
+        )
+
+    def test_vx24_ffmpeg_failure_falls_back_to_webm(self, client):
+        """CardMp4ConvertError from _webm_to_mp4 must fall back to WebM response.
+
+        The response must be 200 (not 500), content-type video/webm, and include
+        X-Export-Fallback: ffmpeg-failed so clients can detect the degradation.
+        """
+        from app.main import app
+        current_user = _make_user(user_id=7)
+        db = _mock_db(
+            target_user=_make_user(user_id=7),
+            target_license=_make_license(card_variant="fifa"),
+        )
+        _setup_overrides(app, current_user, db)
+        try:
+            with patch("app.services.card_export_service._sync_record_video",
+                       return_value=_WEBM_FIXTURE):
+                with patch("app.services.card_export_service._webm_to_mp4",
+                           side_effect=CardMp4ConvertError("ffmpeg binary not found")):
+                    r = client.get(
+                        "/players/7/card/export/video"
+                        "?platform=instagram_square&format=mp4&duration=5"
+                    )
+        finally:
+            _clear_overrides(app)
+
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("video/webm"), (
+            "Fallback response must be video/webm, not mp4"
+        )
+        assert r.headers.get("x-export-fallback") == "ffmpeg-failed", (
+            "X-Export-Fallback: ffmpeg-failed header must be set on fallback response"
+        )
+        assert r.headers.get("x-export-format") == "webm", (
+            "X-Export-Format must reflect the actual delivered format (webm on fallback)"
+        )
+
+    def test_vx25_unsupported_format_avi_returns_422(self, client):
+        """format=avi is not in _SUPPORTED_VIDEO_FORMATS → 422."""
+        r = _video_export(
+            client, platform="instagram_square", card_variant="fifa",
+            format="avi",
+        )
         assert r.status_code == 422
