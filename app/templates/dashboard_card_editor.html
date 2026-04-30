@@ -280,7 +280,7 @@
         </div>
         <div class="player-card-embed-wrap">
             <iframe id="player-card-iframe"
-                    src="{% if active_card_platform and active_card_platform != 'default' %}/players/{{ user.id }}/card?platform={{ active_card_platform }}&export=1{% else %}/players/{{ user.id }}/card{% endif %}"
+                    src="{% if active_card_platform and active_card_platform != 'default' %}/players/{{ user.id }}/card?platform={{ active_card_platform }}&export=1{% if active_card_platform in animated_capable_platforms %}&animated=1{% endif %}{% else %}/players/{{ user.id }}/card{% endif %}"
                     height="920" scrolling="no" title="My Player Card"></iframe>
         </div>
         <div style="margin-top: 0.75rem; display: flex; justify-content: flex-end; gap: 0.5rem; align-items: center;">
@@ -394,7 +394,8 @@ function _cardIframeSrc() {
     if (_currentPlatform === 'default') {
         return `/players/${_cardUserId}/card?_t=${Date.now()}`;
     }
-    return `/players/${_cardUserId}/card?platform=${_currentPlatform}&export=1&_t=${Date.now()}`;
+    const animParam = _isVideoCapable() ? '&animated=1' : '';
+    return `/players/${_cardUserId}/card?platform=${_currentPlatform}&export=1${animParam}&_t=${Date.now()}`;
 }
 
 function _applyIframeSize() {
