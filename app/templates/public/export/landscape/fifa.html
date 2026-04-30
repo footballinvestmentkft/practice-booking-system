@@ -11,25 +11,19 @@
  * Classes : ex- prefix throughout, no inheritance from editor templates
  * Covers  : facebook_landscape AND og (both map to 'landscape' bucket)
  *
- * vs. export/portrait/fifa.html:
- *   layout    column → ROW  (horizontal, left panel + right skills panel)
- *   ex-hero   → ex-left panel 360px wide (player identity column)
- *   avatar    160 → 110px   (left panel is 288px inner width)
- *   ovr-num    88 → 72px
- *   name       44 → 32px    (word-break allowed; 288px panel width)
- *   skills     flex:1 right panel (840px wide, flex-direction: column)
- *   per-cat    [:6] → [:4]  (cells only 210px tall in landscape)
- *   max-height 44px (same as portrait)
- *   ex-sname  160/15px → 140/14px
- *   photo var  landscape_photo_url → portrait_photo_url → photo_url
+ * 3-COLUMN LAYOUT:
+ *   .ex-left    155px  — dark FIFA panel: avatar, OVR watermark, OVR num, tier, dom badge
+ *   .ex-center  195px  — profile panel: name, position, 9 profile rows, team pill
+ *   .ex-skills  flex:1 — 2×2 skill grid: ALL skills per category (no slicing)
  */
 
 :root {
-    --ex-panel-bg: {{ theme.panel_bg if theme is defined else 'linear-gradient(155deg, #1a2744 0%, #2a3a5c 60%, #1e3a4a 100%)' }};
-    --ex-body-bg:  {{ theme.body_bg  if theme is defined else '#1a202c' }};
-    --ex-accent:   {{ theme.accent   if theme is defined else '#667eea' }};
-    --ex-bar-bg:      rgba(255,255,255,0.10);
-    --ex-cat-bg:      rgba(255,255,255,0.05);
+    --ex-panel-bg:  {{ theme.panel_bg if theme is defined else 'linear-gradient(155deg,#1a2744 0%,#2a3a5c 60%,#1e3a4a 100%)' }};
+    --ex-body-bg:   {{ theme.body_bg  if theme is defined else '#1a202c' }};
+    --ex-accent:    {{ theme.accent   if theme is defined else '#667eea' }};
+    --ex-center-bg: rgba(255,255,255,0.028);
+    --ex-bar-bg:    rgba(255,255,255,0.10);
+    --ex-cat-bg:    rgba(255,255,255,0.04);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -50,166 +44,210 @@ html, body {
     overflow: hidden;
 }
 
-/* ── LEFT PLAYER PANEL ────────────────────────────────────────────────────────
-   Fixed at 360px (30% of 1200px).
-   Layout: column, centred, avatar → identity → OVR block.
+/* ── LEFT PANEL — dark FIFA identity column ──────────────────────────────────
+   155px fixed. Contains OVR watermark (absolute), avatar, OVR num, badges.
+   position: relative required for .ex-ovr-watermark.
    ─────────────────────────────────────────────────────────────────────────── */
 .ex-left {
-    flex: 0 0 360px;
+    flex: 0 0 155px;
     background: var(--ex-panel-bg);
     display: flex;
     flex-direction: column;
+    align-items: center;
     justify-content: center;
-    padding: 44px 36px;
-    gap: 16px;
+    gap: 8px;
+    padding: 14px 10px;
+    position: relative;
     overflow: hidden;
+    border-right: 1px solid rgba(255,255,255,0.06);
 }
 
-/* Avatar circle — 110px (vs 160px portrait; fits 288px inner panel) */
+/* OVR watermark — decorative large number behind content */
+.ex-ovr-watermark {
+    position: absolute;
+    right: -12px;
+    top: -8px;
+    font-size: 7rem;
+    font-weight: 900;
+    color: rgba(255,255,255,0.045);
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+    letter-spacing: -0.04em;
+}
+
+/* Avatar */
 .ex-avatar {
     flex-shrink: 0;
-    width: 110px;
-    height: 110px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
-    border: 3px solid rgba(255,255,255,0.22);
+    border: 2px solid rgba(255,255,255,0.22);
     object-fit: cover;
+    position: relative;
+    z-index: 1;
 }
 .ex-avatar-placeholder {
     flex-shrink: 0;
-    width: 110px;
-    height: 110px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
-    border: 3px solid rgba(255,255,255,0.22);
+    border: 2px solid rgba(255,255,255,0.22);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 36px;
+    font-size: 18px;
     font-weight: 900;
     color: white;
     letter-spacing: -0.02em;
+    position: relative;
+    z-index: 1;
 }
 
-/* Identity block */
-.ex-identity {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    min-width: 0;
-}
-.ex-name {
-    font-size: 32px;
-    font-weight: 900;
-    color: white;
-    line-height: 1.2;
-    word-break: break-word;
-    overflow-wrap: break-word;
-    overflow: hidden;
-}
-.ex-tag-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: nowrap;
-    overflow: hidden;
-}
-.ex-pos-badge {
-    font-size: 12px;
-    font-weight: 800;
-    color: white;
-    padding: 3px 12px;
-    border-radius: 99px;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-.ex-brand-tag {
-    font-size: 11px;
-    font-weight: 700;
-    color: rgba(255,255,255,0.40);
-    text-transform: uppercase;
-    letter-spacing: 0.10em;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-.ex-meta-row {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-    flex-wrap: wrap;
-}
-.ex-meta-item {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-}
-.ex-meta-label {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.09em;
-    color: rgba(255,255,255,0.42);
-    white-space: nowrap;
-}
-.ex-meta-value {
-    font-size: 15px;
-    font-weight: 700;
-    color: rgba(255,255,255,0.90);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 160px;
-}
-.ex-club-row {
-    font-size: 12px;
-    color: rgba(255,255,255,0.50);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* OVR block — below identity in left panel */
-.ex-ovr-block {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-}
+/* OVR number */
 .ex-ovr-num {
-    font-size: 72px;
+    font-size: 42px;
     font-weight: 900;
     line-height: 1;
     color: white;
     letter-spacing: -0.03em;
+    position: relative;
+    z-index: 1;
 }
+
+/* Tier badge */
 .ex-tier-badge {
-    font-size: 11px;
+    font-size: 8px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    padding: 4px 16px;
+    padding: 3px 10px;
     border-radius: 99px;
     color: white;
     white-space: nowrap;
-}
-/* Dominant foot badge — Rl / rL / RL / rl */
-.ex-dom-badge {
-    font-size: 14px;
-    font-weight: 900;
-    letter-spacing: 0.04em;
-    color: rgba(255,255,255,0.55);
-    line-height: 1;
-    white-space: nowrap;
-}
-.ex-dom-badge .ex-dom-hi {
-    color: rgba(255,255,255,0.92);
+    position: relative;
+    z-index: 1;
 }
 
-/* ── RIGHT SKILLS PANEL ───────────────────────────────────────────────────────
-   flex:1 → takes 1200 - 360 = 840px of width.
-   Full canvas height: 630px.
-   Internal: skills-title (flex-shrink:0) + 2×2 grid (flex:1).
+/* Dominant foot badge — Rl / rL / RL / rl */
+.ex-dom-badge {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    color: rgba(255,255,255,0.45);
+    line-height: 1;
+    white-space: nowrap;
+    position: relative;
+    z-index: 1;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 4px;
+    padding: 3px 7px;
+    font-family: monospace;
+}
+.ex-dom-badge .ex-dom-hi {
+    color: var(--ex-accent);
+    font-weight: 900;
+}
+
+/* ── CENTER PANEL — player profile data ──────────────────────────────────────
+   195px fixed. Contains name, position badge, 9 profile rows, team pill.
+   Slightly lighter overlay on body bg.
+   ─────────────────────────────────────────────────────────────────────────── */
+.ex-center {
+    flex: 0 0 195px;
+    background: var(--ex-center-bg);
+    background-color: var(--ex-body-bg);
+    background-image: linear-gradient(to right, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+    display: flex;
+    flex-direction: column;
+    padding: 14px 12px;
+    gap: 8px;
+    overflow: hidden;
+    border-right: 1px solid rgba(255,255,255,0.07);
+}
+
+/* Player name */
+.ex-name {
+    font-size: 17px;
+    font-weight: 800;
+    color: white;
+    line-height: 1.1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Position badge */
+.ex-pos-badge {
+    display: inline-block;
+    font-size: 8px;
+    font-weight: 800;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    white-space: nowrap;
+}
+
+/* Profile rows */
+.ex-profile-rows {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+.ex-profile-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    flex-shrink: 0;
+}
+.ex-profile-label {
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255,255,255,0.38);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.ex-profile-value {
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.82);
+    text-align: right;
+    margin-left: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+}
+
+/* Team pill */
+.ex-team-pill {
+    flex-shrink: 0;
+    font-size: 8px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 99px;
+    padding: 3px 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    align-self: flex-start;
+}
+
+/* ── SKILLS PANEL — 2×2 category grid, ALL skills ────────────────────────────
+   flex:1 → takes 1200 - 155 - 195 = 850px.
+   No [:4] slicing — all skills in every category are rendered.
    ─────────────────────────────────────────────────────────────────────────── */
 .ex-skills {
     flex: 1;
@@ -217,17 +255,17 @@ html, body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    padding: 24px;
+    padding: 10px 12px;
     min-width: 0;
 }
 .ex-skills-title {
     flex-shrink: 0;
-    font-size: 12px;
+    font-size: 9px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.14em;
-    color: rgba(255,255,255,0.30);
-    margin-bottom: 12px;
+    color: rgba(255,255,255,0.25);
+    margin-bottom: 6px;
 }
 
 /* 2×2 category grid */
@@ -236,7 +274,7 @@ html, body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
-    gap: 12px;
+    gap: 6px;
     overflow: hidden;
     min-height: 0;
 }
@@ -244,8 +282,8 @@ html, body {
 /* Category cell */
 .ex-cat {
     background: var(--ex-cat-bg);
-    border-radius: 10px;
-    padding: 14px;
+    border-radius: 8px;
+    padding: 8px 10px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -253,17 +291,25 @@ html, body {
 }
 .ex-cat-name {
     flex-shrink: 0;
-    font-size: 12px;
+    font-size: 9px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.10em;
-    color: rgba(255,255,255,0.48);
-    margin-bottom: 8px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.40);
+    margin-bottom: 5px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.ex-cat-avg {
+    font-size: 9px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.50);
 }
 
 /* Skill rows container */
@@ -275,22 +321,22 @@ html, body {
     overflow: hidden;
 }
 
-/* Individual skill row — max-height: 44px caps Set Pieces (3-row) stretch */
+/* Individual skill row */
 .ex-row {
     flex: 1;
     min-height: 0;
-    max-height: 44px;
+    max-height: 26px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
 }
 
-/* Fixed-width name column — 140px (vs 160px portrait; landscape cells narrower) */
+/* Skill name — fixed width */
 .ex-sname {
-    flex: 0 0 140px;
-    font-size: 14px;
+    flex: 0 0 80px;
+    font-size: 9px;
     font-weight: 500;
-    color: rgba(255,255,255,0.72);
+    color: rgba(255,255,255,0.60);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -301,21 +347,21 @@ html, body {
 .ex-bar-bg {
     flex: 1;
     min-width: 0;
-    height: 7px;
+    height: 4px;
     background: var(--ex-bar-bg);
-    border-radius: 4px;
+    border-radius: 3px;
     overflow: hidden;
 }
 .ex-bar-fill {
     height: 100%;
-    border-radius: 4px;
-    min-width: 4px;
+    border-radius: 3px;
+    min-width: 3px;
 }
 
-/* Value — right-aligned fixed width */
+/* Value */
 .ex-sval {
-    flex: 0 0 40px;
-    font-size: 14px;
+    flex: 0 0 24px;
+    font-size: 9px;
     font-weight: 700;
     text-align: right;
     line-height: 1;
@@ -323,8 +369,8 @@ html, body {
 
 /* Trend arrow */
 .ex-trend {
-    flex: 0 0 18px;
-    font-size: 13px;
+    flex: 0 0 10px;
+    font-size: 8px;
     font-weight: 900;
     text-align: center;
     line-height: 1;
@@ -334,9 +380,13 @@ html, body {
 <body>
 <div class="ex-card">
 
-    <!-- ── LEFT PANEL ─────────────────────────────────────────────────────── -->
+    <!-- ── LEFT PANEL — dark FIFA identity ───────────────────────────────── -->
     <div class="ex-left">
 
+        <!-- OVR decorative watermark -->
+        <div class="ex-ovr-watermark">{{ overall | round(0) | int }}</div>
+
+        <!-- Avatar -->
         {% set _photo = landscape_photo_url if landscape_photo_url is defined else None %}
         {% set _photo = _photo or (portrait_photo_url if portrait_photo_url is defined else None) %}
         {% set _photo = _photo or (photo_url if photo_url is defined else None) %}
@@ -347,86 +397,137 @@ html, body {
         <div class="ex-avatar-placeholder" style="background: {{ avatar_bg }};">{{ initials }}</div>
         {% endif %}
 
-        <div class="ex-identity">
-            <div class="ex-name">{{ player.name }}</div>
+        <!-- OVR number -->
+        <div class="ex-ovr-num">{{ overall | round(0) | int }}</div>
 
-            <div class="ex-tag-row">
-                {% if player.position and player.position != "Unknown" %}
-                <span class="ex-pos-badge" style="background: {{ pos_color }};">{{ player.position }}</span>
-                {% endif %}
-                <span class="ex-brand-tag">⚽ LFA Education</span>
-            </div>
+        <!-- Tier badge -->
+        <span class="ex-tier-badge" style="background: {{ tier_color }};">{{ tier_label }}</span>
 
-            <div class="ex-meta-row">
-                {% if player.nationality %}
-                <div class="ex-meta-item">
-                    <span class="ex-meta-label">Nationality</span>
-                    <span class="ex-meta-value">{{ player.nationality }}</span>
-                </div>
-                {% endif %}
-                <div class="ex-meta-item">
-                    <span class="ex-meta-label">Age Group</span>
-                    <span class="ex-meta-value">{{ player.age_group }}</span>
-                </div>
-                <div class="ex-meta-item">
-                    <span class="ex-meta-label">Events</span>
-                    <span class="ex-meta-value">{{ player.total_tournaments }}</span>
-                </div>
-            </div>
-
-            {% if teams_info %}
-            <div class="ex-club-row">
-                {% set t = teams_info[0] %}
-                🏟️ {{ t.team_name }}{% if t.club_name %} · {{ t.club_name }}{% endif %}{% if t.age_group_label %} · {{ t.age_group_label }}{% endif %}
-            </div>
-            {% endif %}
-        </div>
-
-        <div class="ex-ovr-block">
-            <div class="ex-ovr-num">{{ overall | round(0) | int }}</div>
-            <span class="ex-tier-badge" style="background: {{ tier_color }};">{{ tier_label }}</span>
-            {% if dominant_badge is defined and dominant_badge %}
-            <span class="ex-dom-badge">
-                {%- set db = dominant_badge -%}
-                {%- if db == "Rl" %}<span class="ex-dom-hi">R</span>l
-                {%- elif db == "rL" %}r<span class="ex-dom-hi">L</span>
-                {%- elif db == "RL" %}<span class="ex-dom-hi">R</span><span class="ex-dom-hi">L</span>
-                {%- else %}rl
-                {%- endif %}
-            </span>
-            {% endif %}
-        </div>
+        <!-- Dominant foot badge -->
+        {% if dominant_badge is defined and dominant_badge %}
+        <span class="ex-dom-badge">
+            {%- set db = dominant_badge -%}
+            {%- if db == "Rl" %}<span class="ex-dom-hi">R</span>l
+            {%- elif db == "rL" %}r<span class="ex-dom-hi">L</span>
+            {%- elif db == "RL" %}<span class="ex-dom-hi">R</span><span class="ex-dom-hi">L</span>
+            {%- else %}rl
+            {%- endif %}
+        </span>
+        {% endif %}
 
     </div>
 
-    <!-- ── RIGHT SKILLS PANEL ─────────────────────────────────────────────── -->
+    <!-- ── CENTER PANEL — player profile ─────────────────────────────────── -->
+    <div class="ex-center">
+
+        <!-- Name -->
+        <div class="ex-name">{{ player.name }}</div>
+
+        <!-- Position badge -->
+        {% if player.position and player.position != "Unknown" %}
+        <span class="ex-pos-badge" style="background: {{ pos_color }};">{{ player.position }}</span>
+        {% endif %}
+
+        <!-- 9-row profile grid -->
+        <div class="ex-profile-rows">
+            {% if player.nationality %}
+            <div class="ex-profile-row">
+                <span class="ex-profile-label">Nationality</span>
+                <span class="ex-profile-value">{{ player.nationality }}</span>
+            </div>
+            {% endif %}
+            {% if player_age %}
+            <div class="ex-profile-row">
+                <span class="ex-profile-label">Age</span>
+                <span class="ex-profile-value">{{ player_age }} yrs</span>
+            </div>
+            {% endif %}
+            {% if player_gender %}
+            <div class="ex-profile-row">
+                <span class="ex-profile-label">Gender</span>
+                <span class="ex-profile-value">{{ player_gender }}</span>
+            </div>
+            {% endif %}
+            {% if player_height_cm %}
+            <div class="ex-profile-row">
+                <span class="ex-profile-label">Height</span>
+                <span class="ex-profile-value">{{ player_height_cm }} cm</span>
+            </div>
+            {% endif %}
+            {% if player_weight_kg %}
+            <div class="ex-profile-row">
+                <span class="ex-profile-label">Weight</span>
+                <span class="ex-profile-value">{{ player_weight_kg }} kg</span>
+            </div>
+            {% endif %}
+            {% if player.age_group %}
+            <div class="ex-profile-row">
+                <span class="ex-profile-label">Age Group</span>
+                <span class="ex-profile-value">{{ player.age_group }}</span>
+            </div>
+            {% endif %}
+            <div class="ex-profile-row">
+                <span class="ex-profile-label">Events</span>
+                <span class="ex-profile-value">{{ player.total_tournaments }}</span>
+            </div>
+            {% if license_current_level %}
+            <div class="ex-profile-row">
+                <span class="ex-profile-label">License</span>
+                <span class="ex-profile-value">Lv. {{ license_current_level }}</span>
+            </div>
+            {% endif %}
+            {% if xp_balance is defined %}
+            <div class="ex-profile-row">
+                <span class="ex-profile-label">XP</span>
+                <span class="ex-profile-value">{{ "{:,}".format(xp_balance | int) }} ✦</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Team pill -->
+        {% if teams_info %}
+        {% set t = teams_info[0] %}
+        <span class="ex-team-pill">
+            🏟 {{ t.team_name }}{% if t.club_name %} · {{ t.club_name }}{% endif %}
+        </span>
+        {% endif %}
+
+    </div>
+
+    <!-- ── SKILLS PANEL — 2×2 grid, ALL skills ───────────────────────────── -->
     {% if skill_categories %}
     <div class="ex-skills">
         <div class="ex-skills-title">Football Skills — {{ overall | round(0) | int }} OVR</div>
         <div class="ex-skill-cats">
             {% for cat in skill_categories %}
+            {% set ns = namespace(total=0) %}
+            {% for skill in cat.skills %}{% set ns.total = ns.total + player.skills.get(skill.key, {}).get('current_level', 50) %}{% endfor %}
+            {% set cat_avg = (ns.total / (cat.skills | length)) | round(0) | int %}
             <div class="ex-cat">
-                <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
+                <div class="ex-cat-name">
+                    {{ cat.emoji }} {{ cat.name_en }}
+                    <span class="ex-cat-avg">{{ cat_avg }}</span>
+                </div>
                 <div class="ex-skill-rows">
-                    {% for skill in cat.skills[:4] %}
+                    {% for skill in cat.skills %}
                     {% set sdata = player.skills.get(skill.key, {}) %}
                     {% set sval  = sdata.get('current_level', 50) | round(0) | int %}
                     {% set fill  = [sval, 100] | min %}
                     {% set delta = last_skill_delta.get(skill.key, 0) %}
                     {% if delta > 0 %}
-                        {% set bar_clr  = '#48bb78' %}
-                        {% set val_clr  = '#48bb78' %}
-                        {% set trend    = '↑' %}
+                        {% set bar_clr   = '#48bb78' %}
+                        {% set val_clr   = '#48bb78' %}
+                        {% set trend_chr = '↑' %}
                         {% set trend_vis = 'visible' %}
                     {% elif delta < 0 %}
-                        {% set bar_clr  = '#fc8181' %}
-                        {% set val_clr  = '#fc8181' %}
-                        {% set trend    = '↓' %}
+                        {% set bar_clr   = '#fc8181' %}
+                        {% set val_clr   = '#fc8181' %}
+                        {% set trend_chr = '↓' %}
                         {% set trend_vis = 'visible' %}
                     {% else %}
-                        {% set bar_clr  = 'rgba(255,255,255,0.20)' %}
-                        {% set val_clr  = 'rgba(255,255,255,0.85)' %}
-                        {% set trend    = '↑' %}
+                        {% set bar_clr   = 'rgba(255,255,255,0.18)' %}
+                        {% set val_clr   = 'rgba(255,255,255,0.80)' %}
+                        {% set trend_chr = '↑' %}
                         {% set trend_vis = 'hidden' %}
                     {% endif %}
                     <div class="ex-row">
@@ -435,7 +536,7 @@ html, body {
                             <div class="ex-bar-fill" style="width:{{ fill }}%; background:{{ bar_clr }};"></div>
                         </div>
                         <span class="ex-sval" style="color:{{ val_clr }};">{{ sval }}</span>
-                        <span class="ex-trend" style="color:{{ bar_clr }}; visibility:{{ trend_vis }};">{{ trend }}</span>
+                        <span class="ex-trend" style="color:{{ bar_clr }}; visibility:{{ trend_vis }};">{{ trend_chr }}</span>
                     </div>
                     {% endfor %}
                 </div>

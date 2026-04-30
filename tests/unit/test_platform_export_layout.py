@@ -665,6 +665,12 @@ class TestFifaLandscapeExport:
     EX-20  FIFA × facebook_landscape export HTML has .ex-skill-cats (2×2 grid)
     EX-21  FIFA × facebook_landscape export uses landscape_photo_url variable
     EX-22  FIFA × og uses the same landscape export template (ex-card present)
+    EX-41  landscape/fifa.html source references dominant_badge + ex-dom-badge CSS
+    EX-42  dominant badge rendered in HTML when foot scores provided
+    EX-43  3-col layout: .ex-center panel present in rendered HTML
+    EX-44  OVR watermark (.ex-ovr-watermark) present in rendered HTML
+    EX-45  template source has no cat.skills[:4] slicing (all skills rendered)
+    EX-46  all 4 configured skill categories appear in rendered HTML
     """
 
     def _get_fifa_export_html(self, client, platform: str) -> str:
@@ -705,12 +711,18 @@ class TestFifaLandscapeExport:
         assert html, "Export returned empty response for facebook_landscape"
         assert "ex-skill-cats" in html, ".ex-skill-cats not found in landscape export HTML"
 
-    def test_ex21_landscape_photo_url_in_landscape(self, client):
-        """Landscape export template must reference landscape_photo_url (landscape crop first)."""
-        html = self._get_fifa_export_html(client, "facebook_landscape")
-        assert html, "Export returned empty response for facebook_landscape"
-        assert "landscape_photo_url" in html, (
-            "landscape_photo_url not referenced in landscape export template"
+    def test_ex21_landscape_photo_url_in_landscape(self):
+        """Landscape export template source must reference landscape_photo_url (landscape crop first)."""
+        import os, app as _app_pkg
+        tpl_path = os.path.join(
+            os.path.dirname(_app_pkg.__file__),
+            "templates/public/export/landscape/fifa.html",
+        )
+        with open(tpl_path, encoding="utf-8") as f:
+            source = f.read()
+        assert "landscape_photo_url" in source, (
+            "landscape_photo_url not found in landscape/fifa.html source — "
+            "landscape crop must be the primary photo fallback"
         )
 
     def test_ex22_og_uses_landscape_export_template(self, client):
@@ -760,6 +772,48 @@ class TestFifaLandscapeExport:
         assert "ex-dom-badge" in html, (
             ".ex-dom-badge not rendered — dominant foot badge missing from landscape export"
         )
+
+    def test_ex43_center_panel_present(self, client):
+        """3-col layout: .ex-center must exist in rendered landscape export HTML."""
+        html = self._get_fifa_export_html(client, "facebook_landscape")
+        assert html, "Export returned empty response for facebook_landscape"
+        assert "ex-center" in html, (
+            ".ex-center panel not found — landscape/fifa.html must use 3-column layout"
+        )
+
+    def test_ex44_ovr_watermark_present(self, client):
+        """OVR watermark element (.ex-ovr-watermark) must exist in rendered landscape HTML."""
+        html = self._get_fifa_export_html(client, "facebook_landscape")
+        assert html, "Export returned empty response for facebook_landscape"
+        assert "ex-ovr-watermark" in html, (
+            ".ex-ovr-watermark not found — OVR decorative watermark missing from left panel"
+        )
+
+    def test_ex45_no_skill_slicing_in_template_source(self):
+        """landscape/fifa.html source must NOT contain cat.skills[:N] slice — all skills render."""
+        import os, re, app as _app_pkg
+        tpl_path = os.path.join(
+            os.path.dirname(_app_pkg.__file__),
+            "templates/public/export/landscape/fifa.html",
+        )
+        with open(tpl_path, encoding="utf-8") as f:
+            source = f.read()
+        slicing = re.search(r"cat\.skills\[:", source)
+        assert slicing is None, (
+            f"cat.skills[:N] slice found in landscape/fifa.html at position {slicing.start()} — "
+            "all skills must be rendered; remove the slice"
+        )
+
+    def test_ex46_all_skill_categories_rendered(self, client):
+        """All 4 skill category names must appear in the rendered landscape HTML."""
+        from app.skills_config import SKILL_CATEGORIES as CATS
+        html = self._get_fifa_export_html(client, "facebook_landscape")
+        assert html, "Export returned empty response for facebook_landscape"
+        for cat in CATS:
+            assert cat["name_en"] in html, (
+                f"Skill category '{cat['name_en']}' not found in rendered landscape HTML — "
+                "all 4 categories must appear in the 2×2 skill grid"
+            )
 
 
 @pytest.mark.unit
