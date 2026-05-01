@@ -631,6 +631,8 @@ from ...services.player_photo_service import (  # noqa: E402
     delete_compact_bg_photo,
     save_showcase_bg_photo,
     delete_showcase_bg_photo,
+    save_sponsor_logo,
+    delete_sponsor_logo,
 )
 
 
@@ -835,6 +837,47 @@ async def student_delete_showcase_bg_photo(
     if lfa_license:
         delete_showcase_bg_photo(user.id)
         lfa_license.card_bg_showcase_url = None
+        db.commit()
+    return JSONResponse({"ok": True})
+
+
+@router.post("/dashboard/lfa-player-sponsor-logo")
+async def student_upload_sponsor_logo(
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "Nincs aktív LFA Football Player licensz"}, status_code=404)
+    try:
+        url = save_sponsor_logo(await file.read(), file.content_type or "", user.id)
+        lfa_license.sponsor_logo_url = url
+        db.commit()
+        return JSONResponse({"ok": True, "photo_url": url})
+    except ValueError as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+
+
+@router.post("/dashboard/lfa-player-sponsor-logo/delete")
+async def student_delete_sponsor_logo(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if lfa_license:
+        delete_sponsor_logo(user.id)
+        lfa_license.sponsor_logo_url = None
         db.commit()
     return JSONResponse({"ok": True})
 

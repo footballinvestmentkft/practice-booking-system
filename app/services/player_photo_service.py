@@ -209,3 +209,18 @@ def save_showcase_bg_photo(file_bytes: bytes, content_type: str, user_id: int) -
 def delete_showcase_bg_photo(user_id: int) -> None:
     """Remove all showcase background PNG files (timestamped + legacy). Silent no-op if missing."""
     _delete_variant_files(user_id, "bg_showcase")
+
+
+# ── Sponsor logo helper ────────────────────────────────────────────────────────
+
+_SPONSOR_LOGO_SIZE: tuple[int, int] = (300, 300)  # fit-inside box, aspect ratio preserved
+
+
+def save_sponsor_logo(file_bytes: bytes, content_type: str, user_id: int) -> str:
+    """Fit into 300×300 box, preserve alpha, save as PNG. Returns static URL."""
+    return _save_variant_photo(file_bytes, content_type, user_id, _SPONSOR_LOGO_SIZE, "sponsor_logo")
+
+
+def delete_sponsor_logo(user_id: int) -> None:
+    """Remove all sponsor logo PNG files (timestamped + legacy). Silent no-op if missing."""
+    _delete_variant_files(user_id, "sponsor_logo")

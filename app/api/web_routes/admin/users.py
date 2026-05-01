@@ -25,6 +25,8 @@ from ....skills_config import SKILL_CATEGORIES
 from ....services.player_photo_service import (
     save_player_photo,
     delete_player_photo,
+    save_sponsor_logo,
+    delete_sponsor_logo,
 )
 
 from . import templates, _admin_guard
@@ -582,5 +584,51 @@ async def admin_delete_player_photo(
         return JSONResponse({"ok": False, "error": "Nincs aktív LFA Football Player licensz"}, status_code=404)
     delete_player_photo(user_id)
     lfa_license.player_card_photo_url = None
+    db.commit()
+    return JSONResponse({"ok": True})
+
+
+@router.post("/admin/users/{user_id}/lfa-player-sponsor-logo")
+async def admin_upload_sponsor_logo(
+    request: Request,
+    user_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    await _admin_guard(request, db)
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user_id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "Nincs aktív LFA Football Player licensz"}, status_code=404)
+    try:
+        url = save_sponsor_logo(await file.read(), file.content_type or "", user_id)
+        lfa_license.sponsor_logo_url = url
+        db.commit()
+        return JSONResponse({"ok": True, "photo_url": url})
+    except ValueError as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+
+
+@router.post("/admin/users/{user_id}/lfa-player-sponsor-logo/delete")
+async def admin_delete_sponsor_logo(
+    request: Request,
+    user_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    await _admin_guard(request, db)
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user_id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "Nincs aktív LFA Football Player licensz"}, status_code=404)
+    delete_sponsor_logo(user_id)
+    lfa_license.sponsor_logo_url = None
     db.commit()
     return JSONResponse({"ok": True})

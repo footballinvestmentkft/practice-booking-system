@@ -45,8 +45,9 @@ Tests:
   EX-28  FIFA × banner_custom uses banner template, not landscape template (420px left panel)
   EX-29  FIFA × instagram_square export HTML contains all 11 Outfield skill names
   EX-30  square/fifa.html template source has no skill slicing (no cat.skills[:)
-  EX-31  FIFA × instagram_square export uses column grid-auto-flow (proportional rows)
-  EX-31b FIFA × instagram_square export CSS contains proportional row heights (11fr 7fr)
+  EX-31  FIFA × instagram_square export uses 2-column flex layout (v4 proportional columns)
+  EX-31b FIFA × instagram_square export uses col-filler to bottom-align Set Pieces with Physical
+  EX-31g FIFA × instagram_square skill columns have no vertical overlap (Playwright)
   EX-32  square/fifa.html template source contains {% if animated_mode %} branch
   EX-33  square/fifa.html rendered with animated_mode=True contains @keyframes
   EX-34  square/fifa.html rendered with animated_mode=False (default) contains NO @keyframes
@@ -95,6 +96,7 @@ def _make_license(card_variant: str = "compact") -> MagicMock:
     lic.compact_focus_y = 20
     lic.right_foot_score = None
     lic.left_foot_score = None
+    lic.sponsor_logo_url = None
     lic.current_level = 1
     lic.max_achieved_level = 1
     return lic
@@ -895,8 +897,8 @@ class TestFifaSquareAllSkills:
 
     EX-29  All 11 Outfield skill names present in rendered Square export HTML
     EX-30  square/fifa.html template source contains no skill slicing (cat.skills[:)
-    EX-31  Square export CSS uses column grid-auto-flow (proportional layout)
-    EX-31b Square export CSS contains proportional row heights (11fr 7fr)
+    EX-31  Square export uses 2-column flex layout (v4 proportional columns)
+    EX-31b Square export uses col-filler to bottom-align Set Pieces with Physical Fitness
     """
 
     def _get_fifa_export_html(self, client, platform: str = "instagram_square") -> str:
@@ -947,38 +949,157 @@ class TestFifaSquareAllSkills:
         )
 
     def test_ex31_square_proportional_grid_flow(self, client):
-        """Square export CSS must use grid-auto-flow: column for column-first ordering.
+        """Square export uses 2-column flex layout (v4): .ex-skill-col wrappers present.
 
-        Column-first fill places Outfield+Set Pieces in col-1 and Mental+Physical
-        in col-2, matching the 11fr:7fr row proportions to actual skill counts.
+        Each .ex-skill-col is an independent flex column — left=[Outfield, Set Pieces],
+        right=[Mental, Physical Fitness]. Eliminates the 85px dead gap caused by CSS Grid
+        sharing row heights across columns.
         """
         html = self._get_fifa_export_html(client, "instagram_square")
         assert html, "Export returned empty response for instagram_square"
-        assert "column" in html, (
-            "grid-auto-flow: column not found in Square export CSS — "
-            "category ordering will not match proportional row heights"
+        assert "ex-skill-col" in html, (
+            "ex-skill-col not found in Square export HTML — "
+            "2-column flex layout (v4) must be used, not grid-auto-flow"
         )
 
     def test_ex31b_square_proportional_row_heights(self, client):
-        """Square export skill grid uses equal 1fr 1fr rows + align-items: start.
+        """Square export uses .ex-cat--col-filler to bottom-align Set Pieces with Physical Fitness.
 
-        Proportional rows (11fr 7fr) were dropped: align-items:start on the grid
-        container keeps each category block compact regardless of skill count, so
-        equal rows produce no empty space.  Category ordering is handled explicitly
-        in the Jinja2 template instead of via grid-auto-flow: column.
+        v4 flex-column layout: Set Pieces (3 rows, left col bottom) has flex:1 so its cell
+        expands to fill remaining left-column height, aligning its bottom edge with Physical
+        Fitness. The 24px fixed skill row height (.ex-row { flex: none; min-height: 24px })
+        is preserved unchanged.
         """
         html = self._get_fifa_export_html(client, "instagram_square")
         assert html, "Export returned empty response for instagram_square"
-        # Equal rows — proportional layout replaced by align-items: start
-        assert "1fr 1fr" in html, (
-            "Equal row heights (1fr 1fr) not found in Square export CSS — "
-            "grid-template-rows must be 1fr 1fr (proportional 11fr 7fr was removed)"
+        assert "ex-cat--col-filler" in html, (
+            "ex-cat--col-filler not found in Square export HTML — "
+            "Set Pieces cell must carry this class so it expands to match Physical Fitness height"
         )
-        # align-items: start prevents Set Pieces (3 skills) from stretching into the taller row
-        assert "align-items: start" in html, (
-            "align-items: start not found in Square export skill grid CSS — "
-            "required so compact categories don't stretch to fill equal-height rows"
+
+    def test_ex31c_sponsor_logo_slot_present_without_logo(self, client):
+        """ex-sponsor-slot div is always rendered below both skill columns; no img when URL is None.
+
+        The slot is a full-width flex-sibling of .ex-skill-cats — it exists unconditionally
+        so bottom spacing is stable regardless of whether a sponsor logo is configured.
+        """
+        html = self._get_fifa_export_html(client, "instagram_square")
+        assert html, "Export returned empty response for instagram_square"
+        assert 'class="ex-sponsor-slot"' in html, (
+            "ex-sponsor-slot div not found in Square export HTML — "
+            "slot must always be rendered below both skill columns"
         )
+        assert 'class="ex-sponsor-slot-img"' not in html, (
+            "ex-sponsor-slot-img found when sponsor_logo_url is None — "
+            "img must not be rendered without a logo URL"
+        )
+
+    def test_ex31d_sponsor_logo_renders_img_when_url_present(self, client):
+        """img.ex-sponsor-slot-img renders inside ex-sponsor-slot when sponsor_logo_url is set."""
+        from app.main import app
+        from app.dependencies import get_db
+
+        lic = _make_license(card_variant="fifa")
+        lic.sponsor_logo_url = "/static/uploads/lfa_player_photos/7_sponsor_logo_1234567890.png"
+        db = _mock_db(user=_make_user(), license_=lic)
+        app.dependency_overrides[get_db] = lambda: db
+        try:
+            r = client.get("/players/7/card?platform=instagram_square&export=1")
+            html = r.text if r.status_code == 200 else ""
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+
+        assert html, "Export returned empty response"
+        assert 'class="ex-sponsor-slot-img"' in html, (
+            "ex-sponsor-slot-img not found when sponsor_logo_url is set — "
+            "img must render inside ex-sponsor-slot"
+        )
+        assert "/static/uploads/lfa_player_photos/7_sponsor_logo_1234567890.png" in html, (
+            "sponsor_logo_url value not found in rendered img src"
+        )
+
+    def test_ex31e_sponsor_logo_css_constraints(self, client):
+        """CSS for ex-sponsor-slot-img contains object-fit: contain and max-height constraint."""
+        html = self._get_fifa_export_html(client, "instagram_square")
+        assert html, "Export returned empty response for instagram_square"
+        assert "object-fit: contain" in html, (
+            "object-fit: contain not found in Square export CSS — "
+            "required so sponsor logo preserves aspect ratio within the slot"
+        )
+        assert "max-height: 48px" in html, (
+            "max-height: 48px not found in Square export CSS — "
+            "required so sponsor logo never overflows the 70px ex-sponsor-slot"
+        )
+
+    def test_ex31f_sponsor_logo_onerror_fallback(self, client):
+        """img has onerror fallback so a broken logo URL hides the img without layout breakage."""
+        from app.main import app
+        from app.dependencies import get_db
+
+        lic = _make_license(card_variant="fifa")
+        lic.sponsor_logo_url = "/static/uploads/broken.png"
+        db = _mock_db(user=_make_user(), license_=lic)
+        app.dependency_overrides[get_db] = lambda: db
+        try:
+            r = client.get("/players/7/card?platform=instagram_square&export=1")
+            html = r.text if r.status_code == 200 else ""
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+
+        assert html, "Export returned empty response"
+        assert "onerror" in html, (
+            "onerror attribute not found on sponsor logo img — "
+            "broken URL must hide the img via onerror='this.style.display=\\'none\\''"
+        )
+        assert "this.style.display" in html, (
+            "onerror handler body not found — must set display:none on broken img"
+        )
+
+    @pytest.mark.skipif(not _playwright_and_server_available(), reason=_PLAYWRIGHT_REASON)
+    def test_ex31g_no_grid_cell_overlap(self):
+        """Playwright: no vertical overlap between skill categories in either flex column.
+
+        v4 flex-column layout DOM order: [0]=Outfield(col1), [1]=SetPieces(col1),
+        [2]=Mental(col2), [3]=Physical(col2).
+
+        Checks:
+          - SetPieces.top >= Outfield.bottom      (left column: no overlap)
+          - Physical.top  >= Mental.bottom        (right column: no overlap)
+          - Mental–Physical gap ≈ 6–10px          (gap:6px CSS, allow 2px browser rounding)
+        """
+        from playwright.sync_api import sync_playwright
+        from app.config import settings
+
+        url = (
+            f"http://127.0.0.1:{settings.APP_INTERNAL_PORT}"
+            "/players/7/card?platform=instagram_square&export=1"
+        )
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": 1080, "height": 1080})
+            page.goto(url, wait_until="networkidle", timeout=15_000)
+            try:
+                cats = page.query_selector_all(".ex-cat")
+                assert len(cats) == 4, f"Expected 4 .ex-cat elements, got {len(cats)}"
+                bbs = [c.bounding_box() for c in cats]
+                # DOM order (v4 flex-column): left col first, then right col
+                outfield, set_pieces, mental, physical = bbs
+                gap_left  = set_pieces["y"] - (outfield["y"] + outfield["height"])
+                gap_right = physical["y"]   - (mental["y"]   + mental["height"])
+                assert gap_left >= 0, (
+                    f"Left col overlap: Set Pieces top={set_pieces['y']:.0f} "
+                    f"< Outfield bottom={outfield['y']+outfield['height']:.0f} (gap={gap_left:.0f}px)"
+                )
+                assert gap_right >= 0, (
+                    f"Right col overlap: Physical top={physical['y']:.0f} "
+                    f"< Mental bottom={mental['y']+mental['height']:.0f} (gap={gap_right:.0f}px)"
+                )
+                assert gap_right <= 10, (
+                    f"Mental–Physical gap {gap_right:.0f}px > 10px — "
+                    "gap should be ~6px (CSS gap property); large gap suggests layout regression"
+                )
+            finally:
+                browser.close()
 
 
 @pytest.mark.unit

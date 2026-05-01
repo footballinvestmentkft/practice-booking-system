@@ -276,6 +276,7 @@ def public_player_card(
         # variant-specific context
         "compact_bg_url": lfa_license.card_bg_compact_url,
         "showcase_bg_url": lfa_license.card_bg_showcase_url,
+        "sponsor_logo_url": lfa_license.sponsor_logo_url,
         "compact_photo_position": lfa_license.card_compact_photo_position or "left",
         # Focus points default to match original CSS (compact: center bottom = 50/100, showcase: center = 50/50)
         "compact_focus_x": lfa_license.card_compact_focus_x if lfa_license.card_compact_focus_x is not None else 50,

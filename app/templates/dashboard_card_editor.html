@@ -371,6 +371,30 @@
     </div>
     {% endif %}
 
+    {# ── Sponsor logo (always visible for FIFA square variant) ── #}
+    <div class="player-photo-section">
+        <div class="player-photo-section-title">🏷️ Player Card Sponsor Logo</div>
+        <div class="player-photo-body">
+            {% if user_license.sponsor_logo_url %}
+            <img src="{{ user_license.sponsor_logo_url }}"
+                 class="player-photo-preview" alt="Sponsor logo"
+                 style="background: rgba(255,255,255,0.05); object-fit: contain;">
+            {% else %}
+            <div class="player-photo-placeholder">🏷️</div>
+            <p class="player-photo-empty">Szponzor logó hiányzik — tölts fel egyet!</p>
+            {% endif %}
+            <label class="btn-photo-upload-student">
+                🏷️ Logó feltöltése
+                <input type="file" accept="image/jpeg,image/png,image/webp"
+                       onchange="uploadSponsorLogo(this)" hidden>
+            </label>
+            {% if user_license.sponsor_logo_url %}
+            <button class="btn-photo-delete-student" onclick="deleteSponsorLogo()">✕ Törlés</button>
+            {% endif %}
+            <p class="player-photo-hint">Max 2 MB · JPEG/PNG/WEBP · 300×300 px max · PNG transparent ajánlott</p>
+        </div>
+    </div>
+
 </div>
 {% endblock %}
 
@@ -733,6 +757,25 @@ async function deleteShowcaseBg() {
     if (!confirm('Törli a Showcase+BG háttérképet?')) return;
     const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
     const r = await fetch('/dashboard/lfa-player-photo-showcase-bg/delete', {
+        method: 'POST', headers: { 'X-CSRF-Token': csrf, 'Content-Type': 'application/json' }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload();
+}
+async function uploadSponsorLogo(input) {
+    if (!input.files[0]) return;
+    const fd = new FormData(); fd.append('file', input.files[0]);
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-sponsor-logo', {
+        method: 'POST', body: fd, headers: { 'X-CSRF-Token': csrf }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload(); else alert('Hiba a feltöltésnél: ' + data.error);
+}
+async function deleteSponsorLogo() {
+    if (!confirm('Törli a szponzor logót?')) return;
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-sponsor-logo/delete', {
         method: 'POST', headers: { 'X-CSRF-Token': csrf, 'Content-Type': 'application/json' }
     });
     const data = await r.json();

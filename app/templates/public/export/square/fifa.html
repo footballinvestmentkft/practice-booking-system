@@ -15,15 +15,23 @@
  *   .ex-skills (flex: 1)       — 2×2 grid, all 29 skills (58% of canvas)
  *
  * Hero photo: portrait_photo_url → photo_url (no circle, no border, cover)
- * Skill grid: rows 1fr/1fr + align-items:start (Set Pieces compact)
+ * Hero profile-col: justify-content:space-between distributes 3 sections
+ *   across 420px inner height — Identity(122px) · ProfileData(76px) · Stats(54px)
+ *
+ * Skill grid — fixed-rhythm model (v3):
+ *   grid-template-columns: 1fr 1fr
+ *   grid-template-rows: auto auto      ← category-driven; tallest in row wins
+ *   align-items: start                 ← compact categories don't stretch
+ *   gap: 6px
+ *   FIX_ROW_H = 24px: .ex-row { flex: none; min-height: 24px }
+ *   Every skill row across all 4 categories is exactly 24px — uniform rhythm.
+ *   Short categories (Set Pieces 3 rows) show dark background below their block.
+ *
+ * Typography scale (% of C_H=1080):
+ *   OVR 96px (8.89%), Name 40px (3.70%), Stat 28px (2.59%), Meta 20px (1.85%)
+ *
  * Category order in HTML: Outfield · Mental / Set Pieces · Physical
  *   (row-flow, so rendered as [0],[2],[1],[3] from skill_categories)
- *
- * Skill zone all-skills layout (same as previous square version):
- *   grid-template-columns: 1fr 1fr
- *   grid-template-rows: 1fr 1fr
- *   align-items: start  ← NEW: Set Pieces (3 rows) no longer stretches
- *   gap: 8px
  */
 
 :root {
@@ -123,9 +131,9 @@ html, body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    gap: 10px;
-    padding: 14px 16px 14px 14px;
+    justify-content: space-between;
+    gap: 0;
+    padding: 16px 18px 18px 16px;
     min-width: 0;
     position: relative;
     z-index: 1;
@@ -146,7 +154,7 @@ html, body {
     gap: 4px;
 }
 .ex-naam {
-    font-size: 32px;
+    font-size: 40px;
     font-weight: 800;
     color: white;
     line-height: 1.05;
@@ -187,7 +195,7 @@ html, body {
     gap: 5px;
 }
 .ex-ovr-num {
-    font-size: 80px;
+    font-size: 96px;
     font-weight: 900;
     line-height: 1;
     color: white;
@@ -225,7 +233,7 @@ html, body {
     white-space: nowrap;
 }
 .ex-mini-value {
-    font-size: 15px;
+    font-size: 20px;
     font-weight: 700;
     color: rgba(255,255,255,0.82);
     white-space: nowrap;
@@ -262,7 +270,7 @@ html, body {
     white-space: nowrap;
 }
 .ex-stat-value {
-    font-size: 20px;
+    font-size: 28px;
     font-weight: 800;
     color: rgba(255,255,255,0.82);
 }
@@ -286,9 +294,13 @@ html, body {
 }
 
 /* ── SKILLS ZONE ──────────────────────────────────────────────────────────────
-   flex:1 → takes 1080 − 410 = 670px of remaining height.
-   2×2 grid, row-flow, category order in HTML: OF · MNT / SET · PHY.
-   align-items:start → Set Pieces (3 skills) does not stretch to fill row.
+   flex:1 → takes 1080 − 454 = 626px of remaining height.
+   2-column flex layout (v4):
+     Left col:  Outfield (fixed) + Set Pieces (flex:1, fills column)
+     Right col: Mental (fixed)   + Physical Fitness (natural, directly below Mental)
+   Sponsor slot: full-width flex-sibling below both columns.
+   Math: max-col height = Mental(258)+6+Physical(232) = 496px.
+         Slot: 575 − 496 − 6(margin) = 73px available; slot uses 70px.
    ─────────────────────────────────────────────────────────────────────────── */
 .ex-skills {
     flex: 1;
@@ -309,16 +321,32 @@ html, body {
     margin-bottom: 8px;
 }
 
-/* 2×2 category grid */
+/* 2-column flex layout (v4).
+ * Each column is independently height-managed — eliminates the 85px dead gap
+ * caused by CSS Grid sharing row heights across columns (Outfield taller than Mental). */
 .ex-skill-cats {
     flex: 1;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
+    display: flex;
+    flex-direction: row;
     gap: 6px;
     overflow: hidden;
     min-height: 0;
-    align-items: start;
+}
+
+/* Column wrapper: stacks its two categories vertically, independent of the other column. */
+.ex-skill-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Set Pieces (left col bottom): flex:1 fills remaining column height so its bottom edge
+ * aligns with Physical Fitness even though it has only 3 skill rows. */
+.ex-cat--col-filler {
+    flex: 1;
 }
 
 /* Category cell */
@@ -334,7 +362,7 @@ html, body {
 }
 .ex-cat-name {
     flex-shrink: 0;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.10em;
@@ -353,23 +381,24 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    min-height: 0;
     overflow: hidden;
 }
 
-/* Individual skill row */
+/* Individual skill row — FIX_ROW_H = 24px (v3 fixed-rhythm model).
+ * flex: none + min-height: 24px decouples row height from grid/container geometry.
+ * Every category has identical row heights regardless of skill count. */
 .ex-row {
-    flex: 1;
-    min-height: 0;
+    flex: none;
+    min-height: 24px;
     display: flex;
     align-items: center;
     gap: 6px;
 }
 
-/* Fixed-width name column — 90px, longer names clip with ellipsis */
+/* Fixed-width name column — 96px, longer names clip with ellipsis */
 .ex-sname {
-    flex: 0 0 90px;
-    font-size: 13px;
+    flex: 0 0 96px;
+    font-size: 15px;
     font-weight: 500;
     color: rgba(255,255,255,0.72);
     white-space: nowrap;
@@ -382,7 +411,7 @@ html, body {
 .ex-bar-bg {
     flex: 1;
     min-width: 0;
-    height: 8px;
+    height: 10px;
     background: var(--ex-bar-bg);
     border-radius: 4px;
     overflow: hidden;
@@ -395,8 +424,8 @@ html, body {
 
 /* Value — right-aligned fixed width */
 .ex-sval {
-    flex: 0 0 30px;
-    font-size: 14px;
+    flex: 0 0 32px;
+    font-size: 17px;
     font-weight: 700;
     text-align: right;
     line-height: 1;
@@ -405,10 +434,31 @@ html, body {
 /* Trend arrow */
 .ex-trend {
     flex: 0 0 14px;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 900;
     text-align: center;
     line-height: 1;
+}
+
+/* Shared sponsor slot: full-width row below both skill columns.
+ * flex-shrink:0 + margin-top:6px reserves 70px at the bottom of .ex-skills.
+ * Not absolute, not in-cell — clean flex-sibling in .ex-skills flow. */
+.ex-sponsor-slot {
+    flex-shrink: 0;
+    height: 70px;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top: 1px solid rgba(255,255,255,0.10);
+}
+
+/* Sponsor logo image: contained, alpha preserved, never overflows slot. */
+.ex-sponsor-slot-img {
+    max-height: 48px;
+    max-width: 70%;
+    object-fit: contain;
+    display: block;
 }
 </style>
 
@@ -574,52 +624,105 @@ html, body {
     </div>
 
     <!-- ── SKILLS ─────────────────────────────────────────────────────────────
-         Category order: Outfield · Mental (row 1) / Set Pieces · Physical (row 2)
-         Row-flow grid — categories rendered in [0,2,1,3] index order so that
-         row-flow places them correctly without grid-auto-flow:column.
+         2-column flex layout (v4):
+         Left col:  [0] Outfield (fixed) · [1] Set Pieces (flex:1, fills column)
+         Right col: [2] Mental (fixed)   · [3] Physical Fitness (natural, directly below)
+         Sponsor slot: shared full-width row below both columns.
          ─────────────────────────────────────────────────────────────────── -->
     {% if skill_categories %}
     <div class="ex-skills">
         <div class="ex-skills-title">Football Skills — {{ overall | round(0) | int }} OVR</div>
         <div class="ex-skill-cats">
-            {% set _cats = [skill_categories[0], skill_categories[2], skill_categories[1], skill_categories[3]] %}
-            {% for cat in _cats %}
-            <div class="ex-cat">
-                <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
-                <div class="ex-skill-rows">
-                    {% for skill in cat.skills %}
-                    {% set sdata = player.skills.get(skill.key, {}) %}
-                    {% set sval  = sdata.get('current_level', 50) | round(0) | int %}
-                    {% set fill  = [sval, 100] | min %}
-                    {% set delta = last_skill_delta.get(skill.key, 0) %}
-                    {% if delta > 0 %}
-                        {% set bar_clr  = '#48bb78' %}
-                        {% set val_clr  = '#48bb78' %}
-                        {% set trend    = '↑' %}
-                        {% set trend_vis = 'visible' %}
-                    {% elif delta < 0 %}
-                        {% set bar_clr  = '#fc8181' %}
-                        {% set val_clr  = '#fc8181' %}
-                        {% set trend    = '↓' %}
-                        {% set trend_vis = 'visible' %}
-                    {% else %}
-                        {% set bar_clr  = 'rgba(255,255,255,0.20)' %}
-                        {% set val_clr  = 'rgba(255,255,255,0.85)' %}
-                        {% set trend    = '↑' %}
-                        {% set trend_vis = 'hidden' %}
-                    {% endif %}
-                    <div class="ex-row">
-                        <span class="ex-sname">{{ skill.name_en }}</span>
-                        <div class="ex-bar-bg">
-                            <div class="ex-bar-fill" style="width:{{ fill }}%; background:{{ bar_clr }};"></div>
+
+            <!-- Left column: Outfield + Set Pieces -->
+            <div class="ex-skill-col">
+                {% for cat in [skill_categories[0], skill_categories[1]] %}
+                <div class="ex-cat{% if loop.last %} ex-cat--col-filler{% endif %}">
+                    <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
+                    <div class="ex-skill-rows">
+                        {% for skill in cat.skills %}
+                        {% set sdata = player.skills.get(skill.key, {}) %}
+                        {% set sval  = sdata.get('current_level', 50) | round(0) | int %}
+                        {% set fill  = [sval, 100] | min %}
+                        {% set delta = last_skill_delta.get(skill.key, 0) %}
+                        {% if delta > 0 %}
+                            {% set bar_clr  = '#48bb78' %}
+                            {% set val_clr  = '#48bb78' %}
+                            {% set trend    = '↑' %}
+                            {% set trend_vis = 'visible' %}
+                        {% elif delta < 0 %}
+                            {% set bar_clr  = '#fc8181' %}
+                            {% set val_clr  = '#fc8181' %}
+                            {% set trend    = '↓' %}
+                            {% set trend_vis = 'visible' %}
+                        {% else %}
+                            {% set bar_clr  = 'rgba(255,255,255,0.20)' %}
+                            {% set val_clr  = 'rgba(255,255,255,0.85)' %}
+                            {% set trend    = '↑' %}
+                            {% set trend_vis = 'hidden' %}
+                        {% endif %}
+                        <div class="ex-row">
+                            <span class="ex-sname">{{ skill.name_en }}</span>
+                            <div class="ex-bar-bg">
+                                <div class="ex-bar-fill" style="width:{{ fill }}%; background:{{ bar_clr }};"></div>
+                            </div>
+                            <span class="ex-sval" style="color:{{ val_clr }};">{{ sval }}</span>
+                            <span class="ex-trend" style="color:{{ bar_clr }}; visibility:{{ trend_vis }};">{{ trend }}</span>
                         </div>
-                        <span class="ex-sval" style="color:{{ val_clr }};">{{ sval }}</span>
-                        <span class="ex-trend" style="color:{{ bar_clr }}; visibility:{{ trend_vis }};">{{ trend }}</span>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
+
+            <!-- Right column: Mental + Physical Fitness -->
+            <div class="ex-skill-col">
+                {% for cat in [skill_categories[2], skill_categories[3]] %}
+                <div class="ex-cat">
+                    <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
+                    <div class="ex-skill-rows">
+                        {% for skill in cat.skills %}
+                        {% set sdata = player.skills.get(skill.key, {}) %}
+                        {% set sval  = sdata.get('current_level', 50) | round(0) | int %}
+                        {% set fill  = [sval, 100] | min %}
+                        {% set delta = last_skill_delta.get(skill.key, 0) %}
+                        {% if delta > 0 %}
+                            {% set bar_clr  = '#48bb78' %}
+                            {% set val_clr  = '#48bb78' %}
+                            {% set trend    = '↑' %}
+                            {% set trend_vis = 'visible' %}
+                        {% elif delta < 0 %}
+                            {% set bar_clr  = '#fc8181' %}
+                            {% set val_clr  = '#fc8181' %}
+                            {% set trend    = '↓' %}
+                            {% set trend_vis = 'visible' %}
+                        {% else %}
+                            {% set bar_clr  = 'rgba(255,255,255,0.20)' %}
+                            {% set val_clr  = 'rgba(255,255,255,0.85)' %}
+                            {% set trend    = '↑' %}
+                            {% set trend_vis = 'hidden' %}
+                        {% endif %}
+                        <div class="ex-row">
+                            <span class="ex-sname">{{ skill.name_en }}</span>
+                            <div class="ex-bar-bg">
+                                <div class="ex-bar-fill" style="width:{{ fill }}%; background:{{ bar_clr }};"></div>
+                            </div>
+                            <span class="ex-sval" style="color:{{ val_clr }};">{{ sval }}</span>
+                            <span class="ex-trend" style="color:{{ bar_clr }}; visibility:{{ trend_vis }};">{{ trend }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+        <!-- Sponsor slot: shared zone below both columns, not in-cell -->
+        <div class="ex-sponsor-slot">
+            {% if sponsor_logo_url %}
+            <img src="{{ sponsor_logo_url }}" alt="" class="ex-sponsor-slot-img"
+                 onerror="this.style.display='none'">
+            {% endif %}
         </div>
     </div>
     {% endif %}

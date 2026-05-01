@@ -179,6 +179,8 @@ class UserLicense(Base):
                                  comment="Background image for compact card variant")
     card_bg_showcase_url = Column(String(512), nullable=True,
                                   comment="Background image for showcase card variant")
+    sponsor_logo_url = Column(String(512), nullable=True,
+                              comment="Sponsor/partner logo URL for player card (square FIFA bottom slot)")
     card_compact_photo_position = Column(String(10), nullable=True, default="left",
                                          comment="Photo side for compact variant: left or right")
     card_compact_focus_x = Column(Integer, nullable=True, default=50,
