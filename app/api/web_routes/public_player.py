@@ -48,7 +48,7 @@ _EXPORT_FORMAT_BUCKETS: dict[str, str] = {
     "facebook_square":    "square",
     "instagram_portrait": "portrait",
     "instagram_story":    "story",
-    "tiktok":             "story",
+    "tiktok":             "tiktok",
     "facebook_landscape": "landscape",
     "og":                 "landscape",
     "banner_custom":      "banner",
@@ -244,6 +244,18 @@ def public_player_card(
         _sq_tpl = "public/export/square/fifa.html"
         if os.path.isfile(os.path.join(_TEMPLATES_DIR, _sq_tpl)):
             template_path = _sq_tpl
+
+    # Instagram Story FIFA browser-preview — single source of truth, prevents editor drift.
+    if not export and platform_preset.id == "instagram_story" and card_variant_id == "fifa":
+        _st_tpl = "public/export/story/fifa.html"
+        if os.path.isfile(os.path.join(_TEMPLATES_DIR, _st_tpl)):
+            template_path = _st_tpl
+
+    # TikTok FIFA browser-preview — single source of truth, dedicated tiktok template.
+    if not export and platform_preset.id == "tiktok" and card_variant_id == "fifa":
+        _tk_tpl = "public/export/tiktok/fifa.html"
+        if os.path.isfile(os.path.join(_TEMPLATES_DIR, _tk_tpl)):
+            template_path = _tk_tpl
 
     # animated_mode: True only when both export=1 AND animated=1 are present.
     # The PNG endpoint never passes animated=1 → this is always False for PNG renders.

@@ -30,7 +30,7 @@ Tests:
   EX-13  FIFA × instagram_story export HTML has no card-wrap
   EX-14  FIFA × instagram_story export HTML has .ex-skill-cats
   EX-15  FIFA × instagram_story export uses portrait_photo_url variable
-  EX-16  FIFA × tiktok uses the same story export template (ex-card present)
+  EX-16  FIFA × tiktok uses its own dedicated tiktok export template (NOT the story template)
   EX-17  FIFA × facebook_landscape uses dedicated export template (ex-card present)
   EX-18  FIFA × facebook_landscape export HTML has no tab-bar
   EX-19  FIFA × facebook_landscape export HTML has no card-wrap
@@ -57,6 +57,20 @@ Tests:
   EX-38  square/pulse.html rendered with animated_mode=False (default) contains NO @keyframes
   EX-39  animated_mode=False does not break Pulse static layout (pex-bar-fill CSS present)
   EX-40  pulse × instagram_square export uses dedicated pex-card template (not editor chrome)
+  EX-47  FIFA × instagram_story preview (no export flag) uses story template (SoT — no drift)
+  EX-48  story/fifa.html contains class="ex-sponsor-slot" HTML element
+  EX-49  story sponsor logo renders when sponsor_logo_url provided; absent when None
+  EX-50  story template renders height/weight meta items when provided
+  EX-51  story template renders dominant foot badge when provided
+  EX-52  FIFA × tiktok export uses dedicated tiktok template (ex-card present, NOT story)
+  EX-53  FIFA × tiktok export HTML has no tab-bar
+  EX-54  FIFA × tiktok export HTML has no card-wrap
+  EX-55  FIFA × tiktok preview (no export flag) uses tiktok template (SoT — no drift)
+  EX-56  tiktok and instagram_story export HTML are structurally different (separation)
+  EX-57  tiktok/fifa.html template source contains ex-hero-photo (full-bleed hero)
+  EX-58  tiktok/fifa.html template source contains ex-identity-strip
+  EX-59  tiktok rendered HTML contains class="ex-sponsor-slot" element
+  EX-60  tiktok sponsor logo renders when sponsor_logo_url provided; absent when None
 """
 from __future__ import annotations
 
@@ -598,14 +612,17 @@ class TestExportRenderLayerStatic:
 
 @pytest.mark.unit
 class TestFifaStoryExport:
-    """Static tests for FIFA Classic × Story/TikTok dedicated export template.
+    """Static tests for FIFA Classic × Instagram Story dedicated export template.
+
+    Instagram Story uses export/story/fifa.html (Option A: conservative layout).
+    TikTok uses export/tiktok/fifa.html (Option B: native redesign) — see TestFifaTikTokExport.
 
     EX-11  FIFA × instagram_story uses dedicated export template (ex-card present)
     EX-12  FIFA × instagram_story export HTML has no tab-bar
     EX-13  FIFA × instagram_story export HTML has no card-wrap (editor chrome)
     EX-14  FIFA × instagram_story export HTML has .ex-skill-cats (2×2 grid)
     EX-15  FIFA × instagram_story export uses portrait_photo_url variable
-    EX-16  FIFA × tiktok uses the same story export template (ex-card present)
+    EX-16  FIFA × tiktok uses its own dedicated tiktok export template (NOT the story template)
     """
 
     def _get_fifa_export_html(self, client, platform: str) -> str:
@@ -654,12 +671,258 @@ class TestFifaStoryExport:
             "portrait_photo_url not referenced in story export template"
         )
 
-    def test_ex16_tiktok_uses_story_export_template(self, client):
-        """TikTok shares the story bucket — must render the same dedicated export template."""
-        html = self._get_fifa_export_html(client, "tiktok")
+    def test_ex16_tiktok_uses_tiktok_export_template_not_story(self, client):
+        """TikTok must use its own dedicated tiktok template, NOT the story template.
+
+        instagram_story → export/story/fifa.html
+        tiktok          → export/tiktok/fifa.html  (separate bucket since split)
+        """
+        story_html  = self._get_fifa_export_html(client, "instagram_story")
+        tiktok_html = self._get_fifa_export_html(client, "tiktok")
+        assert tiktok_html, "Export returned empty response for tiktok"
+        assert "ex-card" in tiktok_html, (
+            "Dedicated tiktok export template not used — expected .ex-card root element"
+        )
+        # The two platforms must render different templates
+        assert story_html != tiktok_html, (
+            "tiktok and instagram_story rendered identical HTML — bucket split not effective"
+        )
+        # TikTok template has full-bleed hero; story template has avatar circle
+        assert "ex-hero-photo" in tiktok_html, (
+            "ex-hero-photo not found in tiktok HTML — expected full-bleed hero (tiktok/fifa.html)"
+        )
+        assert "ex-hero-photo" not in story_html, (
+            "ex-hero-photo found in instagram_story HTML — story template should use avatar circle"
+        )
+
+
+@pytest.mark.unit
+class TestFifaStoryOptionA:
+    """Instagram Story Option A additions — sponsor slot, foot badge, height/weight, SoT.
+
+    EX-47  FIFA × instagram_story preview (no export flag) uses story template (SoT)
+    EX-48  story/fifa.html contains class="ex-sponsor-slot" HTML element
+    EX-49  story sponsor logo renders when sponsor_logo_url provided; absent when None
+    EX-50  story template renders height/weight meta items when provided
+    EX-51  story template renders dominant foot badge when provided
+    """
+
+    def _get_story_html(self, client, export: bool = True, sponsor: str | None = None,
+                        height: int | None = None, weight: int | None = None,
+                        right_foot: float | None = None, left_foot: float | None = None) -> str:
+        from app.main import app
+        from app.dependencies import get_db
+
+        lic = _make_license(card_variant="fifa")
+        lic.sponsor_logo_url = sponsor
+        lic.right_foot_score = right_foot
+        lic.left_foot_score  = left_foot
+        if height is not None:
+            lic.motivation_scores = {"height_cm": height, "weight_kg": weight, "position": "MIDFIELDER"}
+        db = _mock_db(user=_make_user(), license_=lic)
+        app.dependency_overrides[get_db] = lambda: db
+        try:
+            url = f"/players/7/card?platform=instagram_story"
+            if export:
+                url += "&export=1"
+            r = client.get(url)
+            return r.text if r.status_code == 200 else ""
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+
+    def test_ex47_story_preview_uses_story_template(self, client):
+        """EX-47: instagram_story preview (no export flag) must load story template, not editor."""
+        html = self._get_story_html(client, export=False)
+        assert html, "Preview returned empty response for instagram_story"
+        assert "ex-card" in html, (
+            "EX-47: story preview did not use export/story/fifa.html — editor drift detected "
+            "(expected .ex-card root from standalone template)"
+        )
+        assert "tab-bar" not in html, (
+            "EX-47: tab-bar found in instagram_story preview — editor template was loaded instead"
+        )
+
+    def test_ex48_story_sponsor_slot_element_present(self):
+        """EX-48: story/fifa.html must contain the unconditional ex-sponsor-slot HTML element."""
+        import os, app as _app_pkg
+        tpl_path = os.path.join(
+            os.path.dirname(_app_pkg.__file__),
+            "templates/public/export/story/fifa.html",
+        )
+        with open(tpl_path) as f:
+            src = f.read()
+        assert 'class="ex-sponsor-slot"' in src, (
+            "EX-48: ex-sponsor-slot element not found in story/fifa.html — "
+            "sponsor slot must be unconditional"
+        )
+
+    def test_ex49_story_sponsor_logo_conditional(self, client):
+        """EX-49: logo renders only when sponsor_logo_url is provided."""
+        with_logo    = self._get_story_html(client, sponsor="/static/test/logo.png")
+        without_logo = self._get_story_html(client, sponsor=None)
+        assert 'class="ex-sponsor-slot-img"' in with_logo, (
+            "EX-49: sponsor logo img not rendered when sponsor_logo_url is set"
+        )
+        assert 'class="ex-sponsor-slot-img"' not in without_logo, (
+            "EX-49: sponsor logo img rendered even when sponsor_logo_url is None"
+        )
+
+    def test_ex50_story_height_weight_rendered(self, client):
+        """EX-50: height and weight appear in rendered HTML when provided via motivation_scores."""
+        html = self._get_story_html(client, height=180, weight=75)
+        assert "180 cm" in html, "EX-50: height not rendered in story export HTML"
+        assert "75 kg" in html,  "EX-50: weight not rendered in story export HTML"
+
+    def test_ex51_story_dominant_foot_badge_rendered(self, client):
+        """EX-51: dominant foot badge renders in tag-row when foot scores are provided."""
+        html = self._get_story_html(client, right_foot=68.0, left_foot=32.0)
+        # 68/(68+32)*100 = 68% right → "Rl"
+        assert "Rl" in html, (
+            "EX-51: dominant foot badge 'Rl' not found in story export HTML "
+            "(right_foot=68, left_foot=32 → 68% right → should render Rl)"
+        )
+
+
+@pytest.mark.unit
+class TestFifaTikTokExport:
+    """TikTok Option B — dedicated tiktok export template, full-bleed hero, identity strip.
+
+    EX-52  FIFA × tiktok export uses dedicated tiktok template (ex-card present, NOT story)
+    EX-53  FIFA × tiktok export HTML has no tab-bar
+    EX-54  FIFA × tiktok export HTML has no card-wrap
+    EX-55  FIFA × tiktok preview (no export flag) uses tiktok template (SoT)
+    EX-56  tiktok and instagram_story export HTML are structurally different (separation)
+    EX-57  tiktok/fifa.html template source contains ex-hero-photo (full-bleed hero)
+    EX-58  tiktok/fifa.html template source contains ex-identity-strip
+    EX-59  tiktok rendered HTML contains class="ex-sponsor-slot" element
+    EX-60  tiktok sponsor logo renders when sponsor_logo_url provided; absent when None
+    """
+
+    def _get_tiktok_html(self, client, export: bool = True, sponsor: str | None = None,
+                         right_foot: float | None = None, left_foot: float | None = None) -> str:
+        from app.main import app
+        from app.dependencies import get_db
+
+        lic = _make_license(card_variant="fifa")
+        lic.sponsor_logo_url = sponsor
+        lic.right_foot_score = right_foot
+        lic.left_foot_score  = left_foot
+        db = _mock_db(user=_make_user(), license_=lic)
+        app.dependency_overrides[get_db] = lambda: db
+        try:
+            url = "/players/7/card?platform=tiktok"
+            if export:
+                url += "&export=1"
+            r = client.get(url)
+            return r.text if r.status_code == 200 else ""
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+
+    def test_ex52_tiktok_uses_tiktok_template(self, client):
+        """EX-52: tiktok export must use tiktok/fifa.html, not story/fifa.html."""
+        html = self._get_tiktok_html(client)
         assert html, "Export returned empty response for tiktok"
         assert "ex-card" in html, (
-            "Story export template not used for tiktok — expected .ex-card root element"
+            "EX-52: .ex-card not found in tiktok export — dedicated template not used"
+        )
+        assert "ex-hero-photo" in html, (
+            "EX-52: ex-hero-photo not found — tiktok must use full-bleed hero template, "
+            "not story/fifa.html"
+        )
+
+    def test_ex53_no_tab_bar_in_tiktok_export(self, client):
+        """EX-53: tiktok export template must not contain a tab-bar."""
+        html = self._get_tiktok_html(client)
+        assert html, "Export returned empty response for tiktok"
+        assert "tab-bar" not in html, "EX-53: tab-bar found in tiktok export HTML"
+
+    def test_ex54_no_card_wrap_in_tiktok_export(self, client):
+        """EX-54: tiktok export template must not contain card-wrap (editor chrome)."""
+        html = self._get_tiktok_html(client)
+        assert html, "Export returned empty response for tiktok"
+        assert "card-wrap" not in html, "EX-54: card-wrap found in tiktok export HTML"
+
+    def test_ex55_tiktok_preview_uses_tiktok_template(self, client):
+        """EX-55: tiktok preview (no export flag) must load tiktok template, not editor."""
+        html = self._get_tiktok_html(client, export=False)
+        assert html, "Preview returned empty response for tiktok"
+        assert "ex-card" in html, (
+            "EX-55: tiktok preview did not use export/tiktok/fifa.html — editor drift detected"
+        )
+        assert "tab-bar" not in html, (
+            "EX-55: tab-bar found in tiktok preview — editor template was loaded instead"
+        )
+
+    def test_ex56_tiktok_and_story_templates_differ(self, client):
+        """EX-56: tiktok and instagram_story export must render structurally different HTML."""
+        from app.main import app
+        from app.dependencies import get_db
+
+        # Each request needs its own fresh mock — a shared mock exhausts its call counter
+        # after the first request and returns MagicMocks instead of user/license on the second.
+        def _make_db():
+            return _mock_db(user=_make_user(), license_=_make_license(card_variant="fifa"))
+
+        app.dependency_overrides[get_db] = lambda: _make_db()
+        try:
+            story_html  = client.get("/players/7/card?platform=instagram_story&export=1").text
+            tiktok_html = client.get("/players/7/card?platform=tiktok&export=1").text
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+
+        assert story_html != tiktok_html, (
+            "EX-56: tiktok and instagram_story rendered identical HTML — bucket split not effective"
+        )
+        assert "ex-identity-strip" in tiktok_html, (
+            "EX-56: ex-identity-strip missing from tiktok HTML"
+        )
+        assert "ex-identity-strip" not in story_html, (
+            "EX-56: ex-identity-strip found in instagram_story HTML — templates have drifted"
+        )
+
+    def test_ex57_tiktok_template_has_hero_photo_class(self):
+        """EX-57: tiktok/fifa.html source must define the full-bleed hero photo class."""
+        import os, app as _app_pkg
+        tpl_path = os.path.join(
+            os.path.dirname(_app_pkg.__file__),
+            "templates/public/export/tiktok/fifa.html",
+        )
+        with open(tpl_path) as f:
+            src = f.read()
+        assert "ex-hero-photo" in src, (
+            "EX-57: ex-hero-photo not found in tiktok/fifa.html — full-bleed hero missing"
+        )
+
+    def test_ex58_tiktok_template_has_identity_strip(self):
+        """EX-58: tiktok/fifa.html source must define the identity strip."""
+        import os, app as _app_pkg
+        tpl_path = os.path.join(
+            os.path.dirname(_app_pkg.__file__),
+            "templates/public/export/tiktok/fifa.html",
+        )
+        with open(tpl_path) as f:
+            src = f.read()
+        assert "ex-identity-strip" in src, (
+            "EX-58: ex-identity-strip not found in tiktok/fifa.html source"
+        )
+
+    def test_ex59_tiktok_sponsor_slot_present(self, client):
+        """EX-59: tiktok rendered HTML must contain the unconditional ex-sponsor-slot element."""
+        html = self._get_tiktok_html(client)
+        assert 'class="ex-sponsor-slot"' in html, (
+            "EX-59: ex-sponsor-slot not found in tiktok export HTML — "
+            "sponsor slot must be unconditional"
+        )
+
+    def test_ex60_tiktok_sponsor_logo_conditional(self, client):
+        """EX-60: logo renders only when sponsor_logo_url is provided."""
+        with_logo    = self._get_tiktok_html(client, sponsor="/static/test/logo.png")
+        without_logo = self._get_tiktok_html(client, sponsor=None)
+        assert 'class="ex-sponsor-slot-img"' in with_logo, (
+            "EX-60: sponsor logo img not rendered when sponsor_logo_url is set"
+        )
+        assert 'class="ex-sponsor-slot-img"' not in without_logo, (
+            "EX-60: sponsor logo img rendered even when sponsor_logo_url is None"
         )
 
 

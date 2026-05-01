@@ -10,16 +10,21 @@
  * Purpose : static social export ONLY — no editor UI, no responsive CSS
  * Classes : ex- prefix throughout, no inheritance from editor templates
  *
+ * Platform       : Instagram Story only — export/tiktok/fifa.html serves TikTok
  * vs. export/portrait/fifa.html:
  *   hero        350 → 460px   (+110px, uses extra vertical space)
  *   avatar      160 → 180px   (+20px)
  *   ovr-num      88 → 96px
  *   player name  44 → 48px
- *   skill slice [:6] → [:8]   (more rows fit in 1460px skills zone)
+ *   skill slice [:6] → [:8]   (8 rows; Outfield 8/11 — Heading/Tackle/Marking omitted)
  *   ex-row      max-height: 44px → 66px  (wider rows in taller cells)
  *   ex-sname   160/15px → 155/14px  (slightly narrower for 8-row layout)
  *   ex-sval     15 → 14px
- *   photo var   portrait_photo_url (same as portrait — portrait crop preferred)
+ *   photo var   portrait_photo_url (portrait crop preferred)
+ * Option A additions vs. original story template:
+ *   height/weight in meta-row (player_height_cm / player_weight_kg)
+ *   dominant foot badge in tag-row (dominant_badge)
+ *   sponsor slot (70px, unconditional, logo conditional on sponsor_logo_url)
  */
 
 :root {
@@ -164,6 +169,18 @@ html, body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* Dominant foot badge — tag-row sibling */
+.ex-foot-badge {
+    font-size: 12px;
+    font-weight: 800;
+    color: white;
+    background: rgba(255,255,255,0.12);
+    padding: 4px 12px;
+    border-radius: 99px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 /* OVR block — right anchor of hero */
@@ -314,6 +331,25 @@ html, body {
     text-align: center;
     line-height: 1;
 }
+
+/* ── SPONSOR SLOT ─────────────────────────────────────────────────────────────
+   Unconditional 70px zone at the bottom of the skills flex-column.
+   Logo renders only when sponsor_logo_url is provided — no fallback image.
+   ─────────────────────────────────────────────────────────────────────────── */
+.ex-sponsor-slot {
+    flex-shrink: 0;
+    height: 70px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ex-sponsor-slot-img {
+    max-height: 48px;
+    max-width: 70%;
+    object-fit: contain;
+    opacity: 0.85;
+}
 </style>
 </head>
 <body>
@@ -338,6 +374,9 @@ html, body {
                 {% if player.position and player.position != "Unknown" %}
                 <span class="ex-pos-badge" style="background: {{ pos_color }};">{{ player.position }}</span>
                 {% endif %}
+                {% if dominant_badge %}
+                <span class="ex-foot-badge">{{ dominant_badge }}</span>
+                {% endif %}
                 <span class="ex-brand-tag">⚽ LFA Education</span>
             </div>
 
@@ -356,6 +395,18 @@ html, body {
                     <span class="ex-meta-label">Events</span>
                     <span class="ex-meta-value">{{ player.total_tournaments }}</span>
                 </div>
+                {% if player_height_cm %}
+                <div class="ex-meta-item">
+                    <span class="ex-meta-label">Height</span>
+                    <span class="ex-meta-value">{{ player_height_cm }} cm</span>
+                </div>
+                {% endif %}
+                {% if player_weight_kg %}
+                <div class="ex-meta-item">
+                    <span class="ex-meta-label">Weight</span>
+                    <span class="ex-meta-value">{{ player_weight_kg }} kg</span>
+                </div>
+                {% endif %}
             </div>
 
             {% if teams_info %}
@@ -415,6 +466,13 @@ html, body {
                 </div>
             </div>
             {% endfor %}
+        </div>
+
+        <!-- Sponsor slot — unconditional 70px zone; logo renders only if provided -->
+        <div class="ex-sponsor-slot">
+            {% if sponsor_logo_url %}
+            <img class="ex-sponsor-slot-img" src="{{ sponsor_logo_url }}" alt="Sponsor">
+            {% endif %}
         </div>
     </div>
     {% endif %}

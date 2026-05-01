@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ player.name }} — LFA Player Card</title>
+<style>
+/*
+ * FIFA Classic × TikTok — Dedicated export template
+ * Canvas  : 1080 × 1920 px  (Playwright viewport, 9:16 ratio)
+ * Purpose : static social export ONLY — no editor UI, no responsive CSS
+ * Classes : ex- prefix throughout, no inheritance from editor templates
+ * Platform: TikTok only — export/story/fifa.html serves Instagram Story
+ *
+ * Layout zones:
+ *   Hero          0–720px   (37.5%)  full-bleed photo + gradient overlay
+ *   Identity    720–860px   ( 7.3%)  stats strip: nationality/age/height/weight/foot
+ *   Skills      860–1840px  (51.0%)  2×2 grid; Outfield unsliced (all 11 skills)
+ *   Sponsor    1840–1920px  ( 4.2%)  80px unconditional slot; logo conditional
+ *
+ * Set Pieces uses big-number display (.ex-cat--set-pieces) instead of bars.
+ * Sponsor slot is always rendered; logo appears only when sponsor_logo_url is set.
+ */
+
+:root {
+    --ex-panel-bg: {{ theme.panel_bg if theme is defined else 'linear-gradient(155deg, #1a2744 0%, #2a3a5c 60%, #1e3a4a 100%)' }};
+    --ex-body-bg:  {{ theme.body_bg  if theme is defined else '#1a202c' }};
+    --ex-accent:   {{ theme.accent   if theme is defined else '#667eea' }};
+    --ex-bar-bg:      rgba(255,255,255,0.10);
+    --ex-cat-bg:      rgba(255,255,255,0.05);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Root card — fills the 1080×1920 viewport exactly */
+.ex-card {
+    width:  100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ── HERO ZONE ────────────────────────────────────────────────────────────────
+   720px full-bleed photo.  Photo + gradient overlay use position:absolute;
+   text overlays use position:absolute with z-index:1.
+   ─────────────────────────────────────────────────────────────────────────── */
+.ex-hero {
+    flex: 0 0 720px;
+    position: relative;
+    overflow: hidden;
+    background: var(--ex-panel-bg);
+}
+
+/* Full-bleed photo — covers the entire hero zone */
+.ex-hero-photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 20%;
+}
+
+/* Fallback when no photo: gradient fill + large initials centred */
+.ex-hero-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 160px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.18);
+    letter-spacing: -0.04em;
+    background: var(--ex-panel-bg);
+}
+
+/* Bottom-to-top gradient overlay — keeps text readable over any photo */
+.ex-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to top,
+        rgba(26,32,44,1.00)  0%,
+        rgba(26,32,44,0.85) 18%,
+        rgba(26,32,44,0.35) 42%,
+        transparent         58%
+    );
+}
+
+/* Position badge — top-left, inside the safe zone */
+.ex-pos-badge {
+    position: absolute;
+    top: 40px;
+    left: 28px;
+    z-index: 1;
+    font-size: 13px;
+    font-weight: 800;
+    color: white;
+    padding: 5px 16px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    white-space: nowrap;
+}
+
+/* Player name — bottom-left overlay */
+.ex-name {
+    position: absolute;
+    bottom: 72px;
+    left: 28px;
+    right: 160px;
+    z-index: 1;
+    font-size: 52px;
+    font-weight: 900;
+    color: white;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.70);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+/* OVR block — bottom-right overlay */
+.ex-ovr-block {
+    position: absolute;
+    bottom: 52px;
+    right: 28px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+.ex-ovr-num {
+    font-size: 120px;
+    font-weight: 900;
+    line-height: 1;
+    color: white;
+    letter-spacing: -0.04em;
+    text-shadow: 0 2px 16px rgba(0,0,0,0.60);
+}
+.ex-tier-badge {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 5px 18px;
+    border-radius: 99px;
+    color: white;
+    white-space: nowrap;
+}
+
+/* ── IDENTITY STRIP ───────────────────────────────────────────────────────────
+   140px dark band below the hero.  Stats displayed as label/value columns
+   separated by thin vertical dividers.
+   ─────────────────────────────────────────────────────────────────────────── */
+.ex-identity-strip {
+    flex: 0 0 140px;
+    background: var(--ex-body-bg);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 24px;
+    gap: 0;
+    overflow: hidden;
+}
+
+.ex-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    flex: 1;
+    min-width: 0;
+    padding: 0 8px;
+    position: relative;
+}
+.ex-stat-item + .ex-stat-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 20%;
+    height: 60%;
+    width: 1px;
+    background: rgba(255,255,255,0.12);
+}
+.ex-stat-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: rgba(255,255,255,0.42);
+    white-space: nowrap;
+}
+.ex-stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.92);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    text-align: center;
+}
+
+/* ── SKILLS ZONE ──────────────────────────────────────────────────────────────
+   flex:1 → takes 1920 − 720 − 140 − 80(sponsor) = 980px.
+   Internal: title (flex-shrink:0) + 2×2 grid (flex:1) + sponsor slot (flex-shrink:0).
+   ─────────────────────────────────────────────────────────────────────────── */
+.ex-skills {
+    flex: 1;
+    background: var(--ex-body-bg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 16px;
+    min-height: 0;
+}
+.ex-skills-title {
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.30);
+    margin-bottom: 12px;
+}
+
+/* 2×2 category grid */
+.ex-skill-cats {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 10px;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* Category cell — standard */
+.ex-cat {
+    background: var(--ex-cat-bg);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+.ex-cat-name {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    color: rgba(255,255,255,0.48);
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Skill rows container */
+.ex-skill-rows {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Individual skill row — max-height: 44px keeps 11-row Outfield cells tidy */
+.ex-row {
+    flex: 1;
+    min-height: 0;
+    max-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Fixed-width name column */
+.ex-sname {
+    flex: 0 0 140px;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.72);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1;
+}
+
+/* Skill bar */
+.ex-bar-bg {
+    flex: 1;
+    min-width: 0;
+    height: 7px;
+    background: var(--ex-bar-bg);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.ex-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    min-width: 3px;
+}
+
+/* Value */
+.ex-sval {
+    flex: 0 0 38px;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: right;
+    line-height: 1;
+}
+
+/* Trend arrow */
+.ex-trend {
+    flex: 0 0 16px;
+    font-size: 13px;
+    font-weight: 900;
+    text-align: center;
+    line-height: 1;
+}
+
+/* ── SET PIECES — big-number display ─────────────────────────────────────────
+   .ex-cat--set-pieces replaces the bar layout with 3 large stat blocks.
+   The cell still uses flex-column, but .ex-sp-grid fills the remaining space.
+   ─────────────────────────────────────────────────────────────────────────── */
+.ex-cat--set-pieces {
+    /* inherits .ex-cat */
+}
+.ex-sp-grid {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    min-height: 0;
+    overflow: hidden;
+}
+.ex-sp-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+}
+.ex-sp-name {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.42);
+    text-align: center;
+    white-space: nowrap;
+}
+.ex-sp-val {
+    font-size: 60px;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.03em;
+}
+
+/* ── SPONSOR SLOT ─────────────────────────────────────────────────────────────
+   Unconditional 80px zone at the bottom of the card.
+   Logo renders only when sponsor_logo_url is provided — no fallback image.
+   ─────────────────────────────────────────────────────────────────────────── */
+.ex-sponsor-slot {
+    flex: 0 0 80px;
+    background: var(--ex-body-bg);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ex-sponsor-slot-img {
+    max-height: 52px;
+    max-width: 65%;
+    object-fit: contain;
+    opacity: 0.85;
+}
+</style>
+</head>
+<body>
+<div class="ex-card">
+
+    <!-- ── HERO ────────────────────────────────────────────────────────────── -->
+    <div class="ex-hero">
+
+        {% set _photo = portrait_photo_url if portrait_photo_url is defined else None %}
+        {% set _photo = _photo or (photo_url if photo_url is defined else None) %}
+        {% if _photo %}
+        <img class="ex-hero-photo" src="{{ _photo }}" alt="{{ player.name }}">
+        {% else %}
+        <div class="ex-hero-placeholder">{{ initials }}</div>
+        {% endif %}
+
+        <div class="ex-hero-overlay"></div>
+
+        {% if player.position and player.position != "Unknown" %}
+        <span class="ex-pos-badge" style="background: {{ pos_color }};">{{ player.position }}</span>
+        {% endif %}
+
+        <div class="ex-name">{{ player.name }}</div>
+
+        <div class="ex-ovr-block">
+            <div class="ex-ovr-num">{{ overall | round(0) | int }}</div>
+            <span class="ex-tier-badge" style="background: {{ tier_color }};">{{ tier_label }}</span>
+        </div>
+
+    </div>
+
+    <!-- ── IDENTITY STRIP ────────────────────────────────────────────────── -->
+    <div class="ex-identity-strip">
+        {% if player.nationality %}
+        <div class="ex-stat-item">
+            <span class="ex-stat-label">Nationality</span>
+            <span class="ex-stat-value">{{ player.nationality }}</span>
+        </div>
+        {% endif %}
+        <div class="ex-stat-item">
+            <span class="ex-stat-label">Age Group</span>
+            <span class="ex-stat-value">{{ player.age_group }}</span>
+        </div>
+        {% if player_height_cm %}
+        <div class="ex-stat-item">
+            <span class="ex-stat-label">Height</span>
+            <span class="ex-stat-value">{{ player_height_cm }} cm</span>
+        </div>
+        {% endif %}
+        {% if player_weight_kg %}
+        <div class="ex-stat-item">
+            <span class="ex-stat-label">Weight</span>
+            <span class="ex-stat-value">{{ player_weight_kg }} kg</span>
+        </div>
+        {% endif %}
+        {% if dominant_badge %}
+        <div class="ex-stat-item">
+            <span class="ex-stat-label">Foot</span>
+            <span class="ex-stat-value">{{ dominant_badge }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ── SKILLS ──────────────────────────────────────────────────────────── -->
+    {% if skill_categories %}
+    <div class="ex-skills">
+        <div class="ex-skills-title">Football Skills — {{ overall | round(0) | int }} OVR</div>
+        <div class="ex-skill-cats">
+            {% for cat in skill_categories %}
+
+            {% if cat.key == 'set_pieces' %}
+            <!-- Set Pieces: big-number display instead of bars -->
+            <div class="ex-cat ex-cat--set-pieces">
+                <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
+                <div class="ex-sp-grid">
+                    {% for skill in cat.skills %}
+                    {% set sdata = player.skills.get(skill.key, {}) %}
+                    {% set sval  = sdata.get('current_level', 50) | round(0) | int %}
+                    {% set delta = last_skill_delta.get(skill.key, 0) %}
+                    {% if delta > 0 %}
+                        {% set val_clr = '#48bb78' %}
+                    {% elif delta < 0 %}
+                        {% set val_clr = '#fc8181' %}
+                    {% else %}
+                        {% set val_clr = 'rgba(255,255,255,0.88)' %}
+                    {% endif %}
+                    <div class="ex-sp-item">
+                        <span class="ex-sp-name">{{ skill.name_en }}</span>
+                        <span class="ex-sp-val" style="color:{{ val_clr }};">{{ sval }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% else %}
+            <!-- Standard skill category: bar layout, no [:8] slice -->
+            <div class="ex-cat">
+                <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
+                <div class="ex-skill-rows">
+                    {% for skill in cat.skills %}
+                    {% set sdata = player.skills.get(skill.key, {}) %}
+                    {% set sval  = sdata.get('current_level', 50) | round(0) | int %}
+                    {% set fill  = [sval, 100] | min %}
+                    {% set delta = last_skill_delta.get(skill.key, 0) %}
+                    {% if delta > 0 %}
+                        {% set bar_clr  = '#48bb78' %}
+                        {% set val_clr  = '#48bb78' %}
+                        {% set trend    = '↑' %}
+                        {% set trend_vis = 'visible' %}
+                    {% elif delta < 0 %}
+                        {% set bar_clr  = '#fc8181' %}
+                        {% set val_clr  = '#fc8181' %}
+                        {% set trend    = '↓' %}
+                        {% set trend_vis = 'visible' %}
+                    {% else %}
+                        {% set bar_clr  = 'rgba(255,255,255,0.20)' %}
+                        {% set val_clr  = 'rgba(255,255,255,0.85)' %}
+                        {% set trend    = '↑' %}
+                        {% set trend_vis = 'hidden' %}
+                    {% endif %}
+                    <div class="ex-row">
+                        <span class="ex-sname">{{ skill.name_en }}</span>
+                        <div class="ex-bar-bg">
+                            <div class="ex-bar-fill" style="width:{{ fill }}%; background:{{ bar_clr }};"></div>
+                        </div>
+                        <span class="ex-sval" style="color:{{ val_clr }};">{{ sval }}</span>
+                        <span class="ex-trend" style="color:{{ bar_clr }}; visibility:{{ trend_vis }};">{{ trend }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Sponsor slot — unconditional 80px zone; logo renders only if provided -->
+    <div class="ex-sponsor-slot">
+        {% if sponsor_logo_url %}
+        <img class="ex-sponsor-slot-img" src="{{ sponsor_logo_url }}" alt="Sponsor">
+        {% endif %}
+    </div>
+
+</div>
+</body>
+</html>
