@@ -1,11 +1,12 @@
 """
-skill_progression sub-package — Layers 1 + 2 + 3 + 4 + 5.
+skill_progression sub-package — Layers 1 + 2 + 3 + 4 + 5 + Lateral.
 
 Layer 1 (_formulas):    pure math, constants
 Layer 2 (_config):      skill key enumeration, baseline lookup, tournament mapping
 Layer 3 (_db_helpers):  DB-backed opponent factor + match performance modifier
 Layer 4 (_ema_engine):  sequential EMA history-replay loops (ctsc + cstsd)
 Layer 5 (_views):       per-user skill profile, timeline, audit, and checkpoint views
+Lateral (_lateral):     laterality-aware skill aggregation (foot-context routing)
 
 The canonical import surface remains app.services.skill_progression_service (thin shim).
 """
@@ -37,6 +38,10 @@ from ._views import (
     get_skill_audit,
     get_avg_skill_level_checkpoints,
 )
+from ._lateral import (
+    aggregate_lateral_components,
+    update_lateral_component,
+)
 
 __all__ = [
     "MIN_SKILL_VALUE",
@@ -57,4 +62,6 @@ __all__ = [
     "get_skill_timeline",
     "get_skill_audit",
     "get_avg_skill_level_checkpoints",
+    "aggregate_lateral_components",
+    "update_lateral_component",
 ]

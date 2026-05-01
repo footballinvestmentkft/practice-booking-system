@@ -152,3 +152,18 @@ class GamePreset(Base):
     def recommended_player_count(self):
         """Extract recommended player count range from metadata"""
         return self.game_config.get("metadata", {}).get("recommended_player_count", {})
+
+    # Valid foot context values — kept as a frozenset for O(1) lookup and immutability.
+    _VALID_FOOT_CONTEXTS = frozenset({"right", "left", "neutral"})
+
+    @property
+    def foot_context(self) -> str:
+        """Return the foot-laterality context for this preset.
+
+        Stored in game_config.skill_config.foot_context.
+        Valid values: "right" | "left" | "neutral".
+        Any missing or invalid stored value silently falls back to "neutral"
+        so callers never receive an unexpected value.
+        """
+        raw = (self.game_config or {}).get("skill_config", {}).get("foot_context", "neutral")
+        return raw if raw in self._VALID_FOOT_CONTEXTS else "neutral"

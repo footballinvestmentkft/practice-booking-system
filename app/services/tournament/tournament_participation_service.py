@@ -415,11 +415,19 @@ def record_tournament_participation(
         TournamentParticipation.semester_id == tournament_id
     ).first()
 
+    # Resolve foot_context from the tournament's game preset (F4a — laterality).
+    # Semester.game_preset uses a backward-compatible property (P3 path).
+    # Falls back to "neutral" when no preset is attached or the JSONB key is absent.
+    _semester = db.query(Semester).filter(Semester.id == tournament_id).first()
+    _preset   = getattr(_semester, "game_preset", None) if _semester else None
+    _foot_ctx = getattr(_preset, "foot_context", "neutral") if _preset is not None else "neutral"
+
     if existing_participation:
         existing_participation.placement = placement
         existing_participation.skill_points_awarded = skill_points if skill_points else None
         existing_participation.xp_awarded = total_xp
         existing_participation.credits_awarded = credits
+        existing_participation.foot_context = _foot_ctx
         participation = existing_participation
     else:
         participation = TournamentParticipation(
@@ -429,7 +437,8 @@ def record_tournament_participation(
             placement=placement,
             skill_points_awarded=skill_points if skill_points else None,
             xp_awarded=total_xp,
-            credits_awarded=credits
+            credits_awarded=credits,
+            foot_context=_foot_ctx,
         )
         db.add(participation)
 
