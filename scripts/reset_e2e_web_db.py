@@ -586,6 +586,23 @@ def scenario_business_lifecycle(db) -> list[str]:
     instructor = db.query(User).filter(User.email == "grandmaster@lfa.com").first()
     student_spec = next(s for s in _BASELINE_USERS if s["role"] == UserRole.STUDENT)
     student = db.query(User).filter(User.email == student_spec["email"]).first()
+
+    # Delete stale lifecycle sessions from previous runs so the Cypress
+    # title-based lookup always finds only the fresh one. Without this, the
+    # find() picks the oldest session which may already be ended, causing 404
+    # in BW-LIFE-05 / INST-WF-02.
+    old_sessions = (
+        db.query(SessionModel)
+        .filter(SessionModel.title == "E2E Lifecycle Session")
+        .all()
+    )
+    for old in old_sessions:
+        db.query(Booking).filter(Booking.session_id == old.id).delete()
+        db.delete(old)
+    if old_sessions:
+        db.flush()
+        lines.append(f"  deleted {len(old_sessions)} stale lifecycle session(s)")
+
     session = _create_lifecycle_session(db, semester, instructor, student)
     lines.append(
         f"  created lifecycle session id={session.id} '{session.title}' "
