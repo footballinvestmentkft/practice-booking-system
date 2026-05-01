@@ -55,8 +55,13 @@ _NATIONALITY = "Hungarian"
 _GENDER      = "Male"
 _COUNTRY     = "Hungary"
 _POSITION    = "MIDFIELDER"
+_HEIGHT_CM   = 180
+_WEIGHT_KG   = 75
+_RIGHT_FOOT  = 68.0   # dominant badge: right-footed ("Rl")
+_LEFT_FOOT   = 32.0
 
-# 29 skill keys — baseline at 60 for all.
+# 29 skill keys — varied baseline values for realistic card rendering.
+# Values represent a competent MIDFIELDER profile (OVR ≈ 67).
 # Mirrors SKILL_CATEGORIES key list; kept inline to avoid circular import risk.
 _SKILL_KEYS = [
     "ball_control", "dribbling", "finishing", "shot_power", "long_shots",
@@ -67,7 +72,44 @@ _SKILL_KEYS = [
     "acceleration", "sprint_speed", "agility", "jumping",
     "strength", "stamina", "balance",
 ]
-_SKILL_BASELINE = 60.0
+
+# Realistic per-skill values — all bars visible, varied heights, no identical rows.
+_SKILL_VALUES: dict[str, float] = {
+    # Outfield (11)
+    "ball_control":  68.0,
+    "dribbling":     71.0,
+    "finishing":     59.0,
+    "shot_power":    63.0,
+    "long_shots":    65.0,
+    "volleys":       58.0,
+    "crossing":      72.0,
+    "passing":       80.0,
+    "heading":       62.0,
+    "tackle":        68.0,
+    "marking":       65.0,
+    # Set Pieces (3)
+    "free_kicks":    66.0,
+    "corners":       74.0,
+    "penalties":     70.0,
+    # Mental (8)
+    "positioning_off":    72.0,
+    "positioning_def":    69.0,
+    "vision":             76.0,
+    "aggression":         64.0,
+    "reactions":          71.0,
+    "composure":          68.0,
+    "consistency":        66.0,
+    "tactical_awareness": 73.0,
+    # Physical Fitness (7)
+    "acceleration":  70.0,
+    "sprint_speed":  68.0,
+    "agility":       73.0,
+    "jumping":       65.0,
+    "strength":      67.0,
+    "stamina":       72.0,
+    "balance":       70.0,
+}
+_SKILL_BASELINE = 60.0  # kept for legacy reference
 
 SEMESTER_CODE = "LOAD-TEST-MINI-01"
 SEMESTER_NAME = "Load Test MINI_SEASON (Phase 6.3)"
@@ -116,6 +158,8 @@ def _build_motivation_scores() -> dict:
         "goals":                  "improve_skills",
         "motivation":             "",
         "average_skill_level":    _SKILL_BASELINE,
+        "height_cm":              _HEIGHT_CM,
+        "weight_kg":              _WEIGHT_KG,
         "onboarding_completed_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -124,8 +168,8 @@ def _build_football_skills() -> dict:
     now = datetime.now(timezone.utc).isoformat()
     return {
         key: {
-            "baseline":         _SKILL_BASELINE,
-            "current_level":    _SKILL_BASELINE,
+            "baseline":         _SKILL_VALUES.get(key, _SKILL_BASELINE),
+            "current_level":    _SKILL_VALUES.get(key, _SKILL_BASELINE),
             "tournament_delta": 0.0,
             "total_delta":      0.0,
             "tournament_count": 0,
@@ -145,17 +189,59 @@ def _ensure_license(db, user: User) -> UserLicense:
         .first()
     )
     if lic:
+        from sqlalchemy.orm.attributes import flag_modified
         if not lic.is_active:
             lic.is_active = True
-        # Backfill motivation_scores + football_skills if missing
+        # Backfill motivation_scores — add missing height_cm / weight_kg
         if not lic.motivation_scores:
             lic.motivation_scores = _build_motivation_scores()
-            from sqlalchemy.orm.attributes import flag_modified
             flag_modified(lic, "motivation_scores")
+        else:
+            ms = dict(lic.motivation_scores)
+            changed = False
+            if not ms.get("height_cm"):
+                ms["height_cm"] = _HEIGHT_CM
+                changed = True
+            if not ms.get("weight_kg"):
+                ms["weight_kg"] = _WEIGHT_KG
+                changed = True
+            if changed:
+                lic.motivation_scores = ms
+                flag_modified(lic, "motivation_scores")
+        # Backfill football_skills with varied values (replaces flat 60.0 baselines)
         if not lic.football_skills:
             lic.football_skills = _build_football_skills()
-            from sqlalchemy.orm.attributes import flag_modified
             flag_modified(lic, "football_skills")
+        else:
+            # Update any skill whose value is still at the old flat baseline (60.0)
+            fs = dict(lic.football_skills)
+            changed = False
+            for key, target in _SKILL_VALUES.items():
+                entry = fs.get(key)
+                if entry is None:
+                    fs[key] = {
+                        "baseline": target, "current_level": target,
+                        "tournament_delta": 0.0, "total_delta": 0.0,
+                        "tournament_count": 0,
+                        "last_updated": datetime.now(timezone.utc).isoformat(),
+                    }
+                    changed = True
+                elif isinstance(entry, dict) and entry.get("current_level") == _SKILL_BASELINE:
+                    entry["baseline"]      = target
+                    entry["current_level"] = target
+                    fs[key] = entry
+                    changed = True
+                elif isinstance(entry, (int, float)) and float(entry) == _SKILL_BASELINE:
+                    fs[key] = target
+                    changed = True
+            if changed:
+                lic.football_skills = fs
+                flag_modified(lic, "football_skills")
+        # Backfill foot scores for dominant badge
+        if lic.right_foot_score is None:
+            lic.right_foot_score = _RIGHT_FOOT
+        if lic.left_foot_score is None:
+            lic.left_foot_score = _LEFT_FOOT
         db.flush()
         return lic
 
@@ -169,6 +255,8 @@ def _ensure_license(db, user: User) -> UserLicense:
         credit_balance       = 0,
         motivation_scores    = _build_motivation_scores(),
         football_skills      = _build_football_skills(),
+        right_foot_score     = _RIGHT_FOOT,
+        left_foot_score      = _LEFT_FOOT,
     )
     db.add(lic)
     db.flush()
