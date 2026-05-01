@@ -238,6 +238,13 @@ def public_player_card(
         if os.path.isfile(os.path.join(_TEMPLATES_DIR, _fb_tpl)):
             template_path = _fb_tpl
 
+    # Square FIFA browser-preview: same pattern as landscape — single source of truth.
+    # Covers instagram_square and facebook_square (both map to the square bucket).
+    if not export and platform_preset.id in {"instagram_square", "facebook_square"} and card_variant_id == "fifa":
+        _sq_tpl = "public/export/square/fifa.html"
+        if os.path.isfile(os.path.join(_TEMPLATES_DIR, _sq_tpl)):
+            template_path = _sq_tpl
+
     # animated_mode: True only when both export=1 AND animated=1 are present.
     # The PNG endpoint never passes animated=1 → this is always False for PNG renders.
     animated_mode = bool(export) and bool(animated)
