@@ -498,6 +498,8 @@
         status.textContent = '⏳ Saving onboarding data...';
 
         try {
+            // foot_dominance: 0=fully left, 50=balanced, 100=fully right
+            const footDominance = parseInt(document.getElementById('foot-dominance-slider').value, 10);
             const response = await fetch('/specialization/lfa-player/onboarding-web', {
                 method: 'POST',
                 headers: {
@@ -506,8 +508,6 @@
                 },
                 credentials: 'include',
                 // motivation: "" — Streamlit parity: goals dropdown only, no free text
-                // foot_dominance: 0=fully left, 50=balanced, 100=fully right
-                const footDominance = parseInt(document.getElementById('foot-dominance-slider').value, 10);
                 body: JSON.stringify({ position: selectedPosition, goals, motivation: '', skills, foot_dominance: footDominance }),
             });
 
