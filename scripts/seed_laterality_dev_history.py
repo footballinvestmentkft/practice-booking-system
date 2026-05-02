@@ -40,7 +40,7 @@ from app.models.tournament_achievement import TournamentParticipation, Tournamen
 from app.models.user import User
 from app.models.license import UserLicense
 from app.services.tournament.tournament_reward_orchestrator import distribute_rewards_for_user
-from scripts.seed_laterality_test_fixtures import seed_laterality_fixtures
+from scripts.seed_laterality_test_fixtures import seed_laterality_fixtures, _LAT_PRESETS, _CONTROL_USERS
 
 # ── Sentinel prefix ────────────────────────────────────────────────────────────
 # All semesters created by this script carry this prefix.  --clean removes ONLY
@@ -130,6 +130,35 @@ def clean_dev_history(db: Session) -> int:
 
 # ── Main seed ─────────────────────────────────────────────────────────────────
 
+def _load_or_create_fixtures(db: Session) -> dict:
+    """
+    Look up preset IDs + user IDs without resetting football_skills.
+
+    If any fixture is missing, fall through to seed_laterality_fixtures() to
+    create the missing records.  We avoid calling it unconditionally because
+    seed_laterality_fixtures() resets football_skills to flat floats on every
+    run (designed for test isolation — destructive in a dev context).
+    """
+    preset_ids = {d["code"]: None for d in _LAT_PRESETS}
+    user_ids   = {u["email"]: None for u in _CONTROL_USERS}
+
+    for code in list(preset_ids):
+        p = db.query(GamePreset).filter(GamePreset.code == code).first()
+        if p:
+            preset_ids[code] = p.id
+
+    for email in list(user_ids):
+        u = db.query(User).filter(User.email == email).first()
+        if u:
+            user_ids[email] = u.id
+
+    if None in preset_ids.values() or None in user_ids.values():
+        # Some fixtures are missing — create them (first-time run)
+        return seed_laterality_fixtures(db)
+
+    return {"presets": preset_ids, "users": user_ids}
+
+
 def seed_laterality_dev_history(db: Session) -> dict:
     """
     Idempotent seed: run the real distribute_rewards_for_user() pipeline for
@@ -144,8 +173,8 @@ def seed_laterality_dev_history(db: Session) -> dict:
 
     Returns summary dict for CLI output.
     """
-    # 1. Ensure presets + users exist
-    fixtures = seed_laterality_fixtures(db)
+    # 1. Look up presets + users — do NOT reset football_skills if they exist
+    fixtures = _load_or_create_fixtures(db)
 
     summary = {}
 
