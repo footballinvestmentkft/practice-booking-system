@@ -61,6 +61,15 @@ class TournamentParticipation(Base):
     xp_awarded = Column(Integer, nullable=False, default=0)
     credits_awarded = Column(Integer, nullable=False, default=0)
     achieved_at = Column(DateTime(timezone=True), server_default=func.now())
+    # Laterality context: which foot the tournament preset targets.
+    # Values: "right" | "left" | "neutral". Populated from GamePreset.foot_context
+    # at participation-record creation time. CHECK constraint enforces valid values.
+    foot_context = Column(
+        String(10),
+        nullable=False,
+        server_default="neutral",
+        comment="Foot-laterality context of the tournament preset: right | left | neutral",
+    )
 
     # Relationships
     user = relationship("User", back_populates="tournament_participations")

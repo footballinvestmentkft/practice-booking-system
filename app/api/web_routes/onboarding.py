@@ -223,10 +223,12 @@ async def lfa_player_onboarding_web_submit(
     try:
         body = await request.json()
 
-        position   = body.get("position", "")
-        goals      = body.get("goals", "")
-        motivation = body.get("motivation", "")
-        skills     = body.get("skills", {})
+        position      = body.get("position", "")
+        goals         = body.get("goals", "")
+        motivation    = body.get("motivation", "")
+        skills        = body.get("skills", {})
+        # foot_dominance: 0 = fully left, 50 = balanced, 100 = fully right. Default: 50.
+        foot_dominance = body.get("foot_dominance", 50)
 
         logger.info("onboarding_submit_received", extra={"user": user.email, "skill_count": len(skills)})
 
@@ -234,6 +236,14 @@ async def lfa_player_onboarding_web_submit(
         valid_positions = ["STRIKER", "MIDFIELDER", "DEFENDER", "GOALKEEPER"]
         if position not in valid_positions:
             return JSONResponse(status_code=400, content={"error": f"Invalid position: {position}"})
+
+        # Validate foot_dominance
+        try:
+            foot_dominance = float(foot_dominance)
+        except (TypeError, ValueError):
+            return JSONResponse(status_code=400, content={"error": "foot_dominance must be a number 0–100"})
+        if not (0.0 <= foot_dominance <= 100.0):
+            return JSONResponse(status_code=400, content={"error": "foot_dominance out of range (0–100)"})
 
         # Validate all 29 skills present
         expected_skills = set(get_all_skill_keys())
@@ -277,6 +287,10 @@ async def lfa_player_onboarding_web_submit(
         average_skill = sum(float(v) for v in skills.values()) / len(skills)
 
         license.football_skills      = football_skills
+        # Dominant foot: canonical storage in UserLicense columns (not motivation_scores).
+        # right_foot_score = slider value; left_foot_score = complement.
+        license.right_foot_score     = foot_dominance
+        license.left_foot_score      = 100.0 - foot_dominance
         license.motivation_scores    = {
             "position":              position,
             "goals":                 goals,
@@ -300,7 +314,7 @@ async def lfa_player_onboarding_web_submit(
         db.refresh(user)
         db.refresh(license)
 
-        logger.info("onboarding_complete", extra={"user": user.email, "position": position, "skill_count": len(skills), "avg_skill": round(average_skill, 1)})
+        logger.info("onboarding_complete", extra={"user": user.email, "position": position, "skill_count": len(skills), "avg_skill": round(average_skill, 1), "foot_dominance": foot_dominance})
 
         return {"success": True, "redirect": "/dashboard/lfa-football-player"}
 
@@ -373,10 +387,12 @@ async def lfa_player_onboarding_submit(
         body = await request.json()
 
         # Get form data
-        position = body.get("position")
-        goals = body.get("goals", "")
-        motivation = body.get("motivation", "")
-        skills = body.get("skills", {})  # NEW: All 36 skills, 0-100 scale
+        position      = body.get("position")
+        goals         = body.get("goals", "")
+        motivation    = body.get("motivation", "")
+        skills        = body.get("skills", {})  # NEW: All 36 skills, 0-100 scale
+        # foot_dominance: 0 = fully left, 50 = balanced, 100 = fully right. Default: 50.
+        foot_dominance = body.get("foot_dominance", 50)
 
         logger.info("onboarding_full_submit_received", extra={"user": user.email, "skill_count": len(skills)})
 
@@ -384,6 +400,14 @@ async def lfa_player_onboarding_submit(
         valid_positions = ["STRIKER", "MIDFIELDER", "DEFENDER", "GOALKEEPER"]
         if position not in valid_positions:
             raise ValueError(f"Invalid position: {position}")
+
+        # Validate foot_dominance
+        try:
+            foot_dominance = float(foot_dominance)
+        except (TypeError, ValueError):
+            raise ValueError("foot_dominance must be a number 0–100")
+        if not (0.0 <= foot_dominance <= 100.0):
+            raise ValueError(f"foot_dominance out of range: {foot_dominance} (must be 0–100)")
 
         # Validate skills (must have all 36 skills)
         from app.skills_config import get_all_skill_keys
@@ -424,6 +448,9 @@ async def lfa_player_onboarding_submit(
             }
 
         license.football_skills = football_skills
+        # Dominant foot: canonical storage in UserLicense columns (not motivation_scores).
+        license.right_foot_score = foot_dominance
+        license.left_foot_score  = 100.0 - foot_dominance
 
         # Store metadata in motivation_scores for backward compatibility
         average_skill = sum(skills.values()) / len(skills) if skills else SYSTEM_BASELINE

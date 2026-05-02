@@ -298,10 +298,15 @@ def distribute_rewards_for_user(
     bonus_xp = participation_service.convert_skill_points_to_xp(db, skill_points)
     total_xp = base_xp + bonus_xp
 
+    # Resolve foot_context from the already-loaded tournament preset (F4a — laterality).
+    _preset    = getattr(tournament, "game_preset", None) if tournament else None
+    _foot_ctx  = getattr(_preset, "foot_context", "neutral") if _preset is not None else "neutral"
+
     # Record participation
     participation_record = participation_service.record_tournament_participation(
         db, user_id, tournament_id, placement, skill_points, base_xp, credits, distributed_by,
         team_id=team_id,
+        foot_context=_foot_ctx,
     )
 
     # ── Monitoring: log dominant/minor delta ratio (sampled: podium placements only) ──
@@ -336,6 +341,10 @@ def distribute_rewards_for_user(
             from app.models.license import UserLicense
             from sqlalchemy.orm.attributes import flag_modified
             from datetime import timezone
+            from app.services.skill_progression import (
+                update_lateral_component,
+                aggregate_lateral_components,
+            )
 
             # R04: Lock UserLicense row before reading football_skills JSONB.
             # Prevents two concurrent distributions from both reading stale skills,
@@ -363,6 +372,12 @@ def distribute_rewards_for_user(
                         for sk in list(updated_skills.keys()):
                             updated_skills[sk] = _normalise_skill_entry(updated_skills[sk])
 
+                        # F4b — laterality write-back context
+                        _foot_ctx   = getattr(participation_record, "foot_context", "neutral") or "neutral"
+                        _raw_deltas = participation_record.skill_rating_delta or {}
+                        _right_ft   = active_license.right_foot_score
+                        _left_ft    = active_license.left_foot_score
+
                         changed = 0
                         for skill_key, sdata in computed.items():
                             if skill_key not in updated_skills:
@@ -371,8 +386,22 @@ def distribute_rewards_for_user(
                             if not isinstance(entry, dict):
                                 # Should not happen after normalisation — defensive guard
                                 continue
-                            # Only update delta-related fields; preserve baseline & assessment fields
-                            entry["current_level"]    = sdata["current_level"]
+
+                            # ── Lateral component update (F4b) ────────────────────────
+                            # Apply this tournament's EMA delta to the foot-context bucket.
+                            # update_lateral_component initialises the bucket from the
+                            # pre-tournament current_level on first contact so that
+                            # existing skill history is preserved.
+                            _skill_delta = float(_raw_deltas.get(skill_key, 0.0))
+                            entry = update_lateral_component(entry, _foot_ctx, _skill_delta)
+
+                            # Re-aggregate current_level from all lateral components.
+                            # Falls back to the EMA-derived sdata["current_level"] when
+                            # no lateral_components exist (backward-compatible old records).
+                            _agg = aggregate_lateral_components(entry, _right_ft, _left_ft)
+                            entry["current_level"] = _agg
+
+                            # ── Global tracking fields (unchanged semantics) ──────────
                             entry["tournament_delta"] = sdata["tournament_delta"]
                             entry["total_delta"]      = sdata["total_delta"]
                             entry["tournament_count"] = sdata["tournament_count"]
@@ -387,7 +416,8 @@ def distribute_rewards_for_user(
                         logger.info(
                             f"✅ Persisted skill deltas for user {user_id} "
                             f"(license {active_license.id}): {changed} skills updated, "
-                            f"placement={participation_record.placement}"
+                            f"placement={participation_record.placement}, "
+                            f"foot_context={_foot_ctx}"
                         )
                 else:
                     logger.warning(

@@ -384,6 +384,7 @@ def record_tournament_participation(
     credits: int,
     assessed_by_id: Optional[int] = None,
     team_id: Optional[int] = None,
+    foot_context: str = "neutral",
 ) -> TournamentParticipation:
     """
     Record tournament participation and update player skill assessments.
@@ -415,11 +416,16 @@ def record_tournament_participation(
         TournamentParticipation.semester_id == tournament_id
     ).first()
 
+    # foot_context is resolved by the caller from the tournament's game preset (F4a).
+    # Default "neutral" covers callers that don't supply laterality context.
+    _foot_ctx = foot_context if foot_context in ("right", "left", "neutral") else "neutral"
+
     if existing_participation:
         existing_participation.placement = placement
         existing_participation.skill_points_awarded = skill_points if skill_points else None
         existing_participation.xp_awarded = total_xp
         existing_participation.credits_awarded = credits
+        existing_participation.foot_context = _foot_ctx
         participation = existing_participation
     else:
         participation = TournamentParticipation(
@@ -429,7 +435,8 @@ def record_tournament_participation(
             placement=placement,
             skill_points_awarded=skill_points if skill_points else None,
             xp_awarded=total_xp,
-            credits_awarded=credits
+            credits_awarded=credits,
+            foot_context=_foot_ctx,
         )
         db.add(participation)
 
