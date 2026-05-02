@@ -13,6 +13,28 @@ from app.models.booking import Booking, BookingStatus
 from app.models.user import User
 
 
+# ── Laterality-controlled-trial fixtures ─────────────────────────────────────
+
+@pytest.fixture(scope="session")
+def laterality_fixtures():
+    """
+    Session-scoped fixture that seeds the 6 laterality GamePresets and 4 control
+    users once per test session.  Uses a separate SessionLocal() connection so
+    the seed commits are visible to the SAVEPOINT-isolated test_db sessions.
+
+    Returns the same dict as seed_laterality_fixtures():
+      {"presets": {code: id}, "users": {email: user_id}}
+    """
+    from app.database import SessionLocal
+    from scripts.seed_laterality_test_fixtures import seed_laterality_fixtures
+
+    db = SessionLocal()
+    try:
+        return seed_laterality_fixtures(db)
+    finally:
+        db.close()
+
+
 @pytest.fixture(scope="function")
 def tournament_semester_with_instructor(test_db: Session, instructor_user: User) -> Semester:
     """Create a tournament semester with a master instructor assigned."""
