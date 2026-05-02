@@ -216,7 +216,7 @@ async def admin_semester_edit_dispatch(
     if not sem:
         raise HTTPException(status_code=404, detail="Semester not found")
     is_tournament = (
-        sem.semester_category == SemesterCategory.TOURNAMENT
+        sem.semester_category in (SemesterCategory.TOURNAMENT, SemesterCategory.PROMOTION_EVENT)
         or (sem.code or "").startswith("TOURN-")
         or (sem.code or "").startswith("OPS-")
     )

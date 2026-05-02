@@ -20,10 +20,11 @@ class SemesterStatus(str, enum.Enum):
 
 class SemesterCategory(str, enum.Enum):
     """Top-level category for a semester, drives access control and reporting."""
-    ACADEMY_SEASON = "ACADEMY_SEASON"  # Jul-Jun multi-month program
-    MINI_SEASON = "MINI_SEASON"        # Short academy season (4-8 weeks)
-    TOURNAMENT = "TOURNAMENT"          # Competitive tournament
-    CAMP = "CAMP"                      # Short-term intensive camp (e.g. summer/winter camp)
+    ACADEMY_SEASON  = "ACADEMY_SEASON"   # Jul-Jun multi-month program
+    MINI_SEASON     = "MINI_SEASON"      # Short academy season (4-8 weeks)
+    TOURNAMENT      = "TOURNAMENT"       # Competitive tournament
+    CAMP            = "CAMP"             # Short-term intensive camp (e.g. summer/winter camp)
+    PROMOTION_EVENT = "PROMOTION_EVENT"  # Scouting / showcase event (uses tournament pipeline, separate UI)
 
 
 # Many-to-many association table for additional instructors
@@ -75,7 +76,7 @@ class Semester(Base):
         Enum(SemesterCategory, name='semester_category_type'),
         nullable=True,
         index=True,
-        comment="Program category: ACADEMY_SEASON | MINI_SEASON | TOURNAMENT | CAMP"
+        comment="Program category: ACADEMY_SEASON | MINI_SEASON | TOURNAMENT | CAMP | PROMOTION_EVENT"
     )
     parent_semester_id = Column(
         Integer,

@@ -386,12 +386,15 @@ async def admin_location_events_page(
     campus_ids = [c.id for c in campuses]
     campus_map = {c.id: c for c in campuses}
 
-    # Tournaments (TOURNAMENT category OR legacy TOURN-/OPS- codes) at this location
+    # Tournaments and promotion events at this location.
     tournaments = (
         db.query(Semester)
         .filter(
             or_(
-                Semester.semester_category == SemesterCategory.TOURNAMENT,
+                Semester.semester_category.in_([
+                    SemesterCategory.TOURNAMENT,
+                    SemesterCategory.PROMOTION_EVENT,
+                ]),
                 Semester.code.like("TOURN-%"),
                 Semester.code.like("OPS-%"),
             ),

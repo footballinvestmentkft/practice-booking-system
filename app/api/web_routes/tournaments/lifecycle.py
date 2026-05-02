@@ -31,17 +31,15 @@ async def admin_promotion_events_list(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
-    """Admin: list all promotion tournaments (TEAM and INDIVIDUAL)."""
+    """Admin: list all promotion events (PROMOTION_EVENT category)."""
     _admin_only(user)
 
-    # All TOURNAMENT-category semesters — both TEAM and INDIVIDUAL participant types.
+    # All semesters in the dedicated PROMOTION_EVENT category.
+    # participant_type filter no longer needed — the category is the discriminator.
     promotions = (
         db.query(Semester)
-        .join(TournamentConfiguration,
-              TournamentConfiguration.semester_id == Semester.id)
         .filter(
-            Semester.semester_category == SemesterCategory.TOURNAMENT,
-            TournamentConfiguration.participant_type.in_(["TEAM", "INDIVIDUAL"]),
+            Semester.semester_category == SemesterCategory.PROMOTION_EVENT,
         )
         .order_by(Semester.start_date.desc(), Semester.name.asc(), Semester.id.asc())
         .all()

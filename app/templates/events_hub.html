@@ -164,6 +164,20 @@
             </div>
         </a>
 
+        {# ── Promotion Events ─────────────────────────────────────────────── #}
+        <a href="/events/promotions" class="event-cat-card" style="--cat-color: #e74c3c;">
+            <div class="cat-icon">🎯</div>
+            <div class="cat-title">Promotion Events</div>
+            <div class="cat-desc">Scouting and showcase events — get seen by coaches and clubs.</div>
+            <div class="cat-counter {% if promos_open == 0 %}none{% endif %}">
+                {% if promos_open > 0 %}
+                    {{ promos_open }} event{{ 's' if promos_open != 1 }} open
+                {% else %}
+                    No events open right now
+                {% endif %}
+            </div>
+        </a>
+
         {# ── Academy Season ───────────────────────────────────────────────── #}
         <a href="/semesters/enroll?category=ACADEMY_SEASON" class="event-cat-card" style="--cat-color: #3498db;">
             <div class="cat-icon">🎓</div>

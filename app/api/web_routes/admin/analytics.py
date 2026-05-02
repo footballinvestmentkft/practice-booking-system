@@ -335,7 +335,10 @@ async def admin_events_hub_page(
         or_(
             Semester.code.like("TOURN-%"),
             Semester.code.like("OPS-%"),
-            Semester.semester_category == SemesterCategory.TOURNAMENT,
+            Semester.semester_category.in_([
+                SemesterCategory.TOURNAMENT,
+                SemesterCategory.PROMOTION_EVENT,
+            ]),
         ),
         Semester.status != SemesterStatus.CANCELLED,
     ).scalar() or 0
@@ -361,7 +364,11 @@ async def admin_events_hub_page(
 
     upcoming_events = db.query(Semester).filter(
         or_(
-            Semester.semester_category.in_([SemesterCategory.TOURNAMENT, SemesterCategory.CAMP]),
+            Semester.semester_category.in_([
+                SemesterCategory.TOURNAMENT,
+                SemesterCategory.CAMP,
+                SemesterCategory.PROMOTION_EVENT,
+            ]),
             Semester.code.like("TOURN-%"),
             Semester.code.like("OPS-%"),
         ),
