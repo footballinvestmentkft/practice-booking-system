@@ -525,6 +525,7 @@ def _get_tournament_history(db: Session, user_id: int) -> List[dict]:
             "skill_points_total": skill_pts_total,
             "xp_awarded": tp.xp_awarded or 0,
             "credits_awarded": tp.credits_awarded or 0,
+            "foot_context": tp.foot_context or "neutral",
         })
     return history
 

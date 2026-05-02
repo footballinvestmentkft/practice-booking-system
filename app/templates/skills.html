@@ -186,6 +186,19 @@
 
     .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 10px; }
 
+    .foot-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: capitalize;
+        letter-spacing: 0.02em;
+    }
+    .foot-right   { background: rgba(99,102,241,0.12); color: #818cf8; }
+    .foot-left    { background: rgba(245,158,11,0.12); color: #d97706; }
+    .foot-neutral { background: rgba(107,114,128,0.12); color: #9ca3af; }
+
     /* Loading placeholder */
     .loading-placeholder {
         text-align: center;
@@ -253,6 +266,7 @@
                     <th>Skill Pts</th>
                     <th>XP</th>
                     <th>Credits</th>
+                    <th>Foot</th>
                 </tr>
             </thead>
             <tbody>
@@ -276,6 +290,7 @@
                     <td>{{ "%.1f"|format(t.skill_points_total) }}</td>
                     <td>{{ t.xp_awarded }}</td>
                     <td>{{ t.credits_awarded }}</td>
+                    <td><span class="foot-badge foot-{{ t.foot_context | default('neutral') }}">{{ t.foot_context | default('neutral') }}</span></td>
                 </tr>
                 {% endfor %}
             </tbody>
