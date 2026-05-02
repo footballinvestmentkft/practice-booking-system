@@ -366,7 +366,7 @@ async def admin_club_promotion(
             end_date=date.fromisoformat(end_date),
             status=SemesterStatus.DRAFT,
             tournament_status="DRAFT",
-            semester_category=SemesterCategory.TOURNAMENT,
+            semester_category=SemesterCategory.PROMOTION_EVENT,
             specialization_type="LFA_FOOTBALL_PLAYER",
             age_group=_normalize_club_age_group(ag),  # U15 → YOUTH, U12 → PRE, etc.
             enrollment_cost=0,
@@ -475,9 +475,9 @@ async def admin_teams_page(
     """Admin: global teams list, filterable by tournament."""
     _admin_guard(user)
 
-    # All tournaments for filter dropdown (TEAM participant type)
+    # All tournaments + promotion events for filter dropdown (TEAM participant type)
     tournaments = db.query(Semester).filter(
-        Semester.semester_category == SemesterCategory.TOURNAMENT,
+        Semester.semester_category.in_([SemesterCategory.TOURNAMENT, SemesterCategory.PROMOTION_EVENT]),
     ).order_by(Semester.start_date.desc()).all()
 
     if tournament_filter:

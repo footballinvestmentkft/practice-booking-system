@@ -25581,7 +25581,7 @@
     },
     "/admin/promotion-events": {
       "get": {
-        "description": "Admin: list all promotion tournaments (TEAM and INDIVIDUAL).",
+        "description": "Admin: list all promotion events (PROMOTION_EVENT category).",
         "operationId": "admin_promotion_events_list_admin_promotion_events_get",
         "responses": {
           "200": {
