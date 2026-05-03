@@ -26609,6 +26609,47 @@
         ]
       }
     },
+    "/admin/sponsors/{sponsor_id}/audience/promote": {
+      "post": {
+        "description": "Admin: promote selected ACTIVE SponsorAudienceEntry rows to User accounts.",
+        "operationId": "admin_sponsor_audience_promote_admin_sponsors__sponsor_id__audience_promote_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Sponsor Audience Promote",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/admin/sponsors/{sponsor_id}/contacts/add": {
       "post": {
         "description": "Admin: add a contact to a sponsor.",

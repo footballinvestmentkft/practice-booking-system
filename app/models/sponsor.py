@@ -87,15 +87,20 @@ class SponsorAudienceEntry(Base):
     status = Column(String(20), nullable=False, default="SUPPRESSED")
     notes  = Column(Text,       nullable=True)
 
-    # Audit
+    # Audit — import
     imported_at      = Column(DateTime(timezone=True),
                               server_default=func.now(), nullable=False)
     last_imported_at = Column(DateTime(timezone=True), nullable=True)
     imported_by      = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"),
                               nullable=True)
 
+    # Audit — promote
+    promoted_at = Column(DateTime(timezone=True), nullable=True)
+    promoted_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
     # Relationships
     sponsor    = relationship("Sponsor", back_populates="audience_entries")
     import_log = relationship("CsvImportLog", foreign_keys=[import_log_id])
     user       = relationship("User", foreign_keys=[user_id])
     importer   = relationship("User", foreign_keys=[imported_by])
+    promoter   = relationship("User", foreign_keys=[promoted_by])

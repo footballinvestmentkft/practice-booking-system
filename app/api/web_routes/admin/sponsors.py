@@ -22,6 +22,7 @@ from ....services.sponsor_csv_import_service import (
     apply_import,
     preview_rows,
 )
+from ....services.sponsor_promote_service import promote_entries
 from . import _admin_guard, templates
 
 logger = logging.getLogger(__name__)
@@ -386,9 +387,75 @@ async def admin_sponsor_audience_list(
         .order_by(SponsorAudienceEntry.imported_at.desc())
         .all()
     )
+    # Build promoted_by display names for audit column
+    promoter_ids = {e.promoted_by for e in entries if e.promoted_by}
+    promoters: dict[int, str] = {}
+    if promoter_ids:
+        for u in db.query(User).filter(User.id.in_(promoter_ids)).all():
+            promoters[u.id] = u.name
+
+    flash = request.query_params.get("flash", "")
     return templates.TemplateResponse(
         "admin/sponsor_audience_list.html",
-        {"request": request, "user": user, "sponsor": sponsor, "entries": entries},
+        {
+            "request": request,
+            "user": user,
+            "sponsor": sponsor,
+            "entries": entries,
+            "promoters": promoters,
+            "flash": flash,
+        },
+    )
+
+
+@router.post("/admin/sponsors/{sponsor_id}/audience/promote")
+async def admin_sponsor_audience_promote(
+    sponsor_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Admin: promote selected ACTIVE SponsorAudienceEntry rows to User accounts."""
+    _admin_guard(user)
+    sponsor = db.query(Sponsor).filter(Sponsor.id == sponsor_id).first()
+    if not sponsor:
+        raise HTTPException(status_code=404, detail="Partner not found")
+    if not sponsor.is_active:
+        return RedirectResponse(
+            f"/admin/sponsors/{sponsor_id}?error=Inactive+partner",
+            status_code=303,
+        )
+
+    form = await request.form()
+    raw_ids = form.getlist("entry_ids")
+    try:
+        entry_ids = [int(i) for i in raw_ids if i]
+    except ValueError:
+        return RedirectResponse(
+            f"/admin/sponsors/{sponsor_id}/audience?error=Invalid+entry+IDs",
+            status_code=303,
+        )
+
+    if not entry_ids:
+        return RedirectResponse(
+            f"/admin/sponsors/{sponsor_id}/audience?flash=No+entries+selected",
+            status_code=303,
+        )
+
+    result = promote_entries(entry_ids, sponsor_id, db, user)
+
+    parts = []
+    if result.promoted:
+        parts.append(f"{result.promoted}+promoted")
+    if result.already_linked:
+        parts.append(f"{result.already_linked}+already+linked")
+    if result.skipped:
+        parts.append(f"{result.skipped}+skipped+%28not+ACTIVE+or+no+consent%29")
+    flash = "%2C+".join(parts) if parts else "No+changes"
+
+    return RedirectResponse(
+        f"/admin/sponsors/{sponsor_id}/audience?flash={flash}",
+        status_code=303,
     )
 
 

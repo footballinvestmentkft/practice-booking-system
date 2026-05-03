@@ -20,11 +20,21 @@
         display: flex; align-items: center; justify-content: space-between;
         margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;
     }
-    .toolbar-left { display: flex; gap: 0.5rem; align-items: center; }
+    .filter-input {
+        padding: 0.4rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px;
+        font-size: 0.85rem; width: 220px;
+    }
+    .filter-input:focus { outline: none; border-color: #667eea; }
+
+    .flash-bar {
+        background: #f0fff4; border: 1px solid #9ae6b4; border-radius: 8px;
+        padding: 0.65rem 1rem; margin-bottom: 1rem;
+        font-size: 0.875rem; color: #276749; font-weight: 600;
+    }
 
     .section-card {
         background: white; border: 1px solid #e2e8f0; border-radius: 12px;
-        overflow: hidden; margin-bottom: 1.5rem;
+        overflow: hidden; margin-bottom: 4rem;
     }
 
     .data-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
@@ -34,29 +44,50 @@
         padding: 0.55rem 0.75rem; border-bottom: 1px solid #e2e8f0;
         background: #f7fafc; white-space: nowrap;
     }
+    .data-table th.th-check { width: 36px; text-align: center; }
     .data-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+    .data-table td.td-check { text-align: center; }
     .data-table tr:last-child td { border-bottom: none; }
-    .data-table tr:hover td { background: #fafbff; }
+    .data-table tr.row-promotable:hover td { background: #fafbff; }
+    .data-table tr.row-suppressed td { opacity: 0.55; }
 
     .badge-active     { background: #c6f6d5; color: #276749; border-radius: 99px; padding: 0.1rem 0.55rem; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
     .badge-suppressed { background: #e2e8f0; color: #718096; border-radius: 99px; padding: 0.1rem 0.55rem; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
     .badge-unsub      { background: #fed7d7; color: #9b2c2c; border-radius: 99px; padding: 0.1rem 0.55rem; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
     .badge-deleted    { background: #fefcbf; color: #744210; border-radius: 99px; padding: 0.1rem 0.55rem; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
 
-    .age-tag { background: #e9d8fd; color: #553c9a; border-radius: 4px; padding: 0.1rem 0.4rem; font-size: 0.72rem; font-weight: 700; }
-    .age-raw { color: #a0aec0; font-size: 0.72rem; }
-
+    .age-tag  { background: #e9d8fd; color: #553c9a; border-radius: 4px; padding: 0.1rem 0.4rem; font-size: 0.72rem; font-weight: 700; }
+    .age-raw  { color: #a0aec0; font-size: 0.72rem; }
     .user-link { color: #667eea; text-decoration: none; font-size: 0.78rem; font-weight: 600; }
     .user-link:hover { text-decoration: underline; }
 
-    .empty-state { text-align: center; padding: 3rem 1rem; color: #a0aec0; }
-    .empty-state p { margin: 0.5rem 0 1.25rem; }
-
-    .filter-input {
-        padding: 0.4rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px;
-        font-size: 0.85rem; width: 220px;
+    .promoted-tag {
+        background: #e9d8fd; color: #553c9a;
+        border-radius: 4px; padding: 0.1rem 0.4rem;
+        font-size: 0.7rem; font-weight: 700; white-space: nowrap;
     }
-    .filter-input:focus { outline: none; border-color: #667eea; }
+
+    /* Sticky action bar */
+    .action-bar {
+        display: none;
+        position: fixed; bottom: 0; left: 0; right: 0;
+        background: white; border-top: 1px solid #e2e8f0;
+        padding: 0.9rem 1.5rem;
+        box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+        align-items: center; justify-content: space-between; gap: 1rem;
+        z-index: 100;
+    }
+    .action-bar.visible { display: flex; }
+    .action-bar-left { font-size: 0.9rem; color: #4a5568; }
+    .action-bar-left strong { color: #2d3748; }
+    .btn-promote {
+        background: #5a4a9a; color: white; border: none;
+        padding: 0.55rem 1.75rem; border-radius: 6px;
+        font-size: 0.9rem; font-weight: 700; cursor: pointer;
+    }
+    .btn-promote:hover { background: #4c3d87; }
+
+    .empty-state { text-align: center; padding: 3rem 1rem; color: #a0aec0; }
 </style>
 {% endblock %}
 
@@ -77,11 +108,13 @@
     </a>
 </div>
 
+{% if flash %}
+<div class="flash-bar">✅ {{ flash | replace('+', ' ') | replace('%2C', ',') }}</div>
+{% endif %}
+
 <div class="toolbar">
-    <div class="toolbar-left">
-        <input type="text" id="filter-input" class="filter-input"
-               placeholder="Filter by name or email…" oninput="filterTable(this.value)">
-    </div>
+    <input type="text" id="filter-input" class="filter-input"
+           placeholder="Filter by name or email…" oninput="filterTable(this.value)">
     {% if sponsor.is_active %}
     <a href="/admin/sponsors/{{ sponsor.id }}/csv-import"
        style="background:#1a6b5a;color:white;padding:0.45rem 1.25rem;border-radius:6px;font-size:0.85rem;font-weight:600;text-decoration:none;">
@@ -90,11 +123,18 @@
     {% endif %}
 </div>
 
+<form method="POST" action="/admin/sponsors/{{ sponsor.id }}/audience/promote" id="promote-form">
+    <input type="hidden" name="csrf_token" id="promote-csrf">
+
 <div class="section-card">
 {% if entries %}
 <table class="data-table" id="audience-table">
     <thead>
         <tr>
+            <th class="th-check">
+                <input type="checkbox" id="select-all" title="Select all promotable"
+                       onchange="toggleAll(this)">
+            </th>
             <th>Name</th>
             <th>Email</th>
             <th>Phone</th>
@@ -105,12 +145,26 @@
             <th>Parent Email</th>
             <th>User</th>
             <th>Imported</th>
-            <th>Last Import</th>
+            <th>Promoted</th>
+            <th>Promoted by</th>
         </tr>
     </thead>
     <tbody>
         {% for e in entries %}
-        <tr>
+        {% set promotable = (e.status == 'ACTIVE' and e.consent_given and e.user_id is none) %}
+        {% set already_linked = (e.user_id is not none) %}
+        <tr class="{{ 'row-promotable' if promotable else 'row-suppressed' }}"
+            data-search="{{ (e.first_name + ' ' + e.last_name + ' ' + e.email) | lower }}">
+            <td class="td-check">
+                {% if promotable %}
+                <input type="checkbox" name="entry_ids" value="{{ e.id }}"
+                       class="row-check" onchange="updateBar()">
+                {% elif already_linked %}
+                <span title="Already promoted" style="color:#a0aec0;font-size:0.8rem;">✓</span>
+                {% else %}
+                <span title="Not promotable ({{ e.status }})" style="color:#e2e8f0;">—</span>
+                {% endif %}
+            </td>
             <td style="font-weight:600;white-space:nowrap;">{{ e.first_name }} {{ e.last_name }}</td>
             <td>{{ e.email }}</td>
             <td style="color:#718096;">{{ e.phone or '—' }}</td>
@@ -126,39 +180,36 @@
                 {% endif %}
             </td>
             <td style="text-align:center;">
-                {% if e.consent_given %}
-                <span style="color:#276749;">✅</span>
-                {% else %}
-                <span style="color:#a0aec0;">—</span>
-                {% endif %}
+                {% if e.consent_given %}<span style="color:#276749;">✅</span>
+                {% else %}<span style="color:#a0aec0;">—</span>{% endif %}
             </td>
             <td>
-                {% if e.age_category %}
-                <span class="age-tag">{{ e.age_category }}</span>
-                {% else %}
-                <span style="color:#a0aec0;">—</span>
-                {% endif %}
+                {% if e.age_category %}<span class="age-tag">{{ e.age_category }}</span>
+                {% else %}<span style="color:#a0aec0;">—</span>{% endif %}
             </td>
             <td>
                 {% if e.age_raw and e.age_raw != e.age_category %}
                 <span class="age-raw" title="Original CSV value">{{ e.age_raw }}</span>
-                {% else %}
-                <span style="color:#a0aec0;">—</span>
-                {% endif %}
+                {% else %}<span style="color:#a0aec0;">—</span>{% endif %}
             </td>
             <td style="font-size:0.78rem;color:#718096;">{{ e.parent_email or '—' }}</td>
             <td>
                 {% if e.user_id %}
                 <a href="/admin/users/{{ e.user_id }}" class="user-link">#{{ e.user_id }}</a>
-                {% else %}
-                <span style="color:#a0aec0;">—</span>
-                {% endif %}
+                {% else %}<span style="color:#a0aec0;">—</span>{% endif %}
             </td>
             <td style="font-size:0.75rem;color:#718096;white-space:nowrap;">
                 {{ e.imported_at.strftime('%Y-%m-%d %H:%M') if e.imported_at else '—' }}
             </td>
-            <td style="font-size:0.75rem;color:#a0aec0;white-space:nowrap;">
-                {{ e.last_imported_at.strftime('%Y-%m-%d %H:%M') if e.last_imported_at else '—' }}
+            <td style="font-size:0.75rem;white-space:nowrap;">
+                {% if e.promoted_at %}
+                <span class="promoted-tag">{{ e.promoted_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                {% else %}<span style="color:#a0aec0;">—</span>{% endif %}
+            </td>
+            <td style="font-size:0.75rem;color:#718096;white-space:nowrap;">
+                {% if e.promoted_by %}
+                {{ promoters.get(e.promoted_by, '#' ~ e.promoted_by) }}
+                {% else %}<span style="color:#a0aec0;">—</span>{% endif %}
             </td>
         </tr>
         {% endfor %}
@@ -178,14 +229,51 @@
 {% endif %}
 </div>
 
+<!-- Sticky promote action bar -->
+<div class="action-bar" id="action-bar">
+    <div class="action-bar-left">
+        <strong id="sel-count">0</strong> entries selected for promotion
+    </div>
+    <button type="submit" class="btn-promote">Promote to User →</button>
+</div>
+
+</form>
+
 <script>
-function filterTable(q) {
-    q = q.toLowerCase();
-    document.querySelectorAll('#audience-table tbody tr').forEach(function (tr) {
-        var text = tr.textContent.toLowerCase();
-        tr.style.display = (!q || text.indexOf(q) !== -1) ? '' : 'none';
-    });
-}
+(function () {
+    // CSRF
+    var csrf = (document.cookie.split('; ')
+        .find(function (r) { return r.startsWith('csrf_token='); }) || '')
+        .split('=')[1] || '';
+    var el = document.getElementById('promote-csrf');
+    if (el) el.value = csrf;
+
+    window.updateBar = function () {
+        var checked = document.querySelectorAll('.row-check:checked').length;
+        document.getElementById('sel-count').textContent = checked;
+        document.getElementById('action-bar').classList.toggle('visible', checked > 0);
+    };
+
+    window.toggleAll = function (master) {
+        document.querySelectorAll('.row-check').forEach(function (cb) {
+            var tr = cb.closest('tr');
+            if (!tr || tr.style.display === 'none') return;
+            cb.checked = master.checked;
+        });
+        updateBar();
+    };
+
+    window.filterTable = function (q) {
+        q = q.toLowerCase();
+        var master = document.getElementById('select-all');
+        document.querySelectorAll('#audience-table tbody tr').forEach(function (tr) {
+            var match = !q || (tr.dataset.search || '').indexOf(q) !== -1;
+            tr.style.display = match ? '' : 'none';
+        });
+        if (master) master.checked = false;
+        updateBar();
+    };
+}());
 </script>
 
 {% endblock %}
