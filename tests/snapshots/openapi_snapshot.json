@@ -2758,7 +2758,7 @@
         "title": "Body_admin_revoke_license_admin_users__user_id__revoke_license__license_id__post",
         "type": "object"
       },
-      "Body_admin_sponsor_csv_apply_admin_sponsors__sponsor_id__csv_import_apply_post": {
+      "Body_admin_sponsor_campaign_import_apply_admin_sponsors__sponsor_id__campaigns__campaign_id__import_apply_post": {
         "properties": {
           "csv_data": {
             "title": "Csv Data",
@@ -2773,10 +2773,10 @@
         "required": [
           "csv_data"
         ],
-        "title": "Body_admin_sponsor_csv_apply_admin_sponsors__sponsor_id__csv_import_apply_post",
+        "title": "Body_admin_sponsor_campaign_import_apply_admin_sponsors__sponsor_id__campaigns__campaign_id__import_apply_post",
         "type": "object"
       },
-      "Body_admin_sponsor_csv_preview_admin_sponsors__sponsor_id__csv_import_preview_post": {
+      "Body_admin_sponsor_campaign_import_preview_admin_sponsors__sponsor_id__campaigns__campaign_id__import_preview_post": {
         "properties": {
           "file": {
             "format": "binary",
@@ -2787,7 +2787,47 @@
         "required": [
           "file"
         ],
-        "title": "Body_admin_sponsor_csv_preview_admin_sponsors__sponsor_id__csv_import_preview_post",
+        "title": "Body_admin_sponsor_campaign_import_preview_admin_sponsors__sponsor_id__campaigns__campaign_id__import_preview_post",
+        "type": "object"
+      },
+      "Body_admin_sponsor_campaigns_create_admin_sponsors__sponsor_id__campaigns_post": {
+        "properties": {
+          "campaign_type": {
+            "default": "IMPORT",
+            "title": "Campaign Type",
+            "type": "string"
+          },
+          "event_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Date"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "Body_admin_sponsor_campaigns_create_admin_sponsors__sponsor_id__campaigns_post",
         "type": "object"
       },
       "Body_admin_sponsor_promotion_create_admin_sponsors__sponsor_id__promotion_post": {
@@ -26568,8 +26608,8 @@
     },
     "/admin/sponsors/{sponsor_id}/audience": {
       "get": {
-        "description": "Admin: full paginated audience/prospect list for a sponsor.",
-        "operationId": "admin_sponsor_audience_list_admin_sponsors__sponsor_id__audience_get",
+        "description": "Legacy URL \u2014 redirects to campaign list on sponsor detail.",
+        "operationId": "_redirect_audience_to_campaigns_admin_sponsors__sponsor_id__audience_get",
         "parameters": [
           {
             "in": "path",
@@ -26603,16 +26643,16 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Admin Sponsor Audience List",
+        "summary": " Redirect Audience To Campaigns",
         "tags": [
           "web"
         ]
       }
     },
-    "/admin/sponsors/{sponsor_id}/audience/promote": {
+    "/admin/sponsors/{sponsor_id}/campaigns": {
       "post": {
-        "description": "Admin: promote selected ACTIVE SponsorAudienceEntry rows to User accounts.",
-        "operationId": "admin_sponsor_audience_promote_admin_sponsors__sponsor_id__audience_promote_post",
+        "description": "Create a new campaign for a sponsor.",
+        "operationId": "admin_sponsor_campaigns_create_admin_sponsors__sponsor_id__campaigns_post",
         "parameters": [
           {
             "in": "path",
@@ -26620,6 +26660,170 @@
             "required": true,
             "schema": {
               "title": "Sponsor Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_admin_sponsor_campaigns_create_admin_sponsors__sponsor_id__campaigns_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Sponsor Campaigns Create",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}": {
+      "get": {
+        "description": "Campaign detail: entry stats, import history, audience link.",
+        "operationId": "admin_sponsor_campaign_detail_admin_sponsors__sponsor_id__campaigns__campaign_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "title": "Campaign Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Sponsor Campaign Detail",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}/audience": {
+      "get": {
+        "description": "Campaign-scoped audience/prospect list.",
+        "operationId": "admin_sponsor_campaign_audience_list_admin_sponsors__sponsor_id__campaigns__campaign_id__audience_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "title": "Campaign Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Sponsor Campaign Audience List",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}/audience/promote": {
+      "post": {
+        "description": "Promote selected ACTIVE entries from a campaign to User accounts.",
+        "operationId": "admin_sponsor_campaign_audience_promote_admin_sponsors__sponsor_id__campaigns__campaign_id__audience_promote_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "title": "Campaign Id",
               "type": "integer"
             }
           }
@@ -26644,7 +26848,414 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Admin Sponsor Audience Promote",
+        "summary": "Admin Sponsor Campaign Audience Promote",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}/audience/{entry_id}/delete": {
+      "post": {
+        "operationId": "admin_campaign_audience_delete_admin_sponsors__sponsor_id__campaigns__campaign_id__audience__entry_id__delete_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "title": "Campaign Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "title": "Entry Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Campaign Audience Delete",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}/audience/{entry_id}/suppress": {
+      "post": {
+        "operationId": "admin_campaign_audience_suppress_admin_sponsors__sponsor_id__campaigns__campaign_id__audience__entry_id__suppress_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "title": "Campaign Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "title": "Entry Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Campaign Audience Suppress",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}/audience/{entry_id}/unlink": {
+      "post": {
+        "operationId": "admin_campaign_audience_unlink_admin_sponsors__sponsor_id__campaigns__campaign_id__audience__entry_id__unlink_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "title": "Campaign Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "title": "Entry Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Campaign Audience Unlink",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}/import": {
+      "get": {
+        "description": "Render CSV upload form scoped to a campaign.",
+        "operationId": "admin_sponsor_campaign_import_form_admin_sponsors__sponsor_id__campaigns__campaign_id__import_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "title": "Campaign Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Sponsor Campaign Import Form",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}/import/apply": {
+      "post": {
+        "description": "Apply the previewed CSV import into a campaign (single atomic transaction).",
+        "operationId": "admin_sponsor_campaign_import_apply_admin_sponsors__sponsor_id__campaigns__campaign_id__import_apply_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "title": "Campaign Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_admin_sponsor_campaign_import_apply_admin_sponsors__sponsor_id__campaigns__campaign_id__import_apply_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Sponsor Campaign Import Apply",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}/import/preview": {
+      "post": {
+        "description": "Parse and validate CSV for a campaign.  Writes nothing to DB.",
+        "operationId": "admin_sponsor_campaign_import_preview_admin_sponsors__sponsor_id__campaigns__campaign_id__import_preview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "title": "Campaign Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_admin_sponsor_campaign_import_preview_admin_sponsors__sponsor_id__campaigns__campaign_id__import_preview_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Sponsor Campaign Import Preview",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}/import/{log_id}/rollback": {
+      "post": {
+        "description": "Rollback a CSV import: soft-delete all unpromoted entries from this import log.",
+        "operationId": "admin_sponsor_campaign_import_rollback_admin_sponsors__sponsor_id__campaigns__campaign_id__import__log_id__rollback_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "title": "Campaign Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "log_id",
+            "required": true,
+            "schema": {
+              "title": "Log Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Sponsor Campaign Import Rollback",
         "tags": [
           "web"
         ]
@@ -26753,8 +27364,8 @@
     },
     "/admin/sponsors/{sponsor_id}/csv-import": {
       "get": {
-        "description": "Admin: render the CSV upload form for sponsor audience import.",
-        "operationId": "admin_sponsor_csv_upload_form_admin_sponsors__sponsor_id__csv_import_get",
+        "description": "Legacy URL \u2014 redirects to sponsor detail (create a campaign there first).",
+        "operationId": "_redirect_csv_import_to_campaigns_admin_sponsors__sponsor_id__csv_import_get",
         "parameters": [
           {
             "in": "path",
@@ -26788,16 +27399,16 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Admin Sponsor Csv Upload Form",
+        "summary": " Redirect Csv Import To Campaigns",
         "tags": [
           "web"
         ]
       }
     },
-    "/admin/sponsors/{sponsor_id}/csv-import/apply": {
+    "/admin/sponsors/{sponsor_id}/csv-import/{log_id}/rollback": {
       "post": {
-        "description": "Admin: apply the previously-previewed CSV import (single atomic transaction).",
-        "operationId": "admin_sponsor_csv_apply_admin_sponsors__sponsor_id__csv_import_apply_post",
+        "description": "Legacy rollback URL \u2014 redirects to sponsor detail with guidance.",
+        "operationId": "_legacy_rollback_redirect_admin_sponsors__sponsor_id__csv_import__log_id__rollback_post",
         "parameters": [
           {
             "in": "path",
@@ -26807,18 +27418,17 @@
               "title": "Sponsor Id",
               "type": "integer"
             }
+          },
+          {
+            "in": "path",
+            "name": "log_id",
+            "required": true,
+            "schema": {
+              "title": "Log Id",
+              "type": "integer"
+            }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_admin_sponsor_csv_apply_admin_sponsors__sponsor_id__csv_import_apply_post"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "content": {
@@ -26839,60 +27449,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Admin Sponsor Csv Apply",
-        "tags": [
-          "web"
-        ]
-      }
-    },
-    "/admin/sponsors/{sponsor_id}/csv-import/preview": {
-      "post": {
-        "description": "Admin: parse and validate CSV, return preview page.  Writes nothing to DB.",
-        "operationId": "admin_sponsor_csv_preview_admin_sponsors__sponsor_id__csv_import_preview_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "sponsor_id",
-            "required": true,
-            "schema": {
-              "title": "Sponsor Id",
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_admin_sponsor_csv_preview_admin_sponsors__sponsor_id__csv_import_preview_post"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Admin Sponsor Csv Preview",
+        "summary": " Legacy Rollback Redirect",
         "tags": [
           "web"
         ]
