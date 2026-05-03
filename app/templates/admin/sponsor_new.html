@@ -6,182 +6,215 @@
 
 {% block extra_styles %}
 <style>
-.field-hint     { font-size: 0.78rem; color: #718096; margin-top: 0.28rem; }
-.field-error-msg{ font-size: 0.78rem; color: #e53e3e; margin-top: 0.28rem; font-weight: 600; }
-.input-error    { border-color: #e53e3e !important; box-shadow: 0 0 0 2px rgba(229,62,62,0.18) !important; }
-.context-bar {
+.edit-form-wrap { max-width: 640px; }
+.edit-card {
+    background: white;
+    border-radius: 14px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+}
+.edit-card h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #2d3748;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #667eea;
+    margin-top: 1.75rem;
+    margin-bottom: 1.25rem;
+}
+.edit-card h3:first-of-type { margin-top: 0; }
+.form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1.1rem; }
+.form-group label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #4a5568;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 0.6rem 0.9rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+}
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+.form-actions { display: flex; gap: 1rem; margin-top: 2rem; }
+.field-hint { font-size: 0.75rem; color: #95a5a6; margin-top: 0.2rem; }
+.field-error-msg { font-size: 0.78rem; color: #e53e3e; margin-top: 0.2rem; font-weight: 600; }
+.input-error { border-color: #e53e3e !important; box-shadow: 0 0 0 2px rgba(229,62,62,0.15) !important; }
+.info-bar {
     background: #ebf8ff;
     border: 1px solid #bee3f8;
-    border-radius: 10px;
-    padding: 0.75rem 1.1rem;
-    margin-bottom: 1.5rem;
-    font-size: 0.87rem;
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    margin-bottom: 1.75rem;
+    font-size: 0.85rem;
     color: #2c5282;
     display: flex;
     align-items: flex-start;
     gap: 0.5rem;
 }
-.section-heading {
-    font-size: 0.70rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.10em;
-    color: #a0aec0;
-    margin-bottom: 1rem;
-    padding-bottom: 0.45rem;
-    border-bottom: 1px solid #f0f4f8;
-}
-.optional-tag {
-    font-weight: 400;
-    text-transform: none;
-    letter-spacing: 0;
-    font-size: 0.75rem;
-    color: #a0aec0;
-}
+.optional-label { font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.8rem; color: #a0aec0; }
 </style>
 {% endblock %}
 
 {% block admin_content %}
 
-<div style="margin-bottom:1.25rem;">
-    <a href="/admin/sponsors" style="color:#718096;text-decoration:none;font-size:0.85rem;">← Back to Partners</a>
-</div>
+<div class="edit-form-wrap">
 
-<div class="context-bar">
-    <span style="font-size:1.1rem;line-height:1.2;flex-shrink:0;">ℹ️</span>
-    <span><strong>Sponsors</strong> are brand or partner organizations that can organize Promotion Events.
-    Once created, a sponsor can be linked to events through the Promotion Event wizard on any Club page.</span>
-</div>
-
-{% if error %}
-<div class="alert-bar alert-error">⚠️ {{ error }}</div>
-{% endif %}
-
-{% set code_error = error and ('already in use' in error or 'code' in error | lower) %}
-
-<div style="max-width:680px;">
-<form method="POST" action="/admin/sponsors/new">
-    <input type="hidden" name="csrf_token" id="form-csrf">
-
-    <!-- ── Basic Information ─────────────────────────────────────── -->
-    <div class="content-card" style="margin-bottom:1.25rem;">
-        <div class="section-heading">Basic Information</div>
-
-        <div class="form-group">
-            <label>Sponsor Name *</label>
-            <input name="name" type="text" required placeholder="e.g. Adidas Hungary"
-                   value="{{ form.name if form else '' }}">
-        </div>
-
-        <div class="form-group">
-            <label>Sponsor Code * <small style="color:#a0aec0;">(unique, UPPERCASE)</small></label>
-            <input name="code" type="text" required placeholder="e.g. ADIDAS-HU"
-                   style="text-transform:uppercase;"
-                   class="{{ 'input-error' if code_error else '' }}"
-                   value="{{ form.code if form else '' }}">
-            {% if code_error %}
-            <div class="field-error-msg">⚠ {{ error }}</div>
-            {% else %}
-            <div class="field-hint">Unique identifier used in integrations. Example: ADIDAS-HU.</div>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            <label>Industry / Category</label>
-            <input name="brand_category" type="text" list="category-suggestions"
-                   placeholder="e.g. Sportswear, Media, Insurance"
-                   value="{{ form.brand_category if form else '' }}">
-            <datalist id="category-suggestions">
-                <option value="Sportswear">
-                <option value="Media">
-                <option value="Insurance">
-                <option value="Food &amp; Beverage">
-                <option value="Technology">
-                <option value="Financial Services">
-                <option value="Other">
-            </datalist>
-        </div>
-
-        <div class="form-group">
-            <label>Website</label>
-            <input name="website" type="url" placeholder="https://partner.com"
-                   value="{{ form.website if form else '' }}">
-            <div class="field-hint">Include the https:// prefix.</div>
-        </div>
-
-        <div class="form-group" style="margin-bottom:0;">
-            <label>Company Email</label>
-            <input name="contact_email" type="email" placeholder="info@partner.com"
-                   value="{{ form.contact_email if form else '' }}">
-            <div class="field-hint">General contact email for the organization.</div>
-        </div>
+    <div style="margin-bottom: 1rem;">
+        <a href="/admin/sponsors" class="btn btn-secondary">← Back to Partners</a>
     </div>
 
-    <!-- ── Location ──────────────────────────────────────────────── -->
-    <div class="content-card" style="margin-bottom:1.25rem;">
-        <div class="section-heading">Location</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:0;">
-            <div class="form-group" style="margin-bottom:0;">
-                <label>City</label>
-                <input name="city" type="text" placeholder="Budapest"
-                       value="{{ form.city if form else '' }}">
-            </div>
-            <div class="form-group" style="margin-bottom:0;">
-                <label>Country</label>
-                <input name="country" type="text" placeholder="Hungary"
-                       value="{{ form.country if form else '' }}">
-            </div>
-        </div>
+    {% if error %}
+    <div style="background:#fee;border:1px solid #e74c3c;border-radius:8px;padding:0.8rem 1rem;margin-bottom:1rem;color:#c0392b;">
+        ⚠️ {{ error }}
     </div>
+    {% endif %}
 
-    <!-- ── Primary Contact ───────────────────────────────────────── -->
-    <div class="content-card" style="margin-bottom:1.25rem;">
-        <div class="section-heading">
-            Primary Contact <span class="optional-tag">— optional</span>
+    {% set code_error = error and ('already in use' in error or 'code' in error | lower) %}
+
+    <div class="edit-card">
+
+        <div class="info-bar">
+            <span style="flex-shrink:0;">ℹ️</span>
+            <span><strong>Sponsors</strong> are brand or partner organizations that can organize Promotion Events.
+            Once created, a sponsor can be linked to events through the Promotion Event wizard on any Club page.</span>
         </div>
 
-        <div class="form-group">
-            <label>Contact Name</label>
-            <input name="contact_name" type="text" placeholder="Kovács János"
-                   value="{{ form.contact_name if form else '' }}">
-        </div>
-        <div class="form-group">
-            <label>Role / Title</label>
-            <input name="contact_role" type="text" placeholder="Partnership Manager"
-                   value="{{ form.contact_role if form else '' }}">
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <form method="POST" action="/admin/sponsors/new">
+            <input type="hidden" name="csrf_token" id="form-csrf">
+
+            <!-- ── Basic Information ──────────────────────────────── -->
+            <h3>Basic Information</h3>
+
             <div class="form-group">
-                <label>Contact Email</label>
-                <input name="contact_email_primary" type="email" placeholder="janos@partner.com"
-                       value="{{ form.contact_email_primary if form else '' }}">
+                <label>Sponsor Name *</label>
+                <input name="name" type="text" required placeholder="e.g. Adidas Hungary"
+                       value="{{ form.name if form else '' }}">
             </div>
+
             <div class="form-group">
-                <label>Phone</label>
-                <input name="contact_phone" type="text" placeholder="+36 1 234 5678"
-                       value="{{ form.contact_phone if form else '' }}">
+                <label>
+                    Sponsor Code *
+                    <span style="font-weight:400;font-size:0.78rem;text-transform:none;letter-spacing:0;color:#a0aec0;">(unique, UPPERCASE)</span>
+                </label>
+                <input name="code" type="text" required placeholder="e.g. ADIDAS-HU"
+                       style="text-transform:uppercase;"
+                       class="{{ 'input-error' if code_error else '' }}"
+                       value="{{ form.code if form else '' }}">
+                {% if code_error %}
+                <div class="field-error-msg">⚠ {{ error }}</div>
+                {% else %}
+                <div class="field-hint">Unique identifier used in integrations. Example: ADIDAS-HU.</div>
+                {% endif %}
             </div>
-        </div>
-        <div class="field-hint" style="margin-top:-0.25rem;">
-            If provided, this person will be marked as the primary point of contact for this sponsor.
-        </div>
+
+            <div class="form-group">
+                <label>Industry / Category</label>
+                <input name="brand_category" type="text" list="category-suggestions"
+                       placeholder="e.g. Sportswear, Media, Insurance"
+                       value="{{ form.brand_category if form else '' }}">
+                <datalist id="category-suggestions">
+                    <option value="Sportswear">
+                    <option value="Media">
+                    <option value="Insurance">
+                    <option value="Food &amp; Beverage">
+                    <option value="Technology">
+                    <option value="Financial Services">
+                    <option value="Other">
+                </datalist>
+            </div>
+
+            <div class="form-group">
+                <label>Website</label>
+                <input name="website" type="url" placeholder="https://partner.com"
+                       value="{{ form.website if form else '' }}">
+                <div class="field-hint">Include the https:// prefix.</div>
+            </div>
+
+            <div class="form-group">
+                <label>Company Email</label>
+                <input name="contact_email" type="email" placeholder="info@partner.com"
+                       value="{{ form.contact_email if form else '' }}">
+                <div class="field-hint">General contact email for the organization.</div>
+            </div>
+
+            <!-- ── Location ───────────────────────────────────────── -->
+            <h3>Location</h3>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>City</label>
+                    <input name="city" type="text" placeholder="Budapest"
+                           value="{{ form.city if form else '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Country</label>
+                    <input name="country" type="text" placeholder="Hungary"
+                           value="{{ form.country if form else '' }}">
+                </div>
+            </div>
+
+            <!-- ── Primary Contact ────────────────────────────────── -->
+            <h3>Primary Contact <span class="optional-label">— optional</span></h3>
+
+            <div class="form-group">
+                <label>Contact Name</label>
+                <input name="contact_name" type="text" placeholder="Kovács János"
+                       value="{{ form.contact_name if form else '' }}">
+            </div>
+
+            <div class="form-group">
+                <label>Role / Title</label>
+                <input name="contact_role" type="text" placeholder="Partnership Manager"
+                       value="{{ form.contact_role if form else '' }}">
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Contact Email</label>
+                    <input name="contact_email_primary" type="email" placeholder="janos@partner.com"
+                           value="{{ form.contact_email_primary if form else '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input name="contact_phone" type="text" placeholder="+36 1 234 5678"
+                           value="{{ form.contact_phone if form else '' }}">
+                </div>
+            </div>
+            <p class="field-hint" style="margin-top:-0.6rem;margin-bottom:0;">
+                If provided, this person will be marked as the primary point of contact for this sponsor.
+            </p>
+
+            <!-- ── Notes ─────────────────────────────────────────── -->
+            <h3>Notes</h3>
+
+            <div class="form-group" style="margin-bottom:0;">
+                <label>Internal Notes</label>
+                <textarea name="notes" rows="3"
+                          placeholder="Internal notes visible only to admins.">{{ form.notes if form else '' }}</textarea>
+            </div>
+
+            <!-- ── CTA ───────────────────────────────────────────── -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">Create Sponsor</button>
+                <a href="/admin/sponsors" class="btn btn-secondary">Cancel</a>
+            </div>
+
+        </form>
     </div>
 
-    <!-- ── Notes ─────────────────────────────────────────────────── -->
-    <div class="content-card" style="margin-bottom:1.5rem;">
-        <div class="section-heading">Notes</div>
-        <div class="form-group" style="margin-bottom:0;">
-            <label>Internal Notes</label>
-            <textarea name="notes" rows="3"
-                      placeholder="Internal notes visible only to admins.">{{ form.notes if form else '' }}</textarea>
-        </div>
-    </div>
-
-    <div style="display:flex;gap:1rem;">
-        <button type="submit" class="btn-primary">Create Sponsor</button>
-        <a href="/admin/sponsors" class="btn-secondary">Cancel</a>
-    </div>
-</form>
 </div>
 
 <script>
