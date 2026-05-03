@@ -302,7 +302,7 @@ def _create_team_tournament(club_id, campus_id, tt_id, age_group, label, name_pr
             "age_groups": [age_group],
         },
     )
-    _assert_redirect(resp, "/admin/tournaments", f"Promotion wizard ({label})")
+    _assert_redirect(resp, "/admin/promotion-events", f"Promotion wizard ({label})")
     t = _get_tournament_after_promotion(name_prefix)
     info(f"Tournament: id={t.id}  name={t.name!r}  status={t.tournament_status}")
     return t.id

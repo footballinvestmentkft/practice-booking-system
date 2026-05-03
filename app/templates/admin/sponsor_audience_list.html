@@ -1,0 +1,379 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Audience — {{ sponsor.name }}{% endblock %}
+{% block page_heading %}👥 Audience{% endblock %}
+{% block page_subtitle %}{{ sponsor.name }} — {{ entries|length }} entr{{ 'y' if entries|length == 1 else 'ies' }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .module-strip {
+        display: flex; align-items: center; gap: 0.5rem;
+        padding: 0.75rem 0; margin-bottom: 1.5rem;
+        border-bottom: 2px solid #e2e8f0; flex-wrap: wrap;
+    }
+    .module-strip-label { font-size: 0.75rem; font-weight: 700; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.08em; padding-right: 0.5rem; border-right: 1px solid #e2e8f0; }
+    .module-link { padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; text-decoration: none; color: #718096; transition: background 0.15s; }
+    .module-link:hover { background: #f0f4ff; color: #5a4a9a; }
+    .module-link.active { background: #ece8ff; color: #5a4a9a; }
+
+    .toolbar {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;
+    }
+    .filter-input {
+        padding: 0.4rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px;
+        font-size: 0.85rem; width: 220px;
+    }
+    .filter-input:focus { outline: none; border-color: #667eea; }
+
+    .flash-bar {
+        background: #f0fff4; border: 1px solid #9ae6b4; border-radius: 8px;
+        padding: 0.65rem 1rem; margin-bottom: 1rem;
+        font-size: 0.875rem; color: #276749; font-weight: 600;
+    }
+
+    .section-card {
+        background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+        overflow: hidden; margin-bottom: 4rem;
+    }
+
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .data-table th {
+        text-align: left; color: #718096; font-weight: 700; font-size: 0.72rem;
+        text-transform: uppercase; letter-spacing: 0.05em;
+        padding: 0.55rem 0.75rem; border-bottom: 1px solid #e2e8f0;
+        background: #f7fafc; white-space: nowrap;
+    }
+    .data-table th.th-check { width: 36px; text-align: center; }
+    .data-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+    .data-table td.td-check { text-align: center; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr.row-promotable:hover td { background: #fafbff; }
+    .data-table tr.row-suppressed td { opacity: 0.55; }
+
+    .badge-active     { background: #c6f6d5; color: #276749; border-radius: 99px; padding: 0.1rem 0.55rem; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
+    .badge-suppressed { background: #e2e8f0; color: #718096; border-radius: 99px; padding: 0.1rem 0.55rem; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
+    .badge-unsub      { background: #fed7d7; color: #9b2c2c; border-radius: 99px; padding: 0.1rem 0.55rem; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
+    .badge-deleted    { background: #fefcbf; color: #744210; border-radius: 99px; padding: 0.1rem 0.55rem; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
+
+    .age-tag  { background: #e9d8fd; color: #553c9a; border-radius: 4px; padding: 0.1rem 0.4rem; font-size: 0.72rem; font-weight: 700; }
+    .age-raw  { color: #a0aec0; font-size: 0.72rem; }
+    .user-link { color: #667eea; text-decoration: none; font-size: 0.78rem; font-weight: 600; }
+    .user-link:hover { text-decoration: underline; }
+
+    .promoted-tag {
+        background: #e9d8fd; color: #553c9a;
+        border-radius: 4px; padding: 0.1rem 0.4rem;
+        font-size: 0.7rem; font-weight: 700; white-space: nowrap;
+    }
+
+    .pos-tag { background: #e2e8f0; color: #2d3748; border-radius: 4px; padding: 0.1rem 0.4rem; font-size: 0.72rem; font-weight: 700; }
+    .ready-yes { background: #c6f6d5; color: #276749; border-radius: 4px; padding: 0.1rem 0.5rem; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
+    .ready-no  { background: #fed7d7; color: #9b2c2c; border-radius: 4px; padding: 0.1rem 0.5rem; font-size: 0.7rem; font-weight: 700; white-space: nowrap; cursor: help; }
+
+    /* Sticky action bar */
+    .action-bar {
+        display: none;
+        position: fixed; bottom: 0; left: 0; right: 0;
+        background: white; border-top: 1px solid #e2e8f0;
+        padding: 0.9rem 1.5rem;
+        box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+        align-items: center; justify-content: space-between; gap: 1rem;
+        z-index: 100;
+    }
+    .action-bar.visible { display: flex; }
+    .action-bar-left { font-size: 0.9rem; color: #4a5568; }
+    .action-bar-left strong { color: #2d3748; }
+    .btn-promote {
+        background: #5a4a9a; color: white; border: none;
+        padding: 0.55rem 1.75rem; border-radius: 6px;
+        font-size: 0.9rem; font-weight: 700; cursor: pointer;
+    }
+    .btn-promote:hover { background: #4c3d87; }
+
+    .empty-state { text-align: center; padding: 3rem 1rem; color: #a0aec0; }
+
+    /* Cleanup action buttons */
+    .action-form { display: inline; }
+    .btn-suppress { background: none; border: 1px solid #cbd5e0; color: #718096; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-suppress:hover { background: #edf2f7; }
+    .btn-del     { background: none; border: 1px solid #feb2b2; color: #c53030; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-del:hover { background: #fff5f5; }
+    .btn-unlink  { background: none; border: 1px solid #fbd38d; color: #c05621; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-unlink:hover { background: #fffaf0; }
+    .td-actions { white-space: nowrap; vertical-align: top; }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+
+<div class="module-strip">
+    <span class="module-strip-label">People</span>
+    <a href="/admin/sponsors" class="module-link">🤝 Partners</a>
+    <a href="/admin/sponsors/{{ sponsor.id }}" class="module-link">{{ sponsor.name }}</a>
+    {% if campaign %}
+    <a href="/admin/sponsors/{{ sponsor.id }}/campaigns/{{ campaign.id }}" class="module-link">{{ campaign.name }}</a>
+    <span class="module-link active">Audience</span>
+    {% else %}
+    <span class="module-link active">Audience</span>
+    {% endif %}
+</div>
+
+<div style="margin-bottom:1rem;">
+    {% if campaign %}
+    <a href="/admin/sponsors/{{ sponsor.id }}/campaigns/{{ campaign.id }}" style="color:#718096;font-size:0.85rem;text-decoration:none;">
+        ← Back to {{ campaign.name }}
+    </a>
+    {% else %}
+    <a href="/admin/sponsors/{{ sponsor.id }}" style="color:#718096;font-size:0.85rem;text-decoration:none;">
+        ← Back to {{ sponsor.name }}
+    </a>
+    {% endif %}
+</div>
+
+{% if flash %}
+<div class="flash-bar">✅ {{ flash | replace('+', ' ') | replace('%2C', ',') }}</div>
+{% endif %}
+{% set err = request.query_params.get('error', '') %}
+{% if err %}
+<div style="background:#fff5f5;border:1px solid #feb2b2;border-radius:8px;padding:0.65rem 1rem;margin-bottom:1rem;font-size:0.875rem;color:#c53030;font-weight:600;">
+    ⚠️ {{ err | replace('+', ' ') }}
+</div>
+{% endif %}
+
+<div class="toolbar">
+    <input type="text" id="filter-input" class="filter-input"
+           placeholder="Filter by name or email…" oninput="filterTable(this.value)">
+    {% if sponsor.is_active and campaign %}
+    <a href="/admin/sponsors/{{ sponsor.id }}/campaigns/{{ campaign.id }}/import"
+       style="background:#1a6b5a;color:white;padding:0.45rem 1.25rem;border-radius:6px;font-size:0.85rem;font-weight:600;text-decoration:none;">
+        ↑ Upload CSV
+    </a>
+    {% endif %}
+</div>
+
+{% if campaign %}
+<form method="POST" action="/admin/sponsors/{{ sponsor.id }}/campaigns/{{ campaign.id }}/audience/promote" id="promote-form">
+    <input type="hidden" name="csrf_token" id="promote-csrf">
+</form>
+{% else %}
+<form method="POST" action="/admin/sponsors/{{ sponsor.id }}/audience/promote" id="promote-form">
+    <input type="hidden" name="csrf_token" id="promote-csrf">
+</form>
+{% endif %}
+
+<div class="section-card">
+{% if entries %}
+<table class="data-table" id="audience-table">
+    <thead>
+        <tr>
+            <th class="th-check">
+                <input type="checkbox" id="select-all" title="Select all promotable"
+                       onchange="toggleAll(this)">
+            </th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Status</th>
+            <th>Consent</th>
+            <th>Age Cat.</th>
+            <th>Age Raw</th>
+            <th>Position</th>
+            <th>Parent Email</th>
+            <th>User</th>
+            <th>Ready</th>
+            <th>Imported</th>
+            <th>Promoted</th>
+            <th>Promoted by</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for e in entries %}
+        {% set promotable = (e.status == 'ACTIVE' and e.consent_given and e.user_id is none) %}
+        {% set already_linked = (e.user_id is not none) %}
+        <tr class="{{ 'row-promotable' if promotable else 'row-suppressed' }}"
+            data-search="{{ (e.first_name + ' ' + e.last_name + ' ' + e.email) | lower }}">
+            <td class="td-check">
+                {% if promotable %}
+                <input type="checkbox" name="entry_ids" value="{{ e.id }}"
+                       class="row-check" onchange="updateBar()" form="promote-form">
+                {% elif already_linked %}
+                <span title="Already promoted" style="color:#a0aec0;font-size:0.8rem;">✓</span>
+                {% else %}
+                <span title="Not promotable ({{ e.status }})" style="color:#e2e8f0;">—</span>
+                {% endif %}
+            </td>
+            <td style="font-weight:600;white-space:nowrap;">{{ e.first_name }} {{ e.last_name }}</td>
+            <td>{{ e.email }}</td>
+            <td style="color:#718096;">{{ e.phone or '—' }}</td>
+            <td>
+                {% if e.status == 'ACTIVE' %}
+                <span class="badge-active">ACTIVE</span>
+                {% elif e.status == 'SUPPRESSED' %}
+                <span class="badge-suppressed">SUPPRESSED</span>
+                {% elif e.status == 'UNSUBSCRIBED' %}
+                <span class="badge-unsub">UNSUB</span>
+                {% else %}
+                <span class="badge-deleted">{{ e.status }}</span>
+                {% endif %}
+            </td>
+            <td style="text-align:center;">
+                {% if e.consent_given %}<span style="color:#276749;">✅</span>
+                {% else %}<span style="color:#a0aec0;">—</span>{% endif %}
+            </td>
+            <td>
+                {% if e.age_category %}<span class="age-tag">{{ e.age_category }}</span>
+                {% else %}<span style="color:#a0aec0;">—</span>{% endif %}
+            </td>
+            <td>
+                {% if e.age_raw and e.age_raw != e.age_category %}
+                <span class="age-raw" title="Original CSV value">{{ e.age_raw }}</span>
+                {% else %}<span style="color:#a0aec0;">—</span>{% endif %}
+            </td>
+            <td>
+                {% if e.position %}<span class="pos-tag">{{ e.position }}</span>
+                {% else %}<span style="color:#a0aec0;">—</span>{% endif %}
+            </td>
+            <td style="font-size:0.78rem;color:#718096;">{{ e.parent_email or '—' }}</td>
+            <td>
+                {% if e.user_id %}
+                <a href="/admin/users/{{ e.user_id }}" class="user-link">#{{ e.user_id }}</a>
+                {% else %}<span style="color:#a0aec0;">—</span>{% endif %}
+            </td>
+            <td>
+                {% set r = readiness.get(e.id) %}
+                {% if r == 'ready' %}
+                <span class="ready-yes">✓ Ready</span>
+                {% elif r == 'no_user' %}
+                <span class="ready-no" title="Entry not yet promoted to User">no user</span>
+                {% elif r == 'dob_missing' %}
+                <span class="ready-no" title="date_of_birth missing">no DOB</span>
+                {% elif r == 'position_missing' %}
+                <span class="ready-no" title="Position not set (needs STRIKER/MIDFIELDER/DEFENDER/GOALKEEPER)">no position</span>
+                {% elif r == 'onboarding_missing' %}
+                <span class="ready-no" title="User exists but onboarding baseline not yet applied">no onboarding</span>
+                {% else %}
+                <span style="color:#a0aec0;">—</span>
+                {% endif %}
+            </td>
+            <td style="font-size:0.75rem;color:#718096;white-space:nowrap;">
+                {{ e.imported_at.strftime('%Y-%m-%d %H:%M') if e.imported_at else '—' }}
+            </td>
+            <td style="font-size:0.75rem;white-space:nowrap;">
+                {% if e.promoted_at %}
+                <span class="promoted-tag">{{ e.promoted_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                {% else %}<span style="color:#a0aec0;">—</span>{% endif %}
+            </td>
+            <td style="font-size:0.75rem;color:#718096;white-space:nowrap;">
+                {% if e.promoted_by %}
+                {{ promoters.get(e.promoted_by, '#' ~ e.promoted_by) }}
+                {% else %}<span style="color:#a0aec0;">—</span>{% endif %}
+            </td>
+            <td class="td-actions">
+                {% if e.status == 'DELETED' %}
+                <span style="color:#a0aec0;font-size:0.7rem;">deleted</span>
+                {% else %}
+                    {% set _base = '/admin/sponsors/' ~ sponsor.id ~ ('/campaigns/' ~ campaign.id ~ '/audience' if campaign else '/audience') %}
+                    {# Suppress — only for ACTIVE entries #}
+                    {% if e.status == 'ACTIVE' %}
+                    <form class="action-form" method="POST"
+                          action="{{ _base }}/{{ e.id }}/suppress">
+                        <input type="hidden" name="csrf_token" class="inline-csrf">
+                        <button type="submit" class="btn-suppress"
+                                onclick="return confirm('Suppress this entry?\n\n{{ e.email }}\n\nThe entry will be marked SUPPRESSED and cannot be promoted until reactivated.')">
+                            ⊘ Suppress
+                        </button>
+                    </form>
+                    {% endif %}
+                    {# Delete — for ACTIVE and SUPPRESSED entries #}
+                    <form class="action-form" method="POST"
+                          action="{{ _base }}/{{ e.id }}/delete">
+                        <input type="hidden" name="csrf_token" class="inline-csrf">
+                        <button type="submit" class="btn-del"
+                                onclick="return confirm('Soft-delete this entry?\n\n{{ e.email }}\n\nThe entry will be marked DELETED. It will remain in the database for audit purposes but cannot be promoted.')">
+                            🗑 Delete
+                        </button>
+                    </form>
+                    {# Unlink — only for promoted entries #}
+                    {% if e.user_id %}
+                    <form class="action-form" method="POST"
+                          action="{{ _base }}/{{ e.id }}/unlink">
+                        <input type="hidden" name="csrf_token" class="inline-csrf">
+                        <button type="submit" class="btn-unlink"
+                                onclick="return confirm('Unlink User #{{ e.user_id }} from this entry?\n\n{{ e.email }}\n\n⚠️ The User account will NOT be deleted — manage it separately via User Admin.\n\nThe entry status will remain unchanged.')">
+                            ↩ Unlink
+                        </button>
+                    </form>
+                    {% endif %}
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="empty-state">
+    <div style="font-size:2.5rem;">📭</div>
+    <p>No audience entries yet for <strong>{{ sponsor.name }}</strong>.</p>
+    {% if sponsor.is_active and campaign %}
+    <a href="/admin/sponsors/{{ sponsor.id }}/campaigns/{{ campaign.id }}/import"
+       style="background:#1a6b5a;color:white;padding:0.5rem 1.5rem;border-radius:6px;font-size:0.9rem;font-weight:600;text-decoration:none;display:inline-block;">
+        Upload CSV
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+</div>
+
+<!-- Sticky promote action bar -->
+<div class="action-bar" id="action-bar">
+    <div class="action-bar-left">
+        <strong id="sel-count">0</strong> entries selected for promotion
+    </div>
+    <button type="submit" class="btn-promote" form="promote-form">Promote to User →</button>
+</div>
+
+<script>
+(function () {
+    // CSRF
+    var csrf = (document.cookie.split('; ')
+        .find(function (r) { return r.startsWith('csrf_token='); }) || '')
+        .split('=')[1] || '';
+    var el = document.getElementById('promote-csrf');
+    if (el) el.value = csrf;
+
+    window.updateBar = function () {
+        var checked = document.querySelectorAll('.row-check:checked').length;
+        document.getElementById('sel-count').textContent = checked;
+        document.getElementById('action-bar').classList.toggle('visible', checked > 0);
+    };
+
+    window.toggleAll = function (master) {
+        document.querySelectorAll('.row-check').forEach(function (cb) {
+            var tr = cb.closest('tr');
+            if (!tr || tr.style.display === 'none') return;
+            cb.checked = master.checked;
+        });
+        updateBar();
+    };
+
+    window.filterTable = function (q) {
+        q = q.toLowerCase();
+        var master = document.getElementById('select-all');
+        document.querySelectorAll('#audience-table tbody tr').forEach(function (tr) {
+            var match = !q || (tr.dataset.search || '').indexOf(q) !== -1;
+            tr.style.display = match ? '' : 'none';
+        });
+        if (master) master.checked = false;
+        updateBar();
+    };
+
+    // Inject CSRF token into all inline action forms
+    document.querySelectorAll('.inline-csrf').forEach(function (el) {
+        el.value = csrf;
+    });
+}());
+</script>
+
+{% endblock %}

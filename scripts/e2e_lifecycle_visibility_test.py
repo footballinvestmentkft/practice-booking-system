@@ -423,7 +423,7 @@ def _promotion_wizard(club_id, campus_id, tt_id, age_group, name_prefix):
             "age_groups": [age_group],
         },
     )
-    _assert_redirect_ok(resp, "/admin/tournaments", f"Promotion wizard ({age_group})")
+    _assert_redirect_ok(resp, "/admin/promotion-events", f"Promotion wizard ({age_group})")
     t = _get_tournament(name_prefix)
     info(
         f"Tournament: id={t.id}  name={t.name!r}  "

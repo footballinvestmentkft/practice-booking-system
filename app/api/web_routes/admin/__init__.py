@@ -28,6 +28,7 @@ from . import (  # noqa: E402
     sport_directors,
     analytics,
     enrollments,
+    sponsors,
 )
 
 router = APIRouter()
@@ -44,5 +45,6 @@ for _mod in [
     sport_directors,
     analytics,
     enrollments,
+    sponsors,
 ]:
     router.include_router(_mod.router)

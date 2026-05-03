@@ -2,7 +2,7 @@
 
 {% block title %}Promotion Events{% endblock %}
 {% block page_heading %}🚀 Promotion Events{% endblock %}
-{% block page_subtitle %}All promotion tournaments — team and individual formats{% endblock %}
+{% block page_subtitle %}All promotion events managed through the LFA platform{% endblock %}
 
 {% block extra_styles %}
 <style>
@@ -290,13 +290,22 @@
                 {% endif %}
             </div>
             <div class="event-meta">
-                {% if info.source_club %}
+                {% if info.organizer_club %}
+                <a href="/admin/clubs/{{ info.organizer_club.id }}" class="meta-club" style="color:#667eea;text-decoration:none;">🏟️ {{ info.organizer_club.name }}</a>
+                <span class="meta-sep">·</span>
+                {% elif info.organizer_sponsor %}
+                <a href="/admin/sponsors/{{ info.organizer_sponsor.id }}" class="meta-club" style="color:#d69e2e;text-decoration:none;">🤝 {{ info.organizer_sponsor.name }}</a>
+                <span class="meta-sep">·</span>
+                {% elif info.source_club %}
                 <a href="/admin/clubs/{{ info.source_club.id }}" class="meta-club" style="color:#667eea;text-decoration:none;">{{ info.source_club.name }}</a>
+                <span class="meta-sep">·</span>
+                {% else %}
+                <span style="color:#cbd5e0;font-size:0.74rem;">— standalone —</span>
                 <span class="meta-sep">·</span>
                 {% endif %}
                 {% if t.age_group %}<span class="ag-chip">{{ t.age_group }}</span><span class="meta-sep">·</span>{% endif %}
                 <span class="ag-chip type-chip">{% if info.type_code == 'league' %}League{% elif info.type_code == 'knockout' %}Knockout{% elif info.type_code == 'group_knockout' %}Group+KO{% elif info.type_code == 'swiss' %}Swiss{% elif info.type_code %}{{ info.type_code }}{% else %}IR{% endif %}</span><span class="meta-sep">·</span>
-                <span class="ag-chip fmt-chip">{% if info.participant_type == 'TEAM' %}Teams{% else %}Indiv.{% endif %}</span><span class="meta-sep">·</span>
+                {% if info.participant_type %}<span class="ag-chip fmt-chip">{% if info.participant_type == 'TEAM' %}Teams{% else %}Indiv.{% endif %}</span><span class="meta-sep">·</span>{% endif %}
                 {% if info.fmt == 'INDIVIDUAL_RANKING' %}
                 {% if info.scoring_type %}<span class="ag-chip scoring-chip">{%- if info.scoring_type == 'SCORE_BASED' -%}Score{%- elif info.scoring_type == 'TIME_BASED' -%}Time{%- elif info.scoring_type == 'DISTANCE_BASED' -%}Distance{%- else -%}Ranking{%- endif -%}{%- if info.measurement_unit %} ({{ info.measurement_unit }}){%- endif -%}</span><span class="meta-sep">·</span>{% endif %}
                 {% if info.ranking_direction %}<span class="ag-chip direction-chip">{%- if info.ranking_direction == 'DESC' -%}↑ High wins{%- else -%}↓ Low wins{%- endif -%}</span><span class="meta-sep">·</span>{% endif %}

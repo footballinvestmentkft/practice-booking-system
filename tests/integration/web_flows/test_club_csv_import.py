@@ -8,7 +8,7 @@ Club CSV Import Integration Tests — CLUB-01 through CLUB-08
   CLUB-05  CSV duplicate email → user name/position UPDATE (no duplicate user)
   CLUB-06  initial_credits > 0 → CreditTransaction created
   CLUB-07  initial_credits idempotency → second import does NOT create duplicate tx
-  CLUB-08  Promotion wizard → N tournaments created, teams enrolled per age_group
+  CLUB-08  Promotion wizard → N promotion events created (PROMOTION_EVENT), teams enrolled per age_group
 
 DONE = pytest tests/integration/web_flows/test_club_csv_import.py -v
 """
@@ -438,15 +438,15 @@ class TestPromotionWizard:
                 follow_redirects=False,
             )
             assert resp.status_code == 303
-            assert "/admin/tournaments" in resp.headers.get("location", "")
+            assert "/admin/promotion-events" in resp.headers.get("location", "")
         finally:
             app.dependency_overrides.clear()
 
-        # 2 tournaments created
+        # 2 promotion events created
         tournaments = (
             test_db.query(Semester)
             .filter(
-                Semester.semester_category == SemesterCategory.TOURNAMENT,
+                Semester.semester_category == SemesterCategory.PROMOTION_EVENT,
                 Semester.name.like("Vasas Cup 2026%"),
             )
             .all()
@@ -457,6 +457,13 @@ class TestPromotionWizard:
         age_labels = {t.age_group for t in tournaments}
         assert "PRE" in age_labels, f"Expected PRE (from U12), got: {age_labels}"
         assert "YOUTH" in age_labels, f"Expected YOUTH (from U15), got: {age_labels}"
+
+        # organizer_club_id is set on every promotion event (P2-A)
+        for tournament in tournaments:
+            assert tournament.organizer_club_id == club.id, (
+                f"organizer_club_id expected {club.id}, got {tournament.organizer_club_id}"
+            )
+            assert tournament.organizer_sponsor_id is None
 
         # Each tournament has 2 teams enrolled
         for tournament in tournaments:

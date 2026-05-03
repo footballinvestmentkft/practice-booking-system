@@ -1,0 +1,157 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}{{ campaign.name }} — {{ sponsor.name }}{% endblock %}
+{% block page_heading %}📋 {{ campaign.name }}{% endblock %}
+{% block page_subtitle %}{{ sponsor.name }} · Campaign detail{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .module-strip {
+        display: flex; align-items: center; gap: 0.5rem;
+        padding: 0.75rem 0; margin-bottom: 1.5rem;
+        border-bottom: 2px solid #e2e8f0; flex-wrap: wrap;
+    }
+    .module-strip-label { font-size: 0.75rem; font-weight: 700; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.08em; padding-right: 0.5rem; border-right: 1px solid #e2e8f0; }
+    .module-link { padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; text-decoration: none; color: #718096; transition: background 0.15s; }
+    .module-link:hover { background: #f0f4ff; color: #5a4a9a; }
+    .module-link.active { background: #ece8ff; color: #5a4a9a; }
+
+    .section-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 1.5rem; overflow: hidden; }
+    .section-header { padding: 1rem 1.5rem; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; background: #f7fafc; }
+    .section-header h3 { margin: 0; font-size: 0.95rem; font-weight: 700; color: #2d3748; }
+    .section-body { padding: 1.5rem; }
+
+    .meta-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
+    .meta-item { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem; }
+    .meta-label { font-size: 0.72rem; font-weight: 700; color: #a0aec0; text-transform: uppercase; margin-bottom: 0.25rem; }
+    .meta-value { font-size: 1rem; font-weight: 700; color: #2d3748; }
+
+    .btn-cta { padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.83rem; font-weight: 600; text-decoration: none; background: #1a6b5a; color: white; border: 1px solid transparent; display: inline-block; }
+    .btn-cta:hover { background: #155a4a; color: white; }
+    .btn-action { padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; text-decoration: none; border: 1px solid #e2e8f0; background: white; color: #4a5568; cursor: pointer; display: inline-block; }
+    .btn-action:hover { background: #f0f4ff; border-color: #667eea; color: #667eea; }
+
+    .alert-bar { padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; }
+    .alert-success { background: #f0fff4; border: 1px solid #9ae6b4; color: #276749; }
+    .alert-error   { background: #fff5f5; border: 1px solid #feb2b2; color: #9b2c2c; }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+
+<!-- Module strip / breadcrumb -->
+<div class="module-strip">
+    <span class="module-strip-label">People</span>
+    <a href="/admin/sponsors" class="module-link">🤝 Partners</a>
+    <a href="/admin/sponsors/{{ sponsor.id }}" class="module-link">{{ sponsor.name }}</a>
+    <span class="module-link active">{{ campaign.name }}</span>
+</div>
+
+{% if flash %}<div class="alert-bar alert-success">✅ {{ flash|replace('+', ' ') }}</div>{% endif %}
+{% if error %}<div class="alert-bar alert-error">⚠️ {{ error|replace('+', ' ') }}</div>{% endif %}
+
+<!-- ── Campaign metadata ───────────────────────────────────────────────────── -->
+{% set active_entries = campaign.entries | rejectattr('status', 'equalto', 'DELETED') | list %}
+{% set deleted_entries = campaign.entries | selectattr('status', 'equalto', 'DELETED') | list %}
+{% set promoted_entries = campaign.entries | selectattr('user_id') | list %}
+
+<div class="section-card">
+    <div class="section-header">
+        <h3>📊 Campaign Overview</h3>
+        <div style="display:flex;gap:0.5rem;">
+            {% if active_entries %}
+            <a href="/admin/sponsors/{{ sponsor.id }}/campaigns/{{ campaign.id }}/audience"
+               class="btn-action">👥 View Audience →</a>
+            {% endif %}
+            {% if sponsor.is_active %}
+            <a href="/admin/sponsors/{{ sponsor.id }}/campaigns/{{ campaign.id }}/import"
+               class="btn-cta">↑ Upload CSV</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="section-body">
+        <div class="meta-grid">
+            <div class="meta-item">
+                <div class="meta-label">Active Entries</div>
+                <div class="meta-value" style="color:#667eea;">{{ active_entries|length }}</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Promoted</div>
+                <div class="meta-value" style="color:#553c9a;">{{ promoted_entries|length }}</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Deleted</div>
+                <div class="meta-value" style="color:#a0aec0;">{{ deleted_entries|length }}</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Type</div>
+                <div class="meta-value" style="font-size:0.85rem;">{{ campaign.campaign_type }}</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Status</div>
+                <div class="meta-value" style="font-size:0.85rem;">{{ campaign.status }}</div>
+            </div>
+            {% if campaign.event_date %}
+            <div class="meta-item">
+                <div class="meta-label">Event Date</div>
+                <div class="meta-value" style="font-size:0.85rem;">{{ campaign.event_date.strftime('%Y-%m-%d') }}</div>
+            </div>
+            {% endif %}
+        </div>
+        {% if campaign.notes %}
+        <p style="margin:1rem 0 0;font-size:0.85rem;color:#718096;">{{ campaign.notes }}</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ── Import history ──────────────────────────────────────────────────────── -->
+<div class="section-card">
+    <div class="section-header">
+        <h3>📂 Import History ({{ imports|length }})</h3>
+    </div>
+    <div class="section-body">
+        {% if imports %}
+        {% for log in imports %}
+        <div style="display:flex;align-items:center;gap:1rem;padding:0.6rem 0;border-bottom:1px solid #f0f0f0;font-size:0.85rem;">
+            <span style="font-weight:600;flex:1;">{{ log.filename or 'upload.csv' }}</span>
+            <span style="font-size:0.8rem;color:#718096;">
+                ✅ {{ log.rows_created }} · ↻ {{ log.rows_updated }}
+                {% if log.rows_failed %} · <span style="color:#e53e3e;">✕ {{ log.rows_failed }}</span>{% endif %}
+            </span>
+            <span style="font-size:0.75rem;color:#a0aec0;">
+                {{ log.uploaded_at.strftime('%Y-%m-%d %H:%M') if log.uploaded_at else '' }}
+            </span>
+            <form method="POST"
+                  action="/admin/sponsors/{{ sponsor.id }}/campaigns/{{ campaign.id }}/import/{{ log.id }}/rollback"
+                  style="margin:0;">
+                <input type="hidden" name="csrf_token" class="csrf-field">
+                <button type="submit"
+                        style="background:none;border:1px solid #fed7d7;color:#c53030;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.7rem;font-weight:600;cursor:pointer;"
+                        onclick="return confirm('Rollback this import?\n\n{{ log.filename or 'upload.csv' }}\n\nAll unpromoted entries from this import will be soft-deleted.\nAlready promoted entries will be skipped.\n\nThis cannot be undone.')">
+                    ↩ Rollback
+                </button>
+            </form>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p style="color:#a0aec0;font-size:0.85rem;margin:0;">
+            No imports yet.
+            {% if sponsor.is_active %}
+            <a href="/admin/sponsors/{{ sponsor.id }}/campaigns/{{ campaign.id }}/import"
+               style="color:#667eea;">Upload a CSV to this campaign.</a>
+            {% endif %}
+        </p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+(function () {
+    var csrf = (document.cookie.split('; ')
+        .find(function (r) { return r.startsWith('csrf_token='); }) || '')
+        .split('=')[1] || '';
+    document.querySelectorAll('.csrf-field').forEach(function (f) { f.value = csrf; });
+}());
+</script>
+
+{% endblock %}

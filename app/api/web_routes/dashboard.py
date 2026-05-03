@@ -261,7 +261,10 @@ async def dashboard(
         quick_stats = {
             "active_semesters": db.query(Semester).filter(
                 Semester.status == SemesterStatus.ONGOING,
-                Semester.semester_category != SemesterCategory.TOURNAMENT
+                Semester.semester_category.notin_([
+                    SemesterCategory.TOURNAMENT,
+                    SemesterCategory.PROMOTION_EVENT,
+                ])
             ).count(),
             "enrolled_students": db.query(SemesterEnrollment).filter(
                 SemesterEnrollment.request_status == EnrollmentStatus.APPROVED

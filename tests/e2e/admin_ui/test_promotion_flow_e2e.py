@@ -5,7 +5,7 @@ Playwright E2E — Club & Promotion Flow (PROMO-01..05)
   PROMO-01  Admin creates a club via UI modal → club appears in list
   PROMO-02  Admin uploads CSV → import result panel shows correct created/updated counts
   PROMO-03  CSV with an invalid row → error count visible, valid rows processed
-  PROMO-04  Promotion wizard: 2 age groups → 2 Semester(TOURNAMENT) rows in DB
+  PROMO-04  Promotion wizard: 2 age groups → 2 Semester(PROMOTION_EVENT) rows in DB
   PROMO-05  Created tournaments each have teams enrolled (TournamentTeamEnrollment)
 
 Run (CI / headless, with video):
@@ -416,9 +416,9 @@ class TestPromo04And05PromotionWizard:
 
             # Submit the promotion wizard
             page.click("#promotion-modal button[type=submit]")
-            # Wait for redirect to /admin/tournaments
+            # Wait for redirect to /admin/promotion-events
             page.wait_for_url(
-                lambda url: "/admin/tournaments" in url,
+                lambda url: "/admin/promotion-events" in url,
                 timeout=20_000,
             )
             page.wait_for_load_state("networkidle")
@@ -427,23 +427,30 @@ class TestPromo04And05PromotionWizard:
             content = page.content()
             assert "Internal Server Error" not in content
 
-            # ── PROMO-04: verify 2 tournaments in DB ──────────────────────────
+            # ── PROMO-04: verify 2 promotion events in DB ─────────────────────
             db_session.expire_all()
             tournaments = (
                 db_session.query(Semester)
                 .filter(
-                    Semester.semester_category == SemesterCategory.TOURNAMENT,
+                    Semester.semester_category == SemesterCategory.PROMOTION_EVENT,
                     Semester.name.like(f"{club.name}%"),
                 )
                 .all()
             )
             assert len(tournaments) == 2, (
-                f"Expected 2 promotion tournaments, found {len(tournaments)}"
+                f"Expected 2 promotion events, found {len(tournaments)}"
             )
             age_labels = {t.age_group for t in tournaments}
             # U12 → PRE, U15 → YOUTH via _normalize_club_age_group()
             assert "PRE" in age_labels, f"U12→PRE tournament not created, got: {age_labels}"
             assert "YOUTH" in age_labels, f"U15→YOUTH tournament not created, got: {age_labels}"
+
+            # ── PROMO-04 (P2-A): organizer_club_id set on each event ─────────
+            for tournament in tournaments:
+                assert tournament.organizer_club_id == club.id, (
+                    f"organizer_club_id expected {club.id}, got {tournament.organizer_club_id}"
+                )
+                assert tournament.organizer_sponsor_id is None
 
             # ── PROMO-05: each tournament has 2 teams enrolled ────────────────
             for tournament in tournaments:
@@ -617,29 +624,33 @@ class TestPromo00GoldenPath:
                 u15_cb.first.check()
 
             page.click("#promotion-modal button[type=submit]")
-            page.wait_for_url(lambda url: "/admin/tournaments" in url, timeout=20_000)
+            page.wait_for_url(lambda url: "/admin/promotion-events" in url, timeout=20_000)
             page.wait_for_load_state("networkidle")
-            _ss(page, "00g_tournaments_page")
+            _ss(page, "00g_promotion_events_page")
 
             content = page.content()
             assert "Internal Server Error" not in content
             assert tourn_name in content or "Promotion tournaments created" in content, \
-                "Expected tournament name or success banner on /admin/tournaments"
+                "Expected tournament name or success banner on /admin/promotion-events"
 
             # ── 8. DB assertions ──────────────────────────────────────────────
             db_session.expire_all()
             tournaments = (
                 db_session.query(Semester)
                 .filter(
-                    Semester.semester_category == SemesterCategory.TOURNAMENT,
+                    Semester.semester_category == SemesterCategory.PROMOTION_EVENT,
                     Semester.name.like(f"{club_name}%"),
                 )
                 .all()
             )
-            assert len(tournaments) == 1, f"Expected 1 tournament, found {len(tournaments)}"
+            assert len(tournaments) == 1, f"Expected 1 promotion event, found {len(tournaments)}"
             # U15 → mapped to YOUTH by _normalize_club_age_group()
             assert tournaments[0].age_group == "YOUTH", (
                 f"Expected Semester.age_group='YOUTH' (U15 normalized), got '{tournaments[0].age_group}'"
+            )
+            # P2-A: organizer_club_id must be set to the source club
+            assert tournaments[0].organizer_club_id == club.id, (
+                f"organizer_club_id expected {club.id}, got {tournaments[0].organizer_club_id}"
             )
 
             enrollments = (

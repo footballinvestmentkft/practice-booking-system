@@ -31,17 +31,15 @@ async def admin_promotion_events_list(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
-    """Admin: list all promotion tournaments (TEAM and INDIVIDUAL)."""
+    """Admin: list all promotion events (PROMOTION_EVENT category)."""
     _admin_only(user)
 
-    # All TOURNAMENT-category semesters — both TEAM and INDIVIDUAL participant types.
+    # All semesters in the dedicated PROMOTION_EVENT category.
+    # participant_type filter no longer needed — the category is the discriminator.
     promotions = (
         db.query(Semester)
-        .join(TournamentConfiguration,
-              TournamentConfiguration.semester_id == Semester.id)
         .filter(
-            Semester.semester_category == SemesterCategory.TOURNAMENT,
-            TournamentConfiguration.participant_type.in_(["TEAM", "INDIVIDUAL"]),
+            Semester.semester_category == SemesterCategory.PROMOTION_EVENT,
         )
         .order_by(Semester.start_date.desc(), Semester.name.asc(), Semester.id.asc())
         .all()
@@ -102,27 +100,29 @@ async def admin_promotion_events_list(
         )
         tt = cfg.tournament_type if cfg else None
         promo_info.append({
-            "tournament":       t,
-            "participant_type": participant_type,
-            "team_count":       team_count,
-            "player_count":     player_count,
-            "session_count":    session_count,
-            "campus":           campus,
-            "source_club":      source_club,
-            "slot_total":       len(slots),
-            "slot_planned":     sum(1 for s in slots if s.status == SlotStatus.PLANNED.value),
-            "slot_checked":     sum(1 for s in slots if s.status == SlotStatus.CHECKED_IN.value),
-            "slot_absent":      sum(1 for s in slots if s.status == SlotStatus.ABSENT.value),
-            "has_absent_field": any(
+            "tournament":        t,
+            "participant_type":  participant_type,
+            "team_count":        team_count,
+            "player_count":      player_count,
+            "session_count":     session_count,
+            "campus":            campus,
+            "source_club":       source_club,
+            "organizer_club":    t.organizer_club,
+            "organizer_sponsor": t.organizer_sponsor,
+            "slot_total":        len(slots),
+            "slot_planned":      sum(1 for s in slots if s.status == SlotStatus.PLANNED.value),
+            "slot_checked":      sum(1 for s in slots if s.status == SlotStatus.CHECKED_IN.value),
+            "slot_absent":       sum(1 for s in slots if s.status == SlotStatus.ABSENT.value),
+            "has_absent_field":  any(
                 s.status == SlotStatus.ABSENT.value and s.role == SlotRole.FIELD.value
                 for s in slots
             ),
-            "fmt":              t.format,
-            "type_code":        tt.code if tt else None,
-            "max_players":      cfg.max_players if cfg else None,
-            "scoring_type":     cfg.scoring_type if cfg else None,
+            "fmt":               t.format,
+            "type_code":         tt.code if tt else None,
+            "max_players":       cfg.max_players if cfg else None,
+            "scoring_type":      cfg.scoring_type if cfg else None,
             "ranking_direction": cfg.ranking_direction if cfg else None,
-            "measurement_unit": cfg.measurement_unit if cfg else None,
+            "measurement_unit":  cfg.measurement_unit if cfg else None,
         })
 
     return templates.TemplateResponse(

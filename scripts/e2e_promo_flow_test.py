@@ -228,7 +228,7 @@ def run() -> None:
                 "age_groups": ["U12", "U15"],
             },
         )
-        assert_redirect(resp, "/admin/tournaments", "Promotion wizard")
+        assert_redirect(resp, "/admin/promotion-events", "Promotion wizard")
 
         _db.expire_all()
         tournaments = _db.query(Semester).filter(

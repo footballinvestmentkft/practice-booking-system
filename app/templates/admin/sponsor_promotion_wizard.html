@@ -1,0 +1,210 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Create Promotion Event — {{ sponsor.name }}{% endblock %}
+{% block page_heading %}🎯 Create Promotion Event{% endblock %}
+{% block page_subtitle %}Organized by {{ sponsor.name }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+.edit-form-wrap { max-width: 680px; }
+.edit-card {
+    background: white;
+    border-radius: 14px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+}
+.edit-card h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #2d3748;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #667eea;
+    margin-top: 1.75rem;
+    margin-bottom: 1.25rem;
+}
+.edit-card h3:first-of-type { margin-top: 0; }
+.form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1.1rem; }
+.form-group label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #4a5568;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.6rem 0.9rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+}
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.1rem; }
+.form-grid .form-group { margin-bottom: 0; }
+.form-actions { display: flex; gap: 1rem; margin-top: 2rem; }
+.field-hint { font-size: 0.75rem; color: #95a5a6; margin-top: 0.2rem; }
+.organizer-badge {
+    background: #ebf8ff;
+    border: 1px solid #bee3f8;
+    border-radius: 8px;
+    padding: 0.65rem 1rem;
+    margin-bottom: 1.75rem;
+    font-size: 0.85rem;
+    color: #2c5282;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.age-group-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+.age-group-item {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.65rem 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    cursor: pointer;
+    transition: border-color 0.12s, background 0.12s;
+}
+.age-group-item input[type="checkbox"] { flex-shrink: 0; cursor: pointer; }
+.age-group-item:hover { border-color: #a3bffa; background: #f7faff; }
+.age-group-item:has(input:checked) { border-color: #667eea; background: #ebf4ff; }
+.ag-name { font-weight: 700; font-size: 0.9rem; color: #2d3748; }
+.ag-sub { font-size: 0.73rem; color: #718096; margin-top: 0.1rem; }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+
+{% set err = request.query_params.get('error') %}
+{% if err %}<div class="alert-bar alert-error">⚠️ {{ err }}</div>{% endif %}
+
+<div class="edit-form-wrap">
+
+    <div style="margin-bottom: 1rem;">
+        <a href="/admin/sponsors/{{ sponsor.id }}" class="btn btn-secondary">← Back to {{ sponsor.name }}</a>
+    </div>
+
+    <div class="edit-card">
+
+        <div class="organizer-badge">
+            <span style="flex-shrink:0;">🤝</span>
+            <span>
+                <strong>Organized by {{ sponsor.name }}</strong>
+                &nbsp;·&nbsp; Individual participants
+                &nbsp;·&nbsp; No teams or club membership required
+            </span>
+        </div>
+
+        <form method="POST" action="/admin/sponsors/{{ sponsor.id }}/promotion">
+            <input type="hidden" name="csrf_token" id="form-csrf">
+
+            <!-- ── Event Details ───────────────────────────────────── -->
+            <h3>Event Details</h3>
+
+            <div class="form-group">
+                <label>Event Name *</label>
+                <input name="tournament_name" type="text" required
+                       placeholder="e.g. {{ sponsor.name }} Spring Challenge 2026">
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Start Date *</label>
+                    <input name="start_date" type="date" required>
+                </div>
+                <div class="form-group">
+                    <label>End Date *</label>
+                    <input name="end_date" type="date" required>
+                </div>
+            </div>
+
+            <!-- ── Location & Format ───────────────────────────────── -->
+            <h3>Location &amp; Format</h3>
+
+            <div class="form-group">
+                <label>Location / Campus <span style="font-weight:400;font-size:0.78rem;text-transform:none;letter-spacing:0;color:#a0aec0;">— optional</span></label>
+                <select name="campus_id">
+                    <option value="">— no specific location —</option>
+                    {% for c in campuses %}
+                    <option value="{{ c.id }}">{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Event Format <span style="font-weight:400;font-size:0.78rem;text-transform:none;letter-spacing:0;color:#a0aec0;">— optional</span></label>
+                <select name="tournament_type_id">
+                    <option value="">— select format —</option>
+                    {% for tt in tournament_types %}
+                    <option value="{{ tt.id }}">{{ tt.display_name }}</option>
+                    {% endfor %}
+                </select>
+                <div class="field-hint">Defines scoring and activity structure. Can be set later.</div>
+            </div>
+
+            <!-- ── Age Category ────────────────────────────────────── -->
+            <h3>Age Category *</h3>
+
+            <div class="age-group-grid">
+                <label class="age-group-item">
+                    <input type="checkbox" name="age_groups" value="PRE">
+                    <span>
+                        <div class="ag-name">PRE</div>
+                        <div class="ag-sub">U6 – U12</div>
+                    </span>
+                </label>
+                <label class="age-group-item">
+                    <input type="checkbox" name="age_groups" value="YOUTH">
+                    <span>
+                        <div class="ag-name">YOUTH</div>
+                        <div class="ag-sub">U13 – U18</div>
+                    </span>
+                </label>
+                <label class="age-group-item">
+                    <input type="checkbox" name="age_groups" value="AMATEUR">
+                    <span>
+                        <div class="ag-name">AMATEUR</div>
+                        <div class="ag-sub">U19 – U23 / Adult</div>
+                    </span>
+                </label>
+                <label class="age-group-item">
+                    <input type="checkbox" name="age_groups" value="PRO">
+                    <span>
+                        <div class="ag-name">PRO</div>
+                        <div class="ag-sub">Professional level</div>
+                    </span>
+                </label>
+            </div>
+            <p class="field-hint" style="margin-top: 0.6rem; margin-bottom: 0;">
+                One promotion event will be created per selected age category.
+            </p>
+
+            <!-- ── CTA ───────────────────────────────────────────────── -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">Create Promotion Event</button>
+                <a href="/admin/sponsors/{{ sponsor.id }}" class="btn btn-secondary">Cancel</a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('form-csrf').value =
+    document.cookie.split('; ').find(r => r.startsWith('csrf_token='))?.split('=')[1] || '';
+</script>
+{% endblock %}

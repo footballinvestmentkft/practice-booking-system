@@ -52,6 +52,13 @@ async def events_hub(
         Semester.end_date >= today,
     ).count()
 
+    promos_open = db.query(Semester).filter(
+        Semester.semester_category == SemesterCategory.PROMOTION_EVENT,
+        Semester.tournament_status.in_(["ENROLLMENT_OPEN", "IN_PROGRESS"]),
+        Semester.status != SemesterStatus.CANCELLED,
+        Semester.end_date >= today,
+    ).count()
+
     spec_value = user.specialization.value if user.specialization else None
 
     academy_available = 0
@@ -84,6 +91,7 @@ async def events_hub(
             **_spec_ctx(user, db),
             "camps_open": camps_open,
             "tournaments_open": tournaments_open,
+            "promos_open": promos_open,
             "academy_available": academy_available,
             "mini_available": mini_available,
             "my_active_enrollments": my_active,

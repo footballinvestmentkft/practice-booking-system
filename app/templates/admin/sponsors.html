@@ -1,0 +1,81 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Partners{% endblock %}
+{% block page_heading %}🤝 Partners{% endblock %}
+{% block page_subtitle %}Sponsor and organizer management for Promotion Events{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .stats-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem 1.5rem; min-width: 120px; }
+    .stat-card .val { font-size: 2rem; font-weight: 700; color: #5a4a9a; }
+    .stat-card .lbl { font-size: 0.78rem; color: #a0aec0; font-weight: 600; text-transform: uppercase; }
+    .action-btn { padding: 0.3rem 0.8rem; border-radius: 6px; font-size: 0.82rem; font-weight: 600; text-decoration: none; background: #ece8ff; color: #5a4a9a; border: none; cursor: pointer; }
+    .badge-active { background: #c6f6d5; color: #276749; border-radius: 999px; padding: 0.15rem 0.6rem; font-size: 0.75rem; font-weight: 700; }
+    .badge-inactive { background: #fed7d7; color: #9b2c2c; border-radius: 999px; padding: 0.15rem 0.6rem; font-size: 0.75rem; font-weight: 700; }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+{% set flash = request.query_params.get('flash') %}
+{% if flash %}
+<div class="alert-bar alert-success">✅ {{ flash }}</div>
+{% endif %}
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+    <div></div>
+    <a href="/admin/sponsors/new" class="action-btn" style="background:#5a4a9a;color:#fff;padding:0.5rem 1.2rem;font-size:0.9rem;">+ New Partner</a>
+</div>
+
+<div class="stats-row">
+    <div class="stat-card"><div class="val">{{ sponsors|length }}</div><div class="lbl">🤝 Partners</div></div>
+    <div class="stat-card"><div class="val">{{ sponsors|selectattr('is_active')|list|length }}</div><div class="lbl">✅ Active</div></div>
+</div>
+
+<div class="content-card">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Code</th>
+                <th>Category</th>
+                <th>City</th>
+                <th>Contacts</th>
+                <th>Events</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for s in sponsors %}
+        <tr>
+            <td style="color:#a0aec0;font-size:0.8rem;">{{ s.id }}</td>
+            <td style="font-weight:600;">{{ s.name }}</td>
+            <td><code style="background:#f7fafc;padding:0.1rem 0.4rem;border-radius:4px;font-size:0.8rem;">{{ s.code }}</code></td>
+            <td>{{ s.brand_category or '—' }}</td>
+            <td>{{ s.city or '—' }}</td>
+            <td>{{ s.contacts|length }}</td>
+            <td>{{ s.promotion_events|length }}</td>
+            <td>
+                {% if s.is_active %}
+                <span class="badge-active">Active</span>
+                {% else %}
+                <span class="badge-inactive">Inactive</span>
+                {% endif %}
+            </td>
+            <td>
+                <a href="/admin/sponsors/{{ s.id }}" class="action-btn">View</a>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="9" style="text-align:center;color:#a0aec0;padding:2rem;">
+                No partners yet. <a href="/admin/sponsors/new">Create the first one.</a>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

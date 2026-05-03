@@ -366,11 +366,12 @@ async def admin_club_promotion(
             end_date=date.fromisoformat(end_date),
             status=SemesterStatus.DRAFT,
             tournament_status="DRAFT",
-            semester_category=SemesterCategory.TOURNAMENT,
+            semester_category=SemesterCategory.PROMOTION_EVENT,
             specialization_type="LFA_FOOTBALL_PLAYER",
             age_group=_normalize_club_age_group(ag),  # U15 → YOUTH, U12 → PRE, etc.
             enrollment_cost=0,
             campus_id=int(campus_id) if campus_id.strip() else None,
+            organizer_club_id=club.id,
         )
         db.add(t)
         db.flush()
@@ -421,10 +422,10 @@ async def admin_club_promotion(
         extra={"admin": user.email, "club": club.name, "age_groups": age_groups, "tournament_ids": created_ids},
     )
 
-    # Redirect to tournaments list; flash is shown via query param
+    # Redirect to promotion events list; flash is shown via query param
     names_enc = "+".join(ag.replace(" ", "_") for ag in age_groups)
     return RedirectResponse(
-        url=f"/admin/tournaments?flash=Promotion+tournaments+created+for+{names_enc}",
+        url=f"/admin/promotion-events?flash=Promotion+tournaments+created+for+{names_enc}",
         status_code=303,
     )
 
@@ -475,9 +476,9 @@ async def admin_teams_page(
     """Admin: global teams list, filterable by tournament."""
     _admin_guard(user)
 
-    # All tournaments for filter dropdown (TEAM participant type)
+    # All tournaments + promotion events for filter dropdown (TEAM participant type)
     tournaments = db.query(Semester).filter(
-        Semester.semester_category == SemesterCategory.TOURNAMENT,
+        Semester.semester_category.in_([SemesterCategory.TOURNAMENT, SemesterCategory.PROMOTION_EVENT]),
     ).order_by(Semester.start_date.desc()).all()
 
     if tournament_filter:

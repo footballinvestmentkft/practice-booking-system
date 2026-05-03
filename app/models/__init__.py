@@ -53,6 +53,7 @@ from .audit_log import AuditLog
 from .system_event import SystemEvent, SystemEventLevel, SystemEventType
 from .match_structure import MatchStructure, MatchResult, MatchFormat, ScoringType
 from .club import Club, CsvImportLog
+from .sponsor import Sponsor, SponsorCampaign, SponsorContact, SponsorAudienceEntry
 from .tournament_instructor_slot import TournamentInstructorSlot, SlotRole, SlotStatus
 
 # 🎓 New Track-Based Modular Education System
@@ -209,6 +210,11 @@ __all__ = [
     # Club system
     "Club",
     "CsvImportLog",
+    # Sponsor system (P2-A / P3)
+    "Sponsor",
+    "SponsorCampaign",
+    "SponsorContact",
+    "SponsorAudienceEntry",
     # Instructor planning
     "TournamentInstructorSlot",
     "SlotRole",

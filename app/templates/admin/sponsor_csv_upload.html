@@ -1,0 +1,196 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Import Audience — {{ sponsor.name }}{% endblock %}
+{% block page_heading %}📥 Import Audience{% endblock %}
+{% block page_subtitle %}{{ sponsor.name }} — sponsor audience CSV upload{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .module-strip {
+        display: flex; align-items: center; gap: 0.5rem;
+        padding: 0.75rem 0; margin-bottom: 1.5rem;
+        border-bottom: 2px solid #e2e8f0; flex-wrap: wrap;
+    }
+    .module-strip-label { font-size: 0.75rem; font-weight: 700; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.08em; padding-right: 0.5rem; border-right: 1px solid #e2e8f0; }
+    .module-link { padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; text-decoration: none; color: #718096; transition: background 0.15s; }
+    .module-link:hover { background: #f0f4ff; color: #5a4a9a; }
+    .module-link.active { background: #ece8ff; color: #5a4a9a; }
+
+    .upload-card {
+        background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+        padding: 2rem; max-width: 680px;
+    }
+    .upload-card h3 {
+        font-size: 0.95rem; font-weight: 700; color: #2d3748;
+        border-bottom: 2px solid #667eea; padding-bottom: 0.5rem;
+        margin-top: 1.75rem; margin-bottom: 1.25rem;
+    }
+    .upload-card h3:first-of-type { margin-top: 0; }
+
+    .upload-zone {
+        border: 2px dashed #e2e8f0; border-radius: 10px;
+        padding: 2.5rem; text-align: center; cursor: pointer;
+        transition: border-color 0.2s, background 0.2s; background: #fafafa;
+    }
+    .upload-zone:hover { border-color: #667eea; background: #f0f4ff; }
+    .upload-zone .uz-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .upload-zone .uz-label { font-size: 0.95rem; font-weight: 600; color: #4a5568; }
+    .upload-zone .uz-hint { font-size: 0.8rem; color: #a0aec0; margin-top: 0.4rem; }
+    .upload-zone input[type="file"] { display: none; }
+
+    .selected-file {
+        display: none; background: #f0fff4; border: 1px solid #9ae6b4;
+        border-radius: 8px; padding: 0.65rem 1rem; margin-top: 1rem;
+        font-size: 0.875rem; color: #276749; font-weight: 600;
+    }
+    .btn-submit {
+        display: none; margin-top: 1.25rem;
+        background: #1a6b5a; color: white; border: none;
+        padding: 0.6rem 1.75rem; border-radius: 6px;
+        font-size: 0.95rem; font-weight: 600; cursor: pointer;
+    }
+    .btn-submit.visible { display: inline-block; }
+    .btn-submit:hover { background: #155a4a; }
+
+    .col-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 0.5rem; }
+    .col-table th { text-align: left; color: #718096; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.4rem 0.5rem; border-bottom: 1px solid #e2e8f0; }
+    .col-table td { padding: 0.45rem 0.5rem; border-bottom: 1px solid #f0f4f8; vertical-align: top; }
+    .col-table tr:last-child td { border-bottom: none; }
+    .badge-req { background: #fed7d7; color: #9b2c2c; border-radius: 99px; padding: 0.1rem 0.5rem; font-size: 0.7rem; font-weight: 700; }
+    .badge-opt { background: #e9d8fd; color: #553c9a; border-radius: 99px; padding: 0.1rem 0.5rem; font-size: 0.7rem; font-weight: 700; }
+    .badge-ban { background: #fed7d7; color: #742a2a; border-radius: 99px; padding: 0.1rem 0.5rem; font-size: 0.7rem; font-weight: 700; text-decoration: line-through; }
+
+    .sample-pre {
+        background: #1a202c; color: #e2e8f0; border-radius: 8px;
+        padding: 1rem 1.25rem; font-size: 0.78rem; overflow-x: auto;
+        white-space: pre; font-family: monospace; margin-top: 0.5rem;
+        line-height: 1.6;
+    }
+    .alert-bar { padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; }
+    .alert-error { background: #fff5f5; border: 1px solid #feb2b2; color: #9b2c2c; }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+
+<div class="module-strip">
+    <span class="module-strip-label">People</span>
+    <a href="/admin/users" class="module-link">👥 Users</a>
+    <a href="/admin/instructors" class="module-link">👨‍🏫 Instructors</a>
+    <a href="/admin/sport-directors" class="module-link">🎯 Sport Directors</a>
+    <a href="/admin/clubs" class="module-link">🏟️ Clubs</a>
+    <a href="/admin/sponsors" class="module-link active">🤝 Partners</a>
+</div>
+
+{% set err = request.query_params.get('error') %}
+{% if err %}<div class="alert-bar alert-error">⚠️ {{ err|replace('+', ' ') }}</div>{% endif %}
+
+<div style="margin-bottom:1rem;">
+    <a href="/admin/sponsors/{{ sponsor.id }}" style="color:#718096;font-size:0.85rem;text-decoration:none;">
+        ← Back to {{ sponsor.name }}
+    </a>
+</div>
+
+<div class="upload-card">
+
+    <h3>Upload Audience CSV</h3>
+
+    <form method="POST"
+          action="{% if campaign %}/admin/sponsors/{{ sponsor.id }}/campaigns/{{ campaign.id }}/import/preview{% else %}/admin/sponsors/{{ sponsor.id }}/csv-import/preview{% endif %}"
+          enctype="multipart/form-data"
+          id="upload-form">
+        <input type="hidden" name="csrf_token" id="upload-csrf">
+
+        <div class="upload-zone" id="upload-zone"
+             onclick="document.getElementById('file-input').click()">
+            <div class="uz-icon">📁</div>
+            <div class="uz-label">Click to select CSV file</div>
+            <div class="uz-hint">Max 1 MB · UTF-8 · .csv</div>
+            <input type="file" name="file" accept=".csv,text/csv"
+                   id="file-input" required>
+        </div>
+
+        <div class="selected-file" id="selected-file"></div>
+        <button type="submit" class="btn-submit" id="upload-submit">
+            Preview Import →
+        </button>
+    </form>
+
+    <h3>Accepted Columns</h3>
+
+    <table class="col-table">
+        <thead>
+            <tr><th>Column</th><th>Required</th><th>Example</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>first_name</code></td><td><span class="badge-req">required</span></td><td>Kovács</td><td></td></tr>
+            <tr><td><code>last_name</code></td><td><span class="badge-req">required</span></td><td>Dávid</td><td></td></tr>
+            <tr><td><code>email</code></td><td><span class="badge-req">required</span></td><td>kovacs@gmail.com</td><td>unique per sponsor</td></tr>
+            <tr><td><code>phone</code></td><td><span class="badge-opt">optional</span></td><td>+36201234567</td><td></td></tr>
+            <tr><td><code>date_of_birth</code></td><td><span class="badge-opt">optional</span></td><td>2012-03-15</td><td>YYYY-MM-DD — derives age_category</td></tr>
+            <tr><td><code>age_category</code></td><td><span class="badge-opt">optional</span></td><td>YOUTH or U15</td><td>PRE / YOUTH / AMATEUR / PRO or U6-U23 / ADULT. DOB overrides.</td></tr>
+            <tr><td><code>parent_email</code></td><td><span class="badge-opt">optional</span></td><td>szulo@gmail.com</td><td>Recommended if age_category = PRE</td></tr>
+            <tr><td><code>position</code></td><td><span class="badge-opt">optional</span></td><td>STRIKER</td><td><span class="badge-req" style="font-size:0.7rem;">tournament-ready</span> STRIKER / MIDFIELDER / DEFENDER / GOALKEEPER. Invalid → NULL + warning.</td></tr>
+            <tr><td><code>foot_dominance</code></td><td><span class="badge-opt">optional</span></td><td>70</td><td><span class="badge-req" style="font-size:0.7rem;">tournament-ready</span> 0 (left) – 100 (right). Missing → 50 default at promote.</td></tr>
+            <tr><td><code>consent_given</code></td><td><span class="badge-opt">optional</span></td><td>1</td><td>1 / true / yes → contactable. Missing → suppressed.</td></tr>
+            <tr><td><code>consent_source</code></td><td><span class="badge-opt">optional</span></td><td>Spring Cup form</td><td>Audit trail for consent</td></tr>
+            <tr><td><code>campaign_source</code></td><td><span class="badge-opt">optional</span></td><td>Puma Spring Cup 2026</td><td></td></tr>
+            <tr><td><code>target_segment</code></td><td><span class="badge-opt">optional</span></td><td>Youth talent pool</td><td></td></tr>
+            <tr><td><code>notes</code></td><td><span class="badge-opt">optional</span></td><td></td><td>Internal admin notes</td></tr>
+            <tr><td><code>club_name</code></td><td><span class="badge-ban">forbidden</span></td><td>—</td><td>Ignored with warning — no Club created</td></tr>
+            <tr><td><code>team_name</code></td><td><span class="badge-ban">forbidden</span></td><td>—</td><td>Ignored with warning — no Team created</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Sample CSV</h3>
+
+    <div class="sample-pre">first_name,last_name,email,date_of_birth,age_category,consent_given,consent_source,campaign_source
+Kovács,Dávid,kovacs.david@gmail.com,2012-03-15,U12,1,Puma Spring Cup 2026 form,Puma Spring Cup 2026
+Nagy,Péter,nagy.peter@outlook.com,2014-07-22,U10,1,Puma Spring Cup 2026 form,Puma Spring Cup 2026
+Szabó,Anna,szabo.anna@freemail.hu,,YOUTH,0,,
+Tóth,Bence,toth.bence@gmail.com,2009-11-05,U15,1,Puma Spring Cup 2026 form,Puma Spring Cup 2026
+Horváth,Emma,horvath.emma@gmail.com,2006-08-19,U18,1,Puma Spring Cup 2026 form,Puma Spring Cup 2026</div>
+
+</div>
+
+<script>
+(function () {
+    var csrf = (document.cookie.split('; ')
+        .find(function (r) { return r.startsWith('csrf_token='); }) || '')
+        .split('=')[1] || '';
+    document.getElementById('upload-csrf').value = csrf;
+
+    document.getElementById('file-input').addEventListener('change', function () {
+        var f = this.files[0];
+        if (!f) return;
+        var sel = document.getElementById('selected-file');
+        sel.textContent = '📄 ' + f.name + ' (' + (f.size / 1024).toFixed(1) + ' KB)';
+        sel.style.display = 'block';
+        document.getElementById('upload-submit').classList.add('visible');
+    });
+
+    // Drag-and-drop
+    var zone = document.getElementById('upload-zone');
+    zone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        zone.style.borderColor = '#667eea';
+        zone.style.background = '#f0f4ff';
+    });
+    zone.addEventListener('dragleave', function () {
+        zone.style.borderColor = '';
+        zone.style.background = '';
+    });
+    zone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        var input = document.getElementById('file-input');
+        var dt = new DataTransfer();
+        dt.items.add(e.dataTransfer.files[0]);
+        input.files = dt.files;
+        input.dispatchEvent(new Event('change'));
+        zone.style.borderColor = '';
+        zone.style.background = '';
+    });
+}());
+</script>
+
+{% endblock %}

@@ -1,0 +1,6 @@
+first_name,last_name,email,date_of_birth,age_category,consent_given,consent_source,campaign_source,team_name
+Kovács,Dávid,kovacs.david@qa-test.local,2012-03-15,YOUTH,1,QA Spring Cup 2026,Puma Spring Cup 2026,
+Nagy,Péter,nagy.peter@qa-test.local,,PRE,0,,Puma Spring Cup 2026,
+Szabó,Anna,szabo.anna@qa-test.local,2015-08-20,,,,,
+Tóth,Bence,toth.bence@qa-test.local,2010-06-01,U12,1,QA Spring Cup 2026,Puma Spring Cup 2026,Kispest U12
+Horváth,Emma,horvath.emma@qa-test.local,,SUPERSTAR,1,QA Spring Cup 2026,Puma Spring Cup 2026,

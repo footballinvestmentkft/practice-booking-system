@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Date, Boolean, DateTime, ForeignKey, Table, Enum, JSON
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
 from datetime import datetime, timezone
 import enum
 
@@ -20,10 +20,11 @@ class SemesterStatus(str, enum.Enum):
 
 class SemesterCategory(str, enum.Enum):
     """Top-level category for a semester, drives access control and reporting."""
-    ACADEMY_SEASON = "ACADEMY_SEASON"  # Jul-Jun multi-month program
-    MINI_SEASON = "MINI_SEASON"        # Short academy season (4-8 weeks)
-    TOURNAMENT = "TOURNAMENT"          # Competitive tournament
-    CAMP = "CAMP"                      # Short-term intensive camp (e.g. summer/winter camp)
+    ACADEMY_SEASON  = "ACADEMY_SEASON"   # Jul-Jun multi-month program
+    MINI_SEASON     = "MINI_SEASON"      # Short academy season (4-8 weeks)
+    TOURNAMENT      = "TOURNAMENT"       # Competitive tournament
+    CAMP            = "CAMP"             # Short-term intensive camp (e.g. summer/winter camp)
+    PROMOTION_EVENT = "PROMOTION_EVENT"  # Scouting / showcase event (uses tournament pipeline, separate UI)
 
 
 # Many-to-many association table for additional instructors
@@ -75,7 +76,7 @@ class Semester(Base):
         Enum(SemesterCategory, name='semester_category_type'),
         nullable=True,
         index=True,
-        comment="Program category: ACADEMY_SEASON | MINI_SEASON | TOURNAMENT | CAMP"
+        comment="Program category: ACADEMY_SEASON | MINI_SEASON | TOURNAMENT | CAMP | PROMOTION_EVENT"
     )
     parent_semester_id = Column(
         Integer,
@@ -109,6 +110,16 @@ class Semester(Base):
     location_id = Column(Integer, ForeignKey('locations.id', ondelete='SET NULL'), nullable=True, index=True,
                         comment="FK to locations table (less specific than campus_id, preferred over legacy location_city/venue/address)")
 
+    # 🏢 ORGANIZER FIELDS (P2-A: dual nullable FK — at most one may be set)
+    organizer_club_id = Column(
+        Integer, ForeignKey('clubs.id', ondelete='SET NULL'), nullable=True, index=True,
+        comment="FK to clubs — set when a club organizes this promotion event"
+    )
+    organizer_sponsor_id = Column(
+        Integer, ForeignKey('sponsors.id', ondelete='SET NULL'), nullable=True, index=True,
+        comment="FK to sponsors — set when a sponsor organizes this promotion event"
+    )
+    # DB-level CHECK: chk_semester_single_organizer (Migration 2) enforces the same rule
 
     # 🏆 TOURNAMENT CONFIGURATION FIELDS (P2 refactoring)
     # ⚠️ DEPRECATED in P2: All tournament configuration moved to separate table (tournament_configurations)
@@ -198,6 +209,36 @@ class Semester(Base):
         cascade="all, delete-orphan",
         doc="Weekly schedule config for session generation (MINI_SEASON / ACADEMY_SEASON)"
     )
+
+    # 🏢 Organizer relationships (P2-A)
+    organizer_club = relationship(
+        "Club",
+        foreign_keys=[organizer_club_id],
+        back_populates="organized_promotion_events",
+    )
+    organizer_sponsor = relationship(
+        "Sponsor",
+        foreign_keys=[organizer_sponsor_id],
+        back_populates="promotion_events",
+    )
+
+    @validates("organizer_club_id", "organizer_sponsor_id")
+    def _guard_single_organizer_fk(self, key: str, value):
+        if value is None:
+            return value
+        conflict = "organizer_sponsor_id" if key == "organizer_club_id" else "organizer_club_id"
+        if getattr(self, conflict) is not None:
+            raise ValueError(f"Cannot set {key}: {conflict} is already set.")
+        return value
+
+    @validates("organizer_club", "organizer_sponsor")
+    def _guard_single_organizer_rel(self, key: str, value):
+        if value is None:
+            return value
+        conflict_fk = "organizer_sponsor_id" if key == "organizer_club" else "organizer_club_id"
+        if getattr(self, conflict_fk) is not None:
+            raise ValueError(f"Cannot set {key}: {conflict_fk} is already set.")
+        return value
 
     @property
     def format(self) -> str:

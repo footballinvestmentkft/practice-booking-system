@@ -34,7 +34,7 @@
         <a href="/dashboard"
            class="nav-item{% if p == '/dashboard' %} active{% endif %}">🏠 Dashboard</a>
 
-        <div class="nav-group{% if p.startswith('/admin/users') or p.startswith('/admin/instructors') or p.startswith('/admin/sport-directors') or p.startswith('/admin/clubs') %} active{% endif %}">
+        <div class="nav-group{% if p.startswith('/admin/users') or p.startswith('/admin/instructors') or p.startswith('/admin/sport-directors') or p.startswith('/admin/clubs') or p.startswith('/admin/sponsors') %} active{% endif %}">
             <a href="/admin/users" class="nav-item nav-group-trigger"
                onclick="toggleNavDropdown(event,this)">👥 People ▾</a>
             <div class="nav-dropdown">
@@ -46,6 +46,8 @@
                    class="nav-dropdown-item{% if p.startswith('/admin/sport-directors') %} active{% endif %}">🎯 Sport Directors</a>
                 <a href="/admin/clubs"
                    class="nav-dropdown-item{% if p.startswith('/admin/clubs') %} active{% endif %}">🏟️ Clubs</a>
+                <a href="/admin/sponsors"
+                   class="nav-dropdown-item{% if p.startswith('/admin/sponsors') %} active{% endif %}">🤝 Partners</a>
             </div>
         </div>
 
