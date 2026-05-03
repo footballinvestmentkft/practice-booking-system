@@ -472,3 +472,44 @@ class TestInactiveGuard:
             assert count == 0, "Inactive sponsor must not accumulate any audience entries"
         finally:
             app.dependency_overrides.clear()
+
+
+class TestAudienceList:
+    """SPON-CSV-11"""
+
+    def test_spon_csv_11_audience_list_shows_imported_entries(self, test_db: Session):
+        """GET /audience → 200, shows all imported entries with name/email/status/age."""
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db, admin)
+        test_db.commit()
+        client = _client(test_db, admin)
+
+        csv_content = _csv([
+            "Alice,Smith,alice.s@aud.test,2010-01-01,YOUTH,1,form,campaign",
+            "Bob,Jones,bob.j@aud.test,,PRE,0,,",
+        ])
+        b64 = base64.b64encode(csv_content).decode()
+        try:
+            client.post(
+                f"/admin/sponsors/{sponsor.id}/csv-import/apply",
+                data={"csv_data": b64, "filename": "aud.csv"},
+                follow_redirects=False,
+            )
+
+            resp = client.get(f"/admin/sponsors/{sponsor.id}/audience")
+            assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
+
+            body = resp.text
+            # Both entries visible
+            assert "alice.s@aud.test" in body
+            assert "bob.j@aud.test" in body
+            # Status badges present
+            assert "ACTIVE" in body
+            assert "SUPPRESSED" in body
+            # Age category visible
+            assert "YOUTH" in body
+            assert "PRE" in body
+            # Sponsor name in header
+            assert sponsor.name in body
+        finally:
+            app.dependency_overrides.clear()

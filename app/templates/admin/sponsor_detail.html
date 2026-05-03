@@ -304,11 +304,19 @@
 <div class="section-card">
     <div class="section-header">
         <h3>📥 Import Audience ({{ sponsor.audience_entries|length }})</h3>
-        {% if sponsor.is_active %}
-        <a href="/admin/sponsors/{{ sponsor.id }}/csv-import" class="btn-cta">
-            ↑ Upload CSV
-        </a>
-        {% endif %}
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+            {% if sponsor.audience_entries %}
+            <a href="/admin/sponsors/{{ sponsor.id }}/audience"
+               style="padding:0.35rem 0.9rem;border-radius:6px;font-size:0.82rem;font-weight:600;text-decoration:none;background:#f0f4ff;color:#5a4a9a;">
+                View Audience →
+            </a>
+            {% endif %}
+            {% if sponsor.is_active %}
+            <a href="/admin/sponsors/{{ sponsor.id }}/csv-import" class="btn-cta">
+                ↑ Upload CSV
+            </a>
+            {% endif %}
+        </div>
     </div>
     <div class="section-body">
         {% if sponsor.audience_entries %}

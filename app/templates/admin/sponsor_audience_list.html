@@ -1,0 +1,191 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Audience — {{ sponsor.name }}{% endblock %}
+{% block page_heading %}👥 Audience{% endblock %}
+{% block page_subtitle %}{{ sponsor.name }} — {{ entries|length }} entr{{ 'y' if entries|length == 1 else 'ies' }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .module-strip {
+        display: flex; align-items: center; gap: 0.5rem;
+        padding: 0.75rem 0; margin-bottom: 1.5rem;
+        border-bottom: 2px solid #e2e8f0; flex-wrap: wrap;
+    }
+    .module-strip-label { font-size: 0.75rem; font-weight: 700; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.08em; padding-right: 0.5rem; border-right: 1px solid #e2e8f0; }
+    .module-link { padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; text-decoration: none; color: #718096; transition: background 0.15s; }
+    .module-link:hover { background: #f0f4ff; color: #5a4a9a; }
+    .module-link.active { background: #ece8ff; color: #5a4a9a; }
+
+    .toolbar {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;
+    }
+    .toolbar-left { display: flex; gap: 0.5rem; align-items: center; }
+
+    .section-card {
+        background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+        overflow: hidden; margin-bottom: 1.5rem;
+    }
+
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .data-table th {
+        text-align: left; color: #718096; font-weight: 700; font-size: 0.72rem;
+        text-transform: uppercase; letter-spacing: 0.05em;
+        padding: 0.55rem 0.75rem; border-bottom: 1px solid #e2e8f0;
+        background: #f7fafc; white-space: nowrap;
+    }
+    .data-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #fafbff; }
+
+    .badge-active     { background: #c6f6d5; color: #276749; border-radius: 99px; padding: 0.1rem 0.55rem; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
+    .badge-suppressed { background: #e2e8f0; color: #718096; border-radius: 99px; padding: 0.1rem 0.55rem; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
+    .badge-unsub      { background: #fed7d7; color: #9b2c2c; border-radius: 99px; padding: 0.1rem 0.55rem; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
+    .badge-deleted    { background: #fefcbf; color: #744210; border-radius: 99px; padding: 0.1rem 0.55rem; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
+
+    .age-tag { background: #e9d8fd; color: #553c9a; border-radius: 4px; padding: 0.1rem 0.4rem; font-size: 0.72rem; font-weight: 700; }
+    .age-raw { color: #a0aec0; font-size: 0.72rem; }
+
+    .user-link { color: #667eea; text-decoration: none; font-size: 0.78rem; font-weight: 600; }
+    .user-link:hover { text-decoration: underline; }
+
+    .empty-state { text-align: center; padding: 3rem 1rem; color: #a0aec0; }
+    .empty-state p { margin: 0.5rem 0 1.25rem; }
+
+    .filter-input {
+        padding: 0.4rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px;
+        font-size: 0.85rem; width: 220px;
+    }
+    .filter-input:focus { outline: none; border-color: #667eea; }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+
+<div class="module-strip">
+    <span class="module-strip-label">People</span>
+    <a href="/admin/users" class="module-link">👥 Users</a>
+    <a href="/admin/instructors" class="module-link">👨‍🏫 Instructors</a>
+    <a href="/admin/sport-directors" class="module-link">🎯 Sport Directors</a>
+    <a href="/admin/clubs" class="module-link">🏟️ Clubs</a>
+    <a href="/admin/sponsors" class="module-link active">🤝 Partners</a>
+</div>
+
+<div style="margin-bottom:1rem;">
+    <a href="/admin/sponsors/{{ sponsor.id }}" style="color:#718096;font-size:0.85rem;text-decoration:none;">
+        ← Back to {{ sponsor.name }}
+    </a>
+</div>
+
+<div class="toolbar">
+    <div class="toolbar-left">
+        <input type="text" id="filter-input" class="filter-input"
+               placeholder="Filter by name or email…" oninput="filterTable(this.value)">
+    </div>
+    {% if sponsor.is_active %}
+    <a href="/admin/sponsors/{{ sponsor.id }}/csv-import"
+       style="background:#1a6b5a;color:white;padding:0.45rem 1.25rem;border-radius:6px;font-size:0.85rem;font-weight:600;text-decoration:none;">
+        ↑ Upload CSV
+    </a>
+    {% endif %}
+</div>
+
+<div class="section-card">
+{% if entries %}
+<table class="data-table" id="audience-table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Status</th>
+            <th>Consent</th>
+            <th>Age Cat.</th>
+            <th>Age Raw</th>
+            <th>Parent Email</th>
+            <th>User</th>
+            <th>Imported</th>
+            <th>Last Import</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for e in entries %}
+        <tr>
+            <td style="font-weight:600;white-space:nowrap;">{{ e.first_name }} {{ e.last_name }}</td>
+            <td>{{ e.email }}</td>
+            <td style="color:#718096;">{{ e.phone or '—' }}</td>
+            <td>
+                {% if e.status == 'ACTIVE' %}
+                <span class="badge-active">ACTIVE</span>
+                {% elif e.status == 'SUPPRESSED' %}
+                <span class="badge-suppressed">SUPPRESSED</span>
+                {% elif e.status == 'UNSUBSCRIBED' %}
+                <span class="badge-unsub">UNSUB</span>
+                {% else %}
+                <span class="badge-deleted">{{ e.status }}</span>
+                {% endif %}
+            </td>
+            <td style="text-align:center;">
+                {% if e.consent_given %}
+                <span style="color:#276749;">✅</span>
+                {% else %}
+                <span style="color:#a0aec0;">—</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if e.age_category %}
+                <span class="age-tag">{{ e.age_category }}</span>
+                {% else %}
+                <span style="color:#a0aec0;">—</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if e.age_raw and e.age_raw != e.age_category %}
+                <span class="age-raw" title="Original CSV value">{{ e.age_raw }}</span>
+                {% else %}
+                <span style="color:#a0aec0;">—</span>
+                {% endif %}
+            </td>
+            <td style="font-size:0.78rem;color:#718096;">{{ e.parent_email or '—' }}</td>
+            <td>
+                {% if e.user_id %}
+                <a href="/admin/users/{{ e.user_id }}" class="user-link">#{{ e.user_id }}</a>
+                {% else %}
+                <span style="color:#a0aec0;">—</span>
+                {% endif %}
+            </td>
+            <td style="font-size:0.75rem;color:#718096;white-space:nowrap;">
+                {{ e.imported_at.strftime('%Y-%m-%d %H:%M') if e.imported_at else '—' }}
+            </td>
+            <td style="font-size:0.75rem;color:#a0aec0;white-space:nowrap;">
+                {{ e.last_imported_at.strftime('%Y-%m-%d %H:%M') if e.last_imported_at else '—' }}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="empty-state">
+    <div style="font-size:2.5rem;">📭</div>
+    <p>No audience entries yet for <strong>{{ sponsor.name }}</strong>.</p>
+    {% if sponsor.is_active %}
+    <a href="/admin/sponsors/{{ sponsor.id }}/csv-import"
+       style="background:#1a6b5a;color:white;padding:0.5rem 1.5rem;border-radius:6px;font-size:0.9rem;font-weight:600;text-decoration:none;display:inline-block;">
+        Upload CSV
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+</div>
+
+<script>
+function filterTable(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('#audience-table tbody tr').forEach(function (tr) {
+        var text = tr.textContent.toLowerCase();
+        tr.style.display = (!q || text.indexOf(q) !== -1) ? '' : 'none';
+    });
+}
+</script>
+
+{% endblock %}

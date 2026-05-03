@@ -26566,6 +26566,49 @@
         ]
       }
     },
+    "/admin/sponsors/{sponsor_id}/audience": {
+      "get": {
+        "description": "Admin: full paginated audience/prospect list for a sponsor.",
+        "operationId": "admin_sponsor_audience_list_admin_sponsors__sponsor_id__audience_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Sponsor Audience List",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/admin/sponsors/{sponsor_id}/contacts/add": {
       "post": {
         "description": "Admin: add a contact to a sponsor.",

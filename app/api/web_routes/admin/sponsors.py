@@ -368,6 +368,30 @@ async def admin_sponsors_toggle(
 
 # ── Sponsor Audience CSV Import ───────────────────────────────────────────────
 
+@router.get("/admin/sponsors/{sponsor_id}/audience", response_class=HTMLResponse)
+async def admin_sponsor_audience_list(
+    sponsor_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Admin: full paginated audience/prospect list for a sponsor."""
+    _admin_guard(user)
+    sponsor = db.query(Sponsor).filter(Sponsor.id == sponsor_id).first()
+    if not sponsor:
+        raise HTTPException(status_code=404, detail="Partner not found")
+    entries = (
+        db.query(SponsorAudienceEntry)
+        .filter(SponsorAudienceEntry.sponsor_id == sponsor_id)
+        .order_by(SponsorAudienceEntry.imported_at.desc())
+        .all()
+    )
+    return templates.TemplateResponse(
+        "admin/sponsor_audience_list.html",
+        {"request": request, "user": user, "sponsor": sponsor, "entries": entries},
+    )
+
+
 @router.get("/admin/sponsors/{sponsor_id}/csv-import", response_class=HTMLResponse)
 async def admin_sponsor_csv_upload_form(
     sponsor_id: int,
