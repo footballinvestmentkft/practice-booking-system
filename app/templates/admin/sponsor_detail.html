@@ -397,6 +397,25 @@
                 </div>
             </div>
             <div class="m-form-group">
+                <label>Specialization *</label>
+                <select name="specialization_type">
+                    <option value="LFA_FOOTBALL_PLAYER" selected>LFA Football Player</option>
+                </select>
+                <div class="field-hint">License type granted to promoted participants.</div>
+            </div>
+            <div class="form-row">
+                <div class="m-form-group">
+                    <label>Credit Grant (min 100) *</label>
+                    <input name="credit_grant_amount" type="number" min="100" value="100" required>
+                    <div class="field-hint">Credits awarded to each promoted participant.</div>
+                </div>
+                <div class="m-form-group">
+                    <label>Unlock Cost *</label>
+                    <input name="unlock_cost" type="number" min="0" value="100" required>
+                    <div class="field-hint">Deducted for specialization activation (≤ grant).</div>
+                </div>
+            </div>
+            <div class="m-form-group">
                 <label>Notes</label>
                 <textarea name="notes" rows="2" placeholder="Optional context…"></textarea>
             </div>

@@ -52,6 +52,10 @@ class CreditTransaction(Base):
     semester_id = Column(Integer, ForeignKey("semesters.id", ondelete="SET NULL"), nullable=True)
     enrollment_id = Column(Integer, ForeignKey("semester_enrollments.id", ondelete="SET NULL"), nullable=True)
 
+    # P7: sponsor settlement tracing — set on SPONSOR_CREDIT_GRANT and SPECIALIZATION_UNLOCK
+    sponsor_id  = Column(Integer, ForeignKey("sponsors.id",          ondelete="SET NULL"), nullable=True, index=True)
+    campaign_id = Column(Integer, ForeignKey("sponsor_campaigns.id", ondelete="SET NULL"), nullable=True, index=True)
+
     # Admin audit: which admin performed this adjustment (NULL for system/user actions)
     performed_by_user_id = Column(
         Integer,
@@ -77,6 +81,8 @@ class CreditTransaction(Base):
     semester = relationship("Semester")
     enrollment = relationship("SemesterEnrollment")
     performed_by = relationship("User", foreign_keys=[performed_by_user_id])
+    sponsor  = relationship("Sponsor",         foreign_keys=[sponsor_id])
+    campaign = relationship("SponsorCampaign", foreign_keys=[campaign_id])
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API responses"""

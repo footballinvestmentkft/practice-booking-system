@@ -43,7 +43,9 @@ class CreditService:
         description: str,
         idempotency_key: str,
         semester_id: Optional[int] = None,
-        enrollment_id: Optional[int] = None
+        enrollment_id: Optional[int] = None,
+        sponsor_id: Optional[int] = None,
+        campaign_id: Optional[int] = None,
     ) -> tuple[CreditTransaction, bool]:
         """
         Create a credit transaction with idempotency protection.
@@ -98,6 +100,8 @@ class CreditService:
             idempotency_key=idempotency_key,
             semester_id=semester_id,
             enrollment_id=enrollment_id,
+            sponsor_id=sponsor_id,
+            campaign_id=campaign_id,
             created_at=datetime.utcnow()
         )
 
@@ -149,6 +153,8 @@ class CreditService:
         transaction_type: str,
         description: str,
         idempotency_key: str,
+        sponsor_id: Optional[int] = None,
+        campaign_id: Optional[int] = None,
     ) -> CreditTransaction:
         """
         Atomically deduct credits from a user's balance.
@@ -181,8 +187,123 @@ class CreditService:
                 balance_after=new_balance,
                 description=description,
                 idempotency_key=idempotency_key,
+                sponsor_id=sponsor_id,
+                campaign_id=campaign_id,
             )
 
+        user.credit_balance = new_balance
+        logger.info(
+            f"💳 Deducted {amount} credits from user {user.id}: "
+            f"balance {new_balance + amount} → {new_balance} ({transaction_type})"
+        )
+        return transaction
+
+    def award(
+        self,
+        user: User,
+        amount: int,
+        transaction_type: str,
+        description: str,
+        idempotency_key: str,
+        sponsor_id: Optional[int] = None,
+        campaign_id: Optional[int] = None,
+    ) -> tuple[CreditTransaction, bool]:
+        """
+        Award (add) credits to a user's balance within the caller's transaction.
+
+        Checks idempotency BEFORE the SQL UPDATE to avoid phantom balance changes
+        on retry.  No internal SAVEPOINT — caller owns the outer transaction and
+        must call db.commit() (or db.rollback()) when appropriate.
+
+        Returns:
+            (transaction, created) — created=False means idempotent no-op.
+        """
+        # Idempotency-first: do NOT run SQL UPDATE if transaction already exists.
+        existing = self.db.query(CreditTransaction).filter(
+            CreditTransaction.idempotency_key == idempotency_key
+        ).first()
+        if existing:
+            logger.info(
+                f"🔒 IDEMPOTENT AWARD: key='{idempotency_key}' already exists "
+                f"(id={existing.id}). Skipping."
+            )
+            return (existing, False)
+
+        result = self.db.execute(
+            text(
+                "UPDATE users SET credit_balance = credit_balance + :amount "
+                "WHERE id = :uid RETURNING credit_balance"
+            ),
+            {"amount": amount, "uid": user.id},
+        ).fetchone()
+
+        new_balance = result[0]
+        transaction = CreditTransaction(
+            user_id=user.id,
+            user_license_id=None,
+            transaction_type=transaction_type,
+            amount=+amount,
+            balance_after=new_balance,
+            description=description,
+            idempotency_key=idempotency_key,
+            sponsor_id=sponsor_id,
+            campaign_id=campaign_id,
+            created_at=datetime.utcnow(),
+        )
+        self.db.add(transaction)
+        self.db.flush()
+
+        user.credit_balance = new_balance
+        logger.info(
+            f"🎁 Awarded {amount} credits to user {user.id}: "
+            f"balance {new_balance - amount} → {new_balance} ({transaction_type})"
+        )
+        return (transaction, True)
+
+    def deduct_batch(
+        self,
+        user: User,
+        amount: int,
+        transaction_type: str,
+        description: str,
+        idempotency_key: str,
+        sponsor_id: Optional[int] = None,
+        campaign_id: Optional[int] = None,
+    ) -> CreditTransaction:
+        """
+        Deduct credits within the caller's transaction (no internal SAVEPOINT).
+
+        For use in batch operations where the caller manages the outer transaction
+        and an InsufficientCreditsError must roll back the whole batch.
+
+        Raises:
+            InsufficientCreditsError: if user has fewer credits than amount.
+        """
+        result = self.db.execute(
+            text(
+                "UPDATE users SET credit_balance = credit_balance - :amount "
+                "WHERE id = :uid AND credit_balance >= :amount "
+                "RETURNING credit_balance"
+            ),
+            {"amount": amount, "uid": user.id},
+        ).fetchone()
+
+        if result is None:
+            self.db.refresh(user)
+            raise InsufficientCreditsError(required=amount, available=user.credit_balance)
+
+        new_balance = result[0]
+        transaction, _ = self.create_transaction(
+            user_id=user.id,
+            user_license_id=None,
+            transaction_type=transaction_type,
+            amount=-amount,
+            balance_after=new_balance,
+            description=description,
+            idempotency_key=idempotency_key,
+            sponsor_id=sponsor_id,
+            campaign_id=campaign_id,
+        )
         user.credit_balance = new_balance
         logger.info(
             f"💳 Deducted {amount} credits from user {user.id}: "

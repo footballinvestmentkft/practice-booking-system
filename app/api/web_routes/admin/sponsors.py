@@ -421,6 +421,9 @@ async def admin_sponsor_campaigns_create(
     campaign_type: str = Form("IMPORT"),
     event_date: Optional[str] = Form(None),
     notes: Optional[str] = Form(None),
+    specialization_type: str = Form("LFA_FOOTBALL_PLAYER"),
+    credit_grant_amount: int = Form(100),
+    unlock_cost: int = Form(100),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
@@ -432,6 +435,17 @@ async def admin_sponsor_campaigns_create(
     if not sponsor.is_active:
         return RedirectResponse(
             f"/admin/sponsors/{sponsor_id}?error=Inactive+partner+cannot+create+campaign",
+            status_code=303,
+        )
+    if credit_grant_amount < 100:
+        return RedirectResponse(
+            f"/admin/sponsors/{sponsor_id}?error=Credit+grant+must+be+at+least+100",
+            status_code=303,
+        )
+    if unlock_cost > credit_grant_amount:
+        return RedirectResponse(
+            f"/admin/sponsors/{sponsor_id}"
+            "?error=Unlock+cost+cannot+exceed+credit+grant+amount",
             status_code=303,
         )
     parsed_date: Optional[date] = None
@@ -448,6 +462,9 @@ async def admin_sponsor_campaigns_create(
         status="ACTIVE",
         notes=notes or None,
         created_by=user.id,
+        specialization_type=specialization_type.strip() or "LFA_FOOTBALL_PLAYER",
+        credit_grant_amount=credit_grant_amount,
+        unlock_cost=unlock_cost,
     )
     db.add(campaign)
     db.commit()
