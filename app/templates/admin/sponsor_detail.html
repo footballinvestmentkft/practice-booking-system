@@ -1,0 +1,406 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}{{ sponsor.name }}{% endblock %}
+{% block page_heading %}🤝 {{ sponsor.name }}{% endblock %}
+{% block page_subtitle %}Partner detail — code: {{ sponsor.code }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .module-strip {
+        display: flex; align-items: center; gap: 0.5rem;
+        padding: 0.75rem 0; margin-bottom: 1.5rem;
+        border-bottom: 2px solid #e2e8f0; flex-wrap: wrap;
+    }
+    .module-strip-label {
+        font-size: 0.75rem; font-weight: 700; color: #a0aec0;
+        text-transform: uppercase; letter-spacing: 0.08em;
+        padding-right: 0.5rem; border-right: 1px solid #e2e8f0;
+    }
+    .module-link {
+        padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.85rem;
+        font-weight: 600; text-decoration: none; color: #718096; transition: background 0.15s;
+    }
+    .module-link:hover { background: #f0f4ff; color: #5a4a9a; }
+    .module-link.active { background: #ece8ff; color: #5a4a9a; }
+
+    .sponsor-header-card {
+        background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+        padding: 1.5rem 2rem; margin-bottom: 1.5rem;
+        display: flex; align-items: flex-start; justify-content: space-between;
+        gap: 1rem; flex-wrap: wrap;
+    }
+    .sponsor-meta { display: flex; flex-direction: column; gap: 0.3rem; }
+    .sponsor-name { font-size: 1.4rem; font-weight: 800; color: #2d3748; }
+    .sponsor-detail { font-size: 0.875rem; color: #718096; }
+    .sponsor-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-start; }
+
+    .section-card {
+        background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+        margin-bottom: 1.5rem; overflow: hidden;
+    }
+    .section-header {
+        padding: 1rem 1.5rem; border-bottom: 1px solid #f0f0f0;
+        display: flex; align-items: center; justify-content: space-between;
+        background: #f7fafc;
+    }
+    .section-header h3 { margin: 0; font-size: 0.95rem; font-weight: 700; color: #2d3748; }
+    .section-body { padding: 1.5rem; }
+
+    .contact-row {
+        display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+        padding: 0.85rem 1rem; background: #f7fafc; border-radius: 8px; margin-bottom: 0.6rem;
+    }
+    .contact-row:last-of-type { margin-bottom: 0; }
+    .primary-badge {
+        background: #bee3f8; color: #2b6cb0; border-radius: 999px;
+        padding: 0.1rem 0.5rem; font-size: 0.7rem; font-weight: 700; margin-left: 0.4rem;
+    }
+
+    .event-row {
+        display: flex; align-items: center; gap: 1rem;
+        padding: 0.75rem 0; border-bottom: 1px solid #f0f0f0; font-size: 0.875rem;
+    }
+    .event-row:last-child { border-bottom: none; }
+
+    .btn-action {
+        padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600;
+        text-decoration: none; border: 1px solid #e2e8f0; background: white;
+        color: #4a5568; cursor: pointer; display: inline-block;
+    }
+    .btn-action:hover { background: #f0f4ff; border-color: #667eea; color: #667eea; }
+    .btn-cta {
+        padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.83rem; font-weight: 600;
+        text-decoration: none; background: #1a6b5a; color: white;
+        border: 1px solid transparent; display: inline-block;
+    }
+    .btn-cta:hover { background: #155a4a; color: white; }
+
+    /* Modal */
+    .modal-overlay {
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+        z-index: 1000; align-items: center; justify-content: center;
+    }
+    .modal-box {
+        background: white; border-radius: 12px; padding: 2rem;
+        width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .modal-box h3 { margin: 0 0 1.5rem; font-size: 1.1rem; color: #2d3748; }
+    .m-form-group { margin-bottom: 1rem; }
+    .m-form-group label {
+        display: block; font-size: 0.8rem; font-weight: 600; color: #718096;
+        margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .m-form-group input,
+    .m-form-group textarea,
+    .m-form-group select {
+        width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0;
+        border-radius: 6px; font-size: 0.9rem; box-sizing: border-box; font-family: inherit;
+    }
+    .m-form-group input:focus,
+    .m-form-group textarea:focus {
+        outline: none; border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+    }
+    .form-row { display: flex; gap: 1rem; }
+    .form-row .m-form-group { flex: 1; }
+    .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
+    .btn-modal-primary {
+        background: #5a4a9a; color: white; border: none;
+        padding: 0.5rem 1.25rem; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem;
+    }
+    .btn-modal-secondary {
+        background: white; color: #718096; border: 1px solid #e2e8f0;
+        padding: 0.5rem 1.25rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;
+    }
+
+    /* Import Audience placeholder */
+    .import-placeholder {
+        border: 2px dashed #e2e8f0; border-radius: 10px;
+        padding: 2rem; text-align: center; background: #fafafa;
+    }
+    .import-placeholder .import-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .import-placeholder p { font-size: 0.875rem; color: #718096; margin: 0.5rem 0 1.25rem; line-height: 1.5; }
+    .btn-disabled {
+        background: #e2e8f0; color: #a0aec0; border: none;
+        padding: 0.5rem 1.5rem; border-radius: 6px; font-size: 0.9rem;
+        font-weight: 600; cursor: not-allowed;
+    }
+
+    .alert-bar { padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; }
+    .alert-success { background: #f0fff4; border: 1px solid #9ae6b4; color: #276749; }
+    .alert-error   { background: #fff5f5; border: 1px solid #feb2b2; color: #9b2c2c; }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+
+<!-- Module strip -->
+<div class="module-strip">
+    <span class="module-strip-label">People</span>
+    <a href="/admin/users" class="module-link">👥 Users</a>
+    <a href="/admin/instructors" class="module-link">👨‍🏫 Instructors</a>
+    <a href="/admin/sport-directors" class="module-link">🎯 Sport Directors</a>
+    <a href="/admin/clubs" class="module-link">🏟️ Clubs</a>
+    <a href="/admin/sponsors" class="module-link active">🤝 Partners</a>
+</div>
+
+{% set flash = request.query_params.get('flash') %}
+{% set err   = request.query_params.get('error') %}
+{% if flash %}<div class="alert-bar alert-success">✅ {{ flash|replace('+', ' ') }}</div>{% endif %}
+{% if err   %}<div class="alert-bar alert-error">⚠️ {{ err|replace('+', ' ') }}</div>{% endif %}
+
+{% if not sponsor.is_active %}
+<div class="alert-bar" style="background:#fff5f5;border-left:4px solid #e53e3e;color:#742a2a;border-radius:8px;font-size:0.87rem;font-weight:500;margin-bottom:1rem;">
+    ⚠️ This sponsor is <strong>inactive</strong>. Inactive sponsors cannot organize new events.
+</div>
+{% endif %}
+
+<!-- ── Sponsor header card ────────────────────────────────────────────────── -->
+<div class="sponsor-header-card">
+    <div class="sponsor-meta">
+        <div class="sponsor-name">{{ sponsor.name }}</div>
+        <div class="sponsor-detail">
+            Code:&nbsp;<code style="background:#f7fafc;padding:0.1rem 0.4rem;border-radius:4px;font-size:0.85rem;font-weight:700;letter-spacing:0.04em;">{{ sponsor.code }}</code>
+            {% if sponsor.brand_category %}&nbsp;·&nbsp; {{ sponsor.brand_category }}{% endif %}
+            {% if sponsor.city %}&nbsp;·&nbsp; {{ sponsor.city }}{% endif %}
+            {% if sponsor.country %}{% if sponsor.city %}, {% else %}&nbsp;·&nbsp; {% endif %}{{ sponsor.country }}{% endif %}
+            {% if sponsor.contact_email %}&nbsp;·&nbsp; <a href="mailto:{{ sponsor.contact_email }}" style="color:#667eea;">{{ sponsor.contact_email }}</a>{% endif %}
+            {% if sponsor.website %}&nbsp;·&nbsp; <a href="{{ sponsor.website }}" target="_blank" rel="noopener" style="color:#667eea;">{{ sponsor.website }}</a>{% endif %}
+        </div>
+        <div style="margin-top:0.35rem;">
+            {% if sponsor.is_active %}
+            <span style="background:#c6f6d5;color:#276749;padding:0.2rem 0.6rem;border-radius:99px;font-size:0.75rem;font-weight:700;">✅ Active</span>
+            {% else %}
+            <span style="background:#fed7d7;color:#9b2c2c;padding:0.2rem 0.6rem;border-radius:99px;font-size:0.75rem;font-weight:700;">❌ Inactive</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="sponsor-actions">
+        <button onclick="document.getElementById('edit-sponsor-modal').style.display='flex'"
+                class="btn-action">✏️ Edit</button>
+        <form method="POST" action="/admin/sponsors/{{ sponsor.id }}/toggle" style="display:inline;">
+            <input type="hidden" name="csrf_token" id="toggle-csrf">
+            <button type="submit" class="btn-action"
+                    onclick="return confirm('Toggle partner status?')">
+                {% if sponsor.is_active %}🔒 Deactivate{% else %}🔓 Activate{% endif %}
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ── Contacts ───────────────────────────────────────────────────────────── -->
+<div class="section-card">
+    <div class="section-header">
+        <h3>👤 Contacts ({{ sponsor.contacts|length }})</h3>
+    </div>
+    <div class="section-body">
+
+        {% for c in sponsor.contacts %}
+        <div class="contact-row">
+            <div>
+                <div style="font-weight:600;">
+                    {{ c.name }}
+                    {% if c.is_primary %}<span class="primary-badge">Primary</span>{% endif %}
+                </div>
+                {% if c.role  %}<div style="font-size:0.82rem;color:#718096;">{{ c.role }}</div>{% endif %}
+                {% if c.email %}<div style="font-size:0.82rem;">{{ c.email }}</div>{% endif %}
+                {% if c.phone %}<div style="font-size:0.82rem;">{{ c.phone }}</div>{% endif %}
+            </div>
+            <form method="POST"
+                  action="/admin/sponsors/{{ sponsor.id }}/contacts/{{ c.id }}/delete"
+                  onsubmit="return confirm('Remove this contact?')">
+                <input type="hidden" name="csrf_token" class="csrf-field">
+                <button type="submit"
+                        style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:0.8rem;">
+                    Remove
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <p style="color:#a0aec0;font-size:0.85rem;margin:0 0 0.75rem;">
+            No contacts added yet.
+        </p>
+        {% endfor %}
+
+        <details style="margin-top:{{ '1rem' if sponsor.contacts else '0' }};">
+            <summary style="cursor:pointer;font-weight:600;font-size:0.85rem;color:#5a4a9a;">
+                + Add Contact
+            </summary>
+            <form method="POST" action="/admin/sponsors/{{ sponsor.id }}/contacts/add"
+                  style="margin-top:0.75rem;">
+                <input type="hidden" name="csrf_token" class="csrf-field">
+                <div class="m-form-group">
+                    <label>Name *</label>
+                    <input name="contact_name" type="text" required placeholder="Kovács János">
+                </div>
+                <div class="m-form-group">
+                    <label>Role</label>
+                    <input name="contact_role" type="text" placeholder="Partnership Manager">
+                </div>
+                <div class="form-row">
+                    <div class="m-form-group">
+                        <label>Email</label>
+                        <input name="contact_email" type="email">
+                    </div>
+                    <div class="m-form-group">
+                        <label>Phone</label>
+                        <input name="contact_phone" type="text">
+                    </div>
+                </div>
+                <div class="m-form-group"
+                     style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
+                    <input name="is_primary" type="checkbox" id="new-primary-cb">
+                    <label for="new-primary-cb"
+                           style="margin:0;text-transform:none;letter-spacing:0;font-size:0.9rem;">
+                        Set as primary contact
+                    </label>
+                </div>
+                <button type="submit" class="btn-modal-primary"
+                        style="font-size:0.85rem;">Add Contact</button>
+            </form>
+        </details>
+    </div>
+</div>
+
+<!-- ── Linked Promotion Events ───────────────────────────────────────────── -->
+<div class="section-card">
+    <div class="section-header">
+        <h3>🚀 Linked Promotion Events ({{ sponsor.promotion_events|length }})</h3>
+        {% if sponsor.is_active %}
+        <a href="/admin/sponsors/{{ sponsor.id }}/promotion" class="btn-cta">
+            + Create Promotion Event
+        </a>
+        {% endif %}
+    </div>
+    <div class="section-body">
+        {% if sponsor.promotion_events %}
+        {% for ev in sponsor.promotion_events %}
+        {% set ev_status = ev.tournament_status or (ev.status if ev.status is string else ev.status.value if ev.status else 'DRAFT') %}
+        <div class="event-row">
+            <span style="font-weight:600;flex:1;">{{ ev.name }}</span>
+            <span style="font-size:0.78rem;color:#718096;min-width:60px;">
+                {{ ev.age_group or '—' }}
+            </span>
+            <code style="font-size:0.75rem;">{{ ev_status }}</code>
+            <a href="/admin/tournaments/{{ ev.id }}/edit"
+               style="font-size:0.82rem;color:#5a4a9a;">View</a>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p style="color:#a0aec0;font-size:0.875rem;margin:0;">
+            No promotion events yet.
+            {% if sponsor.is_active %}
+            <a href="/admin/sponsors/{{ sponsor.id }}/promotion" style="color:#667eea;">
+                Create the first event for {{ sponsor.name }}.
+            </a>
+            {% endif %}
+        </p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ── Import Audience (placeholder — P2-B) ──────────────────────────────── -->
+<div class="section-card">
+    <div class="section-header">
+        <h3>📥 Import Audience</h3>
+        <span style="font-size:0.78rem;color:#a0aec0;background:#f0f4ff;padding:0.2rem 0.6rem;border-radius:99px;">
+            Coming in P2-B
+        </span>
+    </div>
+    <div class="section-body">
+        <div class="import-placeholder">
+            <div class="import-icon">📁</div>
+            <p>
+                No audience imported yet.<br>
+                Upload a CSV to segment <strong>{{ sponsor.name }}</strong>'s audience by age category.
+            </p>
+            <button class="btn-disabled" disabled
+                    title="CSV audience import is coming in P2-B">
+                Upload CSV
+            </button>
+            <div style="font-size:0.75rem;color:#cbd5e0;margin-top:0.75rem;">
+                Columns: first_name, last_name, email, date_of_birth, age_category, initial_credits, consent_given
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Edit Sponsor Modal ─────────────────────────────────────────────────── -->
+<div id="edit-sponsor-modal" class="modal-overlay">
+    <div class="modal-box">
+        <h3>✏️ Edit Partner</h3>
+        <form method="POST" action="/admin/sponsors/{{ sponsor.id }}/edit">
+            <input type="hidden" name="csrf_token" id="edit-csrf">
+
+            <div class="m-form-group">
+                <label>Name *</label>
+                <input name="name" type="text" required value="{{ sponsor.name }}">
+            </div>
+            <div class="m-form-group">
+                <label>Category</label>
+                <input name="brand_category" type="text"
+                       value="{{ sponsor.brand_category or '' }}">
+            </div>
+            <div class="form-row">
+                <div class="m-form-group">
+                    <label>City</label>
+                    <input name="city" type="text" value="{{ sponsor.city or '' }}">
+                </div>
+                <div class="m-form-group">
+                    <label>Country</label>
+                    <input name="country" type="text" value="{{ sponsor.country or '' }}">
+                </div>
+            </div>
+            <div class="m-form-group">
+                <label>Contact Email</label>
+                <input name="contact_email" type="email"
+                       value="{{ sponsor.contact_email or '' }}">
+            </div>
+            <div class="m-form-group">
+                <label>Website</label>
+                <input name="website" type="url" value="{{ sponsor.website or '' }}">
+            </div>
+            <div class="m-form-group">
+                <label>Notes</label>
+                <textarea name="notes" rows="3">{{ sponsor.notes or '' }}</textarea>
+            </div>
+            <div class="m-form-group"
+                 style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0;">
+                <input name="is_active" type="checkbox" id="is-active-cb"
+                       {% if sponsor.is_active %}checked{% endif %}>
+                <label for="is-active-cb"
+                       style="margin:0;text-transform:none;letter-spacing:0;font-size:0.9rem;">
+                    Active
+                </label>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-secondary"
+                        onclick="document.getElementById('edit-sponsor-modal').style.display='none'">
+                    Cancel
+                </button>
+                <button type="submit" class="btn-modal-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+(function () {
+    var csrf = (document.cookie.split('; ')
+        .find(function (r) { return r.startsWith('csrf_token='); }) || '')
+        .split('=')[1] || '';
+    ['edit-csrf', 'toggle-csrf'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.value = csrf;
+    });
+    document.querySelectorAll('.csrf-field').forEach(function (f) { f.value = csrf; });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            document.getElementById('edit-sponsor-modal').style.display = 'none';
+        }
+    });
+}());
+</script>
+
+{% endblock %}

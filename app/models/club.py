@@ -22,6 +22,11 @@ class Club(Base):
     teams = relationship("Team", back_populates="club", foreign_keys="Team.club_id")
     csv_imports = relationship("CsvImportLog", back_populates="club")
     creator = relationship("User", foreign_keys=[created_by])
+    organized_promotion_events = relationship(
+        "Semester",
+        back_populates="organizer_club",
+        foreign_keys="Semester.organizer_club_id",
+    )
 
 
 class CsvImportLog(Base):

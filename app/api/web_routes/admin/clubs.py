@@ -371,6 +371,7 @@ async def admin_club_promotion(
             age_group=_normalize_club_age_group(ag),  # U15 → YOUTH, U12 → PRE, etc.
             enrollment_cost=0,
             campus_id=int(campus_id) if campus_id.strip() else None,
+            organizer_club_id=club.id,
         )
         db.add(t)
         db.flush()

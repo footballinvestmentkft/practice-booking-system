@@ -458,6 +458,13 @@ class TestPromotionWizard:
         assert "PRE" in age_labels, f"Expected PRE (from U12), got: {age_labels}"
         assert "YOUTH" in age_labels, f"Expected YOUTH (from U15), got: {age_labels}"
 
+        # organizer_club_id is set on every promotion event (P2-A)
+        for tournament in tournaments:
+            assert tournament.organizer_club_id == club.id, (
+                f"organizer_club_id expected {club.id}, got {tournament.organizer_club_id}"
+            )
+            assert tournament.organizer_sponsor_id is None
+
         # Each tournament has 2 teams enrolled
         for tournament in tournaments:
             enrollments = (
