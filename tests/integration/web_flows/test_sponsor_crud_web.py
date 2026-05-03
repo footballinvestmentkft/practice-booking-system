@@ -1,5 +1,5 @@
 """
-Sponsor CRUD Web Flow Tests — SPON-01 through SPON-15
+Sponsor CRUD Web Flow Tests — SPON-01 through SPON-16
 
   SPON-01  GET /admin/sponsors → 200 (empty list)
   SPON-02  POST /admin/sponsors/new → sponsor created, redirects to detail
@@ -14,9 +14,11 @@ Sponsor CRUD Web Flow Tests — SPON-01 through SPON-15
   SPON-11  POST /admin/sponsors/new then GET /admin/sponsors → sponsor appears in list
   SPON-12  POST duplicate code → primary contact fields repopulated in response
   SPON-13  GET /admin/sponsors/{id} → linked events View link uses /admin/tournaments/ prefix
-  SPON-14  GET /admin/sponsors/{id} → Create Promotion Event CTA points to sponsor promotion wizard
+  SPON-14  GET /admin/sponsors/{id} → Create Promotion Event CTA + Import Audience present,
+           no Club-page copy
   SPON-15  GET + POST /admin/sponsors/{id}/promotion → INDIVIDUAL PROMOTION_EVENT created,
            organizer_sponsor_id set, organizer_club_id NULL, no TournamentTeamEnrollment
+  SPON-16  POST /admin/sponsors/{id}/toggle → active/inactive toggle works
 
 DONE = pytest tests/integration/web_flows/test_sponsor_crud_web.py -v
 """
@@ -443,10 +445,13 @@ class TestSponsorUXFixes:
         finally:
             app.dependency_overrides.clear()
 
-    def test_spon_14_detail_create_promotion_event_cta_present(self, test_db: Session):
-        """SPON-14: Sponsor detail page must contain a direct CTA to the sponsor promotion wizard.
+    def test_spon_14_detail_dashboard_elements_present(self, test_db: Session):
+        """SPON-14: Sponsor detail page is a self-contained partner dashboard.
 
-        The CTA must NOT reference /admin/clubs — sponsor events are sponsor-only.
+        Required elements:
+        - Create Promotion Event CTA → /admin/sponsors/{id}/promotion
+        - Import Audience section visible (placeholder state)
+        - No Club-page copy (sponsor-only language)
         """
         admin = _make_admin(test_db)
         sponsor = _make_sponsor(test_db, admin, suffix="CTA")
@@ -456,17 +461,23 @@ class TestSponsorUXFixes:
             resp = client.get(f"/admin/sponsors/{sponsor.id}")
             assert resp.status_code == 200
 
-            # CTA must point directly to the sponsor promotion wizard
+            # Create Promotion Event CTA must point to the sponsor promotion wizard
             assert f"/admin/sponsors/{sponsor.id}/promotion" in resp.text, (
                 f"Create Promotion Event CTA (/admin/sponsors/{sponsor.id}/promotion) "
                 "not found in sponsor detail page"
             )
-            # Must contain the CTA label
             assert "Create Promotion Event" in resp.text, (
                 "Create Promotion Event label not found in sponsor detail page"
             )
-            # Must NOT contain the old misleading "go to Club page" copy
-            # (nav bar may legitimately contain /admin/clubs — check content copy only)
+
+            # Import Audience section must be present (placeholder state is acceptable)
+            assert "Import Audience" in resp.text, (
+                "Import Audience section not found in sponsor detail page — "
+                "must show audience upload entry point even in placeholder state"
+            )
+
+            # Must NOT contain old misleading Club-page copy
+            # (nav bar legitimately contains /admin/clubs — check content copy only)
             assert "Club page" not in resp.text, (
                 "Sponsor detail page must not contain 'Club page' guidance — "
                 "sponsor promotion events are sponsor-only"
@@ -603,6 +614,60 @@ class TestSponsorPromotionWizard:
             assert detail_resp.status_code == 200
             assert event.name in detail_resp.text, (
                 f"Created event '{event.name}' not visible in sponsor detail linked events list"
+            )
+
+        finally:
+            app.dependency_overrides.clear()
+
+
+class TestSponsorToggle:
+    """SPON-16: POST /admin/sponsors/{id}/toggle flips active/inactive status."""
+
+    def test_spon_16_toggle_active_inactive(self, test_db: Session):
+        """SPON-16: Toggle deactivates an active sponsor, then reactivates it.
+
+        Verifies:
+        - POST /admin/sponsors/{id}/toggle → 303 redirect
+        - sponsor.is_active flipped in DB
+        - Detail page reflects new status
+        - Second toggle restores original state
+        """
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db, admin, suffix="Toggle")
+        test_db.commit()
+        assert sponsor.is_active is True
+
+        client = _admin_client(test_db, admin)
+        try:
+            # First toggle: active → inactive
+            resp1 = client.post(
+                f"/admin/sponsors/{sponsor.id}/toggle",
+                follow_redirects=False,
+            )
+            assert resp1.status_code == 303, (
+                f"Toggle expected 303, got {resp1.status_code}"
+            )
+            test_db.expire(sponsor)
+            assert sponsor.is_active is False, (
+                "Sponsor should be inactive after first toggle"
+            )
+
+            # Detail page must show inactive badge
+            detail1 = client.get(f"/admin/sponsors/{sponsor.id}")
+            assert detail1.status_code == 200
+            assert "Inactive" in detail1.text, (
+                "Detail page must show Inactive badge after toggle"
+            )
+
+            # Second toggle: inactive → active
+            resp2 = client.post(
+                f"/admin/sponsors/{sponsor.id}/toggle",
+                follow_redirects=False,
+            )
+            assert resp2.status_code == 303
+            test_db.expire(sponsor)
+            assert sponsor.is_active is True, (
+                "Sponsor should be active again after second toggle"
             )
 
         finally:

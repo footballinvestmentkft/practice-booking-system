@@ -338,6 +338,27 @@ async def admin_sponsor_promotion_create(
     )
 
 
+@router.post("/admin/sponsors/{sponsor_id}/toggle")
+async def admin_sponsors_toggle(
+    sponsor_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Admin: activate or deactivate a sponsor."""
+    _admin_guard(user)
+    sponsor = db.query(Sponsor).filter(Sponsor.id == sponsor_id).first()
+    if not sponsor:
+        raise HTTPException(status_code=404, detail="Partner not found")
+    sponsor.is_active = not sponsor.is_active
+    db.commit()
+    status_word = "activated" if sponsor.is_active else "deactivated"
+    return RedirectResponse(
+        f"/admin/sponsors/{sponsor_id}?flash=Partner+{status_word}",
+        status_code=303,
+    )
+
+
 @router.post("/admin/sponsors/{sponsor_id}/contacts/{contact_id}/delete")
 async def admin_sponsors_delete_contact(
     sponsor_id: int,
