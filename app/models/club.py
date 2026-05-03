@@ -33,7 +33,8 @@ class CsvImportLog(Base):
     __tablename__ = "csv_import_logs"
 
     id = Column(Integer, primary_key=True, index=True)
-    club_id = Column(Integer, ForeignKey("clubs.id"), nullable=True, index=True)
+    club_id    = Column(Integer, ForeignKey("clubs.id"),   nullable=True, index=True)
+    sponsor_id = Column(Integer, ForeignKey("sponsors.id", ondelete="SET NULL"), nullable=True, index=True)
     uploaded_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     filename = Column(String(255), nullable=True)
@@ -46,5 +47,6 @@ class CsvImportLog(Base):
     status = Column(String(20), default="DONE", nullable=False)  # PROCESSING, DONE, FAILED
 
     # Relationships
-    club = relationship("Club", back_populates="csv_imports")
+    club    = relationship("Club",    back_populates="csv_imports")
+    sponsor = relationship("Sponsor", foreign_keys=[sponsor_id], back_populates="csv_imports")
     uploader = relationship("User", foreign_keys=[uploaded_by])

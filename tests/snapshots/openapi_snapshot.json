@@ -2758,6 +2758,79 @@
         "title": "Body_admin_revoke_license_admin_users__user_id__revoke_license__license_id__post",
         "type": "object"
       },
+      "Body_admin_sponsor_csv_apply_admin_sponsors__sponsor_id__csv_import_apply_post": {
+        "properties": {
+          "csv_data": {
+            "title": "Csv Data",
+            "type": "string"
+          },
+          "filename": {
+            "default": "upload.csv",
+            "title": "Filename",
+            "type": "string"
+          }
+        },
+        "required": [
+          "csv_data"
+        ],
+        "title": "Body_admin_sponsor_csv_apply_admin_sponsors__sponsor_id__csv_import_apply_post",
+        "type": "object"
+      },
+      "Body_admin_sponsor_csv_preview_admin_sponsors__sponsor_id__csv_import_preview_post": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_admin_sponsor_csv_preview_admin_sponsors__sponsor_id__csv_import_preview_post",
+        "type": "object"
+      },
+      "Body_admin_sponsor_promotion_create_admin_sponsors__sponsor_id__promotion_post": {
+        "properties": {
+          "age_groups": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Age Groups",
+            "type": "array"
+          },
+          "campus_id": {
+            "default": "",
+            "title": "Campus Id",
+            "type": "string"
+          },
+          "end_date": {
+            "title": "End Date",
+            "type": "string"
+          },
+          "start_date": {
+            "title": "Start Date",
+            "type": "string"
+          },
+          "tournament_name": {
+            "title": "Tournament Name",
+            "type": "string"
+          },
+          "tournament_type_id": {
+            "default": "",
+            "title": "Tournament Type Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tournament_name",
+          "start_date",
+          "end_date"
+        ],
+        "title": "Body_admin_sponsor_promotion_create_admin_sponsors__sponsor_id__promotion_post",
+        "type": "object"
+      },
       "Body_admin_sponsors_add_contact_admin_sponsors__sponsor_id__contacts_add_post": {
         "properties": {
           "contact_email": {
@@ -26594,6 +26667,153 @@
         ]
       }
     },
+    "/admin/sponsors/{sponsor_id}/csv-import": {
+      "get": {
+        "description": "Admin: render the CSV upload form for sponsor audience import.",
+        "operationId": "admin_sponsor_csv_upload_form_admin_sponsors__sponsor_id__csv_import_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Sponsor Csv Upload Form",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/sponsors/{sponsor_id}/csv-import/apply": {
+      "post": {
+        "description": "Admin: apply the previously-previewed CSV import (single atomic transaction).",
+        "operationId": "admin_sponsor_csv_apply_admin_sponsors__sponsor_id__csv_import_apply_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_admin_sponsor_csv_apply_admin_sponsors__sponsor_id__csv_import_apply_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Sponsor Csv Apply",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/sponsors/{sponsor_id}/csv-import/preview": {
+      "post": {
+        "description": "Admin: parse and validate CSV, return preview page.  Writes nothing to DB.",
+        "operationId": "admin_sponsor_csv_preview_admin_sponsors__sponsor_id__csv_import_preview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_admin_sponsor_csv_preview_admin_sponsors__sponsor_id__csv_import_preview_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Sponsor Csv Preview",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/admin/sponsors/{sponsor_id}/edit": {
       "post": {
         "description": "Admin: update sponsor fields.",
@@ -26640,6 +26860,139 @@
           }
         },
         "summary": "Admin Sponsors Edit",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/sponsors/{sponsor_id}/promotion": {
+      "get": {
+        "description": "Admin: render the sponsor promotion event wizard.",
+        "operationId": "admin_sponsor_promotion_form_admin_sponsors__sponsor_id__promotion_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Sponsor Promotion Form",
+        "tags": [
+          "web"
+        ]
+      },
+      "post": {
+        "description": "Admin: create one INDIVIDUAL promotion event per selected age category for a sponsor.\n\nSponsor-only flow \u2014 no Club, no Team, no TournamentTeamEnrollment.\nEach age group produces one Semester record with:\n  organizer_sponsor_id = sponsor.id\n  organizer_club_id    = NULL  (explicit)\n  participant_type     = INDIVIDUAL",
+        "operationId": "admin_sponsor_promotion_create_admin_sponsors__sponsor_id__promotion_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_admin_sponsor_promotion_create_admin_sponsors__sponsor_id__promotion_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Sponsor Promotion Create",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/sponsors/{sponsor_id}/toggle": {
+      "post": {
+        "description": "Admin: activate or deactivate a sponsor.",
+        "operationId": "admin_sponsors_toggle_admin_sponsors__sponsor_id__toggle_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Sponsors Toggle",
         "tags": [
           "web"
         ]

@@ -300,29 +300,79 @@
     </div>
 </div>
 
-<!-- ── Import Audience (placeholder — P2-B) ──────────────────────────────── -->
+<!-- ── Import Audience ───────────────────────────────────────────────────── -->
 <div class="section-card">
     <div class="section-header">
-        <h3>📥 Import Audience</h3>
-        <span style="font-size:0.78rem;color:#a0aec0;background:#f0f4ff;padding:0.2rem 0.6rem;border-radius:99px;">
-            Coming in P2-B
-        </span>
+        <h3>📥 Import Audience ({{ sponsor.audience_entries|length }})</h3>
+        {% if sponsor.is_active %}
+        <a href="/admin/sponsors/{{ sponsor.id }}/csv-import" class="btn-cta">
+            ↑ Upload CSV
+        </a>
+        {% endif %}
     </div>
     <div class="section-body">
+        {% if sponsor.audience_entries %}
+
+        {# Age category breakdown #}
+        {% set age_counts = {} %}
+        {% for e in sponsor.audience_entries %}
+            {% set cat = e.age_category or 'UNKNOWN' %}
+            {% if cat in age_counts %}
+                {% set _ = age_counts.update({cat: age_counts[cat] + 1}) %}
+            {% else %}
+                {% set _ = age_counts.update({cat: 1}) %}
+            {% endif %}
+        {% endfor %}
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.25rem;">
+            {% for cat, cnt in age_counts.items() %}
+            <div style="text-align:center;padding:0.5rem 1rem;background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;min-width:70px;">
+                <div style="font-size:1.25rem;font-weight:800;color:#667eea;">{{ cnt }}</div>
+                <div style="font-size:0.7rem;font-weight:700;color:#718096;text-transform:uppercase;">{{ cat }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {# Recent import history #}
+        {% if sponsor.csv_imports %}
+        <div>
+            <div style="font-size:0.8rem;font-weight:700;color:#718096;margin-bottom:0.5rem;">Recent imports</div>
+            {% for log in sponsor.csv_imports | sort(attribute='uploaded_at', reverse=True) | list %}
+            {% if loop.index <= 5 %}
+            <div style="display:flex;align-items:center;gap:1rem;padding:0.6rem 0;border-bottom:1px solid #f0f0f0;font-size:0.85rem;">
+                <span style="font-weight:600;flex:1;">{{ log.filename or 'upload.csv' }}</span>
+                <span style="font-size:0.8rem;color:#718096;">
+                    ✅ {{ log.rows_created }} · ↻ {{ log.rows_updated }}
+                    {% if log.rows_failed %} · <span style="color:#e53e3e;">✕ {{ log.rows_failed }}</span>{% endif %}
+                </span>
+                <span style="font-size:0.75rem;color:#a0aec0;">
+                    {{ log.uploaded_at.strftime('%Y-%m-%d %H:%M') if log.uploaded_at else '' }}
+                </span>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% else %}
         <div class="import-placeholder">
             <div class="import-icon">📁</div>
             <p>
                 No audience imported yet.<br>
                 Upload a CSV to segment <strong>{{ sponsor.name }}</strong>'s audience by age category.
             </p>
-            <button class="btn-disabled" disabled
-                    title="CSV audience import is coming in P2-B">
+            {% if sponsor.is_active %}
+            <a href="/admin/sponsors/{{ sponsor.id }}/csv-import"
+               style="background:#1a6b5a;color:white;border:none;padding:0.5rem 1.5rem;border-radius:6px;font-size:0.9rem;font-weight:600;text-decoration:none;display:inline-block;">
                 Upload CSV
-            </button>
+            </a>
+            {% else %}
+            <button class="btn-disabled" disabled>Upload CSV</button>
+            {% endif %}
             <div style="font-size:0.75rem;color:#cbd5e0;margin-top:0.75rem;">
-                Columns: first_name, last_name, email, date_of_birth, age_category, initial_credits, consent_given
+                Columns: first_name, last_name, email, date_of_birth, age_category, consent_given, …
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
 

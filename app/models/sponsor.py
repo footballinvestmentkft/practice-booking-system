@@ -1,5 +1,5 @@
-"""Sponsor model — organizer/partner entity for Promotion Events"""
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text
+"""Sponsor model — organizer/partner entity for Promotion Events + Audience Import"""
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Date, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -21,21 +21,81 @@ class Sponsor(Base):
     created_at     = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     created_by     = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
-    contacts         = relationship("SponsorContact", back_populates="sponsor", cascade="all, delete-orphan")
+    contacts         = relationship("SponsorContact", back_populates="sponsor",
+                                    cascade="all, delete-orphan")
     creator          = relationship("User", foreign_keys=[created_by])
     promotion_events = relationship("Semester", back_populates="organizer_sponsor",
                                    foreign_keys="Semester.organizer_sponsor_id")
+    csv_imports      = relationship("CsvImportLog", back_populates="sponsor",
+                                    foreign_keys="CsvImportLog.sponsor_id")
+    audience_entries = relationship("SponsorAudienceEntry", back_populates="sponsor",
+                                    cascade="all, delete-orphan")
 
 
 class SponsorContact(Base):
     __tablename__ = "sponsor_contacts"
 
     id         = Column(Integer, primary_key=True, index=True)
-    sponsor_id = Column(Integer, ForeignKey("sponsors.id", ondelete="CASCADE"), nullable=False, index=True)
+    sponsor_id = Column(Integer, ForeignKey("sponsors.id", ondelete="CASCADE"),
+                        nullable=False, index=True)
     name       = Column(String(100), nullable=False)
     email      = Column(String(200), nullable=True)
-    phone      = Column(String(50), nullable=True)
-    role       = Column(String(50), nullable=True)
+    phone      = Column(String(50),  nullable=True)
+    role       = Column(String(50),  nullable=True)
     is_primary = Column(Boolean, default=False, nullable=False)
 
     sponsor = relationship("Sponsor", back_populates="contacts")
+
+
+class SponsorAudienceEntry(Base):
+    """One prospect/audience record per (sponsor, email).
+
+    Import lifecycle: CSV → preview (no DB) → apply (upsert here).
+    User creation is a separate explicit admin action — never automatic.
+    """
+    __tablename__ = "sponsor_audience_entries"
+
+    id            = Column(Integer, primary_key=True, index=True)
+    sponsor_id    = Column(Integer, ForeignKey("sponsors.id", ondelete="CASCADE"),
+                           nullable=False, index=True)
+    import_log_id = Column(Integer, ForeignKey("csv_import_logs.id", ondelete="CASCADE"),
+                           nullable=False, index=True)
+    user_id       = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"),
+                           nullable=True, index=True)
+
+    # Identity
+    first_name    = Column(String(100), nullable=False)
+    last_name     = Column(String(100), nullable=False)
+    email         = Column(String(200), nullable=False)
+    phone         = Column(String(50),  nullable=True)
+    date_of_birth = Column(Date,        nullable=True)
+
+    # Segmentation — canonical PRE/YOUTH/AMATEUR/PRO or NULL
+    age_category   = Column(String(20),  nullable=True)
+    age_raw        = Column(String(30),  nullable=True)   # original CSV value, audit only
+    target_segment = Column(String(200), nullable=True)
+    campaign_source= Column(String(200), nullable=True)
+
+    # Consent
+    consent_given  = Column(Boolean,     nullable=False, default=False)
+    consent_source = Column(String(300), nullable=True)
+
+    # Parental (for PRE / under-13)
+    parent_email   = Column(String(200), nullable=True)
+
+    # Status: ACTIVE | SUPPRESSED | UNSUBSCRIBED | DELETED
+    status = Column(String(20), nullable=False, default="SUPPRESSED")
+    notes  = Column(Text,       nullable=True)
+
+    # Audit
+    imported_at      = Column(DateTime(timezone=True),
+                              server_default=func.now(), nullable=False)
+    last_imported_at = Column(DateTime(timezone=True), nullable=True)
+    imported_by      = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"),
+                              nullable=True)
+
+    # Relationships
+    sponsor    = relationship("Sponsor", back_populates="audience_entries")
+    import_log = relationship("CsvImportLog", foreign_keys=[import_log_id])
+    user       = relationship("User", foreign_keys=[user_id])
+    importer   = relationship("User", foreign_keys=[imported_by])

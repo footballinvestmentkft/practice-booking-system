@@ -1,0 +1,289 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Import Preview — {{ sponsor.name }}{% endblock %}
+{% block page_heading %}📋 Import Preview{% endblock %}
+{% block page_subtitle %}{{ sponsor.name }} — review before applying{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .module-strip {
+        display: flex; align-items: center; gap: 0.5rem;
+        padding: 0.75rem 0; margin-bottom: 1.5rem;
+        border-bottom: 2px solid #e2e8f0; flex-wrap: wrap;
+    }
+    .module-strip-label { font-size: 0.75rem; font-weight: 700; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.08em; padding-right: 0.5rem; border-right: 1px solid #e2e8f0; }
+    .module-link { padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; text-decoration: none; color: #718096; transition: background 0.15s; }
+    .module-link:hover { background: #f0f4ff; color: #5a4a9a; }
+    .module-link.active { background: #ece8ff; color: #5a4a9a; }
+
+    .summary-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .summary-card {
+        background: white; border: 1px solid #e2e8f0; border-radius: 10px;
+        padding: 1rem 1.25rem; text-align: center;
+    }
+    .summary-card .sc-num { font-size: 1.75rem; font-weight: 800; }
+    .summary-card .sc-label { font-size: 0.75rem; font-weight: 700; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem; }
+    .sc-total   .sc-num { color: #2d3748; }
+    .sc-valid   .sc-num { color: #276749; }
+    .sc-failed  .sc-num { color: #9b2c2c; }
+    .sc-contact .sc-num { color: #2a69ac; }
+    .sc-supp    .sc-num { color: #744210; }
+
+    .section-card {
+        background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+        margin-bottom: 1.5rem; overflow: hidden;
+    }
+    .section-header {
+        padding: 1rem 1.5rem; border-bottom: 1px solid #f0f0f0;
+        display: flex; align-items: center; justify-content: space-between;
+        background: #f7fafc;
+    }
+    .section-header h3 { margin: 0; font-size: 0.95rem; font-weight: 700; color: #2d3748; }
+    .section-body { padding: 1.5rem; }
+
+    .age-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 0.75rem;
+    }
+    .age-pill {
+        text-align: center; padding: 0.65rem 0.5rem;
+        background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+    }
+    .age-pill .ap-num { font-size: 1.4rem; font-weight: 800; color: #667eea; }
+    .age-pill .ap-label { font-size: 0.72rem; font-weight: 700; color: #718096; text-transform: uppercase; }
+
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .data-table th { text-align: left; color: #718096; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem 0.75rem; border-bottom: 1px solid #e2e8f0; background: #f7fafc; }
+    .data-table td { padding: 0.55rem 0.75rem; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .badge-create { background: #c6f6d5; color: #276749; border-radius: 99px; padding: 0.1rem 0.5rem; font-size: 0.72rem; font-weight: 700; }
+    .badge-update { background: #bee3f8; color: #2a69ac; border-radius: 99px; padding: 0.1rem 0.5rem; font-size: 0.72rem; font-weight: 700; }
+    .badge-fail   { background: #fed7d7; color: #9b2c2c; border-radius: 99px; padding: 0.1rem 0.5rem; font-size: 0.72rem; font-weight: 700; }
+    .badge-warn   { background: #fefcbf; color: #744210; border-radius: 99px; padding: 0.1rem 0.5rem; font-size: 0.72rem; font-weight: 700; }
+
+    .warning-list { list-style: none; margin: 0; padding: 0; }
+    .warning-list li {
+        padding: 0.4rem 0.75rem; border-left: 3px solid #f6ad55;
+        background: #fffaf0; border-radius: 0 4px 4px 0;
+        font-size: 0.82rem; color: #744210; margin-bottom: 0.35rem;
+    }
+
+    .apply-bar {
+        position: sticky; bottom: 0;
+        background: white; border-top: 1px solid #e2e8f0;
+        padding: 1rem 1.5rem;
+        display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+        box-shadow: 0 -4px 12px rgba(0,0,0,0.06);
+    }
+    .btn-apply {
+        background: #1a6b5a; color: white; border: none;
+        padding: 0.6rem 2rem; border-radius: 6px;
+        font-size: 0.95rem; font-weight: 700; cursor: pointer;
+    }
+    .btn-apply:hover { background: #155a4a; }
+    .btn-cancel {
+        color: #718096; text-decoration: none; font-size: 0.9rem;
+    }
+    .alert-warn { background: #fffaf0; border: 1px solid #f6ad55; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.875rem; color: #744210; }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+
+<div class="module-strip">
+    <span class="module-strip-label">People</span>
+    <a href="/admin/users" class="module-link">👥 Users</a>
+    <a href="/admin/instructors" class="module-link">👨‍🏫 Instructors</a>
+    <a href="/admin/sport-directors" class="module-link">🎯 Sport Directors</a>
+    <a href="/admin/clubs" class="module-link">🏟️ Clubs</a>
+    <a href="/admin/sponsors" class="module-link active">🤝 Partners</a>
+</div>
+
+<div style="margin-bottom:1rem;">
+    <a href="/admin/sponsors/{{ sponsor.id }}/csv-import"
+       style="color:#718096;font-size:0.85rem;text-decoration:none;">
+        ← Back to upload
+    </a>
+</div>
+
+{% set has_warnings = preview.global_warnings or (preview.rows | selectattr('warnings') | list) %}
+
+{% if has_warnings %}
+<div class="alert-warn">
+    ⚠️ Some rows have warnings — review below. Rows with warnings are still imported unless they have errors.
+</div>
+{% endif %}
+
+<!-- Summary cards -->
+<div class="summary-grid">
+    <div class="summary-card sc-total">
+        <div class="sc-num">{{ preview.total_rows }}</div>
+        <div class="sc-label">Total Rows</div>
+    </div>
+    <div class="summary-card sc-valid">
+        <div class="sc-num">{{ preview.valid_rows }}</div>
+        <div class="sc-label">Valid</div>
+    </div>
+    {% if preview.failed_rows > 0 %}
+    <div class="summary-card sc-failed">
+        <div class="sc-num">{{ preview.failed_rows }}</div>
+        <div class="sc-label">Failed</div>
+    </div>
+    {% endif %}
+    <div class="summary-card sc-contact">
+        <div class="sc-num">{{ preview.consent_breakdown.contactable }}</div>
+        <div class="sc-label">Contactable</div>
+    </div>
+    <div class="summary-card sc-supp">
+        <div class="sc-num">{{ preview.consent_breakdown.suppressed }}</div>
+        <div class="sc-label">Suppressed</div>
+    </div>
+</div>
+
+<!-- Age breakdown -->
+{% if preview.age_breakdown %}
+<div class="section-card">
+    <div class="section-header">
+        <h3>Age Category Breakdown</h3>
+    </div>
+    <div class="section-body">
+        <div class="age-grid">
+            {% for cat, count in preview.age_breakdown.items() %}
+            <div class="age-pill">
+                <div class="ap-num">{{ count }}</div>
+                <div class="ap-label">{{ cat }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Global warnings -->
+{% if preview.global_warnings %}
+<div class="section-card">
+    <div class="section-header">
+        <h3>⚠️ Global Warnings</h3>
+    </div>
+    <div class="section-body">
+        <ul class="warning-list">
+            {% for w in preview.global_warnings %}
+            <li>{{ w }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+<!-- Row preview table -->
+<div class="section-card">
+    <div class="section-header">
+        <h3>Row Preview ({{ preview.total_rows }} rows)</h3>
+        <span style="font-size:0.8rem;color:#a0aec0;">📄 {{ preview.filename }}</span>
+    </div>
+    <div class="section-body" style="padding:0;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Age Cat.</th>
+                    <th>Consent</th>
+                    <th>Action</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in preview.rows %}
+                <tr>
+                    <td style="color:#a0aec0;">{{ row.row_num }}</td>
+                    <td style="font-weight:600;">{{ row.email }}</td>
+                    <td>{{ row.first_name }} {{ row.last_name }}</td>
+                    <td>
+                        {% if row.age_category %}
+                        <code style="font-size:0.75rem;">{{ row.age_category }}</code>
+                        {% else %}
+                        <span style="color:#a0aec0;">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if row.action != 'fail' %}
+                            {% if row.consent_given %}
+                            <span style="color:#276749;font-size:0.8rem;">✅ yes</span>
+                            {% else %}
+                            <span style="color:#a0aec0;font-size:0.8rem;">— no</span>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if row.action == 'create' %}
+                        <span class="badge-create">+ create</span>
+                        {% elif row.action == 'update' %}
+                        <span class="badge-update">↻ update</span>
+                        {% else %}
+                        <span class="badge-fail">✕ fail</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:0.78rem;">
+                        {% if row.action == 'fail' %}
+                        <span style="color:#9b2c2c;">{{ row.reason }}</span>
+                        {% endif %}
+                        {% for w in row.warnings %}
+                        <div style="color:#744210;">⚠ {{ w }}</div>
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Apply bar -->
+{% if preview.valid_rows > 0 %}
+<div class="apply-bar">
+    <div style="font-size:0.875rem;color:#4a5568;">
+        <strong>{{ preview.valid_rows }}</strong> rows will be imported for
+        <strong>{{ sponsor.name }}</strong>.
+        {% if preview.failed_rows > 0 %}
+        <span style="color:#e53e3e;margin-left:0.5rem;">{{ preview.failed_rows }} rows will be skipped.</span>
+        {% endif %}
+    </div>
+    <div style="display:flex;gap:1rem;align-items:center;">
+        <a href="/admin/sponsors/{{ sponsor.id }}/csv-import" class="btn-cancel">Cancel</a>
+        <form method="POST"
+              action="/admin/sponsors/{{ sponsor.id }}/csv-import/apply"
+              id="apply-form">
+            <input type="hidden" name="csrf_token" id="apply-csrf">
+            <input type="hidden" name="csv_data"   value="{{ preview.csv_b64 }}">
+            <input type="hidden" name="filename"   value="{{ preview.filename }}">
+            <button type="submit" class="btn-apply">
+                ✅ Confirm &amp; Apply Import
+            </button>
+        </form>
+    </div>
+</div>
+{% else %}
+<div style="text-align:center;padding:2rem;color:#a0aec0;">
+    No valid rows to import.
+    <a href="/admin/sponsors/{{ sponsor.id }}/csv-import"
+       style="color:#667eea;margin-left:0.5rem;">Upload a different file.</a>
+</div>
+{% endif %}
+
+<script>
+(function () {
+    var csrf = (document.cookie.split('; ')
+        .find(function (r) { return r.startsWith('csrf_token='); }) || '')
+        .split('=')[1] || '';
+    var el = document.getElementById('apply-csrf');
+    if (el) el.value = csrf;
+}());
+</script>
+
+{% endblock %}

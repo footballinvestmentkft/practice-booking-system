@@ -1,21 +1,28 @@
 """Admin sponsor management routes."""
-from fastapi import APIRouter, Request, Depends, Form, HTTPException
+import base64
+import logging
+from datetime import date, datetime
+from typing import Optional
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
-from typing import Optional
-from datetime import date, datetime
-import logging
 
 from ....database import get_db
 from ....dependencies import get_current_user_web
-from ....models.user import User
-from ....models.sponsor import Sponsor, SponsorContact
-from ....models.semester import Semester, SemesterStatus, SemesterCategory
-from ....models.tournament_configuration import TournamentConfiguration
 from ....models.campus import Campus
+from ....models.club import CsvImportLog
+from ....models.semester import Semester, SemesterCategory, SemesterStatus
+from ....models.sponsor import Sponsor, SponsorAudienceEntry, SponsorContact
+from ....models.tournament_configuration import TournamentConfiguration
 from ....models.tournament_type import TournamentType as TournamentTypeModel
-
-from . import templates, _admin_guard
+from ....models.user import User
+from ....services.sponsor_csv_import_service import (
+    MAX_CSV_BYTES,
+    apply_import,
+    preview_rows,
+)
+from . import _admin_guard, templates
 
 logger = logging.getLogger(__name__)
 
@@ -355,6 +362,116 @@ async def admin_sponsors_toggle(
     status_word = "activated" if sponsor.is_active else "deactivated"
     return RedirectResponse(
         f"/admin/sponsors/{sponsor_id}?flash=Partner+{status_word}",
+        status_code=303,
+    )
+
+
+# ── Sponsor Audience CSV Import ───────────────────────────────────────────────
+
+@router.get("/admin/sponsors/{sponsor_id}/csv-import", response_class=HTMLResponse)
+async def admin_sponsor_csv_upload_form(
+    sponsor_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Admin: render the CSV upload form for sponsor audience import."""
+    _admin_guard(user)
+    sponsor = db.query(Sponsor).filter(Sponsor.id == sponsor_id).first()
+    if not sponsor:
+        raise HTTPException(status_code=404, detail="Partner not found")
+    if not sponsor.is_active:
+        return RedirectResponse(
+            f"/admin/sponsors/{sponsor_id}?error=Inactive+partner+cannot+import+audience",
+            status_code=303,
+        )
+    return templates.TemplateResponse(
+        "admin/sponsor_csv_upload.html",
+        {"request": request, "user": user, "sponsor": sponsor},
+    )
+
+
+@router.post("/admin/sponsors/{sponsor_id}/csv-import/preview", response_class=HTMLResponse)
+async def admin_sponsor_csv_preview(
+    sponsor_id: int,
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Admin: parse and validate CSV, return preview page.  Writes nothing to DB."""
+    _admin_guard(user)
+    sponsor = db.query(Sponsor).filter(Sponsor.id == sponsor_id).first()
+    if not sponsor:
+        raise HTTPException(status_code=404, detail="Partner not found")
+    if not sponsor.is_active:
+        return RedirectResponse(
+            f"/admin/sponsors/{sponsor_id}?error=Inactive+partner+cannot+import+audience",
+            status_code=303,
+        )
+
+    content = await file.read()
+    if len(content) > MAX_CSV_BYTES:
+        return RedirectResponse(
+            f"/admin/sponsors/{sponsor_id}/csv-import"
+            "?error=CSV+file+too+large+%28max+1+MB%29",
+            status_code=303,
+        )
+    if not content:
+        return RedirectResponse(
+            f"/admin/sponsors/{sponsor_id}/csv-import?error=Empty+file",
+            status_code=303,
+        )
+
+    result = preview_rows(content, sponsor_id, db, filename=file.filename or "upload.csv")
+
+    return templates.TemplateResponse(
+        "admin/sponsor_csv_preview.html",
+        {
+            "request": request,
+            "user": user,
+            "sponsor": sponsor,
+            "preview": result,
+        },
+    )
+
+
+@router.post("/admin/sponsors/{sponsor_id}/csv-import/apply")
+async def admin_sponsor_csv_apply(
+    sponsor_id: int,
+    request: Request,
+    csv_data: str = Form(...),
+    filename: str = Form("upload.csv"),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Admin: apply the previously-previewed CSV import (single atomic transaction)."""
+    _admin_guard(user)
+    sponsor = db.query(Sponsor).filter(Sponsor.id == sponsor_id).first()
+    if not sponsor:
+        raise HTTPException(status_code=404, detail="Partner not found")
+    if not sponsor.is_active:
+        return RedirectResponse(
+            f"/admin/sponsors/{sponsor_id}?error=Inactive+partner+cannot+import+audience",
+            status_code=303,
+        )
+
+    try:
+        content = base64.b64decode(csv_data)
+    except Exception:
+        return RedirectResponse(
+            f"/admin/sponsors/{sponsor_id}?error=Invalid+import+data",
+            status_code=303,
+        )
+
+    log = apply_import(content, sponsor, db, user, filename=filename)
+    flash = (
+        f"Audience+imported+%E2%80%94+"
+        f"{log.rows_created}+created%2C+{log.rows_updated}+updated"
+        + (f"%2C+{log.rows_failed}+failed" if log.rows_failed else "")
+    )
+    return RedirectResponse(
+        f"/admin/sponsors/{sponsor_id}?flash={flash}",
         status_code=303,
     )
 
