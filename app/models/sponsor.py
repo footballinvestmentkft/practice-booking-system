@@ -50,17 +50,16 @@ class SponsorCampaign(Base):
     campaign_type = Column(String(30), nullable=False, default="IMPORT")
     event_date    = Column(Date, nullable=True)
     status        = Column(String(20), nullable=False, default="ACTIVE")
-    semester_id   = Column(Integer, ForeignKey("semesters.id", ondelete="SET NULL"),
-                           nullable=True, index=True)
     notes         = Column(Text, nullable=True)
     created_at    = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     created_by    = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
-    sponsor  = relationship("Sponsor", back_populates="campaigns")
-    entries  = relationship("SponsorAudienceEntry", back_populates="campaign",
-                            cascade="all, delete-orphan")
-    creator  = relationship("User", foreign_keys=[created_by])
-    semester = relationship("Semester", foreign_keys=[semester_id])
+    sponsor   = relationship("Sponsor", back_populates="campaigns")
+    entries   = relationship("SponsorAudienceEntry", back_populates="campaign",
+                             cascade="all, delete-orphan")
+    creator   = relationship("User", foreign_keys=[created_by])
+    semesters = relationship("Semester", foreign_keys="Semester.organizer_campaign_id",
+                             back_populates="organizer_campaign")
 
 
 class SponsorContact(Base):

@@ -119,7 +119,12 @@ class Semester(Base):
         Integer, ForeignKey('sponsors.id', ondelete='SET NULL'), nullable=True, index=True,
         comment="FK to sponsors — set when a sponsor organizes this promotion event"
     )
-    # DB-level CHECK: chk_semester_single_organizer (Migration 2) enforces the same rule
+    organizer_campaign_id = Column(
+        Integer, ForeignKey('sponsor_campaigns.id', ondelete='SET NULL'), nullable=True, index=True,
+        comment="FK to sponsor_campaigns — the campaign whose audience feeds this promotion event (sponsor events only)"
+    )
+    # DB-level CHECKs: chk_semester_single_organizer (at most one of club/sponsor)
+    #                  chk_campaign_requires_sponsor (campaign requires sponsor)
 
     # 🏆 TOURNAMENT CONFIGURATION FIELDS (P2 refactoring)
     # ⚠️ DEPRECATED in P2: All tournament configuration moved to separate table (tournament_configurations)
@@ -210,7 +215,7 @@ class Semester(Base):
         doc="Weekly schedule config for session generation (MINI_SEASON / ACADEMY_SEASON)"
     )
 
-    # 🏢 Organizer relationships (P2-A)
+    # 🏢 Organizer relationships (P2-A + P4)
     organizer_club = relationship(
         "Club",
         foreign_keys=[organizer_club_id],
@@ -220,6 +225,11 @@ class Semester(Base):
         "Sponsor",
         foreign_keys=[organizer_sponsor_id],
         back_populates="promotion_events",
+    )
+    organizer_campaign = relationship(
+        "SponsorCampaign",
+        foreign_keys=[organizer_campaign_id],
+        back_populates="semesters",
     )
 
     @validates("organizer_club_id", "organizer_sponsor_id")

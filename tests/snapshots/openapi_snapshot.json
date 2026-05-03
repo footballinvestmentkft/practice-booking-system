@@ -2840,6 +2840,11 @@
             "title": "Age Groups",
             "type": "array"
           },
+          "campaign_id": {
+            "default": "",
+            "title": "Campaign Id",
+            "type": "string"
+          },
           "campus_id": {
             "default": "",
             "title": "Campus Id",
@@ -27549,7 +27554,7 @@
         ]
       },
       "post": {
-        "description": "Admin: create one INDIVIDUAL promotion event per selected age category for a sponsor.\n\nSponsor-only flow \u2014 no Club, no Team, no TournamentTeamEnrollment.\nEach age group produces one Semester record with:\n  organizer_sponsor_id = sponsor.id\n  organizer_club_id    = NULL  (explicit)\n  participant_type     = INDIVIDUAL",
+        "description": "Admin: create one INDIVIDUAL promotion event per selected age category for a sponsor.\n\nSponsor-only flow \u2014 no Club, no Team, no TournamentTeamEnrollment.\nEach age group produces one Semester record with:\n  organizer_sponsor_id    = sponsor.id\n  organizer_campaign_id   = campaign.id  (required \u2014 campaign audience feeds the event)\n  organizer_club_id       = NULL  (explicit)\n  participant_type        = INDIVIDUAL",
         "operationId": "admin_sponsor_promotion_create_admin_sponsors__sponsor_id__promotion_post",
         "parameters": [
           {

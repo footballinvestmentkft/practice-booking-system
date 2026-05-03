@@ -112,6 +112,20 @@
         <form method="POST" action="/admin/sponsors/{{ sponsor.id }}/promotion">
             <input type="hidden" name="csrf_token" id="form-csrf">
 
+            <!-- ── Campaign ───────────────────────────────────────── -->
+            <h3>Audience Campaign *</h3>
+
+            <div class="form-group">
+                <label>Campaign</label>
+                <select name="campaign_id" required>
+                    <option value="">— select campaign —</option>
+                    {% for c in active_campaigns %}
+                    <option value="{{ c.id }}">{{ c.name }}{% if c.event_date %} · {{ c.event_date }}{% endif %}</option>
+                    {% endfor %}
+                </select>
+                <div class="field-hint">The campaign whose imported audience will feed this promotion event.</div>
+            </div>
+
             <!-- ── Event Details ───────────────────────────────────── -->
             <h3>Event Details</h3>
 

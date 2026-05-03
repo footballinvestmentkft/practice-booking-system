@@ -261,6 +261,18 @@ async def admin_sponsor_promotion_form(
     if not sponsor:
         raise HTTPException(status_code=404, detail="Partner not found")
 
+    active_campaigns = (
+        db.query(SponsorCampaign)
+        .filter(SponsorCampaign.sponsor_id == sponsor_id, SponsorCampaign.status == "ACTIVE")
+        .order_by(SponsorCampaign.created_at.desc())
+        .all()
+    )
+    if not active_campaigns:
+        return RedirectResponse(
+            f"/admin/sponsors/{sponsor_id}?error=No+active+campaigns+found.+Create+a+campaign+first.",
+            status_code=303,
+        )
+
     campuses = db.query(Campus).filter(Campus.is_active == True).order_by(Campus.name).all()  # noqa: E712
     tournament_types = db.query(TournamentTypeModel).order_by(TournamentTypeModel.display_name).all()
 
@@ -270,6 +282,7 @@ async def admin_sponsor_promotion_form(
             "request": request,
             "user": user,
             "sponsor": sponsor,
+            "active_campaigns": active_campaigns,
             "campuses": campuses,
             "tournament_types": tournament_types,
         },
@@ -283,6 +296,7 @@ async def admin_sponsor_promotion_create(
     tournament_name: str = Form(...),
     start_date: str = Form(...),
     end_date: str = Form(...),
+    campaign_id: str = Form(""),
     campus_id: str = Form(""),
     tournament_type_id: str = Form(""),
     age_groups: list[str] = Form(default=[]),
@@ -293,14 +307,35 @@ async def admin_sponsor_promotion_create(
 
     Sponsor-only flow — no Club, no Team, no TournamentTeamEnrollment.
     Each age group produces one Semester record with:
-      organizer_sponsor_id = sponsor.id
-      organizer_club_id    = NULL  (explicit)
-      participant_type     = INDIVIDUAL
+      organizer_sponsor_id    = sponsor.id
+      organizer_campaign_id   = campaign.id  (required — campaign audience feeds the event)
+      organizer_club_id       = NULL  (explicit)
+      participant_type        = INDIVIDUAL
     """
     _admin_guard(user)
     sponsor = db.query(Sponsor).filter(Sponsor.id == sponsor_id).first()
     if not sponsor:
         raise HTTPException(status_code=404, detail="Partner not found")
+
+    if not campaign_id.strip():
+        return RedirectResponse(
+            url=f"/admin/sponsors/{sponsor_id}/promotion?error=Select+a+campaign",
+            status_code=303,
+        )
+    campaign = (
+        db.query(SponsorCampaign)
+        .filter(
+            SponsorCampaign.id == int(campaign_id),
+            SponsorCampaign.sponsor_id == sponsor_id,
+            SponsorCampaign.status == "ACTIVE",
+        )
+        .first()
+    )
+    if not campaign:
+        return RedirectResponse(
+            url=f"/admin/sponsors/{sponsor_id}/promotion?error=Invalid+or+inactive+campaign",
+            status_code=303,
+        )
 
     if not age_groups:
         return RedirectResponse(
@@ -320,36 +355,37 @@ async def admin_sponsor_promotion_create(
             status=SemesterStatus.DRAFT,
             tournament_status="DRAFT",
             semester_category=SemesterCategory.PROMOTION_EVENT,
-            age_group=ag,                      # PRE / YOUTH / AMATEUR / PRO — already canonical
+            age_group=ag,                        # PRE / YOUTH / AMATEUR / PRO — already canonical
             enrollment_cost=0,
             campus_id=int(campus_id) if campus_id.strip() else None,
-            organizer_sponsor_id=sponsor.id,   # sponsor organizer
-            organizer_club_id=None,            # explicit NULL — never a club
+            organizer_sponsor_id=sponsor.id,     # sponsor organizer
+            organizer_campaign_id=campaign.id,   # campaign whose audience feeds this event
+            organizer_club_id=None,              # explicit NULL — never a club
         )
         db.add(t)
         db.flush()
 
         # Derive location from campus
         if t.campus_id:
-            campus = db.query(Campus).filter(Campus.id == t.campus_id).first()
-            if campus and campus.location_id:
-                t.location_id = campus.location_id
+            campus_obj = db.query(Campus).filter(Campus.id == t.campus_id).first()
+            if campus_obj and campus_obj.location_id:
+                t.location_id = campus_obj.location_id
 
         db.add(TournamentConfiguration(
             semester_id=t.id,
             tournament_type_id=int(tournament_type_id) if tournament_type_id.strip() else None,
-            participant_type="INDIVIDUAL",     # sponsor events are always INDIVIDUAL
+            participant_type="INDIVIDUAL",       # sponsor events are always INDIVIDUAL
             number_of_rounds=1,
         ))
         # No TournamentTeamEnrollment — sponsor events have no teams
 
     db.commit()
     logger.info(
-        "sponsor_promotion_created sponsor=%s age_groups=%s by admin=%s",
-        sponsor.name, age_groups, user.email,
+        "sponsor_promotion_created sponsor=%s campaign=%s age_groups=%s by admin=%s",
+        sponsor.name, campaign.id, age_groups, user.email,
     )
     return RedirectResponse(
-        url=f"/admin/promotion-events?flash=Promotion+event+created+for+{sponsor.name}",
+        url=f"/admin/sponsors/{sponsor_id}?flash=Promotion+event+created",
         status_code=303,
     )
 
@@ -591,7 +627,7 @@ async def admin_sponsor_campaign_audience_promote(
             status_code=303,
         )
 
-    result = promote_entries(entry_ids, sponsor_id, db, user)
+    result = promote_entries(entry_ids, sponsor_id, db, user, campaign_id=campaign_id)
     parts = []
     if result.promoted:
         parts.append(f"{result.promoted}+promoted")

@@ -31,7 +31,7 @@ from app.main import app
 from app.database import get_db
 from app.dependencies import get_current_user_web
 from app.models.user import User, UserRole
-from app.models.sponsor import Sponsor, SponsorContact
+from app.models.sponsor import Sponsor, SponsorCampaign, SponsorContact
 from app.core.security import get_password_hash
 
 
@@ -512,6 +512,17 @@ class TestSponsorPromotionWizard:
         admin = _make_admin(test_db)
         sponsor = _make_sponsor(test_db, admin, suffix="WizardTest")
 
+        # P4: wizard now requires an ACTIVE campaign — create one before hitting GET/POST
+        campaign = SponsorCampaign(
+            sponsor_id=sponsor.id,
+            name="Wizard Test Campaign",
+            campaign_type="IMPORT",
+            status="ACTIVE",
+            created_by=admin.id,
+        )
+        test_db.add(campaign)
+        test_db.flush()
+
         loc = Location(
             name=f"WizLoc-{uuid.uuid4().hex[:6]}",
             city=f"WizCity-{uuid.uuid4().hex[:6]}",
@@ -551,10 +562,11 @@ class TestSponsorPromotionWizard:
             assert "Club page" not in get_resp.text
             assert "go to a Club" not in get_resp.text
 
-            # POST wizard — create event
+            # POST wizard — create event (P4: campaign_id required)
             resp = client.post(
                 f"/admin/sponsors/{sponsor.id}/promotion",
                 data={
+                    "campaign_id": str(campaign.id),
                     "tournament_name": event_name,
                     "start_date": "2026-09-01",
                     "end_date": "2026-09-03",
@@ -587,6 +599,9 @@ class TestSponsorPromotionWizard:
             )
             assert event.organizer_club_id is None, (
                 f"organizer_club_id must be NULL for sponsor event, got {event.organizer_club_id}"
+            )
+            assert event.organizer_campaign_id == campaign.id, (
+                f"organizer_campaign_id expected {campaign.id}, got {event.organizer_campaign_id}"
             )
             assert event.age_group == "YOUTH", (
                 f"age_group expected YOUTH, got {event.age_group}"

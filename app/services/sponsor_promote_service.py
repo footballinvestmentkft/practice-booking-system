@@ -114,11 +114,16 @@ def promote_entries(
     sponsor_id: int,
     db: Session,
     admin_user: User,
+    campaign_id: int | None = None,
 ) -> PromoteResult:
     """Promote selected SponsorAudienceEntry rows to Users with optional baseline onboarding.
 
     Atomically processes the batch; single db.commit() at end.
     Any unhandled exception propagates and rolls back everything.
+
+    campaign_id: when provided, only entries belonging to that campaign are promoted.
+    Entries from other campaigns in the same sponsor are silently excluded and reported
+    as errors — prevents cross-campaign promote via crafted POST bodies.
     """
     result = PromoteResult()
     if not entry_ids:
@@ -126,20 +131,22 @@ def promote_entries(
 
     now = datetime.now(timezone.utc)
 
-    # Load all requested entries belonging to this sponsor in one query
-    entries = (
+    # Load all requested entries scoped to this sponsor+campaign in one query
+    q = (
         db.query(SponsorAudienceEntry)
         .filter(
             SponsorAudienceEntry.id.in_(entry_ids),
             SponsorAudienceEntry.sponsor_id == sponsor_id,
         )
-        .all()
     )
+    if campaign_id is not None:
+        q = q.filter(SponsorAudienceEntry.campaign_id == campaign_id)
+    entries = q.all()
 
-    # Report IDs that were not found or belong to another sponsor
+    # Report IDs that were not found or belong to another sponsor/campaign
     found_ids = {e.id for e in entries}
     for missing in set(entry_ids) - found_ids:
-        result.errors.append(f"Entry {missing}: not found for this sponsor")
+        result.errors.append(f"Entry {missing}: not found for this sponsor/campaign")
 
     # Collect emails that need User lookup (only promotion candidates)
     candidate_emails = {
