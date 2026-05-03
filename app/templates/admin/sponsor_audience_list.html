@@ -92,6 +92,16 @@
     .btn-promote:hover { background: #4c3d87; }
 
     .empty-state { text-align: center; padding: 3rem 1rem; color: #a0aec0; }
+
+    /* Cleanup action buttons */
+    .action-form { display: inline; }
+    .btn-suppress { background: none; border: 1px solid #cbd5e0; color: #718096; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-suppress:hover { background: #edf2f7; }
+    .btn-del     { background: none; border: 1px solid #feb2b2; color: #c53030; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-del:hover { background: #fff5f5; }
+    .btn-unlink  { background: none; border: 1px solid #fbd38d; color: #c05621; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-unlink:hover { background: #fffaf0; }
+    .td-actions { white-space: nowrap; vertical-align: top; }
 </style>
 {% endblock %}
 
@@ -114,6 +124,12 @@
 
 {% if flash %}
 <div class="flash-bar">✅ {{ flash | replace('+', ' ') | replace('%2C', ',') }}</div>
+{% endif %}
+{% set err = request.query_params.get('error', '') %}
+{% if err %}
+<div style="background:#fff5f5;border:1px solid #feb2b2;border-radius:8px;padding:0.65rem 1rem;margin-bottom:1rem;font-size:0.875rem;color:#c53030;font-weight:600;">
+    ⚠️ {{ err | replace('+', ' ') }}
+</div>
 {% endif %}
 
 <div class="toolbar">
@@ -153,6 +169,7 @@
             <th>Imported</th>
             <th>Promoted</th>
             <th>Promoted by</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -237,6 +254,43 @@
                 {{ promoters.get(e.promoted_by, '#' ~ e.promoted_by) }}
                 {% else %}<span style="color:#a0aec0;">—</span>{% endif %}
             </td>
+            <td class="td-actions">
+                {% if e.status == 'DELETED' %}
+                <span style="color:#a0aec0;font-size:0.7rem;">deleted</span>
+                {% else %}
+                    {# Suppress — only for ACTIVE entries #}
+                    {% if e.status == 'ACTIVE' %}
+                    <form class="action-form" method="POST"
+                          action="/admin/sponsors/{{ sponsor.id }}/audience/{{ e.id }}/suppress">
+                        <input type="hidden" name="csrf_token" class="inline-csrf">
+                        <button type="submit" class="btn-suppress"
+                                onclick="return confirm('Suppress this entry?\n\n{{ e.email }}\n\nThe entry will be marked SUPPRESSED and cannot be promoted until reactivated.')">
+                            ⊘ Suppress
+                        </button>
+                    </form>
+                    {% endif %}
+                    {# Delete — for ACTIVE and SUPPRESSED entries #}
+                    <form class="action-form" method="POST"
+                          action="/admin/sponsors/{{ sponsor.id }}/audience/{{ e.id }}/delete">
+                        <input type="hidden" name="csrf_token" class="inline-csrf">
+                        <button type="submit" class="btn-del"
+                                onclick="return confirm('Soft-delete this entry?\n\n{{ e.email }}\n\nThe entry will be marked DELETED. It will remain in the database for audit purposes but cannot be promoted.')">
+                            🗑 Delete
+                        </button>
+                    </form>
+                    {# Unlink — only for promoted entries #}
+                    {% if e.user_id %}
+                    <form class="action-form" method="POST"
+                          action="/admin/sponsors/{{ sponsor.id }}/audience/{{ e.id }}/unlink">
+                        <input type="hidden" name="csrf_token" class="inline-csrf">
+                        <button type="submit" class="btn-unlink"
+                                onclick="return confirm('Unlink User #{{ e.user_id }} from this entry?\n\n{{ e.email }}\n\n⚠️ The User account will NOT be deleted — manage it separately via User Admin.\n\nThe entry status will remain unchanged.')">
+                            ↩ Unlink
+                        </button>
+                    </form>
+                    {% endif %}
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </tbody>
@@ -299,6 +353,11 @@
         if (master) master.checked = false;
         updateBar();
     };
+
+    // Inject CSRF token into all inline action forms
+    document.querySelectorAll('.inline-csrf').forEach(function (el) {
+        el.value = csrf;
+    });
 }());
 </script>
 

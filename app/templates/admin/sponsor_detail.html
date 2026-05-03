@@ -355,9 +355,29 @@
                 <span style="font-size:0.75rem;color:#a0aec0;">
                     {{ log.uploaded_at.strftime('%Y-%m-%d %H:%M') if log.uploaded_at else '' }}
                 </span>
+                <form method="POST"
+                      action="/admin/sponsors/{{ sponsor.id }}/csv-import/{{ log.id }}/rollback"
+                      style="margin:0;">
+                    <input type="hidden" name="csrf_token" id="rollback-csrf-{{ log.id }}">
+                    <button type="submit"
+                            style="background:none;border:1px solid #fed7d7;color:#c53030;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.7rem;font-weight:600;cursor:pointer;"
+                            onclick="return confirm('Rollback this import?\n\n{{ log.filename or 'upload.csv' }} ({{ log.uploaded_at.strftime('%Y-%m-%d') if log.uploaded_at else '' }})\n\nAll unpromoted entries from this import will be soft-deleted.\nAlready promoted entries will be skipped.\n\nThis cannot be undone.')">
+                        ↩ Rollback
+                    </button>
+                </form>
             </div>
             {% endif %}
             {% endfor %}
+            <script>
+            (function() {
+                var csrf = (document.cookie.split('; ')
+                    .find(function(r){ return r.startsWith('csrf_token='); }) || '')
+                    .split('=')[1] || '';
+                document.querySelectorAll('[id^="rollback-csrf-"]').forEach(function(el){
+                    el.value = csrf;
+                });
+            }());
+            </script>
         </div>
         {% endif %}
 

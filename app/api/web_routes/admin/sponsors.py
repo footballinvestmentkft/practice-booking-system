@@ -23,6 +23,13 @@ from ....services.sponsor_csv_import_service import (
     apply_import,
     preview_rows,
 )
+from ....services.sponsor_cleanup_service import (
+    CleanupResult,
+    rollback_import,
+    soft_delete_entry,
+    suppress_entry,
+    unlink_entry,
+)
 from ....services.sponsor_promote_service import promote_entries
 from . import _admin_guard, templates
 
@@ -485,6 +492,101 @@ async def admin_sponsor_audience_promote(
         parts.append(f"{result.skipped}+skipped+%28not+ACTIVE+or+no+consent%29")
     flash = "%2C+".join(parts) if parts else "No+changes"
 
+    return RedirectResponse(
+        f"/admin/sponsors/{sponsor_id}/audience?flash={flash}",
+        status_code=303,
+    )
+
+
+# ── P2-E Cleanup routes ───────────────────────────────────────────────────────
+
+@router.post("/admin/sponsors/{sponsor_id}/audience/{entry_id}/suppress")
+async def admin_sponsor_audience_suppress(
+    sponsor_id: int,
+    entry_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Suppress a single audience entry (status → SUPPRESSED)."""
+    _admin_guard(user)
+    result = suppress_entry(entry_id, sponsor_id, db, user)
+    if result.errors:
+        flash = f"error="+"+".join(result.errors[0].replace(" ", "+").split())
+        return RedirectResponse(f"/admin/sponsors/{sponsor_id}/audience?{flash}", status_code=303)
+    return RedirectResponse(
+        f"/admin/sponsors/{sponsor_id}/audience?flash=1+suppressed",
+        status_code=303,
+    )
+
+
+@router.post("/admin/sponsors/{sponsor_id}/audience/{entry_id}/delete")
+async def admin_sponsor_audience_delete(
+    sponsor_id: int,
+    entry_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Soft-delete a single audience entry (status → DELETED)."""
+    _admin_guard(user)
+    result = soft_delete_entry(entry_id, sponsor_id, db, user)
+    if result.errors:
+        flash = "error="+"+".join(result.errors[0].replace(" ", "+").split())
+        return RedirectResponse(f"/admin/sponsors/{sponsor_id}/audience?{flash}", status_code=303)
+    return RedirectResponse(
+        f"/admin/sponsors/{sponsor_id}/audience?flash=1+deleted",
+        status_code=303,
+    )
+
+
+@router.post("/admin/sponsors/{sponsor_id}/audience/{entry_id}/unlink")
+async def admin_sponsor_audience_unlink(
+    sponsor_id: int,
+    entry_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Unlink User from a promoted audience entry (clears user_id/promoted_at/promoted_by).
+
+    User and UserLicense are NOT modified.
+    """
+    _admin_guard(user)
+    result = unlink_entry(entry_id, sponsor_id, db, user)
+    if result.errors:
+        flash = "error="+"+".join(result.errors[0].replace(" ", "+").split())
+        return RedirectResponse(f"/admin/sponsors/{sponsor_id}/audience?{flash}", status_code=303)
+    flash = f"1+unlinked+%28User+%23{result.unlinked_user_id}+preserved%29"
+    return RedirectResponse(
+        f"/admin/sponsors/{sponsor_id}/audience?flash={flash}",
+        status_code=303,
+    )
+
+
+@router.post("/admin/sponsors/{sponsor_id}/csv-import/{log_id}/rollback")
+async def admin_sponsor_import_rollback(
+    sponsor_id: int,
+    log_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Rollback a CSV import: soft-delete all unpromoted entries from this import log.
+
+    Promoted entries (user_id IS NOT NULL) are skipped and reported.
+    """
+    _admin_guard(user)
+    result = rollback_import(log_id, sponsor_id, db, user)
+    if result.errors:
+        flash = "error="+"+".join(result.errors[0].replace(" ", "+").split())
+        return RedirectResponse(f"/admin/sponsors/{sponsor_id}/audience?{flash}", status_code=303)
+    parts = []
+    if result.deleted:
+        parts.append(f"{result.deleted}+deleted")
+    if result.skipped:
+        parts.append(f"{result.skipped}+skipped+%28already+promoted%29")
+    flash = "%2C+".join(parts) if parts else "0+entries+affected"
     return RedirectResponse(
         f"/admin/sponsors/{sponsor_id}/audience?flash={flash}",
         status_code=303,
