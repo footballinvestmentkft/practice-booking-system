@@ -67,6 +67,10 @@
         font-size: 0.7rem; font-weight: 700; white-space: nowrap;
     }
 
+    .pos-tag { background: #e2e8f0; color: #2d3748; border-radius: 4px; padding: 0.1rem 0.4rem; font-size: 0.72rem; font-weight: 700; }
+    .ready-yes { background: #c6f6d5; color: #276749; border-radius: 4px; padding: 0.1rem 0.5rem; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
+    .ready-no  { background: #fed7d7; color: #9b2c2c; border-radius: 4px; padding: 0.1rem 0.5rem; font-size: 0.7rem; font-weight: 700; white-space: nowrap; cursor: help; }
+
     /* Sticky action bar */
     .action-bar {
         display: none;
@@ -142,8 +146,10 @@
             <th>Consent</th>
             <th>Age Cat.</th>
             <th>Age Raw</th>
+            <th>Position</th>
             <th>Parent Email</th>
             <th>User</th>
+            <th>Ready</th>
             <th>Imported</th>
             <th>Promoted</th>
             <th>Promoted by</th>
@@ -192,11 +198,31 @@
                 <span class="age-raw" title="Original CSV value">{{ e.age_raw }}</span>
                 {% else %}<span style="color:#a0aec0;">—</span>{% endif %}
             </td>
+            <td>
+                {% if e.position %}<span class="pos-tag">{{ e.position }}</span>
+                {% else %}<span style="color:#a0aec0;">—</span>{% endif %}
+            </td>
             <td style="font-size:0.78rem;color:#718096;">{{ e.parent_email or '—' }}</td>
             <td>
                 {% if e.user_id %}
                 <a href="/admin/users/{{ e.user_id }}" class="user-link">#{{ e.user_id }}</a>
                 {% else %}<span style="color:#a0aec0;">—</span>{% endif %}
+            </td>
+            <td>
+                {% set r = readiness.get(e.id) %}
+                {% if r == 'ready' %}
+                <span class="ready-yes">✓ Ready</span>
+                {% elif r == 'no_user' %}
+                <span class="ready-no" title="Entry not yet promoted to User">no user</span>
+                {% elif r == 'dob_missing' %}
+                <span class="ready-no" title="date_of_birth missing">no DOB</span>
+                {% elif r == 'position_missing' %}
+                <span class="ready-no" title="Position not set (needs STRIKER/MIDFIELDER/DEFENDER/GOALKEEPER)">no position</span>
+                {% elif r == 'onboarding_missing' %}
+                <span class="ready-no" title="User exists but onboarding baseline not yet applied">no onboarding</span>
+                {% else %}
+                <span style="color:#a0aec0;">—</span>
+                {% endif %}
             </td>
             <td style="font-size:0.75rem;color:#718096;white-space:nowrap;">
                 {{ e.imported_at.strftime('%Y-%m-%d %H:%M') if e.imported_at else '—' }}

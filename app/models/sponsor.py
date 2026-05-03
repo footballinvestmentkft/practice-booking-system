@@ -83,6 +83,10 @@ class SponsorAudienceEntry(Base):
     # Parental (for PRE / under-13)
     parent_email   = Column(String(200), nullable=True)
 
+    # Tournament-ready fields (P2-D)
+    position       = Column(String(30),  nullable=True)   # STRIKER|MIDFIELDER|DEFENDER|GOALKEEPER
+    foot_dominance = Column(Integer,     nullable=True)   # 0–100; 0=left, 100=right
+
     # Status: ACTIVE | SUPPRESSED | UNSUBSCRIBED | DELETED
     status = Column(String(20), nullable=False, default="SUPPRESSED")
     notes  = Column(Text,       nullable=True)

@@ -16,6 +16,7 @@ from ....models.semester import Semester, SemesterCategory, SemesterStatus
 from ....models.sponsor import Sponsor, SponsorAudienceEntry, SponsorContact
 from ....models.tournament_configuration import TournamentConfiguration
 from ....models.tournament_type import TournamentType as TournamentTypeModel
+from ....models.license import UserLicense
 from ....models.user import User
 from ....services.sponsor_csv_import_service import (
     MAX_CSV_BYTES,
@@ -394,6 +395,36 @@ async def admin_sponsor_audience_list(
         for u in db.query(User).filter(User.id.in_(promoter_ids)).all():
             promoters[u.id] = u.name
 
+    # Compute tournament-readiness per entry
+    # Fetch all LFA_FOOTBALL_PLAYER licenses for promoted users in one query
+    _VALID_POS = frozenset({"STRIKER", "MIDFIELDER", "DEFENDER", "GOALKEEPER"})
+    promoted_user_ids = {e.user_id for e in entries if e.user_id}
+    license_map: dict[int, UserLicense] = {}  # user_id → license
+    if promoted_user_ids:
+        for lic in (
+            db.query(UserLicense)
+            .filter(
+                UserLicense.user_id.in_(promoted_user_ids),
+                UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+                UserLicense.is_active == True,
+            )
+            .all()
+        ):
+            license_map[lic.user_id] = lic
+
+    readiness: dict[int, str] = {}
+    for e in entries:
+        if not e.user_id:
+            readiness[e.id] = "no_user"
+        elif not e.date_of_birth:
+            readiness[e.id] = "dob_missing"
+        elif e.position not in _VALID_POS:
+            readiness[e.id] = "position_missing"
+        else:
+            lic = license_map.get(e.user_id)
+            has_onboarding = lic and (lic.onboarding_completed or lic.football_skills is not None)
+            readiness[e.id] = "ready" if has_onboarding else "onboarding_missing"
+
     flash = request.query_params.get("flash", "")
     return templates.TemplateResponse(
         "admin/sponsor_audience_list.html",
@@ -403,6 +434,7 @@ async def admin_sponsor_audience_list(
             "sponsor": sponsor,
             "entries": entries,
             "promoters": promoters,
+            "readiness": readiness,
             "flash": flash,
         },
     )

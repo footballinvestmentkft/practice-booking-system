@@ -130,6 +130,8 @@
             <tr><td><code>date_of_birth</code></td><td><span class="badge-opt">optional</span></td><td>2012-03-15</td><td>YYYY-MM-DD — derives age_category</td></tr>
             <tr><td><code>age_category</code></td><td><span class="badge-opt">optional</span></td><td>YOUTH or U15</td><td>PRE / YOUTH / AMATEUR / PRO or U6-U23 / ADULT. DOB overrides.</td></tr>
             <tr><td><code>parent_email</code></td><td><span class="badge-opt">optional</span></td><td>szulo@gmail.com</td><td>Recommended if age_category = PRE</td></tr>
+            <tr><td><code>position</code></td><td><span class="badge-opt">optional</span></td><td>STRIKER</td><td><span class="badge-req" style="font-size:0.7rem;">tournament-ready</span> STRIKER / MIDFIELDER / DEFENDER / GOALKEEPER. Invalid → NULL + warning.</td></tr>
+            <tr><td><code>foot_dominance</code></td><td><span class="badge-opt">optional</span></td><td>70</td><td><span class="badge-req" style="font-size:0.7rem;">tournament-ready</span> 0 (left) – 100 (right). Missing → 50 default at promote.</td></tr>
             <tr><td><code>consent_given</code></td><td><span class="badge-opt">optional</span></td><td>1</td><td>1 / true / yes → contactable. Missing → suppressed.</td></tr>
             <tr><td><code>consent_source</code></td><td><span class="badge-opt">optional</span></td><td>Spring Cup form</td><td>Audit trail for consent</td></tr>
             <tr><td><code>campaign_source</code></td><td><span class="badge-opt">optional</span></td><td>Puma Spring Cup 2026</td><td></td></tr>

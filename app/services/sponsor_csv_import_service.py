@@ -45,6 +45,8 @@ MAX_CSV_BYTES = 1 * 1024 * 1024  # 1 MB hard limit
 
 FORBIDDEN_COLUMNS = frozenset({"club_name", "team_name", "team_code", "team_role", "captain"})
 
+VALID_POSITIONS = frozenset({"STRIKER", "MIDFIELDER", "DEFENDER", "GOALKEEPER"})
+
 VALID_STATUSES = frozenset({"ACTIVE", "SUPPRESSED", "UNSUBSCRIBED", "DELETED"})
 
 VALID_AGE_CATEGORIES = frozenset({"PRE", "YOUTH", "AMATEUR", "PRO"})
@@ -176,6 +178,49 @@ def _derive_age_category(
     return canonical, age_raw, warnings
 
 
+# ── Position / foot dominance ────────────────────────────────────────────────
+
+def _parse_position(raw: str) -> tuple[str | None, list[str]]:
+    """Return (canonical_position | None, warnings).
+
+    Only canonical values stored.  Invalid or empty → None + warning.
+    """
+    warnings: list[str] = []
+    val = raw.strip().upper()
+    if not val:
+        warnings.append(
+            "position missing — entry will not be tournament-ready after promote"
+        )
+        return None, warnings
+    if val in VALID_POSITIONS:
+        return val, warnings
+    warnings.append(
+        f"unknown position '{raw.strip()}' — expected STRIKER/MIDFIELDER/DEFENDER/GOALKEEPER, "
+        f"stored as NULL; entry will not be tournament-ready after promote"
+    )
+    return None, warnings
+
+
+def _parse_foot_dominance(raw: str) -> tuple[int | None, list[str]]:
+    """Return (int 0–100 | None, warnings).  Invalid → None + warning."""
+    warnings: list[str] = []
+    val = raw.strip()
+    if not val:
+        return None, warnings
+    try:
+        num = int(val)
+        if 0 <= num <= 100:
+            return num, warnings
+        warnings.append(
+            f"foot_dominance '{val}' out of range (0–100) — ignored"
+        )
+    except ValueError:
+        warnings.append(
+            f"foot_dominance '{val}' is not an integer — ignored"
+        )
+    return None, warnings
+
+
 # ── Consent / status ──────────────────────────────────────────────────────────
 
 def _parse_consent(row: dict) -> bool:
@@ -237,6 +282,18 @@ def preview_rows(
                 "age_category is PRE (under-13) but parent_email is missing — "
                 "parental contact strongly recommended"
             )
+
+        # DOB missing → not tournament-ready after promote
+        if not row.get("date_of_birth", "").strip():
+            row_warnings.append(
+                "date_of_birth missing — entry will not be tournament-ready after promote"
+            )
+
+        # Position / foot dominance
+        _, pos_warnings = _parse_position(row.get("position", ""))
+        row_warnings.extend(pos_warnings)
+        _, fd_warnings = _parse_foot_dominance(row.get("foot_dominance", ""))
+        row_warnings.extend(fd_warnings)
 
         # Determine create vs update
         existing = (
@@ -336,10 +393,24 @@ def apply_import(
             row.get("age_category", ""),
         )
 
+        position, pos_warnings = _parse_position(row.get("position", ""))
+        row_warnings.extend(pos_warnings)
+        foot_dominance, fd_warnings = _parse_foot_dominance(row.get("foot_dominance", ""))
+        row_warnings.extend(fd_warnings)
+
+        if not row.get("date_of_birth", "").strip():
+            row_warnings.append(
+                "date_of_birth missing — entry will not be tournament-ready after promote"
+            )
+
         for w in row_warnings:
             errors.append({"row": row_num, "email": email, "reason": w, "type": "warning"})
 
-        entry, action = _upsert_entry(db, row, email, canonical, age_raw, consent, sponsor, log.id, admin_user.id)
+        entry, action = _upsert_entry(
+            db, row, email, canonical, age_raw, consent,
+            sponsor, log.id, admin_user.id,
+            position=position, foot_dominance=foot_dominance,
+        )
 
         if action == "created":
             log.rows_created += 1
@@ -371,6 +442,9 @@ def _upsert_entry(
     sponsor: "Sponsor",
     log_id: int,
     admin_id: int,
+    *,
+    position: str | None = None,
+    foot_dominance: int | None = None,
 ) -> tuple[SponsorAudienceEntry, str]:
     """Create or update a SponsorAudienceEntry. Returns (entry, action)."""
     now = datetime.now(timezone.utc)
@@ -432,6 +506,8 @@ def _upsert_entry(
             notes=row.get("notes", "").strip() or None,
             status=new_status,
             imported_by=admin_id,
+            position=position,
+            foot_dominance=foot_dominance,
         )
         db.add(entry)
         return entry, "created"
@@ -452,6 +528,8 @@ def _upsert_entry(
     _set("campaign_source", row.get("campaign_source", "").strip() or None)
     _set("target_segment",  row.get("target_segment",  "").strip() or None)
     _set("notes",           row.get("notes",           "").strip() or None)
+    _set("position",        position)
+    _set("foot_dominance",  foot_dominance)
 
     existing.consent_given   = effective_consent
     existing.status          = new_status
