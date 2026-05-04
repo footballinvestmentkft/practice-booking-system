@@ -270,41 +270,49 @@ class TestNoFixedQuestionCount:
 
 
 class TestFeedbackTiming:
-    """Auto-advance delays must differ for correct vs wrong answers."""
+    """Auto-advance removed: feedback + explanation stay until user clicks Next."""
 
-    def test_correct_answer_uses_1500ms(self):
-        """Correct answer advance delay must be 1500ms."""
+    def test_no_auto_advance(self):
+        """_scheduleNextAction must be gone — no setTimeout auto-advance."""
         html = _render_session_page()
-        assert "1500" in html, "1500ms delay missing"
+        assert "_scheduleNextAction" not in html, \
+            "_scheduleNextAction still present — auto-advance not fully removed"
 
-    def test_wrong_answer_uses_3000ms(self):
-        """Wrong answer advance delay must be 3000ms."""
+    def test_show_next_button_called_after_answer(self):
+        """_showNextButton() must be called in the answer handler (replaces auto-advance)."""
         html = _render_session_page()
-        assert "3000" in html, "3000ms delay missing"
+        assert "_showNextButton()" in html, \
+            "_showNextButton() not called in answer handler"
 
-    def test_delay_is_outcome_dependent(self):
-        """advanceDelay must branch on d.correct — correct path and wrong path must differ."""
+    def test_next_button_element_present(self):
+        """als-next-btn-wrap and als-next-btn must exist in the question phase HTML."""
         html = _render_session_page()
-        # The delay logic must be conditional on d.correct
-        assert "d.correct" in html, "d.correct not referenced in delay logic"
-        assert "advanceDelay" in html, "advanceDelay variable missing"
+        assert 'id="als-next-btn-wrap"' in html, "als-next-btn-wrap element missing"
+        assert 'id="als-next-btn"' in html, "als-next-btn element missing"
 
-    def test_schedule_next_action_accepts_delay_param(self):
-        """_scheduleNextAction must accept a delay parameter, not hardcode 1000ms."""
+    def test_next_button_hidden_by_default(self):
+        """als-next-btn-wrap must start hidden (display:none)."""
         html = _render_session_page()
-        assert "_scheduleNextAction(advanceDelay)" in html, \
-            "_scheduleNextAction must be called with advanceDelay argument"
-        # Old hardcoded 1-second call must be gone
-        assert "_scheduleNextAction();" not in html, \
-            "_scheduleNextAction() called without delay — hardcoded timing still present"
+        assert 'id="als-next-btn-wrap" style="display:none' in html, \
+            "als-next-btn-wrap is not hidden by default"
 
-    def test_auto_advance_label_shows_correct_duration(self):
-        """Auto-advance label must show '1.5s' or '3s', not the old '1s'."""
+    def test_next_button_disable_guard(self):
+        """alsNext must disable the button immediately to prevent double submission."""
         html = _render_session_page()
-        assert "1.5s" in html, "'1.5s' label missing from auto-advance"
-        assert "3s" in html, "'3s' label missing from auto-advance"
-        # Old 1-second label must be gone
-        assert "in 1s" not in html, "old 'in 1s' label still present"
+        assert "btn.disabled = true" in html, \
+            "double-click guard (btn.disabled = true) missing from alsNext"
+
+    def test_next_button_reenabled_on_error(self):
+        """alsNext must re-enable the button in the catch block (slow network recovery)."""
+        html = _render_session_page()
+        assert "btn.disabled = false" in html, \
+            "error recovery (btn.disabled = false) missing from alsNext catch block"
+
+    def test_no_old_auto_advance_element(self):
+        """als-auto-advance element must be gone."""
+        html = _render_session_page()
+        assert "als-auto-advance" not in html, \
+            "als-auto-advance element still present in template"
 
 
 class TestCategoryPickerThreshold:
