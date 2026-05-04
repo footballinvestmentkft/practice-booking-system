@@ -1,7 +1,10 @@
 """
 Seed laterality test fixtures.
 
-Creates 6 GamePresets (shooting × right/left/neutral  +  crossing × right/left/neutral)
+Creates 9 GamePresets:
+  shooting × right/left/neutral
+  crossing × right/left/neutral
+  passing  × right/left/neutral  ← added for sponsor foot_dominance bridge tests
 and 4 control users with LFA licenses for laterality-aware skill routing tests.
 
 Idempotent: code-based for presets, email-based for users.
@@ -68,6 +71,25 @@ _LAT_PRESETS = [
         "name": "Laterality Test: Crossing (neutral)",
         "foot_context": "neutral",
         "skills": ["crossing"],
+    },
+    # ── Passing presets (foot_dominance bridge test) ──────────────────────────
+    {
+        "code": "lat_passing_right",
+        "name": "Laterality Test: Passing (right foot)",
+        "foot_context": "right",
+        "skills": ["passing"],
+    },
+    {
+        "code": "lat_passing_left",
+        "name": "Laterality Test: Passing (left foot)",
+        "foot_context": "left",
+        "skills": ["passing"],
+    },
+    {
+        "code": "lat_passing_neutral",
+        "name": "Laterality Test: Passing (neutral)",
+        "foot_context": "neutral",
+        "skills": ["passing"],
     },
 ]
 

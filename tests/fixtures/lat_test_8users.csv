@@ -1,0 +1,10 @@
+# foot_dominance scale: 0 = left-dominant, 100 = right-dominant, 50 = balanced
+email,first_name,last_name,date_of_birth,position,foot_dominance,consent_given
+lat_right_strong@lat.test,Strong,Right,2000-01-15,STRIKER,85,true
+lat_right_mod@lat.test,Moderate,Right,1999-03-20,MIDFIELDER,70,true
+lat_balanced@lat.test,Balanced,Player,1998-06-10,DEFENDER,50,true
+lat_left_mod@lat.test,Moderate,Left,2001-09-05,MIDFIELDER,30,true
+lat_left_strong@lat.test,Strong,Left,1997-12-01,GOALKEEPER,15,true
+lat_no_dob@lat.test,NoDob,Edge,,STRIKER,70,true
+lat_no_consent@lat.test,NoConsent,Edge,2000-05-05,MIDFIELDER,70,false
+lat_bad_pos@lat.test,BadPos,Edge,2000-07-07,COACH,70,true
