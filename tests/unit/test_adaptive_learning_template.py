@@ -478,3 +478,82 @@ class TestLanguageSwitcherJsGuard:
         assert '&language=en' in html or "session_language" in html, (
             "alsInit URL must embed the session language"
         )
+
+
+class TestAnsweredStateHide:
+    """After submitting an answer, question card and options must be hidden.
+    Only feedback + Next button remain visible until the user advances."""
+
+    def test_question_card_has_id(self):
+        """als-question-card must carry an id= so JS can target it."""
+        html = _render_session_page()
+        assert 'id="als-question-card"' in html, \
+            'als-question-card div missing id="als-question-card"'
+
+    def test_show_answered_state_helper_present(self):
+        """_showAnsweredState() helper must exist in the template JS."""
+        html = _render_session_page()
+        assert "_showAnsweredState" in html, \
+            "_showAnsweredState helper function missing from template"
+
+    def test_show_answered_state_called_after_answer(self):
+        """_showAnsweredState() must be called in the alsAnswer success path."""
+        html = _render_session_page()
+        # Locate alsAnswer function body
+        start = html.index("function alsAnswer(")
+        end = html.index("\n    }", start)
+        body = html[start:end]
+        assert "_showAnsweredState()" in body, \
+            "_showAnsweredState() not called inside alsAnswer success path"
+
+    def test_show_answered_state_hides_question_card(self):
+        """_showAnsweredState must set display:none on als-question-card."""
+        html = _render_session_page()
+        fn_start = html.index("function _showAnsweredState(")
+        fn_end = html.index("}", fn_start)
+        fn_body = html[fn_start:fn_end]
+        assert "als-question-card" in fn_body, \
+            "_showAnsweredState does not reference als-question-card"
+        assert "display" in fn_body and "none" in fn_body, \
+            "_showAnsweredState does not set display:none on question card"
+
+    def test_show_answered_state_hides_options(self):
+        """_showAnsweredState must set display:none on als-options."""
+        html = _render_session_page()
+        fn_start = html.index("function _showAnsweredState(")
+        fn_end = html.index("}", fn_start)
+        fn_body = html[fn_start:fn_end]
+        assert "als-options" in fn_body, \
+            "_showAnsweredState does not reference als-options"
+
+    def test_render_question_restores_question_card(self):
+        """renderQuestion must restore als-question-card visibility (display='')."""
+        html = _render_session_page()
+        fn_start = html.index("function renderQuestion(")
+        fn_end = html.index("\n    }", fn_start)
+        fn_body = html[fn_start:fn_end]
+        assert "als-question-card" in fn_body, \
+            "renderQuestion does not restore als-question-card"
+
+    def test_render_question_restores_options(self):
+        """renderQuestion must restore als-options visibility (display='')."""
+        html = _render_session_page()
+        fn_start = html.index("function renderQuestion(")
+        fn_end = html.index("\n    }", fn_start)
+        fn_body = html[fn_start:fn_end]
+        assert "als-options" in fn_body and "display" in fn_body, \
+            "renderQuestion does not restore als-options display"
+
+    def test_error_path_does_not_hide_question(self):
+        """On POST /answer failure (!res.ok), _showAnsweredState must NOT be called
+        so the question remains visible for retry."""
+        html = _render_session_page()
+        fn_start = html.index("function alsAnswer(")
+        fn_end = html.index("\n    }", fn_start)
+        fn_body = html[fn_start:fn_end]
+        # Find the !res.ok error branch
+        err_start = fn_body.index("if (!res.ok)")
+        err_end = fn_body.index("return;", err_start) + len("return;")
+        err_branch = fn_body[err_start:err_end]
+        assert "_showAnsweredState" not in err_branch, \
+            "_showAnsweredState must NOT be called in the !res.ok error branch"

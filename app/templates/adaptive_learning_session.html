@@ -597,7 +597,7 @@
         </div>
         <div id="als-progress-label" class="als-progress-label">Question 0</div>
 
-        <div class="als-question-card">
+        <div id="als-question-card" class="als-question-card">
             <div id="als-question-num" class="als-question-num">Question 1</div>
             <p id="als-question-text" class="als-question-text"></p>
         </div>
@@ -1082,6 +1082,8 @@
         document.getElementById('als-feedback').style.display = 'none';
         document.getElementById('als-feedback').className = 'als-feedback';
         document.getElementById('als-next-btn-wrap').style.display = 'none';
+        document.getElementById('als-question-card').style.display = '';
+        document.getElementById('als-options').style.display = '';
         updateProgress();
         showPhase('question');
     }
@@ -1137,6 +1139,7 @@
             }
             fb.style.display = 'block';
 
+            _showAnsweredState();
             _showNextButton();
         }).catch(function () {
             showError('Network error while recording answer. Please check your connection.');
@@ -1148,6 +1151,13 @@
         var btn  = document.getElementById('als-next-btn');
         if (wrap) wrap.style.display = 'block';
         if (btn)  btn.disabled = false;
+    }
+
+    function _showAnsweredState() {
+        var card = document.getElementById('als-question-card');
+        var opts = document.getElementById('als-options');
+        if (card) card.style.display = 'none';
+        if (opts) opts.style.display = 'none';
     }
 
     /* ── Next question ─────────────────────────────────────────────────────── */
