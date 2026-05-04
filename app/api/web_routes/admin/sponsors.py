@@ -343,6 +343,8 @@ async def admin_sponsor_promotion_create(
             status_code=303,
         )
 
+    created_semester_id: int | None = None
+
     for ag in age_groups:
         suffix = datetime.now().strftime("%H%M%S%f")[:9]
         code = f"PROMO-{date.fromisoformat(start_date).strftime('%Y%m%d')}-{ag.upper()[:6]}-{suffix}"
@@ -355,6 +357,7 @@ async def admin_sponsor_promotion_create(
             status=SemesterStatus.DRAFT,
             tournament_status="DRAFT",
             semester_category=SemesterCategory.PROMOTION_EVENT,
+            specialization_type="LFA_FOOTBALL_PLAYER",
             age_group=ag,                        # PRE / YOUTH / AMATEUR / PRO — already canonical
             enrollment_cost=0,
             campus_id=int(campus_id) if campus_id.strip() else None,
@@ -364,6 +367,7 @@ async def admin_sponsor_promotion_create(
         )
         db.add(t)
         db.flush()
+        created_semester_id = t.id
 
         # Derive location from campus
         if t.campus_id:
@@ -375,6 +379,7 @@ async def admin_sponsor_promotion_create(
             semester_id=t.id,
             tournament_type_id=int(tournament_type_id) if tournament_type_id.strip() else None,
             participant_type="INDIVIDUAL",       # sponsor events are always INDIVIDUAL
+            assignment_type="OPEN_ASSIGNMENT",
             number_of_rounds=1,
         ))
         # No TournamentTeamEnrollment — sponsor events have no teams
@@ -384,6 +389,12 @@ async def admin_sponsor_promotion_create(
         "sponsor_promotion_created sponsor=%s campaign=%s age_groups=%s by admin=%s",
         sponsor.name, campaign.id, age_groups, user.email,
     )
+
+    if len(age_groups) == 1 and created_semester_id:
+        return RedirectResponse(
+            url=f"/admin/tournaments/{created_semester_id}/edit?flash=Promotion+event+created",
+            status_code=303,
+        )
     return RedirectResponse(
         url=f"/admin/sponsors/{sponsor_id}?flash=Promotion+event+created",
         status_code=303,
