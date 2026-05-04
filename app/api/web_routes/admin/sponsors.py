@@ -518,6 +518,109 @@ async def admin_sponsor_campaign_detail(
     )
 
 
+@router.post("/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}/close")
+async def admin_sponsor_campaign_close(
+    sponsor_id: int,
+    campaign_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Close a campaign — prevents further imports and audience promotions."""
+    _admin_guard(user)
+    sponsor = db.query(Sponsor).filter(Sponsor.id == sponsor_id).first()
+    if not sponsor:
+        raise HTTPException(status_code=404, detail="Partner not found")
+    campaign = (
+        db.query(SponsorCampaign)
+        .filter(SponsorCampaign.id == campaign_id, SponsorCampaign.sponsor_id == sponsor_id)
+        .first()
+    )
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    campaign.status = "CLOSED"
+    db.commit()
+    return RedirectResponse(
+        f"/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}?flash=Campaign+closed",
+        status_code=303,
+    )
+
+
+@router.post("/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}/edit")
+async def admin_sponsor_campaign_edit(
+    sponsor_id: int,
+    campaign_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Edit campaign name, credit fields, and event date."""
+    _admin_guard(user)
+    sponsor = db.query(Sponsor).filter(Sponsor.id == sponsor_id).first()
+    if not sponsor:
+        raise HTTPException(status_code=404, detail="Partner not found")
+    campaign = (
+        db.query(SponsorCampaign)
+        .filter(SponsorCampaign.id == campaign_id, SponsorCampaign.sponsor_id == sponsor_id)
+        .first()
+    )
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    base = f"/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}"
+    form = await request.form()
+
+    name = (form.get("name") or "").strip()
+    if not name:
+        return RedirectResponse(f"{base}?error=Campaign+name+is+required", status_code=303)
+
+    try:
+        credit_grant_amount = int(form.get("credit_grant_amount", 0))
+    except (ValueError, TypeError):
+        return RedirectResponse(f"{base}?error=Invalid+credit+grant+amount", status_code=303)
+
+    if credit_grant_amount < 100:
+        return RedirectResponse(
+            f"{base}?error=Credit+grant+must+be+at+least+100", status_code=303
+        )
+
+    try:
+        unlock_cost = int(form.get("unlock_cost", 0))
+    except (ValueError, TypeError):
+        return RedirectResponse(f"{base}?error=Invalid+unlock+cost", status_code=303)
+
+    if unlock_cost > credit_grant_amount:
+        return RedirectResponse(
+            f"{base}?error=Unlock+cost+cannot+exceed+credit+grant", status_code=303
+        )
+
+    if campaign.status == "CLOSED":
+        if (
+            credit_grant_amount != campaign.credit_grant_amount
+            or unlock_cost != campaign.unlock_cost
+        ):
+            return RedirectResponse(
+                f"{base}?error=Credit+fields+are+locked+for+closed+campaigns",
+                status_code=303,
+            )
+
+    event_date_str = (form.get("event_date") or "").strip()
+    event_date_val: date | None = None
+    if event_date_str:
+        try:
+            event_date_val = date.fromisoformat(event_date_str)
+        except ValueError:
+            return RedirectResponse(f"{base}?error=Invalid+event+date", status_code=303)
+
+    campaign.name = name
+    campaign.credit_grant_amount = credit_grant_amount
+    campaign.unlock_cost = unlock_cost
+    campaign.event_date = event_date_val
+    db.commit()
+
+    return RedirectResponse(f"{base}?flash=Campaign+updated", status_code=303)
+
+
 # ── P3: Campaign-scoped audience list ────────────────────────────────────────
 
 def _build_audience_context(
@@ -623,6 +726,19 @@ async def admin_sponsor_campaign_audience_promote(
     if not sponsor.is_active:
         return RedirectResponse(
             f"/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}?error=Inactive+partner",
+            status_code=303,
+        )
+    campaign = (
+        db.query(SponsorCampaign)
+        .filter(SponsorCampaign.id == campaign_id, SponsorCampaign.sponsor_id == sponsor_id)
+        .first()
+    )
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    if campaign.status == "CLOSED":
+        return RedirectResponse(
+            f"/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}/audience"
+            "?error=Campaign+is+closed+-+promote+not+allowed",
             status_code=303,
         )
 
@@ -779,6 +895,12 @@ async def admin_sponsor_campaign_import_preview(
             "?error=Inactive+partner+cannot+import+audience",
             status_code=303,
         )
+    if campaign.status == "CLOSED":
+        return RedirectResponse(
+            f"/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}"
+            "?error=Campaign+is+closed+-+import+not+allowed",
+            status_code=303,
+        )
 
     content = await file.read()
     base_url = f"/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}/import"
@@ -829,6 +951,12 @@ async def admin_sponsor_campaign_import_apply(
         return RedirectResponse(
             f"/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}"
             "?error=Inactive+partner+cannot+import+audience",
+            status_code=303,
+        )
+    if campaign.status == "CLOSED":
+        return RedirectResponse(
+            f"/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}"
+            "?error=Campaign+is+closed+-+import+not+allowed",
             status_code=303,
         )
 
