@@ -27048,6 +27048,106 @@
         ]
       }
     },
+    "/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}/close": {
+      "post": {
+        "description": "Close a campaign \u2014 prevents further imports and audience promotions.",
+        "operationId": "admin_sponsor_campaign_close_admin_sponsors__sponsor_id__campaigns__campaign_id__close_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "title": "Campaign Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Sponsor Campaign Close",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}/edit": {
+      "post": {
+        "description": "Edit campaign name, credit fields, and event date.",
+        "operationId": "admin_sponsor_campaign_edit_admin_sponsors__sponsor_id__campaigns__campaign_id__edit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sponsor_id",
+            "required": true,
+            "schema": {
+              "title": "Sponsor Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "title": "Campaign Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Sponsor Campaign Edit",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/admin/sponsors/{sponsor_id}/campaigns/{campaign_id}/import": {
       "get": {
         "description": "Render CSV upload form scoped to a campaign.",
