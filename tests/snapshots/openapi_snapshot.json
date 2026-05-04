@@ -2797,6 +2797,11 @@
             "title": "Campaign Type",
             "type": "string"
           },
+          "credit_grant_amount": {
+            "default": 100,
+            "title": "Credit Grant Amount",
+            "type": "integer"
+          },
           "event_date": {
             "anyOf": [
               {
@@ -2822,6 +2827,16 @@
               }
             ],
             "title": "Notes"
+          },
+          "specialization_type": {
+            "default": "LFA_FOOTBALL_PLAYER",
+            "title": "Specialization Type",
+            "type": "string"
+          },
+          "unlock_cost": {
+            "default": 100,
+            "title": "Unlock Cost",
+            "type": "integer"
           }
         },
         "required": [
