@@ -8,6 +8,8 @@ TC-SM-04  knockout R1: duplicate ID in pool → session skipped, error logged
 TC-SM-05  swiss HEAD_TO_HEAD: clean pool → no self-match sessions
 TC-SM-06  swiss HEAD_TO_HEAD: duplicate ID in pool → session skipped, error logged
 TC-SM-07  dedup_participant_ids: preserves order, logs on duplicate
+TC-SM-08  group_knockout HEAD_TO_HEAD: clean pool → no self-match sessions
+TC-SM-09  group_knockout HEAD_TO_HEAD: duplicate ID in pool → session skipped, no dup in ids
 """
 import pytest
 from datetime import datetime, timezone
@@ -196,3 +198,47 @@ class TestSwissHeadToHeadSelfMatchGuard:
             ids = s.get("participant_user_ids") or []
             if len(ids) == 2:
                 assert ids[0] != ids[1], f"Self-match in Swiss after dedup: {ids}"
+
+
+# ---------------------------------------------------------------------------
+# TC-SM-08/09: Group Knockout HEAD_TO_HEAD
+# ---------------------------------------------------------------------------
+
+class TestGroupKnockoutSelfMatchGuard:
+    def _generate(self, player_ids):
+        from app.services.tournament.session_generation.formats.group_knockout_generator import GroupKnockoutGenerator
+        enrollments = [_make_enrollment(uid) for uid in player_ids]
+        db = _make_db(enrollments)
+        gen = GroupKnockoutGenerator(db)
+        tournament = _make_tournament()
+        tt = _make_tournament_type()
+        tt.config = {"round_names": {}, "group_configuration": {}}
+        return gen.generate(
+            tournament=tournament,
+            tournament_type=tt,
+            player_count=len(player_ids),
+            parallel_fields=1,
+            session_duration=60,
+            break_minutes=10,
+        )
+
+    def test_tc_sm_08_clean_pool_no_self_matches(self):
+        # 8 players → GroupDistribution → 2 groups of 4 → 3 rounds × 2 matches each
+        sessions = self._generate([11, 22, 33, 44, 55, 66, 77, 88])
+        assert len(sessions) > 0, "Expected sessions to be generated"
+        for s in sessions:
+            ids = s.get("participant_user_ids") or []
+            if len(ids) == 2:
+                assert ids[0] != ids[1], f"Self-match in group stage: {ids}"
+
+    def test_tc_sm_09_duplicate_pool_session_skipped(self):
+        # [11,22,33,44,55,66,77,88,33] → dedup → 8 unique players
+        # All generated 1v1 sessions must have distinct participant IDs
+        raw = [11, 22, 33, 44, 55, 66, 77, 88, 33]
+        sessions = self._generate(raw)
+        for s in sessions:
+            ids = s.get("participant_user_ids") or []
+            if len(ids) == 2:
+                assert ids[0] != ids[1], f"Self-match found in group_knockout: {ids}"
+            # No duplicate IDs within any single session's participant list
+            assert len(ids) == len(set(ids)), f"Duplicate participant_ids in session: {ids}"
