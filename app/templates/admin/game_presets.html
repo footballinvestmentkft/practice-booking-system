@@ -60,6 +60,7 @@
     .fc-right   { background: #f0fff4; color: #276749; border: 1px solid #9ae6b4; }
     .fc-left    { background: #ebf8ff; color: #2b6cb0; border: 1px solid #90cdf4; }
     .fc-neutral { background: #f7fafc; color: #718096; border: 1px solid #e2e8f0; }
+    .fc-default { background: #f7fafc; color: #a0aec0; border: 1px dashed #cbd5e0; font-style: italic; font-weight: 400; }
 
     /* Mobile: stack table rows as cards */
     @media (max-width: 768px) {
@@ -117,8 +118,9 @@
             {% for p in presets %}
             {% set sc = p.game_config.get('skill_config', {}) if p.game_config else {} %}
             {% set skills = sc.get('skills_tested', []) %}
-            {% set foot_ctx = sc.get('foot_context', '') %}
-            <tr class="{% if foot_ctx == 'right' %}lat-right{% elif foot_ctx == 'left' %}lat-left{% elif foot_ctx == 'neutral' %}lat-neutral{% endif %}">
+            {% set foot_ctx_raw = sc.get('foot_context') %}
+            {% set foot_ctx = foot_ctx_raw or p.foot_context %}
+            <tr class="{% if foot_ctx_raw == 'right' %}lat-right{% elif foot_ctx_raw == 'left' %}lat-left{% elif foot_ctx_raw == 'neutral' %}lat-neutral{% endif %}">
                 <td data-label="">
                     {% if p.is_active %}
                     <span title="Active" style="color: #276749; font-size: 0.9rem;">●</span>
@@ -132,10 +134,10 @@
                 </td>
                 <td data-label="Code"><code class="preset-code">{{ p.code }}</code></td>
                 <td data-label="Foot Context">
-                    {% if foot_ctx %}
+                    {% if foot_ctx_raw %}
                     <span class="fc-badge fc-{{ foot_ctx }}">{{ foot_ctx }}</span>
                     {% else %}
-                    <span style="color: #cbd5e0; font-size: 0.8rem;">—</span>
+                    <span class="fc-badge fc-default" title="No explicit foot_context stored — defaults to neutral at runtime">{{ foot_ctx }}/default</span>
                     {% endif %}
                 </td>
                 <td data-label="Skills">
