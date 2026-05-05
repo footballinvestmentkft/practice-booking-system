@@ -2271,6 +2271,11 @@
             "title": "Difficulty",
             "type": "string"
           },
+          "foot_context": {
+            "default": "neutral",
+            "title": "Foot Context",
+            "type": "string"
+          },
           "min_players": {
             "default": 4,
             "title": "Min Players",
@@ -2536,6 +2541,11 @@
           "difficulty": {
             "default": "",
             "title": "Difficulty",
+            "type": "string"
+          },
+          "foot_context": {
+            "default": "neutral",
+            "title": "Foot Context",
             "type": "string"
           },
           "min_players": {
