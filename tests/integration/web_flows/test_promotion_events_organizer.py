@@ -20,12 +20,13 @@ from app.database import get_db
 from app.dependencies import get_current_user_web, get_current_admin_user_hybrid
 from app.models.user import User, UserRole
 from app.models.club import Club
-from app.models.sponsor import Sponsor
+from app.models.sponsor import Sponsor, SponsorCampaign
 from app.models.semester import Semester, SemesterCategory
 from app.models.campus import Campus
 from app.models.location import Location
 from app.models.team import Team, TeamMember
 from app.models.tournament_type import TournamentType as TournamentTypeModel
+from app.models.tournament_configuration import TournamentConfiguration
 from app.core.security import get_password_hash
 from app.services.club_service import create_club
 
@@ -278,5 +279,218 @@ class TestStandaloneOrganizerCell:
                 "Expected '— standalone —' label for standalone event in /admin/promotion-events, "
                 "but 'standalone' not found in page HTML"
             )
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── SPON-PROMO-01..05: Sponsor Promotion Create — Block A + B ─────────────────
+
+
+def _make_campaign(db: Session, sponsor: Sponsor, admin: User) -> SponsorCampaign:
+    c = SponsorCampaign(
+        sponsor_id=sponsor.id,
+        name=f"Test Campaign {uuid.uuid4().hex[:6]}",
+        status="ACTIVE",
+        credit_grant_amount=200,
+        unlock_cost=100,
+        created_by=admin.id,
+    )
+    db.add(c)
+    db.flush()
+    return c
+
+
+def _post_promotion(
+    client: TestClient,
+    sponsor_id: int,
+    campaign_id: int,
+    age_groups: list[str],
+) -> object:
+    return client.post(
+        f"/admin/sponsors/{sponsor_id}/promotion",
+        data={
+            "tournament_name": f"Test Promo {uuid.uuid4().hex[:6]}",
+            "start_date": "2026-09-01",
+            "end_date": "2026-09-03",
+            "campaign_id": str(campaign_id),
+            "campus_id": "",
+            "tournament_type_id": "",
+            "age_groups": age_groups,
+        },
+        follow_redirects=False,
+    )
+
+
+class TestSponsorPromotionBlockA:
+    """SPON-PROMO-01/02: Block A — specialization_type + assignment_type set on new records."""
+
+    def test_spon_promo_01_specialization_type(self, test_db: Session):
+        """SPON-PROMO-01: created Semester has specialization_type='LFA_FOOTBALL_PLAYER'."""
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db, admin)
+        campaign = _make_campaign(test_db, sponsor, admin)
+        test_db.commit()
+
+        client = _admin_client(test_db, admin)
+        try:
+            resp = _post_promotion(client, sponsor.id, campaign.id, ["AMATEUR"])
+            assert resp.status_code in (302, 303), f"Expected redirect, got {resp.status_code}"
+
+            test_db.expire_all()
+            event = (
+                test_db.query(Semester)
+                .filter(
+                    Semester.semester_category == SemesterCategory.PROMOTION_EVENT,
+                    Semester.organizer_sponsor_id == sponsor.id,
+                    Semester.organizer_campaign_id == campaign.id,
+                )
+                .first()
+            )
+            assert event is not None, "No promotion event found after POST"
+            assert event.specialization_type == "LFA_FOOTBALL_PLAYER", (
+                f"Expected 'LFA_FOOTBALL_PLAYER', got '{event.specialization_type}'"
+            )
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_spon_promo_02_assignment_type(self, test_db: Session):
+        """SPON-PROMO-02: created TournamentConfiguration has assignment_type='OPEN_ASSIGNMENT'."""
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db, admin)
+        campaign = _make_campaign(test_db, sponsor, admin)
+        test_db.commit()
+
+        client = _admin_client(test_db, admin)
+        try:
+            resp = _post_promotion(client, sponsor.id, campaign.id, ["YOUTH"])
+            assert resp.status_code in (302, 303), f"Expected redirect, got {resp.status_code}"
+
+            test_db.expire_all()
+            event = (
+                test_db.query(Semester)
+                .filter(
+                    Semester.semester_category == SemesterCategory.PROMOTION_EVENT,
+                    Semester.organizer_sponsor_id == sponsor.id,
+                )
+                .first()
+            )
+            assert event is not None, "No promotion event found after POST"
+            cfg = (
+                test_db.query(TournamentConfiguration)
+                .filter(TournamentConfiguration.semester_id == event.id)
+                .first()
+            )
+            assert cfg is not None, "No TournamentConfiguration found"
+            assert cfg.assignment_type == "OPEN_ASSIGNMENT", (
+                f"Expected 'OPEN_ASSIGNMENT', got '{cfg.assignment_type}'"
+            )
+        finally:
+            app.dependency_overrides.clear()
+
+
+class TestSponsorPromotionBlockBRedirect:
+    """SPON-PROMO-03/04: Block B — single age_group → edit page; multi → sponsor detail."""
+
+    def test_spon_promo_03_single_age_group_redirects_to_edit(self, test_db: Session):
+        """SPON-PROMO-03: single age_group → redirect to /admin/tournaments/{id}/edit."""
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db, admin)
+        campaign = _make_campaign(test_db, sponsor, admin)
+        test_db.commit()
+
+        client = _admin_client(test_db, admin)
+        try:
+            resp = _post_promotion(client, sponsor.id, campaign.id, ["AMATEUR"])
+            assert resp.status_code in (302, 303), f"Expected redirect, got {resp.status_code}"
+
+            location = resp.headers.get("location", "")
+            assert "/admin/tournaments/" in location and "/edit" in location, (
+                f"Expected redirect to /admin/tournaments/{{id}}/edit, got: '{location}'"
+            )
+            assert f"/admin/sponsors/{sponsor.id}" not in location, (
+                f"Single-group create should NOT redirect to sponsor page, got: '{location}'"
+            )
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_spon_promo_04_multi_age_group_redirects_to_sponsor(self, test_db: Session):
+        """SPON-PROMO-04: multiple age_groups → redirect to /admin/sponsors/{id}."""
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db, admin)
+        campaign = _make_campaign(test_db, sponsor, admin)
+        test_db.commit()
+
+        client = _admin_client(test_db, admin)
+        try:
+            resp = _post_promotion(client, sponsor.id, campaign.id, ["AMATEUR", "YOUTH"])
+            assert resp.status_code in (302, 303), f"Expected redirect, got {resp.status_code}"
+
+            location = resp.headers.get("location", "")
+            assert f"/admin/sponsors/{sponsor.id}" in location, (
+                f"Multi-group create should redirect to sponsor page, got: '{location}'"
+            )
+            assert "/edit" not in location, (
+                f"Multi-group create should NOT redirect to edit page, got: '{location}'"
+            )
+
+            test_db.expire_all()
+            events = (
+                test_db.query(Semester)
+                .filter(
+                    Semester.semester_category == SemesterCategory.PROMOTION_EVENT,
+                    Semester.organizer_sponsor_id == sponsor.id,
+                    Semester.organizer_campaign_id == campaign.id,
+                )
+                .all()
+            )
+            assert len(events) == 2, f"Expected 2 events, got {len(events)}"
+        finally:
+            app.dependency_overrides.clear()
+
+
+class TestSponsorPromotionOrganizerIntegrity:
+    """SPON-PROMO-05: organizer FK fields intact on both single and multi age_group creates."""
+
+    def test_spon_promo_05_organizer_ids_set_on_all_records(self, test_db: Session):
+        """SPON-PROMO-05: organizer_sponsor_id + organizer_campaign_id set on every created record."""
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db, admin)
+        campaign = _make_campaign(test_db, sponsor, admin)
+        test_db.commit()
+
+        client = _admin_client(test_db, admin)
+        try:
+            resp = _post_promotion(client, sponsor.id, campaign.id, ["PRE", "AMATEUR"])
+            assert resp.status_code in (302, 303)
+
+            test_db.expire_all()
+            events = (
+                test_db.query(Semester)
+                .filter(
+                    Semester.semester_category == SemesterCategory.PROMOTION_EVENT,
+                    Semester.organizer_sponsor_id == sponsor.id,
+                )
+                .order_by(Semester.id)
+                .all()
+            )
+            assert len(events) == 2, f"Expected 2 events, got {len(events)}"
+            for ev in events:
+                assert ev.organizer_sponsor_id == sponsor.id, (
+                    f"organizer_sponsor_id: expected {sponsor.id}, got {ev.organizer_sponsor_id}"
+                )
+                assert ev.organizer_campaign_id == campaign.id, (
+                    f"organizer_campaign_id: expected {campaign.id}, got {ev.organizer_campaign_id}"
+                )
+                assert ev.organizer_club_id is None, (
+                    f"organizer_club_id should be None, got {ev.organizer_club_id}"
+                )
+                assert ev.specialization_type == "LFA_FOOTBALL_PLAYER"
+                cfg = (
+                    test_db.query(TournamentConfiguration)
+                    .filter(TournamentConfiguration.semester_id == ev.id)
+                    .first()
+                )
+                assert cfg is not None
+                assert cfg.assignment_type == "OPEN_ASSIGNMENT"
         finally:
             app.dependency_overrides.clear()

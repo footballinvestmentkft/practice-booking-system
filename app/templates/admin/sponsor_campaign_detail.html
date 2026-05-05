@@ -34,6 +34,28 @@
     .alert-bar { padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; }
     .alert-success { background: #f0fff4; border: 1px solid #9ae6b4; color: #276749; }
     .alert-error   { background: #fff5f5; border: 1px solid #feb2b2; color: #9b2c2c; }
+
+    .status-badge { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700; }
+    .status-badge--active { background: #f0fff4; color: #276749; border: 1px solid #9ae6b4; }
+    .status-badge--closed { background: #f7fafc; color: #718096; border: 1px solid #cbd5e0; }
+
+    .btn-danger { padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.83rem; font-weight: 600; border: 1px solid #fc8181; background: white; color: #c53030; cursor: pointer; }
+    .btn-danger:hover { background: #fff5f5; }
+
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-box { background: white; border-radius: 12px; padding: 2rem; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .modal-box h3 { margin: 0 0 1.5rem; font-size: 1.1rem; color: #2d3748; }
+    .m-form-group { margin-bottom: 1rem; }
+    .m-form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: #718096; margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .m-form-group input, .m-form-group select { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box; font-family: inherit; }
+    .m-form-group input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.15); }
+    .m-form-group input[readonly] { background: #f7fafc; color: #718096; cursor: not-allowed; }
+    .form-row { display: flex; gap: 1rem; }
+    .form-row .m-form-group { flex: 1; }
+    .field-hint { font-size: 0.75rem; color: #a0aec0; margin-top: 0.2rem; }
+    .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
+    .btn-modal-primary { background: #5a4a9a; color: white; border: none; padding: 0.5rem 1.25rem; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+    .btn-modal-secondary { background: white; color: #718096; border: 1px solid #e2e8f0; padding: 0.5rem 1.25rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
 </style>
 {% endblock %}
 
@@ -58,15 +80,26 @@
 <div class="section-card">
     <div class="section-header">
         <h3>📊 Campaign Overview</h3>
-        <div style="display:flex;gap:0.5rem;">
+        <div style="display:flex;gap:0.5rem;align-items:center;">
             {% if active_entries %}
             <a href="/admin/sponsors/{{ sponsor.id }}/campaigns/{{ campaign.id }}/audience"
                class="btn-action">👥 View Audience →</a>
             {% endif %}
-            {% if sponsor.is_active %}
+            {% if sponsor.is_active and campaign.status == 'ACTIVE' %}
             <a href="/admin/sponsors/{{ sponsor.id }}/campaigns/{{ campaign.id }}/import"
                class="btn-cta">↑ Upload CSV</a>
+            <form method="POST"
+                  action="/admin/sponsors/{{ sponsor.id }}/campaigns/{{ campaign.id }}/close"
+                  style="margin:0;"
+                  onsubmit="return confirm('Close this campaign?\n\nNo further imports or promotions will be allowed.')">
+                <input type="hidden" name="csrf_token" class="csrf-field">
+                <button type="submit" class="btn-danger">✕ Close Campaign</button>
+            </form>
             {% endif %}
+            <button class="btn-action"
+                    onclick="document.getElementById('edit-campaign-modal').style.display='flex'">
+                ✏️ Edit
+            </button>
         </div>
     </div>
     <div class="section-body">
@@ -89,7 +122,21 @@
             </div>
             <div class="meta-item">
                 <div class="meta-label">Status</div>
-                <div class="meta-value" style="font-size:0.85rem;">{{ campaign.status }}</div>
+                <div class="meta-value" style="font-size:0.85rem;">
+                    <span class="status-badge status-badge--{{ campaign.status | lower }}">{{ campaign.status }}</span>
+                </div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Specialization</div>
+                <div class="meta-value" style="font-size:0.85rem;">{{ campaign.specialization_type }}</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Credit Grant</div>
+                <div class="meta-value" style="color:#38a169;">{{ campaign.credit_grant_amount }}</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Unlock Cost</div>
+                <div class="meta-value" style="color:#553c9a;">{{ campaign.unlock_cost }}</div>
             </div>
             {% if campaign.event_date %}
             <div class="meta-item">
@@ -136,12 +183,59 @@
         {% else %}
         <p style="color:#a0aec0;font-size:0.85rem;margin:0;">
             No imports yet.
-            {% if sponsor.is_active %}
+            {% if sponsor.is_active and campaign.status == 'ACTIVE' %}
             <a href="/admin/sponsors/{{ sponsor.id }}/campaigns/{{ campaign.id }}/import"
                style="color:#667eea;">Upload a CSV to this campaign.</a>
             {% endif %}
         </p>
         {% endif %}
+    </div>
+</div>
+
+<!-- ── Edit Campaign Modal ─────────────────────────────────────────────────── -->
+<div id="edit-campaign-modal" class="modal-overlay">
+    <div class="modal-box">
+        <h3>✏️ Edit Campaign</h3>
+        <form method="POST"
+              action="/admin/sponsors/{{ sponsor.id }}/campaigns/{{ campaign.id }}/edit">
+            <input type="hidden" name="csrf_token" class="csrf-field">
+            <div class="m-form-group">
+                <label>Campaign Name *</label>
+                <input name="name" type="text" required value="{{ campaign.name }}">
+            </div>
+            <div class="m-form-group">
+                <label>Event Date</label>
+                <input name="event_date" type="date"
+                       value="{{ campaign.event_date.strftime('%Y-%m-%d') if campaign.event_date else '' }}">
+            </div>
+            <div class="form-row">
+                <div class="m-form-group">
+                    <label>Credit Grant (min 100) *</label>
+                    <input name="credit_grant_amount" type="number" min="100" required
+                           value="{{ campaign.credit_grant_amount }}"
+                           {% if campaign.status == 'CLOSED' %}readonly{% endif %}>
+                    <div class="field-hint">
+                        {% if campaign.status == 'CLOSED' %}Locked — campaign is closed.{% else %}Credits awarded to each promoted participant.{% endif %}
+                    </div>
+                </div>
+                <div class="m-form-group">
+                    <label>Unlock Cost *</label>
+                    <input name="unlock_cost" type="number" min="0" required
+                           value="{{ campaign.unlock_cost }}"
+                           {% if campaign.status == 'CLOSED' %}readonly{% endif %}>
+                    <div class="field-hint">
+                        {% if campaign.status == 'CLOSED' %}Locked — campaign is closed.{% else %}Deducted for specialization activation (≤ grant).{% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-secondary"
+                        onclick="document.getElementById('edit-campaign-modal').style.display='none'">
+                    Cancel
+                </button>
+                <button type="submit" class="btn-modal-primary">Save Changes</button>
+            </div>
+        </form>
     </div>
 </div>
 

@@ -44,6 +44,9 @@ async def admin_game_presets_page(
     )
 
 
+_VALID_FOOT_CONTEXTS = frozenset({"right", "left", "neutral"})
+
+
 @router.post("/admin/game-presets")
 async def admin_create_game_preset(
     request: Request,
@@ -54,6 +57,7 @@ async def admin_create_game_preset(
     difficulty: str = Form(""),
     min_players: int = Form(4),
     skill_impact: str = Form(""),
+    foot_context: str = Form("neutral"),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web)
 ):
@@ -75,6 +79,7 @@ async def admin_create_game_preset(
 
     total = sum(weights.get(s, 1) for s in skills) or 1
     skill_weights = {s: round(weights.get(s, 1) / total, 4) for s in skills}
+    resolved_foot_context = foot_context if foot_context in _VALID_FOOT_CONTEXTS else "neutral"
 
     game_config = {
         "version": "1.0",
@@ -83,6 +88,7 @@ async def admin_create_game_preset(
             "skills_tested": skills,
             "skill_weights": skill_weights,
             "skill_impact_on_matches": bool(skill_impact),
+            "foot_context": resolved_foot_context,
         },
         "simulation_config": {},
         "metadata": {
@@ -142,6 +148,7 @@ async def admin_edit_game_preset_submit(
     difficulty: str = Form(""),
     min_players: int = Form(4),
     skill_impact: str = Form(""),
+    foot_context: str = Form("neutral"),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web)
 ):
@@ -163,6 +170,7 @@ async def admin_edit_game_preset_submit(
 
     total = sum(weights.get(s, 1) for s in skills) or 1
     skill_weights = {s: round(weights.get(s, 1) / total, 4) for s in skills}
+    resolved_foot_context = foot_context if foot_context in _VALID_FOOT_CONTEXTS else "neutral"
 
     existing_config = preset.game_config or {}
     new_config = {
@@ -171,6 +179,7 @@ async def admin_edit_game_preset_submit(
             "skills_tested": skills,
             "skill_weights": skill_weights,
             "skill_impact_on_matches": bool(skill_impact),
+            "foot_context": resolved_foot_context,
         },
         "metadata": {
             "game_category": category or None,

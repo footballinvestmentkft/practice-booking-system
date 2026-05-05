@@ -2,8 +2,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Optional
+import logging
 import random
 import math
+
+logger = logging.getLogger(__name__)
 
 from ..models.quiz import (
     Quiz, QuizQuestion, UserQuestionPerformance, AdaptiveLearningSession,
@@ -84,11 +87,16 @@ class AdaptiveLearningService:
         if not selected_question:
             return {"session_complete": True, "reason": "pool_exhausted"}
         
+        # Shuffle answer options so the correct answer position is random.
+        # Grading is ID-based (selected_option_id), so shuffle does not affect correctness check.
+        shuffled_options = list(selected_question.answer_options)
+        random.shuffle(shuffled_options)
+
         # Return question with session info
         return {
             "id": selected_question.id,
             "text": selected_question.question_text,
-            "options": [{"id": opt.id, "text": opt.option_text} for opt in selected_question.answer_options],
+            "options": [{"id": opt.id, "text": opt.option_text} for opt in shuffled_options],
             "type": selected_question.question_type.value if selected_question.question_type else "multiple_choice",
             "difficulty": self._get_question_difficulty(selected_question.id),
             "session_time_remaining": self._get_session_time_remaining(session)
@@ -249,8 +257,9 @@ class AdaptiveLearningService:
         return {
             "weak_concepts": [p for p in performances if p.mastery_level < 0.6],
             "strong_concepts": [p for p in performances if p.mastery_level > 0.8],
-            "due_for_review": [p for p in performances if p.next_review_at and 
-                             p.next_review_at <= datetime.now(timezone.utc)]
+            "due_for_review": [p for p in performances if p.next_review_at and
+                               p.next_review_at <= datetime.now(timezone.utc)],
+            "attempted_ids": {p.question_id for p in performances},
         }
     
     def _get_candidate_questions(
@@ -288,6 +297,12 @@ class AdaptiveLearningService:
 
         # Fall back to all questions matching base filters (no metadata required)
         if not questions:
+            logger.warning(
+                "al_difficulty_fallback category=%s target=%.2f range=±0.2 module=%r → full pool",
+                category.value if hasattr(category, "value") else category,
+                target_difficulty,
+                module_prefix,
+            )
             questions = (
                 self.db.query(QuizQuestion)
                 .join(Quiz)
@@ -297,25 +312,29 @@ class AdaptiveLearningService:
 
         return questions
     
-    def _select_adaptive_question(self, candidate_questions: List[QuizQuestion], 
-                                performance_data: Dict, session: AdaptiveLearningSession) -> QuizQuestion:
+    def _select_adaptive_question(self, candidate_questions: List[QuizQuestion],
+                                  performance_data: Dict, session: AdaptiveLearningSession) -> QuizQuestion:
         """Adaptív kérdésválasztó algoritmus"""
-        
-        # Prioritize questions due for review
-        due_questions = [q for q in candidate_questions 
-                        if any(p.question_id == q.id for p in performance_data["due_for_review"])]
-        
+        attempted_ids = performance_data.get("attempted_ids", set())
+
+        # Priority 0: questions the user has never attempted — maximises pool coverage
+        never_seen = [q for q in candidate_questions if q.id not in attempted_ids]
+        if never_seen:
+            return random.choice(never_seen)
+
+        # Priority 1: questions due for spaced-repetition review
+        due_questions = [q for q in candidate_questions
+                         if any(p.question_id == q.id for p in performance_data["due_for_review"])]
         if due_questions:
             return random.choice(due_questions)
-            
-        # Focus on weak concepts
-        weak_concept_questions = [q for q in candidate_questions 
-                                if any(p.question_id == q.id for p in performance_data["weak_concepts"])]
-        
-        if weak_concept_questions and random.random() < 0.7:  # 70% chance to focus on weak areas
+
+        # Priority 2: weak concepts (mastery < 0.6) — 70 % chance
+        weak_concept_questions = [q for q in candidate_questions
+                                   if any(p.question_id == q.id for p in performance_data["weak_concepts"])]
+        if weak_concept_questions and random.random() < 0.7:
             return random.choice(weak_concept_questions)
-        
-        # Otherwise, random selection from candidates
+
+        # Fallback: random from all candidates
         return random.choice(candidate_questions)
     
     def _calculate_performance_trend(self, session: AdaptiveLearningSession) -> float:

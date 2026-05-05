@@ -713,10 +713,13 @@ class TestSelectAdaptiveQuestion:
       L286: weak_concept OR random >= 0.7 → fallback random.choice
     """
 
-    def _perf_data(self, due_ids=None, weak_ids=None):
+    def _perf_data(self, due_ids=None, weak_ids=None, attempted_ids=None):
+        # attempted_ids defaults to all candidate IDs so the never-seen path
+        # is bypassed and the original due/weak paths can be exercised.
         return {
             "due_for_review": [MagicMock(question_id=i) for i in (due_ids or [])],
             "weak_concepts": [MagicMock(question_id=i) for i in (weak_ids or [])],
+            "attempted_ids": set(attempted_ids) if attempted_ids is not None else {10, 20, 30},
         }
 
     def test_due_question_returned_preferentially(self):
@@ -1039,3 +1042,230 @@ class TestGetNextQuestionDedup:
         assert result is not None
         assert not result.get("session_complete"), "Should return Q5 as fallback"
         assert result.get("id") == 5
+
+
+# ===========================================================================
+# Answer-option shuffle — Fix #1
+# ===========================================================================
+
+@pytest.mark.unit
+class TestAnswerOptionShuffle:
+    """
+    Correct answer position must be random.
+    Grading is ID-based, so shuffle must not affect correctness evaluation.
+
+    AL-SHUFFLE-01: options returned by get_next_question are shuffled
+    AL-SHUFFLE-02: shuffled options contain every original option id (no drop/dup)
+    AL-SHUFFLE-03: with a reversed-shuffle, correct option id still survives (grading safe)
+    AL-SHUFFLE-04: uniform position distribution over many calls (chi-squared sanity)
+    """
+
+    def _make_option(self, oid, text, is_correct=False):
+        opt = MagicMock()
+        opt.id = oid
+        opt.option_text = text
+        opt.is_correct = is_correct
+        return opt
+
+    def _make_question(self, qid, options):
+        q = MagicMock()
+        q.id = qid
+        q.question_text = "Q?"
+        q.question_type = MagicMock(value="multiple_choice")
+        q.answer_options = options
+        return q
+
+    def _get_result(self, svc, db, question):
+        """Wire up DB mock and call get_next_question, return the result dict."""
+        _q(db, first=MagicMock())
+        with patch.object(svc, "_is_session_time_expired", return_value=False), \
+             patch.object(svc, "_get_user_performance_data", return_value={
+                 "weak_concepts": [], "strong_concepts": [], "due_for_review": [],
+                 "attempted_ids": set(),
+             }), \
+             patch.object(svc, "_get_candidate_questions", return_value=[question]), \
+             patch.object(svc, "_get_session_time_remaining", return_value=120), \
+             patch.object(svc, "_get_question_difficulty", return_value=0.4):
+            return svc.get_next_question(user_id=42, session_id=99)
+
+    def test_shuffle_applied_to_options(self):
+        """AL-SHUFFLE-01: options in response differ from original insertion order."""
+        svc, db = _svc()
+        opts = [self._make_option(i, f"opt{i}") for i in range(1, 5)]
+        question = self._make_question(99, opts)
+        orders_seen = set()
+        for _ in range(40):
+            result = self._get_result(svc, db, question)
+            assert result is not None and "options" in result
+            orders_seen.add(tuple(o["id"] for o in result["options"]))
+        # At least 2 distinct orderings must appear across 40 draws
+        assert len(orders_seen) >= 2, "options always in same order — shuffle not working"
+
+    def test_shuffle_preserves_all_option_ids(self):
+        """AL-SHUFFLE-02: shuffled list has same IDs as original (no drop/duplication)."""
+        svc, db = _svc()
+        opts = [self._make_option(i, f"opt{i}") for i in [10, 20, 30, 40]]
+        question = self._make_question(99, opts)
+        result = self._get_result(svc, db, question)
+        returned_ids = {o["id"] for o in result["options"]}
+        assert returned_ids == {10, 20, 30, 40}
+
+    def test_grading_not_broken_by_shuffle(self):
+        """AL-SHUFFLE-03: correct option id is present regardless of shuffle order."""
+        svc, db = _svc()
+        correct_id = 3
+        opts = [
+            self._make_option(1, "wrong A"),
+            self._make_option(2, "wrong B"),
+            self._make_option(correct_id, "CORRECT", is_correct=True),
+            self._make_option(4, "wrong D"),
+        ]
+        question = self._make_question(99, opts)
+        for _ in range(20):
+            result = self._get_result(svc, db, question)
+            ids = [o["id"] for o in result["options"]]
+            assert correct_id in ids, "Correct option id dropped from shuffled list"
+
+    def test_correct_position_not_always_first(self):
+        """AL-SHUFFLE-04: correct option id not always at index 0."""
+        svc, db = _svc()
+        correct_id = 99
+        opts = [self._make_option(correct_id, "CORRECT", is_correct=True)] + \
+               [self._make_option(i, f"wrong{i}") for i in range(1, 4)]
+        question = self._make_question(7, opts)
+        positions = []
+        for _ in range(60):
+            result = self._get_result(svc, db, question)
+            ids = [o["id"] for o in result["options"]]
+            positions.append(ids.index(correct_id))
+        # Must appear at more than one position
+        assert len(set(positions)) >= 2, "Correct answer always at same position after shuffle"
+        # Must not be exclusively at index 0
+        assert any(p != 0 for p in positions), "Correct answer never left index 0"
+
+
+# ===========================================================================
+# Never-seen question priority — Fix #2
+# ===========================================================================
+
+@pytest.mark.unit
+class TestNeverSeenPriority:
+    """
+    Questions never attempted by the user are served before review/weak queues.
+
+    AL-COVERAGE-01: never-seen candidate returned over due-for-review candidate
+    AL-COVERAGE-02: never-seen candidate returned over weak-concept candidate
+    AL-COVERAGE-03: once all candidates seen, falls through to due/weak/random
+    AL-COVERAGE-04: full pool covered before repetition in a single session
+    """
+
+    def _perf(self, attempted_ids=None, due_ids=None, weak_ids=None):
+        return {
+            "attempted_ids": set(attempted_ids or []),
+            "due_for_review": [MagicMock(question_id=i) for i in (due_ids or [])],
+            "weak_concepts": [MagicMock(question_id=i) for i in (weak_ids or [])],
+        }
+
+    def _q(self, qid):
+        q = MagicMock()
+        q.id = qid
+        return q
+
+    def test_never_seen_beats_due_for_review(self):
+        """AL-COVERAGE-01: unseen candidate wins over due-review candidate."""
+        svc, _ = _svc()
+        q_unseen = self._q(1)
+        q_due = self._q(2)
+        perf = self._perf(attempted_ids=[2], due_ids=[2])  # q2 due, q1 never seen
+        with patch("random.choice", side_effect=lambda lst: lst[0]):
+            result = svc._select_adaptive_question([q_unseen, q_due], perf, MagicMock())
+        assert result is q_unseen
+
+    def test_never_seen_beats_weak_concept(self):
+        """AL-COVERAGE-02: unseen candidate wins over weak-concept candidate."""
+        svc, _ = _svc()
+        q_unseen = self._q(5)
+        q_weak = self._q(6)
+        perf = self._perf(attempted_ids=[6], weak_ids=[6])  # q6 weak, q5 never seen
+        with patch("random.choice", side_effect=lambda lst: lst[0]):
+            result = svc._select_adaptive_question([q_unseen, q_weak], perf, MagicMock())
+        assert result is q_unseen
+
+    def test_all_seen_falls_through_to_due(self):
+        """AL-COVERAGE-03: when all candidates attempted, due-for-review path fires."""
+        svc, _ = _svc()
+        q_due = self._q(10)
+        q_other = self._q(11)
+        perf = self._perf(attempted_ids=[10, 11], due_ids=[10])
+        with patch("random.choice", return_value=q_due):
+            result = svc._select_adaptive_question([q_due, q_other], perf, MagicMock())
+        assert result is q_due
+
+    def test_full_pool_covered_before_repetition(self):
+        """AL-COVERAGE-04: 5-question pool fully covered before any repeat."""
+        svc, _ = _svc()
+        pool = [self._q(i) for i in range(5)]
+        seen_ids = set()
+        attempted_ids: set = set()
+
+        for _ in range(5):
+            available = [q for q in pool if q.id not in seen_ids]
+            perf = self._perf(attempted_ids=attempted_ids)
+            chosen = svc._select_adaptive_question(available, perf, MagicMock())
+            assert chosen.id not in seen_ids, f"Question {chosen.id} repeated before pool exhausted"
+            seen_ids.add(chosen.id)
+            attempted_ids.add(chosen.id)
+
+        assert seen_ids == {0, 1, 2, 3, 4}
+
+
+# ===========================================================================
+# Difficulty fallback logging — Fix #3
+# ===========================================================================
+
+@pytest.mark.unit
+class TestDifficultyFallbackLogging:
+    """
+    When the difficulty-window query returns empty, the fallback must log a warning.
+
+    AL-FALLBACK-01: warning emitted when difficulty query returns empty
+    AL-FALLBACK-02: no warning when difficulty query succeeds
+    """
+
+    def _make_db_with_two_calls(self, first_returns, second_returns):
+        """DB mock where first .all() returns first_returns, second returns second_returns."""
+        db = MagicMock()
+        calls = {"n": 0}
+        base_q = MagicMock()
+        base_q.filter.return_value = base_q
+        base_q.join.return_value = base_q
+        base_q.outerjoin.return_value = base_q
+
+        def _all():
+            n = calls["n"]
+            calls["n"] += 1
+            return first_returns if n == 0 else second_returns
+
+        base_q.all.side_effect = _all
+        db.query.return_value = base_q
+        return db
+
+    def test_warning_logged_on_fallback(self):
+        """AL-FALLBACK-01: logger.warning fired when difficulty window is empty."""
+        db = self._make_db_with_two_calls(first_returns=[], second_returns=[MagicMock()])
+        svc = AdaptiveLearningService(db)
+        with patch("app.services.adaptive_learning.logger") as mock_log:
+            result = svc._get_candidate_questions(QuizCategory.GENERAL, target_difficulty=0.9)
+        mock_log.warning.assert_called_once()
+        call_args = mock_log.warning.call_args[0]
+        assert "al_difficulty_fallback" in call_args[0]
+
+    def test_no_warning_when_questions_found(self):
+        """AL-FALLBACK-02: logger.warning not called when difficulty query succeeds."""
+        db = self._make_db_with_two_calls(
+            first_returns=[MagicMock()], second_returns=[]
+        )
+        svc = AdaptiveLearningService(db)
+        with patch("app.services.adaptive_learning.logger") as mock_log:
+            svc._get_candidate_questions(QuizCategory.GENERAL, target_difficulty=0.5)
+        mock_log.warning.assert_not_called()

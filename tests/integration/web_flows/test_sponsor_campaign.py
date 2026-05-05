@@ -1,5 +1,5 @@
 """
-P3 SponsorCampaign — isolation + guard tests (SPON-CAM-01 through SPON-CAM-07)
+P3 SponsorCampaign — isolation + guard tests (SPON-CAM-01 through SPON-CAM-20)
 
   SPON-CAM-01  Same email in 2 campaigns → 2 separate entries, both ACTIVE
   SPON-CAM-02  rollback_import(log1) → only campaign1 entries DELETED; campaign2 untouched
@@ -8,6 +8,19 @@ P3 SponsorCampaign — isolation + guard tests (SPON-CAM-01 through SPON-CAM-07)
   SPON-CAM-05  Migration backfill integrity: no NULL campaign_id after _make_* helpers
   SPON-CAM-06  apply_import without campaign_id → explicit ValueError (not silent fail)
   SPON-CAM-07  Legacy GET /audience → 303 redirect (HTTP-level test)
+  SPON-CAM-08  Campaign detail shows specialization_type, credit_grant_amount, unlock_cost
+  SPON-CAM-09  Close campaign → status becomes CLOSED
+  SPON-CAM-10  Close campaign idempotent (already CLOSED → no error, stays CLOSED)
+  SPON-CAM-11  CLOSED campaign: import/apply returns 303 with closed error message
+  SPON-CAM-12  CLOSED campaign: import/preview returns 303 with closed error message
+  SPON-CAM-13  CLOSED campaign: audience/promote returns 303 with closed error message
+  SPON-CAM-14  Edit campaign name → name updated
+  SPON-CAM-15  Edit campaign credit fields → grant/unlock updated (ACTIVE only)
+  SPON-CAM-16  Edit validation: empty name rejected
+  SPON-CAM-17  Edit validation: credit_grant < 100 rejected
+  SPON-CAM-18  Edit validation: unlock_cost > credit_grant rejected
+  SPON-CAM-19  CLOSED campaign edit: credit fields locked (values unchanged)
+  SPON-CAM-20  CLOSED campaign edit: name field is still editable
 
 DONE = pytest tests/integration/web_flows/test_sponsor_campaign.py -v
 """
@@ -291,6 +304,375 @@ class TestLegacyAudienceRedirect:
             resp = client.get(f"/admin/sponsors/{sponsor.id}/audience")
             assert resp.status_code == 303
             assert f"/admin/sponsors/{sponsor.id}" in resp.headers["location"]
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+            app.dependency_overrides.pop(get_current_user_web, None)
+
+
+# ── SPON-CAM-08 ───────────────────────────────────────────────────────────────
+
+class TestCampaignDetailP7Fields:
+    """SPON-CAM-08: Campaign detail page renders specialization_type, credit_grant_amount,
+    and unlock_cost as read-only meta-items."""
+
+    def _client_and_campaign(self, test_db: Session):
+        from fastapi.testclient import TestClient
+        from app.main import app
+        from app.database import get_db
+        from app.dependencies import get_current_user_web
+
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db, admin)
+        campaign = SponsorCampaign(
+            sponsor_id=sponsor.id,
+            name=f"P7 Test {uuid.uuid4().hex[:4]}",
+            campaign_type="IMPORT",
+            status="ACTIVE",
+            specialization_type="LFA_FOOTBALL_PLAYER",
+            credit_grant_amount=200,
+            unlock_cost=150,
+            created_by=admin.id,
+        )
+        test_db.add(campaign)
+        test_db.commit()
+
+        def _override_db():
+            yield test_db
+
+        app.dependency_overrides[get_db] = _override_db
+        app.dependency_overrides[get_current_user_web] = lambda: admin
+
+        client = TestClient(app, follow_redirects=False)
+        return client, sponsor, campaign, app
+
+    def test_spon_cam_08a_specialization_type_displayed(self, test_db: Session):
+        client, sponsor, campaign, app = self._client_and_campaign(test_db)
+        from app.database import get_db
+        from app.dependencies import get_current_user_web
+        try:
+            resp = client.get(f"/admin/sponsors/{sponsor.id}/campaigns/{campaign.id}")
+            assert resp.status_code == 200
+            assert "LFA_FOOTBALL_PLAYER" in resp.text
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+            app.dependency_overrides.pop(get_current_user_web, None)
+
+    def test_spon_cam_08b_credit_grant_amount_displayed(self, test_db: Session):
+        client, sponsor, campaign, app = self._client_and_campaign(test_db)
+        from app.database import get_db
+        from app.dependencies import get_current_user_web
+        try:
+            resp = client.get(f"/admin/sponsors/{sponsor.id}/campaigns/{campaign.id}")
+            assert resp.status_code == 200
+            assert "200" in resp.text
+            assert "Credit Grant" in resp.text
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+            app.dependency_overrides.pop(get_current_user_web, None)
+
+    def test_spon_cam_08c_unlock_cost_displayed(self, test_db: Session):
+        client, sponsor, campaign, app = self._client_and_campaign(test_db)
+        from app.database import get_db
+        from app.dependencies import get_current_user_web
+        try:
+            resp = client.get(f"/admin/sponsors/{sponsor.id}/campaigns/{campaign.id}")
+            assert resp.status_code == 200
+            assert "150" in resp.text
+            assert "Unlock Cost" in resp.text
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+            app.dependency_overrides.pop(get_current_user_web, None)
+
+
+# ── SPON-CAM-09 / SPON-CAM-10 ────────────────────────────────────────────────
+
+class TestCampaignClose:
+    """SPON-CAM-09/10: POST .../close sets status=CLOSED; idempotent second call."""
+
+    def _setup(self, test_db: Session):
+        from fastapi.testclient import TestClient
+        from app.main import app
+        from app.database import get_db
+        from app.dependencies import get_current_user_web
+
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db, admin)
+        campaign = _make_campaign(test_db, sponsor, admin)
+        test_db.commit()
+
+        def _override_db():
+            yield test_db
+
+        app.dependency_overrides[get_db] = _override_db
+        app.dependency_overrides[get_current_user_web] = lambda: admin
+        client = TestClient(
+            app,
+            headers={"Authorization": "Bearer test-csrf-bypass"},
+            follow_redirects=False,
+        )
+        return client, sponsor, campaign, app
+
+    def test_spon_cam_09_close_sets_closed_status(self, test_db: Session):
+        from app.database import get_db
+        from app.dependencies import get_current_user_web
+        client, sponsor, campaign, app = self._setup(test_db)
+        try:
+            resp = client.post(
+                f"/admin/sponsors/{sponsor.id}/campaigns/{campaign.id}/close",
+                data={"csrf_token": "test"},
+            )
+            assert resp.status_code == 303
+            assert "flash=Campaign+closed" in resp.headers["location"]
+            test_db.expire(campaign)
+            assert campaign.status == "CLOSED"
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+            app.dependency_overrides.pop(get_current_user_web, None)
+
+    def test_spon_cam_10_close_idempotent(self, test_db: Session):
+        from app.database import get_db
+        from app.dependencies import get_current_user_web
+        client, sponsor, campaign, app = self._setup(test_db)
+        try:
+            campaign.status = "CLOSED"
+            test_db.commit()
+            resp = client.post(
+                f"/admin/sponsors/{sponsor.id}/campaigns/{campaign.id}/close",
+                data={"csrf_token": "test"},
+            )
+            assert resp.status_code == 303
+            test_db.expire(campaign)
+            assert campaign.status == "CLOSED"
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+            app.dependency_overrides.pop(get_current_user_web, None)
+
+
+# ── SPON-CAM-11 / SPON-CAM-12 / SPON-CAM-13 ─────────────────────────────────
+
+class TestClosedCampaignGuards:
+    """SPON-CAM-11/12/13: CLOSED campaign blocks import apply, import preview, and promote."""
+
+    def _setup(self, test_db: Session):
+        from fastapi.testclient import TestClient
+        from app.main import app
+        from app.database import get_db
+        from app.dependencies import get_current_user_web
+
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db, admin)
+        campaign = _make_campaign(test_db, sponsor, admin)
+        campaign.status = "CLOSED"
+        test_db.commit()
+
+        def _override_db():
+            yield test_db
+
+        app.dependency_overrides[get_db] = _override_db
+        app.dependency_overrides[get_current_user_web] = lambda: admin
+        client = TestClient(
+            app,
+            headers={"Authorization": "Bearer test-csrf-bypass"},
+            follow_redirects=False,
+        )
+        return client, sponsor, campaign, app
+
+    def test_spon_cam_11_closed_campaign_import_apply_blocked(self, test_db: Session):
+        import base64
+        from app.database import get_db
+        from app.dependencies import get_current_user_web
+        client, sponsor, campaign, app = self._setup(test_db)
+        try:
+            csv_b64 = base64.b64encode(b"first_name,last_name,email,consent_given\n").decode()
+            resp = client.post(
+                f"/admin/sponsors/{sponsor.id}/campaigns/{campaign.id}/import/apply",
+                data={"csrf_token": "test", "csv_data": csv_b64, "filename": "test.csv"},
+            )
+            assert resp.status_code == 303
+            assert "closed" in resp.headers["location"].lower()
+            assert "import" in resp.headers["location"].lower()
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+            app.dependency_overrides.pop(get_current_user_web, None)
+
+    def test_spon_cam_12_closed_campaign_import_preview_blocked(self, test_db: Session):
+        from io import BytesIO
+        from app.database import get_db
+        from app.dependencies import get_current_user_web
+        client, sponsor, campaign, app = self._setup(test_db)
+        try:
+            csv_bytes = b"first_name,last_name,email,consent_given\nTest,Player,t@t.com,1\n"
+            resp = client.post(
+                f"/admin/sponsors/{sponsor.id}/campaigns/{campaign.id}/import/preview",
+                files={"file": ("test.csv", BytesIO(csv_bytes), "text/csv")},
+            )
+            assert resp.status_code == 303
+            assert "closed" in resp.headers["location"].lower()
+            assert "import" in resp.headers["location"].lower()
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+            app.dependency_overrides.pop(get_current_user_web, None)
+
+    def test_spon_cam_13_closed_campaign_promote_blocked(self, test_db: Session):
+        from app.database import get_db
+        from app.dependencies import get_current_user_web
+        client, sponsor, campaign, app = self._setup(test_db)
+        try:
+            # CLOSED guard fires before processing entry IDs — dummy ID is fine
+            resp = client.post(
+                f"/admin/sponsors/{sponsor.id}/campaigns/{campaign.id}/audience/promote",
+                data={"csrf_token": "test", "entry_ids": "9999"},
+            )
+            assert resp.status_code == 303
+            assert "closed" in resp.headers["location"].lower()
+            assert "promote" in resp.headers["location"].lower()
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+            app.dependency_overrides.pop(get_current_user_web, None)
+
+
+# ── SPON-CAM-14 through SPON-CAM-20 ──────────────────────────────────────────
+
+class TestCampaignEdit:
+    """SPON-CAM-14..20: Campaign EDIT route — happy path, validation, CLOSED lock."""
+
+    def _setup(self, test_db: Session, *, closed: bool = False):
+        from fastapi.testclient import TestClient
+        from app.main import app
+        from app.database import get_db
+        from app.dependencies import get_current_user_web
+
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db, admin)
+        campaign = SponsorCampaign(
+            sponsor_id=sponsor.id,
+            name=f"Edit Test {uuid.uuid4().hex[:4]}",
+            campaign_type="IMPORT",
+            status="CLOSED" if closed else "ACTIVE",
+            specialization_type="LFA_FOOTBALL_PLAYER",
+            credit_grant_amount=200,
+            unlock_cost=100,
+            created_by=admin.id,
+        )
+        test_db.add(campaign)
+        test_db.commit()
+
+        def _override_db():
+            yield test_db
+
+        app.dependency_overrides[get_db] = _override_db
+        app.dependency_overrides[get_current_user_web] = lambda: admin
+        client = TestClient(
+            app,
+            headers={"Authorization": "Bearer test-csrf-bypass"},
+            follow_redirects=False,
+        )
+        return client, sponsor, campaign, app
+
+    def _post_edit(self, client, sponsor, campaign, *, name=None, credit_grant=None, unlock=None):
+        return client.post(
+            f"/admin/sponsors/{sponsor.id}/campaigns/{campaign.id}/edit",
+            data={
+                "csrf_token": "test",
+                "name": name if name is not None else campaign.name,
+                "credit_grant_amount": str(credit_grant if credit_grant is not None else campaign.credit_grant_amount),
+                "unlock_cost": str(unlock if unlock is not None else campaign.unlock_cost),
+            },
+        )
+
+    def test_spon_cam_14_edit_name_updated(self, test_db: Session):
+        from app.database import get_db
+        from app.dependencies import get_current_user_web
+        client, sponsor, campaign, app = self._setup(test_db)
+        try:
+            resp = self._post_edit(client, sponsor, campaign, name="New Name")
+            assert resp.status_code == 303
+            assert "flash=Campaign+updated" in resp.headers["location"]
+            test_db.expire(campaign)
+            assert campaign.name == "New Name"
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+            app.dependency_overrides.pop(get_current_user_web, None)
+
+    def test_spon_cam_15_edit_credit_fields_updated(self, test_db: Session):
+        from app.database import get_db
+        from app.dependencies import get_current_user_web
+        client, sponsor, campaign, app = self._setup(test_db)
+        try:
+            resp = self._post_edit(client, sponsor, campaign, credit_grant=300, unlock=150)
+            assert resp.status_code == 303
+            assert "flash=Campaign+updated" in resp.headers["location"]
+            test_db.expire(campaign)
+            assert campaign.credit_grant_amount == 300
+            assert campaign.unlock_cost == 150
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+            app.dependency_overrides.pop(get_current_user_web, None)
+
+    def test_spon_cam_16_edit_empty_name_rejected(self, test_db: Session):
+        from app.database import get_db
+        from app.dependencies import get_current_user_web
+        client, sponsor, campaign, app = self._setup(test_db)
+        try:
+            resp = self._post_edit(client, sponsor, campaign, name="")
+            assert resp.status_code == 303
+            assert "error=" in resp.headers["location"]
+            assert "name" in resp.headers["location"].lower()
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+            app.dependency_overrides.pop(get_current_user_web, None)
+
+    def test_spon_cam_17_edit_credit_grant_below_100_rejected(self, test_db: Session):
+        from app.database import get_db
+        from app.dependencies import get_current_user_web
+        client, sponsor, campaign, app = self._setup(test_db)
+        try:
+            resp = self._post_edit(client, sponsor, campaign, credit_grant=50, unlock=50)
+            assert resp.status_code == 303
+            assert "error=" in resp.headers["location"]
+            assert "100" in resp.headers["location"] or "grant" in resp.headers["location"].lower()
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+            app.dependency_overrides.pop(get_current_user_web, None)
+
+    def test_spon_cam_18_edit_unlock_exceeds_grant_rejected(self, test_db: Session):
+        from app.database import get_db
+        from app.dependencies import get_current_user_web
+        client, sponsor, campaign, app = self._setup(test_db)
+        try:
+            resp = self._post_edit(client, sponsor, campaign, credit_grant=200, unlock=250)
+            assert resp.status_code == 303
+            assert "error=" in resp.headers["location"]
+            assert "exceed" in resp.headers["location"].lower() or "unlock" in resp.headers["location"].lower()
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+            app.dependency_overrides.pop(get_current_user_web, None)
+
+    def test_spon_cam_19_closed_campaign_credit_change_rejected(self, test_db: Session):
+        from app.database import get_db
+        from app.dependencies import get_current_user_web
+        client, sponsor, campaign, app = self._setup(test_db, closed=True)
+        try:
+            resp = self._post_edit(client, sponsor, campaign, credit_grant=500, unlock=100)
+            assert resp.status_code == 303
+            assert "error=" in resp.headers["location"]
+            assert "locked" in resp.headers["location"].lower() or "closed" in resp.headers["location"].lower()
+            test_db.expire(campaign)
+            assert campaign.credit_grant_amount == 200
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+            app.dependency_overrides.pop(get_current_user_web, None)
+
+    def test_spon_cam_20_closed_campaign_name_editable(self, test_db: Session):
+        from app.database import get_db
+        from app.dependencies import get_current_user_web
+        client, sponsor, campaign, app = self._setup(test_db, closed=True)
+        try:
+            resp = self._post_edit(client, sponsor, campaign, name="Renamed Closed")
+            assert resp.status_code == 303
+            assert "flash=Campaign+updated" in resp.headers["location"]
+            test_db.expire(campaign)
+            assert campaign.name == "Renamed Closed"
         finally:
             app.dependency_overrides.pop(get_db, None)
             app.dependency_overrides.pop(get_current_user_web, None)

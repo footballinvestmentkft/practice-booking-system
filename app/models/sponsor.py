@@ -54,6 +54,15 @@ class SponsorCampaign(Base):
     created_at    = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     created_by    = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
+    # P6: target specialization for this campaign's audience
+    specialization_type = Column(String(50), nullable=False, default="LFA_FOOTBALL_PLAYER")
+
+    # P7: sponsor-funded credit flow — grant is what the user receives,
+    #     unlock_cost is the specialization activation fee (deducted from the grant)
+    #     DB CHECKs: chk_campaign_min_grant (>=100), chk_campaign_unlock_lte (<=grant)
+    credit_grant_amount = Column(Integer, nullable=False, default=100)
+    unlock_cost         = Column(Integer, nullable=False, default=100)
+
     sponsor   = relationship("Sponsor", back_populates="campaigns")
     entries   = relationship("SponsorAudienceEntry", back_populates="campaign",
                              cascade="all, delete-orphan")
