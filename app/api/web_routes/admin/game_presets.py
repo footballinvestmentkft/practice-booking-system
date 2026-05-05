@@ -82,6 +82,8 @@ async def admin_create_game_preset(
             if sk in skills and val in _VALID_FOOT_CONTEXTS:
                 skill_foot_contexts[sk] = val
 
+    foot_context = form_data.get("foot_context", "")
+
     total = sum(weights.get(s, 1) for s in skills) or 1
     skill_weights = {s: round(weights.get(s, 1) / total, 4) for s in skills}
 
@@ -92,6 +94,7 @@ async def admin_create_game_preset(
             "skills_tested": skills,
             "skill_weights": skill_weights,
             "skill_impact_on_matches": bool(skill_impact),
+            **({"foot_context": foot_context} if foot_context in _VALID_FOOT_CONTEXTS else {}),
             **({"skill_foot_contexts": skill_foot_contexts} if skill_foot_contexts else {}),
         },
         "simulation_config": {},
@@ -179,6 +182,8 @@ async def admin_edit_game_preset_submit(
             if sk in skills and val in _VALID_FOOT_CONTEXTS:
                 skill_foot_contexts[sk] = val
 
+    foot_context = form_data.get("foot_context", "")
+
     total = sum(weights.get(s, 1) for s in skills) or 1
     skill_weights = {s: round(weights.get(s, 1) / total, 4) for s in skills}
 
@@ -189,6 +194,7 @@ async def admin_edit_game_preset_submit(
             "skills_tested": skills,
             "skill_weights": skill_weights,
             "skill_impact_on_matches": bool(skill_impact),
+            **({"foot_context": foot_context} if foot_context in _VALID_FOOT_CONTEXTS else {}),
             **({"skill_foot_contexts": skill_foot_contexts} if skill_foot_contexts else {}),
         },
         "metadata": {

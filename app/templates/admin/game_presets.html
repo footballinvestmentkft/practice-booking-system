@@ -8,18 +8,6 @@
 <style>
     .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
     .section-header h2 { font-size: 1.5rem; color: #2d3748; }
-    .card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 1rem; overflow: hidden; }
-    .card-header { padding: 1rem 1.5rem; background: #f8f9fa; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; cursor: pointer; }
-    .card-header h3 { font-size: 1.05rem; color: #2d3748; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-    .card-body { padding: 1.5rem; display: none; }
-    .card-body.open { display: block; }
-    .badge-active { background: #c6f6d5; color: #276749; }
-    .badge-inactive { background: #fed7d7; color: #9b2335; }
-    .badge-recommended { background: #fef3c7; color: #92400e; }
-    .info-row { margin-bottom: 0.75rem; }
-    .info-row label { font-size: 0.8rem; color: #718096; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.2rem; }
-    .skills-str { font-size: 0.9rem; color: #2d3748; }
-    .action-row { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
     .create-form { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 2rem; margin-top: 1.5rem; }
     .create-form h3 { margin-bottom: 1.5rem; color: #2d3748; }
     .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
@@ -43,8 +31,46 @@
     .sum-err { background: #fed7d7; color: #9b2335; }
     .no-data { text-align: center; padding: 3rem; color: #718096; }
     .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+    /* B3: per-skill foot context select in weight items */
     .skill-fc-select { width: 100%; padding: 0.3rem 0.4rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.76rem; color: #4a5568; margin-top: 0.25rem; background: white; cursor: pointer; }
-    @media (max-width: 600px) { .weight-row { grid-template-columns: repeat(2, 1fr); } }
+
+    /* ─── Preset table ──────────────────────────────────────────────────────── */
+    .preset-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .preset-table thead th { background: #f7fafc; color: #718096; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.55rem 0.75rem; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+    .preset-table tbody tr { border-bottom: 1px solid #f0f0f0; transition: background 0.1s; }
+    .preset-table tbody tr:last-child { border-bottom: none; }
+    .preset-table tbody tr:hover { background: #fafbff; }
+    .preset-table td { padding: 0.5rem 0.75rem; vertical-align: middle; }
+    .preset-code { font-family: monospace; font-size: 0.78rem; background: #f0f0f0; padding: 0.1rem 0.4rem; border-radius: 4px; color: #4a5568; }
+    .skill-pill { display: inline-block; background: #e9d8fd; color: #553c9a; border-radius: 4px; padding: 0.1rem 0.35rem; font-size: 0.72rem; margin-right: 0.2rem; white-space: nowrap; }
+    .skill-more { font-size: 0.72rem; color: #718096; }
+    .btn-tbl { padding: 0.2rem 0.55rem; font-size: 0.75rem; border-radius: 4px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; white-space: nowrap; }
+    .btn-tbl-primary { background: #5a4a9a; color: white; border: none; }
+    .btn-tbl-primary:hover { background: #4a3a8a; color: white; }
+    .btn-tbl-warning { background: white; color: #c05621; border: 1px solid #fbd38d; }
+    .btn-tbl-warning:hover { background: #fffbf0; }
+    .btn-tbl-danger { background: white; color: #c53030; border: 1px solid #fed7d7; }
+    .btn-tbl-danger:hover { background: #fff5f5; }
+    /* Laterality left-border indicators */
+    .lat-right   { border-left: 3px solid #48bb78; }
+    .lat-left    { border-left: 3px solid #4299e1; }
+    .lat-neutral { border-left: 3px solid #a0aec0; }
+    /* Foot context inline badges */
+    .fc-badge { display: inline-block; padding: 0.1rem 0.45rem; border-radius: 4px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+    .fc-right   { background: #f0fff4; color: #276749; border: 1px solid #9ae6b4; }
+    .fc-left    { background: #ebf8ff; color: #2b6cb0; border: 1px solid #90cdf4; }
+    .fc-neutral { background: #f7fafc; color: #718096; border: 1px solid #e2e8f0; }
+    .fc-default { background: #f7fafc; color: #a0aec0; border: 1px dashed #cbd5e0; font-style: italic; font-weight: 400; }
+    /* Mobile: stack table rows as cards */
+    @media (max-width: 768px) {
+        .preset-table thead { display: none; }
+        .preset-table, .preset-table tbody, .preset-table tr, .preset-table td { display: block; }
+        .preset-table tbody tr { border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 0.75rem; padding: 0.25rem 0.75rem; background: white; border-left-width: 3px; }
+        .preset-table td { padding: 0.3rem 0; border: none; font-size: 0.85rem; }
+        .preset-table td::before { content: attr(data-label); font-weight: 700; font-size: 0.7rem; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.04em; display: inline-block; width: 90px; }
+        .preset-table td[data-label=""]::before { display: none; }
+        .weight-row { grid-template-columns: repeat(2, 1fr); }
+    }
 </style>
 {% endblock %}
 
@@ -74,73 +100,76 @@
     </div>
 
     {% if presets %}
-        {% for p in presets %}
-        {% set sc = p.game_config.get('skill_config', {}) if p.game_config else {} %}
-        {% set meta = p.game_config.get('metadata', {}) if p.game_config else {} %}
-        {% set skills = sc.get('skills_tested', []) %}
-        {% set weights = sc.get('skill_weights', {}) %}
-        <div class="card">
-            <div class="card-header" onclick="toggleCard('preset-{{ p.id }}')">
-                <h3>
-                    {% if p.is_active %}🟢{% else %}⚫{% endif %}
-                    {% if p.is_recommended %}⭐ {% endif %}
-                    <strong>{{ p.name }}</strong>
-                    <code style="background: #f0f0f0; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.8rem">{{ p.code }}</code>
-                    · {{ skills | length }} skills
-                    <span class="badge {% if p.is_active %}badge-active{% else %}badge-inactive{% endif %}">{{ 'Active' if p.is_active else 'Inactive' }}</span>
-                    {% if p.is_recommended %}<span class="badge badge-recommended">⭐ Recommended</span>{% endif %}
-                </h3>
-                <span style="color: #718096; font-size: 0.85rem">id={{ p.id }} ▼</span>
-            </div>
-            <div class="card-body" id="preset-{{ p.id }}">
-                {% if p.description %}
-                <div class="info-row">
-                    <label>Description</label>
-                    <p class="skills-str">{{ p.description }}</p>
-                </div>
-                {% endif %}
-                <div class="info-row">
-                    <label>Skills</label>
-                    <p class="skills-str">
-                        {% if weights %}
-                            {% set total_w = weights.values() | sum %}
-                            {% for s in skills %}
-                                {% if s in weights %}
-                                    {{ s.replace('_', ' ').title() }} {{ (weights[s] / total_w * 100) | round | int }}%{% if not loop.last %}  ·  {% endif %}
-                                {% endif %}
-                            {% endfor %}
-                        {% else %}
-                            {{ skills | join(', ') or '—' }}
-                        {% endif %}
-                    </p>
-                </div>
-                <div class="info-row" style="display: flex; gap: 2rem">
-                    {% if meta.get('game_category') %}<span>🎮 {{ meta.game_category }}</span>{% endif %}
-                    {% if meta.get('difficulty_level') %}<span>📶 {{ meta.difficulty_level }}</span>{% endif %}
-                    {% if meta.get('min_players') %}<span>👥 min {{ meta.min_players }} players</span>{% endif %}
-                    <span style="color: #718096; font-size: 0.85rem">id={{ p.id }} · code={{ p.code }}</span>
-                </div>
-                <div class="action-row">
-                    {% if not p.is_locked %}
-                    <a href="/admin/game-presets/{{ p.id }}/edit" class="btn btn-sm btn-primary">✏️ Edit</a>
-                    {% endif %}
-                    <form method="post" action="/admin/game-presets/{{ p.id }}/toggle" style="display:inline">
-                        <button type="submit" class="btn btn-sm btn-warning">
-                            {{ '⚫ Deactivate' if p.is_active else '🟢 Activate' }}
-                        </button>
-                    </form>
-                    {% if not p.is_locked %}
-                    <form method="post" action="/admin/game-presets/{{ p.id }}/delete" style="display:inline"
-                          onsubmit="return confirm('Delete preset {{ p.name }}? This cannot be undone.')">
-                        <button type="submit" class="btn btn-sm btn-danger">🗑️ Delete</button>
-                    </form>
+    <div style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 1.5rem;">
+    <table class="preset-table">
+        <thead>
+            <tr>
+                <th></th>
+                <th>Name</th>
+                <th>Code</th>
+                <th>Foot Context</th>
+                <th>Skills</th>
+                <th>Rec.</th>
+                <th>ID</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in presets %}
+            {% set sc = p.game_config.get('skill_config', {}) if p.game_config else {} %}
+            {% set skills = sc.get('skills_tested', []) %}
+            {% set foot_ctx_raw = sc.get('foot_context') %}
+            {% set foot_ctx = foot_ctx_raw or p.foot_context %}
+            <tr class="{% if foot_ctx_raw == 'right' %}lat-right{% elif foot_ctx_raw == 'left' %}lat-left{% elif foot_ctx_raw == 'neutral' %}lat-neutral{% endif %}">
+                <td data-label="">
+                    {% if p.is_active %}
+                    <span title="Active" style="color: #276749; font-size: 0.9rem;">●</span>
                     {% else %}
-                    <span style="color: #718096; font-size: 0.8rem">🔒 Locked — cannot edit or delete</span>
+                    <span title="Inactive" style="color: #cbd5e0; font-size: 0.9rem;">●</span>
                     {% endif %}
-                </div>
-            </div>
-        </div>
-        {% endfor %}
+                </td>
+                <td data-label="Name">
+                    <strong>{{ p.name }}</strong>
+                    {% if not p.is_active %}<span style="font-size: 0.72rem; color: #a0aec0; margin-left: 0.3rem;">(inactive)</span>{% endif %}
+                </td>
+                <td data-label="Code"><code class="preset-code">{{ p.code }}</code></td>
+                <td data-label="Foot Context">
+                    {% if foot_ctx_raw %}
+                    <span class="fc-badge fc-{{ foot_ctx }}">{{ foot_ctx }}</span>
+                    {% else %}
+                    <span class="fc-badge fc-default" title="No explicit foot_context stored — defaults to neutral at runtime">{{ foot_ctx }}/default</span>
+                    {% endif %}
+                </td>
+                <td data-label="Skills">
+                    {% for s in skills[:3] %}<span class="skill-pill">{{ s.replace('_', ' ') }}</span>{% endfor %}
+                    {% if skills | length > 3 %}<span class="skill-more">+{{ skills | length - 3 }}</span>{% endif %}
+                    {% if not skills %}<span style="color: #cbd5e0; font-size: 0.8rem;">—</span>{% endif %}
+                </td>
+                <td data-label="Rec.">{% if p.is_recommended %}⭐{% else %}<span style="color: #e2e8f0;">—</span>{% endif %}</td>
+                <td data-label="ID" style="color: #a0aec0; font-size: 0.8rem; white-space: nowrap;">{{ p.id }}</td>
+                <td data-label="Actions">
+                    <div style="display: flex; gap: 0.3rem; flex-wrap: wrap; align-items: center;">
+                        {% if not p.is_locked %}
+                        <a href="/admin/game-presets/{{ p.id }}/edit" class="btn-tbl btn-tbl-primary">✏️ Edit</a>
+                        {% endif %}
+                        <form method="post" action="/admin/game-presets/{{ p.id }}/toggle" style="display:inline">
+                            <button type="submit" class="btn-tbl btn-tbl-warning">{{ '⚫ Off' if p.is_active else '🟢 On' }}</button>
+                        </form>
+                        {% if not p.is_locked %}
+                        <form method="post" action="/admin/game-presets/{{ p.id }}/delete" style="display:inline"
+                              onsubmit="return confirm('Delete preset {{ p.name }}? This cannot be undone.')">
+                            <button type="submit" class="btn-tbl btn-tbl-danger">🗑️</button>
+                        </form>
+                        {% else %}
+                        <span style="color: #a0aec0; font-size: 0.72rem;" title="Locked — cannot edit or delete">🔒</span>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
     {% else %}
         <div class="no-data">
             <p style="font-size: 1.5rem">🎮</p>
@@ -190,6 +219,14 @@
                     <input type="number" name="min_players" value="4" min="2" max="1024">
                 </div>
                 <div class="form-group">
+                    <label>Foot Context</label>
+                    <select name="foot_context">
+                        <option value="neutral" selected>neutral — both feet / default</option>
+                        <option value="right">right — right foot</option>
+                        <option value="left">left — left foot</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>
                         <input type="checkbox" name="skill_impact" value="1" checked>
                         Skill impact on matches
@@ -230,11 +267,6 @@
 
 {% block scripts %}
 <script>
-function toggleCard(id) {
-    const body = document.getElementById(id);
-    body.classList.toggle('open');
-}
-
 let codeManuallyEdited = false;
 document.getElementById('codeField').addEventListener('input', () => { codeManuallyEdited = true; });
 
@@ -258,7 +290,7 @@ function updateWeights() {
         return;
     }
     section.style.display = 'block';
-    // Preserve existing weight and foot context values
+    // Preserve existing weight AND foot context values on checkbox toggle
     const existing = {};
     container.querySelectorAll('input[type="number"]').forEach(inp => {
         existing[inp.name] = inp.value;
@@ -269,7 +301,8 @@ function updateWeights() {
     container.innerHTML = '';
     checked.forEach((cb) => {
         const key = cb.name.replace('skill_cb_', '');
-        const label = cb.parentElement.querySelector('label').textContent;
+        const label = cb.closest('.skill-item')?.querySelector('label')?.textContent.trim()
+                      || key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
         const div = document.createElement('div');
         div.className = 'weight-item';
         const defaultVal = existing['skill_w_' + key] || 10;

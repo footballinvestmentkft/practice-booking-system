@@ -126,3 +126,55 @@ class TestFcTmpl01EditPageRendersSkillFcSelects:
         assert '— preset default —' in resp.text, (
             "Default option text must appear in rendered select"
         )
+
+
+class TestAdminPresetsListTable:
+    """UI-PRESETS-01: GET /admin/game-presets renders compact <table>, not card/accordion."""
+
+    def test_list_uses_table_not_accordion(self, admin_client):
+        resp = admin_client.get("/admin/game-presets")
+        assert resp.status_code == 200
+        assert "preset-table" in resp.text, (
+            "preset-table class must be present — compact table UI expected"
+        )
+        assert "card-header" not in resp.text, (
+            "card-header must be absent — old accordion layout must not be rendered"
+        )
+
+
+class TestAdminPresetEditChartPanel:
+    """UI-PRESETS-02: GET /admin/game-presets/{id}/edit renders SVG chart panel."""
+
+    def test_chart_panel_and_canvas_rendered(self, admin_client, test_db):
+        gp = GamePreset(
+            code=f"cht_{uuid.uuid4().hex[:6]}",
+            name="Chart Panel Test",
+            is_active=True,
+            game_config={
+                "version": "1.0",
+                "format_config": {},
+                "simulation_config": {},
+                "skill_config": {
+                    "skills_tested": ["crossing"],
+                    "skill_weights": {"crossing": 1.0},
+                    "skill_impact_on_matches": True,
+                },
+                "metadata": {
+                    "game_category": "FOOTBALL",
+                    "difficulty_level": None,
+                    "min_players": 2,
+                },
+            },
+        )
+        test_db.add(gp)
+        test_db.commit()
+        test_db.refresh(gp)
+
+        resp = admin_client.get(f"/admin/game-presets/{gp.id}/edit")
+        assert resp.status_code == 200
+        assert 'id="presetChart"' in resp.text, (
+            "SVG element #presetChart must be present in edit page"
+        )
+        assert "chart-panel" in resp.text, (
+            "chart-panel container must be present — two-column layout expected"
+        )
