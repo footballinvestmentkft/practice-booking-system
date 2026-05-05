@@ -4,6 +4,7 @@ Group + Knockout Format Generator
 Generates sessions for group stage followed by knockout stage tournaments.
 """
 import math
+import logging
 from typing import List, Dict, Any
 from datetime import timedelta
 
@@ -13,7 +14,7 @@ from app.models.tournament_enums import TournamentPhase
 from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 from .base_format_generator import BaseFormatGenerator
 from ..algorithms import RoundRobinPairing, GroupDistribution, KnockoutBracket
-from ..utils import get_tournament_venue, pick_pitch
+from ..utils import get_tournament_venue, pick_campus, pick_pitch, dedup_participant_ids
 
 
 class GroupKnockoutGenerator(BaseFormatGenerator):
@@ -43,6 +44,7 @@ class GroupKnockoutGenerator(BaseFormatGenerator):
         Generate group stage + knockout tournament sessions
         """
         sessions = []
+        logger = logging.getLogger(__name__)
         team_ids = kwargs.get('team_ids')
         team_mode = kwargs.get('team_mode', False)
         number_of_legs = kwargs.get('number_of_legs', 1)
@@ -57,7 +59,10 @@ class GroupKnockoutGenerator(BaseFormatGenerator):
                 SemesterEnrollment.is_active == True,
                 SemesterEnrollment.request_status == EnrollmentStatus.APPROVED,
             ).all()
-            player_ids = [e.user_id for e in enrolled_players]
+            player_ids = dedup_participant_ids(
+                [e.user_id for e in enrolled_players],
+                tournament.id, logger, context="group_knockout.generate",
+            )
 
         # Use actual enrolled count, not configured max
         actual_player_count = len(player_ids)
@@ -162,7 +167,12 @@ class GroupKnockoutGenerator(BaseFormatGenerator):
 
                         for match_num, (player1_id, player2_id) in enumerate(round_pairings, start=1):
                             if player1_id is None or player2_id is None:
-                                # Skip bye matches
+                                continue
+                            if player1_id == player2_id:             # P0-A: self-match guard
+                                logger.error(
+                                    "🚨 SELF-MATCH BLOCKED | tournament=%s | participant_id=%s",
+                                    tournament.id, player1_id,
+                                )
                                 continue
 
                             # Even legs with home/away tracking: swap sides

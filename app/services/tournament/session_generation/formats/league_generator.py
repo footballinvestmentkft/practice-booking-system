@@ -12,7 +12,7 @@ from app.models.tournament_enums import TournamentPhase
 from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 from .base_format_generator import BaseFormatGenerator
 from ..algorithms import RoundRobinPairing
-from ..utils import get_tournament_venue, pick_campus, pick_pitch
+from ..utils import get_tournament_venue, pick_campus, pick_pitch, dedup_participant_ids
 
 
 class LeagueGenerator(BaseFormatGenerator):
@@ -137,6 +137,9 @@ class LeagueGenerator(BaseFormatGenerator):
         """
         sessions = []
 
+        import logging
+        logger = logging.getLogger(__name__)
+
         if team_mode and team_ids:
             participant_ids = team_ids
         else:
@@ -145,7 +148,11 @@ class LeagueGenerator(BaseFormatGenerator):
                 SemesterEnrollment.is_active == True,
                 SemesterEnrollment.request_status == EnrollmentStatus.APPROVED,
             ).all()
-            participant_ids = [e.user_id for e in enrolled_players]
+            participant_ids = dedup_participant_ids(
+                [e.user_id for e in enrolled_players],
+                tournament.id, logger,
+                context="league._generate_head_to_head_pairings",
+            )
 
         num_rounds = RoundRobinPairing.calculate_rounds(player_count)
         current_time = tournament.start_date
@@ -158,6 +165,12 @@ class LeagueGenerator(BaseFormatGenerator):
 
                 for match_num, (id1, id2) in enumerate(round_pairings, start=1):
                     if id1 is None or id2 is None:
+                        continue
+                    if id1 == id2:                           # P0-A: self-match guard
+                        logger.error(
+                            "🚨 SELF-MATCH BLOCKED | tournament=%s | participant_id=%s",
+                            tournament.id, id1,
+                        )
                         continue
 
                     # Even legs with home/away tracking: swap so the "home" side becomes "away"

@@ -3,6 +3,7 @@ Tournament Session Generation Utilities
 
 Helper functions for session generation.
 """
+import logging
 from typing import List, Optional, TYPE_CHECKING
 from app.models.semester import Semester
 
@@ -189,3 +190,29 @@ def get_campus_schedule(
         "parallel_fields": global_parallel_fields,
         "venue_label": None,
     }
+
+
+def dedup_participant_ids(
+    raw_ids: List[int],
+    tournament_id: int,
+    logger: logging.Logger,
+    context: str = "",
+) -> List[int]:
+    """
+    Remove duplicate user/team IDs from a seeding pool, preserving insertion order.
+
+    Duplicate IDs cause self-match sessions (participant_user_ids = [id, id]).
+    This is the single dedup point used by all format generators (P0-A fix).
+
+    Logs an error when duplicates are found so the enrollment data anomaly is
+    visible in monitoring without crashing generation.
+    """
+    deduped = list(dict.fromkeys(raw_ids))
+    if len(deduped) != len(raw_ids):
+        dupes = [uid for uid in set(raw_ids) if raw_ids.count(uid) > 1]
+        logger.error(
+            "🚨 SEEDING DEDUP | tournament=%s | raw=%d → unique=%d | "
+            "duplicate_ids=%s | context=%s",
+            tournament_id, len(raw_ids), len(deduped), sorted(dupes), context,
+        )
+    return deduped

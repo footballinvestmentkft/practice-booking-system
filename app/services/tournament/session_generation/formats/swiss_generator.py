@@ -4,6 +4,7 @@ Swiss System Format Generator
 Generates sessions for Swiss system tournaments.
 """
 import math
+import logging
 from typing import List, Dict, Any
 from datetime import timedelta
 
@@ -12,7 +13,7 @@ from app.models.tournament_type import TournamentType
 from app.models.tournament_enums import TournamentPhase
 from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 from .base_format_generator import BaseFormatGenerator
-from ..utils import get_tournament_venue, pick_campus, pick_pitch
+from ..utils import get_tournament_venue, pick_campus, pick_pitch, dedup_participant_ids
 
 
 class SwissGenerator(BaseFormatGenerator):
@@ -40,6 +41,7 @@ class SwissGenerator(BaseFormatGenerator):
         Generate Swiss system tournament sessions
         """
         sessions = []
+        logger = logging.getLogger(__name__)
         campus_ids = kwargs.get('campus_ids')
         team_ids = kwargs.get('team_ids')
         team_mode = kwargs.get('team_mode', False)
@@ -54,7 +56,10 @@ class SwissGenerator(BaseFormatGenerator):
                 SemesterEnrollment.is_active == True,
                 SemesterEnrollment.request_status == EnrollmentStatus.APPROVED,
             ).all()
-            player_ids = [e.user_id for e in enrolled_players]
+            player_ids = dedup_participant_ids(
+                [e.user_id for e in enrolled_players],
+                tournament.id, logger, context="swiss.generate",
+            )
 
         current_time = tournament.start_date
 
@@ -80,6 +85,13 @@ class SwissGenerator(BaseFormatGenerator):
 
                     player1_id = player_ids[i]
                     player2_id = player_ids[i + 1]
+
+                    if player1_id == player2_id:             # P0-A: self-match guard
+                        logger.error(
+                            "🚨 SELF-MATCH BLOCKED | tournament=%s | participant_id=%s",
+                            tournament.id, player1_id,
+                        )
+                        continue
 
                     # Assign to next available field
                     field_index = (match_num - 1) % parallel_fields
