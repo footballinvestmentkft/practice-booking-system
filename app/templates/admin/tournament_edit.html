@@ -363,6 +363,9 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
         </div>
         <div class="form-group">
             <label>Participant Type</label>
+            {% if is_promotion_event %}
+            <div id="basic-participant-type-readonly" class="form-control-plaintext">👤 Individual</div>
+            {% else %}
             <select id="basic-participant-type-h2h">
                 <option value="INDIVIDUAL" {% if not cfg or cfg.participant_type == 'INDIVIDUAL' %}selected{% endif %}>👤 Individual</option>
                 <option value="TEAM" {% if cfg and cfg.participant_type == 'TEAM' %}selected{% endif %}>👥 Team</option>
@@ -370,6 +373,7 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
             </select>
             {% if cfg and cfg.participant_type == 'TEAM' %}
             <a href="/admin/tournaments/{{ t.id }}/teams" class="btn btn-sm btn-outline" style="margin-top:6px">👥 Manage Teams →</a>
+            {% endif %}
             {% endif %}
         </div>
         <div class="form-group">
@@ -410,10 +414,14 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
         </div>
         <div class="form-group">
             <label>Participant Type</label>
+            {% if is_promotion_event %}
+            <div id="basic-participant-type-readonly" class="form-control-plaintext">👤 Individual</div>
+            {% else %}
             <select id="basic-participant-type-ir">
                 <option value="INDIVIDUAL" {% if not cfg or cfg.participant_type == 'INDIVIDUAL' %}selected{% endif %}>👤 Individual</option>
                 <option value="TEAM" {% if cfg and cfg.participant_type == 'TEAM' %}selected{% endif %}>👥 Team</option>
             </select>
+            {% endif %}
         </div>
         <div class="form-group">
             <label>Number of Rounds</label>
@@ -1295,7 +1303,7 @@ async function saveBasicInfo() {
     if (_currentFormat === 'HEAD_TO_HEAD') {
         const ttId = document.getElementById('basic-tournament-type').value;
         if (ttId) body.tournament_type_id = parseInt(ttId);
-        const ptVal = document.getElementById('basic-participant-type-h2h').value;
+        const ptVal = document.getElementById('basic-participant-type-h2h')?.value;
         if (ptVal) body.participant_type = ptVal;
         const gpVal = document.getElementById('basic-game-preset-id-h2h').value;
         if (gpVal) body.game_preset_id = parseInt(gpVal);
@@ -1306,7 +1314,7 @@ async function saveBasicInfo() {
         body.ranking_direction = document.getElementById('basic-ranking-direction').value;
         const muEl = document.getElementById('basic-measurement-unit');
         if (muEl && muEl.value.trim()) body.measurement_unit = muEl.value.trim();
-        const ptVal = document.getElementById('basic-participant-type-ir').value;
+        const ptVal = document.getElementById('basic-participant-type-ir')?.value;
         if (ptVal) body.participant_type = ptVal;
         const roundsVal = document.getElementById('basic-rounds').value;
         if (roundsVal) body.number_of_rounds = parseInt(roundsVal);
