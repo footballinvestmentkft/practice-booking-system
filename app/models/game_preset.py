@@ -167,3 +167,14 @@ class GamePreset(Base):
         """
         raw = (self.game_config or {}).get("skill_config", {}).get("foot_context", "neutral")
         return raw if raw in self._VALID_FOOT_CONTEXTS else "neutral"
+
+    def foot_context_for(self, skill_key: str) -> str:
+        """Per-skill foot context with preset-level fallback.
+
+        Checks skill_foot_contexts override dict first; falls back to the
+        preset-level foot_context property. Callers always receive a valid
+        value from _VALID_FOOT_CONTEXTS — never None or an unknown string.
+        """
+        sc = (self.game_config or {}).get("skill_config", {})
+        override = sc.get("skill_foot_contexts", {}).get(skill_key)
+        return override if override in self._VALID_FOOT_CONTEXTS else self.foot_context
