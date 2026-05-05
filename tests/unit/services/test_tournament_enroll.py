@@ -77,13 +77,15 @@ def _seq_db(*qs):
     return db
 
 
-def _tournament(*, status="ENROLLMENT_OPEN", age_group="PRE", cost=500, max_players=32):
+def _tournament(*, status="ENROLLMENT_OPEN", age_group="PRE", cost=500, max_players=32,
+                age_groups=None):
     t = MagicMock()
     t.id = 1
     t.tournament_status = status
     t.name = "LFA Tournament"
     t.code = "LFA-T-001"
     t.age_group = age_group
+    t.age_groups = age_groups  # None for single-age legacy; explicit list for multi-age
     t.enrollment_cost = cost
     t.max_players = max_players
     t.start_date.isoformat.return_value = "2024-07-01"
@@ -239,17 +241,19 @@ class TestEnrollInTournament:
                 assert "cannot enroll" not in str(exc)
 
     def test_400_age_category_validation_fails(self):
+        """PRE player in PRO-only tournament → 400, detail names both categories."""
         t = _tournament(age_group="PRO")
         lic = _license()
         db = _seq_db(_q(first=t), _q(first=None), _q(first=lic))
         with patch(f"{_BASE}.get_current_season_year", return_value=2024), \
              patch(f"{_BASE}.calculate_age_at_season_start", return_value=10), \
-             patch(f"{_BASE}.get_automatic_age_category", return_value="PRE"), \
-             patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(False, "PRE cannot enroll in PRO")):
+             patch(f"{_BASE}.get_automatic_age_category", return_value="PRE"):
             with pytest.raises(Exception) as exc:
                 enroll_in_tournament(self.TID, db=db, current_user=_student())
         assert exc.value.status_code == 400
-        assert "PRE cannot enroll in PRO" in exc.value.detail
+        # New message: "Your age category (PRE) is not eligible...Eligible: ['PRO']"
+        assert "PRE" in exc.value.detail
+        assert "PRO" in exc.value.detail
 
     def test_400_tournament_full(self):
         t = _tournament(max_players=16)

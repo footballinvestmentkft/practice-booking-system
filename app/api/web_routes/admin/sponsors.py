@@ -343,41 +343,42 @@ async def admin_sponsor_promotion_create(
             status_code=303,
         )
 
-    for ag in age_groups:
-        suffix = datetime.now().strftime("%H%M%S%f")[:9]
-        code = f"PROMO-{date.fromisoformat(start_date).strftime('%Y%m%d')}-{ag.upper()[:6]}-{suffix}"
+    suffix = datetime.now().strftime("%H%M%S%f")[:9]
+    code = f"PROMO-{date.fromisoformat(start_date).strftime('%Y%m%d')}-{suffix}"
 
-        t = Semester(
-            code=code,
-            name=f"{tournament_name} ({ag})",
-            start_date=date.fromisoformat(start_date),
-            end_date=date.fromisoformat(end_date),
-            status=SemesterStatus.DRAFT,
-            tournament_status="DRAFT",
-            semester_category=SemesterCategory.PROMOTION_EVENT,
-            age_group=ag,                        # PRE / YOUTH / AMATEUR / PRO — already canonical
-            enrollment_cost=0,
-            campus_id=int(campus_id) if campus_id.strip() else None,
-            organizer_sponsor_id=sponsor.id,     # sponsor organizer
-            organizer_campaign_id=campaign.id,   # campaign whose audience feeds this event
-            organizer_club_id=None,              # explicit NULL — never a club
-        )
-        db.add(t)
-        db.flush()
+    t = Semester(
+        code=code,
+        name=tournament_name,
+        start_date=date.fromisoformat(start_date),
+        end_date=date.fromisoformat(end_date),
+        status=SemesterStatus.DRAFT,
+        tournament_status="DRAFT",
+        semester_category=SemesterCategory.PROMOTION_EVENT,
+        specialization_type="LFA_FOOTBALL_PLAYER",
+        age_group=age_groups[0] if len(age_groups) == 1 else None,
+        age_groups=age_groups,
+        enrollment_cost=0,
+        campus_id=int(campus_id) if campus_id.strip() else None,
+        organizer_sponsor_id=sponsor.id,
+        organizer_campaign_id=campaign.id,
+        organizer_club_id=None,
+    )
+    db.add(t)
+    db.flush()
 
-        # Derive location from campus
-        if t.campus_id:
-            campus_obj = db.query(Campus).filter(Campus.id == t.campus_id).first()
-            if campus_obj and campus_obj.location_id:
-                t.location_id = campus_obj.location_id
+    # Derive location from campus
+    if t.campus_id:
+        campus_obj = db.query(Campus).filter(Campus.id == t.campus_id).first()
+        if campus_obj and campus_obj.location_id:
+            t.location_id = campus_obj.location_id
 
-        db.add(TournamentConfiguration(
-            semester_id=t.id,
-            tournament_type_id=int(tournament_type_id) if tournament_type_id.strip() else None,
-            participant_type="INDIVIDUAL",       # sponsor events are always INDIVIDUAL
-            number_of_rounds=1,
-        ))
-        # No TournamentTeamEnrollment — sponsor events have no teams
+    db.add(TournamentConfiguration(
+        semester_id=t.id,
+        tournament_type_id=int(tournament_type_id) if tournament_type_id.strip() else None,
+        participant_type="INDIVIDUAL",
+        number_of_rounds=1,
+        assignment_type="OPEN_ASSIGNMENT",
+    ))
 
     db.commit()
     logger.info(

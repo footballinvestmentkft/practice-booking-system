@@ -24,7 +24,7 @@ from app.services.age_category_service import (
     calculate_age_at_season_start
 )
 from app.services.enrollment_conflict_service import EnrollmentConflictService
-from app.services.tournament.validation import validate_tournament_enrollment_age, check_duplicate_enrollment
+from app.services.tournament.validation import validate_tournament_enrollment_age, check_duplicate_enrollment, get_allowed_age_groups
 from app.services.audit_service import AuditService
 from app.models.audit_log import AuditAction
 import logging
@@ -165,30 +165,34 @@ def enroll_in_tournament(
     age_at_season_start = calculate_age_at_season_start(current_user.date_of_birth, season_year)
     player_age_category = get_automatic_age_category(age_at_season_start)
 
-    # For 18+ users, automatically infer category from tournament age group
+    # For 18+ users, automatically infer category from tournament's allowed age groups
     if not player_age_category:
-        tournament_age_group = tournament.age_group
-        if tournament_age_group in ["AMATEUR", "PRO"]:
-            player_age_category = tournament_age_group
+        allowed = get_allowed_age_groups(tournament)
+        upper_allowed = [ag for ag in (allowed or []) if ag in ["AMATEUR", "PRO"]]
+        if len(upper_allowed) == 1:
+            player_age_category = upper_allowed[0]
             logger.info(f"✅ Auto-assigned age category {player_age_category} to user {current_user.id} based on tournament {tournament.code}")
-        else:
-            # Tournament is PRE or YOUTH, but player is 18+
+        elif len(upper_allowed) > 1:
+            # Multi-age event with multiple adult categories — admin must assign explicitly
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"You are over 18 and cannot enroll in {tournament_age_group} tournaments. Please enroll in AMATEUR or PRO tournaments."
+                detail="This event spans multiple adult age categories. "
+                       "Please ask an administrator to assign your age category before enrolling."
+            )
+        else:
+            # No upper group (PRE/YOUTH only) — 18+ cannot enroll
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="You are over 18 and cannot enroll in this tournament. Please enroll in AMATEUR or PRO tournaments."
             )
 
-    # 6. Verify age category enrollment rules using shared validation
-    tournament_age_group = tournament.age_group
-    is_valid, error_message = validate_tournament_enrollment_age(
-        player_age_category,
-        tournament_age_group
-    )
-
-    if not is_valid:
+    # 6. Verify age category enrollment rules using get_allowed_age_groups
+    allowed = get_allowed_age_groups(tournament)
+    if allowed is not None and player_age_category not in allowed:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error_message
+            detail=f"Your age category ({player_age_category}) is not eligible for this event. "
+                   f"Eligible categories: {allowed}"
         )
 
     # 7. Acquire row-level lock on the tournament row FIRST to prevent race conditions
