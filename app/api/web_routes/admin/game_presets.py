@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+_VALID_FOOT_CONTEXTS = frozenset({"right", "left", "neutral"})
+
 
 def _build_skill_groups():
     """Build skill groups from SKILL_CATEGORIES config for template rendering."""
@@ -73,6 +75,13 @@ async def admin_create_game_preset(
             except (ValueError, TypeError):
                 weights[skill_key] = 1
 
+    skill_foot_contexts: dict = {}
+    for key, val in form_data.multi_items():
+        if key.startswith("skill_fc_"):
+            sk = key[len("skill_fc_"):]
+            if sk in skills and val in _VALID_FOOT_CONTEXTS:
+                skill_foot_contexts[sk] = val
+
     total = sum(weights.get(s, 1) for s in skills) or 1
     skill_weights = {s: round(weights.get(s, 1) / total, 4) for s in skills}
 
@@ -83,6 +92,7 @@ async def admin_create_game_preset(
             "skills_tested": skills,
             "skill_weights": skill_weights,
             "skill_impact_on_matches": bool(skill_impact),
+            **({"skill_foot_contexts": skill_foot_contexts} if skill_foot_contexts else {}),
         },
         "simulation_config": {},
         "metadata": {
@@ -128,6 +138,7 @@ async def admin_edit_game_preset_page(
             "request": request, "user": user, "preset": preset,
             "skill_groups": skill_groups, "current_skills": current_skills,
             "weight_pcts": weight_pcts,
+            "skill_foot_contexts": sc.get("skill_foot_contexts", {}),
         }
     )
 
@@ -161,6 +172,13 @@ async def admin_edit_game_preset_submit(
             except (ValueError, TypeError):
                 weights[key[len("skill_w_"):]] = 1
 
+    skill_foot_contexts: dict = {}
+    for key, val in form_data.multi_items():
+        if key.startswith("skill_fc_"):
+            sk = key[len("skill_fc_"):]
+            if sk in skills and val in _VALID_FOOT_CONTEXTS:
+                skill_foot_contexts[sk] = val
+
     total = sum(weights.get(s, 1) for s in skills) or 1
     skill_weights = {s: round(weights.get(s, 1) / total, 4) for s in skills}
 
@@ -171,6 +189,7 @@ async def admin_edit_game_preset_submit(
             "skills_tested": skills,
             "skill_weights": skill_weights,
             "skill_impact_on_matches": bool(skill_impact),
+            **({"skill_foot_contexts": skill_foot_contexts} if skill_foot_contexts else {}),
         },
         "metadata": {
             "game_category": category or None,
