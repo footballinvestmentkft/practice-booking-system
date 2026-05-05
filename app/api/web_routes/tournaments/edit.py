@@ -10,7 +10,8 @@ from ....dependencies import get_current_user_web
 from ....models.campus import Campus
 from ....models.game_preset import GamePreset
 from ....models.location import Location
-from ....models.semester import Semester
+from ....models.semester import Semester, SemesterCategory
+from ....services.tournament import get_allowed_age_groups
 from ....models.semester_enrollment import SemesterEnrollment
 from ....models.session import Session as SessionModel, EventCategory
 from ....models.team import Team, TournamentTeamEnrollment
@@ -261,6 +262,8 @@ async def admin_tournament_edit_page(
             "eligible_instructors": eligible_instructors,
             "pitches_for_roster": pitches_for_roster,
             "has_absent_field": has_absent_field,
+            "is_promotion_event": t.semester_category == SemesterCategory.PROMOTION_EVENT,
+            "promotion_age_groups": get_allowed_age_groups(t),
             "flash": request.query_params.get("flash"),
             "error": request.query_params.get("error"),
         },

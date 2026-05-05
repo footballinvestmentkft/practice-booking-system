@@ -292,11 +292,17 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
     <div class="form-row">
         <div class="form-group">
             <label>Age Group</label>
+            {% if is_promotion_event %}
+            <div id="basic-age-group-readonly" class="form-control-plaintext">
+                {{ promotion_age_groups | join(", ") if promotion_age_groups else "—" }}
+            </div>
+            {% else %}
             <select id="basic-age-group">
                 {% for ag in ['PRE', 'YOUTH', 'AMATEUR', 'PRO'] %}
                 <option value="{{ ag }}" {% if t.age_group == ag %}selected{% endif %}>{{ ag }}</option>
                 {% endfor %}
             </select>
+            {% endif %}
         </div>
         <div class="form-group">
             <label>Max Players</label>
@@ -1279,7 +1285,7 @@ async function saveBasicInfo() {
         start_date:      document.getElementById('basic-start-date').value || undefined,
         end_date:        document.getElementById('basic-end-date').value || undefined,
         enrollment_cost: parseInt(document.getElementById('basic-enrollment-cost').value) || 0,
-        age_group:       document.getElementById('basic-age-group').value || undefined,
+        age_group:       document.getElementById('basic-age-group')?.value || undefined,
         campus_id:       parseInt(document.getElementById('basic-campus-id').value) || undefined,
         location_id:     parseInt(document.getElementById('basic-location-id').value) || undefined,
     };

@@ -35,6 +35,7 @@ from app.api.api_v1.endpoints.tournaments.lifecycle_updates import (
     TournamentUpdateRequest,
 )
 from app.models.user import UserRole
+from app.models.semester import SemesterCategory
 
 _VALID = "app.services.tournament.status_validator.VALID_TRANSITIONS"
 _TSG   = "app.services.tournament_session_generator.TournamentSessionGenerator"
@@ -85,6 +86,8 @@ def _tournament(**overrides):
     t.name = "Old Name"
     t.enrollment_cost = 100
     t.age_group = "AMATEUR"
+    t.age_groups = None          # explicit None — prevents MagicMock auto-attr trap
+    t.semester_category = None   # explicit None — enum comparison safe
     t.focus_description = "Old Desc"
     t.start_date = date(2026, 4, 1)
     t.end_date = date(2026, 5, 1)
@@ -185,6 +188,20 @@ class TestUpdateTournamentSimpleFields:
         t = _tournament()
         result = update_tournament(1, TournamentUpdateRequest(age_group="YOUTH"), db=_db(t), current_user=_admin())
         assert t.age_group == "YOUTH"
+
+    def test_age_group_blocked_for_promotion_event(self):
+        """PROMOTION_EVENT guard: 400 raised; age_group and age_groups unchanged."""
+        t = _tournament(
+            age_group="PRE",
+            age_groups=["PRE", "YOUTH"],
+            semester_category=SemesterCategory.PROMOTION_EVENT,
+        )
+        with pytest.raises(HTTPException) as exc:
+            update_tournament(1, TournamentUpdateRequest(age_group="AMATEUR"), db=_db(t), current_user=_admin())
+        assert exc.value.status_code == 400
+        assert "promotion" in exc.value.detail.lower()
+        assert t.age_group == "PRE"
+        assert t.age_groups == ["PRE", "YOUTH"]
 
     def test_update_description(self):
         t = _tournament()

@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 from app.database import get_db
 from app.dependencies import get_current_admin_user_hybrid
 from app.models.user import User, UserRole
-from app.models.semester import Semester
+from app.models.semester import Semester, SemesterCategory
 from app.models.specialization import SpecializationType
 from app.api.api_v1.endpoints.tournaments.lifecycle import record_status_change
 
@@ -137,6 +137,11 @@ def update_tournament(
 
     # Update age_group
     if request.age_group is not None:
+        if tournament.semester_category == SemesterCategory.PROMOTION_EVENT:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Age group cannot be changed for promotion events.",
+            )
         updates["age_group"] = {"old": tournament.age_group, "new": request.age_group}
         tournament.age_group = request.age_group
 
