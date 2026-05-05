@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from app.database import get_db
 from app.api.deps import get_current_user
 from app.models.user import User, UserRole
-from app.models.semester import Semester
+from app.models.semester import Semester, SemesterCategory
 from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 from app.models.license import UserLicense
 from app.models.session import Session as SessionModel
@@ -81,7 +81,14 @@ def enroll_in_tournament(
             detail="Tournament not found"
         )
 
-    # 2. Verify tournament status (check tournament_status field, NOT the old status field)
+    # 2. Block self-enrollment for PROMOTION_EVENT — participants come from sponsor campaign audience
+    if tournament.semester_category == SemesterCategory.PROMOTION_EVENT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This event accepts participants by invitation only.",
+        )
+
+    # 3. Verify tournament status (check tournament_status field, NOT the old status field)
     # Only ENROLLMENT_OPEN and IN_PROGRESS allow enrollment
     # ENROLLMENT_CLOSED does NOT allow new enrollments (enrollment period ended)
     if tournament.tournament_status not in ["ENROLLMENT_OPEN", "IN_PROGRESS"]:

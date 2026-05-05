@@ -591,7 +591,19 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
   <div class="wiz-step-body">
 
 {# ── SECTION 4: Enrolled Players / Teams ─────────────────────────────────── #}
-{% if cfg and cfg.participant_type == 'TEAM' %}
+{% if is_promotion_event %}
+<div class="card" id="section-campaign-audience-placeholder">
+    <div class="section-header">
+        <span class="section-icon">📋</span>
+        <h2>Campaign Audience</h2>
+    </div>
+    <p style="color:#a0aec0;margin:0 0 .75rem;">
+        Participants for this event come from the sponsor campaign audience, not from standard enrollment.
+        Standard player add/remove actions are disabled for promotion events.
+    </p>
+    <a href="#section-campaign-audience" class="btn btn-outline" style="display:inline-block;">View Campaign Audience ↓</a>
+</div>
+{% elif cfg and cfg.participant_type == 'TEAM' %}
 <div class="card" id="section-checkin">
     <div class="section-header">
         <span class="section-icon">👥</span>

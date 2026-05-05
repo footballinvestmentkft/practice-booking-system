@@ -42,6 +42,7 @@ from app.api.api_v1.endpoints.tournaments.enroll import (
     unenroll_from_tournament,
 )
 from app.models.user import UserRole
+from app.models.semester import SemesterCategory
 
 _BASE = "app.api.api_v1.endpoints.tournaments.enroll"
 
@@ -78,14 +79,15 @@ def _seq_db(*qs):
 
 
 def _tournament(*, status="ENROLLMENT_OPEN", age_group="PRE", cost=500, max_players=32,
-                age_groups=None):
+                age_groups=None, semester_category=None):
     t = MagicMock()
     t.id = 1
     t.tournament_status = status
     t.name = "LFA Tournament"
     t.code = "LFA-T-001"
     t.age_group = age_group
-    t.age_groups = age_groups  # None for single-age legacy; explicit list for multi-age
+    t.age_groups = age_groups          # explicit None — MagicMock auto-attr trap prevention
+    t.semester_category = semester_category  # explicit None — enum comparison safe
     t.enrollment_cost = cost
     t.max_players = max_players
     t.start_date.isoformat.return_value = "2024-07-01"
@@ -155,6 +157,18 @@ class TestEnrollInTournament:
         with pytest.raises(Exception) as exc:
             enroll_in_tournament(self.TID, db=db, current_user=_student())
         assert exc.value.status_code == 404
+
+    def test_400_promotion_event_blocks_self_enroll(self):
+        """PROMOTION_EVENT guard fires before status check — 400, invitation only."""
+        t = _tournament(
+            status="ENROLLMENT_OPEN",
+            semester_category=SemesterCategory.PROMOTION_EVENT,
+        )
+        db = _seq_db(_q(first=t))
+        with pytest.raises(Exception) as exc:
+            enroll_in_tournament(self.TID, db=db, current_user=_student())
+        assert exc.value.status_code == 400
+        assert "invitation" in exc.value.detail.lower()
 
     def test_400_wrong_tournament_status_triggers_audit(self):
         t = _tournament(status="COMPLETED")

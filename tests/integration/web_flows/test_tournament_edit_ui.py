@@ -1,11 +1,15 @@
 """
-Integration tests — tournament edit page age group field rendering.
+Integration tests — tournament edit page field rendering.
 
   EDIT-UI-01  PROMOTION_EVENT (multi-age) → id="basic-age-group-readonly" present,
               id="basic-age-group" absent
   EDIT-UI-02  PROMOTION_EVENT (single-age) → id="basic-age-group-readonly" present,
               id="basic-age-group" absent
   EDIT-UI-03  Non-promotion event → id="basic-age-group" present
+  EDIT-UI-06  PROMOTION_EVENT → campaign audience placeholder shown, standard
+              enrolled-players section absent
+  EDIT-UI-07  Non-promotion event → standard enrolled-players section shown,
+              campaign audience placeholder absent
 
 DONE = pytest tests/integration/web_flows/test_tournament_edit_ui.py -v
 """
@@ -141,5 +145,51 @@ class TestNonPromotionEventSelect:
 
             assert 'id="basic-age-group"' in resp.text
             assert 'id="basic-age-group-readonly"' not in resp.text
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-06 ────────────────────────────────────────────────────────────────
+
+class TestPromotionEventEnrolledPlayersSection:
+    """EDIT-UI-06: PROMOTION_EVENT → campaign audience placeholder shown; standard
+    enrolled-players section absent."""
+
+    def test_edit_ui_06_campaign_placeholder_present_enrolled_absent(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sem = _make_promotion_semester(test_db, age_groups=["PRE", "YOUTH"])
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+
+            html = resp.text
+            assert 'id="section-campaign-audience-placeholder"' in html
+            assert 'id="section-checkin"' not in html
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-07 ────────────────────────────────────────────────────────────────
+
+class TestNonPromotionEventEnrolledPlayersSection:
+    """EDIT-UI-07: non-promotion event → standard enrolled-players section shown;
+    campaign audience placeholder absent."""
+
+    def test_edit_ui_07_enrolled_section_present_placeholder_absent(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sem = _make_mini_season_semester(test_db)
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+
+            html = resp.text
+            assert 'id="section-checkin"' in html
+            assert 'id="section-campaign-audience-placeholder"' not in html
         finally:
             app.dependency_overrides.clear()

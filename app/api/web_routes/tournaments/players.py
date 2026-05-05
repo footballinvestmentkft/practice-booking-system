@@ -11,7 +11,7 @@ from ....database import get_db
 from ....dependencies import get_current_user_web, get_current_admin_or_instructor_user_hybrid
 from ....models.club import Club
 from ....models.license import UserLicense
-from ....models.semester import Semester
+from ....models.semester import Semester, SemesterCategory
 from ....models.semester_enrollment import SemesterEnrollment
 from ....models.team import Team, TeamMember
 from ....models.user import User
@@ -19,6 +19,20 @@ import app.services.tournament.enrollment_service as _enroll_service
 from . import templates, _admin_only
 
 router = APIRouter()
+
+_PROMO_GUARD_MSG = "Standard enrollment management is not available for promotion events."
+
+
+def _fetch_tournament_or_404(db: Session, tournament_id: int) -> Semester:
+    t = db.query(Semester).filter(Semester.id == tournament_id).first()
+    if not t:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    return t
+
+
+def _raise_if_promotion_event(t: Semester) -> None:
+    if t.semester_category == SemesterCategory.PROMOTION_EVENT:
+        raise HTTPException(status_code=400, detail=_PROMO_GUARD_MSG)
 
 
 @router.get("/admin/tournaments/{tournament_id}/players", response_class=HTMLResponse)
@@ -35,6 +49,11 @@ async def admin_tournament_players_page(
     if not t:
         return RedirectResponse(url="/admin/tournaments?error=Tournament+not+found", status_code=303)
 
+    if t.semester_category == SemesterCategory.PROMOTION_EVENT:
+        return RedirectResponse(
+            url=f"/admin/tournaments/{tournament_id}/edit?error=Player+management+is+not+available+for+promotion+events",
+            status_code=303,
+        )
     cfg = t.tournament_config_obj
     if cfg is None:
         return RedirectResponse(
@@ -122,6 +141,7 @@ async def admin_tournament_players_enroll(
     """Enroll a single player into an INDIVIDUAL tournament (admin bypass)."""
     _admin_only(user)
     try:
+        _raise_if_promotion_event(_fetch_tournament_or_404(db, tournament_id))
         _enroll_service.enroll_player_admin(db, tournament_id, user_id, user.id)
         db.commit()
         return RedirectResponse(
@@ -146,6 +166,7 @@ async def admin_tournament_players_remove(
     """Remove a player's active enrollment from an INDIVIDUAL tournament."""
     _admin_only(user)
     try:
+        _raise_if_promotion_event(_fetch_tournament_or_404(db, tournament_id))
         _enroll_service.unenroll_player_admin(db, tournament_id, player_user_id)
         db.commit()
         return RedirectResponse(
@@ -173,6 +194,11 @@ async def admin_tournament_players_enroll_from_team(
     t = db.query(Semester).filter(Semester.id == tournament_id).first()
     if not t:
         return RedirectResponse(url="/admin/tournaments?error=Tournament+not+found", status_code=303)
+    if t.semester_category == SemesterCategory.PROMOTION_EVENT:
+        return RedirectResponse(
+            url=f"/admin/tournaments/{tournament_id}/edit?error=Player+management+is+not+available+for+promotion+events",
+            status_code=303,
+        )
     if t.tournament_status != "ENROLLMENT_OPEN":
         return RedirectResponse(
             url=f"/admin/tournaments/{tournament_id}/players?error=Enrollment+is+not+open",
@@ -356,6 +382,7 @@ async def admin_enroll_player(
     user: User = Depends(get_current_admin_or_instructor_user_hybrid),
 ):
     """Bulk-enroll one or more players (admin bypass — no credit deduction)."""
+    _raise_if_promotion_event(_fetch_tournament_or_404(db, tournament_id))
     body = await request.json()
     user_ids = body.get("user_ids", [])
 
@@ -382,6 +409,7 @@ async def admin_unenroll_player(
     user: User = Depends(get_current_admin_or_instructor_user_hybrid),
 ):
     """Remove a player's active enrollment (admin action)."""
+    _raise_if_promotion_event(_fetch_tournament_or_404(db, tournament_id))
     body = await request.json()
     uid = body.get("user_id")
     if not uid:
