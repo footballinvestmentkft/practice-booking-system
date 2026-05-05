@@ -22,8 +22,11 @@ from app.models.sponsor import SponsorAudienceEntry
 from app.models.user import User
 
 # Statuses in which bulk-enroll is permitted.
+# ENROLLMENT_OPEN is included to support recovery of tournaments that entered it
+# via legacy data or direct API (PROMOTION_EVENT should use DRAFT → ENROLLMENT_CLOSED,
+# but ENROLLMENT_OPEN is treated as equivalent for this operation).
 # CHECK_IN_OPEN and later are frozen: participant list is locked for session generation.
-_ALLOWED_STATUSES = {"DRAFT", "ENROLLMENT_CLOSED"}
+_ALLOWED_STATUSES = {"DRAFT", "ENROLLMENT_OPEN", "ENROLLMENT_CLOSED"}
 
 
 class _SkippedEntry(TypedDict):
@@ -75,7 +78,7 @@ def bulk_enroll_from_campaign(
     if tournament.tournament_status not in _ALLOWED_STATUSES:
         raise ValueError(
             f"Cannot bulk-enroll: tournament status is '{tournament.tournament_status}'. "
-            f"Bulk enrollment is only allowed in DRAFT or ENROLLMENT_CLOSED. "
+            f"Bulk enrollment is only allowed in DRAFT, ENROLLMENT_OPEN, or ENROLLMENT_CLOSED. "
             f"CHECK_IN_OPEN and later statuses are frozen."
         )
 

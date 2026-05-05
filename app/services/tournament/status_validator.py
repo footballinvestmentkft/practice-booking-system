@@ -110,6 +110,16 @@ def validate_status_transition(
             return False, "Cannot move to pending acceptance: No instructor assigned"
 
     if new_status == "ENROLLMENT_OPEN":
+        # PROMOTION_EVENT uses the DRAFT → ENROLLMENT_CLOSED fast path.
+        # Allowing ENROLLMENT_OPEN would create a state with no recovery UI (the bulk enroll
+        # button and Lock Audience action were only wired for DRAFT/ENROLLMENT_CLOSED).
+        from app.models.semester import SemesterCategory
+        if getattr(tournament, 'semester_category', None) == SemesterCategory.PROMOTION_EVENT:
+            return False, (
+                "PROMOTION_EVENT tournaments cannot enter ENROLLMENT_OPEN. "
+                "Use 'Lock Audience & Start Preparation' to transition directly to ENROLLMENT_CLOSED."
+            )
+
         # instructor check only on the full workflow path (INSTRUCTOR_CONFIRMED → ENROLLMENT_OPEN)
         # Fast-path (DRAFT → ENROLLMENT_OPEN) is allowed without an instructor;
         # IN_PROGRESS guard will enforce instructor assignment before the tournament can start.

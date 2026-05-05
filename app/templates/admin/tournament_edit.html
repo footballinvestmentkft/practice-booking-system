@@ -1160,7 +1160,7 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
     </div>
 
     {# ── Bulk Enroll action — DRAFT / ENROLLMENT_CLOSED only ── #}
-    {% if organizer_campaign and _status in ['DRAFT', 'ENROLLMENT_CLOSED'] %}
+    {% if organizer_campaign and _status in ['DRAFT', 'ENROLLMENT_OPEN', 'ENROLLMENT_CLOSED'] %}
     <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
         <button class="btn btn-primary" onclick="bulkEnrollCampaign()"
                 id="bulk-enroll-btn"
@@ -1296,10 +1296,16 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
               📢 Open Enrollment
           </button>
           {% endif %}
-        {% elif t.tournament_status == 'ENROLLMENT_OPEN' and not is_promotion_event %}
-        <button class="btn btn-warning" onclick="transitionStatus('ENROLLMENT_CLOSED')">
-            🔒 Close Enrollment
-        </button>
+        {% elif t.tournament_status == 'ENROLLMENT_OPEN' %}
+          {% if is_promotion_event %}
+          <button class="btn btn-warning" onclick="transitionStatus('ENROLLMENT_CLOSED')">
+              🔒 Lock Audience &amp; Start Preparation
+          </button>
+          {% else %}
+          <button class="btn btn-warning" onclick="transitionStatus('ENROLLMENT_CLOSED')">
+              🔒 Close Enrollment
+          </button>
+          {% endif %}
         {% elif t.tournament_status == 'ENROLLMENT_CLOSED' %}
         <button class="btn btn-warning" onclick="transitionStatus('CHECK_IN_OPEN')">
             ⏰ Open Check-In

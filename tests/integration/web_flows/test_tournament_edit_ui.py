@@ -706,3 +706,75 @@ class TestBulkEnrollButtonDisabledNoEligible:
             assert "No eligible promoted campaign participants to enroll." in html
         finally:
             app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-23 ────────────────────────────────────────────────────────────────
+
+class TestBulkEnrollButtonVisibleEnrollmentOpen:
+    """EDIT-UI-23: PROMOTION_EVENT ENROLLMENT_OPEN + eligible entry → Bulk Enroll visible and enabled."""
+
+    def test_edit_ui_23_bulk_enroll_visible_in_enrollment_open(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db)
+        campaign = _make_campaign(test_db, sponsor)
+        user, _ = _make_user_with_license(test_db)
+        _make_audience_entry_promoted(test_db, sponsor, campaign, user)
+        sem = _make_promotion_semester_with_campaign(test_db, sponsor, campaign)
+        sem.tournament_status = "ENROLLMENT_OPEN"
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            assert "Bulk Enroll Campaign Participants" in html
+            # Enabled: no disabled attribute on the bulk-enroll button
+            assert 'id="bulk-enroll-btn" disabled' not in html
+            assert 'id="bulk-enroll-btn"\n                disabled' not in html
+            # Count badge rendered
+            assert "eligible" in html
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-24 ────────────────────────────────────────────────────────────────
+
+class TestLockAudienceButtonEnrollmentOpen:
+    """EDIT-UI-24: PROMOTION_EVENT ENROLLMENT_OPEN → Lock Audience shown; Close Enrollment absent.
+    Non-PROMOTION_EVENT ENROLLMENT_OPEN → Close Enrollment shown (regression)."""
+
+    def test_edit_ui_24_lock_audience_visible_close_enrollment_absent(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db)
+        campaign = _make_campaign(test_db, sponsor)
+        sem = _make_promotion_semester_with_campaign(test_db, sponsor, campaign)
+        sem.tournament_status = "ENROLLMENT_OPEN"
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            assert "Lock Audience" in html
+            assert "Close Enrollment" not in html
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_edit_ui_24b_non_promo_close_enrollment_unchanged(self, test_db: Session):
+        """EDIT-UI-24b: non-PROMOTION_EVENT ENROLLMENT_OPEN → Close Enrollment still shown (regression)."""
+        admin = _make_admin(test_db)
+        sem = _make_mini_season_semester(test_db)
+        sem.tournament_status = "ENROLLMENT_OPEN"
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            assert "Close Enrollment" in html
+            assert "Lock Audience" not in html
+        finally:
+            app.dependency_overrides.clear()

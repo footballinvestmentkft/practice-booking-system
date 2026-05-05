@@ -264,7 +264,7 @@ async def admin_tournament_edit_page(
                 # Use None-safe fallback so tournaments where tournament_status was never
                 # explicitly set (NULL) are treated as DRAFT.
                 _ts = t.tournament_status or "DRAFT"
-                if _ts in ("DRAFT", "ENROLLMENT_CLOSED"):
+                if _ts in ("DRAFT", "ENROLLMENT_OPEN", "ENROLLMENT_CLOSED"):
                     bulk_enroll_eligible_count = (
                         db.query(SponsorAudienceEntry)
                         .filter(

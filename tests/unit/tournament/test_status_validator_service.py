@@ -571,3 +571,39 @@ class TestPromotionEventInProgressGuard:
         is_valid, err = validate_status_transition("CHECK_IN_OPEN", "IN_PROGRESS", t)
         assert is_valid is True
         assert err is None
+
+
+# ──────────────────── PROMOTION_EVENT ENROLLMENT_OPEN prevention ─────────────
+
+
+class TestPromotionEventBlockedFromEnrollmentOpen:
+    """PROMO-SM-11: DRAFT → ENROLLMENT_OPEN is blocked for PROMOTION_EVENT.
+
+    Prevention: PROMOTION_EVENT uses the DRAFT → ENROLLMENT_CLOSED fast path.
+    Allowing ENROLLMENT_OPEN would create a dead-end (no recovery UI).
+    Non-PROMOTION_EVENT DRAFT → ENROLLMENT_OPEN must remain unaffected.
+    """
+
+    def test_promo_sm_11_draft_to_enrollment_open_blocked(self):
+        """PROMO-SM-11: PROMOTION_EVENT DRAFT → ENROLLMENT_OPEN → rejected."""
+        t = _promo_tournament(status="DRAFT")
+        is_valid, err = validate_status_transition("DRAFT", "ENROLLMENT_OPEN", t)
+        assert is_valid is False
+        assert "ENROLLMENT_OPEN" in err or "Lock Audience" in err
+
+    def test_promo_sm_11b_non_promo_draft_to_enrollment_open_unchanged(self):
+        """PROMO-SM-11b: non-PROMOTION_EVENT DRAFT → ENROLLMENT_OPEN still allowed (regression)."""
+        from app.models.semester import SemesterCategory
+        from datetime import date
+        t = MagicMock()
+        t.tournament_status = "DRAFT"
+        t.semester_category = SemesterCategory.MINI_SEASON
+        t.tournament_type_id = None
+        t.master_instructor_id = 1
+        t.campus_id = 1
+        t.name = "Mini Season"
+        t.start_date = date(2027, 1, 1)
+        t.end_date = date(2027, 1, 2)
+        t.format = "INDIVIDUAL_RANKING"
+        is_valid, err = validate_status_transition("DRAFT", "ENROLLMENT_OPEN", t)
+        assert is_valid is True

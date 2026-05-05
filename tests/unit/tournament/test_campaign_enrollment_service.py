@@ -422,3 +422,29 @@ class TestBulkEnrollInEnrollmentClosed:
         test_db.commit()
 
         assert result["enrolled_count"] == 1
+
+
+# ── BULKENR-11 ────────────────────────────────────────────────────────────────
+
+class TestBulkEnrollInEnrollmentOpen:
+    """BULKENR-11: bulk_enroll_from_campaign allowed when status=ENROLLMENT_OPEN.
+
+    Recovery path: PROMOTION_EVENT tournaments that entered ENROLLMENT_OPEN via
+    legacy data or direct API call must be able to bulk-enroll before locking.
+    """
+
+    def test_bulkenr_11_enrollment_open(self, test_db: Session):
+        admin = _admin(test_db)
+        sponsor = _sponsor(test_db)
+        campaign = _campaign(test_db, sponsor)
+        t = _promo_tournament(test_db, sponsor, campaign, status="ENROLLMENT_OPEN")
+
+        user, _ = _user_with_license(test_db, "eo")
+        _audience_entry(test_db, sponsor, campaign, user=user)
+        test_db.commit()
+
+        result = bulk_enroll_from_campaign(test_db, t.id, admin.id)
+        test_db.commit()
+
+        assert result["enrolled_count"] == 1
+        assert result["skipped_count"] == 0
