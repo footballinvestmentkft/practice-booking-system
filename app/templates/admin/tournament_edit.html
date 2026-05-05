@@ -219,7 +219,7 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
 {% set _all_results_done = (session_count > 0 and completed_session_count >= session_count) %}
 {% set _has_rankings = (existing_rankings | length > 0) %}
 {% set step1_state = 'done' if _status != 'DRAFT' else 'active' %}
-{% set step2_state = 'done' if _status not in ['DRAFT','ENROLLMENT_OPEN'] else ('active' if _status == 'ENROLLMENT_OPEN' else 'locked') %}
+{% set step2_state = 'done' if _status not in ['DRAFT','ENROLLMENT_OPEN'] else ('active' if (_status == 'ENROLLMENT_OPEN' or (is_promotion_event and _status == 'DRAFT')) else 'locked') %}
 {% set step3_state = 'done' if _status not in ['DRAFT','ENROLLMENT_OPEN','ENROLLMENT_CLOSED'] else ('active' if _status == 'ENROLLMENT_CLOSED' else 'locked') %}
 {% set step4_state = 'done' if _status in ['IN_PROGRESS','COMPLETED','REWARDS_DISTRIBUTED'] else ('active' if _status == 'CHECK_IN_OPEN' else 'locked') %}
 {% set step5_state = 'done' if (_status in ['COMPLETED','REWARDS_DISTRIBUTED'] or (_status == 'IN_PROGRESS' and _all_results_done)) else ('active' if _status == 'IN_PROGRESS' else 'locked') %}
@@ -1160,7 +1160,7 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
     </div>
 
     {# ── Bulk Enroll action — DRAFT / ENROLLMENT_CLOSED only ── #}
-    {% if organizer_campaign and t.tournament_status in ['DRAFT', 'ENROLLMENT_CLOSED'] %}
+    {% if organizer_campaign and _status in ['DRAFT', 'ENROLLMENT_CLOSED'] %}
     <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
         <button class="btn btn-primary" onclick="bulkEnrollCampaign()"
                 id="bulk-enroll-btn"
@@ -1180,7 +1180,7 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
     </div>
     {% if bulk_enroll_eligible_count == 0 and organizer_campaign %}
     <p style="font-size:.82rem;color:#a0aec0;margin:0 0 .75rem;">
-        No eligible entries found. Entries must be ACTIVE with consent and have been promoted (linked user) before they can be enrolled.
+        No eligible promoted campaign participants to enroll.
     </p>
     {% endif %}
     {% endif %}

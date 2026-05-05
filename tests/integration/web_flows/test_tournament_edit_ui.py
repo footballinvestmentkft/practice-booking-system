@@ -645,3 +645,64 @@ class TestBulkEnrollButtonHiddenFrozenStatus:
             assert "Bulk Enroll Campaign Participants" not in resp.text
         finally:
             app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-21 ────────────────────────────────────────────────────────────────
+
+class TestBulkEnrollButtonEnabledWithEligible:
+    """EDIT-UI-21: eligible promoted entry → button rendered AND enabled (no disabled attr)."""
+
+    def test_edit_ui_21_button_enabled_shows_count(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db)
+        campaign = _make_campaign(test_db, sponsor)
+        user, _ = _make_user_with_license(test_db)
+        _make_audience_entry_promoted(test_db, sponsor, campaign, user)
+        sem = _make_promotion_semester_with_campaign(test_db, sponsor, campaign)
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            assert "Bulk Enroll Campaign Participants" in html
+            # Button must be enabled: no disabled attribute on the button
+            assert 'id="bulk-enroll-btn" disabled' not in html
+            assert 'id="bulk-enroll-btn"\n                disabled' not in html
+            # Eligible count badge must be rendered
+            assert "eligible" in html
+            # Help text for 0 eligible must be absent
+            assert "No eligible promoted campaign participants to enroll." not in html
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-22 ────────────────────────────────────────────────────────────────
+
+class TestBulkEnrollButtonDisabledNoEligible:
+    """EDIT-UI-22: campaign linked but no eligible entry (not promoted) →
+    disabled button + help text rendered."""
+
+    def test_edit_ui_22_disabled_button_and_help_text(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db)
+        campaign = _make_campaign(test_db, sponsor)
+        # ACTIVE audience entry but user_id=None (not yet promoted) → not eligible
+        _make_audience_entry_with_status(test_db, sponsor, campaign, "ACTIVE")
+        sem = _make_promotion_semester_with_campaign(test_db, sponsor, campaign)
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            # Button must render (visible even when disabled)
+            assert "Bulk Enroll Campaign Participants" in html
+            # Button must have disabled attribute
+            assert "disabled" in html
+            # Help text must appear
+            assert "No eligible promoted campaign participants to enroll." in html
+        finally:
+            app.dependency_overrides.clear()

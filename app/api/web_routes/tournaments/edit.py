@@ -261,7 +261,10 @@ async def admin_tournament_edit_page(
                 # Mirrors the service filter: ACTIVE + consent + promoted (user_id set).
                 # Does not subtract already-enrolled — the button label is indicative;
                 # idempotency is enforced in the service.
-                if t.tournament_status in ("DRAFT", "ENROLLMENT_CLOSED"):
+                # Use None-safe fallback so tournaments where tournament_status was never
+                # explicitly set (NULL) are treated as DRAFT.
+                _ts = t.tournament_status or "DRAFT"
+                if _ts in ("DRAFT", "ENROLLMENT_CLOSED"):
                     bulk_enroll_eligible_count = (
                         db.query(SponsorAudienceEntry)
                         .filter(
