@@ -15,6 +15,8 @@ Integration tests — tournament edit page field rendering.
   EDIT-UI-09  PROMOTION_EVENT without campaign link → id="section-campaign-audience"
               present, id="campaign-audience-no-link" shown (fallback)
   EDIT-UI-10  Non-promotion event → id="section-campaign-audience" absent
+  EDIT-UI-11  PROMOTION_EVENT: DELETED entry excluded, ACTIVE entry shown
+  EDIT-UI-12  PROMOTION_EVENT: all-DELETED campaign → empty/fallback (no table rows)
 
 DONE = pytest tests/integration/web_flows/test_tournament_edit_ui.py -v
 """
@@ -334,5 +336,88 @@ class TestNonPromotionEventNoCampaignAudienceSection:
             assert resp.status_code == 200
 
             assert 'id="section-campaign-audience"' not in resp.text
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── Helpers for EDIT-UI-11/12 ─────────────────────────────────────────────────
+
+def _make_audience_entry_with_status(
+    db: Session, sponsor: Sponsor, campaign: SponsorCampaign, status: str, email_hint: str = ""
+) -> SponsorAudienceEntry:
+    log = CsvImportLog(sponsor_id=sponsor.id, campaign_id=campaign.id)
+    db.add(log)
+    db.flush()
+    entry = SponsorAudienceEntry(
+        sponsor_id=sponsor.id,
+        campaign_id=campaign.id,
+        import_log_id=log.id,
+        first_name="Test",
+        last_name=f"Player{email_hint}",
+        email=f"audience-{status.lower()}{email_hint}+{uuid.uuid4().hex[:8]}@lfa.com",
+        status=status,
+    )
+    db.add(entry)
+    db.flush()
+    return entry
+
+
+# ── EDIT-UI-11 ────────────────────────────────────────────────────────────────
+
+class TestCampaignAudienceDeletedFiltered:
+    """EDIT-UI-11: DELETED entry is excluded; ACTIVE entry appears in the table."""
+
+    def test_edit_ui_11_deleted_excluded_active_shown(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db)
+        campaign = _make_campaign(test_db, sponsor)
+        active_entry = _make_audience_entry_with_status(test_db, sponsor, campaign, "ACTIVE", "a")
+        _make_audience_entry_with_status(test_db, sponsor, campaign, "DELETED", "d")
+        sem = _make_promotion_semester_with_campaign(test_db, sponsor, campaign)
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+
+            html = resp.text
+            # ACTIVE entry email must appear in the rendered table
+            assert active_entry.email in html
+            # DELETED entry last name suffix must NOT appear
+            assert "PlayerDELETED" not in html
+            assert "Playerd" not in html
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-12 ────────────────────────────────────────────────────────────────
+
+class TestCampaignAudienceAllDeletedFallback:
+    """EDIT-UI-12: when every entry in the campaign is DELETED, the section renders
+    the empty-state message (no misleading participant table)."""
+
+    def test_edit_ui_12_all_deleted_shows_empty_state(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db)
+        campaign = _make_campaign(test_db, sponsor)
+        _make_audience_entry_with_status(test_db, sponsor, campaign, "DELETED", "x")
+        _make_audience_entry_with_status(test_db, sponsor, campaign, "DELETED", "y")
+        sem = _make_promotion_semester_with_campaign(test_db, sponsor, campaign)
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+
+            html = resp.text
+            # Section must exist (campaign IS linked)
+            assert 'id="section-campaign-audience"' in html
+            # No audience table rows rendered — the "No audience entries" fallback appears
+            assert "No audience entries found for this campaign" in html
+            # The deleted entry emails must not be visible
+            assert "Playerx" not in html
+            assert "Playery" not in html
         finally:
             app.dependency_overrides.clear()

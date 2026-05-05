@@ -249,7 +249,10 @@ async def admin_tournament_edit_page(
             if organizer_campaign:
                 campaign_audience = (
                     db.query(SponsorAudienceEntry)
-                    .filter(SponsorAudienceEntry.campaign_id == t.organizer_campaign_id)
+                    .filter(
+                        SponsorAudienceEntry.campaign_id == t.organizer_campaign_id,
+                        SponsorAudienceEntry.status != "DELETED",
+                    )
                     .order_by(SponsorAudienceEntry.last_name, SponsorAudienceEntry.first_name)
                     .all()
                 )
