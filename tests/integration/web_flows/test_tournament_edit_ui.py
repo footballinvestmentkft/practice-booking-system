@@ -1,11 +1,14 @@
 """
-Integration tests — tournament edit page age group field rendering.
+Integration tests — tournament edit page age group + participant type field rendering.
 
   EDIT-UI-01  PROMOTION_EVENT (multi-age) → id="basic-age-group-readonly" present,
               id="basic-age-group" absent
   EDIT-UI-02  PROMOTION_EVENT (single-age) → id="basic-age-group-readonly" present,
               id="basic-age-group" absent
   EDIT-UI-03  Non-promotion event → id="basic-age-group" present
+  EDIT-UI-04  PROMOTION_EVENT → id="basic-participant-type-readonly" present,
+              id="basic-participant-type-h2h" and id="basic-participant-type-ir" absent
+  EDIT-UI-05  Non-promotion event (H2H format) → id="basic-participant-type-h2h" present
 
 DONE = pytest tests/integration/web_flows/test_tournament_edit_ui.py -v
 """
@@ -141,5 +144,53 @@ class TestNonPromotionEventSelect:
 
             assert 'id="basic-age-group"' in resp.text
             assert 'id="basic-age-group-readonly"' not in resp.text
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-04 ────────────────────────────────────────────────────────────────
+
+class TestPromotionEventParticipantTypeReadOnly:
+    """EDIT-UI-04: PROMOTION_EVENT → participant_type readonly div, no selects."""
+
+    def test_edit_ui_04_readonly_present_selects_absent(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sem = _make_promotion_semester(test_db, age_groups=["PRE", "YOUTH"])
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+
+            html = resp.text
+            assert 'id="basic-participant-type-readonly"' in html
+            assert 'id="basic-participant-type-h2h"' not in html
+            assert 'id="basic-participant-type-ir"' not in html
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-05 ────────────────────────────────────────────────────────────────
+
+class TestNonPromotionEventParticipantTypeSelect:
+    """EDIT-UI-05: non-promotion event → participant_type select rendered normally."""
+
+    def test_edit_ui_05_select_present(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sem = _make_mini_season_semester(test_db)
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+
+            html = resp.text
+            assert 'id="basic-participant-type-readonly"' not in html
+            assert (
+                'id="basic-participant-type-h2h"' in html
+                or 'id="basic-participant-type-ir"' in html
+            )
         finally:
             app.dependency_overrides.clear()

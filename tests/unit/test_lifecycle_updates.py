@@ -203,6 +203,16 @@ class TestUpdateTournamentSimpleFields:
         assert t.age_group == "PRE"
         assert t.age_groups == ["PRE", "YOUTH"]
 
+    def test_participant_type_blocked_for_promotion_event(self):
+        """PROMOTION_EVENT guard: participant_type PATCH → 400; cfg.participant_type unchanged."""
+        t = _tournament(semester_category=SemesterCategory.PROMOTION_EVENT)
+        t.tournament_config_obj.participant_type = "INDIVIDUAL"
+        with pytest.raises(HTTPException) as exc:
+            update_tournament(1, TournamentUpdateRequest(participant_type="TEAM"), db=_db(t), current_user=_admin())
+        assert exc.value.status_code == 400
+        assert "promotion" in exc.value.detail.lower()
+        assert t.tournament_config_obj.participant_type == "INDIVIDUAL"
+
     def test_update_description(self):
         t = _tournament()
         result = update_tournament(1, TournamentUpdateRequest(description="New desc"), db=_db(t), current_user=_admin())

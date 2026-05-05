@@ -195,6 +195,11 @@ def update_tournament(
 
     # Update participant_type (lives in TournamentConfiguration)
     if request.participant_type is not None:
+        if tournament.semester_category == SemesterCategory.PROMOTION_EVENT:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Participant type cannot be changed for promotion events.",
+            )
         valid_types = ["INDIVIDUAL", "TEAM", "MIXED"]
         if request.participant_type not in valid_types:
             raise HTTPException(
