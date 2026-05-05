@@ -6,7 +6,7 @@ Sponsor Campaign → Promotion Event — P4 integration tests (SPON-CAM-08..13)
   SPON-CAM-09  Wizard POST with valid campaign_id → Semester.organizer_campaign_id == campaign.id
   SPON-CAM-10  Wizard GET with 0 ACTIVE campaigns → 303 redirect with error
   SPON-CAM-11  Wizard POST without campaign_id → 303 + error (no Semester created)
-  SPON-CAM-12  Multi-age-group (PRE+YOUTH) → 2 Semesters, both organizer_campaign_id == campaign.id
+  SPON-CAM-12  Multi-age-group (PRE+YOUTH) → 1 Semester, age_groups=["PRE","YOUTH"], age_group=None
   SPON-CAM-13  Club event (club wizard) → organizer_campaign_id IS NULL
 
 DONE = pytest tests/integration/web_flows/test_sponsor_campaign_promotion.py -v
@@ -24,6 +24,7 @@ from app.dependencies import get_current_user_web
 from app.models.user import User, UserRole
 from app.models.sponsor import Sponsor, SponsorAudienceEntry, SponsorCampaign
 from app.models.semester import Semester
+from app.models.tournament_configuration import TournamentConfiguration
 from app.models.club import CsvImportLog
 from app.core.security import get_password_hash
 from app.services.sponsor_promote_service import promote_entries
@@ -262,9 +263,9 @@ class TestWizardPostNoCampaignRejected:
 # ── SPON-CAM-12 ───────────────────────────────────────────────────────────────
 
 class TestWizardMultiAgeGroup:
-    """SPON-CAM-12: PRE+YOUTH → 2 Semesters, both organizer_campaign_id == campaign.id."""
+    """SPON-CAM-12: PRE+YOUTH → 1 Semester, age_groups=["PRE","YOUTH"], age_group=None."""
 
-    def test_spon_cam_12_two_age_groups_both_linked_to_campaign(self, test_db: Session):
+    def test_spon_cam_12_two_age_groups_single_semester(self, test_db: Session):
         admin = _make_admin(test_db)
         sponsor = _make_sponsor(test_db, admin)
         campaign = _make_campaign(test_db, sponsor, admin)
@@ -290,12 +291,32 @@ class TestWizardMultiAgeGroup:
                 .filter(Semester.organizer_sponsor_id == sponsor.id)
                 .all()
             )
-            assert len(new_sems) == 2
-            for sem in new_sems:
-                assert sem.organizer_campaign_id == campaign.id
-                assert sem.organizer_club_id is None
-            age_groups = {sem.age_group for sem in new_sems}
-            assert age_groups == {"PRE", "YOUTH"}
+            # Single event for all selected age groups
+            assert len(new_sems) == 1
+            s = new_sems[0]
+
+            # Organizer linkage
+            assert s.organizer_campaign_id == campaign.id
+            assert s.organizer_club_id is None
+
+            # Multi-age: age_groups JSONB set, scalar age_group null
+            assert set(s.age_groups) == {"PRE", "YOUTH"}
+            assert s.age_group is None
+
+            # Name has no age-category suffix
+            assert "(PRE)" not in s.name
+            assert "(YOUTH)" not in s.name
+            assert s.name == "CAM-12 Multi Event"
+
+            # Domain defaults
+            assert s.specialization_type == "LFA_FOOTBALL_PLAYER"
+
+            # TournamentConfiguration wired correctly
+            tc = test_db.query(TournamentConfiguration).filter(
+                TournamentConfiguration.semester_id == s.id
+            ).first()
+            assert tc is not None
+            assert tc.assignment_type == "OPEN_ASSIGNMENT"
         finally:
             app.dependency_overrides.clear()
 

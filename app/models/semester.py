@@ -96,6 +96,10 @@ class Semester(Base):
                                  comment="Specialization type (SEASON types: LFA_PLAYER_PRE/YOUTH/AMATEUR/PRO, GANCUJU_PLAYER, LFA_COACH, INTERNSHIP, OR user license for tournaments: LFA_FOOTBALL_PLAYER)")
     age_group = Column(String(20), nullable=True, index=True,
                       comment="Age group (PRE, YOUTH, AMATEUR, PRO)")
+    age_groups = Column(JSONB, nullable=True,
+                       comment='Multi-age eligibility list e.g. ["PRE","YOUTH"]. '
+                               'Overrides age_group when set. '
+                               'Populated by sponsor promotion when >1 age selected.')
     theme = Column(String(200), nullable=True,
                   comment="Marketing theme (e.g., 'New Year Challenge', 'Q1', 'Fall')")
     focus_description = Column(String(500), nullable=True,

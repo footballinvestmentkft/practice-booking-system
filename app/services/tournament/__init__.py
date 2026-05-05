@@ -20,6 +20,7 @@ from .validation import (
     check_duplicate_enrollment,
     validate_tournament_session_type,
     validate_tournament_attendance_status,
+    get_allowed_age_groups,
 )
 
 from .core import (
@@ -48,6 +49,7 @@ __all__ = [
     "check_duplicate_enrollment",
     "validate_tournament_session_type",
     "validate_tournament_attendance_status",
+    "get_allowed_age_groups",
     # Core CRUD functions
     "create_tournament_semester",
     "create_tournament_sessions",

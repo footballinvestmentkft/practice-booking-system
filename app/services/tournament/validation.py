@@ -104,6 +104,22 @@ def validate_tournament_enrollment_age(
     return True, None
 
 
+def get_allowed_age_groups(semester) -> list:
+    """
+    Single source of truth for age eligibility on a Semester.
+
+    Precedence:
+      1. semester.age_groups  (JSONB list — multi-age events)
+      2. semester.age_group   (String — legacy single-age, backward compat)
+      3. None                 (no age restriction)
+    """
+    if semester.age_groups:
+        return list(semester.age_groups)
+    if semester.age_group:
+        return [semester.age_group]
+    return None
+
+
 def validate_tournament_ready_for_enrollment(
     tournament: Semester
 ) -> Tuple[bool, Optional[str]]:
