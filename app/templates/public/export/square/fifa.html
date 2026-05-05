@@ -343,10 +343,17 @@ html, body {
     overflow: hidden;
 }
 
-/* Set Pieces (left col bottom): flex:1 fills remaining column height so its bottom edge
- * aligns with Physical Fitness even though it has only 3 skill rows. */
-.ex-cat--col-filler {
+/* Set Pieces (left col bottom): flex:1 fills remaining column height; logo-slot occupies
+ * the freed dark area at the bottom as a static visual placeholder. */
+.ex-cat--logo-host {
     flex: 1;
+}
+
+.ex-logo-slot {
+    flex-shrink: 0;
+    height: 96px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    margin-top: 0;
 }
 
 /* Category cell */
@@ -637,7 +644,7 @@ html, body {
             <!-- Left column: Outfield + Set Pieces -->
             <div class="ex-skill-col">
                 {% for cat in [skill_categories[0], skill_categories[1]] %}
-                <div class="ex-cat{% if loop.last %} ex-cat--col-filler{% endif %}">
+                <div class="ex-cat{% if loop.last %} ex-cat--logo-host{% endif %}">
                     <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
                     <div class="ex-skill-rows">
                         {% for skill in cat.skills %}
@@ -671,6 +678,7 @@ html, body {
                         </div>
                         {% endfor %}
                     </div>
+                    {% if loop.last %}<div class="ex-logo-slot"></div>{% endif %}
                 </div>
                 {% endfor %}
             </div>

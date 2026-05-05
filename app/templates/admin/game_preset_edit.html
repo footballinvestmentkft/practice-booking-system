@@ -6,49 +6,165 @@
 
 {% block extra_styles %}
 <style>
-    .edit-card {
+    /* ── Two-column layout ───────────────────────────────────────────────── */
+    .edit-layout {
+        display: grid;
+        grid-template-columns: 1fr 290px;
+        gap: 1.5rem;
+        align-items: start;
+    }
+    .edit-form-col {
         background: white;
         border-radius: 12px;
         padding: 2rem;
         box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        max-width: 900px;
+        min-width: 0;
     }
-    .edit-card h2 { margin-bottom: 1.5rem; color: #2d3748; }
+    .edit-form-col h2 { margin: 0 0 1.5rem; color: #2d3748; font-size: 1.15rem; }
+
+    .edit-chart-col { position: sticky; top: 1.5rem; }
+    .chart-panel {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        text-align: center;
+    }
+    .chart-panel-title {
+        font-size: 0.72rem; font-weight: 700; color: #718096;
+        text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 1rem;
+    }
+
+    /* ── Form fields ─────────────────────────────────────────────────────── */
     .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
     .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #4a5568; margin-bottom: 0.4rem; }
-    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.6rem 0.9rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; }
+    .form-group input, .form-group select, .form-group textarea {
+        width: 100%; padding: 0.6rem 0.9rem; border: 1px solid #e2e8f0;
+        border-radius: 8px; font-size: 0.9rem; box-sizing: border-box; font-family: inherit;
+    }
     .form-group input:disabled { background: #f0f0f0; color: #718096; }
     .form-group.full { grid-column: 1 / -1; }
+
+    /* ── Skills section ──────────────────────────────────────────────────── */
     .skills-section { background: #f8f9fa; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
-    .skills-section h4 { font-size: 0.9rem; color: #2d3748; margin-bottom: 0.75rem; }
-    .skill-group-label { font-size: 0.8rem; color: #718096; font-weight: 600; margin-bottom: 0.4rem; margin-top: 0.75rem; }
-    .skill-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
-    .skill-item { display: flex; align-items: center; gap: 0.4rem; background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.3rem 0.6rem; }
+    .skills-section h4 { font-size: 0.85rem; color: #2d3748; margin-bottom: 0.6rem; }
+    .skill-group-label {
+        font-size: 0.7rem; color: #a0aec0; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.05em;
+        margin-top: 0.65rem; margin-bottom: 0.3rem;
+    }
+    .skill-row { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.2rem; }
+    .skill-item {
+        display: flex; align-items: center; gap: 0.35rem;
+        background: white; border: 1px solid #e2e8f0; border-radius: 5px; padding: 0.2rem 0.5rem;
+        transition: border-color 0.12s, background 0.12s;
+    }
+    .skill-item:has(input:checked) { border-color: #667eea; background: #f0f4ff; }
     .skill-item input[type="checkbox"] { cursor: pointer; }
-    .skill-item label { font-size: 0.8rem; color: #4a5568; cursor: pointer; white-space: nowrap; }
+    .skill-item label { font-size: 0.77rem; color: #4a5568; cursor: pointer; white-space: nowrap; }
+
+    /* ── Weights section ─────────────────────────────────────────────────── */
     .weights-section { background: #ebf8ff; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
-    .weights-section h4 { font-size: 0.9rem; color: #2c5282; margin-bottom: 0.75rem; }
-    .weight-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
-    .weight-item label { display: block; font-size: 0.8rem; color: #4a5568; margin-bottom: 0.3rem; }
-    .weight-item input { width: 100%; padding: 0.4rem 0.6rem; border: 1px solid #bee3f8; border-radius: 6px; font-size: 0.9rem; }
-    .sum-indicator { margin-top: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; }
-    .sum-ok { background: #c6f6d5; color: #276749; }
+    .weights-section h4 { font-size: 0.85rem; color: #2c5282; margin-bottom: 0.75rem; }
+    .weight-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.55rem; }
+    .weight-item label {
+        display: block; font-size: 0.74rem; color: #4a5568; margin-bottom: 0.2rem;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .weight-item input {
+        width: 100%; padding: 0.35rem 0.5rem; border: 1px solid #bee3f8;
+        border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;
+    }
+    .weight-item input:focus { outline: none; border-color: #4299e1; box-shadow: 0 0 0 2px rgba(66,153,225,0.15); }
+    .sum-indicator { margin-top: 0.75rem; padding: 0.45rem 0.75rem; border-radius: 6px; font-size: 0.83rem; font-weight: 600; }
+    .sum-ok  { background: #c6f6d5; color: #276749; }
     .sum-err { background: #fed7d7; color: #9b2335; }
-    .form-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+    /* B3: per-skill foot context select in each weight item */
     .skill-fc-select { width: 100%; padding: 0.3rem 0.4rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.76rem; color: #4a5568; margin-top: 0.25rem; background: white; cursor: pointer; }
-    @media (max-width: 600px) { .weight-row { grid-template-columns: repeat(2, 1fr); } }
+
+    /* ── Form actions ────────────────────────────────────────────────────── */
+    .form-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; align-items: center; }
+    #submitBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ── Chart internals ─────────────────────────────────────────────────── */
+    #presetChart { display: block; margin: 0 auto; overflow: visible; }
+
+    .chart-empty {
+        width: 180px; height: 180px; margin: 0 auto;
+        display: flex; align-items: center; justify-content: center;
+        border: 2px dashed #e2e8f0; border-radius: 50%;
+        color: #a0aec0; font-size: 0.8rem;
+    }
+
+    .chart-legend { margin-top: 0.9rem; text-align: left; }
+    .legend-item { display: flex; align-items: center; gap: 0.45rem; padding: 0.18rem 0; font-size: 0.77rem; color: #4a5568; }
+    .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .legend-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .legend-pct { font-weight: 700; color: #2d3748; min-width: 34px; text-align: right; font-size: 0.78rem; }
+
+    .chart-sum-badge {
+        display: inline-block; margin-top: 0.75rem;
+        padding: 0.25rem 0.65rem; border-radius: 999px;
+        font-size: 0.78rem; font-weight: 700;
+    }
+    .chart-sum-ok  { background: #c6f6d5; color: #276749; }
+    .chart-sum-err { background: #fed7d7; color: #9b2335; }
+
+    /* ── foot_context badge in chart panel ───────────────────────────────── */
+    .fc-info {
+        margin-top: 1rem; padding: 0.45rem 0.75rem;
+        border-radius: 8px; font-size: 0.78rem; text-align: left;
+    }
+    .fc-info-label {
+        font-size: 0.65rem; font-weight: 700; color: #a0aec0;
+        text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem;
+    }
+    .fc-info-right   { background: #f0fff4; border: 1px solid #9ae6b4; color: #276749; }
+    .fc-info-left    { background: #ebf8ff; border: 1px solid #90cdf4; color: #2b6cb0; }
+    .fc-info-neutral { background: #f7fafc; border: 1px solid #e2e8f0; color: #718096; }
+    .fc-info-default { background: #f7fafc; border: 1px dashed #cbd5e0; color: #a0aec0; font-style: italic; }
+
+    /* ── Per-skill fc chip in legend ────────────────────────────────────── */
+    .legend-fc {
+        font-size: 0.67rem; font-weight: 600;
+        padding: 0.1rem 0.38rem; border-radius: 999px;
+        white-space: nowrap; flex-shrink: 0;
+    }
+    .legend-fc-right   { background: #f0fff4; color: #276749; border: 1px solid #9ae6b4; }
+    .legend-fc-left    { background: #ebf8ff; color: #2b6cb0; border: 1px solid #90cdf4; }
+    .legend-fc-neutral { background: #f7fafc; color: #718096; border: 1px solid #e2e8f0; }
+    .legend-fc-default { background: #f7fafc; color: #a0aec0; border: 1px dashed #cbd5e0; font-style: italic; }
+
+    /* ── Responsive ──────────────────────────────────────────────────────── */
+    @media (max-width: 820px) {
+        .edit-layout { grid-template-columns: 1fr; }
+        .edit-chart-col { position: static; order: -1; }
+        .chart-panel { margin-bottom: 1.5rem; }
+        .chart-empty { width: 160px; height: 160px; }
+        #presetChart { width: 160px; height: 160px; }
+        .weight-row { grid-template-columns: repeat(2, 1fr); }
+    }
 </style>
 {% endblock %}
 
 {% block admin_content %}
 
-    <div style="margin-bottom: 1rem;">
-        <a href="/admin/game-presets" class="btn btn-secondary">← Back to Game Presets</a>
-    </div>
+<div style="margin-bottom: 1rem;">
+    <a href="/admin/game-presets" class="btn btn-secondary">← Back to Game Presets</a>
+</div>
 
-    <div class="edit-card">
+{# foot_context detection — raw vs property fallback #}
+{% set sc_info = preset.game_config.get('skill_config', {}) if preset.game_config else {} %}
+{% set foot_ctx_raw = sc_info.get('foot_context') %}
+{% set foot_ctx = foot_ctx_raw if foot_ctx_raw else preset.foot_context %}
+
+<div class="edit-layout">
+
+    <!-- ── Left column: form ──────────────────────────────────────────────── -->
+    <div class="edit-form-col">
         <h2>✏️ Edit: {{ preset.name }}</h2>
-        <form method="post" action="/admin/game-presets/{{ preset.id }}/edit">
+        <form method="post" action="/admin/game-presets/{{ preset.id }}/edit" id="editForm">
+
             <div class="form-grid">
                 <div class="form-group">
                     <label>Name *</label>
@@ -82,6 +198,14 @@
                 </div>
                 {% set sc = preset.game_config.get('skill_config', {}) if preset.game_config else {} %}
                 <div class="form-group">
+                    <label>Foot Context</label>
+                    <select name="foot_context" id="footContextSelect" onchange="syncFcBadge(this.value)">
+                        <option value="neutral" {% if foot_ctx == 'neutral' %}selected{% endif %}>neutral — both feet / default</option>
+                        <option value="right"   {% if foot_ctx == 'right'   %}selected{% endif %}>right — right foot</option>
+                        <option value="left"    {% if foot_ctx == 'left'    %}selected{% endif %}>left — left foot</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>
                         <input type="checkbox" name="skill_impact" value="1"
                                {% if sc.get('skill_impact_on_matches', True) %}checked{% endif %}>
@@ -92,7 +216,7 @@
 
             <!-- Skills selection -->
             <div class="skills-section">
-                <h4>Skills tested — check each skill to include:</h4>
+                <h4>Skills tested — check to include:</h4>
                 {% for group in skill_groups %}
                 <div class="skill-group-label">{{ group.label }}</div>
                 <div class="skill-row">
@@ -111,14 +235,15 @@
 
             <!-- Skill weights -->
             <div class="weights-section" id="weightsSection">
-                <h4>Skill weights (%) — assign a percentage to each skill; must sum to <strong>100%</strong></h4>
+                <h4>Skill weights (%) — must sum to <strong>100%</strong></h4>
                 <div class="weight-row" id="weightInputs">
                     {% for skill_key in current_skills %}
                     {% set pct = weight_pcts.get(skill_key, 10) %}
                     {% set fc_val = skill_foot_contexts.get(skill_key, '') %}
                     <div class="weight-item">
                         <label>{{ skill_key.replace('_', ' ').title() }} %</label>
-                        <input type="number" name="skill_w_{{ skill_key }}" value="{{ pct }}" min="1" max="100" oninput="updateSum()">
+                        <input type="number" name="skill_w_{{ skill_key }}" value="{{ pct }}"
+                               min="1" max="100" oninput="onWeightInput()">
                         <select name="skill_fc_{{ skill_key }}" class="skill-fc-select">
                             <option value=""       {% if fc_val == ''        %}selected{% endif %}>— preset default —</option>
                             <option value="neutral"{% if fc_val == 'neutral' %}selected{% endif %}>neutral — both feet</option>
@@ -132,21 +257,217 @@
             </div>
 
             <div class="form-actions">
-                <button type="submit" class="btn btn-success">💾 Save Changes</button>
+                <button type="submit" class="btn btn-success" id="submitBtn">💾 Save Changes</button>
                 <a href="/admin/game-presets" class="btn btn-secondary">Cancel</a>
+                <span id="saveHint" style="font-size:0.78rem;color:#9b2335;display:none;">Fix weight sum first</span>
             </div>
+
         </form>
     </div>
+
+    <!-- ── Right column: chart panel ─────────────────────────────────────── -->
+    <div class="edit-chart-col">
+        <div class="chart-panel">
+            <div class="chart-panel-title">Skill Distribution</div>
+
+            <!-- SVG donut (built by JS) / empty state -->
+            <div id="chartSvgWrap">
+                <svg id="presetChart" width="180" height="180" viewBox="0 0 180 180"></svg>
+            </div>
+            <div id="chartEmpty" class="chart-empty" style="display:none;">No skills<br>selected</div>
+
+            <!-- Legend -->
+            <div class="chart-legend" id="chartLegend"></div>
+
+            <!-- Sum badge in chart panel -->
+            <div id="chartSumBadge" class="chart-sum-badge" style="display:none;"></div>
+
+            <!-- foot_context badge — synced with select via syncFcBadge() -->
+            <div class="fc-info fc-info-{{ foot_ctx }}" id="fcBadge">
+                <div class="fc-info-label">Foot Context</div>
+                <span id="fcBadgeText">{{ foot_ctx }}</span>
+            </div>
+
+        </div>
+    </div>
+
+</div>
 
 {% endblock %}
 
 {% block scripts %}
 <script>
-function updateWeights() {
+// ── Foot context badge sync ───────────────────────────────────────────────
+function syncFcBadge(val) {
+    const badge = document.getElementById('fcBadge');
+    const text  = document.getElementById('fcBadgeText');
+    if (!badge || !text) return;
+    badge.className = 'fc-info fc-info-' + (val || 'neutral');
+    text.textContent = val || 'neutral';
+    buildChart();
+}
+
+// ── Palette (12 colours, cycles for >12 skills) ───────────────────────────
+const CHART_COLORS = [
+    '#667eea','#48bb78','#ed8936','#4299e1',
+    '#ed64a6','#9f7aea','#38b2ac','#f6ad55',
+    '#fc8181','#4fd1c5','#fbd38d','#9ae6b4'
+];
+
+// ── SVG helpers ───────────────────────────────────────────────────────────
+function _polar(cx, cy, r, deg) {
+    const rad = (deg - 90) * Math.PI / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+function _arcPath(cx, cy, R, r, startDeg, endDeg) {
+    const s1 = _polar(cx, cy, R, startDeg), e1 = _polar(cx, cy, R, endDeg);
+    const s2 = _polar(cx, cy, r, endDeg),   e2 = _polar(cx, cy, r, startDeg);
+    const lg = (endDeg - startDeg > 180) ? 1 : 0;
+    const f = v => v.toFixed(3);
+    return `M${f(s1.x)} ${f(s1.y)} A${R} ${R} 0 ${lg} 1 ${f(e1.x)} ${f(e1.y)} `
+         + `L${f(s2.x)} ${f(s2.y)} A${r} ${r} 0 ${lg} 0 ${f(e2.x)} ${f(e2.y)} Z`;
+}
+
+function _svgEl(tag, attrs) {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+    return el;
+}
+
+// ── Chart builder ─────────────────────────────────────────────────────────
+function buildChart() {
+    const svg    = document.getElementById('presetChart');
+    const wrap   = document.getElementById('chartSvgWrap');
+    const empty  = document.getElementById('chartEmpty');
+    const legend = document.getElementById('chartLegend');
+    const badge  = document.getElementById('chartSumBadge');
+
     const checked = Array.from(document.querySelectorAll('[name^="skill_cb_"]:checked'));
+    const keys    = checked.map(cb => cb.name.replace('skill_cb_', ''));
+    const rawVals = keys.map(k => {
+        const inp = document.querySelector(`[name="skill_w_${k}"]`);
+        return Math.max(1, parseInt(inp ? inp.value : 0) || 1);
+    });
+    const inputSum = rawVals.reduce((a, b) => a + b, 0);
+
+    if (keys.length === 0) {
+        wrap.style.display = 'none';
+        empty.style.display = 'flex';
+        legend.innerHTML = '';
+        badge.style.display = 'none';
+        return;
+    }
+    wrap.style.display = 'block';
+    empty.style.display = 'none';
+
+    const pcts = rawVals.map(v => v / inputSum * 100);
+    const labels = checked.map(cb => {
+        const lbl = cb.closest('.skill-item')?.querySelector('label');
+        return lbl ? lbl.textContent.trim()
+                   : cb.name.replace('skill_cb_', '').replace(/_/g, ' ');
+    });
+    const presetFc = document.getElementById('footContextSelect')?.value || 'neutral';
+    const fcVals = keys.map(k => {
+        const sel = document.querySelector(`[name="skill_fc_${k}"]`);
+        return sel ? sel.value : '';
+    });
+
+    const cx = 90, cy = 90, R = 80, ri = 44;
+    svg.innerHTML = '';
+
+    if (keys.length === 1) {
+        svg.appendChild(_svgEl('circle', { cx, cy, r: R, fill: CHART_COLORS[0] }));
+        svg.appendChild(_svgEl('circle', { cx, cy, r: ri, fill: 'white' }));
+    } else {
+        let deg = 0;
+        keys.forEach((k, i) => {
+            const sweep  = pcts[i] / 100 * 360;
+            const endDeg = deg + sweep;
+            svg.appendChild(_svgEl('path', {
+                d: _arcPath(cx, cy, R, ri, deg, endDeg),
+                fill: CHART_COLORS[i % CHART_COLORS.length],
+                stroke: 'white',
+                'stroke-width': '2'
+            }));
+            deg = endDeg;
+        });
+    }
+
+    const txt = _svgEl('text', {
+        x: cx, y: cy - 7,
+        'text-anchor': 'middle', 'dominant-baseline': 'central',
+        'font-size': '20', 'font-weight': '700', fill: '#2d3748', 'font-family': 'inherit'
+    });
+    txt.textContent = keys.length;
+    const sub = _svgEl('text', {
+        x: cx, y: cy + 14,
+        'text-anchor': 'middle', 'dominant-baseline': 'central',
+        'font-size': '10', fill: '#a0aec0', 'font-family': 'inherit'
+    });
+    sub.textContent = keys.length === 1 ? 'skill' : 'skills';
+    svg.appendChild(txt);
+    svg.appendChild(sub);
+
+    legend.innerHTML = keys.map((k, i) => {
+        const rawFc   = fcVals[i];
+        const fcClass = rawFc || 'default';
+        const fcText  = rawFc || 'default';
+        const fcTitle = rawFc ? `${rawFc} foot` : `inherits preset: ${presetFc}`;
+        return `<div class="legend-item">
+            <span class="legend-dot" style="background:${CHART_COLORS[i % CHART_COLORS.length]}"></span>
+            <span class="legend-name">${labels[i]}</span>
+            <span class="legend-pct">${Math.round(pcts[i])}%</span>
+            <span class="legend-fc legend-fc-${fcClass}" title="${fcTitle}">${fcText}</span>
+        </div>`;
+    }).join('');
+
+    badge.style.display = 'inline-block';
+    if (inputSum === 100) {
+        badge.textContent = '✅ 100%';
+        badge.className = 'chart-sum-badge chart-sum-ok';
+    } else {
+        const diff = inputSum - 100;
+        badge.textContent = `⚠️ ${inputSum}% (${diff > 0 ? '+' : ''}${diff})`;
+        badge.className = 'chart-sum-badge chart-sum-err';
+    }
+}
+
+// ── Form sum indicator + Save gating ─────────────────────────────────────
+function updateSum() {
+    const inputs = document.querySelectorAll('#weightInputs input[type="number"]');
+    let sum = 0;
+    inputs.forEach(inp => { sum += parseInt(inp.value) || 0; });
+
+    const indicator = document.getElementById('sumIndicator');
+    const btn       = document.getElementById('submitBtn');
+    const hint      = document.getElementById('saveHint');
+
+    if (sum === 100) {
+        indicator.className = 'sum-indicator sum-ok';
+        indicator.textContent = '✅ Sum: 100% — ready to save';
+        btn.disabled = false;
+        hint.style.display = 'none';
+    } else {
+        const diff = sum - 100;
+        indicator.className = 'sum-indicator sum-err';
+        indicator.textContent = `❌ Sum: ${sum}% (${diff > 0 ? '+' : ''}${diff}) — must be exactly 100%`;
+        btn.disabled = true;
+        hint.style.display = 'inline';
+    }
+
+    buildChart();
+}
+
+function onWeightInput() { updateSum(); }
+
+// ── Rebuild weight inputs when checkboxes change ──────────────────────────
+function updateWeights() {
+    const checked   = Array.from(document.querySelectorAll('[name^="skill_cb_"]:checked'));
     const container = document.getElementById('weightInputs');
-    const section = document.getElementById('weightsSection');
-    // Preserve existing weight and foot context values
+    const section   = document.getElementById('weightsSection');
+
+    // Preserve existing weight AND foot context values on checkbox toggle
     const existing = {};
     container.querySelectorAll('input[type="number"]').forEach(inp => {
         existing[inp.name] = inp.value;
@@ -155,43 +476,40 @@ function updateWeights() {
         existing[sel.name] = sel.value;
     });
     container.innerHTML = '';
+
     checked.forEach(cb => {
-        const key = cb.name.replace('skill_cb_', '');
-        const label = cb.parentElement.querySelector('label').textContent;
-        const div = document.createElement('div');
-        div.className = 'weight-item';
-        const val = existing['skill_w_' + key] || 10;
+        const key   = cb.name.replace('skill_cb_', '');
+        const label = cb.closest('.skill-item')?.querySelector('label')?.textContent.trim()
+                      || key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const val   = existing['skill_w_' + key] || 10;
         const fcVal = existing['skill_fc_' + key] || '';
-        div.innerHTML = `<label>${label} %</label>
-            <input type="number" name="skill_w_${key}" value="${val}" min="1" max="100" oninput="updateSum()">
-            <select name="skill_fc_${key}" class="skill-fc-select">
-                <option value=""${fcVal==='' ? ' selected' : ''}>— preset default —</option>
-                <option value="neutral"${fcVal==='neutral' ? ' selected' : ''}>neutral — both feet</option>
-                <option value="right"${fcVal==='right' ? ' selected' : ''}>right — right foot</option>
-                <option value="left"${fcVal==='left' ? ' selected' : ''}>left — left foot</option>
-            </select>`;
+        const div   = document.createElement('div');
+        div.className = 'weight-item';
+        div.innerHTML = `<label>${label} %</label>`
+            + `<input type="number" name="skill_w_${key}" value="${val}" min="1" max="100" oninput="onWeightInput()">`
+            + `<select name="skill_fc_${key}" class="skill-fc-select">`
+            + `<option value=""${fcVal==='' ? ' selected' : ''}>— preset default —</option>`
+            + `<option value="neutral"${fcVal==='neutral' ? ' selected' : ''}>neutral — both feet</option>`
+            + `<option value="right"${fcVal==='right' ? ' selected' : ''}>right — right foot</option>`
+            + `<option value="left"${fcVal==='left' ? ' selected' : ''}>left — left foot</option>`
+            + `</select>`;
         container.appendChild(div);
     });
+
     section.style.display = checked.length === 0 ? 'none' : 'block';
     updateSum();
 }
 
-function updateSum() {
-    const inputs = document.querySelectorAll('#weightInputs input[type="number"]');
-    let sum = 0;
-    inputs.forEach(inp => { sum += parseInt(inp.value) || 0; });
-    const indicator = document.getElementById('sumIndicator');
-    if (sum === 100) {
-        indicator.className = 'sum-indicator sum-ok';
-        indicator.textContent = '✅ Sum: ' + sum + '% — ready to save';
-    } else {
-        const diff = sum - 100;
-        indicator.className = 'sum-indicator sum-err';
-        indicator.textContent = '❌ Sum: ' + sum + '% (' + (diff > 0 ? '+' : '') + diff + '%) — must be exactly 100%';
-    }
-}
+// ── Initialise on load ────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+    const hasSkills = document.querySelectorAll('[name^="skill_cb_"]:checked').length > 0;
+    document.getElementById('weightsSection').style.display = hasSkills ? 'block' : 'none';
+    updateSum();
 
-// Initial sum calculation
-document.addEventListener('DOMContentLoaded', updateSum);
+    // Re-render legend whenever any per-skill fc select changes
+    document.getElementById('weightInputs').addEventListener('change', function (e) {
+        if (e.target.classList.contains('skill-fc-select')) buildChart();
+    });
+});
 </script>
 {% endblock %}

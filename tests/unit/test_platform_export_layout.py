@@ -1161,7 +1161,7 @@ class TestFifaSquareAllSkills:
     EX-29  All 11 Outfield skill names present in rendered Square export HTML
     EX-30  square/fifa.html template source contains no skill slicing (cat.skills[:)
     EX-31  Square export uses 2-column flex layout (v4 proportional columns)
-    EX-31b Square export uses col-filler to bottom-align Set Pieces with Physical Fitness
+    EX-31b Square export uses logo-host to bottom-align Set Pieces with Physical Fitness + logo-slot placeholder
     """
 
     def _get_fifa_export_html(self, client, platform: str = "instagram_square") -> str:
@@ -1226,18 +1226,22 @@ class TestFifaSquareAllSkills:
         )
 
     def test_ex31b_square_proportional_row_heights(self, client):
-        """Square export uses .ex-cat--col-filler to bottom-align Set Pieces with Physical Fitness.
+        """Square export uses .ex-cat--logo-host to bottom-align Set Pieces with Physical Fitness.
 
         v4 flex-column layout: Set Pieces (3 rows, left col bottom) has flex:1 so its cell
         expands to fill remaining left-column height, aligning its bottom edge with Physical
-        Fitness. The 24px fixed skill row height (.ex-row { flex: none; min-height: 24px })
-        is preserved unchanged.
+        Fitness. A static .ex-logo-slot placeholder fills the freed dark area at the bottom.
+        The 24px fixed skill row height (.ex-row { flex: none; min-height: 24px }) is unchanged.
         """
         html = self._get_fifa_export_html(client, "instagram_square")
         assert html, "Export returned empty response for instagram_square"
-        assert "ex-cat--col-filler" in html, (
-            "ex-cat--col-filler not found in Square export HTML — "
+        assert "ex-cat--logo-host" in html, (
+            "ex-cat--logo-host not found in Square export HTML — "
             "Set Pieces cell must carry this class so it expands to match Physical Fitness height"
+        )
+        assert "ex-logo-slot" in html, (
+            "ex-logo-slot not found in Square export HTML — "
+            "static placeholder must be rendered inside the Set Pieces cell"
         )
 
     def test_ex31c_sponsor_logo_slot_present_without_logo(self, client):
