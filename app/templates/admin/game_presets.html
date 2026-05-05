@@ -43,6 +43,8 @@
     .sum-err { background: #fed7d7; color: #9b2335; }
     .no-data { text-align: center; padding: 3rem; color: #718096; }
     .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+    .skill-fc-select { width: 100%; padding: 0.3rem 0.4rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.76rem; color: #4a5568; margin-top: 0.25rem; background: white; cursor: pointer; }
+    @media (max-width: 600px) { .weight-row { grid-template-columns: repeat(2, 1fr); } }
 </style>
 {% endblock %}
 
@@ -256,19 +258,30 @@ function updateWeights() {
         return;
     }
     section.style.display = 'block';
-    // Preserve existing values
+    // Preserve existing weight and foot context values
     const existing = {};
     container.querySelectorAll('input[type="number"]').forEach(inp => {
         existing[inp.name] = inp.value;
     });
+    container.querySelectorAll('select.skill-fc-select').forEach(sel => {
+        existing[sel.name] = sel.value;
+    });
     container.innerHTML = '';
-    checked.forEach((cb, i) => {
+    checked.forEach((cb) => {
         const key = cb.name.replace('skill_cb_', '');
         const label = cb.parentElement.querySelector('label').textContent;
         const div = document.createElement('div');
         div.className = 'weight-item';
         const defaultVal = existing['skill_w_' + key] || 10;
-        div.innerHTML = `<label>${label} %</label><input type="number" name="skill_w_${key}" value="${defaultVal}" min="1" max="100" oninput="updateSum()">`;
+        const fcVal = existing['skill_fc_' + key] || '';
+        div.innerHTML = `<label>${label} %</label>
+            <input type="number" name="skill_w_${key}" value="${defaultVal}" min="1" max="100" oninput="updateSum()">
+            <select name="skill_fc_${key}" class="skill-fc-select">
+                <option value=""${fcVal==='' ? ' selected' : ''}>— preset default —</option>
+                <option value="neutral"${fcVal==='neutral' ? ' selected' : ''}>neutral — both feet</option>
+                <option value="right"${fcVal==='right' ? ' selected' : ''}>right — right foot</option>
+                <option value="left"${fcVal==='left' ? ' selected' : ''}>left — left foot</option>
+            </select>`;
         container.appendChild(div);
     });
     updateSum();
