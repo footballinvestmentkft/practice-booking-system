@@ -393,7 +393,12 @@ def distribute_rewards_for_user(
                             # pre-tournament current_level on first contact so that
                             # existing skill history is preserved.
                             _skill_delta = float(_raw_deltas.get(skill_key, 0.0))
-                            entry = update_lateral_component(entry, _foot_ctx, _skill_delta)
+                            _skill_fc = (
+                                _preset.foot_context_for(skill_key)
+                                if _preset is not None
+                                else _foot_ctx
+                            )
+                            entry = update_lateral_component(entry, _skill_fc, _skill_delta)
 
                             # Re-aggregate current_level from all lateral components.
                             # Falls back to the EMA-derived sdata["current_level"] when
@@ -417,7 +422,7 @@ def distribute_rewards_for_user(
                             f"✅ Persisted skill deltas for user {user_id} "
                             f"(license {active_license.id}): {changed} skills updated, "
                             f"placement={participation_record.placement}, "
-                            f"foot_context={_foot_ctx}"
+                            f"foot_context=per-skill"
                         )
                 else:
                     logger.warning(
