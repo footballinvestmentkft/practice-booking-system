@@ -75,7 +75,8 @@ def bulk_enroll_from_campaign(
             f"(got {tournament.semester_category})"
         )
 
-    if tournament.tournament_status not in _ALLOWED_STATUSES:
+    effective_status = tournament.tournament_status or "DRAFT"
+    if effective_status not in _ALLOWED_STATUSES:
         raise ValueError(
             f"Cannot bulk-enroll: tournament status is '{tournament.tournament_status}'. "
             f"Bulk enrollment is only allowed in DRAFT, ENROLLMENT_OPEN, or ENROLLMENT_CLOSED. "

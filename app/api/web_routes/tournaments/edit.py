@@ -13,6 +13,7 @@ from ....models.location import Location
 from ....models.semester import Semester, SemesterCategory
 from ....services.tournament import get_allowed_age_groups
 from ....models.semester_enrollment import SemesterEnrollment
+from ....models.license import UserLicense
 from ....models.sponsor import Sponsor, SponsorCampaign, SponsorAudienceEntry
 from ....models.session import Session as SessionModel, EventCategory
 from ....models.team import Team, TournamentTeamEnrollment
@@ -257,16 +258,27 @@ async def admin_tournament_edit_page(
                     .order_by(SponsorAudienceEntry.last_name, SponsorAudienceEntry.first_name)
                     .all()
                 )
-                # Eligible count for the Bulk Enroll button (shown in DRAFT / ENROLLMENT_CLOSED).
-                # Mirrors the service filter: ACTIVE + consent + promoted (user_id set).
-                # Does not subtract already-enrolled — the button label is indicative;
-                # idempotency is enforced in the service.
-                # Use None-safe fallback so tournaments where tournament_status was never
-                # explicitly set (NULL) are treated as DRAFT.
+                # Eligible count for the Bulk Enroll button.
+                # Mirrors the service filter exactly: ACTIVE + consent + promoted +
+                # active User + active LFA_FOOTBALL_PLAYER license.
+                # JOIN with UserLicense keeps this accurate so the button count matches
+                # what the service will actually enroll (no inflated "eligible" promise).
+                # Does not subtract already-enrolled — idempotency is in the service.
                 _ts = t.tournament_status or "DRAFT"
                 if _ts in ("DRAFT", "ENROLLMENT_OPEN", "ENROLLMENT_CLOSED"):
                     bulk_enroll_eligible_count = (
                         db.query(SponsorAudienceEntry)
+                        .join(
+                            User,
+                            (User.id == SponsorAudienceEntry.user_id)
+                            & (User.is_active == True),
+                        )
+                        .join(
+                            UserLicense,
+                            (UserLicense.user_id == SponsorAudienceEntry.user_id)
+                            & (UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER")
+                            & (UserLicense.is_active == True),
+                        )
                         .filter(
                             SponsorAudienceEntry.sponsor_id == t.organizer_sponsor_id,
                             SponsorAudienceEntry.campaign_id == t.organizer_campaign_id,

@@ -448,3 +448,75 @@ class TestBulkEnrollInEnrollmentOpen:
 
         assert result["enrolled_count"] == 1
         assert result["skipped_count"] == 0
+
+
+# ── BULKENR-12 ────────────────────────────────────────────────────────────────
+
+class TestBulkEnrollNullStatus:
+    """BULKENR-12: NULL tournament_status treated as DRAFT — service does not reject it.
+
+    Root cause fix: service was doing `tournament.tournament_status not in _ALLOWED_STATUSES`
+    which evaluates None as NOT in the set, raising ValueError even though NULL ≡ DRAFT
+    (same fallback used in the template and route).
+    """
+
+    def test_bulkenr_12_null_status_succeeds(self, test_db: Session):
+        admin = _admin(test_db)
+        sponsor = _sponsor(test_db)
+        campaign = _campaign(test_db, sponsor)
+        t = _promo_tournament(test_db, sponsor, campaign, status="DRAFT")
+        # Simulate a tournament where tournament_status was never explicitly set
+        t.tournament_status = None
+        test_db.flush()
+
+        user, _ = _user_with_license(test_db, "null")
+        _audience_entry(test_db, sponsor, campaign, user=user)
+        test_db.commit()
+
+        # Must NOT raise ValueError for NULL status
+        result = bulk_enroll_from_campaign(test_db, t.id, admin.id)
+        test_db.commit()
+
+        assert result["enrolled_count"] == 1
+        assert result["skipped_count"] == 0
+
+
+# ── BULKENR-13 ────────────────────────────────────────────────────────────────
+
+class TestBulkEnrollAllSkippedNoLicense:
+    """BULKENR-13: promoted entries (user_id set) with no LFA_FOOTBALL_PLAYER license
+    → all skipped, enrolled_count=0, skipped_count=N, reason surfaced.
+
+    This is the scenario behind the P0 silent fail: the template eligible count was
+    inflated (no license check), but the service skipped everyone — result was
+    enrolled_count=0 with no visible feedback.
+    """
+
+    def test_bulkenr_13_no_license_all_skipped(self, test_db: Session):
+        admin = _admin(test_db)
+        sponsor = _sponsor(test_db)
+        campaign = _campaign(test_db, sponsor)
+        t = _promo_tournament(test_db, sponsor, campaign, status="DRAFT")
+
+        # User without LFA_FOOTBALL_PLAYER license
+        user = User(
+            email=f"nolic+{uuid.uuid4().hex[:8]}@test.com",
+            name="No License Player",
+            password_hash=get_password_hash("x"),
+            role=UserRole.STUDENT,
+            is_active=True,
+        )
+        test_db.add(user)
+        test_db.flush()
+        # Deliberately no UserLicense added
+
+        _audience_entry(test_db, sponsor, campaign, user=user)
+        test_db.commit()
+
+        result = bulk_enroll_from_campaign(test_db, t.id, admin.id)
+        test_db.commit()
+
+        assert result["enrolled_count"] == 0
+        assert result["skipped_count"] == 1
+        assert result["skipped"][0]["user_id"] == user.id
+        assert "license" in result["skipped"][0]["reason"]

@@ -1159,14 +1159,14 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
         {% endif %}
     </div>
 
-    {# ── Bulk Enroll action — DRAFT / ENROLLMENT_CLOSED only ── #}
+    {# ── Bulk Enroll action — DRAFT / ENROLLMENT_OPEN / ENROLLMENT_CLOSED ── #}
     {% if organizer_campaign and _status in ['DRAFT', 'ENROLLMENT_OPEN', 'ENROLLMENT_CLOSED'] %}
-    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
-        <button class="btn btn-primary" onclick="bulkEnrollCampaign()"
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.5rem;">
+        <button type="button" class="btn btn-primary" onclick="bulkEnrollCampaign()"
                 id="bulk-enroll-btn"
                 {% if bulk_enroll_eligible_count == 0 %}
                 disabled
-                title="No eligible entries to enroll (must be ACTIVE, consented, and promoted)"
+                title="No eligible entries to enroll (must be ACTIVE, consented, promoted, and have an active LFA license)"
                 style="opacity:.55;cursor:not-allowed;"
                 {% endif %}>
             👥 Bulk Enroll Campaign Participants
@@ -1178,9 +1178,10 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
         </button>
         <span id="bulk-enroll-status" style="font-size:.85rem;color:#718096;"></span>
     </div>
+    <div id="bulk-enroll-skipped" style="display:none;margin-bottom:.75rem;padding:.6rem .8rem;background:#fff7ed;border:1px solid #fed7aa;border-radius:.4rem;font-size:.82rem;color:#92400e;"></div>
     {% if bulk_enroll_eligible_count == 0 and organizer_campaign %}
     <p style="font-size:.82rem;color:#a0aec0;margin:0 0 .75rem;">
-        No eligible promoted campaign participants to enroll.
+        No eligible promoted campaign participants to enroll. Participants must have an active LFA Football Player license.
     </p>
     {% endif %}
     {% endif %}
@@ -1687,18 +1688,44 @@ async function wizDistributeRewards(tournId) {
 async function bulkEnrollCampaign() {
     const btn = document.getElementById('bulk-enroll-btn');
     const statusEl = document.getElementById('bulk-enroll-status');
+    const skippedEl = document.getElementById('bulk-enroll-skipped');
     if (!confirm('Enroll all eligible campaign participants into this tournament?')) return;
+
     btn.disabled = true;
-    statusEl.textContent = 'Enrolling…';
+    if (statusEl) statusEl.textContent = 'Enrolling…';
+    if (skippedEl) skippedEl.style.display = 'none';
+
     try {
         const data = await AdminAPI.post(
             `/api/v1/tournaments/${TOURN_ID}/bulk-enroll-campaign`, {}
         );
-        statusEl.textContent =
-            `✅ ${data.enrolled_count} enrolled, ${data.skipped_count} skipped`;
-        setTimeout(() => location.reload(), 1200);
+
+        if (data.enrolled_count > 0) {
+            toast(`✅ ${data.enrolled_count} enrolled, ${data.skipped_count} skipped`);
+            if (statusEl) statusEl.textContent = '';
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            // 0 enrolled — show detail, no reload
+            const msg = data.skipped_count > 0
+                ? `⚠️ 0 enrolled — ${data.skipped_count} skipped (see details below)`
+                : '⚠️ 0 enrolled — no eligible participants found';
+            toast(msg, 'warning');
+            if (statusEl) statusEl.textContent = msg;
+            btn.disabled = false;
+
+            if (skippedEl && data.skipped && data.skipped.length > 0) {
+                const reasons = data.skipped
+                    .map(s => `• user_id ${s.user_id}: ${s.reason}`)
+                    .join('\n');
+                skippedEl.style.display = 'block';
+                skippedEl.textContent = `Skipped (${data.skipped_count}):\n${reasons}`;
+                skippedEl.style.whiteSpace = 'pre-line';
+            }
+        }
     } catch (err) {
-        statusEl.textContent = '❌ ' + err.message;
+        const msg = err.message || 'Unknown error';
+        toast('❌ Bulk enroll failed: ' + msg, 'error');
+        if (statusEl) statusEl.textContent = '❌ ' + msg;
         btn.disabled = false;
     }
 }

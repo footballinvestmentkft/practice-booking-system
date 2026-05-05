@@ -778,3 +778,123 @@ class TestLockAudienceButtonEnrollmentOpen:
             assert "Lock Audience" not in html
         finally:
             app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-25 ────────────────────────────────────────────────────────────────
+
+class TestBulkEnrollEligibleCountLicenseAware:
+    """EDIT-UI-25: promoted entry (user_id set) but NO LFA license → eligible count = 0
+    → button disabled.
+
+    Validates that the F2 JOIN fix correctly excludes users without LFA_FOOTBALL_PLAYER
+    license from the eligible count. Before F2 the count was inflated and showed
+    the entry as eligible even though the service would skip it.
+    """
+
+    def test_edit_ui_25_no_license_count_zero_button_disabled(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db)
+        campaign = _make_campaign(test_db, sponsor)
+
+        # Promoted user (user_id set on entry) but NO UserLicense
+        user = User(
+            email=f"nolic-ui+{uuid.uuid4().hex[:8]}@lfa.com",
+            name="No License Player",
+            password_hash=get_password_hash("x"),
+            role=UserRole.STUDENT,
+            is_active=True,
+        )
+        test_db.add(user)
+        test_db.flush()
+        # Deliberately no UserLicense added
+
+        log = CsvImportLog(sponsor_id=sponsor.id, campaign_id=campaign.id)
+        test_db.add(log)
+        test_db.flush()
+        entry = SponsorAudienceEntry(
+            sponsor_id=sponsor.id,
+            campaign_id=campaign.id,
+            import_log_id=log.id,
+            first_name="No",
+            last_name="License",
+            email=user.email,
+            status="ACTIVE",
+            consent_given=True,
+            user_id=user.id,
+        )
+        test_db.add(entry)
+
+        sem = _make_promotion_semester_with_campaign(test_db, sponsor, campaign)
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            # Button renders but must be disabled (0 eligible after license JOIN)
+            assert "Bulk Enroll Campaign Participants" in html
+            assert "disabled" in html
+            assert "No eligible promoted campaign participants to enroll." in html
+            # No eligible badge
+            assert "eligible" not in html.split("No eligible")[0].split("Bulk Enroll")[-1]
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-26 ────────────────────────────────────────────────────────────────
+
+class TestBulkEnrollEligibleCountWithLicense:
+    """EDIT-UI-26: promoted entry + active LFA license → eligible count = 1 → button enabled.
+
+    Regression guard: F2 JOIN must not over-filter — users with a valid license
+    must still appear in the count and enable the button.
+    """
+
+    def test_edit_ui_26_with_license_count_one_button_enabled(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db)
+        campaign = _make_campaign(test_db, sponsor)
+        user, _ = _make_user_with_license(test_db)
+        _make_audience_entry_promoted(test_db, sponsor, campaign, user)
+        sem = _make_promotion_semester_with_campaign(test_db, sponsor, campaign)
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            assert "Bulk Enroll Campaign Participants" in html
+            assert "1 eligible" in html
+            assert 'id="bulk-enroll-btn" disabled' not in html
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-27 ────────────────────────────────────────────────────────────────
+
+class TestBulkEnrollSkippedDivPresent:
+    """EDIT-UI-27: when Bulk Enroll button section renders, the skipped-reasons div
+    is present in the DOM (initially hidden via style).
+
+    The JS uses this div to show per-entry skipped reasons when enrolled_count=0.
+    If the element is absent, statusEl updates silently fail (no visible feedback).
+    """
+
+    def test_edit_ui_27_skipped_div_in_dom(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db)
+        campaign = _make_campaign(test_db, sponsor)
+        user, _ = _make_user_with_license(test_db)
+        _make_audience_entry_promoted(test_db, sponsor, campaign, user)
+        sem = _make_promotion_semester_with_campaign(test_db, sponsor, campaign)
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            assert 'id="bulk-enroll-skipped"' in resp.text
+        finally:
+            app.dependency_overrides.clear()
