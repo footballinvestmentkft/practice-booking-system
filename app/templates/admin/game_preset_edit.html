@@ -108,7 +108,7 @@
     .chart-sum-ok  { background: #c6f6d5; color: #276749; }
     .chart-sum-err { background: #fed7d7; color: #9b2335; }
 
-    /* ── foot_context read-only info ─────────────────────────────────────── */
+    /* ── foot_context badge in chart panel ───────────────────────────────── */
     .fc-info {
         margin-top: 1rem; padding: 0.45rem 0.75rem;
         border-radius: 8px; font-size: 0.78rem; text-align: left;
@@ -185,6 +185,14 @@
                 </div>
                 {% set sc = preset.game_config.get('skill_config', {}) if preset.game_config else {} %}
                 <div class="form-group">
+                    <label>Foot Context</label>
+                    <select name="foot_context" id="footContextSelect" onchange="syncFcBadge(this.value)">
+                        <option value="neutral" {% if foot_ctx == 'neutral' %}selected{% endif %}>neutral — mindkét lábas / default</option>
+                        <option value="right"   {% if foot_ctx == 'right'   %}selected{% endif %}>right — jobb lábas</option>
+                        <option value="left"    {% if foot_ctx == 'left'    %}selected{% endif %}>left — bal lábas</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>
                         <input type="checkbox" name="skill_impact" value="1"
                                {% if sc.get('skill_impact_on_matches', True) %}checked{% endif %}>
@@ -254,10 +262,10 @@
             <!-- Sum badge in chart panel -->
             <div id="chartSumBadge" class="chart-sum-badge" style="display:none;"></div>
 
-            <!-- foot_context read-only info -->
-            <div class="fc-info {% if foot_ctx_explicit %}fc-info-{{ foot_ctx }}{% else %}fc-info-default{% endif %}">
+            <!-- foot_context badge — synced with select via syncFcBadge() -->
+            <div class="fc-info fc-info-{{ foot_ctx }}" id="fcBadge">
                 <div class="fc-info-label">Foot Context</div>
-                {% if foot_ctx_explicit %}{{ foot_ctx }}{% else %}{{ foot_ctx }}/default{% endif %}
+                <span id="fcBadgeText">{{ foot_ctx }}</span>
             </div>
 
         </div>
@@ -269,6 +277,15 @@
 
 {% block scripts %}
 <script>
+// ── Foot context badge sync ───────────────────────────────────────────────
+function syncFcBadge(val) {
+    const badge = document.getElementById('fcBadge');
+    const text  = document.getElementById('fcBadgeText');
+    if (!badge || !text) return;
+    badge.className = 'fc-info fc-info-' + (val || 'neutral');
+    text.textContent = val || 'neutral';
+}
+
 // ── Palette (12 colours, cycles for >12 skills) ───────────────────────────
 const CHART_COLORS = [
     '#667eea','#48bb78','#ed8936','#4299e1',
