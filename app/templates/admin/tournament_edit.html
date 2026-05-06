@@ -805,10 +805,18 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
         <div class="stat-card"><div class="val">{{ enrolled_count }}</div><div class="lbl">Enrolled</div></div>
         <div class="stat-card"><div class="val">{{ checked_in_count }}</div><div class="lbl">Checked In</div></div>
       </div>
-      <div class="info-banner">ℹ️ Sessions will be auto-generated when you start the tournament.</div>
+      <div class="info-banner">ℹ️ Sessions are auto-generated from enrolled participants when opening check-in (preview draw). If players check in, the draw is refreshed from checked-in participants when the tournament starts.</div>
+      {% if cfg and cfg.sessions_generated and checked_in_count == 0 %}
+      <div class="warn-banner" style="margin-top:0.5rem;">⚠️ 0 checked-in — sessions currently based on enrolled participants. The tournament will start with this draw unless players check in.</div>
+      {% elif cfg and cfg.sessions_generated and checked_in_count > 0 %}
+      <div class="info-banner" style="margin-top:0.5rem;">ℹ️ {{ checked_in_count }} player{{ 's' if checked_in_count != 1 else '' }} checked in — draw will be refreshed from checked-in participants at start.</div>
+      {% endif %}
     </div>
     {% if step4_state == 'active' %}
     <div class="wiz-action-row">
+      {% if checked_in_count == 0 %}
+      <span style="font-size:0.82rem;color:#b7791f;margin-right:auto;align-self:center;">⚠️ No check-ins — will start with enrolled participants</span>
+      {% endif %}
       <button class="btn btn-start" onclick="transitionStatus('IN_PROGRESS')">🚀 Start Tournament</button>
     </div>
     {% endif %}
@@ -840,8 +848,18 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
             <div class="lbl">Sessions</div>
         </div>
         <div class="stat-card">
-            <div class="val">{{ '✅' if (cfg and cfg.sessions_generated) else '—' }}</div>
+            {% if cfg and cfg.sessions_generated %}
+                {% if _status == 'IN_PROGRESS' and checked_in_count > 0 %}
+                <div class="val">✅</div>
+                <div class="lbl">Final draw</div>
+                {% else %}
+                <div class="val">✅</div>
+                <div class="lbl">Preview draw</div>
+                {% endif %}
+            {% else %}
+            <div class="val">—</div>
             <div class="lbl">Generated</div>
+            {% endif %}
         </div>
         <div class="stat-card">
             <div class="val">{{ enrollments|length }}</div>
@@ -859,8 +877,11 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
     {% endif %}
 
     {% if cfg and cfg.sessions_generated %}
-        <div class="info-banner">✅ Sessions already generated ({{ session_count }} sessions).
-        Regeneration will delete existing sessions first.</div>
+        {% if _status == 'IN_PROGRESS' and checked_in_count > 0 %}
+        <div class="info-banner">✅ Final draw generated from {{ checked_in_count }} checked-in participant{{ 's' if checked_in_count != 1 else '' }} ({{ session_count }} sessions). Regeneration will delete existing sessions first.</div>
+        {% else %}
+        <div class="info-banner">✅ Preview draw generated from enrolled participants ({{ session_count }} sessions). If players check in, draw will be refreshed at start. Regeneration will delete existing sessions first.</div>
+        {% endif %}
 
         {% if sessions %}
         <div style="margin-top:0.75rem;">

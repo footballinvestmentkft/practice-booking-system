@@ -1045,3 +1045,244 @@ class TestPromoTeamConfigEnrolledCountUsesEnrollments:
             assert 'id="wiz-step-3"' in html
         finally:
             app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-32 ────────────────────────────────────────────────────────────────
+
+class TestStep4WordingNoLongerMisleading:
+    """EDIT-UI-32: Step 4 info-banner no longer says 'auto-generated when you start'.
+    Correct wording explains Check-in Open is the generation trigger (enrolled preview),
+    and start refreshes from checked-in participants."""
+
+    def test_edit_ui_32_step4_wording_correct(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sem = _make_mini_season_semester(test_db)
+        sem.tournament_status = "CHECK_IN_OPEN"
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            # Old misleading message must be absent
+            assert "Sessions will be auto-generated when you start the tournament" not in html
+            # Correct timing language must be present
+            assert "enrolled participants" in html
+            assert "check-in" in html.lower()
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-33 ────────────────────────────────────────────────────────────────
+
+class TestZeroCheckinWarningWhenSessionsGenerated:
+    """EDIT-UI-33: sessions_generated=True + 0 check-ins → warn-banner shown in step 4.
+    Informs admin the current draw is enrolled-based and will be used as-is at start."""
+
+    def test_edit_ui_33_zero_checkin_warn_banner_shown(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sem = _make_mini_season_semester(test_db)
+        sem.tournament_status = "CHECK_IN_OPEN"
+        test_db.flush()
+
+        # TournamentConfiguration with sessions_generated=True
+        cfg = TournamentConfiguration(
+            semester_id=sem.id,
+            participant_type="INDIVIDUAL",
+            sessions_generated=True,
+        )
+        test_db.add(cfg)
+
+        # 1 enrollment, no check-in (checked_in_count == 0)
+        u, lic = _make_user_with_license(test_db)
+        test_db.add(SemesterEnrollment(
+            user_id=u.id,
+            semester_id=sem.id,
+            user_license_id=lic.id,
+            request_status=EnrollmentStatus.APPROVED,
+            is_active=True,
+        ))
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            # 0 check-in warning must be present
+            assert "0 checked-in" in html
+            assert "enrolled participants" in html
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_edit_ui_33b_no_warn_when_sessions_not_generated(self, test_db: Session):
+        """EDIT-UI-33b: sessions_generated=False → 0 check-in warn-banner absent."""
+        admin = _make_admin(test_db)
+        sem = _make_mini_season_semester(test_db)
+        sem.tournament_status = "CHECK_IN_OPEN"
+        test_db.flush()
+
+        test_db.add(TournamentConfiguration(
+            semester_id=sem.id,
+            participant_type="INDIVIDUAL",
+            sessions_generated=False,
+        ))
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            assert "0 checked-in" not in resp.text
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-34 ────────────────────────────────────────────────────────────────
+
+class TestStartWarningZeroCheckin:
+    """EDIT-UI-34: step4_state == 'active' (CHECK_IN_OPEN) + 0 check-ins →
+    inline warning before Start button: 'No check-ins — will start with enrolled participants'."""
+
+    def test_edit_ui_34_start_warning_zero_checkin(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sem = _make_mini_season_semester(test_db)
+        sem.tournament_status = "CHECK_IN_OPEN"
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            # Start button must be present (not blocked)
+            assert "Start Tournament" in html
+            # Inline start warning must appear
+            assert "No check-ins" in html
+            assert "enrolled participants" in html
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_edit_ui_34b_no_start_warning_when_checkins_exist(self, test_db: Session):
+        """EDIT-UI-34b: CHECK_IN_OPEN + ≥1 check-in → no 'No check-ins' warning."""
+        from datetime import datetime, timezone as tz
+        admin = _make_admin(test_db)
+        sem = _make_mini_season_semester(test_db)
+        sem.tournament_status = "CHECK_IN_OPEN"
+        test_db.flush()
+
+        # 1 checked-in enrollment
+        u, lic = _make_user_with_license(test_db)
+        test_db.add(SemesterEnrollment(
+            user_id=u.id,
+            semester_id=sem.id,
+            user_license_id=lic.id,
+            request_status=EnrollmentStatus.APPROVED,
+            is_active=True,
+            tournament_checked_in_at=datetime.now(tz.utc),
+        ))
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            assert "No check-ins" not in html
+            assert "Start Tournament" in html
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-35 ────────────────────────────────────────────────────────────────
+
+class TestSessionStatCardLabels:
+    """EDIT-UI-35: stat card label distinguishes 'Preview draw' vs 'Final draw'.
+
+    Preview draw: sessions_generated=True, status != IN_PROGRESS or 0 check-ins.
+    Final draw:   sessions_generated=True, status == IN_PROGRESS, checked_in_count > 0.
+    Not generated: label stays 'Generated' with dash value."""
+
+    def test_edit_ui_35a_preview_draw_label(self, test_db: Session):
+        """CHECK_IN_OPEN + sessions_generated=True → 'Preview draw' label."""
+        admin = _make_admin(test_db)
+        sem = _make_mini_season_semester(test_db)
+        sem.tournament_status = "CHECK_IN_OPEN"
+        test_db.flush()
+
+        test_db.add(TournamentConfiguration(
+            semester_id=sem.id,
+            participant_type="INDIVIDUAL",
+            sessions_generated=True,
+        ))
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            assert "Preview draw" in html
+            assert "Final draw" not in html
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_edit_ui_35b_final_draw_label(self, test_db: Session):
+        """IN_PROGRESS + sessions_generated=True + ≥1 check-in → 'Final draw' label."""
+        from datetime import datetime, timezone as tz
+        admin = _make_admin(test_db)
+        sem = _make_mini_season_semester(test_db)
+        sem.tournament_status = "IN_PROGRESS"
+        test_db.flush()
+
+        test_db.add(TournamentConfiguration(
+            semester_id=sem.id,
+            participant_type="INDIVIDUAL",
+            sessions_generated=True,
+        ))
+
+        u, lic = _make_user_with_license(test_db)
+        test_db.add(SemesterEnrollment(
+            user_id=u.id,
+            semester_id=sem.id,
+            user_license_id=lic.id,
+            request_status=EnrollmentStatus.APPROVED,
+            is_active=True,
+            tournament_checked_in_at=datetime.now(tz.utc),
+        ))
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            assert "Final draw" in html
+            assert "Preview draw" not in html
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_edit_ui_35c_not_generated_label(self, test_db: Session):
+        """sessions_generated=False → stat card shows dash, no Preview/Final label."""
+        admin = _make_admin(test_db)
+        sem = _make_mini_season_semester(test_db)
+        sem.tournament_status = "ENROLLMENT_CLOSED"
+        test_db.flush()
+
+        test_db.add(TournamentConfiguration(
+            semester_id=sem.id,
+            participant_type="INDIVIDUAL",
+            sessions_generated=False,
+        ))
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            assert "Preview draw" not in html
+            assert "Final draw" not in html
+        finally:
+            app.dependency_overrides.clear()
