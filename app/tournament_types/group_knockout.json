@@ -1,6 +1,8 @@
 {
   "code": "group_knockout",
   "display_name": "Group Stage + Knockout",
+  "qualification_policy": "winners_plus_best_runner_up",
+  "best_runner_up_count": 1,
   "description": "Hybrid format - group stage followed by knockout playoffs. Best balance of fairness and excitement.",
   "format": "HEAD_TO_HEAD",
   "min_players": 8,

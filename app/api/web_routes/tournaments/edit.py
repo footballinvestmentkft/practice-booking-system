@@ -117,7 +117,12 @@ async def admin_tournament_edit_page(
     )
 
     def _matchup_label(s, teams_dict: dict, users_dict: dict):
-        """Return 'Team A vs Team B' / 'Player X vs Player Y' / 'N participants' / None."""
+        """Return 'Team A vs Team B' / 'Player X vs Player Y' / 'N participants' / None.
+
+        Falls back to structure_config.matchup (written at generation time) when
+        participant_user_ids is not yet populated — e.g. pending knockout slots.
+        Concrete participant names take priority over the slot label.
+        """
         if s.participant_team_ids:
             names = [teams_dict.get(tid, f"Team #{tid}") for tid in s.participant_team_ids[:2]]
             return " vs ".join(names) if len(names) >= 2 else names[0]
@@ -129,7 +134,8 @@ async def admin_tournament_edit_page(
                 n2 = u2.name if u2 else f"Player #{s.participant_user_ids[1]}"
                 return f"{n1} vs {n2}"
             return f"{len(s.participant_user_ids)} participants"
-        return None
+        sc = s.structure_config or {}
+        return sc.get("matchup") or None
 
     # Team name map for TEAM tournaments (team_id → name) — built first for matchup_label
     enrolled_teams: dict = {}

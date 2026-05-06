@@ -57,7 +57,7 @@ class RankingStrategyFactory:
                 return HeadToHeadLeagueRankingStrategy()
             elif tournament_type_code == "knockout":
                 return HeadToHeadKnockoutRankingStrategy()
-            elif tournament_type_code == "group_knockout":
+            elif tournament_type_code and tournament_type_code.startswith("group_knockout"):
                 return HeadToHeadGroupKnockoutRankingStrategy()
             else:
                 raise ValueError(

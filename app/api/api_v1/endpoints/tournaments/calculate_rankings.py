@@ -95,7 +95,7 @@ def calculate_tournament_rankings(
     # For group+knockout tournaments: use GROUP_STAGE sessions for validation,
     # but pass ALL completed sessions (group + knockout) to the ranking strategy
     # so final ranks reflect bracket position, not group stage points.
-    if tournament_type_code == "group_knockout":
+    if tournament_type_code and tournament_type_code.startswith("group_knockout"):
         group_sessions = [s for s in all_sessions if s.tournament_phase == "GROUP_STAGE"]
         knockout_sessions = [
             s for s in all_sessions
@@ -114,6 +114,22 @@ def calculate_tournament_rankings(
                 status_code=400,
                 detail=f"{len(group_missing)} GROUP_STAGE session(s) do not have results yet."
             )
+
+        # Assign semifinal participants if qualification policy requires it.
+        # Must run after group-complete validation above (group_missing guard)
+        # so that assign_semifinal_participants() always sees complete standings.
+        _tt_cfg = (
+            tournament.tournament_config_obj.tournament_type.config
+            if tournament.tournament_config_obj
+            and tournament.tournament_config_obj.tournament_type
+            else {}
+        )
+        if _tt_cfg.get("qualification_policy") == "winners_plus_best_runner_up":
+            _brc = int(_tt_cfg.get("best_runner_up_count", 0))
+            if _brc > 0:
+                from app.services.tournament.qualification import assign_semifinal_participants
+                assign_semifinal_participants(db, tournament_id, _brc)
+
         # Pass all sessions (group + completed knockout) to strategy
         sessions = group_sessions + knockout_sessions
     else:

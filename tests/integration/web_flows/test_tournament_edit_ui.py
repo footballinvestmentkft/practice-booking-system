@@ -1383,7 +1383,8 @@ def _make_gk_session(
 
 class TestGroupKnockoutGroupStageRendering:
     """EDIT-UI-37: group_knockout IN_PROGRESS → Section 7 renders GROUP_STAGE
-    sessions in fmt-groups-grid columns, not in flat list.
+    sessions using the new 3-row group-card layout (fmt-sess-gc), not the old
+    horizontal fmt-session-row layout.
     """
 
     def test_edit_ui_37_group_stage_rendered_in_columns(self, test_db: Session):
@@ -1410,6 +1411,8 @@ class TestGroupKnockoutGroupStageRendering:
             resp = client.get(f"/admin/tournaments/{sem.id}/edit")
             assert resp.status_code == 200
             html = resp.text
+
+            # ── Structural: grid + phase containers ──────────────────────────
             assert "section-session-results" in html
             assert "fmt-groups-grid" in html
             assert "fmt-phase-hdr" in html
@@ -1417,13 +1420,28 @@ class TestGroupKnockoutGroupStageRendering:
             assert "Group A" in html
             assert "Group B" in html
             assert "fmt-group-col-hdr" in html
-            # F-1/F-2: button container no flex-shrink:0; each button has white-space:nowrap
-            assert "flex-wrap:wrap" in html
-            assert "white-space:nowrap" in html
-            # F-9: sess-type has data-priority="medium" for mobile hiding
-            assert 'data-priority="medium"' in html
-            # F-7: group_knockout structured view does NOT show R-badges (structural headers replace them)
+            # F-7: group_knockout structured view does NOT show R-badges
             assert ">R1<" not in html
+
+            # ── Scope to Group Stage section for layout assertions ────────────
+            # Test only has GROUP_STAGE sessions; GS section starts at the phase header.
+            gs_section = html[html.index("⚽ Group Stage"):]
+
+            # New 3-row group-card layout is used
+            assert "fmt-sess-gc" in gs_section
+            assert "fmt-sess-gc-hdr" in gs_section
+            assert "fmt-sess-gc-label" in gs_section
+            # IN_PROGRESS → action buttons row rendered
+            assert "fmt-sess-gc-actions" in gs_section
+
+            # Label row appears before actions row (separate sibling divs)
+            assert gs_section.index("fmt-sess-gc-label") < gs_section.index("fmt-sess-gc-actions")
+
+            # Old horizontal row NOT used inside Group Stage cards
+            assert 'class="fmt-session-row"' not in gs_section
+
+            # HEAD_TO_HEAD badge (sess-type) absent from Group Stage cards
+            assert 'class="sess-type"' not in gs_section
         finally:
             app.dependency_overrides.clear()
 
@@ -1478,6 +1496,15 @@ class TestGroupKnockoutKnockoutStageRendering:
             assert 'flex-shrink:0' not in html.split('sess-type')[0].split('fmt-session-row')[-1].split('endmacro')[0] or "flex-shrink:0;white-space:nowrap" in html
             # F-7: knockout sessions in structured view have no R-badge (round header provides context)
             assert ">R1<" not in html
+
+            # ── Regression guard: KO Stage uses old horizontal layout ────────
+            ko_section = html[html.index("🏆 Knockout Stage"):]
+            # Old horizontal row IS used for KO sessions
+            assert 'class="session-list-row fmt-session-row"' in ko_section
+            # New group-card layout NOT used for KO sessions
+            assert "fmt-sess-gc" not in ko_section
+            # HEAD_TO_HEAD badge (sess-type) IS present for KO sessions
+            assert 'data-priority="medium"' in ko_section
         finally:
             app.dependency_overrides.clear()
 
@@ -1535,5 +1562,238 @@ class TestNonGroupKnockoutFlatListFallback:
             assert ">R1<" in html
             # F-8: flat-list wrapper has fmt-flat-list-wrap class
             assert "fmt-flat-list-wrap" in html
+
+            # ── Regression guard: flat list uses old horizontal layout ───────
+            sr_section = html[html.index("section-session-results"):]
+            # Old horizontal row IS used in flat list
+            assert 'class="session-list-row fmt-session-row"' in sr_section
+            # New group-card layout NOT used in flat list
+            assert "fmt-sess-gc" not in sr_section
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-40..43: KO slot label fallback via _matchup_label() ───────────────
+
+def _make_ko_session_with_matchup(
+    db: Session,
+    sem: Semester,
+    round_num: int,
+    match_num: int,
+    matchup: str,
+    seed_1: str | None = None,
+    seed_2: str | None = None,
+) -> SessionModel:
+    s = SessionModel(
+        title=f"KO Cup - Round {round_num} - Match {match_num}",
+        date_start=datetime(2026, 9, 1, 15, 0),
+        date_end=datetime(2026, 9, 1, 16, 30),
+        semester_id=sem.id,
+        match_format="HEAD_TO_HEAD",
+        auto_generated=True,
+        credit_cost=0,
+        event_category=EventCategory.MATCH,
+        tournament_phase=TournamentPhase.KNOCKOUT,
+        tournament_round=round_num,
+        tournament_match_number=match_num,
+        structure_config={
+            "matchup": matchup,
+            **({"seed_1": seed_1} if seed_1 else {}),
+            **({"seed_2": seed_2} if seed_2 else {}),
+        },
+    )
+    db.add(s)
+    db.flush()
+    return s
+
+
+class TestKOSlotLabelFallback:
+    """EDIT-UI-40..43: pending KO sessions show human-readable qualification
+    source labels from structure_config.matchup when participant_user_ids is None.
+    """
+
+    def test_edit_ui_40_pending_ko_shows_slot_labels(self, test_db: Session):
+        """EDIT-UI-40: Before results, KO section shows slot labels from structure_config."""
+        admin = _make_admin(test_db)
+        sem = _make_mini_season_semester(test_db)
+        sem.tournament_status = "IN_PROGRESS"
+        test_db.flush()
+
+        tt = _get_or_skip_tt(test_db, "group_knockout")
+        test_db.add(TournamentConfiguration(
+            semester_id=sem.id,
+            participant_type="INDIVIDUAL",
+            sessions_generated=True,
+            tournament_type_id=tt.id,
+        ))
+        test_db.flush()
+
+        # Semi-finals with slot labels, no participants yet
+        _make_ko_session_with_matchup(
+            test_db, sem, 1, 1,
+            "Group A winner vs Best runner-up", "A1", "BR",
+        )
+        _make_ko_session_with_matchup(
+            test_db, sem, 1, 2,
+            "Group B winner vs Group C winner", "B1", "C1",
+        )
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            assert "Group A winner vs Best runner-up" in html
+            assert "Group B winner vs Group C winner" in html
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_edit_ui_41_concrete_names_take_priority(self, test_db: Session):
+        """EDIT-UI-41: When participant_user_ids are set, concrete names appear
+        instead of the slot label (concrete names take priority).
+        """
+        admin = _make_admin(test_db)
+        sem = _make_mini_season_semester(test_db)
+        sem.tournament_status = "IN_PROGRESS"
+        test_db.flush()
+
+        tt = _get_or_skip_tt(test_db, "group_knockout")
+        test_db.add(TournamentConfiguration(
+            semester_id=sem.id,
+            participant_type="INDIVIDUAL",
+            sessions_generated=True,
+            tournament_type_id=tt.id,
+        ))
+
+        # Create two real users with licenses and semester enrollments
+        # (enrolled_users in edit.py is built from SemesterEnrollment rows)
+        from app.models.license import UserLicense as _UL
+        import uuid as _uuid
+        p1 = User(
+            email=f"slottest1+{_uuid.uuid4().hex[:6]}@test.com",
+            name="Alice Qualifier",
+            password_hash=get_password_hash("pw"),
+            role=UserRole.STUDENT,
+            is_active=True,
+        )
+        p2 = User(
+            email=f"slottest2+{_uuid.uuid4().hex[:6]}@test.com",
+            name="Bob Qualifier",
+            password_hash=get_password_hash("pw"),
+            role=UserRole.STUDENT,
+            is_active=True,
+        )
+        test_db.add_all([p1, p2])
+        test_db.flush()
+        for p in (p1, p2):
+            lic = _UL(
+                user_id=p.id,
+                specialization_type="LFA_FOOTBALL_PLAYER",
+                is_active=True,
+                started_at=datetime.now(timezone.utc),
+            )
+            test_db.add(lic)
+            test_db.flush()
+            test_db.add(SemesterEnrollment(
+                semester_id=sem.id,
+                user_id=p.id,
+                user_license_id=lic.id,
+                is_active=True,
+                request_status=EnrollmentStatus.APPROVED,
+            ))
+        test_db.flush()
+
+        # SF1 with actual participants assigned (simulates post-calculate-rankings state)
+        sf1 = SessionModel(
+            title="KO Cup - Semi-Finals - Match 1",
+            date_start=datetime(2026, 9, 1, 15, 0),
+            date_end=datetime(2026, 9, 1, 16, 30),
+            semester_id=sem.id,
+            match_format="HEAD_TO_HEAD",
+            auto_generated=True,
+            credit_cost=0,
+            event_category=EventCategory.MATCH,
+            tournament_phase=TournamentPhase.KNOCKOUT,
+            tournament_round=1,
+            tournament_match_number=1,
+            participant_user_ids=[p1.id, p2.id],
+            structure_config={
+                "matchup": "Group A winner vs Best runner-up",
+                "seed_1": "A1",
+                "seed_2": "BR",
+            },
+        )
+        test_db.add(sf1)
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            # Concrete names appear
+            assert "Alice Qualifier" in html
+            assert "Bob Qualifier" in html
+            # Slot label does NOT appear (concrete names replaced it)
+            assert "Group A winner vs Best runner-up" not in html
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_edit_ui_42_final_slot_label(self, test_db: Session):
+        """EDIT-UI-42: Final session shows 'SF1 winner vs SF2 winner' label."""
+        admin = _make_admin(test_db)
+        sem = _make_mini_season_semester(test_db)
+        sem.tournament_status = "IN_PROGRESS"
+        test_db.flush()
+
+        tt = _get_or_skip_tt(test_db, "group_knockout")
+        test_db.add(TournamentConfiguration(
+            semester_id=sem.id,
+            participant_type="INDIVIDUAL",
+            sessions_generated=True,
+            tournament_type_id=tt.id,
+        ))
+        test_db.flush()
+
+        _make_ko_session_with_matchup(
+            test_db, sem, 2, 1, "SF1 winner vs SF2 winner",
+        )
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            assert "SF1 winner vs SF2 winner" in resp.text
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_edit_ui_43_bronze_slot_label(self, test_db: Session):
+        """EDIT-UI-43: 3rd Place session shows 'SF1 loser vs SF2 loser' label."""
+        admin = _make_admin(test_db)
+        sem = _make_mini_season_semester(test_db)
+        sem.tournament_status = "IN_PROGRESS"
+        test_db.flush()
+
+        tt = _get_or_skip_tt(test_db, "group_knockout")
+        test_db.add(TournamentConfiguration(
+            semester_id=sem.id,
+            participant_type="INDIVIDUAL",
+            sessions_generated=True,
+            tournament_type_id=tt.id,
+        ))
+        test_db.flush()
+
+        _make_ko_session_with_matchup(
+            test_db, sem, 3, 1, "SF1 loser vs SF2 loser",
+        )
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            assert "SF1 loser vs SF2 loser" in resp.text
         finally:
             app.dependency_overrides.clear()
