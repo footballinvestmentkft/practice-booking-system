@@ -101,17 +101,25 @@ def _generate(player_count: int, tt_config: dict) -> list[dict]:
 
 
 _POLICY_9P = {
-    "qualification_policy": "winners_plus_best_runner_up",
-    "best_runner_up_count": 1,
     "round_names": {"4": "Semi-Finals", "2": "Finals"},
+    "group_configuration": {
+        "9_players": {
+            "groups": 3,
+            "players_per_group": 3,
+            "qualifiers": 1,
+            "qualification_policy": "winners_plus_best_runner_up",
+            "best_runner_up_count": 1,
+        }
+    },
 }
 
 _POLICY_NONE = {
     "round_names": {"4": "Semi-Finals", "2": "Finals"},
 }
 
+# GKG-10: 9p without a group_configuration.9_players entry — generator falls
+# back to dynamic distribution (qualifiers_per_group=2) → 6 qualifiers → play-in.
 _POLICY_FIXED = {
-    "qualification_policy": "fixed_per_group",
     "round_names": {"4": "Semi-Finals", "2": "Finals"},
 }
 

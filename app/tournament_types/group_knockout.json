@@ -26,6 +26,13 @@
     }
   ],
   "group_configuration": {
+    "9_players": {
+      "groups": 3,
+      "players_per_group": 3,
+      "qualifiers": 1,
+      "qualification_policy": "winners_plus_best_runner_up",
+      "best_runner_up_count": 1
+    },
     "8_players": {
       "groups": 2,
       "players_per_group": 4,

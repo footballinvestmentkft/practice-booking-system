@@ -90,10 +90,11 @@ class GroupKnockoutGenerator(BaseFormatGenerator):
             group_rounds = distribution['group_rounds']
 
         # ── Qualification policy override ──────────────────────────────────────
-        # Default "fixed_per_group" preserves legacy behaviour for all existing
-        # tournaments that have no qualification_policy key in their config.
-        _q_policy = tournament_type.config.get('qualification_policy', 'fixed_per_group')
-        _best_runner_up_count = int(tournament_type.config.get('best_runner_up_count', 0))
+        # Policy is scoped per player-count inside group_configuration[N_players].
+        # Reading from top-level config would affect ALL sizes sharing the same
+        # TournamentType (e.g. 16p would break if 9p policy were at top level).
+        _q_policy = (group_config or {}).get('qualification_policy', 'fixed_per_group')
+        _best_runner_up_count = int((group_config or {}).get('best_runner_up_count', 0))
         if _q_policy == 'winners_plus_best_runner_up' and _best_runner_up_count > 0:
             qualifiers_per_group = 1   # only group winners qualify automatically
         else:

@@ -61,7 +61,8 @@ def _make_h2h_result(uid1: int, score1: int, uid2: int, score2: int) -> dict:
 
 @pytest.fixture()
 def _gk_tournament_type(test_db: Session) -> TournamentType:
-    """Group-knockout TournamentType with winners_plus_best_runner_up policy."""
+    """Group-knockout TournamentType with winners_plus_best_runner_up policy
+    stored in group_configuration.9_players (production-equivalent structure)."""
     tt = TournamentType(
         code=f"group_knockout_{_uid()}",
         display_name="Group + KO (9p test)",
@@ -73,9 +74,16 @@ def _gk_tournament_type(test_db: Session) -> TournamentType:
         session_duration_minutes=90,
         break_between_sessions_minutes=15,
         config={
-            "qualification_policy": "winners_plus_best_runner_up",
-            "best_runner_up_count": 1,
             "round_names": {"4": "Semi-Finals", "2": "Finals"},
+            "group_configuration": {
+                "9_players": {
+                    "groups": 3,
+                    "players_per_group": 3,
+                    "qualifiers": 1,
+                    "qualification_policy": "winners_plus_best_runner_up",
+                    "best_runner_up_count": 1,
+                }
+            },
         },
     )
     test_db.add(tt)
