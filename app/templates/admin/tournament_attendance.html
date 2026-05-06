@@ -189,9 +189,9 @@
 </div>
 
 {% if summary.instructors_checked_in == 0 %}
-<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:0.85rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:0.75rem;">
-    <span style="font-size:1.25rem">⚠️</span>
-    <span><strong>Instructor check-in required</strong> — At least one instructor must be <span class="badge badge-green" style="font-size:0.75rem">✓ Checked In</span> before player/team check-in is enabled. Go to the <a href="/admin/tournaments/{{ t.id }}/edit#section-instructors" style="color:#856404">Edit page → Instructors</a>.</span>
+<div style="background:#ebf8ff;border:1px solid #bee3f8;border-radius:8px;padding:0.85rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:0.75rem;">
+    <span style="font-size:1.25rem">ℹ️</span>
+    <span>No instructor checked in yet. Player check-in is available — you can <a href="/admin/tournaments/{{ t.id }}/edit#section-instructors" style="color:#2b6cb0">check in instructors on the Edit page</a> at any time.</span>
 </div>
 {% endif %}
 
@@ -235,8 +235,7 @@
                         </button>
                         {% else %}
                         <button class="btn-checkin"
-                                onclick="teamCheckin({{ team.team_id }})"
-                                {% if summary.instructors_checked_in == 0 %}disabled title="Instructor check-in required"{% endif %}>
+                                onclick="teamCheckin({{ team.team_id }})">
                             Check In
                         </button>
                         {% endif %}
@@ -300,8 +299,7 @@
                                     </button>
                                     {% else %}
                                     <button class="btn-checkin"
-                                            onclick="playerCheckin({{ team.team_id }}, {{ player.user_id }})"
-                                            {% if summary.instructors_checked_in == 0 %}disabled title="Instructor check-in required"{% endif %}>
+                                            onclick="playerCheckin({{ team.team_id }}, {{ player.user_id }})">
                                         Check In
                                     </button>
                                     {% endif %}
@@ -365,8 +363,7 @@
                         </button>
                         {% else %}
                         <button class="btn-checkin"
-                                onclick="indPlayerCheckin({{ player.user_id }})"
-                                {% if summary.instructors_checked_in == 0 %}disabled title="Instructor check-in required"{% endif %}>
+                                onclick="indPlayerCheckin({{ player.user_id }})">
                             Check In
                         </button>
                         {% endif %}
