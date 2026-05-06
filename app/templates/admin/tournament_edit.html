@@ -196,6 +196,16 @@
 .wiz-step-body{padding:0.25rem 0 0.75rem;}
 .wiz-step.done:not(.expanded) .wiz-step-body,.wiz-step.locked .wiz-step-body{display:none;}
 .wiz-action-row{display:flex;justify-content:flex-end;padding:.75rem 1.25rem 0;margin-top:0.5rem;border-top:1px solid #e2e8f0;gap:.75rem;}
+.fmt-phase-block{margin-bottom:1.25rem;}
+.fmt-phase-hdr{font-weight:700;font-size:.9rem;color:#4a5568;padding:.5rem .75rem;background:#edf2f7;border-radius:6px;margin-bottom:.75rem;border-left:3px solid #667eea;}
+.fmt-groups-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.75rem;}
+.fmt-group-col{border:1px solid #e2e8f0;border-radius:8px;padding:.5rem;}
+.fmt-group-col-hdr{font-weight:700;font-size:.82rem;color:#2b6cb0;background:#ebf8ff;border-radius:4px;padding:.25rem .5rem;margin-bottom:.4rem;text-align:center;}
+.fmt-group-round{font-size:.74rem;color:#718096;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin:.4rem 0 .15rem;padding-left:.25rem;}
+.fmt-ko-round{margin-bottom:.75rem;}
+.fmt-ko-round-hdr{font-weight:700;font-size:.85rem;color:#553c9a;padding:.3rem .75rem;background:#faf5ff;border-radius:6px;margin-bottom:.4rem;border-left:3px solid #805ad5;}
+.fmt-session-row{padding:.4rem .25rem;border-bottom:1px solid #f7fafc;}
+.fmt-session-row:last-child{border-bottom:none;}
 </style>
 {% endblock %}
 
@@ -937,51 +947,99 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
         </span>
     </div>
 
-    {% if sessions_result_status %}
-    <div style="max-height:420px;overflow-y:auto;">
-        {% for sess in sessions_result_status %}
-        <div class="session-list-row" style="justify-content:space-between;padding:0.65rem 0;">
-            <div style="flex:1;min-width:0;">
-                <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.15rem;">
-                    <span class="sess-time">{{ sess.date_start }}</span>
-                    {% if sess.tournament_round %}
-                    <span style="background:#e2e8f0;border-radius:4px;padding:0.1rem 0.4rem;font-size:0.75rem;font-weight:600;color:#4a5568;">R{{ sess.tournament_round }}</span>
-                    {% endif %}
-                    {% if sess.group_identifier %}
-                    <span style="background:#bee3f8;border-radius:4px;padding:0.1rem 0.4rem;font-size:0.75rem;font-weight:600;color:#2b6cb0;">Group {{ sess.group_identifier }}</span>
-                    {% endif %}
-                </div>
+    {% macro sess_row(sess) %}
+    <div class="session-list-row fmt-session-row" style="justify-content:space-between;">
+        <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.15rem;">
+                <span class="sess-time">{{ sess.date_start }}</span>
                 {% if sess.matchup_label %}
                 <span style="font-weight:700;font-size:0.95rem;color:#2d3748;">{{ sess.matchup_label }}</span>
                 {% else %}
                 <span style="font-size:0.85rem;color:#718096;">{{ sess.title }}</span>
                 {% endif %}
-                <span class="sess-type" style="margin-left:0.4rem;">{{ sess.match_format }}</span>
+                <span class="sess-type" style="margin-left:0.2rem;">{{ sess.match_format }}</span>
             </div>
-            <div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">
-                {% if sess.postponed_reason %}
-                    <span style="color:#c05621;font-weight:600;font-size:0.85rem;" title="{{ sess.postponed_reason }}">⏸ Postponed</span>
-                {% elif sess.has_results %}
-                    <span style="color:#27ae60;font-weight:600;font-size:0.85rem;">✅ Results entered</span>
-                {% else %}
-                    <span style="color:#a0aec0;font-size:0.85rem;">⬜ No results</span>
-                {% endif %}
-                {% if t.tournament_status == 'IN_PROGRESS' %}
-                <button class="btn btn-secondary"
-                        style="font-size:0.78rem;padding:0.3rem 0.75rem;"
-                        onclick="openResultModal({{ sess.id }}, '{{ sess.match_format }}', {{ sess.participant_user_ids | tojson }}, {{ sess.participant_team_ids | tojson }})">
-                    ✏️ Enter Results
-                </button>
-                <button class="btn btn-secondary"
-                        style="font-size:0.78rem;padding:0.3rem 0.75rem;{% if sess.postponed_reason %}background:#fffaf0;border-color:#fed7aa;color:#c05621;{% endif %}"
-                        onclick="openPostponeModal({{ sess.id }}, {{ sess.postponed_reason | tojson }})">
-                    ⏸ {% if sess.postponed_reason %}Edit Postpone{% else %}Postpone{% endif %}
-                </button>
-                {% endif %}
-            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">
+            {% if sess.postponed_reason %}
+                <span style="color:#c05621;font-weight:600;font-size:0.85rem;" title="{{ sess.postponed_reason }}">⏸ Postponed</span>
+            {% elif sess.has_results %}
+                <span style="color:#27ae60;font-weight:600;font-size:0.85rem;">✅ Results entered</span>
+            {% else %}
+                <span style="color:#a0aec0;font-size:0.85rem;">⬜ No results</span>
+            {% endif %}
+            {% if t.tournament_status == 'IN_PROGRESS' %}
+            <button class="btn btn-secondary"
+                    style="font-size:0.78rem;padding:0.3rem 0.75rem;"
+                    onclick="openResultModal({{ sess.id }}, '{{ sess.match_format }}', {{ sess.participant_user_ids | tojson }}, {{ sess.participant_team_ids | tojson }})">
+                ✏️ Enter Results
+            </button>
+            <button class="btn btn-secondary"
+                    style="font-size:0.78rem;padding:0.3rem 0.75rem;{% if sess.postponed_reason %}background:#fffaf0;border-color:#fed7aa;color:#c05621;{% endif %}"
+                    onclick="openPostponeModal({{ sess.id }}, {{ sess.postponed_reason | tojson }})">
+                ⏸ {% if sess.postponed_reason %}Edit Postpone{% else %}Postpone{% endif %}
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    {% endmacro %}
+
+    {% if sessions_result_status %}
+    {% if tt_code == 'group_knockout' %}
+    {# ── GROUP STAGE ──────────────────────────────────────────────────── #}
+    {% set gs_sessions = sessions_result_status | selectattr('tournament_phase', 'equalto', 'GROUP_STAGE') | list %}
+    {% if gs_sessions %}
+    <div class="fmt-phase-block">
+        <div class="fmt-phase-hdr">⚽ Group Stage</div>
+        <div class="fmt-groups-grid">
+        {% for grp in gk_unique_groups %}
+        <div class="fmt-group-col">
+            <div class="fmt-group-col-hdr">Group {{ grp }}</div>
+            {% set grp_sessions = gs_sessions | selectattr('group_identifier', 'equalto', grp) | list %}
+            {% for rn, round_sessions in grp_sessions | groupby('tournament_round') %}
+            <div class="fmt-group-round">Round {{ rn }}</div>
+            {% for sess in round_sessions %}
+            {{ sess_row(sess) }}
+            {% endfor %}
+            {% endfor %}
+        </div>
+        {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    {# ── KNOCKOUT STAGE ───────────────────────────────────────────────── #}
+    {% set ko_sessions = sessions_result_status | selectattr('tournament_phase', 'equalto', 'KNOCKOUT') | list %}
+    {% if ko_sessions %}
+    <div class="fmt-phase-block">
+        <div class="fmt-phase-hdr">🏆 Knockout Stage</div>
+        {% for rn in ko_unique_rounds %}
+        <div class="fmt-ko-round">
+            <div class="fmt-ko-round-hdr">{{ ko_round_labels[rn] if rn in ko_round_labels else 'Round ' ~ rn }}</div>
+            {% for sess in ko_sessions %}
+            {% if sess.tournament_round == rn %}{{ sess_row(sess) }}{% endif %}
+            {% endfor %}
         </div>
         {% endfor %}
     </div>
+    {% endif %}
+    {# ── OTHER phases (FINALS, PLACEMENT, etc.) ───────────────────────── #}
+    {% set other_sessions = sessions_result_status | rejectattr('tournament_phase', 'equalto', 'GROUP_STAGE') | rejectattr('tournament_phase', 'equalto', 'KNOCKOUT') | list %}
+    {% if other_sessions %}
+    <div class="fmt-phase-block">
+        <div class="fmt-phase-hdr">📋 Other Sessions</div>
+        {% for sess in other_sessions %}{{ sess_row(sess) }}{% endfor %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    {# ── fallback: flat list (league, swiss, standalone knockout, etc.) ── #}
+    <div style="max-height:420px;overflow-y:auto;">
+        {% for sess in sessions_result_status %}
+        {{ sess_row(sess) }}
+        {% endfor %}
+    </div>
+    {% endif %}
+
     {% else %}
         <p style="color:#718096;font-style:italic;">No match sessions found. Generate sessions first.</p>
     {% endif %}

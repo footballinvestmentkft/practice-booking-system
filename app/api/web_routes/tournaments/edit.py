@@ -160,11 +160,39 @@ async def admin_tournament_edit_page(
             "participant_team_ids": s.participant_team_ids or [],
             "tournament_round": s.tournament_round,
             "group_identifier": s.group_identifier,
+            "tournament_phase": s.tournament_phase.value if s.tournament_phase else None,
             "matchup_label": _matchup_label(s, enrolled_teams, enrolled_users),
             "postponed_reason": s.postponed_reason,
         }
         for s in all_match_sessions
     ]
+
+    # View preprocessing for format-aware Section 7 rendering
+    tt_code = (cfg.tournament_type.code if cfg and cfg.tournament_type else None) or "unknown"
+    _gk_unique_groups: list = []
+    _ko_unique_rounds: list = []
+    _ko_round_labels: dict = {}
+    if tt_code == "group_knockout":
+        _gk_unique_groups = sorted(set(
+            s["group_identifier"] for s in sessions_result_status
+            if s.get("group_identifier") and s.get("tournament_phase") == "GROUP_STAGE"
+        ))
+        _ko_unique_rounds = sorted(set(
+            s["tournament_round"] for s in sessions_result_status
+            if s.get("tournament_phase") == "KNOCKOUT" and s["tournament_round"] is not None
+        ))
+        for s in sessions_result_status:
+            if s.get("tournament_phase") == "KNOCKOUT" and s["tournament_round"] is not None:
+                rn = s["tournament_round"]
+                if rn not in _ko_round_labels:
+                    title = s["title"]
+                    parts = [p.strip() for p in title.split(" - ")]
+                    if len(parts) >= 3 and parts[-1].lower().startswith("match"):
+                        _ko_round_labels[rn] = " - ".join(parts[1:-1])
+                    elif len(parts) == 2:
+                        _ko_round_labels[rn] = parts[-1]
+                    else:
+                        _ko_round_labels[rn] = f"Round {rn}"
 
     # Existing rankings (for Section 8 — rankings panel)
     existing_rankings = (
@@ -314,6 +342,10 @@ async def admin_tournament_edit_page(
             "sessions": sessions,
             "session_count": session_count,
             "sessions_result_status": sessions_result_status,
+            "tt_code": tt_code,
+            "gk_unique_groups": _gk_unique_groups,
+            "ko_unique_rounds": _ko_unique_rounds,
+            "ko_round_labels": _ko_round_labels,
             "enrolled_teams": enrolled_teams,
             "existing_rankings": existing_rankings,
             "ranking_users": ranking_users,

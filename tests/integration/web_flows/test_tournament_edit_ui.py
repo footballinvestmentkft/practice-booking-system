@@ -1337,3 +1337,188 @@ class TestStep4ManageCheckinsLink:
             assert f"/admin/tournaments/{sem.id}/attendance" in html
         finally:
             app.dependency_overrides.clear()
+
+
+# ── Helpers for EDIT-UI-37..39 ────────────────────────────────────────────────
+
+from app.models.session import Session as SessionModel, EventCategory
+from app.models.tournament_type import TournamentType
+from app.models.tournament_enums import TournamentPhase
+
+
+def _get_or_skip_tt(db: Session, code: str) -> TournamentType:
+    tt = db.query(TournamentType).filter(TournamentType.code == code).first()
+    if tt is None:
+        import pytest as _pt
+        _pt.skip(f"TournamentType '{code}' not found in test DB")
+    return tt
+
+
+def _make_gk_session(
+    db: Session,
+    sem: Semester,
+    phase: TournamentPhase,
+    grp: str,
+    rn: int,
+) -> SessionModel:
+    s = SessionModel(
+        title=f"{phase.value} - Group {grp} - Match 1",
+        date_start=datetime(2026, 9, 1, 10, 0),
+        date_end=datetime(2026, 9, 1, 11, 0),
+        semester_id=sem.id,
+        match_format="HEAD_TO_HEAD",
+        auto_generated=True,
+        credit_cost=0,
+        event_category=EventCategory.MATCH,
+        tournament_phase=phase,
+        tournament_round=rn,
+        group_identifier=grp,
+    )
+    db.add(s)
+    db.flush()
+    return s
+
+
+# ── EDIT-UI-37 ────────────────────────────────────────────────────────────────
+
+class TestGroupKnockoutGroupStageRendering:
+    """EDIT-UI-37: group_knockout IN_PROGRESS → Section 7 renders GROUP_STAGE
+    sessions in fmt-groups-grid columns, not in flat list.
+    """
+
+    def test_edit_ui_37_group_stage_rendered_in_columns(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sem = _make_mini_season_semester(test_db)
+        sem.tournament_status = "IN_PROGRESS"
+        test_db.flush()
+
+        tt = _get_or_skip_tt(test_db, "group_knockout")
+        test_db.add(TournamentConfiguration(
+            semester_id=sem.id,
+            participant_type="INDIVIDUAL",
+            sessions_generated=True,
+            tournament_type_id=tt.id,
+        ))
+        test_db.flush()
+
+        _make_gk_session(test_db, sem, TournamentPhase.GROUP_STAGE, "A", 1)
+        _make_gk_session(test_db, sem, TournamentPhase.GROUP_STAGE, "B", 1)
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            assert "section-session-results" in html
+            assert "fmt-groups-grid" in html
+            assert "fmt-phase-hdr" in html
+            assert "Group Stage" in html
+            assert "Group A" in html
+            assert "Group B" in html
+            assert "fmt-group-col-hdr" in html
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-38 ────────────────────────────────────────────────────────────────
+
+class TestGroupKnockoutKnockoutStageRendering:
+    """EDIT-UI-38: group_knockout IN_PROGRESS → KNOCKOUT sessions render in
+    fmt-ko-round blocks with round header labels.
+    """
+
+    def test_edit_ui_38_knockout_stage_rendered_in_rounds(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sem = _make_mini_season_semester(test_db)
+        sem.tournament_status = "IN_PROGRESS"
+        test_db.flush()
+
+        tt = _get_or_skip_tt(test_db, "group_knockout")
+        test_db.add(TournamentConfiguration(
+            semester_id=sem.id,
+            participant_type="INDIVIDUAL",
+            sessions_generated=True,
+            tournament_type_id=tt.id,
+        ))
+        test_db.flush()
+
+        ko = SessionModel(
+            title="group_knockout - Quarter Final - Match 1",
+            date_start=datetime(2026, 9, 1, 12, 0),
+            date_end=datetime(2026, 9, 1, 13, 0),
+            semester_id=sem.id,
+            match_format="HEAD_TO_HEAD",
+            auto_generated=True,
+            credit_cost=0,
+            event_category=EventCategory.MATCH,
+            tournament_phase=TournamentPhase.KNOCKOUT,
+            tournament_round=1,
+        )
+        test_db.add(ko)
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            assert "Knockout Stage" in html
+            assert "fmt-ko-round" in html
+            assert "fmt-ko-round-hdr" in html
+            assert "Quarter Final" in html
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-39 ────────────────────────────────────────────────────────────────
+
+class TestNonGroupKnockoutFlatListFallback:
+    """EDIT-UI-39: non-group_knockout (league) IN_PROGRESS → Section 7 renders
+    flat list fallback; no fmt-phase-block or fmt-groups-grid in HTML.
+    """
+
+    def test_edit_ui_39_league_flat_list_no_phase_blocks(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sem = _make_mini_season_semester(test_db)
+        sem.tournament_status = "IN_PROGRESS"
+        test_db.flush()
+
+        tt = _get_or_skip_tt(test_db, "league")
+        test_db.add(TournamentConfiguration(
+            semester_id=sem.id,
+            participant_type="INDIVIDUAL",
+            sessions_generated=True,
+            tournament_type_id=tt.id,
+        ))
+        test_db.flush()
+
+        s = SessionModel(
+            title="League Round 1 Match 1",
+            date_start=datetime(2026, 9, 1, 10, 0),
+            date_end=datetime(2026, 9, 1, 11, 0),
+            semester_id=sem.id,
+            match_format="HEAD_TO_HEAD",
+            auto_generated=True,
+            credit_cost=0,
+            event_category=EventCategory.MATCH,
+            tournament_round=1,
+        )
+        test_db.add(s)
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            assert "section-session-results" in html
+            # CSS definitions exist, but no rendered group/knockout phase containers
+            assert 'class="fmt-phase-block"' not in html
+            assert 'class="fmt-groups-grid"' not in html
+            assert "Knockout Stage" not in html
+            # Session title appears in flat list (not in group column)
+            assert "League Round 1 Match 1" in html
+            assert 'class="fmt-group-col"' not in html
+        finally:
+            app.dependency_overrides.clear()
