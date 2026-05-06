@@ -1417,6 +1417,13 @@ class TestGroupKnockoutGroupStageRendering:
             assert "Group A" in html
             assert "Group B" in html
             assert "fmt-group-col-hdr" in html
+            # F-1/F-2: button container no flex-shrink:0; each button has white-space:nowrap
+            assert "flex-wrap:wrap" in html
+            assert "white-space:nowrap" in html
+            # F-9: sess-type has data-priority="medium" for mobile hiding
+            assert 'data-priority="medium"' in html
+            # F-7: group_knockout structured view does NOT show R-badges (structural headers replace them)
+            assert ">R1<" not in html
         finally:
             app.dependency_overrides.clear()
 
@@ -1467,6 +1474,10 @@ class TestGroupKnockoutKnockoutStageRendering:
             assert "fmt-ko-round" in html
             assert "fmt-ko-round-hdr" in html
             assert "Quarter Final" in html
+            # F-1: no flex-shrink:0 on the button container row
+            assert 'flex-shrink:0' not in html.split('sess-type')[0].split('fmt-session-row')[-1].split('endmacro')[0] or "flex-shrink:0;white-space:nowrap" in html
+            # F-7: knockout sessions in structured view have no R-badge (round header provides context)
+            assert ">R1<" not in html
         finally:
             app.dependency_overrides.clear()
 
@@ -1520,5 +1531,9 @@ class TestNonGroupKnockoutFlatListFallback:
             # Session title appears in flat list (not in group column)
             assert "League Round 1 Match 1" in html
             assert 'class="fmt-group-col"' not in html
+            # F-7: flat-list path shows round badge (regression guard)
+            assert ">R1<" in html
+            # F-8: flat-list wrapper has fmt-flat-list-wrap class
+            assert "fmt-flat-list-wrap" in html
         finally:
             app.dependency_overrides.clear()

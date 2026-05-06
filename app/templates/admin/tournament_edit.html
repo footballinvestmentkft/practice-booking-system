@@ -206,6 +206,17 @@
 .fmt-ko-round-hdr{font-weight:700;font-size:.85rem;color:#553c9a;padding:.3rem .75rem;background:#faf5ff;border-radius:6px;margin-bottom:.4rem;border-left:3px solid #805ad5;}
 .fmt-session-row{padding:.4rem .25rem;border-bottom:1px solid #f7fafc;}
 .fmt-session-row:last-child{border-bottom:none;}
+/* F-6: tablet — reduce grid column min so 2 columns still fit at 640px */
+@media (max-width:1023px) {
+    .fmt-groups-grid { grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); }
+}
+/* F-3,F-4,F-5,F-8: mobile — single-col grid, stacked rows, touch targets, page scroll */
+@media (max-width:639px) {
+    .fmt-groups-grid { grid-template-columns: 1fr; }
+    .fmt-session-row { flex-direction: column; align-items: flex-start; gap: 0.4rem; }
+    .fmt-session-row .btn { padding: 0.5rem 0.75rem; font-size: 0.82rem; }
+    .fmt-flat-list-wrap { max-height: none; overflow-y: visible; }
+}
 </style>
 {% endblock %}
 
@@ -947,35 +958,46 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
         </span>
     </div>
 
-    {% macro sess_row(sess) %}
+    {% macro sess_row(sess, show_context_badges=False) %}
     <div class="session-list-row fmt-session-row" style="justify-content:space-between;">
         <div style="flex:1;min-width:0;">
             <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.15rem;">
                 <span class="sess-time">{{ sess.date_start }}</span>
+                {# F-7: round/group context badges — shown only in flat-list path #}
+                {% if show_context_badges %}
+                {% if sess.tournament_round %}
+                <span style="background:#e2e8f0;border-radius:4px;padding:0.1rem 0.4rem;font-size:0.75rem;font-weight:600;color:#4a5568;">R{{ sess.tournament_round }}</span>
+                {% endif %}
+                {% if sess.group_identifier %}
+                <span style="background:#bee3f8;border-radius:4px;padding:0.1rem 0.4rem;font-size:0.75rem;font-weight:600;color:#2b6cb0;">Group {{ sess.group_identifier }}</span>
+                {% endif %}
+                {% endif %}
                 {% if sess.matchup_label %}
                 <span style="font-weight:700;font-size:0.95rem;color:#2d3748;">{{ sess.matchup_label }}</span>
                 {% else %}
                 <span style="font-size:0.85rem;color:#718096;">{{ sess.title }}</span>
                 {% endif %}
-                <span class="sess-type" style="margin-left:0.2rem;">{{ sess.match_format }}</span>
+                {# F-9: hide format badge on mobile — low-priority in narrow layout #}
+                <span class="sess-type" data-priority="medium" style="margin-left:0.2rem;">{{ sess.match_format }}</span>
             </div>
         </div>
-        <div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">
+        {# F-1: allow wrap; F-2: each button gets flex-shrink:0 so it wraps as a unit #}
+        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
             {% if sess.postponed_reason %}
-                <span style="color:#c05621;font-weight:600;font-size:0.85rem;" title="{{ sess.postponed_reason }}">⏸ Postponed</span>
+                <span style="color:#c05621;font-weight:600;font-size:0.85rem;white-space:nowrap;" title="{{ sess.postponed_reason }}">⏸ Postponed</span>
             {% elif sess.has_results %}
-                <span style="color:#27ae60;font-weight:600;font-size:0.85rem;">✅ Results entered</span>
+                <span style="color:#27ae60;font-weight:600;font-size:0.85rem;white-space:nowrap;">✅ Results entered</span>
             {% else %}
-                <span style="color:#a0aec0;font-size:0.85rem;">⬜ No results</span>
+                <span style="color:#a0aec0;font-size:0.85rem;white-space:nowrap;">⬜ No results</span>
             {% endif %}
             {% if t.tournament_status == 'IN_PROGRESS' %}
             <button class="btn btn-secondary"
-                    style="font-size:0.78rem;padding:0.3rem 0.75rem;"
+                    style="font-size:0.78rem;padding:0.3rem 0.75rem;flex-shrink:0;white-space:nowrap;"
                     onclick="openResultModal({{ sess.id }}, '{{ sess.match_format }}', {{ sess.participant_user_ids | tojson }}, {{ sess.participant_team_ids | tojson }})">
                 ✏️ Enter Results
             </button>
             <button class="btn btn-secondary"
-                    style="font-size:0.78rem;padding:0.3rem 0.75rem;{% if sess.postponed_reason %}background:#fffaf0;border-color:#fed7aa;color:#c05621;{% endif %}"
+                    style="font-size:0.78rem;padding:0.3rem 0.75rem;flex-shrink:0;white-space:nowrap;{% if sess.postponed_reason %}background:#fffaf0;border-color:#fed7aa;color:#c05621;{% endif %}"
                     onclick="openPostponeModal({{ sess.id }}, {{ sess.postponed_reason | tojson }})">
                 ⏸ {% if sess.postponed_reason %}Edit Postpone{% else %}Postpone{% endif %}
             </button>
@@ -1033,9 +1055,9 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
 
     {% else %}
     {# ── fallback: flat list (league, swiss, standalone knockout, etc.) ── #}
-    <div style="max-height:420px;overflow-y:auto;">
+    <div class="fmt-flat-list-wrap" style="max-height:420px;overflow-y:auto;">
         {% for sess in sessions_result_status %}
-        {{ sess_row(sess) }}
+        {{ sess_row(sess, show_context_badges=True) }}
         {% endfor %}
     </div>
     {% endif %}
