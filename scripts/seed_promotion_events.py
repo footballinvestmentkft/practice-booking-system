@@ -85,6 +85,14 @@ _EXPECTED_SF_MATCHUPS = frozenset({
     "Group B winner vs Group C winner",
 })
 
+# ─── URL helpers ──────────────────────────────────────────────────────────────
+
+
+def _admin_tournament_url(tid: int) -> str:
+    """Return the canonical admin edit URL for a tournament."""
+    return f"/admin/tournaments/{tid}/edit"
+
+
 # ─── Production guard ─────────────────────────────────────────────────────────
 
 _BLOCKED_URL_FRAGMENTS = ("lfa.com", "production", "staging", "prod")
@@ -782,7 +790,7 @@ def main() -> None:
         print("  DONE")
         for sc, tid in results.items():
             if tid and not args.dry_run:
-                print(f"  {sc}: http://localhost:8000/admin/promotion-events/{tid}")
+                print(f"  {sc}: http://localhost:8000{_admin_tournament_url(tid)}")
             else:
                 print(f"  {sc}: (dry-run or skipped)")
         print("=" * 60)

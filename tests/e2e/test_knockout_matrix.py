@@ -324,7 +324,7 @@ def test_knockout_seeding_matrix(
     ]
     # More precise: sessions that were in initially_unseeded AND are now the deepest KO round
     # Use: sessions with title containing the deepest "Round of N" phrase
-    expected_round_name = {8: "Round of 4", 16: "Round of 8", 32: "Round of 16"}
+    expected_round_name = {8: "Semi-finals", 16: "Quarter-finals", 32: "Round of 16"}
     r1_title_keyword = expected_round_name[player_count]
     round1_sessions = [
         s for s in refreshed
@@ -440,8 +440,10 @@ def test_seeding_api_only(player_count: int, num_groups: int, expected_r1: int):
 
     refreshed = _get_sessions(token, tid)
 
-    # Identify first-round knockout sessions by the deepest "Round of N" title
-    r1_keyword = {8: "Round of 4", 16: "Round of 8", 32: "Round of 16"}[player_count]
+    # Identify first-round knockout sessions by title keyword.
+    # Keywords come from group_knockout.json round_names (4→Semi-finals, 8→Quarter-finals,
+    # 16→Round of 16). 8p KO has 4 players (2g×2q), 16p has 8 (4g×2q), 32p has 16 (8g×2q).
+    r1_keyword = {8: "Semi-finals", 16: "Quarter-finals", 32: "Round of 16"}[player_count]
     round1 = [s for s in refreshed if r1_keyword in (s.get("title") or "")]
 
     assert len(round1) == expected_r1, (

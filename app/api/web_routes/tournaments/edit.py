@@ -23,6 +23,61 @@ from . import templates, _admin_only
 
 router = APIRouter()
 
+# ── Session ordering helpers ────────────────────────────────────────────────────
+
+# Canonical KO game-type order — guards against inconsistent tournament_round values.
+_KO_GAME_TYPE_ORDER: dict[str, int] = {
+    "Semi-finals": 0,
+    "Final": 1,
+    "3rd Place Match": 2,
+}
+
+
+def _session_sort_key(s) -> tuple:
+    """Sort key: GROUP_STAGE first (A→B→C, R1→R2→R3), then KNOCKOUT (SF→F→B).
+
+    For KO sessions ko_type_order (derived from game_type) is placed before
+    tournament_round so that correct KO ordering is preserved even when round
+    numbers are inconsistent.  For GROUP sessions ko_type_order is pinned to 0
+    so it has no effect and tournament_round drives the within-group order.
+    """
+    phase_str = s.tournament_phase.value if hasattr(s.tournament_phase, "value") else str(s.tournament_phase or "")
+    is_group = "GROUP" in phase_str
+    ko_type_order = 0 if is_group else _KO_GAME_TYPE_ORDER.get(s.game_type or "", 99)
+    return (
+        0 if is_group else 1,            # GROUP_STAGE before KNOCKOUT
+        s.group_identifier or "Z",       # A < B < C; KO has no group → sorts last
+        ko_type_order,                   # SF(0) < Final(1) < Bronze(2); 0 for GROUP (no-op)
+        s.tournament_round or 99,        # R1 < R2 < R3 within group; secondary for KO
+        s.tournament_match_number or 99, # M1 < M2 within same round
+    )
+
+
+def _matchup_label(s, teams_dict: dict, users_dict: dict) -> str | None:
+    """Return a human-readable matchup label for a session.
+
+    Priority:
+      1. Concrete team names (TEAM tournaments)
+      2. Concrete player names (HEAD_TO_HEAD with participants assigned)
+      3. ⏳ pending label from structure_config["matchup"] (bracket not yet resolved)
+      4. None
+    """
+    if s.participant_team_ids:
+        names = [teams_dict.get(tid, f"Team #{tid}") for tid in s.participant_team_ids[:2]]
+        return " vs ".join(names) if len(names) >= 2 else names[0]
+    if s.participant_user_ids:
+        if s.match_format == "HEAD_TO_HEAD" and len(s.participant_user_ids) >= 2:
+            u1 = users_dict.get(s.participant_user_ids[0])
+            u2 = users_dict.get(s.participant_user_ids[1])
+            n1 = u1.name if u1 else f"Player #{s.participant_user_ids[0]}"
+            n2 = u2.name if u2 else f"Player #{s.participant_user_ids[1]}"
+            return f"{n1} vs {n2}"
+        return f"{len(s.participant_user_ids)} participants"
+    matchup = (s.structure_config or {}).get("matchup")
+    if matchup:
+        return f"⏳ {matchup}"
+    return None
+
 
 # ── Tournament Edit Page ────────────────────────────────────────────────────────
 
@@ -110,24 +165,9 @@ async def admin_tournament_edit_page(
             SessionModel.semester_id == tournament_id,
             SessionModel.event_category == EventCategory.MATCH,
         )
-        .order_by(SessionModel.date_start)
         .all()
     )
-
-    def _matchup_label(s, teams_dict: dict, users_dict: dict):
-        """Return 'Team A vs Team B' / 'Player X vs Player Y' / 'N participants' / None."""
-        if s.participant_team_ids:
-            names = [teams_dict.get(tid, f"Team #{tid}") for tid in s.participant_team_ids[:2]]
-            return " vs ".join(names) if len(names) >= 2 else names[0]
-        if s.participant_user_ids:
-            if s.match_format == "HEAD_TO_HEAD" and len(s.participant_user_ids) >= 2:
-                u1 = users_dict.get(s.participant_user_ids[0])
-                u2 = users_dict.get(s.participant_user_ids[1])
-                n1 = u1.name if u1 else f"Player #{s.participant_user_ids[0]}"
-                n2 = u2.name if u2 else f"Player #{s.participant_user_ids[1]}"
-                return f"{n1} vs {n2}"
-            return f"{len(s.participant_user_ids)} participants"
-        return None
+    all_match_sessions.sort(key=_session_sort_key)
 
     # Team name map for TEAM tournaments (team_id → name) — built first for matchup_label
     enrolled_teams: dict = {}

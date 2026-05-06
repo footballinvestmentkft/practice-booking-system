@@ -31,6 +31,13 @@
       "players_per_group": 4,
       "qualifiers": 2
     },
+    "9_players": {
+      "groups": 3,
+      "players_per_group": 3,
+      "qualifiers": 1,
+      "qualification_policy": "winners_plus_best_runner_up",
+      "best_runner_up_count": 1
+    },
     "12_players": {
       "groups": 3,
       "players_per_group": 4,
@@ -61,6 +68,14 @@
       "players_per_group": 4,
       "qualifiers": 2
     }
+  },
+  "round_names": {
+    "64": "Round of 64",
+    "32": "Round of 32",
+    "16": "Round of 16",
+    "8": "Quarter-finals",
+    "4": "Semi-finals",
+    "2": "Final"
   },
   "placement_rules": {
     "group_stage": {
