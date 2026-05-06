@@ -89,6 +89,17 @@ class GroupKnockoutGenerator(BaseFormatGenerator):
             qualifiers_per_group = distribution['qualifiers_per_group']
             group_rounds = distribution['group_rounds']
 
+        # ── Qualification policy override ────────────────────────────────────
+        # Policy is scoped per player-count inside group_configuration[N_players].
+        # Reading from top-level config would affect ALL sizes sharing the same
+        # TournamentType (e.g. 16p would break if 9p policy were at top level).
+        _q_policy = (group_config or {}).get('qualification_policy', 'fixed_per_group')
+        _best_runner_up_count = int((group_config or {}).get('best_runner_up_count', 0))
+        if _q_policy == 'winners_plus_best_runner_up' and _best_runner_up_count > 0:
+            qualifiers_per_group = 1   # only group winners qualify automatically
+        else:
+            _best_runner_up_count = 0  # policy inactive — zero out to prevent drift
+
         # ✅ NEW: Assign players to groups with variable sizes
         group_assignments = {}  # {group_name: [user_id1, user_id2, ...]}
         player_index = 0
@@ -320,7 +331,7 @@ class GroupKnockoutGenerator(BaseFormatGenerator):
         # ============================================================================
         # PHASE 2: KNOCKOUT STAGE (TOP QUALIFIERS ONLY) - WITH BYE LOGIC
         # ============================================================================
-        knockout_players = groups_count * qualifiers_per_group
+        knockout_players = groups_count * qualifiers_per_group + _best_runner_up_count
         round_names = tournament_type.config.get('round_names', {})
 
         # ✅ NEW: Calculate knockout structure (byes, play-in, bronze)
@@ -400,29 +411,44 @@ class GroupKnockoutGenerator(BaseFormatGenerator):
                 session_start = current_time
                 session_end = session_start + timedelta(minutes=session_duration)
 
-                # ✅ Calculate seeding placeholders for first knockout round
+                # ── Seeding / qualification source metadata ──────────────────
+                # Round 1: slot labels written at generation time; resolved to
+                #   concrete participant_user_ids at ranking-calculation time
+                #   by assign_semifinal_participants() in the qualification service.
+                # Round > 1: source-label only; participants assigned when
+                #   the preceding round's results are entered (out of scope v1).
                 seeding_info = {}
                 if round_num == 1:
-                    # First round uses group qualifiers
-                    # Standard bracket seeding: 1 vs last, 2 vs second-to-last, etc.
-                    # For 4 qualifiers (2 groups): A1 vs B2, B1 vs A2
-                    # For 8 qualifiers (4 groups): A1 vs D2, B1 vs C2, C1 vs B2, D1 vs A2
-
-                    if knockout_players == 4:  # 2 groups
+                    if knockout_players == 4 and _best_runner_up_count > 0:
+                        # 3 groups of 3: 3 winners + 1 best runner-up
+                        if match_in_round == 1:
+                            seeding_info = {
+                                'matchup': 'Group A winner vs Best runner-up',
+                                'seed_1': 'A1', 'seed_2': 'BR',
+                            }
+                        elif match_in_round == 2:
+                            seeding_info = {
+                                'matchup': 'Group B winner vs Group C winner',
+                                'seed_1': 'B1', 'seed_2': 'C1',
+                            }
+                    elif knockout_players == 4:
+                        # Standard 2-group case: A1 vs B2, B1 vs A2
                         if match_in_round == 1:
                             seeding_info = {'matchup': 'A1 vs B2', 'seed_1': 'A1', 'seed_2': 'B2'}
                         elif match_in_round == 2:
                             seeding_info = {'matchup': 'B1 vs A2', 'seed_1': 'B1', 'seed_2': 'A2'}
-                    elif knockout_players == 8:  # 4 groups
+                    elif knockout_players == 8:
+                        # 4-group case
                         matchups = [
                             ('A1', 'D2'), ('B1', 'C2'), ('C1', 'B2'), ('D1', 'A2')
                         ]
                         if match_in_round <= len(matchups):
                             seed_1, seed_2 = matchups[match_in_round - 1]
                             seeding_info = {'matchup': f'{seed_1} vs {seed_2}', 'seed_1': seed_1, 'seed_2': seed_2}
+                elif round_num == knockout_rounds:
+                    seeding_info = {'matchup': 'SF1 winner vs SF2 winner'}
                 else:
-                    # Later rounds use previous match winners
-                    seeding_info = {'matchup': f'Winner of previous matches', 'round': round_num}
+                    seeding_info = {'matchup': f'Round {round_num - 1} winners'}
 
                 sessions.append({
                     'title': f'{tournament.name} - {round_name} - Match {match_in_round}',
