@@ -321,7 +321,8 @@ def s1_team_league(club, campus, tt_by_code, instructor, boot_teams):
     if count < 2:
         fail_local(f"Need ≥2 teams, got {count}")
 
-    _status_transition(tid, "ENROLLMENT_OPEN")
+    # PROMOTION_EVENT cannot enter ENROLLMENT_OPEN (by design).
+    # Use the direct DRAFT → ENROLLMENT_CLOSED fast path via _common_lifecycle.
     _common_lifecycle(tid, instructor.id, expected_min_sessions=1)
 
 
@@ -473,7 +474,8 @@ def s4_team_league_2leg(club, campus, tt_by_code, instructor, boot_teams):
     _db.commit()
     ok("number_of_legs = 2 set on TournamentConfiguration")
 
-    _status_transition(tid, "ENROLLMENT_OPEN")
+    # PROMOTION_EVENT cannot enter ENROLLMENT_OPEN (by design).
+    # Use the direct DRAFT → ENROLLMENT_CLOSED fast path via _common_lifecycle.
     # 2 teams × 2 legs = 2 matches
     _common_lifecycle(tid, instructor.id, expected_min_sessions=2)
 
