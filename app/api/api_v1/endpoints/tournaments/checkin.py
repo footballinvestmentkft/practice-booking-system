@@ -65,6 +65,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.api.deps import get_current_user
+from app.models.semester import SemesterCategory
 from app.models.user import User
 from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 from app.repositories import TournamentRepository
@@ -99,7 +100,12 @@ def tournament_checkin(
     tournament = TournamentRepository(db).get_or_404(tournament_id)
 
     # 2. Must be a tournament, not a regular semester
-    if not getattr(tournament, "is_tournament", False):
+    _TOURNAMENT_CATEGORIES = frozenset({
+        SemesterCategory.TOURNAMENT,
+        SemesterCategory.MINI_SEASON,
+        SemesterCategory.PROMOTION_EVENT,
+    })
+    if tournament.semester_category not in _TOURNAMENT_CATEGORIES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="This endpoint is only available for tournament semesters",

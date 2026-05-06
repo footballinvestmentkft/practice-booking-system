@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, patch
 from fastapi import HTTPException
 
 from app.api.api_v1.endpoints.tournaments.checkin import tournament_checkin
+from app.models.semester import SemesterCategory
 from app.models.semester_enrollment import EnrollmentStatus
 
 _BASE = "app.api.api_v1.endpoints.tournaments.checkin"
@@ -25,7 +26,8 @@ def _user(uid=42):
 
 def _tournament(is_tournament=True, date_start=None):
     t = MagicMock()
-    t.is_tournament = is_tournament
+    # semester_category drives the is-tournament guard (getattr was always False — fixed)
+    t.semester_category = SemesterCategory.MINI_SEASON if is_tournament else SemesterCategory.ACADEMY_SEASON
     t.date_start = date_start
     return t
 
@@ -66,15 +68,16 @@ class TestTournamentCheckin:
         assert exc.value.status_code == 400
         assert "tournament" in exc.value.detail.lower()
 
-    def test_tc02_getattr_fallback_not_tournament(self):
-        """TC-02: is_tournament attribute missing (getattr fallback) → 400."""
-        t = MagicMock(spec=[])  # no attributes → getattr returns False
-        t.is_tournament = False
+    def test_tc02_camp_category_not_tournament(self):
+        """TC-02: CAMP semester_category → 400 (not a tournament semester)."""
+        t = MagicMock()
+        t.semester_category = SemesterCategory.CAMP
         with patch(_REPO) as MockRepo:
             MockRepo.return_value.get_or_404.return_value = t
             with pytest.raises(HTTPException) as exc:
                 _call()
         assert exc.value.status_code == 400
+        assert "tournament" in exc.value.detail.lower()
 
     def test_tc03_not_enrolled_403(self):
         """TC-03: player not enrolled or not approved → 403."""
