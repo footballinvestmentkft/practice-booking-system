@@ -644,11 +644,18 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
 </div>
 {% endif %}
 
-    {% if step2_state == 'active' and not is_promotion_event %}
+    {% if step2_state == 'active' %}
     <div class="wiz-action-row">
-      <button class="btn btn-warning"
+      {% if is_promotion_event %}
+      <button type="button" class="btn btn-warning"
+              onclick="transitionStatus('ENROLLMENT_CLOSED')">
+          🔒 Lock Audience &amp; Start Preparation
+      </button>
+      {% else %}
+      <button type="button" class="btn btn-warning"
               {% if enrolled_count < 2 %}disabled title="Need at least 2 participants" style="opacity:.5;cursor:not-allowed"{% endif %}
               onclick="transitionStatus('ENROLLMENT_CLOSED')">🔒 Close Enrollment</button>
+      {% endif %}
     </div>
     {% endif %}
   </div>{# /wiz-step-body #}

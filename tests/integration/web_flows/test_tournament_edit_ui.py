@@ -898,3 +898,150 @@ class TestBulkEnrollSkippedDivPresent:
             assert 'id="bulk-enroll-skipped"' in resp.text
         finally:
             app.dependency_overrides.clear()
+
+
+# ── Helpers for EDIT-UI-28..31 ────────────────────────────────────────────────
+
+from app.models.tournament_configuration import TournamentConfiguration
+from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
+
+
+# ── EDIT-UI-28 ────────────────────────────────────────────────────────────────
+
+class TestPromoEnrollmentOpenLockAudienceStep2:
+    """EDIT-UI-28: PROMOTION_EVENT ENROLLMENT_OPEN → step 2 action row shows
+    'Lock Audience & Start Preparation' (P1 fix — was blocked by not is_promotion_event gate)."""
+
+    def test_edit_ui_28_promo_enrollment_open_lock_audience_step2(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sem = _make_promotion_semester(test_db, age_groups=["PRE"])
+        sem.tournament_status = "ENROLLMENT_OPEN"
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            # step2_state == 'active' for ENROLLMENT_OPEN →
+            # PROMOTION_EVENT must show Lock Audience, not Close Enrollment
+            assert "Lock Audience" in html
+            assert "Start Preparation" in html
+            assert "Close Enrollment" not in html
+            assert 'id="wiz-step-2"' in html
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-29 ────────────────────────────────────────────────────────────────
+
+class TestNonPromoCloseEnrollmentEnabledRegression:
+    """EDIT-UI-29: non-PROMOTION_EVENT ENROLLMENT_OPEN + ≥2 enrolled →
+    'Close Enrollment' button enabled (no disabled guard triggered).
+    Regression guard: P1 bifurcation must not break the non-promo path."""
+
+    def test_edit_ui_29_non_promo_close_enrollment_enabled(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sem = _make_mini_season_semester(test_db)
+        sem.tournament_status = "ENROLLMENT_OPEN"
+        test_db.flush()
+
+        # 2 active enrollments → enrolled_count=2 → button enabled
+        for _ in range(2):
+            u, lic = _make_user_with_license(test_db)
+            test_db.add(SemesterEnrollment(
+                user_id=u.id,
+                semester_id=sem.id,
+                user_license_id=lic.id,
+                request_status=EnrollmentStatus.APPROVED,
+                is_active=True,
+            ))
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            assert "Close Enrollment" in html
+            assert "Lock Audience" not in html
+            # enrolled_count >= 2 → no disabled guard
+            assert "Need at least 2 participants" not in html
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-30 ────────────────────────────────────────────────────────────────
+
+class TestPromoDraftStep2Active:
+    """EDIT-UI-30: PROMOTION_EVENT DRAFT → step2_state == 'active' fast-path.
+    'Lock Audience & Start Preparation' appears in both step 1 and step 2 action rows,
+    because PROMO DRAFT makes both step1_state and step2_state 'active'.
+    (Non-promo DRAFT has step 2 locked — only step 1 shows 'Open Enrollment'.)"""
+
+    def test_edit_ui_30_promo_draft_step2_active_dual_button(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sem = _make_promotion_semester(test_db, age_groups=["PRE"])
+        # tournament_status defaults to DRAFT
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            # Both step 1 and step 2 action rows show Lock Audience for PROMO+DRAFT
+            assert html.count("Lock Audience") >= 2
+            assert "Close Enrollment" not in html
+            assert 'id="wiz-step-2"' in html
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── EDIT-UI-31 ────────────────────────────────────────────────────────────────
+
+class TestPromoTeamConfigEnrolledCountUsesEnrollments:
+    """EDIT-UI-31: PROMOTION_EVENT with TEAM participant_type + active SemesterEnrollments →
+    enrolled_count reflects SemesterEnrollment count, not TournamentTeamEnrollment count.
+
+    P2 fix regression guard: before the fix, enrolled_count used len(team_enrollments)=0
+    for participant_type=TEAM even for PROMOTION_EVENT (bulk_enroll never creates
+    TournamentTeamEnrollment rows). After fix, enrolled_count always uses
+    len(enrollments) for PROMOTION_EVENT regardless of participant_type."""
+
+    def test_edit_ui_31_team_config_enrolled_count_nonzero(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sem = _make_promotion_semester(test_db, age_groups=["PRE"])
+        sem.tournament_status = "ENROLLMENT_CLOSED"
+        test_db.flush()
+
+        # TEAM config — the scenario that broke before P2
+        test_db.add(TournamentConfiguration(
+            semester_id=sem.id,
+            participant_type="TEAM",
+        ))
+        test_db.flush()
+
+        # 3 individual SemesterEnrollment rows (as bulk_enroll_from_campaign creates)
+        for _ in range(3):
+            u, lic = _make_user_with_license(test_db)
+            test_db.add(SemesterEnrollment(
+                user_id=u.id,
+                semester_id=sem.id,
+                user_license_id=lic.id,
+                request_status=EnrollmentStatus.APPROVED,
+                is_active=True,
+            ))
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/tournaments/{sem.id}/edit")
+            assert resp.status_code == 200
+            html = resp.text
+            # P2 fix: enrolled_count = len(enrollments) = 3 (not len(team_enrollments) = 0)
+            # Step 3 subtitle: "3 enrolled · ..."
+            assert "3 enrolled" in html
+            assert 'id="wiz-step-3"' in html
+        finally:
+            app.dependency_overrides.clear()

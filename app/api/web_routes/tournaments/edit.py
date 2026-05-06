@@ -223,16 +223,21 @@ async def admin_tournament_edit_page(
         for s in instructor_roster
     )
 
+    # Campaign audience — only queried for PROMOTION_EVENT to avoid unnecessary work
+    _is_promo = t.semester_category == SemesterCategory.PROMOTION_EVENT
+
     # Wizard context: enrolled_count + completed_session_count
+    # PROMOTION_EVENT always uses individual SemesterEnrollments (bulk_enroll never
+    # creates TournamentTeamEnrollment rows) — ignore participant_type for PROMO.
     _participant_type = cfg.participant_type if cfg else "INDIVIDUAL"
-    enrolled_count = len(team_enrollments) if _participant_type == "TEAM" else len(enrollments)
+    if _is_promo:
+        enrolled_count = len(enrollments)
+    else:
+        enrolled_count = len(team_enrollments) if _participant_type == "TEAM" else len(enrollments)
     completed_session_count = sum(
         1 for s in all_match_sessions
         if s.game_results or (s.rounds_data and s.rounds_data.get("round_results"))
     )
-
-    # Campaign audience — only queried for PROMOTION_EVENT to avoid unnecessary work
-    _is_promo = t.semester_category == SemesterCategory.PROMOTION_EVENT
     campaign_audience: list = []
     organizer_sponsor = None
     organizer_campaign = None
