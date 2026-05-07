@@ -375,6 +375,32 @@ def e2e_test_users():
                 }
                 print(f"   ✅ {user_spec['key']}: {user_spec['email']} (created, id={new_user.id})")
 
+        # Ensure grandmaster@lfa.com has an active LFA_COACH license (required by
+        # the session generation eligibility guard — PR #143).
+        from app.models.license import UserLicense
+        instructor_id = created_users.get("instructor", {}).get("id")
+        if instructor_id:
+            coach_lic = db.query(UserLicense).filter(
+                UserLicense.user_id == instructor_id,
+                UserLicense.specialization_type == "LFA_COACH",
+            ).first()
+            if coach_lic:
+                coach_lic.is_active = True
+                coach_lic.current_level = 7
+                coach_lic.expires_at = None
+                db.flush()
+            else:
+                db.add(UserLicense(
+                    user_id=instructor_id,
+                    specialization_type="LFA_COACH",
+                    current_level=7,
+                    max_achieved_level=7,
+                    is_active=True,
+                    started_at=datetime.now(timezone.utc),
+                    expires_at=None,
+                ))
+                db.flush()
+
         # Commit all changes
         db.commit()
         print(f"   📊 E2E test users ready: {len(created_users)} users available")
