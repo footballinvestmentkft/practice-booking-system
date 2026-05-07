@@ -276,6 +276,28 @@ def test_instructor(api_url: str, admin_token: str) -> Dict:
         print(f"⚠️  Cleanup warning: Failed to delete instructor {instructor['id']}: {e}")
 
 
+def _ensure_campus_has_pitches(campus_id: int) -> None:
+    """Ensure a campus has ≥1 active pitch (domain invariant for session generation)."""
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from app.models.pitch import Pitch
+    from app.config import settings
+
+    engine = create_engine(settings.DATABASE_URL)
+    _Session = sessionmaker(bind=engine)
+    db = _Session()
+    try:
+        count = db.query(Pitch).filter(Pitch.campus_id == campus_id, Pitch.is_active == True).count()
+        if count == 0:
+            # Session generation requires ≥1 active pitch on the campus (domain invariant)
+            for pitch_num, pitch_name in enumerate(["Pálya A", "Pálya B"], start=1):
+                db.add(Pitch(campus_id=campus_id, pitch_number=pitch_num, name=pitch_name, capacity=22, is_active=True))
+            db.commit()
+            print(f"   ↳ Seeded 2 pitches on campus ID={campus_id} (domain invariant)")
+    finally:
+        db.close()
+
+
 @pytest.fixture(scope="function")
 def test_campus_ids(api_url: str, admin_token: str) -> List[int]:
     """
@@ -299,6 +321,7 @@ def test_campus_ids(api_url: str, admin_token: str) -> List[int]:
             # Use first available active campus
             campus_id = campuses[0]["id"]
             print(f"ℹ️  Using existing campus: ID={campus_id}")
+            _ensure_campus_has_pitches(campus_id)
             return [campus_id]
 
     # No campuses found - create test location + campus
@@ -347,6 +370,7 @@ def test_campus_ids(api_url: str, admin_token: str) -> List[int]:
     if campus_response.status_code in [200, 201]:
         campus_id = campus_response.json()["id"]
         print(f"✅ Created test campus: ID={campus_id}")
+        _ensure_campus_has_pitches(campus_id)
         return [campus_id]
     elif campus_response.status_code == 400 and "already exists" in campus_response.text:
         # Campus already exists - query it by location
@@ -360,6 +384,7 @@ def test_campus_ids(api_url: str, admin_token: str) -> List[int]:
                 if campus["name"] == "INT_TEST_Campus":
                     campus_id = campus["id"]
                     print(f"ℹ️  Reusing existing campus: ID={campus_id}")
+                    _ensure_campus_has_pitches(campus_id)
                     return [campus_id]
 
     raise AssertionError(f"Cannot create/find campus: {campus_response.text}")

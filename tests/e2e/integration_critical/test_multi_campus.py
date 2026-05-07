@@ -180,8 +180,13 @@ def test_multi_campus_round_robin(
                     db_session.add(campus)
                     db_session.flush()  # Get campus_id
 
+                    # Session generation requires ≥1 active pitch on the campus (domain invariant)
+                    from app.models.pitch import Pitch
+                    for pitch_num, pitch_name in enumerate(["Pálya A", "Pálya B"], start=1):
+                        db_session.add(Pitch(campus_id=campus.id, pitch_number=pitch_num, name=pitch_name, capacity=22, is_active=True))
+
                     campus_ids_for_test.append(campus.id)
-                    print(f"✅ Created campus {campus.id} (DB insert)")
+                    print(f"✅ Created campus {campus.id} with pitches (DB insert)")
 
                 db_session.commit()
             except Exception as e:
