@@ -159,6 +159,20 @@
                 </select>
             </div>
 
+            <!-- ── Master Instructor ──────────────────────────────── -->
+            <h3>Master Instructor</h3>
+
+            <div class="form-group">
+                <label>Master Instructor <span style="font-weight:400;font-size:0.78rem;text-transform:none;letter-spacing:0;color:#a0aec0;">— optional</span></label>
+                <select name="master_instructor_id">
+                    <option value="">— assign later —</option>
+                    {% for instr in instructors %}
+                    <option value="{{ instr.id }}">{{ instr.name }} ({{ instr.email }})</option>
+                    {% endfor %}
+                </select>
+                <div class="field-hint">Required before advancing to CHECK_IN_OPEN. Assign now or set later on the tournament edit page.</div>
+            </div>
+
             <!-- ── Age Category ────────────────────────────────────── -->
             <h3>Age Category *</h3>
 

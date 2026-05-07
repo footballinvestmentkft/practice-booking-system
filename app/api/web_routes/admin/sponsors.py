@@ -17,7 +17,7 @@ from ....models.sponsor import Sponsor, SponsorAudienceEntry, SponsorCampaign, S
 from ....models.tournament_configuration import TournamentConfiguration
 from ....models.tournament_type import TournamentType as TournamentTypeModel
 from ....models.license import UserLicense
-from ....models.user import User
+from ....models.user import User, UserRole
 from ....services.sponsor_csv_import_service import (
     MAX_CSV_BYTES,
     apply_import,
@@ -275,6 +275,12 @@ async def admin_sponsor_promotion_form(
 
     campuses = db.query(Campus).filter(Campus.is_active == True).order_by(Campus.name).all()  # noqa: E712
     tournament_types = db.query(TournamentTypeModel).order_by(TournamentTypeModel.display_name).all()
+    instructors = (
+        db.query(User)
+        .filter(User.role == UserRole.INSTRUCTOR, User.is_active == True)  # noqa: E712
+        .order_by(User.name)
+        .all()
+    )
 
     return templates.TemplateResponse(
         "admin/sponsor_promotion_wizard.html",
@@ -285,6 +291,7 @@ async def admin_sponsor_promotion_form(
             "active_campaigns": active_campaigns,
             "campuses": campuses,
             "tournament_types": tournament_types,
+            "instructors": instructors,
         },
     )
 
@@ -300,6 +307,7 @@ async def admin_sponsor_promotion_create(
     campus_id: str = Form(""),
     tournament_type_id: str = Form(""),
     age_groups: list[str] = Form(default=[]),
+    master_instructor_id: str = Form(""),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
@@ -343,6 +351,27 @@ async def admin_sponsor_promotion_create(
             status_code=303,
         )
 
+    resolved_instructor_id: int | None = None
+    if master_instructor_id.strip():
+        try:
+            iid = int(master_instructor_id)
+        except ValueError:
+            return RedirectResponse(
+                url=f"/admin/sponsors/{sponsor_id}/promotion?error=Invalid+instructor+selection",
+                status_code=303,
+            )
+        instructor = (
+            db.query(User)
+            .filter(User.id == iid, User.role == UserRole.INSTRUCTOR, User.is_active == True)  # noqa: E712
+            .first()
+        )
+        if not instructor:
+            return RedirectResponse(
+                url=f"/admin/sponsors/{sponsor_id}/promotion?error=Selected+instructor+not+found+or+inactive",
+                status_code=303,
+            )
+        resolved_instructor_id = iid
+
     suffix = datetime.now().strftime("%H%M%S%f")[:9]
     code = f"PROMO-{date.fromisoformat(start_date).strftime('%Y%m%d')}-{suffix}"
 
@@ -362,6 +391,7 @@ async def admin_sponsor_promotion_create(
         organizer_sponsor_id=sponsor.id,
         organizer_campaign_id=campaign.id,
         organizer_club_id=None,
+        master_instructor_id=resolved_instructor_id,
     )
     db.add(t)
     db.flush()
