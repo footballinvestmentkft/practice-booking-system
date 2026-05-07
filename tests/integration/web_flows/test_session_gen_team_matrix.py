@@ -85,7 +85,18 @@ def _user(db: Session, role=UserRole.STUDENT) -> User:
 
 
 def _instructor(db: Session) -> User:
-    return _user(db, role=UserRole.INSTRUCTOR)
+    u = _user(db, role=UserRole.INSTRUCTOR)
+    db.add(UserLicense(
+        user_id=u.id,
+        specialization_type="LFA_COACH",
+        current_level=7,
+        max_achieved_level=7,
+        is_active=True,
+        started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+        expires_at=None,
+    ))
+    db.flush()
+    return u
 
 
 def _tournament_type(db: Session, code: str, tt_format: str = "HEAD_TO_HEAD",

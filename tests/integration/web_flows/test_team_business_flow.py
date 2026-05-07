@@ -700,6 +700,16 @@ class TestGenerationValidatorTeam:
         )
         db.add(instructor)
         db.flush()
+        db.add(UserLicense(
+            user_id=instructor.id,
+            specialization_type="LFA_COACH",
+            current_level=7,
+            max_achieved_level=7,
+            is_active=True,
+            started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+            expires_at=None,
+        ))
+        db.flush()
 
         t = Semester(
             code=f"GENV-{uuid.uuid4().hex[:8].upper()}",
@@ -790,6 +800,16 @@ class TestGenerationValidatorTeam:
             is_active=True,
         )
         test_db.add(instructor)
+        test_db.flush()
+        test_db.add(UserLicense(
+            user_id=instructor.id,
+            specialization_type="LFA_COACH",
+            current_level=7,
+            max_achieved_level=7,
+            is_active=True,
+            started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+            expires_at=None,
+        ))
         test_db.flush()
 
         t = Semester(
