@@ -2854,6 +2854,11 @@
             "title": "End Date",
             "type": "string"
           },
+          "master_instructor_id": {
+            "default": "",
+            "title": "Master Instructor Id",
+            "type": "string"
+          },
           "start_date": {
             "title": "Start Date",
             "type": "string"
