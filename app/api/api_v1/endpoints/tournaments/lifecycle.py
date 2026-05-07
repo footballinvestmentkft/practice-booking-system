@@ -428,17 +428,6 @@ def transition_tournament_status(
     # AUTO-REGENERATE SESSIONS when transitioning to IN_PROGRESS (check-in filter)
     # ============================================================================
     if request.new_status == "IN_PROGRESS":
-        # ── Instructor prerequisite guard ─────────────────────────────────────
-        from app.services.tournament.instructor_service import has_master_instructor_assignment
-        if not has_master_instructor_assignment(db, tournament_id):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=(
-                    "Cannot start tournament: No instructor assigned. "
-                    "Assign a master instructor before transitioning to IN_PROGRESS."
-                ),
-            )
-
         # 📸 SAVE REWARD POLICY SNAPSHOT FIRST (lock reward_config for this tournament)
         # This MUST happen BEFORE session generation and ALWAYS when entering IN_PROGRESS
         # This prevents admin from changing reward config after tournament starts

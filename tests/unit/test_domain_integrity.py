@@ -5,6 +5,9 @@ Tests verify the invariants introduced by the domain integrity fix:
   BP-02  bootstrap _seed_pitches is idempotent (second call creates 0)
   GV-01  generation_validator blocks tournament with no active pitches
   GV-02  generation_validator passes tournament with active pitches
+  GV-03  generation_validator blocks HEAD_TO_HEAD session generation without instructor
+  GV-04  generation_validator blocks INDIVIDUAL_RANKING session generation without instructor
+  GV-05  generation_validator passes HEAD_TO_HEAD with instructor assigned
   LC-01  lifecycle CHECK_IN_OPEN raises HTTPException when session gen fails
   SI-01  _create_tournament links a game_preset_id (not NULL)
   SI-02  _stamp_player_checkins stamps all APPROVED enrollments and returns count
@@ -516,3 +519,110 @@ class TestPreflightAuditInstructorCheck:
         db = self._make_db(has_instructor=False)
         with pytest.raises(SystemExit):
             _run_preflight_audit(db, campus_id=1, fail=True)
+
+
+# ── GV-03/04/05 — GenerationValidator instructor prerequisite guard ───────────
+
+class TestGenerationValidatorInstructorGuard:
+    """
+    GV-03  HEAD_TO_HEAD + no instructor → (False, reason with 'instructor')
+    GV-04  INDIVIDUAL_RANKING + no instructor → also blocked (format does not exempt)
+    GV-05  HEAD_TO_HEAD + instructor present → instructor guard passes
+
+    The session_generator assigns instructor_id via FIELD-slot OR master_instructor_id.
+    If neither is set, every session gets instructor_id=NULL — a domain invariant
+    violation.  GenerationValidator enforces the prerequisite for ALL formats before
+    enrollment count so the failure is attributable and clear.
+    """
+
+    _PATCH_REPO = (
+        "app.services.tournament.session_generation.validators"
+        ".generation_validator.TournamentRepository"
+    )
+    _PATCH_HMIA = "app.services.tournament.instructor_service.has_master_instructor_assignment"
+
+    def _make_tournament(self, fmt, type_id=None):
+        t = MagicMock()
+        t.id = 77
+        t.sessions_generated = False
+        t.format = fmt
+        t.tournament_type_id = type_id
+        t.tournament_status = "CHECK_IN_OPEN"
+        t.participant_type = "INDIVIDUAL"
+        t.location_id = 1
+        t.campus_id = 1
+        return t
+
+    def _make_db(self, tournament):
+        from app.models.semester_enrollment import SemesterEnrollment
+        from app.models.pitch import Pitch
+        from app.models.tournament_type import TournamentType
+
+        tt_mock = MagicMock()
+        tt_mock.min_players = 2
+
+        db = MagicMock()
+
+        def _query(model):
+            q = MagicMock()
+            if model is SemesterEnrollment:
+                q.filter.return_value.count.return_value = 4
+            elif model is Pitch:
+                q.filter.return_value.count.return_value = 1
+            elif model is TournamentType:
+                q.filter.return_value.first.return_value = tt_mock
+            else:
+                q.filter.return_value.first.return_value = tournament
+            return q
+
+        db.query.side_effect = _query
+        return db
+
+    def test_gv_03_head_to_head_no_instructor_blocked(self):
+        """HEAD_TO_HEAD + no instructor → (False, reason mentioning 'instructor')."""
+        from app.services.tournament.session_generation.validators.generation_validator import GenerationValidator
+
+        t = self._make_tournament("HEAD_TO_HEAD", type_id=5)
+        db = self._make_db(t)
+
+        with patch(self._PATCH_REPO) as MockRepo, \
+             patch(self._PATCH_HMIA, return_value=False):
+            MockRepo.return_value.get_optional.return_value = t
+            ok, reason = GenerationValidator(db).can_generate_sessions(77)
+
+        assert ok is False
+        assert "instructor" in reason.lower()
+
+    def test_gv_04_individual_ranking_no_instructor_blocked(self):
+        """INDIVIDUAL_RANKING + no instructor → blocked; format does not exempt.
+
+        Session generator assigns instructor_id via master_instructor_id or FIELD slots.
+        Without either, all generated sessions get instructor_id=NULL — a domain
+        invariant violation that the guard prevents for both formats.
+        """
+        from app.services.tournament.session_generation.validators.generation_validator import GenerationValidator
+
+        t = self._make_tournament("INDIVIDUAL_RANKING", type_id=None)
+        db = self._make_db(t)
+
+        with patch(self._PATCH_REPO) as MockRepo, \
+             patch(self._PATCH_HMIA, return_value=False):
+            MockRepo.return_value.get_optional.return_value = t
+            ok, reason = GenerationValidator(db).can_generate_sessions(77)
+
+        assert ok is False
+        assert "instructor" in reason.lower()
+
+    def test_gv_05_head_to_head_with_instructor_passes_guard(self):
+        """HEAD_TO_HEAD + instructor assigned → instructor guard passes."""
+        from app.services.tournament.session_generation.validators.generation_validator import GenerationValidator
+
+        t = self._make_tournament("HEAD_TO_HEAD", type_id=5)
+        db = self._make_db(t)
+
+        with patch(self._PATCH_REPO) as MockRepo, \
+             patch(self._PATCH_HMIA, return_value=True):
+            MockRepo.return_value.get_optional.return_value = t
+            ok, reason = GenerationValidator(db).can_generate_sessions(77)
+
+        assert ok is True

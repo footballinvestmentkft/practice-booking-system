@@ -110,7 +110,7 @@ jobs:
           echo "| Test | What it proves |" >> $GITHUB_STEP_SUMMARY
           echo "|------|----------------|" >> $GITHUB_STEP_SUMMARY
           echo "| GUARD-A | \`campus_id=NULL\` → ENROLLMENT_OPEN rejected (HTTP 400) |" >> $GITHUB_STEP_SUMMARY
-          echo "| GUARD-C | No instructor → IN_PROGRESS rejected (HTTP 400) |" >> $GITHUB_STEP_SUMMARY
+          echo "| GUARD-C | No instructor → CHECK_IN_OPEN rejected (HTTP 400, GenerationValidator blocks session creation) |" >> $GITHUB_STEP_SUMMARY
           echo "| GUARD-D | 0 rankings → COMPLETED rejected (HTTP 400) |" >> $GITHUB_STEP_SUMMARY
           echo "| FULL-LC | DRAFT→ENROLLMENT_OPEN→ENROLLMENT_CLOSED→CHECK_IN_OPEN→IN_PROGRESS→COMPLETED→REWARDS_DISTRIBUTED |" >> $GITHUB_STEP_SUMMARY
           echo "| CANCELLED | DRAFT→CANCELLED → \`/events/{id}\` = 200 (cancelled page) |" >> $GITHUB_STEP_SUMMARY

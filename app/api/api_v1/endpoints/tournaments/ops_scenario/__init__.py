@@ -842,16 +842,27 @@ def run_ops_scenario(
                 detail=f"Tournament type '{tournament_type_code}' not found in DB. Run seed_tournament_types first.",
             )
 
-    grandmaster = db.query(_User).filter(
-        _User.role == _UserRole.INSTRUCTOR,
-        _User.email == "grandmaster@lfa.com",
-    ).first()
+    # Deterministic instructor fallback for ops/demo scenarios:
+    #   1. grandmaster@lfa.com (seeded by seed_e2e_users.py / create_fresh_database.py)
+    #   2. Any active INSTRUCTOR user (e.g. instructor@lfa.com from bootstrap_clean.py)
+    #   3. HTTP 400 — no instructor at all, caller must seed one first
+    # This is NOT the production partner-assignment model; it exists for ops scripting only.
+    grandmaster = (
+        db.query(_User)
+        .filter(_User.role == _UserRole.INSTRUCTOR, _User.email == "grandmaster@lfa.com")
+        .first()
+    ) or (
+        db.query(_User)
+        .filter(_User.role == _UserRole.INSTRUCTOR, _User.is_active == True)  # noqa: E712
+        .first()
+    )
     if not grandmaster:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
-                "grandmaster@lfa.com instructor not found in DB. "
-                "Run seed_e2e_users.py or create_fresh_database.py first."
+                "No instructor found in DB. "
+                "Seed at least one INSTRUCTOR user (e.g. run bootstrap_clean.py or seed_e2e_users.py) "
+                "before running ops scenarios."
             ),
         )
 

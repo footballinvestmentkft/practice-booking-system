@@ -689,6 +689,18 @@ class TestGenerationValidatorTeam:
         db.add(Pitch(campus_id=camp.id, pitch_number=1, name="Pálya A", capacity=22, is_active=True))
         db.flush()
 
+        # Session generation requires instructor assignment (domain invariant: no
+        # auto-generated session may have instructor_id=NULL).
+        instructor = User(
+            email=f"genv-instructor-{uuid.uuid4().hex[:8]}@lfa.com",
+            name="GENV Instructor",
+            password_hash=get_password_hash("pw"),
+            role=UserRole.INSTRUCTOR,
+            is_active=True,
+        )
+        db.add(instructor)
+        db.flush()
+
         t = Semester(
             code=f"GENV-{uuid.uuid4().hex[:8].upper()}",
             name="GenVal TEAM Tournament",
@@ -701,6 +713,7 @@ class TestGenerationValidatorTeam:
             enrollment_cost=0,
             specialization_type="LFA_FOOTBALL_PLAYER",
             campus_id=camp.id,
+            master_instructor_id=instructor.id,
         )
         db.add(t)
         db.flush()

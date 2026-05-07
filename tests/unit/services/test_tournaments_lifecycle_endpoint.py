@@ -28,8 +28,6 @@ _PATCH_VST = f"{_BASE}.validate_status_transition"
 _PATCH_GNS = f"{_BASE}.get_next_allowed_statuses"
 _PATCH_SEM = f"{_BASE}.Semester"
 _PATCH_TSG = "app.services.tournament_session_generator.TournamentSessionGenerator"
-# Lazy import inside function body — must patch at source module, not endpoint module
-_PATCH_HMIA = "app.services.tournament.instructor_service.has_master_instructor_assignment"
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -404,8 +402,7 @@ class TestTransitionTournamentStatus:
         db = _seq_db(q_semester, q_count)
 
         with patch(_PATCH_VST, return_value=(True, None)), \
-             patch(_PATCH_GNS, return_value=[]), \
-             patch(_PATCH_HMIA, return_value=True):
+             patch(_PATCH_GNS, return_value=[]):
             result = transition_tournament_status(
                 10, _trans_req(new_status="IN_PROGRESS"),
                 db=db, current_user=_user()
@@ -424,8 +421,7 @@ class TestTransitionTournamentStatus:
         db = _seq_db(q_semester, q_count)
 
         with patch(_PATCH_VST, return_value=(True, None)), \
-             patch(_PATCH_GNS, return_value=[]), \
-             patch(_PATCH_HMIA, return_value=True):
+             patch(_PATCH_GNS, return_value=[]):
             result = transition_tournament_status(
                 10, _trans_req(new_status="IN_PROGRESS"),
                 db=db, current_user=_user()
@@ -445,8 +441,7 @@ class TestTransitionTournamentStatus:
         db = _seq_db(q_semester, q_count)
 
         with patch(_PATCH_VST, return_value=(True, None)), \
-             patch(_PATCH_GNS, return_value=[]), \
-             patch(_PATCH_HMIA, return_value=True):
+             patch(_PATCH_GNS, return_value=[]):
             result = transition_tournament_status(
                 10, _trans_req(new_status="IN_PROGRESS"),
                 db=db, current_user=_user()
@@ -462,8 +457,7 @@ class TestTransitionTournamentStatus:
         db = _seq_db(q_semester, q_count)
 
         with patch(_PATCH_VST, return_value=(True, None)), \
-             patch(_PATCH_GNS, return_value=[]), \
-             patch(_PATCH_HMIA, return_value=True):
+             patch(_PATCH_GNS, return_value=[]):
             result = transition_tournament_status(
                 10, _trans_req(new_status="IN_PROGRESS"),
                 db=db, current_user=_user()
@@ -478,8 +472,7 @@ class TestTransitionTournamentStatus:
         db = _seq_db(q_semester, q_count)
 
         with patch(_PATCH_VST, return_value=(True, None)), \
-             patch(_PATCH_GNS, return_value=[]), \
-             patch(_PATCH_HMIA, return_value=True):
+             patch(_PATCH_GNS, return_value=[]):
             result = transition_tournament_status(
                 10, _trans_req(new_status="IN_PROGRESS"),
                 db=db, current_user=_user()
@@ -503,7 +496,6 @@ class TestTransitionTournamentStatus:
 
         with patch(_PATCH_VST, return_value=(True, None)), \
              patch(_PATCH_GNS, return_value=[]), \
-             patch(_PATCH_HMIA, return_value=True), \
              patch(_PATCH_TSG, return_value=mock_gen):
             result = transition_tournament_status(
                 10, _trans_req(new_status="IN_PROGRESS"),
@@ -532,7 +524,6 @@ class TestTransitionTournamentStatus:
 
         with patch(_PATCH_VST, return_value=(True, None)), \
              patch(_PATCH_GNS, return_value=[]), \
-             patch(_PATCH_HMIA, return_value=True), \
              patch(_PATCH_TSG, return_value=mock_gen):
             result = transition_tournament_status(
                 10, _trans_req(new_status="IN_PROGRESS"),
@@ -559,7 +550,6 @@ class TestTransitionTournamentStatus:
 
         with patch(_PATCH_VST, return_value=(True, None)), \
              patch(_PATCH_GNS, return_value=[]), \
-             patch(_PATCH_HMIA, return_value=True), \
              patch(_PATCH_TSG, return_value=mock_gen):
             result = transition_tournament_status(
                 10, _trans_req(new_status="IN_PROGRESS"),
@@ -585,7 +575,6 @@ class TestTransitionTournamentStatus:
 
         with patch(_PATCH_VST, return_value=(True, None)), \
              patch(_PATCH_GNS, return_value=[]), \
-             patch(_PATCH_HMIA, return_value=True), \
              patch(_PATCH_TSG, return_value=mock_gen):
             result = transition_tournament_status(
                 10, _trans_req(new_status="IN_PROGRESS"),
@@ -620,7 +609,6 @@ class TestTransitionTournamentStatus:
 
         with patch(_PATCH_VST, return_value=(True, None)), \
              patch(_PATCH_GNS, return_value=[]), \
-             patch(_PATCH_HMIA, return_value=True), \
              patch(_PATCH_TSG, return_value=mock_gen):
             result = transition_tournament_status(
                 10, _trans_req(new_status="IN_PROGRESS"),

@@ -116,7 +116,7 @@ def _make_campus_with_pitch(db: Session) -> Campus:
     return campus
 
 
-def _make_check_in_open_tournament(
+def _make_enrollment_closed_tournament(
     db: Session,
     campus: Campus,
     admin: User,
@@ -124,11 +124,13 @@ def _make_check_in_open_tournament(
     tt,
 ) -> Semester:
     """
-    Create a tournament directly in CHECK_IN_OPEN status with all prerequisites
+    Create a tournament directly in ENROLLMENT_CLOSED status with all prerequisites
     satisfied EXCEPT instructor (controlled by instructor_id parameter).
 
-    Used to test the IN_PROGRESS lifecycle guard: the tournament is already past
-    session generation so we can probe whether IN_PROGRESS is correctly gated.
+    Used to test the CHECK_IN_OPEN lifecycle guard: the instructor check fires inside
+    GenerationValidator during the CHECK_IN_OPEN transition (before sessions can be
+    created), so setting status to ENROLLMENT_CLOSED lets us probe that guard without
+    any prior session generation.
 
     Prerequisites met:
     - campus with active pitch ✅
@@ -142,7 +144,7 @@ def _make_check_in_open_tournament(
         name=f"IPG Test Tournament {code[-6:]}",
         semester_category=SemesterCategory.TOURNAMENT,
         status=SemesterStatus.DRAFT,
-        tournament_status="CHECK_IN_OPEN",
+        tournament_status="ENROLLMENT_CLOSED",
         age_group="PRO",
         campus_id=campus.id,
         location_id=None,
@@ -178,32 +180,34 @@ def _admin_client(db: Session, admin: User) -> TestClient:
     return TestClient(app, raise_server_exceptions=False)
 
 
-# ── LC-02 — IN_PROGRESS blocked without instructor ────────────────────────────
+# ── LC-02 — CHECK_IN_OPEN blocked without instructor ─────────────────────────
 
 
-class TestInProgressInstructorGuard:
+class TestCheckInOpenInstructorGuard:
     """
-    LC-02: CHECK_IN_OPEN → IN_PROGRESS is blocked (HTTP 400) when no
-    instructor is assigned.  All other prerequisites are satisfied so the
-    response is attributable exclusively to the instructor gap.
+    LC-02: ENROLLMENT_CLOSED → CHECK_IN_OPEN is blocked (HTTP 400) when no
+    instructor is assigned.  The instructor prerequisite is enforced inside
+    GenerationValidator.can_generate_sessions(), which is called during the
+    CHECK_IN_OPEN transition (sessions are generated there).  All other
+    prerequisites are satisfied so the 400 is attributable exclusively to the
+    instructor gap.
 
-    The guard lives at the IN_PROGRESS transition (not CHECK_IN_OPEN) so that
-    session generation can happen during CHECK_IN_OPEN and the instructor can be
-    assigned any time before the tournament goes live.
+    Domain invariant: no auto-generated session may have instructor_id=NULL.
+    The guard fires before any session is created.
     """
 
-    def test_lc_02_in_progress_blocked_no_master_instructor_id(self, test_db):
+    def test_lc_02_check_in_open_blocked_no_master_instructor_id(self, test_db):
         """
         No master_instructor_id, no TournamentInstructorSlot →
-        PATCH /status IN_PROGRESS → 400 with 'instructor' in detail.
-        Status remains CHECK_IN_OPEN.
+        PATCH /status CHECK_IN_OPEN → 400 with 'instructor' in detail.
+        Status remains ENROLLMENT_CLOSED.
         """
         admin = _make_admin(test_db)
         campus = _make_campus_with_pitch(test_db)
         tt = TournamentFactory.ensure_tournament_type(
             test_db, code=f"lc02-tt-{uuid.uuid4().hex[:6]}"
         )
-        tournament = _make_check_in_open_tournament(
+        tournament = _make_enrollment_closed_tournament(
             test_db, campus=campus, admin=admin, instructor_id=None, tt=tt
         )
         tournament_id = tournament.id
@@ -212,7 +216,7 @@ class TestInProgressInstructorGuard:
         try:
             response = client.patch(
                 f"/api/v1/tournaments/{tournament_id}/status",
-                json={"new_status": "IN_PROGRESS", "reason": "test"},
+                json={"new_status": "CHECK_IN_OPEN", "reason": "test"},
             )
 
             assert response.status_code == 400, (
@@ -227,16 +231,16 @@ class TestInProgressInstructorGuard:
             # Status must not have changed
             test_db.expire_all()
             t_after = test_db.query(Semester).filter(Semester.id == tournament_id).first()
-            assert t_after.tournament_status == "CHECK_IN_OPEN", (
+            assert t_after.tournament_status == "ENROLLMENT_CLOSED", (
                 f"Status changed unexpectedly to {t_after.tournament_status!r}"
             )
         finally:
             app.dependency_overrides.clear()
 
-    def test_lc_02b_in_progress_blocked_absent_slot_only(self, test_db):
+    def test_lc_02b_check_in_open_blocked_absent_slot_only(self, test_db):
         """
         No master_instructor_id + MASTER slot with status=ABSENT →
-        slot is not usable, transition must still be blocked.
+        slot is not usable, CHECK_IN_OPEN transition must still be blocked.
         """
         admin = _make_admin(test_db)
         instructor = _make_instructor(test_db)
@@ -244,7 +248,7 @@ class TestInProgressInstructorGuard:
         tt = TournamentFactory.ensure_tournament_type(
             test_db, code=f"lc02b-tt-{uuid.uuid4().hex[:6]}"
         )
-        tournament = _make_check_in_open_tournament(
+        tournament = _make_enrollment_closed_tournament(
             test_db, campus=campus, admin=admin, instructor_id=None, tt=tt
         )
 
@@ -262,7 +266,7 @@ class TestInProgressInstructorGuard:
         try:
             response = client.patch(
                 f"/api/v1/tournaments/{tournament.id}/status",
-                json={"new_status": "IN_PROGRESS", "reason": "test"},
+                json={"new_status": "CHECK_IN_OPEN", "reason": "test"},
             )
             assert response.status_code == 400
             body = response.json()
@@ -273,14 +277,13 @@ class TestInProgressInstructorGuard:
         finally:
             app.dependency_overrides.clear()
 
-    def test_lc_02c_in_progress_not_blocked_with_confirmed_master_slot(self, test_db):
+    def test_lc_02c_check_in_open_not_blocked_with_confirmed_master_slot(self, test_db):
         """
         No master_instructor_id but MASTER/CONFIRMED slot → instructor guard passes,
-        transition may succeed or fail for another reason (not instructor).
+        transition may succeed or fail for another reason (e.g. not enough players),
+        but NOT due to instructor.
 
-        This test verifies the slot fallback path is wired correctly at IN_PROGRESS.
-        It does NOT assert full IN_PROGRESS success — it asserts that the
-        instructor guard specifically does NOT block.
+        This verifies the slot fallback path is wired correctly in GenerationValidator.
         """
         admin = _make_admin(test_db)
         instructor = _make_instructor(test_db)
@@ -288,7 +291,7 @@ class TestInProgressInstructorGuard:
         tt = TournamentFactory.ensure_tournament_type(
             test_db, code=f"lc02c-tt-{uuid.uuid4().hex[:6]}"
         )
-        tournament = _make_check_in_open_tournament(
+        tournament = _make_enrollment_closed_tournament(
             test_db, campus=campus, admin=admin, instructor_id=None, tt=tt
         )
 
@@ -306,7 +309,7 @@ class TestInProgressInstructorGuard:
         try:
             response = client.patch(
                 f"/api/v1/tournaments/{tournament.id}/status",
-                json={"new_status": "IN_PROGRESS", "reason": "test"},
+                json={"new_status": "CHECK_IN_OPEN", "reason": "test"},
             )
             # The instructor guard must NOT return 400 with "instructor" message.
             if response.status_code == 400:
