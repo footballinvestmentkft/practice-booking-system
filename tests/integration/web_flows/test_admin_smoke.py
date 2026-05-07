@@ -2522,6 +2522,30 @@ class TestSmoke22GamePresetPlayerCountGuard:
                by hardcoded >=2 guard (confirms preset guard is NOT the blocker)
     """
 
+    def _make_eligible_instructor(self, test_db):
+        """Create a fresh INSTRUCTOR user with active LFA_COACH license."""
+        from datetime import datetime, timezone
+        uid = uuid.uuid4().hex[:8]
+        instr = User(
+            name=f"S22 Instructor {uid}",
+            email=f"s22-instr-{uid}@smoke22.test",
+            role=UserRole.INSTRUCTOR,
+            password_hash="x",
+            is_active=True,
+        )
+        test_db.add(instr)
+        test_db.flush()
+        test_db.add(UserLicense(
+            user_id=instr.id,
+            specialization_type=SpecializationType.LFA_COACH.value,
+            current_level=7,
+            max_achieved_level=7,
+            is_active=True,
+            started_at=datetime.now(timezone.utc),
+        ))
+        test_db.flush()
+        return instr
+
     def _make_ir_tournament(self, test_db, admin_user, suffix=""):
         """Create an INDIVIDUAL_RANKING tournament in IN_PROGRESS status."""
         from datetime import date, timedelta
@@ -2542,13 +2566,14 @@ class TestSmoke22GamePresetPlayerCountGuard:
         # Session generation requires ≥1 active pitch on the campus (domain invariant)
         test_db.add(Pitch(campus_id=camp.id, pitch_number=1, name="Pálya A", capacity=22, is_active=True))
         test_db.flush()
+        eligible_instructor = self._make_eligible_instructor(test_db)
         tourn = Semester(
             code=f"S22{suffix}-{uuid.uuid4().hex[:6]}",
             name=f"SMOKE-22{suffix} Preset Guard Test",
             start_date=today,
             end_date=today + timedelta(days=7),
             tournament_status="IN_PROGRESS",
-            master_instructor_id=admin_user.id,
+            master_instructor_id=eligible_instructor.id,
             campus_id=camp.id,
             tournament_config_obj=TournamentConfiguration(
                 tournament_type_id=None,
