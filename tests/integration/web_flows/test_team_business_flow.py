@@ -781,6 +781,17 @@ class TestGenerationValidatorTeam:
         from app.services.tournament.session_generation.validators.generation_validator import GenerationValidator
         from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 
+        # Instructor required — instructor guard fires before enrollment count check.
+        instructor = User(
+            email=f"genv-ind-instr-{uuid.uuid4().hex[:8]}@lfa.com",
+            name="GENV IND Instructor",
+            password_hash=get_password_hash("pw"),
+            role=UserRole.INSTRUCTOR,
+            is_active=True,
+        )
+        test_db.add(instructor)
+        test_db.flush()
+
         t = Semester(
             code=f"GENV-IND-{uuid.uuid4().hex[:8].upper()}",
             name="GenVal IND Tournament",
@@ -792,6 +803,7 @@ class TestGenerationValidatorTeam:
             end_date=date(2026, 4, 8),
             enrollment_cost=0,
             specialization_type="LFA_FOOTBALL_PLAYER",
+            master_instructor_id=instructor.id,
         )
         test_db.add(t)
         test_db.flush()
