@@ -414,9 +414,15 @@ def transition_tournament_status(
                 if success:
                     print(f"✅ Auto-generated {len(sessions_created)} sessions at CHECK_IN_OPEN for tournament {tournament_id}")
                 else:
-                    print(f"⚠️ Failed to auto-generate sessions at CHECK_IN_OPEN: {message}")
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Session generation failed at CHECK_IN_OPEN: {message}",
+                    )
             else:
-                print(f"⚠️ Cannot auto-generate sessions at CHECK_IN_OPEN: {reason}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Cannot generate sessions for tournament {tournament_id}: {reason}",
+                )
 
     # ============================================================================
     # AUTO-REGENERATE SESSIONS when transitioning to IN_PROGRESS (check-in filter)

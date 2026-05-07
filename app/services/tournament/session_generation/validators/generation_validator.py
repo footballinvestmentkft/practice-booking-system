@@ -94,4 +94,17 @@ class GenerationValidator:
         if not tournament.location_id and not tournament.campus_id:
             return False, "Tournament must have a Location or Campus set before sessions can be generated."
 
+        # Check at least one active pitch exists on the tournament's campus
+        if tournament.campus_id:
+            from app.models.pitch import Pitch
+            active_pitch_count = self.db.query(Pitch).filter(
+                Pitch.campus_id == tournament.campus_id,
+                Pitch.is_active == True,  # noqa: E712
+            ).count()
+            if active_pitch_count == 0:
+                return False, (
+                    f"Campus {tournament.campus_id} has no active pitches. "
+                    "Add at least one active pitch before generating sessions."
+                )
+
         return True, "Ready for session generation"

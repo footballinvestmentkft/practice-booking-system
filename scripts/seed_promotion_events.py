@@ -170,6 +170,14 @@ def run_reset(db: DBSession) -> None:
         .all()
     ]
     if promo_ids:
+        from app.models.tournament_status_history import TournamentStatusHistory
+        from app.models.game_configuration import GameConfiguration
+        db.query(TournamentStatusHistory).filter(
+            TournamentStatusHistory.tournament_id.in_(promo_ids)
+        ).delete(synchronize_session=False)
+        db.query(GameConfiguration).filter(
+            GameConfiguration.semester_id.in_(promo_ids)
+        ).delete(synchronize_session=False)
         db.query(SessionModel).filter(
             SessionModel.semester_id.in_(promo_ids)
         ).delete(synchronize_session=False)
@@ -355,6 +363,8 @@ def _create_tournament(
         return None
 
     from app.models.campus import Campus
+    from app.models.game_configuration import GameConfiguration
+    from app.models.game_preset import GamePreset
 
     suffix = uuid.uuid4().hex[:8]
     code = f"{_TOURNAMENT_PREFIX}{suffix}"
@@ -391,6 +401,15 @@ def _create_tournament(
             assignment_type="OPEN_ASSIGNMENT",
         )
     )
+    db.flush()
+
+    # Link default game preset so session generator can validate min_players
+    default_preset = db.query(GamePreset).filter(GamePreset.code == "outfield_default").first()
+    db.add(GameConfiguration(
+        semester_id=t.id,
+        game_preset_id=default_preset.id if default_preset else None,
+    ))
+
     db.commit()
     db.refresh(t)
     return t
@@ -520,6 +539,84 @@ def _bulk_enroll_direct(db: DBSession, tid: int, campaign_id: int, sponsor_id: i
     }
 
 
+# ─── Check-in stamper ────────────────────────────────────────────────────────
+
+def _stamp_player_checkins(db: DBSession, tid: int) -> int:
+    """Set tournament_checked_in_at = now() for all APPROVED active enrollments.
+
+    The session generator seeds the bracket only from checked-in players.
+    This must be called BEFORE the CHECK_IN_OPEN transition so that the
+    seeding pool is non-empty (otherwise all 9 players fall through to the
+    fallback pool instead of the confirmed pool).
+
+    Returns the number of enrollments stamped.
+    """
+    from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
+    now = datetime.datetime.now(datetime.timezone.utc)
+    rows = (
+        db.query(SemesterEnrollment)
+        .filter(
+            SemesterEnrollment.semester_id == tid,
+            SemesterEnrollment.is_active == True,
+            SemesterEnrollment.request_status == EnrollmentStatus.APPROVED,
+            SemesterEnrollment.tournament_checked_in_at == None,  # noqa: E711
+        )
+        .all()
+    )
+    for r in rows:
+        r.tournament_checked_in_at = now
+    db.flush()
+    return len(rows)
+
+
+# ─── Preflight audit ─────────────────────────────────────────────────────────
+
+def _run_preflight_audit(db: DBSession, campus_id: int, fail: bool = False) -> list[str]:
+    """Check domain invariants before running scenarios.
+
+    Returns a list of human-readable issue strings.
+    If *fail* is True, exits the process on the first failure.
+    """
+    from app.models.campus import Campus
+    from app.models.game_preset import GamePreset
+    from app.models.pitch import Pitch
+
+    issues: list[str] = []
+
+    campus = db.query(Campus).filter(Campus.id == campus_id).first()
+    if not campus:
+        issues.append(f"Campus id={campus_id} not found — run bootstrap first")
+    else:
+        pitch_count = db.query(Pitch).filter(
+            Pitch.campus_id == campus_id,
+            Pitch.is_active == True,  # noqa: E712
+        ).count()
+        if pitch_count == 0:
+            issues.append(
+                f"Campus {campus_id} ({campus.name}) has no active pitches — "
+                "run bootstrap to create Pálya A / Pálya B"
+            )
+
+    default_preset = db.query(GamePreset).filter(GamePreset.code == "outfield_default").first()
+    if not default_preset:
+        issues.append("GamePreset code='outfield_default' not found — run bootstrap first")
+
+    admin = db.query(User).filter(User.email == "admin@lfa.com").first()
+    if not admin:
+        issues.append("admin@lfa.com not found — run bootstrap first")
+
+    if issues:
+        print("\n  PREFLIGHT AUDIT ISSUES:")
+        for issue in issues:
+            print(f"    * {issue}")
+        if fail:
+            sys.exit(f"Seed aborted: {len(issues)} preflight issue(s)")
+    else:
+        print("  PREFLIGHT AUDIT OK")
+
+    return issues
+
+
 # ─── SC-04 hard validation ────────────────────────────────────────────────────
 
 def _validate_sc04(db: DBSession, tid: int, tournament_name: str) -> None:
@@ -610,18 +707,20 @@ def run_scenarios(
     scenario_ids: list[str] | None = None,
     dry_run: bool = False,
     campus_id: int = 1,
+    fail_on_missing_prereq: bool = False,
 ) -> dict[str, int | None]:
     """Run promotion event seed scenarios.
 
-    Always runs the group_knockout preflight before any scenario so that
-    SC-04 structural failures are caught early with a clear message.
+    Always runs the group_knockout preflight and domain audit before any
+    scenario so that structural failures are caught early with a clear message.
 
     Args:
-        db:           Committed SQLAlchemy session (caller owns lifecycle).
-        client:       TestClient with admin auth overrides already applied.
-        scenario_ids: Subset to run, e.g. ["SC-01", "SC-04"]. None = all.
-        dry_run:      If True, print intent but write nothing.
-        campus_id:    Campus to associate with the tournament (default=1).
+        db:                    Committed SQLAlchemy session (caller owns lifecycle).
+        client:                TestClient with admin auth overrides already applied.
+        scenario_ids:          Subset to run, e.g. ["SC-01", "SC-04"]. None = all.
+        dry_run:               If True, print intent but write nothing.
+        campus_id:             Campus to associate with the tournament (default=1).
+        fail_on_missing_prereq: If True, exit on any audit failure before seeding.
 
     Returns:
         Dict mapping scenario_id -> created tournament id (or None in dry-run).
@@ -629,6 +728,9 @@ def run_scenarios(
     _assert_not_production()
 
     tt = _preflight_group_knockout_9p(db)
+
+    # Domain integrity audit (pitches, default preset, admin user)
+    _run_preflight_audit(db, campus_id, fail=fail_on_missing_prereq)
 
     all_scenarios = ["SC-01", "SC-02", "SC-03", "SC-04"]
     to_run = [s for s in all_scenarios if s in (scenario_ids or all_scenarios)]
@@ -686,6 +788,9 @@ def run_scenarios(
             _bulk_enroll_direct(db, t.id, campaign.id, sponsor.id)
             db.commit()
             _lock_enrollment(client, t.id)
+            stamped = _stamp_player_checkins(db, t.id)
+            db.commit()
+            print(f"  check-in stamped: {stamped} player(s)")
             if _transition(client, t.id, "CHECK_IN_OPEN"):
                 db.expire_all()
                 count = (
@@ -711,6 +816,9 @@ def run_scenarios(
             _bulk_enroll_direct(db, t.id, campaign.id, sponsor.id)
             db.commit()
             _lock_enrollment(client, t.id)
+            stamped = _stamp_player_checkins(db, t.id)
+            db.commit()
+            print(f"  check-in stamped: {stamped} player(s)")
             _transition(client, t.id, "CHECK_IN_OPEN")
             db.expire_all()
 
@@ -746,6 +854,16 @@ def main() -> None:
         help="Comma-separated scenario IDs to run, e.g. SC-01,SC-04. Default: all.",
     )
     parser.add_argument("--campus-id", type=int, default=1, metavar="ID")
+    parser.add_argument(
+        "--audit-only",
+        action="store_true",
+        help="Run preflight audit only — print issues and exit without seeding",
+    )
+    parser.add_argument(
+        "--fail-on-missing-prereq",
+        action="store_true",
+        help="Abort seeding if preflight audit finds any issues (pitches, preset, admin)",
+    )
     args = parser.parse_args()
 
     _assert_not_production()
@@ -757,6 +875,10 @@ def main() -> None:
         if args.reset:
             run_reset(db)
             return
+
+        if args.audit_only:
+            issues = _run_preflight_audit(db, args.campus_id, fail=False)
+            sys.exit(1 if issues else 0)
 
         scenario_ids = (
             [s.strip() for s in args.scenarios.split(",")] if args.scenarios else None
@@ -784,6 +906,7 @@ def main() -> None:
             scenario_ids=scenario_ids,
             dry_run=args.dry_run,
             campus_id=args.campus_id,
+            fail_on_missing_prereq=args.fail_on_missing_prereq,
         )
 
         print("\n" + "=" * 60)

@@ -34,6 +34,7 @@ from app.database import SessionLocal  # noqa: E402
 # ── Models ────────────────────────────────────────────────────────────────────
 from app.models.campus import Campus  # noqa: E402
 from app.models.club import Club  # noqa: E402
+from app.models.pitch import Pitch  # noqa: E402
 from app.models.game_preset import GamePreset  # noqa: E402
 from app.models.license import UserLicense  # noqa: E402
 from app.models.location import Location, LocationType  # noqa: E402
@@ -347,6 +348,34 @@ def _seed_location_campus(db) -> tuple:
     return loc, campus
 
 
+def _seed_pitches(db, campus) -> int:
+    """Create 2 active pitches on the given campus — idempotent (skips existing numbers)."""
+    pitches = [
+        {"pitch_number": 1, "name": "Pálya A", "capacity": 22},
+        {"pitch_number": 2, "name": "Pálya B", "capacity": 22},
+    ]
+    created = 0
+    for p in pitches:
+        exists = db.query(Pitch).filter(
+            Pitch.campus_id == campus.id,
+            Pitch.pitch_number == p["pitch_number"],
+        ).first()
+        if exists:
+            _skip(f"  Pitch {p['name']} already exists on campus {campus.id}")
+            continue
+        db.add(Pitch(
+            campus_id=campus.id,
+            pitch_number=p["pitch_number"],
+            name=p["name"],
+            capacity=p["capacity"],
+            is_active=True,
+        ))
+        db.flush()
+        _ok(f"  Pitch '{p['name']}' (campus_id={campus.id}) created")
+        created += 1
+    return created
+
+
 def _seed_users(db) -> tuple:
     """Create admin@lfa.com and instructor@lfa.com if not present."""
     admin = db.query(User).filter(User.email == "admin@lfa.com").first()
@@ -541,6 +570,13 @@ def run():
         loc, campus = _seed_location_campus(db)
         db.commit()
 
+        # Step 4b: Pitches (2 per bootstrap campus)
+        _step("4b", "Pitches (Pálya A + Pálya B on Főváros Campus)")
+        _seed_pitches(db, campus)
+        db.commit()
+        total = db.query(Pitch).filter(Pitch.campus_id == campus.id).count()
+        print(f"  → Campus {campus.id} pitch total: {total}")
+
         # Step 5: Admin + Instructor users
         _step(5, "Admin + Instructor users")
         admin, instr = _seed_users(db)
@@ -591,6 +627,16 @@ def run():
             if missing:
                 db.commit()
                 print(f"       → assigned default game preset to {len(missing)} tournament(s)")
+
+            # Also backfill existing GameConfiguration rows that have NULL game_preset_id
+            null_preset_cfgs = db.query(GameConfiguration).filter(
+                GameConfiguration.game_preset_id == None  # noqa: E711
+            ).all()
+            for cfg in null_preset_cfgs:
+                cfg.game_preset_id = default_preset.id
+            if null_preset_cfgs:
+                db.commit()
+                print(f"       → patched {len(null_preset_cfgs)} GameConfiguration(s) with NULL game_preset_id")
 
         # Summary
         print("\n" + "="*70)

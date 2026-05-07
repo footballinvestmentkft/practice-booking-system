@@ -396,6 +396,38 @@ class TournamentSessionGenerator:
                     _pitch_instructor_map[_s.pitch_id] = _s.instructor_id
             logger.info(f"🧑‍🏫 Pitch→instructor map: {_pitch_instructor_map} (master fallback: {tournament.master_instructor_id})")
 
+            # ── Round-robin pitch assignment ──────────────────────────────────────────
+            # Every generated session must have a pitch_id.  Query active pitches for
+            # the tournament campus and assign sequentially (index modulo pitch count).
+            # Sessions already carrying a pitch_id (multi-campus formats) are skipped.
+            _campus_id_for_pitch = tournament.campus_id
+            if _campus_id_for_pitch:
+                from app.models.pitch import Pitch as PitchModel
+                _active_pitches = (
+                    self.db.query(PitchModel)
+                    .filter(
+                        PitchModel.campus_id == _campus_id_for_pitch,
+                        PitchModel.is_active == True,  # noqa: E712
+                    )
+                    .order_by(PitchModel.pitch_number)
+                    .all()
+                )
+                if _active_pitches:
+                    _pitch_ids = [p.id for p in _active_pitches]
+                    _pitch_count = len(_pitch_ids)
+                    for _i, _sd in enumerate(sessions):
+                        if not _sd.get("pitch_id"):
+                            _sd["pitch_id"] = _pitch_ids[_i % _pitch_count]
+                    logger.info(
+                        f"🏟️ Pitch assignment: {_pitch_count} active pitch(es) on campus "
+                        f"{_campus_id_for_pitch} → assigned round-robin to {len(sessions)} sessions"
+                    )
+                else:
+                    logger.warning(
+                        f"⚠️ No active pitches on campus {_campus_id_for_pitch} — "
+                        f"sessions will have pitch_id=NULL (validator should have blocked this)"
+                    )
+
             # Create session records in database (bulk insert — no per-session flush)
             created_sessions = []
             logger.info(f"🔨 Creating {len(sessions)} session records in database (bulk)...")
