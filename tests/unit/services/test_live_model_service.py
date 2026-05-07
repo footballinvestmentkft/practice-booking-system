@@ -251,3 +251,167 @@ def test_lm_08_sponsor_context_none_when_no_sponsor():
     t = _make_tournament(sponsor=None, campaign=None)
     ctx = _build_sponsor_context(t, enrollment_count=5, checkin_count=3)
     assert ctx is None
+
+
+# ── Helpers for LM-09..12 (group stage tests) ─────────────────────────────────
+
+_GK_CONF_9 = {
+    "group_configuration": {
+        "9_players": {
+            "groups": 3,
+            "players_per_group": 3,
+            "qualifiers": 1,
+            "qualification_policy": "winners_plus_best_runner_up",
+            "best_runner_up_count": 1,
+        }
+    }
+}
+
+
+def _planned_group_sessions():
+    """9 planned sessions for groups A/B/C (3 per group), no results."""
+    from app.models.tournament_enums import TournamentPhase
+    sessions = []
+    n = 1
+    for gid, (u1, u2, u3) in [("A", (1, 2, 3)), ("B", (4, 5, 6)), ("C", (7, 8, 9))]:
+        for p1, p2 in [(u1, u2), (u1, u3), (u2, u3)]:
+            sessions.append(_make_session(
+                id=n, tournament_phase=TournamentPhase.GROUP_STAGE,
+                group_identifier=gid, session_status="planned",
+                participant_user_ids=[p1, p2], tournament_match_number=n,
+            ))
+            n += 1
+    return sessions
+
+
+def _completed_group(gid: str, uid_winner: int, uid2: int, uid3: int, base_id: int):
+    """3 completed sessions where uid_winner beats both others."""
+    from app.models.tournament_enums import TournamentPhase
+    def _result(w, l, sid):
+        return _make_session(
+            id=sid, tournament_phase=TournamentPhase.GROUP_STAGE,
+            group_identifier=gid, session_status="completed",
+            participant_user_ids=[w, l],
+            game_results={"participants": [
+                {"user_id": w, "score": 2, "result": "win"},
+                {"user_id": l, "score": 0, "result": "loss"},
+            ]},
+            tournament_match_number=sid,
+        )
+    return [
+        _result(uid_winner, uid2, base_id),
+        _result(uid_winner, uid3, base_id + 1),
+        _result(uid2, uid3, base_id + 2),   # runner-up uid2 gets 1 win
+    ]
+
+
+def _all_users_9():
+    return {i: _make_user(i) for i in range(1, 10)}
+
+
+# ── LM-09 ─────────────────────────────────────────────────────────────────────
+
+def test_lm_09_zero_results_no_qualification_badge():
+    """When no sessions are completed, every row must have qualification_state=None."""
+    from app.services.tournament.live_model_service import _build_group_stage
+    sessions = _planned_group_sessions()
+    users = _all_users_9()
+    result = _build_group_stage(sessions, [], users, _GK_CONF_9, enrollment_count=9)
+
+    all_states = [
+        row["qualification_state"]
+        for gdata in result["groups"].values()
+        for row in gdata["standings"]
+    ]
+    assert all(s is None for s in all_states), (
+        f"Expected all None, got: {all_states}"
+    )
+    assert result["complete"] is False
+
+
+# ── LM-10 ─────────────────────────────────────────────────────────────────────
+
+def test_lm_10_one_group_complete_top_n_qualifies():
+    """If group A is complete, its winner gets 'qualified'; groups B/C stay None."""
+    from app.models.tournament_enums import TournamentPhase
+    from app.services.tournament.live_model_service import _build_group_stage
+
+    # Group A complete (uid1 wins), Groups B/C planned
+    group_a_sessions = _completed_group("A", uid_winner=1, uid2=2, uid3=3, base_id=1)
+    planned_bc = [
+        s for s in _planned_group_sessions() if s.group_identifier in ("B", "C")
+    ]
+    sessions = group_a_sessions + planned_bc
+    users = _all_users_9()
+    result = _build_group_stage(sessions, [], users, _GK_CONF_9, enrollment_count=9)
+
+    # Group A winner (uid1) must be "qualified"
+    a_standings = result["groups"]["A"]["standings"]
+    assert a_standings[0]["qualification_state"] == "qualified"
+    assert a_standings[0]["user_id"] == 1
+
+    # Group A rank 2 and 3 must be None
+    assert a_standings[1]["qualification_state"] is None
+    assert a_standings[2]["qualification_state"] is None
+
+    # Group B and C must all be None (not complete)
+    for gid in ("B", "C"):
+        for row in result["groups"][gid]["standings"]:
+            assert row["qualification_state"] is None, (
+                f"Group {gid} uid={row['user_id']} has unexpected state: {row['qualification_state']}"
+            )
+
+
+# ── LM-11 ─────────────────────────────────────────────────────────────────────
+
+def test_lm_11_group_stage_not_complete_no_best_runner_up():
+    """Even with all groups having some completions, no 'best_runner_up' until all complete."""
+    from app.services.tournament.live_model_service import _build_group_stage
+
+    # Groups A and B complete, C still planned → group stage NOT complete
+    group_a = _completed_group("A", uid_winner=1, uid2=2, uid3=3, base_id=1)
+    group_b = _completed_group("B", uid_winner=4, uid2=5, uid3=6, base_id=10)
+    planned_c = [
+        s for s in _planned_group_sessions() if s.group_identifier == "C"
+    ]
+    sessions = group_a + group_b + planned_c
+    users = _all_users_9()
+    result = _build_group_stage(sessions, [], users, _GK_CONF_9, enrollment_count=9)
+
+    all_states = [
+        row["qualification_state"]
+        for gdata in result["groups"].values()
+        for row in gdata["standings"]
+    ]
+    assert "best_runner_up" not in all_states, (
+        f"'best_runner_up' appeared before group stage complete: {all_states}"
+    )
+    assert result["complete"] is False
+
+
+# ── LM-12 ─────────────────────────────────────────────────────────────────────
+
+def test_lm_12_full_group_stage_exactly_one_best_runner_up():
+    """When all groups are complete, exactly best_runner_up_count rows get 'best_runner_up'."""
+    from app.services.tournament.live_model_service import _build_group_stage
+
+    group_a = _completed_group("A", uid_winner=1, uid2=2, uid3=3, base_id=1)
+    group_b = _completed_group("B", uid_winner=4, uid2=5, uid3=6, base_id=10)
+    group_c = _completed_group("C", uid_winner=7, uid2=8, uid3=9, base_id=20)
+    sessions = group_a + group_b + group_c
+    users = _all_users_9()
+    result = _build_group_stage(sessions, [], users, _GK_CONF_9, enrollment_count=9)
+
+    assert result["complete"] is True
+
+    all_states = [
+        row["qualification_state"]
+        for gdata in result["groups"].values()
+        for row in gdata["standings"]
+    ]
+    best_count = all_states.count("best_runner_up")
+    qualified_count = all_states.count("qualified")
+
+    # 9-player: 3 group winners + 1 best runner-up = 4 total qualifiers
+    assert qualified_count == 3, f"Expected 3 qualified, got {qualified_count}"
+    assert best_count == 1, f"Expected exactly 1 best_runner_up, got {best_count}"

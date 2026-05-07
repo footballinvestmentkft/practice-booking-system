@@ -88,6 +88,7 @@
                 <th style="text-align:center;padding:3px 2px">D</th>
                 <th style="text-align:center;padding:3px 2px">L</th>
                 <th style="text-align:center;padding:3px 2px">GF</th>
+                <th style="text-align:center;padding:3px 2px">GA</th>
                 <th style="text-align:center;padding:3px 2px">GD</th>
                 <th style="text-align:center;padding:3px 2px">Pts</th>
                 <th style="padding:3px 4px"></th>
@@ -95,10 +96,14 @@
         </thead>
         <tbody>
         {% for row in gdata.standings %}
+        {% set qs = row.qualification_state %}
         <tr style="border-top:1px solid #f7fafc;
-                   {% if row.qualifies %}background:#f0fff4;{% endif %}">
+                   {% if qs == 'qualified' %}background:#f0fff4;
+                   {% elif qs == 'best_runner_up' %}background:#fff5f5;
+                   {% endif %}">
             <td style="padding:4px;color:#718096">{{ row.rank }}</td>
-            <td style="padding:4px;font-weight:{% if row.qualifies %}600{% else %}400{% endif %};
+            <td style="padding:4px;
+                       font-weight:{% if qs %}600{% else %}400{% endif %};
                        max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
                 title="{{ row.name }}">{{ row.name }}</td>
             <td style="text-align:center;padding:4px">{{ row.p }}</td>
@@ -106,16 +111,18 @@
             <td style="text-align:center;padding:4px">{{ row.d }}</td>
             <td style="text-align:center;padding:4px">{{ row.l }}</td>
             <td style="text-align:center;padding:4px">{{ row.gf }}</td>
+            <td style="text-align:center;padding:4px">{{ row.ga }}</td>
             <td style="text-align:center;padding:4px;{% if row.gd > 0 %}color:#276749{% elif row.gd < 0 %}color:#c53030{% endif %}">
                 {{ '+' if row.gd > 0 else '' }}{{ row.gd }}
             </td>
             <td style="text-align:center;padding:4px;font-weight:700;color:#2d3748">{{ row.pts }}</td>
-            <td style="padding:4px">
-                {% if row.qualifies %}
+            <td style="padding:4px;white-space:nowrap">
+                {% if qs == 'qualified' %}
                 <span style="background:#c6f6d5;color:#276749;border-radius:3px;
-                             padding:1px 5px;font-size:0.68rem;font-weight:600;white-space:nowrap">
-                    {{ row.qualifier_label if row.qualifier_label is defined else 'Q' }}
-                </span>
+                             padding:1px 5px;font-size:0.68rem;font-weight:600">Q</span>
+                {% elif qs == 'best_runner_up' %}
+                <span style="background:#fed7d7;color:#c53030;border-radius:3px;
+                             padding:1px 5px;font-size:0.68rem;font-weight:600">Best Runner-Up</span>
                 {% endif %}
             </td>
         </tr>
@@ -148,6 +155,15 @@
     {% endif %}
 </div>
 
+{% if gs and not gs.complete %}
+<div style="background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;
+            padding:10px 14px;margin-bottom:14px;font-size:0.82rem;color:#718096;
+            display:flex;align-items:center;gap:8px">
+    <span>⏳</span>
+    <span>Qualifiers not yet determined — group stage still in progress</span>
+</div>
+{% endif %}
+
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:20px">
 {% for round_name, matches in kb.rounds.items() %}
 <div style="background:#fff;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.06);padding:14px">
@@ -163,6 +179,10 @@
         {% else %}
         <span style="color:#a0aec0">⏳</span>
         <span style="flex:1;color:#718096;font-style:italic">{{ match.matchup_label }}</span>
+        {% if gs and not gs.complete %}
+        <span style="font-size:0.7rem;color:#a0aec0;border:1px solid #e2e8f0;
+                     border-radius:3px;padding:1px 4px">source slot</span>
+        {% endif %}
         {% endif %}
     </div>
     {% endfor %}

@@ -219,19 +219,26 @@ def _build_group_stage(
         standings = _compute_group_standings(g_sessions, users)
         sessions_out = [_build_live_session_row(s, users) for s in g_sessions]
 
-        # Mark qualifiers
-        for i, row in enumerate(standings):
-            row["rank"] = i + 1
-            row["qualifies"] = i < qualifiers_per_group
-
-        # Collect runner-ups for best-runner-up policy
-        if qualification_policy == "winners_plus_best_runner_up" and len(standings) > qualifiers_per_group:
-            runner_up = standings[qualifiers_per_group]
-            all_runner_ups.append({"group": gid, **runner_up})
-
         group_complete = all(
             (s.session_status or "").lower() == "completed" for s in g_sessions
         )
+
+        # qualification_state is only set when the group is mathematically closed.
+        # While group is in progress, every row stays None — no misleading badge.
+        for i, row in enumerate(standings):
+            row["rank"] = i + 1
+            if group_complete and i < qualifiers_per_group:
+                row["qualification_state"] = "qualified"
+            else:
+                row["qualification_state"] = None
+
+        # Collect runner-up candidates only from completed groups.
+        if (group_complete
+                and qualification_policy == "winners_plus_best_runner_up"
+                and len(standings) > qualifiers_per_group):
+            runner_up = standings[qualifiers_per_group]
+            all_runner_ups.append({"group": gid, **runner_up})
+
         groups[gid] = {
             "group_id": gid,
             "sessions": sessions_out,
@@ -239,17 +246,20 @@ def _build_group_stage(
             "complete": group_complete,
         }
 
-    # Resolve best runner-up across groups
-    if qualification_policy == "winners_plus_best_runner_up" and all_runner_ups:
+    # group_stage_complete must be evaluated AFTER the loop so all groups are present.
+    group_stage_complete = all(g["complete"] for g in groups.values()) if groups else False
+
+    # Best runner-up resolution: only when every group has finished.
+    # Cross-group comparison on a partial dataset would produce meaningless results.
+    if (group_stage_complete
+            and qualification_policy == "winners_plus_best_runner_up"
+            and all_runner_ups):
         best_runner_ups = _pick_best_runner_ups(all_runner_ups, best_runner_up_count)
         best_ids = {r["user_id"] for r in best_runner_ups}
         for gid, gdata in groups.items():
             for row in gdata["standings"]:
-                if not row["qualifies"] and row["user_id"] in best_ids:
-                    row["qualifies"] = True
-                    row["qualifier_label"] = "Best Runner-Up"
-
-    group_stage_complete = all(g["complete"] for g in groups.values()) if groups else False
+                if row["qualification_state"] is None and row["user_id"] in best_ids:
+                    row["qualification_state"] = "best_runner_up"
 
     return {
         "complete": group_stage_complete,
