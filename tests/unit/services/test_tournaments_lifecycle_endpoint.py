@@ -28,7 +28,6 @@ _PATCH_VST = f"{_BASE}.validate_status_transition"
 _PATCH_GNS = f"{_BASE}.get_next_allowed_statuses"
 _PATCH_SEM = f"{_BASE}.Semester"
 _PATCH_TSG = "app.services.tournament_session_generator.TournamentSessionGenerator"
-# Lazy import inside function body — must patch at source module, not endpoint module
 
 
 # ─────────────────────────────────────────────────────────────────

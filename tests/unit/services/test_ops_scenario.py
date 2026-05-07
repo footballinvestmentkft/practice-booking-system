@@ -77,6 +77,14 @@ def _admin():
     return u
 
 
+def _gm_user():
+    """Mock grandmaster user returned by the hard-fail guard in ops_scenario."""
+    gm = MagicMock()
+    gm.id = 7
+    gm.email = "grandmaster@lfa.com"
+    return gm
+
+
 def _req(**overrides):
     """MagicMock OpsScenarioRequest with sensible defaults."""
     r = MagicMock()
@@ -496,9 +504,11 @@ class TestRunOpsScenarioValidation:
             mock_t = MagicMock()
             mock_t.id = 99
             MockSem.return_value = mock_t
+            gm = MagicMock()
+            gm.id = 7
             db = _seq_db(
-                _q(first=None),    # q0: grandmaster (IR, no TT query)
-                _q(all_=[campus_row]),  # q1: campus validation → found id=2, not id=1
+                _q(first=gm),          # q0: grandmaster found
+                _q(all_=[campus_row]), # q1: campus validation → found id=2, not id=1
             )
             with pytest.raises(Exception) as exc:
                 run_ops_scenario(
@@ -545,7 +555,7 @@ class TestRunOpsScenarioSuccess:
         campus_row.id = 1  # campus 1 found and valid
 
         db = _seq_db(
-            _q(first=None),        # q0: grandmaster lookup
+            _q(first=_gm_user()),        # q0: grandmaster lookup
             _q(all_=[campus_row]), # q1: campus validation
             _q(first=None),        # q2: CampusScheduleConfig existing check
             _q(count=0),           # q3: final session count
@@ -588,7 +598,7 @@ class TestRunOpsScenarioSuccess:
         campus_row = MagicMock()
         campus_row.id = 1
 
-        db = _seq_db(_q(first=None), _q(all_=[campus_row]), _q(first=None), _q(count=0))
+        db = _seq_db(_q(first=_gm_user()), _q(all_=[campus_row]), _q(first=None), _q(count=0))
 
         with patch("app.models.semester.Semester") as MockSem, \
              patch("app.models.semester.SemesterStatus"), \
@@ -615,7 +625,7 @@ class TestRunOpsScenarioSuccess:
         campus_row = MagicMock()
         campus_row.id = 1
 
-        db = _seq_db(_q(first=None), _q(all_=[campus_row]), _q(first=None), _q(count=0))
+        db = _seq_db(_q(first=_gm_user()), _q(all_=[campus_row]), _q(first=None), _q(count=0))
 
         with patch("app.models.semester.Semester") as MockSem, \
              patch("app.models.semester.SemesterStatus"), \
@@ -650,7 +660,7 @@ class TestRunOpsScenarioSuccess:
 
         db = _seq_db(
             _q(all_=[valid_user_row]),  # q0: valid_rows for player_ids=[10]
-            _q(first=None),             # q1: grandmaster (IR)
+            _q(first=_gm_user()),             # q1: grandmaster (IR)
             _q(first=None),             # q2: _Enroll existing check → not enrolled
             _q(first=lic_mock),         # q3: _Lic check → has license
             _q(all_=[campus_row]),      # q4: campus validation
@@ -689,7 +699,7 @@ class TestRunOpsScenarioSuccess:
         campus_row.id = 1
 
         db = _seq_db(
-            _q(first=None),        # q0: grandmaster (IR, no TT query)
+            _q(first=_gm_user()),        # q0: grandmaster (IR, no TT query)
             _q(all_=[campus_row]), # q1: campus validation
             _q(first=None),        # q2: CampusScheduleConfig existing check
             _q(all_=[]),           # q3: SemesterEnrollment enrolled_user_ids
@@ -745,7 +755,7 @@ class TestRunOpsScenarioSuccess:
 
         db = _seq_db(
             _q(all_=[seed_row]),   # q0: seed pool → 1 user
-            _q(first=None),        # q1: grandmaster
+            _q(first=_gm_user()),        # q1: grandmaster
             _q(first=None),        # q2: _Enroll check → not enrolled
             _q(first=lic_mock),    # q3: _Lic check → has license
             _q(all_=[campus_row]), # q4: campus validation
@@ -784,7 +794,7 @@ class TestRunOpsScenarioSuccess:
         campus_row.id = 1
 
         db = _seq_db(
-            _q(first=None),        # q0: grandmaster
+            _q(first=_gm_user()),        # q0: grandmaster
             _q(all_=[campus_row]), # q1: campus validation
             _q(first=None),        # q2: CampusScheduleConfig
             _q(all_=[]),           # q3: SemesterEnrollment enrolled_user_ids
@@ -828,7 +838,7 @@ class TestRunOpsScenarioSuccess:
         campus_row.id = 1
 
         db = _seq_db(
-            _q(first=None),        # q0: grandmaster
+            _q(first=_gm_user()),        # q0: grandmaster
             _q(all_=[campus_row]), # q1: campus validation
             _q(first=None),        # q2: CampusScheduleConfig
             _q(count=0),           # q3: session count (thread dispatched, no SE query)
@@ -874,7 +884,7 @@ class TestRunOpsScenarioSuccess:
         mock_t2.tournament_config_obj = None
 
         db = _seq_db(
-            _q(first=None),        # q0: grandmaster
+            _q(first=_gm_user()),        # q0: grandmaster
             _q(all_=[campus_row]), # q1: campus validation
             _q(first=None),        # q2: CampusScheduleConfig
             _q(all_=[]),           # q3: SE enrolled_user_ids (sync path)
@@ -1493,7 +1503,7 @@ class TestWorkflowFullOpsScenario:
 
         db = _seq_db(
             _q(all_=rows),         # q0: seed pool → 3 users
-            _q(first=None),        # q1: grandmaster
+            _q(first=_gm_user()),        # q1: grandmaster
             _q(first=None),        # q2: enroll check p1 → not enrolled
             _q(first=lic_mock),    # q3: lic check p1 → has license
             _q(first=None),        # q4: enroll check p2
@@ -1559,7 +1569,7 @@ class TestWorkflowFullOpsScenario:
         mock_t2.tournament_config_obj = None  # → empty rankings (no rounds_data)
 
         db = _seq_db(
-            _q(first=None),              # q0: grandmaster
+            _q(first=_gm_user()),              # q0: grandmaster
             _q(all_=[campus_row]),       # q1: campus validation
             _q(first=None),              # q2: CampusScheduleConfig
             _q(all_=[]),                 # q3: SE enrolled_user_ids (sync path)
@@ -1860,7 +1870,7 @@ class TestEdgeCaseWorkflows:
 
         def _make_db():
             return _seq_db(
-                _q(first=None),          # q0: grandmaster
+                _q(first=_gm_user()),          # q0: grandmaster
                 _q(all_=[campus_row]),   # q1: campus validation
                 _q(first=None),          # q2: CampusScheduleConfig
                 _q(all_=[]),             # q3: SE enrolled_user_ids
@@ -2330,7 +2340,7 @@ class TestDatabaseConsistency:
         ]
 
         db = _seq_db(
-            _q(first=None),          # grandmaster
+            _q(first=_gm_user()),          # grandmaster
             _q(all_=[campus_row]),   # campus validation
             _q(first=None),          # CampusScheduleConfig
             _q(all_=[]),             # SE enrolled_user_ids
@@ -2688,7 +2698,7 @@ class TestConcurrencyScaleInvariants:
         campus_row = MagicMock(); campus_row.id = 1
 
         db = _seq_db(
-            _q(first=None),              # q0: grandmaster
+            _q(first=_gm_user()),              # q0: grandmaster
             _q(all_=[campus_row]),       # q1: campus validation
             _q(first=None),              # q2: CampusScheduleConfig
             _q(all_=[]),                 # q3: SE enrolled (sync path)
@@ -2764,7 +2774,7 @@ class TestConcurrencyScaleInvariants:
         campus_row = MagicMock(); campus_row.id = 1
 
         db = _seq_db(
-            _q(first=None),              # q0: grandmaster
+            _q(first=_gm_user()),              # q0: grandmaster
             _q(all_=[campus_row]),       # q1: campus validation
             _q(first=None),              # q2: CampusScheduleConfig
             _q(all_=[]),                 # q3: SE enrolled
@@ -2968,7 +2978,7 @@ class TestConcurrencyScaleInvariants:
         campus_row = MagicMock(); campus_row.id = 1
 
         db = _seq_db(
-            _q(first=None),          # q0: grandmaster
+            _q(first=_gm_user()),          # q0: grandmaster
             _q(all_=[campus_row]),   # q1: campus validation
             _q(first=None),          # q2: CampusScheduleConfig
             _q(all_=[]),             # q3: SE enrolled
@@ -3081,7 +3091,7 @@ class TestTransactionBoundaries:
         campus_row = MagicMock(); campus_row.id = 1
 
         db = _seq_db(
-            _q(first=None),           # q0: grandmaster
+            _q(first=_gm_user()),           # q0: grandmaster
             _q(all_=[campus_row]),    # q1: campus validation
             _q(first=None),           # q2: CampusScheduleConfig
             _q(all_=[]),              # q3: SE enrolled_user_ids
@@ -3133,7 +3143,7 @@ class TestTransactionBoundaries:
         campus_row = MagicMock(); campus_row.id = 1
 
         db = _seq_db(
-            _q(first=None),           # q0: grandmaster
+            _q(first=_gm_user()),           # q0: grandmaster
             _q(all_=[campus_row]),    # q1: campus validation
             _q(first=None),           # q2: CampusScheduleConfig
             _q(all_=[]),              # q3: SE enrolled
@@ -3187,7 +3197,7 @@ class TestTransactionBoundaries:
         campus_row = MagicMock(); campus_row.id = 1
 
         db = _seq_db(
-            _q(first=None),            # q0: grandmaster
+            _q(first=_gm_user()),            # q0: grandmaster
             _q(all_=[campus_row]),     # q1: campus
             _q(first=None),            # q2: CampusScheduleConfig
             _q(all_=[]),               # q3: SE enrolled
@@ -3250,7 +3260,7 @@ class TestTransactionBoundaries:
         campus_row = MagicMock(); campus_row.id = 1
 
         db = _seq_db(
-            _q(first=None),            # q0: grandmaster
+            _q(first=_gm_user()),            # q0: grandmaster
             _q(all_=[campus_row]),     # q1: campus
             _q(first=None),            # q2: CampusScheduleConfig
             _q(all_=[]),               # q3: SE enrolled
@@ -3316,7 +3326,7 @@ class TestTransactionBoundaries:
         campus_row = MagicMock(); campus_row.id = 99  # ← different from requested ID
 
         db = _seq_db(
-            _q(first=None),              # q0: grandmaster
+            _q(first=_gm_user()),              # q0: grandmaster
             _q(all_=[campus_row]),       # q1: campus query returns campus_id=99, not 1
         )
 
@@ -3397,7 +3407,7 @@ class TestConcurrencySafety:
 
         def _make_db():
             return _seq_db(
-                _q(first=None),         # grandmaster
+                _q(first=_gm_user()),         # grandmaster
                 _q(all_=[campus_row]),  # campus
                 _q(first=None),         # CampusScheduleConfig
             )
@@ -3545,7 +3555,7 @@ class TestConcurrencySafety:
         for i in range(N):
             mock_t = MagicMock(); mock_t.id = 700 + i
             db = _seq_db(
-                _q(first=None),
+                _q(first=_gm_user()),  # grandmaster
                 _q(all_=[campus_row]),
                 _q(first=None),
             )
@@ -3611,7 +3621,7 @@ class TestConcurrencySafety:
 
         def _call(mock_t):
             db = _seq_db(
-                _q(first=None),
+                _q(first=_gm_user()),  # grandmaster
                 _q(all_=[campus_row]),
                 _q(first=None),
             )
@@ -3722,6 +3732,22 @@ class TestOpsScenarioIntegration:
         db.add(admin); db.commit(); db.refresh(admin)
         return admin
 
+    def _create_grandmaster(self, db):
+        """Create the grandmaster@lfa.com instructor required by ops_scenario."""
+        from app.models.user import User, UserRole
+        existing = db.query(User).filter(User.email == "grandmaster@lfa.com").first()
+        if existing:
+            return existing
+        gm = User(
+            email="grandmaster@lfa.com",
+            name="Grandmaster Instructor",
+            password_hash="test_hash",
+            role=UserRole.INSTRUCTOR,
+            is_active=True,
+        )
+        db.add(gm); db.commit(); db.refresh(gm)
+        return gm
+
     def test_full_pipeline_four_players_real_tsg(self, test_db):
         """Real DB: 4 players → real TSG → real simulation → real ranking → finalize mocked.
 
@@ -3747,6 +3773,7 @@ class TestOpsScenarioIntegration:
         campus = self._create_campus(test_db, loc.id)
         players = [self._create_player_with_license(test_db, i) for i in range(4)]
         admin = self._create_admin(test_db)
+        self._create_grandmaster(test_db)  # required by ops_scenario grandmaster guard
 
         req = OpsScenarioRequest(
             scenario="smoke_test",

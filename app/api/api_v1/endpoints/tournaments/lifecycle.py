@@ -281,6 +281,22 @@ def transition_tournament_status(
     # Record old status for response and history
     old_status = tournament.tournament_status
 
+    # ── Pre-check: instructor prerequisite (before status flush) ──────────────
+    # GenerationValidator also checks this, but that check runs AFTER the flush.
+    # In SAVEPOINT-isolated tests the flushed status change would remain visible
+    # even after an HTTPException, making the status assertion fail.  Checking
+    # here (before any mutation) keeps the status unchanged on failure.
+    if request.new_status == "CHECK_IN_OPEN":
+        from app.services.tournament.instructor_service import has_master_instructor_assignment
+        if not has_master_instructor_assignment(db, tournament_id):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Cannot generate sessions: No instructor assigned. "
+                    "Assign a master instructor before generating sessions."
+                ),
+            )
+
     # Update tournament status
     tournament.tournament_status = request.new_status
     db.flush()

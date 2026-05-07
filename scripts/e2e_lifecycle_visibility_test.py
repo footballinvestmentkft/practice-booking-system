@@ -526,13 +526,18 @@ def test_guard_a_campus_required(tt_id):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# GUARD C — no instructor → IN_PROGRESS rejected
+# GUARD C — no instructor → CHECK_IN_OPEN rejected (session generation blocked)
 # ══════════════════════════════════════════════════════════════════════════════
 def test_guard_c_instructor_required(club, campus, tt_id):
-    """Run lifecycle to CHECK_IN_OPEN without instructor; assert IN_PROGRESS fails."""
+    """Create tournament without instructor; assert CHECK_IN_OPEN fails.
+
+    The instructor prerequisite is enforced by GenerationValidator during the
+    CHECK_IN_OPEN transition (sessions are generated there).  Without an instructor
+    no session can be created, so the transition is rejected with HTTP 400.
+    """
     prefix = f"Guard-C-{uuid.uuid4().hex[:6]}"
     t = _promotion_wizard(club.id, campus.id, tt_id, "U15", prefix)
-    _add_lfa_u18_enrollment(t.id)  # need ≥2 teams to close enrollment
+    _add_lfa_u18_enrollment(t.id)  # need ≥2 teams to pass ENROLLMENT_CLOSED
 
     enr_count = _db.query(TournamentTeamEnrollment).filter(
         TournamentTeamEnrollment.semester_id == t.id,
@@ -542,7 +547,6 @@ def test_guard_c_instructor_required(club, campus, tt_id):
 
     _status_transition(t.id, "ENROLLMENT_OPEN")
     _status_transition(t.id, "ENROLLMENT_CLOSED")
-    _status_transition(t.id, "CHECK_IN_OPEN")
 
     _db.expire_all()
     t_reloaded = _db.query(Semester).filter(Semester.id == t.id).first()
@@ -550,8 +554,8 @@ def test_guard_c_instructor_required(club, campus, tt_id):
         fail(f"instructor_id was unexpectedly set ({t_reloaded.master_instructor_id}); guard test invalid")
 
     _status_transition_expect_fail(
-        t.id, "IN_PROGRESS",
-        "master_instructor_id=NULL → status_validator rejects IN_PROGRESS",
+        t.id, "CHECK_IN_OPEN",
+        "master_instructor_id=NULL → GenerationValidator rejects CHECK_IN_OPEN (no sessions may have instructor_id=NULL)",
     )
 
 
@@ -566,20 +570,23 @@ def test_guard_d_rankings_required(club, campus, tt_id, instructor):
 
     _status_transition(t.id, "ENROLLMENT_OPEN")
     _status_transition(t.id, "ENROLLMENT_CLOSED")
-    _status_transition(t.id, "CHECK_IN_OPEN")
 
+    # Set instructor BEFORE CHECK_IN_OPEN — required so GenerationValidator allows
+    # session generation (no auto-generated session may have instructor_id=NULL).
     _db.expire_all()
     t_obj = _db.query(Semester).filter(Semester.id == t.id).first()
     t_obj.master_instructor_id = instructor.id
     _db.commit()
     _db.expire_all()
 
-    _status_transition(t.id, "IN_PROGRESS")
+    _status_transition(t.id, "CHECK_IN_OPEN")  # sessions generated here
 
     sess_count = _db.query(SessionModel).filter(SessionModel.semester_id == t.id).count()
     if sess_count == 0:
-        fail("No sessions generated after IN_PROGRESS — cannot test GUARD D meaningfully")
+        fail("No sessions generated after CHECK_IN_OPEN — cannot test GUARD D meaningfully")
     info(f"  Sessions generated: {sess_count} (rankings NOT submitted)")
+
+    _status_transition(t.id, "IN_PROGRESS")
 
     ranking_count = _db.query(TournamentRanking).filter(
         TournamentRanking.tournament_id == t.id
@@ -635,18 +642,19 @@ def test_full_lifecycle_visibility(club, campus, tt_id, instructor):
     _assert_public_visibility(t.id, 200, "ENROLLMENT_CLOSED")
     _assert_db_invariants(t.id, "ENROLLMENT_CLOSED", sessions=0, rankings=0, rewards=0)
 
-    # ─── → CHECK_IN_OPEN ──────────────────────────────────────────────────────
-    _status_transition(t.id, "CHECK_IN_OPEN")
-    _assert_public_visibility(t.id, 200, "CHECK_IN_OPEN")
-    _assert_db_invariants(t.id, "CHECK_IN_OPEN", sessions_min=1, rankings=0, rewards=0)
-
-    # ─── Set instructor ───────────────────────────────────────────────────────
+    # ─── Set instructor (before CHECK_IN_OPEN — required for session generation) ──
+    # GenerationValidator enforces: no auto-generated session may have instructor_id=NULL.
     _db.expire_all()
     t_obj = _db.query(Semester).filter(Semester.id == t.id).first()
     t_obj.master_instructor_id = instructor.id
     _db.commit()
     _db.expire_all()
     ok(f"master_instructor_id = {instructor.id}")
+
+    # ─── → CHECK_IN_OPEN ──────────────────────────────────────────────────────
+    _status_transition(t.id, "CHECK_IN_OPEN")
+    _assert_public_visibility(t.id, 200, "CHECK_IN_OPEN")
+    _assert_db_invariants(t.id, "CHECK_IN_OPEN", sessions_min=1, rankings=0, rewards=0)
 
     # ─── → IN_PROGRESS (sessions already generated at CHECK_IN_OPEN) ──────────
     _status_transition(t.id, "IN_PROGRESS")
@@ -771,12 +779,14 @@ def test_idempotency(club, campus, tt_id, instructor):
     # Fast-track to IN_PROGRESS
     _status_transition(t.id, "ENROLLMENT_OPEN")
     _status_transition(t.id, "ENROLLMENT_CLOSED")
-    _status_transition(t.id, "CHECK_IN_OPEN")
+    # Set instructor BEFORE CHECK_IN_OPEN — GenerationValidator requires it
+    # (no auto-generated session may have instructor_id=NULL).
     _db.expire_all()
     t_obj = _db.query(Semester).filter(Semester.id == t.id).first()
     t_obj.master_instructor_id = instructor.id
     _db.commit()
     _db.expire_all()
+    _status_transition(t.id, "CHECK_IN_OPEN")
     _status_transition(t.id, "IN_PROGRESS")
 
     sess_count = _db.query(SessionModel).filter(SessionModel.semester_id == t.id).count()
@@ -915,16 +925,17 @@ def test_public_api_strict(club, campus, tt_id, instructor):
     _status_transition(t.id, "ENROLLMENT_CLOSED")
     _check_html("ENROLLMENT_CLOSED")
 
-    # CHECK_IN_OPEN
-    _status_transition(t.id, "CHECK_IN_OPEN")
-    _check_html("CHECK_IN_OPEN")
-
-    # Set instructor
+    # Set instructor BEFORE CHECK_IN_OPEN — GenerationValidator requires it
+    # (no auto-generated session may have instructor_id=NULL).
     _db.expire_all()
     t_obj = _db.query(Semester).filter(Semester.id == t.id).first()
     t_obj.master_instructor_id = instructor.id
     _db.commit()
     _db.expire_all()
+
+    # CHECK_IN_OPEN
+    _status_transition(t.id, "CHECK_IN_OPEN")
+    _check_html("CHECK_IN_OPEN")
 
     # IN_PROGRESS
     _status_transition(t.id, "IN_PROGRESS")

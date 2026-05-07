@@ -221,3 +221,38 @@ def decline_instructor_request(
     db.refresh(assignment_request)
 
     return assignment_request
+
+
+# ── Instructor prerequisite guard ─────────────────────────────────────────────
+
+def has_master_instructor_assignment(db: Session, tournament_id: int) -> bool:
+    """Return True if the tournament has a usable master instructor assignment.
+
+    Accepted sources (checked in order):
+    1. Semester.master_instructor_id — legacy field, non-NULL
+    2. TournamentInstructorSlot with role=MASTER and status != ABSENT
+
+    Args:
+        db: explicit SQLAlchemy session — no internal ORM state extraction.
+        tournament_id: Semester.id of the tournament.
+    """
+    from app.models.tournament_instructor_slot import (
+        TournamentInstructorSlot,
+        SlotRole,
+        SlotStatus,
+    )
+
+    tournament = db.query(Semester).filter(Semester.id == tournament_id).first()
+    if not tournament:
+        return False
+
+    if tournament.master_instructor_id:
+        return True
+
+    # SlotRole and SlotStatus are str enums — .value yields the stored string.
+    master_slot = db.query(TournamentInstructorSlot).filter(
+        TournamentInstructorSlot.semester_id == tournament_id,
+        TournamentInstructorSlot.role == SlotRole.MASTER.value,
+        TournamentInstructorSlot.status != SlotStatus.ABSENT.value,
+    ).first()
+    return master_slot is not None

@@ -1619,6 +1619,16 @@ class TestMultiRoundSessionGeneration:
         db.add(Pitch(campus_id=camp.id, pitch_number=1, name="Pálya A", capacity=22, is_active=True))
         db.flush()
 
+        instructor = User(
+            email=f"sess-instr-{uid}@lfa.com",
+            name="SESS Instructor",
+            password_hash=get_password_hash("pw"),
+            role=UserRole.INSTRUCTOR,
+            is_active=True,
+        )
+        db.add(instructor)
+        db.flush()
+
         code = f"SESS-{uuid.uuid4().hex[:8].upper()}"
         t = Semester(
             code=code,
@@ -1632,6 +1642,7 @@ class TestMultiRoundSessionGeneration:
             enrollment_cost=0,
             specialization_type="LFA_FOOTBALL_PLAYER",
             campus_id=camp.id,
+            master_instructor_id=instructor.id,
         )
         db.add(t)
         db.flush()
