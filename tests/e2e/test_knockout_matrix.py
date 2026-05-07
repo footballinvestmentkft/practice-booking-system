@@ -85,7 +85,34 @@ def _headers(token: str) -> Dict[str, str]:
 # ── OPS lifecycle helpers ──────────────────────────────────────────────────────
 
 def _get_or_create_campus_ids(token: str) -> list:
-    """Return a list with at least one valid campus ID (required by OPS endpoint)."""
+    """Return a list with at least one valid campus ID that has active pitches."""
+    # Query DB directly for first active campus with ≥1 active pitch (domain invariant).
+    # This avoids picking a campus that happens to sort first in the API response but
+    # has no pitches — which would cause session generation to fail.
+    try:
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker
+        from app.models.campus import Campus
+        from app.models.pitch import Pitch
+        from app.config import settings
+
+        engine = create_engine(settings.DATABASE_URL)
+        _Session = sessionmaker(bind=engine)
+        db = _Session()
+        try:
+            campus = (
+                db.query(Campus)
+                .join(Pitch, (Pitch.campus_id == Campus.id) & (Pitch.is_active == True))
+                .filter(Campus.is_active == True)
+                .first()
+            )
+            if campus:
+                return [campus.id]
+        finally:
+            db.close()
+    except Exception:
+        pass  # fall through to API-based creation
+
     headers = _headers(token)
     resp = requests.get(f"{_API_URL}/api/v1/campuses", headers=headers, timeout=10)
     if resp.status_code == 200:
