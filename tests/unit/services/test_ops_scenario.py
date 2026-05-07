@@ -3673,12 +3673,16 @@ class TestOpsScenarioIntegration:
 
     def _create_campus(self, db, location_id):
         from app.models.campus import Campus
+        from app.models.pitch import Pitch
         campus = Campus(
             location_id=location_id,
             name="Test Campus",
             is_active=True,
         )
         db.add(campus); db.commit(); db.refresh(campus)
+        # Session generation requires ≥1 active pitch on the campus (domain invariant)
+        db.add(Pitch(campus_id=campus.id, pitch_number=1, name="Pálya A", capacity=22, is_active=True))
+        db.commit()
         return campus
 
     def _create_player_with_license(self, db, idx):
