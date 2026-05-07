@@ -103,14 +103,16 @@ class TestAddSlotMasterSync:
 
         db.query.side_effect = query_side
 
-        result = add_slot(
-            db=db,
-            semester_id=1,
-            instructor_id=42,
-            role=SlotRole.MASTER.value,
-            pitch_id=None,
-            assigned_by_id=1,
-        )
+        _elig = "app.services.tournament.instructor_eligibility_service.is_eligible_master_instructor"
+        with patch(_elig, return_value=(True, "")):
+            result = add_slot(
+                db=db,
+                semester_id=1,
+                instructor_id=42,
+                role=SlotRole.MASTER.value,
+                pitch_id=None,
+                assigned_by_id=1,
+            )
 
         # master_instructor_id must be set on the tournament object
         assert tournament.master_instructor_id == 42
@@ -144,14 +146,16 @@ class TestAddSlotMasterSync:
         db = MagicMock()
         db.query.side_effect = query_side
 
-        add_slot(
-            db=db,
-            semester_id=1,
-            instructor_id=55,
-            role=SlotRole.FIELD.value,
-            pitch_id=10,
-            assigned_by_id=1,
-        )
+        _elig = "app.services.tournament.instructor_eligibility_service.is_eligible_field_instructor"
+        with patch(_elig, return_value=(True, "")):
+            add_slot(
+                db=db,
+                semester_id=1,
+                instructor_id=55,
+                role=SlotRole.FIELD.value,
+                pitch_id=10,
+                assigned_by_id=1,
+            )
 
         # FIELD slot must NOT touch master_instructor_id
         assert tournament.master_instructor_id == 99
