@@ -779,12 +779,14 @@ def test_idempotency(club, campus, tt_id, instructor):
     # Fast-track to IN_PROGRESS
     _status_transition(t.id, "ENROLLMENT_OPEN")
     _status_transition(t.id, "ENROLLMENT_CLOSED")
-    _status_transition(t.id, "CHECK_IN_OPEN")
+    # Set instructor BEFORE CHECK_IN_OPEN — GenerationValidator requires it
+    # (no auto-generated session may have instructor_id=NULL).
     _db.expire_all()
     t_obj = _db.query(Semester).filter(Semester.id == t.id).first()
     t_obj.master_instructor_id = instructor.id
     _db.commit()
     _db.expire_all()
+    _status_transition(t.id, "CHECK_IN_OPEN")
     _status_transition(t.id, "IN_PROGRESS")
 
     sess_count = _db.query(SessionModel).filter(SessionModel.semester_id == t.id).count()
@@ -923,16 +925,17 @@ def test_public_api_strict(club, campus, tt_id, instructor):
     _status_transition(t.id, "ENROLLMENT_CLOSED")
     _check_html("ENROLLMENT_CLOSED")
 
-    # CHECK_IN_OPEN
-    _status_transition(t.id, "CHECK_IN_OPEN")
-    _check_html("CHECK_IN_OPEN")
-
-    # Set instructor
+    # Set instructor BEFORE CHECK_IN_OPEN — GenerationValidator requires it
+    # (no auto-generated session may have instructor_id=NULL).
     _db.expire_all()
     t_obj = _db.query(Semester).filter(Semester.id == t.id).first()
     t_obj.master_instructor_id = instructor.id
     _db.commit()
     _db.expire_all()
+
+    # CHECK_IN_OPEN
+    _status_transition(t.id, "CHECK_IN_OPEN")
+    _check_html("CHECK_IN_OPEN")
 
     # IN_PROGRESS
     _status_transition(t.id, "IN_PROGRESS")
