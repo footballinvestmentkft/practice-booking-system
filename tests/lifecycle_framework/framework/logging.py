@@ -68,7 +68,18 @@ class SilentLogger:
 
 
 class TimedStep:
-    """Context manager that records elapsed time and logs a TransitionEvent."""
+    """Context manager that records elapsed time and logs a TransitionEvent.
+
+    On success: caller calls step.ok(detail) explicitly.
+    On exception: __exit__ automatically logs a fail event with the exception
+                  message, then returns False so the exception propagates.
+                  The exception is NEVER swallowed.
+
+    Usage:
+        with TimedStep("my_step", logger) as step:
+            do_work()
+            step.ok("work done")
+    """
 
     def __init__(self, name: str, logger: ScenarioLogger) -> None:
         self._name = name
@@ -88,4 +99,11 @@ class TimedStep:
         self._logger.log(TransitionEvent(self._name, "fail", elapsed, detail))
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        return False
+        if exc_type is not None:
+            # Auto-log a fail event so the summary accurately reflects the failure.
+            # The exception is NOT suppressed — it propagates after logging.
+            elapsed = (time.perf_counter() - self._start) * 1000
+            self._logger.log(
+                TransitionEvent(self._name, "fail", elapsed, str(exc_val))
+            )
+        return False  # never swallow exceptions

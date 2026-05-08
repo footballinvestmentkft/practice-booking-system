@@ -16,12 +16,21 @@ from ..framework.transitions import (
     direct_assign_instructor,
     accept_instructor_assignment,
     enroll_players,
+    set_schedule_config,
+    set_reward_config,
 )
 from .base import ScenarioConfig, ScenarioResult, ScenarioRunner
 
 
 class H2HKnockoutStrategy:
-    """ScenarioStrategy for HEAD_TO_HEAD knockout tournaments."""
+    """ScenarioStrategy for HEAD_TO_HEAD knockout tournaments.
+
+    Owns ALL format-specific configuration:
+      - Instructor: direct-assign + accept
+      - Schedule config: set in extra_pre_checkin_steps (required before CHECK_IN_OPEN)
+      - Reward config: set in extra_pre_in_progress_steps (required before IN_PROGRESS)
+      - Session completion: H2HResultStrategy (check-in + head-to-head-results)
+    """
 
     def setup_instructor(
         self,
@@ -59,7 +68,15 @@ class H2HKnockoutStrategy:
         auth: AuthContext,
         tournament_id: int,
     ) -> None:
-        """No extra steps needed for H2H knockout."""
+        """Set schedule config — required before CHECK_IN_OPEN (SCHEDULE_CONFIG_MISSING guard)."""
+        set_schedule_config(
+            cfg.base_url,
+            auth.admin_token,
+            tournament_id,
+            match_duration_minutes=cfg.match_duration_minutes,
+            break_duration_minutes=cfg.break_duration_minutes,
+            parallel_fields=cfg.parallel_fields,
+        )
 
     def extra_pre_in_progress_steps(
         self,
@@ -67,7 +84,12 @@ class H2HKnockoutStrategy:
         auth: AuthContext,
         tournament_id: int,
     ) -> None:
-        """No extra steps needed for H2H knockout."""
+        """Set reward config — required before IN_PROGRESS (REWARD_CONFIG_MISSING guard)."""
+        set_reward_config(
+            cfg.base_url,
+            auth.admin_token,
+            tournament_id,
+        )
 
     def complete_sessions(
         self,

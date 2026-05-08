@@ -9,8 +9,8 @@ raises PreflightError with actionable messages on failure.
 """
 from __future__ import annotations
 
-import inspect
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Callable, Optional
 
@@ -70,31 +70,62 @@ _AGE_GROUP_REQUIRED_LEVEL: dict[str, int] = {
 }
 
 
+def _to_utc_aware(dt: datetime) -> datetime:
+    """Treat naive datetimes as UTC — mirrors instructor_eligibility_service._to_utc_aware()."""
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def _get_active_coach_license(db, user_id: int):
+    """Return an active, non-expired LFA_COACH license or None.
+
+    Mirrors the three conditions enforced by instructor_eligibility_service:
+      1. specialization_type == 'LFA_COACH'
+      2. is_active == True
+      3. expires_at IS NULL OR expires_at > now(UTC)
+    """
+    from app.models.license import UserLicense
+
+    now_utc = datetime.now(timezone.utc)
+    candidates = (
+        db.query(UserLicense)
+        .filter(
+            UserLicense.user_id == user_id,
+            UserLicense.specialization_type == "LFA_COACH",
+            UserLicense.is_active == True,  # noqa: E712
+        )
+        .all()
+    )
+    for lic in candidates:
+        if lic.expires_at is None:
+            return lic
+        expires = _to_utc_aware(lic.expires_at)
+        if expires > now_utc:
+            return lic
+    return None
+
+
 def _check_instructor_lfa_coach(
     instructor_email: str,
 ) -> Callable[[], tuple[bool, str]]:
     def _check() -> tuple[bool, str]:
         from app.database import SessionLocal
         from app.models.user import User as UserModel
-        from app.models.license import UserLicense
 
         db = SessionLocal()
         try:
             user = db.query(UserModel).filter(UserModel.email == instructor_email).first()
             if not user:
                 return False, f"{instructor_email} not in DB"
-            lic = (
-                db.query(UserLicense)
-                .filter(
-                    UserLicense.user_id == user.id,
-                    UserLicense.specialization_type == "LFA_COACH",
-                    UserLicense.is_active == True,  # noqa: E712
-                )
-                .first()
-            )
+            lic = _get_active_coach_license(db, user.id)
             if not lic:
-                return False, f"{instructor_email} has no active LFA_COACH license"
-            return True, f"LFA_COACH level={lic.current_level}"
+                return (
+                    False,
+                    f"{instructor_email} has no active, non-expired LFA_COACH license",
+                )
+            expiry = f"expires_at={lic.expires_at}" if lic.expires_at else "no expiry"
+            return True, f"LFA_COACH level={lic.current_level} ({expiry})"
         finally:
             db.close()
 
@@ -110,24 +141,15 @@ def _check_instructor_level(
     def _check() -> tuple[bool, str]:
         from app.database import SessionLocal
         from app.models.user import User as UserModel
-        from app.models.license import UserLicense
 
         db = SessionLocal()
         try:
             user = db.query(UserModel).filter(UserModel.email == instructor_email).first()
             if not user:
                 return False, f"{instructor_email} not in DB"
-            lic = (
-                db.query(UserLicense)
-                .filter(
-                    UserLicense.user_id == user.id,
-                    UserLicense.specialization_type == "LFA_COACH",
-                    UserLicense.is_active == True,  # noqa: E712
-                )
-                .first()
-            )
+            lic = _get_active_coach_license(db, user.id)
             if not lic:
-                return False, "no active LFA_COACH license"
+                return False, "no active, non-expired LFA_COACH license"
             if lic.current_level >= required:
                 return True, f"level={lic.current_level} ≥ required={required} for {age_group}"
             return (
@@ -172,7 +194,8 @@ def _check_active_pitch() -> Callable[[], tuple[bool, str]]:
             finally:
                 db.close()
         except ImportError:
-            return True, "Pitch model not available — skipped"
+            # ImportError means Pitch model path changed — treat as unknown, not OK.
+            return False, "Pitch model not importable — verify app.models.pitch path"
 
     return _check
 
@@ -225,7 +248,10 @@ class PreflightChecker:
         passed: list[str] = []
 
         for dep in self._registry.all_auto():
-            assert dep.check_fn is not None
+            if dep.check_fn is None:
+                raise ValueError(
+                    f"HiddenDependency '{dep.name}' has AUTO detection but check_fn is None"
+                )
             try:
                 ok, detail = dep.check_fn()
             except Exception as exc:
@@ -234,7 +260,7 @@ class PreflightChecker:
             if ok:
                 passed.append(f"{dep.name}: {detail}")
             else:
-                msg = f"{detail}"
+                msg = detail
                 if dep.remediation:
                     msg += f" — {dep.remediation}"
                 if fail_fast and dep.severity == Severity.CRITICAL:
@@ -242,10 +268,7 @@ class PreflightChecker:
                 failures.append(f"[{dep.severity.value}] {dep.name}: {msg}")
 
         if failures:
-            raise PreflightError(
-                "preflight",
-                "\n".join(failures),
-            )
+            raise PreflightError("preflight", "\n".join(failures))
         return passed
 
 
@@ -256,13 +279,15 @@ def build_standard_registry(
     min_players: int = 4,
 ) -> HiddenDependencyRegistry:
     """Build a registry pre-loaded with the standard H2H knockout hidden deps."""
+    required_level = _AGE_GROUP_REQUIRED_LEVEL.get(age_group.upper(), "?")
     reg = HiddenDependencyRegistry()
 
     reg.register(HiddenDependency(
         name="instructor_lfa_coach_license",
         description=(
-            "Instructor must have an active LFA_COACH UserLicense. "
-            "Direct-assign-instructor and accept both enforce this."
+            f"Instructor must have an active, non-expired LFA_COACH UserLicense "
+            f"(is_active=True AND expires_at IS NULL OR > now). "
+            f"Mirrors instructor_eligibility_service policy."
         ),
         severity=Severity.CRITICAL,
         detection_mode=DetectionMode.AUTO,
@@ -273,8 +298,8 @@ def build_standard_registry(
     reg.register(HiddenDependency(
         name="instructor_coach_level",
         description=(
-            f"Instructor LFA_COACH level must be ≥ {_AGE_GROUP_REQUIRED_LEVEL.get(age_group.upper(), '?')} "
-            f"for age_group={age_group}."
+            f"Instructor LFA_COACH level must be ≥ {required_level} "
+            f"for age_group={age_group}. Uses same active+non-expired license."
         ),
         severity=Severity.CRITICAL,
         detection_mode=DetectionMode.AUTO,

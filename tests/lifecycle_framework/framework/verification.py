@@ -52,7 +52,10 @@ class ApiVerifier:
                 timeout=15,
             )
             data = require_ok(resp, "api:tournament_status")
-            status = data.get("tournament_status") or data.get("status")
+            # Explicit None check — avoid falsy-string fall-through via `or`.
+            status = data.get("tournament_status")
+            if status is None:
+                status = data.get("status")
             if status == "REWARDS_DISTRIBUTED":
                 result.passed.append(f"tournament_status = {status}")
             else:
@@ -113,8 +116,17 @@ class DbVerifier:
     """Verifies business invariants directly in the database.
 
     Uses only business-observable state, not implementation-internal flags.
-    Session completion is verified via reward_policy_snapshot + ranking coverage,
-    not session_status (which is an internal state machine detail).
+    Session completion is NOT checked directly here — the lifecycle guard
+    (check_pre_completed → SESSIONS_INCOMPLETE) already enforces it, and
+    ranking_coverage is the business-observable proxy: if TournamentRanking
+    records exist for all enrolled players, sessions were necessarily completed.
+    The API-observable proxy (result_submitted=True) is verified by ApiVerifier.
+
+    Checks (4):
+      1. tournament_status = REWARDS_DISTRIBUTED
+      2. reward_policy_snapshot IS NOT NULL  (SNAPSHOT_MISSING guard passed)
+      3. TournamentRanking count ≥ enrolled  (RANKINGS_INCOMPLETE guard passed)
+      4. TournamentParticipation count ≥ enrolled  (PARTICIPATION_RECORDS_MISSING guard passed)
     """
 
     def verify_rewards_distributed(
@@ -125,9 +137,8 @@ class DbVerifier:
         result = VerificationResult()
         self._check_tournament_status(tournament_id, result)
         self._check_reward_snapshot(tournament_id, result)
-        self._check_sessions_complete(tournament_id, result)
         self._check_ranking_coverage(tournament_id, enrolled_count, result)
-        self._check_participation_records(tournament_id, result)
+        self._check_participation_records(tournament_id, result, enrolled_count)
         return result
 
     def _check_tournament_status(self, tid: int, result: VerificationResult) -> None:
@@ -174,36 +185,6 @@ class DbVerifier:
         except Exception as exc:
             result.failed.append(f"db:reward_policy_snapshot check raised: {exc}")
 
-    def _check_sessions_complete(self, tid: int, result: VerificationResult) -> None:
-        try:
-            from app.database import SessionLocal
-            from app.models.session import Session as SessionModel, EventCategory
-
-            db = SessionLocal()
-            try:
-                incomplete = (
-                    db.query(SessionModel)
-                    .filter(
-                        SessionModel.semester_id == tid,
-                        SessionModel.auto_generated == True,  # noqa: E712
-                        SessionModel.event_category == EventCategory.MATCH,
-                        SessionModel.session_status != "completed",
-                    )
-                    .count()
-                )
-                if incomplete == 0:
-                    result.passed.append(
-                        "db:all auto-generated MATCH sessions have session_status='completed'"
-                    )
-                else:
-                    result.failed.append(
-                        f"db:{incomplete} auto-generated MATCH session(s) not completed"
-                    )
-            finally:
-                db.close()
-        except Exception as exc:
-            result.failed.append(f"db:sessions_complete check raised: {exc}")
-
     def _check_ranking_coverage(
         self, tid: int, enrolled_count: int, result: VerificationResult
     ) -> None:
@@ -231,7 +212,9 @@ class DbVerifier:
         except Exception as exc:
             result.failed.append(f"db:ranking_coverage check raised: {exc}")
 
-    def _check_participation_records(self, tid: int, result: VerificationResult) -> None:
+    def _check_participation_records(
+        self, tid: int, result: VerificationResult, enrolled_count: int = 0
+    ) -> None:
         try:
             from app.database import SessionLocal
             from app.models.tournament_achievement import TournamentParticipation
@@ -243,15 +226,22 @@ class DbVerifier:
                     .filter(TournamentParticipation.semester_id == tid)
                     .count()
                 )
-                if count > 0:
-                    result.passed.append(f"db:TournamentParticipation count = {count}")
+                if count >= max(enrolled_count, 1):
+                    result.passed.append(
+                        f"db:TournamentParticipation count = {count}"
+                        + (f" (≥ enrolled {enrolled_count})" if enrolled_count else "")
+                    )
                 else:
                     result.failed.append(
-                        "db:TournamentParticipation count = 0 — PARTICIPATION_RECORDS_MISSING"
+                        f"db:TournamentParticipation count = {count}, "
+                        f"expected ≥ {enrolled_count} — PARTICIPATION_RECORDS_MISSING"
                     )
             finally:
                 db.close()
         except ImportError:
-            result.passed.append("db:TournamentParticipation skipped (not importable)")
+            # ImportError means model path changed — treat as unknown failure.
+            result.failed.append(
+                "db:TournamentParticipation not importable — verify app.models.tournament_achievement"
+            )
         except Exception as exc:
             result.failed.append(f"db:participation_records check raised: {exc}")

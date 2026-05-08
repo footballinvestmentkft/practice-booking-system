@@ -76,11 +76,12 @@ def resolve_campus(
 
 def resolve_players_db(
     email_pattern: str = "lfa-adult-%@lfa.com",
-    password: str = "Bootstrap#123",
     count: int = 4,
-    base_url: str = "http://localhost:8000",
 ) -> list[PlayerFixture]:
-    """Resolve seed players via direct DB query + login for token capture.
+    """Resolve seed players via direct DB query.
+
+    Returns PlayerFixture list (id + email). Token acquisition is the caller's
+    responsibility — call login(base_url, player.email, password) per player.
 
     Direct DB is required because the users list API rejects .test-TLD emails
     created by other seed scripts (Pydantic EmailStr validation).

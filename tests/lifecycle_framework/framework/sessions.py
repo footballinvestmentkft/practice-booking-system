@@ -6,7 +6,7 @@ from typing import Protocol
 
 import requests
 
-from ._http import require_ok
+from ._http import LifecycleError, require_ok
 
 
 class SessionCompletionStrategy(Protocol):
@@ -52,14 +52,26 @@ class H2HResultStrategy:
 
         headers = {"Authorization": f"Bearer {instructor_token}"}
 
-        # Check in (400 is acceptable if already in_progress)
+        # Check in
         resp = requests.post(
             f"{base_url}/api/v1/sessions/{session_id}/check-in",
             headers=headers,
             json={},
             timeout=15,
         )
-        if resp.status_code not in (200, 201, 400):
+        if resp.status_code == 400:
+            # FRAGILE: 400 is accepted ONLY when the detail indicates the session is
+            # already in_progress. Any other 400 (wrong instructor, not found, etc.)
+            # must surface as LifecycleError. String-match is a pragmatic compromise —
+            # the proper fix is an error-code field on the API response.
+            try:
+                detail = str(resp.json().get("detail", resp.text))
+            except Exception:
+                detail = resp.text
+            if "in_progress" in detail.lower() or "already" in detail.lower():
+                return True  # already checked in — acceptable, continue to results
+            raise LifecycleError(f"session:{session_id}:check-in", 400, detail)
+        elif resp.status_code not in (200, 201):
             require_ok(resp, f"session:{session_id}:check-in")
 
         # Submit HEAD_TO_HEAD results — participant[0] wins 2-0 (deterministic)
