@@ -50,6 +50,7 @@ class ScenarioConfig:
     match_duration_minutes: int = 90
     break_duration_minutes: int = 15
     parallel_fields: int = 1
+    participant_type: str = "INDIVIDUAL"
 
 
 @dataclass
@@ -281,6 +282,7 @@ class ScenarioRunner:
                 max_players=cfg.max_players,
                 enrollment_cost=cfg.enrollment_cost,
                 campus_ids=[campus.id],
+                participant_type=cfg.participant_type,
             )
             tid = data["tournament_id"]
             step.ok(f"id={tid} → SEEKING_INSTRUCTOR")

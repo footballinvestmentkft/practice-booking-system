@@ -23,6 +23,7 @@ from .checkin import router as checkin_router  # ✅ Pre-tournament check-in (re
 from .ops_scenario import router as ops_scenario_router  # ✅ OPS scenario endpoint (split from generator.py)
 from .lifecycle_instructor import router as lifecycle_instructor_router  # ✅ Cycle 2 instructor assignment (split from lifecycle.py)
 from .lifecycle_updates import router as lifecycle_updates_router        # ✅ Admin tournament update (split from lifecycle.py)
+from .team_enrollment import router as team_enrollment_router            # ✅ Admin team enrollment (automation path)
 
 # Combine all tournament routers
 router = APIRouter()
@@ -47,5 +48,6 @@ router.include_router(generate_sessions_router)  # ✅ Session generation with a
 router.include_router(ops_scenario_router)  # ✅ OPS scenario endpoint (admin-only)
 router.include_router(lifecycle_instructor_router)  # ✅ Cycle 2: assign-instructor, instructor/accept, instructor/decline
 router.include_router(lifecycle_updates_router)     # ✅ Admin PATCH /{id}: tournament field updates
+router.include_router(team_enrollment_router)        # ✅ Admin team enrollment (automation path)
 
 __all__ = ["router"]

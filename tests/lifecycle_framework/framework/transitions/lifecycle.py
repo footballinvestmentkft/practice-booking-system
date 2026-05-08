@@ -23,6 +23,7 @@ def create_tournament(
     campus_ids: list[int] | None = None,
     dry_run: bool = False,
     confirmed: bool = False,
+    participant_type: str = "INDIVIDUAL",
 ) -> dict:
     """POST /api/v1/tournaments/ops/run-scenario and return the response dict."""
     payload: dict = {
@@ -38,6 +39,7 @@ def create_tournament(
         "initial_tournament_status": initial_tournament_status,
         "dry_run": dry_run,
         "confirmed": confirmed,
+        "participant_type": participant_type,
     }
     if campus_ids is not None:
         payload["campus_ids"] = campus_ids

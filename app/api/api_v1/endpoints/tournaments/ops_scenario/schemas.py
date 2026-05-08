@@ -126,6 +126,14 @@ class OpsScenarioRequest(BaseModel):
             "False: Skip session generation (manual mode for instructor assignment tests)."
         ),
     )
+    participant_type: str = Field(
+        "INDIVIDUAL",
+        description=(
+            "Participant type for the tournament: 'INDIVIDUAL' or 'TEAM'. "
+            "Default: 'INDIVIDUAL' (all existing callers are unaffected). "
+            "Set to 'TEAM' to create a team-based tournament (TeamLeagueScenario prerequisite)."
+        ),
+    )
 
 
 class OpsScenarioResponse(BaseModel):
