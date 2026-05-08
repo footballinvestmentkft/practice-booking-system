@@ -47,6 +47,18 @@ class GenerationValidator:
         else:
             return False, f"Invalid tournament format: {tournament.format}"
 
+        # ✅ Instructor prerequisite — applies to ALL formats.
+        # session_generator assigns instructor_id via: FIELD-slot per pitch OR master_instructor_id.
+        # If neither is set, every generated session gets instructor_id=NULL — a domain invariant
+        # violation.  Guard here (before enrollment count) so the error is attributable and clear.
+        # Eligibility (license + level) is also checked — not just assignment presence.
+        from app.services.tournament.instructor_eligibility_service import (
+            check_tournament_master_instructor_eligible,
+        )
+        eligible, reason = check_tournament_master_instructor_eligible(self.db, tournament_id)
+        if not eligible:
+            return False, f"Cannot generate sessions: {reason}"
+
         # Check if enrollment is closed (tournament status must be CHECK_IN_OPEN or later)
         if tournament.tournament_status not in ["CHECK_IN_OPEN", "IN_PROGRESS", "COMPLETED"]:
             return False, f"Tournament not ready for session generation. Current status: {tournament.tournament_status}. Sessions can only be generated when status is CHECK_IN_OPEN or later."

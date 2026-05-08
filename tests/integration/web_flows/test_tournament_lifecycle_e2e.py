@@ -73,6 +73,7 @@ from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 from app.models.location import Location, LocationType
 from app.models.campus import Campus
 from app.models.pitch import Pitch
+from app.models.license import UserLicense
 from tests.factories.game_factory import PlayerFactory, TournamentFactory
 
 
@@ -802,7 +803,9 @@ class TestTournamentFullLifecycleFlow:
             reward_config=_LC_REWARD_CONFIG,
         ))
 
-        # Add one session (required by status_validator for IN_PROGRESS → COMPLETED)
+        # Add one session (required by status_validator for IN_PROGRESS → COMPLETED).
+        # session_status must be "completed" — check_pre_completed blocks COMPLETED
+        # transitions when any auto-generated MATCH session is not yet finished.
         test_db.add(SessionModel(
             title="FLOW-01 Match",
             semester_id=t.id,
@@ -812,6 +815,7 @@ class TestTournamentFullLifecycleFlow:
             event_category=EventCategory.MATCH,
             match_format="INDIVIDUAL_RANKING",
             auto_generated=True,
+            session_status="completed",
         ))
         test_db.flush()
 
@@ -1619,6 +1623,26 @@ class TestMultiRoundSessionGeneration:
         db.add(Pitch(campus_id=camp.id, pitch_number=1, name="Pálya A", capacity=22, is_active=True))
         db.flush()
 
+        instructor = User(
+            email=f"sess-instr-{uid}@lfa.com",
+            name="SESS Instructor",
+            password_hash=get_password_hash("pw"),
+            role=UserRole.INSTRUCTOR,
+            is_active=True,
+        )
+        db.add(instructor)
+        db.flush()
+        db.add(UserLicense(
+            user_id=instructor.id,
+            specialization_type="LFA_COACH",
+            current_level=7,
+            max_achieved_level=7,
+            is_active=True,
+            started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+            expires_at=None,
+        ))
+        db.flush()
+
         code = f"SESS-{uuid.uuid4().hex[:8].upper()}"
         t = Semester(
             code=code,
@@ -1632,6 +1656,7 @@ class TestMultiRoundSessionGeneration:
             enrollment_cost=0,
             specialization_type="LFA_FOOTBALL_PLAYER",
             campus_id=camp.id,
+            master_instructor_id=instructor.id,
         )
         db.add(t)
         db.flush()

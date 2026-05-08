@@ -410,6 +410,25 @@ def _seed_users(db) -> tuple:
         db.flush()
         _ok(f"Instructor user created: instructor@lfa.com / instructor123 (id={instr.id})")
 
+    # Ensure instructor has an active LFA_COACH license (required by eligibility checks)
+    coach_lic = db.query(UserLicense).filter(
+        UserLicense.user_id == instr.id,
+        UserLicense.specialization_type == "LFA_COACH",
+    ).first()
+    if coach_lic:
+        _skip(f"LFA_COACH license for 'instructor@lfa.com' already exists")
+    else:
+        db.add(UserLicense(
+            user_id=instr.id,
+            specialization_type="LFA_COACH",
+            current_level=5,
+            max_achieved_level=5,
+            is_active=True,
+            started_at=datetime.now(),
+        ))
+        db.flush()
+        _ok(f"LFA_COACH license created for instructor@lfa.com (level=5)")
+
     return admin, instr
 
 

@@ -12,7 +12,7 @@ Sponsor Campaign → Promotion Event — P4 integration tests (SPON-CAM-08..13)
 DONE = pytest tests/integration/web_flows/test_sponsor_campaign_promotion.py -v
 """
 import uuid
-from datetime import date
+from datetime import date, datetime, timezone
 
 import pytest
 from fastapi.testclient import TestClient
@@ -26,6 +26,7 @@ from app.models.sponsor import Sponsor, SponsorAudienceEntry, SponsorCampaign
 from app.models.semester import Semester
 from app.models.tournament_configuration import TournamentConfiguration
 from app.models.club import CsvImportLog
+from app.models.license import UserLicense
 from app.core.security import get_password_hash
 from app.services.sponsor_promote_service import promote_entries
 
@@ -357,3 +358,231 @@ class TestClubEventNoCampaign:
         assert sem.organizer_campaign_id is None
         assert sem.organizer_club_id == club.id
         assert sem.organizer_sponsor_id is None
+
+
+# ── Instructor wizard helpers ──────────────────────────────────────────────────
+
+def _make_instructor(db: Session, *, is_active: bool = True) -> User:
+    u = User(
+        email=f"instr+{uuid.uuid4().hex[:8]}@lfa.com",
+        name=f"Instructor {uuid.uuid4().hex[:4]}",
+        password_hash=get_password_hash("pw"),
+        role=UserRole.INSTRUCTOR,
+        is_active=is_active,
+    )
+    db.add(u)
+    db.flush()
+    return u
+
+
+def _make_coach_license(db: Session, user: User, *, level: int = 5) -> UserLicense:
+    lic = UserLicense(
+        user_id=user.id,
+        specialization_type="LFA_COACH",
+        current_level=level,
+        max_achieved_level=level,
+        is_active=True,
+        started_at=datetime.now(timezone.utc),
+    )
+    db.add(lic)
+    db.flush()
+    return lic
+
+
+# ── SPON-CAM-14 ───────────────────────────────────────────────────────────────
+
+class TestWizardGetContainsInstructorDropdown:
+    """SPON-CAM-14: GET wizard renders master_instructor_id select with active instructors."""
+
+    def test_spon_cam_14_dropdown_present_with_instructors(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db, admin)
+        _make_campaign(test_db, sponsor, admin)
+        instr = _make_instructor(test_db)
+        _make_coach_license(test_db, instr)
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.get(f"/admin/sponsors/{sponsor.id}/promotion", follow_redirects=False)
+            assert resp.status_code == 200
+            html = resp.text
+            assert 'name="master_instructor_id"' in html
+            assert f'value="{instr.id}"' in html
+            assert instr.email in html
+            assert "assign later" in html
+            assert "CHECK_IN_OPEN" in html
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── SPON-CAM-15 ───────────────────────────────────────────────────────────────
+
+class TestWizardPostNoInstructorCreatesNullMasterId:
+    """SPON-CAM-15: POST with empty master_instructor_id → Semester created with master_instructor_id=None."""
+
+    def test_spon_cam_15_empty_instructor_id_accepted(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db, admin)
+        campaign = _make_campaign(test_db, sponsor, admin)
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.post(
+                f"/admin/sponsors/{sponsor.id}/promotion",
+                data={
+                    "campaign_id": str(campaign.id),
+                    "tournament_name": "CAM-15 Event",
+                    "start_date": "2026-06-01",
+                    "end_date": "2026-06-02",
+                    "age_groups": "AMATEUR",
+                    # master_instructor_id intentionally omitted
+                },
+                follow_redirects=False,
+            )
+            assert resp.status_code == 303
+
+            sem = (
+                test_db.query(Semester)
+                .filter(Semester.organizer_sponsor_id == sponsor.id)
+                .first()
+            )
+            assert sem is not None
+            assert sem.master_instructor_id is None
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── SPON-CAM-16 ───────────────────────────────────────────────────────────────
+
+class TestWizardPostValidInstructorSetsMasterId:
+    """SPON-CAM-16: POST with valid instructor ID → Semester.master_instructor_id == instructor.id."""
+
+    def test_spon_cam_16_valid_instructor_id_saved(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db, admin)
+        campaign = _make_campaign(test_db, sponsor, admin)
+        instr = _make_instructor(test_db)
+        _make_coach_license(test_db, instr)
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        try:
+            resp = client.post(
+                f"/admin/sponsors/{sponsor.id}/promotion",
+                data={
+                    "campaign_id": str(campaign.id),
+                    "tournament_name": "CAM-16 Event",
+                    "start_date": "2026-06-01",
+                    "end_date": "2026-06-02",
+                    "age_groups": "AMATEUR",
+                    "master_instructor_id": str(instr.id),
+                },
+                follow_redirects=False,
+            )
+            assert resp.status_code == 303
+
+            sem = (
+                test_db.query(Semester)
+                .filter(Semester.organizer_sponsor_id == sponsor.id)
+                .first()
+            )
+            assert sem is not None
+            assert sem.master_instructor_id == instr.id
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── SPON-CAM-17 ───────────────────────────────────────────────────────────────
+
+class TestWizardPostInvalidInstructorIdRejected:
+    """SPON-CAM-17: POST with non-existent or non-instructor user ID → 303 error, no Semester created."""
+
+    def test_spon_cam_17_nonexistent_id_returns_error(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db, admin)
+        campaign = _make_campaign(test_db, sponsor, admin)
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        semesters_before = test_db.query(Semester).count()
+        try:
+            resp = client.post(
+                f"/admin/sponsors/{sponsor.id}/promotion",
+                data={
+                    "campaign_id": str(campaign.id),
+                    "tournament_name": "CAM-17 Event",
+                    "start_date": "2026-06-01",
+                    "end_date": "2026-06-02",
+                    "age_groups": "AMATEUR",
+                    "master_instructor_id": "999999",
+                },
+                follow_redirects=False,
+            )
+            assert resp.status_code == 303
+            assert "error" in resp.headers["location"]
+            assert test_db.query(Semester).count() == semesters_before
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_spon_cam_17b_admin_role_user_rejected(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db, admin)
+        campaign = _make_campaign(test_db, sponsor, admin)
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        semesters_before = test_db.query(Semester).count()
+        try:
+            resp = client.post(
+                f"/admin/sponsors/{sponsor.id}/promotion",
+                data={
+                    "campaign_id": str(campaign.id),
+                    "tournament_name": "CAM-17b Event",
+                    "start_date": "2026-06-01",
+                    "end_date": "2026-06-02",
+                    "age_groups": "AMATEUR",
+                    "master_instructor_id": str(admin.id),  # ADMIN role, not INSTRUCTOR
+                },
+                follow_redirects=False,
+            )
+            assert resp.status_code == 303
+            assert "error" in resp.headers["location"]
+            assert test_db.query(Semester).count() == semesters_before
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── SPON-CAM-18 ───────────────────────────────────────────────────────────────
+
+class TestWizardPostInactiveInstructorRejected:
+    """SPON-CAM-18: POST with inactive INSTRUCTOR user ID → 303 error, no Semester created."""
+
+    def test_spon_cam_18_inactive_instructor_rejected(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db, admin)
+        campaign = _make_campaign(test_db, sponsor, admin)
+        inactive_instr = _make_instructor(test_db, is_active=False)
+        test_db.commit()
+
+        client = _client(test_db, admin)
+        semesters_before = test_db.query(Semester).count()
+        try:
+            resp = client.post(
+                f"/admin/sponsors/{sponsor.id}/promotion",
+                data={
+                    "campaign_id": str(campaign.id),
+                    "tournament_name": "CAM-18 Event",
+                    "start_date": "2026-06-01",
+                    "end_date": "2026-06-02",
+                    "age_groups": "AMATEUR",
+                    "master_instructor_id": str(inactive_instr.id),
+                },
+                follow_redirects=False,
+            )
+            assert resp.status_code == 303
+            assert "error" in resp.headers["location"]
+            assert test_db.query(Semester).count() == semesters_before
+        finally:
+            app.dependency_overrides.clear()

@@ -24,6 +24,7 @@ from app.main import app
 from app.database import engine, get_db
 from app.dependencies import get_current_user_web
 from app.models.user import User, UserRole
+from app.models.license import UserLicense
 from app.models.campus import Campus
 from app.models.location import Location
 from app.models.pitch import Pitch
@@ -78,6 +79,17 @@ def _user(db: Session, role: UserRole = UserRole.INSTRUCTOR) -> User:
     )
     db.add(u)
     db.flush()
+    if role == UserRole.INSTRUCTOR:
+        db.add(UserLicense(
+            user_id=u.id,
+            specialization_type="LFA_COACH",
+            current_level=7,
+            max_achieved_level=7,
+            is_active=True,
+            started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+            expires_at=None,
+        ))
+        db.flush()
     return u
 
 

@@ -17,7 +17,12 @@ from ....models.sponsor import Sponsor, SponsorAudienceEntry, SponsorCampaign, S
 from ....models.tournament_configuration import TournamentConfiguration
 from ....models.tournament_type import TournamentType as TournamentTypeModel
 from ....models.license import UserLicense
-from ....models.user import User
+from ....models.user import User, UserRole
+from ....services.tournament.instructor_eligibility_service import (
+    get_eligible_master_instructors,
+    get_instructor_license_levels,
+    is_eligible_master_instructor,
+)
 from ....services.sponsor_csv_import_service import (
     MAX_CSV_BYTES,
     apply_import,
@@ -275,6 +280,11 @@ async def admin_sponsor_promotion_form(
 
     campuses = db.query(Campus).filter(Campus.is_active == True).order_by(Campus.name).all()  # noqa: E712
     tournament_types = db.query(TournamentTypeModel).order_by(TournamentTypeModel.display_name).all()
+    # age_groups unknown at GET time — filter by license+role, level validated at POST
+    instructors = get_eligible_master_instructors(db, age_groups=None)
+    instructor_license_levels = get_instructor_license_levels(
+        db, [instr.id for instr in instructors]
+    )
 
     return templates.TemplateResponse(
         "admin/sponsor_promotion_wizard.html",
@@ -285,6 +295,8 @@ async def admin_sponsor_promotion_form(
             "active_campaigns": active_campaigns,
             "campuses": campuses,
             "tournament_types": tournament_types,
+            "instructors": instructors,
+            "instructor_license_levels": instructor_license_levels,
         },
     )
 
@@ -300,6 +312,7 @@ async def admin_sponsor_promotion_create(
     campus_id: str = Form(""),
     tournament_type_id: str = Form(""),
     age_groups: list[str] = Form(default=[]),
+    master_instructor_id: str = Form(""),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
@@ -343,6 +356,24 @@ async def admin_sponsor_promotion_create(
             status_code=303,
         )
 
+    resolved_instructor_id: int | None = None
+    if master_instructor_id.strip():
+        try:
+            iid = int(master_instructor_id)
+        except ValueError:
+            return RedirectResponse(
+                url=f"/admin/sponsors/{sponsor_id}/promotion?error=Invalid+instructor+selection",
+                status_code=303,
+            )
+        eligible, reason = is_eligible_master_instructor(db, iid, age_groups)
+        if not eligible:
+            error_msg = reason.replace(" ", "+")
+            return RedirectResponse(
+                url=f"/admin/sponsors/{sponsor_id}/promotion?error={error_msg}",
+                status_code=303,
+            )
+        resolved_instructor_id = iid
+
     suffix = datetime.now().strftime("%H%M%S%f")[:9]
     code = f"PROMO-{date.fromisoformat(start_date).strftime('%Y%m%d')}-{suffix}"
 
@@ -362,6 +393,7 @@ async def admin_sponsor_promotion_create(
         organizer_sponsor_id=sponsor.id,
         organizer_campaign_id=campaign.id,
         organizer_club_id=None,
+        master_instructor_id=resolved_instructor_id,
     )
     db.add(t)
     db.flush()

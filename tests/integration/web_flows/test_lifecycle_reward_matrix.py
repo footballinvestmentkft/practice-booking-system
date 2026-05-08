@@ -76,6 +76,7 @@ from app.models.team import Team, TeamMember, TournamentTeamEnrollment
 from app.models.location import Location
 from app.models.campus import Campus
 from app.models.pitch import Pitch
+from app.models.tournament_reward_config import TournamentRewardConfig
 from app.core.security import get_password_hash
 
 
@@ -97,6 +98,30 @@ def _user(db: Session, role=UserRole.STUDENT) -> User:
         is_active=True,
     )
     db.add(u)
+    db.flush()
+    return u
+
+
+def _eligible_instructor(db: Session) -> User:
+    """Create an INSTRUCTOR with an active LFA_COACH license (level 5, no expiry)."""
+    from datetime import timezone
+    u = User(
+        email=f"{_PFX}-coach-{_uid()}@lfa-test.com",
+        name=f"SRL Coach {_uid()}",
+        password_hash=get_password_hash("pw"),
+        role=UserRole.INSTRUCTOR,
+        is_active=True,
+    )
+    db.add(u)
+    db.flush()
+    db.add(UserLicense(
+        user_id=u.id,
+        specialization_type="LFA_COACH",
+        current_level=5,
+        max_achieved_level=5,
+        is_active=True,
+        started_at=datetime.now(timezone.utc),
+    ))
     db.flush()
     return u
 
@@ -173,10 +198,22 @@ def _tournament(
         number_of_rounds=1,
         parallel_fields=1,
         ranking_direction="DESC",
+        match_duration_minutes=60,   # required by readiness_validator (GAP-1 guard)
+        break_duration_minutes=10,
     ))
     db.add(GameConfiguration(
         semester_id=t.id,
         game_preset_id=preset.id,
+    ))
+    db.add(TournamentRewardConfig(
+        semester_id=t.id,
+        reward_policy_name="standard",
+        reward_config={
+            "template_name": "Standard",
+            "skill_mappings": [],
+            "first_place": {"credits": 100, "xp": 500},
+            "participation": {"credits": 10, "xp": 50},
+        },
     ))
     db.flush()
     return t
@@ -965,10 +1002,22 @@ def _ir_tournament(
         parallel_fields=1,
         ranking_direction="DESC",   # higher score = better rank
         scoring_type="SCORE_BASED",
+        match_duration_minutes=60,   # required by readiness_validator (GAP-1 guard)
+        break_duration_minutes=10,
     ))
     db.add(GameConfiguration(
         semester_id=t.id,
         game_preset_id=preset.id,
+    ))
+    db.add(TournamentRewardConfig(
+        semester_id=t.id,
+        reward_policy_name="standard",
+        reward_config={
+            "template_name": "Standard",
+            "skill_mappings": [],
+            "first_place": {"credits": 100, "xp": 500},
+            "participation": {"credits": 10, "xp": 50},
+        },
     ))
     db.flush()
     return t
@@ -1100,7 +1149,8 @@ class TestExtendedLifecycleMatrix:
         """
         tt = _tt(test_db, "knockout", min_players=4)
         camp = _campus(test_db)
-        t = _tournament(test_db, admin_user, tt, tournament_status="DRAFT")
+        instr = _eligible_instructor(test_db)
+        t = _tournament(test_db, instr, tt, tournament_status="DRAFT")
         t.campus_id = camp.id
         test_db.flush()
 
@@ -1189,7 +1239,8 @@ class TestExtendedLifecycleMatrix:
         """
         tt = _tt(test_db, "group_knockout", min_players=8)
         camp = _campus(test_db)
-        t = _tournament(test_db, admin_user, tt, tournament_status="DRAFT")
+        instr = _eligible_instructor(test_db)
+        t = _tournament(test_db, instr, tt, tournament_status="DRAFT")
         t.campus_id = camp.id
         test_db.flush()
 
@@ -1283,7 +1334,8 @@ class TestExtendedLifecycleMatrix:
         → p1 rank=1 (highest score) → COMPLETED → REWARDS_DISTRIBUTED
         """
         camp = _campus(test_db)
-        t = _ir_tournament(test_db, admin_user, tournament_status="DRAFT")
+        instr = _eligible_instructor(test_db)
+        t = _ir_tournament(test_db, instr, tournament_status="DRAFT")
         t.campus_id = camp.id
         test_db.flush()
 
@@ -1339,7 +1391,8 @@ class TestExtendedLifecycleMatrix:
         → team_A rank=1 → COMPLETED → 6 TournamentParticipation rows (team expansion)
         """
         camp = _campus(test_db)
-        t = _ir_tournament(test_db, admin_user, participant_type="TEAM", tournament_status="DRAFT")
+        instr = _eligible_instructor(test_db)
+        t = _ir_tournament(test_db, instr, participant_type="TEAM", tournament_status="DRAFT")
         t.campus_id = camp.id
         test_db.flush()
 
@@ -1406,7 +1459,8 @@ class TestExtendedLifecycleMatrix:
 
         tt = _tt(test_db, "knockout", min_players=4)
         camp = _campus(test_db)
-        t = _tournament(test_db, admin_user, tt, participant_type="TEAM", tournament_status="DRAFT")
+        instr = _eligible_instructor(test_db)
+        t = _tournament(test_db, instr, tt, participant_type="TEAM", tournament_status="DRAFT")
         t.campus_id = camp.id
         test_db.flush()
 
@@ -1493,7 +1547,8 @@ class TestExtendedLifecycleMatrix:
         """
         tt = _tt(test_db, "league", min_players=2)
         camp = _campus(test_db)
-        t = _tournament(test_db, admin_user, tt, participant_type="TEAM", tournament_status="DRAFT")
+        instr = _eligible_instructor(test_db)
+        t = _tournament(test_db, instr, tt, participant_type="TEAM", tournament_status="DRAFT")
         t.campus_id = camp.id
         cfg = t.tournament_config_obj
         cfg.number_of_legs = 2

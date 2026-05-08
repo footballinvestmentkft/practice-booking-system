@@ -605,6 +605,13 @@ def _run_preflight_audit(db: DBSession, campus_id: int, fail: bool = False) -> l
     if not admin:
         issues.append("admin@lfa.com not found — run bootstrap first")
 
+    instructor = db.query(User).filter(User.email == "instructor@lfa.com").first()
+    if not instructor:
+        issues.append(
+            "instructor@lfa.com not found — run seed_e2e_users first "
+            "(required for CHECK_IN_OPEN transition)"
+        )
+
     if issues:
         print("\n  PREFLIGHT AUDIT ISSUES:")
         for issue in issues:
@@ -791,6 +798,18 @@ def run_scenarios(
             stamped = _stamp_player_checkins(db, t.id)
             db.commit()
             print(f"  check-in stamped: {stamped} player(s)")
+            # Domain invariant: instructor must be assigned before CHECK_IN_OPEN.
+            if not dry_run:
+                if not instructor:
+                    sys.exit(
+                        "SC-03 ABORT: instructor@lfa.com not found. "
+                        "Run seed_e2e_users first. Cannot transition to CHECK_IN_OPEN."
+                    )
+                t_db = db.query(Semester).filter(Semester.id == t.id).first()
+                t_db.master_instructor_id = instructor.id
+                db.commit()
+                db.expire_all()
+                print(f"  instructor assigned: master_instructor_id={instructor.id}")
             if _transition(client, t.id, "CHECK_IN_OPEN"):
                 db.expire_all()
                 count = (
@@ -819,21 +838,29 @@ def run_scenarios(
             stamped = _stamp_player_checkins(db, t.id)
             db.commit()
             print(f"  check-in stamped: {stamped} player(s)")
+            # Domain invariant: instructor must be assigned BEFORE CHECK_IN_OPEN.
+            # (Previously this was done after CHECK_IN_OPEN — that order is now invalid.)
+            if not dry_run:
+                if not instructor:
+                    sys.exit(
+                        "SC-04 ABORT: instructor@lfa.com not found. "
+                        "Run seed_e2e_users first. Cannot transition to CHECK_IN_OPEN."
+                    )
+                t_db = db.query(Semester).filter(Semester.id == t.id).first()
+                t_db.master_instructor_id = instructor.id
+                db.commit()
+                db.expire_all()
+                print(f"  instructor assigned: master_instructor_id={instructor.id}")
             _transition(client, t.id, "CHECK_IN_OPEN")
             db.expire_all()
 
             _validate_sc04(db, t.id, t.name)
 
+            # Instructor already assigned above — proceed directly to IN_PROGRESS.
             if instructor:
-                t_db = db.query(Semester).filter(Semester.id == t.id).first()
-                t_db.master_instructor_id = instructor.id
-                db.commit()
-                db.expire_all()
                 if _transition(client, t.id, "IN_PROGRESS"):
                     db.expire_all()
                     print(f"  id={t.id}  status=IN_PROGRESS")
-            else:
-                print(f"  id={t.id}  status=CHECK_IN_OPEN  (no instructor@lfa.com, skipping IN_PROGRESS)")
         results["SC-04"] = t.id if t else None
 
     return results

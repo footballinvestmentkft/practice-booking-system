@@ -544,7 +544,7 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
                 ('third_place',  '🥉 3rd Place',   150, 1.2),
                 ('participation','🎽 Participation', 50, 1.0),
             ] %}
-            {% set tier_data = reward_cfg.get(tier, {}) if reward_cfg else {} %}
+            {% set tier_data = (reward_cfg.get(tier) or {}) if reward_cfg else {} %}
             <tr style="border-bottom:1px solid #f0f0f0;">
                 <td style="padding:0.4rem 0.5rem;">{{ icon }}</td>
                 <td style="padding:0.4rem 0.5rem;text-align:right;">

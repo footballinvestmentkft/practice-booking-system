@@ -842,10 +842,29 @@ def run_ops_scenario(
                 detail=f"Tournament type '{tournament_type_code}' not found in DB. Run seed_tournament_types first.",
             )
 
-    grandmaster = db.query(_User).filter(
-        _User.role == _UserRole.INSTRUCTOR,
-        _User.email == "grandmaster@lfa.com",
-    ).first()
+    # Deterministic instructor fallback for ops/demo scenarios:
+    #   1. grandmaster@lfa.com (seeded by seed_e2e_users.py / create_fresh_database.py)
+    #   2. Any active INSTRUCTOR user (e.g. instructor@lfa.com from bootstrap_clean.py)
+    #   3. HTTP 400 — no instructor at all, caller must seed one first
+    # This is NOT the production partner-assignment model; it exists for ops scripting only.
+    grandmaster = (
+        db.query(_User)
+        .filter(_User.role == _UserRole.INSTRUCTOR, _User.email == "grandmaster@lfa.com")
+        .first()
+    ) or (
+        db.query(_User)
+        .filter(_User.role == _UserRole.INSTRUCTOR, _User.is_active == True)  # noqa: E712
+        .first()
+    )
+    if not grandmaster:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "No instructor found in DB. "
+                "Seed at least one INSTRUCTOR user (e.g. run bootstrap_clean.py or seed_e2e_users.py) "
+                "before running ops scenarios."
+            ),
+        )
 
     tc_ts = _dt.now().strftime("%Y%m%d-%H%M%S")
     tournament = _Semester(
@@ -855,7 +874,7 @@ def run_ops_scenario(
         end_date=(_dt.now() + _td(days=30)).date(),
         status=_SemStatus.ONGOING,        # lifecycle enum
         tournament_status=request.initial_tournament_status,  # Use parameter (default: IN_PROGRESS)
-        master_instructor_id=grandmaster.id if grandmaster else None,
+        master_instructor_id=grandmaster.id,  # guaranteed non-None after guard above
         enrollment_cost=request.enrollment_cost,  # Enrollment cost from request (default: 0)
         age_group=request.age_group,              # Age group from request (default: PRO)
     )
@@ -867,7 +886,7 @@ def run_ops_scenario(
         t_cfg = _TCfg(
             semester_id=tournament.id,
             tournament_type_id=tt.id,
-            participant_type="INDIVIDUAL",
+            participant_type=request.participant_type,
             is_multi_day=False,
             max_players=request.max_players or _effective_count,  # Use override if provided
             parallel_fields=1,
@@ -880,7 +899,7 @@ def run_ops_scenario(
         t_cfg = _TCfg(
             semester_id=tournament.id,
             tournament_type_id=None,
-            participant_type="INDIVIDUAL",
+            participant_type=request.participant_type,
             is_multi_day=False,
             max_players=request.max_players or _effective_count,  # Use override if provided
             parallel_fields=1,

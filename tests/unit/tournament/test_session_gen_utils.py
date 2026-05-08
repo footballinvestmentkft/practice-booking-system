@@ -16,7 +16,7 @@ Missing coverage (generation_validator.py):
   Line  73:    not enough players → False + reason
 """
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from app.services.tournament.session_generation.utils import (
     get_tournament_venue,
@@ -178,7 +178,16 @@ def _make_validator(tournament=None):
     return v, db
 
 
+_ELIG_PATCH = "app.services.tournament.instructor_eligibility_service.check_tournament_master_instructor_eligible"
+
+
 class TestGenerationValidator:
+
+    @pytest.fixture(autouse=True)
+    def _patch_eligibility(self):
+        """Stub out the eligibility guard so validator tests focus on their own logic."""
+        with patch(_ELIG_PATCH, return_value=(True, "")):
+            yield
 
     def test_tournament_not_found(self):
         v, _ = _make_validator(None)

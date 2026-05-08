@@ -346,6 +346,13 @@ def scenario_baseline(db) -> list[str]:
         lines.append(f"  upserted user {spec['email']} ({spec['role'].value})")
     _upsert_user(db, _INACTIVE_STUDENT, credit_balance=0, is_active=False)
     lines.append(f"  upserted inactive user {_INACTIVE_STUDENT['email']}")
+
+    # grandmaster@lfa.com needs an active LFA_COACH license for tournament instructor eligibility
+    grandmaster = db.query(User).filter(User.email == "grandmaster@lfa.com").first()
+    if grandmaster:
+        _upsert_lfa_coach_license(db, grandmaster)
+        lines.append(f"  upserted LFA_COACH license for grandmaster@lfa.com (level=5)")
+
     _upsert_semester(db)
     lines.append(f"  upserted semester {_SEMESTER_CODE}")
     _upsert_e2e_invitation_code(db)
@@ -450,6 +457,30 @@ def _upsert_lfa_license(db, user: User) -> UserLicense:
             payment_verified_at=datetime.now(),
             onboarding_completed=True,
             onboarding_completed_at=datetime.now(),
+            is_active=True,
+        )
+        db.add(lic)
+        db.commit()
+        db.refresh(lic)
+    return lic
+
+
+def _upsert_lfa_coach_license(db, user: User) -> UserLicense:
+    """Ensure an instructor has an active LFA_COACH license (level 5, no expiry)."""
+    lic = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_COACH",
+    ).first()
+    if lic:
+        lic.is_active = True
+        db.commit()
+    else:
+        lic = UserLicense(
+            user_id=user.id,
+            specialization_type="LFA_COACH",
+            current_level=5,
+            max_achieved_level=5,
+            started_at=datetime.now(),
             is_active=True,
         )
         db.add(lic)
