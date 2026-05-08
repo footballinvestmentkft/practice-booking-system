@@ -30,7 +30,6 @@ from ..framework.transitions import (
     accept_instructor_assignment,
     set_schedule_config,
     set_reward_config,
-    set_participant_type_team,
     create_team,
     add_team_member,
     enroll_team,
@@ -140,14 +139,6 @@ class TeamLeagueStrategy:
         auth: AuthContext,
         tournament_id: int,
     ) -> None:
-        # TODO: Fix ops/run-scenario participant_type propagation (separate PR).
-        #   Root cause: OpsScenarioRequest schema has no participant_type field;
-        #   ops/__init__.py hardcodes "INDIVIDUAL" at TournamentConfiguration creation
-        #   (lines 870, 883, 1179). Fix = add field to schema + read it in __init__.py.
-        #   This call is a legitimate admin config update (PATCH /tournaments/{id})
-        #   in SEEKING_INSTRUCTOR status — not a lifecycle bypass. All subsequent
-        #   guards (ENROLLMENT_OPEN, CHECK_IN_OPEN, IN_PROGRESS) run after this.
-        set_participant_type_team(cfg.base_url, auth.admin_token, tournament_id)
         direct_assign_instructor(
             cfg.base_url,
             auth.admin_token,
