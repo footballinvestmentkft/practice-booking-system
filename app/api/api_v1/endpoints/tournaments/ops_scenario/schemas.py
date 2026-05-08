@@ -126,12 +126,13 @@ class OpsScenarioRequest(BaseModel):
             "False: Skip session generation (manual mode for instructor assignment tests)."
         ),
     )
-    participant_type: str = Field(
+    participant_type: Literal["INDIVIDUAL", "TEAM"] = Field(
         "INDIVIDUAL",
         description=(
             "Participant type for the tournament: 'INDIVIDUAL' or 'TEAM'. "
             "Default: 'INDIVIDUAL' (all existing callers are unaffected). "
-            "Set to 'TEAM' to create a team-based tournament (TeamLeagueScenario prerequisite)."
+            "Set to 'TEAM' to create a team-based tournament (TeamLeagueScenario prerequisite). "
+            "MIXED is not accepted — no implemented flow behind it."
         ),
     )
 

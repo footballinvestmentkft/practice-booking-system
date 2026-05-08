@@ -1,5 +1,5 @@
 """
-Unit tests for Team API v1 endpoints.
+Unit tests for Team API v1 endpoints + admin_enroll_team_in_tournament cost policy.
 
 Coverage:
   POST /api/v1/teams  (admin_create_team)
@@ -20,9 +20,13 @@ Coverage:
     T11  tournament participant_type != TEAM → 400 (service raises)
     T12  tournament status != ENROLLMENT_OPEN → 400 (service raises)
     T13  success, cost=0 → 200, enrolled=True
+
+  admin_enroll_team_in_tournament — cost policy (service-level, MagicMock DB)
+    T14  cost>0, sufficient credits → deducts from captain once, creates CreditTransaction
+    T15  cost>0, pre-existing enrollment → returns existing, no debit (double-debit proof)
 """
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 from fastapi import HTTPException
 
 from app.api.api_v1.endpoints.teams import (
@@ -36,6 +40,11 @@ from app.api.api_v1.endpoints.tournaments.team_enrollment import (
     TeamEnrollRequest,
 )
 from app.models.user import UserRole
+from app.models.team import Team, TournamentTeamEnrollment
+from app.models.semester import Semester
+from app.models.tournament_configuration import TournamentConfiguration
+from app.models.license import UserLicense
+from app.models.credit_transaction import CreditTransaction
 
 _TEAMS_BASE = "app.api.api_v1.endpoints.teams.team_service"
 _TE_BASE = "app.api.api_v1.endpoints.tournaments.team_enrollment.team_service"
@@ -218,3 +227,140 @@ class TestAdminEnrollTeam:
         assert result["tournament_id"] == 1
         assert result["payment_verified"] is True
         mock_enroll.assert_called_once_with(db, team_id=5, tournament_id=1)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# admin_enroll_team_in_tournament — cost policy (service-level, MagicMock DB)
+# ─────────────────────────────────────────────────────────────────────────────
+
+_SVC = "app.services.tournament.team_service"
+
+
+def _make_db(team, tournament, cfg, existing_enrollment, license_obj):
+    """
+    Build a MagicMock db whose .query() returns the right object per model.
+
+    For UserLicense the chain is .filter().with_for_update().first().
+    For all others it is .filter().first().
+    """
+    db = MagicMock()
+
+    def _query(model):
+        q = MagicMock()
+        if model is Team:
+            q.filter.return_value.first.return_value = team
+        elif model is Semester:
+            q.filter.return_value.first.return_value = tournament
+        elif model is TournamentConfiguration:
+            q.filter.return_value.first.return_value = cfg
+        elif model is TournamentTeamEnrollment:
+            q.filter.return_value.first.return_value = existing_enrollment
+        elif model is UserLicense:
+            q.filter.return_value.with_for_update.return_value.first.return_value = license_obj
+        return q
+
+    db.query.side_effect = _query
+    return db
+
+
+class TestAdminEnrollTeamCostPolicy:
+    """
+    Service-level tests for admin_enroll_team_in_tournament cost policy.
+
+    Uses MagicMock DB — no real database required.
+    Directly tests the service function (not the endpoint wrapper).
+    """
+
+    def test_T14_cost_positive_debits_captain_once(self):
+        """First enrollment with cost>0 deducts from captain's credit balance."""
+        from app.services.tournament.team_service import admin_enroll_team_in_tournament
+
+        COST = 50
+        INITIAL_BALANCE = 200
+
+        fake_team = MagicMock()
+        fake_team.is_active = True
+        fake_team.captain_user_id = 7
+
+        fake_tournament = MagicMock()
+        fake_tournament.tournament_status = "ENROLLMENT_OPEN"
+
+        fake_cfg = MagicMock()
+        fake_cfg.participant_type = "TEAM"
+        fake_cfg.team_enrollment_cost = COST
+
+        fake_license = MagicMock()
+        fake_license.id = 99
+        fake_license.credit_balance = INITIAL_BALANCE
+
+        db = _make_db(
+            team=fake_team,
+            tournament=fake_tournament,
+            cfg=fake_cfg,
+            existing_enrollment=None,   # no prior enrollment
+            license_obj=fake_license,
+        )
+
+        admin_enroll_team_in_tournament(db, team_id=5, tournament_id=1)
+
+        # Credit was deducted from captain
+        assert fake_license.credit_balance == INITIAL_BALANCE - COST
+
+        # A CreditTransaction was added to the session
+        added_objects = [c.args[0] for c in db.add.call_args_list]
+        credit_txs = [o for o in added_objects if isinstance(o, CreditTransaction)]
+        assert len(credit_txs) == 1, f"Expected 1 CreditTransaction, got {len(credit_txs)}"
+        assert credit_txs[0].amount == -COST
+        assert credit_txs[0].balance_after == INITIAL_BALANCE - COST
+
+    def test_T15_cost_positive_duplicate_no_double_debit(self):
+        """Repeat enrollment returns existing record; captain balance is NOT touched."""
+        from app.services.tournament.team_service import admin_enroll_team_in_tournament
+
+        COST = 50
+        INITIAL_BALANCE = 200
+
+        fake_team = MagicMock()
+        fake_team.is_active = True
+        fake_team.captain_user_id = 7
+
+        fake_tournament = MagicMock()
+        fake_tournament.tournament_status = "ENROLLMENT_OPEN"
+
+        fake_cfg = MagicMock()
+        fake_cfg.participant_type = "TEAM"
+        fake_cfg.team_enrollment_cost = COST
+
+        fake_license = MagicMock()
+        fake_license.credit_balance = INITIAL_BALANCE
+
+        # Pre-existing enrollment — service must return early without debit
+        existing = MagicMock()
+        existing.id = 42
+        existing.team_id = 5
+        existing.semester_id = 1
+        existing.payment_verified = False
+
+        db = _make_db(
+            team=fake_team,
+            tournament=fake_tournament,
+            cfg=fake_cfg,
+            existing_enrollment=existing,
+            license_obj=fake_license,
+        )
+
+        result = admin_enroll_team_in_tournament(db, team_id=5, tournament_id=1)
+
+        # Returns the existing enrollment unchanged
+        assert result is existing
+
+        # Captain balance untouched
+        assert fake_license.credit_balance == INITIAL_BALANCE
+
+        # No CreditTransaction created
+        added_objects = [c.args[0] for c in db.add.call_args_list]
+        credit_txs = [o for o in added_objects if isinstance(o, CreditTransaction)]
+        assert len(credit_txs) == 0, f"Expected 0 CreditTransactions, got {len(credit_txs)}"
+
+        # db.commit() was NOT called (early return before any write)
+        db.commit.assert_not_called()
