@@ -803,7 +803,9 @@ class TestTournamentFullLifecycleFlow:
             reward_config=_LC_REWARD_CONFIG,
         ))
 
-        # Add one session (required by status_validator for IN_PROGRESS → COMPLETED)
+        # Add one session (required by status_validator for IN_PROGRESS → COMPLETED).
+        # session_status must be "completed" — check_pre_completed blocks COMPLETED
+        # transitions when any auto-generated MATCH session is not yet finished.
         test_db.add(SessionModel(
             title="FLOW-01 Match",
             semester_id=t.id,
@@ -813,6 +815,7 @@ class TestTournamentFullLifecycleFlow:
             event_category=EventCategory.MATCH,
             match_format="INDIVIDUAL_RANKING",
             auto_generated=True,
+            session_status="completed",
         ))
         test_db.flush()
 

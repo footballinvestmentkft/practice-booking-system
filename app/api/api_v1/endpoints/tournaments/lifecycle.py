@@ -321,6 +321,26 @@ def transition_tournament_status(
                 detail=f"Cannot advance to IN_PROGRESS: {'; '.join(rwd.blocking_errors)}{_codes}",
             )
 
+    if request.new_status == "COMPLETED":
+        from app.services.tournament.readiness_validator import check_pre_completed
+        comp = check_pre_completed(db, tournament)
+        if not comp.ok:
+            _codes = f" [{', '.join(comp.requirement_codes)}]" if comp.requirement_codes else ""
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot advance to COMPLETED: {'; '.join(comp.blocking_errors)}{_codes}",
+            )
+
+    if request.new_status == "REWARDS_DISTRIBUTED":
+        from app.services.tournament.readiness_validator import check_pre_rewards_distributed
+        rdist = check_pre_rewards_distributed(db, tournament)
+        if not rdist.ok:
+            _codes = f" [{', '.join(rdist.requirement_codes)}]" if rdist.requirement_codes else ""
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot advance to REWARDS_DISTRIBUTED: {'; '.join(rdist.blocking_errors)}{_codes}",
+            )
+
     # Update tournament status
     tournament.tournament_status = request.new_status
     db.flush()

@@ -40,6 +40,10 @@ from app.models.tournament_configuration import TournamentConfiguration
 from app.models.tournament_reward_config import TournamentRewardConfig
 from app.models.user import User, UserRole
 from app.core.security import get_password_hash
+from app.models.session import Session as SessionModel, EventCategory
+from app.models.sponsor import Sponsor
+from app.models.tournament_achievement import TournamentParticipation
+from app.models.tournament_ranking import TournamentRanking
 from tests.factories.game_factory import TournamentFactory
 
 
@@ -603,5 +607,556 @@ class TestFullConfiguredTournamentLifecycle:
             test_db.expire_all()
             t2 = test_db.query(Semester).filter(Semester.id == tournament.id).first()
             assert t2.tournament_status == "IN_PROGRESS"
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── Finalization hardening helpers ────────────────────────────────────────────
+
+
+def _make_match_session(
+    db: Session,
+    tournament_id: int,
+    session_status: str,
+    instructor_id: int,
+) -> SessionModel:
+    """Create an auto-generated MATCH session with the given session_status."""
+    from datetime import date, timedelta
+    s = SessionModel(
+        title=f"FH Match {uuid.uuid4().hex[:6]}",
+        date_start=datetime.now(timezone.utc) + timedelta(days=1),
+        date_end=datetime.now(timezone.utc) + timedelta(days=1, hours=2),
+        semester_id=tournament_id,
+        instructor_id=instructor_id,
+        auto_generated=True,
+        event_category=EventCategory.MATCH,
+        session_status=session_status,
+    )
+    db.add(s)
+    db.flush()
+    return s
+
+
+def _make_ranking(
+    db: Session,
+    tournament_id: int,
+    user_id: int,
+    rank: int = 1,
+) -> TournamentRanking:
+    r = TournamentRanking(
+        tournament_id=tournament_id,
+        user_id=user_id,
+        participant_type="INDIVIDUAL",
+        rank=rank,
+        points=0,
+    )
+    db.add(r)
+    db.flush()
+    return r
+
+
+def _make_participation(
+    db: Session,
+    tournament_id: int,
+    user_id: int,
+) -> TournamentParticipation:
+    p = TournamentParticipation(
+        user_id=user_id,
+        semester_id=tournament_id,
+        xp_awarded=0,
+        credits_awarded=0,
+        foot_context="neutral",
+    )
+    db.add(p)
+    db.flush()
+    return p
+
+
+def _make_sponsor(db: Session, is_active: bool = True) -> Sponsor:
+    s = Sponsor(
+        name=f"FH Sponsor {uuid.uuid4().hex[:6]}",
+        code=f"FHS-{uuid.uuid4().hex[:8].upper()}",
+        is_active=is_active,
+    )
+    db.add(s)
+    db.flush()
+    return s
+
+
+def _make_completed_tournament(
+    db: Session,
+    *,
+    campus: Campus,
+    instructor: User,
+    tt,
+    with_snapshot: bool = True,
+) -> tuple[Semester, list[User]]:
+    """
+    Create a tournament at IN_PROGRESS with schedule config + reward config,
+    enroll 4 players, and set tournament_status=COMPLETED.
+    Returns (tournament, [player1..player4]).
+    """
+    tournament = _make_tournament(
+        db,
+        campus=campus,
+        instructor=instructor,
+        tt=tt,
+        tournament_status="COMPLETED",
+        match_duration_minutes=60,
+        break_duration_minutes=10,
+        parallel_fields=1,
+        with_reward_config=True,
+    )
+    if with_snapshot:
+        # Simulate the snapshot written by lifecycle at IN_PROGRESS entry.
+        rc = tournament.reward_config_obj
+        rc.reward_policy_snapshot = tournament.reward_config
+        db.flush()
+    players = [_enroll_player(db, tournament.id) for _ in range(4)]
+    db.commit()
+    db.expire_all()
+    t = db.query(Semester).filter(Semester.id == tournament.id).first()
+    return t, players
+
+
+# ── FH-01 — scheduled MATCH session blocks COMPLETED ─────────────────────────
+
+
+class TestScheduledMatchBlocksCompleted:
+    """FH-01: IN_PROGRESS → COMPLETED is blocked when a MATCH session is still
+    in session_status='scheduled'. Code SESSIONS_INCOMPLETE must appear."""
+
+    def test_fh_01_scheduled_match_blocks_completed(self, test_db):
+        admin = _make_admin(test_db)
+        instructor = _make_instructor(test_db)
+        campus = _make_campus_with_pitch(test_db)
+        tt = TournamentFactory.ensure_tournament_type(test_db, code=f"fh01-{uuid.uuid4().hex[:6]}")
+
+        tournament = _make_tournament(
+            test_db,
+            campus=campus, instructor=instructor, tt=tt,
+            tournament_status="IN_PROGRESS",
+            match_duration_minutes=60, break_duration_minutes=10,
+            with_reward_config=True, sessions_generated=True,
+        )
+        player = _enroll_player(test_db, tournament.id)
+        _make_match_session(test_db, tournament.id, session_status="scheduled", instructor_id=instructor.id)
+        _make_ranking(test_db, tournament.id, player.id, rank=1)
+        test_db.commit()
+
+        client = _admin_client(test_db, admin)
+        try:
+            resp = client.patch(
+                f"/api/v1/tournaments/{tournament.id}/status",
+                json={"new_status": "COMPLETED", "reason": "test"},
+            )
+            assert resp.status_code == 400, f"Expected 400, got {resp.status_code}: {resp.text}"
+            body = resp.json()
+            detail = body.get("detail") or body.get("error", {}).get("message", "")
+            assert "SESSIONS_INCOMPLETE" in detail, f"Expected SESSIONS_INCOMPLETE in: {detail!r}"
+            test_db.expire_all()
+            t = test_db.query(Semester).filter(Semester.id == tournament.id).first()
+            assert t.tournament_status == "IN_PROGRESS"
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── FH-02 — in_progress MATCH session blocks COMPLETED ───────────────────────
+
+
+class TestInProgressMatchBlocksCompleted:
+    """FH-02: IN_PROGRESS → COMPLETED is blocked when a MATCH session is still
+    in session_status='in_progress'. Code SESSIONS_INCOMPLETE must appear."""
+
+    def test_fh_02_in_progress_match_blocks_completed(self, test_db):
+        admin = _make_admin(test_db)
+        instructor = _make_instructor(test_db)
+        campus = _make_campus_with_pitch(test_db)
+        tt = TournamentFactory.ensure_tournament_type(test_db, code=f"fh02-{uuid.uuid4().hex[:6]}")
+
+        tournament = _make_tournament(
+            test_db,
+            campus=campus, instructor=instructor, tt=tt,
+            tournament_status="IN_PROGRESS",
+            match_duration_minutes=60, break_duration_minutes=10,
+            with_reward_config=True, sessions_generated=True,
+        )
+        player = _enroll_player(test_db, tournament.id)
+        _make_match_session(test_db, tournament.id, session_status="in_progress", instructor_id=instructor.id)
+        _make_ranking(test_db, tournament.id, player.id, rank=1)
+        test_db.commit()
+
+        client = _admin_client(test_db, admin)
+        try:
+            resp = client.patch(
+                f"/api/v1/tournaments/{tournament.id}/status",
+                json={"new_status": "COMPLETED", "reason": "test"},
+            )
+            assert resp.status_code == 400, f"Expected 400, got {resp.status_code}: {resp.text}"
+            body = resp.json()
+            detail = body.get("detail") or body.get("error", {}).get("message", "")
+            assert "SESSIONS_INCOMPLETE" in detail, f"Expected SESSIONS_INCOMPLETE in: {detail!r}"
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── FH-03 — incomplete rankings blocks COMPLETED ──────────────────────────────
+
+
+class TestIncompleteRankingsBlocksCompleted:
+    """FH-03: IN_PROGRESS → COMPLETED is blocked when ranking count < enrolled
+    participant count. Code RANKINGS_INCOMPLETE must appear."""
+
+    def test_fh_03_incomplete_rankings_blocks_completed(self, test_db):
+        admin = _make_admin(test_db)
+        instructor = _make_instructor(test_db)
+        campus = _make_campus_with_pitch(test_db)
+        tt = TournamentFactory.ensure_tournament_type(test_db, code=f"fh03-{uuid.uuid4().hex[:6]}")
+
+        tournament = _make_tournament(
+            test_db,
+            campus=campus, instructor=instructor, tt=tt,
+            tournament_status="IN_PROGRESS",
+            match_duration_minutes=60, break_duration_minutes=10,
+            with_reward_config=True, sessions_generated=True,
+        )
+        players = [_enroll_player(test_db, tournament.id) for _ in range(4)]
+        # All sessions completed
+        _make_match_session(test_db, tournament.id, session_status="completed", instructor_id=instructor.id)
+        # Only 1 of 4 players ranked
+        _make_ranking(test_db, tournament.id, players[0].id, rank=1)
+        test_db.commit()
+
+        client = _admin_client(test_db, admin)
+        try:
+            resp = client.patch(
+                f"/api/v1/tournaments/{tournament.id}/status",
+                json={"new_status": "COMPLETED", "reason": "test"},
+            )
+            assert resp.status_code == 400, f"Expected 400, got {resp.status_code}: {resp.text}"
+            body = resp.json()
+            detail = body.get("detail") or body.get("error", {}).get("message", "")
+            assert "RANKINGS_INCOMPLETE" in detail, f"Expected RANKINGS_INCOMPLETE in: {detail!r}"
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── FH-happy — all sessions completed + full rankings → COMPLETED succeeds ────
+
+
+class TestCompletedHappyPath:
+    """FH-happy: all MATCH sessions completed + rankings cover all enrolled
+    players → IN_PROGRESS → COMPLETED succeeds (HTTP 200)."""
+
+    def test_fh_happy_completed_succeeds(self, test_db):
+        admin = _make_admin(test_db)
+        instructor = _make_instructor(test_db)
+        campus = _make_campus_with_pitch(test_db)
+        tt = TournamentFactory.ensure_tournament_type(test_db, code=f"fhhappy-{uuid.uuid4().hex[:6]}")
+
+        tournament = _make_tournament(
+            test_db,
+            campus=campus, instructor=instructor, tt=tt,
+            tournament_status="IN_PROGRESS",
+            match_duration_minutes=60, break_duration_minutes=10,
+            with_reward_config=True, sessions_generated=True,
+        )
+        players = [_enroll_player(test_db, tournament.id) for _ in range(4)]
+        _make_match_session(test_db, tournament.id, session_status="completed", instructor_id=instructor.id)
+        for i, p in enumerate(players):
+            _make_ranking(test_db, tournament.id, p.id, rank=i + 1)
+        test_db.commit()
+
+        client = _admin_client(test_db, admin)
+        try:
+            resp = client.patch(
+                f"/api/v1/tournaments/{tournament.id}/status",
+                json={"new_status": "COMPLETED", "reason": "test"},
+            )
+            assert resp.status_code == 200, f"Expected 200, got {resp.status_code}: {resp.text}"
+            test_db.expire_all()
+            t = test_db.query(Semester).filter(Semester.id == tournament.id).first()
+            assert t.tournament_status == "COMPLETED"
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── RD-01 — snapshot missing blocks REWARDS_DISTRIBUTED ──────────────────────
+
+
+class TestSnapshotMissingBlocksRewardsDistributed:
+    """RD-01: COMPLETED → REWARDS_DISTRIBUTED blocked when reward_policy_snapshot
+    is None. Code SNAPSHOT_MISSING must appear."""
+
+    def test_rd_01_snapshot_missing_blocks(self, test_db):
+        admin = _make_admin(test_db)
+        instructor = _make_instructor(test_db)
+        campus = _make_campus_with_pitch(test_db)
+        tt = TournamentFactory.ensure_tournament_type(test_db, code=f"rd01-{uuid.uuid4().hex[:6]}")
+
+        # with_snapshot=False — reward_policy_snapshot remains None
+        tournament, players = _make_completed_tournament(
+            test_db, campus=campus, instructor=instructor, tt=tt, with_snapshot=False,
+        )
+        for i, p in enumerate(players):
+            _make_ranking(test_db, tournament.id, p.id, rank=i + 1)
+            _make_participation(test_db, tournament.id, p.id)
+        test_db.commit()
+
+        client = _admin_client(test_db, admin)
+        try:
+            resp = client.patch(
+                f"/api/v1/tournaments/{tournament.id}/status",
+                json={"new_status": "REWARDS_DISTRIBUTED", "reason": "test"},
+            )
+            assert resp.status_code == 400, f"Expected 400, got {resp.status_code}: {resp.text}"
+            body = resp.json()
+            detail = body.get("detail") or body.get("error", {}).get("message", "")
+            assert "SNAPSHOT_MISSING" in detail, f"Expected SNAPSHOT_MISSING in: {detail!r}"
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── RD-02 — no participation records blocks REWARDS_DISTRIBUTED ───────────────
+
+
+class TestNoParticipationBlocksRewardsDistributed:
+    """RD-02: COMPLETED → REWARDS_DISTRIBUTED blocked when 0 TournamentParticipation
+    rows exist. Code PARTICIPATION_RECORDS_MISSING must appear."""
+
+    def test_rd_02_no_participation_blocks(self, test_db):
+        admin = _make_admin(test_db)
+        instructor = _make_instructor(test_db)
+        campus = _make_campus_with_pitch(test_db)
+        tt = TournamentFactory.ensure_tournament_type(test_db, code=f"rd02-{uuid.uuid4().hex[:6]}")
+
+        tournament, players = _make_completed_tournament(
+            test_db, campus=campus, instructor=instructor, tt=tt,
+        )
+        for i, p in enumerate(players):
+            _make_ranking(test_db, tournament.id, p.id, rank=i + 1)
+        # No TournamentParticipation rows
+        test_db.commit()
+
+        client = _admin_client(test_db, admin)
+        try:
+            resp = client.patch(
+                f"/api/v1/tournaments/{tournament.id}/status",
+                json={"new_status": "REWARDS_DISTRIBUTED", "reason": "test"},
+            )
+            assert resp.status_code == 400, f"Expected 400, got {resp.status_code}: {resp.text}"
+            body = resp.json()
+            detail = body.get("detail") or body.get("error", {}).get("message", "")
+            assert "PARTICIPATION_RECORDS_MISSING" in detail, (
+                f"Expected PARTICIPATION_RECORDS_MISSING in: {detail!r}"
+            )
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── RD-03 — partial participation blocks REWARDS_DISTRIBUTED ──────────────────
+
+
+class TestPartialParticipationBlocksRewardsDistributed:
+    """RD-03: COMPLETED → REWARDS_DISTRIBUTED blocked when only 2 of 4 players
+    have TournamentParticipation records. Code PARTICIPATION_INCOMPLETE must appear."""
+
+    def test_rd_03_partial_participation_blocks(self, test_db):
+        admin = _make_admin(test_db)
+        instructor = _make_instructor(test_db)
+        campus = _make_campus_with_pitch(test_db)
+        tt = TournamentFactory.ensure_tournament_type(test_db, code=f"rd03-{uuid.uuid4().hex[:6]}")
+
+        tournament, players = _make_completed_tournament(
+            test_db, campus=campus, instructor=instructor, tt=tt,
+        )
+        for i, p in enumerate(players):
+            _make_ranking(test_db, tournament.id, p.id, rank=i + 1)
+        # Only 2 of 4 participation records
+        _make_participation(test_db, tournament.id, players[0].id)
+        _make_participation(test_db, tournament.id, players[1].id)
+        test_db.commit()
+
+        client = _admin_client(test_db, admin)
+        try:
+            resp = client.patch(
+                f"/api/v1/tournaments/{tournament.id}/status",
+                json={"new_status": "REWARDS_DISTRIBUTED", "reason": "test"},
+            )
+            assert resp.status_code == 400, f"Expected 400, got {resp.status_code}: {resp.text}"
+            body = resp.json()
+            detail = body.get("detail") or body.get("error", {}).get("message", "")
+            assert "PARTICIPATION_INCOMPLETE" in detail, (
+                f"Expected PARTICIPATION_INCOMPLETE in: {detail!r}"
+            )
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── RD-04 — incomplete rankings blocks REWARDS_DISTRIBUTED ────────────────────
+
+
+class TestIncompleteRankingsBlocksRewardsDistributed:
+    """RD-04: COMPLETED → REWARDS_DISTRIBUTED blocked when ranking count < enrolled
+    count (1 of 4 ranked). Code RANKINGS_INCOMPLETE must appear."""
+
+    def test_rd_04_incomplete_rankings_blocks(self, test_db):
+        admin = _make_admin(test_db)
+        instructor = _make_instructor(test_db)
+        campus = _make_campus_with_pitch(test_db)
+        tt = TournamentFactory.ensure_tournament_type(test_db, code=f"rd04-{uuid.uuid4().hex[:6]}")
+
+        tournament, players = _make_completed_tournament(
+            test_db, campus=campus, instructor=instructor, tt=tt,
+        )
+        # Only 1 of 4 players ranked
+        _make_ranking(test_db, tournament.id, players[0].id, rank=1)
+        for p in players:
+            _make_participation(test_db, tournament.id, p.id)
+        test_db.commit()
+
+        client = _admin_client(test_db, admin)
+        try:
+            resp = client.patch(
+                f"/api/v1/tournaments/{tournament.id}/status",
+                json={"new_status": "REWARDS_DISTRIBUTED", "reason": "test"},
+            )
+            assert resp.status_code == 400, f"Expected 400, got {resp.status_code}: {resp.text}"
+            body = resp.json()
+            detail = body.get("detail") or body.get("error", {}).get("message", "")
+            assert "RANKINGS_INCOMPLETE" in detail, f"Expected RANKINGS_INCOMPLETE in: {detail!r}"
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── SP-01 — PROMOTION_EVENT without sponsor blocks CHECK_IN_OPEN ──────────────
+
+
+class TestPromotionEventNoSponsorBlocksCheckInOpen:
+    """SP-01: ENROLLMENT_CLOSED → CHECK_IN_OPEN blocked for PROMOTION_EVENT
+    tournament when organizer_sponsor_id is None. Code PROMOTION_SPONSOR_MISSING."""
+
+    def test_sp_01_no_sponsor_blocks(self, test_db):
+        admin = _make_admin(test_db)
+        instructor = _make_instructor(test_db)
+        campus = _make_campus_with_pitch(test_db)
+        tt = TournamentFactory.ensure_tournament_type(test_db, code=f"sp01-{uuid.uuid4().hex[:6]}")
+
+        # Create PROMOTION_EVENT with no organizer_sponsor_id
+        code = f"SP01-{uuid.uuid4().hex[:8].upper()}"
+        t = Semester(
+            code=code,
+            name=f"SP-01 Promo Event {code[-6:]}",
+            semester_category=SemesterCategory.PROMOTION_EVENT,
+            status=SemesterStatus.DRAFT,
+            tournament_status="ENROLLMENT_CLOSED",
+            age_group="PRO",
+            campus_id=campus.id,
+            start_date=date.today() + timedelta(days=7),
+            end_date=date.today() + timedelta(days=8),
+            enrollment_cost=0,
+            specialization_type="LFA_FOOTBALL_PLAYER",
+            master_instructor_id=instructor.id,
+            organizer_sponsor_id=None,  # ← missing
+        )
+        test_db.add(t)
+        test_db.flush()
+        test_db.add(TournamentConfiguration(
+            semester_id=t.id,
+            tournament_type_id=tt.id,
+            participant_type="INDIVIDUAL",
+            number_of_rounds=1,
+            max_players=32,
+            match_duration_minutes=60,
+            break_duration_minutes=10,
+            parallel_fields=1,
+        ))
+        test_db.flush()
+        _enroll_player(test_db, t.id)
+        _enroll_player(test_db, t.id)
+        test_db.commit()
+        test_db.expire_all()
+
+        client = _admin_client(test_db, admin)
+        try:
+            resp = client.patch(
+                f"/api/v1/tournaments/{t.id}/status",
+                json={"new_status": "CHECK_IN_OPEN", "reason": "test"},
+            )
+            assert resp.status_code == 400, f"Expected 400, got {resp.status_code}: {resp.text}"
+            body = resp.json()
+            detail = body.get("detail") or body.get("error", {}).get("message", "")
+            assert "PROMOTION_SPONSOR_MISSING" in detail, (
+                f"Expected PROMOTION_SPONSOR_MISSING in: {detail!r}"
+            )
+            test_db.expire_all()
+            t_after = test_db.query(Semester).filter(Semester.id == t.id).first()
+            assert t_after.tournament_status == "ENROLLMENT_CLOSED"
+        finally:
+            app.dependency_overrides.clear()
+
+
+# ── SP-02 — PROMOTION_EVENT with inactive sponsor blocks CHECK_IN_OPEN ─────────
+
+
+class TestPromotionEventInactiveSponsorBlocksCheckInOpen:
+    """SP-02: ENROLLMENT_CLOSED → CHECK_IN_OPEN blocked for PROMOTION_EVENT
+    tournament when the referenced Sponsor has is_active=False.
+    Code PROMOTION_SPONSOR_INACTIVE must appear."""
+
+    def test_sp_02_inactive_sponsor_blocks(self, test_db):
+        admin = _make_admin(test_db)
+        instructor = _make_instructor(test_db)
+        campus = _make_campus_with_pitch(test_db)
+        tt = TournamentFactory.ensure_tournament_type(test_db, code=f"sp02-{uuid.uuid4().hex[:6]}")
+
+        sponsor = _make_sponsor(test_db, is_active=False)
+
+        code = f"SP02-{uuid.uuid4().hex[:8].upper()}"
+        t = Semester(
+            code=code,
+            name=f"SP-02 Promo Event {code[-6:]}",
+            semester_category=SemesterCategory.PROMOTION_EVENT,
+            status=SemesterStatus.DRAFT,
+            tournament_status="ENROLLMENT_CLOSED",
+            age_group="PRO",
+            campus_id=campus.id,
+            start_date=date.today() + timedelta(days=7),
+            end_date=date.today() + timedelta(days=8),
+            enrollment_cost=0,
+            specialization_type="LFA_FOOTBALL_PLAYER",
+            master_instructor_id=instructor.id,
+            organizer_sponsor_id=sponsor.id,  # ← inactive sponsor
+        )
+        test_db.add(t)
+        test_db.flush()
+        test_db.add(TournamentConfiguration(
+            semester_id=t.id,
+            tournament_type_id=tt.id,
+            participant_type="INDIVIDUAL",
+            number_of_rounds=1,
+            max_players=32,
+            match_duration_minutes=60,
+            break_duration_minutes=10,
+            parallel_fields=1,
+        ))
+        test_db.flush()
+        _enroll_player(test_db, t.id)
+        _enroll_player(test_db, t.id)
+        test_db.commit()
+        test_db.expire_all()
+
+        client = _admin_client(test_db, admin)
+        try:
+            resp = client.patch(
+                f"/api/v1/tournaments/{t.id}/status",
+                json={"new_status": "CHECK_IN_OPEN", "reason": "test"},
+            )
+            assert resp.status_code == 400, f"Expected 400, got {resp.status_code}: {resp.text}"
+            body = resp.json()
+            detail = body.get("detail") or body.get("error", {}).get("message", "")
+            assert "PROMOTION_SPONSOR_INACTIVE" in detail, (
+                f"Expected PROMOTION_SPONSOR_INACTIVE in: {detail!r}"
+            )
         finally:
             app.dependency_overrides.clear()
