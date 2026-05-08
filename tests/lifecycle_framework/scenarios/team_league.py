@@ -23,7 +23,7 @@ import requests
 from ..framework._http import require_ok
 from ..framework.auth import AuthContext
 from ..framework.fixtures import resolve_players_db
-from ..framework.logging import ColoredConsoleLogger
+from ..framework.logging import ColoredConsoleLogger, TimedStep
 from ..framework.preflight import build_standard_registry
 from ..framework.transitions import (
     direct_assign_instructor,
@@ -140,8 +140,13 @@ class TeamLeagueStrategy:
         auth: AuthContext,
         tournament_id: int,
     ) -> None:
-        # Must set participant_type=TEAM BEFORE instructor assignment because the
-        # ops/run-scenario endpoint silently drops participant_type (schema gap).
+        # TODO: Fix ops/run-scenario participant_type propagation (separate PR).
+        #   Root cause: OpsScenarioRequest schema has no participant_type field;
+        #   ops/__init__.py hardcodes "INDIVIDUAL" at TournamentConfiguration creation
+        #   (lines 870, 883, 1179). Fix = add field to schema + read it in __init__.py.
+        #   This call is a legitimate admin config update (PATCH /tournaments/{id})
+        #   in SEEKING_INSTRUCTOR status — not a lifecycle bypass. All subsequent
+        #   guards (ENROLLMENT_OPEN, CHECK_IN_OPEN, IN_PROGRESS) run after this.
         set_participant_type_team(cfg.base_url, auth.admin_token, tournament_id)
         direct_assign_instructor(
             cfg.base_url,
@@ -239,6 +244,46 @@ class TeamLeagueStrategy:
         )
 
 
+# ── Runner subclass ──────────────────────────────────────────────────────────
+
+class _TeamScenarioRunner(ScenarioRunner):
+    """ScenarioRunner subclass that wires TEAM-specific verifiers into _step_verify.
+
+    Sole override: _step_verify — replaces ApiVerifier/DbVerifier with
+    TeamApiVerifier/TeamDbVerifier so the verify log accurately reflects
+    TEAM tournament state instead of a false FAIL from result_submitted checks.
+
+    Standard ApiVerifier._check_sessions_completed uses result_submitted=False
+    (always for TEAM, because /team-results never sets game_results), and
+    DbVerifier._check_ranking_coverage counts individual players, not teams.
+    Neither failure is real — this override corrects the verification path.
+
+    All 14 other orchestration steps are inherited unchanged from ScenarioRunner.
+    The core ApiVerifier, DbVerifier, and complete_all_sessions() are untouched.
+    """
+
+    def _step_verify(
+        self,
+        auth: AuthContext,
+        tid: int,
+        enrolled_count: int,  # not used — TEAM verification counts teams, not players
+    ) -> tuple:
+        with TimedStep("verify", self) as step:
+            cfg = self._cfg
+            team_api = TeamApiVerifier(cfg.base_url, auth.admin_token, auth.instructor_token)
+            team_db = TeamDbVerifier()
+            api_result = team_api.verify_team_tournament(tid, team_count=_TEAM_COUNT)
+            db_result = team_db.verify_team_tournament(
+                tid, team_count=_TEAM_COUNT, member_count=_PLAYER_COUNT
+            )
+            all_ok = api_result.ok and db_result.ok
+            step.ok(
+                f"API {len(api_result.passed)} passed, "
+                f"DB {len(db_result.passed)} passed — {'PASS' if all_ok else 'FAIL'}"
+            )
+        return api_result, db_result
+
+
 # ── Scenario ─────────────────────────────────────────────────────────────────
 
 class TeamLeagueScenario:
@@ -252,10 +297,10 @@ class TeamLeagueScenario:
         instructor_password="instructor123",
         player_password="Bootstrap#123",
         player_email_pattern="lfa-adult-%@lfa.com",
-        # player_count=4 tells ScenarioRunner to resolve 4 players for auth fixtures;
-        # TeamLeagueStrategy independently resolves 12 for team composition.
-        # The runner also passes player_count=4 to the standard verifier — we
-        # override verification after runner.run() with TEAM-specific verifiers.
+        # player_count=4: ScenarioRunner resolves 4 seed players for auth fixtures.
+        # TeamLeagueStrategy independently resolves 12 (4 teams × 3 members) from DB.
+        # _TeamScenarioRunner._step_verify uses _TEAM_COUNT/_PLAYER_COUNT directly,
+        # so enrolled_count=4 passed by the runner is intentionally ignored there.
         player_count=4,
         age_group="AMATEUR",
         tournament_format="HEAD_TO_HEAD",
@@ -280,37 +325,13 @@ class TeamLeagueScenario:
             player_email_pattern=cfg.player_email_pattern,
             min_players=_PLAYER_COUNT,
         )
-        runner = ScenarioRunner(
+        runner = _TeamScenarioRunner(
             config=cfg,
             strategy=strategy,
             registry=registry,
             logger=ColoredConsoleLogger(),
         )
         result = runner.run()
-
-        # Re-authenticate to get fresh tokens for TEAM-specific verifiers.
-        # runner.run() does not expose its AuthContext in ScenarioResult, so we
-        # login again (idempotent, stateless JWT — no side effects).
-        from ..framework.auth import login
-        admin_token = login(cfg.base_url, cfg.admin_email, cfg.admin_password)
-        instructor_token = login(cfg.base_url, cfg.instructor_email, cfg.instructor_password)
-
-        # Override standard verification with TEAM-specific verifiers.
-        # Standard ApiVerifier._check_sessions_completed uses result_submitted=False
-        # (always for TEAM because game_results is never set by /team-results).
-        # Standard DbVerifier._check_ranking_coverage expects individual player count.
-        # TEAM verifiers use rounds_data.round_results and TournamentTeamEnrollment.
-        team_api = TeamApiVerifier(cfg.base_url, admin_token, instructor_token)
-        team_db = TeamDbVerifier()
-
-        result.api_verification = team_api.verify_team_tournament(
-            result.tournament_id, team_count=_TEAM_COUNT
-        )
-        result.db_verification = team_db.verify_team_tournament(
-            result.tournament_id,
-            team_count=_TEAM_COUNT,
-            member_count=_PLAYER_COUNT,
-        )
         result.api_verification.assert_all()
         result.db_verification.assert_all()
         return result

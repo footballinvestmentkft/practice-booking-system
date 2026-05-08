@@ -67,9 +67,28 @@ def set_participant_type_team(
 ) -> dict:
     """PATCH /api/v1/tournaments/{id} to set participant_type=TEAM.
 
-    Required because the ops/run-scenario endpoint ignores participant_type —
-    the OpsScenarioRequest schema has no such field, so any value passed is
-    silently dropped by Pydantic and the tournament is always created INDIVIDUAL.
+    WHY THIS EXISTS — ops endpoint gap:
+      OpsScenarioRequest schema (ops_scenario/schemas.py) has no participant_type
+      field. The ops endpoint hardcodes participant_type="INDIVIDUAL" at
+      TournamentConfiguration creation (ops_scenario/__init__.py lines 870, 883,
+      1179). Any participant_type value in the framework's create_tournament() JSON
+      payload is silently dropped by Pydantic before reaching the endpoint handler.
+
+      TODO: Fix ops/run-scenario participant_type propagation (separate PR).
+        Root cause: OpsScenarioRequest schema + hardcoded "INDIVIDUAL" in __init__.py.
+        Scope: ops_scenario/schemas.py + ops_scenario/__init__.py only. No lifecycle
+        model or domain change needed.
+
+    WHEN THIS IS SAFE TO CALL:
+      Only in SEEKING_INSTRUCTOR status — before any enrollment or session generation.
+      Calling it after ENROLLMENT_OPEN may leave enrolled participants in an
+      inconsistent state (individual enrollments against a TEAM config).
+
+    NOT A LIFECYCLE BYPASS:
+      Uses the production admin PATCH endpoint (/api/v1/tournaments/{id}) with admin
+      auth. This is the same endpoint used by human admins to configure tournaments
+      before they open. All lifecycle guards (ENROLLMENT_OPEN, CHECK_IN_OPEN,
+      IN_PROGRESS) run after this call against the corrected participant_type=TEAM.
     """
     resp = requests.patch(
         f"{base_url}/api/v1/tournaments/{tournament_id}",
