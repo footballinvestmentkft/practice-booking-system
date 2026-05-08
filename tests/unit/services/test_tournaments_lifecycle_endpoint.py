@@ -87,7 +87,7 @@ def _tournament(**kw):
     t.end_date = date(2026, 6, 30)
     t.format = "INDIVIDUAL_RANKING"
     t.sessions_generated = False
-    t.reward_config = None
+    t.reward_config = {"template_name": "standard"}  # truthy; tests needing None pass it explicitly
     t.reward_policy_snapshot = None
     t.reward_config_obj = None
     t.tournament_config_obj = MagicMock()

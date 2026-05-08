@@ -46,7 +46,6 @@ from app.models.semester import Semester  # noqa: E402
 from app.models.session import Session as SessionModel  # noqa: E402
 from app.models.team import Team, TeamMember, TournamentTeamEnrollment  # noqa: E402
 from app.models.tournament_configuration import TournamentConfiguration  # noqa: E402
-from app.models.sponsor import Sponsor  # noqa: E402
 from app.models.tournament_type import TournamentType  # noqa: E402
 from app.models.user import User, UserRole  # noqa: E402
 from app.dependencies import (  # noqa: E402
@@ -260,22 +259,18 @@ def _enroll_teams_direct(tid, teams):
 
 
 # ── Common lifecycle (after enrollment phase) ─────────────────────────────────
-def _common_lifecycle(tid, instructor_id, expected_min_sessions=1, *, organizer_sponsor_id=None):
+def _common_lifecycle(tid, instructor_id, expected_min_sessions=1):
     """ENROLLMENT_CLOSED → (set instructor + config) → CHECK_IN_OPEN → IN_PROGRESS → verify."""
     _status_transition(tid, "ENROLLMENT_CLOSED")
 
-    # Set instructor (and optional sponsor) directly — eligibility guard requires
-    # master_instructor_id before CHECK_IN_OPEN; no API endpoint exists for sponsor.
+    # Set instructor directly — eligibility guard requires master_instructor_id
+    # before CHECK_IN_OPEN; no API endpoint exists for this field.
     t = _db.query(Semester).filter(Semester.id == tid).first()
     t.master_instructor_id = instructor_id
-    if organizer_sponsor_id is not None:
-        t.organizer_sponsor_id = organizer_sponsor_id
     _db.commit()
     ok(f"master_instructor_id = {instructor_id}")
-    if organizer_sponsor_id is not None:
-        ok(f"organizer_sponsor_id = {organizer_sponsor_id}")
 
-    # Schedule + reward config required before CHECK_IN_OPEN.
+    # Schedule + reward config required before CHECK_IN_OPEN / IN_PROGRESS.
     _set_schedule_config(tid)
     _set_reward_config(tid)
 
@@ -351,7 +346,7 @@ def _create_team_tournament(club_id, campus_id, tt_id, age_group, label, name_pr
 # ══════════════════════════════════════════════════════════════════════════════
 # S1: TEAM + League — 2 teams (U15 + U18)
 # ══════════════════════════════════════════════════════════════════════════════
-def s1_team_league(club, campus, tt_by_code, instructor, boot_teams, *, sponsor_id):
+def s1_team_league(club, campus, tt_by_code, instructor, boot_teams):
     prefix = f"S1-League-{uuid.uuid4().hex[:6]}"
     # Create via promotion wizard (enrolls LFA U15 automatically)
     tid = _create_team_tournament(club.id, campus.id, tt_by_code["league"].id, "U15", "league/U15", prefix)
@@ -362,7 +357,7 @@ def s1_team_league(club, campus, tt_by_code, instructor, boot_teams, *, sponsor_
         fail_local(f"Need ≥2 teams, got {count}")
 
     _status_transition(tid, "ENROLLMENT_OPEN")
-    _common_lifecycle(tid, instructor.id, expected_min_sessions=1, organizer_sponsor_id=sponsor_id)
+    _common_lifecycle(tid, instructor.id, expected_min_sessions=1)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -494,7 +489,7 @@ def s3_individual_group_knockout(club, campus, tt_by_code, instructor, boot_team
 # ══════════════════════════════════════════════════════════════════════════════
 # S4: TEAM + League 2-leg — 2 teams (U15 + U18), number_of_legs=2
 # ══════════════════════════════════════════════════════════════════════════════
-def s4_team_league_2leg(club, campus, tt_by_code, instructor, boot_teams, *, sponsor_id):
+def s4_team_league_2leg(club, campus, tt_by_code, instructor, boot_teams):
     prefix = f"S4-2Leg-{uuid.uuid4().hex[:6]}"
     tid = _create_team_tournament(club.id, campus.id, tt_by_code["league"].id, "U15", "2leg/U15", prefix)
 
@@ -515,7 +510,7 @@ def s4_team_league_2leg(club, campus, tt_by_code, instructor, boot_teams, *, spo
 
     _status_transition(tid, "ENROLLMENT_OPEN")
     # 2 teams × 2 legs = 2 matches
-    _common_lifecycle(tid, instructor.id, expected_min_sessions=2, organizer_sponsor_id=sponsor_id)
+    _common_lifecycle(tid, instructor.id, expected_min_sessions=2)
 
     # Verify exactly 2× matches (1 per leg)
     sess_count = _db.query(SessionModel).filter(SessionModel.semester_id == tid).count()
@@ -633,21 +628,9 @@ def run():
         sys.exit(1)
     info(f"  Bootstrap teams loaded: {[t.name for t in boot_teams.values()]}")
 
-    # S1/S4 create PROMOTION_EVENT tournaments — organizer_sponsor_id is required
-    # before CHECK_IN_OPEN. No API endpoint exists for this field, so we write
-    # it directly in _common_lifecycle via the DB. Create a shared sponsor here.
-    lc_sponsor = _db.query(Sponsor).filter(Sponsor.code == "MATRIX-E2E").first()
-    if not lc_sponsor:
-        lc_sponsor = Sponsor(name="Matrix E2E Sponsor", code="MATRIX-E2E", is_active=True)
-        _db.add(lc_sponsor)
-        _db.commit()
-        _db.refresh(lc_sponsor)
-    ok(f"Shared sponsor: id={lc_sponsor.id}  code={lc_sponsor.code!r}")
-
     # ── Run scenarios ─────────────────────────────────────────────────────────
     _run_scenario("S1: TEAM + League (U15+U18, 2 teams)",
-                  s1_team_league, club, campus, tt_by_code, instructor, boot_teams,
-                  sponsor_id=lc_sponsor.id)
+                  s1_team_league, club, campus, tt_by_code, instructor, boot_teams)
 
     _run_scenario("S2: INDIVIDUAL + Knockout (8 players from U15)",
                   s2_individual_knockout, club, campus, tt_by_code, instructor, boot_teams)
@@ -656,8 +639,7 @@ def run():
                   s3_individual_group_knockout, club, campus, tt_by_code, instructor, boot_teams)
 
     _run_scenario("S4: TEAM + League 2-leg (U15+U18, 2 teams)",
-                  s4_team_league_2leg, club, campus, tt_by_code, instructor, boot_teams,
-                  sponsor_id=lc_sponsor.id)
+                  s4_team_league_2leg, club, campus, tt_by_code, instructor, boot_teams)
 
     _run_scenario("S5: INDIVIDUAL + League (U15+U18 players individually)",
                   s5_individual_league, club, campus, tt_by_code, instructor, boot_teams)

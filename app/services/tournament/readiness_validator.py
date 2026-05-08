@@ -75,17 +75,21 @@ def check_pre_check_in_open(db: "Session", tournament: "Semester") -> ReadinessR
             errors.extend(range_errs)
             codes.append("SCHEDULE_CONFIG_INVALID")
 
-    # PROMOTION_EVENT sponsor guard — organizer_sponsor_id is mandatory; the
-    # referenced Sponsor must be active.  organizer_campaign_id is optional here.
+    # PROMOTION_EVENT organizer guard — the event must have at least one organizer
+    # (organizer_club_id OR organizer_sponsor_id).  The two fields are mutually
+    # exclusive (Semester._guard_single_organizer_fk ORM validator).
+    # Club-organized events (organizer_club_id set, organizer_sponsor_id NULL) are
+    # valid without further sponsor checks.  Sponsor-organized events must reference
+    # an active Sponsor.  organizer_campaign_id is optional at this stage.
     from app.models.semester import SemesterCategory
     if tournament.semester_category == SemesterCategory.PROMOTION_EVENT:
-        if not tournament.organizer_sponsor_id:
+        if not tournament.organizer_sponsor_id and not tournament.organizer_club_id:
             errors.append(
-                "PROMOTION_EVENT tournaments require an organizer sponsor before CHECK_IN_OPEN. "
-                "Set organizer_sponsor_id via the Tournament Settings."
+                "PROMOTION_EVENT tournaments require an organizer (club or sponsor) before CHECK_IN_OPEN. "
+                "Set organizer_sponsor_id or organizer_club_id via the Tournament Settings."
             )
             codes.append("PROMOTION_SPONSOR_MISSING")
-        else:
+        elif tournament.organizer_sponsor_id:
             from app.models.sponsor import Sponsor
             sponsor = (
                 db.query(Sponsor)
@@ -98,6 +102,7 @@ def check_pre_check_in_open(db: "Session", tournament: "Semester") -> ReadinessR
                     "Activate the sponsor record before transitioning to CHECK_IN_OPEN."
                 )
                 codes.append("PROMOTION_SPONSOR_INACTIVE")
+        # else: organizer_club_id is set — club-organized PROMOTION_EVENT, allowed.
 
     return ReadinessResult(
         ok=not errors,
