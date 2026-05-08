@@ -131,6 +131,34 @@ def _api_patch(url, body):
     return resp
 
 
+def _api_post(url, body):
+    resp = _client.post(url, json=body)
+    _refresh_csrf(resp)
+    return resp
+
+
+def _set_schedule_config(tid):
+    _assert_api_ok(
+        _api_patch(f"/api/v1/tournaments/{tid}/schedule-config", {
+            "match_duration_minutes": 90,
+            "break_duration_minutes": 15,
+            "parallel_fields": 1,
+        }),
+        "schedule-config",
+    )
+
+
+def _set_reward_config(tid):
+    _assert_api_ok(
+        _api_post(f"/api/v1/tournaments/{tid}/reward-config", {
+            "skill_mappings": [
+                {"skill": "speed", "weight": 1.0, "category": "PHYSICAL", "enabled": True}
+            ],
+        }),
+        "reward-config",
+    )
+
+
 # ── Assertion helpers ─────────────────────────────────────────────────────────
 def _assert_redirect(resp, fragment, label):
     location = resp.headers.get("location", "")
@@ -232,15 +260,22 @@ def _enroll_teams_direct(tid, teams):
 
 # ── Common lifecycle (after enrollment phase) ─────────────────────────────────
 def _common_lifecycle(tid, instructor_id, expected_min_sessions=1):
-    """ENROLLMENT_CLOSED → CHECK_IN_OPEN → (set instructor) → IN_PROGRESS → verify."""
+    """ENROLLMENT_CLOSED → (set instructor + config) → CHECK_IN_OPEN → IN_PROGRESS → verify."""
     _status_transition(tid, "ENROLLMENT_CLOSED")
-    _status_transition(tid, "CHECK_IN_OPEN")
 
-    # Set instructor directly (simulates wizard Basic Info save)
+    # Set instructor directly — eligibility guard requires master_instructor_id
+    # before CHECK_IN_OPEN; no API endpoint exists for this field.
     t = _db.query(Semester).filter(Semester.id == tid).first()
     t.master_instructor_id = instructor_id
     _db.commit()
     ok(f"master_instructor_id = {instructor_id}")
+
+    # Schedule + reward config required before CHECK_IN_OPEN / IN_PROGRESS.
+    _set_schedule_config(tid)
+    _set_reward_config(tid)
+
+    _db.expire_all()
+    _status_transition(tid, "CHECK_IN_OPEN")
 
     _db.expire_all()
     _status_transition(tid, "IN_PROGRESS")

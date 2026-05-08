@@ -220,6 +220,24 @@ def test_instructor_full_lifecycle(
     print(f"✅ Step 3.75: Enrollment closed (status=ENROLLMENT_CLOSED)")
 
     # ==================================================================
+    # STEP 3.8: Set schedule config (required before CHECK_IN_OPEN)
+    # ==================================================================
+
+    print(f"[Step 3.8] Setting schedule config for tournament {tournament_id}...")
+    sched_cfg_response = requests.patch(
+        f"{api_url}/api/v1/tournaments/{tournament_id}/schedule-config",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={
+            "match_duration_minutes": 90,
+            "break_duration_minutes": 15,
+            "parallel_fields": 1,
+        }
+    )
+    assert sched_cfg_response.status_code in [200, 201], \
+        f"Schedule config failed: {sched_cfg_response.text}"
+    print(f"✅ Step 3.8: Schedule config set")
+
+    # ==================================================================
     # STEP 3.9: Admin opens check-in (ENROLLMENT_CLOSED → CHECK_IN_OPEN)
     # ==================================================================
 
@@ -237,6 +255,24 @@ def test_instructor_full_lifecycle(
         f"Open check-in failed: {checkin_open_response.text}"
 
     print(f"✅ Step 3.9: Check-in opened (status=CHECK_IN_OPEN)")
+
+    # ==================================================================
+    # STEP 3.91: Set reward config (required before IN_PROGRESS)
+    # ==================================================================
+
+    print(f"[Step 3.91] Setting reward config for tournament {tournament_id}...")
+    reward_cfg_response = requests.post(
+        f"{api_url}/api/v1/tournaments/{tournament_id}/reward-config",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={
+            "skill_mappings": [
+                {"skill": "speed", "weight": 1.0, "category": "PHYSICAL", "enabled": True}
+            ],
+        }
+    )
+    assert reward_cfg_response.status_code in [200, 201], \
+        f"Reward config failed: {reward_cfg_response.text}"
+    print(f"✅ Step 3.91: Reward config set")
 
     # ==================================================================
     # STEP 3.95: Admin starts tournament (CHECK_IN_OPEN → IN_PROGRESS)

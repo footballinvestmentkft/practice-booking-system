@@ -136,13 +136,13 @@ def accept_instructor_assignment(
     """
     # REFACTORED: Use shared services
     require_instructor(current_user)
-    LicenseValidator.get_coach_license(db, current_user.id, raise_if_missing=True)
 
     tournament_repo = TournamentRepository(db)
     tournament = tournament_repo.get_or_404(tournament_id)
 
     # ============================================================================
     # VALIDATION 4: Tournament status allows instructor acceptance
+    # (checked before eligibility so wrong-status returns 400, not 403)
     # ============================================================================
     # Two scenarios:
     # 1. SEEKING_INSTRUCTOR: Instructor volunteers for APPLICATION_BASED tournaments
@@ -160,6 +160,24 @@ def accept_instructor_assignment(
                 "tournament_id": tournament_id,
                 "tournament_name": tournament.name
             }
+        )
+
+    # Eligibility check — license, expiry, AND level vs tournament age group.
+    # Runs after status check so wrong-status always returns 400 before this.
+    from app.services.tournament.instructor_eligibility_service import (
+        is_eligible_master_instructor,
+        resolve_tournament_age_groups,
+    )
+    _age_groups = resolve_tournament_age_groups(tournament)
+    _eligible, _reason = is_eligible_master_instructor(db, current_user.id, _age_groups)
+    if not _eligible:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error": "instructor_not_eligible",
+                "message": f"Instructor not eligible for this tournament: {_reason}",
+                "user_id": current_user.id,
+            },
         )
 
     # ============================================================================

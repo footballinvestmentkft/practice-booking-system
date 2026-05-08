@@ -108,6 +108,21 @@ def _make_license(db: Session, user: User) -> UserLicense:
     return lic
 
 
+def _make_coach_license(db: Session, user: User) -> UserLicense:
+    lic = UserLicense(
+        user_id=user.id,
+        specialization_type="LFA_COACH",
+        current_level=7,
+        max_achieved_level=7,
+        is_active=True,
+        started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+        expires_at=None,
+    )
+    db.add(lic)
+    db.flush()
+    return lic
+
+
 def _make_tournament(db: Session, enrollment_cost: int = 0) -> Semester:
     sem = Semester(
         code=f"TOURN-{_uid()}",
@@ -906,6 +921,7 @@ def test_instructor_slot_duplicate_rejected(test_db: Session, client: TestClient
     """
     admin = _make_user(test_db, role=UserRole.ADMIN)
     instructor = _make_user(test_db, role=UserRole.INSTRUCTOR)
+    _make_coach_license(test_db, instructor)
     tourn = _make_tournament(test_db)
 
     app.dependency_overrides[get_current_user_web] = lambda: admin
@@ -4081,6 +4097,7 @@ def test_admin_instructor_slot_create_planned(test_db: Session, client: TestClie
     """
     admin = _make_user(test_db, role=UserRole.ADMIN)
     instructor = _make_user(test_db, role=UserRole.INSTRUCTOR)
+    _make_coach_license(test_db, instructor)
     uid = _uid()
 
     sem = Semester(

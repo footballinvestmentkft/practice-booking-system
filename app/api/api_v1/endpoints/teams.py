@@ -3,20 +3,74 @@ Teams REST API
 
 Endpoints for team management in team-based tournaments.
 Student-facing: create teams, invite members, respond to invites.
-Admin: user search for invite flow.
+Admin: user search for invite flow, admin team creation, direct member add.
 """
 from typing import List, Optional
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
 
 from ....database import get_db
-from ....dependencies import get_current_user, get_current_active_user
+from ....dependencies import get_current_user, get_current_active_user, get_current_admin_user_hybrid
 from ....models.user import User, UserRole
 from ....models.team import Team, TeamMember, TeamInvite, TeamInviteStatus
 from ....services.tournament import team_service
 
 router = APIRouter()
+
+
+# ---------------------------------------------------------------------------
+# Admin: team creation with explicit captain (automation / framework path)
+# ---------------------------------------------------------------------------
+
+class AdminCreateTeamRequest(BaseModel):
+    name: str
+    captain_user_id: int
+    specialization_type: Optional[str] = None
+    code: Optional[str] = None
+
+
+@router.post("/teams", status_code=status.HTTP_201_CREATED)
+def admin_create_team(
+    body: AdminCreateTeamRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user_hybrid),
+):
+    """Admin-only: create a team with an explicit captain. Bearer-token auth."""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin only")
+    team = team_service.create_team(
+        db,
+        name=body.name,
+        captain_user_id=body.captain_user_id,
+        specialization_type=body.specialization_type or "",
+        code=body.code,
+    )
+    return {"id": team.id, "name": team.name, "code": team.code, "captain_user_id": team.captain_user_id}
+
+
+# ---------------------------------------------------------------------------
+# Admin: direct member add (no invite flow)
+# ---------------------------------------------------------------------------
+
+class AdminAddMemberRequest(BaseModel):
+    user_id: int
+    role: Optional[str] = "PLAYER"
+
+
+@router.post("/teams/{team_id}/members", status_code=status.HTTP_201_CREATED)
+def admin_add_team_member(
+    team_id: int,
+    body: AdminAddMemberRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user_hybrid),
+):
+    """Admin-only: add a user directly to a team without the invite flow. Bearer-token auth."""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin only")
+    member = team_service.add_team_member(db, team_id=team_id, user_id=body.user_id, role=body.role or "PLAYER")
+    return {"id": member.id, "team_id": member.team_id, "user_id": member.user_id, "role": member.role}
 
 
 # ---------------------------------------------------------------------------

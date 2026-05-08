@@ -311,6 +311,71 @@
         "title": "AddXPRequest",
         "type": "object"
       },
+      "AdminAddMemberRequest": {
+        "properties": {
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": "PLAYER",
+            "title": "Role"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "title": "AdminAddMemberRequest",
+        "type": "object"
+      },
+      "AdminCreateTeamRequest": {
+        "properties": {
+          "captain_user_id": {
+            "title": "Captain User Id",
+            "type": "integer"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "specialization_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Specialization Type"
+          }
+        },
+        "required": [
+          "name",
+          "captain_user_id"
+        ],
+        "title": "AdminCreateTeamRequest",
+        "type": "object"
+      },
       "AnswerQuestionRequest": {
         "properties": {
           "answer_text": {
@@ -11055,6 +11120,16 @@
             "description": "Number of rounds for INDIVIDUAL_RANKING tournaments (1\u201320). Defaults to 1 if omitted.",
             "title": "Number Of Rounds"
           },
+          "participant_type": {
+            "default": "INDIVIDUAL",
+            "description": "Participant type for the tournament: 'INDIVIDUAL' or 'TEAM'. Default: 'INDIVIDUAL' (all existing callers are unaffected). Set to 'TEAM' to create a team-based tournament (TeamLeagueScenario prerequisite). MIXED is not accepted \u2014 no implemented flow behind it.",
+            "enum": [
+              "INDIVIDUAL",
+              "TEAM"
+            ],
+            "title": "Participant Type",
+            "type": "string"
+          },
           "player_count": {
             "default": 1024,
             "description": "Number of players to seed + enroll (0\u20131024). Use 0 for testing enrollment workflows.",
@@ -18155,6 +18230,19 @@
           "recorded_at"
         ],
         "title": "TeachingHoursResponse",
+        "type": "object"
+      },
+      "TeamEnrollRequest": {
+        "properties": {
+          "team_id": {
+            "title": "Team Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "team_id"
+        ],
+        "title": "TeamEnrollRequest",
         "type": "object"
       },
       "TeamResultEntry": {
@@ -51806,6 +51894,51 @@
         ]
       }
     },
+    "/api/v1/teams": {
+      "post": {
+        "description": "Admin-only: create a team with an explicit captain. Bearer-token auth.",
+        "operationId": "admin_create_team_api_v1_teams_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminCreateTeamRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Admin Create Team",
+        "tags": [
+          "teams"
+        ]
+      }
+    },
     "/api/v1/teams/invites/my": {
       "get": {
         "description": "Get all pending invites for the current user.",
@@ -52074,6 +52207,62 @@
           }
         ],
         "summary": "Cancel Invite",
+        "tags": [
+          "teams"
+        ]
+      }
+    },
+    "/api/v1/teams/{team_id}/members": {
+      "post": {
+        "description": "Admin-only: add a user directly to a team without the invite flow. Bearer-token auth.",
+        "operationId": "admin_add_team_member_api_v1_teams__team_id__members_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "team_id",
+            "required": true,
+            "schema": {
+              "title": "Team Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminAddMemberRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Admin Add Team Member",
         "tags": [
           "teams"
         ]
@@ -53952,6 +54141,62 @@
           }
         ],
         "summary": "Enroll In Tournament",
+        "tags": [
+          "tournaments"
+        ]
+      }
+    },
+    "/api/v1/tournaments/{tournament_id}/enroll-team": {
+      "post": {
+        "description": "Admin-only: enroll an existing team into a TEAM tournament.\n\nGuards (enforced by service):\n- tournament exists, participant_type == TEAM, status == ENROLLMENT_OPEN\n- team exists and is active\n- no duplicate enrollment (idempotent: returns existing enrollment on repeat call)\n- if team_enrollment_cost > 0: deducts from captain's credit balance\n\nReturns 200 whether the enrollment is new or pre-existing (idempotent).",
+        "operationId": "admin_enroll_team_api_v1_tournaments__tournament_id__enroll_team_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tournament_id",
+            "required": true,
+            "schema": {
+              "title": "Tournament Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamEnrollRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Admin Enroll Team",
         "tags": [
           "tournaments"
         ]

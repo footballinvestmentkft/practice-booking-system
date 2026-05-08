@@ -87,12 +87,35 @@ def add_slot(
     notes: Optional[str] = None,
 ) -> TournamentInstructorSlot:
     """Add an instructor to the tournament roster."""
+    from app.services.tournament.instructor_eligibility_service import (
+        is_eligible_master_instructor,
+        is_eligible_field_instructor,
+        resolve_tournament_age_groups,
+    )
+
     tournament = _get_tournament_or_404(db, semester_id)
 
     # Validate instructor exists
     instructor = db.query(User).filter(User.id == instructor_id).first()
     if not instructor:
         raise HTTPException(status_code=404, detail=f"User {instructor_id} not found")
+
+    # Eligibility check — must happen before role business rules
+    age_groups = resolve_tournament_age_groups(tournament)
+    if role == SlotRole.MASTER.value:
+        eligible, reason = is_eligible_master_instructor(db, instructor_id, age_groups)
+        if not eligible:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Instructor not eligible as master: {reason}",
+            )
+    elif role == SlotRole.FIELD.value:
+        eligible, reason = is_eligible_field_instructor(db, instructor_id, age_groups)
+        if not eligible:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Instructor not eligible as field instructor: {reason}",
+            )
 
     # Role business rules
     if role == SlotRole.MASTER.value:

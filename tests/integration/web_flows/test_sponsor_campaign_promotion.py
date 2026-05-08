@@ -12,7 +12,7 @@ Sponsor Campaign → Promotion Event — P4 integration tests (SPON-CAM-08..13)
 DONE = pytest tests/integration/web_flows/test_sponsor_campaign_promotion.py -v
 """
 import uuid
-from datetime import date
+from datetime import date, datetime, timezone
 
 import pytest
 from fastapi.testclient import TestClient
@@ -26,6 +26,7 @@ from app.models.sponsor import Sponsor, SponsorAudienceEntry, SponsorCampaign
 from app.models.semester import Semester
 from app.models.tournament_configuration import TournamentConfiguration
 from app.models.club import CsvImportLog
+from app.models.license import UserLicense
 from app.core.security import get_password_hash
 from app.services.sponsor_promote_service import promote_entries
 
@@ -374,6 +375,20 @@ def _make_instructor(db: Session, *, is_active: bool = True) -> User:
     return u
 
 
+def _make_coach_license(db: Session, user: User, *, level: int = 5) -> UserLicense:
+    lic = UserLicense(
+        user_id=user.id,
+        specialization_type="LFA_COACH",
+        current_level=level,
+        max_achieved_level=level,
+        is_active=True,
+        started_at=datetime.now(timezone.utc),
+    )
+    db.add(lic)
+    db.flush()
+    return lic
+
+
 # ── SPON-CAM-14 ───────────────────────────────────────────────────────────────
 
 class TestWizardGetContainsInstructorDropdown:
@@ -384,6 +399,7 @@ class TestWizardGetContainsInstructorDropdown:
         sponsor = _make_sponsor(test_db, admin)
         _make_campaign(test_db, sponsor, admin)
         instr = _make_instructor(test_db)
+        _make_coach_license(test_db, instr)
         test_db.commit()
 
         client = _client(test_db, admin)
@@ -448,6 +464,7 @@ class TestWizardPostValidInstructorSetsMasterId:
         sponsor = _make_sponsor(test_db, admin)
         campaign = _make_campaign(test_db, sponsor, admin)
         instr = _make_instructor(test_db)
+        _make_coach_license(test_db, instr)
         test_db.commit()
 
         client = _client(test_db, admin)

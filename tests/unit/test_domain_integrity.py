@@ -139,10 +139,13 @@ class TestGenerationValidatorPitchGuard:
         t = self._make_tournament(campus_id=5)
         db = self._make_db(t, active_pitch_count=0)
 
-        # Patch TournamentRepository.get_optional
+        _PATCH_ELIG = (
+            "app.services.tournament.instructor_eligibility_service"
+            ".check_tournament_master_instructor_eligible"
+        )
         with patch(
             "app.services.tournament.session_generation.validators.generation_validator.TournamentRepository"
-        ) as MockRepo:
+        ) as MockRepo, patch(_PATCH_ELIG, return_value=(True, "")):
             MockRepo.return_value.get_optional.return_value = t
             validator = GenerationValidator(db)
             ok, reason = validator.can_generate_sessions(99)
@@ -157,9 +160,13 @@ class TestGenerationValidatorPitchGuard:
         t = self._make_tournament(campus_id=5)
         db = self._make_db(t, active_pitch_count=2)
 
+        _PATCH_ELIG = (
+            "app.services.tournament.instructor_eligibility_service"
+            ".check_tournament_master_instructor_eligible"
+        )
         with patch(
             "app.services.tournament.session_generation.validators.generation_validator.TournamentRepository"
-        ) as MockRepo:
+        ) as MockRepo, patch(_PATCH_ELIG, return_value=(True, "")):
             MockRepo.return_value.get_optional.return_value = t
             validator = GenerationValidator(db)
             ok, reason = validator.can_generate_sessions(99)
@@ -539,7 +546,10 @@ class TestGenerationValidatorInstructorGuard:
         "app.services.tournament.session_generation.validators"
         ".generation_validator.TournamentRepository"
     )
-    _PATCH_HMIA = "app.services.tournament.instructor_service.has_master_instructor_assignment"
+    _PATCH_ELIGIBILITY = (
+        "app.services.tournament.instructor_eligibility_service"
+        ".check_tournament_master_instructor_eligible"
+    )
 
     def _make_tournament(self, fmt, type_id=None):
         t = MagicMock()
@@ -586,7 +596,7 @@ class TestGenerationValidatorInstructorGuard:
         db = self._make_db(t)
 
         with patch(self._PATCH_REPO) as MockRepo, \
-             patch(self._PATCH_HMIA, return_value=False):
+             patch(self._PATCH_ELIGIBILITY, return_value=(False, "No master instructor assigned")):
             MockRepo.return_value.get_optional.return_value = t
             ok, reason = GenerationValidator(db).can_generate_sessions(77)
 
@@ -606,7 +616,7 @@ class TestGenerationValidatorInstructorGuard:
         db = self._make_db(t)
 
         with patch(self._PATCH_REPO) as MockRepo, \
-             patch(self._PATCH_HMIA, return_value=False):
+             patch(self._PATCH_ELIGIBILITY, return_value=(False, "No master instructor assigned")):
             MockRepo.return_value.get_optional.return_value = t
             ok, reason = GenerationValidator(db).can_generate_sessions(77)
 
@@ -621,7 +631,7 @@ class TestGenerationValidatorInstructorGuard:
         db = self._make_db(t)
 
         with patch(self._PATCH_REPO) as MockRepo, \
-             patch(self._PATCH_HMIA, return_value=True):
+             patch(self._PATCH_ELIGIBILITY, return_value=(True, "")):
             MockRepo.return_value.get_optional.return_value = t
             ok, reason = GenerationValidator(db).can_generate_sessions(77)
 

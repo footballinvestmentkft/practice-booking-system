@@ -3734,18 +3734,41 @@ class TestOpsScenarioIntegration:
 
     def _create_grandmaster(self, db):
         """Create the grandmaster@lfa.com instructor required by ops_scenario."""
+        from datetime import datetime, timezone
         from app.models.user import User, UserRole
+        from app.models.license import UserLicense
         existing = db.query(User).filter(User.email == "grandmaster@lfa.com").first()
         if existing:
-            return existing
-        gm = User(
-            email="grandmaster@lfa.com",
-            name="Grandmaster Instructor",
-            password_hash="test_hash",
-            role=UserRole.INSTRUCTOR,
-            is_active=True,
-        )
-        db.add(gm); db.commit(); db.refresh(gm)
+            gm = existing
+        else:
+            gm = User(
+                email="grandmaster@lfa.com",
+                name="Grandmaster Instructor",
+                password_hash="test_hash",
+                role=UserRole.INSTRUCTOR,
+                is_active=True,
+            )
+            db.add(gm); db.commit(); db.refresh(gm)
+        coach_lic = db.query(UserLicense).filter(
+            UserLicense.user_id == gm.id,
+            UserLicense.specialization_type == "LFA_COACH",
+        ).first()
+        if coach_lic:
+            coach_lic.is_active = True
+            coach_lic.current_level = 7
+            coach_lic.expires_at = None
+            db.commit()
+        else:
+            db.add(UserLicense(
+                user_id=gm.id,
+                specialization_type="LFA_COACH",
+                current_level=7,
+                max_achieved_level=7,
+                is_active=True,
+                started_at=datetime.now(timezone.utc),
+                expires_at=None,
+            ))
+            db.commit()
         return gm
 
     def test_full_pipeline_four_players_real_tsg(self, test_db):

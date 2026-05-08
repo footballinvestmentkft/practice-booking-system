@@ -440,6 +440,98 @@ def cancel_invite(
     return True
 
 
+def admin_enroll_team_in_tournament(
+    db: Session,
+    team_id: int,
+    tournament_id: int,
+) -> TournamentTeamEnrollment:
+    """
+    Admin-only: enroll any active team into a TEAM tournament without requiring
+    caller to be the team captain.
+
+    Guards (same as enroll_existing_team_in_tournament minus captain check):
+    - team exists and is active
+    - tournament exists, participant_type == TEAM, status == ENROLLMENT_OPEN
+    - no active enrollment already exists (idempotent: returns existing if found)
+    - if cost > 0: deducts from captain's credit balance (SELECT FOR UPDATE)
+
+    Returns the existing enrollment record when called twice (idempotent).
+    """
+    from app.models.semester import Semester
+
+    team = get_team(db, team_id)
+    if not team or not team.is_active:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team not found")
+
+    tournament = db.query(Semester).filter(Semester.id == tournament_id).first()
+    if not tournament:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tournament not found")
+
+    cfg = db.query(TournamentConfiguration).filter(
+        TournamentConfiguration.semester_id == tournament_id
+    ).first()
+    if not cfg or cfg.participant_type != "TEAM":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This tournament does not support team enrollment",
+        )
+
+    if tournament.tournament_status != "ENROLLMENT_OPEN":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Tournament enrollment is not open (current status: {tournament.tournament_status})",
+        )
+
+    existing = db.query(TournamentTeamEnrollment).filter(
+        and_(
+            TournamentTeamEnrollment.semester_id == tournament_id,
+            TournamentTeamEnrollment.team_id == team_id,
+            TournamentTeamEnrollment.is_active == True,
+        )
+    ).first()
+    if existing:
+        return existing
+
+    cost = cfg.team_enrollment_cost if cfg else 0
+
+    if cost > 0:
+        license = (
+            db.query(UserLicense)
+            .filter(
+                UserLicense.user_id == team.captain_user_id,
+                UserLicense.is_active == True,
+            )
+            .with_for_update()
+            .first()
+        )
+        if not license or license.credit_balance < cost:
+            available = license.credit_balance if license else 0
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail=f"Insufficient credits. Required: {cost}, Available: {available}",
+            )
+        license.credit_balance -= cost
+        db.add(CreditTransaction(
+            user_license_id=license.id,
+            amount=-cost,
+            balance_after=license.credit_balance,
+            transaction_type=TransactionType.ENROLLMENT.value,
+            description=f"Team enrollment fee for tournament {tournament_id}",
+            idempotency_key=f"team-enroll-{team_id}-{tournament_id}",
+        ))
+
+    enrollment = TournamentTeamEnrollment(
+        semester_id=tournament_id,
+        team_id=team_id,
+        is_active=True,
+        payment_verified=(cost == 0),
+    )
+    db.add(enrollment)
+    db.commit()
+    db.refresh(enrollment)
+    return enrollment
+
+
 def get_pending_invites_for_user(db: Session, user_id: int) -> List[TeamInvite]:
     """Get all PENDING invites for a user"""
     return db.query(TeamInvite).filter(

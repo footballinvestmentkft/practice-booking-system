@@ -169,6 +169,53 @@ def _api_post(url, body):
     return resp
 
 
+def _set_schedule_config(tid):
+    resp = _api_patch(f"/api/v1/tournaments/{tid}/schedule-config", {
+        "match_duration_minutes": 90,
+        "break_duration_minutes": 15,
+        "parallel_fields": 1,
+    })
+    if resp.status_code not in (200, 201):
+        body = {}
+        try:
+            body = resp.json()
+        except Exception:
+            pass
+        detail = body.get("detail", "") if isinstance(body, dict) else resp.text[:150]
+        fail(f"schedule-config: HTTP {resp.status_code} — {detail}")
+    ok("schedule-config set")
+
+
+def _set_reward_config(tid):
+    resp = _api_post(f"/api/v1/tournaments/{tid}/reward-config", {
+        "skill_mappings": [
+            {"skill": "speed", "weight": 1.0, "category": "PHYSICAL", "enabled": True}
+        ],
+    })
+    if resp.status_code not in (200, 201):
+        body = {}
+        try:
+            body = resp.json()
+        except Exception:
+            pass
+        detail = body.get("detail", "") if isinstance(body, dict) else resp.text[:150]
+        fail(f"reward-config: HTTP {resp.status_code} — {detail}")
+    ok("reward-config set")
+
+
+def _prepare_for_check_in(tid):
+    """Set schedule config and reward config before CHECK_IN_OPEN / IN_PROGRESS.
+
+    - SCHEDULE_CONFIG_MISSING: checked at CHECK_IN_OPEN
+    - REWARD_CONFIG_MISSING: checked at IN_PROGRESS
+    PROMOTION_EVENT tournaments created via the promotion wizard have
+    organizer_club_id already set; the organizer guard allows this without
+    requiring organizer_sponsor_id (the two fields are mutually exclusive).
+    """
+    _set_schedule_config(tid)
+    _set_reward_config(tid)
+
+
 # ── Assertion helpers ─────────────────────────────────────────────────────────
 def _assert_redirect_ok(resp, fragment, label):
     location = resp.headers.get("location", "")
@@ -579,6 +626,9 @@ def test_guard_d_rankings_required(club, campus, tt_id, instructor):
     _db.commit()
     _db.expire_all()
 
+    # Set schedule config and reward config before CHECK_IN_OPEN / IN_PROGRESS.
+    _prepare_for_check_in(t.id)
+
     _status_transition(t.id, "CHECK_IN_OPEN")  # sessions generated here
 
     sess_count = _db.query(SessionModel).filter(SessionModel.semester_id == t.id).count()
@@ -650,6 +700,9 @@ def test_full_lifecycle_visibility(club, campus, tt_id, instructor):
     _db.commit()
     _db.expire_all()
     ok(f"master_instructor_id = {instructor.id}")
+
+    # Set schedule config and reward config before CHECK_IN_OPEN / IN_PROGRESS.
+    _prepare_for_check_in(t.id)
 
     # ─── → CHECK_IN_OPEN ──────────────────────────────────────────────────────
     _status_transition(t.id, "CHECK_IN_OPEN")
@@ -786,6 +839,8 @@ def test_idempotency(club, campus, tt_id, instructor):
     t_obj.master_instructor_id = instructor.id
     _db.commit()
     _db.expire_all()
+    # Set schedule config and reward config before CHECK_IN_OPEN / IN_PROGRESS.
+    _prepare_for_check_in(t.id)
     _status_transition(t.id, "CHECK_IN_OPEN")
     _status_transition(t.id, "IN_PROGRESS")
 
@@ -932,6 +987,9 @@ def test_public_api_strict(club, campus, tt_id, instructor):
     t_obj.master_instructor_id = instructor.id
     _db.commit()
     _db.expire_all()
+
+    # Set schedule config and reward config before CHECK_IN_OPEN / IN_PROGRESS.
+    _prepare_for_check_in(t.id)
 
     # CHECK_IN_OPEN
     _status_transition(t.id, "CHECK_IN_OPEN")

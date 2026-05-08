@@ -167,7 +167,10 @@
                 <select name="master_instructor_id">
                     <option value="">— assign later —</option>
                     {% for instr in instructors %}
-                    <option value="{{ instr.id }}">{{ instr.name }} ({{ instr.email }})</option>
+                    <option value="{{ instr.id }}">
+                        {{- instr.name }} ({{ instr.email }})
+                        {%- if instructor_license_levels.get(instr.id) %} — Level {{ instructor_license_levels[instr.id] }}{% endif %}
+                    </option>
                     {% endfor %}
                 </select>
                 <div class="field-hint">Required before advancing to CHECK_IN_OPEN. Assign now or set later on the tournament edit page.</div>

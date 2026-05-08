@@ -886,7 +886,7 @@ def run_ops_scenario(
         t_cfg = _TCfg(
             semester_id=tournament.id,
             tournament_type_id=tt.id,
-            participant_type="INDIVIDUAL",
+            participant_type=request.participant_type,
             is_multi_day=False,
             max_players=request.max_players or _effective_count,  # Use override if provided
             parallel_fields=1,
@@ -899,7 +899,7 @@ def run_ops_scenario(
         t_cfg = _TCfg(
             semester_id=tournament.id,
             tournament_type_id=None,
-            participant_type="INDIVIDUAL",
+            participant_type=request.participant_type,
             is_multi_day=False,
             max_players=request.max_players or _effective_count,  # Use override if provided
             parallel_fields=1,

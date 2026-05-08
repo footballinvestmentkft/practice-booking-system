@@ -281,20 +281,64 @@ def transition_tournament_status(
     # Record old status for response and history
     old_status = tournament.tournament_status
 
-    # ── Pre-check: instructor prerequisite (before status flush) ──────────────
-    # GenerationValidator also checks this, but that check runs AFTER the flush.
-    # In SAVEPOINT-isolated tests the flushed status change would remain visible
-    # even after an HTTPException, making the status assertion fail.  Checking
-    # here (before any mutation) keeps the status unchanged on failure.
+    # ── Pre-checks (before status flush) ─────────────────────────────────────
+    # All pre-checks must run before the status flush so a 400 leaves
+    # tournament_status unchanged (important for SAVEPOINT-isolated tests).
+
     if request.new_status == "CHECK_IN_OPEN":
-        from app.services.tournament.instructor_service import has_master_instructor_assignment
-        if not has_master_instructor_assignment(db, tournament_id):
+        # Instructor eligibility — GenerationValidator repeats this, but that runs
+        # after the flush; checking here keeps status unchanged on failure.
+        from app.services.tournament.instructor_eligibility_service import (
+            check_tournament_master_instructor_eligible,
+        )
+        eligible, reason = check_tournament_master_instructor_eligible(db, tournament_id)
+        if not eligible:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=(
-                    "Cannot generate sessions: No instructor assigned. "
-                    "Assign a master instructor before generating sessions."
-                ),
+                detail=f"Cannot advance to CHECK_IN_OPEN: {reason}",
+            )
+
+        # Schedule configuration — NULL fields are NOT silently defaulted;
+        # the admin must explicitly set match/break/parallel before closing enrollment.
+        from app.services.tournament.readiness_validator import check_pre_check_in_open
+        sched = check_pre_check_in_open(db, tournament)
+        if not sched.ok:
+            _codes = f" [{', '.join(sched.requirement_codes)}]" if sched.requirement_codes else ""
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot advance to CHECK_IN_OPEN: {'; '.join(sched.blocking_errors)}{_codes}",
+            )
+
+    if request.new_status == "IN_PROGRESS":
+        # Reward configuration — a tournament without reward config enters IN_PROGRESS
+        # but never distributes XP; block here so the admin is forced to configure it.
+        from app.services.tournament.readiness_validator import check_pre_in_progress
+        rwd = check_pre_in_progress(db, tournament)
+        if not rwd.ok:
+            _codes = f" [{', '.join(rwd.requirement_codes)}]" if rwd.requirement_codes else ""
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot advance to IN_PROGRESS: {'; '.join(rwd.blocking_errors)}{_codes}",
+            )
+
+    if request.new_status == "COMPLETED":
+        from app.services.tournament.readiness_validator import check_pre_completed
+        comp = check_pre_completed(db, tournament)
+        if not comp.ok:
+            _codes = f" [{', '.join(comp.requirement_codes)}]" if comp.requirement_codes else ""
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot advance to COMPLETED: {'; '.join(comp.blocking_errors)}{_codes}",
+            )
+
+    if request.new_status == "REWARDS_DISTRIBUTED":
+        from app.services.tournament.readiness_validator import check_pre_rewards_distributed
+        rdist = check_pre_rewards_distributed(db, tournament)
+        if not rdist.ok:
+            _codes = f" [{', '.join(rdist.requirement_codes)}]" if rdist.requirement_codes else ""
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot advance to REWARDS_DISTRIBUTED: {'; '.join(rdist.blocking_errors)}{_codes}",
             )
 
     # Update tournament status
@@ -544,9 +588,15 @@ def transition_tournament_status(
                 if success:
                     print(f"✅ Auto-regenerated {len(sessions_created)} sessions at IN_PROGRESS for tournament {tournament_id}")
                 else:
-                    print(f"⚠️ Failed to regenerate sessions at IN_PROGRESS: {message}")
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Session regeneration failed at IN_PROGRESS: {message}",
+                    )
             else:
-                print(f"⚠️ Cannot regenerate sessions at IN_PROGRESS: {reason}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Cannot regenerate sessions at IN_PROGRESS: {reason}",
+                )
 
     # Record status history
     record_status_change(
