@@ -200,6 +200,7 @@ async def admin_tournament_edit_page(
             "group_identifier": s.group_identifier,
             "matchup_label": _matchup_label(s, enrolled_teams, enrolled_users),
             "postponed_reason": s.postponed_reason,
+            "pitch_name": pitch_name_map.get(s.pitch_id) if s.pitch_id else None,
         }
         for s in all_match_sessions
     ]
@@ -241,8 +242,15 @@ async def admin_tournament_edit_page(
         if _team_ids_in_rankings else {}
     )
 
-    # Instructor roster (Section 4.5)
+    # Pitch name map for session list display (pitch_id → name)
     from app.models.pitch import Pitch as PitchModel
+    _session_pitch_ids = {s.pitch_id for s in all_match_sessions if s.pitch_id}
+    pitch_name_map: dict[int, str] = {}
+    if _session_pitch_ids:
+        for p in db.query(PitchModel).filter(PitchModel.id.in_(_session_pitch_ids)).all():
+            pitch_name_map[p.id] = p.name
+
+    # Instructor roster (Section 4.5)
     instructor_roster = _ip_service.get_roster(db, tournament_id)
     eligible_instructors = (
         db.query(User)
@@ -268,6 +276,12 @@ async def admin_tournament_edit_page(
         1 for s in all_match_sessions
         if s.game_results or (s.rounds_data and s.rounds_data.get("round_results"))
     )
+
+    # Tournament format (HEAD_TO_HEAD / INDIVIDUAL_RANKING) — used by rankings SSR table
+    try:
+        tournament_format = t.format
+    except Exception:
+        tournament_format = "HEAD_TO_HEAD"
 
     return templates.TemplateResponse(
         "admin/tournament_edit.html",
@@ -302,6 +316,7 @@ async def admin_tournament_edit_page(
             "eligible_instructors": eligible_instructors,
             "pitches_for_roster": pitches_for_roster,
             "has_absent_field": has_absent_field,
+            "tournament_format": tournament_format,
             "is_promotion_event": t.semester_category == SemesterCategory.PROMOTION_EVENT,
             "promotion_age_groups": get_allowed_age_groups(t),
             "flash": request.query_params.get("flash"),

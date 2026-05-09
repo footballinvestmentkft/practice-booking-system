@@ -564,11 +564,21 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
         </tbody>
     </table>
 
-    {# ── Skills — always driven by game preset (mandatory) ── #}
+    {# ── Skills — TRC for sponsor events, game preset for standard tournaments ── #}
+    {% if is_promotion_event and reward_cfg and reward_cfg.get('skill_mappings') %}
+    <div class="info-banner" style="margin-bottom:1.25rem;">
+        ℹ️ Skill rewards for this sponsor event are driven by the
+        <strong>Tournament Reward Config</strong>
+        ({{ reward_cfg.get('skill_mappings') | length }} skill{{ 's' if reward_cfg.get('skill_mappings') | length != 1 else '' }}:
+        {% for sk in reward_cfg.get('skill_mappings') %}<code style="font-size:.8rem;">{{ sk.skill }}</code>{% if not loop.last %}, {% endif %}{% endfor %}).
+        The game preset affects session simulation scoring only, not skill distribution.
+    </div>
+    {% else %}
     <div class="info-banner" style="margin-bottom:1.25rem;">
         ℹ️ Skill rewards are automatically determined by the game preset
         {% if t.game_preset %}<strong>({{ t.game_preset.name }})</strong>{% endif %}.
     </div>
+    {% endif %}
 
     <div class="save-row">
         <button class="btn btn-primary" onclick="saveRewardConfig()">💾 Save Reward Config</button>
@@ -598,16 +608,32 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
 
 {# ── SECTION 4: Enrolled Players / Teams ─────────────────────────────────── #}
 {% if is_promotion_event %}
-<div class="card" id="section-campaign-audience-placeholder">
+<div class="card" id="section-campaign-audience">
     <div class="section-header">
         <span class="section-icon">📋</span>
         <h2>Campaign Audience</h2>
+        <span style="margin-left:.75rem;background:#ebf4ff;color:#2b6cb0;border:1px solid #bee3f8;border-radius:.4rem;padding:.2rem .6rem;font-size:.8rem;font-weight:600;">
+            {{ enrolled_count }} enrolled
+        </span>
     </div>
-    <p style="color:#a0aec0;margin:0 0 .75rem;">
-        Participants for this event come from the sponsor campaign audience, not from standard enrollment.
-        Standard player add/remove actions are disabled for promotion events.
+    <p style="color:#718096;margin:0 0 .75rem;font-size:.9rem;">
+        Participants come from the sponsor campaign. Standard enrollment is disabled for promotion events.
     </p>
-    <a href="#section-campaign-audience" class="btn btn-outline" style="display:inline-block;">View Campaign Audience ↓</a>
+    {% if enrollments %}
+    <ul style="list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:.4rem;">
+        {% for e in enrollments %}
+        {% set player = enrolled_users.get(e.user_id) %}
+        <li style="background:#f7fafc;border:1px solid #e2e8f0;border-radius:.4rem;padding:.25rem .6rem;font-size:.85rem;">
+            {{ player.name if player else 'Player #' ~ e.user_id }}
+            <span style="color:{{ '#38a169' if e.tournament_checked_in_at else '#a0aec0' }};font-size:.75rem;margin-left:.25rem;">
+                {{ '✓' if e.tournament_checked_in_at else '○' }}
+            </span>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p style="color:#a0aec0;font-style:italic;margin:0;">No players enrolled yet.</p>
+    {% endif %}
 </div>
 {% elif cfg and cfg.participant_type == 'TEAM' %}
 <div class="card" id="section-checkin">
@@ -668,7 +694,8 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
         <h2>Instructor Roster</h2>
         {% set _field_slots_count = instructor_roster | selectattr("role","equalto","FIELD") | list | length %}
         {% set _parallel = schedule.parallel_fields or 1 %}
-        {% if _field_slots_count != _parallel %}
+        {% set _mismatch_actionable = t.tournament_status not in ['COMPLETED', 'REWARDS_DISTRIBUTED', 'ARCHIVED', 'CANCELLED'] %}
+        {% if _field_slots_count != _parallel and _mismatch_actionable %}
         <span id="instructor-mismatch-badge" style="margin-left:0.75rem; background:#fff3cd; color:#856404; border:1px solid #ffc107; border-radius:0.4rem; padding:0.2rem 0.6rem; font-size:0.8rem; font-weight:600;">
             ⚠️ {{ _field_slots_count }}/{{ _parallel }} field instructors
         </span>
@@ -789,10 +816,43 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
   </div>
   <div class="wiz-step-body">
     <div class="card">
+      {# ── Player check-in stats ── #}
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1rem;">
         <div class="stat-card"><div class="val">{{ enrolled_count }}</div><div class="lbl">Enrolled</div></div>
-        <div class="stat-card"><div class="val">{{ checked_in_count }}</div><div class="lbl">Checked In</div></div>
+        <div class="stat-card"><div class="val">{{ checked_in_count }}</div><div class="lbl">Players Checked In</div></div>
       </div>
+
+      {# ── Instructor readiness summary ── #}
+      {% set _s4_master = instructor_roster | selectattr("role","equalto","MASTER") | list | first %}
+      {% set _s4_field_slots = instructor_roster | selectattr("role","equalto","FIELD") | list %}
+      {% set _s4_field_ci = _s4_field_slots | selectattr("status","equalto","CHECKED_IN") | list | length %}
+      {% set _s4_pf = schedule.parallel_fields or 1 %}
+      <div style="margin-bottom:1rem;">
+        <div style="font-weight:600; color:#4a5568; margin-bottom:0.6rem; font-size:0.875rem;">Instructor Readiness</div>
+        <div style="display:flex; flex-direction:column; gap:0.4rem; font-size:0.875rem;">
+          {# MASTER #}
+          {% if _s4_master and _s4_master.status == "CHECKED_IN" %}
+          <div>✅ <strong>MASTER</strong> {{ _s4_master.instructor_name }} — CHECKED IN</div>
+          {% elif _s4_master %}
+          <div>⚠️ <strong>MASTER</strong> {{ _s4_master.instructor_name }} — {{ _s4_master.status }}</div>
+          {% else %}
+          <div style="color:#e53e3e;">❌ <strong>MASTER</strong> — not assigned</div>
+          {% endif %}
+          {# FIELD #}
+          {% if _s4_field_ci >= _s4_pf %}
+          <div>✅ <strong>FIELD</strong> {{ _s4_field_ci }}/{{ _s4_pf }} CHECKED IN</div>
+          {% else %}
+          <div style="color:#dd6b20;">⚠️ <strong>FIELD</strong> {{ _s4_field_ci }}/{{ _s4_pf }} CHECKED IN — need {{ _s4_pf }} before start</div>
+          {% endif %}
+          {# Players #}
+          {% if checked_in_count == enrolled_count and enrolled_count > 0 %}
+          <div>✅ <strong>Players</strong> {{ checked_in_count }}/{{ enrolled_count }} checked in</div>
+          {% else %}
+          <div style="color:#dd6b20;">⚠️ <strong>Players</strong> {{ checked_in_count }}/{{ enrolled_count }} checked in</div>
+          {% endif %}
+        </div>
+      </div>
+
       <div class="info-banner">ℹ️ Sessions will be auto-generated when you start the tournament.</div>
     </div>
     {% if step4_state == 'active' %}
@@ -919,6 +979,9 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
                 <span style="font-size:0.85rem;color:#718096;">{{ sess.title }}</span>
                 {% endif %}
                 <span class="sess-type" style="margin-left:0.4rem;">{{ sess.match_format }}</span>
+                {% if sess.pitch_name %}
+                <span style="background:#ebf8ff;border-radius:4px;padding:0.1rem 0.4rem;font-size:0.75rem;font-weight:600;color:#2b6cb0;margin-left:0.2rem;">📍 {{ sess.pitch_name }}</span>
+                {% endif %}
             </div>
             <div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">
                 {% if sess.postponed_reason %}
@@ -1052,8 +1115,10 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
                     <th style="text-align:left;">#</th>
                     <th style="text-align:left;">{% if cfg and cfg.participant_type == 'TEAM' %}Team{% else %}Player{% endif %}</th>
                     <th style="text-align:right;">Score / Points</th>
+                    {% if tournament_format == 'HEAD_TO_HEAD' %}
                     <th style="text-align:right;">W / D / L</th>
                     <th style="text-align:right;">GF / GA</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -1072,12 +1137,14 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
                         {% endif %}
                     </td>
                     <td style="padding:0.5rem;text-align:right;font-weight:600;">{{ r.points or 0 }}</td>
+                    {% if tournament_format == 'HEAD_TO_HEAD' %}
                     <td style="padding:0.5rem;text-align:right;color:#718096;">
                         {{ r.wins or 0 }} / {{ r.draws or 0 }} / {{ r.losses or 0 }}
                     </td>
                     <td style="padding:0.5rem;text-align:right;color:#718096;">
                         {{ (r.goals_for or 0) | int }} / {{ (r.goals_against or 0) | int }}
                     </td>
+                    {% endif %}
                 </tr>
                 {% endfor %}
             </tbody>
