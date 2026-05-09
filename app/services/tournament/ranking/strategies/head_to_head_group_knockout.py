@@ -76,20 +76,26 @@ class HeadToHeadGroupKnockoutRankingStrategy:
             for participant in standings:
                 group_stats_by_user[participant["user_id"]] = participant
 
-        # Add knockout participants first (sorted by rank), enriched with group stage stats
+        # Accumulate knockout match stats (wins/draws/losses/goals) per participant
+        knockout_stats = self._calculate_knockout_stats(knockout_sessions)
+
+        # Add knockout participants first (sorted by rank), enriched with combined stats
         knockout_user_ids = set([r["user_id"] for r in knockout_rankings])
         for ko_rank in knockout_rankings:
             uid = ko_rank["user_id"]
             gs = group_stats_by_user.get(uid, {})
+            ks = knockout_stats.get(uid, {})
+            combined_gf = gs.get("goals_for", 0) + ks.get("goals_for", 0)
+            combined_ga = gs.get("goals_against", 0) + ks.get("goals_against", 0)
             final_rankings.append({
                 **ko_rank,
                 "points": gs.get("points", 0),
-                "wins": gs.get("wins", 0),
-                "draws": gs.get("draws", 0),
-                "losses": gs.get("losses", 0),
-                "goals_for": gs.get("goals_for", 0),
-                "goals_against": gs.get("goals_against", 0),
-                "goal_difference": gs.get("goal_difference", 0),
+                "wins": gs.get("wins", 0) + ks.get("wins", 0),
+                "draws": gs.get("draws", 0) + ks.get("draws", 0),
+                "losses": gs.get("losses", 0) + ks.get("losses", 0),
+                "goals_for": combined_gf,
+                "goals_against": combined_ga,
+                "goal_difference": combined_gf - combined_ga,
             })
 
         # Add group-only participants (did not qualify for knockout)
@@ -231,3 +237,51 @@ class HeadToHeadGroupKnockoutRankingStrategy:
 
         knockout_strategy = HeadToHeadKnockoutRankingStrategy()
         return knockout_strategy.calculate_rankings(knockout_sessions, db_session=None)
+
+    def _calculate_knockout_stats(self, knockout_sessions: List) -> Dict[int, Dict]:
+        """
+        Accumulate match stats (wins/draws/losses/goals) from knockout sessions.
+
+        Returns:
+            {user_id: {"wins": int, "draws": int, "losses": int,
+                       "goals_for": int, "goals_against": int}}
+        """
+        stats: Dict[int, Dict] = defaultdict(lambda: {
+            "wins": 0, "draws": 0, "losses": 0,
+            "goals_for": 0, "goals_against": 0,
+        })
+
+        for session in knockout_sessions:
+            if not session.game_results:
+                continue
+
+            match_data = parse_game_results(session.game_results)
+            if not match_data:
+                continue
+
+            if match_data.get("match_format") != "HEAD_TO_HEAD":
+                continue
+
+            participants = match_data.get("participants", [])
+            if len(participants) != 2:
+                continue
+
+            for participant in participants:
+                uid = participant["user_id"]
+                result = participant["result"]
+                score = participant.get("score", 0)
+                opponent_score = next(
+                    p.get("score", 0) for p in participants if p["user_id"] != uid
+                )
+
+                stats[uid]["goals_for"] += score
+                stats[uid]["goals_against"] += opponent_score
+
+                if result == "win":
+                    stats[uid]["wins"] += 1
+                elif result == "draw":
+                    stats[uid]["draws"] += 1
+                else:
+                    stats[uid]["losses"] += 1
+
+        return dict(stats)
