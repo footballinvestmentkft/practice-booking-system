@@ -528,9 +528,22 @@ def transition_tournament_status(
                 if success:
                     print(f"✅ Auto-regenerated {len(sessions_created)} sessions at IN_PROGRESS for tournament {tournament_id}")
                 else:
-                    print(f"⚠️ Failed to regenerate sessions at IN_PROGRESS: {message}")
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            f"Session regeneration failed at IN_PROGRESS "
+                            f"(check-in filter active): {message}. "
+                            f"Transition aborted — existing sessions and tournament status restored."
+                        ),
+                    )
             else:
-                print(f"⚠️ Cannot regenerate sessions at IN_PROGRESS: {reason}")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"Cannot regenerate sessions at IN_PROGRESS: {reason}. "
+                        f"Transition aborted — existing sessions and tournament status restored."
+                    ),
+                )
 
     # Record status history
     record_status_change(

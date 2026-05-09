@@ -505,8 +505,8 @@ class TestTransitionTournamentStatus:
         assert result.new_status == "IN_PROGRESS"
         mock_gen.generate_sessions.assert_called_once()
 
-    def test_in_progress_needs_regen_deletes_old_sessions_first(self):
-        """needs_regeneration=True, count>0 → delete old sessions then regenerate."""
+    def test_in_progress_can_generate_false_raises_400(self):
+        """P0 fix: can_generate_sessions=False → HTTP 400, transition aborted (T2)."""
         s1 = MagicMock(); s1.id = 55
         t = _tournament(format="INDIVIDUAL_RANKING", sessions_generated=False)
         t.tournament_config_obj = MagicMock()
@@ -523,19 +523,24 @@ class TestTransitionTournamentStatus:
         mock_gen = MagicMock()
         mock_gen.can_generate_sessions.return_value = (False, "Not enough players")
 
+        from fastapi import HTTPException
         with patch(_PATCH_VST, return_value=(True, None)), \
              patch(_PATCH_GNS, return_value=[]), \
              patch(_PATCH_TSG, return_value=mock_gen):
-            result = transition_tournament_status(
-                10, _trans_req(new_status="IN_PROGRESS"),
-                db=db, current_user=_user()
-            )
-        assert result.new_status == "IN_PROGRESS"
-        # generator was called with can_generate check
+            with pytest.raises(HTTPException) as exc:
+                transition_tournament_status(
+                    10, _trans_req(new_status="IN_PROGRESS"),
+                    db=db, current_user=_user()
+                )
+        assert exc.value.status_code == 400
+        assert "Cannot regenerate sessions at IN_PROGRESS" in exc.value.detail
+        assert "Transition aborted" in exc.value.detail
         mock_gen.can_generate_sessions.assert_called_once()
+        # db.commit() never reached — exception fires before it
+        db.commit.assert_not_called()
 
-    def test_in_progress_generator_fails_gracefully(self):
-        """can_generate=True but generate_sessions fails → no exception, status still set."""
+    def test_in_progress_generate_sessions_failure_raises_400(self):
+        """P0 fix: generate_sessions returns (False,...) → HTTP 400, transition aborted (T1)."""
         t = _tournament(format="INDIVIDUAL_RANKING", sessions_generated=False)
         t.tournament_config_obj = MagicMock()
 
@@ -547,17 +552,23 @@ class TestTransitionTournamentStatus:
 
         mock_gen = MagicMock()
         mock_gen.can_generate_sessions.return_value = (True, None)
-        mock_gen.generate_sessions.return_value = (False, "Generation failed", [])
+        mock_gen.generate_sessions.return_value = (False, "Not enough players. Need 4, have 1", [])
 
+        from fastapi import HTTPException
         with patch(_PATCH_VST, return_value=(True, None)), \
              patch(_PATCH_GNS, return_value=[]), \
              patch(_PATCH_TSG, return_value=mock_gen):
-            result = transition_tournament_status(
-                10, _trans_req(new_status="IN_PROGRESS"),
-                db=db, current_user=_user()
-            )
-        # Function continues even if generation fails (prints warning)
-        assert result.new_status == "IN_PROGRESS"
+            with pytest.raises(HTTPException) as exc:
+                transition_tournament_status(
+                    10, _trans_req(new_status="IN_PROGRESS"),
+                    db=db, current_user=_user()
+                )
+        assert exc.value.status_code == 400
+        assert "Session regeneration failed at IN_PROGRESS" in exc.value.detail
+        assert "Not enough players. Need 4, have 1" in exc.value.detail
+        assert "Transition aborted" in exc.value.detail
+        # db.commit() never reached — exception fires before it
+        db.commit.assert_not_called()
 
     def test_in_progress_needs_regen_no_config_obj_still_works(self):
         """needs_regeneration=True, tournament_config_obj=None → skip config reset."""
@@ -616,6 +627,103 @@ class TestTransitionTournamentStatus:
                 db=db, current_user=_user()
             )
         assert result.new_status == "IN_PROGRESS"
+
+    # ── P0 fix: additional invariant proofs ──────────────────────
+
+    def test_in_progress_failure_status_history_not_written(self):
+        """T6: record_status_change (db.execute) is NOT called when failure is raised.
+
+        record_status_change() sits after the regeneration block.  HTTPException raised
+        inside the block unwinds before reaching it, so no spurious IN_PROGRESS history
+        row is written — and db.commit() is never called.
+        """
+        t = _tournament(format="INDIVIDUAL_RANKING", sessions_generated=False)
+        t.tournament_config_obj = MagicMock()
+        q_semester = _fq(first=t)
+        q_count = _fq(count=0)
+        q_enroll = _fq(all_=[])
+        db = _seq_db(q_semester, q_count, q_enroll)
+
+        mock_gen = MagicMock()
+        mock_gen.can_generate_sessions.return_value = (True, None)
+        mock_gen.generate_sessions.return_value = (False, "Not enough players", [])
+
+        from fastapi import HTTPException
+        with patch(_PATCH_VST, return_value=(True, None)), \
+             patch(_PATCH_GNS, return_value=[]), \
+             patch(_PATCH_TSG, return_value=mock_gen):
+            with pytest.raises(HTTPException):
+                transition_tournament_status(
+                    10, _trans_req(new_status="IN_PROGRESS"),
+                    db=db, current_user=_user()
+                )
+        # db.execute carries status-history INSERT — must not be called
+        db.execute.assert_not_called()
+        db.commit.assert_not_called()
+
+    def test_in_progress_no_checkin_fallback_not_affected(self):
+        """T7: no check-ins → needs_regeneration=False → regeneration block skipped → HTTP 200.
+
+        Regression guard: the P0 raise paths are only reachable when needs_regeneration=True.
+        HEAD_TO_HEAD with sessions_generated=True and zero check-ins never enters
+        the regeneration block, so the fix cannot affect it.
+        """
+        t = _tournament(
+            format="HEAD_TO_HEAD",
+            sessions_generated=True,
+            participant_type="INDIVIDUAL",
+        )
+        t.tournament_config_obj = MagicMock()
+        t.tournament_config_obj.participant_type = "INDIVIDUAL"
+
+        q_semester = _fq(first=t)
+        # q_count: current_session_count (HEAD_TO_HEAD, sessions_generated=True)
+        q_count = _fq(count=3)
+        # checked-in count query → 0 (no check-ins)
+        q_checkin_count = _fq(count=0)
+        q_enroll = _fq(all_=[])
+
+        db = _seq_db(q_semester, q_count, q_checkin_count, q_enroll)
+
+        with patch(_PATCH_VST, return_value=(True, None)), \
+             patch(_PATCH_GNS, return_value=[]):
+            result = transition_tournament_status(
+                10, _trans_req(new_status="IN_PROGRESS"),
+                db=db, current_user=_user()
+            )
+        assert result.new_status == "IN_PROGRESS"
+
+    def test_in_progress_sufficient_checkins_succeeds(self):
+        """T8: check-ins exist and generate_sessions succeeds → HTTP 200, no raise.
+
+        Regression guard: the success path (success=True) must remain completely
+        unaffected by the P0 fix.
+        """
+        t = _tournament(format="INDIVIDUAL_RANKING", sessions_generated=True)
+        t.tournament_config_obj = MagicMock()
+        # INDIVIDUAL_RANKING: needs_regeneration = (not True) or (count != 1) = (2 != 1) = True
+        q_semester = _fq(first=t)
+        q_count = _fq(count=2)         # current_session_count=2 ≠ 1 → needs_regeneration
+        q_sess_all = _fq(all_=[MagicMock(id=10), MagicMock(id=11)])
+        q_att_del = _fq(count=0)
+        q_sess_del = _fq(count=2)
+        q_enroll = _fq(all_=[])
+
+        db = _seq_db(q_semester, q_count, q_sess_all, q_att_del, q_sess_del, q_enroll)
+
+        mock_gen = MagicMock()
+        mock_gen.can_generate_sessions.return_value = (True, None)
+        mock_gen.generate_sessions.return_value = (True, "OK", [MagicMock()])
+
+        with patch(_PATCH_VST, return_value=(True, None)), \
+             patch(_PATCH_GNS, return_value=[]), \
+             patch(_PATCH_TSG, return_value=mock_gen):
+            result = transition_tournament_status(
+                10, _trans_req(new_status="IN_PROGRESS"),
+                db=db, current_user=_user()
+            )
+        assert result.new_status == "IN_PROGRESS"
+        mock_gen.generate_sessions.assert_called_once()
 
 
 # ─────────────────────────────────────────────────────────────────
