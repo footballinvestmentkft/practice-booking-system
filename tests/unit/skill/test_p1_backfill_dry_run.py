@@ -614,12 +614,18 @@ class TestShowDDLContent:
         assert "Rollback"                    in SNAPSHOT_DDL
 
     def test_rollback_template_has_all_steps(self):
-        """ROLLBACK_TEMPLATE contains the 4-step rollback sequence."""
-        assert "UPDATE tournament_participations"   in ROLLBACK_TEMPLATE
-        assert "DELETE FROM football_skill_assessments" in ROLLBACK_TEMPLATE
-        assert "UPDATE football_skill_assessments"  in ROLLBACK_TEMPLATE
+        """ROLLBACK_TEMPLATE contains the P1-scope rollback sequence (TP delta only).
+
+        FSA rollback steps are P3 scope and are NOT present in the P1 rollback template.
+        The P1 template restores TP.skill_rating_delta from tp_delta_backfill_audit.old_delta
+        and cleans up audit + snapshot rows.
+        """
+        assert "UPDATE tournament_participations"        in ROLLBACK_TEMPLATE
+        assert "tp_delta_backfill_audit"                 in ROLLBACK_TEMPLATE
         assert "DELETE FROM backfill_tp_delta_snapshots" in ROLLBACK_TEMPLATE
-        assert "DELETE FROM backfill_fsa_snapshots"      in ROLLBACK_TEMPLATE
+        # FSA rollback is P3 scope — NOT in P1 rollback template
+        assert "DELETE FROM football_skill_assessments"  not in ROLLBACK_TEMPLATE
+        assert "UPDATE football_skill_assessments"       not in ROLLBACK_TEMPLATE
 
     def test_no_execute_in_dry_run(self):
         """DDL strings contain no psycopg2 execute or BEGIN/COMMIT calls in dry-run."""
