@@ -285,6 +285,8 @@
             <code style="font-size:0.75rem;">{{ ev_status }}</code>
             <a href="/admin/tournaments/{{ ev.id }}/edit"
                style="font-size:0.82rem;color:#5a4a9a;">View</a>
+            <a href="/events/{{ ev.id }}" target="_blank" rel="noopener"
+               style="font-size:0.82rem;color:#2b6cb0;text-decoration:none;">🌐 Public</a>
             {% if ev_status == 'IN_PROGRESS' %}
             <a href="/admin/tournaments/{{ ev.id }}/live"
                style="font-size:0.82rem;font-weight:600;color:#c53030;

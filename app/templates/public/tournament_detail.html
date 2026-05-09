@@ -420,6 +420,9 @@ body {
             <span class="meta-chip">{{ type_name }}</span>
             {% endif %}
             <span class="meta-chip">{{ participant_type }}</span>
+            {% if sponsor_name %}
+            <span class="meta-chip">🏢 {{ sponsor_name }}</span>
+            {% endif %}
         </div>
 
         <div class="event-info-grid">
@@ -729,16 +732,36 @@ body {
         {% endif %}
         {% endfor %}
     </div>
-    {# ── H2H match schedule / draw ── #}
+
+    {# ── H2H match schedule / draw (P1-B: phase-separated) ── #}
     {% elif schedule %}
     <div class="section">
         <div class="section-title">🎲 Match Schedule</div>
         <div class="schedule-list">
-            {% set ns = namespace(cur_round=None) %}
+            {% set ns = namespace(cur_phase=None, cur_round=None, cur_label=None) %}
             {% for match in schedule %}
-                {% if match.round != ns.cur_round %}
-                    {% set ns.cur_round = match.round %}
-                    <div class="sched-round-header">Round {{ match.round or '—' }}</div>
+                {# Phase header when phase changes #}
+                {% if match.phase != ns.cur_phase %}
+                    {% set ns.cur_phase = match.phase %}
+                    {% set ns.cur_round = None %}
+                    {% set ns.cur_label = None %}
+                    {% if 'GROUP' in (match.phase or '') %}
+                    <div class="sched-round-header" style="color: rgba(255,255,255,0.55); font-size: 0.65rem;">GROUP STAGE</div>
+                    {% elif 'KNOCKOUT' in (match.phase or '') %}
+                    <div class="sched-round-header" style="color: rgba(255,255,255,0.55); font-size: 0.65rem; margin-top: 0.5rem;">KNOCKOUT</div>
+                    {% endif %}
+                {% endif %}
+                {# Sub-header: round number (group) or match label (knockout) #}
+                {% if 'KNOCKOUT' in (match.phase or '') %}
+                    {% if match.match_label != ns.cur_label %}
+                        {% set ns.cur_label = match.match_label %}
+                        <div class="sched-round-header">{{ match.match_label or ('Round ' ~ (match.round or '—')) }}</div>
+                    {% endif %}
+                {% else %}
+                    {% if match.round != ns.cur_round %}
+                        {% set ns.cur_round = match.round %}
+                        <div class="sched-round-header">Round {{ match.round or '—' }}</div>
+                    {% endif %}
                 {% endif %}
                 <div class="match-row{% if match.done %} match-done{% endif %}">
                     <span class="match-team team-a">{{ match.team_a }}</span>
@@ -750,6 +773,46 @@ body {
                 </div>
             {% endfor %}
         </div>
+    </div>
+    {% endif %}
+
+    {# ── Group Stage Standings (P1-A) ── #}
+    {% if group_standings %}
+    <div class="section">
+        <div class="section-title">📊 Group Stage</div>
+        {% for group_id, members in group_standings.items() %}
+        <div{% if not loop.last %} style="margin-bottom: 1rem;"{% endif %}>
+            <div style="font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.4); padding-bottom: 0.4rem;">Group {{ group_id }}</div>
+            <table class="rankings-table">
+                <thead>
+                    <tr>
+                        <th class="rank-col">#</th>
+                        <th>Player</th>
+                        <th class="num">Pts</th>
+                        <th class="num hide-sm">W</th>
+                        <th class="num hide-sm">D</th>
+                        <th class="num hide-sm">L</th>
+                        <th class="num hide-sm">GF</th>
+                        <th class="num hide-sm">GA</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in members %}
+                    <tr>
+                        <td class="rank-col">{{ p.group_rank }}</td>
+                        <td><div class="participant-name">{{ p.name }}</div></td>
+                        <td class="num"><span class="pts-badge">{{ p.points }}</span></td>
+                        <td class="num hide-sm">{{ p.wins }}</td>
+                        <td class="num hide-sm">{{ p.draws }}</td>
+                        <td class="num hide-sm">{{ p.losses }}</td>
+                        <td class="num hide-sm goals">{{ p.goals_for }}</td>
+                        <td class="num hide-sm goals">{{ p.goals_against }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
     </div>
     {% endif %}
 

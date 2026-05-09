@@ -1024,7 +1024,7 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
                                     🏆 {{ ranking_teams[r.team_id].name if r.team_id in ranking_teams else 'Team #' ~ r.team_id }}
                                 {% else %}
                                     {% set p = ranking_users.get(r.user_id) %}
-                                    {{ p.full_name if p else 'Player #' ~ r.user_id }}
+                                    {{ p.name if p else 'Player #' ~ r.user_id }}
                                 {% endif %}
                             </td>
                             <td style="padding:0.35rem 0.5rem;text-align:right;font-weight:700;">{{ r.points | int }}</td>
@@ -1068,7 +1068,7 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
                             🏆 {{ ranking_teams[r.team_id].name if r.team_id in ranking_teams else 'Team #' ~ r.team_id }}
                         {% else %}
                             {% set player = ranking_users.get(r.user_id) %}
-                            {{ player.full_name if player else 'Player #' ~ r.user_id }}
+                            {{ player.name if player else 'Player #' ~ r.user_id }}
                         {% endif %}
                     </td>
                     <td style="padding:0.5rem;text-align:right;font-weight:600;">{{ r.points or 0 }}</td>
@@ -1127,7 +1127,7 @@ ID {{ t.id }} · {{ t.code }} · <strong>{{ t.tournament_status or t.status.valu
           <div class="tier-label">{% if r.rank == 1 %}🥇 1st{% elif r.rank == 2 %}🥈 2nd{% else %}🥉 3rd{% endif %}</div>
           <div class="tier-credits" style="font-size:1rem;">
             {% if r.team_id %}{{ ranking_teams[r.team_id].name if r.team_id in ranking_teams else 'Team #' ~ r.team_id }}
-            {% else %}{% set _p = ranking_users.get(r.user_id) %}{{ _p.full_name if _p else 'Player #' ~ r.user_id }}{% endif %}
+            {% else %}{% set _p = ranking_users.get(r.user_id) %}{{ _p.name if _p else 'Player #' ~ r.user_id }}{% endif %}
           </div>
           <div class="tier-xp">{{ r.points or 0 }} pts</div>
         </div>

@@ -248,23 +248,21 @@ def _build_schedule_block(
     tournament_id: int,
     tournament_format: str,
     rankings: list,
-) -> "tuple[int, list[dict], list[dict]]":
-    """Phases 6–7 (sessions + IR results): explicit 6-col select (Phase 11 optimisation),
-    team/player cache build, schedule list, IR results list.
+) -> "tuple[int, list[dict], list[dict], dict[str, list]]":
+    """Phases 6–7 (sessions + IR results): explicit 9-col select (Phase 11 optimisation),
+    team/player cache build, schedule list, IR results list, group standings dict.
     Mutates rankings[*]["members"] in-place to enrich with score/position from player_data.
-    Returns (sessions_total, schedule, ir_results).
+    Returns (sessions_total, schedule, ir_results, group_standings).
 
     IMPORTANT — preserve Phase 11 column narrowing:
     SELECT * width=1,439 B/row × 32 sessions = 46 KB per request at idle.
-    Selecting only the 6 consumed fields reduces payload to ~105 B/row (13.7×).
+    Selecting only consumed fields reduces payload significantly.
     SQLAlchemy returns sqlalchemy.engine.Row objects — attribute access (sess.field)
-    works identically to ORM objects for these six columns.
+    works identically to ORM objects for selected columns.
     """
     # Q (TEAM+INDIVIDUAL path): sessions fetch — explicit columns only (Phase 11)
-    # SELECT * width=1,439 B/row × 32 sessions = 46 KB per request at idle.
-    # Selecting only the 6 consumed fields reduces payload to ~105 B/row (13.7×).
-    # SQLAlchemy returns sqlalchemy.engine.Row objects — attribute access (sess.field)
-    # works identically to ORM objects for these six columns.
+    # 3 extra columns added for P1 (tournament_phase, group_identifier, title):
+    # narrow-select philosophy preserved — still far below SELECT * width.
     raw_sessions = (
         db.query(
             SessionModel.round_number,
@@ -273,9 +271,17 @@ def _build_schedule_block(
             SessionModel.participant_team_ids,
             SessionModel.participant_user_ids,
             SessionModel.rounds_data,
+            SessionModel.tournament_phase,   # P1-B: phase separation
+            SessionModel.group_identifier,   # P1-A: group standings
+            SessionModel.title,              # P1-B: KO match label
+            SessionModel.game_results,       # KO score fallback: KO sessions have rounds_data={} but game_results populated
         )
         .filter(SessionModel.semester_id == tournament_id)
-        .order_by(SessionModel.round_number.asc().nulls_last(), SessionModel.id)
+        .order_by(
+            SessionModel.tournament_phase.asc().nulls_last(),  # GROUP_STAGE < KNOCKOUT
+            SessionModel.round_number.asc().nulls_last(),
+            SessionModel.id,
+        )
         .all()
     )
     sessions_total = len(raw_sessions)
@@ -325,30 +331,136 @@ def _build_schedule_block(
                     m["position"] = player_score_map[uid]["position"]
             rank_row["members"].sort(key=lambda m: m.get("position") or 999)
 
+    # P0-A: Batch-fetch user names for INDIVIDUAL H2H schedule display.
+    # HEAD_TO_HEAD+INDIVIDUAL sessions use participant_user_ids (not team_ids),
+    # so team_cache misses all participants and renders "TBD" on both sides.
+    # One batch SELECT regardless of session count — stays within query budget.
+    sched_user_ids: set[int] = set()
+    for sess in raw_sessions:
+        if not (sess.participant_team_ids or []):
+            for uid in (sess.participant_user_ids or []):
+                sched_user_ids.add(uid)
+    sched_user_cache: dict[int, str] = {}
+    if sched_user_ids:
+        for u in db.query(User).filter(User.id.in_(sched_user_ids)).all():
+            sched_user_cache[u.id] = u.name or u.email
+
     schedule: list[dict] = []
     for sess in raw_sessions:
         tids = sess.participant_team_ids or []
-        name_a = team_cache.get(tids[0], f"Team #{tids[0]}") if len(tids) > 0 else "TBD"
-        name_b = team_cache.get(tids[1], f"Team #{tids[1]}") if len(tids) > 1 else "TBD"
+        uids = sess.participant_user_ids or []
+        if tids:
+            name_a = team_cache.get(tids[0], f"Team #{tids[0]}") if len(tids) > 0 else "TBD"
+            name_b = team_cache.get(tids[1], f"Team #{tids[1]}") if len(tids) > 1 else "TBD"
+        else:
+            # P0-A: INDIVIDUAL H2H — resolve player names from participant_user_ids
+            name_a = sched_user_cache.get(uids[0], f"Player #{uids[0]}") if len(uids) > 0 else "TBD"
+            name_b = sched_user_cache.get(uids[1], f"Player #{uids[1]}") if len(uids) > 1 else "TBD"
         score_a = score_b = None
         rr = (sess.rounds_data or {}).get("round_results", {})
-        if rr and len(tids) >= 2:
+        if rr:
             r1 = rr.get("1", {})
-            raw_a = r1.get(f"team_{tids[0]}")
-            raw_b = r1.get(f"team_{tids[1]}")
+            if tids and len(tids) >= 2:
+                # TEAM H2H: rounds_data keys are "team_{id}"
+                raw_a = r1.get(f"team_{tids[0]}")
+                raw_b = r1.get(f"team_{tids[1]}")
+            elif uids and len(uids) >= 2:
+                # P0-B: INDIVIDUAL H2H: rounds_data keys are str(user_id)
+                raw_a = r1.get(str(uids[0]))
+                raw_b = r1.get(str(uids[1]))
+            else:
+                raw_a = raw_b = None
             if raw_a is not None:
                 score_a = int(float(raw_a))
             if raw_b is not None:
                 score_b = int(float(raw_b))
+        # KO score fallback: KO sessions write scores only to game_results (rounds_data stays {}).
+        # Group stage sessions have rounds_data populated → this block is never reached for them.
+        if score_a is None and score_b is None and sess.game_results:
+            try:
+                import json as _json
+                gr = _json.loads(sess.game_results) if isinstance(sess.game_results, str) else sess.game_results
+                parts_map = {p["user_id"]: p for p in gr.get("participants", [])}
+                if uids and len(uids) >= 2:
+                    raw_a = parts_map.get(uids[0], {}).get("score")
+                    raw_b = parts_map.get(uids[1], {}).get("score")
+                    if raw_a is not None:
+                        score_a = int(float(raw_a))
+                    if raw_b is not None:
+                        score_b = int(float(raw_b))
+            except Exception:
+                pass
+        # P1-B: phase string + KO match label from session title
+        phase_val = getattr(sess.tournament_phase, "value", str(sess.tournament_phase or ""))
+        match_label = None
+        if "KNOCKOUT" in phase_val and sess.title:
+            t = sess.title
+            if "3rd Place" in t or "Third Place" in t:
+                match_label = "3rd Place Match"
+            elif "Final" in t:
+                match_label = "Final"
+            elif "Semi" in t:
+                match_label = "Semi-finals"
+            elif "Quarter" in t:
+                match_label = "Quarter-finals"
         schedule.append({
-            "round":   sess.round_number,
-            "date":    sess.date_start,
-            "team_a":  name_a,
-            "team_b":  name_b,
-            "score_a": score_a,
-            "score_b": score_b,
-            "done":    sess.session_status == "completed",
+            "round":       sess.round_number,
+            "date":        sess.date_start,
+            "team_a":      name_a,
+            "team_b":      name_b,
+            "score_a":     score_a,
+            "score_b":     score_b,
+            "done":        sess.session_status == "completed",
+            "phase":       phase_val,          # P1-B
+            "match_label": match_label,        # P1-B
         })
+
+    # UX: within KNOCKOUT phase show Final last (climactic order: SF → 3rd Place → Final).
+    # Group stage entries sort by round number; KO entries sort by label priority.
+    # Python sort is stable — relative order within the same key is preserved.
+    _KO_LABEL_ORDER = {"Quarter-finals": 0, "Semi-finals": 1, "3rd Place Match": 2, "Final": 3}
+    schedule.sort(key=lambda m: (
+        0 if "GROUP" in (m.get("phase") or "") else 1,
+        (m.get("round") or 0) if "GROUP" in (m.get("phase") or "")
+        else _KO_LABEL_ORDER.get(m.get("match_label") or "", 1),
+    ))
+
+    # P1-A: Group standings — zero extra queries.
+    # Reconstructed from raw_sessions (group_identifier) + already-loaded rankings (pts/W/D/L/GF/GA).
+    user_group_map: dict[int, str] = {}
+    for sess in raw_sessions:
+        ph = getattr(sess.tournament_phase, "value", str(sess.tournament_phase or ""))
+        if "GROUP" in ph:
+            gid = sess.group_identifier or "A"
+            for uid in (sess.participant_user_ids or []):
+                user_group_map[uid] = gid
+
+    group_standings: dict[str, list[dict]] = {}
+    for row in rankings:
+        uid = row.get("user_id")
+        if uid and uid in user_group_map:
+            gid = user_group_map[uid]
+            if gid not in group_standings:
+                group_standings[gid] = []
+            gf = float(row.get("goals_for") or 0)
+            ga = float(row.get("goals_against") or 0)
+            group_standings[gid].append({
+                "name":           row["name"],
+                "points":         int(row.get("points") or 0),
+                "wins":           int(row.get("wins") or 0),
+                "draws":          int(row.get("draws") or 0),
+                "losses":         int(row.get("losses") or 0),
+                "goals_for":      int(gf),
+                "goals_against":  int(ga),
+                "goal_difference": int(gf - ga),
+            })
+    for gid in group_standings:
+        group_standings[gid].sort(
+            key=lambda x: (-x["points"], -x["goal_difference"], -x["goals_for"])
+        )
+        for i, entry in enumerate(group_standings[gid]):
+            entry["group_rank"] = i + 1
+    group_standings = dict(sorted(group_standings.items()))
 
     # ── IR results (INDIVIDUAL_RANKING sessions, shown instead of H2H schedule) ─
     ir_results: list[dict] = []
@@ -402,7 +514,7 @@ def _build_schedule_block(
                     "done": sess.session_status == "completed",
                 })
 
-    return sessions_total, schedule, ir_results
+    return sessions_total, schedule, ir_results, group_standings
 
 
 def _build_prize_pool_block(
@@ -531,9 +643,24 @@ def public_event_detail(
 
     rankings, has_rankings = _build_rankings_block(db, tournament_id, participant_type, tournament_format)
     enrolled_count, participants = _build_participants_block(db, tournament_id, participant_type, has_rankings)
-    sessions_total, schedule, ir_results = _build_schedule_block(db, tournament_id, tournament_format, rankings)
+    sessions_total, schedule, ir_results, group_standings = _build_schedule_block(db, tournament_id, tournament_format, rankings)
     prize_pool, has_prize_pool = _build_prize_pool_block(db, tournament_id, tournament)
     awards, has_awards = _build_awards_block(db, tournament_id, status)
+
+    # P1-C: Sponsor branding — 1 JOIN query (conditional on organizer_campaign_id, within budget)
+    sponsor_name: str | None = None
+    if tournament.organizer_campaign_id:
+        try:
+            from app.models.sponsor import SponsorCampaign, Sponsor as SponsorModel
+            row = (
+                db.query(SponsorModel.name)
+                .join(SponsorCampaign, SponsorCampaign.sponsor_id == SponsorModel.id)
+                .filter(SponsorCampaign.id == tournament.organizer_campaign_id)
+                .first()
+            )
+            sponsor_name = row[0] if row else None
+        except Exception:
+            pass
 
     return templates.TemplateResponse(request, "public/tournament_detail.html", {
         "t": tournament,
@@ -567,4 +694,6 @@ def public_event_detail(
         "has_awards": has_awards,
         "is_draft": status == "DRAFT",
         "is_cancelled": status == "CANCELLED",
+        "group_standings": group_standings,   # P1-A
+        "sponsor_name": sponsor_name,         # P1-C
     })

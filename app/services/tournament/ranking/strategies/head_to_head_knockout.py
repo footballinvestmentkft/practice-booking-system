@@ -147,8 +147,8 @@ class HeadToHeadKnockoutRankingStrategy:
         participants_list = list(participant_progress.values())
 
         # Sort by:
-        # 1. Round reached (DESC - higher round = better)
-        # 2. 3rd Place Playoff distinction (Final participants rank higher than 3rd Place participants)
+        # 1. Bracket tier: Final participants (0) before 3rd Place participants (1)
+        # 2. Round reached (DESC - higher round = better within same bracket tier)
         # 3. Result (winner > runner_up > loss)
         # 4. Elimination score (DESC - higher score when eliminated = better)
         def sort_key(p):
@@ -162,8 +162,8 @@ class HeadToHeadKnockoutRankingStrategy:
             third_place_penalty = 1 if p.get("is_third_place", False) else 0
 
             return (
-                -p["round_reached"],  # Higher round = better (Final & 3rd Place both Round 2)
                 third_place_penalty,  # Final participants (0) rank higher than 3rd Place (1)
+                -p["round_reached"],  # Within same bracket tier: deeper round = better
                 result_priority.get(p["result"], 3),  # Winner > Runner-up > Loss
                 -(p["elimination_score"] or 0)  # Higher score when eliminated = better
             )

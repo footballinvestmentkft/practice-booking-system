@@ -70,9 +70,27 @@ class HeadToHeadGroupKnockoutRankingStrategy:
 
         final_rankings = []
 
-        # Add knockout participants first (sorted by rank)
+        # Build flat lookup: user_id → group stage stats for all participants
+        group_stats_by_user: Dict[int, Dict] = {}
+        for standings in group_standings.values():
+            for participant in standings:
+                group_stats_by_user[participant["user_id"]] = participant
+
+        # Add knockout participants first (sorted by rank), enriched with group stage stats
         knockout_user_ids = set([r["user_id"] for r in knockout_rankings])
-        final_rankings.extend(knockout_rankings)
+        for ko_rank in knockout_rankings:
+            uid = ko_rank["user_id"]
+            gs = group_stats_by_user.get(uid, {})
+            final_rankings.append({
+                **ko_rank,
+                "points": gs.get("points", 0),
+                "wins": gs.get("wins", 0),
+                "draws": gs.get("draws", 0),
+                "losses": gs.get("losses", 0),
+                "goals_for": gs.get("goals_for", 0),
+                "goals_against": gs.get("goals_against", 0),
+                "goal_difference": gs.get("goal_difference", 0),
+            })
 
         # Add group-only participants (did not qualify for knockout)
         # Rank them by group finish: A1, B1, C1, A2, B2, C2, etc. (already eliminated)
