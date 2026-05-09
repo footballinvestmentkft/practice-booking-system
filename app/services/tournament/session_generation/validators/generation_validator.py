@@ -94,17 +94,58 @@ class GenerationValidator:
         if not tournament.location_id and not tournament.campus_id:
             return False, "Tournament must have a Location or Campus set before sessions can be generated."
 
-        # Check at least one active pitch exists on the tournament's campus
+        # Check enough active pitches exist on the campus (>= parallel_fields)
+        cfg = tournament.tournament_config_obj
+        parallel_fields = (cfg.parallel_fields if cfg and cfg.parallel_fields else 1)
+
         if tournament.campus_id:
             from app.models.pitch import Pitch
             active_pitch_count = self.db.query(Pitch).filter(
                 Pitch.campus_id == tournament.campus_id,
                 Pitch.is_active == True,  # noqa: E712
             ).count()
-            if active_pitch_count == 0:
+            if active_pitch_count < parallel_fields:
                 return False, (
-                    f"Campus {tournament.campus_id} has no active pitches. "
-                    "Add at least one active pitch before generating sessions."
+                    f"Campus {tournament.campus_id} has {active_pitch_count} active pitch(es) "
+                    f"but parallel_fields={parallel_fields}. "
+                    "Add more active pitches or lower parallel_fields before generating sessions."
                 )
+
+        # Check FIELD instructor slots: need >= parallel_fields CHECKED_IN slots,
+        # each with a valid active pitch.
+        from app.models.tournament_instructor_slot import TournamentInstructorSlot
+        from app.models.pitch import Pitch as _Pitch
+
+        field_slots = self.db.query(TournamentInstructorSlot).filter(
+            TournamentInstructorSlot.semester_id == tournament_id,
+            TournamentInstructorSlot.role == "FIELD",
+        ).all()
+
+        checked_in_field = [s for s in field_slots if s.status == "CHECKED_IN"]
+        if len(checked_in_field) < parallel_fields:
+            return False, (
+                f"Tournament requires {parallel_fields} FIELD instructor slot(s) "
+                f"with status CHECKED_IN, but only {len(checked_in_field)} found. "
+                "Assign and check in a FIELD instructor for each pitch before generating sessions."
+            )
+
+        invalid_pitch_slots = []
+        for slot in checked_in_field:
+            if not slot.pitch_id:
+                invalid_pitch_slots.append(f"slot {slot.id} has no pitch assigned")
+                continue
+            pitch = self.db.query(_Pitch).filter(
+                _Pitch.id == slot.pitch_id,
+                _Pitch.is_active == True,  # noqa: E712
+            ).first()
+            if not pitch:
+                invalid_pitch_slots.append(f"slot {slot.id} references inactive/missing pitch {slot.pitch_id}")
+
+        if invalid_pitch_slots:
+            return False, (
+                "FIELD instructor slot(s) have invalid pitch assignments: "
+                + "; ".join(invalid_pitch_slots)
+                + ". Assign an active pitch to every FIELD slot before generating sessions."
+            )
 
         return True, "Ready for session generation"

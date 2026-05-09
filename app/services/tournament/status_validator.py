@@ -166,24 +166,66 @@ def validate_status_transition(
         # else: rollback path (IN_PROGRESS → ENROLLMENT_CLOSED) — allow unconditionally
 
     if new_status == "IN_PROGRESS":
-        # Check instructor assignment: legacy field OR new TournamentInstructorSlot
-        has_instructor = bool(tournament.master_instructor_id)
-        if not has_instructor:
-            # Fallback: check TournamentInstructorSlot for a non-absent MASTER slot.
-            # Handles tournaments where the new planning system was used (slot exists
-            # but legacy master_instructor_id was never set).
-            from app.models.tournament_instructor_slot import TournamentInstructorSlot
-            _state = tournament.__dict__.get('_sa_instance_state')
-            _db = _state.session if _state else None
-            if _db:
-                master_slot = _db.query(TournamentInstructorSlot).filter(
-                    TournamentInstructorSlot.semester_id == tournament.id,
-                    TournamentInstructorSlot.role == 'MASTER',
-                    TournamentInstructorSlot.status.notin_(['ABSENT']),
+        from app.models.tournament_instructor_slot import TournamentInstructorSlot
+        from app.models.pitch import Pitch as _Pitch
+        _state = tournament.__dict__.get('_sa_instance_state')
+        _db = _state.session if _state else None
+
+        # Guard 1: MASTER slot must exist with status CHECKED_IN.
+        # Legacy tournaments may use master_instructor_id alone; accept both paths.
+        master_checked_in = False
+        if _db:
+            master_slot = _db.query(TournamentInstructorSlot).filter(
+                TournamentInstructorSlot.semester_id == tournament.id,
+                TournamentInstructorSlot.role == 'MASTER',
+                TournamentInstructorSlot.status == 'CHECKED_IN',
+            ).first()
+            master_checked_in = bool(master_slot)
+        if not master_checked_in:
+            # Legacy fallback: a master_instructor_id without a slot is still
+            # accepted for backwards-compat, but the slot path is authoritative.
+            has_legacy_master = bool(tournament.master_instructor_id)
+            if not has_legacy_master:
+                return False, (
+                    "Cannot start tournament: MASTER instructor slot must exist "
+                    "and be CHECKED_IN before the tournament can go IN_PROGRESS."
+                )
+
+        # Guard 2 & 3: FIELD slots — need >= parallel_fields CHECKED_IN, each with active pitch.
+        if _db:
+            cfg = tournament.tournament_config_obj
+            parallel_fields = (cfg.parallel_fields if cfg and cfg.parallel_fields else 1)
+
+            field_slots = _db.query(TournamentInstructorSlot).filter(
+                TournamentInstructorSlot.semester_id == tournament.id,
+                TournamentInstructorSlot.role == 'FIELD',
+            ).all()
+            checked_in_field = [s for s in field_slots if s.status == 'CHECKED_IN']
+
+            if len(checked_in_field) < parallel_fields:
+                return False, (
+                    f"Cannot start tournament: {parallel_fields} FIELD instructor slot(s) "
+                    f"must be CHECKED_IN (found {len(checked_in_field)}). "
+                    "Assign and check in a FIELD instructor for each pitch."
+                )
+
+            invalid_pitch_slots = []
+            for slot in checked_in_field:
+                if not slot.pitch_id:
+                    invalid_pitch_slots.append(f"slot {slot.id} has no pitch")
+                    continue
+                pitch = _db.query(_Pitch).filter(
+                    _Pitch.id == slot.pitch_id,
+                    _Pitch.is_active == True,  # noqa: E712
                 ).first()
-                has_instructor = bool(master_slot)
-        if not has_instructor:
-            return False, "Cannot start tournament: No instructor assigned"
+                if not pitch:
+                    invalid_pitch_slots.append(f"slot {slot.id} → inactive pitch {slot.pitch_id}")
+            if invalid_pitch_slots:
+                return False, (
+                    "Cannot start tournament: FIELD slot(s) have invalid pitch assignments: "
+                    + "; ".join(invalid_pitch_slots)
+                    + ". Every CHECKED_IN FIELD slot must reference an active pitch."
+                )
 
         # Validate against tournament type's minimum player requirement
         player_count = _count_active_participants(tournament)

@@ -40,6 +40,7 @@ from app.models.tournament_instructor_slot import (
     SlotStatus,
 )
 from app.models.tournament_configuration import TournamentConfiguration
+from app.models.license import UserLicense
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -114,6 +115,21 @@ def add_slot(
         pitch = db.query(Pitch).filter(Pitch.id == pitch_id).first()
         if not pitch:
             raise HTTPException(status_code=404, detail=f"Pitch {pitch_id} not found")
+
+        # FIELD role requires an active LFA_COACH license
+        lfa_license = db.query(UserLicense).filter(
+            UserLicense.user_id == instructor_id,
+            UserLicense.specialization_type == "LFA_COACH",
+            UserLicense.is_active == True,  # noqa: E712
+        ).first()
+        if not lfa_license:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Instructor {instructor_id} does not have an active LFA_COACH license. "
+                    "Only licensed coaches can be assigned as FIELD instructors."
+                ),
+            )
     else:
         raise HTTPException(status_code=422, detail=f"Invalid role: {role}. Use MASTER or FIELD.")
 
