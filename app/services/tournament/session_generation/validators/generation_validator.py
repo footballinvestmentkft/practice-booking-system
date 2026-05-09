@@ -20,7 +20,11 @@ class GenerationValidator:
         self.db = db
         self.tournament_repo = TournamentRepository(db)
 
-    def can_generate_sessions(self, tournament_id: int) -> Tuple[bool, str]:
+    def can_generate_sessions(
+        self,
+        tournament_id: int,
+        skip_instructor_check: bool = False,
+    ) -> Tuple[bool, str]:
         """
         Check if tournament is ready for session generation
 
@@ -113,6 +117,10 @@ class GenerationValidator:
 
         # Check FIELD instructor slots: need >= parallel_fields CHECKED_IN slots,
         # each with a valid active pitch.
+        # Skipped for ops/simulation paths that bypass normal lifecycle gates.
+        if skip_instructor_check:
+            return True, "Ready for session generation"
+
         from app.models.tournament_instructor_slot import TournamentInstructorSlot
         from app.models.pitch import Pitch as _Pitch
 

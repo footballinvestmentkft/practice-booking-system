@@ -97,7 +97,7 @@ class TestBootstrapSeedPitches:
 class TestGenerationValidatorPitchGuard:
     """GenerationValidator.can_generate_sessions() pitch guard."""
 
-    def _make_tournament(self, campus_id: int | None = 1):
+    def _make_tournament(self, campus_id: int | None = 1, parallel_fields: int = 1):
         t = MagicMock()
         t.id = 99
         t.sessions_generated = False
@@ -107,20 +107,39 @@ class TestGenerationValidatorPitchGuard:
         t.participant_type = "INDIVIDUAL"
         t.location_id = 1
         t.campus_id = campus_id
+        cfg = MagicMock()
+        cfg.parallel_fields = parallel_fields
+        t.tournament_config_obj = cfg
         return t
 
-    def _make_db(self, tournament, active_pitch_count: int):
+    def _make_db(self, tournament, active_pitch_count: int, checked_in_field_slots: int = 0):
         from app.models.pitch import Pitch
         from app.models.semester_enrollment import SemesterEnrollment
+        from app.models.tournament_instructor_slot import TournamentInstructorSlot
 
         db = MagicMock()
+
+        # Build mock FIELD slots with valid pitch references
+        mock_slots = []
+        for i in range(checked_in_field_slots):
+            slot = MagicMock()
+            slot.status = "CHECKED_IN"
+            slot.pitch_id = i + 1
+            slot.id = i + 1
+            mock_slots.append(slot)
 
         def _query(model):
             q = MagicMock()
             if model is Pitch:
                 q.filter.return_value.count.return_value = active_pitch_count
+                # Also handle single-pitch lookup (is_active filter) for slot validation
+                mock_pitch = MagicMock()
+                mock_pitch.id = 1
+                q.filter.return_value.first.return_value = mock_pitch
             elif model is SemesterEnrollment:
                 q.filter.return_value.count.return_value = 4
+            elif model is TournamentInstructorSlot:
+                q.filter.return_value.all.return_value = mock_slots
             else:
                 q.filter.return_value.first.return_value = tournament
             return q
@@ -146,12 +165,13 @@ class TestGenerationValidatorPitchGuard:
         assert ok is False
         assert "no active pitches" in reason.lower() or "active pitch" in reason.lower()
 
-    def test_gv_02_passes_when_active_pitches_exist(self):
-        """Returns (True, ...) when campus has ≥1 active pitch."""
+    def test_gv_02_passes_when_active_pitches_and_field_slots_exist(self):
+        """Returns (True, ...) when campus has >= parallel_fields active pitches
+        and >= parallel_fields CHECKED_IN FIELD slots with active pitches."""
         from app.services.tournament.session_generation.validators.generation_validator import GenerationValidator
 
-        t = self._make_tournament(campus_id=5)
-        db = self._make_db(t, active_pitch_count=2)
+        t = self._make_tournament(campus_id=5, parallel_fields=1)
+        db = self._make_db(t, active_pitch_count=2, checked_in_field_slots=1)
 
         with patch(
             "app.services.tournament.session_generation.validators.generation_validator.TournamentRepository"

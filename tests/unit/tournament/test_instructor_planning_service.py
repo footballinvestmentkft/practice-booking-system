@@ -123,6 +123,7 @@ class TestAddSlotMasterSync:
         instructor = _make_instructor(user_id=55)
         pitch = MagicMock()
         pitch.id = 10
+        lfa_license = MagicMock()  # active LFA_COACH license
 
         call_count = [0]
 
@@ -137,6 +138,8 @@ class TestAddSlotMasterSync:
                 inner.first.return_value = instructor  # instructor lookup
             elif call_count[0] == 3:
                 inner.first.return_value = pitch       # pitch lookup
+            elif call_count[0] == 4:
+                inner.first.return_value = lfa_license  # LFA_COACH license check
             else:
                 inner.first.return_value = None        # conflict checks
             return inner

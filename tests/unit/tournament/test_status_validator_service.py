@@ -45,6 +45,8 @@ def _tournament(
     t.name = name
     t.start_date = start_date
     t.end_date = end_date
+    # Ensure parallel_fields is an integer so Guard 2 comparisons don't raise TypeError
+    t.tournament_config_obj.parallel_fields = 1
     return t
 
 
@@ -56,14 +58,39 @@ def _sa_state(db):
 
 
 def _type_db(min_players, found=True):
-    """DB mock that returns a TournamentType with given min_players."""
+    """DB mock: TournamentType with min_players + a CHECKED_IN FIELD slot + active pitch."""
+    from app.models.tournament_type import TournamentType
+    from app.models.tournament_instructor_slot import TournamentInstructorSlot
+    from app.models.pitch import Pitch as _Pitch
+
     db = MagicMock()
     tt = MagicMock()
     tt.min_players = min_players
-    q = MagicMock()
-    q.filter.return_value = q
-    q.first.return_value = tt if found else None
-    db.query.return_value = q
+
+    field_slot = MagicMock()
+    field_slot.status = "CHECKED_IN"
+    field_slot.pitch_id = 1
+
+    active_pitch = MagicMock()
+    active_pitch.id = 1
+
+    def _q(model):
+        q = MagicMock()
+        q.filter.return_value = q
+        q.count.return_value = 0
+        if model is TournamentType:
+            q.first.return_value = tt if found else None
+        elif model is TournamentInstructorSlot:
+            q.first.return_value = field_slot   # MASTER slot: non-None → CHECKED_IN
+            q.all.return_value = [field_slot]   # FIELD slots: 1 CHECKED_IN slot
+        elif model is _Pitch:
+            q.first.return_value = active_pitch
+        else:
+            q.first.return_value = None
+            q.all.return_value = []
+        return q
+
+    db.query.side_effect = _q
     return db
 
 
@@ -238,13 +265,34 @@ class TestMasterSlotFallback:
     """IN_PROGRESS guard: TournamentInstructorSlot fallback when master_instructor_id is None."""
 
     def _slot_db(self, has_slot=True):
-        """DB mock that returns/doesn't return a TournamentInstructorSlot for MASTER query."""
+        """DB mock: MASTER slot (optional) + CHECKED_IN FIELD slot + active pitch."""
+        from app.models.tournament_instructor_slot import TournamentInstructorSlot
+        from app.models.pitch import Pitch as _Pitch
+
         db = MagicMock()
-        slot_mock = MagicMock() if has_slot else None
-        q = MagicMock()
-        q.filter.return_value = q
-        q.first.return_value = slot_mock
-        db.query.return_value = q
+        master_slot = MagicMock() if has_slot else None
+
+        field_slot = MagicMock()
+        field_slot.status = "CHECKED_IN"
+        field_slot.pitch_id = 1
+
+        active_pitch = MagicMock()
+        active_pitch.id = 1
+
+        def _q(model):
+            q = MagicMock()
+            q.filter.return_value = q
+            if model is TournamentInstructorSlot:
+                q.first.return_value = master_slot
+                q.all.return_value = [field_slot] if has_slot else []
+            elif model is _Pitch:
+                q.first.return_value = active_pitch if has_slot else None
+            else:
+                q.first.return_value = None
+                q.all.return_value = []
+            return q
+
+        db.query.side_effect = _q
         return db
 
     def test_master_slot_satisfies_in_progress_guard(self):

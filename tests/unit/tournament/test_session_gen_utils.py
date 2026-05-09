@@ -257,6 +257,8 @@ class TestGenerationValidator:
         from app.models.semester_enrollment import SemesterEnrollment
 
         t = _make_tournament(fmt="HEAD_TO_HEAD", type_id=3, status="IN_PROGRESS")
+        # No campus → skip pitch check; instructor check bypassed via flag
+        t.campus_id = None
         v, db = _make_validator(t)
 
         tournament_type = MagicMock()
@@ -277,7 +279,7 @@ class TestGenerationValidator:
 
         db.query.side_effect = _q
 
-        ok, reason = v.can_generate_sessions(1)
+        ok, reason = v.can_generate_sessions(1, skip_instructor_check=True)
 
         assert ok is True
 
@@ -314,6 +316,7 @@ class TestGenerationValidator:
     def test_individual_ranking_enough_players(self):
         """Happy path: IR format, IN_PROGRESS, 3 players → True."""
         t = _make_tournament(fmt="INDIVIDUAL_RANKING", status="IN_PROGRESS")
+        t.campus_id = None  # skip pitch + instructor checks (not under test here)
         v, db = _make_validator(t)
 
         enroll_q = MagicMock()
@@ -321,7 +324,7 @@ class TestGenerationValidator:
         enroll_q.count.return_value = 3
         db.query.return_value = enroll_q
 
-        ok, reason = v.can_generate_sessions(1)
+        ok, reason = v.can_generate_sessions(1, skip_instructor_check=True)
 
         assert ok is True
         assert "Ready" in reason
@@ -331,6 +334,7 @@ class TestGenerationValidator:
         from app.models.tournament_type import TournamentType
 
         t = _make_tournament(fmt="HEAD_TO_HEAD", type_id=99, status="IN_PROGRESS")
+        t.campus_id = None  # skip pitch + instructor checks (not under test here)
         v, db = _make_validator(t)
 
         enroll_q = MagicMock()
@@ -348,6 +352,6 @@ class TestGenerationValidator:
 
         db.query.side_effect = _q
 
-        ok, reason = v.can_generate_sessions(1)
+        ok, reason = v.can_generate_sessions(1, skip_instructor_check=True)
 
         assert ok is True

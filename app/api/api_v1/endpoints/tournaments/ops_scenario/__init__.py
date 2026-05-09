@@ -1113,6 +1113,7 @@ def run_ops_scenario(
                 break_minutes=break_duration,
                 number_of_rounds=number_of_rounds,
                 campus_ids=campus_ids,
+                skip_instructor_check=True,  # ops simulation bypasses lifecycle instructor gates
             )
             task_id = "sync-done"
             if not _gen_ok:

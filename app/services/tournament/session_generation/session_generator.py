@@ -45,14 +45,18 @@ class TournamentSessionGenerator:
         self.group_knockout_generator = GroupKnockoutGenerator(db)
         self.individual_ranking_generator = IndividualRankingGenerator(db)
 
-    def can_generate_sessions(self, tournament_id: int) -> Tuple[bool, str]:
+    def can_generate_sessions(
+        self,
+        tournament_id: int,
+        skip_instructor_check: bool = False,
+    ) -> Tuple[bool, str]:
         """
         Check if tournament is ready for session generation
 
         Returns:
             (can_generate, reason)
         """
-        return self.validator.can_generate_sessions(tournament_id)
+        return self.validator.can_generate_sessions(tournament_id, skip_instructor_check=skip_instructor_check)
 
     def generate_sessions(
         self,
@@ -64,6 +68,7 @@ class TournamentSessionGenerator:
         campus_ids: List[int] = None,
         number_of_legs: int = 1,
         track_home_away: bool = False,
+        skip_instructor_check: bool = False,
     ) -> Tuple[bool, str, List[Dict[str, Any]]]:
         """
         Generate all tournament sessions based on tournament type and enrolled player count
@@ -87,7 +92,7 @@ class TournamentSessionGenerator:
             logger.info(f"📊 Input params: parallel_fields={parallel_fields}, session_duration={session_duration_minutes}, break_minutes={break_minutes}, number_of_rounds={number_of_rounds}")
 
             # Validation
-            can_generate, reason = self.can_generate_sessions(tournament_id)
+            can_generate, reason = self.can_generate_sessions(tournament_id, skip_instructor_check=skip_instructor_check)
             logger.info(f"✅ Validation result: can_generate={can_generate}, reason={reason}")
             if not can_generate:
                 return False, reason, []
