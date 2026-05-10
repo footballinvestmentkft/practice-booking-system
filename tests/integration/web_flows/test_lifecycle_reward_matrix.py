@@ -76,6 +76,7 @@ from app.models.team import Team, TeamMember, TournamentTeamEnrollment
 from app.models.location import Location
 from app.models.campus import Campus
 from app.models.pitch import Pitch
+from app.models.tournament_instructor_slot import TournamentInstructorSlot
 from app.core.security import get_password_hash
 
 
@@ -984,16 +985,60 @@ def _make_team_with_members(db: Session, count: int = 2) -> Team:
     return team
 
 
-def _advance_to_in_progress(client, tournament_id: int, admin_token: str) -> None:
+def _ensure_field_slot(db: Session, tournament_id: int, instructor_id: int) -> None:
+    """Create a CHECKED_IN FIELD instructor slot if none exists.
+
+    status_validator requires >=parallel_fields CHECKED_IN FIELD slots before
+    allowing the IN_PROGRESS transition. Finds the first active pitch on the
+    tournament's campus and creates the slot against it.
+    """
+    from app.models.semester import Semester as _Sem
+
+    existing = db.query(TournamentInstructorSlot).filter(
+        TournamentInstructorSlot.semester_id == tournament_id,
+        TournamentInstructorSlot.role == "FIELD",
+        TournamentInstructorSlot.status == "CHECKED_IN",
+    ).first()
+    if existing:
+        return
+
+    tourn = db.query(_Sem).filter(_Sem.id == tournament_id).first()
+    campus_id = tourn.campus_id if tourn else None
+    pitch = db.query(Pitch).filter(Pitch.campus_id == campus_id, Pitch.is_active == True).first()  # noqa: E712
+    assert pitch, f"No active pitch found for campus {campus_id} — _campus() must create one"
+
+    db.add(TournamentInstructorSlot(
+        semester_id=tournament_id,
+        instructor_id=instructor_id,
+        role="FIELD",
+        status="CHECKED_IN",
+        pitch_id=pitch.id,
+        assigned_by=instructor_id,
+    ))
+    db.flush()
+
+
+def _advance_to_in_progress(
+    client,
+    tournament_id: int,
+    admin_token: str,
+    test_db: Session = None,
+    admin_user_id: int = None,
+) -> None:
     """Drive a DRAFT tournament through the full state machine to IN_PROGRESS.
 
     Required pre-conditions (set BEFORE calling this):
-      - tournament.campus_id is set
+      - tournament.campus_id is set (with >=1 active pitch)
       - tournament.master_instructor_id is set
       - enough participants enrolled (≥ TournamentType.min_players)
+
+    Pass test_db + admin_user_id to auto-provision the FIELD instructor slot
+    required by status_validator before the IN_PROGRESS transition.
     """
     hdrs = {"Authorization": f"Bearer {admin_token}"}
     for new_status in ("ENROLLMENT_OPEN", "ENROLLMENT_CLOSED", "CHECK_IN_OPEN", "IN_PROGRESS"):
+        if new_status == "IN_PROGRESS" and test_db is not None and admin_user_id is not None:
+            _ensure_field_slot(test_db, tournament_id, admin_user_id)
         resp = client.patch(
             f"/api/v1/tournaments/{tournament_id}/status",
             json={"new_status": new_status},
@@ -1109,7 +1154,7 @@ class TestExtendedLifecycleMatrix:
         for p in players:
             _enroll(test_db, t, p)
 
-        _advance_to_in_progress(client, t.id, admin_token)
+        _advance_to_in_progress(client, t.id, admin_token, test_db=test_db, admin_user_id=admin_user.id)
 
         # 4 sessions: 2 SFs (round 1) + 1 Final + 1 Bronze/3rd-place (round 2)
         # The "knockout" TournamentType has third_place_playoff=True
@@ -1198,7 +1243,7 @@ class TestExtendedLifecycleMatrix:
         for p in players:
             _enroll(test_db, t, p)
 
-        _advance_to_in_progress(client, t.id, admin_token)
+        _advance_to_in_progress(client, t.id, admin_token, test_db=test_db, admin_user_id=admin_user.id)
 
         # 16 sessions: 12 GROUP_STAGE + 4 KNOCKOUT (SF×2 + Final + Bronze)
         sessions = _get_match_sessions(test_db, t.id)
@@ -1291,7 +1336,7 @@ class TestExtendedLifecycleMatrix:
         for p in players:
             _enroll(test_db, t, p)
 
-        _advance_to_in_progress(client, t.id, admin_token)
+        _advance_to_in_progress(client, t.id, admin_token, test_db=test_db, admin_user_id=admin_user.id)
 
         sessions = _get_match_sessions(test_db, t.id)
         assert len(sessions) == 1, f"INDIVIDUAL_RANKING must auto-generate exactly 1 session, got {len(sessions)}"
@@ -1351,7 +1396,7 @@ class TestExtendedLifecycleMatrix:
         _enroll_team(test_db, t, team_b)
         _enroll_team(test_db, t, team_c)
 
-        _advance_to_in_progress(client, t.id, admin_token)
+        _advance_to_in_progress(client, t.id, admin_token, test_db=test_db, admin_user_id=admin_user.id)
 
         sessions = _get_match_sessions(test_db, t.id)
         assert len(sessions) == 1, f"IR TEAM must auto-generate 1 session, got {len(sessions)}"
@@ -1414,7 +1459,7 @@ class TestExtendedLifecycleMatrix:
         for team in teams:
             _enroll_team(test_db, t, team)
 
-        _advance_to_in_progress(client, t.id, admin_token)
+        _advance_to_in_progress(client, t.id, admin_token, test_db=test_db, admin_user_id=admin_user.id)
 
         # 4 sessions: 2 SFs (round 1) + Final + Bronze (round 2, third_place_playoff=True)
         sessions = _get_match_sessions(test_db, t.id)
@@ -1504,7 +1549,7 @@ class TestExtendedLifecycleMatrix:
         for team in teams:
             _enroll_team(test_db, t, team)
 
-        _advance_to_in_progress(client, t.id, admin_token)
+        _advance_to_in_progress(client, t.id, admin_token, test_db=test_db, admin_user_id=admin_user.id)
 
         # 3 teams × 2 legs = 3 matches/leg × 2 legs = 6 sessions
         sessions = _get_match_sessions(test_db, t.id)
