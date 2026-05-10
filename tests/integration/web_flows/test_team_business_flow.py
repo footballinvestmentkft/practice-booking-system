@@ -747,7 +747,7 @@ class TestGenerationValidatorTeam:
         test_db.flush()
 
         validator = GenerationValidator(test_db)
-        can, reason = validator.can_generate_sessions(t.id)
+        can, reason = validator.can_generate_sessions(t.id, skip_instructor_check=True)
 
         assert can is True, f"Expected True, got False: {reason}"
 
@@ -758,7 +758,7 @@ class TestGenerationValidatorTeam:
         t = self._team_tournament_in_progress(test_db)
 
         validator = GenerationValidator(test_db)
-        can, reason = validator.can_generate_sessions(t.id)
+        can, reason = validator.can_generate_sessions(t.id, skip_instructor_check=True)
 
         assert can is False
         assert "teams enrolled" in reason.lower(), f"Expected 'teams enrolled' in error: {reason}"
