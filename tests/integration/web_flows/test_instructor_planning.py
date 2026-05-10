@@ -87,7 +87,7 @@ def _user(db: Session, role: UserRole = UserRole.INSTRUCTOR) -> User:
             " (user_id, specialization_type, current_level, max_achieved_level, started_at,"
             "  payment_verified, onboarding_completed, is_active, renewal_cost,"
             "  credit_balance, credit_purchased)"
-            " VALUES (:uid, 'LFA_COACH', 1, 1, '2025-01-01',"
+            " VALUES (:uid, 'LFA_COACH', 4, 4, '2025-01-01',"
             "         TRUE, TRUE, TRUE, 0, 0, 0)"
         ), {"uid": u.id})
         db.flush()
