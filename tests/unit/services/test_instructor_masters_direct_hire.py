@@ -208,10 +208,11 @@ class TestCreateDirectHireOffer:
         db = _seq_db(_location(), instr, None)
         with patch(f"{_BASE}.check_instructor_has_active_master_position", return_value=False):
             with patch(f"{_BASE}.check_availability_match", return_value=_avail_result(match_score=90)):
-                with patch(f"{_BASE}.TeachingPermissionService") as MockTPS:
-                    MockTPS.get_teaching_permissions.return_value = _permissions(can_teach=False)
-                    with pytest.raises(HTTPException) as exc:
-                        self._call(db=db)
+                with patch(f"{_BASE}.LicenseValidator"):
+                    with patch(f"{_BASE}.TeachingPermissionService") as MockTPS:
+                        MockTPS.get_teaching_permissions.return_value = _permissions(can_teach=False)
+                        with pytest.raises(HTTPException) as exc:
+                            self._call(db=db)
         assert exc.value.status_code == 400
 
     def test_incompatible_semester_400(self):
@@ -225,16 +226,17 @@ class TestCreateDirectHireOffer:
         db = _seq_db(_location(), instr, None, [semester])
         with patch(f"{_BASE}.check_instructor_has_active_master_position", return_value=False):
             with patch(f"{_BASE}.check_availability_match", return_value=_avail_result(match_score=90)):
-                with patch(f"{_BASE}.Semester") as MockSem:
-                    MockSem.location_city = MagicMock()
-                    MockSem.status = MagicMock()
-                    with patch(f"{_BASE}.TeachingPermissionService") as MockTPS:
-                        MockTPS.get_teaching_permissions.return_value = _permissions(age_group="YOUTH_FOOTBALL")
-                        with patch(f"{_BASE}.get_semester_age_group", return_value="ADULT_FOOTBALL"):
-                            with patch(f"{_BASE}.can_teach_age_group", return_value=False):
-                                with patch(f"{_BASE}.get_allowed_age_groups", return_value=["YOUTH_FOOTBALL"]):
-                                    with pytest.raises(HTTPException) as exc:
-                                        self._call(db=db)
+                with patch(f"{_BASE}.LicenseValidator"):
+                    with patch(f"{_BASE}.Semester") as MockSem:
+                        MockSem.location_city = MagicMock()
+                        MockSem.status = MagicMock()
+                        with patch(f"{_BASE}.TeachingPermissionService") as MockTPS:
+                            MockTPS.get_teaching_permissions.return_value = _permissions(age_group="YOUTH_FOOTBALL")
+                            with patch(f"{_BASE}.get_semester_age_group", return_value="ADULT_FOOTBALL"):
+                                with patch(f"{_BASE}.can_teach_age_group", return_value=False):
+                                    with patch(f"{_BASE}.get_allowed_age_groups", return_value=["YOUTH_FOOTBALL"]):
+                                        with pytest.raises(HTTPException) as exc:
+                                            self._call(db=db)
         assert exc.value.status_code == 400
 
     def test_success_no_semesters(self):

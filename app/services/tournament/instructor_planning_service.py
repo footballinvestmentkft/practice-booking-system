@@ -41,6 +41,11 @@ from app.models.tournament_instructor_slot import (
 )
 from app.models.tournament_configuration import TournamentConfiguration
 from app.models.license import UserLicense
+from app.services.tournament.instructor_eligibility_service import (
+    is_eligible_master_instructor,
+    is_eligible_field_instructor,
+    resolve_tournament_age_groups,
+)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -95,6 +100,23 @@ def add_slot(
     if not instructor:
         raise HTTPException(status_code=404, detail=f"User {instructor_id} not found")
 
+    # Canonical eligibility policy enforced for both MASTER and FIELD roles
+    age_groups = resolve_tournament_age_groups(tournament)
+    if role == SlotRole.MASTER.value:
+        eligible, reason = is_eligible_master_instructor(db, instructor_id, age_groups)
+        if not eligible:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Instructor is not eligible for MASTER role: {reason}",
+            )
+    elif role == SlotRole.FIELD.value:
+        eligible, reason = is_eligible_field_instructor(db, instructor_id, age_groups)
+        if not eligible:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Instructor is not eligible for FIELD role: {reason}",
+            )
+
     # Role business rules
     if role == SlotRole.MASTER.value:
         existing_master = _get_master_slot(db, semester_id)
@@ -116,20 +138,6 @@ def add_slot(
         if not pitch:
             raise HTTPException(status_code=404, detail=f"Pitch {pitch_id} not found")
 
-        # FIELD role requires an active LFA_COACH license
-        lfa_license = db.query(UserLicense).filter(
-            UserLicense.user_id == instructor_id,
-            UserLicense.specialization_type == "LFA_COACH",
-            UserLicense.is_active == True,  # noqa: E712
-        ).first()
-        if not lfa_license:
-            raise HTTPException(
-                status_code=422,
-                detail=(
-                    f"Instructor {instructor_id} does not have an active LFA_COACH license. "
-                    "Only licensed coaches can be assigned as FIELD instructors."
-                ),
-            )
     else:
         raise HTTPException(status_code=422, detail=f"Invalid role: {role}. Use MASTER or FIELD.")
 

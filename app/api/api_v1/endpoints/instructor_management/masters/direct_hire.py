@@ -32,6 +32,7 @@ from app.services.availability_service import (
     check_instructor_has_active_master_position,
     get_instructor_active_master_location
 )
+from app.services.shared.license_validator import LicenseValidator
 from .utils import (
     get_semester_age_group,
     can_teach_age_group,
@@ -140,6 +141,9 @@ def create_direct_hire_offer(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Master Instructor must have LFA_COACH license. Instructor has: {instructor.specialization.value if instructor.specialization else 'None'}"
         )
+
+    # Verify the LFA_COACH UserLicense is active and not expired
+    LicenseValidator.get_coach_license(db, instructor.id, raise_if_missing=True)
 
     # Get teaching permissions
     permissions = TeachingPermissionService.get_teaching_permissions(instructor, db)

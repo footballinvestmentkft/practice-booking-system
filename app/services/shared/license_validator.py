@@ -16,8 +16,11 @@ Usage:
     license = LicenseValidator.get_coach_license(db, user_id)
 """
 
+from datetime import datetime, timezone
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from typing import Optional
 
 from ...models.license import UserLicense
@@ -63,9 +66,12 @@ class LicenseValidator:
         Raises:
             HTTPException(403): If no coach license found and raise_if_missing=True
         """
+        now = datetime.now(timezone.utc)
         coach_license = db.query(UserLicense).filter(
             UserLicense.user_id == user_id,
-            UserLicense.specialization_type == "LFA_COACH"
+            UserLicense.specialization_type == "LFA_COACH",
+            UserLicense.is_active == True,  # noqa: E712
+            or_(UserLicense.expires_at.is_(None), UserLicense.expires_at > now),
         ).order_by(UserLicense.current_level.desc()).first()
 
         if not coach_license and raise_if_missing:

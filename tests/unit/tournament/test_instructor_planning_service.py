@@ -8,6 +8,10 @@ status_validator.py.
   IPS-01  add_slot(MASTER) → Semester.master_instructor_id synced
   IPS-02  remove_slot(MASTER) → Semester.master_instructor_id cleared
   IPS-03  add_slot(FIELD) → Semester.master_instructor_id unchanged
+
+Eligibility policy (is_eligible_master_instructor / is_eligible_field_instructor)
+is tested in test_instructor_eligibility_service.py; here we mock it to (True, "")
+for happy-path tests and verify the rejection path raises 422.
 """
 
 import pytest
@@ -68,23 +72,19 @@ def _make_admin():
 # ── IPS-01: add_slot MASTER syncs master_instructor_id ───────────────────────
 
 
+_ELIGIBILITY_MODULE = "app.services.tournament.instructor_planning_service"
+
+
 class TestAddSlotMasterSync:
 
-    def test_add_master_slot_syncs_master_instructor_id(self):
+    @patch(f"{_ELIGIBILITY_MODULE}.is_eligible_master_instructor", return_value=(True, ""))
+    def test_add_master_slot_syncs_master_instructor_id(self, _mock_elig):
         """IPS-01: add_slot(role=MASTER) sets tournament.master_instructor_id."""
         from app.services.tournament.instructor_planning_service import add_slot
 
         tournament = _make_tournament(master_instructor_id=None)
         instructor = _make_instructor(user_id=42)
 
-        db = MagicMock()
-        q = MagicMock()
-        q.filter.return_value = q
-        q.count.return_value = 0
-        q.first.return_value = None
-
-        # Return tournament for _get_tournament_or_404, instructor for user lookup,
-        # None for existing_master / existing / existing_pitch checks
         call_count = [0]
 
         def query_side(model):
@@ -92,7 +92,7 @@ class TestAddSlotMasterSync:
             inner = MagicMock()
             inner.filter.return_value = inner
             inner.count.return_value = 0
-            # First query → tournament; second → instructor; rest → None (no conflicts)
+            # 1=tournament, 2=instructor, rest=None (conflict checks)
             if call_count[0] == 1:
                 inner.first.return_value = tournament
             elif call_count[0] == 2:
@@ -101,9 +101,10 @@ class TestAddSlotMasterSync:
                 inner.first.return_value = None
             return inner
 
+        db = MagicMock()
         db.query.side_effect = query_side
 
-        result = add_slot(
+        add_slot(
             db=db,
             semester_id=1,
             instructor_id=42,
@@ -115,7 +116,8 @@ class TestAddSlotMasterSync:
         # master_instructor_id must be set on the tournament object
         assert tournament.master_instructor_id == 42
 
-    def test_add_field_slot_does_not_change_master_instructor_id(self):
+    @patch(f"{_ELIGIBILITY_MODULE}.is_eligible_field_instructor", return_value=(True, ""))
+    def test_add_field_slot_does_not_change_master_instructor_id(self, _mock_elig):
         """IPS-03: add_slot(role=FIELD) leaves master_instructor_id untouched."""
         from app.services.tournament.instructor_planning_service import add_slot
 
@@ -123,7 +125,6 @@ class TestAddSlotMasterSync:
         instructor = _make_instructor(user_id=55)
         pitch = MagicMock()
         pitch.id = 10
-        lfa_license = MagicMock()  # active LFA_COACH license
 
         call_count = [0]
 
@@ -132,16 +133,15 @@ class TestAddSlotMasterSync:
             inner = MagicMock()
             inner.filter.return_value = inner
             inner.count.return_value = 0
+            # 1=tournament, 2=instructor, 3=pitch, rest=None (conflict checks)
             if call_count[0] == 1:
-                inner.first.return_value = tournament  # _get_tournament_or_404
+                inner.first.return_value = tournament
             elif call_count[0] == 2:
-                inner.first.return_value = instructor  # instructor lookup
+                inner.first.return_value = instructor
             elif call_count[0] == 3:
-                inner.first.return_value = pitch       # pitch lookup
-            elif call_count[0] == 4:
-                inner.first.return_value = lfa_license  # LFA_COACH license check
+                inner.first.return_value = pitch
             else:
-                inner.first.return_value = None        # conflict checks
+                inner.first.return_value = None
             return inner
 
         db = MagicMock()

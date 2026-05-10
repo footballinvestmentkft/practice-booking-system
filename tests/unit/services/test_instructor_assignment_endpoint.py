@@ -142,7 +142,8 @@ class TestAcceptInstructorAssignment:
 
     def test_wrong_status_raises_400(self):
         t = _tournament(status="COMPLETED")
-        with _mock_repo(t), patch(f"{_BASE}.LicenseValidator"):
+        _elig = patch(f"{_BASE}.is_eligible_master_instructor", return_value=(True, ""))
+        with _mock_repo(t), _elig:
             db = MagicMock()
             with pytest.raises(HTTPException) as exc:
                 accept_instructor_assignment(1, db=db, current_user=_instructor())
@@ -153,7 +154,8 @@ class TestAcceptInstructorAssignment:
         t = _tournament(status="SEEKING_INSTRUCTOR")
         s1, s2 = MagicMock(), MagicMock()
         db = _seq_db(_q(all_=[s1, s2]))
-        with _mock_repo(t), patch(f"{_BASE}.LicenseValidator"):
+        _elig = patch(f"{_BASE}.is_eligible_master_instructor", return_value=(True, ""))
+        with _mock_repo(t), _elig:
             result = accept_instructor_assignment(1, db=db, current_user=_instructor(42))
         assert result["message"] == "Tournament assignment accepted successfully"
         assert result["sessions_updated"] == 2
@@ -164,7 +166,8 @@ class TestAcceptInstructorAssignment:
     def test_success_pending_acceptance_no_sessions(self):
         t = _tournament(status="PENDING_INSTRUCTOR_ACCEPTANCE")
         db = _seq_db(_q(all_=[]))
-        with _mock_repo(t), patch(f"{_BASE}.LicenseValidator"):
+        _elig = patch(f"{_BASE}.is_eligible_master_instructor", return_value=(True, ""))
+        with _mock_repo(t), _elig:
             result = accept_instructor_assignment(1, db=db, current_user=_instructor())
         assert result["sessions_updated"] == 0
 
@@ -172,7 +175,8 @@ class TestAcceptInstructorAssignment:
         t = _tournament(status="SEEKING_INSTRUCTOR")
         t.start_date = None
         db = _seq_db(_q(all_=[]))
-        with _mock_repo(t), patch(f"{_BASE}.LicenseValidator"):
+        _elig = patch(f"{_BASE}.is_eligible_master_instructor", return_value=(True, ""))
+        with _mock_repo(t), _elig:
             result = accept_instructor_assignment(1, db=db, current_user=_instructor())
         assert result["tournament_date"] is None
 

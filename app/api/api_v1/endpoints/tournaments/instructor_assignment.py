@@ -51,6 +51,10 @@ from app.services.shared import (
     StatusHistoryRecorder
 )
 from app.repositories import TournamentRepository
+from app.services.tournament.instructor_eligibility_service import (
+    is_eligible_master_instructor,
+    resolve_tournament_age_groups,
+)
 
 router = APIRouter()
 
@@ -136,10 +140,23 @@ def accept_instructor_assignment(
     """
     # REFACTORED: Use shared services
     require_instructor(current_user)
-    LicenseValidator.get_coach_license(db, current_user.id, raise_if_missing=True)
 
     tournament_repo = TournamentRepository(db)
     tournament = tournament_repo.get_or_404(tournament_id)
+
+    # Canonical eligibility policy: role + active LFA_COACH license + level for age group
+    age_groups = resolve_tournament_age_groups(tournament)
+    eligible, reason = is_eligible_master_instructor(db, current_user.id, age_groups)
+    if not eligible:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error": "instructor_not_eligible",
+                "message": reason,
+                "user_id": current_user.id,
+                "tournament_id": tournament_id,
+            },
+        )
 
     # ============================================================================
     # VALIDATION 4: Tournament status allows instructor acceptance
