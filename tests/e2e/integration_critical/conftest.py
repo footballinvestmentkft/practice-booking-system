@@ -305,11 +305,11 @@ def _ensure_tournament_has_field_slot(tournament_id: int, campus_id: int) -> Non
     Uses direct DB access (bypasses add_slot() service) so no LFA_COACH license
     is required. Idempotent — no-op if a FIELD slot already exists.
     """
-    from sqlalchemy import create_engine, text
+    from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
     from app.models.pitch import Pitch
     from app.models.tournament_instructor_slot import TournamentInstructorSlot
-    from app.models.user import User
+    from app.models.user import User, UserRole
     from app.config import settings
 
     engine = create_engine(settings.DATABASE_URL)
@@ -332,7 +332,7 @@ def _ensure_tournament_has_field_slot(tournament_id: int, campus_id: int) -> Non
             print(f"⚠️  No active pitch on campus {campus_id} — cannot create FIELD slot")
             return
 
-        admin = db.query(User).filter(User.is_admin == True).first()  # noqa: E712
+        admin = db.query(User).filter(User.role == UserRole.ADMIN).first()
         if not admin:
             print("⚠️  No admin user found — cannot create FIELD slot")
             return
