@@ -141,7 +141,7 @@ describe('F1rstTeam — Teljes Business Lifecycle (vizuális)', {
     cy.get('select[name="gender"]').select('Male');
     cy.get('input[name="date_of_birth"]').invoke('val', '2000-06-15');
     cy.wait(300);
-    cy.get('input[name="nationality"]').type('Magyar', { delay: 80 });
+    cy.get('select[name="nationality"]').select('HU');
     cy.get('input[name="email"]').type(PLAYER_EMAIL, { delay: 60 });
     cy.get('input[name="password"]').type('F1rstPass2026!', { delay: 80 });
     cy.get('input[name="phone"]').type('+36301234567', { delay: 60 });

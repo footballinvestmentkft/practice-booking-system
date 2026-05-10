@@ -61,7 +61,7 @@ describe('Business Workflow — Student Full Process', {
     // date_of_birth: bypass Chrome's max attribute constraint by setting val directly
     cy.get('input[name="date_of_birth"]').invoke('val', '1998-03-10');
 
-    cy.get('input[name="nationality"]').type('Hungarian');
+    cy.get('select[name="nationality"]').select('HU');
 
     // ── Account details ──────────────────────────────────────────────────
     // Use unique email per run to avoid duplicate key errors on retries
