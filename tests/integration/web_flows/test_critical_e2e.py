@@ -2038,6 +2038,9 @@ def test_lfa_player_onboarding_creates_license(test_db: Session, client: TestCli
             "goals": "improve",
             "motivation": "E2E test",
             "skills": all_skills,
+            "height_cm": 178,
+            "weight_kg": 74,
+            "preferred_foot": "right",
         },
     )
     assert r_submit.status_code == 200, (
