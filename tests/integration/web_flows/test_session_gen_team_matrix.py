@@ -246,6 +246,7 @@ class TestSessionGenTeamMatrix:
             session_duration_minutes=60,
             break_minutes=10,
             number_of_rounds=1,
+            skip_instructor_check=True,
         )
         db.rollback()  # don't persist generated sessions between tests
         return result
@@ -444,6 +445,7 @@ class TestMultiLegGeneration:
             session_duration_minutes=60,
             break_minutes=10,
             number_of_rounds=1,
+            skip_instructor_check=True,
             **kwargs,
         )
         db.rollback()
@@ -492,6 +494,7 @@ class TestMultiLegGeneration:
             break_minutes=10,
             number_of_legs=2,
             track_home_away=True,
+            skip_instructor_check=True,
         )
         test_db.rollback()
 
