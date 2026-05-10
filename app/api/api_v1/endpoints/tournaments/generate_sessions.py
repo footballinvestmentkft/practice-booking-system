@@ -64,6 +64,7 @@ def _run_generation_in_background(
     campus_ids: Optional[list] = None,
     number_of_legs: int = 1,
     track_home_away: bool = False,
+    skip_instructor_check: bool = False,
 ) -> None:
     """
     Worker function executed in a daemon thread.
@@ -94,6 +95,7 @@ def _run_generation_in_background(
             campus_ids=campus_ids,
             number_of_legs=number_of_legs,
             track_home_away=track_home_away,
+            skip_instructor_check=skip_instructor_check,
         )
 
         with _registry_lock:

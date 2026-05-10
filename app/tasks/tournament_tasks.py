@@ -68,6 +68,7 @@ def generate_sessions_task(
     number_of_rounds: int,
     campus_overrides_raw: Optional[Dict[str, Any]] = None,
     campus_ids: Optional[list] = None,
+    skip_instructor_check: bool = False,
 ) -> Dict[str, Any]:
     """
     Celery task: generate tournament sessions asynchronously.
@@ -139,6 +140,7 @@ def generate_sessions_task(
             break_minutes=break_minutes,
             number_of_rounds=number_of_rounds,
             campus_ids=campus_ids,
+            skip_instructor_check=skip_instructor_check,
         )
         t_gen_end = time.perf_counter()
 

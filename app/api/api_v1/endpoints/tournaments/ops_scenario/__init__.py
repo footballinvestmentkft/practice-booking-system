@@ -1069,6 +1069,7 @@ def run_ops_scenario(
                 celery_result = generate_sessions_task.apply_async(
                     args=[tid, parallel_fields, session_duration, break_duration,
                           number_of_rounds, campus_overrides_raw, campus_ids],
+                    kwargs={"skip_instructor_check": True},
                     queue="tournaments",
                     headers={"dispatched_at": _time.perf_counter()},
                 )
@@ -1088,6 +1089,7 @@ def run_ops_scenario(
                     target=_run_generation_in_background,
                     args=(task_id, tid, parallel_fields, session_duration,
                           break_duration, number_of_rounds, campus_overrides_raw, campus_ids),
+                    kwargs={"skip_instructor_check": True},
                     daemon=True,
                 ).start()
                 _ops_logger.info("[ops] Thread task dispatched task_id=%s", task_id)
