@@ -4094,6 +4094,20 @@ def test_admin_instructor_slot_create_planned(test_db: Session, client: TestClie
     """
     admin = _make_user(test_db, role=UserRole.ADMIN)
     instructor = _make_user(test_db, role=UserRole.INSTRUCTOR)
+
+    # Instructor must have an active LFA_COACH UserLicense for eligibility check
+    coach_lic_f61 = UserLicense(
+        user_id=instructor.id,
+        specialization_type="LFA_COACH",
+        current_level=5,
+        max_achieved_level=5,
+        is_active=True,
+        expires_at=None,
+        started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+    )
+    test_db.add(coach_lic_f61)
+    test_db.flush()
+
     uid = _uid()
 
     sem = Semester(
