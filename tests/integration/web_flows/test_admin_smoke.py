@@ -47,6 +47,7 @@ from app.models.system_event import SystemEvent, SystemEventLevel
 from app.models.credit_transaction import CreditTransaction, TransactionType
 from app.models.specialization import SpecializationType
 from app.core.security import get_password_hash
+from app.models.tournament_instructor_slot import TournamentInstructorSlot
 
 
 # ── SAVEPOINT-isolated DB ─────────────────────────────────────────────────────
@@ -2540,7 +2541,8 @@ class TestSmoke22GamePresetPlayerCountGuard:
         test_db.add(camp)
         test_db.flush()
         # Session generation requires ≥1 active pitch on the campus (domain invariant)
-        test_db.add(Pitch(campus_id=camp.id, pitch_number=1, name="Pálya A", capacity=22, is_active=True))
+        pitch = Pitch(campus_id=camp.id, pitch_number=1, name="Pálya A", capacity=22, is_active=True)
+        test_db.add(pitch)
         test_db.flush()
         tourn = Semester(
             code=f"S22{suffix}-{uuid.uuid4().hex[:6]}",
@@ -2558,6 +2560,17 @@ class TestSmoke22GamePresetPlayerCountGuard:
             ),
         )
         test_db.add(tourn)
+        test_db.flush()
+        # GenerationValidator requires ≥ parallel_fields CHECKED_IN FIELD slots,
+        # each with a valid active pitch. Add one so only the preset guard is the blocker.
+        test_db.add(TournamentInstructorSlot(
+            semester_id=tourn.id,
+            instructor_id=admin_user.id,
+            role="FIELD",
+            status="CHECKED_IN",
+            pitch_id=pitch.id,
+            assigned_by=admin_user.id,
+        ))
         test_db.flush()
         return tourn
 
