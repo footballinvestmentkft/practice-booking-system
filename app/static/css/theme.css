@@ -1,0 +1,139 @@
+/* ================================
+   LFA EDUCATION CENTER
+   BRAND THEME — AUTH DESIGN TOKENS
+   Brand direction: yellow + black
+   ================================ */
+
+:root {
+    /* Brand core */
+    --brand-yellow:       #FFD200;
+    --brand-yellow-hover: #E6BD00;
+    --brand-black:        #0B0B0B;
+
+    /* Auth page background gradient (light mode: dark → yellow) */
+    --auth-gradient-start: #0B0B0B;
+    --auth-gradient-mid:   #1A1A1A;
+    --auth-gradient-end:   #FFD200;
+
+    /* Auth card */
+    --auth-card-bg:     #FFFDF5;
+    --auth-card-radius: 20px;
+    --auth-card-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    --auth-card-border: rgba(230, 189, 0, 0.22);
+
+    /* Typography */
+    --auth-text-primary: #111111;
+    --auth-text-muted:   #666666;
+
+    /* Inputs */
+    --auth-input-border: #D6D6D6;
+    --auth-input-focus:  #FFD200;
+
+    /* Links */
+    --auth-link-color: #111111;
+
+    /* Primary action button */
+    --auth-btn-bg:    #FFD200;
+    --auth-btn-hover: #E6BD00;
+    --auth-btn-text:  #0B0B0B;
+
+    /* Invitation code highlight box */
+    --auth-invite-bg:           #FFFBE6;
+    --auth-invite-border:       #FFD200;
+    --auth-invite-text:         #0B0B0B;
+    --auth-invite-muted:        #6B5A00;
+    --auth-invite-input-bg:     #FFFFFF;
+    --auth-invite-input-border: #E6BD00;
+    --auth-invite-glow:         rgba(255, 210, 0, 0.18);
+
+    /* Specialization Hub */
+    --hub-bg:                   #FFFDF5;
+    --hub-nav-bg:               linear-gradient(135deg, #0B0B0B 0%, #1A1A1A 100%);
+    --hub-nav-text:             #FFFFFF;
+    --hub-nav-btn-bg:           rgba(255, 255, 255, 0.12);
+    --hub-nav-btn-hover:        rgba(255, 255, 255, 0.25);
+    --hub-credit-pill-bg:       rgba(255, 210, 0, 0.15);
+    --hub-credit-pill-border:   rgba(255, 210, 0, 0.55);
+    --hub-card-bg:              #FFFFFF;
+    --hub-card-border:          rgba(230, 189, 0, 0.18);
+    --hub-card-shadow:          0 4px 12px rgba(0, 0, 0, 0.08);
+    --hub-text-primary:         #111111;
+    --hub-text-secondary:       #4a5568;
+    --hub-text-muted:           #666666;
+    --hub-info-bg:              #FFFBE6;
+    --hub-info-border:          #FFD200;
+    --hub-info-text:            #0B0B0B;
+    --hub-btn-bg:               linear-gradient(135deg, #FFD200 0%, #E6BD00 100%);
+    --hub-btn-text:             #0B0B0B;
+    --hub-btn-shadow:           rgba(255, 210, 0, 0.4);
+    --hub-btn-disabled-bg:      #e2e8f0;
+    --hub-btn-disabled-text:    #999999;
+    --hub-btn-setup-bg:         linear-gradient(135deg, #E6BD00 0%, #C9A400 100%);
+    --hub-unlocked-border:      #27ae60;
+    --hub-badge-age-bg:         #E6BD00;
+    --hub-cost-bg:              #FFD200;
+    --hub-cost-text:            #0B0B0B;
+    --hub-divider:              #e2e8f0;
+    --hub-link:                 #111111;
+    --hub-warn-bg:              #FFFBE6;
+    --hub-warn-border:          #E6BD00;
+    --hub-warn-text:            #6B5A00;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* Dark mode gradient: yellow → dark (inverse of light mode) */
+        --auth-gradient-start: #FFD200;
+        --auth-gradient-mid:   #1A1A1A;
+        --auth-gradient-end:   #000000;
+
+        /* Auth card — subtle yellow glow separates card from background */
+        --auth-card-bg:     #111111;
+        --auth-card-shadow: 0 24px 70px rgba(255, 210, 0, 0.10);
+        --auth-card-border: rgba(255, 210, 0, 0.18);
+
+        --auth-text-primary: #F5F5F5;
+        --auth-text-muted:   #B8B8B8;
+
+        --auth-input-border: #333333;
+        --auth-input-focus:  #FFD200;
+
+        --auth-link-color: #FFD200;
+
+        --auth-btn-bg:    #FFD200;
+        --auth-btn-hover: #E6BD00;
+        --auth-btn-text:  #0B0B0B;
+
+        /* Invitation code highlight box — dark mode */
+        --auth-invite-bg:           #1A1500;
+        --auth-invite-border:       #FFD200;
+        --auth-invite-text:         #FFD200;
+        --auth-invite-muted:        #B8A000;
+        --auth-invite-input-bg:     #111000;
+        --auth-invite-input-border: #FFD200;
+        --auth-invite-glow:         rgba(255, 210, 0, 0.12);
+
+        /* Specialization Hub — dark mode */
+        --hub-bg:                   #0B0B0B;
+        --hub-nav-bg:               linear-gradient(135deg, #1A1A1A 0%, #111111 100%);
+        --hub-credit-pill-bg:       rgba(255, 210, 0, 0.12);
+        --hub-credit-pill-border:   rgba(255, 210, 0, 0.45);
+        --hub-card-bg:              #1A1A1A;
+        --hub-card-border:          rgba(255, 210, 0, 0.15);
+        --hub-card-shadow:          0 4px 16px rgba(0, 0, 0, 0.35);
+        --hub-text-primary:         #F5F5F5;
+        --hub-text-secondary:       #B8B8B8;
+        --hub-text-muted:           #888888;
+        --hub-info-bg:              #1A1500;
+        --hub-info-border:          #FFD200;
+        --hub-info-text:            #F5F5F5;
+        --hub-btn-disabled-bg:      #2d2d2d;
+        --hub-btn-disabled-text:    #555555;
+        --hub-badge-age-bg:         #C9A400;
+        --hub-divider:              #2d2d2d;
+        --hub-link:                 #FFD200;
+        --hub-warn-bg:              #1A1500;
+        --hub-warn-border:          #FFD200;
+        --hub-warn-text:            #B8A000;
+    }
+}

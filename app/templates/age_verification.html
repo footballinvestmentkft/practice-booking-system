@@ -1,171 +1,192 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Age Verification - LFA Education Center</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% extends "base.html" %}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
+{% block title %}Age Verification - LFA Education Center{% endblock %}
 
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 500px;
-            width: 100%;
-            padding: 40px;
-            animation: slideUp 0.5s ease-out;
-        }
+{% block extra_head %}
+<style>
+    /* Full-screen auth background — single gradient on html, transparent body */
+    html {
+        min-height: 100%;
+        background: linear-gradient(
+            135deg,
+            var(--auth-gradient-start) 0%,
+            var(--auth-gradient-mid) 50%,
+            var(--auth-gradient-end) 100%
+        ) !important;
+    }
+    body {
+        min-height: 100%;
+        background: transparent !important;
+    }
+    .main-content {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        background: transparent !important;
+    }
+    footer.footer { display: none; }
+</style>
+{% endblock %}
 
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+{% block content %}
 
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
+<style>
+    .age-verify-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
 
-        .icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-        }
+    .age-verify-card {
+        background: var(--auth-card-bg);
+        border-radius: var(--auth-card-radius);
+        box-shadow: var(--auth-card-shadow);
+        border: 1px solid var(--auth-card-border);
+        max-width: 500px;
+        width: 100%;
+        padding: 3rem;
+        animation: slideUp 0.5s ease-out;
+    }
 
-        h1 {
-            color: #2d3748;
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
+    .age-verify-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
 
-        .subtitle {
-            color: #718096;
-            font-size: 16px;
-            line-height: 1.5;
-        }
+    .age-verify-logo-wrap {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1.25rem;
+    }
 
-        .form-group {
-            margin-bottom: 25px;
-        }
+    .age-verify-logo-img {
+        width: 180px;
+        height: auto;
+    }
 
-        label {
-            display: block;
-            color: #2d3748;
-            font-weight: 600;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
+    .age-verify-title {
+        color: var(--auth-text-primary);
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+    }
 
-        input[type="date"] {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            font-family: inherit;
-        }
+    .age-verify-subtitle {
+        color: var(--auth-text-muted);
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin: 0;
+    }
 
-        input[type="date"]:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
+    .info-box {
+        background: #ebf8ff;
+        border-left: 4px solid #3182ce;
+        padding: 1rem 1.2rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+    }
 
-        .error {
-            background: #fed7d7;
-            color: #c53030;
-            padding: 12px 16px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            border-left: 4px solid #c53030;
-        }
+    .info-box p {
+        color: #2c5282;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        margin: 0;
+    }
 
-        .info-box {
-            background: #ebf8ff;
-            border-left: 4px solid #3182ce;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-        }
+    .age-form-group {
+        margin-bottom: 1.5rem;
+    }
 
-        .info-box p {
-            color: #2c5282;
-            font-size: 14px;
-            line-height: 1.6;
-            margin: 0;
-        }
+    .age-label {
+        display: block;
+        color: var(--auth-text-primary);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
 
-        .btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
+    .age-date-input {
+        width: 100%;
+        padding: 0.9rem 1.2rem;
+        border: 2px solid var(--auth-input-border);
+        border-radius: 10px;
+        font-size: 1rem;
+        font-family: inherit;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+        background: var(--auth-card-bg);
+        color: var(--auth-text-primary);
+    }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-        }
+    .age-date-input:focus {
+        outline: none;
+        border-color: var(--auth-input-focus);
+        box-shadow: 0 0 0 3px rgba(255, 210, 0, 0.2);
+    }
 
-        .btn:active {
-            transform: translateY(0);
-        }
+    .age-error {
+        background: #fed7d7;
+        color: #c53030;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.25rem;
+        font-size: 0.875rem;
+        border-left: 4px solid #c53030;
+    }
 
-        .privacy-note {
-            margin-top: 20px;
-            text-align: center;
-            color: #718096;
-            font-size: 12px;
-        }
+    .age-verify-btn {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
 
-        .privacy-note a {
-            color: #667eea;
-            text-decoration: none;
-        }
+    .age-privacy-note {
+        margin-top: 1.25rem;
+        text-align: center;
+        color: var(--auth-text-muted);
+        font-size: 0.78rem;
+        line-height: 1.5;
+    }
 
-        .privacy-note a:hover {
-            text-decoration: underline;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="icon">🎂</div>
-            <h1>Welcome to LFA Education Center!</h1>
-            <p class="subtitle">To get started, we need to verify your age to show you the programs that are right for you.</p>
+    .age-privacy-note a {
+        color: var(--auth-link-color);
+        text-decoration: none;
+    }
+
+    .age-privacy-note a:hover {
+        text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+        .age-verify-container { padding: 1rem; }
+        .age-verify-card { padding: 2rem 1.5rem; }
+        .age-verify-logo-img { width: 140px; }
+    }
+</style>
+
+<div class="age-verify-container">
+    <div class="age-verify-card">
+        <div class="age-verify-header">
+            <div class="age-verify-logo-wrap">
+                <picture>
+                    <source srcset="/static/images/logo-dark.png" media="(prefers-color-scheme: dark)">
+                    <img
+                        src="/static/images/logo-light.png"
+                        alt="Lion Football Academy"
+                        class="age-verify-logo-img"
+                        width="180"
+                        height="65"
+                    >
+                </picture>
+            </div>
+            <h1 class="age-verify-title">Welcome to LFA Education Center!</h1>
+            <p class="age-verify-subtitle">To get started, we need to verify your age to show you the programs that are right for you.</p>
         </div>
 
         {% if error %}
-        <div class="error">
+        <div class="age-error">
             {{ error }}
         </div>
         {% endif %}
@@ -176,27 +197,29 @@
         </div>
 
         <form method="POST" action="/age-verification">
-            <div class="form-group">
-                <label for="date_of_birth">📅 Your Date of Birth</label>
+            <div class="age-form-group">
+                <label class="age-label" for="date_of_birth">📅 Your Date of Birth</label>
                 <input
                     type="date"
                     id="date_of_birth"
                     name="date_of_birth"
+                    class="age-date-input"
                     required
                     max="{{ today }}"
                     value="{{ date_of_birth or '' }}"
                 >
             </div>
 
-            <button type="submit" class="btn">
+            <button type="submit" class="modern-btn modern-btn-brand age-verify-btn">
                 Continue to Dashboard →
             </button>
         </form>
 
-        <div class="privacy-note">
+        <div class="age-privacy-note">
             🔒 Your information is secure and private.<br>
             You can update this later in your <a href="/profile">profile settings</a>.
         </div>
     </div>
-</body>
-</html>
+</div>
+
+{% endblock %}

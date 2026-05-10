@@ -4,16 +4,26 @@
 
 {% block extra_head %}
 <style>
-    /* Full-screen override: neutralise base.html layout constraints */
-    html, body {
-        height: 100%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) !important;
+    /* Full-screen auth background — single gradient on html, transparent body */
+    html {
+        min-height: 100%;
+        background: linear-gradient(
+            135deg,
+            var(--auth-gradient-start) 0%,
+            var(--auth-gradient-mid) 50%,
+            var(--auth-gradient-end) 100%
+        ) !important;
+    }
+    body {
+        min-height: 100%;
+        background: transparent !important;
     }
     .main-content {
         max-width: 100% !important;
         padding: 0 !important;
         margin: 0 !important;
         width: 100% !important;
+        background: transparent !important;
     }
     footer.footer { display: none; }
 </style>
@@ -22,7 +32,6 @@
 {% block content %}
 
 <style>
-    /* Modern Login Page Styling */
     .login-container {
         min-height: 100vh;
         display: flex;
@@ -33,9 +42,10 @@
     }
 
     .login-card {
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        background: var(--auth-card-bg);
+        border-radius: var(--auth-card-radius);
+        box-shadow: var(--auth-card-shadow);
+        border: 1px solid var(--auth-card-border);
         max-width: 450px;
         width: 100%;
         padding: 3rem;
@@ -47,23 +57,26 @@
         margin-bottom: 2rem;
     }
 
-    .login-logo {
-        font-size: 4rem;
-        margin-bottom: 1rem;
+    .login-logo-wrap {
         display: flex;
         justify-content: center;
-        gap: 0.5rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .login-logo-img {
+        width: 200px;
+        height: auto;
     }
 
     .login-title {
-        color: #2c3e50;
+        color: var(--auth-text-primary);
         font-size: 2rem;
         font-weight: 700;
         margin: 0 0 0.5rem 0;
     }
 
     .login-subtitle {
-        color: #7f8c8d;
+        color: var(--auth-text-muted);
         font-size: 1rem;
         margin: 0;
     }
@@ -74,7 +87,7 @@
 
     .modern-label {
         display: block;
-        color: #2c3e50;
+        color: var(--auth-text-primary);
         font-weight: 600;
         margin-bottom: 0.5rem;
         font-size: 0.9rem;
@@ -83,21 +96,23 @@
     .modern-input {
         width: 100%;
         padding: 0.9rem 1.2rem;
-        border: 2px solid #e0e0e0;
+        border: 2px solid var(--auth-input-border);
         border-radius: 10px;
         font-size: 1rem;
         transition: all 0.3s ease;
         box-sizing: border-box;
+        background: var(--auth-card-bg);
+        color: var(--auth-text-primary);
     }
 
     .modern-input:focus {
         outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: var(--auth-input-focus);
+        box-shadow: 0 0 0 3px rgba(255, 210, 0, 0.2);
     }
 
     .modern-input::placeholder {
-        color: #bdc3c7;
+        color: var(--auth-text-muted);
     }
 
     .login-btn {
@@ -120,7 +135,7 @@
         gap: 0.8rem;
         margin-top: 2rem;
         padding-top: 2rem;
-        border-top: 2px solid #ecf0f1;
+        border-top: 2px solid var(--auth-input-border);
     }
 
     .role-badge {
@@ -133,46 +148,33 @@
         gap: 0.3rem;
     }
 
-    .role-badge.student {
-        color: white;
-    }
+    .role-badge.student { color: white; }
+    .role-badge.instructor { color: white; }
+    .role-badge.admin { color: white; }
 
-    .role-badge.instructor {
-        color: white;
-    }
-
-    .role-badge.admin {
-        color: white;
-    }
-
-    /* Responsive */
     @media (max-width: 600px) {
-        .login-container {
-            padding: 1rem;
-        }
-
-        .login-card {
-            padding: 2rem 1.5rem;
-        }
-
-        .login-title {
-            font-size: 1.6rem;
-        }
-
-        .login-logo {
-            font-size: 3rem;
-        }
+        .login-container { padding: 1rem; }
+        .login-card { padding: 2rem 1.5rem; }
+        .login-title { font-size: 1.6rem; }
+        .login-logo-img { width: 160px; }
     }
 </style>
 
-<div class="login-container gradient-purple-full">
+<div class="login-container">
     <div class="login-card">
         <!-- Header with Logo -->
         <div class="login-header">
-            <div class="login-logo">
-                <span>⚽</span>
-                <span>🥋</span>
-                <span>💼</span>
+            <div class="login-logo-wrap">
+                <picture>
+                    <source srcset="/static/images/logo-dark.png" media="(prefers-color-scheme: dark)">
+                    <img
+                        src="/static/images/logo-light.png"
+                        alt="Lion Football Academy"
+                        class="login-logo-img"
+                        width="200"
+                        height="72"
+                    >
+                </picture>
             </div>
             <h1 class="login-title">LFA Education Center</h1>
             <p class="login-subtitle">Football Education Platform</p>
@@ -215,7 +217,7 @@
                 >
             </div>
 
-            <button type="submit" class="modern-btn modern-btn-purple login-btn">
+            <button type="submit" class="modern-btn modern-btn-brand login-btn">
                 Sign In →
             </button>
         </form>
@@ -228,8 +230,8 @@
         </div>
 
         <!-- Register Link -->
-        <div style="text-align:center; margin-top:1.2rem; color:#7f8c8d; font-size:0.9rem;">
-            New to LFA? <a href="/register" style="color:#667eea; font-weight:600; text-decoration:none;">Create an account</a>
+        <div style="text-align:center; margin-top:1.2rem; color:var(--auth-text-muted); font-size:0.9rem;">
+            New to LFA? <a href="/register" style="color:var(--auth-link-color); font-weight:600; text-decoration:none;">Create an account</a>
         </div>
     </div>
 </div>

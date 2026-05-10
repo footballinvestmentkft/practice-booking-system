@@ -97,6 +97,10 @@
     75% { transform: translateX(10px); }
 }
 
+.animate-shake {
+    animation: shake 0.5s ease-in-out;
+}
+
 @keyframes spin {
     from {
         transform: rotate(0deg);
@@ -254,6 +258,15 @@
 .modern-btn-secondary {
     background: #ecf0f1;
     color: #2c3e50;
+}
+
+.modern-btn-brand {
+    background: var(--auth-btn-bg, #FFD200);
+    color: var(--auth-btn-text, #0B0B0B);
+}
+
+.modern-btn-brand:hover {
+    background: var(--auth-btn-hover, #E6BD00);
 }
 
 /* ========== FORM ELEMENTS ========== */

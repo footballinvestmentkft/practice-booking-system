@@ -2,22 +2,49 @@
 
 {% block title %}Register - LFA Education Center{% endblock %}
 
+{% block extra_head %}
+<style>
+    /* Full-screen auth background — single gradient on html, transparent body */
+    html {
+        min-height: 100%;
+        background: linear-gradient(
+            135deg,
+            var(--auth-gradient-start) 0%,
+            var(--auth-gradient-mid) 50%,
+            var(--auth-gradient-end) 100%
+        ) !important;
+    }
+    body {
+        min-height: 100%;
+        background: transparent !important;
+    }
+    .main-content {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        background: transparent !important;
+    }
+    footer.footer { display: none; }
+</style>
+{% endblock %}
+
 {% block content %}
 
 <style>
     .register-container {
-        min-height: calc(100vh - 100px);
+        min-height: 100vh;
         display: flex;
         align-items: flex-start;
         justify-content: center;
         padding: 2rem;
-        margin: -2rem -2rem 0 -2rem;
     }
 
     .register-card {
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        background: var(--auth-card-bg);
+        border-radius: var(--auth-card-radius);
+        box-shadow: var(--auth-card-shadow);
+        border: 1px solid var(--auth-card-border);
         max-width: 680px;
         width: 100%;
         padding: 3rem;
@@ -30,36 +57,39 @@
         margin-bottom: 2rem;
     }
 
-    .register-logo {
-        font-size: 3rem;
-        margin-bottom: 1rem;
+    .register-logo-wrap {
         display: flex;
         justify-content: center;
-        gap: 0.5rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .register-logo-img {
+        width: 200px;
+        height: auto;
     }
 
     .register-title {
-        color: #2c3e50;
+        color: var(--auth-text-primary);
         font-size: 1.8rem;
         font-weight: 700;
         margin: 0 0 0.5rem 0;
     }
 
     .register-subtitle {
-        color: #7f8c8d;
+        color: var(--auth-text-muted);
         font-size: 0.95rem;
         margin: 0;
     }
 
     .section-divider {
-        color: #667eea;
+        color: var(--auth-text-primary);
         font-weight: 700;
         font-size: 0.85rem;
         text-transform: uppercase;
         letter-spacing: 0.08em;
         margin: 1.8rem 0 1rem 0;
         padding-bottom: 0.5rem;
-        border-bottom: 2px solid #e8ecfd;
+        border-bottom: 2px solid var(--auth-input-border);
     }
 
     .form-row {
@@ -74,7 +104,7 @@
 
     .modern-label {
         display: block;
-        color: #2c3e50;
+        color: var(--auth-text-primary);
         font-weight: 600;
         margin-bottom: 0.4rem;
         font-size: 0.88rem;
@@ -83,21 +113,23 @@
     .modern-input {
         width: 100%;
         padding: 0.8rem 1rem;
-        border: 2px solid #e0e0e0;
+        border: 2px solid var(--auth-input-border);
         border-radius: 10px;
         font-size: 0.95rem;
         transition: all 0.3s ease;
         box-sizing: border-box;
+        background: var(--auth-card-bg);
+        color: var(--auth-text-primary);
     }
 
     .modern-input:focus {
         outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: var(--auth-input-focus);
+        box-shadow: 0 0 0 3px rgba(255, 210, 0, 0.2);
     }
 
     .modern-input::placeholder {
-        color: #bdc3c7;
+        color: var(--auth-text-muted);
     }
 
     .modern-select {
@@ -127,12 +159,12 @@
     .login-link {
         text-align: center;
         margin-top: 1.5rem;
-        color: #7f8c8d;
+        color: var(--auth-text-muted);
         font-size: 0.9rem;
     }
 
     .login-link a {
-        color: #667eea;
+        color: var(--auth-link-color);
         font-weight: 600;
         text-decoration: none;
     }
@@ -143,25 +175,27 @@
 
     .hint-text {
         font-size: 0.78rem;
-        color: #95a5a6;
+        color: var(--auth-text-muted);
         margin-top: 0.25rem;
     }
 
     .invitation-highlight {
-        background: linear-gradient(135deg, #f0e7ff, #e9d5ff);
-        border: 2px solid #8e44ad;
+        background: var(--auth-invite-bg);
+        border: 2px solid var(--auth-invite-border);
         border-radius: 12px;
         padding: 1rem 1.2rem;
         margin-bottom: 1.5rem;
+        box-shadow: 0 0 0 4px var(--auth-invite-glow);
     }
 
     .invitation-highlight .modern-label {
-        color: #6c3483;
+        color: var(--auth-invite-text);
     }
 
     .invitation-highlight .modern-input {
-        border-color: #c39bd3;
-        background: white;
+        border-color: var(--auth-invite-input-border);
+        background: var(--auth-invite-input-bg);
+        color: var(--auth-text-primary);
         font-family: monospace;
         font-size: 1rem;
         letter-spacing: 0.05em;
@@ -169,24 +203,32 @@
     }
 
     .invitation-highlight .modern-input:focus {
-        border-color: #8e44ad;
-        box-shadow: 0 0 0 3px rgba(142, 68, 173, 0.15);
+        border-color: var(--auth-invite-border);
+        box-shadow: 0 0 0 3px var(--auth-invite-glow);
     }
 
     @media (max-width: 600px) {
         .register-container { padding: 1rem; }
         .register-card { padding: 2rem 1.5rem; }
         .form-row { grid-template-columns: 1fr; }
+        .register-logo-img { width: 160px; }
     }
 </style>
 
-<div class="register-container gradient-purple-full">
+<div class="register-container">
     <div class="register-card">
         <div class="register-header">
-            <div class="register-logo">
-                <span>⚽</span>
-                <span>🥋</span>
-                <span>💼</span>
+            <div class="register-logo-wrap">
+                <picture>
+                    <source srcset="/static/images/logo-dark.png" media="(prefers-color-scheme: dark)">
+                    <img
+                        src="/static/images/logo-light.png"
+                        alt="Lion Football Academy"
+                        class="register-logo-img"
+                        width="200"
+                        height="72"
+                    >
+                </picture>
             </div>
             <h1 class="register-title">Create Account</h1>
             <p class="register-subtitle">LFA Education Center — New Student Registration</p>
@@ -217,7 +259,7 @@
                         spellcheck="false"
                         oninput="this.value=this.value.toUpperCase()"
                     >
-                    <p class="hint-text" style="color:#6c3483;">You must have received an invitation code to register. Contact your administrator if you don't have one.</p>
+                    <p class="hint-text" style="color:var(--auth-invite-muted);">You must have received an invitation code to register. Contact your administrator if you don't have one.</p>
                 </div>
             </div>
 
@@ -249,6 +291,7 @@
                         <option value="">Select gender</option>
                         <option value="Male" {% if gender == 'Male' %}selected{% endif %}>Male</option>
                         <option value="Female" {% if gender == 'Female' %}selected{% endif %}>Female</option>
+                        <option value="Non-binary" {% if gender == 'Non-binary' %}selected{% endif %}>Non-binary</option>
                         <option value="Other" {% if gender == 'Other' %}selected{% endif %}>Other</option>
                     </select>
                 </div>
@@ -263,9 +306,23 @@
                 </div>
                 <div class="modern-form-group">
                     <label class="modern-label" for="nationality">Nationality</label>
-                    <input type="text" id="nationality" name="nationality" class="modern-input"
-                        required placeholder="Hungarian" value="{{ nationality or '' }}">
+                    <select id="nationality" name="nationality" class="modern-input modern-select" required>
+                        <option value="">Select nationality</option>
+                        {% for code, label in country_list %}
+                        <option value="{{ code }}" {% if nationality == code %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
+            </div>
+
+            <div class="modern-form-group">
+                <label class="modern-label" for="secondary_nationality">Secondary Nationality <span style="font-weight:400;color:var(--auth-text-muted);">(optional)</span></label>
+                <select id="secondary_nationality" name="secondary_nationality" class="modern-input modern-select">
+                    <option value="">No secondary nationality</option>
+                    {% for code, label in country_list %}
+                    <option value="{{ code }}" {% if secondary_nationality == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
             </div>
 
             <!-- Account Details -->
@@ -325,7 +382,7 @@
                     value="{{ country or '' }}" autocomplete="country-name">
             </div>
 
-            <button type="submit" class="modern-btn modern-btn-purple register-btn">
+            <button type="submit" class="modern-btn modern-btn-brand register-btn">
                 Create Account →
             </button>
         </form>
@@ -336,4 +393,34 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const primary = document.getElementById('nationality');
+    const secondary = document.getElementById('secondary_nationality');
+    if (!primary || !secondary) return;
+
+    function warnIfDuplicate() {
+        const p = primary.value;
+        const s = secondary.value;
+        let hint = secondary.parentElement.querySelector('.dup-hint');
+        if (p && s && p === s) {
+            if (!hint) {
+                hint = document.createElement('small');
+                hint.className = 'dup-hint';
+                hint.style.cssText = 'color:#e74c3c;font-weight:600;display:block;margin-top:0.3rem;';
+                secondary.parentElement.appendChild(hint);
+            }
+            hint.textContent = '⚠️ Secondary nationality must be different from primary.';
+        } else if (hint) {
+            hint.remove();
+        }
+    }
+
+    primary.addEventListener('change', warnIfDuplicate);
+    secondary.addEventListener('change', warnIfDuplicate);
+})();
+</script>
 {% endblock %}
