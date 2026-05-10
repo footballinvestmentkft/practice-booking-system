@@ -239,6 +239,14 @@ def test_instructor_full_lifecycle(
     print(f"✅ Step 3.9: Check-in opened (status=CHECK_IN_OPEN)")
 
     # ==================================================================
+    # STEP 3.92: Ensure FIELD instructor slot exists (status_validator guard)
+    # ==================================================================
+
+    from tests.e2e.integration_critical.conftest import _ensure_tournament_has_field_slot
+    _ensure_tournament_has_field_slot(tournament_id, test_campus_ids[0])
+    print(f"✅ Step 3.92: FIELD instructor slot ensured for tournament {tournament_id}")
+
+    # ==================================================================
     # STEP 3.95: Admin starts tournament (CHECK_IN_OPEN → IN_PROGRESS)
     # ==================================================================
 

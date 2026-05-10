@@ -225,6 +225,14 @@ def test_student_full_lifecycle(
     print(f"✅ Step 7.5: Enrolled 4 total students (knockout minimum met)")
 
     # ==================================================================
+    # STEP 7.9: Ensure FIELD instructor slot exists (generation guard)
+    # ==================================================================
+
+    from tests.e2e.integration_critical.conftest import _ensure_tournament_has_field_slot
+    _ensure_tournament_has_field_slot(tournament_id, test_campus_ids[0])
+    print(f"✅ Step 7.9: FIELD instructor slot ensured for tournament {tournament_id}")
+
+    # ==================================================================
     # STEP 8: Admin generates sessions manually
     # ==================================================================
 

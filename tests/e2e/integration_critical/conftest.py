@@ -298,6 +298,59 @@ def _ensure_campus_has_pitches(campus_id: int) -> None:
         db.close()
 
 
+def _ensure_tournament_has_field_slot(tournament_id: int, campus_id: int) -> None:
+    """Ensure a tournament has >=1 CHECKED_IN FIELD instructor slot.
+
+    status_validator requires this before allowing the IN_PROGRESS transition.
+    Uses direct DB access (bypasses add_slot() service) so no LFA_COACH license
+    is required. Idempotent — no-op if a FIELD slot already exists.
+    """
+    from sqlalchemy import create_engine, text
+    from sqlalchemy.orm import sessionmaker
+    from app.models.pitch import Pitch
+    from app.models.tournament_instructor_slot import TournamentInstructorSlot
+    from app.models.user import User
+    from app.config import settings
+
+    engine = create_engine(settings.DATABASE_URL)
+    _Session = sessionmaker(bind=engine)
+    db = _Session()
+    try:
+        existing = db.query(TournamentInstructorSlot).filter(
+            TournamentInstructorSlot.semester_id == tournament_id,
+            TournamentInstructorSlot.role == "FIELD",
+            TournamentInstructorSlot.status == "CHECKED_IN",
+        ).first()
+        if existing:
+            return
+
+        pitch = db.query(Pitch).filter(
+            Pitch.campus_id == campus_id,
+            Pitch.is_active == True,  # noqa: E712
+        ).first()
+        if not pitch:
+            print(f"⚠️  No active pitch on campus {campus_id} — cannot create FIELD slot")
+            return
+
+        admin = db.query(User).filter(User.is_admin == True).first()  # noqa: E712
+        if not admin:
+            print("⚠️  No admin user found — cannot create FIELD slot")
+            return
+
+        db.add(TournamentInstructorSlot(
+            semester_id=tournament_id,
+            instructor_id=admin.id,
+            role="FIELD",
+            status="CHECKED_IN",
+            pitch_id=pitch.id,
+            assigned_by=admin.id,
+        ))
+        db.commit()
+        print(f"   ↳ Seeded FIELD slot for tournament {tournament_id} (pitch={pitch.id}, admin={admin.id})")
+    finally:
+        db.close()
+
+
 @pytest.fixture(scope="function")
 def test_campus_ids(api_url: str, admin_token: str) -> List[int]:
     """
