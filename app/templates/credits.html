@@ -599,6 +599,71 @@
         </div>
     </div>
 </div>
+
+<!-- Transaction History -->
+<div class="credits-container" style="margin-top: 2rem;">
+    <div class="credits-card">
+        <h2>📋 Transaction History</h2>
+        <p class="card-subtitle">All credit movements on your account</p>
+
+        {% if credit_transactions %}
+        <div style="overflow-x: auto; margin-top: 1.5rem;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #e2e8f0;">
+                        <th style="text-align: left; padding: 0.6rem 0.75rem; color: #4a5568; font-weight: 600;">Date</th>
+                        <th style="text-align: left; padding: 0.6rem 0.75rem; color: #4a5568; font-weight: 600;">Type</th>
+                        <th style="text-align: left; padding: 0.6rem 0.75rem; color: #4a5568; font-weight: 600;">Description</th>
+                        <th style="text-align: right; padding: 0.6rem 0.75rem; color: #4a5568; font-weight: 600;">Amount</th>
+                        <th style="text-align: right; padding: 0.6rem 0.75rem; color: #4a5568; font-weight: 600;">Balance After</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tx in credit_transactions %}
+                    <tr style="border-bottom: 1px solid #f0f0f0;">
+                        <td style="padding: 0.65rem 0.75rem; color: #718096; white-space: nowrap;">
+                            {{ tx.created_at.strftime('%Y-%m-%d') if tx.created_at else '—' }}
+                        </td>
+                        <td style="padding: 0.65rem 0.75rem;">
+                            {% set tx_type = tx.transaction_type %}
+                            {% if tx_type == 'INVITATION_BONUS' %}
+                                <span style="background: #d4edda; color: #155724; padding: 0.2rem 0.55rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">🎁 Invite Bonus</span>
+                            {% elif tx_type == 'SPECIALIZATION_UNLOCK' %}
+                                <span style="background: #fff3cd; color: #856404; padding: 0.2rem 0.55rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">🔓 Specialization</span>
+                            {% elif tx_type == 'ENROLLMENT' %}
+                                <span style="background: #cce5ff; color: #004085; padding: 0.2rem 0.55rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">📚 Enrollment</span>
+                            {% elif tx_type == 'REFUND' %}
+                                <span style="background: #d4edda; color: #155724; padding: 0.2rem 0.55rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">↩️ Refund</span>
+                            {% elif tx_type == 'TOURNAMENT_REWARD' %}
+                                <span style="background: #ffd700; color: #5a4a00; padding: 0.2rem 0.55rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">🏆 Tournament</span>
+                            {% elif tx_type == 'PURCHASE' %}
+                                <span style="background: #d4edda; color: #155724; padding: 0.2rem 0.55rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">💳 Purchase</span>
+                            {% elif tx_type == 'ADMIN_ADJUSTMENT' or tx_type == 'MANUAL_ADJUSTMENT' %}
+                                <span style="background: #e2e8f0; color: #4a5568; padding: 0.2rem 0.55rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">⚙️ Adjustment</span>
+                            {% else %}
+                                <span style="background: #e2e8f0; color: #4a5568; padding: 0.2rem 0.55rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">{{ tx_type }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 0.65rem 0.75rem; color: #2d3748;">{{ tx.description or '—' }}</td>
+                        <td style="padding: 0.65rem 0.75rem; text-align: right; font-weight: 700;
+                            {% if tx.amount > 0 %}color: #27ae60;{% else %}color: #e74c3c;{% endif %}">
+                            {% if tx.amount > 0 %}+{{ tx.amount }}{% else %}{{ tx.amount }}{% endif %}
+                        </td>
+                        <td style="padding: 0.65rem 0.75rem; text-align: right; color: #4a5568; font-weight: 600;">
+                            {{ tx.balance_after }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color: #718096; margin-top: 1.5rem; text-align: center; padding: 2rem 0;">
+            No credit transactions yet. Transactions will appear here once you register or unlock specializations.
+        </p>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}

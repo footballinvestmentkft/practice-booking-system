@@ -12,6 +12,7 @@ from ....core.auth import create_access_token, create_refresh_token, verify_toke
 from ....core.security import verify_password, get_password_hash
 from ....models.user import User, UserRole
 from ....models.invitation_code import InvitationCode
+from ....models.credit_transaction import CreditTransaction, TransactionType
 from ....schemas.auth import Login, Token, RefreshToken, ChangePassword
 from ....schemas.user import User as UserSchema
 from ....config import settings
@@ -384,6 +385,19 @@ def register_with_invitation(
 
     db.add(new_user)
     db.flush()  # Get user ID without committing
+
+    # Log invitation bonus credit transaction (if any)
+    if invitation_code.bonus_credits > 0:
+        bonus_tx = CreditTransaction(
+            user_id=new_user.id,
+            amount=invitation_code.bonus_credits,
+            transaction_type=TransactionType.INVITATION_BONUS.value,
+            description=f"Registration bonus via invitation code {invitation_code.code}",
+            balance_after=new_user.credit_balance,
+            idempotency_key=f"invite_bonus:{invitation_code.id}:{new_user.id}",
+            created_at=datetime.now(timezone.utc),
+        )
+        db.add(bonus_tx)
 
     # Mark invitation code as used
     invitation_code.is_used = True

@@ -120,7 +120,7 @@ async def specialization_unlock(
     credit_transaction = CreditTransaction(
         user_license_id=new_license.id,
         amount=-100,
-        transaction_type=TransactionType.PURCHASE.value,
+        transaction_type=TransactionType.SPECIALIZATION_UNLOCK.value,
         description=f"Unlocked specialization: {spec_type.value}",
         balance_after=current_user.credit_balance,
         idempotency_key=idempotency_key,

@@ -120,7 +120,7 @@ async def specialization_select_submit(
             credit_transaction = CreditTransaction(
                 user_license_id=user_license.id,
                 amount=-SPEC_UNLOCK_COST,
-                transaction_type=TransactionType.PURCHASE.value,
+                transaction_type=TransactionType.SPECIALIZATION_UNLOCK.value,
                 description=f"Unlocked specialization: {spec_type.value.replace('_', ' ')}",
                 balance_after=user.credit_balance,
                 idempotency_key=str(uuid.uuid4()),

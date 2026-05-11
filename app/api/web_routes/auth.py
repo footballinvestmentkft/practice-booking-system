@@ -16,6 +16,7 @@ from ...database import get_db
 from ...dependencies import get_current_user_web, get_current_user_optional
 from ...models.user import User, UserRole
 from ...models.invitation_code import InvitationCode
+from ...models.credit_transaction import CreditTransaction, TransactionType
 from ...core.auth import create_access_token
 from ...core.security import verify_password, get_password_hash
 from ...config import settings
@@ -379,8 +380,21 @@ async def register_submit(
         db.add(new_user)
         db.flush()  # get new_user.id
 
-        # Mark invitation code as used
+        # Log invitation bonus credit transaction (if any)
         from datetime import timezone as _tz
+        if inv_code.bonus_credits > 0:
+            bonus_tx = CreditTransaction(
+                user_id=new_user.id,
+                amount=inv_code.bonus_credits,
+                transaction_type=TransactionType.INVITATION_BONUS.value,
+                description=f"Registration bonus via invitation code {inv_code.code}",
+                balance_after=new_user.credit_balance,
+                idempotency_key=f"invite_bonus:{inv_code.id}:{new_user.id}",
+                created_at=datetime.now(_tz.utc),
+            )
+            db.add(bonus_tx)
+
+        # Mark invitation code as used
         inv_code.is_used = True
         inv_code.used_by_user_id = new_user.id
         inv_code.used_at = datetime.now(_tz.utc)

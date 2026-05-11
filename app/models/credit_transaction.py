@@ -20,6 +20,8 @@ class TransactionType(enum.Enum):
     MANUAL_ADJUSTMENT = "MANUAL_ADJUSTMENT"  # Manual adjustment (alias for ADMIN_ADJUSTMENT)
     TOURNAMENT_REWARD = "TOURNAMENT_REWARD"  # Tournament placement rewards
     EXPIRATION = "EXPIRATION"      # Credits expired (2 year limit)
+    INVITATION_BONUS = "INVITATION_BONUS"    # Bonus credits granted on registration via invitation code
+    SPECIALIZATION_UNLOCK = "SPECIALIZATION_UNLOCK"  # Credits spent to unlock a specialization
 
 
 class CreditTransaction(Base):

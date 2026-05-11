@@ -22,6 +22,7 @@ from ...models.tournament_achievement import TournamentParticipation
 from ...models.achievement import Achievement
 from ...models.gamification import UserAchievement
 from ...models.invoice_request import InvoiceRequest
+from ...models.credit_transaction import CreditTransaction
 from ...models.quiz import AdaptiveLearningSession
 from ...models.session import Session as SessionModel
 from ...services.gamification import GamificationService
@@ -191,6 +192,22 @@ async def credits_page(
         SemesterEnrollment.is_active == True
     ).first() is not None
 
+    # Fetch CreditTransaction rows for this user (user-level + all license-level)
+    license_ids = [lic.id for lic in user_licenses]
+    from sqlalchemy import or_, and_
+    _ct_conditions = [
+        and_(CreditTransaction.user_id == current_user.id, CreditTransaction.user_license_id == None)
+    ]
+    if license_ids:
+        _ct_conditions.append(CreditTransaction.user_license_id.in_(license_ids))
+    credit_transactions = (
+        db.query(CreditTransaction)
+        .filter(or_(*_ct_conditions))
+        .order_by(CreditTransaction.created_at.desc())
+        .limit(50)
+        .all()
+    )
+
     return templates.TemplateResponse(
         "credits.html",
         {
@@ -205,6 +222,7 @@ async def credits_page(
             "user_licenses": user_licenses,
             "transactions": transactions,
             "invoice_requests": invoice_requests,
+            "credit_transactions": credit_transactions,
             "specialization_color": specialization_color or '#667eea',
             "today": datetime.now(timezone.utc).date(),
             "spec_header_class": "hdr-hub",
