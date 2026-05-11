@@ -22,6 +22,7 @@ from ...models.semester_enrollment import SemesterEnrollment
 from ...models.semester import Semester, SemesterStatus
 from ...utils.age_requirements import validate_specialization_for_age
 from ...utils.country_codes import COUNTRY_CODES, COUNTRY_OPTIONS, register_filters
+from ...utils.dominant_foot import calculate_dominant_badge
 from ...skills_config import SKILL_CATEGORIES
 from ...services.card_theme_service import get_theme as _get_theme
 from ...services.card_platform_service import get_preset as _get_platform_preset
@@ -426,10 +427,15 @@ def _build_welcome_card_context(
 
     overall_sa = round(sum(all_sa_values) / len(all_sa_values), 1) if all_sa_values else 60.0
 
-    display_name = user.name or user.email or ""
-    parts        = display_name.split()
-    initials     = "".join(p[0].upper() for p in parts[:2]) if parts else "?"
-    position     = ms.get("position", "")
+    display_name      = user.name or user.email or ""
+    parts             = display_name.split()
+    initials          = "".join(p[0].upper() for p in parts[:2]) if parts else "?"
+    position          = ms.get("position", "")
+    player_height_cm  = ms.get("height_cm")
+    player_weight_kg  = ms.get("weight_kg")
+    dominant_badge    = calculate_dominant_badge(
+        license.right_foot_score, license.left_foot_score
+    )
 
     # ── Player namespace: satisfies all `player.*` references in FIFA template ──
     player = types.SimpleNamespace(
@@ -478,7 +484,9 @@ def _build_welcome_card_context(
         # Fixed app logo shown on Welcome Card (logo-dark.png for dark FIFA background)
         "app_logo_url":          _WC_APP_LOGO_URL,
         "compact_photo_position":"left",
-        "dominant_badge":        None,
+        "player_height_cm":      player_height_cm,
+        "player_weight_kg":      player_weight_kg,
+        "dominant_badge":        dominant_badge,
         "display_name":          display_name,
         "welcome_card_mode":     True,
     }

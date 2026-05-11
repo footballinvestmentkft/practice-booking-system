@@ -92,15 +92,15 @@
         }
         .wc-preview-label span { color: #94a3b8; font-weight: 400; text-transform: none; letter-spacing: 0; }
         .wc-preview-frame-wrap {
+            position: relative;
             width: 100%;
-            aspect-ratio: 1 / 1;
             overflow: hidden;
             background: #0f0f1a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         #wc-preview-iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
             border: none;
             transform-origin: top left;
             display: block;
@@ -222,31 +222,50 @@
 </div>
 
 <script>
-// ── iframe scaling: fit the 1080×1080 card into the preview wrapper ─────────
-function scaleIframe() {
-    const wrap   = document.getElementById('wc-frame-wrap');
-    const iframe = document.getElementById('wc-preview-iframe');
-    const wrapW  = wrap.offsetWidth || 600;
-    const scale  = wrapW / 1080;
-    iframe.style.width  = '1080px';
-    iframe.style.height = '1080px';
+// ── Canvas size map — mirrors card_export_service.CANVAS_SIZES ───────────────
+var CANVAS_SIZES = {
+    instagram_square:   [1080, 1080],
+    instagram_portrait: [1080, 1350],
+    instagram_story:    [1080, 1920],
+    tiktok:             [1080, 1920],
+    facebook_landscape: [1200,  630],
+    banner_custom:      [1500,  500],
+};
+
+var _activePlatform = 'instagram_square';
+
+// ── iframe scaling: fit the platform canvas into the preview wrapper ─────────
+function scaleIframe(pid) {
+    var dims  = CANVAS_SIZES[pid] || [1080, 1080];
+    var cw    = dims[0];
+    var ch    = dims[1];
+    var wrap  = document.getElementById('wc-frame-wrap');
+    var iframe = document.getElementById('wc-preview-iframe');
+    var wrapW = wrap.offsetWidth || 600;
+    var scale = wrapW / cw;
+    iframe.style.width     = cw + 'px';
+    iframe.style.height    = ch + 'px';
     iframe.style.transform = 'scale(' + scale + ')';
-    wrap.style.height = Math.round(1080 * scale) + 'px';
+    wrap.style.height      = Math.round(ch * scale) + 'px';
 }
-window.addEventListener('load', scaleIframe);
-window.addEventListener('resize', scaleIframe);
+window.addEventListener('load',   function() { scaleIframe(_activePlatform); });
+window.addEventListener('resize', function() { scaleIframe(_activePlatform); });
 
 // ── Platform selector ────────────────────────────────────────────────────────
 function selectPlatform(card) {
-    document.querySelectorAll('.wc-platform-card').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.wc-platform-card').forEach(function(c) {
+        c.classList.remove('active');
+    });
     card.classList.add('active');
-    const pid   = card.dataset.platform;
-    const label = card.dataset.label;
-    const dims  = card.dataset.dims;
+    var pid   = card.dataset.platform;
+    var label = card.dataset.label;
+    var dims  = card.dataset.dims;
+    _activePlatform = pid;
     document.getElementById('wc-preview-iframe').src =
         '/profile/onboarding-card?platform=' + pid;
     document.getElementById('wc-active-label').textContent =
         label + ' · ' + dims;
+    scaleIframe(pid);
 }
 </script>
 </body>

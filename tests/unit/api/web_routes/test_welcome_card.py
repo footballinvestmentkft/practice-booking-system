@@ -637,3 +637,158 @@ class TestWelcomeCardProfileSection:
     def test_dashboard_player_card_link_unchanged(self, dashboard_src):
         assert '/players/{{ user.id }}/card' in dashboard_src
         assert 'spec-player-card-iframe' in dashboard_src
+
+
+# ── 9. Preview / export rendering fixes (Fix A, B, C) ────────────────────────
+
+_PUBLIC_PLAYER_PY_PATH = (
+    pathlib.Path(__file__).resolve().parents[4]
+    / "app" / "api" / "web_routes" / "public_player.py"
+)
+_STORY_EXPORT_TPL_PATH = (
+    pathlib.Path(__file__).resolve().parents[4]
+    / "app" / "templates" / "public" / "export" / "story" / "fifa.html"
+)
+_TIKTOK_EXPORT_TPL_PATH = (
+    pathlib.Path(__file__).resolve().parents[4]
+    / "app" / "templates" / "public" / "export" / "tiktok" / "fifa.html"
+)
+
+
+@pytest.fixture(scope="module")
+def gallery_html_src():
+    return _GALLERY_TPL_PATH.read_text(encoding="utf-8")
+
+
+@pytest.fixture(scope="module")
+def public_player_src():
+    return _PUBLIC_PLAYER_PY_PATH.read_text(encoding="utf-8")
+
+
+@pytest.fixture(scope="module")
+def story_export_src():
+    return _STORY_EXPORT_TPL_PATH.read_text(encoding="utf-8")
+
+
+@pytest.fixture(scope="module")
+def tiktok_export_src():
+    return _TIKTOK_EXPORT_TPL_PATH.read_text(encoding="utf-8")
+
+
+def _wc_context(right_foot=70.0, left_foot=30.0, motivation_scores=None):
+    """Call _build_welcome_card_context with controllable foot scores and motivation data."""
+    from app.api.web_routes.profile import _build_welcome_card_context
+    lic = _license()
+    lic.right_foot_score = right_foot
+    lic.left_foot_score  = left_foot
+    if motivation_scores is not None:
+        lic.motivation_scores = motivation_scores
+    return _build_welcome_card_context(_req(), _user(), lic, "instagram_square", False)
+
+
+class TestWelcomeCardRenderingFixes:
+    """Verify Fix A (iframe alignment), Fix B (canvas sizing), Fix C (physical context)."""
+
+    # ── Fix A: no flex centering on the frame wrapper ──
+
+    def test_gallery_frame_wrap_has_no_justify_content_center(self, gallery_html_src):
+        """Fix A: justify-content:center must NOT appear in .wc-preview-frame-wrap block."""
+        start = gallery_html_src.find(".wc-preview-frame-wrap {")
+        end   = gallery_html_src.find("}", start)
+        assert start != -1, ".wc-preview-frame-wrap rule not found"
+        wrap_rule = gallery_html_src[start:end]
+        assert "justify-content" not in wrap_rule
+        assert "align-items" not in wrap_rule
+
+    def test_gallery_iframe_is_position_absolute(self, gallery_html_src):
+        """Fix A: iframe must be position:absolute so transform-origin:top-left works."""
+        start = gallery_html_src.find("#wc-preview-iframe {")
+        end   = gallery_html_src.find("}", start)
+        assert start != -1
+        iframe_rule = gallery_html_src[start:end]
+        assert "position: absolute" in iframe_rule
+        assert "top: 0" in iframe_rule
+        assert "left: 0" in iframe_rule
+
+    def test_gallery_frame_wrap_is_position_relative(self, gallery_html_src):
+        """Fix A: wrapper must be position:relative to contain the absolute iframe."""
+        start = gallery_html_src.find(".wc-preview-frame-wrap {")
+        end   = gallery_html_src.find("}", start)
+        wrap_rule = gallery_html_src[start:end]
+        assert "position: relative" in wrap_rule
+
+    # ── Fix B: platform-aware canvas sizing ──
+
+    def test_canvas_sizes_has_instagram_square(self, gallery_html_src):
+        assert "instagram_square" in gallery_html_src
+        assert "[1080, 1080]" in gallery_html_src
+
+    def test_canvas_sizes_has_instagram_story(self, gallery_html_src):
+        assert "instagram_story" in gallery_html_src
+        assert "[1080, 1920]" in gallery_html_src
+
+    def test_canvas_sizes_has_facebook_landscape(self, gallery_html_src):
+        assert "facebook_landscape" in gallery_html_src
+        assert "[1200,  630]" in gallery_html_src
+
+    def test_canvas_sizes_has_banner_custom(self, gallery_html_src):
+        assert "banner_custom" in gallery_html_src
+        assert "[1500,  500]" in gallery_html_src
+
+    def test_select_platform_calls_scale_iframe(self, gallery_html_src):
+        """Fix B: selectPlatform() must call scaleIframe(pid) after updating src."""
+        func_start = gallery_html_src.find("function selectPlatform(")
+        func_end   = gallery_html_src.find("\n}", func_start)
+        assert func_start != -1
+        func_body = gallery_html_src[func_start:func_end]
+        assert "scaleIframe" in func_body
+
+    def test_scale_iframe_uses_canvas_sizes(self, gallery_html_src):
+        """Fix B: scaleIframe must reference CANVAS_SIZES, not a hardcoded 1080."""
+        func_start = gallery_html_src.find("function scaleIframe(")
+        func_end   = gallery_html_src.find("\n}", func_start)
+        assert func_start != -1
+        func_body = gallery_html_src[func_start:func_end]
+        assert "CANVAS_SIZES" in func_body
+        # Must not hardcode 1080 for both width and height
+        assert "= '1080px'" not in func_body
+
+    # ── Fix C: physical context keys ──
+
+    def test_context_has_player_height_cm(self):
+        ctx = _wc_context(motivation_scores={"height_cm": 178, "weight_kg": 74})
+        assert ctx["player_height_cm"] == 178
+
+    def test_context_has_player_weight_kg(self):
+        ctx = _wc_context(motivation_scores={"height_cm": 178, "weight_kg": 74})
+        assert ctx["player_weight_kg"] == 74
+
+    def test_context_player_height_cm_is_none_when_absent(self):
+        ctx = _wc_context(motivation_scores={})
+        assert ctx["player_height_cm"] is None
+
+    def test_context_dominant_badge_when_foot_scores_differ(self):
+        """right=70, left=30 → right_pct=70% → 'Rl' (right-footed)."""
+        ctx = _wc_context(right_foot=70.0, left_foot=30.0)
+        assert ctx["dominant_badge"] == "Rl"
+
+    def test_context_dominant_badge_no_data_returns_rl(self):
+        """No foot scores → calculate_dominant_badge returns 'rl' (unassessed), never None."""
+        ctx = _wc_context(right_foot=None, left_foot=None)
+        assert ctx["dominant_badge"] == "rl"
+        assert ctx["dominant_badge"] is not None
+
+    # ── Regression: data contract unchanged ──
+
+    def test_player_card_route_uses_calculate_dominant_badge(self, public_player_src):
+        """Player Card route must still call calculate_dominant_badge unchanged."""
+        assert "calculate_dominant_badge" in public_player_src
+        assert "dominant_badge" in public_player_src
+
+    def test_story_template_guards_dominant_badge(self, story_export_src):
+        """Story template must guard dominant_badge with {% if %}."""
+        assert "{% if dominant_badge %}" in story_export_src
+
+    def test_tiktok_template_guards_player_height_cm(self, tiktok_export_src):
+        """TikTok template must guard player_height_cm with {% if %}."""
+        assert "{% if player_height_cm %}" in tiktok_export_src
