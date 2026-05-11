@@ -268,6 +268,47 @@
         #submit-status.error   { background: var(--onboarding-status-error-bg);   color: var(--onboarding-status-error-text);   border: 1px solid var(--onboarding-status-error-border); }
         #submit-status.loading { background: var(--onboarding-status-loading-bg); color: var(--onboarding-status-loading-text); border: 1px solid var(--onboarding-status-loading-border); }
         #submit-status.success { background: var(--onboarding-status-success-bg); color: var(--onboarding-status-success-text); border: 1px solid var(--onboarding-status-success-border); }
+
+        /* ── Step 7: Welcome / Success screen ── */
+        .welcome-screen { text-align: center; padding: 1rem 0 2rem; }
+        .welcome-icon { font-size: 4rem; margin-bottom: 0.75rem; }
+        .welcome-title { font-size: 1.7rem; font-weight: 800; color: var(--onboarding-accent, #f5c518); margin-bottom: 0.5rem; }
+        .welcome-subtitle { font-size: 1rem; color: var(--onboarding-text-muted, #aaa); margin-bottom: 2rem; }
+        .welcome-card-notice {
+            background: var(--onboarding-card-bg, #1a1a1a);
+            border: 1px solid var(--onboarding-border, #333);
+            border-radius: 12px;
+            padding: 1.2rem 1.4rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+        .welcome-card-notice-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--onboarding-accent, #f5c518);
+            margin-bottom: 0.6rem;
+        }
+        .welcome-card-notice p {
+            font-size: 0.88rem;
+            color: var(--onboarding-text-muted, #bbb);
+            margin: 0.3rem 0;
+            line-height: 1.5;
+        }
+        .welcome-cta-row {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+        .welcome-cta-row .btn { min-width: 160px; }
+        .btn-disabled-placeholder {
+            opacity: 0.45;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -282,14 +323,14 @@
     <!-- Progress -->
     <div class="progress-section">
         <div class="progress-steps">
-            {% for n in range(1, 7) %}
+            {% for n in range(1, 8) %}
             <div class="step-dot" id="dot-{{ n }}">{{ n }}</div>
             {% endfor %}
         </div>
         <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="progress-fill" style="width:16.7%"></div>
+            <div class="progress-bar-fill" id="progress-fill" style="width:14.3%"></div>
         </div>
-        <div class="progress-label" id="progress-label">1 / 6 — Position</div>
+        <div class="progress-label" id="progress-label">1 / 7 — Position</div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════
@@ -417,16 +458,38 @@
         </div>
     </div>
 
+    <!-- ── Step 7: Success / Welcome screen ─────────────────────────────── -->
+    <div class="step" id="step-7">
+        <div class="welcome-screen">
+            <div class="welcome-icon">🎉</div>
+            <div class="welcome-title">Az onboarding sikeresen befejeződött!</div>
+            <div class="welcome-subtitle">Onboarding completed successfully</div>
+
+            <div class="welcome-card-notice">
+                <div class="welcome-card-notice-label">Welcome Card — Onboarding Self-Assessment</div>
+                <p>Ez a kártya az onboarding során megadott önértékelési adatokból készül.</p>
+                <p>Nem azonos a rendes Player Carddal — nem a számított skill profilt mutatja.</p>
+                <p>Az értékek az általad megadott önértékelésből (self-assessment) származnak, nem az EMA-motor által számított szintekből.</p>
+            </div>
+
+            <div class="welcome-cta-row">
+                <a id="btn-go-profile"    href="/profile"   class="btn btn-secondary">👤 Go to Profile</a>
+                <a id="btn-go-dashboard"  href="/dashboard/lfa-football-player" class="btn btn-primary">⚽ Continue to Dashboard</a>
+                <span class="btn btn-secondary btn-disabled-placeholder" title="Welcome Card download — coming soon">⬇️ Download Welcome Card</span>
+            </div>
+        </div>
+    </div>
+
 </div><!-- /container -->
 
 <script>
     // ── State ────────────────────────────────────────────────────────────────
     let currentStep       = 1;
-    const TOTAL_STEPS     = 6;
+    const TOTAL_STEPS     = 7;
     let primaryPosition   = null;
     let secondaryPositions = [];
 
-    const STEP_LABELS = ['Position', 'Outfield', 'Set Pieces', 'Mental', 'Physical', 'Goals'];
+    const STEP_LABELS = ['Position', 'Outfield', 'Set Pieces', 'Mental', 'Physical', 'Goals', 'Welcome'];
 
     // ── Progress ─────────────────────────────────────────────────────────────
     function updateProgress(step) {
@@ -684,10 +747,11 @@
             const data = await response.json();
 
             if (response.ok && data.success) {
-                status.className = 'success';
-                status.style.display = 'block';
-                status.textContent = '✅ Onboarding complete! Redirecting to dashboard...';
-                setTimeout(() => { window.location.href = data.redirect || '/dashboard'; }, 800);
+                // Inject the dashboard URL from the server response into the CTA button
+                const dashBtn = document.getElementById('btn-go-dashboard');
+                if (dashBtn && data.redirect) dashBtn.href = data.redirect;
+                // Show the success step instead of auto-redirecting
+                goTo(7);
             } else {
                 throw new Error(data.error || 'Server error');
             }

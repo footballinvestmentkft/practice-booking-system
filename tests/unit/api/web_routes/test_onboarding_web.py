@@ -10,6 +10,10 @@ Covers unique routes (not duplicated in specialization.py):
                                                         completed → /dashboard, valid → template
   lfa_player_onboarding_cancel (onboarding.py version) — no license → /dashboard, cancel → refund
   lfa_player_onboarding_submit — invalid position → 500, no license → 500, valid → success dict
+  lfa_player_onboarding_web_submit (Phase B) — response fields: success/user_id/welcome_card URLs;
+                                                validation: missing position/height/skills → 4xx
+  OnboardingTemplatePhaseB — static template assertions: step-7, TOTAL_STEPS=7, no auto-redirect,
+                              goTo(7) on success, btn-go-dashboard, btn-go-profile present
   onboarding_start — renders onboarding_new.html, age=None skips spec lookup
   onboarding_set_birthdate — invalid format → 400, too young → 400, valid → /onboarding/start
 
@@ -17,6 +21,7 @@ Note: onboarding.py missing imports (SpecializationType, CreditTransaction, Tran
       get_available_specializations) were fixed in Sprint 54 P0. create=True removed.
 """
 import asyncio
+import pathlib
 import pytest
 from datetime import date
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -28,6 +33,7 @@ from app.api.web_routes.onboarding import (
     lfa_player_onboarding_cancel,
     lfa_player_onboarding_page,
     lfa_player_onboarding_submit,
+    lfa_player_onboarding_web_submit,
     onboarding_set_birthdate,
     onboarding_start,
     specialization_select_page,
@@ -389,3 +395,197 @@ class TestOnboardingSetBirthdate:
             request=_req(), date_of_birth="1998-03-20", db=db, user=user
         ))
         assert user.date_of_birth == date(1998, 3, 20)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# lfa_player_onboarding_web_submit (POST /specialization/lfa-player/onboarding-web)
+# Phase B — cookie-auth web endpoint; returns welcome card URLs in response
+# ──────────────────────────────────────────────────────────────────────────────
+
+class TestLfaPlayerOnboardingWebSubmit:
+
+    # Patch get_all_skill_keys to a 2-key stub so tests don't depend on taxonomy size
+    _MOCK_KEYS = ["skill_a", "skill_b"]
+
+    def _make_req(self, body: dict):
+        r = MagicMock()
+        r.json = AsyncMock(return_value=body)
+        return r
+
+    def _valid_body(self):
+        return {
+            "position":       "STRIKER",
+            # omit "positions" → handler defaults to [position], which is fine
+            "goals":          "Win",
+            "motivation":     "Love football",
+            "skills":         {"skill_a": 70, "skill_b": 65},
+            "height_cm":      175,
+            "weight_kg":      72,
+            "preferred_foot": "right",
+            "foot_dominance": 60,
+        }
+
+    def _run_valid(self, uid=77):
+        body = self._valid_body()
+        license_mock = MagicMock()
+        user = _user(uid=uid)
+        db = _mock_db(first_return=license_mock)
+        with patch(f"{_BASE}.get_all_skill_keys", return_value=self._MOCK_KEYS), \
+             patch("app.services.onboarding_service.complete_lfa_player_onboarding"), \
+             patch("sqlalchemy.orm.attributes.flag_modified"):
+            result = _run(lfa_player_onboarding_web_submit(
+                request=self._make_req(body), db=db, user=user
+            ))
+        return result, user, license_mock
+
+    # ── response shape ────────────────────────────────────────────────────────
+
+    def test_success_is_true(self):
+        result, _, _ = self._run_valid()
+        assert result["success"] is True
+
+    def test_response_contains_user_id(self):
+        result, user, _ = self._run_valid(uid=77)
+        assert result["user_id"] == 77
+
+    def test_response_contains_welcome_card_url(self):
+        result, _, _ = self._run_valid()
+        assert result["welcome_card_url"] == "/profile/onboarding-card"
+
+    def test_response_contains_welcome_card_export_url(self):
+        result, _, _ = self._run_valid()
+        assert result["welcome_card_export_url"] == "/profile/onboarding-card/export"
+
+    def test_response_contains_redirect_to_dashboard(self):
+        result, _, _ = self._run_valid()
+        assert result["redirect"] == "/dashboard/lfa-football-player"
+
+    # ── validation rejections ─────────────────────────────────────────────────
+
+    def test_empty_position_returns_400(self):
+        body = self._valid_body()
+        body["position"] = ""
+        user = _user()
+        db = _mock_db(first_return=MagicMock())
+        with patch(f"{_BASE}.get_all_skill_keys", return_value=self._MOCK_KEYS):
+            result = _run(lfa_player_onboarding_web_submit(
+                request=self._make_req(body), db=db, user=user
+            ))
+        assert result.status_code == 400
+
+    def test_missing_height_cm_returns_422(self):
+        body = self._valid_body()
+        del body["height_cm"]
+        user = _user()
+        db = _mock_db(first_return=MagicMock())
+        with patch(f"{_BASE}.get_all_skill_keys", return_value=self._MOCK_KEYS):
+            result = _run(lfa_player_onboarding_web_submit(
+                request=self._make_req(body), db=db, user=user
+            ))
+        assert result.status_code == 422
+
+    def test_missing_weight_kg_returns_422(self):
+        body = self._valid_body()
+        del body["weight_kg"]
+        user = _user()
+        db = _mock_db(first_return=MagicMock())
+        with patch(f"{_BASE}.get_all_skill_keys", return_value=self._MOCK_KEYS):
+            result = _run(lfa_player_onboarding_web_submit(
+                request=self._make_req(body), db=db, user=user
+            ))
+        assert result.status_code == 422
+
+    def test_missing_preferred_foot_returns_422(self):
+        body = self._valid_body()
+        del body["preferred_foot"]
+        user = _user()
+        db = _mock_db(first_return=MagicMock())
+        with patch(f"{_BASE}.get_all_skill_keys", return_value=self._MOCK_KEYS):
+            result = _run(lfa_player_onboarding_web_submit(
+                request=self._make_req(body), db=db, user=user
+            ))
+        assert result.status_code == 422
+
+    def test_missing_skills_returns_400(self):
+        body = self._valid_body()
+        body["skills"] = {}
+        user = _user()
+        db = _mock_db(first_return=MagicMock())
+        with patch(f"{_BASE}.get_all_skill_keys", return_value=self._MOCK_KEYS):
+            result = _run(lfa_player_onboarding_web_submit(
+                request=self._make_req(body), db=db, user=user
+            ))
+        assert result.status_code == 400
+
+    def test_no_license_returns_400(self):
+        body = self._valid_body()
+        user = _user()
+        db = _mock_db(first_return=None)
+        with patch(f"{_BASE}.get_all_skill_keys", return_value=self._MOCK_KEYS):
+            result = _run(lfa_player_onboarding_web_submit(
+                request=self._make_req(body), db=db, user=user
+            ))
+        assert result.status_code == 400
+
+    def test_invalid_preferred_foot_returns_422(self):
+        body = self._valid_body()
+        body["preferred_foot"] = "both_feet"  # not in left|right|both
+        user = _user()
+        db = _mock_db(first_return=MagicMock())
+        with patch(f"{_BASE}.get_all_skill_keys", return_value=self._MOCK_KEYS):
+            result = _run(lfa_player_onboarding_web_submit(
+                request=self._make_req(body), db=db, user=user
+            ))
+        assert result.status_code == 422
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase B template static assertions
+# ──────────────────────────────────────────────────────────────────────────────
+
+_TEMPLATE_PATH = (
+    pathlib.Path(__file__).resolve().parents[4]
+    / "app" / "templates" / "lfa_player_onboarding.html"
+)
+
+
+@pytest.fixture(scope="module")
+def template_src():
+    return _TEMPLATE_PATH.read_text(encoding="utf-8")
+
+
+class TestOnboardingTemplatePhaseB:
+    """
+    Static analysis of lfa_player_onboarding.html confirming Phase B invariants.
+    These checks do not render Jinja2 — they assert raw HTML/JS source markers.
+    """
+
+    def test_step7_div_present(self, template_src):
+        assert 'id="step-7"' in template_src
+
+    def test_total_steps_is_7(self, template_src):
+        assert "TOTAL_STEPS" in template_src
+        # Match either `= 7;` or spaces around assignment
+        import re
+        assert re.search(r"TOTAL_STEPS\s*=\s*7\b", template_src)
+
+    def test_step_labels_contains_welcome(self, template_src):
+        assert "'Welcome'" in template_src or '"Welcome"' in template_src
+
+    def test_no_auto_redirect_on_success(self, template_src):
+        """Phase B replaced 800ms auto-redirect with goTo(7) — old pattern must be gone."""
+        assert "Redirecting to dashboard" not in template_src
+        assert "window.location.href = data.redirect" not in template_src
+
+    def test_goto_7_called_on_success(self, template_src):
+        assert "goTo(7)" in template_src
+
+    def test_btn_go_dashboard_present(self, template_src):
+        assert 'id="btn-go-dashboard"' in template_src
+
+    def test_btn_go_profile_present(self, template_src):
+        assert 'id="btn-go-profile"' in template_src
+
+    def test_progress_dots_range_covers_7_steps(self, template_src):
+        # Progress dots loop: range(1, 8) generates 7 dots
+        assert "range(1, 8)" in template_src
