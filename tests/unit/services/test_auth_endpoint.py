@@ -476,6 +476,12 @@ class TestRegisterWithInvitation:
                                 with patch(f"{_BASE}.create_refresh_token", return_value="ref_tok"):
                                     with patch(f"{_BASE}.AuditService"):
                                         result = self._call(db=db)
+        from app.models.credit_transaction import CreditTransaction
         assert result["access_token"] == "acc_tok"
-        db.add.assert_called_once_with(mock_user)
+        # db.add called twice: new_user + bonus CreditTransaction
+        assert db.add.call_count == 2
+        db.add.assert_any_call(mock_user)
+        bonus_arg = db.add.call_args_list[1][0][0]
+        assert isinstance(bonus_arg, CreditTransaction)
+        assert bonus_arg.amount == 50
         db.commit.assert_called_once()
