@@ -1,12 +1,18 @@
 """
 User profile routes
 """
-from fastapi import APIRouter, Request, Depends, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
+import asyncio
+import logging
+import os
+import traceback
+import types
 from pathlib import Path
 from datetime import datetime, timezone, date
+
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
 
 from ...database import get_db
 from ...dependencies import get_current_user_web
@@ -17,8 +23,9 @@ from ...models.semester import Semester, SemesterStatus
 from ...utils.age_requirements import validate_specialization_for_age
 from ...utils.country_codes import COUNTRY_CODES, COUNTRY_OPTIONS, register_filters
 from ...skills_config import SKILL_CATEGORIES
-import logging
-import traceback
+from ...services.card_theme_service import get_theme as _get_theme
+from ...services.card_platform_service import get_preset as _get_platform_preset
+import app.services.card_export_service as _export_svc
 
 # Setup templates
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -354,18 +361,174 @@ async def profile_edit_submit(
         )
 
 
+# Export format buckets — mirrors public_player.py so Welcome Card uses the
+# same export templates as Player Card without importing from that module.
+_WC_EXPORT_BUCKETS: dict[str, str] = {
+    "instagram_square":   "square",
+    "facebook_square":    "square",
+    "instagram_portrait": "portrait",
+    "instagram_story":    "story",
+    "tiktok":             "tiktok",
+    "facebook_landscape": "landscape",
+    "og":                 "landscape",
+    "banner_custom":      "banner",
+    "facebook_post":      "landscape",
+}
+
+# Platforms exposed in the Welcome Card gallery (subset that has FIFA export templates)
+_WC_GALLERY_PLATFORMS: list[dict] = [
+    {"id": "instagram_square",   "label": "Instagram Square",   "dims": "1080 × 1080"},
+    {"id": "instagram_portrait", "label": "Instagram Portrait", "dims": "1080 × 1350"},
+    {"id": "instagram_story",    "label": "Instagram Story",    "dims": "1080 × 1920"},
+    {"id": "tiktok",             "label": "TikTok",             "dims": "1080 × 1920"},
+    {"id": "facebook_landscape", "label": "Facebook Landscape", "dims": "1200 × 630"},
+    {"id": "banner_custom",      "label": "Banner",             "dims": "1500 × 500"},
+]
+
+_WC_APP_LOGO_URL = "/static/images/logo-dark.png"
+_TEMPLATES_DIR   = str(BASE_DIR / "templates")
+
+
+def _build_welcome_card_context(
+    request: Request,
+    user: User,
+    license: UserLicense,
+    platform: str | None,
+    export: bool,
+) -> dict:
+    """
+    Build the FIFA template context for the Welcome Card.
+
+    Self-assessment adapter:
+    FIFA Classic templates read `current_level` as the displayed skill number.
+    For Welcome Card only, this field is populated from self_assessment.
+    This must never be written back to football_skills JSONB and must never
+    be used by calculation services.
+    """
+    football_skills = license.football_skills or {}
+    ms              = license.motivation_scores or {}
+
+    # ── Build skills dict: current_level = self_assessment (adapter only) ──────
+    skills_for_fifa: dict[str, dict] = {}
+    all_sa_values: list[float] = []
+    for cat in SKILL_CATEGORIES:
+        for skill_def in cat["skills"]:
+            key = skill_def["key"]
+            raw = football_skills.get(key)
+            sa_val = float(raw.get("self_assessment", 60.0)) if isinstance(raw, dict) else 60.0
+            # Welcome Card template adapter:
+            # FIFA Classic templates read `current_level` as the displayed number.
+            # For Welcome Card only, this field is populated from self_assessment.
+            # This must never be written back to football_skills JSONB and must
+            # never be used by calculation services.
+            skills_for_fifa[key] = {"current_level": sa_val, "self_assessment": sa_val}
+            all_sa_values.append(sa_val)
+
+    overall_sa = round(sum(all_sa_values) / len(all_sa_values), 1) if all_sa_values else 60.0
+
+    display_name = user.name or user.email or ""
+    parts        = display_name.split()
+    initials     = "".join(p[0].upper() for p in parts[:2]) if parts else "?"
+    position     = ms.get("position", "")
+
+    # ── Player namespace: satisfies all `player.*` references in FIFA template ──
+    player = types.SimpleNamespace(
+        skills               = skills_for_fifa,
+        name                 = display_name,
+        position             = position,
+        positions            = ms.get("positions", []),
+        nationality          = getattr(user, "country", None) or "",
+        secondary_nationality= None,
+        age_group            = None,
+        total_tournaments    = 0,
+        photo_url            = license.player_card_photo_url,
+    )
+
+    platform_preset = _get_platform_preset(platform)
+    theme           = _get_theme("midnight")  # dark FIFA Classic default
+
+    return {
+        "request":               request,
+        "player":                player,
+        "overall":               overall_sa,
+        "tier_label":            "Self-Assessment",
+        "tier_color":            "#f59e0b",
+        "avatar_bg":             "#1e3a5f",
+        "initials":              initials,
+        "pos_color":             "#667eea",
+        "skill_categories":      SKILL_CATEGORIES,
+        "teams_info":            [],
+        "animated_mode":         False,
+        "last_skill_delta":      {},
+        "participations_history":[],
+        "theme":                 theme,
+        "card_theme_id":         theme.id,
+        "card_theme":            theme.id,
+        "card_variant_id":       "fifa",
+        "platform_class":        platform_preset.css_class,
+        "platform_id":           platform_preset.id,
+        "export_mode":           export,
+        "photo_url":             license.player_card_photo_url,
+        "portrait_photo_url":    license.card_photo_portrait_url or license.player_card_photo_url,
+        "landscape_photo_url":   license.card_photo_landscape_url or license.player_card_photo_url,
+        "compact_bg_url":        None,
+        "showcase_bg_url":       None,
+        # sponsor_logo is always None on Welcome Card — enforced at context build time
+        "sponsor_logo_url":      None,
+        # Fixed app logo shown on Welcome Card (logo-dark.png for dark FIFA background)
+        "app_logo_url":          _WC_APP_LOGO_URL,
+        "compact_photo_position":"left",
+        "dominant_badge":        None,
+        "display_name":          display_name,
+        "welcome_card_mode":     True,
+    }
+
+
+def _select_welcome_card_template(platform: str | None, export: bool) -> str:
+    """Return the FIFA template path appropriate for this platform + render mode."""
+    if platform and platform in _WC_EXPORT_BUCKETS:
+        bucket   = _WC_EXPORT_BUCKETS[platform]
+        exp_path = f"public/export/{bucket}/fifa.html"
+        if os.path.isfile(os.path.join(_TEMPLATES_DIR, exp_path)):
+            return exp_path
+    return "public/player_card_fifa.html"
+
+
+def _check_welcome_card_auth(
+    license: UserLicense | None, user_email: str
+) -> RedirectResponse | None:
+    """Return a redirect if the user is not eligible to view the Welcome Card."""
+    if not license:
+        logger.info("welcome_card_no_license", extra={"user": user_email})
+        return RedirectResponse(
+            url="/dashboard?info=complete_lfa_onboarding_first", status_code=303
+        )
+    if not license.onboarding_completed:
+        logger.info("welcome_card_onboarding_incomplete", extra={"user": user_email})
+        return RedirectResponse(
+            url="/specialization/lfa-player/onboarding", status_code=303
+        )
+    return None
+
+
 @router.get("/profile/onboarding-card", response_class=HTMLResponse)
 async def onboarding_welcome_card(
     request: Request,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user_web),
+    platform: str | None = Query(default=None),
+    export: bool         = Query(default=False),
+    db: Session          = Depends(get_db),
+    user: User           = Depends(get_current_user_web),
 ):
     """
-    Welcome Card — private self-assessment preview (Phase C).
+    Welcome Card preview — private self-assessment view.
 
     Data source: football_skills[*].self_assessment ONLY.
     NEVER reads current_level, baseline, system_baseline, tournament_delta,
     assessment_delta, or any EMA output.
+
+    Without ?platform=: renders the gallery hub (iframe + download buttons).
+    With ?platform=X:   renders the FIFA Classic card for that platform size.
+    With ?export=1:     switches the FIFA template to export-mode (Playwright use).
 
     Auth: own card only (get_current_user_web enforces login; ownership is
     implicit because we query by user.id).
@@ -376,83 +539,90 @@ async def onboarding_welcome_card(
         UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
     ).first()
 
-    if not license:
-        logger.info("welcome_card_no_license", extra={"user": user.email})
-        return RedirectResponse(
-            url="/dashboard?info=complete_lfa_onboarding_first", status_code=303
+    redirect = _check_welcome_card_auth(license, user.email)
+    if redirect:
+        return redirect
+
+    if not platform:
+        # Gallery hub: iframe preview of default platform + per-platform download buttons
+        display_name = user.name or user.email or ""
+        logger.info("welcome_card_gallery_rendered", extra={"user": user.email})
+        return templates.TemplateResponse(
+            "public/welcome_card.html",
+            {
+                "request":      request,
+                "user":         user,
+                "display_name": display_name,
+                "platforms":    _WC_GALLERY_PLATFORMS,
+                "default_platform": "instagram_square",
+            },
         )
 
-    if not license.onboarding_completed:
-        logger.info("welcome_card_onboarding_incomplete", extra={"user": user.email})
-        return RedirectResponse(
-            url="/specialization/lfa-player/onboarding", status_code=303
+    logger.info("welcome_card_rendered", extra={"user": user.email, "platform": platform, "export": export})
+    ctx  = _build_welcome_card_context(request, user, license, platform, export)
+    tmpl = _select_welcome_card_template(platform, export)
+    return templates.TemplateResponse(tmpl, ctx)
+
+
+@router.get("/profile/onboarding-card/export")
+async def export_onboarding_welcome_card(
+    request: Request,
+    platform: str = Query(default="instagram_square"),
+    db: Session   = Depends(get_db),
+    user: User    = Depends(get_current_user_web),
+):
+    """
+    Export the Welcome Card as a PNG at a social-media canvas size.
+
+    Auth: own card only. Rate limit: 5 exports per 60 s per user+IP.
+    Data source: self_assessment only (same contract as the preview route).
+    """
+    from app.config import settings
+
+    license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+    ).first()
+
+    redirect = _check_welcome_card_auth(license, user.email)
+    if redirect:
+        return redirect
+
+    if platform not in _export_svc.CANVAS_SIZES:
+        valid = list(_export_svc.CANVAS_SIZES)
+        raise HTTPException(
+            status_code=422,
+            detail=f"Unsupported export platform: {platform!r}. Valid values: {valid}",
         )
 
-    # ── Extract self_assessment values ONLY ───────────────────────────────────
-    football_skills = license.football_skills or {}
-    skill_categories_data = []
-    all_sa_values: list[float] = []
+    client_ip = request.client.host if request.client else "unknown"
+    rate_key  = f"wc:{user.id}:{client_ip}"
+    if not _export_svc.check_export_rate_limit(rate_key):
+        raise HTTPException(
+            status_code=429,
+            detail="Export rate limit exceeded (5 per minute). Please wait before exporting again.",
+        )
 
-    for cat in SKILL_CATEGORIES:
-        cat_skills = []
-        for skill_def in cat["skills"]:
-            key = skill_def["key"]
-            raw = football_skills.get(key)
-            if isinstance(raw, dict):
-                sa_value = float(raw.get("self_assessment", 60.0))
-            else:
-                sa_value = 60.0
-            cat_skills.append({
-                "key":     key,
-                "name_en": skill_def["name_en"],
-                "name_hu": skill_def.get("name_hu", skill_def["name_en"]),
-                "value":   round(sa_value, 1),
-            })
-            all_sa_values.append(sa_value)
-        cat_avg = round(sum(s["value"] for s in cat_skills) / len(cat_skills), 1) if cat_skills else 0.0
-        skill_categories_data.append({
-            "key":     cat["key"],
-            "name_en": cat["name_en"],
-            "name_hu": cat.get("name_hu", cat["name_en"]),
-            "emoji":   cat.get("emoji", ""),
-            "skills":  cat_skills,
-            "avg":     cat_avg,
-        })
+    render_url = (
+        f"http://127.0.0.1:{settings.APP_INTERNAL_PORT}"
+        f"/profile/onboarding-card?platform={platform}&export=1"
+    )
 
-    overall_sa = round(sum(all_sa_values) / len(all_sa_values), 1) if all_sa_values else 60.0
+    logger.info("welcome_card_export", extra={"user": user.email, "platform": platform})
+    try:
+        png_bytes = await asyncio.to_thread(
+            _export_svc._sync_take_screenshot, render_url, platform
+        )
+    except _export_svc.CardExportTimeoutError:
+        raise HTTPException(status_code=504, detail="Card render timed out")
 
-    # Top 5 self-assessed skills (highest values)
-    flat_skills = [s for cat in skill_categories_data for s in cat["skills"]]
-    top_skills = sorted(flat_skills, key=lambda s: s["value"], reverse=True)[:5]
-
-    # ── Physical / personal data from motivation_scores ───────────────────────
-    ms = license.motivation_scores or {}
-
-    # ── Display name + initials fallback ─────────────────────────────────────
-    display_name = user.name or user.email or ""
-    parts = display_name.split()
-    initials = "".join(p[0].upper() for p in parts[:2]) if parts else "?"
-
-    logger.info("welcome_card_rendered", extra={"user": user.email, "overall_sa": overall_sa})
-
-    return templates.TemplateResponse(
-        "public/welcome_card.html",
-        {
-            "request":          request,
-            "user":             user,
-            "license":          license,
-            "display_name":     display_name,
-            "initials":         initials,
-            "skill_categories": skill_categories_data,
-            "overall_sa":       overall_sa,
-            "top_skills":       top_skills,
-            "position":         ms.get("position", ""),
-            "positions":        ms.get("positions", []),
-            "height_cm":        ms.get("height_cm"),
-            "weight_kg":        ms.get("weight_kg"),
-            "preferred_foot":   ms.get("preferred_foot"),
-            "goals":            ms.get("goals", ""),
-            "right_foot_score": license.right_foot_score,
-            "left_foot_score":  license.left_foot_score,
+    filename = f"welcome_card_{platform}.png"
+    return Response(
+        content=png_bytes,
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control":       "no-store",
+            "X-Export-Platform":   platform,
         },
     )
