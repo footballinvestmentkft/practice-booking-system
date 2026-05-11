@@ -30388,7 +30388,7 @@
     },
     "/admin/users/{user_id}/profile": {
       "get": {
-        "description": "Admin: FIFA EA Sports-style user profile page (29-skill system).",
+        "description": "Admin: FIFA EA Sports-style user profile page (44-skill system).",
         "operationId": "admin_user_profile_admin_users__user_id__profile_get",
         "parameters": [
           {
@@ -42354,7 +42354,7 @@
     },
     "/api/v1/lfa-player/licenses": {
       "get": {
-        "description": "Get all LFA Player licenses (Admin only)\n\nReturns a list of all active LFA_FOOTBALL_PLAYER licenses in the system.\nSkills are stored in UserLicense.football_skills JSONB (29 skills, baseline 50.0).",
+        "description": "Get all LFA Player licenses (Admin only)\n\nReturns a list of all active LFA_FOOTBALL_PLAYER licenses in the system.\nSkills are stored in UserLicense.football_skills JSONB (44 skills, baseline 60.0).",
         "operationId": "list_all_licenses_api_v1_lfa_player_licenses_get",
         "responses": {
           "200": {
@@ -42455,7 +42455,7 @@
     },
     "/api/v1/lfa-player/licenses/{license_id}/skills": {
       "put": {
-        "description": "Update a skill average \u2014 **DEPRECATED (410 Gone)**\n\nSkill updates are now handled via the 29-skill system.\nUse PUT /licenses/{license_id}/football-skills instead.",
+        "description": "Update a skill average \u2014 **DEPRECATED (410 Gone)**\n\nSkill updates are now handled via the 44-skill system.\nUse PUT /licenses/{license_id}/football-skills instead.",
         "operationId": "update_skill_api_v1_lfa_player_licenses__license_id__skills_put",
         "parameters": [
           {
@@ -47323,7 +47323,7 @@
     },
     "/api/v1/public/users/{user_id}/profile/lfa-player": {
       "get": {
-        "description": "Get FIFA-style LFA Football Player profile\n\n**Returns:**\n- User basic info (name, email)\n- Position preference\n- 29 football skills with tier data (from UserLicense.football_skills JSONB)\n- Overall rating (0-100, average of 29 skills)\n- Level & progress\n- Recent assessments",
+        "description": "Get FIFA-style LFA Football Player profile\n\n**Returns:**\n- User basic info (name, email)\n- Position preference\n- 44 football skills with tier data (from UserLicense.football_skills JSONB)\n- Overall rating (0-100, average of 44 skills)\n- Level & progress\n- Recent assessments",
         "operationId": "get_lfa_player_profile_api_v1_public_users__user_id__profile_lfa_player_get",
         "parameters": [
           {
@@ -59814,6 +59814,28 @@
         ]
       }
     },
+    "/profile/onboarding-card": {
+      "get": {
+        "description": "Welcome Card \u2014 private self-assessment preview (Phase C).\n\nData source: football_skills[*].self_assessment ONLY.\nNEVER reads current_level, baseline, system_baseline, tournament_delta,\nassessment_delta, or any EMA output.\n\nAuth: own card only (get_current_user_web enforces login; ownership is\nimplicit because we query by user.id).\nVisibility: private, no-index (meta tag in template).",
+        "operationId": "onboarding_welcome_card_profile_onboarding_card_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Onboarding Welcome Card",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/progress": {
       "get": {
         "description": "Display student academic progress page with XP, level, and semester completion",
@@ -60540,7 +60562,7 @@
     },
     "/skills": {
       "get": {
-        "description": "Student skill progression page \u2014 all 29 skills, lazy-loaded.",
+        "description": "Student skill progression page \u2014 all 44 skills, lazy-loaded.",
         "operationId": "skills_page_skills_get",
         "responses": {
           "200": {
