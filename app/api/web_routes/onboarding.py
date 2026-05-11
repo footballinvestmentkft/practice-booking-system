@@ -217,7 +217,7 @@ async def lfa_player_onboarding_web_submit(
         position   : str  — STRIKER | MIDFIELDER | DEFENDER | GOALKEEPER
         goals      : str  — dropdown value
         motivation : str  — free text
-        skills     : dict — all 44 skill keys (0-100 scale, step=5)
+        skills     : dict — all 44 skill keys (0-99 scale, step=1)
 
     Returns JSON {"success": true} on success; {"error": "..."} on failure.
     """
@@ -294,9 +294,9 @@ async def lfa_player_onboarding_web_submit(
         if missing:
             return JSONResponse(status_code=400, content={"error": f"Missing skills: {sorted(missing)}"})
 
-        # Validate skill values 0-100
+        # Validate skill values 0-99
         for key, val in skills.items():
-            if not (0 <= float(val) <= 100):
+            if not (0 <= float(val) <= 99):
                 return JSONResponse(status_code=400, content={"error": f"Skill value out of range: {key}={val}"})
 
         # Get LFA Player license
@@ -435,8 +435,8 @@ async def lfa_player_onboarding_submit(
 ):
     """
     Process LFA Player onboarding questionnaire
-    NEW: Accepts 36 skills on 0-100 scale, writes directly to football_skills
-    Saves: position, skills (36 skills, 0-100 scale), goals
+    NEW: Accepts 44 skills on 0-99 scale, writes directly to football_skills
+    Saves: position, skills (44 skills, 0-99 scale), goals
     """
     try:
         # Parse JSON body
@@ -447,7 +447,7 @@ async def lfa_player_onboarding_submit(
         raw_positions  = body.get("positions", [])  # full list; legacy callers may omit this
         goals          = body.get("goals", "")
         motivation     = body.get("motivation", "")
-        skills         = body.get("skills", {})  # All skills, 0-100 scale
+        skills         = body.get("skills", {})  # All skills, 0-99 scale
         # foot_dominance: 0 = fully left, 50 = balanced, 100 = fully right. Default: 50.
         foot_dominance = body.get("foot_dominance", 50)
         # Optional physical fields — accepted here for parity with web handler.

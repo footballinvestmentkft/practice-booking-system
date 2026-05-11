@@ -60736,7 +60736,7 @@
     },
     "/specialization/lfa-player/onboarding-submit": {
       "post": {
-        "description": "Process LFA Player onboarding questionnaire\nNEW: Accepts 36 skills on 0-100 scale, writes directly to football_skills\nSaves: position, skills (36 skills, 0-100 scale), goals",
+        "description": "Process LFA Player onboarding questionnaire\nNEW: Accepts 44 skills on 0-99 scale, writes directly to football_skills\nSaves: position, skills (44 skills, 0-99 scale), goals",
         "operationId": "lfa_player_onboarding_submit_specialization_lfa_player_onboarding_submit_post",
         "responses": {
           "200": {
@@ -60761,7 +60761,7 @@
     },
     "/specialization/lfa-player/onboarding-web": {
       "post": {
-        "description": "Web-compatible LFA Player onboarding submit.\nCalled via AJAX fetch from lfa_player_onboarding.html (cookie session auth).\n\nAccepts the same JSON body as /specialization/lfa-player/onboarding-submit\n(Bearer JWT endpoint for Streamlit) but uses get_current_user_web so that\nbrowser-session users can submit the 6-step onboarding form.\n\nRequest body (JSON):\n    position   : str  \u2014 STRIKER | MIDFIELDER | DEFENDER | GOALKEEPER\n    goals      : str  \u2014 dropdown value\n    motivation : str  \u2014 free text\n    skills     : dict \u2014 all 44 skill keys (0-100 scale, step=5)\n\nReturns JSON {\"success\": true} on success; {\"error\": \"...\"} on failure.",
+        "description": "Web-compatible LFA Player onboarding submit.\nCalled via AJAX fetch from lfa_player_onboarding.html (cookie session auth).\n\nAccepts the same JSON body as /specialization/lfa-player/onboarding-submit\n(Bearer JWT endpoint for Streamlit) but uses get_current_user_web so that\nbrowser-session users can submit the 6-step onboarding form.\n\nRequest body (JSON):\n    position   : str  \u2014 STRIKER | MIDFIELDER | DEFENDER | GOALKEEPER\n    goals      : str  \u2014 dropdown value\n    motivation : str  \u2014 free text\n    skills     : dict \u2014 all 44 skill keys (0-99 scale, step=1)\n\nReturns JSON {\"success\": true} on success; {\"error\": \"...\"} on failure.",
         "operationId": "lfa_player_onboarding_web_submit_specialization_lfa_player_onboarding_web_post",
         "responses": {
           "200": {

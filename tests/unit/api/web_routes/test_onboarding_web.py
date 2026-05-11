@@ -538,6 +538,62 @@ class TestLfaPlayerOnboardingWebSubmit:
             ))
         assert result.status_code == 422
 
+    # ── skill value boundary (0-99) ───────────────────────────────────────────
+
+    def test_skill_value_99_accepted(self):
+        """Upper boundary: 99 is valid self-assessment."""
+        body = self._valid_body()
+        body["skills"] = {"skill_a": 99, "skill_b": 99}
+        license_mock = MagicMock()
+        user = _user()
+        db = _mock_db(first_return=license_mock)
+        with patch(f"{_BASE}.get_all_skill_keys", return_value=self._MOCK_KEYS), \
+             patch("app.services.onboarding_service.complete_lfa_player_onboarding"), \
+             patch("sqlalchemy.orm.attributes.flag_modified"):
+            result = _run(lfa_player_onboarding_web_submit(
+                request=self._make_req(body), db=db, user=user
+            ))
+        assert result["success"] is True
+
+    def test_skill_value_100_rejected(self):
+        """100 must be rejected — MAX_SKILL_CAP=99 business rule."""
+        body = self._valid_body()
+        body["skills"] = {"skill_a": 100, "skill_b": 65}
+        user = _user()
+        db = _mock_db(first_return=MagicMock())
+        with patch(f"{_BASE}.get_all_skill_keys", return_value=self._MOCK_KEYS):
+            result = _run(lfa_player_onboarding_web_submit(
+                request=self._make_req(body), db=db, user=user
+            ))
+        assert result.status_code == 400
+
+    def test_skill_value_0_accepted(self):
+        """Lower boundary: 0 is valid self-assessment."""
+        body = self._valid_body()
+        body["skills"] = {"skill_a": 0, "skill_b": 0}
+        license_mock = MagicMock()
+        user = _user()
+        db = _mock_db(first_return=license_mock)
+        with patch(f"{_BASE}.get_all_skill_keys", return_value=self._MOCK_KEYS), \
+             patch("app.services.onboarding_service.complete_lfa_player_onboarding"), \
+             patch("sqlalchemy.orm.attributes.flag_modified"):
+            result = _run(lfa_player_onboarding_web_submit(
+                request=self._make_req(body), db=db, user=user
+            ))
+        assert result["success"] is True
+
+    def test_skill_value_negative_rejected(self):
+        """Negative values must be rejected."""
+        body = self._valid_body()
+        body["skills"] = {"skill_a": -1, "skill_b": 65}
+        user = _user()
+        db = _mock_db(first_return=MagicMock())
+        with patch(f"{_BASE}.get_all_skill_keys", return_value=self._MOCK_KEYS):
+            result = _run(lfa_player_onboarding_web_submit(
+                request=self._make_req(body), db=db, user=user
+            ))
+        assert result.status_code == 400
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Phase B template static assertions

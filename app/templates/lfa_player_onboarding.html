@@ -358,7 +358,7 @@
     <div class="step" id="step-{{ step_num }}">
         <div class="step-title">{{ loop.index + 1 }}️⃣ {{ cat.emoji }} {{ cat.name_en }}</div>
         <div class="step-subtitle">
-            Rate your current skill level from 0 to 100 (step: 5).
+            Rate your current skill level from 0 to 99 (step: 1).
             Be honest — this is the baseline against which your progress will be measured.
         </div>
 
@@ -372,7 +372,7 @@
                 type="range"
                 class="skill-slider"
                 data-skill="{{ skill.key }}"
-                min="0" max="100" step="5" value="60"
+                min="0" max="99" step="1" value="60"
                 oninput="updateSkillValue('{{ skill.key }}', this.value)"
             >
         </div>
@@ -710,7 +710,7 @@
             return;
         }
 
-        // Collect all 29 skill values (0-100, step=5)
+        // Collect all 44 skill values (0-99, step=1)
         const skills = {};
         document.querySelectorAll('.skill-slider').forEach(slider => {
             skills[slider.dataset.skill] = parseInt(slider.value, 10);
