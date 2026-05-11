@@ -118,6 +118,7 @@
             grid-template-columns: repeat(4, 1fr);
             gap: 1.5rem;
             margin-bottom: 2rem;
+            align-items: stretch;
         }
 
         @media (max-width: 1023px) {
@@ -131,11 +132,11 @@
                 grid-template-columns: 1fr;
                 gap: 1rem;
             }
-        }
-
-        @media (min-width: 1024px) {
-            .spec-card {
-                padding: 1.5rem;
+            .spec-title {
+                min-height: unset;
+            }
+            .spec-icon {
+                min-height: unset;
             }
         }
 
@@ -148,6 +149,22 @@
             transition: transform 0.3s, box-shadow 0.3s;
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .spec-card.has-cost {
+            padding-top: 3rem;
+        }
+
+        @media (min-width: 1024px) {
+            .spec-card {
+                padding: 1.5rem;
+            }
+            .spec-card.has-cost {
+                padding-top: 2.75rem;
+            }
         }
 
         .spec-card:hover {
@@ -172,6 +189,10 @@
             font-size: 4rem;
             text-align: center;
             margin-bottom: 1rem;
+            min-height: 5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .spec-title {
@@ -180,6 +201,7 @@
             color: var(--hub-text-primary) !important;
             text-align: center;
             margin-bottom: 0.5rem;
+            min-height: 3.6rem;
         }
 
         .spec-age {
@@ -195,10 +217,12 @@
             line-height: 1.6;
             margin-bottom: 1.5rem;
             text-align: center;
+            flex: 1;
         }
 
         .spec-action {
             text-align: center;
+            margin-top: auto;
         }
 
         .unlock-btn {
@@ -351,7 +375,7 @@
         <!-- Specialization Cards -->
         <div class="cards-grid">
             {% for spec in available_specializations %}
-            <div class="spec-card {% if spec.is_unlocked %}unlocked{% elif not spec.is_available %}locked{% endif %}">
+            <div class="spec-card {% if spec.is_unlocked %}unlocked{% elif not spec.is_available %}locked{% endif %} {% if not spec.is_unlocked and spec.is_available %}has-cost{% endif %}">
                 {% if not spec.is_unlocked and spec.is_available %}
                 <div class="cost-badge">💰 100 Credits</div>
                 {% endif %}
@@ -386,7 +410,7 @@
                         <form method="POST" action="/specialization/select">
                             <input type="hidden" name="specialization" value="{{ spec.type }}">
                             <button type="submit" class="unlock-btn">
-                                🔓 Unlock Now (100 credits)
+                                🔓 Unlock Now
                             </button>
                         </form>
                     {% endif %}
