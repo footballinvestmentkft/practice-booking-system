@@ -1208,7 +1208,7 @@ class TestFifaSquareAllSkills:
 
         assert "cat.skills[:" not in source, (
             "Skill slicing detected in export/square/fifa.html — "
-            "use `cat.skills` (no slice) so all 29 skills are rendered"
+            "use `cat.skills` (no slice) so all 44 skills are rendered"
         )
 
     def test_ex31_square_proportional_grid_flow(self, client):

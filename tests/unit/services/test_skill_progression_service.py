@@ -327,7 +327,7 @@ class TestGetBaselineSkills:
         assert result["ball_control"] == 70.0
         assert result["dribbling"] == 65.0
         # Skills not in football_skills should default to DEFAULT_BASELINE
-        # (at least some keys should be DEFAULT_BASELINE since there are ~29 skills)
+        # (at least some keys should be DEFAULT_BASELINE since there are ~44 skills)
 
     def test_license_with_dict_format_skills(self):
         db = _db()

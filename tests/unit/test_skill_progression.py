@@ -134,9 +134,9 @@ class TestGetAllSkillKeys:
         assert get_all_skill_keys() == get_all_skill_keys()
 
     def test_count_matches_config(self):
-        """29 skills expected based on SKILL_CATEGORIES config."""
+        """44 skills expected based on SKILL_CATEGORIES config."""
         keys = get_all_skill_keys()
-        assert len(keys) == 29, f"Expected 29 skill keys, got {len(keys)}: {keys}"
+        assert len(keys) == 44, f"Expected 44 skill keys, got {len(keys)}: {keys}"
 
 
 # ── calculate_skill_value_from_placement — shared ─────────────────────────────

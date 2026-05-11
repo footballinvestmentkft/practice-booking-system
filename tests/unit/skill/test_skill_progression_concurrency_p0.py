@@ -201,7 +201,7 @@ class TestRaceS02AssessmentLock:
 
         This test simulates the race window:
           1. Assessment loads football_skills = {"passing": 70.0, "dribbling": 65.0}
-          2. Tournament (concurrently) updates current_level for all 29 skills and commits.
+          2. Tournament (concurrently) updates current_level for all 44 skills and commits.
           3. Assessment writes back {"passing": 75.0, "dribbling": 65.0}
              → dribbling's current_level update from step 2 is lost.
 

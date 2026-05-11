@@ -5,7 +5,7 @@ Coverage targets:
   get_lfa_player_profile() — GET /users/{user_id}/profile/lfa-player
     - 404: user not found (fetchone returns None)
     - 404: no active LFA Player license (UserLicense ORM query returns None)
-    - happy path: returns all expected fields (29-skill system)
+    - happy path: returns all expected fields (44-skill system)
     - DOB-based age_group: PRE (<7), YOUTH (7-14), AMATEUR (15+)
     - no DOB → defaults to AMATEUR
     - motivation_scores dict → position_preference extracted

@@ -5,7 +5,7 @@ Validates the COMPLETE pipeline from zero state to skill history visualization.
 All state is created inside each test — no manual seeding required.
 CI-safe: works on a fresh DB (only alembic upgrade head needed).
 
-SMOKE-41a  Factory creates User + LFA license with 29 football_skills
+SMOKE-41a  Factory creates User + LFA license with 44 football_skills
 SMOKE-41b  Factory creates completed tournament → TournamentParticipation exists
 SMOKE-41c  Tournament with placement → skill_rating_delta is computed (not None)
 SMOKE-41d  Tournament with NULL placement (participant) → skill_rating_delta is None
@@ -117,7 +117,7 @@ class TestFactoryLayer:
     """SMOKE-41a–41e — validates factory functions and service pipeline."""
 
     def test_smoke41a_creates_user_with_license_and_skills(self, test_db: Session):
-        """SMOKE-41a: Factory creates User + LFA license with 29 football_skills."""
+        """SMOKE-41a: Factory creates User + LFA license with 44 football_skills."""
         from app.models.license import UserLicense
 
         user, license = PlayerFactory.create_lfa_player(test_db)
@@ -130,7 +130,7 @@ class TestFactoryLayer:
         assert license.specialization_type == "LFA_FOOTBALL_PLAYER"
         assert license.onboarding_completed is True
         assert license.football_skills is not None
-        assert len(license.football_skills) == 29
+        assert len(license.football_skills) == 44
         assert "passing" in license.football_skills
         assert "dribbling" in license.football_skills
 

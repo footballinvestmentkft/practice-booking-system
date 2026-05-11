@@ -67,11 +67,11 @@ class TestBaselineConstants:
 
 class TestNullFallback:
     def test_no_license_returns_all_60(self):
-        """User with no active license → all 29 skills return DEFAULT_BASELINE = 60."""
+        """User with no active license → all 44 skills return DEFAULT_BASELINE = 60."""
         db = _mock_db_no_license()
         result = get_baseline_skills(db, user_id=_USER_ID)
         assert all(v == 60.0 for v in result.values())
-        assert len(result) == 29
+        assert len(result) == 44
 
     def test_empty_football_skills_returns_all_60(self):
         """License exists but football_skills is empty dict → DEFAULT_BASELINE = 60."""
@@ -209,7 +209,7 @@ class TestSelfAssessmentContract:
     """
 
     def _skills_with_sa(self, sa_value: float):
-        """Build a full 29-skill football_skills dict with given self_assessment."""
+        """Build a full 44-skill football_skills dict with given self_assessment."""
         from app.skills_config import get_all_skill_keys
         return {
             k: {

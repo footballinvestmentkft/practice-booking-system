@@ -169,7 +169,7 @@ class TestProgressSkillWidget:
         resp = student_client.get("/progress")
         assert resp.status_code == 200
         assert "Skill Snapshot" in resp.text
-        # The "View all 29 skills" link should be present
+        # The "View all 44 skills" link should be present
         assert "/skills" in resp.text
 
 

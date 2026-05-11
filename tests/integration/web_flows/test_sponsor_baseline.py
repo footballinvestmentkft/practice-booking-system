@@ -263,10 +263,10 @@ class TestBaselineStructure:
     def test_spon_d_05_baseline_passes_effective_onboarding_gate(self, test_db: Session):
         skills = _build_baseline_football_skills()
 
-        # 29 keys
+        # 44 keys
         expected = set(get_all_skill_keys())
         assert set(skills.keys()) == expected
-        assert len(skills) == 29
+        assert len(skills) == 44
 
         # Every value is a dict with all required sub-keys
         required_sub_keys = {

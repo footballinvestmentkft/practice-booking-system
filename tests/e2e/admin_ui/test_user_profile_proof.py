@@ -1,5 +1,5 @@
 """
-PROOF: Club → Team → Member Name (click) → User Profile page with 29 skills
+PROOF: Club → Team → Member Name (click) → User Profile page with 44 skills
 """
 import os
 import time
@@ -16,7 +16,7 @@ SCREENSHOT_DIR = "tests/e2e/admin_ui/screenshots"
 # - Club id=59: PROMO_VALIDATION_CLUB
 # - Team id=943: Validation U15 (club_id=59)
 # - User id=723: Smoke Test Student, license_id=113
-#   onboarding_completed=True, football_skills (29 skills) seeded
+#   onboarding_completed=True, football_skills (44 skills) seeded
 CLUB_ID = 59
 TEAM_ID = 943
 
@@ -39,7 +39,7 @@ class TestUserProfileProof:
         3. /admin/clubs/59 (PROMO_VALIDATION_CLUB) → club detail
         4. click "View members" for Validation U15 → team detail
         5. click "Smoke Test Student" name → profile page
-        6. Assert: 29 skill bars visible, overall rating shown
+        6. Assert: 44 skill bars visible, overall rating shown
         """
 
         # ── 1. Login ────────────────────────────────────────────────────────
@@ -87,14 +87,14 @@ class TestUserProfileProof:
         assert "LFA Football Player" in content, "Specialization not in profile"
         assert "🌐 Public Card" in content, "Public profile link missing"
 
-        # 29 skill bars: check skill-cat-card elements
+        # 44 skill bars: check skill-cat-card elements
         skill_cards = page.locator(".skill-cat-card")
         skill_card_count = skill_cards.count()
         assert skill_card_count == 4, f"Expected 4 skill categories, got {skill_card_count}"
 
         skill_rows = page.locator(".skill-row")
         skill_row_count = skill_rows.count()
-        assert skill_row_count == 29, f"Expected 29 skill rows, got {skill_row_count}"
+        assert skill_row_count == 44, f"Expected 44 skill rows, got {skill_row_count}"
 
         # Overall rating visible (FIFA redesign uses fifa-overall-num)
         assert "fifa-overall-num" in content or "overall-val" in content or "overall-bar-wrap" in content, \

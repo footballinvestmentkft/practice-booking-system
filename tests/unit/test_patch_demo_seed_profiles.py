@@ -98,13 +98,13 @@ def _license(
     right_foot_score=None,
     left_foot_score=None,
     motivation_scores=None,
-    n_skills=29,
+    n_skills=44,
 ):
     lic = MagicMock()
     lic.right_foot_score  = right_foot_score
     lic.left_foot_score   = left_foot_score
     lic.motivation_scores = motivation_scores
-    # Simulate existing 29-key football_skills — must survive untouched
+    # Simulate existing 44-key football_skills — must survive untouched
     original = {f"skill_{i}": {"current_level": 60.0} for i in range(n_skills)}
     lic.football_skills   = original
     lic._original_skills  = original   # reference for identity checks
@@ -225,7 +225,7 @@ class TestPatchLicenseFields:
         patch_license_fields(lic, p, force=False)
         # The football_skills attribute must be the same object (not reassigned)
         assert lic.football_skills is original
-        assert len(lic.football_skills) == 29
+        assert len(lic.football_skills) == 44
 
     def test_foot_scores_not_overwritten_without_force(self):
         """PATCH-10: existing foot scores not overwritten when force=False."""
