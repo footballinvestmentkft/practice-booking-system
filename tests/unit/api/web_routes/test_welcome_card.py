@@ -545,3 +545,95 @@ class TestWelcomeCardStep7:
         assert idx_upload != -1 and idx_view != -1
         # Both elements present in step-7 — the CTA row comes after the upload widget
         assert idx_upload < idx_view or idx_upload > idx_view  # both present, order flexible
+
+
+# ── 8. Profile page Welcome Card section ──────────────────────────────────────
+
+_PROFILE_TPL_PATH = (
+    pathlib.Path(__file__).resolve().parents[4]
+    / "app" / "templates" / "profile.html"
+)
+_DASHBOARD_TPL_PATH = (
+    pathlib.Path(__file__).resolve().parents[4]
+    / "app" / "templates" / "dashboard_student_new.html"
+)
+
+
+@pytest.fixture(scope="module")
+def profile_src():
+    return _PROFILE_TPL_PATH.read_text(encoding="utf-8")
+
+
+@pytest.fixture(scope="module")
+def dashboard_src():
+    return _DASHBOARD_TPL_PATH.read_text(encoding="utf-8")
+
+
+def _wc_block(profile_src: str) -> str:
+    """Extract and return the Welcome Card conditional block from profile.html."""
+    start = profile_src.find("<!-- Welcome Card")
+    end   = profile_src.find("<!-- Emergency Contact", start)
+    assert start != -1 and end != -1, "Welcome Card block not found in profile.html"
+    return profile_src[start:end]
+
+
+def _render_wc_fragment(profile_src: str, active_license) -> str:
+    """Render only the Welcome Card conditional fragment as a standalone Jinja2 template."""
+    from jinja2 import Template
+    fragment = _wc_block(profile_src)
+    # Strip the HTML comment line so only the Jinja2 block remains
+    fragment = "\n".join(
+        line for line in fragment.splitlines()
+        if not line.strip().startswith("<!--")
+    )
+    return Template(fragment).render(active_license=active_license)
+
+
+def _lic(spec_type="LFA_FOOTBALL_PLAYER", onboarding_completed=True):
+    lic = MagicMock()
+    lic.specialization_type  = spec_type
+    lic.onboarding_completed = onboarding_completed
+    return lic
+
+
+class TestWelcomeCardProfileSection:
+    """Verify the Welcome Card section in profile.html is gated correctly."""
+
+    # ── T1: completed LFA Player sees the section ──
+
+    def test_completed_lfa_player_sees_welcome_card_section(self, profile_src):
+        html = _render_wc_fragment(profile_src, _lic())
+        assert "/profile/onboarding-card" in html
+        assert "View Welcome Card" in html
+        assert "Download" in html
+
+    # ── T2: incomplete onboarding hides the section ──
+
+    def test_incomplete_onboarding_hides_welcome_card(self, profile_src):
+        html = _render_wc_fragment(profile_src, _lic(onboarding_completed=False))
+        assert "/profile/onboarding-card" not in html
+        assert "Welcome Card" not in html
+
+    # ── T3: non-LFA spec hides the section ──
+
+    def test_non_lfa_spec_hides_welcome_card(self, profile_src):
+        for spec in ("GANCUJU_PLAYER", "LFA_COACH", "INTERNSHIP"):
+            html = _render_wc_fragment(profile_src, _lic(spec_type=spec))
+            assert "/profile/onboarding-card" not in html, f"Welcome Card visible for {spec}"
+
+    # ── T4: dashboard mod-nav has no Welcome Card quick action ──
+
+    def test_dashboard_mod_nav_has_no_welcome_card_link(self, dashboard_src):
+        # Extract mod-nav-section block
+        start = dashboard_src.find('class="mod-nav-section"')
+        end   = dashboard_src.find("</section>", start)
+        assert start != -1 and end != -1
+        mod_nav = dashboard_src[start:end]
+        assert "onboarding-card" not in mod_nav
+        assert "Welcome Card" not in mod_nav
+
+    # ── T5: dashboard Player Card iframe link unchanged ──
+
+    def test_dashboard_player_card_link_unchanged(self, dashboard_src):
+        assert '/players/{{ user.id }}/card' in dashboard_src
+        assert 'spec-player-card-iframe' in dashboard_src

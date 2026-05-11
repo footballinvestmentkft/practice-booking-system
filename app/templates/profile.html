@@ -370,6 +370,21 @@
             {% endif %}
         </div>
 
+        <!-- Welcome Card (LFA Football Player, onboarding completed only) -->
+        {% if active_license and active_license.specialization_type == 'LFA_FOOTBALL_PLAYER' and active_license.onboarding_completed %}
+        <div class="card">
+            <h2>🎴 Welcome Card</h2>
+            <p style="font-size:0.85rem; color:#64748b; margin-bottom:0.85rem;">
+                Based on your onboarding self-assessment — not the same as the regular Player Card.
+            </p>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <a href="/profile/onboarding-card" class="btn btn-primary">View Welcome Card</a>
+                <a href="/profile/onboarding-card/export?platform=instagram_square"
+                   class="btn btn-secondary">⬇️ Download</a>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Emergency Contact (if provided) -->
         {% if user.emergency_contact or user.emergency_phone %}
         <div class="card">
