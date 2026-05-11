@@ -730,6 +730,8 @@ html, body {
             {% if sponsor_logo_url %}
             <img src="{{ sponsor_logo_url }}" alt="" class="ex-sponsor-slot-img"
                  onerror="this.style.display='none'">
+            {% elif app_logo_url %}
+            <img src="{{ app_logo_url }}" alt="LFA" class="ex-sponsor-slot-img">
             {% endif %}
         </div>
     </div>

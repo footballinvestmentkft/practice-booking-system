@@ -62,6 +62,10 @@ body {
     text-transform: uppercase; color: rgba(255,255,255,0.35);
     margin-bottom: 1.25rem; text-align: center;
 }
+.page-logo {
+    display: block; height: 36px; width: auto; opacity: 0.9;
+    margin: 0 auto 1.25rem;
+}
 .card-wrap {
     width: 100%;
     max-width: min(820px, calc(100vw - 1.5rem));
@@ -323,7 +327,11 @@ body.export-mode .skill-bar-bg  { flex: 1 1 0 !important; max-width: none !impor
 </head>
 <body class="{% if platform_class %}{{ platform_class }}{% endif %}{% if export_mode %} export-mode{% endif %}">
 
+{% if app_logo_url %}
+<img class="page-logo" src="{{ app_logo_url }}" alt="LFA">
+{% else %}
 <div class="page-brand">⚽ LFA Education Center — Player Card</div>
+{% endif %}
 
 <div class="card-wrap">
 
