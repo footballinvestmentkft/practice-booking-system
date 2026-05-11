@@ -22,9 +22,18 @@ async def get_football_skills(
     db: Session = Depends(get_db)
 ):
     """
-    Get football skills for a specific license (LFA Player specializations only)
+    Get football skills for a specific license (LFA Player specializations only).
 
-    Returns 6 skill percentages: heading, shooting, crossing, passing, dribbling, ball_control
+    Returns the raw football_skills JSONB for the license. Each skill entry contains:
+    - `current_level`   — EMA-updated visible skill level (starts at SYSTEM_BASELINE = 60.0)
+    - `system_baseline` — fixed EMA anchor, always 60.0 for post-onboarding players
+    - `baseline`        — backward-compatible alias for system_baseline (60.0)
+    - `self_assessment` — onboarding self-evaluation entered by the player (0-100 scale).
+                          **Motivational reference only. Not a skill level. Never used
+                          as input by EMA, baseline extraction, or any calculation service.**
+    - `assessment_delta`— computed from FootballSkillAssessment rows (coach evaluations),
+                          NOT from self_assessment
+    - `tournament_delta`— cumulative EMA delta from tournament placements
 
     - **license_id**: UserLicense ID
     """

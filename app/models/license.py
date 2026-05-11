@@ -159,7 +159,12 @@ class UserLicense(Base):
     motivation_scores = Column(JSON, nullable=True,
                                comment="Motivation assessment scores (1-5 scale) - filled by admin/instructor")
     average_motivation_score = Column(Float, nullable=True,
-                                      comment="Calculated average motivation score (1.0-5.0)")
+                                      comment=(
+                                          "Mean of the 29 onboarding self-assessment values (0-100 scale). "
+                                          "Motivational profile indicator only. "
+                                          "Never read by skill calculation services (EMA, baseline extraction, "
+                                          "or tournament reward formulas)."
+                                      ))
     motivation_last_assessed_at = Column(DateTime, nullable=True,
                                          comment="When motivation was last assessed")
     motivation_assessed_by = Column(Integer, ForeignKey("users.id"), nullable=True,

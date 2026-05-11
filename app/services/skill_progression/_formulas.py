@@ -15,6 +15,26 @@ from typing import Optional
 MIN_SKILL_VALUE  = 40.0   # Worst possible skill value (last place)
 MAX_SKILL_VALUE  = 100.0  # Best possible skill value (1st place) — used for percentile mapping
 MAX_SKILL_CAP    = 99.0   # Hard cap for final skill values (business rule)
+
+# ── Self-Assessment Contract ──────────────────────────────────────────────────
+# Onboarding input values (0-100) are stored as `self_assessment` in the
+# football_skills JSONB for motivational reference only.
+#
+# They are NEVER used as calculation baselines.
+# All EMA anchors, baselines, and visible current_levels are initialised from
+# SYSTEM_BASELINE (60.0) regardless of what the player entered at onboarding.
+#
+# `assessment_delta` is computed from FootballSkillAssessment rows
+# (coach / instructor evaluations), NOT from onboarding self_assessment values.
+#
+# Naming conventions enforced throughout the codebase:
+#   self_assessment       — onboarding self-evaluation (stored, never read for maths)
+#   system_baseline       — 60.0, the fixed EMA anchor written at onboarding
+#   current_level         — EMA-updated visible skill level (starts at 60.0)
+#   baseline              — backward-compatible alias for system_baseline (also 60.0)
+#   average_motivation_score — mean of onboarding self_assessment values; motivational
+#                              profile indicator only, never read by calculation services
+# ─────────────────────────────────────────────────────────────────────────────
 SYSTEM_BASELINE  = 60.0   # Fixed visible starting level for every new LFA Football Player
 DEFAULT_BASELINE = 60.0   # Fallback when football_skills is absent (equals SYSTEM_BASELINE)
 

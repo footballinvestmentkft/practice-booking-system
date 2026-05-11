@@ -49,7 +49,7 @@ def get_lfa_player_profile(
             )
 
         # 2. Get LFA Player license via UserLicense ORM
-        #    football_skills JSONB column holds all 29 skills (DEFAULT_BASELINE=50.0 each)
+        #    football_skills JSONB column holds all 29 skills (SYSTEM_BASELINE=60.0 each)
         lfa_license = db.query(UserLicense).filter(
             UserLicense.user_id == user_id,
             UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
@@ -63,7 +63,7 @@ def get_lfa_player_profile(
             )
 
         # 3. Get 29-skill profile (EMA-updated values + tier info)
-        #    Only meaningful after onboarding_completed=True; otherwise skills stay at baseline 50.0
+        #    Only meaningful after onboarding_completed=True; otherwise skills stay at SYSTEM_BASELINE=60.0
         from app.services.skill_progression_service import get_skill_profile
         skill_profile = None
         if lfa_license.onboarding_completed:

@@ -36,14 +36,20 @@ def get_all_skill_keys() -> List[str]:
 
 def get_baseline_skills(db: Session, user_id: int) -> Dict[str, float]:
     """
-    Get baseline skill values from UserLicense.football_skills (onboarding).
+    Get EMA anchor baseline values for all 29 skills (used by the EMA calculation engine).
+
+    This function reads `system_baseline` (60.0) from the football_skills JSONB column.
+    The `self_assessment` field present in the same JSONB is intentionally ignored —
+    it records the player's onboarding self-evaluation but has no role in the skill
+    calculation pipeline. Onboarding self-assessment values are a motivational reference
+    only and are never fed into EMA, baseline extraction, or any skill formula.
 
     Args:
         db: Database session
         user_id: User ID
 
     Returns:
-        Dict of skill_key → baseline_value (0-100)
+        Dict of skill_key → EMA anchor value (always 60.0 for onboarded players)
 
     ⚠️ FALLBACK BEHAVIOR FOR MISSING SKILLS:
         If a skill is NOT found in UserLicense.football_skills, it defaults to DEFAULT_BASELINE (60.0).
@@ -56,14 +62,17 @@ def get_baseline_skills(db: Session, user_id: int) -> Dict[str, float]:
         new LFA Football Player.  Tournament placements adjust this value up or down.
 
     Baseline priority for dict-format skills:
-        1. system_baseline  — new format; fixed 60.0 written at onboarding
-        2. baseline         — legacy format; may hold a self-assessment value for older records
+        1. system_baseline  — new format; fixed 60.0 written at onboarding (PREFERRED)
+        2. baseline         — legacy format; backward-compatible alias, also 60.0 for post-correction records
         3. DEFAULT_BASELINE — absolute fallback (60.0)
 
-    Example:
-        User has onboarding data: {"ball_control": 70, "dribbling": 65}
-        System now has 29 skills total.
-        Result: {"ball_control": 70.0, "dribbling": 65.0, "speed": 60.0, ...other skills... → 60.0}
+    Note on legacy records: older records may have `baseline` set to a self-assessment value
+    before the baseline-semantics correction. The `system_baseline` field was introduced
+    precisely to have an unambiguous 60.0 anchor that is never overwritten by self-assessment.
+
+    Example (post-correction onboarding record):
+        football_skills = {"ball_control": {"system_baseline": 60.0, "self_assessment": 75.0, ...}}
+        → get_baseline_skills() returns {"ball_control": 60.0}   # self_assessment ignored
     """
     # Get active LFA_FOOTBALL_PLAYER license
     license = db.query(UserLicense).filter(
