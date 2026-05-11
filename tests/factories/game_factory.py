@@ -42,15 +42,27 @@ from app.services.tournament.tournament_participation_service import (
 # ── Default values ─────────────────────────────────────────────────────────────
 
 DEFAULT_FOOTBALL_SKILLS = {
+    # outfield (original 11)
     "ball_control": 70.0, "dribbling": 70.0, "finishing": 70.0, "shot_power": 68.0,
     "long_shots": 62.0, "volleys": 58.0, "crossing": 62.0, "passing": 70.0,
     "heading": 65.0, "tackle": 55.0, "marking": 52.0,
+    # outfield (Phase 3 new 8)
+    "shooting": 60.0, "technique": 60.0, "creativity": 60.0, "long_passing": 60.0,
+    "flair": 60.0, "touch": 60.0, "forward_runs": 60.0, "throwing": 60.0,
+    # set_pieces (unchanged 3)
     "free_kicks": 60.0, "corners": 60.0, "penalties": 65.0,
+    # mental (original 8)
     "positioning_off": 65.0, "positioning_def": 60.0, "vision": 65.0,
     "aggression": 55.0, "reactions": 68.0, "composure": 65.0,
     "consistency": 62.0, "tactical_awareness": 64.0,
+    # mental (Phase 3 new 6)
+    "anticipation": 60.0, "concentration": 60.0, "decisions": 60.0,
+    "determination": 60.0, "teamwork": 60.0, "leadership": 60.0,
+    # physical (original 7)
     "acceleration": 68.0, "sprint_speed": 70.0, "agility": 70.0,
     "jumping": 65.0, "strength": 60.0, "stamina": 67.0, "balance": 68.0,
+    # physical (Phase 3 new 1)
+    "work_rate": 60.0,
 }
 
 # IMPORTANT: skill keys MUST be lowercase snake_case to match get_all_skill_keys()

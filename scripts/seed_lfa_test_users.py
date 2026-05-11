@@ -5,6 +5,8 @@ Seed minimal @lfa-seed.hu users for CI/E2E testing
 Creates 12 test users with @lfa-seed.hu emails + LFA_FOOTBALL_PLAYER licenses.
 Idempotent: skips existing users.
 
+Skills: all 44 skills at SYSTEM_BASELINE (60.0) with position-specific overrides.
+
 Usage:
     DATABASE_URL="postgresql://..." python scripts/seed_lfa_test_users.py
 """
@@ -23,6 +25,39 @@ from app.config import settings
 from app.models.user import User
 from app.models.license import UserLicense
 from app.core.security import get_password_hash
+from app.skills_config import get_all_skill_keys
+
+# SYSTEM_BASELINE — starting level for every LFA Football Player
+_BASELINE = 60.0
+
+# Position-specific overrides applied on top of the 60.0 baseline for all 44 skills
+_POSITION_OVERRIDES = {
+    "STRIKER":    {"finishing": 85.0, "dribbling": 80.0, "passing": 70.0, "shooting": 82.0},
+    "MIDFIELDER": {"finishing": 65.0, "dribbling": 75.0, "passing": 85.0, "vision": 80.0},
+    "DEFENDER":   {"finishing": 50.0, "dribbling": 60.0, "passing": 70.0, "tackle": 82.0},
+    "GOALKEEPER": {"finishing": 40.0, "dribbling": 45.0, "passing": 60.0, "throwing": 82.0},
+}
+
+
+def _build_football_skills(position: str) -> dict:
+    """Build all 44 skills at baseline with position-specific overrides."""
+    overrides = _POSITION_OVERRIDES.get(position, {})
+    now_iso = datetime.now(timezone.utc).isoformat()
+    return {
+        skill_key: {
+            "system_baseline":  _BASELINE,
+            "baseline":         _BASELINE,
+            "current_level":    float(overrides.get(skill_key, _BASELINE)),
+            "self_assessment":  float(overrides.get(skill_key, _BASELINE)),
+            "total_delta":      0.0,
+            "tournament_delta": 0.0,
+            "assessment_delta": 0.0,
+            "last_updated":     now_iso,
+            "assessment_count": 0,
+            "tournament_count": 0,
+        }
+        for skill_key in get_all_skill_keys()
+    }
 
 
 def create_lfa_test_users():
@@ -47,14 +82,6 @@ def create_lfa_test_users():
         ("player11", "Test Player 11", "STRIKER"),
         ("player12", "Test Player 12", "MIDFIELDER"),
     ]
-
-    # Position-based skill template (simplified)
-    position_skills = {
-        "STRIKER": {"finishing": 85.0, "dribbling": 80.0, "passing": 70.0},
-        "MIDFIELDER": {"finishing": 65.0, "dribbling": 75.0, "passing": 85.0},
-        "DEFENDER": {"finishing": 50.0, "dribbling": 60.0, "passing": 70.0},
-        "GOALKEEPER": {"finishing": 40.0, "dribbling": 45.0, "passing": 60.0},
-    }
 
     print("🌱 ═══════════════════════════════════════════════════════")
     print(f"🌱 LFA Test Users Seed  ({len(test_users)} @lfa-seed.hu users)")
@@ -88,23 +115,7 @@ def create_lfa_test_users():
             db.add(user)
             db.flush()
 
-            # Create license with baseline skills
-            skills = position_skills.get(position, position_skills["MIDFIELDER"])
-            now_iso = datetime.now(timezone.utc).isoformat()
-
-            football_skills = {
-                skill_key: {
-                    "current_level": float(value),
-                    "baseline": float(value),
-                    "total_delta": 0.0,
-                    "tournament_delta": 0.0,
-                    "assessment_delta": 0.0,
-                    "last_updated": now_iso,
-                    "assessment_count": 0,
-                    "tournament_count": 0,
-                }
-                for skill_key, value in skills.items()
-            }
+            football_skills = _build_football_skills(position)
 
             license = UserLicense(
                 user_id=user.id,
@@ -114,13 +125,13 @@ def create_lfa_test_users():
                 payment_verified=True,
                 payment_verified_at=datetime.now(timezone.utc),
                 football_skills=football_skills,
-                average_motivation_score=75.0,
+                average_motivation_score=_BASELINE,
                 motivation_last_assessed_at=datetime.now(timezone.utc),
                 motivation_assessed_by=user.id,
             )
             db.add(license)
             created += 1
-            print(f"   ✅ Created {email} ({position})")
+            print(f"   ✅ Created {email} ({position}, {len(football_skills)} skills)")
 
         db.commit()
         print(f"\n✅ Seed complete: {created} created, {skipped} skipped")
