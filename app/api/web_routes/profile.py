@@ -16,6 +16,7 @@ from ...models.semester_enrollment import SemesterEnrollment
 from ...models.semester import Semester, SemesterStatus
 from ...utils.age_requirements import validate_specialization_for_age
 from ...utils.country_codes import COUNTRY_CODES, COUNTRY_OPTIONS, register_filters
+from ...skills_config import SKILL_CATEGORIES
 import logging
 import traceback
 
@@ -351,3 +352,107 @@ async def profile_edit_submit(
                 "show_spec_nav": False,
             }
         )
+
+
+@router.get("/profile/onboarding-card", response_class=HTMLResponse)
+async def onboarding_welcome_card(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """
+    Welcome Card — private self-assessment preview (Phase C).
+
+    Data source: football_skills[*].self_assessment ONLY.
+    NEVER reads current_level, baseline, system_baseline, tournament_delta,
+    assessment_delta, or any EMA output.
+
+    Auth: own card only (get_current_user_web enforces login; ownership is
+    implicit because we query by user.id).
+    Visibility: private, no-index (meta tag in template).
+    """
+    license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+    ).first()
+
+    if not license:
+        logger.info("welcome_card_no_license", extra={"user": user.email})
+        return RedirectResponse(
+            url="/dashboard?info=complete_lfa_onboarding_first", status_code=303
+        )
+
+    if not license.onboarding_completed:
+        logger.info("welcome_card_onboarding_incomplete", extra={"user": user.email})
+        return RedirectResponse(
+            url="/specialization/lfa-player/onboarding", status_code=303
+        )
+
+    # ── Extract self_assessment values ONLY ───────────────────────────────────
+    football_skills = license.football_skills or {}
+    skill_categories_data = []
+    all_sa_values: list[float] = []
+
+    for cat in SKILL_CATEGORIES:
+        cat_skills = []
+        for skill_def in cat["skills"]:
+            key = skill_def["key"]
+            raw = football_skills.get(key)
+            if isinstance(raw, dict):
+                sa_value = float(raw.get("self_assessment", 60.0))
+            else:
+                sa_value = 60.0
+            cat_skills.append({
+                "key":     key,
+                "name_en": skill_def["name_en"],
+                "name_hu": skill_def.get("name_hu", skill_def["name_en"]),
+                "value":   round(sa_value, 1),
+            })
+            all_sa_values.append(sa_value)
+        cat_avg = round(sum(s["value"] for s in cat_skills) / len(cat_skills), 1) if cat_skills else 0.0
+        skill_categories_data.append({
+            "key":     cat["key"],
+            "name_en": cat["name_en"],
+            "name_hu": cat.get("name_hu", cat["name_en"]),
+            "emoji":   cat.get("emoji", ""),
+            "skills":  cat_skills,
+            "avg":     cat_avg,
+        })
+
+    overall_sa = round(sum(all_sa_values) / len(all_sa_values), 1) if all_sa_values else 60.0
+
+    # Top 5 self-assessed skills (highest values)
+    flat_skills = [s for cat in skill_categories_data for s in cat["skills"]]
+    top_skills = sorted(flat_skills, key=lambda s: s["value"], reverse=True)[:5]
+
+    # ── Physical / personal data from motivation_scores ───────────────────────
+    ms = license.motivation_scores or {}
+
+    # ── Display name + initials fallback ─────────────────────────────────────
+    display_name = user.name or user.email or ""
+    parts = display_name.split()
+    initials = "".join(p[0].upper() for p in parts[:2]) if parts else "?"
+
+    logger.info("welcome_card_rendered", extra={"user": user.email, "overall_sa": overall_sa})
+
+    return templates.TemplateResponse(
+        "public/welcome_card.html",
+        {
+            "request":          request,
+            "user":             user,
+            "license":          license,
+            "display_name":     display_name,
+            "initials":         initials,
+            "skill_categories": skill_categories_data,
+            "overall_sa":       overall_sa,
+            "top_skills":       top_skills,
+            "position":         ms.get("position", ""),
+            "positions":        ms.get("positions", []),
+            "height_cm":        ms.get("height_cm"),
+            "weight_kg":        ms.get("weight_kg"),
+            "preferred_foot":   ms.get("preferred_foot"),
+            "goals":            ms.get("goals", ""),
+            "right_foot_score": license.right_foot_score,
+            "left_foot_score":  license.left_foot_score,
+        },
+    )
