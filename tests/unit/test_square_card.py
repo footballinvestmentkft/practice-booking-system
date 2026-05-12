@@ -11,9 +11,11 @@ Coverage:
   SQ-03  Col 1 renders skill_categories[0] (Outfield — 1st column, single cat)
   SQ-04  .ex-col-right renders skill_categories[2] (Mental — nested right panel)
   SQ-05  .ex-col-right renders both skill_categories[1] (Set Pieces) + [3] (Physical)
-  SQ-06  Position badge uses primary_pos_label (not raw player.position snake_case)
-  SQ-07  Secondary position chips container ex-sec-pos-chips present in HTML
-  SQ-08  .ex-sec-pos-chip CSS class defined in stylesheet
+  SQ-06  primary_pos_label referenced in Position Map panel (v9 — photo badges removed)
+         .ex-pos-badge class absent from HTML body
+  SQ-07  Secondary position chips in Position Map panel (ex-pos-secondary-chips)
+         Chips gated by secondary_pos_labels; full list rendered (no artificial slice)
+  SQ-08  .ex-sec-pos-chip CSS class defined in stylesheet (reused in pos panel)
   SQ-09  .ex-cat has no overflow:hidden (content layers must never clip skills)
   SQ-10  .ex-skill-rows has no overflow:hidden
   SQ-11  Animation stagger covers rows 1–19 (Outfield is longest at 19 skills)
@@ -31,11 +33,16 @@ Coverage:
   SQ-20  Landscape panel appears after skill_categories[3] reference
   SQ-21  Column count unchanged: still exactly 3 .ex-skill-col divs with panel added
   SQ-22  Position panel gated by {% if position_nodes %} — graceful empty state
-  SQ-23  .ex-pos-svg-landscape CSS defines width and height (fills container)
+  SQ-23  .ex-pos-svg-landscape CSS defines flex or dimension (fills container)
   SQ-24  Position panel does NOT use .ex-cat class — immune to cat fade-slide animation
   SQ-25  .ex-col-right container present in HTML body, contains skill_categories[2]
   SQ-27  Landscape SVG has no {{ node.label }} text — no labels per user request
   SQ-28  preserveAspectRatio="xMidYMid meet" on landscape SVG — no stretch, no crop (v8)
+  SQ-29  Position Map panel has info column: .ex-pos-info div present — v9
+         .ex-pos-panel-title CSS defined; primary_pos_label in panel context
+  SQ-30  .ex-pos-badge absent from HTML body (photo is clean portrait block) — v9
+         .ex-sec-pos-chips absent from photo column (chips moved to pos panel)
+  SQ-31  No PRIMARY/SECONDARY/OTHER legend in Position Map panel — v9
 """
 from __future__ import annotations
 
@@ -97,35 +104,60 @@ class TestThreeColumnLayout:
         )
 
 
-# ── SQ-06/07/08: Position badge ───────────────────────────────────────────────
+# ── SQ-06/07/08: Position info (v9 — photo badges removed, info in panel) ────
 
 class TestPositionBadge:
-    def test_sq06_uses_primary_pos_label(self, tpl):
-        """Position badge must use primary_pos_label (human-readable), not raw player.position."""
+    def test_sq06_primary_pos_label_referenced(self, tpl):
+        """v9: primary_pos_label must be referenced in the template (Position Map panel)."""
         assert "primary_pos_label" in tpl
 
-    def test_sq06_not_raw_player_position_in_badge(self, tpl):
-        """raw {{ player.position }} must not appear inside the badge div."""
-        # The badge div: search for ex-pos-badge context
-        badge_idx = tpl.find('class="ex-pos-badge"')
-        assert badge_idx != -1
-        # The badge closing tag ends a short block; check no raw snake_case in 200 chars after
-        badge_region = tpl[badge_idx: badge_idx + 300]
-        assert "{{ player.position }}" not in badge_region
+    def test_sq06_no_pos_badge_on_photo(self, tpl):
+        """v9: .ex-pos-badge class must be absent from the HTML body (photo is clean portrait)."""
+        html_body = tpl[tpl.rfind("</style>"):]
+        assert 'class="ex-pos-badge"' not in html_body, (
+            ".ex-pos-badge must not appear in the HTML body — photo badges were removed in v9"
+        )
 
-    def test_sq07_secondary_chips_container_in_html(self, tpl):
-        """ex-sec-pos-chips container must be present in the HTML body."""
-        assert 'class="ex-sec-pos-chips"' in tpl
+    def test_sq06_primary_pos_in_panel_context(self, tpl):
+        """v9: primary_pos_label must appear inside the .ex-pos-panel-landscape block."""
+        html_body = tpl[tpl.rfind("</style>"):]
+        panel_start = html_body.find('class="ex-pos-panel-landscape"')
+        assert panel_start != -1
+        panel_region = html_body[panel_start: panel_start + 1200]
+        assert "primary_pos_label" in panel_region, (
+            "primary_pos_label must be rendered inside .ex-pos-panel-landscape (Position Map)"
+        )
+
+    def test_sq07_secondary_chips_in_pos_panel(self, tpl):
+        """v9: secondary chips container must be in the Position Map panel, not the photo column."""
+        html_body = tpl[tpl.rfind("</style>"):]
+        # Chips container must exist somewhere in the body
+        assert 'class="ex-pos-secondary-chips"' in html_body, (
+            ".ex-pos-secondary-chips must be present inside the Position Map panel"
+        )
+        # Must appear after ex-pos-panel-landscape opens
+        panel_start = html_body.find('class="ex-pos-panel-landscape"')
+        chips_idx   = html_body.find('class="ex-pos-secondary-chips"', panel_start)
+        assert chips_idx > panel_start, (
+            ".ex-pos-secondary-chips must be inside .ex-pos-panel-landscape, not in the photo column"
+        )
+
+    def test_sq07_chips_no_artificial_slice(self, tpl):
+        """v9: secondary_pos_labels loop must not use [:4] slice — domain guarantees max 3."""
+        html_body = tpl[tpl.rfind("</style>"):]
+        panel_start = html_body.find('class="ex-pos-panel-landscape"')
+        panel_region = html_body[panel_start: panel_start + 1200]
+        assert "secondary_pos_labels[:4]" not in panel_region, (
+            "Loop must use full secondary_pos_labels (or [:3] max) — [:4] slice is not allowed"
+        )
+
+    def test_sq07_chips_gated_by_secondary_pos_labels(self, tpl):
+        """Secondary chips must be Jinja2-gated so they only render when list is non-empty."""
+        assert "{% if secondary_pos_labels" in tpl
 
     def test_sq08_sec_pos_chip_css_defined(self, tpl):
-        """CSS class .ex-sec-pos-chip must be defined in the stylesheet."""
+        """.ex-sec-pos-chip CSS must be defined — reused in Position Map panel."""
         assert ".ex-sec-pos-chip" in tpl
-
-    def test_sq07_secondary_chips_gated_by_secondary_pos_labels(self, tpl):
-        """Secondary chips must only render when secondary_pos_labels is defined and truthy."""
-        assert "secondary_pos_labels" in tpl
-        # The guard should be present
-        assert "{% if secondary_pos_labels" in tpl
 
 
 # ── SQ-09/10: No overflow clipping on content layers ─────────────────────────
@@ -327,13 +359,17 @@ class TestPositionPanelIntegrity:
         assert gate_idx != -1, "ex-pos-panel-landscape must be inside a {% if position_nodes %} block"
 
     def test_sq23_pos_svg_explicit_dimensions(self, tpl):
-        """.ex-pos-svg-landscape must define width and height — fills container, no auto-stretch."""
+        """.ex-pos-svg-landscape must define flex or explicit dimension to fill container."""
         svg_rule_start = tpl.find(".ex-pos-svg-landscape {")
         assert svg_rule_start != -1, ".ex-pos-svg-landscape CSS rule must be defined"
         svg_rule_end = tpl.find("}", svg_rule_start)
         svg_rule = tpl[svg_rule_start: svg_rule_end + 1]
-        assert "width:" in svg_rule
-        assert "height:" in svg_rule
+        # v9: flex:1 fills remaining width; OR explicit width/height — either is acceptable
+        has_flex   = "flex:" in svg_rule
+        has_width  = "width:" in svg_rule
+        assert has_flex or has_width, (
+            ".ex-pos-svg-landscape must use flex: or width: to fill the panel"
+        )
 
     def test_sq24_pos_panel_not_ex_cat(self, tpl):
         """Landscape panel must NOT use .ex-cat class — immune to cat fade-slide animation."""
@@ -383,12 +419,99 @@ class TestAspectRatioIntegrity:
         """v8: landscape SVG must declare preserveAspectRatio='xMidYMid meet' — no stretch, no crop."""
         html_body = tpl[tpl.rfind("</style>"):]
         panel_start = html_body.find('class="ex-pos-panel-landscape"')
-        panel_end   = html_body.find("{% endif %}", panel_start)
-        svg_block   = html_body[panel_start:panel_end]
-        assert 'preserveAspectRatio="xMidYMid meet"' in svg_block, (
+        assert panel_start != -1
+        # Scope to the <svg>…</svg> element directly — avoids inner {% endif %} ambiguity
+        svg_open  = html_body.find("<svg", panel_start)
+        svg_close = html_body.find("</svg>", svg_open) + len("</svg>")
+        svg_elem  = html_body[svg_open:svg_close]
+        assert 'preserveAspectRatio="xMidYMid meet"' in svg_elem, (
             "Landscape SVG must use preserveAspectRatio='xMidYMid meet' to prevent horizontal stretch"
         )
 
     def test_sq28_no_stretch_viewbox(self, tpl):
         """v8: old 100:24 squashed viewBox (artificially flat) must be absent."""
         assert 'viewBox="0 0 100 24"' not in tpl
+
+
+# ── SQ-29: Position Map info column presence — v9 ────────────────────────────
+
+class TestPositionMapInfoColumn:
+    def test_sq29_pos_info_div_in_html(self, tpl):
+        """v9: .ex-pos-info div must be present inside .ex-pos-panel-landscape."""
+        html_body = tpl[tpl.rfind("</style>"):]
+        panel_start = html_body.find('class="ex-pos-panel-landscape"')
+        assert panel_start != -1
+        panel_region = html_body[panel_start: panel_start + 1500]
+        assert 'class="ex-pos-info"' in panel_region, (
+            ".ex-pos-info info column must be present inside .ex-pos-panel-landscape"
+        )
+
+    def test_sq29_pos_panel_title_css_defined(self, tpl):
+        """v9: .ex-pos-panel-title CSS rule must be defined for the panel header."""
+        assert ".ex-pos-panel-title" in tpl
+
+    def test_sq29_pos_info_css_defined(self, tpl):
+        """v9: .ex-pos-info CSS rule must be defined."""
+        assert ".ex-pos-info {" in tpl
+
+    def test_sq29_pos_primary_name_css_defined(self, tpl):
+        """v9: .ex-pos-primary-name CSS rule must be defined (gold primary position text)."""
+        assert ".ex-pos-primary-name" in tpl
+
+    def test_sq29_pos_panel_flex_row(self, tpl):
+        """v9: .ex-pos-panel-landscape must use flex-direction: row (info left, SVG right)."""
+        panel_css_start = tpl.find(".ex-pos-panel-landscape {")
+        assert panel_css_start != -1
+        panel_css_end = tpl.find("}", panel_css_start)
+        panel_css = tpl[panel_css_start: panel_css_end + 1]
+        assert "flex-direction: row" in panel_css, (
+            ".ex-pos-panel-landscape must be flex-direction: row in v9"
+        )
+
+
+# ── SQ-30: Photo column is clean portrait block — v9 ─────────────────────────
+
+class TestCleanPhotoColumn:
+    def test_sq30_no_pos_badge_in_body(self, tpl):
+        """v9: .ex-pos-badge class must not appear anywhere in the HTML body."""
+        html_body = tpl[tpl.rfind("</style>"):]
+        assert 'class="ex-pos-badge"' not in html_body, (
+            ".ex-pos-badge removed in v9 — all position info lives in Position Map panel"
+        )
+
+    def test_sq30_no_pos_badge_css(self, tpl):
+        """v9: .ex-pos-badge CSS rule must be absent (class removed entirely)."""
+        assert ".ex-pos-badge {" not in tpl
+
+    def test_sq30_no_photo_sec_chips(self, tpl):
+        """v9: secondary chips must NOT appear inside the photo column block."""
+        html_body = tpl[tpl.rfind("</style>"):]
+        photo_col_start = html_body.find('class="ex-photo-col"')
+        photo_col_end   = html_body.find('class="ex-profile-col"', photo_col_start)
+        assert photo_col_start != -1 and photo_col_end > photo_col_start
+        photo_block = html_body[photo_col_start:photo_col_end]
+        assert 'ex-sec-pos-chip' not in photo_block, (
+            "Position chips must not be in the photo column — they live in Position Map panel"
+        )
+
+
+# ── SQ-31: No legend in Position Map panel — v9 ──────────────────────────────
+
+class TestNoPositionLegend:
+    def test_sq31_no_legend_marker_elements(self, tpl):
+        """v9: Position Map panel must not contain a PRIMARY/SECONDARY/OTHER legend."""
+        html_body = tpl[tpl.rfind("</style>"):]
+        panel_start = html_body.find('class="ex-pos-panel-landscape"')
+        panel_end   = html_body.find("{% endif %}", panel_start)
+        assert panel_start > 0 and panel_end > panel_start
+        panel_block = html_body[panel_start:panel_end]
+        # "OTHER" would only appear as a legend item — its absence confirms no legend
+        assert "OTHER" not in panel_block, (
+            "Position Map panel must not contain a legend — 'OTHER' marker found"
+        )
+
+    def test_sq31_no_legend_css_classes(self, tpl):
+        """v9: legend-specific CSS classes must not be defined."""
+        legend_classes = [".ex-pos-legend", ".ex-legend-item", ".ex-legend-marker"]
+        for cls in legend_classes:
+            assert cls not in tpl, f"Legend CSS class {cls} must not be defined in v9"

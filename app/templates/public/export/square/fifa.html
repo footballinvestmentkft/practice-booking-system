@@ -26,21 +26,25 @@
  *   All 44 skills visible without overflow clipping.
  *   FIX_ROW_H = 24px: .ex-row { flex: none; min-height: 24px }
  *
- * Landscape position panel (v7):
+ * Landscape position panel (v9):
  *   Placed as 2nd flex child of .ex-col-right (below .ex-col-right-skills).
  *   Class: .ex-pos-panel-landscape (NOT .ex-cat — immune to cat animation).
+ *   flex-row: .ex-pos-info (180px) | svg.ex-pos-svg-landscape (flex:1).
+ *   Info column: panel title · Primary Position label+name (gold) · Secondary chips.
+ *   No legend — node visual encoding (gold/white/faint) is self-explanatory.
  *   SVG: viewBox "0 0 105 68" (real 105m×68m pitch geometry).
- *   preserveAspectRatio="xMidYMid meet" — undistorted, pitch green letterbox sides.
+ *   preserveAspectRatio="xMidYMid meet" — undistorted render.
  *   Coordinate transform: cx = node.x × 105, cy = node.y × 68 (GK left, ST right).
- *   Panel bg #1a5c2a blends with pitch green — seamless letterbox effect.
- *   No text labels — position shown in hero photo badge.
  *   Gated: "if position_nodes" — graceful empty state when position not set.
  *   Animation: self-contained fade-in (animated_mode only), no skill stagger impact.
  *
- * Sponsor / logo (v8):
- *   Moved to hero layer: .ex-hero-sponsor in .ex-profile-col (4th flex child).
+ * Sponsor / logo (v8, unchanged in v9):
+ *   In hero layer: .ex-hero-sponsor in .ex-profile-col (4th flex child).
  *   Gated: "if sponsor_logo_url or app_logo_url" — no layout break when absent.
- *   Skills zone gains 76px → .ex-pos-panel-landscape ~242px tall (was ~166px).
+ *
+ * Photo column (v9):
+ *   Clean portrait block — no position badges, no secondary chips.
+ *   All position info lives exclusively in the Position Map panel.
  *
  * Typography scale (% of C_H=1080):
  *   OVR 96px (8.89%), Name 40px (3.70%), Stat 28px (2.59%), Meta 20px (1.85%)
@@ -139,39 +143,14 @@ html, body {
     pointer-events: none;
 }
 
-/* Primary position badge — overlaid top-left of photo */
-.ex-pos-badge {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    font-size: 12px;
-    font-weight: 800;
-    color: white;
-    padding: 3px 9px;
-    border-radius: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    z-index: 2;
-    white-space: nowrap;
-}
-
-/* Secondary position chips — stacked below primary badge */
-.ex-sec-pos-chips {
-    position: absolute;
-    top: 40px;
-    left: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    z-index: 2;
-}
+/* Secondary position chip — reused in Position Map panel info column */
 .ex-sec-pos-chip {
     font-size: 9px;
     font-weight: 700;
     color: rgba(255,255,255,0.75);
     padding: 2px 6px;
     border-radius: 3px;
-    background: rgba(0,0,0,0.45);
+    background: rgba(255,255,255,0.10);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     white-space: nowrap;
@@ -491,9 +470,10 @@ html, body {
 /* ── POSITION LANDSCAPE PANEL ───────────────────────────────────────────────────────────────────────────
    2nd flex child of .ex-col-right (below .ex-col-right-skills).
    NOT .ex-cat → existing cat fade-slide animation never fires here.
-   v8: SVG viewBox "0 0 105 68" (real pitch), preserveAspectRatio="xMidYMid meet".
-   Panel ~242px tall (76px gained by moving sponsor to hero).
-   Background #1a5c2a — blends with pitch green in letterbox areas.
+   v9: flex-row layout — left info column + right pitch SVG.
+   Info column: panel title · primary pos name (gold) · secondary chips.
+   NO legend — node visual encoding (gold/white/faint) is self-explanatory.
+   SVG viewBox "0 0 105 68", preserveAspectRatio="xMidYMid meet" (unchanged).
    ─────────────────────────────────────────────────────────────────────────────────────── */
 
 /* Nested Col 2+3 container — takes 2/3 of skill-cats width */
@@ -512,20 +492,70 @@ html, body {
     gap: 6px;
     flex-shrink: 0;
 }
-/* Landscape panel: takes remaining height (~165px) */
+/* Landscape panel: flex-row — info column left, SVG right */
 .ex-pos-panel-landscape {
     flex: 1;
-    background: #1a5c2a;
+    background: var(--ex-cat-bg);
     border: 1px solid rgba(255,255,255,0.10);
     border-radius: 12px;
     overflow: hidden;
     min-height: 60px;
+    display: flex;
+    flex-direction: row;
 }
-/* SVG fills entire landscape panel */
+/* Info column — left of pitch SVG */
+.ex-pos-info {
+    flex: 0 0 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    padding: 10px 14px;
+    border-right: 1px solid rgba(255,255,255,0.08);
+}
+.ex-pos-panel-title {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 4px;
+}
+.ex-pos-primary-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.28);
+}
+.ex-pos-primary-name {
+    font-size: 16px;
+    font-weight: 800;
+    color: #ECC94B;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    line-height: 1.15;
+    margin-bottom: 4px;
+}
+.ex-pos-secondary-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.28);
+}
+.ex-pos-secondary-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: 2px;
+}
+/* SVG takes remaining width of landscape panel */
 .ex-pos-svg-landscape {
-    width: 100%;
-    height: 100%;
+    flex: 1;
+    min-width: 0;
     display: block;
+    align-self: stretch;
 }
 
 /* Sponsor / logo in hero layer (v8) — 4th flex child of .ex-profile-col.
@@ -634,17 +664,6 @@ html, body {
             </div>
             {% endif %}
             <div class="ex-photo-fade"></div>
-            {% set _pos_label = primary_pos_label if primary_pos_label is defined and primary_pos_label else player.position %}
-            {% if _pos_label and _pos_label != "Unknown" %}
-            <div class="ex-pos-badge" style="background: {{ pos_color }};">{{ _pos_label }}</div>
-            {% endif %}
-            {% if secondary_pos_labels is defined and secondary_pos_labels %}
-            <div class="ex-sec-pos-chips">
-                {% for sp in secondary_pos_labels[:3] %}
-                <span class="ex-sec-pos-chip">{{ sp }}</span>
-                {% endfor %}
-            </div>
-            {% endif %}
         </div>
 
         <!-- Profile column -->
@@ -909,11 +928,33 @@ html, body {
 
                 </div>
 
-                <!-- Landscape position panel: full width (~693px) below skill rows.
+                <!-- Landscape position panel (v9): info column (left) + pitch SVG (right).
                      Coordinate transform: cx = node.x * 105, cy = node.y * 68
                      (GK at left x≈0.02, ST at right x≈0.88; y=0 top, y=1 bottom) -->
                 {% if position_nodes %}
                 <div class="ex-pos-panel-landscape">
+
+                    <!-- Info column: title · primary pos · secondary chips (no legend) -->
+                    <div class="ex-pos-info">
+                        <div class="ex-pos-panel-title">Position Map</div>
+                        <div class="ex-pos-primary-label">Primary Position</div>
+                        <div class="ex-pos-primary-name">
+                            {%- if primary_pos_label is defined and primary_pos_label -%}
+                                {{ primary_pos_label }}
+                            {%- else -%}
+                                {{ player.position | replace("_", " ") | title }}
+                            {%- endif -%}
+                        </div>
+                        {% if secondary_pos_labels is defined and secondary_pos_labels %}
+                        <div class="ex-pos-secondary-label">Secondary Positions</div>
+                        <div class="ex-pos-secondary-chips">
+                            {% for sp in secondary_pos_labels %}
+                            <span class="ex-sec-pos-chip">{{ sp }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
                     <svg class="ex-pos-svg-landscape" viewBox="0 0 105 68"
                          xmlns="http://www.w3.org/2000/svg" aria-label="Position map"
                          preserveAspectRatio="xMidYMid meet">
