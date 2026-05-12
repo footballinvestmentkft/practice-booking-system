@@ -47,6 +47,15 @@
         color: white;
     }
 
+    .btn-secondary {
+        background: #e2e8f0;
+        color: #2d3748;
+    }
+
+    .btn-secondary:hover {
+        background: #cbd5e0;
+    }
+
     .btn:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.2);
@@ -370,8 +379,8 @@
             {% endif %}
         </div>
 
-        <!-- Welcome Card (LFA Football Player, onboarding completed only) -->
-        {% if active_license and active_license.specialization_type == 'LFA_FOOTBALL_PLAYER' and active_license.onboarding_completed %}
+        <!-- Welcome Card (LFA Football Player, onboarding completed) -->
+        {% if lfa_license %}
         <div class="card">
             <h2>🎴 Welcome Card</h2>
             <p style="font-size:0.85rem; color:#64748b; margin-bottom:0.85rem;">

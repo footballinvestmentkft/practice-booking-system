@@ -47,6 +47,7 @@ async def profile_page(
     """Display user profile page"""
     user_licenses = []
     active_license = None
+    lfa_license = None
     active_enrollment = None
     current_semester = None
     available_semesters = []
@@ -56,6 +57,14 @@ async def profile_page(
 
     if user.role == UserRole.STUDENT:
         user_licenses = db.query(UserLicense).filter(UserLicense.user_id == user.id).all()
+
+        # LFA Football Player license — independent of active specialization.
+        # Used by the Welcome Card section which must remain visible after spec-switch.
+        lfa_license = next(
+            (l for l in user_licenses
+             if l.specialization_type == "LFA_FOOTBALL_PLAYER" and l.onboarding_completed),
+            None
+        )
 
         # Get ACTIVE semester enrollment for CURRENT specialization
         if user.specialization:
@@ -130,6 +139,7 @@ async def profile_page(
             "user": user,
             "user_licenses": user_licenses,
             "active_license": active_license,
+            "lfa_license": lfa_license,
             "specialization_color": specialization_color,
             "active_enrollment": active_enrollment,
             "current_semester": current_semester,
@@ -558,11 +568,12 @@ async def onboarding_welcome_card(
         return templates.TemplateResponse(
             "public/welcome_card.html",
             {
-                "request":      request,
-                "user":         user,
-                "display_name": display_name,
-                "platforms":    _WC_GALLERY_PLATFORMS,
+                "request":          request,
+                "user":             user,
+                "display_name":     display_name,
+                "platforms":        _WC_GALLERY_PLATFORMS,
                 "default_platform": "instagram_square",
+                "photo_url":        license.player_card_photo_url,
             },
         )
 

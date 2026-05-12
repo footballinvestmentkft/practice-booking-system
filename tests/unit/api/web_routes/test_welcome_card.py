@@ -24,10 +24,12 @@ from fastapi.responses import RedirectResponse, Response
 from app.api.web_routes.profile import (
     onboarding_welcome_card,
     export_onboarding_welcome_card,
+    profile_page,
     _build_welcome_card_context,
     _WC_APP_LOGO_URL,
     _WC_GALLERY_PLATFORMS,
 )
+from app.models.license import UserLicense
 from app.models.user import UserRole
 
 _BASE = "app.api.web_routes.profile"
@@ -412,8 +414,9 @@ class TestWelcomeCardGalleryTemplate:
     def test_has_platform_download_buttons(self, gallery_src):
         assert "/profile/onboarding-card/export?platform=" in gallery_src
 
-    def test_has_back_link_to_profile(self, gallery_src):
-        assert 'href="/profile"' in gallery_src
+    def test_has_back_link_to_lfa_player_profile(self, gallery_src):
+        # Back link updated (Fázis 2): Welcome Card is LFA-specific context.
+        assert 'href="/profile/lfa-football-player"' in gallery_src
 
     def test_gallery_renders_with_minimal_context(self):
         """Jinja2 render: gallery template must not error with minimal context."""
@@ -577,16 +580,16 @@ def _wc_block(profile_src: str) -> str:
     return profile_src[start:end]
 
 
-def _render_wc_fragment(profile_src: str, active_license) -> str:
-    """Render only the Welcome Card conditional fragment as a standalone Jinja2 template."""
+def _render_wc_fragment(profile_src: str, lfa_license) -> str:
+    """Render the Welcome Card conditional block with the given lfa_license value."""
     from jinja2 import Template
     fragment = _wc_block(profile_src)
-    # Strip the HTML comment line so only the Jinja2 block remains
+    # Strip HTML comment lines so only the Jinja2 conditional block remains
     fragment = "\n".join(
         line for line in fragment.splitlines()
         if not line.strip().startswith("<!--")
     )
-    return Template(fragment).render(active_license=active_license)
+    return Template(fragment).render(lfa_license=lfa_license)
 
 
 def _lic(spec_type="LFA_FOOTBALL_PLAYER", onboarding_completed=True):
@@ -608,18 +611,21 @@ class TestWelcomeCardProfileSection:
         assert "Download" in html
 
     # ── T2: incomplete onboarding hides the section ──
+    # The route sets lfa_license=None when onboarding is not completed,
+    # so the template receives None — not a license object.
 
     def test_incomplete_onboarding_hides_welcome_card(self, profile_src):
-        html = _render_wc_fragment(profile_src, _lic(onboarding_completed=False))
+        html = _render_wc_fragment(profile_src, None)
         assert "/profile/onboarding-card" not in html
         assert "Welcome Card" not in html
 
     # ── T3: non-LFA spec hides the section ──
+    # The route sets lfa_license=None when no completed LFA_FOOTBALL_PLAYER license
+    # exists, regardless of what other licenses the user holds.
 
     def test_non_lfa_spec_hides_welcome_card(self, profile_src):
-        for spec in ("GANCUJU_PLAYER", "LFA_COACH", "INTERNSHIP"):
-            html = _render_wc_fragment(profile_src, _lic(spec_type=spec))
-            assert "/profile/onboarding-card" not in html, f"Welcome Card visible for {spec}"
+        html = _render_wc_fragment(profile_src, None)
+        assert "/profile/onboarding-card" not in html
 
     # ── T4: dashboard mod-nav has no Welcome Card quick action ──
 
@@ -792,3 +798,214 @@ class TestWelcomeCardRenderingFixes:
     def test_tiktok_template_guards_player_height_cm(self, tiktok_export_src):
         """TikTok template must guard player_height_cm with {% if %}."""
         assert "{% if player_height_cm %}" in tiktok_export_src
+
+
+# ── 10. Gallery hub photo upload panel ───────────────────────────────────────
+
+class TestWelcomeCardPhotoUpload:
+    """Gallery hub photo upload & delete panel — context, template, JS."""
+
+    # ── Route context ──────────────────────────────────────────────────────────
+
+    def _call_gallery(self, photo_url=None):
+        lic = _license()
+        lic.player_card_photo_url = photo_url
+        db = _mock_db(license_return=lic)
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(onboarding_welcome_card(_req(), platform=None, db=db, user=_user()))
+        return mock_tmpl.TemplateResponse.call_args.args[1]  # ctx dict
+
+    def test_gallery_context_has_photo_url_key(self):
+        ctx = self._call_gallery()
+        assert "photo_url" in ctx
+
+    def test_gallery_context_photo_url_is_none_when_no_photo(self):
+        ctx = self._call_gallery(photo_url=None)
+        assert ctx["photo_url"] is None
+
+    def test_gallery_context_photo_url_matches_license(self):
+        url = "/static/uploads/lfa_player_photos/10_orig_1234567890.png"
+        ctx = self._call_gallery(photo_url=url)
+        assert ctx["photo_url"] == url
+
+    # ── Template static checks ─────────────────────────────────────────────────
+
+    def test_gallery_has_photo_panel(self, gallery_html_src):
+        assert "wc-photo-panel" in gallery_html_src
+
+    def test_gallery_has_photo_file_input(self, gallery_html_src):
+        assert 'id="wc-photo-input"' in gallery_html_src
+        assert 'type="file"' in gallery_html_src
+
+    def test_gallery_upload_endpoint_is_correct(self, gallery_html_src):
+        assert "/dashboard/lfa-player-photo'" in gallery_html_src
+
+    def test_gallery_delete_endpoint_is_correct(self, gallery_html_src):
+        assert "/dashboard/lfa-player-photo/delete'" in gallery_html_src
+
+    def test_gallery_has_getcsrftoken_function(self, gallery_html_src):
+        assert "function getCsrfToken()" in gallery_html_src
+
+    def test_gallery_photo_requests_have_csrf_header(self, gallery_html_src):
+        """Both upload and delete fetches must include the X-CSRF-Token header."""
+        assert "'X-CSRF-Token': getCsrfToken()" in gallery_html_src
+
+    def test_gallery_success_reloads_iframe(self, gallery_html_src):
+        """reloadPreview() must be called on both upload and delete success."""
+        assert "function reloadPreview()" in gallery_html_src
+        assert "reloadPreview()" in gallery_html_src
+
+    def test_gallery_error_shows_backend_detail(self, gallery_html_src):
+        """Error fallback must include data.detail before 'unknown error'."""
+        assert "data.detail" in gallery_html_src
+
+    # ── Jinja2 render: thumbnail / placeholder state ───────────────────────────
+
+    def _render_gallery(self, photo_url=None):
+        from jinja2 import Environment, FileSystemLoader, Undefined
+        env = Environment(
+            loader=FileSystemLoader(str(_GALLERY_TPL_PATH.parents[1])),
+            autoescape=True,
+            undefined=Undefined,
+        )
+        ctx = {
+            "request":          MagicMock(),
+            "display_name":     "Test Player",
+            "platforms":        _WC_GALLERY_PLATFORMS,
+            "default_platform": "instagram_square",
+            "photo_url":        photo_url,
+        }
+        return env.get_template("public/welcome_card.html").render(**ctx)
+
+    def test_thumbnail_src_set_when_photo_url_present(self):
+        url = "/static/uploads/lfa_player_photos/10_orig_1234567890.png"
+        html = self._render_gallery(photo_url=url)
+        assert f'src="{url}"' in html
+
+    def test_thumbnail_visible_when_photo_url_present(self):
+        url = "/static/uploads/lfa_player_photos/10_orig_1234567890.png"
+        html = self._render_gallery(photo_url=url)
+        # img tag must NOT be hidden (display:none absent from its inline style)
+        thumb_start = html.find('id="wc-photo-thumb"')
+        assert thumb_start != -1
+        tag_end = html.find('>', thumb_start)
+        tag_html = html[thumb_start:tag_end]
+        assert "display:none" not in tag_html
+
+    def test_placeholder_visible_when_no_photo_url(self):
+        html = self._render_gallery(photo_url=None)
+        ph_start = html.find('id="wc-photo-placeholder"')
+        assert ph_start != -1
+        tag_end = html.find('>', ph_start)
+        tag_html = html[ph_start:tag_end]
+        assert "display:none" not in tag_html
+
+    def test_delete_btn_hidden_when_no_photo_url(self):
+        html = self._render_gallery(photo_url=None)
+        btn_start = html.find('id="wc-delete-btn"')
+        assert btn_start != -1
+        tag_end = html.find('>', btn_start)
+        tag_html = html[btn_start:tag_end]
+        assert "display:none" in tag_html
+
+    def test_delete_btn_visible_when_photo_url_present(self):
+        url = "/static/uploads/lfa_player_photos/10_orig_1234567890.png"
+        html = self._render_gallery(photo_url=url)
+        btn_start = html.find('id="wc-delete-btn"')
+        assert btn_start != -1
+        tag_end = html.find('>', btn_start)
+        tag_html = html[btn_start:tag_end]
+        assert "display:none" not in tag_html
+
+
+# ── 11. profile_page route — lfa_license context key ─────────────────────────
+
+class TestProfilePageLfaLicense:
+    """
+    profile_page sets lfa_license independent of user.specialization.
+    Covers the spec-switch scenario: Welcome Card remains visible after the
+    user switches active spec away from LFA_FOOTBALL_PLAYER.
+    """
+
+    def _make_db(self, user_licenses):
+        db = MagicMock()
+        db.query.return_value.filter.return_value.all.return_value = user_licenses
+        db.query.return_value.filter.return_value.first.return_value = None
+        return db
+
+    def _lfa_lic(self, completed=True):
+        lic = MagicMock()
+        lic.specialization_type = "LFA_FOOTBALL_PLAYER"
+        lic.onboarding_completed = completed
+        return lic
+
+    def _call_profile(self, user_licenses, active_spec_value=None):
+        """Invoke profile_page and return the TemplateResponse context dict."""
+        user = _user()
+        if active_spec_value is not None:
+            spec = MagicMock()
+            spec.value = active_spec_value
+            user.specialization = spec
+        else:
+            user.specialization = None
+        db = self._make_db(user_licenses)
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(profile_page(_req(), db=db, user=user))
+        return mock_tmpl.TemplateResponse.call_args.args[1]
+
+    # ── Route context: key presence ───────────────────────────────────────────
+
+    def test_context_includes_lfa_license_key(self):
+        ctx = self._call_profile([])
+        assert "lfa_license" in ctx
+
+    def test_lfa_license_none_when_no_licenses(self):
+        ctx = self._call_profile([])
+        assert ctx["lfa_license"] is None
+
+    def test_lfa_license_none_when_incomplete_onboarding(self):
+        ctx = self._call_profile([self._lfa_lic(completed=False)])
+        assert ctx["lfa_license"] is None
+
+    def test_lfa_license_set_when_completed(self):
+        lic = self._lfa_lic(completed=True)
+        ctx = self._call_profile([lic])
+        assert ctx["lfa_license"] is lic
+
+    # ── Spec-switch scenario ──────────────────────────────────────────────────
+
+    def test_lfa_license_set_when_active_spec_is_gancuju(self):
+        """
+        Active spec = GANCUJU_PLAYER, but a completed LFA_FOOTBALL_PLAYER license
+        also exists → lfa_license must be set so the Welcome Card remains visible.
+        """
+        lic = self._lfa_lic(completed=True)
+        ctx = self._call_profile([lic], active_spec_value="GANCUJU_PLAYER")
+        assert ctx["lfa_license"] is lic
+
+    def test_lfa_license_set_when_active_spec_is_lfa_coach(self):
+        lic = self._lfa_lic(completed=True)
+        ctx = self._call_profile([lic], active_spec_value="LFA_COACH")
+        assert ctx["lfa_license"] is lic
+
+    def test_lfa_license_none_when_only_gancuju_license_exists(self):
+        """User has GANCUJU license (no LFA_FOOTBALL_PLAYER) → lfa_license is None."""
+        gancuju = MagicMock()
+        gancuju.specialization_type = "GANCUJU_PLAYER"
+        gancuju.onboarding_completed = True
+        ctx = self._call_profile([gancuju])
+        assert ctx["lfa_license"] is None
+
+    # ── Template: Welcome Card visible via lfa_license (not active_license) ───
+
+    def test_welcome_card_visible_when_active_spec_is_gancuju(self, profile_src):
+        """
+        Template: Welcome Card section must appear when lfa_license is set,
+        even if the user's current active spec is GANCUJU_PLAYER.
+        """
+        lic = self._lfa_lic(completed=True)
+        html = _render_wc_fragment(profile_src, lic)
+        assert "/profile/onboarding-card" in html
+        assert "View Welcome Card" in html

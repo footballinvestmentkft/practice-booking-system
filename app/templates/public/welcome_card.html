@@ -156,6 +156,89 @@
             flex-shrink: 0;
         }
         .wc-download-btn:hover { opacity: 0.85; }
+
+        /* ── Card Photo panel ── */
+        .wc-photo-panel {
+            margin-top: 1.2rem;
+            background: #1e2436;
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            padding: 0.9rem 1rem;
+        }
+        .wc-photo-panel-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.65rem;
+        }
+        .wc-photo-content {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            flex-wrap: wrap;
+        }
+        .wc-photo-thumb {
+            width: 64px;
+            height: 64px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+        .wc-photo-placeholder {
+            width: 64px;
+            height: 64px;
+            border-radius: 8px;
+            border: 1px dashed rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: #64748b;
+        }
+        .wc-photo-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .wc-upload-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.35rem 0.75rem;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #cbd5e1;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .wc-upload-label:hover { background: rgba(255,255,255,0.12); }
+        .wc-delete-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.35rem 0.75rem;
+            background: transparent;
+            border: 1px solid rgba(239,68,68,0.4);
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #f87171;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .wc-delete-btn:hover { background: rgba(239,68,68,0.1); }
+        .wc-photo-status {
+            font-size: 0.78rem;
+            margin-top: 0.5rem;
+            color: #94a3b8;
+            min-height: 1.1em;
+        }
     </style>
 </head>
 <body>
@@ -166,7 +249,7 @@
             <h1>🎴 Welcome Card</h1>
             <p>Based on your onboarding self-assessment</p>
         </div>
-        <a class="wc-back-link" href="/profile">← Back to Profile</a>
+        <a class="wc-back-link" href="/profile/lfa-football-player">← Back to Profile</a>
     </div>
 
     <div class="wc-disclaimer">
@@ -219,6 +302,33 @@
 
     </div>
 
+    <!-- Card Photo -->
+    <div class="wc-photo-panel">
+        <div class="wc-photo-panel-label">Card Photo</div>
+        <div class="wc-photo-content">
+            <img id="wc-photo-thumb" class="wc-photo-thumb"
+                 src="{{ photo_url or '' }}"
+                 alt="Card photo"
+                 style="display:{{ 'block' if photo_url else 'none' }};">
+            <div id="wc-photo-placeholder" class="wc-photo-placeholder"
+                 style="display:{{ 'none' if photo_url else 'flex' }};">
+                📸
+            </div>
+            <div class="wc-photo-actions">
+                <label class="wc-upload-label" for="wc-photo-input">
+                    ⬆️ Upload Photo
+                    <input id="wc-photo-input" type="file"
+                           accept="image/jpeg,image/png,image/webp"
+                           style="display:none;">
+                </label>
+                <button id="wc-delete-btn" class="wc-delete-btn"
+                        style="display:{{ 'inline-flex' if photo_url else 'none' }};"
+                        onclick="deletePhoto()">🗑️ Remove</button>
+            </div>
+        </div>
+        <div id="wc-photo-status" class="wc-photo-status"></div>
+    </div>
+
 </div>
 
 <script>
@@ -266,6 +376,73 @@ function selectPlatform(card) {
     document.getElementById('wc-active-label').textContent =
         label + ' · ' + dims;
     scaleIframe(pid);
+}
+
+// ── CSRF ──────────────────────────────────────────────────────────────────────
+function getCsrfToken() {
+    var m = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : '';
+}
+
+// ── Reload iframe preview ─────────────────────────────────────────────────────
+function reloadPreview() {
+    document.getElementById('wc-preview-iframe').contentWindow.location.reload();
+}
+
+// ── Photo upload ──────────────────────────────────────────────────────────────
+document.getElementById('wc-photo-input').addEventListener('change', async function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var formData = new FormData();
+    formData.append('file', file);
+    var status = document.getElementById('wc-photo-status');
+    status.textContent = 'Uploading…';
+    try {
+        var resp = await fetch('/dashboard/lfa-player-photo', {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            body: formData,
+        });
+        var data = await resp.json();
+        if (data.ok) {
+            document.getElementById('wc-photo-thumb').src = data.photo_url;
+            document.getElementById('wc-photo-thumb').style.display = 'block';
+            document.getElementById('wc-photo-placeholder').style.display = 'none';
+            document.getElementById('wc-delete-btn').style.display = 'inline-flex';
+            status.textContent = '✅ Photo saved.';
+            reloadPreview();
+        } else {
+            status.textContent = '❌ Upload failed: ' + (data.error || data.detail || 'unknown error');
+        }
+    } catch {
+        status.textContent = '❌ Upload failed.';
+    }
+    e.target.value = '';
+});
+
+// ── Photo delete ──────────────────────────────────────────────────────────────
+async function deletePhoto() {
+    var status = document.getElementById('wc-photo-status');
+    status.textContent = 'Removing…';
+    try {
+        var resp = await fetch('/dashboard/lfa-player-photo/delete', {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+        });
+        var data = await resp.json();
+        if (data.ok) {
+            document.getElementById('wc-photo-thumb').src = '';
+            document.getElementById('wc-photo-thumb').style.display = 'none';
+            document.getElementById('wc-photo-placeholder').style.display = 'flex';
+            document.getElementById('wc-delete-btn').style.display = 'none';
+            status.textContent = '✅ Photo removed.';
+            reloadPreview();
+        } else {
+            status.textContent = '❌ Remove failed: ' + (data.error || data.detail || 'unknown error');
+        }
+    } catch {
+        status.textContent = '❌ Remove failed.';
+    }
 }
 </script>
 </body>
