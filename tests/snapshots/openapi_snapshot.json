@@ -3645,6 +3645,22 @@
         "title": "Body_lfa_player_profile_edit_submit_profile_lfa_football_player_edit_post",
         "type": "object"
       },
+      "Body_lfa_player_profile_positions_submit_profile_lfa_football_player_positions_post": {
+        "properties": {
+          "position": {
+            "default": "",
+            "title": "Position",
+            "type": "string"
+          },
+          "positions_raw": {
+            "default": "[]",
+            "title": "Positions Raw",
+            "type": "string"
+          }
+        },
+        "title": "Body_lfa_player_profile_positions_submit_profile_lfa_football_player_positions_post",
+        "type": "object"
+      },
       "Body_login_form_api_v1_auth_login_form_post": {
         "properties": {
           "client_id": {
@@ -59621,6 +59637,23 @@
               "default": false,
               "title": "Animated"
             }
+          },
+          {
+            "in": "query",
+            "name": "native_export",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": false,
+              "title": "Native Export"
+            }
           }
         ],
         "responses": {
@@ -59932,6 +59965,47 @@
           }
         },
         "summary": "Lfa Player Profile Edit Submit",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/profile/lfa-football-player/positions": {
+      "post": {
+        "description": "Update only the player's positions (primary + secondaries, max 4 total).\n\nAccepts:\n  position      \u2014 canonical primary position (snake_case)\n  positions_raw \u2014 JSON array of all positions including primary, e.g. '[\"striker\",\"left_wing\"]'\n\nValidates: canonical values, 1\u20134 count, primary is first element.\nNever touches foot scores, goals, height, weight, or any other field.",
+        "operationId": "lfa_player_profile_positions_submit_profile_lfa_football_player_positions_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_lfa_player_profile_positions_submit_profile_lfa_football_player_positions_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Lfa Player Profile Positions Submit",
         "tags": [
           "web"
         ]
