@@ -139,6 +139,10 @@ body.native-export-mode .events-section { display: none !important; }
     letter-spacing: 0.12em; padding: 3px 10px; border-radius: 99px; color: white;
     white-space: nowrap;
 }
+.card-logo {
+    height: 22px; width: auto; opacity: 0.75;
+    filter: brightness(0) invert(1); flex-shrink: 0;
+}
 .fifa-right {
     background: var(--card-right-bg);
     padding: 1.25rem 1.25rem 1rem;
@@ -186,16 +190,10 @@ body.native-export-mode .events-section { display: none !important; }
     margin-bottom: 0.8rem;
 }
 .skill-cats {
-    display: grid; grid-template-columns: repeat(2, 1fr);
+    display: flex; align-items: flex-start;
     gap: 0.5rem;
 }
-/* Visual order: Outfield (DOM 1st) → top-left,   Mental (DOM 3rd) → top-right,
-   Set Pieces (DOM 2nd) → bottom-left, Physical Fitness (DOM 4th) → bottom-right.
-   Long columns pair together (top row), short columns pair together (bottom row). */
-.skill-cat:nth-child(1) { order: 1; }
-.skill-cat:nth-child(2) { order: 3; }
-.skill-cat:nth-child(3) { order: 2; }
-.skill-cat:nth-child(4) { order: 4; }
+.skill-col { flex: 1; display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
 .skill-cat { background: var(--card-cat-bg); border-radius: 9px; padding: 0.6rem; min-width: 0; }
 .skill-cat-name {
     font-size: 0.58rem; font-weight: 800; text-transform: uppercase;
@@ -215,7 +213,7 @@ body.native-export-mode .events-section { display: none !important; }
 /* ── Position panel (right, ~40%) ──────────────────────────────── */
 .position-panel {
     background: var(--card-panel-bg);
-    padding: 0.85rem 0.85rem 0.75rem;
+    padding: 0.75rem 0.5rem;
     display: flex;
     flex-direction: column;
     gap: 0.45rem;
@@ -231,19 +229,7 @@ body.native-export-mode .events-section { display: none !important; }
     width: 100%; height: auto;
     border-radius: 5px;
     overflow: visible;
-}
-.pos-primary-label {
-    font-size: 0.72rem; font-weight: 700; color: var(--card-text-primary);
-    text-align: center; letter-spacing: 0.03em;
-}
-.pos-secondary-chips {
-    display: flex; flex-wrap: wrap; gap: 0.25rem; justify-content: center;
-}
-.pos-chip {
-    font-size: 0.56rem; font-weight: 700;
-    background: rgba(255,255,255,0.08);
-    color: var(--card-text-secondary);
-    border-radius: 99px; padding: 2px 7px;
+    flex: 1; margin: auto 0;
 }
 
 /* ── Tab bar ─────────────────────────────────────────────── */
@@ -315,9 +301,8 @@ body.native-export-mode .events-section { display: none !important; }
     .position-panel { order: -1; }
     /* In stacked layout, names can wrap again */
     .skill-name { white-space: normal; overflow-wrap: break-word; overflow: visible; text-overflow: clip; }
-    .skill-cats { grid-template-columns: 1fr 1fr; }
     .skills-panel { padding: 0.9rem; }
-    /* Portrait pitch: cap height when stacked full-width (landscape would be ~260px tall at card width) */
+    /* Portrait pitch: cap height when stacked full-width */
     .pitch-svg { max-height: 200px; width: auto; display: block; margin: 0 auto; }
 }
 @media (max-width: 440px) {
@@ -330,11 +315,10 @@ body.native-export-mode .events-section { display: none !important; }
     .fifa-overall { font-size: 2.4rem; }
     .fifa-right { padding: 1rem; }
     .identity-grid { grid-template-columns: repeat(3, 1fr); }
-    .skill-cats { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 340px) {
     .identity-grid { grid-template-columns: 1fr 1fr; }
-    .skill-cats { grid-template-columns: 1fr; }
+    .skill-cats { flex-direction: column; }
     .fifa-name { font-size: 1.05rem; }
 }
 
@@ -410,6 +394,9 @@ body.export-mode .skill-bar-bg  { flex: 1 1 0 !important; max-width: none !impor
     <!-- Split header -->
     <div class="fifa-header">
         <div class="fifa-left">
+            {% if app_logo_url %}
+            <img class="card-logo" src="{{ app_logo_url }}" alt="LFA">
+            {% endif %}
             {% if photo_url %}
             <img class="fifa-avatar" src="{{ photo_url }}" alt="{{ initials }}"
                  style="background: {{ avatar_bg }}; object-fit: cover;">
@@ -440,6 +427,18 @@ body.export-mode .skill-bar-bg  { flex: 1 1 0 !important; max-width: none !impor
                     <span class="id-label">Tournaments</span>
                     <span class="id-value">{{ player.total_tournaments }}</span>
                 </div>
+                <div class="id-field">
+                    <span class="id-label">Height</span>
+                    <span class="id-value">{% if player_height_cm %}{{ player_height_cm }} cm{% else %}—{% endif %}</span>
+                </div>
+                <div class="id-field">
+                    <span class="id-label">Weight</span>
+                    <span class="id-value">{% if player_weight_kg %}{{ player_weight_kg }} kg{% else %}—{% endif %}</span>
+                </div>
+                <div class="id-field">
+                    <span class="id-label">Foot</span>
+                    <span class="id-value">{{ player_preferred_foot | capitalize if player_preferred_foot else "—" }}</span>
+                </div>
             </div>
 
             {% if teams_info %}
@@ -466,7 +465,9 @@ body.export-mode .skill-bar-bg  { flex: 1 1 0 !important; max-width: none !impor
             {% if skill_categories %}
             <div class="skills-title">Football Skills — {{ overall | round(0) | int }} OVR</div>
             <div class="skill-cats">
-                {% for cat in skill_categories %}
+                {# Left column: Outfield (index 0) + Set Pieces (index 1) #}
+                <div class="skill-col">
+                {% for cat in skill_categories[:2] %}
                 <div class="skill-cat">
                     <div class="skill-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
                     {% for skill in cat.skills %}
@@ -496,6 +497,40 @@ body.export-mode .skill-bar-bg  { flex: 1 1 0 !important; max-width: none !impor
                     {% endfor %}
                 </div>
                 {% endfor %}
+                </div>
+                {# Right column: Mental (index 2) + Physical (index 3) #}
+                <div class="skill-col">
+                {% for cat in skill_categories[2:] %}
+                <div class="skill-cat">
+                    <div class="skill-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
+                    {% for skill in cat.skills %}
+                    {% set sdata = player.skills.get(skill.key, {}) %}
+                    {% set sval = sdata.get('current_level', 50) | round(1) %}
+                    {% set fill_pct = [sval, 100] | min %}
+                    {% set sdelta = last_skill_delta.get(skill.key, 0) %}
+                    {# Color driven solely by last-tournament delta, not by level tier. #}
+                    {% if sdelta > 0 %}
+                        {% set bar_color = '#48bb78' %}
+                        {% set val_color = '#48bb78' %}
+                    {% elif sdelta < 0 %}
+                        {% set bar_color = '#fc8181' %}
+                        {% set val_color = '#fc8181' %}
+                    {% else %}
+                        {% set bar_color = 'var(--card-bar-neutral)' %}
+                        {% set val_color = 'var(--card-val-neutral)' %}
+                    {% endif %}
+                    <div class="skill-row">
+                        <span class="skill-name" title="{{ skill.name_en }}">{{ skill.name_en }}</span>
+                        <div class="skill-bar-bg"><div class="skill-bar-fill" style="width:{{ fill_pct }}%; background:{{ bar_color }};"></div></div>
+                        <span class="skill-val" style="color:{{ val_color }};">{{ sval }}</span>
+                        {% if sdelta > 0 %}<span class="skill-up">↑</span>
+                        {% elif sdelta < 0 %}<span class="skill-up" style="color:#fc8181;">↓</span>
+                        {% else %}<span class="skill-up" style="visibility:hidden">↑</span>{% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+                </div>
             </div>
             {% endif %}
         </div>
@@ -562,24 +597,6 @@ body.export-mode .skill-bar-bg  { flex: 1 1 0 !important; max-width: none !impor
                 {% endif %}
                 {% endfor %}
             </svg>
-            <!-- Primary position: abbreviated label · full name -->
-            {% set _prim_nodes = position_nodes | selectattr('is_primary', 'equalto', true) | list %}
-            {% set primary_node = _prim_nodes[0] if _prim_nodes else none %}
-            {% if primary_node %}
-            <div class="pos-primary-label">★ {{ primary_node.label }} · {{ primary_node.name }}</div>
-            {% elif player.position and player.position != "Unknown" %}
-            <div class="pos-primary-label">★ {{ player.position | replace('_', ' ') | title }}</div>
-            {% endif %}
-            <!-- Secondary positions: abbreviated -->
-            {% if player_positions and player_positions | length > 1 %}
-            <div class="pos-secondary-chips">
-                {% for pos in player_positions[1:] %}
-                {% set _sec_nodes = position_nodes | selectattr('canonical', 'equalto', pos) | list %}
-                {% set sec_node = _sec_nodes[0] if _sec_nodes else none %}
-                <span class="pos-chip">{{ sec_node.label if sec_node else pos | replace('_', ' ') | title }}</span>
-                {% endfor %}
-            </div>
-            {% endif %}
         </div>
 
     </div>

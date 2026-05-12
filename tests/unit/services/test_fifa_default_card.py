@@ -38,12 +38,17 @@ Template (TPL-*)
   TPL-07 tab-btn still references switchTab (regression guard)
   TPL-08 native-export-mode CSS class defined in the template
   TPL-09 skills-section class is ABSENT (replaced by card-body)
-  TPL-10 skill-cats CSS uses repeat(2, 1fr) — 2-column 2×2 grid, not 4-column
-  TPL-11 skill-cat nth-child order rules present for Outfield/Mental/SetPieces/Physical reorder
+  TPL-10 skill-cats CSS uses display:flex (two-column flex, not CSS grid)
+  TPL-11 skill-col class present; nth-child order rules ABSENT (flex replaced grid)
   TPL-12 pitch SVG viewBox is portrait "0 0 65 100" (not landscape "0 0 100 65")
   TPL-13 selected/primary nodes have <text> labels in SVG (pass 4 present)
-  TPL-14 primary label uses "·" separator format (abbreviation · full name)
-  TPL-15 secondary chip template uses sec_node.label (abbreviated, not full canonical)
+  TPL-14 pos-primary-label div is ABSENT (removed — SVG node labels are sufficient)
+  TPL-15 pos-secondary-chips div is ABSENT (removed — position text cleaned up)
+  TPL-16 card-logo CSS class defined in the template
+  TPL-17 card-logo img element present inside .fifa-left (above avatar)
+  TPL-18 identity-grid has Height, Weight, Foot fields (second row)
+  TPL-19 skill_categories[:2] slice used for left column (Outfield + Set Pieces)
+  TPL-20 skill_categories[2:] slice used for right column (Mental + Physical)
 
 Editor (ED-*)
   ED-01  Download PNG button has no "disabled" attribute in the default-platform branch
@@ -331,29 +336,34 @@ def test_tpl09_skills_section_class_absent():
     )
 
 
-def test_tpl10_skill_cats_two_column_grid():
-    """skills-panel must use a 2-column grid (2×2 layout), not the old 4-column layout."""
+def test_tpl10_skill_cats_flex_layout():
+    """skill-cats must use display:flex (two-column flex), not CSS grid."""
     html = _fifa_html()
-    assert "repeat(2, 1fr)" in html, (
-        ".skill-cats must use grid-template-columns: repeat(2, 1fr) for the 2×2 layout"
-    )
-    assert "repeat(4, 1fr)" not in html, (
-        ".skill-cats must NOT use 4-column grid — old layout removed"
+    # CSS must declare display:flex for .skill-cats
+    assert "display: flex; align-items: flex-start;" in html or (
+        ".skill-cats" in html and "display: flex" in html
+    ), ".skill-cats must use display: flex for the two-column flex layout"
+    # Must NOT use CSS grid for skill categories any more
+    assert "grid-template-columns: repeat(2, 1fr)" not in html, (
+        ".skill-cats must NOT use grid-template-columns: repeat(2, 1fr) — replaced by flex"
     )
 
 
-def test_tpl11_skill_cat_order_rules_present():
-    """CSS nth-child order rules must be present to reorder Outfield/Mental/SetPieces/Physical."""
+def test_tpl11_skill_col_present_nth_child_absent():
+    """skill-col class must exist; nth-child order rules must be gone (flex replaced grid)."""
     html = _fifa_html()
-    # All 4 order rules must be present
+    assert "skill-col" in html, (
+        ".skill-col class must be present — wraps left/right flex columns"
+    )
+    # All 4 old nth-child order rules must be gone
     for rule in [
         "nth-child(1) { order: 1; }",
         "nth-child(2) { order: 3; }",
         "nth-child(3) { order: 2; }",
         "nth-child(4) { order: 4; }",
     ]:
-        assert rule in html, (
-            f"CSS rule '.skill-cat:{rule}' must be in the template for 2×2 category reorder"
+        assert rule not in html, (
+            f"Old CSS rule '.skill-cat:{rule}' must be removed — flex columns replaced grid reorder"
         )
 
 
@@ -381,33 +391,79 @@ def test_tpl13_svg_text_labels_on_selected_nodes():
     )
 
 
-def test_tpl14_primary_label_abbreviated_format():
-    """Primary position label must use '·' separator: abbreviated label · full name."""
+def test_tpl14_pos_primary_label_absent():
+    """pos-primary-label div must be ABSENT — position text removed; SVG labels are sufficient."""
     html = _fifa_html()
-    # Check the primary_node.label and primary_node.name are both referenced
-    assert "primary_node.label" in html, (
-        "pos-primary-label must use primary_node.label (abbreviated form, e.g. CM)"
-    )
-    assert "primary_node.name" in html, (
-        "pos-primary-label must use primary_node.name (full name, e.g. Centre Midfield)"
-    )
-    # The separator · must be present in the label template
-    assert "·" in html, (
-        "pos-primary-label must use '·' separator between abbreviated and full name"
+    assert "pos-primary-label" not in html, (
+        "pos-primary-label class/div must be gone — position label text was removed "
+        "in Phase 4 to reduce clutter; abbreviated labels live in the SVG nodes only"
     )
 
 
-def test_tpl15_secondary_chip_abbreviated():
-    """Secondary chips must use sec_node.label (abbreviated) not full canonical names."""
+def test_tpl15_pos_secondary_chips_absent():
+    """pos-secondary-chips div must be ABSENT — secondary position chips removed."""
     html = _fifa_html()
-    # The chip template must use sec_node.label
-    assert "sec_node.label" in html, (
-        "pos-chip must use sec_node.label for abbreviated secondary position chips"
+    assert "pos-secondary-chips" not in html, (
+        "pos-secondary-chips class/div must be gone — secondary position chips removed in Phase 4"
     )
-    # Must NOT fall back to raw `pos | replace('_', ' ') | title` for ALL chips —
-    # the fallback may exist as a `else` branch, but the primary path must be abbreviated.
-    assert "sec_node" in html, (
-        "secondary chip Jinja2 variable 'sec_node' must be used to look up abbreviation"
+    assert "pos-chip" not in html, (
+        "pos-chip class must be gone — secondary position chips removed in Phase 4"
+    )
+
+
+def test_tpl16_card_logo_css_defined():
+    """card-logo CSS class must be defined in the template."""
+    html = _fifa_html()
+    assert ".card-logo" in html, (
+        ".card-logo CSS class must be defined — used for the LFA logo inside .fifa-left"
+    )
+    assert "filter: brightness(0) invert(1)" in html, (
+        "card-logo must apply filter:brightness(0)invert(1) to convert dark PNG to white"
+    )
+
+
+def test_tpl17_card_logo_img_inside_fifa_left():
+    """card-logo img element must appear inside .fifa-left, before the avatar."""
+    html = _fifa_html()
+    # Both the img with class card-logo and the condition block must be present
+    assert 'class="card-logo"' in html, (
+        "An <img class='card-logo'> element must be present inside .fifa-left"
+    )
+    # Card logo must appear before the avatar HTML element (earlier in the file).
+    # Use class="..." form to skip CSS selector occurrences.
+    logo_pos = html.find('class="card-logo"')
+    avatar_pos = html.find('class="fifa-avatar"')
+    assert logo_pos < avatar_pos, (
+        "card-logo img must appear before fifa-avatar in the template (logo above avatar)"
+    )
+
+
+def test_tpl18_identity_grid_has_height_weight_foot():
+    """identity-grid must render Height, Weight, and Foot fields (second row)."""
+    html = _fifa_html()
+    for label in ("Height", "Weight", "Foot"):
+        assert label in html, (
+            f"identity-grid must contain a '{label}' id-label field — "
+            "added as the second row (player physical attributes)"
+        )
+    assert "player_height_cm" in html, "player_height_cm must be referenced in the template"
+    assert "player_weight_kg" in html, "player_weight_kg must be referenced in the template"
+    assert "player_preferred_foot" in html, "player_preferred_foot must be referenced in the template"
+
+
+def test_tpl19_left_skill_column_uses_first_two_categories():
+    """Left skill-col must iterate skill_categories[:2] (Outfield + Set Pieces)."""
+    html = _fifa_html()
+    assert "skill_categories[:2]" in html, (
+        "Left .skill-col must use skill_categories[:2] to render Outfield + Set Pieces"
+    )
+
+
+def test_tpl20_right_skill_column_uses_last_two_categories():
+    """Right skill-col must iterate skill_categories[2:] (Mental + Physical)."""
+    html = _fifa_html()
+    assert "skill_categories[2:]" in html, (
+        "Right .skill-col must use skill_categories[2:] to render Mental + Physical Fitness"
     )
 
 

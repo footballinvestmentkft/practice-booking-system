@@ -10,7 +10,7 @@ Coverage:
   EX-05  valid platform (og)               → 200
   EX-06  missing platform param → defaults to "instagram_square", 200
   EX-07  invalid platform       → 422
-  EX-08  "default" platform (not exportable) → 422
+  EX-08  "default" platform → 200 (native FIFA Classic export via ?native_export=1)
   EX-09  player not found       → 404
   EX-10  no active LFA license  → 404
   EX-11  student exports other player → 403
@@ -197,10 +197,10 @@ class TestExportValidation:
         r = _export(client, "foobar")
         assert r.status_code == 422
 
-    def test_ex08_default_platform_returns_422(self, client):
-        """'default' has no canvas size — it is not an export target."""
+    def test_ex08_default_platform_returns_200(self, client):
+        """'default' is the native FIFA Classic export; uses ?native_export=1 render path."""
         r = _export(client, "default")
-        assert r.status_code == 422
+        assert r.status_code == 200
 
     def test_ex09_player_not_found_returns_404(self, client):
         from app.main import app
@@ -424,11 +424,17 @@ class TestExportErrorPaths:
 class TestCanvasSizeRegistry:
 
     def test_all_presets_have_canvas_size(self):
-        """Every non-default preset in card_platform_service must have a CANVAS_SIZES entry."""
+        """Every non-native preset must have a CANVAS_SIZES entry.
+
+        NATIVE ('default') has an entry too — it stores the documented baseline for
+        the native-export BoundingClientRect clip path (not a template canvas target).
+        """
         from app.services.card_platform_service import PLATFORM_PRESETS, LayoutStrategy
         for pid, preset in PLATFORM_PRESETS.items():
             if preset.layout_strategy == LayoutStrategy.NATIVE:
-                assert pid not in CANVAS_SIZES, f"'default' must not be in CANVAS_SIZES"
+                # NATIVE platforms may or may not have a CANVAS_SIZES entry.
+                # 'default' intentionally has one (820×800 documented baseline).
+                pass
             else:
                 assert pid in CANVAS_SIZES, f"Preset {pid!r} missing from CANVAS_SIZES"
 
