@@ -415,11 +415,25 @@ def test_tpl15_pos_secondary_chips_absent():
 
 
 def test_tpl16_card_watermark_css_defined_card_logo_absent():
-    """card-watermark CSS must be defined; old card-logo CSS must be gone."""
+    """card-watermark CSS must define full-panel layout; old card-logo CSS must be gone."""
     html = _fifa_html()
     assert ".card-watermark" in html, (
-        ".card-watermark CSS class must be defined — sponsor logo watermark inside .fifa-right"
+        ".card-watermark CSS class must be defined — full-panel sponsor logo inside .fifa-right"
     )
+    # Full-panel layout properties
+    assert "inset: 0" in html, (
+        ".card-watermark must use inset:0 to fill the entire .fifa-right panel"
+    )
+    assert "width: 100%" in html, (
+        ".card-watermark must use width:100% for full-panel coverage"
+    )
+    assert "height: 100%" in html, (
+        ".card-watermark must use height:100% for full-panel coverage"
+    )
+    assert "opacity: 0.18" in html, (
+        ".card-watermark opacity must be 0.18 — characterful branding, not a faint corner hint"
+    )
+    # Removed corner-position properties must be absent from the watermark rule
     assert ".card-logo" not in html, (
         ".card-logo CSS must be removed — replaced by .card-watermark in .fifa-right"
     )
