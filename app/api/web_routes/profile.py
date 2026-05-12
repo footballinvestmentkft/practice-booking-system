@@ -23,6 +23,7 @@ from ...models.semester import Semester, SemesterStatus
 from ...utils.age_requirements import validate_specialization_for_age
 from ...utils.country_codes import COUNTRY_CODES, COUNTRY_OPTIONS, register_filters
 from ...utils.dominant_foot import calculate_dominant_badge
+from ...utils.football_positions import POSITIONS_21, VALID_POSITION_VALUES, positions_grouped
 from ...skills_config import SKILL_CATEGORIES
 from ...services.card_theme_service import get_theme as _get_theme
 from ...services.card_platform_service import get_preset as _get_platform_preset
@@ -155,14 +156,10 @@ async def profile_page(
 
 
 # ── LFA Football Player profile constants ─────────────────────────────────────
+# Derived from football_positions.py — single source of truth.
+# Adding a new position to POSITIONS_21 automatically propagates here.
 
-_VALID_POSITIONS: frozenset[str] = frozenset({
-    "striker", "centre_forward", "left_wing", "right_wing", "second_striker",
-    "attacking_midfield", "centre_midfield", "defensive_midfield",
-    "left_midfield", "right_midfield",
-    "centre_back", "left_back", "right_back", "left_wing_back", "right_wing_back",
-    "goalkeeper", "sweeper_keeper",
-})
+_VALID_POSITIONS: frozenset[str] = VALID_POSITION_VALUES
 
 _VALID_GOALS: frozenset[str] = frozenset({
     "improve_skills", "play_higher_level", "become_professional",
@@ -181,31 +178,10 @@ _GOAL_LABELS: dict[str, str] = {
 }
 
 _POSITION_LABELS: dict[str, str] = {
-    "striker":            "Striker (ST)",
-    "centre_forward":     "Centre Forward (CF)",
-    "left_wing":          "Left Wing (LW)",
-    "right_wing":         "Right Wing (RW)",
-    "second_striker":     "Second Striker (SS)",
-    "attacking_midfield": "Attacking Midfielder (AM)",
-    "centre_midfield":    "Central Midfielder (CM)",
-    "defensive_midfield": "Defensive Midfielder (DM)",
-    "left_midfield":      "Left Midfielder (LM)",
-    "right_midfield":     "Right Midfielder (RM)",
-    "centre_back":        "Centre Back (CB)",
-    "left_back":          "Left Back (LB)",
-    "right_back":         "Right Back (RB)",
-    "left_wing_back":     "Left Wing-Back (LWB)",
-    "right_wing_back":    "Right Wing-Back (RWB)",
-    "goalkeeper":         "Goalkeeper (GK)",
-    "sweeper_keeper":     "Sweeper Keeper (SK)",
+    p["value"]: f"{p['label']} ({p['short']})" for p in POSITIONS_21
 }
 
-_POSITION_GROUPS: list[dict] = [
-    {"label": "Forwards",    "positions": ["striker", "centre_forward", "left_wing", "right_wing", "second_striker"]},
-    {"label": "Midfielders", "positions": ["attacking_midfield", "centre_midfield", "defensive_midfield", "left_midfield", "right_midfield"]},
-    {"label": "Defenders",   "positions": ["centre_back", "left_back", "right_back", "left_wing_back", "right_wing_back"]},
-    {"label": "Goalkeepers", "positions": ["goalkeeper", "sweeper_keeper"]},
-]
+_POSITION_GROUPS: list[dict] = positions_grouped()
 
 
 def _lfa_license_or_redirect(
