@@ -346,6 +346,7 @@ def distribute_rewards_for_user(
                 update_lateral_component,
                 aggregate_lateral_components,
             )
+            from app.skills_config import SKILL_LATERALITY
 
             # R04: Lock UserLicense row before reading football_skills JSONB.
             # Prevents two concurrent distributions from both reading stale skills,
@@ -389,23 +390,48 @@ def distribute_rewards_for_user(
                                 continue
 
                             # ── Lateral component update (F4b) ────────────────────────
-                            # Apply this tournament's EMA delta to the foot-context bucket.
-                            # update_lateral_component initialises the bucket from the
-                            # pre-tournament current_level on first contact so that
-                            # existing skill history is preserved.
+                            # Only foot-domain skills track lateral (right/left/neutral)
+                            # buckets.  hand and none skills carry the EMA current_level
+                            # directly — no foot bucket is created for them.
                             _skill_delta = float(_raw_deltas.get(skill_key, 0.0))
                             _skill_fc = (
                                 _preset.foot_context_for(skill_key)
                                 if _preset is not None
                                 else _foot_ctx
                             )
-                            entry = update_lateral_component(entry, _skill_fc, _skill_delta)
+                            _lat_domain = SKILL_LATERALITY.get(skill_key)
 
-                            # Re-aggregate current_level from all lateral components.
-                            # Falls back to the EMA-derived sdata["current_level"] when
-                            # no lateral_components exist (backward-compatible old records).
-                            _agg = aggregate_lateral_components(entry, _right_ft, _left_ft)
-                            entry["current_level"] = _agg
+                            if _lat_domain is None:
+                                # Configuration error: skill exists in football_skills but
+                                # is absent from SKILL_LATERALITY.  Log and skip lateral
+                                # update — do not silently create a foot bucket.
+                                logger.warning(
+                                    f"Unknown laterality_domain for skill '{skill_key}': "
+                                    f"skipping lateral update. Add skill to SKILL_LATERALITY."
+                                )
+                                entry["current_level"] = float(
+                                    sdata.get("current_level",
+                                              entry.get("current_level", 60.0))
+                                )
+                            elif _lat_domain == "foot":
+                                entry = update_lateral_component(entry, _skill_fc, _skill_delta)
+                                # Re-aggregate current_level from all lateral components.
+                                # Falls back to EMA-derived value when no components exist
+                                # (backward-compatible with old records).
+                                _agg = aggregate_lateral_components(entry, _right_ft, _left_ft)
+                                entry["current_level"] = _agg
+                            else:
+                                # "hand" or "none": EMA current_level is authoritative.
+                                # No foot bucket is created; existing stale neutral buckets
+                                # (if any) are left untouched in JSONB but never updated.
+                                logger.debug(
+                                    f"Lateral update skipped for '{skill_key}' "
+                                    f"(laterality_domain='{_lat_domain}')"
+                                )
+                                entry["current_level"] = float(
+                                    sdata.get("current_level",
+                                              entry.get("current_level", 60.0))
+                                )
 
                             # ── Global tracking fields (unchanged semantics) ──────────
                             entry["tournament_delta"] = sdata["tournament_delta"]
