@@ -184,6 +184,15 @@ async def admin_tournament_edit_page(
         teams = db.query(Team).filter(Team.id.in_(team_ids)).all()
         enrolled_teams = {t.id: t.name for t in teams}
 
+    # Pitch name map for session list display (pitch_id → name) — must be built
+    # before the list comprehension below that references it.
+    from app.models.pitch import Pitch as PitchModel
+    _session_pitch_ids = {s.pitch_id for s in all_match_sessions if s.pitch_id}
+    pitch_name_map: dict[int, str] = {}
+    if _session_pitch_ids:
+        for p in db.query(PitchModel).filter(PitchModel.id.in_(_session_pitch_ids)).all():
+            pitch_name_map[p.id] = p.name
+
     sessions_result_status = [
         {
             "id": s.id,
@@ -241,14 +250,6 @@ async def admin_tournament_edit_page(
         {t.id: t for t in db.query(Team).filter(Team.id.in_(_team_ids_in_rankings)).all()}
         if _team_ids_in_rankings else {}
     )
-
-    # Pitch name map for session list display (pitch_id → name)
-    from app.models.pitch import Pitch as PitchModel
-    _session_pitch_ids = {s.pitch_id for s in all_match_sessions if s.pitch_id}
-    pitch_name_map: dict[int, str] = {}
-    if _session_pitch_ids:
-        for p in db.query(PitchModel).filter(PitchModel.id.in_(_session_pitch_ids)).all():
-            pitch_name_map[p.id] = p.name
 
     # Instructor roster (Section 4.5)
     instructor_roster = _ip_service.get_roster(db, tournament_id)
