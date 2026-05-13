@@ -516,7 +516,8 @@ class TestWelcomeCardFifaLogoAudit:
 
     def test_export_square_has_app_logo_in_sponsor_slot(self, square_export_src):
         assert "app_logo_url" in square_export_src
-        assert "elif app_logo_url" in square_export_src
+        # v8: combined `or` condition — sponsor takes priority via `sponsor_logo_url or app_logo_url`
+        assert "sponsor_logo_url or app_logo_url" in square_export_src
 
     def test_export_square_sponsor_logo_takes_priority(self, square_export_src):
         """sponsor_logo_url branch must be checked before app_logo_url."""
