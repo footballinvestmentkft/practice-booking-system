@@ -1,0 +1,575 @@
+{% extends "student_base.html" %}
+
+{% block title %}LFA Player Profile - LFA Education Center{% endblock %}
+
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '🪪' %}
+{% set _page_name = 'Player Profile' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        color: var(--hub-text-primary);
+        margin-bottom: 0.4rem;
+    }
+
+    .page-subtitle {
+        color: var(--hub-text-muted);
+        font-size: 1rem;
+    }
+
+    .page-header-actions {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .btn {
+        padding: 0.75rem 1.4rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .btn-primary   { background: var(--hub-btn-bg); color: var(--hub-btn-text); }
+    .btn-secondary { background: #e2e8f0; color: #2d3748; }
+    .btn-sm        { padding: 0.45rem 0.9rem; font-size: 0.85rem; }
+
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    }
+
+    .cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .card {
+        background: var(--hub-card-bg);
+        border-radius: 14px;
+        padding: 1.75rem;
+        box-shadow: var(--hub-card-shadow);
+    }
+
+    .card h2 {
+        font-size: 1.25rem;
+        color: var(--hub-text-primary);
+        margin-bottom: 1.2rem;
+        padding-bottom: 0.65rem;
+        border-bottom: 2px solid var(--hub-divider);
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--hub-divider);
+        gap: 1rem;
+    }
+
+    .info-row:last-child { border-bottom: none; }
+
+    .info-label {
+        font-weight: 600;
+        color: var(--hub-text-secondary);
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .info-value {
+        color: var(--hub-text-primary);
+        text-align: right;
+        font-size: 0.95rem;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.3rem 0.7rem;
+        border-radius: 6px;
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
+    .badge-pos     { background: #ebf4ff; color: #2b6cb0; }
+    .badge-sec-pos { background: #f0fff4; color: #276749; font-size: 0.78rem; }
+    .badge-foot    { background: #fefcbf; color: #744210; }
+
+    .foot-bar-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+
+    .foot-bar-row {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+    }
+
+    .foot-bar-label {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--hub-text-secondary);
+        width: 60px;
+        flex-shrink: 0;
+    }
+
+    .foot-bar-bg {
+        flex: 1;
+        height: 10px;
+        background: var(--hub-divider);
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .foot-bar-fill {
+        height: 100%;
+        border-radius: 5px;
+        background: var(--hub-btn-bg);
+    }
+
+    .foot-bar-pct {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--hub-text-primary);
+        width: 38px;
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    .foot-note {
+        font-size: 0.78rem;
+        color: var(--hub-text-muted);
+        margin-top: 0.5rem;
+    }
+
+    /* Photo card */
+    .photo-thumb-wrap {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .photo-thumb {
+        width: 72px;
+        height: 72px;
+        border-radius: 10px;
+        object-fit: cover;
+        border: 1px solid var(--hub-divider);
+    }
+
+    .photo-placeholder {
+        width: 72px;
+        height: 72px;
+        border-radius: 10px;
+        border: 2px dashed #cbd5e0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        color: #a0aec0;
+    }
+
+    .photo-meta {
+        font-size: 0.85rem;
+        color: var(--hub-text-muted);
+    }
+
+    /* Welcome card CTAs */
+    .wc-cta-row {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+    }
+
+    /* Back link */
+    .back-link {
+        display: inline-block;
+        font-size: 0.85rem;
+        color: var(--hub-text-muted);
+        text-decoration: none;
+        margin-bottom: 1.5rem;
+    }
+
+    .back-link:hover { color: var(--hub-text-secondary); }
+
+    /* ── Positions card — view / edit modes ───────────────────────────────── */
+    .pos-view-badges  { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 1rem; }
+    .pos-view-section { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+    .pos-section-label {
+        font-size: 0.7rem; font-weight: 700; color: var(--hub-text-muted);
+        text-transform: uppercase; letter-spacing: 0.06em;
+        width: 44px; flex-shrink: 0;
+    }
+    .pos-badge-primary {
+        display: inline-block; padding: 0.35rem 0.85rem; border-radius: 7px;
+        font-size: 0.88rem; font-weight: 800;
+        background: var(--hub-btn-bg); color: var(--hub-btn-text);
+    }
+    .pos-badge-secondary {
+        display: inline-block; padding: 0.3rem 0.7rem; border-radius: 6px;
+        font-size: 0.8rem; font-weight: 600;
+        background: #e9f5ff; color: #2b6cb0; border: 1px solid #bee3f8;
+    }
+    .pos-empty { color: var(--hub-text-muted); font-size: 0.9rem; margin-bottom: 1rem; }
+    .pos-alert {
+        padding: 0.65rem 0.9rem; border-radius: 8px;
+        font-size: 0.85rem; font-weight: 600; margin-bottom: 1rem;
+    }
+    .pos-alert-success { background: #f0fff4; color: #276749; border: 1px solid #9ae6b4; }
+    .pos-alert-error   { background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; }
+    .pos-action-row    { display: flex; gap: 0.6rem; margin-top: 0.75rem; flex-wrap: wrap; }
+
+    /* Profile-scoped: override onboarding yellow tokens in the pitch selector */
+    #ps-profile-mount .ps-info-panel {
+        background: #f8fafc;
+        border-color: var(--hub-divider, #e2e8f0);
+    }
+    #ps-profile-mount .ps-counter {
+        background: #f0f4f8;
+        border-color: var(--hub-divider, #e2e8f0);
+        color: var(--hub-text-primary, #1a202c);
+    }
+    #ps-profile-mount .ps-chip {
+        background: #e9f5ff; border-color: #bee3f8; color: #2b6cb0;
+    }
+    #ps-profile-mount .ps-primary-label { color: var(--hub-text-secondary, #4a5568); }
+    #ps-profile-mount .ps-primary-value { color: var(--hub-text-primary, #1a202c); }
+
+    /* Edit mode reveal animation */
+    @keyframes pos-edit-reveal {
+        from { opacity: 0; transform: translateY(-4px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .pos-edit-entering { animation: pos-edit-reveal 0.18s ease-out; }
+
+    @media (max-width: 700px) {
+        .cards-grid { grid-template-columns: 1fr; }
+        .page-header { flex-direction: column; align-items: flex-start; }
+    }
+
+    /* Mobile: sticky Save/Cancel so buttons stay visible on tall portrait pitch */
+    @media (max-width: 640px) {
+        .pos-action-row {
+            position: sticky;
+            bottom: 0;
+            background: var(--hub-card-bg, #fff);
+            padding: 0.5rem 0 0.25rem;
+            border-top: 1px solid var(--hub-divider, #e2e8f0);
+            z-index: 5;
+            margin-top: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="container">
+
+    <a class="back-link" href="/profile">← Back to Profile</a>
+
+    <div class="page-header">
+        <div>
+            <h2 class="page-title">🪪 LFA Player Profile</h2>
+            <p class="page-subtitle">{{ user.name }} — LFA Football Player specialization</p>
+        </div>
+        <div class="page-header-actions">
+            <a href="/profile/lfa-football-player/edit" class="btn btn-primary">✏️ Edit Profile</a>
+            <a href="/profile/onboarding-card" class="btn btn-secondary">🎴 Welcome Card</a>
+            <a href="/dashboard/lfa-football-player" class="btn btn-secondary">⚽ Dashboard</a>
+        </div>
+    </div>
+
+    <div class="cards-grid">
+
+        <!-- Player Profile -->
+        <div class="card">
+            <h2>⚽ Player Profile</h2>
+
+            {% if primary_pos %}
+            <div class="info-row">
+                <span class="info-label">Primary Position</span>
+                <span class="info-value">
+                    <span class="badge badge-pos">
+                        {{ position_labels.get(primary_pos, primary_pos.replace('_', ' ').title()) }}
+                    </span>
+                </span>
+            </div>
+            {% endif %}
+
+            {% if secondary_pos %}
+            <div class="info-row">
+                <span class="info-label">Secondary Positions</span>
+                <span class="info-value" style="display:flex; flex-wrap:wrap; gap:0.3rem; justify-content:flex-end;">
+                    {% for pos in secondary_pos %}
+                    <span class="badge badge-sec-pos">
+                        {{ position_labels.get(pos, pos.replace('_', ' ').title()) }}
+                    </span>
+                    {% endfor %}
+                </span>
+            </div>
+            {% endif %}
+
+            {% if ms.preferred_foot %}
+            <div class="info-row">
+                <span class="info-label">Preferred Foot</span>
+                <span class="info-value">
+                    <span class="badge badge-foot">
+                        {{ ms.preferred_foot | capitalize }}
+                    </span>
+                </span>
+            </div>
+            {% endif %}
+
+            {% if ms.height_cm %}
+            <div class="info-row">
+                <span class="info-label">Height</span>
+                <span class="info-value">{{ ms.height_cm }} cm</span>
+            </div>
+            {% endif %}
+
+            {% if ms.weight_kg %}
+            <div class="info-row">
+                <span class="info-label">Weight</span>
+                <span class="info-value">{{ ms.weight_kg }} kg</span>
+            </div>
+            {% endif %}
+
+            {% if goal_label %}
+            <div class="info-row">
+                <span class="info-label">Goal</span>
+                <span class="info-value">{{ goal_label }}</span>
+            </div>
+            {% endif %}
+
+            <div class="info-row">
+                <span class="info-label">Self-Assessment Avg</span>
+                <span class="info-value">
+                    {% if average_skill_level is not none %}
+                        {{ average_skill_level | round(1) }} / 100
+                    {% else %}
+                        <span style="color: var(--hub-text-muted);">N/A</span>
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Member since</span>
+                <span class="info-value">
+                    {% if onboarding_completed_at %}
+                        {{ onboarding_completed_at[:10] }}
+                    {% else %}
+                        <span style="color: var(--hub-text-muted);">—</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+
+        <!-- 📍 Positions (editable via pitch selector) -->
+        <div class="card" id="card-positions">
+            <h2>📍 Positions</h2>
+
+            {% if pos_updated %}
+            <div class="pos-alert pos-alert-success">✓ Positions updated successfully.</div>
+            {% endif %}
+
+            <!-- View mode (default) -->
+            <div id="pos-view-mode">
+                {% if primary_pos %}
+                <div class="pos-view-badges">
+                    <div class="pos-view-section">
+                        <span class="pos-section-label">Primary</span>
+                        <span class="pos-badge-primary">
+                            {{ position_labels.get(primary_pos, primary_pos.replace('_', ' ').title()) }}
+                        </span>
+                    </div>
+                    {% if secondary_pos %}
+                    <div class="pos-view-section">
+                        <span class="pos-section-label">Also</span>
+                        {% for sp in secondary_pos %}
+                        <span class="pos-badge-secondary">
+                            {{ position_labels.get(sp, sp.replace('_', ' ').title()) }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="pos-empty">No positions set yet.</p>
+                {% endif %}
+                <button class="btn btn-secondary btn-sm" onclick="showPosEdit()">✏️ Edit Positions</button>
+            </div>
+
+            <!-- Edit mode (hidden until toggled) -->
+            <div id="pos-edit-mode" style="display:none;">
+                {% if pos_error %}
+                <div class="pos-alert pos-alert-error">
+                    {% if pos_error == "invalid_primary" %}Invalid primary position selected.
+                    {% elif pos_error == "invalid_count" %}Select between 1 and 4 positions total.
+                    {% elif pos_error == "invalid_format" %}Invalid form data — please try again.
+                    {% elif pos_error == "invalid_position" %}One or more positions are not recognised.
+                    {% elif pos_error == "primary_not_first" %}Primary position must be selected first.
+                    {% else %}Something went wrong — please try again.
+                    {% endif %}
+                </div>
+                {% endif %}
+                <form method="post" action="/profile/lfa-football-player/positions" id="pos-form">
+                    <input type="hidden" name="position"     id="ps-input-primary" value="">
+                    <input type="hidden" name="positions_raw" id="ps-input-raw"    value="[]">
+                    <div id="ps-profile-mount"></div>
+                    <div class="pos-action-row">
+                        <button type="submit" class="btn btn-primary btn-sm"
+                                id="pos-save-btn" disabled>💾 Save Changes</button>
+                        <button type="button" class="btn btn-secondary btn-sm"
+                                onclick="hidePosEdit()">✕ Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Foot Assessment (read-only) -->
+        <div class="card">
+            <h2>🦶 Foot Assessment</h2>
+            {% set rf = license.right_foot_score %}
+            {% set lf = license.left_foot_score %}
+            {% if rf is not none or lf is not none %}
+            <div class="foot-bar-wrap">
+                <div class="foot-bar-row">
+                    <span class="foot-bar-label">Right</span>
+                    <div class="foot-bar-bg">
+                        <div class="foot-bar-fill" style="width:{{ [[(rf or 0), 0] | max, 100] | min }}%;"></div>
+                    </div>
+                    <span class="foot-bar-pct">{{ (rf or 0) | round(1) }}</span>
+                </div>
+                <div class="foot-bar-row">
+                    <span class="foot-bar-label">Left</span>
+                    <div class="foot-bar-bg">
+                        <div class="foot-bar-fill" style="width:{{ [[(lf or 0), 0] | max, 100] | min }}%;"></div>
+                    </div>
+                    <span class="foot-bar-pct">{{ (lf or 0) | round(1) }}</span>
+                </div>
+            </div>
+            <p class="foot-note">Read-only assessment data — set during onboarding. Not editable via profile. Separate from EMA skill ratings.</p>
+            {% else %}
+            <p style="color: var(--hub-text-muted); font-size:0.9rem;">No foot assessment data recorded during onboarding.</p>
+            {% endif %}
+        </div>
+
+        <!-- Card Photo -->
+        <div class="card">
+            <h2>📸 Card Photo</h2>
+            <div class="photo-thumb-wrap">
+                {% if license.player_card_photo_url %}
+                <img class="photo-thumb"
+                     src="{{ license.player_card_photo_url }}"
+                     alt="Card photo">
+                <div class="photo-meta">
+                    <strong>Photo uploaded</strong><br>
+                    Used on Welcome Card and Player Card.
+                </div>
+                {% else %}
+                <div class="photo-placeholder">📸</div>
+                <div class="photo-meta">
+                    No photo yet.<br>
+                    Upload from the Welcome Card page.
+                </div>
+                {% endif %}
+            </div>
+            <a href="/profile/onboarding-card" class="btn btn-secondary btn-sm">🎴 Manage in Welcome Card</a>
+        </div>
+
+        <!-- Welcome Card -->
+        <div class="card">
+            <h2>🎴 Welcome Card</h2>
+            <p style="font-size:0.85rem; color: var(--hub-text-secondary); margin-bottom:0.5rem;">
+                Your onboarding self-assessment card — a personal snapshot from when you joined.
+            </p>
+            <p style="font-size:0.82rem; color: var(--hub-text-muted); margin-bottom:1rem;">
+                Not the same as the regular Player Card. Based on self-assessment, not EMA scores.
+            </p>
+            <div class="wc-cta-row">
+                <a href="/profile/onboarding-card" class="btn btn-primary btn-sm">View Welcome Card</a>
+                <a href="/profile/onboarding-card/export?platform=instagram_square"
+                   class="btn btn-secondary btn-sm">⬇️ Download</a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="/static/js/pitch-selector.js"></script>
+<script>
+(function () {
+    'use strict';
+    var _ps = null;
+    var _currentPositions = {{ player_positions | tojson }};
+
+    function _updateInputs(primary, all) {
+        document.getElementById('ps-input-primary').value = primary || '';
+        document.getElementById('ps-input-raw').value     = JSON.stringify(all || []);
+        document.getElementById('pos-save-btn').disabled  = !primary;
+    }
+
+    window.showPosEdit = function () {
+        var editMode = document.getElementById('pos-edit-mode');
+        document.getElementById('pos-view-mode').style.display = 'none';
+        editMode.style.display = '';
+        editMode.classList.add('pos-edit-entering');
+        setTimeout(function () { editMode.classList.remove('pos-edit-entering'); }, 220);
+        if (!_ps) {
+            _ps = new PitchSelector('ps-profile-mount', function (primary, all) {
+                _updateInputs(primary, all);
+            });
+            if (_currentPositions.length > 0) {
+                _ps.setPositions(_currentPositions);
+            }
+        }
+    };
+
+    window.hidePosEdit = function () {
+        document.getElementById('pos-view-mode').style.display = '';
+        document.getElementById('pos-edit-mode').style.display = 'none';
+        if (_ps) {
+            document.getElementById('ps-profile-mount').innerHTML = '';
+            _ps = null;
+        }
+    };
+
+    {% if pos_error %}
+    /* Auto-open edit mode when returning from a validation error */
+    document.addEventListener('DOMContentLoaded', function () { showPosEdit(); });
+    {% endif %}
+}());
+</script>
+{% endblock %}

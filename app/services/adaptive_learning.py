@@ -11,9 +11,12 @@ from ..models.quiz import (
 )
 
 
+_SESSION_DUE_CAP = 3
+
+
 class AdaptiveLearningService:
     """Adaptív tanulási algoritmusok és logika"""
-    
+
     def __init__(self, db: Session):
         self.db = db
     def start_adaptive_session(
@@ -30,7 +33,7 @@ class AdaptiveLearningService:
             category=category,
             language=language,
             module_prefix=module_prefix,
-            target_difficulty=self._calculate_target_difficulty(user_id, category),
+            target_difficulty=self._calculate_target_difficulty(user_id, category, language=language),
             performance_trend=0.0,
             session_time_limit_seconds=session_duration_seconds,
             session_start_time=datetime.now(timezone.utc)
@@ -53,8 +56,10 @@ class AdaptiveLearningService:
         if self._is_session_time_expired(session):
             return {"session_complete": True, "reason": "time_expired"}
 
-        # Get user's performance data
-        performance_data = self._get_user_performance_data(user_id, session.category)
+        # Get user's performance data (language-scoped)
+        performance_data = self._get_user_performance_data(
+            user_id, session.category, language=session.language
+        )
 
         # Select question based on adaptive algorithm
         candidate_questions = self._get_candidate_questions(
@@ -65,25 +70,21 @@ class AdaptiveLearningService:
         if not candidate_questions:
             return {"session_complete": True, "reason": "pool_exhausted"}
 
-        # Exclude already-seen questions at service level, before adaptive selection.
-        available_questions = (
-            [q for q in candidate_questions if q.id not in exclude_ids]
-            if exclude_ids
-            else candidate_questions
-        )
-        if not available_questions:
-            return {"session_complete": True, "reason": "all_seen"}
-
-        # Apply adaptive selection algorithm
-        selected_question = self._select_adaptive_question(
-            available_questions,
-            performance_data,
-            session
+        # Apply weighted selection (recency penalty replaces hard exclude for small pools)
+        selected_question = self._select_weighted_question(
+            candidate_questions, performance_data, session, exclude_ids=exclude_ids
         )
 
         if not selected_question:
             return {"session_complete": True, "reason": "pool_exhausted"}
-        
+
+        # Increment session_due_shown when a due question is served
+        due_ids = {p.question_id for p in performance_data["due_for_review"]}
+        was_due = selected_question.id in due_ids
+        if was_due:
+            session.session_due_shown = (session.session_due_shown or 0) + 1
+            self.db.commit()
+
         # Return question with session info
         return {
             "id": selected_question.id,
@@ -91,7 +92,8 @@ class AdaptiveLearningService:
             "options": [{"id": opt.id, "text": opt.option_text} for opt in selected_question.answer_options],
             "type": selected_question.question_type.value if selected_question.question_type else "multiple_choice",
             "difficulty": self._get_question_difficulty(selected_question.id),
-            "session_time_remaining": self._get_session_time_remaining(session)
+            "session_time_remaining": self._get_session_time_remaining(session),
+            "was_due": was_due,
         }
     
     def record_answer(self, user_id: int, session_id: int, question_id: int, 
@@ -168,18 +170,23 @@ class AdaptiveLearningService:
             "final_difficulty": session.target_difficulty
         }
     
-    def get_user_learning_analytics(self, user_id: int, category: QuizCategory = None) -> Dict:
+    def get_user_learning_analytics(
+        self, user_id: int, category: QuizCategory = None, language: str | None = None
+    ) -> Dict:
         """Felhasználói tanulási analitika"""
-        
+
         # Get overall performance
         query = self.db.query(UserQuestionPerformance).filter(
             UserQuestionPerformance.user_id == user_id
         )
-        
-        if category:
-            # Join with questions to filter by category
-            query = query.join(QuizQuestion).join(Quiz).filter(Quiz.category == category)
-        
+
+        if category or language:
+            query = query.join(QuizQuestion).join(Quiz)
+            if category:
+                query = query.filter(Quiz.category == category)
+            if language:
+                query = query.filter(Quiz.language == language)
+
         performances = query.all()
         
         if not performances:
@@ -219,9 +226,11 @@ class AdaptiveLearningService:
     
     # Private helper methods
     
-    def _calculate_target_difficulty(self, user_id: int, category: QuizCategory) -> float:
+    def _calculate_target_difficulty(
+        self, user_id: int, category: QuizCategory, language: str = "en"
+    ) -> float:
         """Célnehézség számítása felhasználói teljesítmény alapján"""
-        analytics = self.get_user_learning_analytics(user_id, category)
+        analytics = self.get_user_learning_analytics(user_id, category, language=language)
         
         base_difficulty = 0.5  # Default medium difficulty
         
@@ -237,20 +246,25 @@ class AdaptiveLearningService:
         # Clamp between 0.1 and 0.9
         return max(0.1, min(0.9, base_difficulty))
     
-    def _get_user_performance_data(self, user_id: int, category: QuizCategory) -> Dict:
+    def _get_user_performance_data(
+        self, user_id: int, category: QuizCategory, language: str = "en"
+    ) -> Dict:
         """Felhasználói teljesítményadatok összegyűjtése"""
         performances = self.db.query(UserQuestionPerformance).join(QuizQuestion).join(Quiz).filter(
             and_(
                 UserQuestionPerformance.user_id == user_id,
-                Quiz.category == category
+                Quiz.category == category,
+                Quiz.language == language,
             )
         ).all()
-        
+
+        now = datetime.now(timezone.utc)
         return {
+            "all_performances": performances,
             "weak_concepts": [p for p in performances if p.mastery_level < 0.6],
             "strong_concepts": [p for p in performances if p.mastery_level > 0.8],
-            "due_for_review": [p for p in performances if p.next_review_at and 
-                             p.next_review_at <= datetime.now(timezone.utc)]
+            "due_for_review": [p for p in performances if p.next_review_at and
+                               p.next_review_at <= now],
         }
     
     def _get_candidate_questions(
@@ -297,26 +311,54 @@ class AdaptiveLearningService:
 
         return questions
     
-    def _select_adaptive_question(self, candidate_questions: List[QuizQuestion], 
-                                performance_data: Dict, session: AdaptiveLearningSession) -> QuizQuestion:
-        """Adaptív kérdésválasztó algoritmus"""
-        
-        # Prioritize questions due for review
-        due_questions = [q for q in candidate_questions 
-                        if any(p.question_id == q.id for p in performance_data["due_for_review"])]
-        
-        if due_questions:
-            return random.choice(due_questions)
-            
-        # Focus on weak concepts
-        weak_concept_questions = [q for q in candidate_questions 
-                                if any(p.question_id == q.id for p in performance_data["weak_concepts"])]
-        
-        if weak_concept_questions and random.random() < 0.7:  # 70% chance to focus on weak areas
-            return random.choice(weak_concept_questions)
-        
-        # Otherwise, random selection from candidates
-        return random.choice(candidate_questions)
+    def _calculate_question_weight(
+        self,
+        q_id: int,
+        due_ids: set,
+        perf_map: dict,
+        session_due_shown: int,
+        exclude_ids: set,
+    ) -> float:
+        perf = perf_map.get(q_id)
+        mastery = perf.mastery_level if perf else None
+        dw = perf.difficulty_weight if perf else 1.5
+        in_due = q_id in due_ids and session_due_shown < _SESSION_DUE_CAP
+
+        if in_due:
+            w = 2.5
+        elif q_id in due_ids:
+            w = min(dw, 1.8)
+        elif mastery is not None and mastery < 0.6:
+            w = min(dw, 1.8)
+        elif mastery is None:
+            w = 1.2
+        else:
+            w = 1.0
+
+        if q_id in exclude_ids:
+            w *= 0.1
+
+        return max(0.05, w)
+
+    def _select_weighted_question(
+        self,
+        candidates: List[QuizQuestion],
+        performance_data: Dict,
+        session: AdaptiveLearningSession,
+        exclude_ids: set | None = None,
+    ) -> Optional[QuizQuestion]:
+        """Súlyozott véletlenszerű kérdésválasztó — session cap és recency penalty."""
+        if not candidates:
+            return None
+        due_ids = {p.question_id for p in performance_data["due_for_review"]}
+        perf_map = {p.question_id: p for p in performance_data["all_performances"]}
+        session_due_shown = session.session_due_shown or 0
+        exc = exclude_ids or set()
+        weights = [
+            self._calculate_question_weight(q.id, due_ids, perf_map, session_due_shown, exc)
+            for q in candidates
+        ]
+        return random.choices(candidates, weights=weights, k=1)[0]
     
     def _calculate_performance_trend(self, session: AdaptiveLearningSession) -> float:
         """Teljesítménytrend számítása"""

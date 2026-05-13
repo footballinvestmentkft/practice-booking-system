@@ -11,34 +11,15 @@ from threading import Lock
 
 logger = logging.getLogger(__name__)
 
-# Social canvas sizes — keyed by platform preset id.
-# "default" is intentionally absent (not an export target).
-# Dimensions match each platform's recommended export resolution.
-CANVAS_SIZES: dict[str, tuple[int, int]] = {
-    "instagram_square":   (1080, 1080),
-    "instagram_portrait": (1080, 1350),
-    "instagram_story":    (1080, 1920),
-    "tiktok":             (1080, 1920),
-    "facebook_square":    (1080, 1080),
-    "facebook_landscape": (1200,  630),
-    "og":                 (1200,  630),
-    "banner_custom":      (1500,  500),
-    "facebook_post":      (1200,  630),
-}
-
-# ── Animated video export capability registry ─────────────────────────────────
-# Central source of truth: (variant_id, platform_id) pairs that have a
-# dedicated animated export template.  All other combinations are unsupported
-# and the video endpoint returns 422 — no fallback, no silent degradation.
-ANIMATED_EXPORT_CAPABLE: frozenset[tuple[str, str]] = frozenset({
-    ("fifa",  "instagram_square"),
-    ("pulse", "instagram_square"),
-})
-
-
-def is_animated_capable(variant_id: str, platform_id: str) -> bool:
-    """Return True if (variant_id, platform_id) supports animated video export."""
-    return (variant_id, platform_id) in ANIMATED_EXPORT_CAPABLE
+# Re-exported from card_constants — the authoritative source for all
+# platform dimensions and animated-capability declarations.
+# External callers that already reference _export_svc.CANVAS_SIZES or
+# _export_svc.is_animated_capable() continue to work without change.
+from .card_constants import (  # noqa: E402
+    CANVAS_SIZES,
+    ANIMATED_EXPORT_CAPABLE,
+    is_animated_capable,
+)
 
 
 _GOTO_TIMEOUT_MS  = 10_000  # 10 s — generous vs. measured 0.6 s
@@ -152,6 +133,18 @@ def _sync_take_screenshot(render_url: str, platform: str) -> bytes:  # pragma: n
     Called via asyncio.to_thread from the async export endpoint so it does
     not block the event loop.
 
+    For platform=="default" (FIFA Classic native export):
+      - render_url uses ?native_export=1 so body gets native-export-mode CSS
+        (card fills 820px width at auto height, logo hidden, tab bar hidden).
+      - Viewport is set tall (2000px) to avoid content clipping during render.
+      - Clip is derived at runtime from .card-wrap getBoundingClientRect().
+        This guarantees full capture even if content height changes with new
+        skills or theme updates — 820×613 is the measured baseline, not a hard
+        constraint.
+
+    For all other platforms:
+      - Viewport = canvas size; clip = full viewport (standard path).
+
     Raises:
         CardExportTimeoutError: if page.goto exceeds _GOTO_TIMEOUT_MS
         ValueError: if platform has no registered canvas size
@@ -159,7 +152,7 @@ def _sync_take_screenshot(render_url: str, platform: str) -> bytes:  # pragma: n
     canvas = CANVAS_SIZES.get(platform)
     if canvas is None:
         raise ValueError(f"No canvas size for platform: {platform!r}")
-    w, h = canvas
+    w, _ = canvas
 
     from playwright.sync_api import sync_playwright
     from playwright.sync_api import TimeoutError as _PWTimeout
@@ -168,12 +161,41 @@ def _sync_take_screenshot(render_url: str, platform: str) -> bytes:  # pragma: n
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             try:
-                page = browser.new_page(viewport={"width": w, "height": h})
-                page.goto(render_url, wait_until="networkidle", timeout=_GOTO_TIMEOUT_MS)
-                png = page.screenshot(
-                    clip={"x": 0, "y": 0, "width": w, "height": h},
-                    type="png",
-                )
+                if platform == "default":
+                    # Native export: let the card render at its natural height.
+                    # Use a tall viewport so content is not clipped during layout.
+                    page = browser.new_page(viewport={"width": w, "height": 2000})
+                    page.goto(render_url, wait_until="networkidle", timeout=_GOTO_TIMEOUT_MS)
+                    card_rect = page.evaluate("""() => {
+                        const el = document.querySelector('.card-wrap');
+                        if (!el) return null;
+                        const r = el.getBoundingClientRect();
+                        return {
+                            x: Math.round(r.left),
+                            y: Math.round(r.top),
+                            w: Math.round(r.width),
+                            h: Math.round(r.height),
+                        };
+                    }""")
+                    if card_rect is None:
+                        raise ValueError("card-wrap element not found in default export render")
+                    png = page.screenshot(
+                        clip={
+                            "x": card_rect["x"],
+                            "y": card_rect["y"],
+                            "width":  card_rect["w"],
+                            "height": card_rect["h"],
+                        },
+                        type="png",
+                    )
+                else:
+                    h = CANVAS_SIZES[platform][1]
+                    page = browser.new_page(viewport={"width": w, "height": h})
+                    page.goto(render_url, wait_until="networkidle", timeout=_GOTO_TIMEOUT_MS)
+                    png = page.screenshot(
+                        clip={"x": 0, "y": 0, "width": w, "height": h},
+                        type="png",
+                    )
             finally:
                 browser.close()
     except _PWTimeout as exc:

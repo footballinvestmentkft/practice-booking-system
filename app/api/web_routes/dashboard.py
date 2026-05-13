@@ -413,10 +413,23 @@ async def lfa_player_card_editor(
 
     # Animated video export capability: list of platforms supported for the
     # current variant. Used by the card editor to show/hide the video button.
-    from ...services.card_export_service import ANIMATED_EXPORT_CAPABLE
+    from ...services.card_constants import (
+        ANIMATED_EXPORT_CAPABLE,
+        CANVAS_SIZES as _editor_canvas_sizes,
+        CARD_EDITOR_PLATFORM_IDS,
+    )
+    from ...services.card_platform_service import build_platform_list as _build_platform_list
     animated_capable_platforms = [
         p for (v, p) in ANIMATED_EXPORT_CAPABLE if v == active_card_variant
     ]
+
+    # Platform list for the Jinja2 picker loop (all non-default export platforms).
+    editor_platforms = _build_platform_list(CARD_EDITOR_PLATFORM_IDS)
+
+    # JSON-serialisable canvas sizes for server-rendered JS const in template.
+    canvas_sizes = {
+        pid: {"w": w, "h": h} for pid, (w, h) in _editor_canvas_sizes.items()
+    }
 
     return templates.TemplateResponse(
         "dashboard_card_editor.html",
@@ -432,6 +445,8 @@ async def lfa_player_card_editor(
             "active_card_platform": user_license.public_card_platform or "default",
             "show_variant_picker": True,  # page is LFA Football Player only
             "animated_capable_platforms": animated_capable_platforms,
+            "platforms": editor_platforms,
+            "canvas_sizes": canvas_sizes,
         },
     )
 

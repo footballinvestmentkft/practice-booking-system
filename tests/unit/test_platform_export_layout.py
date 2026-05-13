@@ -1226,43 +1226,52 @@ class TestFifaSquareAllSkills:
         )
 
     def test_ex31b_square_proportional_row_heights(self, client):
-        """Square export uses .ex-cat--logo-host to bottom-align Set Pieces with Physical Fitness.
+        """Square export uses ex-col-sets-phys to co-host Set Pieces + Physical in col 3.
 
-        v4 flex-column layout: Set Pieces (3 rows, left col bottom) has flex:1 so its cell
-        expands to fill remaining left-column height, aligning its bottom edge with Physical
-        Fitness. A static .ex-logo-slot placeholder fills the freed dark area at the bottom.
-        The 24px fixed skill row height (.ex-row { flex: none; min-height: 24px }) is unchanged.
+        v11 3-column layout: Set Pieces (3 rows, natural height) and Physical Fitness
+        (8 rows, flex:1) live together in .ex-col-sets-phys — Physical expands to fill
+        remaining column height via CSS `ex-col-sets-phys .ex-cat:last-child { flex:1 }`.
+        The old v4 ex-cat--logo-host / ex-logo-slot mechanism was removed in v5.
         """
         html = self._get_fifa_export_html(client, "instagram_square")
         assert html, "Export returned empty response for instagram_square"
-        assert "ex-cat--logo-host" in html, (
-            "ex-cat--logo-host not found in Square export HTML — "
-            "Set Pieces cell must carry this class so it expands to match Physical Fitness height"
+        assert "ex-col-sets-phys" in html, (
+            "ex-col-sets-phys not found in Square export HTML — "
+            "v11 col 3 must carry this class to co-host Set Pieces + Physical Fitness"
         )
-        assert "ex-logo-slot" in html, (
-            "ex-logo-slot not found in Square export HTML — "
-            "static placeholder must be rendered inside the Set Pieces cell"
+        assert "ex-cat--logo-host" not in html, (
+            "ex-cat--logo-host found in Square export HTML — "
+            "this v4 class was removed in v5; template must not reference it"
+        )
+        assert "ex-logo-slot" not in html, (
+            "ex-logo-slot found in Square export HTML — "
+            "this v4 placeholder was removed in v5; template must not reference it"
         )
 
     def test_ex31c_sponsor_logo_slot_present_without_logo(self, client):
-        """ex-sponsor-slot div is always rendered below both skill columns; no img when URL is None.
+        """ex-hero-sponsor is always rendered; ex-sponsor-slot is absent (removed in v8).
 
-        The slot is a full-width flex-sibling of .ex-skill-cats — it exists unconditionally
-        so bottom spacing is stable regardless of whether a sponsor logo is configured.
+        v8 moved the sponsor from the skills zone into the hero layer (.ex-hero-sponsor
+        inside .ex-profile-col). The slot renders unconditionally because app_logo_url
+        is always set as a fallback — even when no sponsor_logo_url is configured.
+        The old ex-sponsor-slot mechanism was removed in v8.
         """
         html = self._get_fifa_export_html(client, "instagram_square")
         assert html, "Export returned empty response for instagram_square"
-        assert 'class="ex-sponsor-slot"' in html, (
-            "ex-sponsor-slot div not found in Square export HTML — "
-            "slot must always be rendered below both skill columns"
+        assert "ex-sponsor-slot" not in html, (
+            "ex-sponsor-slot found in Square export HTML — "
+            "this class was removed in v8; sponsor moved to hero layer (ex-hero-sponsor)"
         )
-        assert 'class="ex-sponsor-slot-img"' not in html, (
-            "ex-sponsor-slot-img found when sponsor_logo_url is None — "
-            "img must not be rendered without a logo URL"
+        assert "ex-hero-sponsor" in html, (
+            "ex-hero-sponsor not found in Square export HTML — "
+            "v8+ sponsor/logo must render in .ex-hero-sponsor inside .ex-profile-col"
+        )
+        assert "ex-hero-sponsor-img" in html, (
+            "ex-hero-sponsor-img not found — img must always render via app_logo_url fallback"
         )
 
     def test_ex31d_sponsor_logo_renders_img_when_url_present(self, client):
-        """img.ex-sponsor-slot-img renders inside ex-sponsor-slot when sponsor_logo_url is set."""
+        """img.ex-hero-sponsor-img renders inside ex-hero-sponsor when sponsor_logo_url is set."""
         from app.main import app
         from app.dependencies import get_db
 
@@ -1277,25 +1286,25 @@ class TestFifaSquareAllSkills:
             app.dependency_overrides.pop(get_db, None)
 
         assert html, "Export returned empty response"
-        assert 'class="ex-sponsor-slot-img"' in html, (
-            "ex-sponsor-slot-img not found when sponsor_logo_url is set — "
-            "img must render inside ex-sponsor-slot"
+        assert 'class="ex-hero-sponsor-img"' in html, (
+            "ex-hero-sponsor-img not found when sponsor_logo_url is set — "
+            "img must render inside ex-hero-sponsor (v8 hero layer)"
         )
         assert "/static/uploads/lfa_player_photos/7_sponsor_logo_1234567890.png" in html, (
             "sponsor_logo_url value not found in rendered img src"
         )
 
     def test_ex31e_sponsor_logo_css_constraints(self, client):
-        """CSS for ex-sponsor-slot-img contains object-fit: contain and max-height constraint."""
+        """CSS for ex-hero-sponsor-img contains object-fit: contain and max-height constraint."""
         html = self._get_fifa_export_html(client, "instagram_square")
         assert html, "Export returned empty response for instagram_square"
         assert "object-fit: contain" in html, (
             "object-fit: contain not found in Square export CSS — "
-            "required so sponsor logo preserves aspect ratio within the slot"
+            "required so sponsor/app logo preserves aspect ratio in ex-hero-sponsor"
         )
-        assert "max-height: 48px" in html, (
-            "max-height: 48px not found in Square export CSS — "
-            "required so sponsor logo never overflows the 70px ex-sponsor-slot"
+        assert "max-height: 28px" in html, (
+            "max-height: 28px not found in Square export CSS — "
+            "required so logo never overflows the ex-hero-sponsor area (v8 hero layer)"
         )
 
     def test_ex31f_sponsor_logo_onerror_fallback(self, client):

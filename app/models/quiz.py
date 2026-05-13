@@ -195,7 +195,10 @@ class AdaptiveLearningSession(Base):
     # Session timing
     session_time_limit_seconds = Column(Integer, default=1800)  # 30 minutes default
     session_start_time = Column(DateTime(timezone=True), nullable=True)
-    
+
+    # Spaced-repetition cap: how many due questions have been served this session
+    session_due_shown = Column(Integer, nullable=False, default=0)
+
     # Relationships
     user = relationship("User")
 

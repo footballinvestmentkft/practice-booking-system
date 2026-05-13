@@ -67,8 +67,10 @@ from app.models.team import Team, TeamMember, TournamentTeamEnrollment  # noqa: 
 from app.models.tournament_achievement import TournamentParticipation  # noqa: E402
 from app.models.tournament_configuration import TournamentConfiguration  # noqa: E402
 from app.models.tournament_ranking import TournamentRanking  # noqa: E402
+from app.models.tournament_instructor_slot import TournamentInstructorSlot  # noqa: E402
 from app.models.tournament_type import TournamentType  # noqa: E402
 from app.models.user import User  # noqa: E402
+from app.models.pitch import Pitch  # noqa: E402
 from app.dependencies import (  # noqa: E402
     get_current_user_web,
     get_current_admin_user_hybrid,
@@ -115,6 +117,35 @@ class _TestFailed(Exception):
 
 def fail(msg):
     raise _TestFailed(msg)
+
+
+# ── Instructor slot helper ────────────────────────────────────────────────────
+def _assign_field_instructor(tournament_id, campus_id, instructor_id):
+    """Create a CHECKED_IN FIELD TournamentInstructorSlot for the first active pitch.
+
+    Required since the Instructor Prerequisite Guard (PR #141) blocks IN_PROGRESS
+    unless at least one FIELD slot is CHECKED_IN with a valid active pitch.
+    Uses the same instructor as the MASTER legacy path (no slot row for MASTER,
+    so the unique-per-tournament constraint is not violated).
+    """
+    pitch = _db.query(Pitch).filter(
+        Pitch.campus_id == campus_id,
+        Pitch.is_active == True,  # noqa: E712
+    ).first()
+    if not pitch:
+        fail(f"No active pitch on campus {campus_id} — cannot create FIELD instructor slot")
+    slot = TournamentInstructorSlot(
+        semester_id=tournament_id,
+        instructor_id=instructor_id,
+        role="FIELD",
+        pitch_id=pitch.id,
+        status="CHECKED_IN",
+        assigned_by=instructor_id,
+    )
+    _db.add(slot)
+    _db.commit()
+    _db.expire_all()
+    ok(f"FIELD instructor slot created: pitch_id={pitch.id}, instructor_id={instructor_id}")
 
 
 # ── Auth + CSRF helpers ───────────────────────────────────────────────────────
@@ -574,6 +605,7 @@ def test_guard_d_rankings_required(club, campus, tt_id, instructor):
     _db.commit()
     _db.expire_all()
 
+    _assign_field_instructor(t.id, campus.id, instructor.id)
     _status_transition(t.id, "IN_PROGRESS")
 
     sess_count = _db.query(SessionModel).filter(SessionModel.semester_id == t.id).count()
@@ -647,6 +679,7 @@ def test_full_lifecycle_visibility(club, campus, tt_id, instructor):
     _db.commit()
     _db.expire_all()
     ok(f"master_instructor_id = {instructor.id}")
+    _assign_field_instructor(t.id, campus.id, instructor.id)
 
     # ─── → IN_PROGRESS (sessions already generated at CHECK_IN_OPEN) ──────────
     _status_transition(t.id, "IN_PROGRESS")
@@ -777,6 +810,7 @@ def test_idempotency(club, campus, tt_id, instructor):
     t_obj.master_instructor_id = instructor.id
     _db.commit()
     _db.expire_all()
+    _assign_field_instructor(t.id, campus.id, instructor.id)
     _status_transition(t.id, "IN_PROGRESS")
 
     sess_count = _db.query(SessionModel).filter(SessionModel.semester_id == t.id).count()
@@ -925,6 +959,7 @@ def test_public_api_strict(club, campus, tt_id, instructor):
     t_obj.master_instructor_id = instructor.id
     _db.commit()
     _db.expire_all()
+    _assign_field_instructor(t.id, campus.id, instructor.id)
 
     # IN_PROGRESS
     _status_transition(t.id, "IN_PROGRESS")

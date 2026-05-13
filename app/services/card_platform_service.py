@@ -100,3 +100,29 @@ _FALLBACK = PLATFORM_PRESETS["default"]
 def get_preset(preset_id: str | None) -> PlatformPresetDefinition:
     """Return the preset for preset_id, falling back to 'default' for unknown ids."""
     return PLATFORM_PRESETS.get(preset_id or "default", _FALLBACK)
+
+
+def build_platform_list(platform_ids: tuple[str, ...]) -> list[dict]:
+    """Build a template-ready platform list from authoritative sources.
+
+    Each entry contains:
+      id    — platform preset id (snake_case)
+      label — human-readable name from PLATFORM_PRESETS
+      title — description string suitable for HTML title attribute
+      dims  — formatted dimension string, e.g. "1080 × 1080"
+      w, h  — integer pixel dimensions from CANVAS_SIZES
+    """
+    from .card_constants import CANVAS_SIZES  # local import avoids circular dep
+    result = []
+    for pid in platform_ids:
+        preset = get_preset(pid)
+        w, h = CANVAS_SIZES[pid]
+        result.append({
+            "id":    pid,
+            "label": preset.label,
+            "title": preset.description,
+            "dims":  f"{w} × {h}",
+            "w":     w,
+            "h":     h,
+        })
+    return result

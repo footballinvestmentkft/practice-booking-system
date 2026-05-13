@@ -12,13 +12,13 @@
     --card-body-bg:  {{ theme.body_bg  if theme is defined else '#1a202c' }};
     --card-tab-bg:   {{ theme.tab_bg   if theme is defined else '#2d3748' }};
     --card-accent:   {{ theme.accent   if theme is defined else '#667eea' }};
-    /* Right panel tokens — FIFA right panel is always white regardless of theme */
-    --card-right-bg:       #ffffff;
+    /* Right panel tokens — light lavender tint aligned with card accent #667eea family */
+    --card-right-bg:       #eef2ff;
     --card-right-text:     #1a202c;
     --card-right-subtext:  #718096;
     --card-right-value:    #2d3748;
-    --card-pill-bg:        #f0f4ff;
-    --card-pill-border:    #e2e8f0;
+    --card-pill-bg:        #dde4ff;
+    --card-pill-border:    #c7d2fe;
     --card-pill-text:      #4a5568;
     /* Dark panel text tokens */
     --card-text-primary:   rgba(255,255,255,0.88);
@@ -97,8 +97,24 @@ body.export-mode .card-wrap  {
     max-width: none !important; border-radius: 0; overflow: hidden;
 }
 body.export-mode .tab-bar        { display: none !important; }
-body.export-mode .skills-section { display: block !important; }
+body.export-mode .card-body      { display: grid !important; }
 body.export-mode .events-section { display: none !important; }
+
+/* ── Default/native export: card fills width at natural height ─────────── */
+/* Used by the ?native_export=1 render path (Default platform PNG download). */
+body.native-export-mode {
+    padding: 0; margin: 0; align-items: flex-start;
+    justify-content: flex-start;
+}
+body.native-export-mode .page-brand,
+body.native-export-mode .page-logo { display: none; }
+body.native-export-mode .card-wrap {
+    width: 820px !important; height: auto !important;
+    max-width: none !important; border-radius: 0;
+}
+body.native-export-mode .tab-bar        { display: none !important; }
+body.native-export-mode .card-body      { display: grid !important; }
+body.native-export-mode .events-section { display: none !important; }
 
 /* ── Split header ─────────────────────────────────────────── */
 .fifa-header {
@@ -106,28 +122,32 @@ body.export-mode .events-section { display: none !important; }
     grid-template-columns: 170px 1fr;
 }
 .fifa-left {
-    background: var(--card-panel-bg);
-    padding: 1.5rem 1rem;
-    display: flex; flex-direction: column;
-    align-items: center; gap: 0.5rem; text-align: center;
+    position: relative; overflow: hidden;
+    min-height: 200px;
 }
-.fifa-avatar {
-    width: 68px; height: 68px; border-radius: 50%;
+.fifa-avatar { border-radius: 0; flex-shrink: 0; font-size: 2rem; font-weight: 900; color: white; }
+img.fifa-avatar {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: top center;
+}
+div.fifa-avatar {
+    position: absolute; inset: 0; width: 100%; height: 100%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.55rem; font-weight: 900; color: white;
-    border: 3px solid rgba(255,255,255,0.18); flex-shrink: 0;
 }
-.fifa-overall { font-size: 2.8rem; font-weight: 900; color: white; line-height: 1; margin-top: 0.15rem; }
-.fifa-tier {
-    font-size: 0.58rem; font-weight: 800; text-transform: uppercase;
-    letter-spacing: 0.12em; padding: 3px 10px; border-radius: 99px; color: white;
-    white-space: nowrap;
-}
+.fifa-overall { font-size: 2.5rem; font-weight: 900; color: var(--card-accent); line-height: 1; flex-shrink: 0; }
+.fifa-name-row { display: flex; align-items: flex-start; gap: 0.65rem; }
 .fifa-right {
     background: var(--card-right-bg);
     padding: 1.25rem 1.25rem 1rem;
-    display: flex; flex-direction: column; gap: 0.7rem;
+    display: flex; flex-direction: column; gap: 0;
     min-width: 0; /* prevent grid blowout */
+    position: relative; overflow: hidden;
+}
+.fifa-right-body {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; gap: 0.7rem;
+    flex: 1; min-width: 0;
 }
 .fifa-name {
     font-size: 1.45rem; font-weight: 800; color: var(--card-right-text); line-height: 1.1;
@@ -137,6 +157,13 @@ body.export-mode .events-section { display: none !important; }
     display: inline-block; padding: 3px 11px; border-radius: 6px;
     font-size: 0.7rem; font-weight: 800; color: white;
     text-transform: uppercase; letter-spacing: 0.08em;
+}
+.fifa-pos-secondary-badges { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+.fifa-pos-secondary-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 0.62rem; font-weight: 700; color: var(--card-right-subtext);
+    background: var(--card-pill-bg); border: 1px solid var(--card-pill-border);
+    text-transform: uppercase; letter-spacing: 0.06em;
 }
 .identity-grid {
     display: grid; grid-template-columns: repeat(3, 1fr);
@@ -153,33 +180,80 @@ body.export-mode .events-section { display: none !important; }
     overflow-wrap: anywhere;
 }
 
-/* ── Skills section ───────────────────────────────────────── */
-.skills-section {
+/* ── Sponsor logo bar — below skills+position panel, above events ── */
+.card-logo-bar {
     background: var(--card-body-bg);
-    padding: 1.1rem 1.1rem;
+    padding: 0.6rem 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+.card-logo-bar-img {
+    max-height: 40px;
+    max-width: 160px;
+    object-fit: contain;
+    opacity: 0.75;
+}
+
+/* ── Card body: skills (left ~60%) + position panel (right ~40%) ── */
+.card-body {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    background: var(--card-body-bg);
+    min-height: 0;
+}
+.skills-panel {
+    padding: 1rem;
+    min-width: 0;
 }
 .skills-title {
     font-size: 0.63rem; font-weight: 800; text-transform: uppercase;
     letter-spacing: 0.13em; color: var(--card-text-faint);
-    margin-bottom: 0.85rem;
+    margin-bottom: 0.8rem;
 }
 .skill-cats {
-    display: grid; grid-template-columns: repeat(4, 1fr);
-    gap: 0.65rem;
+    display: flex; align-items: flex-start;
+    gap: 0.5rem;
 }
-.skill-cat { background: var(--card-cat-bg); border-radius: 9px; padding: 0.65rem; min-width: 0; }
+.skill-col { flex: 1; display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+.skill-cat { background: var(--card-cat-bg); border-radius: 9px; padding: 0.6rem; min-width: 0; }
 .skill-cat-name {
     font-size: 0.58rem; font-weight: 800; text-transform: uppercase;
-    letter-spacing: 0.09em; color: var(--card-text-muted); margin-bottom: 0.45rem;
+    letter-spacing: 0.09em; color: var(--card-text-muted); margin-bottom: 0.4rem;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.skill-row { display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.3rem; }
+.skill-row { display: flex; align-items: center; gap: 0.3rem; margin-bottom: 0.25rem; }
 .skill-row:last-child { margin-bottom: 0; }
-.skill-name { font-size: 0.62rem; color: var(--card-text-secondary); flex: 1; min-width: 0; overflow-wrap: break-word; line-height: 1.3; }
-.skill-val { font-size: 0.67rem; font-weight: 700; width: 28px; text-align: right; flex-shrink: 0; }
+/* Truncate names in the narrower 4-col split-layout context */
+.skill-name { font-size: 0.62rem; color: var(--card-text-secondary); flex: 1; min-width: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+.skill-val { font-size: 0.67rem; font-weight: 700; width: 26px; text-align: right; flex-shrink: 0; }
 .skill-up { font-size: 0.6rem; color: #48bb78; font-weight: 900; flex-shrink: 0; line-height: 1; }
-.skill-bar-bg { flex: 0 0 22px; height: 5px; background: var(--card-bar-bg); border-radius: 3px; }
+.skill-bar-bg { flex: 0 0 18px; height: 4px; background: var(--card-bar-bg); border-radius: 3px; }
 .skill-bar-fill { height: 100%; border-radius: 2px; }
+
+/* ── Position panel (right, ~40%) ──────────────────────────────── */
+.position-panel {
+    background: var(--card-panel-bg);
+    padding: 0.75rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    min-width: 0;
+    align-items: center;
+}
+.pos-panel-title {
+    font-size: 0.56rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.13em; color: var(--card-text-faint);
+    align-self: flex-start;
+}
+.pitch-svg {
+    width: 100%; height: auto;
+    border-radius: 5px;
+    overflow: visible;
+    flex: 1; margin: auto 0;
+}
 
 /* ── Tab bar ─────────────────────────────────────────────── */
 .tab-bar {
@@ -232,37 +306,36 @@ body.export-mode .events-section { display: none !important; }
 
 /* ── Responsive ─────────────────────────────────────────────
    Breakpoints:
-   < 560px : tablet/large phone — 2-col skills, 2-col identity, smaller left
+   < 560px : tablet/large phone — stack card-body, 2-col skills, smaller left
    < 440px : phone portrait    — stack header vertically, 1-col skills
    < 340px : tiny phone        — extra compact
 ───────────────────────────────────────────────────────────── */
 @media (max-width: 560px) {
     body { padding: 1rem 0.5rem 3rem; }
     .fifa-header { grid-template-columns: 130px 1fr; }
-    .fifa-left { padding: 1.1rem 0.75rem; }
-    .fifa-avatar { width: 58px; height: 58px; font-size: 1.3rem; }
-    .fifa-overall { font-size: 2.3rem; }
+    .fifa-overall { font-size: 2rem; }
     .fifa-right { padding: 1rem; gap: 0.6rem; }
     .fifa-name { font-size: 1.2rem; }
     .identity-grid { grid-template-columns: 1fr 1fr; }
-    .skill-cats { grid-template-columns: 1fr 1fr; }
-    .skills-section { padding: 0.9rem; }
+    /* Stack panels vertically; position panel above skills */
+    .card-body { grid-template-columns: 1fr; }
+    .position-panel { order: -1; }
+    /* In stacked layout, names can wrap again */
+    .skill-name { white-space: normal; overflow-wrap: break-word; overflow: visible; text-overflow: clip; }
+    .skills-panel { padding: 0.9rem; }
+    /* Portrait pitch: cap height when stacked full-width */
+    .pitch-svg { max-height: 200px; width: auto; display: block; margin: 0 auto; }
 }
 @media (max-width: 440px) {
     .fifa-header { grid-template-columns: 1fr; }
-    .fifa-left {
-        flex-direction: row; justify-content: center;
-        align-items: center; flex-wrap: wrap;
-        gap: 0.6rem 1rem; padding: 1rem 1.25rem;
-    }
-    .fifa-overall { font-size: 2.4rem; }
+    .fifa-left { min-height: 260px; }
+    .fifa-overall { font-size: 2.1rem; }
     .fifa-right { padding: 1rem; }
     .identity-grid { grid-template-columns: repeat(3, 1fr); }
-    .skill-cats { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 340px) {
     .identity-grid { grid-template-columns: 1fr 1fr; }
-    .skill-cats { grid-template-columns: 1fr; }
+    .skill-cats { flex-direction: column; }
     .fifa-name { font-size: 1.05rem; }
 }
 
@@ -279,8 +352,8 @@ body.export-mode.platform-facebook-landscape .fifa-left,
 body.export-mode.platform-og .fifa-left,
 body.export-mode.platform-facebook-landscape .fifa-right,
 body.export-mode.platform-og .fifa-right { min-height: 100%; }
-body.export-mode.platform-facebook-landscape .skills-section,
-body.export-mode.platform-og .skills-section {
+body.export-mode.platform-facebook-landscape .card-body,
+body.export-mode.platform-og .card-body {
     flex: 1; height: 100%; overflow: hidden;
 }
 body.export-mode.platform-facebook-landscape .skill-cats,
@@ -325,7 +398,7 @@ body.export-mode .skill-val     { font-size: var(--ex-font-skill); }
 body.export-mode .skill-bar-bg  { flex: 1 1 0 !important; max-width: none !important; }
 </style>
 </head>
-<body class="{% if platform_class %}{{ platform_class }}{% endif %}{% if export_mode %} export-mode{% endif %}">
+<body class="{% if platform_class %}{{ platform_class }}{% endif %}{% if native_export_mode %} native-export-mode{% elif export_mode %} export-mode{% endif %}">
 
 {% if app_logo_url %}
 <img class="page-logo" src="{{ app_logo_url }}" alt="LFA">
@@ -339,20 +412,28 @@ body.export-mode .skill-bar-bg  { flex: 1 1 0 !important; max-width: none !impor
     <div class="fifa-header">
         <div class="fifa-left">
             {% if photo_url %}
-            <img class="fifa-avatar" src="{{ photo_url }}" alt="{{ initials }}"
-                 style="background: {{ avatar_bg }}; object-fit: cover;">
+            <img class="fifa-avatar" src="{{ photo_url }}" alt="{{ initials }}">
             {% else %}
             <div class="fifa-avatar" style="background: {{ avatar_bg }};">{{ initials }}</div>
             {% endif %}
-            <div class="fifa-overall">{{ overall | round(0) | int }}</div>
-            <span class="fifa-tier" style="background: {{ tier_color }};">{{ tier_label }}</span>
         </div>
         <div class="fifa-right">
-            <div>
-                <h2 class="fifa-name">{{ player.name }}</h2>
-                {% if player.position and player.position != "Unknown" %}
-                <span class="fifa-pos-badge" style="background: {{ pos_color }};">{{ player.position }}</span>
-                {% endif %}
+            <div class="fifa-right-body">
+            <div class="fifa-name-row">
+                <div class="fifa-overall">{{ overall | round(0) | int }}</div>
+                <div>
+                    <h2 class="fifa-name">{{ player.name }}</h2>
+                    {% if primary_pos_label %}
+                    <span class="fifa-pos-badge" style="background: {{ pos_color }};">{{ primary_pos_label }}</span>
+                    {% endif %}
+                    {% if secondary_pos_labels %}
+                    <div class="fifa-pos-secondary-badges">
+                        {% for lbl in secondary_pos_labels %}
+                        <span class="fifa-pos-secondary-badge">{{ lbl }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
             </div>
 
             <div class="identity-grid">
@@ -368,6 +449,18 @@ body.export-mode .skill-bar-bg  { flex: 1 1 0 !important; max-width: none !impor
                     <span class="id-label">Tournaments</span>
                     <span class="id-value">{{ player.total_tournaments }}</span>
                 </div>
+                <div class="id-field">
+                    <span class="id-label">Height</span>
+                    <span class="id-value">{% if player_height_cm %}{{ player_height_cm }} cm{% else %}—{% endif %}</span>
+                </div>
+                <div class="id-field">
+                    <span class="id-label">Weight</span>
+                    <span class="id-value">{% if player_weight_kg %}{{ player_weight_kg }} kg{% else %}—{% endif %}</span>
+                </div>
+                <div class="id-field">
+                    <span class="id-label">Foot</span>
+                    <span class="id-value">{{ player_preferred_foot | capitalize if player_preferred_foot else "—" }}</span>
+                </div>
             </div>
 
             {% if teams_info %}
@@ -377,6 +470,7 @@ body.export-mode .skill-bar-bg  { flex: 1 1 0 !important; max-width: none !impor
                 {% endfor %}
             </div>
             {% endif %}
+            </div>{# /fifa-right-body #}
         </div>
     </div>
 
@@ -386,43 +480,150 @@ body.export-mode .skill-bar-bg  { flex: 1 1 0 !important; max-width: none !impor
         <button class="tab-btn"        id="btn-events" onclick="switchTab('events')">🏆 Events</button>
     </div>
 
-    <!-- Skills tab -->
-    {% if skill_categories %}
-    <div class="skills-section" id="tab-skills">
-        <div class="skills-title">Football Skills — {{ overall | round(0) | int }} OVR</div>
-        <div class="skill-cats">
-            {% for cat in skill_categories %}
-            <div class="skill-cat">
-                <div class="skill-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
-                {% for skill in cat.skills %}
-                {% set sdata = player.skills.get(skill.key, {}) %}
-                {% set sval = sdata.get('current_level', 50) | round(1) %}
-                {% set fill_pct = [sval, 100] | min %}
-                {% set sdelta = last_skill_delta.get(skill.key, 0) %}
-                {# Color driven solely by last-tournament delta, not by level tier.
-                   Neutral = not affected by the most recent tournament. #}
-                {% if sdelta > 0 %}
-                    {% set bar_color = '#48bb78' %}
-                    {% set val_color = '#48bb78' %}
-                {% elif sdelta < 0 %}
-                    {% set bar_color = '#fc8181' %}
-                    {% set val_color = '#fc8181' %}
-                {% else %}
-                    {% set bar_color = 'var(--card-bar-neutral)' %}
-                    {% set val_color = 'var(--card-val-neutral)' %}
-                {% endif %}
-                <div class="skill-row">
-                    <span class="skill-name">{{ skill.name_en }}</span>
-                    <div class="skill-bar-bg"><div class="skill-bar-fill" style="width:{{ fill_pct }}%; background:{{ bar_color }};"></div></div>
-                    <span class="skill-val" style="color:{{ val_color }};">{{ sval }}</span>
-                    {% if sdelta > 0 %}<span class="skill-up">↑</span>
-                    {% elif sdelta < 0 %}<span class="skill-up" style="color:#fc8181;">↓</span>
-                    {% else %}<span class="skill-up" style="visibility:hidden">↑</span>{% endif %}
+    <!-- Skills tab: split layout — skills (left ~60%) + position panel (right ~40%) -->
+    <div class="card-body" id="tab-skills">
+
+        <!-- Left: skill categories -->
+        <div class="skills-panel">
+            {% if skill_categories %}
+            <div class="skills-title">Football Skills — {{ overall | round(0) | int }} OVR</div>
+            <div class="skill-cats">
+                {# Left column: Outfield (index 0) + Set Pieces (index 1) #}
+                <div class="skill-col">
+                {% for cat in skill_categories[:2] %}
+                <div class="skill-cat">
+                    <div class="skill-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
+                    {% for skill in cat.skills %}
+                    {% set sdata = player.skills.get(skill.key, {}) %}
+                    {% set sval = sdata.get('current_level', 50) | round(1) %}
+                    {% set fill_pct = [sval, 100] | min %}
+                    {% set sdelta = last_skill_delta.get(skill.key, 0) %}
+                    {# Color driven solely by last-tournament delta, not by level tier. #}
+                    {% if sdelta > 0 %}
+                        {% set bar_color = '#48bb78' %}
+                        {% set val_color = '#48bb78' %}
+                    {% elif sdelta < 0 %}
+                        {% set bar_color = '#fc8181' %}
+                        {% set val_color = '#fc8181' %}
+                    {% else %}
+                        {% set bar_color = 'var(--card-bar-neutral)' %}
+                        {% set val_color = 'var(--card-val-neutral)' %}
+                    {% endif %}
+                    <div class="skill-row">
+                        <span class="skill-name" title="{{ skill.name_en }}">{{ skill.name_en }}</span>
+                        <div class="skill-bar-bg"><div class="skill-bar-fill" style="width:{{ fill_pct }}%; background:{{ bar_color }};"></div></div>
+                        <span class="skill-val" style="color:{{ val_color }};">{{ sval }}</span>
+                        {% if sdelta > 0 %}<span class="skill-up">↑</span>
+                        {% elif sdelta < 0 %}<span class="skill-up" style="color:#fc8181;">↓</span>
+                        {% else %}<span class="skill-up" style="visibility:hidden">↑</span>{% endif %}
+                    </div>
+                    {% endfor %}
                 </div>
                 {% endfor %}
+                </div>
+                {# Right column: Mental (index 2) + Physical (index 3) #}
+                <div class="skill-col">
+                {% for cat in skill_categories[2:] %}
+                <div class="skill-cat">
+                    <div class="skill-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
+                    {% for skill in cat.skills %}
+                    {% set sdata = player.skills.get(skill.key, {}) %}
+                    {% set sval = sdata.get('current_level', 50) | round(1) %}
+                    {% set fill_pct = [sval, 100] | min %}
+                    {% set sdelta = last_skill_delta.get(skill.key, 0) %}
+                    {# Color driven solely by last-tournament delta, not by level tier. #}
+                    {% if sdelta > 0 %}
+                        {% set bar_color = '#48bb78' %}
+                        {% set val_color = '#48bb78' %}
+                    {% elif sdelta < 0 %}
+                        {% set bar_color = '#fc8181' %}
+                        {% set val_color = '#fc8181' %}
+                    {% else %}
+                        {% set bar_color = 'var(--card-bar-neutral)' %}
+                        {% set val_color = 'var(--card-val-neutral)' %}
+                    {% endif %}
+                    <div class="skill-row">
+                        <span class="skill-name" title="{{ skill.name_en }}">{{ skill.name_en }}</span>
+                        <div class="skill-bar-bg"><div class="skill-bar-fill" style="width:{{ fill_pct }}%; background:{{ bar_color }};"></div></div>
+                        <span class="skill-val" style="color:{{ val_color }};">{{ sval }}</span>
+                        {% if sdelta > 0 %}<span class="skill-up">↑</span>
+                        {% elif sdelta < 0 %}<span class="skill-up" style="color:#fc8181;">↓</span>
+                        {% else %}<span class="skill-up" style="visibility:hidden">↑</span>{% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+                </div>
             </div>
-            {% endfor %}
+            {% endif %}
         </div>
+
+        <!-- Right: position mini-pitch -->
+        <div class="position-panel">
+            <div class="pos-panel-title">Position</div>
+            <svg class="pitch-svg" viewBox="0 0 65 100" xmlns="http://www.w3.org/2000/svg" aria-label="Pitch position map">
+                <!-- Portrait pitch: ST at top, GK at bottom.
+                     Coordinate transform from landscape node data (x=longitudinal 0→1 GK→ST, y=lateral 0→1):
+                       cx_svg = node.y × 65   (lateral → horizontal)
+                       cy_svg = (1 − node.x) × 100   (longitudinal → vertical, inverted so GK=bottom) -->
+                <!-- Pitch background -->
+                <rect width="65" height="100" fill="#1a5c2a"/>
+                <!-- Field border -->
+                <rect x="0.5" y="0.5" width="64" height="99" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="0.45"/>
+                <!-- Center line (horizontal) -->
+                <line x1="0" y1="50" x2="65" y2="50" stroke="rgba(255,255,255,0.22)" stroke-width="0.4"/>
+                <!-- Center circle -->
+                <circle cx="32.5" cy="50" r="9" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="0.4"/>
+                <circle cx="32.5" cy="50" r="0.8" fill="rgba(255,255,255,0.35)"/>
+                <!-- ST penalty area (top) -->
+                <rect x="16" y="0" width="33" height="17" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.35"/>
+                <!-- GK penalty area (bottom) -->
+                <rect x="16" y="83" width="33" height="17" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.35"/>
+                <!-- ST 6-yard box (top) -->
+                <rect x="24" y="0" width="17" height="6" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="0.3"/>
+                <!-- GK 6-yard box (bottom) -->
+                <rect x="24" y="94" width="17" height="6" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="0.3"/>
+                <!-- Pass 1: inactive nodes (faint dots, no label) -->
+                {% for node in position_nodes %}
+                {% if not node.is_selected and not node.is_primary %}
+                <circle cx="{{ (node.y * 65) | round(1) }}" cy="{{ ((1 - node.x) * 100) | round(1) }}"
+                        r="1.8" fill="rgba(255,255,255,0.13)"/>
+                {% endif %}
+                {% endfor %}
+                <!-- Pass 2: secondary selected positions -->
+                {% for node in position_nodes %}
+                {% if node.is_selected and not node.is_primary %}
+                <circle cx="{{ (node.y * 65) | round(1) }}" cy="{{ ((1 - node.x) * 100) | round(1) }}"
+                        r="3.2" fill="rgba(255,255,255,0.70)"/>
+                <circle cx="{{ (node.y * 65) | round(1) }}" cy="{{ ((1 - node.x) * 100) | round(1) }}"
+                        r="4.6" fill="none" stroke="rgba(255,255,255,0.38)" stroke-width="0.65"/>
+                {% endif %}
+                {% endfor %}
+                <!-- Pass 3: primary position — gold, topmost -->
+                {% for node in position_nodes %}
+                {% if node.is_primary %}
+                <circle cx="{{ (node.y * 65) | round(1) }}" cy="{{ ((1 - node.x) * 100) | round(1) }}"
+                        r="4.2" fill="#ECC94B" opacity="0.95"/>
+                <circle cx="{{ (node.y * 65) | round(1) }}" cy="{{ ((1 - node.x) * 100) | round(1) }}"
+                        r="6" fill="none" stroke="#ECC94B" stroke-width="0.85" opacity="0.45"/>
+                {% endif %}
+                {% endfor %}
+                <!-- Pass 4: abbreviated labels on selected + primary nodes only -->
+                {% for node in position_nodes %}
+                {% if node.is_primary or node.is_selected %}
+                <text x="{{ (node.y * 65) | round(1) }}" y="{{ ((1 - node.x) * 100) | round(1) }}"
+                      font-size="3" font-family="sans-serif" font-weight="800"
+                      fill="rgba(0,0,0,0.72)" text-anchor="middle" dominant-baseline="middle">{{ node.label }}</text>
+                {% endif %}
+                {% endfor %}
+            </svg>
+        </div>
+
+    </div>
+
+    {% if sponsor_logo_url %}
+    <div class="card-logo-bar">
+        <img class="card-logo-bar-img" src="{{ sponsor_logo_url }}" alt="">
     </div>
     {% endif %}
 

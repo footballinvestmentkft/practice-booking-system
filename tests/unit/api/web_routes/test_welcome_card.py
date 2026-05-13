@@ -196,6 +196,52 @@ class TestWelcomeCardGalleryRoute:
         _, ctx = mock_tmpl.TemplateResponse.call_args.args
         assert "player" not in ctx
 
+    # WC-CTX-01..03 — Phase 2: canvas_sizes context and platform order regression
+
+    def test_wc_ctx01_canvas_sizes_keys_match_canvas_sizes_constant(self):
+        """Gallery context canvas_sizes must cover all CANVAS_SIZES platforms."""
+        from app.services.card_constants import CANVAS_SIZES
+        lic = _license()
+        db  = _mock_db(license_return=lic)
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(onboarding_welcome_card(_req(), platform=None, db=db, user=_user()))
+        _, ctx = mock_tmpl.TemplateResponse.call_args.args
+        assert "canvas_sizes" in ctx, "Gallery hub context must include 'canvas_sizes'"
+        assert set(ctx["canvas_sizes"].keys()) == set(CANVAS_SIZES.keys()), (
+            "canvas_sizes keys in context must match CANVAS_SIZES keys exactly"
+        )
+
+    def test_wc_ctx02_platforms_length_matches_wc_gallery_platform_ids(self):
+        """Gallery platforms list length must equal WC_GALLERY_PLATFORM_IDS length."""
+        from app.services.card_constants import WC_GALLERY_PLATFORM_IDS
+        lic = _license()
+        db  = _mock_db(license_return=lic)
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(onboarding_welcome_card(_req(), platform=None, db=db, user=_user()))
+        _, ctx = mock_tmpl.TemplateResponse.call_args.args
+        assert len(ctx["platforms"]) == len(WC_GALLERY_PLATFORM_IDS), (
+            f"Expected {len(WC_GALLERY_PLATFORM_IDS)} platforms, "
+            f"got {len(ctx['platforms'])}"
+        )
+
+    def test_wc_ctx03_platforms_order_matches_wc_gallery_platform_ids(self):
+        """Gallery platforms order must match WC_GALLERY_PLATFORM_IDS order."""
+        from app.services.card_constants import WC_GALLERY_PLATFORM_IDS
+        lic = _license()
+        db  = _mock_db(license_return=lic)
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(onboarding_welcome_card(_req(), platform=None, db=db, user=_user()))
+        _, ctx = mock_tmpl.TemplateResponse.call_args.args
+        actual_ids = [p["id"] for p in ctx["platforms"]]
+        assert actual_ids == list(WC_GALLERY_PLATFORM_IDS), (
+            f"Platform order mismatch.\n"
+            f"Expected: {list(WC_GALLERY_PLATFORM_IDS)}\n"
+            f"Actual:   {actual_ids}"
+        )
+
 
 # ── 3. FIFA card route (?platform=X) ──────────────────────────────────────────
 
@@ -419,18 +465,25 @@ class TestWelcomeCardGalleryTemplate:
         assert 'href="/profile/lfa-football-player"' in gallery_src
 
     def test_gallery_renders_with_minimal_context(self):
-        """Jinja2 render: gallery template must not error with minimal context."""
+        """Jinja2 render: gallery template must not error with minimal context.
+
+        canvas_sizes is required (Phase 2): the template uses {{ canvas_sizes | tojson }}
+        to generate the JS CANVAS_SIZES object instead of a hardcoded literal.
+        """
         from jinja2 import Environment, FileSystemLoader, Undefined
+        from app.services.card_constants import CANVAS_SIZES
         env = Environment(
             loader=FileSystemLoader(str(_GALLERY_TPL_PATH.parents[1])),
             autoescape=True,
             undefined=Undefined,
         )
+        canvas_sizes = {pid: {"w": w, "h": h} for pid, (w, h) in CANVAS_SIZES.items()}
         ctx = {
             "request":          MagicMock(),
             "display_name":     "Test Player",
             "platforms":        _WC_GALLERY_PLATFORMS,
             "default_platform": "instagram_square",
+            "canvas_sizes":     canvas_sizes,
         }
         html = env.get_template("public/welcome_card.html").render(**ctx)
         assert "Welcome Card" in html
@@ -463,7 +516,8 @@ class TestWelcomeCardFifaLogoAudit:
 
     def test_export_square_has_app_logo_in_sponsor_slot(self, square_export_src):
         assert "app_logo_url" in square_export_src
-        assert "elif app_logo_url" in square_export_src
+        # v8: combined `or` condition — sponsor takes priority via `sponsor_logo_url or app_logo_url`
+        assert "sponsor_logo_url or app_logo_url" in square_export_src
 
     def test_export_square_sponsor_logo_takes_priority(self, square_export_src):
         """sponsor_logo_url branch must be checked before app_logo_url."""
@@ -725,21 +779,17 @@ class TestWelcomeCardRenderingFixes:
 
     # ── Fix B: platform-aware canvas sizing ──
 
-    def test_canvas_sizes_has_instagram_square(self, gallery_html_src):
-        assert "instagram_square" in gallery_html_src
-        assert "[1080, 1080]" in gallery_html_src
+    def test_canvas_sizes_is_server_rendered(self, gallery_html_src):
+        """Fix B (Phase 2): JS CANVAS_SIZES must be server-rendered from context,
+        not a hardcoded literal. Verifies the tojson injection marker is present."""
+        assert "canvas_sizes | tojson" in gallery_html_src, (
+            "welcome_card.html must use {{ canvas_sizes | tojson }} to populate "
+            "the JS CANVAS_SIZES object — hardcoded platform literals must not appear."
+        )
 
-    def test_canvas_sizes_has_instagram_story(self, gallery_html_src):
-        assert "instagram_story" in gallery_html_src
-        assert "[1080, 1920]" in gallery_html_src
-
-    def test_canvas_sizes_has_facebook_landscape(self, gallery_html_src):
-        assert "facebook_landscape" in gallery_html_src
-        assert "[1200,  630]" in gallery_html_src
-
-    def test_canvas_sizes_has_banner_custom(self, gallery_html_src):
-        assert "banner_custom" in gallery_html_src
-        assert "[1500,  500]" in gallery_html_src
+    def test_canvas_sizes_default_platform_still_hardcoded_in_iframe_src(self, gallery_html_src):
+        """Default iframe src still references instagram_square as the initial preview."""
+        assert "platform=instagram_square" in gallery_html_src
 
     def test_select_platform_calls_scale_iframe(self, gallery_html_src):
         """Fix B: selectPlatform() must call scaleIframe(pid) after updating src."""
@@ -864,17 +914,20 @@ class TestWelcomeCardPhotoUpload:
 
     def _render_gallery(self, photo_url=None):
         from jinja2 import Environment, FileSystemLoader, Undefined
+        from app.services.card_constants import CANVAS_SIZES
         env = Environment(
             loader=FileSystemLoader(str(_GALLERY_TPL_PATH.parents[1])),
             autoescape=True,
             undefined=Undefined,
         )
+        canvas_sizes = {pid: {"w": w, "h": h} for pid, (w, h) in CANVAS_SIZES.items()}
         ctx = {
             "request":          MagicMock(),
             "display_name":     "Test Player",
             "platforms":        _WC_GALLERY_PLATFORMS,
             "default_platform": "instagram_square",
             "photo_url":        photo_url,
+            "canvas_sizes":     canvas_sizes,
         }
         return env.get_template("public/welcome_card.html").render(**ctx)
 
@@ -1009,3 +1062,166 @@ class TestProfilePageLfaLicense:
         html = _render_wc_fragment(profile_src, lic)
         assert "/profile/onboarding-card" in html
         assert "View Welcome Card" in html
+
+
+# ── 12. Square export template — WC quality fixes ────────────────────────────
+
+_LANDSCAPE_EXPORT_TPL_PATH = (
+    pathlib.Path(__file__).resolve().parents[4]
+    / "app" / "templates" / "public" / "export" / "landscape" / "fifa.html"
+)
+
+
+@pytest.fixture(scope="module")
+def landscape_export_src():
+    return _LANDSCAPE_EXPORT_TPL_PATH.read_text(encoding="utf-8")
+
+
+class TestSquareExportWCFixes:
+    """
+    Static source assertions for export/square/fifa.html Welcome Card quality fixes.
+
+    SQ-WC-01: player.age_group bare pattern removed; or "—" fallback present in both grid paths
+    SQ-WC-02: ex-mini-grid--wc CSS class defined (2×2 WC variant)
+    SQ-WC-03: welcome_card_mode gates which grid variant renders
+    SQ-WC-04: AGE and GENDER cells absent from WC mini-grid branch
+    SQ-WC-05: WC mini-grid branch contains NAT, GROUP, HEIGHT, WEIGHT cells
+    SQ-WC-06: stat strip WC branch renders TIER label and SA value
+    SQ-WC-07: stat strip non-WC branch preserves LICENSE / Lv. logic
+    SQ-WC-08: no-photo placeholder contains ex-photo-monogram inner element
+    """
+
+    def test_sq_wc_01_age_group_bare_pattern_removed(self, square_export_src):
+        """Bare {{ player.age_group }} without fallback must not exist in square template."""
+        assert "{{ player.age_group }}" not in square_export_src, (
+            "Bare {{ player.age_group }} renders empty string when None. "
+            "Must use player.age_group or '—' in both grid paths."
+        )
+
+    def test_sq_wc_01_age_group_has_or_dash_fallback(self, square_export_src):
+        """Both WC and non-WC grid paths must use player.age_group or '—'."""
+        assert 'player.age_group or "—"' in square_export_src, (
+            "GROUP cell must use player.age_group or '—' fallback in square template."
+        )
+
+    def test_sq_wc_02_mini_grid_wc_css_class_defined(self, square_export_src):
+        """CSS class ex-mini-grid--wc must be defined for the 2×2 WC grid layout."""
+        assert ".ex-mini-grid--wc" in square_export_src, (
+            "WC 2×2 grid CSS class ex-mini-grid--wc must be defined in square template."
+        )
+
+    def test_sq_wc_03_welcome_card_mode_gates_mini_grid(self, square_export_src):
+        """welcome_card_mode Jinja2 conditional must control which grid variant renders."""
+        assert "{% if welcome_card_mode %}" in square_export_src, (
+            "Mini-grid must be gated on welcome_card_mode to switch between "
+            "2×2 WC layout and 3×2 full layout."
+        )
+
+    def test_sq_wc_04_age_cell_absent_in_wc_grid_branch(self, square_export_src):
+        """AGE cell must not appear inside the WC mini-grid branch."""
+        wc_start   = square_export_src.find("{% if welcome_card_mode %}")
+        else_start = square_export_src.find("{% else %}", wc_start)
+        assert wc_start != -1 and else_start != -1, "welcome_card_mode conditional not found"
+        wc_branch = square_export_src[wc_start:else_start]
+        assert ">AGE<" not in wc_branch, (
+            "AGE cell must be suppressed in WC mini-grid branch — "
+            "player_age is not in the Welcome Card context."
+        )
+
+    def test_sq_wc_04_gender_cell_absent_in_wc_grid_branch(self, square_export_src):
+        """GENDER cell must not appear inside the WC mini-grid branch."""
+        wc_start   = square_export_src.find("{% if welcome_card_mode %}")
+        else_start = square_export_src.find("{% else %}", wc_start)
+        wc_branch  = square_export_src[wc_start:else_start]
+        assert ">GENDER<" not in wc_branch, (
+            "GENDER cell must be suppressed in WC mini-grid branch — "
+            "player_gender is not in the Welcome Card context."
+        )
+
+    def test_sq_wc_05_wc_branch_has_nat_group_height_weight(self, square_export_src):
+        """WC mini-grid branch must contain exactly NAT, GROUP, HEIGHT, WEIGHT cells."""
+        wc_start   = square_export_src.find("{% if welcome_card_mode %}")
+        else_start = square_export_src.find("{% else %}", wc_start)
+        wc_branch  = square_export_src[wc_start:else_start]
+        for label in (">NAT.<", ">GROUP<", ">HEIGHT<", ">WEIGHT<"):
+            assert label in wc_branch, (
+                f"{label!r} cell must appear in WC mini-grid branch."
+            )
+
+    def test_sq_wc_06_stat_strip_tier_label_in_wc_branch(self, square_export_src):
+        """Stat strip WC branch must render TIER label instead of LICENSE."""
+        stat_start = square_export_src.find("<!-- Stat strip:")
+        assert stat_start != -1, "Stat strip HTML comment not found in square template"
+        stat_section = square_export_src[stat_start:stat_start + 900]
+        assert "TIER" in stat_section, (
+            "WC stat strip must render 'TIER' label in welcome_card_mode branch."
+        )
+
+    def test_sq_wc_06_stat_strip_sa_value_in_wc_branch(self, square_export_src):
+        """Stat strip WC branch must render SA value instead of Lv. N."""
+        stat_start   = square_export_src.find("<!-- Stat strip:")
+        stat_section = square_export_src[stat_start:stat_start + 900]
+        assert ">SA<" in stat_section, (
+            "WC stat strip must render '>SA<' value in welcome_card_mode branch."
+        )
+
+    def test_sq_wc_07_stat_strip_license_preserved_in_non_wc_branch(self, square_export_src):
+        """Non-WC stat strip branch must still render LICENSE / Lv. X logic unchanged."""
+        stat_start   = square_export_src.find("<!-- Stat strip:")
+        stat_section = square_export_src[stat_start:stat_start + 1200]
+        assert "LICENSE" in stat_section, (
+            "Non-WC stat strip branch must retain the LICENSE label."
+        )
+        assert "license_current_level or 1" in stat_section, (
+            "Non-WC stat strip branch must retain license_current_level or 1 fallback."
+        )
+
+    def test_sq_wc_08_photo_monogram_class_defined_in_css(self, square_export_src):
+        """CSS class ex-photo-monogram must be defined in square template."""
+        assert ".ex-photo-monogram" in square_export_src, (
+            "ex-photo-monogram CSS class must be defined for the no-photo circle badge."
+        )
+
+    def test_sq_wc_08_photo_monogram_used_in_placeholder_html(self, square_export_src):
+        """ex-photo-monogram inner div must appear inside the ex-photo-placeholder block."""
+        ph_idx       = square_export_src.find("ex-photo-placeholder")
+        monogram_idx = square_export_src.find("ex-photo-monogram", ph_idx)
+        assert ph_idx != -1, "ex-photo-placeholder not found in square template"
+        assert monogram_idx != -1, (
+            "ex-photo-monogram must appear after ex-photo-placeholder "
+            "as the inner element of the no-photo fallback."
+        )
+
+
+class TestLandscapeExportP0Fix:
+    """
+    P0 hotfix: export/landscape/fifa.html must not render bare 'Lv.' when
+    license_current_level is absent from the context (Welcome Card flow).
+
+    LS-P0-01: bare {{ license_current_level }} pattern removed — was broken render
+    LS-P0-02: fallback renders 'Lv. —' not 'Lv. ' when value is absent
+    LS-P0-03: max-level suffix guarded to prevent 'Lv. — / None' edge case
+    """
+
+    def test_ls_p0_01_bare_license_pattern_removed(self, landscape_export_src):
+        """Bare Lv. {{ license_current_level }} without fallback must not exist."""
+        assert "Lv. {{ license_current_level }}" not in landscape_export_src, (
+            "Broken P0: 'Lv. {{ license_current_level }}' renders 'Lv. ' (empty) "
+            "when license_current_level is not in the Welcome Card context. "
+            "Must use a fallback."
+        )
+
+    def test_ls_p0_02_license_has_or_dash_fallback(self, landscape_export_src):
+        """License value must fall back to '—' when license_current_level is absent."""
+        assert 'license_current_level or "—"' in landscape_export_src, (
+            "License row must use license_current_level or '—' to produce "
+            "'Lv. —' instead of 'Lv. ' in Welcome Card context."
+        )
+
+    def test_ls_p0_03_max_level_suffix_guarded_by_current_level(self, landscape_export_src):
+        """Max-level suffix must only render when license_current_level is truthy."""
+        # The fix wraps the max-level condition with `license_current_level and ...`
+        assert "license_current_level and license_max_level" in landscape_export_src, (
+            "Max-level suffix must be guarded: if license_current_level is '—', "
+            "the '/ max_level' suffix must not render."
+        )

@@ -46,8 +46,10 @@ from app.models.semester import Semester  # noqa: E402
 from app.models.session import Session as SessionModel  # noqa: E402
 from app.models.team import Team, TeamMember, TournamentTeamEnrollment  # noqa: E402
 from app.models.tournament_configuration import TournamentConfiguration  # noqa: E402
+from app.models.tournament_instructor_slot import TournamentInstructorSlot  # noqa: E402
 from app.models.tournament_type import TournamentType  # noqa: E402
 from app.models.user import User, UserRole  # noqa: E402
+from app.models.pitch import Pitch  # noqa: E402
 from app.dependencies import (  # noqa: E402
     get_current_user_web,
     get_current_admin_user_hybrid,
@@ -231,16 +233,35 @@ def _enroll_teams_direct(tid, teams):
 
 
 # ── Common lifecycle (after enrollment phase) ─────────────────────────────────
-def _common_lifecycle(tid, instructor_id, expected_min_sessions=1):
-    """ENROLLMENT_CLOSED → CHECK_IN_OPEN → (set instructor) → IN_PROGRESS → verify."""
+def _common_lifecycle(tid, instructor_id, campus_id, expected_min_sessions=1):
+    """ENROLLMENT_CLOSED → CHECK_IN_OPEN → (set instructor + FIELD slot) → IN_PROGRESS → verify."""
     _status_transition(tid, "ENROLLMENT_CLOSED")
     _status_transition(tid, "CHECK_IN_OPEN")
 
-    # Set instructor directly (simulates wizard Basic Info save)
+    # Set master instructor directly (simulates wizard Basic Info save)
     t = _db.query(Semester).filter(Semester.id == tid).first()
     t.master_instructor_id = instructor_id
     _db.commit()
     ok(f"master_instructor_id = {instructor_id}")
+
+    # Create FIELD instructor slot required by Instructor Prerequisite Guard (PR #141)
+    pitch = _db.query(Pitch).filter(
+        Pitch.campus_id == campus_id,
+        Pitch.is_active == True,  # noqa: E712
+    ).first()
+    if not pitch:
+        fail_local(f"No active pitch on campus {campus_id} — cannot create FIELD instructor slot")
+    slot = TournamentInstructorSlot(
+        semester_id=tid,
+        instructor_id=instructor_id,
+        role="FIELD",
+        pitch_id=pitch.id,
+        status="CHECKED_IN",
+        assigned_by=instructor_id,
+    )
+    _db.add(slot)
+    _db.commit()
+    ok(f"FIELD instructor slot created: pitch_id={pitch.id}")
 
     _db.expire_all()
     _status_transition(tid, "IN_PROGRESS")
@@ -322,7 +343,7 @@ def s1_team_league(club, campus, tt_by_code, instructor, boot_teams):
         fail_local(f"Need ≥2 teams, got {count}")
 
     _status_transition(tid, "ENROLLMENT_OPEN")
-    _common_lifecycle(tid, instructor.id, expected_min_sessions=1)
+    _common_lifecycle(tid, instructor.id, campus.id, expected_min_sessions=1)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -391,7 +412,7 @@ def s2_individual_knockout(club, campus, tt_by_code, instructor, boot_teams):
         fail_local(f"Need ≥4 players for knockout, got {enrolled_count}")
 
     # 8-player knockout: 7 matches (4 R1 + 2 semis + 1 final) — check ≥4
-    _common_lifecycle(t.id, instructor.id, expected_min_sessions=4)
+    _common_lifecycle(t.id, instructor.id, campus.id, expected_min_sessions=4)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -448,7 +469,7 @@ def s3_individual_group_knockout(club, campus, tt_by_code, instructor, boot_team
         fail_local(f"Need ≥8 players for group+knockout, got {enrolled_count}")
 
     # 12 players: group stage + knockout → ≥10 sessions minimum
-    _common_lifecycle(t.id, instructor.id, expected_min_sessions=10)
+    _common_lifecycle(t.id, instructor.id, campus.id, expected_min_sessions=10)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -475,7 +496,7 @@ def s4_team_league_2leg(club, campus, tt_by_code, instructor, boot_teams):
 
     _status_transition(tid, "ENROLLMENT_OPEN")
     # 2 teams × 2 legs = 2 matches
-    _common_lifecycle(tid, instructor.id, expected_min_sessions=2)
+    _common_lifecycle(tid, instructor.id, campus.id, expected_min_sessions=2)
 
     # Verify exactly 2× matches (1 per leg)
     sess_count = _db.query(SessionModel).filter(SessionModel.semester_id == tid).count()
@@ -548,7 +569,7 @@ def s5_individual_league(club, campus, tt_by_code, instructor, boot_teams):
         fail_local(f"Need ≥2 players for ENROLLMENT_CLOSED, got {enrolled_count}")
 
     # Full lifecycle
-    _common_lifecycle(t.id, instructor.id, expected_min_sessions=1)
+    _common_lifecycle(t.id, instructor.id, campus.id, expected_min_sessions=1)
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────

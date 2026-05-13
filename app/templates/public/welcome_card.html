@@ -332,15 +332,13 @@
 </div>
 
 <script>
-// ── Canvas size map — mirrors card_export_service.CANVAS_SIZES ───────────────
-var CANVAS_SIZES = {
-    instagram_square:   [1080, 1080],
-    instagram_portrait: [1080, 1350],
-    instagram_story:    [1080, 1920],
-    tiktok:             [1080, 1920],
-    facebook_landscape: [1200,  630],
-    banner_custom:      [1500,  500],
-};
+// ── Canvas size map — server-rendered from card_constants.CANVAS_SIZES ───────
+var CANVAS_SIZES = (function () {
+    var raw = {{ canvas_sizes | tojson }};
+    var out = {};
+    for (var pid in raw) { out[pid] = [raw[pid].w, raw[pid].h]; }
+    return out;
+}());
 
 var _activePlatform = 'instagram_square';
 

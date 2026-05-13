@@ -526,7 +526,7 @@ html, body {
             </div>
             <div class="ex-profile-row">
                 <span class="ex-profile-label">License</span>
-                <span class="ex-profile-value">Lv. {{ license_current_level }}{% if license_max_level is defined and license_max_level > license_current_level %} / {{ license_max_level }}{% endif %}</span>
+                <span class="ex-profile-value">Lv. {{ license_current_level or "—" }}{% if license_current_level and license_max_level is defined and license_max_level > license_current_level %} / {{ license_max_level }}{% endif %}</span>
             </div>
             <div class="ex-profile-row">
                 <span class="ex-profile-label">XP</span>
