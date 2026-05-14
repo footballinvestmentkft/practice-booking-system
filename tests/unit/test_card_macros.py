@@ -703,6 +703,7 @@ def _minimal_export_ctx(theme=None, **overrides):
         player_weight_kg=None,
         sponsor_logo_url=None,
         app_logo_url=None,
+        landscape_photo_url=None,
     )
     ctx.update(overrides)
     return ctx
@@ -715,6 +716,11 @@ def _render_portrait(**ctx_overrides):
 
 def _render_story(**ctx_overrides):
     tpl = _make_export_env().get_template("public/export/story/fifa.html")
+    return tpl.render(**_minimal_export_ctx(**ctx_overrides))
+
+
+def _render_banner(**ctx_overrides):
+    tpl = _make_export_env().get_template("public/export/banner/fifa.html")
     return tpl.render(**_minimal_export_ctx(**ctx_overrides))
 
 
@@ -1239,3 +1245,170 @@ class TestStoryFifaPhase3b1:
         """sponsor_zone move into column base must not inject sponsor in portrait."""
         html = _render_portrait()
         assert "ex-sponsor" not in html
+
+
+# ---------------------------------------------------------------------------
+# TestBannerFifaPhase3b2  (BB3_ prefix)
+# Tests for the migrated banner/fifa.html  (Phase 3b-2)
+# ---------------------------------------------------------------------------
+
+class TestBannerFifaPhase3b2:
+    """BB3_ — public/export/banner/fifa.html extends fifa_base.html."""
+
+    def _source(self):
+        import os
+        import app as _app_pkg
+        tpl_dir = os.path.join(os.path.dirname(_app_pkg.__file__), "templates")
+        with open(os.path.join(tpl_dir, "public/export/banner/fifa.html")) as f:
+            return f.read()
+
+    # --- template structure ---
+
+    def test_BB3_extends_fifa_base(self):
+        assert '{% extends "public/export/shared/fifa_base.html" %}' in self._source()
+
+    def test_BB3_has_platform_vars_block(self):
+        assert "{% block platform_vars %}" in self._source()
+
+    def test_BB3_has_extra_css_block(self):
+        assert "{% block extra_css %}" in self._source()
+
+    # --- platform vars (row layout + compact sizing) ---
+
+    def test_BB3_card_direction_row(self):
+        html = _render_banner()
+        assert "--ex-card-direction: row" in html
+
+    def test_BB3_grid_gap_10px(self):
+        html = _render_banner()
+        assert "--ex-grid-gap:       10px" in html
+
+    def test_BB3_cat_radius_10px(self):
+        html = _render_banner()
+        assert "--ex-cat-radius:     10px" in html
+
+    def test_BB3_cat_pad_12px(self):
+        html = _render_banner()
+        assert "--ex-cat-pad:        12px" in html
+
+    def test_BB3_font_cat_11px(self):
+        html = _render_banner()
+        assert "--ex-font-cat:       11px" in html
+
+    def test_BB3_sname_w_155px(self):
+        html = _render_banner()
+        assert "--ex-sname-w:        155px" in html
+
+    def test_BB3_font_skill_14px(self):
+        html = _render_banner()
+        assert "--ex-font-skill:     14px" in html
+
+    def test_BB3_bar_h_7px(self):
+        html = _render_banner()
+        assert "--ex-bar-h:          7px" in html
+
+    def test_BB3_sval_w_40px(self):
+        html = _render_banner()
+        assert "--ex-sval-w:         40px" in html
+
+    # --- render correctness ---
+
+    def test_BB3_renders_without_error(self):
+        html = _render_banner()
+        assert "Test Player" in html
+
+    def test_BB3_ex_left_panel_present(self):
+        html = _render_banner()
+        assert 'class="ex-left"' in html
+
+    def test_BB3_420px_left_panel(self):
+        """Banner-specific 420px left panel (distinguishes from landscape's 360px)."""
+        html = _render_banner()
+        assert "0 0 420px" in html
+
+    # --- skill slice [:4] ---
+
+    def test_BB3_skill_slice_is_4(self):
+        """Banner renders at most 4 skills per category."""
+        from types import SimpleNamespace
+        skills = [SimpleNamespace(key=f"s{i}", name_en=f"Skill{i}") for i in range(6)]
+        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=skills)
+        html = _render_banner(skill_categories=[cat])
+        for i in range(4):
+            assert f"Skill{i}" in html
+        for i in range(4, 6):
+            assert f"Skill{i}" not in html
+
+    def test_BB3_banner_shows_fewer_skills_than_portrait(self):
+        """Banner [:4] vs portrait [:6] — skills 4 and 5 appear in portrait but not banner."""
+        from types import SimpleNamespace
+        skills = [SimpleNamespace(key=f"s{i}", name_en=f"Skill{i}") for i in range(6)]
+        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=skills)
+        banner_html  = _render_banner(skill_categories=[cat])
+        portrait_html = _render_portrait(skill_categories=[cat])
+        assert "Skill4" not in banner_html
+        assert "Skill5" not in banner_html
+        assert "Skill4" in portrait_html
+        assert "Skill5" in portrait_html
+
+    # --- 3-step photo fallback: landscape → portrait → generic ---
+
+    def test_BB3_landscape_photo_url_preferred(self):
+        html = _render_banner(
+            landscape_photo_url="http://example.com/landscape.jpg",
+            portrait_photo_url="http://example.com/portrait.jpg",
+            photo_url="http://example.com/generic.jpg",
+        )
+        assert "landscape.jpg" in html
+        assert "portrait.jpg" not in html
+        assert "generic.jpg" not in html
+
+    def test_BB3_portrait_fallback_when_no_landscape(self):
+        html = _render_banner(
+            landscape_photo_url=None,
+            portrait_photo_url="http://example.com/portrait.jpg",
+            photo_url="http://example.com/generic.jpg",
+        )
+        assert "portrait.jpg" in html
+        assert "generic.jpg" not in html
+
+    def test_BB3_generic_photo_final_fallback(self):
+        html = _render_banner(
+            landscape_photo_url=None,
+            portrait_photo_url=None,
+            photo_url="http://example.com/generic.jpg",
+        )
+        assert "generic.jpg" in html
+
+    def test_BB3_placeholder_when_no_photo(self):
+        html = _render_banner(landscape_photo_url=None, portrait_photo_url=None, photo_url=None)
+        assert "ex-avatar-placeholder" in html
+        assert "<img" not in html
+
+    # --- no sponsor slot ---
+
+    def test_BB3_no_sponsor_slot(self):
+        html = _render_banner()
+        assert "ex-sponsor-slot" not in html
+
+    # --- arctic contrast ---
+
+    def test_BB3_arctic_dark_text_strong_present(self):
+        html = _render_banner(theme=_make_arctic_export_theme())
+        assert "rgba(0,0,0,0.87)" in html
+
+    def test_BB3_arctic_dark_text_body_present(self):
+        html = _render_banner(theme=_make_arctic_export_theme())
+        assert "rgba(0,0,0,0.75)" in html
+
+    # --- layout invariants ---
+
+    def test_BB3_no_duplicate_css_reset(self):
+        html = _render_banner()
+        assert html.count("box-sizing: border-box") == 1
+
+    def test_BB3_cat_bg_default_005(self):
+        """No theme_root override → default cat_bg 0.05 inherited (render-equivalence)."""
+        html = _render_banner()
+        assert "rgba(255,255,255,0.05)" in html
+        assert "rgba(255,255,255,0.04)" not in html

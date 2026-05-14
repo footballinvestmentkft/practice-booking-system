@@ -1206,11 +1206,23 @@ class TestFifaBannerExport:
         assert "ex-skill-cats" in html, ".ex-skill-cats not found in banner export HTML"
 
     def test_ex27_landscape_photo_url_in_banner(self, client):
-        """Banner export template must reference landscape_photo_url (landscape-first fallback)."""
-        html = self._get_fifa_export_html(client, "banner_custom")
+        """Banner export must render landscape_photo_url into the avatar img src."""
+        from app.main import app
+        from app.dependencies import get_db
+
+        lic = _make_license(card_variant="fifa")
+        lic.card_photo_landscape_url = "/static/test-landscape.jpg"
+        db = _mock_db(user=_make_user(), license_=lic)
+        app.dependency_overrides[get_db] = lambda: db
+        try:
+            r = client.get("/players/7/card?platform=banner_custom&export=1")
+            html = r.text if r.status_code == 200 else ""
+        finally:
+            app.dependency_overrides.pop(get_db, None)
         assert html, "Export returned empty response for banner_custom"
-        assert "landscape_photo_url" in html, (
-            "landscape_photo_url not referenced in banner export template"
+        assert "/static/test-landscape.jpg" in html, (
+            "landscape_photo_url not rendered in banner export avatar img src — "
+            "expected landscape crop URL to appear in rendered HTML"
         )
 
     def test_ex28_banner_not_landscape_template(self, client):
