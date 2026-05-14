@@ -729,6 +729,22 @@ def _render_tiktok(**ctx_overrides):
     return tpl.render(**_minimal_export_ctx(**ctx_overrides))
 
 
+def _render_landscape(**ctx_overrides):
+    tpl = _make_export_env().get_template("public/export/landscape/fifa.html")
+    ctx = dict(
+        player_nickname=None,
+        player_age=None,
+        player_gender=None,
+        player_location=None,
+        member_since=None,
+        license_current_level=None,
+        license_max_level=None,
+        xp_balance=0,
+    )
+    ctx.update(ctx_overrides)
+    return tpl.render(**_minimal_export_ctx(**ctx))
+
+
 # ---------------------------------------------------------------------------
 # TestExportBase  (EB_ prefix)
 # Tests for fifa_base.html — verified via portrait child
@@ -1652,3 +1668,246 @@ class TestTikTokFifaPhase3b3:
     def test_TK3_banner_has_no_hero_photo(self):
         html = _render_banner()
         assert 'class="ex-hero-photo"' not in html
+
+
+# ---------------------------------------------------------------------------
+# TestLandscapeFifaPhase3b4  (LS4_ prefix)
+# Tests for landscape/fifa.html — Phase 3b-4 migration to extends fifa_base.html
+# ---------------------------------------------------------------------------
+
+@pytest.mark.unit
+class TestLandscapeFifaPhase3b4:
+    """LS4_ — landscape/fifa.html extends fifa_base.html (Phase 3b-4).
+
+    Verifies:
+    - base inheritance (no standalone HTML shell)
+    - theme_root override: cat_bg=0.04 (not default 0.05)
+    - platform_vars: row direction + 10 sizing overrides
+    - photo fallback: portrait → landscape → generic → placeholder
+    - 3-col layout: .ex-center panel present
+    - OVR watermark, dominant badge
+    - neutral bar/val explicit values in export_skill_rows call
+    - category average (.ex-cat-avg)
+    - cat-name flex layout for cat_avg alignment
+    - no skill slicing
+    - Arctic text tokens
+    - portrait / story / tiktok / banner regression guards
+    """
+
+    # --- base inheritance ---
+
+    def test_LS4_extends_base_not_standalone(self):
+        """Template source must use {% extends %}, not standalone <!DOCTYPE>."""
+        import os, app as _app_pkg
+        src_path = os.path.join(
+            os.path.dirname(_app_pkg.__file__),
+            "templates/public/export/landscape/fifa.html",
+        )
+        with open(src_path) as f:
+            src = f.read()
+        assert "{% extends" in src, "LS4: landscape/fifa.html must extend fifa_base.html"
+        assert "<!DOCTYPE" not in src, "LS4: standalone <!DOCTYPE found — should be removed"
+
+    def test_LS4_no_duplicate_css_reset(self):
+        html = _render_landscape()
+        assert html.count("box-sizing: border-box") == 1
+
+    # --- theme_root cat_bg override: 0.04, not default 0.05 ---
+
+    def test_LS4_cat_bg_is_004(self):
+        """theme_root block must override cat_bg to rgba(255,255,255,0.04)."""
+        html = _render_landscape()
+        # Find the --ex-cat-bg declaration line and check it contains 0.04
+        import re
+        cat_bg_match = re.search(r'--ex-cat-bg:\s+(.*?);', html)
+        assert cat_bg_match, "LS4: --ex-cat-bg declaration not found in rendered HTML"
+        assert '0.04' in cat_bg_match.group(1), (
+            f"LS4: --ex-cat-bg value is '{cat_bg_match.group(1)}' — expected 0.04"
+        )
+
+    def test_LS4_cat_bg_not_default_005(self):
+        """cat_bg must NOT be the default 0.05 — landscape uses explicit 0.04."""
+        html = _render_landscape()
+        import re
+        cat_bg_match = re.search(r'--ex-cat-bg:\s+(.*?);', html)
+        assert cat_bg_match, "LS4: --ex-cat-bg declaration not found"
+        assert '0.05' not in cat_bg_match.group(1), (
+            "LS4: --ex-cat-bg declaration contains 0.05 — cat_bg override not applied"
+        )
+
+    # --- platform_vars ---
+
+    def test_LS4_row_direction(self):
+        html = _render_landscape()
+        assert "--ex-card-direction: row;" in html
+
+    def test_LS4_sname_width_80px(self):
+        html = _render_landscape()
+        assert "--ex-sname-w:        80px" in html
+
+    def test_LS4_font_skill_9px(self):
+        html = _render_landscape()
+        assert "--ex-font-skill:     9px" in html
+
+    def test_LS4_bar_h_4px(self):
+        html = _render_landscape()
+        assert "--ex-bar-h:          4px" in html
+
+    def test_LS4_row_max_h_26px(self):
+        html = _render_landscape()
+        assert "--ex-row-max-h:      26px" in html
+
+    def test_LS4_grid_gap_6px(self):
+        html = _render_landscape()
+        assert "--ex-grid-gap:       6px" in html
+
+    # --- photo fallback: portrait → landscape → generic → placeholder ---
+
+    def test_LS4_portrait_photo_preferred(self):
+        """portrait_photo_url is step 1 — takes priority over landscape and generic."""
+        html = _render_landscape(
+            portrait_photo_url="http://example.com/portrait.jpg",
+            landscape_photo_url="http://example.com/landscape.jpg",
+            photo_url="http://example.com/generic.jpg",
+        )
+        assert "portrait.jpg" in html
+        assert "landscape.jpg" not in html
+        assert "generic.jpg" not in html
+
+    def test_LS4_landscape_photo_fallback(self):
+        """landscape_photo_url is step 2 — used when portrait is absent."""
+        html = _render_landscape(
+            portrait_photo_url=None,
+            landscape_photo_url="http://example.com/landscape.jpg",
+            photo_url="http://example.com/generic.jpg",
+        )
+        assert "landscape.jpg" in html
+        assert "generic.jpg" not in html
+
+    def test_LS4_generic_photo_fallback(self):
+        """photo_url is step 3 — used when portrait and landscape are absent."""
+        html = _render_landscape(
+            portrait_photo_url=None,
+            landscape_photo_url=None,
+            photo_url="http://example.com/generic.jpg",
+        )
+        assert "generic.jpg" in html
+
+    def test_LS4_placeholder_when_no_photo(self):
+        """All None → initials placeholder, no <img>."""
+        html = _render_landscape(portrait_photo_url=None, landscape_photo_url=None, photo_url=None)
+        assert 'class="ex-photo-initials"' in html
+        assert "<img" not in html
+
+    # --- 3-col layout, center panel ---
+
+    def test_LS4_center_panel_present(self):
+        html = _render_landscape()
+        assert 'class="ex-center"' in html
+
+    def test_LS4_center_panel_white_bg(self):
+        html = _render_landscape()
+        assert "background: #ffffff" in html
+
+    # --- OVR watermark ---
+
+    def test_LS4_ovr_watermark_present(self):
+        html = _render_landscape()
+        assert 'class="ex-ovr-watermark"' in html
+
+    # --- dominant badge ---
+
+    def test_LS4_dom_badge_rendered_rl(self):
+        html = _render_landscape(dominant_badge="Rl")
+        assert 'class="ex-dom-badge"' in html
+        assert 'class="ex-dom-hi"' in html
+
+    def test_LS4_dom_badge_absent_when_none(self):
+        html = _render_landscape(dominant_badge=None)
+        assert 'class="ex-dom-badge"' not in html
+
+    # --- neutral bar / val explicit values ---
+
+    def test_LS4_neutral_bar_018(self):
+        """Landscape must pass neutral_bar=rgba(255,255,255,0.18) to export_skill_rows."""
+        from types import SimpleNamespace
+        skill = SimpleNamespace(key="passing", name_en="Passing")
+        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=[skill])
+        html = _render_landscape(skill_categories=[cat])
+        assert "rgba(255,255,255,0.18)" in html
+
+    def test_LS4_neutral_val_080(self):
+        """Landscape must pass neutral_val=rgba(255,255,255,0.80) to export_skill_rows."""
+        from types import SimpleNamespace
+        skill = SimpleNamespace(key="passing", name_en="Passing")
+        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=[skill])
+        html = _render_landscape(skill_categories=[cat])
+        assert "rgba(255,255,255,0.80)" in html
+
+    # --- category average ---
+
+    def _landscape_with_cat(self, **overrides):
+        from types import SimpleNamespace
+        skill = SimpleNamespace(key="passing", name_en="Passing")
+        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=[skill])
+        return _render_landscape(skill_categories=[cat], **overrides)
+
+    def test_LS4_cat_avg_rendered(self):
+        html = self._landscape_with_cat()
+        assert 'class="ex-cat-avg"' in html
+
+    def test_LS4_cat_name_flex_layout(self):
+        """cat-name must use flex layout for cat_avg right-alignment."""
+        html = _render_landscape()
+        assert "justify-content: space-between" in html
+
+    # --- no skill slicing ---
+
+    def test_LS4_no_skill_slicing(self):
+        """All skills in a category must be rendered (no [:N] slicing)."""
+        from types import SimpleNamespace
+        skills = [SimpleNamespace(key=f"s{i}", name_en=f"Skill{i}") for i in range(6)]
+        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=skills)
+        html = _render_landscape(skill_categories=[cat])
+        for i in range(6):
+            assert f"Skill{i}" in html, f"LS4: Skill{i} missing — unexpected slicing"
+
+    # --- Arctic theme ---
+
+    def test_LS4_arctic_text_token_strong(self):
+        html = _render_landscape(theme=_make_arctic_export_theme())
+        assert "rgba(0,0,0,0.87)" in html
+
+    def test_LS4_arctic_cat_bg_dark_overlay(self):
+        """Arctic light theme → macro emits dark overlay regardless of cat_bg param."""
+        html = _render_landscape(theme=_make_arctic_export_theme())
+        import re
+        cat_bg_match = re.search(r'--ex-cat-bg:\s+(.*?);', html)
+        assert cat_bg_match, "LS4: --ex-cat-bg not found in Arctic render"
+        assert 'rgba(0,0,0,0.06)' in cat_bg_match.group(1)
+
+    # --- regression guards ---
+
+    def test_LS4_portrait_no_center_panel(self):
+        html = _render_portrait()
+        assert 'class="ex-center"' not in html
+
+    def test_LS4_story_no_center_panel(self):
+        html = _render_story()
+        assert 'class="ex-center"' not in html
+
+    def test_LS4_tiktok_no_center_panel(self):
+        html = _render_tiktok()
+        assert 'class="ex-center"' not in html
+
+    def test_LS4_banner_no_center_panel(self):
+        html = _render_banner()
+        assert 'class="ex-center"' not in html
+
+    def test_LS4_portrait_no_photo_zone(self):
+        html = _render_portrait()
+        assert 'class="ex-photo-zone"' not in html
+
+    def test_LS4_portrait_no_ovr_watermark(self):
+        html = _render_portrait()
+        assert 'class="ex-ovr-watermark"' not in html
