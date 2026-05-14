@@ -54,7 +54,11 @@ def _make_license(public_card_platform: str | None = None,
     lic = MagicMock()
     lic.public_card_platform = public_card_platform
     lic.card_variant = card_variant
-    lic.card_theme = "default"
+    lic.card_theme   = "default"
+    # Published state mirrors draft for tests — public route now reads these fields
+    lic.published_card_platform = public_card_platform
+    lic.published_card_variant  = card_variant
+    lic.published_card_theme    = "default"
     lic.specialization_type = "LFA_FOOTBALL_PLAYER"
     lic.is_active = True
     lic.onboarding_completed = False

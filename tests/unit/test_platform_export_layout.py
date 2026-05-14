@@ -71,6 +71,11 @@ Tests:
   EX-58  tiktok/fifa.html template source contains ex-identity-strip
   EX-59  tiktok rendered HTML contains class="ex-sponsor-slot" element
   EX-60  tiktok sponsor logo renders when sponsor_logo_url provided; absent when None
+  EX-61  dashboard_card_editor.html: _updateFullscreenLink does NOT append &export=1
+  EX-62  portrait no-export request uses portrait export template (not default card)
+  EX-63  banner_custom no-export request uses banner export template (not default card)
+  EX-64  portrait no-export response has no tab-bar (confirms export template selected)
+  EX-65  banner_custom no-export response has no tab-bar (confirms export template selected)
 """
 from __future__ import annotations
 
@@ -97,6 +102,12 @@ def _make_user(user_id: int = 7) -> MagicMock:
 def _make_license(card_variant: str = "compact") -> MagicMock:
     lic = MagicMock()
     lic.card_variant = card_variant
+    lic.card_theme   = "default"
+    lic.public_card_platform = None
+    # Published state mirrors draft for tests — public route now reads these fields
+    lic.published_card_variant  = card_variant
+    lic.published_card_theme    = "default"
+    lic.published_card_platform = None
     lic.specialization_type = "LFA_FOOTBALL_PLAYER"
     lic.is_active = True
     lic.onboarding_completed = False  # skips get_skill_profile
@@ -537,6 +548,29 @@ class TestExportRenderLayerStatic:
         assert html, "Export returned empty response"
         assert "ex-card" in html, (
             "Dedicated export template not used — expected .ex-card root element"
+        )
+
+    def test_ex01b_fifa_square_card_uses_min_sizing(self, client):
+        """v16: Square export CSS must use min(100vw, 100vh) for .ex-card sizing.
+
+        min(100vw, 100vh) guarantees 1:1 at any viewport:
+          Playwright 1080×1080 → 1080px (PNG/WebM export unchanged).
+          Browser 1440×900    →  900px (square, fully visible, no distortion).
+        Plain 100vw/100vh produces a non-square card at typical browser viewports.
+        """
+        html = self._get_fifa_export_html(client, "instagram_square")
+        assert html, "Export returned empty response for instagram_square"
+        style_block = html[:html.find("</style>")]
+        card_css_start = style_block.find(".ex-card {")
+        assert card_css_start != -1, ".ex-card CSS rule not found in Square export"
+        card_css_end = style_block.find("}", card_css_start)
+        card_css = style_block[card_css_start: card_css_end + 1]
+        assert "min(100vw, 100vh)" in card_css, (
+            ".ex-card must use min(100vw, 100vh) for square-specific sizing — "
+            "plain 100vw/100vh breaks the 1:1 aspect ratio in non-square browser viewports"
+        )
+        assert "aspect-ratio" not in card_css, (
+            ".ex-card must not use aspect-ratio — replaced by explicit min() sizing in v16"
         )
 
     def test_ex02_no_tab_bar_in_export(self, client):
@@ -1249,29 +1283,29 @@ class TestFifaSquareAllSkills:
         )
 
     def test_ex31c_sponsor_logo_slot_present_without_logo(self, client):
-        """ex-hero-sponsor is always rendered; ex-sponsor-slot is absent (removed in v8).
+        """v14: ex-hero-sponsor removed; ex-outfield-logo is in Col 1; ex-sponsor-slot absent.
 
-        v8 moved the sponsor from the skills zone into the hero layer (.ex-hero-sponsor
-        inside .ex-profile-col). The slot renders unconditionally because app_logo_url
-        is always set as a fallback — even when no sponsor_logo_url is configured.
-        The old ex-sponsor-slot mechanism was removed in v8.
+        v14 relocated the sponsor/app logo from the hero layer (.ex-hero-sponsor) into
+        the Outfield column bottom (.ex-outfield-logo). The logo renders conditionally via
+        Jinja2 gate (sponsor_logo_url or app_logo_url). ex-sponsor-slot was removed in v8.
         """
         html = self._get_fifa_export_html(client, "instagram_square")
         assert html, "Export returned empty response for instagram_square"
         assert "ex-sponsor-slot" not in html, (
             "ex-sponsor-slot found in Square export HTML — "
-            "this class was removed in v8; sponsor moved to hero layer (ex-hero-sponsor)"
+            "this class was removed in v8; sponsor moved to outfield column (v14)"
         )
-        assert "ex-hero-sponsor" in html, (
-            "ex-hero-sponsor not found in Square export HTML — "
-            "v8+ sponsor/logo must render in .ex-hero-sponsor inside .ex-profile-col"
+        assert "ex-hero-sponsor" not in html, (
+            "ex-hero-sponsor found in Square export HTML — "
+            "v14 removed hero-layer sponsor; logo is now in ex-outfield-logo (Col 1 bottom)"
         )
-        assert "ex-hero-sponsor-img" in html, (
-            "ex-hero-sponsor-img not found — img must always render via app_logo_url fallback"
+        assert "ex-outfield-logo" in html, (
+            "ex-outfield-logo not found in Square export HTML — "
+            "v14 sponsor/app logo must render in .ex-outfield-logo inside .ex-col-outfield"
         )
 
     def test_ex31d_sponsor_logo_renders_img_when_url_present(self, client):
-        """img.ex-hero-sponsor-img renders inside ex-hero-sponsor when sponsor_logo_url is set."""
+        """img.ex-outfield-logo-img renders inside ex-outfield-logo when sponsor_logo_url is set."""
         from app.main import app
         from app.dependencies import get_db
 
@@ -1286,25 +1320,25 @@ class TestFifaSquareAllSkills:
             app.dependency_overrides.pop(get_db, None)
 
         assert html, "Export returned empty response"
-        assert 'class="ex-hero-sponsor-img"' in html, (
-            "ex-hero-sponsor-img not found when sponsor_logo_url is set — "
-            "img must render inside ex-hero-sponsor (v8 hero layer)"
+        assert 'class="ex-outfield-logo-img"' in html, (
+            "ex-outfield-logo-img not found when sponsor_logo_url is set — "
+            "img must render inside ex-outfield-logo (v14 outfield column)"
         )
         assert "/static/uploads/lfa_player_photos/7_sponsor_logo_1234567890.png" in html, (
             "sponsor_logo_url value not found in rendered img src"
         )
 
     def test_ex31e_sponsor_logo_css_constraints(self, client):
-        """CSS for ex-hero-sponsor-img contains object-fit: contain and max-height constraint."""
+        """CSS for ex-outfield-logo-img contains object-fit: contain and max-height: 44px."""
         html = self._get_fifa_export_html(client, "instagram_square")
         assert html, "Export returned empty response for instagram_square"
         assert "object-fit: contain" in html, (
             "object-fit: contain not found in Square export CSS — "
-            "required so sponsor/app logo preserves aspect ratio in ex-hero-sponsor"
+            "required so sponsor/app logo preserves aspect ratio in ex-outfield-logo"
         )
-        assert "max-height: 28px" in html, (
-            "max-height: 28px not found in Square export CSS — "
-            "required so logo never overflows the ex-hero-sponsor area (v8 hero layer)"
+        assert "max-height: 44px" in html, (
+            "max-height: 44px not found in Square export CSS — "
+            "v14 outfield logo must use 44px cap (was 28px in v8 hero layer)"
         )
 
     def test_ex31f_sponsor_logo_onerror_fallback(self, client):
@@ -1329,6 +1363,31 @@ class TestFifaSquareAllSkills:
         )
         assert "this.style.display" in html, (
             "onerror handler body not found — must set display:none on broken img"
+        )
+
+    def test_ex31h_svg_no_green_css_background(self, client):
+        """v15: .ex-pos-svg-landscape CSS block must not contain background: #1a5c2a.
+
+        Green is provided by <rect fill='#1a5c2a'> inside the SVG viewBox only —
+        consistent with Default card .pitch-svg (no CSS background on the SVG element).
+        Setting background on the SVG element pollutes the letterbox areas with pitch green.
+        """
+        html = self._get_fifa_export_html(client, "instagram_square")
+        assert html, "Export returned empty response for instagram_square"
+        # Find the CSS block for ex-pos-svg-landscape
+        style_block = html[:html.find("</style>")]
+        svg_css_start = style_block.find(".ex-pos-svg-landscape {")
+        assert svg_css_start != -1, ".ex-pos-svg-landscape CSS rule not found"
+        svg_css_end = style_block.find("}", svg_css_start)
+        svg_css = style_block[svg_css_start: svg_css_end + 1]
+        assert "#1a5c2a" not in svg_css, (
+            "background: #1a5c2a found in .ex-pos-svg-landscape CSS — "
+            "v15 removes this so the letterbox shows panel background, not pitch green"
+        )
+        # The green rect must still be present in the SVG HTML section
+        html_body = html[html.rfind("</style>"):]
+        assert 'fill="#1a5c2a"' in html_body, (
+            "<rect fill='#1a5c2a'> must remain inside the SVG for the pitch fill"
         )
 
     @pytest.mark.skipif(not _playwright_and_server_available(), reason=_PLAYWRIGHT_REASON)
@@ -1549,3 +1608,87 @@ class TestPulseSquareAnimatedMode:
         )
         assert "card-wrap" not in html, "Editor chrome (card-wrap) found in Pulse export HTML"
         assert "tab-bar" not in html, "tab-bar found in Pulse export HTML"
+
+
+@pytest.mark.unit
+class TestFullscreenLinkConsistency:
+    """Open Fullscreen link URL contract — ensures no &export=1 leaks into human-browseable URLs.
+
+    EX-61  dashboard_card_editor.html: _updateFullscreenLink does NOT append &export=1
+    EX-62  portrait no-export request uses portrait export template (not default card)
+    EX-63  banner_custom no-export request uses banner export template (not default card)
+    EX-64  portrait no-export response has no tab-bar (confirms export template selected)
+    EX-65  banner_custom no-export response has no tab-bar (confirms export template selected)
+    """
+
+    def test_ex61_fullscreen_link_js_has_no_export_flag(self):
+        """EX-61: _updateFullscreenLink in dashboard_card_editor.html must NOT contain &export=1.
+
+        The fullscreen link is for human browser preview; &export=1 is reserved for
+        Playwright PNG/WebM rendering via card_export_service.py.
+        """
+        import os, app as _app_pkg
+        tpl_path = os.path.join(
+            os.path.dirname(_app_pkg.__file__),
+            "templates/dashboard_card_editor.html",
+        )
+        with open(tpl_path, encoding="utf-8") as f:
+            src = f.read()
+        fn_start = src.find("function _updateFullscreenLink()")
+        fn_end   = src.find("}", fn_start)
+        fn_body  = src[fn_start: fn_end + 1]
+        assert fn_body, "EX-61: _updateFullscreenLink function not found in dashboard_card_editor.html"
+        assert "&export=1" not in fn_body, (
+            "EX-61: &export=1 found inside _updateFullscreenLink — "
+            "fullscreen link must use ?platform=X (no export flag); "
+            "Playwright export uses card_export_service.py directly"
+        )
+
+    def _get_fifa_preview_html(self, client, platform: str) -> str:
+        """GET ?platform={platform} WITHOUT export=1 — simulates Open Fullscreen link."""
+        from app.main import app
+        from app.dependencies import get_db
+
+        db = _mock_db(user=_make_user(), license_=_make_license(card_variant="fifa"))
+        app.dependency_overrides[get_db] = lambda: db
+        try:
+            r = client.get(f"/players/7/card?platform={platform}")
+            return r.text if r.status_code == 200 else ""
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+
+    def test_ex62_portrait_no_export_uses_portrait_template(self, client):
+        """EX-62: GET ?platform=instagram_portrait (no export=1) must load portrait export template."""
+        html = self._get_fifa_preview_html(client, "instagram_portrait")
+        assert html, "EX-62: Card route returned empty response for instagram_portrait (no export)"
+        assert "ex-card" in html, (
+            "EX-62: ex-card not found — portrait preview did not load export/portrait/fifa.html; "
+            "default card template was used instead (missing not-export branch)"
+        )
+
+    def test_ex63_banner_no_export_uses_banner_template(self, client):
+        """EX-63: GET ?platform=banner_custom (no export=1) must load banner export template."""
+        html = self._get_fifa_preview_html(client, "banner_custom")
+        assert html, "EX-63: Card route returned empty response for banner_custom (no export)"
+        assert "ex-card" in html, (
+            "EX-63: ex-card not found — banner preview did not load export/banner/fifa.html; "
+            "default card template was used instead (missing not-export branch)"
+        )
+
+    def test_ex64_portrait_no_export_has_no_editor_chrome(self, client):
+        """EX-64: portrait no-export response must have no tab-bar (editor chrome absent)."""
+        html = self._get_fifa_preview_html(client, "instagram_portrait")
+        assert html, "EX-64: Card route returned empty response for instagram_portrait (no export)"
+        assert "tab-bar" not in html, (
+            "EX-64: tab-bar found in portrait no-export HTML — editor template loaded instead of "
+            "export/portrait/fifa.html"
+        )
+
+    def test_ex65_banner_no_export_has_no_editor_chrome(self, client):
+        """EX-65: banner_custom no-export response must have no tab-bar (editor chrome absent)."""
+        html = self._get_fifa_preview_html(client, "banner_custom")
+        assert html, "EX-65: Card route returned empty response for banner_custom (no export)"
+        assert "tab-bar" not in html, (
+            "EX-65: tab-bar found in banner_custom no-export HTML — editor template loaded instead "
+            "of export/banner/fifa.html"
+        )

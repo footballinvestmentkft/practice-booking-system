@@ -215,6 +215,17 @@ class UserLicense(Base):
     public_card_platform = Column(String(50), nullable=True, default=None,
                                    comment="Saved public card platform ID (NULL = default)")
 
+    # 📣 PUBLISHED PUBLIC STATE: explicitly published snapshot, decoupled from editor draft.
+    # The public card route reads ONLY from these fields.  The editor writes to
+    # card_theme/card_variant/public_card_platform (draft); a "Publish Card" action
+    # copies draft → published so the public URL stays stable while the user edits.
+    published_card_theme    = Column(String(50), nullable=True, default="default",
+                                     comment="Published public card theme (stable; set by Publish action)")
+    published_card_variant  = Column(String(50), nullable=True, default="fifa",
+                                     comment="Published public card variant (stable; set by Publish action)")
+    published_card_platform = Column(String(50), nullable=True, default=None,
+                                     comment="Published public card platform (NULL=default; stable)")
+
     skills_last_updated_at = Column(DateTime, nullable=True,
                                     comment="When skills were last updated")
     skills_updated_by = Column(Integer, ForeignKey("users.id"), nullable=True,

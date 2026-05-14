@@ -392,6 +392,11 @@ async def lfa_player_card_editor(
     ]
     active_card_theme = user_license.card_theme or "default"
 
+    # Published public card state (read-only in the editor — shown as indicator)
+    published_card_theme    = user_license.published_card_theme    or "default"
+    published_card_variant  = user_license.published_card_variant  or "fifa"
+    published_card_platform = user_license.published_card_platform or "default"
+
     # Card variant picker data — identical logic to spec_dashboard
     from ...services.card_variant_service import (  # noqa: E402
         get_all_variants as _get_all_variants,
@@ -447,6 +452,10 @@ async def lfa_player_card_editor(
             "animated_capable_platforms": animated_capable_platforms,
             "platforms": editor_platforms,
             "canvas_sizes": canvas_sizes,
+            # Published state — used for "Unpublished changes" indicator + View Public Card CTA
+            "published_card_theme":    published_card_theme,
+            "published_card_variant":  published_card_variant,
+            "published_card_platform": published_card_platform,
         },
     )
 
@@ -1057,3 +1066,32 @@ async def student_set_card_platform(
     lfa_license.public_card_platform = None if payload.platform == "default" else payload.platform
     db.commit()
     return JSONResponse({"ok": True, "platform": payload.platform})
+
+
+@router.post("/dashboard/publish-card")
+async def student_publish_card(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Copy the current editor draft state to the published public card state.
+
+    Idempotent: calling it multiple times with the same draft produces the same result.
+    The public card route (/players/{id}/card) reads published_card_* fields only,
+    so a user's public card is frozen until they explicitly call this endpoint.
+    """
+    lfa_license = _get_lfa_license(db, user.id)
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "No active LFA Football Player license"}, status_code=404)
+
+    lfa_license.published_card_theme    = lfa_license.card_theme    or "default"
+    lfa_license.published_card_variant  = lfa_license.card_variant  or "fifa"
+    lfa_license.published_card_platform = lfa_license.public_card_platform  # NULL = default; intentional
+    db.commit()
+    return JSONResponse({
+        "ok": True,
+        "published": {
+            "theme":    lfa_license.published_card_theme,
+            "variant":  lfa_license.published_card_variant,
+            "platform": lfa_license.published_card_platform or "default",
+        },
+    })
