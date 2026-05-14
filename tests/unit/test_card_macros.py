@@ -635,3 +635,443 @@ class TestPlayerCardFifaPhase2b:
         tpl = e.from_string(tpl_src)
         html = tpl.render(**self._minimal_ctx(card_theme="slate"))
         assert 'class="page-brand"' in html
+
+
+# ---------------------------------------------------------------------------
+# Phase 3a — Shared Export Base Template
+# ---------------------------------------------------------------------------
+
+def _make_export_env():
+    """Jinja2 env for export templates (includes nationalities_display filter)."""
+    e = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(TEMPLATES_DIR),
+        autoescape=False,
+    )
+    e.filters["nationalities_display"] = lambda v, secondary=None: v or ""
+    return e
+
+
+def _make_dark_export_theme():
+    from types import SimpleNamespace
+    return SimpleNamespace(
+        panel_bg="linear-gradient(155deg,#0d0d0d 0%,#1a1a2e 60%,#16213e 100%)",
+        body_bg="#0f0f0f",
+        accent="#00d4ff",
+        is_light_body_bg=False,
+    )
+
+
+def _make_arctic_export_theme():
+    from types import SimpleNamespace
+    return SimpleNamespace(
+        panel_bg="linear-gradient(155deg,#1a2744 0%,#2a3a5c 60%,#1e3a4a 100%)",
+        body_bg="#f7fafc",
+        accent="#4299e1",
+        is_light_body_bg=True,
+    )
+
+
+def _minimal_export_ctx(theme=None, **overrides):
+    from types import SimpleNamespace
+    if theme is None:
+        theme = _make_dark_export_theme()
+    player = SimpleNamespace(
+        name="Test Player",
+        position="CM",
+        nationality="Hungarian",
+        secondary_nationality=None,
+        age_group="U17",
+        total_tournaments=5,
+        skills={},
+    )
+    ctx = dict(
+        player=player,
+        theme=theme,
+        overall=75.0,
+        tier_label="Silver",
+        tier_color="#718096",
+        pos_color="#667eea",
+        avatar_bg="#1a2744",
+        initials="TP",
+        portrait_photo_url=None,
+        photo_url=None,
+        teams_info=[],
+        skill_categories=[],
+        last_skill_delta={},
+    )
+    ctx.update(overrides)
+    return ctx
+
+
+def _render_portrait(**ctx_overrides):
+    tpl = _make_export_env().get_template("public/export/portrait/fifa.html")
+    return tpl.render(**_minimal_export_ctx(**ctx_overrides))
+
+
+# ---------------------------------------------------------------------------
+# TestExportBase  (EB_ prefix)
+# Tests for fifa_base.html — verified via portrait child
+# ---------------------------------------------------------------------------
+
+class TestExportBase:
+    """EB_ — public/export/shared/fifa_base.html (tested via portrait child)."""
+
+    # --- HTML reset present and not duplicated ---
+
+    def test_EB_html_reset_appears_exactly_once(self):
+        html = _render_portrait()
+        assert html.count("box-sizing: border-box") == 1
+
+    def test_EB_html_and_body_reset_present(self):
+        html = _render_portrait()
+        assert "overflow: hidden" in html
+
+    # --- theme_root block emits CSS vars ---
+
+    def test_EB_theme_root_emits_panel_bg(self):
+        html = _render_portrait()
+        assert "--ex-panel-bg" in html
+
+    def test_EB_theme_root_emits_bar_bg(self):
+        html = _render_portrait()
+        assert "--ex-bar-bg" in html
+
+    def test_EB_theme_root_emits_cat_bg(self):
+        html = _render_portrait()
+        assert "--ex-cat-bg" in html
+
+    def test_EB_default_cat_bg_is_005(self):
+        """Portrait uses default export_root_vars — cat_bg must be 0.05."""
+        html = _render_portrait()
+        assert "rgba(255,255,255,0.05)" in html
+
+    def test_EB_no_square_cat_bg_in_portrait(self):
+        """Square-specific cat_bg=0.06 must not appear in portrait output."""
+        html = _render_portrait()
+        assert "rgba(255,255,255,0.06)" not in html
+
+    # --- theme_root block overridable ---
+
+    def test_EB_theme_root_block_overridable_for_custom_cat_bg(self):
+        """A child that overrides theme_root can emit a custom cat_bg."""
+        e = _make_export_env()
+        tpl_src = (
+            '{%- from "macros/card_theme_root.html" import export_root_vars -%}'
+            '{% extends "public/export/shared/fifa_base.html" %}'
+            '{% block theme_root %}{{ export_root_vars(theme, cat_bg="rgba(255,255,255,0.06)") }}{% endblock %}'
+            '{% block body_content %}OK{% endblock %}'
+        )
+        tpl = e.from_string(tpl_src)
+        html = tpl.render(**_minimal_export_ctx())
+        assert "rgba(255,255,255,0.06)" in html
+
+    # --- arctic text tokens ---
+
+    def test_EB_arctic_theme_emits_dark_text_strong(self):
+        html = _render_portrait(theme=_make_arctic_export_theme())
+        assert "rgba(0,0,0,0.87)" in html
+
+    def test_EB_arctic_theme_emits_dark_text_body(self):
+        html = _render_portrait(theme=_make_arctic_export_theme())
+        assert "rgba(0,0,0,0.75)" in html
+
+    def test_EB_dark_theme_emits_white_text_tokens(self):
+        html = _render_portrait(theme=_make_dark_export_theme())
+        assert "rgba(255,255,255,0.85)" in html  # --ex-text-strong
+
+    # --- shared skill-row CSS classes ---
+
+    def test_EB_shared_ex_row_class_present(self):
+        html = _render_portrait()
+        assert ".ex-row {" in html
+
+    def test_EB_shared_ex_sname_uses_css_var(self):
+        html = _render_portrait()
+        assert "var(--ex-sname-w" in html
+
+    def test_EB_shared_ex_row_max_height_uses_css_var(self):
+        html = _render_portrait()
+        assert "var(--ex-row-max-h" in html
+
+    def test_EB_shared_ex_bar_bg_uses_css_var(self):
+        html = _render_portrait()
+        assert "var(--ex-bar-h" in html
+
+    def test_EB_shared_ex_skill_cats_grid_present(self):
+        html = _render_portrait()
+        assert ".ex-skill-cats {" in html
+
+    def test_EB_player_name_in_title(self):
+        html = _render_portrait()
+        assert "<title>Test Player" in html
+
+
+# ---------------------------------------------------------------------------
+# TestExportBaseColumn  (EBC_ prefix)
+# Tests for fifa_base_column.html — verified via portrait child
+# ---------------------------------------------------------------------------
+
+class TestExportBaseColumn:
+    """EBC_ — public/export/shared/fifa_base_column.html (tested via portrait child)."""
+
+    # --- hero zone rendered ---
+
+    def test_EBC_hero_zone_present(self):
+        html = _render_portrait()
+        assert "ex-hero" in html
+
+    def test_EBC_hero_css_uses_hero_h_var(self):
+        html = _render_portrait()
+        assert "var(--ex-hero-h" in html
+
+    def test_EBC_avatar_css_uses_avatar_sz_var(self):
+        html = _render_portrait()
+        assert "var(--ex-avatar-sz" in html
+
+    def test_EBC_ovr_num_css_uses_ovr_font_var(self):
+        html = _render_portrait()
+        assert "var(--ex-ovr-font" in html
+
+    def test_EBC_name_css_uses_name_font_var(self):
+        html = _render_portrait()
+        assert "var(--ex-name-font" in html
+
+    # --- platform vars defaults match portrait ---
+
+    def test_EBC_column_default_hero_h_is_350px(self):
+        html = _render_portrait()
+        assert "--ex-hero-h:      350px" in html
+
+    def test_EBC_column_default_avatar_sz_is_160px(self):
+        html = _render_portrait()
+        assert "--ex-avatar-sz:   160px" in html
+
+    def test_EBC_column_default_ovr_font_is_88px(self):
+        html = _render_portrait()
+        assert "--ex-ovr-font:    88px" in html
+
+    # --- avatar rendering ---
+
+    def test_EBC_avatar_placeholder_without_photo(self):
+        html = _render_portrait(portrait_photo_url=None, photo_url=None)
+        assert "ex-avatar-placeholder" in html
+        assert "TP" in html
+
+    def test_EBC_avatar_img_with_photo_url(self):
+        html = _render_portrait(photo_url="http://example.com/photo.jpg")
+        assert 'class="ex-avatar"' in html
+        assert "http://example.com/photo.jpg" in html
+
+    def test_EBC_portrait_photo_url_preferred_over_photo_url(self):
+        html = _render_portrait(
+            portrait_photo_url="http://example.com/portrait.jpg",
+            photo_url="http://example.com/photo.jpg",
+        )
+        assert "portrait.jpg" in html
+        assert "photo.jpg" not in html
+
+    # --- identity block ---
+
+    def test_EBC_player_name_rendered(self):
+        html = _render_portrait()
+        assert "Test Player" in html
+
+    def test_EBC_position_badge_rendered(self):
+        html = _render_portrait()
+        assert "ex-pos-badge" in html
+        assert "CM" in html
+
+    def test_EBC_brand_tag_rendered(self):
+        html = _render_portrait()
+        assert "LFA Education" in html
+
+    def test_EBC_nationality_rendered(self):
+        html = _render_portrait()
+        assert "Hungarian" in html
+
+    def test_EBC_age_group_rendered(self):
+        html = _render_portrait()
+        assert "U17" in html
+
+    def test_EBC_overall_rendered(self):
+        html = _render_portrait()
+        assert "75" in html
+
+    def test_EBC_tier_label_rendered(self):
+        html = _render_portrait()
+        assert "Silver" in html
+
+    # --- skills zone ---
+
+    def test_EBC_skills_section_absent_when_empty(self):
+        html = _render_portrait(skill_categories=[])
+        # CSS class definition is present; only the DOM element must be absent
+        assert '<div class="ex-skills">' not in html
+        assert "Football Skills" not in html
+
+    def test_EBC_skills_title_present_with_categories(self):
+        from types import SimpleNamespace
+        skill = SimpleNamespace(key="passing", name_en="Passing")
+        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=[skill])
+        html = _render_portrait(skill_categories=[cat])
+        assert "Football Skills" in html
+        assert "ex-skills-title" in html
+
+    # --- sponsor zone empty by default ---
+
+    def test_EBC_no_sponsor_zone_by_default(self):
+        html = _render_portrait()
+        assert "ex-sponsor" not in html
+
+    # --- tag_row block overridable ---
+
+    def test_EBC_tag_row_block_overridable(self):
+        e = _make_export_env()
+        tpl_src = (
+            '{% extends "public/export/shared/fifa_base_column.html" %}'
+            '{% block tag_row %}<div class="custom-tag">CUSTOM_TAG</div>{% endblock %}'
+            '{% block skill_rows scoped %}{% endblock %}'
+        )
+        tpl = e.from_string(tpl_src)
+        html = tpl.render(**_minimal_export_ctx())
+        assert "custom-tag" in html
+        assert "CUSTOM_TAG" in html
+
+    # --- meta_row block overridable ---
+
+    def test_EBC_meta_row_block_overridable(self):
+        e = _make_export_env()
+        tpl_src = (
+            '{% extends "public/export/shared/fifa_base_column.html" %}'
+            '{% block meta_row %}<div class="custom-meta">CUSTOM_META</div>{% endblock %}'
+            '{% block skill_rows scoped %}{% endblock %}'
+        )
+        tpl = e.from_string(tpl_src)
+        html = tpl.render(**_minimal_export_ctx())
+        assert "custom-meta" in html
+        assert "CUSTOM_META" in html
+
+
+# ---------------------------------------------------------------------------
+# TestPortraitFifaPhase3  (PP3_ prefix)
+# Tests for the migrated portrait/fifa.html
+# ---------------------------------------------------------------------------
+
+class TestPortraitFifaPhase3:
+    """PP3_ — public/export/portrait/fifa.html extends fifa_base_column.html."""
+
+    def _source(self):
+        import os
+        import app as _app_pkg
+        tpl_dir = os.path.join(os.path.dirname(_app_pkg.__file__), "templates")
+        with open(os.path.join(tpl_dir, "public/export/portrait/fifa.html")) as f:
+            return f.read()
+
+    # --- template structure ---
+
+    def test_PP3_extends_column_base(self):
+        assert '{% extends "public/export/shared/fifa_base_column.html" %}' in self._source()
+
+    def test_PP3_source_contains_skill_rows_scoped_block(self):
+        src = self._source()
+        assert "{% block skill_rows scoped %}" in src
+
+    # --- render correctness ---
+
+    def test_PP3_renders_without_error(self):
+        html = _render_portrait()
+        assert "Test Player" in html
+
+    def test_PP3_title_contains_player_name(self):
+        html = _render_portrait()
+        assert "<title>Test Player" in html
+
+    def test_PP3_theme_root_emitted(self):
+        html = _render_portrait()
+        assert "--ex-panel-bg" in html
+
+    # --- arctic token propagation ---
+
+    def test_PP3_arctic_dark_text_strong_present(self):
+        html = _render_portrait(theme=_make_arctic_export_theme())
+        assert "rgba(0,0,0,0.87)" in html
+
+    def test_PP3_arctic_dark_text_body_present(self):
+        html = _render_portrait(theme=_make_arctic_export_theme())
+        assert "rgba(0,0,0,0.75)" in html
+
+    def test_PP3_arctic_dark_text_secondary_present(self):
+        html = _render_portrait(theme=_make_arctic_export_theme())
+        assert "rgba(0,0,0,0.55)" in html
+
+    # --- skill rows ---
+
+    def test_PP3_skill_rows_rendered_with_categories(self):
+        from types import SimpleNamespace
+        skill = SimpleNamespace(key="passing", name_en="Passing")
+        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=[skill])
+        html = _render_portrait(skill_categories=[cat])
+        assert "ex-row" in html
+        assert "Passing" in html
+
+    def test_PP3_skill_slice_is_6(self):
+        """Portrait renders at most 6 skills per category."""
+        from types import SimpleNamespace
+        skills = [SimpleNamespace(key=f"s{i}", name_en=f"Skill{i}") for i in range(10)]
+        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=skills)
+        html = _render_portrait(skill_categories=[cat])
+        for i in range(6):
+            assert f"Skill{i}" in html
+        for i in range(6, 10):
+            assert f"Skill{i}" not in html
+
+    def test_PP3_skill_positive_delta_green(self):
+        from types import SimpleNamespace
+        skill = SimpleNamespace(key="passing", name_en="Passing")
+        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=[skill])
+        html = _render_portrait(
+            skill_categories=[cat],
+            last_skill_delta={"passing": 3},
+        )
+        assert "#48bb78" in html
+        assert "visibility:visible" in html
+
+    def test_PP3_skill_negative_delta_red(self):
+        from types import SimpleNamespace
+        skill = SimpleNamespace(key="passing", name_en="Passing")
+        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=[skill])
+        html = _render_portrait(
+            skill_categories=[cat],
+            last_skill_delta={"passing": -2},
+        )
+        assert "#fc8181" in html
+        assert "visibility:visible" in html
+
+    def test_PP3_skill_zero_delta_neutral_hidden(self):
+        from types import SimpleNamespace
+        skill = SimpleNamespace(key="passing", name_en="Passing")
+        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=[skill])
+        html = _render_portrait(skill_categories=[cat], last_skill_delta={})
+        assert "visibility:hidden" in html
+
+    # --- layout invariants ---
+
+    def test_PP3_no_duplicate_css_reset(self):
+        html = _render_portrait()
+        assert html.count("box-sizing: border-box") == 1
+
+    def test_PP3_no_sponsor_slot(self):
+        html = _render_portrait()
+        assert "ex-sponsor" not in html
+
+    def test_PP3_default_cat_bg_005(self):
+        html = _render_portrait()
+        assert "rgba(255,255,255,0.05)" in html
+
+    def test_PP3_portrait_hero_h_is_350px(self):
+        html = _render_portrait()
+        assert "350px" in html
+
+    def test_PP3_portrait_avatar_sz_is_160px(self):
+        html = _render_portrait()
+        assert "160px" in html

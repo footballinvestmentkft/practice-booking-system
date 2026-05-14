@@ -1,419 +1,60 @@
-{%- from "macros/card_theme_root.html" import export_root_vars -%}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>{{ player.name }} — LFA Player Card</title>
-<style>
-/*
- * FIFA Classic × IG Portrait — Dedicated export template
+{% extends "public/export/shared/fifa_base_column.html" %}
+{#
+ * FIFA Classic × IG Portrait — export template (Phase 3a: extends fifa_base_column.html)
  * Canvas  : 1080 × 1350 px  (Playwright viewport, 4:5 ratio)
  * Purpose : static social export ONLY — no editor UI, no responsive CSS
- * Classes : ex- prefix throughout, no inheritance from editor templates
  *
- * vs. export/square/fifa.html:
- *   hero        300 → 350px   (+50px, uses extra vertical space)
- *   avatar      140 → 160px   (+20px)
- *   ovr-num      80 → 88px
- *   player name  40 → 44px
- *   skill slice [:4] → [:6]   (more rows fit in 1000px skills zone)
- *   ex-row      max-height: 44px  (caps Set Pieces 3-row cell stretch)
- *   ex-sname   170/16px → 160/15px  (slightly narrower for 6-row layout)
- *   ex-sval     16 → 15px
- *   photo var   photo_url → portrait_photo_url (portrait crop preferred)
- */
+ * Inherits from column base:
+ *   HTML shell, CSS reset, theme_root, shared skill-row CSS classes,
+ *   hero structure (avatar circle + identity block + OVR block),
+ *   2×2 skills zone.
+ *
+ * Platform-specific: [:6] skill slice per category.
+ * All sizing vars match column base defaults — no platform_vars override needed.
+ *
+ * vs. story/fifa.html (Phase 3b, extends same column base):
+ *   hero height     350px  → 460px   (--ex-hero-h)
+ *   avatar          160px  → 180px   (--ex-avatar-sz)
+ *   avatar font     52px   → 60px    (--ex-avatar-font)
+ *   ovr-num         88px   → 96px    (--ex-ovr-font)
+ *   player name     44px   → 48px    (--ex-name-font)
+ *   ex-row          44px   → 66px    (--ex-row-max-h)
+ *   ex-sname        160px/15px → 155px/14px
+ *   skill slice     [:6]   → [:8]
+ *   tag-row         — → adds dominant_badge
+ *   meta-row        — → adds height/weight
+ *   sponsor zone    none → sponsor_slot macro
+ #}
 
-{{ export_root_vars(theme) }}
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html, body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-}
-
-/* Root card — fills the 1080×1350 viewport exactly */
-.ex-card {
-    width:  100vw;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-/* ── HERO ZONE ────────────────────────────────────────────────────────────────
-   Fixed at 350px (25.9% of 1350px).
-   Layout: [avatar 160px] · [identity flex:1] · [OVR block fixed]
-   ─────────────────────────────────────────────────────────────────────────── */
-.ex-hero {
-    flex: 0 0 350px;
-    background: var(--ex-panel-bg);
-    display: flex;
-    align-items: center;
-    padding: 0 44px;
-    gap: 28px;
-    overflow: hidden;
-}
-
-/* Avatar circle — 160px (vs 140px square) */
-.ex-avatar {
-    flex-shrink: 0;
-    width: 160px;
-    height: 160px;
-    border-radius: 50%;
-    border: 4px solid rgba(255,255,255,0.22);
-    object-fit: cover;
-}
-.ex-avatar-placeholder {
-    flex-shrink: 0;
-    width: 160px;
-    height: 160px;
-    border-radius: 50%;
-    border: 4px solid rgba(255,255,255,0.22);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 52px;
-    font-weight: 900;
-    color: white;
-    letter-spacing: -0.02em;
-}
-
-/* Identity block — fills space between avatar and OVR */
-.ex-identity {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-.ex-name {
-    font-size: 44px;
-    font-weight: 900;
-    color: white;
-    line-height: 1.1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.ex-tag-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: nowrap;
-    overflow: hidden;
-}
-.ex-pos-badge {
-    font-size: 13px;
-    font-weight: 800;
-    color: white;
-    padding: 4px 14px;
-    border-radius: 99px;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-.ex-brand-tag {
-    font-size: 12px;
-    font-weight: 700;
-    color: rgba(255,255,255,0.40);
-    text-transform: uppercase;
-    letter-spacing: 0.10em;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-.ex-meta-row {
-    display: flex;
-    gap: 24px;
-    align-items: flex-start;
-}
-.ex-meta-item {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
-}
-.ex-meta-label {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.09em;
-    color: rgba(255,255,255,0.42);
-    white-space: nowrap;
-}
-.ex-meta-value {
-    font-size: 17px;
-    font-weight: 700;
-    color: rgba(255,255,255,0.90);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 200px;
-}
-.ex-club-row {
-    font-size: 14px;
-    color: rgba(255,255,255,0.50);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* OVR block — right anchor of hero */
-.ex-ovr-block {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-}
-.ex-ovr-num {
-    font-size: 88px;
-    font-weight: 900;
-    line-height: 1;
-    color: white;
-    letter-spacing: -0.03em;
-}
-.ex-tier-badge {
-    font-size: 12px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    padding: 5px 18px;
-    border-radius: 99px;
-    color: white;
-    white-space: nowrap;
-}
-
-/* ── SKILLS ZONE ──────────────────────────────────────────────────────────────
-   flex:1 → takes 1350 - 350 = 1000px of remaining height.
-   Internal: skills-title (flex-shrink:0) + 2×2 grid (flex:1).
-   ─────────────────────────────────────────────────────────────────────────── */
-.ex-skills {
-    flex: 1;
-    background: var(--ex-body-bg);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    padding: 20px;
-    min-height: 0;
-}
-.ex-skills-title {
-    flex-shrink: 0;
-    font-size: 13px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: var(--ex-text-muted);
-    margin-bottom: 14px;
-}
-
-/* 2×2 category grid */
-.ex-skill-cats {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 12px;
-    overflow: hidden;
-    min-height: 0;
-}
-
-/* Category cell */
-.ex-cat {
-    background: var(--ex-cat-bg);
-    border-radius: 12px;
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-height: 0;
-}
-.ex-cat-name {
-    flex-shrink: 0;
-    font-size: 13px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.10em;
-    color: var(--ex-text-secondary);
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Skill rows container */
-.ex-skill-rows {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    overflow: hidden;
-}
-
-/* Individual skill row — max-height caps stretch in categories with fewer skills */
-.ex-row {
-    flex: 1;
-    min-height: 0;
-    max-height: 44px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* Fixed-width name column — 160px (vs 170px square; accommodates 6-row layout) */
-.ex-sname {
-    flex: 0 0 160px;
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--ex-text-body);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1;
-}
-
-/* Skill bar */
-.ex-bar-bg {
-    flex: 1;
-    min-width: 0;
-    height: 8px;
-    background: var(--ex-bar-bg);
-    border-radius: 4px;
-    overflow: hidden;
-}
-.ex-bar-fill {
-    height: 100%;
-    border-radius: 4px;
-    min-width: 4px;
-}
-
-/* Value — right-aligned fixed width */
-.ex-sval {
-    flex: 0 0 44px;
-    font-size: 15px;
-    font-weight: 700;
-    text-align: right;
-    line-height: 1;
-}
-
-/* Trend arrow */
-.ex-trend {
-    flex: 0 0 18px;
-    font-size: 14px;
-    font-weight: 900;
-    text-align: center;
-    line-height: 1;
-}
-</style>
-</head>
-<body>
-<div class="ex-card">
-
-    <!-- ── HERO ────────────────────────────────────────────────────────────── -->
-    <div class="ex-hero">
-
-        {% set _photo = portrait_photo_url if portrait_photo_url is defined else None %}
-        {% set _photo = _photo or (photo_url if photo_url is defined else None) %}
-        {% if _photo %}
-        <img class="ex-avatar" src="{{ _photo }}" alt="{{ initials }}"
-             style="background: {{ avatar_bg }}; object-fit: cover;">
-        {% else %}
-        <div class="ex-avatar-placeholder" style="background: {{ avatar_bg }};">{{ initials }}</div>
-        {% endif %}
-
-        <div class="ex-identity">
-            <div class="ex-name">{{ player.name }}</div>
-
-            <div class="ex-tag-row">
-                {% if player.position and player.position != "Unknown" %}
-                <span class="ex-pos-badge" style="background: {{ pos_color }};">{{ player.position }}</span>
-                {% endif %}
-                <span class="ex-brand-tag">⚽ LFA Education</span>
-            </div>
-
-            <div class="ex-meta-row">
-                {% if player.nationality %}
-                <div class="ex-meta-item">
-                    <span class="ex-meta-label">Nationality</span>
-                    <span class="ex-meta-value">{{ player.nationality | nationalities_display(player.secondary_nationality) }}</span>
-                </div>
-                {% endif %}
-                <div class="ex-meta-item">
-                    <span class="ex-meta-label">Age Group</span>
-                    <span class="ex-meta-value">{{ player.age_group }}</span>
-                </div>
-                <div class="ex-meta-item">
-                    <span class="ex-meta-label">Events</span>
-                    <span class="ex-meta-value">{{ player.total_tournaments }}</span>
-                </div>
-            </div>
-
-            {% if teams_info %}
-            <div class="ex-club-row">
-                {% set t = teams_info[0] %}
-                🏟️ {{ t.team_name }}{% if t.club_name %} · {{ t.club_name }}{% endif %}{% if t.age_group_label %} · {{ t.age_group_label }}{% endif %}
-            </div>
-            {% endif %}
-        </div>
-
-        <div class="ex-ovr-block">
-            <div class="ex-ovr-num">{{ overall | round(0) | int }}</div>
-            <span class="ex-tier-badge" style="background: {{ tier_color }};">{{ tier_label }}</span>
-        </div>
-
+{% block skill_rows scoped %}
+{% for skill in cat.skills[:6] %}
+{% set sdata = player.skills.get(skill.key, {}) %}
+{% set sval  = sdata.get('current_level', 50) | round(0) | int %}
+{% set fill  = [sval, 100] | min %}
+{% set delta = last_skill_delta.get(skill.key, 0) %}
+{% if delta > 0 %}
+    {% set bar_clr  = '#48bb78' %}
+    {% set val_clr  = '#48bb78' %}
+    {% set trend    = '↑' %}
+    {% set trend_vis = 'visible' %}
+{% elif delta < 0 %}
+    {% set bar_clr  = '#fc8181' %}
+    {% set val_clr  = '#fc8181' %}
+    {% set trend    = '↓' %}
+    {% set trend_vis = 'visible' %}
+{% else %}
+    {% set bar_clr  = 'rgba(255,255,255,0.20)' %}
+    {% set val_clr  = 'rgba(255,255,255,0.85)' %}
+    {% set trend    = '↑' %}
+    {% set trend_vis = 'hidden' %}
+{% endif %}
+<div class="ex-row">
+    <span class="ex-sname">{{ skill.name_en }}</span>
+    <div class="ex-bar-bg">
+        <div class="ex-bar-fill" style="width:{{ fill }}%; background:{{ bar_clr }};"></div>
     </div>
-
-    <!-- ── SKILLS ──────────────────────────────────────────────────────────── -->
-    {% if skill_categories %}
-    <div class="ex-skills">
-        <div class="ex-skills-title">Football Skills — {{ overall | round(0) | int }} OVR</div>
-        <div class="ex-skill-cats">
-            {% for cat in skill_categories %}
-            <div class="ex-cat">
-                <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
-                <div class="ex-skill-rows">
-                    {% for skill in cat.skills[:6] %}
-                    {% set sdata = player.skills.get(skill.key, {}) %}
-                    {% set sval  = sdata.get('current_level', 50) | round(0) | int %}
-                    {% set fill  = [sval, 100] | min %}
-                    {% set delta = last_skill_delta.get(skill.key, 0) %}
-                    {% if delta > 0 %}
-                        {% set bar_clr  = '#48bb78' %}
-                        {% set val_clr  = '#48bb78' %}
-                        {% set trend    = '↑' %}
-                        {% set trend_vis = 'visible' %}
-                    {% elif delta < 0 %}
-                        {% set bar_clr  = '#fc8181' %}
-                        {% set val_clr  = '#fc8181' %}
-                        {% set trend    = '↓' %}
-                        {% set trend_vis = 'visible' %}
-                    {% else %}
-                        {% set bar_clr  = 'rgba(255,255,255,0.20)' %}
-                        {% set val_clr  = 'rgba(255,255,255,0.85)' %}
-                        {% set trend    = '↑' %}
-                        {% set trend_vis = 'hidden' %}
-                    {% endif %}
-                    <div class="ex-row">
-                        <span class="ex-sname">{{ skill.name_en }}</span>
-                        <div class="ex-bar-bg">
-                            <div class="ex-bar-fill" style="width:{{ fill }}%; background:{{ bar_clr }};"></div>
-                        </div>
-                        <span class="ex-sval" style="color:{{ val_clr }};">{{ sval }}</span>
-                        <span class="ex-trend" style="color:{{ bar_clr }}; visibility:{{ trend_vis }};">{{ trend }}</span>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-
+    <span class="ex-sval" style="color:{{ val_clr }};">{{ sval }}</span>
+    <span class="ex-trend" style="color:{{ bar_clr }}; visibility:{{ trend_vis }};">{{ trend }}</span>
 </div>
-</body>
-</html>
+{% endfor %}
+{% endblock %}
