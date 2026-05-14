@@ -10,36 +10,41 @@
  * Purpose : static social export ONLY — no editor UI, no responsive CSS
  * Classes : ex- prefix throughout, no inheritance from editor templates
  *
- * Layout (v11 — Position Map in Col 2 bottom, 3 fill-aligned columns):
+ * Layout (v14 — Position Map full-width bottom bar, Col 2+Col 3 wrapper; outfield logo; info 220px):
  *   .ex-hero   (flex: 0 0 35%) — photo-col 32% | profile-col flex:1
  *   .ex-skills (flex: 1 = 65%, gap:6px):
  *     .ex-skill-cats (flex:1, flex-row, gap:6px):
- *       Col 1 .ex-col-outfield:   Outfield (19 skills, cat flex:1 → fills 656px)
- *       Col 2 .ex-col-mental-pos: Mental (14, cat flex:1) | PosMap (fixed 160px)
- *       Col 3 .ex-col-sets-phys:  Set Pieces (3, natural) | Physical (8, cat flex:1)
+ *       Col 1 .ex-col-outfield   (flex:1):  Outfield (19 skills, cat flex:1 → fills 656px)
+ *       .ex-right-section        (flex:2):  wrapper for Col 2 + Col 3 + PosMap
+ *         .ex-right-skills (flex:1, row):
+ *           .ex-col-mental-pos (flex:1): Mental (14, cat flex:1)
+ *           .ex-col-sets-phys  (flex:1): Set Pieces (3, natural) | Physical (8, cat flex:1)
+ *         .ex-pos-panel-landscape (200px): full-width bottom bar
  *
- * Height budget (v11):
+ * Height budget (v13):
  *   Skills inner: 702−28 = 674px
- *   Title 12px + gap 6px = 18px consumed (no top strip)
- *   Skill-cats: 674−18 = 656px available  (+116px vs v10's 540px)
- *   Column widths: (1052−12)/3 ≈ 347px each
+ *   Title 12px + gap 6px = 18px consumed
+ *   Skill-cats: 674−18 = 656px available
+ *   Column widths: Outfield ≈ 349px · right-section ≈ 697px · inner cols ≈ 346px each
  *   Outfield worst-case: 534px < 656px → +122px bg fill ✓
- *   Mental: 404px < 490px (656−6−160) → +86px bg fill ✓
- *   Set Pieces: 118px natural ✓ · Physical: 248px < 532px → +284px bg fill ✓
+ *   right-skills height: 656−6(gap)−200(PosMap) = 450px
+ *   Mental: 404px < 450px → +46px bg fill ✓
+ *   Set Pieces: 118px natural ✓ · Physical: 248px < 326px → +78px bg fill ✓
+ *   PosMap: 200px × ~697px — pitch rendered 309×200px (49% larger than v11) ✓
  *   All 44 skills fully visible — flex:1 cats fill to bottom, rows align top ✓
  *
- * Position Map panel (v11):
- *   .ex-pos-panel-landscape: fixed 160px tall, inside Col 2 at bottom, flex-row.
- *   .ex-pos-info (140px): title · Primary pos label+name (gold, 14px wrap) · chips.
- *   svg.ex-pos-svg-landscape (flex:1 = ~206px, bg:#1a5c2a): viewBox "0 0 105 68",
- *     preserveAspectRatio="xMidYMid meet" → pitch rendered 206×133px (83% fill).
- *   Jinja2-gated by position_nodes — Col 2 Mental fills full 656px when absent.
+ * Position Map panel (v13):
+ *   .ex-pos-panel-landscape: fixed 200px tall, spans full ex-right-section width (~697px).
+ *   .ex-pos-info (220px): title 13px · Primary pos label 11px + name 17px (gold) · chips.
+ *   svg.ex-pos-svg-landscape (flex:1 = ~557px, bg:#1a5c2a): viewBox "0 0 105 68",
+ *     preserveAspectRatio="xMidYMid meet" → pitch rendered 309×200px (height-constrained).
+ *   Jinja2-gated by position_nodes — right-skills fills full 656px when absent.
  *
  * Photo column (v9, unchanged):
  *   Clean portrait — no position badges. Position info in panel only.
  *
- * Sponsor / logo (v8, unchanged):
- *   Hero layer: .ex-hero-sponsor in .ex-profile-col. Jinja2-gated.
+ * Sponsor / logo (v14):
+ *   Outfield column bottom: .ex-outfield-logo in Col 1 .ex-cat. Jinja2-gated. margin-top:auto.
  *
  * Typography scale (% of C_H=1080):
  *   OVR 96px (8.89%), Name 40px (3.70%), Stat 28px (2.59%), Meta 20px (1.85%)
@@ -63,13 +68,21 @@ html, body {
     width: 100%;
     height: 100%;
     overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 }
 
-/* Root card — 1:1 aspect ratio, fills the 1080×1080 Playwright viewport */
+/* Root card — square-specific min() sizing contract.
+ * min(100vw, 100vh) guarantees 1:1 at any viewport:
+ *   Playwright 1080×1080: min(1080, 1080) = 1080px → PNG/WebM export unchanged.
+ *   Browser 1440×900:     min(1440,  900) =  900px → fully visible, no scroll.
+ * Unlike 100vw/100vh (correct for non-square formats), min() preserves the 1:1
+ * aspect ratio regardless of viewport shape. */
 .ex-card {
-    width:  100%;
-    aspect-ratio: 1 / 1;
+    width:  min(100vw, 100vh);
+    height: min(100vw, 100vh);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -140,10 +153,10 @@ html, body {
 
 /* Secondary position chip — reused in Position Map panel info column */
 .ex-sec-pos-chip {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: rgba(255,255,255,0.75);
-    padding: 2px 6px;
+    padding: 3px 8px;
     border-radius: 3px;
     background: rgba(255,255,255,0.10);
     text-transform: uppercase;
@@ -472,10 +485,10 @@ html, body {
    NO legend. SVG: viewBox "0 0 105 68", xMidYMid meet, seamless green letterbox.
    ─────────────────────────────────────────────────────────────────────────────────────── */
 
-/* Position Map panel — v11: inside Col 2 (bottom), fixed height */
+/* Position Map panel — v13: full-width bottom bar of ex-right-section (Col 2 + Col 3 width) */
 .ex-pos-panel-landscape {
     flex-shrink: 0;
-    height: 160px;
+    height: 200px;
     background: var(--ex-cat-bg);
     border: 1px solid rgba(255,255,255,0.10);
     border-radius: 12px;
@@ -485,16 +498,16 @@ html, body {
 }
 /* Info column — left of pitch SVG (narrower in v11: more SVG room) */
 .ex-pos-info {
-    flex: 0 0 140px;
+    flex: 0 0 220px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 3px;
-    padding: 10px 12px;
+    padding: 12px 16px;
     border-right: 1px solid rgba(255,255,255,0.08);
 }
 .ex-pos-panel-title {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.12em;
@@ -502,14 +515,14 @@ html, body {
     margin-bottom: 4px;
 }
 .ex-pos-primary-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: rgba(255,255,255,0.28);
 }
 .ex-pos-primary-name {
-    font-size: 14px;
+    font-size: 17px;
     font-weight: 800;
     color: #ECC94B;
     text-transform: uppercase;
@@ -518,7 +531,7 @@ html, body {
     margin-bottom: 4px;
 }
 .ex-pos-secondary-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -530,37 +543,83 @@ html, body {
     gap: 3px;
     margin-top: 2px;
 }
-/* v11 column flex-fill: each column's tallest (or only) cat stretches to fill height,
- * so all three columns reach the same bottom edge. */
-.ex-col-outfield .ex-cat         { flex: 1; }   /* Outfield: single cat fills full 656px */
-.ex-col-mental-pos .ex-cat       { flex: 1; }   /* Mental: fills above Position Map */
+/* v13: right-section wraps Col 2 + Col 3 + PosMap full-width bar */
+.ex-right-section {
+    flex: 2 1 0%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+}
+/* Inner flex-row: Mental col | Set Pieces+Physical col — fills right-section above PosMap */
+.ex-right-skills {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    min-height: 0;
+}
+
+/* Column flex-fill: tallest (or only) cat stretches to align all columns to same bottom edge */
+.ex-col-outfield .ex-cat         { flex: 1; }    /* Outfield: single cat fills full 656px */
+.ex-col-mental-pos .ex-cat       { flex: 1; }    /* Mental: fills right-skills height (450px at 200px PosMap) */
 .ex-col-sets-phys .ex-cat:last-child { flex: 1; } /* Physical: fills below Set Pieces */
 
-/* SVG takes remaining width — seamless green background absorbs letterbox areas */
+/* SVG takes remaining width — no CSS background (green comes from internal <rect> only, per Default card pattern) */
 .ex-pos-svg-landscape {
     flex: 1;
     min-width: 0;
     display: block;
     align-self: stretch;
-    background: #1a5c2a;
 }
 
-/* Sponsor / logo in hero layer (v8) — 4th flex child of .ex-profile-col.
- * Appears only when sponsor_logo_url or app_logo_url is provided.
- * Jinja2-gated — no layout break when absent. */
-.ex-hero-sponsor {
+/* Outfield column logo (v14) — bottom of Col 1 ex-cat, Jinja2-gated.
+ * margin-top: auto pushes it to the column bottom inside the flex col. */
+.ex-outfield-logo {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.08);
     display: flex;
+    justify-content: center;
     align-items: center;
-    padding-top: 4px;
-    border-top: 1px solid rgba(255,255,255,0.06);
+    min-height: 52px;
 }
-.ex-hero-sponsor-img {
-    max-height: 28px;
-    max-width: 55%;
+.ex-outfield-logo-img {
+    max-height: 44px;
+    max-width: 190px;
     object-fit: contain;
     display: block;
-    opacity: 0.65;
+    opacity: 0.50;
 }
+
+{% if not export_mode %}
+/* ── Human-browseable public page shell ──────────────────────────────────────
+ * Active ONLY when export_mode=False (i.e. ?export=1 absent).
+ * Playwright PNG/WebM export always uses ?export=1, so this block is
+ * completely absent from every screenshot render — raw canvas contract intact.
+ *
+ * Overrides the raw-canvas html/body rules above (later in cascade wins):
+ *   height: auto   → overrides height: 100% so body can grow
+ *   overflow: auto → overrides overflow: hidden so page is scrollable
+ *   align-items    → center for vertical centering
+ *   padding        → breathing room around the card
+ * .ex-card shrinks slightly (90vw/90vh) so it never bleeds to the edge.
+ * ─────────────────────────────────────────────────────────────────────────── */
+html { background: #0f1923; }
+body {
+    background: #0f1923;
+    height: auto;
+    overflow: auto;
+    align-items: center;
+    padding: 2rem 1rem;
+}
+.ex-card {
+    width:  min(90vw, 90vh);
+    height: min(90vw, 90vh);
+    border-radius: 12px;
+    box-shadow: 0 16px 64px rgba(0,0,0,0.60);
+}
+{% endif %}
 </style>
 
 {% if animated_mode %}
@@ -760,13 +819,6 @@ html, body {
                 </div>
             </div>
 
-            {% if sponsor_logo_url or app_logo_url %}
-            <div class="ex-hero-sponsor">
-                <img src="{{ sponsor_logo_url or app_logo_url }}" alt="" class="ex-hero-sponsor-img"
-                     onerror="this.style.display='none'">
-            </div>
-            {% endif %}
-
         </div>
 
         <!-- OVR watermark -->
@@ -824,48 +876,105 @@ html, body {
                         </div>
                         {% endfor %}
                     </div>
+                    {% if sponsor_logo_url or app_logo_url %}
+                    <div class="ex-outfield-logo">
+                        <img src="{{ sponsor_logo_url or app_logo_url }}" alt="" class="ex-outfield-logo-img"
+                             onerror="this.style.display='none'">
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
-            <!-- Col 2: Mental (top, flex:1) + Position Map (bottom, 160px) -->
-            <div class="ex-skill-col ex-col-mental-pos">
-                {% set cat = skill_categories[2] %}
-                <div class="ex-cat">
-                    <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
-                    <div class="ex-skill-rows">
-                        {% for skill in cat.skills %}
-                        {% set sdata = player.skills.get(skill.key, {}) %}
-                        {% set sval  = sdata.get('current_level', 50) | round(0) | int %}
-                        {% set fill  = [sval, 100] | min %}
-                        {% set delta = last_skill_delta.get(skill.key, 0) %}
-                        {% if delta > 0 %}
-                            {% set bar_clr  = '#48bb78' %}
-                            {% set val_clr  = '#48bb78' %}
-                            {% set trend    = '↑' %}
-                            {% set trend_vis = 'visible' %}
-                        {% elif delta < 0 %}
-                            {% set bar_clr  = '#fc8181' %}
-                            {% set val_clr  = '#fc8181' %}
-                            {% set trend    = '↓' %}
-                            {% set trend_vis = 'visible' %}
-                        {% else %}
-                            {% set bar_clr  = 'rgba(255,255,255,0.20)' %}
-                            {% set val_clr  = 'rgba(255,255,255,0.85)' %}
-                            {% set trend    = '↑' %}
-                            {% set trend_vis = 'hidden' %}
-                        {% endif %}
-                        <div class="ex-row">
-                            <span class="ex-sname">{{ skill.name_en }}</span>
-                            <div class="ex-bar-bg">
-                                <div class="ex-bar-fill" style="width:{{ fill }}%; background:{{ bar_clr }};"></div>
+            <!-- Right section: Col 2 + Col 3 skills (top) + Position Map full-width bar (bottom) -->
+            <div class="ex-right-section">
+
+                <!-- Upper row: Mental | Set Pieces + Physical -->
+                <div class="ex-right-skills">
+
+                    <!-- Col 2: Mental (flex:1 fills right-skills height) -->
+                    <div class="ex-skill-col ex-col-mental-pos">
+                        {% set cat = skill_categories[2] %}
+                        <div class="ex-cat">
+                            <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
+                            <div class="ex-skill-rows">
+                                {% for skill in cat.skills %}
+                                {% set sdata = player.skills.get(skill.key, {}) %}
+                                {% set sval  = sdata.get('current_level', 50) | round(0) | int %}
+                                {% set fill  = [sval, 100] | min %}
+                                {% set delta = last_skill_delta.get(skill.key, 0) %}
+                                {% if delta > 0 %}
+                                    {% set bar_clr  = '#48bb78' %}
+                                    {% set val_clr  = '#48bb78' %}
+                                    {% set trend    = '↑' %}
+                                    {% set trend_vis = 'visible' %}
+                                {% elif delta < 0 %}
+                                    {% set bar_clr  = '#fc8181' %}
+                                    {% set val_clr  = '#fc8181' %}
+                                    {% set trend    = '↓' %}
+                                    {% set trend_vis = 'visible' %}
+                                {% else %}
+                                    {% set bar_clr  = 'rgba(255,255,255,0.20)' %}
+                                    {% set val_clr  = 'rgba(255,255,255,0.85)' %}
+                                    {% set trend    = '↑' %}
+                                    {% set trend_vis = 'hidden' %}
+                                {% endif %}
+                                <div class="ex-row">
+                                    <span class="ex-sname">{{ skill.name_en }}</span>
+                                    <div class="ex-bar-bg">
+                                        <div class="ex-bar-fill" style="width:{{ fill }}%; background:{{ bar_clr }};"></div>
+                                    </div>
+                                    <span class="ex-sval" style="color:{{ val_clr }};">{{ sval }}</span>
+                                    <span class="ex-trend" style="color:{{ bar_clr }}; visibility:{{ trend_vis }};">{{ trend }}</span>
+                                </div>
+                                {% endfor %}
                             </div>
-                            <span class="ex-sval" style="color:{{ val_clr }};">{{ sval }}</span>
-                            <span class="ex-trend" style="color:{{ bar_clr }}; visibility:{{ trend_vis }};">{{ trend }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Col 3: Set Pieces (natural) + Physical (flex:1 last-child) -->
+                    <div class="ex-skill-col ex-col-sets-phys">
+                        {% for cat in [skill_categories[1], skill_categories[3]] %}
+                        <div class="ex-cat">
+                            <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
+                            <div class="ex-skill-rows">
+                                {% for skill in cat.skills %}
+                                {% set sdata = player.skills.get(skill.key, {}) %}
+                                {% set sval  = sdata.get('current_level', 50) | round(0) | int %}
+                                {% set fill  = [sval, 100] | min %}
+                                {% set delta = last_skill_delta.get(skill.key, 0) %}
+                                {% if delta > 0 %}
+                                    {% set bar_clr  = '#48bb78' %}
+                                    {% set val_clr  = '#48bb78' %}
+                                    {% set trend    = '↑' %}
+                                    {% set trend_vis = 'visible' %}
+                                {% elif delta < 0 %}
+                                    {% set bar_clr  = '#fc8181' %}
+                                    {% set val_clr  = '#fc8181' %}
+                                    {% set trend    = '↓' %}
+                                    {% set trend_vis = 'visible' %}
+                                {% else %}
+                                    {% set bar_clr  = 'rgba(255,255,255,0.20)' %}
+                                    {% set val_clr  = 'rgba(255,255,255,0.85)' %}
+                                    {% set trend    = '↑' %}
+                                    {% set trend_vis = 'hidden' %}
+                                {% endif %}
+                                <div class="ex-row">
+                                    <span class="ex-sname">{{ skill.name_en }}</span>
+                                    <div class="ex-bar-bg">
+                                        <div class="ex-bar-fill" style="width:{{ fill }}%; background:{{ bar_clr }};"></div>
+                                    </div>
+                                    <span class="ex-sval" style="color:{{ val_clr }};">{{ sval }}</span>
+                                    <span class="ex-trend" style="color:{{ bar_clr }}; visibility:{{ trend_vis }};">{{ trend }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
                         </div>
                         {% endfor %}
                     </div>
+
                 </div>
 
+                <!-- Position Map — full-width bottom bar (Col 2 + Col 3 combined width) -->
                 {% if position_nodes %}
                 <div class="ex-pos-panel-landscape">
 
@@ -949,50 +1058,21 @@ html, body {
                                 r="2.6" fill="none" stroke="#ECC94B" stroke-width="0.5" opacity="0.45"/>
                         {% endif %}
                         {% endfor %}
+
+                        <!-- Pass 4: abbreviated labels — primary + secondary selected nodes only.
+                             Adapted from player_card_fifa.html:611-618. Landscape coords:
+                             cx = node.x × 105 (longitudinal, GK→ST), cy = node.y × 68 (lateral). -->
+                        {% for node in position_nodes %}
+                        {% if node.is_primary or node.is_selected %}
+                        <text x="{{ (node.x * 105) | round(1) }}" y="{{ (node.y * 68) | round(1) }}"
+                              font-size="2" font-family="sans-serif" font-weight="800"
+                              fill="rgba(0,0,0,0.72)" text-anchor="middle" dominant-baseline="middle">{{ node.label }}</text>
+                        {% endif %}
+                        {% endfor %}
                     </svg>
                 </div>
                 {% endif %}
-            </div>
 
-            <!-- Col 3: Set Pieces (3, natural) + Physical (8, flex:1 fills remaining) -->
-            <div class="ex-skill-col ex-col-sets-phys">
-                {% for cat in [skill_categories[1], skill_categories[3]] %}
-                <div class="ex-cat">
-                    <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
-                    <div class="ex-skill-rows">
-                        {% for skill in cat.skills %}
-                        {% set sdata = player.skills.get(skill.key, {}) %}
-                        {% set sval  = sdata.get('current_level', 50) | round(0) | int %}
-                        {% set fill  = [sval, 100] | min %}
-                        {% set delta = last_skill_delta.get(skill.key, 0) %}
-                        {% if delta > 0 %}
-                            {% set bar_clr  = '#48bb78' %}
-                            {% set val_clr  = '#48bb78' %}
-                            {% set trend    = '↑' %}
-                            {% set trend_vis = 'visible' %}
-                        {% elif delta < 0 %}
-                            {% set bar_clr  = '#fc8181' %}
-                            {% set val_clr  = '#fc8181' %}
-                            {% set trend    = '↓' %}
-                            {% set trend_vis = 'visible' %}
-                        {% else %}
-                            {% set bar_clr  = 'rgba(255,255,255,0.20)' %}
-                            {% set val_clr  = 'rgba(255,255,255,0.85)' %}
-                            {% set trend    = '↑' %}
-                            {% set trend_vis = 'hidden' %}
-                        {% endif %}
-                        <div class="ex-row">
-                            <span class="ex-sname">{{ skill.name_en }}</span>
-                            <div class="ex-bar-bg">
-                                <div class="ex-bar-fill" style="width:{{ fill }}%; background:{{ bar_clr }};"></div>
-                            </div>
-                            <span class="ex-sval" style="color:{{ val_clr }};">{{ sval }}</span>
-                            <span class="ex-trend" style="color:{{ bar_clr }}; visibility:{{ trend_vis }};">{{ trend }}</span>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endfor %}
             </div>
 
         </div>
