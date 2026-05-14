@@ -698,6 +698,11 @@ def _minimal_export_ctx(theme=None, **overrides):
         teams_info=[],
         skill_categories=[],
         last_skill_delta={},
+        dominant_badge=None,
+        player_height_cm=None,
+        player_weight_kg=None,
+        sponsor_logo_url=None,
+        app_logo_url=None,
     )
     ctx.update(overrides)
     return ctx
@@ -705,6 +710,11 @@ def _minimal_export_ctx(theme=None, **overrides):
 
 def _render_portrait(**ctx_overrides):
     tpl = _make_export_env().get_template("public/export/portrait/fifa.html")
+    return tpl.render(**_minimal_export_ctx(**ctx_overrides))
+
+
+def _render_story(**ctx_overrides):
+    tpl = _make_export_env().get_template("public/export/story/fifa.html")
     return tpl.render(**_minimal_export_ctx(**ctx_overrides))
 
 
@@ -1075,3 +1085,157 @@ class TestPortraitFifaPhase3:
     def test_PP3_portrait_avatar_sz_is_160px(self):
         html = _render_portrait()
         assert "160px" in html
+
+
+# ---------------------------------------------------------------------------
+# TestStoryFifaPhase3b1  (SP3_ prefix)
+# Tests for the migrated story/fifa.html  (Phase 3b-1)
+# ---------------------------------------------------------------------------
+
+class TestStoryFifaPhase3b1:
+    """SP3_ — public/export/story/fifa.html extends fifa_base_column.html."""
+
+    def _source(self):
+        import os
+        import app as _app_pkg
+        tpl_dir = os.path.join(os.path.dirname(_app_pkg.__file__), "templates")
+        with open(os.path.join(tpl_dir, "public/export/story/fifa.html")) as f:
+            return f.read()
+
+    # --- template structure ---
+
+    def test_SP3_extends_column_base(self):
+        assert '{% extends "public/export/shared/fifa_base_column.html" %}' in self._source()
+
+    def test_SP3_has_platform_vars_block(self):
+        assert "{% block platform_vars %}" in self._source()
+
+    def test_SP3_has_skill_rows_scoped_block(self):
+        assert "{% block skill_rows scoped %}" in self._source()
+
+    # --- render correctness ---
+
+    def test_SP3_renders_without_error(self):
+        html = _render_story()
+        assert "Test Player" in html
+
+    # --- platform vars (story overrides portrait defaults) ---
+
+    def test_SP3_hero_h_is_460px(self):
+        html = _render_story()
+        assert "--ex-hero-h:      460px" in html
+
+    def test_SP3_avatar_sz_is_180px(self):
+        html = _render_story()
+        assert "--ex-avatar-sz:   180px" in html
+
+    def test_SP3_ovr_font_is_96px(self):
+        html = _render_story()
+        assert "--ex-ovr-font:    96px" in html
+
+    def test_SP3_name_font_is_48px(self):
+        html = _render_story()
+        assert "--ex-name-font:   48px" in html
+
+    def test_SP3_row_max_h_is_66px(self):
+        html = _render_story()
+        assert "--ex-row-max-h:   66px" in html
+
+    def test_SP3_sname_w_is_155px(self):
+        html = _render_story()
+        assert "--ex-sname-w:     155px" in html
+
+    def test_SP3_font_skill_is_14px(self):
+        html = _render_story()
+        assert "--ex-font-skill:  14px" in html
+
+    # --- dominant_badge in tag_row ---
+
+    def test_SP3_dominant_badge_rendered_when_provided(self):
+        html = _render_story(dominant_badge="Right Foot")
+        assert "Right Foot" in html
+        assert 'class="ex-foot-badge"' in html
+
+    def test_SP3_dominant_badge_absent_when_none(self):
+        html = _render_story(dominant_badge=None)
+        assert 'class="ex-foot-badge"' not in html
+
+    # --- height / weight in meta_row ---
+
+    def test_SP3_height_rendered_when_provided(self):
+        html = _render_story(player_height_cm=175)
+        assert "175" in html
+        assert "Height" in html
+
+    def test_SP3_height_absent_when_none(self):
+        html = _render_story(player_height_cm=None)
+        assert "Height" not in html
+
+    def test_SP3_weight_rendered_when_provided(self):
+        html = _render_story(player_weight_kg=65)
+        assert "65" in html
+        assert "Weight" in html
+
+    # --- skill slice [:8] ---
+
+    def test_SP3_skill_slice_is_8(self):
+        """Story renders at most 8 skills per category."""
+        from types import SimpleNamespace
+        skills = [SimpleNamespace(key=f"s{i}", name_en=f"Skill{i}") for i in range(10)]
+        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=skills)
+        html = _render_story(skill_categories=[cat])
+        for i in range(8):
+            assert f"Skill{i}" in html
+        for i in range(8, 10):
+            assert f"Skill{i}" not in html
+
+    def test_SP3_story_shows_more_skills_than_portrait(self):
+        """Story [:8] vs portrait [:6] — skills 6 and 7 appear in story but not portrait."""
+        from types import SimpleNamespace
+        skills = [SimpleNamespace(key=f"s{i}", name_en=f"Skill{i}") for i in range(9)]
+        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=skills)
+        story_html   = _render_story(skill_categories=[cat])
+        portrait_html = _render_portrait(skill_categories=[cat])
+        assert "Skill6" in story_html
+        assert "Skill7" in story_html
+        assert "Skill6" not in portrait_html
+        assert "Skill7" not in portrait_html
+
+    # --- sponsor slot ---
+
+    def _story_with_cats(self, **overrides):
+        """Render story with one skill category so the skills zone is emitted."""
+        from types import SimpleNamespace
+        skill = SimpleNamespace(key="passing", name_en="Passing")
+        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=[skill])
+        return _render_story(skill_categories=[cat], **overrides)
+
+    def test_SP3_sponsor_slot_present_with_skill_categories(self):
+        """Sponsor zone DOM element renders when skill categories are present."""
+        html = self._story_with_cats(sponsor_logo_url=None, app_logo_url=None)
+        assert 'class="ex-sponsor-slot"' in html
+
+    def test_SP3_sponsor_logo_rendered_when_provided(self):
+        html = self._story_with_cats(sponsor_logo_url="http://sponsor.example.com/logo.png")
+        assert "http://sponsor.example.com/logo.png" in html
+
+    # --- arctic contrast ---
+
+    def test_SP3_arctic_dark_text_strong_present(self):
+        html = _render_story(theme=_make_arctic_export_theme())
+        assert "rgba(0,0,0,0.87)" in html
+
+    def test_SP3_arctic_dark_text_body_present(self):
+        html = _render_story(theme=_make_arctic_export_theme())
+        assert "rgba(0,0,0,0.75)" in html
+
+    # --- layout invariants / portrait regression guard ---
+
+    def test_SP3_no_duplicate_css_reset(self):
+        html = _render_story()
+        assert html.count("box-sizing: border-box") == 1
+
+    def test_SP3_portrait_still_has_no_sponsor_slot(self):
+        """sponsor_zone move into column base must not inject sponsor in portrait."""
+        html = _render_portrait()
+        assert "ex-sponsor" not in html

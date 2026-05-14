@@ -325,12 +325,10 @@
             </div>
             {% endfor %}
         </div>
+        {% block sponsor_zone %}{% endblock %}
     </div>
     {% endif %}
     {% endblock %}
-
-    <!-- ── SPONSOR ZONE — empty by default; story provides sponsor_slot macro ── -->
-    {% block sponsor_zone %}{% endblock %}
 
 </div>
 {% endblock %}

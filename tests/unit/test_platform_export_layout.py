@@ -710,11 +710,23 @@ class TestFifaStoryExport:
         assert "ex-skill-cats" in html, ".ex-skill-cats not found in story export HTML"
 
     def test_ex15_portrait_photo_url_used_in_story(self, client):
-        """Story export template must reference portrait_photo_url (portrait crop preferred)."""
-        html = self._get_fifa_export_html(client, "instagram_story")
+        """Story export must render portrait_photo_url into the avatar img src."""
+        from app.main import app
+        from app.dependencies import get_db
+
+        lic = _make_license(card_variant="fifa")
+        lic.card_photo_portrait_url = "/static/test-portrait.jpg"
+        db = _mock_db(user=_make_user(), license_=lic)
+        app.dependency_overrides[get_db] = lambda: db
+        try:
+            r = client.get("/players/7/card?platform=instagram_story&export=1")
+            html = r.text if r.status_code == 200 else ""
+        finally:
+            app.dependency_overrides.pop(get_db, None)
         assert html, "Export returned empty response for instagram_story"
-        assert "portrait_photo_url" in html, (
-            "portrait_photo_url not referenced in story export template"
+        assert "/static/test-portrait.jpg" in html, (
+            "portrait_photo_url not rendered in story export avatar img src — "
+            "expected portrait crop URL to appear in rendered HTML"
         )
 
     def test_ex16_tiktok_uses_tiktok_export_template_not_story(self, client):
