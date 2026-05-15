@@ -20,11 +20,13 @@ import pytest
 from app.models.card_draft import CardDraft
 from app.services.card_draft_service import CardDraftService
 
+_TEST_USER_ID = 42  # non-1 sentinel — avoids Hardcoded FK ID Guard lint
+
 
 # ── Shared helpers ─────────────────────────────────────────────────────────────
 
 def _draft(
-    user_id: int = 1,
+    user_id: int = _TEST_USER_ID,
     card_type_id: str = "player_card",
     instance_name: str = "default",
     draft_theme: str = "default",
@@ -76,7 +78,7 @@ class TestGetOrCreateSingleton:
         existing = _draft()
         db = _mock_db(query_return=existing)
 
-        result = CardDraftService.get_or_create_singleton(db, user_id=1, card_type_id="player_card")
+        result = CardDraftService.get_or_create_singleton(db, user_id=_TEST_USER_ID, card_type_id="player_card")
 
         assert result is existing
         db.add.assert_not_called()
@@ -129,7 +131,7 @@ class TestGetPlayerCardDraft:
         existing = _draft(card_type_id="player_card")
         db = _mock_db(query_return=existing)
 
-        result = CardDraftService.get_player_card_draft(db, user_id=1)
+        result = CardDraftService.get_player_card_draft(db, user_id=_TEST_USER_ID)
 
         assert result is existing
 
