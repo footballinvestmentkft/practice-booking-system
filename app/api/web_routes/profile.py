@@ -729,6 +729,17 @@ def _build_welcome_card_context(
         license.right_foot_score, license.left_foot_score
     )
 
+    # Age group: same logic as Player Card (derived from date_of_birth)
+    age_group = "AMATEUR"
+    if user.date_of_birth:
+        today = date.today()
+        dob   = user.date_of_birth
+        age   = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+        if age < 7:
+            age_group = "PRE"
+        elif age < 15:
+            age_group = "YOUTH"
+
     # ── Player namespace: satisfies all `player.*` references in FIFA template ──
     player = types.SimpleNamespace(
         skills               = skills_for_fifa,
@@ -737,7 +748,7 @@ def _build_welcome_card_context(
         positions            = ms.get("positions", []),
         nationality          = getattr(user, "country", None) or "",
         secondary_nationality= None,
-        age_group            = None,
+        age_group            = age_group,
         total_tournaments    = 0,
         photo_url            = license.player_card_photo_url,
     )

@@ -50,14 +50,15 @@ def _req():
 
 def _user(uid=10, role=UserRole.STUDENT):
     u = MagicMock()
-    u.id      = uid
-    u.role    = role
-    u.email   = "player@test.com"
-    u.name    = "Test Player"
-    u.country = "HU"
-    u.nickname = "tester"
+    u.id            = uid
+    u.role          = role
+    u.email         = "player@test.com"
+    u.name          = "Test Player"
+    u.country       = "HU"
+    u.nickname      = "tester"
     u.secondary_nationality = None
-    u.credit_balance = 500
+    u.credit_balance        = 500
+    u.date_of_birth         = None   # None → age_group defaults to AMATEUR
     return u
 
 
@@ -1261,3 +1262,144 @@ class TestWelcomeCardNativeExportMode:
             "native_export_mode key must be present in WC export context"
         )
         assert ctx["native_export_mode"] is False
+
+
+# ── 13. Landscape BUG-1/2 render guards + BUG-3 age_group + platform regression ─
+
+_LANDSCAPE_TPL_DIR = (
+    pathlib.Path(__file__).resolve().parents[4] / "app" / "templates"
+)
+
+
+def _render_landscape(ctx: dict) -> str:
+    """Render public/export/landscape/fifa.html with a real Jinja2 environment."""
+    from jinja2 import Environment, FileSystemLoader
+    from app.utils.country_codes import register_filters as _rf
+    env = Environment(
+        loader=FileSystemLoader(str(_LANDSCAPE_TPL_DIR)),
+        autoescape=True,
+    )
+    _rf(env)
+    return env.get_template("public/export/landscape/fifa.html").render(**ctx)
+
+
+def _wc_landscape_ctx() -> dict:
+    """WC context for landscape: built via _build_welcome_card_context with DOB=None."""
+    user = _user()
+    user.date_of_birth = None
+    return _build_welcome_card_context(_req(), user, _license(), "facebook_landscape", False)
+
+
+def _pc_landscape_ctx() -> dict:
+    """PC-equivalent landscape context: welcome_card_mode=False + license/XP keys."""
+    ctx = _wc_landscape_ctx()
+    ctx["welcome_card_mode"]     = False
+    ctx["license_current_level"] = 5
+    ctx["license_max_level"]     = 10
+    ctx["xp_balance"]            = 1234
+    return ctx
+
+
+class TestLandscapeBugFix:
+    """
+    BUG-1/2/3 regression tests for landscape/fifa.html and _build_welcome_card_context.
+
+    LS-BUG-01: WC landscape render must NOT contain the License row
+    LS-BUG-02: WC landscape render must NOT contain the XP row (✦)
+    LS-BUG-03: PC landscape render must STILL contain License and XP rows (regression guard)
+    LS-BUG-04: WC context age_group = AMATEUR when date_of_birth is None
+    LS-BUG-05: WC context age_group = YOUTH for a 10-year-old
+    LS-BUG-06: WC context age_group = PRE for a 5-year-old
+    LS-BUG-07: WC context age_group = AMATEUR for a 25-year-old
+    LS-BUG-08: welcome_card_mode=True present on all non-landscape WC platforms
+    """
+
+    # ── LS-BUG-01: License row absent in WC landscape ─────────────────────────
+
+    def test_ls_bug_01_wc_landscape_license_row_absent(self):
+        """BUG-1: Welcome Card landscape must not render the 'License' profile row."""
+        html = _render_landscape(_wc_landscape_ctx())
+        assert ">License<" not in html, (
+            "Welcome Card landscape must not render the License row. "
+            "Guard condition {% if not welcome_card_mode %} must wrap License div."
+        )
+
+    # ── LS-BUG-02: XP row absent in WC landscape ──────────────────────────────
+
+    def test_ls_bug_02_wc_landscape_xp_row_absent(self):
+        """BUG-2: Welcome Card landscape must not render the XP / ✦ row."""
+        html = _render_landscape(_wc_landscape_ctx())
+        assert "✦" not in html, (
+            "Welcome Card landscape must not render the XP row (contains ✦). "
+            "Guard condition {% if not welcome_card_mode %} must wrap XP div."
+        )
+
+    # ── LS-BUG-03: Regression — PC landscape still has License + XP ───────────
+
+    def test_ls_bug_03_pc_landscape_license_and_xp_present(self):
+        """Regression: Player Card landscape must still render License and XP rows."""
+        html = _render_landscape(_pc_landscape_ctx())
+        assert "Lv." in html, (
+            "Player Card landscape must still render the License row ('Lv.')."
+        )
+        assert "✦" in html, (
+            "Player Card landscape must still render the XP row ('✦')."
+        )
+
+    # ── LS-BUG-04..07: age_group from date_of_birth ───────────────────────────
+
+    def test_ls_bug_04_age_group_amateur_when_no_dob(self):
+        """BUG-3: No DOB → age_group defaults to AMATEUR."""
+        user = _user()
+        user.date_of_birth = None
+        ctx = _build_welcome_card_context(_req(), user, _license(), None, False)
+        assert ctx["player"].age_group == "AMATEUR"
+
+    def test_ls_bug_05_age_group_youth_for_age_10(self):
+        """BUG-3: DOB → age 10 → age_group = YOUTH."""
+        from datetime import date
+        user = _user()
+        today = date.today()
+        user.date_of_birth = date(today.year - 10, today.month, today.day)
+        ctx = _build_welcome_card_context(_req(), user, _license(), None, False)
+        assert ctx["player"].age_group == "YOUTH"
+
+    def test_ls_bug_06_age_group_pre_for_age_5(self):
+        """BUG-3: DOB → age 5 → age_group = PRE."""
+        from datetime import date
+        user = _user()
+        today = date.today()
+        user.date_of_birth = date(today.year - 5, today.month, today.day)
+        ctx = _build_welcome_card_context(_req(), user, _license(), None, False)
+        assert ctx["player"].age_group == "PRE"
+
+    def test_ls_bug_07_age_group_amateur_for_age_25(self):
+        """BUG-3: DOB → age 25 → age_group = AMATEUR."""
+        from datetime import date
+        user = _user()
+        today = date.today()
+        user.date_of_birth = date(today.year - 25, today.month, today.day)
+        ctx = _build_welcome_card_context(_req(), user, _license(), None, False)
+        assert ctx["player"].age_group == "AMATEUR"
+
+    # ── LS-BUG-08: other WC platforms still have welcome_card_mode=True ───────
+
+    def test_ls_bug_08_square_welcome_card_mode_true(self):
+        """Regression: WC context for square still has welcome_card_mode=True."""
+        _, ctx = TestWelcomeCardFifaRoute()._call_with_platform("instagram_square")
+        assert ctx.get("welcome_card_mode") is True
+
+    def test_ls_bug_08_story_welcome_card_mode_true(self):
+        """Regression: WC context for story still has welcome_card_mode=True."""
+        _, ctx = TestWelcomeCardFifaRoute()._call_with_platform("instagram_story")
+        assert ctx.get("welcome_card_mode") is True
+
+    def test_ls_bug_08_tiktok_welcome_card_mode_true(self):
+        """Regression: WC context for tiktok still has welcome_card_mode=True."""
+        _, ctx = TestWelcomeCardFifaRoute()._call_with_platform("tiktok")
+        assert ctx.get("welcome_card_mode") is True
+
+    def test_ls_bug_08_banner_welcome_card_mode_true(self):
+        """Regression: WC context for banner still has welcome_card_mode=True."""
+        _, ctx = TestWelcomeCardFifaRoute()._call_with_platform("linkedin_banner")
+        assert ctx.get("welcome_card_mode") is True
