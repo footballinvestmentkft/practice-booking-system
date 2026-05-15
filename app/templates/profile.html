@@ -47,6 +47,15 @@
         color: white;
     }
 
+    .btn-secondary {
+        background: #e2e8f0;
+        color: #2d3748;
+    }
+
+    .btn-secondary:hover {
+        background: #cbd5e0;
+    }
+
     .btn:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.2);
@@ -369,6 +378,21 @@
             </div>
             {% endif %}
         </div>
+
+        <!-- Welcome Card (LFA Football Player, onboarding completed) -->
+        {% if lfa_license %}
+        <div class="card">
+            <h2>🎴 Welcome Card</h2>
+            <p style="font-size:0.85rem; color:#64748b; margin-bottom:0.85rem;">
+                Based on your onboarding self-assessment — not the same as the regular Player Card.
+            </p>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <a href="/profile/onboarding-card" class="btn btn-primary">View Welcome Card</a>
+                <a href="/profile/onboarding-card/export?platform=instagram_square"
+                   class="btn btn-secondary">⬇️ Download</a>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Emergency Contact (if provided) -->
         {% if user.emergency_contact or user.emergency_phone %}

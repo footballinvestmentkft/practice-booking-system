@@ -3604,6 +3604,63 @@
         "title": "Body_instructor_update_student_skills_instructor_students__student_id__skills__license_id__post",
         "type": "object"
       },
+      "Body_lfa_player_profile_edit_submit_profile_lfa_football_player_edit_post": {
+        "properties": {
+          "goals": {
+            "title": "Goals",
+            "type": "string"
+          },
+          "height_cm_raw": {
+            "default": "",
+            "title": "Height Cm Raw",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "string"
+          },
+          "preferred_foot": {
+            "title": "Preferred Foot",
+            "type": "string"
+          },
+          "secondary_positions": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Secondary Positions",
+            "type": "array"
+          },
+          "weight_kg_raw": {
+            "default": "",
+            "title": "Weight Kg Raw",
+            "type": "string"
+          }
+        },
+        "required": [
+          "position",
+          "preferred_foot",
+          "goals"
+        ],
+        "title": "Body_lfa_player_profile_edit_submit_profile_lfa_football_player_edit_post",
+        "type": "object"
+      },
+      "Body_lfa_player_profile_positions_submit_profile_lfa_football_player_positions_post": {
+        "properties": {
+          "position": {
+            "default": "",
+            "title": "Position",
+            "type": "string"
+          },
+          "positions_raw": {
+            "default": "[]",
+            "title": "Positions Raw",
+            "type": "string"
+          }
+        },
+        "title": "Body_lfa_player_profile_positions_submit_profile_lfa_football_player_positions_post",
+        "type": "object"
+      },
       "Body_login_form_api_v1_auth_login_form_post": {
         "properties": {
           "client_id": {
@@ -59580,6 +59637,23 @@
               "default": false,
               "title": "Animated"
             }
+          },
+          {
+            "in": "query",
+            "name": "native_export",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": false,
+              "title": "Native Export"
+            }
           }
         ],
         "responses": {
@@ -59814,10 +59888,10 @@
         ]
       }
     },
-    "/profile/onboarding-card": {
+    "/profile/lfa-football-player": {
       "get": {
-        "description": "Welcome Card \u2014 private self-assessment preview (Phase C).\n\nData source: football_skills[*].self_assessment ONLY.\nNEVER reads current_level, baseline, system_baseline, tournament_delta,\nassessment_delta, or any EMA output.\n\nAuth: own card only (get_current_user_web enforces login; ownership is\nimplicit because we query by user.id).\nVisibility: private, no-index (meta tag in template).",
-        "operationId": "onboarding_welcome_card_profile_onboarding_card_get",
+        "description": "LFA Football Player specialization profile hub.\n\nRequires a completed LFA_FOOTBALL_PLAYER license.\nDisplays spec-specific data from motivation_scores and UserLicense fields.\nfootball_skills (EMA-computed) are not exposed or editable here.",
+        "operationId": "lfa_player_profile_page_profile_lfa_football_player_get",
         "responses": {
           "200": {
             "content": {
@@ -59830,7 +59904,210 @@
             "description": "Successful Response"
           }
         },
+        "summary": "Lfa Player Profile Page",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/profile/lfa-football-player/edit": {
+      "get": {
+        "description": "Show the LFA Football Player spec-profile edit form.",
+        "operationId": "lfa_player_profile_edit_page_profile_lfa_football_player_edit_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Lfa Player Profile Edit Page",
+        "tags": [
+          "web"
+        ]
+      },
+      "post": {
+        "description": "Validate and save LFA Football Player spec-profile fields (motivation_scores only).",
+        "operationId": "lfa_player_profile_edit_submit_profile_lfa_football_player_edit_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_lfa_player_profile_edit_submit_profile_lfa_football_player_edit_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Lfa Player Profile Edit Submit",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/profile/lfa-football-player/positions": {
+      "post": {
+        "description": "Update only the player's positions (primary + secondaries, max 4 total).\n\nAccepts:\n  position      \u2014 canonical primary position (snake_case)\n  positions_raw \u2014 JSON array of all positions including primary, e.g. '[\"striker\",\"left_wing\"]'\n\nValidates: canonical values, 1\u20134 count, primary is first element.\nNever touches foot scores, goals, height, weight, or any other field.",
+        "operationId": "lfa_player_profile_positions_submit_profile_lfa_football_player_positions_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_lfa_player_profile_positions_submit_profile_lfa_football_player_positions_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Lfa Player Profile Positions Submit",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/profile/onboarding-card": {
+      "get": {
+        "description": "Welcome Card preview \u2014 private self-assessment view.\n\nData source: football_skills[*].self_assessment ONLY.\nNEVER reads current_level, baseline, system_baseline, tournament_delta,\nassessment_delta, or any EMA output.\n\nWithout ?platform=: renders the gallery hub (iframe + download buttons).\nWith ?platform=X:   renders the FIFA Classic card for that platform size.\nWith ?export=1:     switches the FIFA template to export-mode (Playwright use).\n\nAuth: own card only (get_current_user_web enforces login; ownership is\nimplicit because we query by user.id).\nVisibility: private, no-index (meta tag in template).",
+        "operationId": "onboarding_welcome_card_profile_onboarding_card_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "platform",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Platform"
+            }
+          },
+          {
+            "in": "query",
+            "name": "export",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Export",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
         "summary": "Onboarding Welcome Card",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/profile/onboarding-card/export": {
+      "get": {
+        "description": "Export the Welcome Card as a PNG at a social-media canvas size.\n\nAuth: own card only. Rate limit: 5 exports per 60 s per user+IP.\nData source: self_assessment only (same contract as the preview route).",
+        "operationId": "export_onboarding_welcome_card_profile_onboarding_card_export_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "platform",
+            "required": false,
+            "schema": {
+              "default": "instagram_square",
+              "title": "Platform",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Onboarding Welcome Card",
         "tags": [
           "web"
         ]

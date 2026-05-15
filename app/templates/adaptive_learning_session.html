@@ -251,6 +251,20 @@
     .als-next-cat-btn:hover:not(:disabled) { background: #4338ca; }
     .als-next-cat-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
+    .als-next-btn {
+        background: var(--app-primary, #4f46e5);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.6rem 1.6rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s, opacity 0.15s;
+    }
+    .als-next-btn:hover:not(:disabled) { background: #4338ca; }
+    .als-next-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
     /* ── Question card ───────────────────────────────────────────────────────── */
     .als-question-card {
         background: var(--app-card);
@@ -583,15 +597,15 @@
         </div>
         <div id="als-progress-label" class="als-progress-label">Question 0</div>
 
-        <div class="als-question-card">
+        <div id="als-question-card" class="als-question-card">
             <div id="als-question-num" class="als-question-num">Question 1</div>
             <p id="als-question-text" class="als-question-text"></p>
         </div>
 
         <div id="als-options" class="als-options"></div>
         <div id="als-feedback" class="als-feedback"></div>
-        <div id="als-auto-advance" style="display:none; text-align:center; font-size:0.82rem; color:var(--app-text-muted); margin-top:0.5rem;">
-            Next question in 1.5s…
+        <div id="als-next-btn-wrap" style="display:none; text-align:center; margin-top:1rem;">
+            <button id="als-next-btn" class="als-next-btn" onclick="alsNext()">Next question →</button>
         </div>
     </div>
 
@@ -1067,7 +1081,9 @@
 
         document.getElementById('als-feedback').style.display = 'none';
         document.getElementById('als-feedback').className = 'als-feedback';
-        document.getElementById('als-auto-advance').style.display = 'none';
+        document.getElementById('als-next-btn-wrap').style.display = 'none';
+        document.getElementById('als-question-card').style.display = '';
+        document.getElementById('als-options').style.display = '';
         updateProgress();
         showPhase('question');
     }
@@ -1123,30 +1139,37 @@
             }
             fb.style.display = 'block';
 
-            var advanceDelay = d.correct ? 1500 : 3000;
-            _scheduleNextAction(advanceDelay);
+            _showAnsweredState();
+            _showNextButton();
         }).catch(function () {
             showError('Network error while recording answer. Please check your connection.');
         });
     }
 
-    function _scheduleNextAction(delayMs) {
-        var adv = document.getElementById('als-auto-advance');
-        if (adv) {
-            adv.textContent = delayMs >= 3000 ? 'Next question in 3s…' : 'Next question in 1.5s…';
-            adv.style.display = 'block';
-        }
-        setTimeout(function () {
-            if (adv) adv.style.display = 'none';
-            alsNext();
-        }, delayMs);
+    function _showNextButton() {
+        var wrap = document.getElementById('als-next-btn-wrap');
+        var btn  = document.getElementById('als-next-btn');
+        if (wrap) wrap.style.display = 'block';
+        if (btn)  btn.disabled = false;
+    }
+
+    function _showAnsweredState() {
+        var card = document.getElementById('als-question-card');
+        var opts = document.getElementById('als-options');
+        if (card) card.style.display = 'none';
+        if (opts) opts.style.display = 'none';
     }
 
     /* ── Next question ─────────────────────────────────────────────────────── */
     window.alsNext = function () {
+        var btn  = document.getElementById('als-next-btn');
+        var wrap = document.getElementById('als-next-btn-wrap');
+        if (btn) btn.disabled = true;  // double-click guard
+
         var excludeParam = state.recentIds.join(',');
         get('/adaptive-learning/session/' + state.sessionId + '/next-question?exclude_ids=' + excludeParam)
             .then(function (res) {
+                if (wrap) wrap.style.display = 'none';
                 if (!res) return;
                 var d = res.data;
                 if (d.session_complete) {
@@ -1160,6 +1183,7 @@
                 if (!d.id) { alsComplete(); return; }
                 renderQuestion(d);
             }).catch(function () {
+                if (btn)  btn.disabled = false;  // re-enable on network error
                 showError('Could not load the next question. Please try again.');
             });
     };

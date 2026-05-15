@@ -10,28 +10,43 @@
  * Purpose : static social export ONLY — no editor UI, no responsive CSS
  * Classes : ex- prefix throughout, no inheritance from editor templates
  *
- * Layout:
- *   .ex-hero  (flex: 0 0 42%) — photo-col 32% | profile-col flex:1
- *   .ex-skills (flex: 1)       — 2×2 grid, all 29 skills (58% of canvas)
+ * Layout (v11 — Position Map in Col 2 bottom, 3 fill-aligned columns):
+ *   .ex-hero   (flex: 0 0 35%) — photo-col 32% | profile-col flex:1
+ *   .ex-skills (flex: 1 = 65%, gap:6px):
+ *     .ex-skill-cats (flex:1, flex-row, gap:6px):
+ *       Col 1 .ex-col-outfield:   Outfield (19 skills, cat flex:1 → fills 656px)
+ *       Col 2 .ex-col-mental-pos: Mental (14, cat flex:1) | PosMap (fixed 160px)
+ *       Col 3 .ex-col-sets-phys:  Set Pieces (3, natural) | Physical (8, cat flex:1)
  *
- * Hero photo: portrait_photo_url → photo_url (no circle, no border, cover)
- * Hero profile-col: justify-content:space-between distributes 3 sections
- *   across 420px inner height — Identity(122px) · ProfileData(76px) · Stats(54px)
+ * Height budget (v11):
+ *   Skills inner: 702−28 = 674px
+ *   Title 12px + gap 6px = 18px consumed (no top strip)
+ *   Skill-cats: 674−18 = 656px available  (+116px vs v10's 540px)
+ *   Column widths: (1052−12)/3 ≈ 347px each
+ *   Outfield worst-case: 534px < 656px → +122px bg fill ✓
+ *   Mental: 404px < 490px (656−6−160) → +86px bg fill ✓
+ *   Set Pieces: 118px natural ✓ · Physical: 248px < 532px → +284px bg fill ✓
+ *   All 44 skills fully visible — flex:1 cats fill to bottom, rows align top ✓
  *
- * Skill grid — fixed-rhythm model (v3):
- *   grid-template-columns: 1fr 1fr
- *   grid-template-rows: auto auto      ← category-driven; tallest in row wins
- *   align-items: start                 ← compact categories don't stretch
- *   gap: 6px
- *   FIX_ROW_H = 24px: .ex-row { flex: none; min-height: 24px }
- *   Every skill row across all 4 categories is exactly 24px — uniform rhythm.
- *   Short categories (Set Pieces 3 rows) show dark background below their block.
+ * Position Map panel (v11):
+ *   .ex-pos-panel-landscape: fixed 160px tall, inside Col 2 at bottom, flex-row.
+ *   .ex-pos-info (140px): title · Primary pos label+name (gold, 14px wrap) · chips.
+ *   svg.ex-pos-svg-landscape (flex:1 = ~206px, bg:#1a5c2a): viewBox "0 0 105 68",
+ *     preserveAspectRatio="xMidYMid meet" → pitch rendered 206×133px (83% fill).
+ *   Jinja2-gated by position_nodes — Col 2 Mental fills full 656px when absent.
+ *
+ * Photo column (v9, unchanged):
+ *   Clean portrait — no position badges. Position info in panel only.
+ *
+ * Sponsor / logo (v8, unchanged):
+ *   Hero layer: .ex-hero-sponsor in .ex-profile-col. Jinja2-gated.
  *
  * Typography scale (% of C_H=1080):
  *   OVR 96px (8.89%), Name 40px (3.70%), Stat 28px (2.59%), Meta 20px (1.85%)
  *
- * Category order in HTML: Outfield · Mental / Set Pieces · Physical
- *   (row-flow, so rendered as [0],[2],[1],[3] from skill_categories)
+ * Column assignment (index → category):
+ *   [0] Outfield · [1] Set Pieces · [2] Mental · [3] Physical
+ *   Rendered order: panel (full-width) | Col1=[0] | Col2=[2] | Col3=[1]+[3]
  */
 
 :root {
@@ -61,11 +76,11 @@ html, body {
 }
 
 /* ── HERO ZONE ────────────────────────────────────────────────────────────────
-   Fixed at 42% of card height (≈ 454px at 1080px canvas). Upper bound.
+   Fixed at 35% of card height (≈ 378px at 1080px canvas).
    Layout: [photo-col 32% fixed] | [profile-col flex:1]
    ─────────────────────────────────────────────────────────────────────────── */
 .ex-hero {
-    flex: 0 0 42%;
+    flex: 0 0 35%;
     background: var(--ex-panel-bg);
     display: flex;
     flex-direction: row;
@@ -96,9 +111,22 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 48px;
+}
+
+/* WC no-photo: monogram circle centred in the photo column */
+.ex-photo-monogram {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 44px;
     font-weight: 900;
-    color: rgba(255,255,255,0.20);
+    color: rgba(255,255,255,0.72);
+    background: rgba(255,255,255,0.06);
+    letter-spacing: -0.02em;
 }
 
 /* Right-edge gradient on photo — blends into profile col */
@@ -110,20 +138,18 @@ html, body {
     pointer-events: none;
 }
 
-/* Position badge — overlaid top-left of photo */
-.ex-pos-badge {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    font-size: 12px;
-    font-weight: 800;
-    color: white;
-    padding: 3px 9px;
-    border-radius: 4px;
+/* Secondary position chip — reused in Position Map panel info column */
+.ex-sec-pos-chip {
+    font-size: 9px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.75);
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.10);
     text-transform: uppercase;
-    letter-spacing: 0.07em;
-    z-index: 2;
+    letter-spacing: 0.05em;
     white-space: nowrap;
+    display: inline-block;
 }
 
 /* Profile column — right side of hero */
@@ -212,10 +238,17 @@ html, body {
     white-space: nowrap;
 }
 
-/* 3×2 mini-grid: profile data */
+/* 3×2 mini-grid: profile data (non-WC mode) */
 .ex-mini-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
+    gap: 4px 8px;
+}
+
+/* WC mode: 2×2 compact grid (NAT · GROUP / HEIGHT · WEIGHT) */
+.ex-mini-grid--wc {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 4px 8px;
 }
 .ex-mini-item {
@@ -293,20 +326,23 @@ html, body {
     z-index: 0;
 }
 
-/* ── SKILLS ZONE ──────────────────────────────────────────────────────────────
-   flex:1 → takes 1080 − 454 = 626px of remaining height.
-   2-column flex layout (v4):
-     Left col:  Outfield (fixed) + Set Pieces (flex:1, fills column)
-     Right col: Mental (fixed)   + Physical Fitness (natural, directly below Mental)
-   Sponsor slot: full-width flex-sibling below both columns.
-   Math: max-col height = Mental(258)+6+Physical(232) = 496px.
-         Slot: 575 − 496 − 6(margin) = 73px available; slot uses 70px.
-   ─────────────────────────────────────────────────────────────────────────── */
+/* ── SKILLS ZONE ────────────────────────────────────────────────────────────────────────────────
+   flex:1 → takes 1080 − 378 = 702px of remaining height (at 35% hero).
+   Nested 3-column model (v7):
+     Col 1: Outfield (19 skills, flex:1, ~346px)
+     .ex-col-right (flex:2, ~693px):
+       .ex-col-right-skills: Mental (14) | Set Pieces(3)+Physical(8)
+       .ex-pos-panel-landscape: landscape pitch SVG, ~165px tall
+   Available height per skill-col: 576px
+   All 44 skills fully visible — no overflow clipping on content layers.
+   Sponsor slot: removed from skills zone — moved to hero layer (v8).
+   ─────────────────────────────────────────────────────────────────────────────────────── */
 .ex-skills {
     flex: 1;
     background: var(--ex-body-bg);
     display: flex;
     flex-direction: column;
+    gap: 6px;
     overflow: hidden;
     padding: 14px;
     min-height: 0;
@@ -318,45 +354,31 @@ html, body {
     text-transform: uppercase;
     letter-spacing: 0.14em;
     color: rgba(255,255,255,0.30);
-    margin-bottom: 8px;
+    margin-bottom: 0;
 }
 
-/* 2-column flex layout (v4).
- * Each column is independently height-managed — eliminates the 85px dead gap
- * caused by CSS Grid sharing row heights across columns (Outfield taller than Mental). */
+/* v10: 3 flat columns — Outfield | Mental | Set Pieces+Physical.
+ * No .ex-col-right nesting. All columns are direct siblings. */
 .ex-skill-cats {
     flex: 1;
     display: flex;
     flex-direction: row;
     gap: 6px;
-    overflow: hidden;
     min-height: 0;
 }
 
-/* Column wrapper: stacks its two categories vertically, independent of the other column. */
+/* Column wrapper: stacks its categories vertically. overflow: visible so
+ * all skill rows remain visible — the 35% hero gives enough height. */
 .ex-skill-col {
-    flex: 1;
+    flex: 1 1 0%;
     display: flex;
     flex-direction: column;
     gap: 6px;
     min-height: 0;
-    overflow: hidden;
+    overflow: visible;
 }
 
-/* Set Pieces (left col bottom): flex:1 fills remaining column height; logo-slot occupies
- * the freed dark area at the bottom as a static visual placeholder. */
-.ex-cat--logo-host {
-    flex: 1;
-}
-
-.ex-logo-slot {
-    flex-shrink: 0;
-    height: 96px;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    margin-top: 0;
-}
-
-/* Category cell */
+/* Category cell — no overflow clipping on content (all 44 skills must be visible) */
 .ex-cat {
     background: var(--ex-cat-bg);
     border: 1px solid rgba(255,255,255,0.10);
@@ -364,8 +386,6 @@ html, body {
     padding: 8px 10px;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    min-height: 0;
 }
 .ex-cat-name {
     flex-shrink: 0;
@@ -382,18 +402,15 @@ html, body {
     text-overflow: ellipsis;
 }
 
-/* Skill rows container */
+/* Skill rows container — visible so rows are never clipped */
 .ex-skill-rows {
-    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 2px;
-    overflow: hidden;
 }
 
-/* Individual skill row — FIX_ROW_H = 24px (v3 fixed-rhythm model).
- * flex: none + min-height: 24px decouples row height from grid/container geometry.
- * Every category has identical row heights regardless of skill count. */
+/* Individual skill row — FIX_ROW_H = 24px (fixed-rhythm model).
+ * flex: none + min-height: 24px decouples row height from container geometry. */
 .ex-row {
     flex: none;
     min-height: 24px;
@@ -447,25 +464,102 @@ html, body {
     line-height: 1;
 }
 
-/* Shared sponsor slot: full-width row below both skill columns.
- * flex-shrink:0 + margin-top:6px reserves 70px at the bottom of .ex-skills.
- * Not absolute, not in-cell — clean flex-sibling in .ex-skills flow. */
-.ex-sponsor-slot {
+/* ── POSITION LANDSCAPE PANEL ───────────────────────────────────────────────────────────────────────────
+   v10: full-width, fixed 110px, direct child of .ex-skills (BEFORE .ex-skill-cats).
+   NOT .ex-cat → cat fade-slide animation never fires here.
+   flex-row: .ex-pos-info (180px) | svg.ex-pos-svg-landscape (flex:1, bg:#1a5c2a).
+   Info: panel title · Primary Position name (gold) · Secondary chips.
+   NO legend. SVG: viewBox "0 0 105 68", xMidYMid meet, seamless green letterbox.
+   ─────────────────────────────────────────────────────────────────────────────────────── */
+
+/* Position Map panel — v11: inside Col 2 (bottom), fixed height */
+.ex-pos-panel-landscape {
     flex-shrink: 0;
-    height: 70px;
-    margin-top: 6px;
+    height: 160px;
+    background: var(--ex-cat-bg);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 12px;
+    overflow: hidden;
     display: flex;
-    align-items: center;
+    flex-direction: row;
+}
+/* Info column — left of pitch SVG (narrower in v11: more SVG room) */
+.ex-pos-info {
+    flex: 0 0 140px;
+    display: flex;
+    flex-direction: column;
     justify-content: center;
-    border-top: 1px solid rgba(255,255,255,0.10);
+    gap: 3px;
+    padding: 10px 12px;
+    border-right: 1px solid rgba(255,255,255,0.08);
+}
+.ex-pos-panel-title {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 4px;
+}
+.ex-pos-primary-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.28);
+}
+.ex-pos-primary-name {
+    font-size: 14px;
+    font-weight: 800;
+    color: #ECC94B;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    margin-bottom: 4px;
+}
+.ex-pos-secondary-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.28);
+}
+.ex-pos-secondary-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: 2px;
+}
+/* v11 column flex-fill: each column's tallest (or only) cat stretches to fill height,
+ * so all three columns reach the same bottom edge. */
+.ex-col-outfield .ex-cat         { flex: 1; }   /* Outfield: single cat fills full 656px */
+.ex-col-mental-pos .ex-cat       { flex: 1; }   /* Mental: fills above Position Map */
+.ex-col-sets-phys .ex-cat:last-child { flex: 1; } /* Physical: fills below Set Pieces */
+
+/* SVG takes remaining width — seamless green background absorbs letterbox areas */
+.ex-pos-svg-landscape {
+    flex: 1;
+    min-width: 0;
+    display: block;
+    align-self: stretch;
+    background: #1a5c2a;
 }
 
-/* Sponsor logo image: contained, alpha preserved, never overflows slot. */
-.ex-sponsor-slot-img {
-    max-height: 48px;
-    max-width: 70%;
+/* Sponsor / logo in hero layer (v8) — 4th flex child of .ex-profile-col.
+ * Appears only when sponsor_logo_url or app_logo_url is provided.
+ * Jinja2-gated — no layout break when absent. */
+.ex-hero-sponsor {
+    display: flex;
+    align-items: center;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+.ex-hero-sponsor-img {
+    max-height: 28px;
+    max-width: 55%;
     object-fit: contain;
     display: block;
+    opacity: 0.65;
 }
 </style>
 
@@ -485,7 +579,8 @@ html, body {
 .ex-ovr-num  { animation: ex-ovr-in 0.5s cubic-bezier(.34,1.56,.64,1) forwards; }
 .ex-tier-badge { opacity: 0; animation: ex-ovr-in 0.4s 0.4s ease-out forwards; }
 
-/* Skill bar fill: animate from width 0 → actual value (staggered per row) */
+/* Skill bar fill: animate from width 0 → actual value (staggered per row).
+ * Delays cover up to 19 rows (Outfield column, the longest). */
 @keyframes ex-bar-in {
     from { width: 0%; }
 }
@@ -501,8 +596,18 @@ html, body {
 .ex-row:nth-child(9)  .ex-bar-fill { animation-delay: 0.70s; }
 .ex-row:nth-child(10) .ex-bar-fill { animation-delay: 0.75s; }
 .ex-row:nth-child(11) .ex-bar-fill { animation-delay: 0.80s; }
+.ex-row:nth-child(12) .ex-bar-fill { animation-delay: 0.84s; }
+.ex-row:nth-child(13) .ex-bar-fill { animation-delay: 0.88s; }
+.ex-row:nth-child(14) .ex-bar-fill { animation-delay: 0.92s; }
+.ex-row:nth-child(15) .ex-bar-fill { animation-delay: 0.96s; }
+.ex-row:nth-child(16) .ex-bar-fill { animation-delay: 1.00s; }
+.ex-row:nth-child(17) .ex-bar-fill { animation-delay: 1.04s; }
+.ex-row:nth-child(18) .ex-bar-fill { animation-delay: 1.08s; }
+.ex-row:nth-child(19) .ex-bar-fill { animation-delay: 1.12s; }
 
-/* Category cells: slide up + fade in, staggered by grid position */
+/* Category cells: slide up + fade in, staggered by position within column.
+ * nth-child is parent-relative (per .ex-skill-col), so delays apply uniformly
+ * to all columns' first/second category. */
 @keyframes ex-cat-in {
     from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -510,8 +615,11 @@ html, body {
 .ex-cat { opacity: 0; animation: ex-cat-in 0.4s ease-out forwards; }
 .ex-cat:nth-child(1) { animation-delay: 0.15s; }
 .ex-cat:nth-child(2) { animation-delay: 0.25s; }
-.ex-cat:nth-child(3) { animation-delay: 0.20s; }
-.ex-cat:nth-child(4) { animation-delay: 0.30s; }
+
+/* Landscape position panel: self-contained fade-in, independent of skill stagger chain.
+ * Uses the same ex-cat-in keyframe already defined above.
+ * Delay 0.35s: appears after category reveals, does not shift bar timing. */
+.ex-pos-panel-landscape { opacity: 0; animation: ex-cat-in 0.4s 0.35s ease-out forwards; }
 
 /* Hero panel: subtle ambient glow pulse (continuous loop) */
 @keyframes ex-hero-glow {
@@ -538,12 +646,11 @@ html, body {
             {% if _photo %}
             <img src="{{ _photo }}" alt="{{ initials }}">
             {% else %}
-            <div class="ex-photo-placeholder" style="background: {{ avatar_bg }};">{{ initials }}</div>
+            <div class="ex-photo-placeholder" style="background: {{ avatar_bg }};">
+                <div class="ex-photo-monogram">{{ initials }}</div>
+            </div>
             {% endif %}
             <div class="ex-photo-fade"></div>
-            {% if player.position and player.position != "Unknown" %}
-            <div class="ex-pos-badge" style="background: {{ pos_color }};">{{ player.position }}</div>
-            {% endif %}
         </div>
 
         <!-- Profile column -->
@@ -575,7 +682,29 @@ html, body {
                 </div>
             </div>
 
-            <!-- Mini-grid: 3×2 — all 6 cells always rendered, "—" fallback for nulls -->
+            <!-- Mini-grid:
+                 WC mode  (welcome_card_mode=True) → 2×2: NAT · GROUP / HEIGHT · WEIGHT
+                 Non-WC                             → 3×2: NAT · AGE · GENDER / GROUP · HEIGHT · WEIGHT -->
+            {% if welcome_card_mode %}
+            <div class="ex-mini-grid ex-mini-grid--wc">
+                <div class="ex-mini-item">
+                    <span class="ex-mini-label">NAT.</span>
+                    <span class="ex-mini-value">{{ player.nationality | nationalities_display(player.secondary_nationality) }}</span>
+                </div>
+                <div class="ex-mini-item">
+                    <span class="ex-mini-label">GROUP</span>
+                    <span class="ex-mini-value">{{ player.age_group or "—" }}</span>
+                </div>
+                <div class="ex-mini-item">
+                    <span class="ex-mini-label">HEIGHT</span>
+                    <span class="ex-mini-value">{{ (player_height_cm ~ " cm") if player_height_cm else "—" }}</span>
+                </div>
+                <div class="ex-mini-item">
+                    <span class="ex-mini-label">WEIGHT</span>
+                    <span class="ex-mini-value">{{ (player_weight_kg ~ " kg") if player_weight_kg else "—" }}</span>
+                </div>
+            </div>
+            {% else %}
             <div class="ex-mini-grid">
                 <div class="ex-mini-item">
                     <span class="ex-mini-label">NAT.</span>
@@ -591,7 +720,7 @@ html, body {
                 </div>
                 <div class="ex-mini-item">
                     <span class="ex-mini-label">GROUP</span>
-                    <span class="ex-mini-value">{{ player.age_group }}</span>
+                    <span class="ex-mini-value">{{ player.age_group or "—" }}</span>
                 </div>
                 <div class="ex-mini-item">
                     <span class="ex-mini-label">HEIGHT</span>
@@ -602,16 +731,24 @@ html, body {
                     <span class="ex-mini-value">{{ (player_weight_kg ~ " kg") if player_weight_kg else "—" }}</span>
                 </div>
             </div>
+            {% endif %}
 
-            <!-- Stat strip: Events · License · XP -->
+            <!-- Stat strip:
+                 WC mode  → EVENTS · TIER (SA) · XP
+                 Non-WC   → EVENTS · LICENSE (Lv. X) · XP -->
             <div class="ex-stat-strip">
                 <div class="ex-stat-item">
                     <span class="ex-stat-label">EVENTS</span>
                     <span class="ex-stat-value">{{ player.total_tournaments }}</span>
                 </div>
                 <div class="ex-stat-item">
+                    {% if welcome_card_mode %}
+                    <span class="ex-stat-label">TIER</span>
+                    <span class="ex-stat-value">SA</span>
+                    {% else %}
                     <span class="ex-stat-label">LICENSE</span>
                     <span class="ex-stat-value">Lv. {{ license_current_level or 1 }}</span>
+                    {% endif %}
                 </div>
                 <div class="ex-stat-item">
                     <span class="ex-stat-label">XP</span>
@@ -623,6 +760,13 @@ html, body {
                 </div>
             </div>
 
+            {% if sponsor_logo_url or app_logo_url %}
+            <div class="ex-hero-sponsor">
+                <img src="{{ sponsor_logo_url or app_logo_url }}" alt="" class="ex-hero-sponsor-img"
+                     onerror="this.style.display='none'">
+            </div>
+            {% endif %}
+
         </div>
 
         <!-- OVR watermark -->
@@ -630,21 +774,23 @@ html, body {
 
     </div>
 
-    <!-- ── SKILLS ─────────────────────────────────────────────────────────────
-         2-column flex layout (v4):
-         Left col:  [0] Outfield (fixed) · [1] Set Pieces (flex:1, fills column)
-         Right col: [2] Mental (fixed)   · [3] Physical Fitness (natural, directly below)
-         Sponsor slot: shared full-width row below both columns.
-         ─────────────────────────────────────────────────────────────────── -->
+    <!-- ── SKILLS ───────────────────────────────────────────────────────────────────────────────────────
+         Nested 3-column model (v7):
+         Col 1: [0] Outfield (19 skills)
+         .ex-col-right:
+           .ex-col-right-skills: [2] Mental (14) | [1]+[3] Set Pieces+Physical
+           .ex-pos-panel-landscape: full-width landscape pitch SVG (v8: 242px tall)
+         Sponsor slot: moved to hero layer (v8) — skills zone fully freed.
+         ─────────────────────────────────────────────────────────────────────── -->
     {% if skill_categories %}
     <div class="ex-skills">
         <div class="ex-skills-title">Football Skills — {{ overall | round(0) | int }} OVR</div>
         <div class="ex-skill-cats">
 
-            <!-- Left column: Outfield + Set Pieces -->
-            <div class="ex-skill-col">
-                {% for cat in [skill_categories[0], skill_categories[1]] %}
-                <div class="ex-cat{% if loop.last %} ex-cat--logo-host{% endif %}">
+            <!-- Col 1: Outfield (19 skills) — single cat fills full column height -->
+            <div class="ex-skill-col ex-col-outfield">
+                {% set cat = skill_categories[0] %}
+                <div class="ex-cat">
                     <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
                     <div class="ex-skill-rows">
                         {% for skill in cat.skills %}
@@ -678,14 +824,139 @@ html, body {
                         </div>
                         {% endfor %}
                     </div>
-                    {% if loop.last %}<div class="ex-logo-slot"></div>{% endif %}
                 </div>
-                {% endfor %}
             </div>
 
-            <!-- Right column: Mental + Physical Fitness -->
-            <div class="ex-skill-col">
-                {% for cat in [skill_categories[2], skill_categories[3]] %}
+            <!-- Col 2: Mental (top, flex:1) + Position Map (bottom, 160px) -->
+            <div class="ex-skill-col ex-col-mental-pos">
+                {% set cat = skill_categories[2] %}
+                <div class="ex-cat">
+                    <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
+                    <div class="ex-skill-rows">
+                        {% for skill in cat.skills %}
+                        {% set sdata = player.skills.get(skill.key, {}) %}
+                        {% set sval  = sdata.get('current_level', 50) | round(0) | int %}
+                        {% set fill  = [sval, 100] | min %}
+                        {% set delta = last_skill_delta.get(skill.key, 0) %}
+                        {% if delta > 0 %}
+                            {% set bar_clr  = '#48bb78' %}
+                            {% set val_clr  = '#48bb78' %}
+                            {% set trend    = '↑' %}
+                            {% set trend_vis = 'visible' %}
+                        {% elif delta < 0 %}
+                            {% set bar_clr  = '#fc8181' %}
+                            {% set val_clr  = '#fc8181' %}
+                            {% set trend    = '↓' %}
+                            {% set trend_vis = 'visible' %}
+                        {% else %}
+                            {% set bar_clr  = 'rgba(255,255,255,0.20)' %}
+                            {% set val_clr  = 'rgba(255,255,255,0.85)' %}
+                            {% set trend    = '↑' %}
+                            {% set trend_vis = 'hidden' %}
+                        {% endif %}
+                        <div class="ex-row">
+                            <span class="ex-sname">{{ skill.name_en }}</span>
+                            <div class="ex-bar-bg">
+                                <div class="ex-bar-fill" style="width:{{ fill }}%; background:{{ bar_clr }};"></div>
+                            </div>
+                            <span class="ex-sval" style="color:{{ val_clr }};">{{ sval }}</span>
+                            <span class="ex-trend" style="color:{{ bar_clr }}; visibility:{{ trend_vis }};">{{ trend }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {% if position_nodes %}
+                <div class="ex-pos-panel-landscape">
+
+                    <!-- Info column: title · primary pos · secondary chips (no legend) -->
+                    <div class="ex-pos-info">
+                        <div class="ex-pos-panel-title">Position Map</div>
+                        <div class="ex-pos-primary-label">Primary Position</div>
+                        <div class="ex-pos-primary-name">
+                            {%- if primary_pos_label is defined and primary_pos_label -%}
+                                {{ primary_pos_label }}
+                            {%- else -%}
+                                {{ player.position | replace("_", " ") | title }}
+                            {%- endif -%}
+                        </div>
+                        {% if secondary_pos_labels is defined and secondary_pos_labels %}
+                        <div class="ex-pos-secondary-label">Secondary Positions</div>
+                        <div class="ex-pos-secondary-chips">
+                            {% for sp in secondary_pos_labels %}
+                            <span class="ex-sec-pos-chip">{{ sp }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <svg class="ex-pos-svg-landscape" viewBox="0 0 105 68"
+                         xmlns="http://www.w3.org/2000/svg" aria-label="Position map"
+                         preserveAspectRatio="xMidYMid meet">
+                        <!-- Pitch background (105m × 68m real geometry) -->
+                        <rect width="105" height="68" fill="#1a5c2a"/>
+                        <!-- Field border -->
+                        <rect x="0.5" y="0.5" width="104" height="67"
+                              fill="none" stroke="rgba(255,255,255,0.30)" stroke-width="0.5"/>
+                        <!-- Center line (vertical at x=52.5) -->
+                        <line x1="52.5" y1="0" x2="52.5" y2="68"
+                              stroke="rgba(255,255,255,0.22)" stroke-width="0.4"/>
+                        <!-- Center circle (r=9.15m) -->
+                        <circle cx="52.5" cy="34" r="9.15"
+                                fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="0.4"/>
+                        <!-- Center spot -->
+                        <circle cx="52.5" cy="34" r="0.6" fill="rgba(255,255,255,0.40)"/>
+                        <!-- GK penalty area (16.5m deep × 40.32m wide) -->
+                        <rect x="0" y="13.84" width="16.5" height="40.32"
+                              fill="none" stroke="rgba(255,255,255,0.20)" stroke-width="0.4"/>
+                        <!-- ST penalty area -->
+                        <rect x="88.5" y="13.84" width="16.5" height="40.32"
+                              fill="none" stroke="rgba(255,255,255,0.20)" stroke-width="0.4"/>
+                        <!-- GK 6-yard box (5.5m deep × 18.32m wide) -->
+                        <rect x="0" y="24.84" width="5.5" height="18.32"
+                              fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="0.3"/>
+                        <!-- ST 6-yard box -->
+                        <rect x="99.5" y="24.84" width="5.5" height="18.32"
+                              fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="0.3"/>
+                        <!-- Penalty spots (11m from goal line) -->
+                        <circle cx="11" cy="34" r="0.5" fill="rgba(255,255,255,0.40)"/>
+                        <circle cx="94" cy="34" r="0.5" fill="rgba(255,255,255,0.40)"/>
+
+                        <!-- Pass 1: inactive nodes (very faint) -->
+                        {% for node in position_nodes %}
+                        {% if not node.is_selected and not node.is_primary %}
+                        <circle cx="{{ (node.x * 105) | round(1) }}" cy="{{ (node.y * 68) | round(1) }}"
+                                r="0.8" fill="rgba(255,255,255,0.12)"/>
+                        {% endif %}
+                        {% endfor %}
+
+                        <!-- Pass 2: secondary selected positions -->
+                        {% for node in position_nodes %}
+                        {% if node.is_selected and not node.is_primary %}
+                        <circle cx="{{ (node.x * 105) | round(1) }}" cy="{{ (node.y * 68) | round(1) }}"
+                                r="1.4" fill="rgba(255,255,255,0.68)"/>
+                        <circle cx="{{ (node.x * 105) | round(1) }}" cy="{{ (node.y * 68) | round(1) }}"
+                                r="2.0" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.4"/>
+                        {% endif %}
+                        {% endfor %}
+
+                        <!-- Pass 3: primary position — gold, topmost -->
+                        {% for node in position_nodes %}
+                        {% if node.is_primary %}
+                        <circle cx="{{ (node.x * 105) | round(1) }}" cy="{{ (node.y * 68) | round(1) }}"
+                                r="1.8" fill="#ECC94B" opacity="0.95"/>
+                        <circle cx="{{ (node.x * 105) | round(1) }}" cy="{{ (node.y * 68) | round(1) }}"
+                                r="2.6" fill="none" stroke="#ECC94B" stroke-width="0.5" opacity="0.45"/>
+                        {% endif %}
+                        {% endfor %}
+                    </svg>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Col 3: Set Pieces (3, natural) + Physical (8, flex:1 fills remaining) -->
+            <div class="ex-skill-col ex-col-sets-phys">
+                {% for cat in [skill_categories[1], skill_categories[3]] %}
                 <div class="ex-cat">
                     <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
                     <div class="ex-skill-rows">
@@ -725,13 +996,7 @@ html, body {
             </div>
 
         </div>
-        <!-- Sponsor slot: shared zone below both columns, not in-cell -->
-        <div class="ex-sponsor-slot">
-            {% if sponsor_logo_url %}
-            <img src="{{ sponsor_logo_url }}" alt="" class="ex-sponsor-slot-img"
-                 onerror="this.style.display='none'">
-            {% endif %}
-        </div>
+
     </div>
     {% endif %}
 

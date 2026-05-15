@@ -472,6 +472,8 @@ html, body {
         <div class="ex-sponsor-slot">
             {% if sponsor_logo_url %}
             <img class="ex-sponsor-slot-img" src="{{ sponsor_logo_url }}" alt="Sponsor">
+            {% elif app_logo_url %}
+            <img class="ex-sponsor-slot-img" src="{{ app_logo_url }}" alt="LFA">
             {% endif %}
         </div>
     </div>

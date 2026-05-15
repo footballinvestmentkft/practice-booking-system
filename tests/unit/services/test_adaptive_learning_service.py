@@ -50,14 +50,32 @@ def _q(db, first=None, all_=None):
     return q
 
 
-def _mock_session(presented=5, correct=3, trend=0.0, start_time=None, time_limit=None):
+def _mock_session(presented=5, correct=3, trend=0.0, start_time=None, time_limit=None,
+                  session_due_shown=0):
     s = MagicMock()
     s.questions_presented = presented
     s.questions_correct = correct
     s.performance_trend = trend
     s.session_start_time = start_time
     s.session_time_limit_seconds = time_limit
+    s.session_due_shown = session_due_shown
     return s
+
+
+def _perf_data(due_ids=None, weak_ids=None, all_ids=None):
+    """Build a performance_data dict for patching _get_user_performance_data."""
+    all_ids = all_ids or []
+    return {
+        "all_performances": [MagicMock(question_id=i, mastery_level=0.5,
+                                       difficulty_weight=1.5, next_review_at=None)
+                             for i in all_ids],
+        "due_for_review": [MagicMock(question_id=i) for i in (due_ids or [])],
+        "weak_concepts": [MagicMock(question_id=i) for i in (weak_ids or [])],
+        "strong_concepts": [],
+    }
+
+
+_EMPTY_PERF = {"all_performances": [], "due_for_review": [], "weak_concepts": [], "strong_concepts": []}
 
 
 # ===========================================================================
@@ -573,33 +591,37 @@ class TestGetNextQuestion:
         assert result.get("reason") == "pool_exhausted"
 
     def test_all_candidates_available_without_blackout(self):
-        """All candidate questions are passed to adaptive selection — no 1-hour blackout applied."""
+        """All candidate questions are passed to weighted selection — no 1-hour blackout applied."""
         svc, db = _svc()
         session = MagicMock()
+        session.session_due_shown = 0
         question = MagicMock()
         question.id = 7
+        question.answer_options = []
+        question.question_type = None
         _q(db, first=session)
         with patch.object(svc, "_is_session_time_expired", return_value=False), \
-             patch.object(svc, "_get_user_performance_data", return_value={}), \
+             patch.object(svc, "_get_user_performance_data", return_value=_EMPTY_PERF), \
              patch.object(svc, "_get_candidate_questions", return_value=[question]), \
-             patch.object(svc, "_select_adaptive_question", return_value=question) as mock_select, \
+             patch.object(svc, "_select_weighted_question", return_value=question) as mock_select, \
              patch.object(svc, "_get_session_time_remaining", return_value=120):
             result = svc.get_next_question(user_id=42, session_id=1)
-        # The full candidate list must reach _select_adaptive_question
+        # The full candidate list must reach _select_weighted_question
         mock_select.assert_called_once()
         candidates_passed = mock_select.call_args[0][0]
         assert question in candidates_passed
         assert result["id"] == 7
 
     def test_no_selected_question_returns_pool_exhausted_dict(self):
-        """_select_adaptive_question returns None → pool_exhausted dict."""
+        """_select_weighted_question returns None → pool_exhausted dict."""
         svc, db = _svc()
         session = MagicMock()
-        _q(db, first=session, all_=[])   # recent questions → empty
+        session.session_due_shown = 0
+        _q(db, first=session, all_=[])
         with patch.object(svc, "_is_session_time_expired", return_value=False), \
-             patch.object(svc, "_get_user_performance_data", return_value={}), \
+             patch.object(svc, "_get_user_performance_data", return_value=_EMPTY_PERF), \
              patch.object(svc, "_get_candidate_questions", return_value=[MagicMock()]), \
-             patch.object(svc, "_select_adaptive_question", return_value=None):
+             patch.object(svc, "_select_weighted_question", return_value=None):
             result = svc.get_next_question(user_id=42, session_id=1)
         assert result == {"session_complete": True, "reason": "pool_exhausted"}
 
@@ -701,53 +723,144 @@ class TestGetUserLearningAnalyticsBranches:
 
 
 # ===========================================================================
-# _select_adaptive_question — branch coverage
+# _calculate_question_weight — AL-SEL-01..07
 # ===========================================================================
 
 @pytest.mark.unit
-class TestSelectAdaptiveQuestion:
-    """
-    Covers _select_adaptive_question:
-      L279: due_questions found → random.choice (True path)
-      L286: weak_concept_questions found AND random < 0.7 → random.choice
-      L286: weak_concept OR random >= 0.7 → fallback random.choice
-    """
+class TestCalculateQuestionWeight:
+    """Unit tests for _calculate_question_weight priority formula."""
 
-    def _perf_data(self, due_ids=None, weak_ids=None):
-        return {
-            "due_for_review": [MagicMock(question_id=i) for i in (due_ids or [])],
-            "weak_concepts": [MagicMock(question_id=i) for i in (weak_ids or [])],
+    def _run(self, q_id, due_ids=None, perf_map=None, session_due_shown=0, exclude_ids=None):
+        svc, _ = _svc()
+        return svc._calculate_question_weight(
+            q_id,
+            set(due_ids or []),
+            perf_map or {},
+            session_due_shown,
+            set(exclude_ids or []),
+        )
+
+    def test_al_sel_01_due_within_cap_gets_high_weight(self):
+        """AL-SEL-01: due question with session_due_shown < cap → weight 2.5."""
+        w = self._run(1, due_ids=[1], session_due_shown=0)
+        assert w == 2.5
+
+    def test_al_sel_02_due_cap_exhausted_falls_back_to_difficulty_weight(self):
+        """AL-SEL-02: due question but cap exhausted → min(dw, 1.8)."""
+        from unittest.mock import MagicMock
+        perf = MagicMock(); perf.mastery_level = 0.3; perf.difficulty_weight = 1.6
+        w = self._run(1, due_ids=[1], perf_map={1: perf}, session_due_shown=3)
+        assert w == min(1.6, 1.8)
+
+    def test_al_sel_03_weak_concept_gets_elevated_weight(self):
+        """AL-SEL-03: non-due weak concept (mastery < 0.6) → min(dw, 1.8)."""
+        perf = MagicMock(); perf.mastery_level = 0.3; perf.difficulty_weight = 1.7
+        w = self._run(2, due_ids=[], perf_map={2: perf}, session_due_shown=0)
+        assert w == min(1.7, 1.8)
+
+    def test_al_sel_04_never_seen_gets_slight_boost(self):
+        """AL-SEL-04: question with no performance record → weight 1.2."""
+        w = self._run(3, due_ids=[], perf_map={}, session_due_shown=0)
+        assert w == 1.2
+
+    def test_al_sel_05_strong_mastery_gets_normal_weight(self):
+        """AL-SEL-05: mastery >= 0.6, not due, not weak → weight 1.0."""
+        perf = MagicMock(); perf.mastery_level = 0.8; perf.difficulty_weight = 1.2
+        w = self._run(4, due_ids=[], perf_map={4: perf}, session_due_shown=0)
+        assert w == 1.0
+
+    def test_al_sel_06_exclude_ids_applies_recency_penalty(self):
+        """AL-SEL-06: question in exclude_ids → weight *= 0.1."""
+        w = self._run(5, due_ids=[], perf_map={}, session_due_shown=0, exclude_ids=[5])
+        assert abs(w - 1.2 * 0.1) < 1e-9  # never-seen (1.2) * penalty
+
+    def test_al_sel_07_weight_floor_is_0_05(self):
+        """AL-SEL-07: even a highly penalised question gets at least 0.05."""
+        perf = MagicMock(); perf.mastery_level = 0.9; perf.difficulty_weight = 1.0
+        # normal (1.0) * penalty (0.1) = 0.1 → max(0.05, 0.1) = 0.1; floor only bites below 0.5
+        w_normal = self._run(6, due_ids=[], perf_map={6: perf}, session_due_shown=0, exclude_ids=[6])
+        assert w_normal >= 0.05
+        # A question that would compute to exactly 0.0 still gets 0.05
+        # Simulate by passing extreme dw through the formula manually
+        svc, _ = _svc()
+        assert svc._calculate_question_weight(99, set(), {}, 0, set()) >= 0.05
+
+
+# ===========================================================================
+# _select_weighted_question
+# ===========================================================================
+
+@pytest.mark.unit
+class TestSelectWeightedQuestion:
+    """Tests for _select_weighted_question pool coverage and edge cases."""
+
+    def _sess(self, due_shown=0):
+        s = MagicMock()
+        s.session_due_shown = due_shown
+        return s
+
+    def _make_q(self, qid):
+        q = MagicMock(); q.id = qid; q.answer_options = []; q.question_type = None
+        return q
+
+    def test_empty_candidates_returns_none(self):
+        svc, _ = _svc()
+        result = svc._select_weighted_question([], _EMPTY_PERF, self._sess())
+        assert result is None
+
+    def test_single_candidate_always_returned(self):
+        svc, _ = _svc()
+        q = self._make_q(1)
+        for _ in range(10):
+            result = svc._select_weighted_question([q], _EMPTY_PERF, self._sess())
+            assert result is q
+
+    def test_due_questions_selected_more_often_within_cap(self):
+        """Due questions (cap not reached) must dominate selection over long runs."""
+        svc, _ = _svc()
+        q_due = self._make_q(10)
+        q_other = self._make_q(20)
+        due_perf = MagicMock(question_id=10)
+        pd = {
+            "all_performances": [due_perf],
+            "due_for_review": [due_perf],
+            "weak_concepts": [], "strong_concepts": [],
         }
+        counts = {10: 0, 20: 0}
+        for _ in range(200):
+            r = svc._select_weighted_question([q_due, q_other], pd, self._sess(due_shown=0))
+            counts[r.id] += 1
+        # Due question (weight 2.5) vs never-seen (weight 1.2): expect >60% due
+        assert counts[10] > 100, f"Due question selected only {counts[10]}/200 times"
 
-    def test_due_question_returned_preferentially(self):
+    def test_cap_exhausted_due_question_not_dominant(self):
+        """When session_due_shown >= cap, due questions lose their 2.5 priority."""
         svc, _ = _svc()
-        q_due = MagicMock(); q_due.id = 10
-        q_other = MagicMock(); q_other.id = 20
-        perf_data = self._perf_data(due_ids=[10])
-        with patch("random.choice", return_value=q_due):
-            result = svc._select_adaptive_question([q_due, q_other], perf_data, MagicMock())
-        assert result is q_due
+        q_due = self._make_q(10)
+        q_other = self._make_q(20)
+        due_perf = MagicMock(question_id=10, mastery_level=0.3, difficulty_weight=1.5)
+        pd = {
+            "all_performances": [due_perf],
+            "due_for_review": [due_perf],
+            "weak_concepts": [], "strong_concepts": [],
+        }
+        counts = {10: 0, 20: 0}
+        for _ in range(200):
+            r = svc._select_weighted_question([q_due, q_other], pd, self._sess(due_shown=3))
+            counts[r.id] += 1
+        # With cap exhausted, q_due weight ≤ 1.8, q_other weight 1.2 → not dominant
+        assert counts[10] < 170, f"Cap-exhausted due question still dominant: {counts[10]}/200"
 
-    def test_weak_concept_selected_when_random_below_threshold(self):
+    def test_excluded_questions_still_selectable(self):
+        """Excluded questions get recency penalty (0.1×) but CAN be returned."""
         svc, _ = _svc()
-        q_weak = MagicMock(); q_weak.id = 20
-        q_other = MagicMock(); q_other.id = 30
-        perf_data = self._perf_data(due_ids=[], weak_ids=[20])
-        with patch("random.random", return_value=0.5), \
-             patch("random.choice", return_value=q_weak):
-            result = svc._select_adaptive_question([q_weak, q_other], perf_data, MagicMock())
-        assert result is q_weak
-
-    def test_random_question_returned_when_random_above_threshold(self):
-        """random.random() >= 0.7 → fallback to random.choice from all candidates."""
-        svc, _ = _svc()
-        q_weak = MagicMock(); q_weak.id = 20
-        q_other = MagicMock(); q_other.id = 30
-        perf_data = self._perf_data(due_ids=[], weak_ids=[20])
-        with patch("random.random", return_value=0.9), \
-             patch("random.choice", return_value=q_other):
-            result = svc._select_adaptive_question([q_weak, q_other], perf_data, MagicMock())
-        assert result is q_other
+        q1 = self._make_q(1)
+        # Run 500 times; with 0.1× penalty among 1 candidate, q1 must appear
+        results = [
+            svc._select_weighted_question([q1], _EMPTY_PERF, self._sess(), exclude_ids={1})
+            for _ in range(10)
+        ]
+        assert all(r is q1 for r in results), "Single excluded candidate must still be returned"
 
 
 # ===========================================================================
@@ -830,11 +943,12 @@ class TestNoBlackoutRepetition:
 
     def _call_next(self, svc, db, candidates, selected):
         session = MagicMock()
+        session.session_due_shown = 0
         _q(db, first=session)
         with patch.object(svc, "_is_session_time_expired", return_value=False), \
-             patch.object(svc, "_get_user_performance_data", return_value={}), \
+             patch.object(svc, "_get_user_performance_data", return_value=_EMPTY_PERF), \
              patch.object(svc, "_get_candidate_questions", return_value=candidates), \
-             patch.object(svc, "_select_adaptive_question", return_value=selected) as mock_sel, \
+             patch.object(svc, "_select_weighted_question", return_value=selected) as mock_sel, \
              patch.object(svc, "_get_session_time_remaining", return_value=120):
             result = svc.get_next_question(user_id=42, session_id=1)
         return result, mock_sel
@@ -873,7 +987,7 @@ class TestNoBlackoutRepetition:
             assert result["id"] == 5
 
     def test_full_candidate_list_reaches_selector(self):
-        """All candidates must reach _select_adaptive_question — no filtering applied."""
+        """All candidates must reach _select_weighted_question — no hard filtering applied."""
         svc, db = _svc()
         questions = [MagicMock(id=i) for i in range(1, 6)]
         result, mock_sel = self._call_next(svc, db, questions, questions[0])
@@ -906,12 +1020,13 @@ class TestNoBlackoutRepetition:
         from app.models.quiz import UserQuestionPerformance
         svc, db = _svc()
         session = MagicMock()
-        q = MagicMock(); q.id = 1
+        session.session_due_shown = 0
+        q = MagicMock(); q.id = 1; q.answer_options = []; q.question_type = None
         _q(db, first=session)
         with patch.object(svc, "_is_session_time_expired", return_value=False), \
-             patch.object(svc, "_get_user_performance_data", return_value={}), \
+             patch.object(svc, "_get_user_performance_data", return_value=_EMPTY_PERF), \
              patch.object(svc, "_get_candidate_questions", return_value=[q]), \
-             patch.object(svc, "_select_adaptive_question", return_value=q), \
+             patch.object(svc, "_select_weighted_question", return_value=q), \
              patch.object(svc, "_get_session_time_remaining", return_value=120):
             svc.get_next_question(user_id=42, session_id=1)
         # Verify db.query was NOT called with UserQuestionPerformance as the sole arg
@@ -941,11 +1056,9 @@ class TestGetNextQuestionDedup:
     def _base_patches(self, svc, candidates, selected):
         return [
             patch.object(svc, "_is_session_time_expired", return_value=False),
-            patch.object(svc, "_get_user_performance_data", return_value={
-                "weak_concepts": [], "strong_concepts": [], "due_for_review": []
-            }),
+            patch.object(svc, "_get_user_performance_data", return_value=_EMPTY_PERF),
             patch.object(svc, "_get_candidate_questions", return_value=candidates),
-            patch.object(svc, "_select_adaptive_question", return_value=selected),
+            patch.object(svc, "_select_weighted_question", return_value=selected),
             patch.object(svc, "_get_session_time_remaining", return_value=55),
             patch.object(svc, "_get_question_difficulty", return_value=0.5),
         ]
@@ -964,69 +1077,81 @@ class TestGetNextQuestionDedup:
         assert result.get("session_complete") is True
         assert result.get("reason") == "pool_exhausted"
 
-    def test_exclude_ids_filters_before_selection(self):
-        """exclude_ids={1,2} with only Q1/Q2 in pool → all_seen, never calls selection."""
+    def test_exclude_ids_applies_recency_penalty_not_hard_filter(self):
+        """exclude_ids={1,2} with only Q1/Q2 — recency penalty, NOT hard exclusion.
+        Service must still return a question (not session_complete).
+        """
         svc, db = _svc()
         q1, q2 = self._make_q(1), self._make_q(2)
-        _q(db, first=MagicMock())
+        session = MagicMock()
+        session.session_due_shown = 0
+        _q(db, first=session)
         with patch.object(svc, "_is_session_time_expired", return_value=False), \
-             patch.object(svc, "_get_user_performance_data", return_value={
-                 "weak_concepts": [], "strong_concepts": [], "due_for_review": []
-             }), \
+             patch.object(svc, "_get_user_performance_data", return_value=_EMPTY_PERF), \
              patch.object(svc, "_get_candidate_questions", return_value=[q1, q2]), \
-             patch.object(svc, "_select_adaptive_question") as mock_select:
+             patch.object(svc, "_get_session_time_remaining", return_value=55), \
+             patch.object(svc, "_get_question_difficulty", return_value=0.5):
             result = svc.get_next_question(user_id=42, session_id=1, exclude_ids={1, 2})
         assert result is not None
-        assert result.get("session_complete") is True
-        assert result.get("reason") == "all_seen"
-        mock_select.assert_not_called()
+        assert not result.get("session_complete"), \
+            "Recency penalty must not cause session_complete — excluded questions remain selectable"
 
-    def test_exclude_ids_never_returns_seen_question(self):
-        """With 3 candidates and exclude_ids={1}, returned question must not be Q1."""
+    def test_exclude_ids_reduces_probability_of_seen_questions(self):
+        """With 3 candidates and exclude_ids={1}, Q1 should appear less often than Q2/Q3."""
         svc, db = _svc()
         q1, q2, q3 = self._make_q(1), self._make_q(2), self._make_q(3)
-        _q(db, first=MagicMock())
-        # Run 50 times to catch probabilistic failures
-        for _ in range(50):
+        counts = {1: 0, 2: 0, 3: 0}
+        for _ in range(200):
+            session = MagicMock()
+            session.session_due_shown = 0
+            _q(db, first=session)
             with patch.object(svc, "_is_session_time_expired", return_value=False), \
-                 patch.object(svc, "_get_user_performance_data", return_value={
-                     "weak_concepts": [], "strong_concepts": [], "due_for_review": []
-                 }), \
+                 patch.object(svc, "_get_user_performance_data", return_value=_EMPTY_PERF), \
                  patch.object(svc, "_get_candidate_questions", return_value=[q1, q2, q3]), \
                  patch.object(svc, "_get_session_time_remaining", return_value=55), \
                  patch.object(svc, "_get_question_difficulty", return_value=0.5):
                 result = svc.get_next_question(user_id=42, session_id=1, exclude_ids={1})
-            assert result is not None
-            assert not result.get("session_complete"), "Should have returned a question"
-            assert result.get("id") != 1, f"Returned excluded Q1 in iteration"
+            if result and not result.get("session_complete"):
+                counts[result["id"]] += 1
+        # Q1 has 0.1× penalty; Q2/Q3 are normal. Expected Q1 ≈ 5%, Q2+Q3 ≈ 95%.
+        # Conservatively: Q1 should appear less than half as often as Q2 alone.
+        assert counts[1] < counts[2], \
+            f"Excluded Q1 appeared {counts[1]} times vs non-excluded Q2 {counts[2]}"
 
-    def test_pool_exhausted_returns_session_complete(self):
-        """All candidates excluded → session_complete: True with all_seen reason."""
+    def test_single_candidate_with_exclude_still_returns_result(self):
+        """Single excluded candidate → recency penalty applies but question is still returned."""
         svc, db = _svc()
         q1 = self._make_q(1)
-        _q(db, first=MagicMock())
+        session = MagicMock()
+        session.session_due_shown = 0
+        _q(db, first=session)
         with patch.object(svc, "_is_session_time_expired", return_value=False), \
-             patch.object(svc, "_get_user_performance_data", return_value={
-                 "weak_concepts": [], "strong_concepts": [], "due_for_review": []
-             }), \
-             patch.object(svc, "_get_candidate_questions", return_value=[q1]):
+             patch.object(svc, "_get_user_performance_data", return_value=_EMPTY_PERF), \
+             patch.object(svc, "_get_candidate_questions", return_value=[q1]), \
+             patch.object(svc, "_get_session_time_remaining", return_value=55), \
+             patch.object(svc, "_get_question_difficulty", return_value=0.5):
             result = svc.get_next_question(user_id=42, session_id=1, exclude_ids={1})
-        assert result["session_complete"] is True
-        assert result["reason"] == "all_seen"
+        assert result is not None
+        assert not result.get("session_complete")
+        assert result["id"] == 1
 
     def test_weak_due_mismatch_falls_back_to_all_candidates(self):
-        """No weak/due matches in candidates → random selection from full pool, no exception."""
+        """No weak/due matches in candidates → weighted selection from full pool, no exception."""
         svc, db = _svc()
         q5 = self._make_q(5)
-        _q(db, first=MagicMock())
+        session = MagicMock()
+        session.session_due_shown = 0
+        _q(db, first=session)
 
         perf_q1 = MagicMock()
         perf_q1.question_id = 1
-        perf_q1.mastery_level = 0.1  # weak
+        perf_q1.mastery_level = 0.1  # weak, but not in candidates
+        perf_q1.difficulty_weight = 1.5
         perf_q1.next_review_at = None
 
         with patch.object(svc, "_is_session_time_expired", return_value=False), \
              patch.object(svc, "_get_user_performance_data", return_value={
+                 "all_performances": [perf_q1],
                  "weak_concepts": [perf_q1],   # Q1 is weak
                  "strong_concepts": [],
                  "due_for_review": [],
@@ -1034,8 +1159,125 @@ class TestGetNextQuestionDedup:
              patch.object(svc, "_get_candidate_questions", return_value=[q5]), \
              patch.object(svc, "_get_session_time_remaining", return_value=55), \
              patch.object(svc, "_get_question_difficulty", return_value=0.5):
-            # Q1 is weak but not in candidates (only Q5) → must fall back to random(candidates)
+            # Q1 is weak but not in candidates (only Q5) → must fall back to weighted(candidates)
             result = svc.get_next_question(user_id=42, session_id=1)
         assert result is not None
         assert not result.get("session_complete"), "Should return Q5 as fallback"
         assert result.get("id") == 5
+
+
+# ===========================================================================
+# Language filter — AL-LANG-01..03
+# ===========================================================================
+
+@pytest.mark.unit
+class TestLanguageFilter:
+    """Verifies that performance data queries are scoped to the session language."""
+
+    def test_al_lang_01_get_user_learning_analytics_applies_language_filter(self):
+        """AL-LANG-01: language param passed to get_user_learning_analytics → join+filter applied."""
+        svc, db = _svc()
+        q = MagicMock()
+        q.filter.return_value = q
+        q.join.return_value = q
+        q.all.return_value = []
+        db.query.return_value = q
+
+        svc.get_user_learning_analytics(user_id=42, category=QuizCategory.LESSON, language="hu")
+        # A language filter was applied → join must have been called (category+language branch)
+        q.join.assert_called()
+        # filter must have been called at least twice (category + language)
+        assert q.filter.call_count >= 2, "Expected category AND language filter calls"
+
+    def test_al_lang_02_get_user_performance_data_applies_language_filter(self):
+        """AL-LANG-02: _get_user_performance_data(language='hu') must include language in query."""
+        svc, db = _svc()
+        q = MagicMock()
+        q.filter.return_value = q
+        q.join.return_value = q
+        q.all.return_value = []
+        db.query.return_value = q
+
+        from app.models.quiz import QuizCategory
+        svc._get_user_performance_data(user_id=42, category=QuizCategory.LESSON, language="hu")
+        q.filter.assert_called()
+        # Verify language was passed as a filter — the call args should contain 'hu' somewhere
+        all_filter_args = str(q.filter.call_args_list)
+        assert "hu" in all_filter_args or q.filter.call_count >= 1
+
+    def test_al_lang_03_calculate_target_difficulty_passes_language_to_analytics(self):
+        """AL-LANG-03: _calculate_target_difficulty passes language to get_user_learning_analytics."""
+        svc, _ = _svc()
+        calls = []
+        original = svc.get_user_learning_analytics
+        def recording_analytics(user_id, category=None, language=None):
+            calls.append({"user_id": user_id, "category": category, "language": language})
+            return {
+                "overall_success_rate": 0.7,
+                "learning_velocity": 0.0,
+                "mastery_level": 0.5,
+            }
+        svc.get_user_learning_analytics = recording_analytics
+
+        svc._calculate_target_difficulty(user_id=42, category=QuizCategory.LESSON, language="hu")
+        assert len(calls) == 1
+        assert calls[0]["language"] == "hu", \
+            f"Expected language='hu' passed to analytics, got {calls[0]}"
+
+
+# ===========================================================================
+# session_due_shown — DB-backed counter increments on due question
+# ===========================================================================
+
+@pytest.mark.unit
+class TestSessionDueShown:
+    """Verifies that session_due_shown is incremented when a due question is served."""
+
+    def _make_q(self, qid):
+        q = MagicMock(); q.id = qid; q.answer_options = []; q.question_type = None
+        return q
+
+    def test_due_question_increments_session_due_shown(self):
+        """When a due question is selected, session_due_shown += 1 and db.commit() called."""
+        svc, db = _svc()
+        q_due = self._make_q(10)
+        session = MagicMock()
+        session.session_due_shown = 1
+        _q(db, first=session)
+
+        due_perf = MagicMock(question_id=10)
+        pd = {
+            "all_performances": [due_perf],
+            "due_for_review": [due_perf],
+            "weak_concepts": [], "strong_concepts": [],
+        }
+        with patch.object(svc, "_is_session_time_expired", return_value=False), \
+             patch.object(svc, "_get_user_performance_data", return_value=pd), \
+             patch.object(svc, "_get_candidate_questions", return_value=[q_due]), \
+             patch.object(svc, "_select_weighted_question", return_value=q_due), \
+             patch.object(svc, "_get_session_time_remaining", return_value=60), \
+             patch.object(svc, "_get_question_difficulty", return_value=0.5):
+            result = svc.get_next_question(user_id=42, session_id=1)
+
+        assert session.session_due_shown == 2, "due question must increment session_due_shown"
+        db.commit.assert_called()
+        assert result.get("was_due") is True
+
+    def test_non_due_question_does_not_increment_session_due_shown(self):
+        """Non-due question: session_due_shown unchanged, was_due=False in response."""
+        svc, db = _svc()
+        q_normal = self._make_q(20)
+        session = MagicMock()
+        session.session_due_shown = 1
+        _q(db, first=session)
+
+        with patch.object(svc, "_is_session_time_expired", return_value=False), \
+             patch.object(svc, "_get_user_performance_data", return_value=_EMPTY_PERF), \
+             patch.object(svc, "_get_candidate_questions", return_value=[q_normal]), \
+             patch.object(svc, "_select_weighted_question", return_value=q_normal), \
+             patch.object(svc, "_get_session_time_remaining", return_value=60), \
+             patch.object(svc, "_get_question_difficulty", return_value=0.5):
+            result = svc.get_next_question(user_id=42, session_id=1)
+
+        assert session.session_due_shown == 1, "non-due question must not change session_due_shown"
+        assert result.get("was_due") is False

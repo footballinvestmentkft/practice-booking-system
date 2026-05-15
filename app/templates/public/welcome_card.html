@@ -16,405 +16,432 @@
             color: #e2e8f0;
         }
 
-        /* ── Page wrapper ── */
-        .wc-page { max-width: 820px; margin: 0 auto; }
+        .wc-page { max-width: 900px; margin: 0 auto; }
 
-        /* ── Disclaimer banner (top — most prominent) ── */
-        .wc-disclaimer {
-            background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
-            border: 1px solid #f59e0b;
-            border-radius: 10px;
-            padding: 0.9rem 1.2rem;
-            margin-bottom: 1.5rem;
+        /* ── Header ── */
+        .wc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.2rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .wc-header-left h1 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #f1f5f9;
+        }
+        .wc-header-left p {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 0.15rem;
+        }
+        .wc-back-link {
             font-size: 0.85rem;
-            color: #fef3c7;
+            color: #94a3b8;
+            text-decoration: none;
+        }
+        .wc-back-link:hover { color: #f1f5f9; }
+
+        /* ── Disclaimer ── */
+        .wc-disclaimer {
+            background: linear-gradient(135deg, #1e3a5f 0%, #1a3a5c 100%);
+            border: 1px solid rgba(245,158,11,0.4);
+            border-radius: 10px;
+            padding: 0.8rem 1.1rem;
+            margin-bottom: 1.4rem;
+            font-size: 0.82rem;
+            color: #cbd5e1;
             display: flex;
             align-items: flex-start;
             gap: 0.6rem;
             line-height: 1.5;
         }
-        .wc-disclaimer .icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 0.05rem; }
+        .wc-disclaimer .icon { font-size: 1rem; flex-shrink: 0; margin-top: 0.1rem; }
 
-        /* ── Card shell ── */
-        .wc-card {
-            background: linear-gradient(160deg, #1e1b4b 0%, #1a1a2e 60%, #0f172a 100%);
-            border: 2px solid #f59e0b;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 8px 40px rgba(245, 158, 11, 0.25);
+        /* ── Layout: preview left, platforms right ── */
+        .wc-layout {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 1.2rem;
+            align-items: start;
+        }
+        @media (max-width: 700px) {
+            .wc-layout { grid-template-columns: 1fr; }
         }
 
-        /* ── Header ── */
-        .wc-header {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
-            padding: 1.4rem 1.6rem;
+        /* ── iframe preview panel ── */
+        .wc-preview-panel {
+            background: #1e2436;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .wc-preview-label {
+            padding: 0.6rem 1rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 0.5rem;
         }
-        .wc-header-left { display: flex; flex-direction: column; gap: 0.15rem; }
-        .wc-badge {
-            font-size: 1.35rem;
-            font-weight: 900;
-            color: #1a1a2e;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
+        .wc-preview-label span { color: #94a3b8; font-weight: 400; text-transform: none; letter-spacing: 0; }
+        .wc-preview-frame-wrap {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            background: #0f0f1a;
         }
-        .wc-badge-sub {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #451a03;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-        }
-        .wc-sa-label {
-            background: rgba(0,0,0,0.25);
-            border-radius: 6px;
-            padding: 0.3rem 0.7rem;
-            font-size: 0.72rem;
-            font-weight: 700;
-            color: #fef3c7;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            white-space: nowrap;
+        #wc-preview-iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border: none;
+            transform-origin: top left;
+            display: block;
         }
 
-        /* ── Player info strip ── */
-        .wc-player-strip {
-            display: grid;
-            grid-template-columns: auto 1fr auto;
+        /* ── Platform list panel ── */
+        .wc-platforms-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .wc-platform-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.25rem;
+        }
+        .wc-platform-card {
+            background: #1e2436;
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 10px;
+            padding: 0.65rem 0.85rem;
+            display: flex;
             align-items: center;
-            gap: 1rem;
-            padding: 1.2rem 1.6rem;
-            background: rgba(255,255,255,0.03);
-            border-bottom: 1px solid rgba(245,158,11,0.15);
+            justify-content: space-between;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: border-color 0.15s;
         }
-        .wc-avatar {
-            width: 72px;
-            height: 72px;
-            border-radius: 50%;
-            border: 2px solid #f59e0b;
+        .wc-platform-card:hover,
+        .wc-platform-card.active {
+            border-color: rgba(245,158,11,0.5);
+        }
+        .wc-platform-card.active { background: #1e2d3d; }
+        .wc-platform-info { display: flex; flex-direction: column; gap: 0.1rem; }
+        .wc-platform-name { font-size: 0.85rem; font-weight: 700; color: #e2e8f0; }
+        .wc-platform-dims { font-size: 0.72rem; color: #64748b; }
+        .wc-download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.3rem 0.7rem;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #1a1a2e;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 6px;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: opacity 0.15s;
+            flex-shrink: 0;
+        }
+        .wc-download-btn:hover { opacity: 0.85; }
+
+        /* ── Card Photo panel ── */
+        .wc-photo-panel {
+            margin-top: 1.2rem;
+            background: #1e2436;
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            padding: 0.9rem 1rem;
+        }
+        .wc-photo-panel-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.65rem;
+        }
+        .wc-photo-content {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            flex-wrap: wrap;
+        }
+        .wc-photo-thumb {
+            width: 64px;
+            height: 64px;
+            border-radius: 8px;
             object-fit: cover;
+            border: 1px solid rgba(255,255,255,0.12);
         }
-        .wc-avatar-initials {
-            width: 72px;
-            height: 72px;
-            border-radius: 50%;
-            border: 2px solid #f59e0b;
-            background: #f59e0b;
+        .wc-photo-placeholder {
+            width: 64px;
+            height: 64px;
+            border-radius: 8px;
+            border: 1px dashed rgba(255,255,255,0.2);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.4rem;
-            font-weight: 900;
-            color: #1a1a2e;
-        }
-        .wc-name-block { display: flex; flex-direction: column; gap: 0.25rem; }
-        .wc-name { font-size: 1.25rem; font-weight: 800; color: #f1f5f9; }
-        .wc-nickname { font-size: 0.85rem; color: #94a3b8; font-style: italic; }
-        .wc-position-pill {
-            background: rgba(245,158,11,0.15);
-            border: 1px solid rgba(245,158,11,0.4);
-            border-radius: 20px;
-            padding: 0.15rem 0.7rem;
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: #fbbf24;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-        .wc-flags { display: flex; gap: 0.3rem; font-size: 0.9rem; }
-        .wc-overall-block {
-            text-align: center;
-            background: rgba(245,158,11,0.1);
-            border: 1px solid rgba(245,158,11,0.3);
-            border-radius: 10px;
-            padding: 0.5rem 0.9rem;
-        }
-        .wc-overall-num {
-            font-size: 2rem;
-            font-weight: 900;
-            color: #f59e0b;
-            line-height: 1;
-        }
-        .wc-overall-label {
-            font-size: 0.65rem;
-            color: #92400e;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-top: 0.1rem;
-        }
-
-        /* ── Physical stats ── */
-        .wc-stats-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            padding: 0.8rem 1.6rem;
-            border-bottom: 1px solid rgba(245,158,11,0.1);
-        }
-        .wc-stat-chip {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 6px;
-            padding: 0.3rem 0.7rem;
-            font-size: 0.8rem;
-            color: #cbd5e1;
-        }
-        .wc-stat-chip strong { color: #f1f5f9; }
-
-        /* ── Top skills ── */
-        .wc-section { padding: 1rem 1.6rem; }
-        .wc-section-title {
-            font-size: 0.72rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #f59e0b;
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-        .wc-top-skills { display: flex; flex-direction: column; gap: 0.45rem; }
-        .wc-top-skill {
-            display: grid;
-            grid-template-columns: 160px 1fr 42px;
-            align-items: center;
-            gap: 0.6rem;
-        }
-        .wc-top-skill-name { font-size: 0.85rem; color: #e2e8f0; font-weight: 600; }
-        .wc-bar-track {
-            height: 8px;
-            background: rgba(255,255,255,0.07);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .wc-bar-fill {
-            height: 100%;
-            border-radius: 4px;
-            background: linear-gradient(90deg, #f59e0b, #d97706);
-            transition: width 0.4s ease;
-        }
-        .wc-bar-val { font-size: 0.8rem; font-weight: 700; color: #fbbf24; text-align: right; }
-
-        /* ── Skill categories ── */
-        .wc-cat-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-        @media (max-width: 600px) { .wc-cat-grid { grid-template-columns: 1fr; } }
-
-        .wc-cat-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(245,158,11,0.15);
-            border-radius: 12px;
-            padding: 0.9rem 1rem;
-        }
-        .wc-cat-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 0.6rem;
-        }
-        .wc-cat-name { font-size: 0.78rem; font-weight: 700; color: #fbbf24; text-transform: uppercase; letter-spacing: 0.04em; }
-        .wc-cat-avg {
-            font-size: 0.78rem;
-            font-weight: 700;
-            color: #f59e0b;
-            background: rgba(245,158,11,0.12);
-            border-radius: 4px;
-            padding: 0.1rem 0.4rem;
-        }
-        .wc-skill-rows { display: flex; flex-direction: column; gap: 0.3rem; }
-        .wc-skill-row {
-            display: grid;
-            grid-template-columns: 1fr 80px 32px;
-            align-items: center;
-            gap: 0.4rem;
-        }
-        .wc-skill-name { font-size: 0.74rem; color: #94a3b8; }
-        .wc-mini-bar-track {
-            height: 5px;
-            background: rgba(255,255,255,0.06);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        .wc-mini-bar-fill {
-            height: 100%;
-            border-radius: 3px;
-            background: linear-gradient(90deg, #f59e0b, #d97706);
-        }
-        .wc-skill-val { font-size: 0.72rem; font-weight: 600; color: #fbbf24; text-align: right; }
-
-        /* ── Footer disclaimer ── */
-        .wc-footer-disc {
-            padding: 1rem 1.6rem 1.4rem;
-            border-top: 1px solid rgba(245,158,11,0.1);
-            font-size: 0.75rem;
             color: #64748b;
-            line-height: 1.6;
-            text-align: center;
         }
-        .wc-footer-disc strong { color: #92400e; }
-
-        /* ── Back link ── */
-        .wc-back { margin-bottom: 1rem; }
-        .wc-back a {
-            color: #f59e0b;
-            text-decoration: none;
-            font-size: 0.85rem;
+        .wc-photo-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .wc-upload-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.35rem 0.75rem;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            font-size: 0.78rem;
             font-weight: 600;
+            color: #cbd5e1;
+            cursor: pointer;
+            transition: background 0.15s;
         }
-        .wc-back a:hover { text-decoration: underline; }
+        .wc-upload-label:hover { background: rgba(255,255,255,0.12); }
+        .wc-delete-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.35rem 0.75rem;
+            background: transparent;
+            border: 1px solid rgba(239,68,68,0.4);
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #f87171;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .wc-delete-btn:hover { background: rgba(239,68,68,0.1); }
+        .wc-photo-status {
+            font-size: 0.78rem;
+            margin-top: 0.5rem;
+            color: #94a3b8;
+            min-height: 1.1em;
+        }
     </style>
 </head>
 <body>
 <div class="wc-page">
 
-    <!-- Back navigation -->
-    <div class="wc-back">
-        <a href="/profile">← Back to Profile</a>
+    <div class="wc-header">
+        <div class="wc-header-left">
+            <h1>🎴 Welcome Card</h1>
+            <p>Based on your onboarding self-assessment</p>
+        </div>
+        <a class="wc-back-link" href="/profile/lfa-football-player">← Back to Profile</a>
     </div>
 
-    <!-- Top disclaimer — most prominent element on the page -->
     <div class="wc-disclaimer">
-        <span class="icon">⚠️</span>
-        <div>
-            <strong>Welcome Card — Onboarding Self-Assessment</strong><br>
-            This card uses your onboarding self-assessment, not calculated player level.
-            Based on your onboarding answers — not EMA-computed skill profile.
-            Skills reflect what <em>you</em> reported at sign-up, not tournament-derived ratings.
-        </div>
+        <span class="icon">ℹ️</span>
+        <span>
+            This card is generated from your self-assessment data collected during onboarding.
+            It is not the same as the regular Player Card.
+            Values come from your own self-assessment, not from EMA-computed levels.
+        </span>
     </div>
 
-    <div class="wc-card">
+    <div class="wc-layout">
 
-        <!-- Header -->
-        <div class="wc-header">
-            <div class="wc-header-left">
-                <div class="wc-badge">🎴 Welcome Card</div>
-                <div class="wc-badge-sub">LFA Football Player</div>
+        <!-- iframe live preview -->
+        <div class="wc-preview-panel">
+            <div class="wc-preview-label">
+                Preview
+                <span id="wc-active-label">Instagram Square · 1080 × 1080</span>
             </div>
-            <div class="wc-sa-label">Self-Assessment Only</div>
+            <div class="wc-preview-frame-wrap" id="wc-frame-wrap">
+                <iframe id="wc-preview-iframe"
+                        src="/profile/onboarding-card?platform=instagram_square"
+                        title="Welcome Card Preview"
+                        scrolling="no"></iframe>
+            </div>
         </div>
 
-        <!-- Player strip -->
-        <div class="wc-player-strip">
-            <!-- Avatar -->
-            {% if license.player_card_photo_url %}
-                <img class="wc-avatar" src="{{ license.player_card_photo_url }}" alt="{{ display_name }}">
-            {% else %}
-                <div class="wc-avatar-initials">{{ initials }}</div>
-            {% endif %}
-
-            <!-- Name / position -->
-            <div class="wc-name-block">
-                <div class="wc-name">{{ display_name }}</div>
-                {% if user.nickname %}
-                    <div class="wc-nickname">"{{ user.nickname }}"</div>
-                {% endif %}
-                <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.2rem;">
-                    {% if position %}
-                        <span class="wc-position-pill">{{ position | replace('_', ' ') | upper }}</span>
-                    {% endif %}
-                    {% for pos in positions[1:] %}
-                        <span class="wc-position-pill" style="opacity:0.65;font-size:0.72rem;">{{ pos | replace('_', ' ') | upper }}</span>
-                    {% endfor %}
+        <!-- Platform selector + download buttons -->
+        <div class="wc-platforms-panel">
+            <div class="wc-platform-label">Download sizes</div>
+            {% for p in platforms %}
+            <div class="wc-platform-card{% if p.id == default_platform %} active{% endif %}"
+                 data-platform="{{ p.id }}"
+                 data-label="{{ p.label }}"
+                 data-dims="{{ p.dims }}"
+                 onclick="selectPlatform(this)">
+                <div class="wc-platform-info">
+                    <div class="wc-platform-name">{{ p.label }}</div>
+                    <div class="wc-platform-dims">{{ p.dims }}</div>
                 </div>
-                {% if user.nationality or user.secondary_nationality %}
-                <div class="wc-flags" style="margin-top:0.3rem;">
-                    {% if user.nationality %}<span title="{{ user.nationality }}">{{ user.nationality }}</span>{% endif %}
-                    {% if user.secondary_nationality %}<span>·</span><span title="{{ user.secondary_nationality }}">{{ user.secondary_nationality }}</span>{% endif %}
-                </div>
-                {% endif %}
+                <a class="wc-download-btn"
+                   id="wc-dl-{{ p.id }}"
+                   href="/profile/onboarding-card/export?platform={{ p.id }}"
+                   onclick="event.stopPropagation();">
+                    ⬇️ Download
+                </a>
             </div>
-
-            <!-- Overall SA score -->
-            <div class="wc-overall-block">
-                <div class="wc-overall-num">{{ overall_sa | round | int }}</div>
-                <div class="wc-overall-label">SA Avg</div>
-            </div>
+            {% endfor %}
         </div>
 
-        <!-- Physical stats chips -->
-        <div class="wc-stats-row">
-            {% if height_cm %}
-                <span class="wc-stat-chip">📏 <strong>{{ height_cm }} cm</strong></span>
-            {% endif %}
-            {% if weight_kg %}
-                <span class="wc-stat-chip">⚖️ <strong>{{ weight_kg }} kg</strong></span>
-            {% endif %}
-            {% if preferred_foot %}
-                <span class="wc-stat-chip">🦶 <strong>{{ preferred_foot | capitalize }}</strong> foot</span>
-            {% endif %}
-            {% if right_foot_score is not none and left_foot_score is not none %}
-                <span class="wc-stat-chip">
-                    R <strong>{{ right_foot_score | round | int }}</strong> / L <strong>{{ left_foot_score | round | int }}</strong>
-                </span>
-            {% endif %}
-            {% if goals %}
-                <span class="wc-stat-chip">🎯 {{ goals | replace('_', ' ') | capitalize }}</span>
-            {% endif %}
-        </div>
+    </div>
 
-        <!-- Top 5 self-assessed skills -->
-        {% if top_skills %}
-        <div class="wc-section">
-            <div class="wc-section-title">⭐ Top Self-Assessed Skills</div>
-            <div class="wc-top-skills">
-                {% for skill in top_skills %}
-                <div class="wc-top-skill" data-skill="{{ skill.key }}">
-                    <span class="wc-top-skill-name">{{ skill.name_en }}</span>
-                    <div class="wc-bar-track">
-                        <div class="wc-bar-fill" style="width:{{ skill.value }}%"></div>
-                    </div>
-                    <span class="wc-bar-val">{{ skill.value | round | int }}</span>
-                </div>
-                {% endfor %}
+    <!-- Card Photo -->
+    <div class="wc-photo-panel">
+        <div class="wc-photo-panel-label">Card Photo</div>
+        <div class="wc-photo-content">
+            <img id="wc-photo-thumb" class="wc-photo-thumb"
+                 src="{{ photo_url or '' }}"
+                 alt="Card photo"
+                 style="display:{{ 'block' if photo_url else 'none' }};">
+            <div id="wc-photo-placeholder" class="wc-photo-placeholder"
+                 style="display:{{ 'none' if photo_url else 'flex' }};">
+                📸
+            </div>
+            <div class="wc-photo-actions">
+                <label class="wc-upload-label" for="wc-photo-input">
+                    ⬆️ Upload Photo
+                    <input id="wc-photo-input" type="file"
+                           accept="image/jpeg,image/png,image/webp"
+                           style="display:none;">
+                </label>
+                <button id="wc-delete-btn" class="wc-delete-btn"
+                        style="display:{{ 'inline-flex' if photo_url else 'none' }};"
+                        onclick="deletePhoto()">🗑️ Remove</button>
             </div>
         </div>
-        {% endif %}
+        <div id="wc-photo-status" class="wc-photo-status"></div>
+    </div>
 
-        <!-- Skill categories grid -->
-        <div class="wc-section">
-            <div class="wc-section-title">📊 Skill Categories — Self-Assessment</div>
-            <div class="wc-cat-grid">
-                {% for cat in skill_categories %}
-                <div class="wc-cat-card">
-                    <div class="wc-cat-header">
-                        <span class="wc-cat-name">{{ cat.emoji }} {{ cat.name_en }}</span>
-                        <span class="wc-cat-avg">{{ cat.avg }}</span>
-                    </div>
-                    <div class="wc-skill-rows">
-                        {% for skill in cat.skills %}
-                        <div class="wc-skill-row" data-skill="{{ skill.key }}">
-                            <span class="wc-skill-name">{{ skill.name_en }}</span>
-                            <div class="wc-mini-bar-track">
-                                <div class="wc-mini-bar-fill" style="width:{{ skill.value }}%"></div>
-                            </div>
-                            <span class="wc-skill-val">{{ skill.value | round | int }}</span>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
+</div>
 
-        <!-- Footer disclaimer -->
-        <div class="wc-footer-disc">
-            <strong>Welcome Card — Onboarding Self-Assessment</strong><br>
-            Values reflect what you reported at onboarding sign-up.<br>
-            This is not your official Player Card and does not use calculated skill levels.<br>
-            Your actual skill profile is computed by the EMA engine from tournament performance.
-        </div>
+<script>
+// ── Canvas size map — server-rendered from card_constants.CANVAS_SIZES ───────
+var CANVAS_SIZES = (function () {
+    var raw = {{ canvas_sizes | tojson }};
+    var out = {};
+    for (var pid in raw) { out[pid] = [raw[pid].w, raw[pid].h]; }
+    return out;
+}());
 
-    </div><!-- /wc-card -->
-</div><!-- /wc-page -->
+var _activePlatform = 'instagram_square';
+
+// ── iframe scaling: fit the platform canvas into the preview wrapper ─────────
+function scaleIframe(pid) {
+    var dims  = CANVAS_SIZES[pid] || [1080, 1080];
+    var cw    = dims[0];
+    var ch    = dims[1];
+    var wrap  = document.getElementById('wc-frame-wrap');
+    var iframe = document.getElementById('wc-preview-iframe');
+    var wrapW = wrap.offsetWidth || 600;
+    var scale = wrapW / cw;
+    iframe.style.width     = cw + 'px';
+    iframe.style.height    = ch + 'px';
+    iframe.style.transform = 'scale(' + scale + ')';
+    wrap.style.height      = Math.round(ch * scale) + 'px';
+}
+window.addEventListener('load',   function() { scaleIframe(_activePlatform); });
+window.addEventListener('resize', function() { scaleIframe(_activePlatform); });
+
+// ── Platform selector ────────────────────────────────────────────────────────
+function selectPlatform(card) {
+    document.querySelectorAll('.wc-platform-card').forEach(function(c) {
+        c.classList.remove('active');
+    });
+    card.classList.add('active');
+    var pid   = card.dataset.platform;
+    var label = card.dataset.label;
+    var dims  = card.dataset.dims;
+    _activePlatform = pid;
+    document.getElementById('wc-preview-iframe').src =
+        '/profile/onboarding-card?platform=' + pid;
+    document.getElementById('wc-active-label').textContent =
+        label + ' · ' + dims;
+    scaleIframe(pid);
+}
+
+// ── CSRF ──────────────────────────────────────────────────────────────────────
+function getCsrfToken() {
+    var m = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : '';
+}
+
+// ── Reload iframe preview ─────────────────────────────────────────────────────
+function reloadPreview() {
+    document.getElementById('wc-preview-iframe').contentWindow.location.reload();
+}
+
+// ── Photo upload ──────────────────────────────────────────────────────────────
+document.getElementById('wc-photo-input').addEventListener('change', async function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var formData = new FormData();
+    formData.append('file', file);
+    var status = document.getElementById('wc-photo-status');
+    status.textContent = 'Uploading…';
+    try {
+        var resp = await fetch('/dashboard/lfa-player-photo', {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+            body: formData,
+        });
+        var data = await resp.json();
+        if (data.ok) {
+            document.getElementById('wc-photo-thumb').src = data.photo_url;
+            document.getElementById('wc-photo-thumb').style.display = 'block';
+            document.getElementById('wc-photo-placeholder').style.display = 'none';
+            document.getElementById('wc-delete-btn').style.display = 'inline-flex';
+            status.textContent = '✅ Photo saved.';
+            reloadPreview();
+        } else {
+            status.textContent = '❌ Upload failed: ' + (data.error || data.detail || 'unknown error');
+        }
+    } catch {
+        status.textContent = '❌ Upload failed.';
+    }
+    e.target.value = '';
+});
+
+// ── Photo delete ──────────────────────────────────────────────────────────────
+async function deletePhoto() {
+    var status = document.getElementById('wc-photo-status');
+    status.textContent = 'Removing…';
+    try {
+        var resp = await fetch('/dashboard/lfa-player-photo/delete', {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+        });
+        var data = await resp.json();
+        if (data.ok) {
+            document.getElementById('wc-photo-thumb').src = '';
+            document.getElementById('wc-photo-thumb').style.display = 'none';
+            document.getElementById('wc-photo-placeholder').style.display = 'flex';
+            document.getElementById('wc-delete-btn').style.display = 'none';
+            status.textContent = '✅ Photo removed.';
+            reloadPreview();
+        } else {
+            status.textContent = '❌ Remove failed: ' + (data.error || data.detail || 'unknown error');
+        }
+    } catch {
+        status.textContent = '❌ Remove failed.';
+    }
+}
+</script>
 </body>
 </html>

@@ -81,52 +81,7 @@
             color: var(--onboarding-text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;
         }
 
-        /* ── Position groups (Step 1 — Phase 2) ── */
-        .position-group  { margin-bottom: 1.2rem; }
-        .group-label {
-            font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.08em; color: var(--onboarding-text-muted);
-            margin-bottom: 0.45rem; padding-left: 0.15rem;
-        }
-        .position-counter {
-            font-size: 0.84rem; color: var(--onboarding-text-muted);
-            margin-bottom: 1.1rem; min-height: 1.5em;
-        }
-        .position-counter strong { color: var(--onboarding-text-primary); }
-
-        .position-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.55rem;
-            margin-bottom: 0;
-        }
-        @media (min-width: 500px) { .position-grid { grid-template-columns: repeat(5, 1fr); } }
-
-        .position-card {
-            position: relative;
-            border: 2px solid var(--onboarding-option-border);
-            border-radius: 10px;
-            padding: 0.6rem 0.35rem 0.55rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.18s;
-            background: var(--onboarding-option-bg);
-            user-select: none;
-        }
-        .position-card:hover:not(.at-limit) { border-color: var(--onboarding-option-hover-border); background: var(--onboarding-option-hover-bg); }
-        .position-card.primary   { border-color: var(--onboarding-option-selected-border); background: var(--onboarding-option-selected-bg); color: var(--onboarding-option-selected-text); }
-        .position-card.secondary { border-color: var(--onboarding-option-hover-border); background: var(--onboarding-option-hover-bg); }
-        .position-card.at-limit  { opacity: 0.35; cursor: not-allowed; }
-        .pos-short { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.05em; opacity: 0.55; margin-bottom: 0.18rem; }
-        .pos-name  { font-weight: 700; font-size: 0.74rem; line-height: 1.2; }
-        .pos-badge {
-            position: absolute; top: -7px; right: -7px;
-            background: var(--onboarding-step-active); color: var(--onboarding-step-active-text);
-            border-radius: 20px; padding: 0 5px; font-size: 0.6rem; font-weight: 800;
-            line-height: 1.7; white-space: nowrap;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.18);
-        }
-        .pos-badge.sec { background: var(--onboarding-option-hover-border); }
+        /* ── Step 1 position UI — provided by /static/js/pitch-selector.js ── */
 
         /* ── Foot dominance slider (Step 6) ── */
         .foot-slider-wrap {
@@ -304,11 +259,6 @@
             margin-top: 1.5rem;
         }
         .welcome-cta-row .btn { min-width: 160px; }
-        .btn-disabled-placeholder {
-            opacity: 0.45;
-            cursor: not-allowed;
-            pointer-events: none;
-        }
     </style>
 </head>
 <body>
@@ -338,10 +288,9 @@
     ═══════════════════════════════════════════════════════════ -->
     <div class="step active" id="step-1">
         <div class="step-title">1️⃣ What is your preferred playing position?</div>
-        <div class="step-subtitle">Select the position where you feel most comfortable on the pitch.</div>
+        <div class="step-subtitle">Select primary (★) and up to 3 secondary (+) positions on the pitch.</div>
 
-        <div id="position-counter" class="position-counter">Select your primary position</div>
-        <div id="positions-container"></div>
+        <div id="pitch-selector-mount"></div>
 
         <div class="btn-row">
             <button class="btn btn-danger" onclick="cancelOnboarding()">✖️ Cancel (refund)</button>
@@ -462,27 +411,40 @@
     <div class="step" id="step-7">
         <div class="welcome-screen">
             <div class="welcome-icon">🎉</div>
-            <div class="welcome-title">Az onboarding sikeresen befejeződött!</div>
             <div class="welcome-subtitle">Onboarding completed successfully</div>
 
             <div class="welcome-card-notice">
-                <div class="welcome-card-notice-label">Welcome Card — Onboarding Self-Assessment</div>
-                <p>Ez a kártya az onboarding során megadott önértékelési adatokból készül.</p>
-                <p>Nem azonos a rendes Player Carddal — nem a számított skill profilt mutatja.</p>
-                <p>Az értékek az általad megadott önértékelésből (self-assessment) származnak, nem az EMA-motor által számított szintekből.</p>
+                <div class="welcome-card-notice-label">Welcome Card — Based on your onboarding self-assessment</div>
+                <p>This card is generated from your self-assessment data collected during onboarding.</p>
+                <p>It is not the same as the regular Player Card.</p>
+                <p>Values come from your own self-assessment, not from EMA-computed levels.</p>
+            </div>
+
+            <!-- ── Step 7: Optional photo upload ──────────────────────────── -->
+            <div class="step7-photo-upload">
+                <div class="step7-photo-preview-wrap">
+                    <img id="step7-photo-preview" src="" alt="Card photo preview" style="display:none; max-width:120px; max-height:120px; border-radius:8px; object-fit:cover; margin-bottom:8px;">
+                    <div id="step7-photo-placeholder" style="color:#94a3b8; font-size:0.9rem; margin-bottom:8px;">📸 No photo uploaded yet</div>
+                </div>
+                <label class="btn btn-secondary" for="step7-photo-input" style="cursor:pointer;">
+                    📷 Upload Card Photo
+                    <input id="step7-photo-input" type="file" accept="image/jpeg,image/png,image/webp" style="display:none;">
+                </label>
+                <div id="step7-photo-status" style="font-size:0.8rem; margin-top:6px; color:#94a3b8;"></div>
             </div>
 
             <div class="welcome-cta-row">
-                <a id="btn-go-profile"       href="/profile"                  class="btn btn-secondary">👤 Go to Profile</a>
-                <a id="btn-go-dashboard"     href="/dashboard/lfa-football-player" class="btn btn-primary">⚽ Continue to Dashboard</a>
-                <a id="btn-view-welcome-card" href="/profile/onboarding-card" class="btn btn-secondary" target="_blank">🎴 View Welcome Card</a>
-                <span class="btn btn-secondary btn-disabled-placeholder" title="Welcome Card download — coming soon">⬇️ Download Welcome Card</span>
+                <a id="btn-go-profile"        href="/profile/lfa-football-player"   class="btn btn-secondary">🪪 Go to Profile</a>
+                <a id="btn-go-dashboard"      href="/dashboard/lfa-football-player" class="btn btn-primary">⚽ Continue to Dashboard</a>
+                <a id="btn-view-welcome-card" href="/profile/onboarding-card"        class="btn btn-secondary" target="_blank">🎴 View Welcome Card</a>
+                <a id="btn-download-welcome-card" href="/profile/onboarding-card/export?platform=instagram_square" class="btn btn-secondary">⬇️ Download Welcome Card</a>
             </div>
         </div>
     </div>
 
 </div><!-- /container -->
 
+<script src="/static/js/pitch-selector.js"></script>
 <script>
     // ── State ────────────────────────────────────────────────────────────────
     let currentStep       = 1;
@@ -515,113 +477,16 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // ── Position system (Step 1 — Phase 2) ──────────────────────────────────
-    const POSITION_GROUPS = [
-        { key: 'forward',    label: 'Forwards', positions: [
-            { value: 'striker',            short: 'ST',  label: 'Striker' },
-            { value: 'centre_forward',     short: 'CF',  label: 'Cen. Forward' },
-            { value: 'left_wing',          short: 'LW',  label: 'Left Wing' },
-            { value: 'right_wing',         short: 'RW',  label: 'Right Wing' },
-            { value: 'second_striker',     short: 'SS',  label: 'Second Striker' },
-        ]},
-        { key: 'midfielder', label: 'Midfielders', positions: [
-            { value: 'attacking_midfield', short: 'AM',  label: 'Att. Mid' },
-            { value: 'centre_midfield',    short: 'CM',  label: 'Cen. Mid' },
-            { value: 'defensive_midfield', short: 'DM',  label: 'Def. Mid' },
-            { value: 'left_midfield',      short: 'LM',  label: 'Left Mid' },
-            { value: 'right_midfield',     short: 'RM',  label: 'Right Mid' },
-        ]},
-        { key: 'defender',   label: 'Defenders', positions: [
-            { value: 'centre_back',        short: 'CB',  label: 'Centre Back' },
-            { value: 'left_back',          short: 'LB',  label: 'Left Back' },
-            { value: 'right_back',         short: 'RB',  label: 'Right Back' },
-            { value: 'left_wing_back',     short: 'LWB', label: 'Left WB' },
-            { value: 'right_wing_back',    short: 'RWB', label: 'Right WB' },
-        ]},
-        { key: 'goalkeeper', label: 'Goalkeepers', positions: [
-            { value: 'goalkeeper',         short: 'GK',  label: 'Goalkeeper' },
-            { value: 'sweeper_keeper',     short: 'SK',  label: 'Sweeper GK' },
-        ]},
-    ];
-    const MAX_SECONDARY = 3;
-    const _ALL_POSITIONS = POSITION_GROUPS.flatMap(g => g.positions);
-
+    // ── Position system (Step 1) — PitchSelector ────────────────────────────
     function getPositions() {
-        if (!primaryPosition) return [];
-        return [primaryPosition, ...secondaryPositions];
+        return pitchSel ? pitchSel.getAll() : [];
     }
 
-    function handlePositionClick(value) {
-        if (value === primaryPosition) {
-            // Clicking primary again → reset all
-            primaryPosition    = null;
-            secondaryPositions = [];
-        } else if (secondaryPositions.includes(value)) {
-            // Clicking a secondary → deselect it
-            secondaryPositions = secondaryPositions.filter(v => v !== value);
-        } else if (!primaryPosition) {
-            // No primary yet → set as primary
-            primaryPosition = value;
-        } else if (secondaryPositions.length < MAX_SECONDARY) {
-            // Have primary, under limit → add as secondary
-            secondaryPositions.push(value);
-        }
-        // else: at limit and not selected → ignore
-        renderPositionCards();
-        updatePositionCounter();
-        document.getElementById('btn-step1-next').disabled = !primaryPosition;
-    }
-
-    function renderPositionCards() {
-        const atLimit   = getPositions().length >= 4;
-        const container = document.getElementById('positions-container');
-        let html = '';
-        POSITION_GROUPS.forEach(group => {
-            html += `<div class="position-group">`;
-            html += `<div class="group-label">${group.label}</div>`;
-            html += `<div class="position-grid">`;
-            group.positions.forEach(pos => {
-                const isPrimary   = pos.value === primaryPosition;
-                const secIdx      = secondaryPositions.indexOf(pos.value);
-                const isSecondary = secIdx !== -1;
-                const isDisabled  = !isPrimary && !isSecondary && atLimit;
-
-                let cls   = 'position-card';
-                if (isPrimary)   cls += ' primary';
-                if (isSecondary) cls += ' secondary';
-                if (isDisabled)  cls += ' at-limit';
-
-                let badge = '';
-                if (isPrimary)        badge = `<span class="pos-badge">★</span>`;
-                else if (isSecondary) badge = `<span class="pos-badge sec">+${secIdx + 1}</span>`;
-
-                html += `<div class="${cls}" data-value="${pos.value}" onclick="handlePositionClick('${pos.value}')">`;
-                html += badge;
-                html += `<div class="pos-short">${pos.short}</div>`;
-                html += `<div class="pos-name">${pos.label}</div>`;
-                html += `</div>`;
-            });
-            html += `</div></div>`;
-        });
-        container.innerHTML = html;
-    }
-
-    function updatePositionCounter() {
-        const el = document.getElementById('position-counter');
-        if (!primaryPosition) {
-            el.textContent = 'Select your primary position';
-            return;
-        }
-        const pLabel = _ALL_POSITIONS.find(p => p.value === primaryPosition)?.label || primaryPosition;
-        let text = `Primary: <strong>${pLabel}</strong>`;
-        if (secondaryPositions.length > 0) {
-            const sLabels = secondaryPositions.map(v => _ALL_POSITIONS.find(p => p.value === v)?.label || v);
-            text += ` &nbsp;|&nbsp; Secondary: <strong>${sLabels.join(', ')}</strong> (${secondaryPositions.length}/${MAX_SECONDARY})`;
-        } else {
-            text += ` &nbsp;|&nbsp; Secondary: <em>none yet — tap up to 3 more</em>`;
-        }
-        el.innerHTML = text;
-    }
+    const pitchSel = new PitchSelector('pitch-selector-mount', function (primary, all) {
+        primaryPosition    = primary;
+        secondaryPositions = all.filter(function (v) { return v !== primary; });
+        document.getElementById('btn-step1-next').disabled = !primary;
+    });
 
     // ── Foot dominance slider ────────────────────────────────────────────────
     function updateFootLabel(value) {
@@ -770,9 +635,38 @@
         }
     }
 
+    // ── Step 7 photo upload ───────────────────────────────────────────────────
+    // Reuses existing /dashboard/lfa-player-photo endpoint — no new backend route.
+    document.getElementById('step7-photo-input').addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('file', file);
+        const statusEl = document.getElementById('step7-photo-status');
+        statusEl.textContent = 'Uploading…';
+        try {
+            const resp = await fetch('/dashboard/lfa-player-photo', {
+                method: 'POST',
+                headers: { 'X-CSRF-Token': getCsrfToken() },
+                body: formData,
+            });
+            const data = await resp.json();
+            if (data.ok) {
+                const preview = document.getElementById('step7-photo-preview');
+                preview.src = data.photo_url;
+                preview.style.display = 'block';
+                document.getElementById('step7-photo-placeholder').style.display = 'none';
+                statusEl.textContent = '✅ Photo saved.';
+            } else {
+                statusEl.textContent = '❌ Upload failed: ' + (data.error || data.detail || 'unknown error');
+            }
+        } catch {
+            statusEl.textContent = '❌ Upload failed.';
+        }
+    });
+
     // ── Init ─────────────────────────────────────────────────────────────────
     updateProgress(1);
-    renderPositionCards();
 </script>
 </body>
 </html>

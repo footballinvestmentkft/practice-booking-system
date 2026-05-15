@@ -22,7 +22,7 @@
                 <a href="/notifications" class="s-hdr-btn" title="Notifications" aria-label="Notifications">🔔</a>
                 <span class="badge-dot" id="hdr-notif-badge">0</span>
             </div>
-            <a href="/profile" class="s-hdr-btn" title="Profile">👤</a>
+            <a href="{% if specialization == 'LFA_FOOTBALL_PLAYER' %}/profile/lfa-football-player{% else %}/profile{% endif %}" class="s-hdr-btn" title="Profile">{% if specialization == 'LFA_FOOTBALL_PLAYER' %}🪪{% else %}👤{% endif %}</a>
             <a href="/logout"  class="s-hdr-btn" title="Logout">🚪</a>
         </div>
     </div>
@@ -177,7 +177,7 @@
     {% if user_license %}
     <section class="section-block dash-hero-block">
         <div class="section-header">
-            <h2 class="page-title">🪪 My Player Card</h2>
+            <h2 class="page-title">🎴 My Player Card</h2>
             <a href="/dashboard/lfa-football-player/card-editor" class="section-link">✏️ Edit →</a>
         </div>
         <div class="player-card-embed-wrap" id="spec-card-wrap">
@@ -236,7 +236,7 @@
                 <span class="mod-nav-title">Events</span>
             </a>
             <a href="/dashboard/lfa-football-player/card-editor" class="mod-nav-card">
-                <span class="mod-nav-icon">🪪</span>
+                <span class="mod-nav-icon">🎴</span>
                 <span class="mod-nav-title">My Card</span>
             </a>
             <a href="/adaptive-learning" class="mod-nav-card">
