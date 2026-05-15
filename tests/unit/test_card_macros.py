@@ -745,6 +745,26 @@ def _render_landscape(**ctx_overrides):
     return tpl.render(**_minimal_export_ctx(**ctx))
 
 
+def _render_square(**ctx_overrides):
+    tpl = _make_export_env().get_template("public/export/square/fifa.html")
+    ctx = dict(
+        export_mode=False,
+        animated_mode=False,
+        welcome_card_mode=False,
+        position_nodes=[],
+        primary_pos_label="CM",
+        secondary_pos_labels=[],
+        player_age=17,
+        player_gender="M",
+        xp_balance=1250,
+        license_current_level=2,
+        player_height_cm=None,
+        player_weight_kg=None,
+    )
+    ctx.update(ctx_overrides)
+    return tpl.render(**_minimal_export_ctx(**ctx))
+
+
 # ---------------------------------------------------------------------------
 # TestExportBase  (EB_ prefix)
 # Tests for fifa_base.html — verified via portrait child
@@ -1911,3 +1931,386 @@ class TestLandscapeFifaPhase3b4:
     def test_LS4_portrait_no_ovr_watermark(self):
         html = _render_portrait()
         assert 'class="ex-ovr-watermark"' not in html
+
+
+# ---------------------------------------------------------------------------
+# TestSquareFifaPhase3b5  (SQ5_ prefix)
+# Tests for square/fifa.html — extends fifa_base.html (Phase 3b-5)
+# ---------------------------------------------------------------------------
+
+class TestSquareFifaPhase3b5:
+    """SQ5_ — square/fifa.html extends fifa_base.html (Phase 3b-5).
+
+    Verifies:
+    - base inheritance (no standalone HTML shell)
+    - theme_root override: cat_bg=0.06
+    - min(100vw,100vh) card sizing
+    - hero zone: photo-col, profile-col, OVR watermark
+    - photo fallback chain: portrait_photo_url → photo_url → placeholder
+    - mini-grid: normal 3×2, WC mode 2×2
+    - stat strip: LICENSE label (normal) / TIER+SA (WC mode)
+    - skills 3-column layout: outfield col + right-section
+    - sponsor/app logo in outfield column
+    - Position Map: absent without nodes, present with nodes
+    - Position Map: primary label, secondary chips, node.label text
+    - export_mode gate: viewport wrapper + scale engine JS
+    - animated_mode gate: @keyframes present/absent
+    - Arctic text tokens
+    - regression guards: pos-panel inside right-section, 220px info, no SVG bg
+    - regression guards: portrait has no hero-photo-col or viewport wrapper
+    """
+
+    # ── A: Base inheritance ───────────────────────────────────────────────
+
+    def test_SQ5_extends_base_not_standalone(self):
+        """Template source must use {% extends %}, not standalone <!DOCTYPE>."""
+        import os, app as _app_pkg
+        src_path = os.path.join(
+            os.path.dirname(_app_pkg.__file__),
+            "templates/public/export/square/fifa.html",
+        )
+        with open(src_path) as f:
+            src = f.read()
+        assert "{% extends" in src, "SQ5: square/fifa.html must extend fifa_base.html"
+        assert "<!DOCTYPE" not in src, "SQ5: standalone <!DOCTYPE found — should be removed"
+
+    # ── B: Render smoke ───────────────────────────────────────────────────
+
+    def test_SQ5_renders_without_error(self):
+        html = _render_square()
+        assert "Test Player" in html
+
+    # ── C: CSS reset deduplication ────────────────────────────────────────
+
+    def test_SQ5_no_duplicate_css_reset(self):
+        html = _render_square()
+        assert html.count("box-sizing: border-box") == 1
+
+    # ── D: Theme / cat_bg ─────────────────────────────────────────────────
+
+    def test_SQ5_cat_bg_is_006(self):
+        """theme_root block must override cat_bg to rgba(255,255,255,0.06)."""
+        html = _render_square()
+        import re
+        cat_bg_match = re.search(r'--ex-cat-bg:\s+(.*?);', html)
+        assert cat_bg_match, "SQ5: --ex-cat-bg declaration not found"
+        assert '0.06' in cat_bg_match.group(1), (
+            f"SQ5: --ex-cat-bg is '{cat_bg_match.group(1)}' — expected 0.06"
+        )
+
+    def test_SQ5_cat_bg_not_default_005(self):
+        """Square must not use the base default 0.05 cat_bg."""
+        html = _render_square()
+        import re
+        cat_bg_match = re.search(r'--ex-cat-bg:\s+(.*?);', html)
+        assert cat_bg_match
+        assert '0.05' not in cat_bg_match.group(1), (
+            "SQ5: Square is using the base default 0.05 cat_bg — theme_root override missing"
+        )
+
+    def test_SQ5_arctic_dark_text_token_strong(self):
+        html = _render_square(theme=_make_arctic_export_theme())
+        assert "rgba(0,0,0,0.87)" in html
+
+    # ── E: Card sizing ────────────────────────────────────────────────────
+
+    def test_SQ5_source_contains_min_sizing(self):
+        """Source must contain min(100vw, 100vh) for 1:1 aspect ratio."""
+        import os, app as _app_pkg
+        src_path = os.path.join(
+            os.path.dirname(_app_pkg.__file__),
+            "templates/public/export/square/fifa.html",
+        )
+        with open(src_path) as f:
+            src = f.read()
+        assert "min(100vw, 100vh)" in src
+
+    def test_SQ5_rendered_min_sizing_present(self):
+        html = _render_square()
+        assert "min(100vw, 100vh)" in html
+
+    # ── F: Hero zone ──────────────────────────────────────────────────────
+
+    def test_SQ5_hero_zone_present(self):
+        html = _render_square()
+        assert 'class="ex-hero"' in html
+
+    def test_SQ5_portrait_photo_url_preferred(self):
+        html = _render_square(
+            portrait_photo_url="http://cdn.test/portrait.jpg",
+            photo_url="http://cdn.test/generic.jpg",
+        )
+        assert "portrait.jpg" in html
+        assert "generic.jpg" not in html
+
+    def test_SQ5_photo_fallback_to_photo_url(self):
+        html = _render_square(
+            portrait_photo_url=None,
+            photo_url="http://cdn.test/generic.jpg",
+        )
+        assert "generic.jpg" in html
+
+    def test_SQ5_photo_placeholder_when_no_photo(self):
+        html = _render_square(portrait_photo_url=None, photo_url=None)
+        assert 'class="ex-photo-placeholder"' in html
+        assert 'class="ex-photo-monogram"' in html
+
+    # ── G: Profile / mini-grid / stat-strip ──────────────────────────────
+
+    def test_SQ5_ovr_watermark_present(self):
+        html = _render_square()
+        assert 'class="ex-ovr-watermark"' in html
+
+    def test_SQ5_normal_mode_mini_grid_6_items(self):
+        """Non-WC mode renders 3×2 grid with AGE and GENDER items."""
+        html = _render_square(welcome_card_mode=False, player_age=17, player_gender="M")
+        assert "AGE" in html
+        assert "GENDER" in html
+        assert 'class="ex-mini-grid ex-mini-grid--wc"' not in html
+
+    def test_SQ5_welcome_card_mode_uses_wc_class(self):
+        html = _render_square(welcome_card_mode=True)
+        assert 'class="ex-mini-grid ex-mini-grid--wc"' in html
+
+    def test_SQ5_welcome_card_mode_no_age_gender(self):
+        """WC mode 2×2 grid must NOT render AGE or GENDER items."""
+        html = _render_square(welcome_card_mode=True)
+        assert ">AGE<" not in html
+        assert ">GENDER<" not in html
+
+    def test_SQ5_welcome_card_mode_stat_tier_sa(self):
+        html = _render_square(welcome_card_mode=True)
+        assert ">TIER<" in html
+        assert ">SA<" in html
+
+    def test_SQ5_normal_mode_stat_license_label(self):
+        html = _render_square(welcome_card_mode=False, license_current_level=3)
+        assert ">LICENSE<" in html
+        assert "Lv. 3" in html
+
+    # ── H: Skills layout ─────────────────────────────────────────────────
+
+    def test_SQ5_right_section_present(self):
+        from types import SimpleNamespace
+        cats = [
+            SimpleNamespace(name_en="Outfield", emoji="⚽", skills=[]),
+            SimpleNamespace(name_en="Set Pieces", emoji="🎯", skills=[]),
+            SimpleNamespace(name_en="Mental", emoji="🧠", skills=[]),
+            SimpleNamespace(name_en="Physical", emoji="💪", skills=[]),
+        ]
+        html = _render_square(skill_categories=cats)
+        assert 'class="ex-right-section"' in html
+
+    def test_SQ5_outfield_col_present(self):
+        from types import SimpleNamespace
+        cats = [
+            SimpleNamespace(name_en="Outfield", emoji="⚽", skills=[]),
+            SimpleNamespace(name_en="Set Pieces", emoji="🎯", skills=[]),
+            SimpleNamespace(name_en="Mental", emoji="🧠", skills=[]),
+            SimpleNamespace(name_en="Physical", emoji="💪", skills=[]),
+        ]
+        html = _render_square(skill_categories=cats)
+        assert 'ex-col-outfield' in html
+
+    def test_SQ5_skill_categories_rendered_with_cats(self):
+        from types import SimpleNamespace
+        cats = [
+            SimpleNamespace(name_en="Outfield", emoji="⚽", skills=[]),
+            SimpleNamespace(name_en="Set Pieces", emoji="🎯", skills=[]),
+            SimpleNamespace(name_en="Mental", emoji="🧠", skills=[]),
+            SimpleNamespace(name_en="Physical", emoji="💪", skills=[]),
+        ]
+        html = _render_square(skill_categories=cats)
+        assert "Outfield" in html
+        assert "Mental" in html
+        assert "Physical" in html
+
+    # ── I: Sponsor / outfield logo ────────────────────────────────────────
+
+    def _four_cats(self):
+        from types import SimpleNamespace
+        return [
+            SimpleNamespace(name_en="Outfield",   emoji="⚽", skills=[]),
+            SimpleNamespace(name_en="Set Pieces",  emoji="🎯", skills=[]),
+            SimpleNamespace(name_en="Mental",      emoji="🧠", skills=[]),
+            SimpleNamespace(name_en="Physical",    emoji="💪", skills=[]),
+        ]
+
+    def test_SQ5_sponsor_logo_rendered_when_provided(self):
+        html = _render_square(
+            skill_categories=self._four_cats(),
+            sponsor_logo_url="http://sponsor.test/logo.png",
+            app_logo_url=None,
+        )
+        assert "sponsor.test/logo.png" in html
+        assert 'class="ex-outfield-logo"' in html
+
+    def test_SQ5_app_logo_fallback_when_no_sponsor(self):
+        html = _render_square(
+            skill_categories=self._four_cats(),
+            sponsor_logo_url=None,
+            app_logo_url="http://cdn.test/app-logo.png",
+        )
+        assert "app-logo.png" in html
+
+    def test_SQ5_logo_absent_when_neither(self):
+        html = _render_square(
+            skill_categories=self._four_cats(),
+            sponsor_logo_url=None,
+            app_logo_url=None,
+        )
+        assert 'class="ex-outfield-logo"' not in html
+
+    # ── J: Position Map ───────────────────────────────────────────────────
+
+    def test_SQ5_pos_map_absent_without_nodes(self):
+        html = _render_square(
+            skill_categories=self._four_cats(),
+            position_nodes=[],
+        )
+        assert 'class="ex-pos-panel-landscape"' not in html
+
+    def test_SQ5_pos_map_present_with_nodes(self):
+        from types import SimpleNamespace
+        nodes = [SimpleNamespace(x=0.1, y=0.5, is_primary=True, is_selected=True, label="GK")]
+        html = _render_square(skill_categories=self._four_cats(), position_nodes=nodes)
+        assert 'class="ex-pos-panel-landscape"' in html
+
+    def test_SQ5_pos_map_primary_label_rendered(self):
+        from types import SimpleNamespace
+        nodes = [SimpleNamespace(x=0.5, y=0.5, is_primary=True, is_selected=True, label="CM")]
+        html = _render_square(
+            skill_categories=self._four_cats(),
+            position_nodes=nodes,
+            primary_pos_label="Central Midfielder",
+        )
+        assert "Central Midfielder" in html
+
+    def test_SQ5_pos_map_secondary_chips_rendered(self):
+        from types import SimpleNamespace
+        nodes = [SimpleNamespace(x=0.5, y=0.5, is_primary=True, is_selected=True, label="CM")]
+        html = _render_square(
+            skill_categories=self._four_cats(),
+            position_nodes=nodes,
+            secondary_pos_labels=["LM", "RM"],
+        )
+        assert "LM" in html
+        assert "RM" in html
+        assert 'ex-sec-pos-chip' in html
+
+    def test_SQ5_pos_map_node_label_text_rendered(self):
+        """node.label abbreviations must appear as SVG text content."""
+        from types import SimpleNamespace
+        nodes = [
+            SimpleNamespace(x=0.9, y=0.5, is_primary=True, is_selected=True, label="ST"),
+            SimpleNamespace(x=0.7, y=0.3, is_primary=False, is_selected=True, label="LW"),
+        ]
+        html = _render_square(skill_categories=self._four_cats(), position_nodes=nodes)
+        assert ">ST<" in html
+        assert ">LW<" in html
+
+    # ── K: Export mode gating ─────────────────────────────────────────────
+
+    def test_SQ5_export_mode_no_viewport_wrapper(self):
+        html = _render_square(export_mode=True)
+        assert 'id="ex-card-viewport"' not in html
+
+    def test_SQ5_human_view_viewport_wrapper_present(self):
+        html = _render_square(export_mode=False)
+        assert 'id="ex-card-viewport"' in html
+
+    def test_SQ5_human_view_scale_engine_absent_in_export(self):
+        html = _render_square(export_mode=True)
+        assert "applyScale" not in html
+
+    def test_SQ5_human_view_scale_engine_present_in_non_export(self):
+        html = _render_square(export_mode=False)
+        assert "applyScale" in html
+
+    # ── L: Animated mode ──────────────────────────────────────────────────
+
+    def test_SQ5_animated_mode_keyframes_absent_in_static(self):
+        html = _render_square(animated_mode=False)
+        assert "@keyframes" not in html
+
+    def test_SQ5_animated_mode_bar_keyframe_present(self):
+        html = _render_square(animated_mode=True)
+        assert "@keyframes ex-bar-in" in html
+
+    def test_SQ5_animated_mode_hero_glow_present(self):
+        html = _render_square(animated_mode=True)
+        assert "@keyframes ex-hero-glow" in html
+
+    # ── M: Regression guards ──────────────────────────────────────────────
+
+    def test_SQ5_pos_panel_inside_right_section(self):
+        """Position Map panel must appear AFTER .ex-right-skills, inside .ex-right-section.
+        Guards regression: pos-panel must not be a sibling of .ex-skill-cats."""
+        from types import SimpleNamespace
+        nodes = [SimpleNamespace(x=0.5, y=0.5, is_primary=True, is_selected=True, label="CM")]
+        cats = [
+            SimpleNamespace(name_en="Outfield", emoji="⚽", skills=[]),
+            SimpleNamespace(name_en="Set Pieces", emoji="🎯", skills=[]),
+            SimpleNamespace(name_en="Mental", emoji="🧠", skills=[]),
+            SimpleNamespace(name_en="Physical", emoji="💪", skills=[]),
+        ]
+        html = _render_square(skill_categories=cats, position_nodes=nodes)
+        right_section_pos = html.find('class="ex-right-section"')
+        pos_panel_pos = html.find('class="ex-pos-panel-landscape"')
+        skill_cats_pos = html.find('class="ex-skill-cats"')
+        assert right_section_pos != -1, "SQ5: .ex-right-section not found"
+        assert pos_panel_pos != -1, "SQ5: .ex-pos-panel-landscape not found"
+        assert pos_panel_pos > right_section_pos, (
+            "SQ5: pos-panel must come after right-section open tag (i.e. be inside it)"
+        )
+        # pos-panel must not appear before skill-cats closes — it's inside right-section
+        right_skills_pos = html.find('class="ex-right-skills"')
+        assert pos_panel_pos > right_skills_pos, (
+            "SQ5: pos-panel must appear after .ex-right-skills (below it in DOM)"
+        )
+
+    def test_SQ5_pos_info_220px_present(self):
+        """Guards R2: .ex-pos-info must keep flex: 0 0 220px."""
+        html = _render_square()
+        assert "220px" in html
+
+    def test_SQ5_pos_svg_no_css_background(self):
+        """Guards R3: .ex-pos-svg-landscape must not have CSS background property.
+        Green pitch comes from internal SVG <rect>, not CSS background."""
+        import re
+        html = _render_square()
+        block = re.search(r'\.ex-pos-svg-landscape\s*\{([^}]+)\}', html)
+        if block:
+            assert 'background' not in block.group(1), (
+                "SQ5: .ex-pos-svg-landscape must not have CSS background (green is SVG-internal)"
+            )
+
+    def test_SQ5_outfield_logo_inside_outfield_col(self):
+        """Guards R8: sponsor logo must be inside .ex-col-outfield, not elsewhere."""
+        html = _render_square(
+            skill_categories=self._four_cats(),
+            sponsor_logo_url="http://test/logo.png",
+        )
+        outfield_pos = html.find('ex-col-outfield')
+        logo_pos = html.find('ex-outfield-logo')
+        assert outfield_pos != -1
+        assert logo_pos != -1
+        assert logo_pos > outfield_pos, "SQ5: outfield logo must appear after .ex-col-outfield"
+
+    def test_SQ5_portrait_no_photo_col(self):
+        """Guards: portrait export must not contain Square's photo-col div."""
+        html = _render_portrait()
+        assert 'class="ex-photo-col"' not in html
+
+    def test_SQ5_portrait_no_viewport_wrapper(self):
+        """Guards: portrait must never have the Square scale-engine viewport wrapper."""
+        html = _render_portrait()
+        assert 'id="ex-card-viewport"' not in html
+
+    def test_SQ5_story_no_viewport_wrapper(self):
+        html = _render_story()
+        assert 'id="ex-card-viewport"' not in html
+
+    def test_SQ5_banner_no_viewport_wrapper(self):
+        html = _render_banner()
+        assert 'id="ex-card-viewport"' not in html

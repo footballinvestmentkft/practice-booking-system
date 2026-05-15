@@ -1,15 +1,11 @@
-{%- from "macros/card_theme_root.html" import export_root_vars -%}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>{{ player.name }} — LFA Player Card</title>
-<style>
-/*
- * FIFA Classic × FB Square — Dedicated export template
- * Canvas  : 1080 × 1080 px  (Playwright viewport)
- * Purpose : static social export ONLY — no editor UI, no responsive CSS
- * Classes : ex- prefix throughout, no inheritance from editor templates
+{% extends "public/export/shared/fifa_base.html" %}
+{#
+ * FIFA Classic × FB Square — export template
+ * (Phase 3b-5: extends fifa_base.html)
+ * Canvas  : 1080 × 1080 px  (Playwright viewport, 1:1 ratio)
+ *
+ * Extends fifa_base.html directly (not column intermediate — Square has its own
+ * hero zone with photo-col + profile-col, not the avatar/OVR/name column layout).
  *
  * Layout (v14 — Position Map full-width bottom bar, Col 2+Col 3 wrapper; outfield logo; info 220px):
  *   .ex-hero   (flex: 0 0 35%) — photo-col 32% | profile-col flex:1
@@ -22,65 +18,144 @@
  *           .ex-col-sets-phys  (flex:1): Set Pieces (3, natural) | Physical (8, cat flex:1)
  *         .ex-pos-panel-landscape (200px): full-width bottom bar
  *
- * Height budget (v13):
- *   Skills inner: 702−28 = 674px
- *   Title 12px + gap 6px = 18px consumed
- *   Skill-cats: 674−18 = 656px available
- *   Column widths: Outfield ≈ 349px · right-section ≈ 697px · inner cols ≈ 346px each
- *   Outfield worst-case: 534px < 656px → +122px bg fill ✓
- *   right-skills height: 656−6(gap)−200(PosMap) = 450px
- *   Mental: 404px < 450px → +46px bg fill ✓
- *   Set Pieces: 118px natural ✓ · Physical: 248px < 326px → +78px bg fill ✓
- *   PosMap: 200px × ~697px — pitch rendered 309×200px (49% larger than v11) ✓
- *   All 44 skills fully visible — flex:1 cats fill to bottom, rows align top ✓
- *
- * Position Map panel (v13):
- *   .ex-pos-panel-landscape: fixed 200px tall, spans full ex-right-section width (~697px).
- *   .ex-pos-info (220px): title 13px · Primary pos label 11px + name 17px (gold) · chips.
- *   svg.ex-pos-svg-landscape (flex:1 = ~557px, bg:#1a5c2a): viewBox "0 0 105 68",
- *     preserveAspectRatio="xMidYMid meet" → pitch rendered 309×200px (height-constrained).
- *   Jinja2-gated by position_nodes — right-skills fills full 656px when absent.
- *
- * Photo column (v9, unchanged):
- *   Clean portrait — no position badges. Position info in panel only.
- *
- * Sponsor / logo (v14):
- *   Outfield column bottom: .ex-outfield-logo in Col 1 .ex-cat. Jinja2-gated. margin-top:auto.
- *
- * Typography scale (% of C_H=1080):
- *   OVR 96px (8.89%), Name 40px (3.70%), Stat 28px (2.59%), Meta 20px (1.85%)
+ * Base conflicts resolved in extra_css (10 overrides):
+ *   .ex-card        — min(100vw,100vh) sizing (base: 100vw × 100vh)
+ *   .ex-skill-cats  — flex row (base: display:grid 1fr×1fr)
+ *   .ex-skill-rows  — gap:2px, no overflow clip (base: flex:1, overflow:hidden)
+ *   .ex-row         — flex:none, min-height:24px (base: flex:1, max-height:var())
+ *   .ex-cat         — border added, padding:8px 10px (base: no border, pad:14px)
+ *   .ex-cat-name    — margin-bottom:7px, padding-bottom:5px (base: 10px/8px)
+ *   .ex-sname       — flex:0 0 96px (base: var(--ex-sname-w, 160px))
+ *   .ex-bar-bg      — height:10px (base: var(--ex-bar-h, 8px))
+ *   .ex-sval        — flex:0 0 32px, font-size:17px (base: var() 44px/15px)
+ *   .ex-trend       — flex:0 0 14px, font-size:13px (base: var() 18px/14px)
  *
  * Column assignment (index → category):
  *   [0] Outfield · [1] Set Pieces · [2] Mental · [3] Physical
- *   Rendered order: panel (full-width) | Col1=[0] | Col2=[2] | Col3=[1]+[3]
- */
+ *   Rendered order: Col1=[0] | Col2=[2] | Col3=[1]+[3] | PosMap full-width under Col2+Col3
+ #}
 
-{{ export_root_vars(theme, cat_bg='rgba(255,255,255,0.06)') }}
+{% block theme_root %}{{ export_root_vars(theme, cat_bg='rgba(255,255,255,0.06)') }}{% endblock %}
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+{% block platform_vars %}{% endblock %}
 
-html, body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
+{% block extra_css %}
+
+/* ── BODY DISPLAY — add flex centering on top of base html/body reset ─────── */
+body {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 }
 
-/* Root card — square-specific min() sizing contract.
+/* ── ROOT CARD override — square-specific min() sizing contract ──────────────
  * min(100vw, 100vh) guarantees 1:1 at any viewport:
  *   Playwright 1080×1080: min(1080, 1080) = 1080px → PNG/WebM export unchanged.
  *   Browser 1440×900:     min(1440,  900) =  900px → fully visible, no scroll.
  * Unlike 100vw/100vh (correct for non-square formats), min() preserves the 1:1
- * aspect ratio regardless of viewport shape. */
+ * aspect ratio regardless of viewport shape.
+ * Overrides base .ex-card (100vw × 100vh). */
 .ex-card {
     width:  min(100vw, 100vh);
     height: min(100vw, 100vh);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+}
+
+/* ── BASE CLASS OVERRIDES (9 of 10 — .ex-card handled above) ─────────────────
+ * These replace/extend the corresponding definitions in fifa_base.html.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/* .ex-skill-cats — flex row (base: display:grid 1fr 1fr / 1fr 1fr) */
+.ex-skill-cats {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    min-height: 0;
+}
+
+/* .ex-skill-rows — gap:2px, no overflow clip (base: flex:1, overflow:hidden) */
+.ex-skill-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* .ex-row — fixed-rhythm model (base: flex:1, max-height:var(), gap:8px) */
+.ex-row {
+    flex: none;
+    min-height: 24px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* .ex-cat — adds border + resets padding (base: no border, padding:14px, overflow:hidden) */
+.ex-cat {
+    background: var(--ex-cat-bg);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 12px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* .ex-cat-name — spacing (base: margin-bottom:10px, padding-bottom:8px) */
+.ex-cat-name {
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    color: var(--ex-text-secondary);
+    margin-bottom: 7px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* .ex-sname — fixed 96px (base: var(--ex-sname-w, 160px)) */
+.ex-sname {
+    flex: 0 0 96px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ex-text-body);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1;
+}
+
+/* .ex-bar-bg — 10px fixed (base: var(--ex-bar-h, 8px)) */
+.ex-bar-bg {
+    flex: 1;
+    min-width: 0;
+    height: 10px;
+    background: var(--ex-bar-bg);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* .ex-sval — fixed sizes (base: var(--ex-sval-w, 44px) / var(--ex-font-skill, 15px)) */
+.ex-sval {
+    flex: 0 0 32px;
+    font-size: 17px;
+    font-weight: 700;
+    text-align: right;
+    line-height: 1;
+}
+
+/* .ex-trend — fixed sizes (base: var(--ex-trend-w, 18px) / var(--ex-font-trend, 14px)) */
+.ex-trend {
+    flex: 0 0 14px;
+    font-size: 13px;
+    font-weight: 900;
+    text-align: center;
+    line-height: 1;
 }
 
 /* ── HERO ZONE ────────────────────────────────────────────────────────────────
@@ -334,17 +409,20 @@ html, body {
     z-index: 0;
 }
 
-/* ── SKILLS ZONE ────────────────────────────────────────────────────────────────────────────────
+/* ── SKILLS ZONE ──────────────────────────────────────────────────────────────
    flex:1 → takes 1080 − 378 = 702px of remaining height (at 35% hero).
-   Nested 3-column model (v7):
-     Col 1: Outfield (19 skills, flex:1, ~346px)
-     .ex-col-right (flex:2, ~693px):
-       .ex-col-right-skills: Mental (14) | Set Pieces(3)+Physical(8)
-       .ex-pos-panel-landscape: landscape pitch SVG, ~165px tall
-   Available height per skill-col: 576px
-   All 44 skills fully visible — no overflow clipping on content layers.
-   Sponsor slot: removed from skills zone — moved to hero layer (v8).
-   ─────────────────────────────────────────────────────────────────────────────────────── */
+   Height budget (v13):
+     Skills inner: 702−28 = 674px
+     Title 12px + gap 6px = 18px consumed
+     Skill-cats: 674−18 = 656px available
+     Column widths: Outfield ≈ 349px · right-section ≈ 697px · inner cols ≈ 346px each
+     Outfield worst-case: 534px < 656px → +122px bg fill ✓
+     right-skills height: 656−6(gap)−200(PosMap) = 450px
+     Mental: 404px < 450px → +46px bg fill ✓
+     Set Pieces: 118px natural ✓ · Physical: 248px < 326px → +78px bg fill ✓
+     PosMap: 200px × ~697px — pitch rendered 309×200px (49% larger than v11) ✓
+     All 44 skills fully visible — flex:1 cats fill to bottom, rows align top ✓
+   ─────────────────────────────────────────────────────────────────────────── */
 .ex-skills {
     flex: 1;
     background: var(--ex-body-bg);
@@ -365,16 +443,6 @@ html, body {
     margin-bottom: 0;
 }
 
-/* v10: 3 flat columns — Outfield | Mental | Set Pieces+Physical.
- * No .ex-col-right nesting. All columns are direct siblings. */
-.ex-skill-cats {
-    flex: 1;
-    display: flex;
-    flex-direction: row;
-    gap: 6px;
-    min-height: 0;
-}
-
 /* Column wrapper: stacks its categories vertically. overflow: visible so
  * all skill rows remain visible — the 35% hero gives enough height. */
 .ex-skill-col {
@@ -386,101 +454,18 @@ html, body {
     overflow: visible;
 }
 
-/* Category cell — no overflow clipping on content (all 44 skills must be visible) */
-.ex-cat {
-    background: var(--ex-cat-bg);
-    border: 1px solid rgba(255,255,255,0.10);
-    border-radius: 12px;
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: column;
-}
-.ex-cat-name {
-    flex-shrink: 0;
-    font-size: 13px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.10em;
-    color: var(--ex-text-secondary);
-    margin-bottom: 7px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+/* Column flex-fill: tallest (or only) cat stretches to align columns to same bottom edge */
+.ex-col-outfield .ex-cat         { flex: 1; }
+.ex-col-mental-pos .ex-cat       { flex: 1; }
+.ex-col-sets-phys .ex-cat:last-child { flex: 1; }
 
-/* Skill rows container — visible so rows are never clipped */
-.ex-skill-rows {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-/* Individual skill row — FIX_ROW_H = 24px (fixed-rhythm model).
- * flex: none + min-height: 24px decouples row height from container geometry. */
-.ex-row {
-    flex: none;
-    min-height: 24px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-/* Fixed-width name column — 96px, longer names clip with ellipsis */
-.ex-sname {
-    flex: 0 0 96px;
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--ex-text-body);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1;
-}
-
-/* Skill bar — fills available row width after name + value + trend */
-.ex-bar-bg {
-    flex: 1;
-    min-width: 0;
-    height: 10px;
-    background: var(--ex-bar-bg);
-    border-radius: 4px;
-    overflow: hidden;
-}
-.ex-bar-fill {
-    height: 100%;
-    border-radius: 4px;
-    min-width: 4px;
-}
-
-/* Value — right-aligned fixed width */
-.ex-sval {
-    flex: 0 0 32px;
-    font-size: 17px;
-    font-weight: 700;
-    text-align: right;
-    line-height: 1;
-}
-
-/* Trend arrow */
-.ex-trend {
-    flex: 0 0 14px;
-    font-size: 13px;
-    font-weight: 900;
-    text-align: center;
-    line-height: 1;
-}
-
-/* ── POSITION LANDSCAPE PANEL ───────────────────────────────────────────────────────────────────────────
-   v10: full-width, fixed 110px, direct child of .ex-skills (BEFORE .ex-skill-cats).
-   NOT .ex-cat → cat fade-slide animation never fires here.
-   flex-row: .ex-pos-info (180px) | svg.ex-pos-svg-landscape (flex:1, bg:#1a5c2a).
-   Info: panel title · Primary Position name (gold) · Secondary chips.
-   NO legend. SVG: viewBox "0 0 105 68", xMidYMid meet, seamless green letterbox.
-   ─────────────────────────────────────────────────────────────────────────────────────── */
-
-/* Position Map panel — v13: full-width bottom bar of ex-right-section (Col 2 + Col 3 width) */
+/* ── POSITION MAP PANEL ───────────────────────────────────────────────────────
+   v13: full-width bottom bar of ex-right-section (Col 2 + Col 3 width).
+   .ex-pos-info (220px): title · Primary pos label + name (gold) · chips.
+   svg.ex-pos-svg-landscape (flex:1): viewBox "0 0 105 68", xMidYMid meet.
+   NO CSS background on SVG — green comes from internal <rect> only.
+   Jinja2-gated by position_nodes — right-skills fills full 656px when absent.
+   ─────────────────────────────────────────────────────────────────────────── */
 .ex-pos-panel-landscape {
     flex-shrink: 0;
     height: 200px;
@@ -491,7 +476,6 @@ html, body {
     display: flex;
     flex-direction: row;
 }
-/* Info column — left of pitch SVG (narrower in v11: more SVG room) */
 .ex-pos-info {
     flex: 0 0 220px;
     display: flex;
@@ -538,6 +522,7 @@ html, body {
     gap: 3px;
     margin-top: 2px;
 }
+
 /* v13: right-section wraps Col 2 + Col 3 + PosMap full-width bar */
 .ex-right-section {
     flex: 2 1 0%;
@@ -555,12 +540,7 @@ html, body {
     min-height: 0;
 }
 
-/* Column flex-fill: tallest (or only) cat stretches to align all columns to same bottom edge */
-.ex-col-outfield .ex-cat         { flex: 1; }    /* Outfield: single cat fills full 656px */
-.ex-col-mental-pos .ex-cat       { flex: 1; }    /* Mental: fills right-skills height (450px at 200px PosMap) */
-.ex-col-sets-phys .ex-cat:last-child { flex: 1; } /* Physical: fills below Set Pieces */
-
-/* SVG takes remaining width — no CSS background (green comes from internal <rect> only, per Default card pattern) */
+/* SVG takes remaining width — no CSS background (green comes from internal <rect> only) */
 .ex-pos-svg-landscape {
     flex: 1;
     min-width: 0;
@@ -568,8 +548,8 @@ html, body {
     align-self: stretch;
 }
 
-/* Outfield column logo (v14) — bottom of Col 1 ex-cat, Jinja2-gated.
- * margin-top: auto pushes it to the column bottom inside the flex col. */
+/* ── OUTFIELD LOGO (v14) ──────────────────────────────────────────────────────
+   Bottom of Col 1 .ex-cat, Jinja2-gated. margin-top:auto pushes to column bottom. */
 .ex-outfield-logo {
     margin-top: auto;
     padding-top: 10px;
@@ -591,7 +571,7 @@ html, body {
 /* ── Human-browseable public page shell ──────────────────────────────────────
  * Active ONLY when export_mode=False (i.e. ?export=1 absent).
  * Playwright PNG/WebM export always uses ?export=1, so this entire block —
- * including the JS below the card — is absent from every screenshot render.
+ * including the JS in the scripts block — is absent from every screenshot render.
  *
  * Strategy: render .ex-card always at its native 1080×1080px canvas size.
  * A wrapper div (.ex-card-viewport) is sized by JS to the available viewport.
@@ -608,7 +588,6 @@ body {
     justify-content: center;
     align-items: center;
     padding: 2rem;
-    box-sizing: border-box;
 }
 /* Viewport wrapper — JS sizes this to (1080 × scale)² so it occupies the
  * correct layout space after the card's transform: scale() is applied. */
@@ -629,10 +608,8 @@ body {
     transform-origin: top left;
 }
 {% endif %}
-</style>
 
 {% if animated_mode %}
-<style>
 /* ── ANIMATED VIDEO EXPORT ONLY ──────────────────────────────────────────────
  * This block is ONLY rendered when ?animated=1 is present in the render URL.
  * The PNG export endpoint never passes animated=1 — static exports are
@@ -695,10 +672,10 @@ body {
     50%       { box-shadow: 0 0 60px 12px rgba(102,126,234,0.15); }
 }
 .ex-hero { animation: ex-hero-glow 3s ease-in-out infinite; }
-</style>
 {% endif %}
-</head>
-<body>
+{% endblock %}
+
+{% block body_content %}
 {% from "macros/card_skill_row.html" import export_skill_rows %}
 {% if not export_mode %}<div class="ex-card-viewport" id="ex-card-viewport">{% endif %}
 <div class="ex-card">
@@ -837,14 +814,13 @@ body {
 
     </div>
 
-    <!-- ── SKILLS ───────────────────────────────────────────────────────────────────────────────────────
-         Nested 3-column model (v7):
+    <!-- ── SKILLS ─────────────────────────────────────────────────────────────
+         3-column model:
          Col 1: [0] Outfield (19 skills)
-         .ex-col-right:
-           .ex-col-right-skills: [2] Mental (14) | [1]+[3] Set Pieces+Physical
-           .ex-pos-panel-landscape: full-width landscape pitch SVG (v8: 242px tall)
-         Sponsor slot: moved to hero layer (v8) — skills zone fully freed.
-         ─────────────────────────────────────────────────────────────────────── -->
+         .ex-right-section:
+           .ex-right-skills: [2] Mental (14) | [1]+[3] Set Pieces+Physical
+           .ex-pos-panel-landscape: full-width landscape pitch SVG (position_nodes-gated)
+         ─────────────────────────────────────────────────────────────────── -->
     {% if skill_categories %}
     <div class="ex-skills">
         <div class="ex-skills-title">Football Skills — {{ overall | round(0) | int }} OVR</div>
@@ -977,9 +953,7 @@ body {
                         {% endif %}
                         {% endfor %}
 
-                        <!-- Pass 4: abbreviated labels — primary + secondary selected nodes only.
-                             Adapted from player_card_fifa.html:611-618. Landscape coords:
-                             cx = node.x × 105 (longitudinal, GK→ST), cy = node.y × 68 (lateral). -->
+                        <!-- Pass 4: abbreviated labels — primary + secondary selected nodes only. -->
                         {% for node in position_nodes %}
                         {% if node.is_primary or node.is_selected %}
                         <text x="{{ (node.x * 105) | round(1) }}" y="{{ (node.y * 68) | round(1) }}"
@@ -999,8 +973,11 @@ body {
     {% endif %}
 
 </div>
+{% if not export_mode %}</div>{% endif %}
+{% endblock %}
+
+{% block scripts %}
 {% if not export_mode %}
-</div>
 <script>
 /* ── Square card scale engine ────────────────────────────────────────────────
  * Renders the 1080×1080 native canvas then scales it to fit the browser window.
@@ -1032,5 +1009,4 @@ body {
 })();
 </script>
 {% endif %}
-</body>
-</html>
+{% endblock %}

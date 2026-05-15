@@ -129,14 +129,14 @@ class TestPositionBadge:
 
     def test_sq06_no_pos_badge_on_photo(self, tpl):
         """v9: .ex-pos-badge class must be absent from the HTML body (photo is clean portrait)."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'class="ex-pos-badge"' not in html_body, (
             ".ex-pos-badge must not appear in the HTML body — photo badges were removed in v9"
         )
 
     def test_sq06_primary_pos_in_panel_context(self, tpl):
         """v9: primary_pos_label must appear inside the .ex-pos-panel-landscape block."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         panel_start = html_body.find('class="ex-pos-panel-landscape"')
         assert panel_start != -1
         panel_region = html_body[panel_start: panel_start + 1200]
@@ -146,7 +146,7 @@ class TestPositionBadge:
 
     def test_sq07_secondary_chips_in_pos_panel(self, tpl):
         """v9: secondary chips container must be in the Position Map panel, not the photo column."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         # Chips container must exist somewhere in the body
         assert 'class="ex-pos-secondary-chips"' in html_body, (
             ".ex-pos-secondary-chips must be present inside the Position Map panel"
@@ -160,7 +160,7 @@ class TestPositionBadge:
 
     def test_sq07_chips_no_artificial_slice(self, tpl):
         """v9: secondary_pos_labels loop must not use [:4] slice — domain guarantees max 3."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         panel_start = html_body.find('class="ex-pos-panel-landscape"')
         panel_region = html_body[panel_start: panel_start + 1200]
         assert "secondary_pos_labels[:4]" not in panel_region, (
@@ -240,13 +240,13 @@ class TestAnimationStagger:
 class TestSponsorSlot:
     def test_sq13_hero_sponsor_absent(self, tpl):
         """v14: ex-hero-sponsor removed from hero layer — must not appear anywhere in HTML body."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'class="ex-hero-sponsor"' not in html_body
         assert 'class="ex-hero-sponsor-img"' not in html_body
 
     def test_sq13_outfield_logo_in_outfield_col(self, tpl):
         """v14: ex-outfield-logo must appear inside ex-col-outfield (Col 1), not in hero layer."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         outfield_start = html_body.find('class="ex-skill-col ex-col-outfield"')
         right_section_start = html_body.find('class="ex-right-section"')
         logo_idx = html_body.find('class="ex-outfield-logo"')
@@ -271,7 +271,7 @@ class TestSponsorSlot:
 
     def test_sq13_no_ex_sponsor_slot_in_body(self, tpl):
         """v8: old .ex-sponsor-slot class must be absent — skills zone is fully freed."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'class="ex-sponsor-slot"' not in html_body
 
 
@@ -298,8 +298,10 @@ class TestFileIntegrity:
         assert _TPL_PATH.exists(), f"Template not found: {_TPL_PATH}"
 
     def test_sq15_has_doctype(self, tpl):
-        """Must be a complete HTML document."""
-        assert "<!DOCTYPE html>" in tpl
+        """Must produce a complete HTML document — via extends fifa_base.html."""
+        assert '{% extends' in tpl and 'fifa_base.html' in tpl, (
+            "Template must extend fifa_base.html (which provides the DOCTYPE declaration)"
+        )
 
     def test_sq15_has_ex_card_root(self, tpl):
         """Root card div with class ex-card must be present."""
@@ -312,12 +314,12 @@ class TestRemovedV4Artefacts:
     def test_sq16_no_logo_host_class_in_html(self, tpl):
         """ex-cat--logo-host must not appear in HTML (v4 filler pattern removed)."""
         # Only check the HTML body part (after </style>)
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert "ex-cat--logo-host" not in html_body
 
     def test_sq16_no_logo_slot_in_html(self, tpl):
         """ex-logo-slot div must not appear in HTML body (v5 has no empty filler slots)."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'class="ex-logo-slot"' not in html_body
 
 
@@ -326,7 +328,7 @@ class TestRemovedV4Artefacts:
 class TestPositionMiniPanel:
     def test_sq17_pos_panel_class_in_html(self, tpl):
         """v7 landscape panel: .ex-pos-panel-landscape div must be present in the HTML body."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'class="ex-pos-panel-landscape"' in html_body
 
     def test_sq18_landscape_pitch_svg_viewbox(self, tpl):
@@ -341,13 +343,13 @@ class TestPositionMiniPanel:
 
     def test_sq19_position_nodes_in_svg(self, tpl):
         """SVG rendering must reference position_nodes from template context."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         # position_nodes must be used in the for loop inside the SVG block
         assert "position_nodes" in html_body
 
     def test_sq19_coordinate_transform_formula(self, tpl):
         """v8: SVG must use real-geometry coordinate transform (cx=node.x*105, cy=node.y*68)."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert "node.x * 105" in html_body, (
             "SVG coordinate transform must use node.x * 105 (105m pitch width), not node.x * 100"
         )
@@ -357,7 +359,7 @@ class TestPositionMiniPanel:
 
     def test_sq20_pos_panel_inside_skill_col(self, tpl):
         """v11: panel is INSIDE .ex-skill-cats and appears after skill_categories[2] (Mental)."""
-        html_body      = tpl[tpl.rfind("</style>"):]
+        html_body      = tpl[tpl.find("{% block body_content %}"):]
         idx_skill_cats = html_body.find('class="ex-skill-cats"')
         idx_mental     = html_body.find("skill_categories[2]", idx_skill_cats)
         idx_panel      = html_body.find('class="ex-pos-panel-landscape"', idx_mental)
@@ -401,7 +403,7 @@ class TestPositionPanelIntegrity:
 
     def test_sq24_pos_panel_not_ex_cat(self, tpl):
         """Landscape panel must NOT use .ex-cat class — immune to cat fade-slide animation."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'class="ex-pos-panel-landscape"' in html_body
         assert 'class="ex-cat ex-pos-panel-landscape"' not in html_body
         assert 'class="ex-pos-panel-landscape ex-cat"' not in html_body
@@ -420,7 +422,7 @@ class TestPositionPanelIntegrity:
 
     def test_sq27_no_node_label_in_landscape_svg(self, tpl):
         """Landscape SVG must not render node.label text — position name is in the hero badge."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         panel_start = html_body.find('class="ex-pos-panel-landscape"')
         panel_end   = html_body.find("{% endif %}", panel_start)
         assert panel_start > 0 and panel_end > panel_start
@@ -435,7 +437,7 @@ class TestPositionPanelIntegrity:
 class TestAspectRatioIntegrity:
     def test_sq28_preserve_aspect_ratio_meet(self, tpl):
         """v8: landscape SVG must declare preserveAspectRatio='xMidYMid meet' — no stretch, no crop."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         panel_start = html_body.find('class="ex-pos-panel-landscape"')
         assert panel_start != -1
         # Scope to the <svg>…</svg> element directly — avoids inner {% endif %} ambiguity
@@ -456,7 +458,7 @@ class TestAspectRatioIntegrity:
 class TestPositionMapInfoColumn:
     def test_sq29_pos_info_div_in_html(self, tpl):
         """v9: .ex-pos-info div must be present inside .ex-pos-panel-landscape."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         panel_start = html_body.find('class="ex-pos-panel-landscape"')
         assert panel_start != -1
         panel_region = html_body[panel_start: panel_start + 1500]
@@ -492,7 +494,7 @@ class TestPositionMapInfoColumn:
 class TestCleanPhotoColumn:
     def test_sq30_no_pos_badge_in_body(self, tpl):
         """v9: .ex-pos-badge class must not appear anywhere in the HTML body."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'class="ex-pos-badge"' not in html_body, (
             ".ex-pos-badge removed in v9 — all position info lives in Position Map panel"
         )
@@ -503,7 +505,7 @@ class TestCleanPhotoColumn:
 
     def test_sq30_no_photo_sec_chips(self, tpl):
         """v9: secondary chips must NOT appear inside the photo column block."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         photo_col_start = html_body.find('class="ex-photo-col"')
         photo_col_end   = html_body.find('class="ex-profile-col"', photo_col_start)
         assert photo_col_start != -1 and photo_col_end > photo_col_start
@@ -518,7 +520,7 @@ class TestCleanPhotoColumn:
 class TestNoPositionLegend:
     def test_sq31_no_legend_marker_elements(self, tpl):
         """v9: Position Map panel must not contain a PRIMARY/SECONDARY/OTHER legend."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         panel_start = html_body.find('class="ex-pos-panel-landscape"')
         panel_end   = html_body.find("{% endif %}", panel_start)
         assert panel_start > 0 and panel_end > panel_start
@@ -540,14 +542,14 @@ class TestNoPositionLegend:
 class TestV10FlatLayout:
     def test_sq32_no_ex_col_right_in_html(self, tpl):
         """v10: .ex-col-right wrapper removed — Mental and Set Pieces are flat siblings."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'class="ex-col-right"' not in html_body, (
             ".ex-col-right wrapper must be absent in v10 — all three skill columns are flat siblings"
         )
 
     def test_sq32_no_ex_col_right_skills_in_html(self, tpl):
         """v10: .ex-col-right-skills inner wrapper also removed."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'class="ex-col-right-skills"' not in html_body, (
             ".ex-col-right-skills inner wrapper must be absent in v10"
         )
@@ -558,35 +560,35 @@ class TestV10FlatLayout:
 class TestV11ColumnModifiers:
     def test_sq33_col_outfield_class_present(self, tpl):
         """v11: Col 1 must carry ex-col-outfield modifier class."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'ex-col-outfield' in html_body, (
             "ex-col-outfield modifier class must be present on Col 1 (Outfield)"
         )
 
     def test_sq33_col_mental_pos_class_present(self, tpl):
         """v11: Col 2 must carry ex-col-mental-pos modifier class."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'ex-col-mental-pos' in html_body, (
             "ex-col-mental-pos modifier class must be present on Col 2 (Mental + PosMap)"
         )
 
     def test_sq33_col_sets_phys_class_present(self, tpl):
         """v11: Col 3 must carry ex-col-sets-phys modifier class."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'ex-col-sets-phys' in html_body, (
             "ex-col-sets-phys modifier class must be present on Col 3 (Set Pieces + Physical)"
         )
 
     def test_sq33_right_section_wrapper_present(self, tpl):
         """v13: ex-right-section wrapper div must be present (wraps Col 2 + Col 3 + PosMap)."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'class="ex-right-section"' in html_body, (
             "v13: ex-right-section wrapper div must be present as the Col 2+Col 3+PosMap container"
         )
 
     def test_sq33_right_skills_inner_row_present(self, tpl):
         """v13: ex-right-skills flex-row must be present inside ex-right-section."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'class="ex-right-skills"' in html_body, (
             "v13: ex-right-skills flex-row div must be present (holds Mental + Set Pieces+Physical)"
         )
@@ -598,7 +600,7 @@ class TestV11ColumnModifiers:
 
     def test_sq33_panel_inside_right_section(self, tpl):
         """v13: Position Map must be inside ex-right-section (after Col 3 in DOM order)."""
-        html_body   = tpl[tpl.rfind("</style>"):]
+        html_body   = tpl[tpl.find("{% block body_content %}"):]
         right_start = html_body.find('class="ex-right-section"')
         col3_start  = html_body.find('ex-col-sets-phys')
         panel_idx   = html_body.find('class="ex-pos-panel-landscape"')
@@ -614,7 +616,7 @@ class TestV11ColumnModifiers:
 
     def test_sq33_panel_not_inside_col_mental_pos(self, tpl):
         """v13 regression guard: Position Map must NOT be inside ex-col-mental-pos."""
-        html_body  = tpl[tpl.rfind("</style>"):]
+        html_body  = tpl[tpl.find("{% block body_content %}"):]
         col2_start = html_body.find('class="ex-skill-col ex-col-mental-pos"')
         col3_start = html_body.find('class="ex-skill-col ex-col-sets-phys"')
         panel_idx  = html_body.find('class="ex-pos-panel-landscape"')
@@ -625,7 +627,7 @@ class TestV11ColumnModifiers:
 
     def test_sq33_panel_not_inside_col_sets_phys(self, tpl):
         """v13 regression guard: Position Map must NOT be inside ex-col-sets-phys (v12 revert guard)."""
-        html_body  = tpl[tpl.rfind("</style>"):]
+        html_body  = tpl[tpl.find("{% block body_content %}"):]
         col3_open  = html_body.find('class="ex-skill-col ex-col-sets-phys"')
         panel_idx  = html_body.find('class="ex-pos-panel-landscape"')
         # Col 3 closing </div> — look for next </div> after the col3 for loop endfor
@@ -733,17 +735,17 @@ class TestV15ConsistencyFixes:
         )
 
     def test_sq34_body_has_flex_centering(self, tpl):
-        """v16: html/body must declare flex centering so the card is centered in wide viewports."""
-        style_block = tpl[:tpl.find("</style>")]
-        body_start = style_block.find("html, body {")
-        assert body_start != -1
+        """v16: body must declare flex centering so the card is centered in wide viewports."""
+        style_block = tpl[:tpl.find("{% block body_content %}")]
+        body_start = style_block.find("body {")
+        assert body_start != -1, "body rule not found in CSS block"
         body_end = style_block.find("}", body_start)
         body_css = style_block[body_start: body_end + 1]
         assert "display: flex" in body_css, (
-            "html, body must declare display: flex for horizontal card centering at wide viewports"
+            "body must declare display: flex for horizontal card centering at wide viewports"
         )
         assert "justify-content: center" in body_css, (
-            "html, body must declare justify-content: center to center the square card horizontally"
+            "body must declare justify-content: center to center the square card horizontally"
         )
 
     def test_sq34_svg_no_green_css_background(self, tpl):
@@ -763,7 +765,7 @@ class TestV15ConsistencyFixes:
 
     def test_sq34_node_label_pass4_present(self, tpl):
         """v15: Pass 4 node.label must be rendered inside the SVG block."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         svg_start = html_body.find('class="ex-pos-svg-landscape"')
         assert svg_start != -1
         svg_end = html_body.find("</svg>", svg_start)
@@ -778,7 +780,7 @@ class TestV15ConsistencyFixes:
 
         Portrait transform (node.y*65, (1-node.x)*100) must NOT appear in the SVG label block.
         """
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         svg_start = html_body.find('class="ex-pos-svg-landscape"')
         svg_end = html_body.find("</svg>", svg_start)
         svg_block = html_body[svg_start: svg_end + len("</svg>")]
@@ -835,14 +837,14 @@ class TestHumanViewPageShell:
         )
 
     def test_sq35c_base_html_body_has_no_background(self, tpl):
-        """SQ-35c: The base html, body rule must NOT declare a background color."""
+        """SQ-35c: The base body rule must NOT declare a background color."""
         base = self._base_style(tpl)
-        body_start = base.find("html, body {")
-        assert body_start != -1, "html, body rule not found in base CSS"
+        body_start = base.find("body {")
+        assert body_start != -1, "body rule not found in base CSS"
         body_end   = base.find("}", body_start)
         base_body  = base[body_start: body_end + 1]
         assert "background" not in base_body, (
-            "SQ-35c: base html, body rule declares a background — Playwright would inherit this; "
+            "SQ-35c: base body rule declares a background — Playwright would inherit this; "
             "background must only appear inside {% if not export_mode %} block"
         )
 
@@ -935,7 +937,7 @@ class TestHumanViewScaleEngine:
 
     def test_sq36e_html_wrapper_gated(self, tpl):
         """SQ-36e: HTML wrapper div must be guarded by {% if not export_mode %}."""
-        idx = tpl.find("ex-card-viewport", tpl.find("<body>"))
+        idx = tpl.find("ex-card-viewport", tpl.find("{% block body_content %}"))
         assert idx != -1, "ex-card-viewport not found in HTML body section"
         gate = tpl.rfind("{% if not export_mode %}", 0, idx)
         assert gate != -1, (

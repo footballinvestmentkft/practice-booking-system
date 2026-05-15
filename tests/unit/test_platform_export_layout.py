@@ -561,7 +561,8 @@ class TestExportRenderLayerStatic:
         html = self._get_fifa_export_html(client, "instagram_square")
         assert html, "Export returned empty response for instagram_square"
         style_block = html[:html.find("</style>")]
-        card_css_start = style_block.find(".ex-card {")
+        # rfind: Square's min() override comes after the base .ex-card {} rule in rendered HTML
+        card_css_start = style_block.rfind(".ex-card {")
         assert card_css_start != -1, ".ex-card CSS rule not found in Square export"
         card_css_end = style_block.find("}", card_css_start)
         card_css = style_block[card_css_start: card_css_end + 1]
