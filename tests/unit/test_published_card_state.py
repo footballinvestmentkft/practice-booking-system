@@ -218,74 +218,76 @@ class TestDraftDoesNotAffectPublished:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class TestPublishCardEndpoint:
-    """PUB-05..07 — publish-card endpoint copies draft → published."""
+    """PUB-05..07 — publish-card endpoint delegates to CardDraftService.publish_draft."""
 
-    def _call(self, lic=None, no_license: bool = False):
+    _CDS_PATH = "app.api.web_routes.dashboard._CardDraftService"
+
+    def _call(self, lic=None, no_license: bool = False,
+              draft_theme: str = "dark", draft_variant: str = "fifa",
+              draft_platform: str | None = None):
         from app.api.web_routes.dashboard import student_publish_card
         db   = MagicMock()
         user = _make_user()
+
+        # Build a mock draft whose published_* fields are what publish_draft will return
+        mock_draft = MagicMock()
+        mock_draft.published_theme    = draft_theme
+        mock_draft.published_variant  = draft_variant
+        mock_draft.published_platform = draft_platform
+
         with patch("app.api.web_routes.dashboard._get_lfa_license",
-                   return_value=None if no_license else (lic or _make_license())):
+                   return_value=None if no_license else (lic or _make_license())), \
+             patch(self._CDS_PATH) as MockCDS:
+            MockCDS.get_player_card_draft.return_value = mock_draft
+            MockCDS.publish_draft.return_value = mock_draft
             result = asyncio.run(student_publish_card(db=db, user=user))
-        return result, db
+
+        return result, db, MockCDS, mock_draft
 
     def test_pub05_publish_copies_draft_to_published(self):
-        """PUB-05: publish-card must copy card_theme/variant/platform → published fields."""
-        lic = _make_license(
-            card_theme="dark", card_variant="fifa", public_card_platform="instagram_square",
-            published_card_theme="default", published_card_variant="fifa", published_card_platform=None,
+        """PUB-05: publish-card must call CardDraftService.publish_draft (Phase 4D-2)."""
+        result, _, MockCDS, _ = self._call(
+            draft_theme="dark", draft_variant="fifa", draft_platform="instagram_square"
         )
-        result, db = self._call(lic=lic)
         body = json.loads(result.body)
-
         assert body["ok"] is True
-        assert lic.published_card_theme   == "dark",            "published_card_theme not updated"
-        assert lic.published_card_variant == "fifa",            "published_card_variant not updated"
-        assert lic.published_card_platform == "instagram_square", "published_card_platform not updated"
-        db.commit.assert_called_once()
+        MockCDS.publish_draft.assert_called_once()
 
     def test_pub06_response_body_contains_published_values(self):
-        """PUB-06: publish-card response body must include the new published state."""
-        lic = _make_license(
-            card_theme="dark", card_variant="fifa", public_card_platform="instagram_square",
+        """PUB-06: publish-card response body reflects card_draft.published_* fields."""
+        result, _, _, _ = self._call(
+            draft_theme="dark", draft_variant="fifa", draft_platform="instagram_square"
         )
-        result, _ = self._call(lic=lic)
         body = json.loads(result.body)
-
         assert body["ok"] is True
         assert "published" in body
         pub = body["published"]
-        assert pub["theme"]   == "dark"
-        assert pub["variant"] == "fifa"
+        assert pub["theme"]    == "dark"
+        assert pub["variant"]  == "fifa"
         assert pub["platform"] == "instagram_square"
 
     def test_pub06b_null_platform_returned_as_default(self):
-        """PUB-06b: published platform NULL is serialised as 'default' in response."""
-        lic = _make_license(public_card_platform=None)
-        result, _ = self._call(lic=lic)
+        """PUB-06b: NULL published_platform is serialised as 'default' in response."""
+        result, _, _, _ = self._call(draft_platform=None)
         body = json.loads(result.body)
         assert body["published"]["platform"] == "default", (
-            "PUB-06b: NULL published platform must be returned as 'default' string in response"
+            "PUB-06b: NULL published_platform must be returned as 'default' string in response"
         )
 
     def test_pub06c_null_draft_theme_defaults_to_default(self):
-        """PUB-06c: NULL card_theme draft falls back to 'default' when publishing."""
-        lic = _make_license()
-        lic.card_theme   = None
-        lic.card_variant = None
-        result, _ = self._call(lic=lic)
+        """PUB-06c: publish_draft is called; NULL safety is CardDraftService's concern."""
+        result, _, MockCDS, _ = self._call()
         body = json.loads(result.body)
         assert body["ok"] is True
-        assert lic.published_card_theme   == "default", "NULL card_theme must publish as 'default'"
-        assert lic.published_card_variant == "fifa",    "NULL card_variant must publish as 'fifa'"
+        MockCDS.publish_draft.assert_called_once()
 
     def test_pub07_no_license_returns_404(self):
         """PUB-07: missing LFA license must return 404."""
-        result, db = self._call(no_license=True)
+        result, db, MockCDS, _ = self._call(no_license=True)
         assert result.status_code == 404
         body = json.loads(result.body)
         assert body["ok"] is False
-        db.commit.assert_not_called()
+        MockCDS.publish_draft.assert_not_called()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

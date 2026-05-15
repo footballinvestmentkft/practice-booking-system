@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from .credit_service import CreditService
+from .card_draft_service import CardDraftService
 
 
 @dataclass(frozen=True)
@@ -109,7 +110,7 @@ def is_unlocked(user_license, theme_id: str) -> bool:
 
 def apply_theme(db, user_license, theme_id: str) -> None:
     """
-    Set the active theme on user_license and commit.
+    Set the active draft theme on the player CardDraft and commit.
     Raises ValueError if theme unknown or not yet unlocked.
     """
     if theme_id not in THEMES:
@@ -119,8 +120,8 @@ def apply_theme(db, user_license, theme_id: str) -> None:
         raise ValueError(
             f"Theme '{theme.label}' is locked. Required: {theme.credit_cost} CR"
         )
-    user_license.card_theme = theme_id
-    db.commit()
+    draft = CardDraftService.get_player_card_draft(db, user_id=user_license.user_id)
+    CardDraftService.update_draft_theme(db, draft, theme_id)
 
 
 def unlock_theme(db, user, user_license, theme_id: str) -> None:
@@ -142,6 +143,10 @@ def unlock_theme(db, user, user_license, theme_id: str) -> None:
     if theme_id in unlocked:
         return  # already unlocked — idempotent
 
+    # Ensure the draft row exists before the credit SAVEPOINT so any draft-creation
+    # commit is isolated from the credit + unlock transaction below.
+    draft = CardDraftService.get_player_card_draft(db, user_id=user_license.user_id)
+
     # Atomic deduction + CT insert (SAVEPOINT guarantees coupling).
     # InsufficientCreditsError propagates to the caller unchanged.
     CreditService(db).deduct(
@@ -152,9 +157,9 @@ def unlock_theme(db, user, user_license, theme_id: str) -> None:
         idempotency_key=f"theme_unlock_{user.id}_{theme_id}",
     )
 
-    # Update unlocked themes list and auto-apply (same outer transaction = one commit)
+    # Update unlocked list and stage draft theme (commit=False keeps one outer commit)
     unlocked.append(theme_id)
     user_license.unlocked_card_themes = unlocked
-    user_license.card_theme = theme_id
+    CardDraftService.update_draft_theme(db, draft, theme_id, commit=False)
 
     db.commit()

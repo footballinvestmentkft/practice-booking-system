@@ -18,6 +18,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .credit_service import CreditService
+from .card_draft_service import CardDraftService
 
 
 @dataclass(frozen=True)
@@ -126,7 +127,7 @@ def is_variant_unlocked(user_license, variant_id: str) -> bool:
 
 def apply_variant(db, user_license, variant_id: str) -> None:
     """
-    Set the active variant on user_license and commit.
+    Set the active draft variant on the player CardDraft and commit.
     Raises ValueError if variant unknown, not yet available, or not yet unlocked.
     """
     if variant_id not in VARIANTS:
@@ -138,8 +139,8 @@ def apply_variant(db, user_license, variant_id: str) -> None:
         raise ValueError(
             f"Variant '{variant.label}' is locked. Required: {variant.credit_cost} CR"
         )
-    user_license.card_variant = variant_id
-    db.commit()
+    draft = CardDraftService.get_player_card_draft(db, user_id=user_license.user_id)
+    CardDraftService.update_draft_variant(db, draft, variant_id)
 
 
 def unlock_variant(db, user, user_license, variant_id: str) -> None:
@@ -163,6 +164,9 @@ def unlock_variant(db, user, user_license, variant_id: str) -> None:
     if variant_id in unlocked:
         return  # already unlocked — idempotent
 
+    # Ensure the draft row exists before the credit SAVEPOINT.
+    draft = CardDraftService.get_player_card_draft(db, user_id=user_license.user_id)
+
     CreditService(db).deduct(
         user=user,
         amount=variant.credit_cost,
@@ -171,9 +175,9 @@ def unlock_variant(db, user, user_license, variant_id: str) -> None:
         idempotency_key=f"variant_unlock_{user.id}_{variant_id}",
     )
 
-    # Update unlocked variants list and auto-apply (same outer transaction = one commit)
+    # Update unlocked list and stage draft variant (commit=False keeps one outer commit)
     unlocked.append(variant_id)
     user_license.unlocked_card_variants = unlocked
-    user_license.card_variant = variant_id
+    CardDraftService.update_draft_variant(db, draft, variant_id, commit=False)
 
     db.commit()

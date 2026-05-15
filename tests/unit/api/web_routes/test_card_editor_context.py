@@ -94,6 +94,14 @@ class TestCardEditorContext:
         lic = _license(uid=user.id)
         db = _mock_db(license_return=lic)
 
+        card_draft = MagicMock()
+        card_draft.draft_theme    = "default"
+        card_draft.draft_variant  = "fifa"
+        card_draft.draft_platform = None
+        card_draft.published_theme    = "default"
+        card_draft.published_variant  = "fifa"
+        card_draft.published_platform = None
+
         with patch(f"{_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             with patch(f"{_BASE}.SemesterEnrollment") as mock_se:
@@ -102,8 +110,9 @@ class TestCardEditorContext:
                 inner.filter.return_value.first.return_value = None
                 mock_se.id = inner
                 db.query.return_value.filter.return_value.first.side_effect = [
-                    lic,   # license query
-                    None,  # enrollment query
+                    lic,        # license query
+                    None,       # enrollment query
+                    card_draft, # CardDraft singleton query (Phase 4D-2)
                 ]
                 _run(lfa_player_card_editor(_req(), db=db, user=user))
             _, ctx = mock_tmpl.TemplateResponse.call_args.args

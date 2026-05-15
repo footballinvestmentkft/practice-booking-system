@@ -377,6 +377,9 @@ async def lfa_player_card_editor(
 
     credit_balance = user.credit_balance if hasattr(user, "credit_balance") else 0
 
+    # Load (or create) the singleton card draft — single source of truth after 4D-2
+    card_draft = _CardDraftService.get_player_card_draft(db, user.id)
+
     # Card theme picker data — identical logic to spec_dashboard
     from ...services.card_theme_service import get_all_themes as _get_all_themes, is_unlocked as _is_theme_unlocked
     card_themes = [
@@ -390,12 +393,12 @@ async def lfa_player_card_editor(
         }
         for t in _get_all_themes()
     ]
-    active_card_theme = user_license.card_theme or "default"
+    active_card_theme = card_draft.draft_theme
 
     # Published public card state (read-only in the editor — shown as indicator)
-    published_card_theme    = user_license.published_card_theme    or "default"
-    published_card_variant  = user_license.published_card_variant  or "fifa"
-    published_card_platform = user_license.published_card_platform or "default"
+    published_card_theme    = card_draft.published_theme    or "default"
+    published_card_variant  = card_draft.published_variant  or "fifa"
+    published_card_platform = card_draft.published_platform or "default"
 
     # Card variant picker data — identical logic to spec_dashboard
     from ...services.card_variant_service import (  # noqa: E402
@@ -414,7 +417,7 @@ async def lfa_player_card_editor(
         }
         for v in _get_all_variants()
     ]
-    active_card_variant = user_license.card_variant or "fifa"
+    active_card_variant = card_draft.draft_variant
 
     # Animated video export capability: list of platforms supported for the
     # current variant. Used by the card editor to show/hide the video button.
@@ -447,7 +450,7 @@ async def lfa_player_card_editor(
             "active_card_theme": active_card_theme,
             "card_variants": card_variants,
             "active_card_variant": active_card_variant,
-            "active_card_platform": user_license.public_card_platform or "default",
+            "active_card_platform": card_draft.draft_platform or "default",
             "show_variant_picker": True,  # page is LFA Football Player only
             "animated_capable_platforms": animated_capable_platforms,
             "platforms": editor_platforms,
@@ -951,6 +954,7 @@ async def student_set_card_photo_focus(
 from ...services.card_theme_service import apply_theme as _apply_theme, unlock_theme as _unlock_theme  # noqa: E402
 from ...services.card_variant_service import apply_variant as _apply_variant, unlock_variant as _unlock_variant  # noqa: E402
 from ...services.card_platform_service import PLATFORM_PRESETS as _PLATFORM_PRESETS  # noqa: E402
+from ...services.card_draft_service import CardDraftService as _CardDraftService  # noqa: E402
 from pydantic import BaseModel as _BaseModel  # noqa: E402
 
 _VALID_PLATFORM_IDS: frozenset = frozenset(_PLATFORM_PRESETS.keys())
@@ -1062,9 +1066,11 @@ async def student_set_card_platform(
     lfa_license = _get_lfa_license(db, user.id)
     if not lfa_license:
         return JSONResponse({"ok": False, "error": "No active LFA Football Player license"}, status_code=404)
-    # "default" is stored as NULL (backward-compatible; NULL == default everywhere)
-    lfa_license.public_card_platform = None if payload.platform == "default" else payload.platform
-    db.commit()
+    draft = _CardDraftService.get_player_card_draft(db, user.id)
+    # "default" stored as NULL (NULL == platform default everywhere)
+    _CardDraftService.update_draft_platform(
+        db, draft, None if payload.platform == "default" else payload.platform
+    )
     return JSONResponse({"ok": True, "platform": payload.platform})
 
 
@@ -1082,16 +1088,13 @@ async def student_publish_card(
     lfa_license = _get_lfa_license(db, user.id)
     if not lfa_license:
         return JSONResponse({"ok": False, "error": "No active LFA Football Player license"}, status_code=404)
-
-    lfa_license.published_card_theme    = lfa_license.card_theme    or "default"
-    lfa_license.published_card_variant  = lfa_license.card_variant  or "fifa"
-    lfa_license.published_card_platform = lfa_license.public_card_platform  # NULL = default; intentional
-    db.commit()
+    draft = _CardDraftService.get_player_card_draft(db, user.id)
+    _CardDraftService.publish_draft(db, draft)
     return JSONResponse({
         "ok": True,
         "published": {
-            "theme":    lfa_license.published_card_theme,
-            "variant":  lfa_license.published_card_variant,
-            "platform": lfa_license.published_card_platform or "default",
+            "theme":    draft.published_theme,
+            "variant":  draft.published_variant,
+            "platform": draft.published_platform or "default",
         },
     })

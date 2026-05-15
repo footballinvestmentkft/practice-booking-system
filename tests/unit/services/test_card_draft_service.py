@@ -315,3 +315,50 @@ class TestIsPublished:
             published_theme=None,   # never published
         )
         assert CardDraftService.is_published(draft) is False
+
+
+# ── CD-SVC-12/13: commit=False defers to outer commit ────────────────────────
+
+class TestCommitFalseParameter:
+
+    def test_cd_svc_12_update_draft_theme_commit_false_no_commit(self):
+        """CD-SVC-12: update_draft_theme(commit=False) does not call db.commit/refresh."""
+        draft = _draft(draft_theme="default")
+        db = MagicMock()
+
+        CardDraftService.update_draft_theme(db, draft, "gold", commit=False)
+
+        assert draft.draft_theme == "gold"
+        db.commit.assert_not_called()
+        db.refresh.assert_not_called()
+
+    def test_cd_svc_12b_update_draft_theme_commit_true_commits(self):
+        """CD-SVC-12b: update_draft_theme(commit=True) [default] still commits."""
+        draft = _draft(draft_theme="default")
+        db = MagicMock()
+
+        CardDraftService.update_draft_theme(db, draft, "gold")  # commit=True is default
+
+        db.commit.assert_called_once()
+        db.refresh.assert_called_once_with(draft)
+
+    def test_cd_svc_13_update_draft_variant_commit_false_no_commit(self):
+        """CD-SVC-13: update_draft_variant(commit=False) does not call db.commit/refresh."""
+        draft = _draft(draft_variant="fifa")
+        db = MagicMock()
+
+        CardDraftService.update_draft_variant(db, draft, "compact", commit=False)
+
+        assert draft.draft_variant == "compact"
+        db.commit.assert_not_called()
+        db.refresh.assert_not_called()
+
+    def test_cd_svc_13b_update_draft_platform_commit_false_no_commit(self):
+        """CD-SVC-13b: update_draft_platform(commit=False) does not commit."""
+        draft = _draft(draft_platform=None)
+        db = MagicMock()
+
+        CardDraftService.update_draft_platform(db, draft, "tiktok", commit=False)
+
+        assert draft.draft_platform == "tiktok"
+        db.commit.assert_not_called()

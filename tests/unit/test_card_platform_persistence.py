@@ -81,14 +81,29 @@ def _make_license(public_card_platform: str | None = None,
 
 
 def _mock_db_for_public_card(user, license_):
-    """DB mock for the public_player_card route (5-query sequence)."""
+    """DB mock for the public_player_card route.
+
+    CardDraft queries are detected by class argument and return a draft mirroring
+    the license published state so card_variant_id stays a valid string.
+    """
+    from app.models.card_draft import CardDraft as _CardDraft
+
     db = MagicMock()
     _calls = [0]
 
     def _side_effect(*args):
         _calls[0] += 1
         q = MagicMock()
-        if _calls[0] == 1:
+        if args and args[0] is _CardDraft:
+            _draft = MagicMock()
+            _draft.published_theme    = (license_.published_card_theme    if license_ else None) or "default"
+            _draft.published_variant  = (license_.published_card_variant  if license_ else None) or "fifa"
+            _draft.published_platform = (license_.published_card_platform if license_ else None)
+            _draft.draft_theme    = _draft.published_theme
+            _draft.draft_variant  = _draft.published_variant
+            _draft.draft_platform = _draft.published_platform
+            q.filter.return_value.first.return_value = _draft
+        elif _calls[0] == 1:
             q.filter.return_value.first.return_value = user
         elif _calls[0] == 2:
             q.filter.return_value.first.return_value = license_
@@ -127,22 +142,48 @@ class TestCardPlatformEndpoint:
         return result, lic, db
 
     def test_cp01_valid_platform_saved(self):
-        """Valid platform ID must be written to public_card_platform and committed."""
-        result, lic, db = self._call_handler("instagram_square")
-        import json
+        """Valid platform ID must be written to card_draft.draft_platform (Phase 4D-2)."""
+        import asyncio, json
+        from app.api.web_routes.dashboard import student_set_card_platform, _CardPlatformRequest
+
+        db = MagicMock()
+        user = _make_user()
+        lic = _make_license()
+        mock_draft = MagicMock()
+        payload = _CardPlatformRequest(platform="instagram_square")
+
+        with patch("app.api.web_routes.dashboard._get_lfa_license", return_value=lic), \
+             patch("app.api.web_routes.dashboard._CardDraftService") as MockCDS:
+            MockCDS.get_player_card_draft.return_value = mock_draft
+            result = asyncio.run(student_set_card_platform(payload=payload, db=db, user=user))
+
         body = json.loads(result.body)
         assert body["ok"] is True
-        assert lic.public_card_platform == "instagram_square"
-        db.commit.assert_called_once()
+        MockCDS.update_draft_platform.assert_called_once()
+        _, _, platform_arg = MockCDS.update_draft_platform.call_args[0]
+        assert platform_arg == "instagram_square"
 
     def test_cp02_default_stores_null(self):
-        """Platform 'default' must be stored as NULL (backward-compatible)."""
-        result, lic, db = self._call_handler("default")
-        import json
+        """Platform 'default' must be stored as NULL in card_draft (backward-compatible)."""
+        import asyncio, json
+        from app.api.web_routes.dashboard import student_set_card_platform, _CardPlatformRequest
+
+        db = MagicMock()
+        user = _make_user()
+        lic = _make_license()
+        mock_draft = MagicMock()
+        payload = _CardPlatformRequest(platform="default")
+
+        with patch("app.api.web_routes.dashboard._get_lfa_license", return_value=lic), \
+             patch("app.api.web_routes.dashboard._CardDraftService") as MockCDS:
+            MockCDS.get_player_card_draft.return_value = mock_draft
+            result = asyncio.run(student_set_card_platform(payload=payload, db=db, user=user))
+
         body = json.loads(result.body)
         assert body["ok"] is True
-        assert lic.public_card_platform is None, (
-            "platform='default' must store NULL in DB, not the string 'default'"
+        _, _, platform_arg = MockCDS.update_draft_platform.call_args[0]
+        assert platform_arg is None, (
+            "platform='default' must store NULL in card_draft.draft_platform"
         )
 
     def test_cp03_unknown_platform_rejected(self):

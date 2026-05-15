@@ -132,14 +132,29 @@ def _mock_db(user=None, license_=None):
 
     Call order: (1) user lookup, (2) license lookup, (3+) participations /
     teams / any further queries — all return empty lists so the template renders.
+
+    CardDraft queries are detected by class argument and always return a draft
+    that mirrors the license published state, so card_variant_id stays a string.
     """
+    from app.models.card_draft import CardDraft as _CardDraft
+
     db = MagicMock()
     _calls = [0]
 
     def _side_effect(*args):
         _calls[0] += 1
         q = MagicMock()
-        if _calls[0] == 1:
+        # Detect CardDraft query by inspecting the queried class.
+        if args and args[0] is _CardDraft:
+            _draft = MagicMock()
+            _draft.published_theme    = (license_.published_card_theme    if license_ else None) or "default"
+            _draft.published_variant  = (license_.published_card_variant  if license_ else None) or "fifa"
+            _draft.published_platform = (license_.published_card_platform if license_ else None)
+            _draft.draft_theme    = _draft.published_theme
+            _draft.draft_variant  = _draft.published_variant
+            _draft.draft_platform = _draft.published_platform
+            q.filter.return_value.first.return_value = _draft
+        elif _calls[0] == 1:
             q.filter.return_value.first.return_value = user
         elif _calls[0] == 2:
             q.filter.return_value.first.return_value = license_

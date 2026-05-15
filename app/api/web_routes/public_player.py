@@ -185,18 +185,27 @@ def public_player_card(
     }
 
     # ── Theme resolution ──────────────────────────────────────────────────────
-    # Reads the PUBLISHED state, not the editor draft.  The draft fields
-    # (card_theme / card_variant / public_card_platform) are written on every
-    # editor interaction; the public route must only reflect the user's last
-    # explicit "Publish Card" action.  See published_card_* model columns.
+    # Reads the PUBLISHED snapshot from card_drafts (primary source after 4D-2).
+    # Falls back to UserLicense.published_card_* for users who have never visited
+    # the editor after the Phase 4D-1 migration (card_drafts row absent).
     from app.services.card_theme_service import get_theme as _get_theme
     from app.services.card_variant_service import get_variant as _get_variant, VARIANTS as _VARIANTS
+    from app.services.card_draft_service import CardDraftService as _CardDraftService
 
-    card_theme_id = (lfa_license.published_card_theme or "default")
+    _card_draft = _CardDraftService.get_player_card_draft(db, user_id=lfa_license.user_id)
+    card_theme_id = (
+        _card_draft.published_theme
+        or lfa_license.published_card_theme
+        or "default"
+    )
     theme = _get_theme(card_theme_id)  # falls back to "default" for unknown IDs
 
     # Variant: ?preview= overrides published value (preview only, not persisted).
-    card_variant_id = (lfa_license.published_card_variant or "fifa")
+    card_variant_id = (
+        _card_draft.published_variant
+        or lfa_license.published_card_variant
+        or "fifa"
+    )
     if preview and preview in _VARIANTS:
         card_variant_id = preview
     variant = _get_variant(card_variant_id)  # falls back to "fifa" for unknown IDs
@@ -231,7 +240,8 @@ def public_player_card(
     # URL override is used by the editor iframe / Playwright export; human-browseable
     # "View Public Card" links omit ?platform= so the published state governs.
     from app.services.card_platform_service import get_preset as _get_preset
-    effective_platform = platform or (lfa_license.published_card_platform or None)
+    _published_platform = _card_draft.published_platform or lfa_license.published_card_platform
+    effective_platform = platform or _published_platform or None
     platform_preset = _get_preset(effective_platform)
 
     # ── Export render layer ──────────────────────────────────────────────────

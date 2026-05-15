@@ -88,39 +88,46 @@ class CardDraftService:
 
     @staticmethod
     def update_draft_theme(
-        db: Session, draft: CardDraft, theme_id: str
+        db: Session, draft: CardDraft, theme_id: str, *, commit: bool = True
     ) -> CardDraft:
-        """Set draft_theme and persist."""
+        """Set draft_theme and persist.
+
+        commit=False skips db.commit()/refresh() so callers that need to bundle
+        multiple writes into one outer commit (e.g. unlock + apply) can do so.
+        """
         draft.draft_theme = theme_id
         draft.updated_at  = datetime.now(timezone.utc)
-        db.commit()
-        db.refresh(draft)
+        if commit:
+            db.commit()
+            db.refresh(draft)
         return draft
 
     @staticmethod
     def update_draft_variant(
-        db: Session, draft: CardDraft, variant_id: str
+        db: Session, draft: CardDraft, variant_id: str, *, commit: bool = True
     ) -> CardDraft:
-        """Set draft_variant and persist."""
+        """Set draft_variant and persist.  commit=False defers to outer commit."""
         draft.draft_variant = variant_id
         draft.updated_at    = datetime.now(timezone.utc)
-        db.commit()
-        db.refresh(draft)
+        if commit:
+            db.commit()
+            db.refresh(draft)
         return draft
 
     @staticmethod
     def update_draft_platform(
-        db: Session, draft: CardDraft, platform_id: str | None
+        db: Session, draft: CardDraft, platform_id: str | None, *, commit: bool = True
     ) -> CardDraft:
         """Set draft_platform (None = platform default) and persist."""
         draft.draft_platform = platform_id
         draft.updated_at     = datetime.now(timezone.utc)
-        db.commit()
-        db.refresh(draft)
+        if commit:
+            db.commit()
+            db.refresh(draft)
         return draft
 
     @staticmethod
-    def publish_draft(db: Session, draft: CardDraft) -> CardDraft:
+    def publish_draft(db: Session, draft: CardDraft, *, commit: bool = True) -> CardDraft:
         """Copy current draft state to the published snapshot.
 
         Idempotent: calling twice with identical draft state yields same result.
@@ -131,8 +138,9 @@ class CardDraftService:
         draft.published_platform = draft.draft_platform
         draft.published_at       = datetime.now(timezone.utc)
         draft.updated_at         = datetime.now(timezone.utc)
-        db.commit()
-        db.refresh(draft)
+        if commit:
+            db.commit()
+            db.refresh(draft)
         return draft
 
     @staticmethod
