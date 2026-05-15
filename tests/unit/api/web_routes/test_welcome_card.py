@@ -404,9 +404,149 @@ class TestWelcomeCardExport:
         assert "/profile/onboarding-card" in captured_url[0]
         assert "instagram_square" in captured_url[0]
         assert "export=1" in captured_url[0]
+        assert "render_token=" in captured_url[0]
+
+    def test_export_render_token_is_valid_jwt(self):
+        """render_token embedded in the render URL must be a valid wc_render JWT."""
+        from jose import jwt as _jwt
+        from app.config import settings
+        lic = _license()
+        db  = _mock_db(license_return=lic)
+        u   = _user(uid=42)
+        captured_url = []
+
+        def _capture(url, platform):
+            captured_url.append(url)
+            return b"\x89PNG"
+
+        with patch(f"{_BASE}._export_svc.check_export_rate_limit", return_value=True), \
+             patch(f"{_BASE}._export_svc._sync_take_screenshot", side_effect=_capture), \
+             patch("app.config.settings") as mock_settings:
+            mock_settings.APP_INTERNAL_PORT = 8000
+            _run(export_onboarding_welcome_card(
+                _req(), platform="instagram_square", db=db, user=u
+            ))
+
+        url = captured_url[0]
+        token = next(p.split("=", 1)[1] for p in url.split("&") if p.startswith("render_token="))
+        payload = _jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        assert payload["purpose"] == "wc_render"
+        assert payload["sub"] == "42"
+
+    def test_export_render_token_expires_within_60s(self):
+        """render_token exp claim must be no more than 60 s from now."""
+        import time
+        from jose import jwt as _jwt
+        from app.config import settings
+        lic = _license()
+        db  = _mock_db(license_return=lic)
+        captured_url = []
+
+        def _capture(url, platform):
+            captured_url.append(url)
+            return b"\x89PNG"
+
+        before = int(time.time())
+        with patch(f"{_BASE}._export_svc.check_export_rate_limit", return_value=True), \
+             patch(f"{_BASE}._export_svc._sync_take_screenshot", side_effect=_capture), \
+             patch("app.config.settings") as mock_settings:
+            mock_settings.APP_INTERNAL_PORT = 8000
+            _run(export_onboarding_welcome_card(
+                _req(), platform="instagram_square", db=db, user=_user()
+            ))
+
+        url = captured_url[0]
+        token = next(p.split("=", 1)[1] for p in url.split("&") if p.startswith("render_token="))
+        payload = _jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        assert payload["exp"] <= before + 60 + 2  # 2 s clock tolerance
 
 
-# ── 5. Gallery template static assertions ─────────────────────────────────────
+# ── 5. Render token auth branch ───────────────────────────────────────────────
+
+class TestWelcomeCardRenderTokenAuth:
+    """Render-token auth branch of GET /profile/onboarding-card (Playwright export path)."""
+
+    def _make_token(self, user_id: int = 10, purpose: str = "wc_render", expired: bool = False) -> str:
+        from datetime import timedelta
+        from app.core.auth import create_access_token
+        delta = timedelta(seconds=-1) if expired else timedelta(seconds=60)
+        return create_access_token(
+            data={"sub": str(user_id), "purpose": purpose},
+            expires_delta=delta,
+        )
+
+    def _db_user_then_license(self):
+        """Mock db that returns _user() on first .first() call, _license() on second."""
+        db = MagicMock()
+        db.query.return_value.filter.return_value.first.side_effect = [_user(), _license()]
+        return db
+
+    def test_valid_token_renders_card(self):
+        """Valid render_token with purpose=wc_render → card rendered (no cookie needed)."""
+        token = self._make_token()
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            result = _run(onboarding_welcome_card(
+                _req(), platform="instagram_square", export=True,
+                render_token=token, db=self._db_user_then_license(), user=None,
+            ))
+        assert mock_tmpl.TemplateResponse.called
+
+    def test_expired_token_raises_401(self):
+        """Expired render_token → HTTPException 401."""
+        from fastapi import HTTPException
+        token = self._make_token(expired=True)
+        with pytest.raises(HTTPException) as exc:
+            _run(onboarding_welcome_card(
+                _req(), platform="instagram_square", export=True,
+                render_token=token, db=_mock_db(), user=None,
+            ))
+        assert exc.value.status_code == 401
+
+    def test_wrong_purpose_token_raises_401(self):
+        """Token with purpose != wc_render → HTTPException 401."""
+        from fastapi import HTTPException
+        token = self._make_token(purpose="access")
+        with pytest.raises(HTTPException) as exc:
+            _run(onboarding_welcome_card(
+                _req(), platform="instagram_square", export=True,
+                render_token=token, db=_mock_db(), user=None,
+            ))
+        assert exc.value.status_code == 401
+
+    def test_invalid_signature_raises_401(self):
+        """Tampered / non-JWT render_token → HTTPException 401."""
+        from fastapi import HTTPException
+        with pytest.raises(HTTPException) as exc:
+            _run(onboarding_welcome_card(
+                _req(), platform="instagram_square", export=True,
+                render_token="not.a.valid.jwt.token", db=_mock_db(), user=None,
+            ))
+        assert exc.value.status_code == 401
+
+    def test_no_token_no_cookie_raises_401(self):
+        """Neither render_token nor cookie user → HTTPException 401."""
+        from fastapi import HTTPException
+        with pytest.raises(HTTPException) as exc:
+            _run(onboarding_welcome_card(
+                _req(), platform="instagram_square", export=True,
+                render_token=None, db=_mock_db(), user=None,
+            ))
+        assert exc.value.status_code == 401
+
+    def test_cookie_auth_still_works_without_token(self):
+        """Backward compat: cookie user, no render_token → card rendered normally."""
+        lic = _license()
+        db  = _mock_db(license_return=lic)
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(onboarding_welcome_card(
+                _req(), platform="instagram_square", db=db, user=_user(),
+            ))
+        assert mock_tmpl.TemplateResponse.called
+
+
+# ── 6. Gallery template static assertions ─────────────────────────────────────
 
 _GALLERY_TPL_PATH = (
     pathlib.Path(__file__).resolve().parents[4]
@@ -493,7 +633,7 @@ class TestWelcomeCardGalleryTemplate:
         assert "instagram_square" in html
 
 
-# ── 6. FIFA template logo audit ────────────────────────────────────────────────
+# ── 7. FIFA template logo audit ────────────────────────────────────────────────
 
 class TestWelcomeCardFifaLogoAudit:
     """Static source checks that Phase 5 logo changes are in place."""
@@ -528,7 +668,7 @@ class TestWelcomeCardFifaLogoAudit:
         assert idx_sponsor < idx_app
 
 
-# ── 7. Step 7 onboarding template ─────────────────────────────────────────────
+# ── 8. Step 7 onboarding template ─────────────────────────────────────────────
 
 @pytest.fixture(scope="module")
 def step7_src():
@@ -606,7 +746,7 @@ class TestWelcomeCardStep7:
         assert idx_upload < idx_view or idx_upload > idx_view  # both present, order flexible
 
 
-# ── 8. Profile page Welcome Card section ──────────────────────────────────────
+# ── 9. Profile page Welcome Card section ──────────────────────────────────────
 
 _PROFILE_TPL_PATH = (
     pathlib.Path(__file__).resolve().parents[4]
@@ -701,7 +841,7 @@ class TestWelcomeCardProfileSection:
         assert 'spec-player-card-iframe' in dashboard_src
 
 
-# ── 9. Preview / export rendering fixes (Fix A, B, C) ────────────────────────
+# ── 10. Preview / export rendering fixes (Fix A, B, C) ───────────────────────
 
 _PUBLIC_PLAYER_PY_PATH = (
     pathlib.Path(__file__).resolve().parents[4]
