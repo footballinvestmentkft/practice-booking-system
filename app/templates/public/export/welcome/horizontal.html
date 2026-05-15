@@ -1,0 +1,248 @@
+{% extends "public/export/shared/fifa_base.html" %}
+{#
+ * Welcome Card — Horizontal archetype
+ * Canvas  : 1200 × 630 px (1.91:1, landscape)
+ *           1500 × 500 px (3:1, banner)
+ * Platforms: facebook_landscape, og, facebook_post, banner_custom
+ *
+ * Hero Welcome layout (Phase 4E):
+ *   Left  — full-height photo (38% width for landscape, 30% for banner)
+ *   Right — panel: LFA logo row · welcome heading · player info · category badges
+ *
+ * Platform CSS overrides via .platform-banner-custom class.
+ * Content contract: same as square archetype.
+ #}
+
+{% block theme_root %}{{ export_root_vars(theme, cat_bg='rgba(255,255,255,0.06)') }}{% endblock %}
+
+{% block platform_vars %}
+:root {
+    --wc-photo-w:     38%;
+    --wc-headline-sz: 28px;
+    --wc-subtitle-sz: 11px;
+    --wc-cat-avg-sz:  24px;
+    --wc-cat-name-sz: 7px;
+    --wc-panel-pad:   22px 24px;
+}
+{% endblock %}
+
+{% block extra_css %}
+/* ── Banner overrides ────────────────────────────────────────────────────── */
+.platform-banner-custom {
+    --wc-photo-w:     30%;
+    --wc-headline-sz: 22px;
+    --wc-subtitle-sz: 9px;
+    --wc-cat-avg-sz:  20px;
+    --wc-cat-name-sz: 6px;
+    --wc-panel-pad:   16px 20px;
+}
+
+/* ── CARD ROOT ───────────────────────────────────────────────────────────── */
+.ex-card { flex-direction: row; overflow: hidden; }
+
+/* ── PHOTO ZONE (left column) ─────────────────────────────────────────────── */
+.wc-photo {
+    flex: 0 0 var(--wc-photo-w);
+    position: relative;
+    overflow: hidden;
+    background: var(--ex-panel-bg);
+}
+.wc-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+}
+.wc-initials {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 80px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.55);
+}
+
+/* ── CONTENT PANEL (right column) ────────────────────────────────────────── */
+.wc-content {
+    flex: 1;
+    background: var(--ex-panel-bg);
+    display: flex;
+    flex-direction: column;
+    padding: var(--wc-panel-pad);
+    overflow: hidden;
+    min-width: 0;
+}
+
+/* ── LOGO ROW ─────────────────────────────────────────────────────────────── */
+.wc-logo-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+.wc-logo {
+    height: 28px;
+    width: auto;
+    object-fit: contain;
+}
+
+/* ── HEADING BLOCK ────────────────────────────────────────────────────────── */
+.wc-heading-block {
+    flex-shrink: 0;
+    margin-bottom: 10px;
+}
+.wc-welcome {
+    font-size: var(--wc-headline-sz);
+    font-weight: 900;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    line-height: 1.05;
+}
+.wc-subtitle {
+    font-size: var(--wc-subtitle-sz);
+    font-weight: 600;
+    color: rgba(255,255,255,0.65);
+    letter-spacing: 0.8px;
+    margin-top: 4px;
+    text-transform: uppercase;
+}
+
+/* ── PLAYER INFO ROW ──────────────────────────────────────────────────────── */
+.wc-info-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+}
+.wc-info-name {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--ex-text-strong);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 55%;
+}
+.wc-tag {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--ex-text-secondary);
+    background: rgba(255,255,255,0.07);
+    border-radius: 4px;
+    padding: 2px 8px;
+    white-space: nowrap;
+}
+.wc-tag-pos { color: var(--ex-accent); background: rgba(102,126,234,0.14); }
+
+/* ── CATEGORY BADGES — 4 in a row ────────────────────────────────────────── */
+.wc-cats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: auto;
+}
+.wc-cat {
+    background: rgba(255,255,255,0.07);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 4px 7px;
+    min-height: 0;
+    overflow: hidden;
+}
+.wc-cat-emoji { font-size: 10px; margin-bottom: 3px; }
+.wc-cat-avg {
+    font-size: var(--wc-cat-avg-sz);
+    font-weight: 900;
+    color: var(--ex-text-strong);
+    line-height: 1;
+}
+.wc-cat-name {
+    font-size: var(--wc-cat-name-sz);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--ex-text-secondary);
+    margin-top: 3px;
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width: 100%;
+    padding: 0 2px;
+}
+{% endblock %}
+
+{% block body_content %}
+<div class="ex-card {{ platform_class }}">
+
+    <!-- ── PHOTO (left column) ─────────────────────────────────────────────── -->
+    <div class="wc-photo">
+        {% set _photo = portrait_photo_url if portrait_photo_url else (photo_url if photo_url else None) %}
+        {% if _photo %}
+        <img src="{{ _photo }}" alt="{{ initials }}">
+        {% else %}
+        <div class="wc-initials" style="background: {{ avatar_bg }};">{{ initials }}</div>
+        {% endif %}
+    </div>
+
+    <!-- ── CONTENT PANEL (right column) ───────────────────────────────────── -->
+    <div class="wc-content">
+
+        <!-- Logo row -->
+        <div class="wc-logo-row">
+            {% if app_logo_url %}
+            <img class="wc-logo" src="{{ app_logo_url }}" alt="LFA"
+                 onerror="this.style.display='none'">
+            {% endif %}
+        </div>
+
+        <!-- Welcome heading -->
+        <div class="wc-heading-block">
+            <div class="wc-welcome">{{ welcome_heading }}</div>
+            <div class="wc-subtitle">{{ welcome_subtitle }}</div>
+        </div>
+
+        <!-- Player info: name + optional tags -->
+        <div class="wc-info-row">
+            <span class="wc-info-name">{{ player.name }}</span>
+            {% if player.position and player.position != "Unknown" %}
+            <span class="wc-tag wc-tag-pos">{{ player.position }}</span>
+            {% endif %}
+            {% if player.nationality %}
+            <span class="wc-tag">
+                {{ player.nationality | nationalities_display(player.secondary_nationality) }}
+            </span>
+            {% endif %}
+            {% if player.age_group %}
+            <span class="wc-tag">{{ player.age_group }}</span>
+            {% endif %}
+        </div>
+
+        <!-- 4 category average badges -->
+        <div class="wc-cats">
+            {% for avg in category_averages %}
+            <div class="wc-cat">
+                <span class="wc-cat-emoji">{{ avg.emoji }}</span>
+                <span class="wc-cat-avg">{{ avg.avg }}</span>
+                <span class="wc-cat-name">{{ avg.name }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

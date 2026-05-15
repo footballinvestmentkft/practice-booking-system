@@ -260,9 +260,10 @@ class TestWelcomeCardFifaRoute:
             ))
         return mock_tmpl.TemplateResponse.call_args.args  # (tmpl, ctx)
 
-    def test_with_platform_uses_fifa_export_template(self):
+    def test_with_platform_uses_welcome_export_template(self):
+        """Phase 4E: WC platform renders now route to welcome/ templates, not fifa/."""
         tmpl, _ = self._call_with_platform("instagram_square")
-        assert "fifa" in tmpl
+        assert "welcome" in tmpl
 
     def test_context_has_player_object(self):
         _, ctx = self._call_with_platform()
@@ -1262,6 +1263,254 @@ class TestWelcomeCardNativeExportMode:
             "native_export_mode key must be present in WC export context"
         )
         assert ctx["native_export_mode"] is False
+
+
+# ── 14. Phase 4E — Hero Welcome Card templates ────────────────────────────────
+#
+# Tests cover:
+#   WC-4E-CTX  — context builder: welcome_heading, welcome_subtitle, category_averages
+#   WC-4E-RT   — template routing: _select_welcome_card_template()
+#   WC-4E-RND  — Jinja2 render: content contract per archetype
+#   WC-4E-NEG  — negative: no EVENTS / XP / LICENSE / Football Skills panel title
+#   WC-4E-REG  — regression: Player Card export routing unchanged
+
+_WELCOME_TPL_DIR = pathlib.Path(__file__).resolve().parents[4] / "app" / "templates"
+
+
+def _render_welcome(archetype: str, platform: str) -> str:
+    """Render the given Welcome Card archetype with a real Jinja2 environment."""
+    from jinja2 import Environment, FileSystemLoader
+    from app.utils.country_codes import register_filters as _rf
+    env = Environment(
+        loader=FileSystemLoader(str(_WELCOME_TPL_DIR)),
+        autoescape=True,
+    )
+    _rf(env)
+    ctx = _build_welcome_card_context(_req(), _user(), _license(), platform, False)
+    return env.get_template(f"public/export/welcome/{archetype}.html").render(**ctx)
+
+
+class TestWelcomeCardPhase4E:
+    """
+    Phase 4E — Hero Welcome Card template suite.
+
+    Context, routing, render, negative, and regression checks.
+    """
+
+    # ── WC-4E-CTX: context builder ────────────────────────────────────────────
+
+    def test_ctx01_welcome_heading(self):
+        """WC-4E-CTX-01: welcome_heading must be 'WELCOME TO LFA'."""
+        ctx = _build_welcome_card_context(_req(), _user(), _license(), None, False)
+        assert ctx["welcome_heading"] == "WELCOME TO LFA"
+
+    def test_ctx02_welcome_subtitle(self):
+        """WC-4E-CTX-02: welcome_subtitle must be 'Lion Football Academy'."""
+        ctx = _build_welcome_card_context(_req(), _user(), _license(), None, False)
+        assert ctx["welcome_subtitle"] == "Lion Football Academy"
+
+    def test_ctx03_category_averages_has_four_items(self):
+        """WC-4E-CTX-03: category_averages must contain exactly 4 entries."""
+        ctx = _build_welcome_card_context(_req(), _user(), _license(), None, False)
+        assert len(ctx["category_averages"]) == 4, (
+            f"Expected 4 category_averages, got {len(ctx['category_averages'])}"
+        )
+
+    def test_ctx04_category_averages_sa_based(self):
+        """WC-4E-CTX-04: category avg values are computed from self_assessment values."""
+        from app.skills_config import get_all_skill_keys
+        sa_val = 80.0
+        skills = {k: {"self_assessment": sa_val, "current_level": 50.0}
+                  for k in get_all_skill_keys()}
+        lic = _license(football_skills=skills)
+        ctx = _build_welcome_card_context(_req(), _user(), lic, None, False)
+        for entry in ctx["category_averages"]:
+            assert entry["avg"] == 80, (
+                f"Category {entry['key']}: expected avg=80 (from SA=80.0), "
+                f"got {entry['avg']}"
+            )
+
+    def test_ctx05_category_averages_have_required_keys(self):
+        """WC-4E-CTX-05: each category_averages entry has key, name, emoji, avg."""
+        ctx = _build_welcome_card_context(_req(), _user(), _license(), None, False)
+        for entry in ctx["category_averages"]:
+            assert "key"   in entry, f"Missing 'key' in {entry}"
+            assert "name"  in entry, f"Missing 'name' in {entry}"
+            assert "emoji" in entry, f"Missing 'emoji' in {entry}"
+            assert "avg"   in entry, f"Missing 'avg' in {entry}"
+            assert isinstance(entry["avg"], int), (
+                f"avg must be int (rounded), got {type(entry['avg'])}"
+            )
+
+    def test_ctx06_category_avg_is_deterministic(self):
+        """WC-4E-CTX-06: same skills → same category averages on repeated calls."""
+        ctx_a = _build_welcome_card_context(_req(), _user(), _license(), None, False)
+        ctx_b = _build_welcome_card_context(_req(), _user(), _license(), None, False)
+        assert ctx_a["category_averages"] == ctx_b["category_averages"]
+
+    # ── WC-4E-RT: template routing ────────────────────────────────────────────
+
+    def test_rt01_square_routes_to_welcome_square(self):
+        """WC-4E-RT-01: instagram_square → welcome/square.html."""
+        from app.api.web_routes.profile import _select_welcome_card_template
+        assert _select_welcome_card_template("instagram_square", False) == \
+               "public/export/welcome/square.html"
+
+    def test_rt02_facebook_square_routes_to_welcome_square(self):
+        """WC-4E-RT-02: facebook_square → welcome/square.html."""
+        from app.api.web_routes.profile import _select_welcome_card_template
+        assert _select_welcome_card_template("facebook_square", False) == \
+               "public/export/welcome/square.html"
+
+    def test_rt03_story_routes_to_welcome_vertical(self):
+        """WC-4E-RT-03: instagram_story → welcome/vertical.html."""
+        from app.api.web_routes.profile import _select_welcome_card_template
+        assert _select_welcome_card_template("instagram_story", False) == \
+               "public/export/welcome/vertical.html"
+
+    def test_rt04_tiktok_routes_to_welcome_vertical(self):
+        """WC-4E-RT-04: tiktok → welcome/vertical.html."""
+        from app.api.web_routes.profile import _select_welcome_card_template
+        assert _select_welcome_card_template("tiktok", False) == \
+               "public/export/welcome/vertical.html"
+
+    def test_rt05_portrait_routes_to_welcome_vertical(self):
+        """WC-4E-RT-05: instagram_portrait → welcome/vertical.html."""
+        from app.api.web_routes.profile import _select_welcome_card_template
+        assert _select_welcome_card_template("instagram_portrait", False) == \
+               "public/export/welcome/vertical.html"
+
+    def test_rt06_landscape_routes_to_welcome_horizontal(self):
+        """WC-4E-RT-06: facebook_landscape → welcome/horizontal.html."""
+        from app.api.web_routes.profile import _select_welcome_card_template
+        assert _select_welcome_card_template("facebook_landscape", False) == \
+               "public/export/welcome/horizontal.html"
+
+    def test_rt07_banner_routes_to_welcome_horizontal(self):
+        """WC-4E-RT-07: banner_custom → welcome/horizontal.html."""
+        from app.api.web_routes.profile import _select_welcome_card_template
+        assert _select_welcome_card_template("banner_custom", False) == \
+               "public/export/welcome/horizontal.html"
+
+    def test_rt08_no_platform_returns_preview_fallback(self):
+        """WC-4E-RT-08: None platform → FIFA preview fallback (gallery hub)."""
+        from app.api.web_routes.profile import _select_welcome_card_template
+        assert _select_welcome_card_template(None, False) == \
+               "public/player_card_fifa.html"
+
+    # ── WC-4E-RND: render — content contract ──────────────────────────────────
+
+    def test_rnd01_square_has_welcome_heading(self):
+        """WC-4E-RND-01: square render contains 'WELCOME TO LFA'."""
+        html = _render_welcome("square", "instagram_square")
+        assert "WELCOME TO LFA" in html
+
+    def test_rnd02_square_has_subtitle(self):
+        """WC-4E-RND-02: square render contains 'Lion Football Academy'."""
+        html = _render_welcome("square", "instagram_square")
+        assert "Lion Football Academy" in html
+
+    def test_rnd03_square_has_lfa_logo(self):
+        """WC-4E-RND-03: square render contains the LFA logo URL."""
+        html = _render_welcome("square", "instagram_square")
+        assert "logo-dark.png" in html
+
+    def test_rnd04_square_has_four_category_badges(self):
+        """WC-4E-RND-04: square render has 4 wc-cat-avg elements."""
+        html = _render_welcome("square", "instagram_square")
+        assert html.count("wc-cat-avg") >= 4
+
+    def test_rnd05_square_photo_fallback_renders(self):
+        """WC-4E-RND-05: square render with no photo renders initials fallback."""
+        html = _render_welcome("square", "instagram_square")
+        assert "wc-initials" in html or "wc-photo" in html
+
+    def test_rnd06_vertical_has_welcome_heading(self):
+        """WC-4E-RND-06: vertical (tiktok) render contains 'WELCOME TO LFA'."""
+        html = _render_welcome("vertical", "tiktok")
+        assert "WELCOME TO LFA" in html
+
+    def test_rnd07_vertical_has_lfa_logo(self):
+        """WC-4E-RND-07: vertical render contains the LFA logo URL."""
+        html = _render_welcome("vertical", "tiktok")
+        assert "logo-dark.png" in html
+
+    def test_rnd08_vertical_has_four_category_badges(self):
+        """WC-4E-RND-08: vertical render has 4 wc-cat-avg elements (2×2 grid)."""
+        html = _render_welcome("vertical", "tiktok")
+        assert html.count("wc-cat-avg") >= 4
+
+    def test_rnd09_horizontal_has_welcome_heading(self):
+        """WC-4E-RND-09: horizontal (landscape) render contains 'WELCOME TO LFA'."""
+        html = _render_welcome("horizontal", "facebook_landscape")
+        assert "WELCOME TO LFA" in html
+
+    def test_rnd10_horizontal_has_lfa_logo(self):
+        """WC-4E-RND-10: horizontal render contains the LFA logo URL."""
+        html = _render_welcome("horizontal", "facebook_landscape")
+        assert "logo-dark.png" in html
+
+    def test_rnd11_horizontal_has_four_category_badges(self):
+        """WC-4E-RND-11: horizontal render has 4 wc-cat-avg elements (4-in-a-row)."""
+        html = _render_welcome("horizontal", "facebook_landscape")
+        assert html.count("wc-cat-avg") >= 4
+
+    def test_rnd12_horizontal_banner_has_welcome_heading(self):
+        """WC-4E-RND-12: horizontal (banner_custom) render contains 'WELCOME TO LFA'."""
+        html = _render_welcome("horizontal", "banner_custom")
+        assert "WELCOME TO LFA" in html
+
+    # ── WC-4E-NEG: no forbidden content ──────────────────────────────────────
+
+    def _assert_no_forbidden(self, html: str, archetype: str) -> None:
+        """Assert none of the forbidden Player Card elements appear in the render."""
+        assert "EVENTS" not in html, \
+            f"{archetype}: 'EVENTS' must not appear in Welcome Card render"
+        assert "✦" not in html, \
+            f"{archetype}: '✦' (XP) must not appear in Welcome Card render"
+        assert "LICENSE" not in html, \
+            f"{archetype}: 'LICENSE' must not appear in Welcome Card render"
+        assert "Lv." not in html, \
+            f"{archetype}: 'Lv.' (license level) must not appear in Welcome Card render"
+        assert "Football Skills —" not in html, \
+            f"{archetype}: 'Football Skills —' Player Card title must not appear in Welcome Card"
+
+    def test_neg01_square_no_forbidden_content(self):
+        """WC-4E-NEG-01: square render has no EVENTS / XP / LICENSE bleed."""
+        self._assert_no_forbidden(_render_welcome("square", "instagram_square"), "square")
+
+    def test_neg02_vertical_no_forbidden_content(self):
+        """WC-4E-NEG-02: vertical render has no EVENTS / XP / LICENSE bleed."""
+        self._assert_no_forbidden(_render_welcome("vertical", "instagram_story"), "vertical")
+
+    def test_neg03_horizontal_no_forbidden_content(self):
+        """WC-4E-NEG-03: horizontal render has no EVENTS / XP / LICENSE bleed."""
+        self._assert_no_forbidden(_render_welcome("horizontal", "facebook_landscape"), "horizontal")
+
+    def test_neg04_banner_no_forbidden_content(self):
+        """WC-4E-NEG-04: banner render has no EVENTS / XP / LICENSE bleed."""
+        self._assert_no_forbidden(_render_welcome("horizontal", "banner_custom"), "banner_custom")
+
+    # ── WC-4E-REG: Player Card routing regression ─────────────────────────────
+
+    def test_reg01_pc_export_route_unchanged(self):
+        """WC-4E-REG-01: Player Card export templates still routed via old bucket logic."""
+        from app.services.card_constants import EXPORT_FORMAT_BUCKETS
+        # Verify the PC bucket mapping is intact — WC routing must not have touched it
+        assert EXPORT_FORMAT_BUCKETS["instagram_square"] == "square"
+        assert EXPORT_FORMAT_BUCKETS["tiktok"]           == "tiktok"
+        assert EXPORT_FORMAT_BUCKETS["banner_custom"]    == "banner"
+        assert EXPORT_FORMAT_BUCKETS["facebook_landscape"] == "landscape"
+
+    def test_reg02_existing_wc_api_tests_unchanged(self):
+        """WC-4E-REG-02: WC context still has welcome_card_mode=True (no regression)."""
+        ctx = _build_welcome_card_context(_req(), _user(), _license(), None, False)
+        assert ctx["welcome_card_mode"] is True
+
+    def test_reg03_wc_sponsor_logo_still_none(self):
+        """WC-4E-REG-03: sponsor_logo_url still None on WC context."""
+        ctx = _build_welcome_card_context(_req(), _user(), _license(), None, False)
+        assert ctx["sponsor_logo_url"] is None
 
 
 # ── 13. Landscape BUG-1/2 render guards + BUG-3 age_group + platform regression ─

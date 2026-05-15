@@ -668,6 +668,20 @@ _WC_CANVAS_SIZES_JSON: dict = {
 _WC_APP_LOGO_URL = "/static/images/logo-dark.png"
 _TEMPLATES_DIR   = str(BASE_DIR / "templates")
 
+# Maps WC platform IDs to the 3 Welcome Card template archetypes.
+# square: 1:1  |  vertical: column (4:5, 9:16)  |  horizontal: wide (1.91:1, 3:1)
+_WC_PLATFORM_TO_ARCHETYPE: dict[str, str] = {
+    "instagram_square":   "square",
+    "facebook_square":    "square",
+    "instagram_portrait": "vertical",
+    "instagram_story":    "vertical",
+    "tiktok":             "vertical",
+    "facebook_landscape": "horizontal",
+    "og":                 "horizontal",
+    "facebook_post":      "horizontal",
+    "banner_custom":      "horizontal",
+}
+
 
 def _build_welcome_card_context(
     request: Request,
@@ -718,6 +732,24 @@ def _build_welcome_card_context(
             all_sa_values.append(sa_val)
 
     overall_sa = round(sum(all_sa_values) / len(all_sa_values), 1) if all_sa_values else 60.0
+
+    # Per-category SA averages for the 4 Welcome Card badge slots.
+    # Computed from skills_for_fifa (current_level = self_assessment) to stay
+    # consistent with the overall SA adapter — no separate DB read required.
+    category_averages = [
+        {
+            "key":   cat["key"],
+            "name":  cat["name_en"],
+            "emoji": cat["emoji"],
+            "avg":   round(
+                sum(
+                    skills_for_fifa.get(s["key"], {}).get("current_level", 60.0)
+                    for s in cat["skills"]
+                ) / len(cat["skills"])
+            ),
+        }
+        for cat in SKILL_CATEGORIES
+    ]
 
     display_name      = user.name or user.email or ""
     parts             = display_name.split()
@@ -793,16 +825,31 @@ def _build_welcome_card_context(
         "dominant_badge":        dominant_badge,
         "display_name":          display_name,
         "welcome_card_mode":     True,
+        # Welcome Card identity copy
+        "welcome_heading":       "WELCOME TO LFA",
+        "welcome_subtitle":      "Lion Football Academy",
+        # 4 category average badges (SA-based, one per SKILL_CATEGORIES entry)
+        "category_averages":     category_averages,
     }
 
 
 def _select_welcome_card_template(platform: str | None, export: bool) -> str:
-    """Return the FIFA template path appropriate for this platform + render mode."""
-    if platform and platform in _WC_EXPORT_BUCKETS:
-        bucket   = _WC_EXPORT_BUCKETS[platform]
-        exp_path = f"public/export/{bucket}/fifa.html"
-        if os.path.isfile(os.path.join(_TEMPLATES_DIR, exp_path)):
-            return exp_path
+    """Return the Welcome Card template path for this platform + render mode.
+
+    Routes to one of three Welcome Card archetype templates in export/welcome/:
+      square     — 1:1 formats (instagram_square, facebook_square)
+      vertical   — column formats (portrait, story, tiktok)
+      horizontal — wide formats (landscape, og, facebook_post, banner_custom)
+
+    Falls back to the FIFA preview template when no platform is given (gallery hub)
+    or when a welcome archetype template file is not found on disk.
+    """
+    if platform:
+        archetype = _WC_PLATFORM_TO_ARCHETYPE.get(platform)
+        if archetype:
+            exp_path = f"public/export/welcome/{archetype}.html"
+            if os.path.isfile(os.path.join(_TEMPLATES_DIR, exp_path)):
+                return exp_path
     return "public/player_card_fifa.html"
 
 
