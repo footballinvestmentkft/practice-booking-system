@@ -882,15 +882,15 @@ class TestLfaNavigationCTAs:
         assert 'href="/profile"' not in card_editor_src or \
                'href="/profile/lfa-football-player"' in card_editor_src
 
-    # ── My Card tile icon — must be 🎴, not 🪪 ────────────────────────────────
+    # ── My Cards tile icon — Phase 4B: 🃏, hero title: My Cards ─────────────
 
-    def test_dashboard_my_card_tile_uses_playing_card_icon(self, dashboard_src):
-        """My Card mod-nav tile must use 🎴 (card/deck icon), not 🪪 (ID card)."""
-        assert '🎴' in dashboard_src
+    def test_dashboard_my_cards_tile_uses_joker_card_icon(self, dashboard_src):
+        """My Cards mod-nav tile must use 🃏 (Phase 4B rename from My Card → My Cards)."""
+        assert '🃏' in dashboard_src
 
-    def test_dashboard_my_card_hero_title_uses_playing_card_icon(self, dashboard_src):
-        """My Player Card hero section title must use 🎴."""
-        assert '🎴 My Player Card' in dashboard_src
+    def test_dashboard_my_cards_hero_title_updated(self, dashboard_src):
+        """My Cards hero section title must reflect Phase 4B rename."""
+        assert '🃏 My Cards' in dashboard_src
 
     def test_card_editor_page_title_uses_playing_card_icon(self, card_editor_src):
         """Card editor page title must use 🎴 My Player Card."""

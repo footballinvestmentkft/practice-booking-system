@@ -25,6 +25,7 @@ from . import (
     public_player,
     public_tournament,
     sport_director,
+    my_cards,
 )
 from .admin import router as admin_router
 from .tournaments import router as tournaments_router
@@ -55,3 +56,4 @@ router.include_router(tournament_live.router)  # ✅ Live monitoring (WebSocket 
 router.include_router(public_player.router)      # 🌐 Public player card (no auth)
 router.include_router(public_tournament.router)  # 🌐 Public event detail page (no auth)
 router.include_router(sport_director.router)     # 🏅 Sport Director team enrollment
+router.include_router(my_cards.router)           # 🃏 My Cards hub (/my-cards)

@@ -59395,6 +59395,71 @@
         "summary": "Metrics Alerts"
       }
     },
+    "/my-cards": {
+      "get": {
+        "description": "Hub page listing all card types \u2014 active (v\u22651) and coming-soon (v0).",
+        "operationId": "my_cards_hub_my_cards_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "My Cards Hub",
+        "tags": [
+          "web",
+          "my-cards"
+        ]
+      }
+    },
+    "/my-cards/player-card": {
+      "get": {
+        "description": "Detail entry point for Player Card \u2014 redirects to the card editor.",
+        "operationId": "my_cards_player_card_my_cards_player_card_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "My Cards Player Card",
+        "tags": [
+          "web",
+          "my-cards"
+        ]
+      }
+    },
+    "/my-cards/welcome-card": {
+      "get": {
+        "description": "Detail entry point for Welcome Card \u2014 redirects to the onboarding card.",
+        "operationId": "my_cards_welcome_card_my_cards_welcome_card_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "My Cards Welcome Card",
+        "tags": [
+          "web",
+          "my-cards"
+        ]
+      }
+    },
     "/notifications": {
       "get": {
         "operationId": "notifications_page_notifications_get",
