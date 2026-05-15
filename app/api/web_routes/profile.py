@@ -684,6 +684,19 @@ def _build_welcome_card_context(
     For Welcome Card only, this field is populated from self_assessment.
     This must never be written back to football_skills JSONB and must never
     be used by calculation services.
+
+    WELCOME_CARD_SPEC v1 content-field → context key mapping:
+      full_name         → player.name / display_name
+      overall_rating    → overall
+      position          → player.position
+      skill_values      → player.skills (current_level = self_assessment)
+      card_theme        → card_theme / card_theme_id
+      nationality       → player.nationality
+      photo_url         → photo_url / portrait_photo_url / landscape_photo_url
+      club_name         → (intentionally absent — WC is individual, not club-branded)
+      club_logo_url     → (intentionally absent)
+      skill_categories  → skill_categories
+      export_mode       → export_mode
     """
     football_skills = license.football_skills or {}
     ms              = license.motivation_scores or {}
@@ -753,6 +766,7 @@ def _build_welcome_card_context(
         "platform_class":        platform_preset.css_class,
         "platform_id":           platform_preset.id,
         "export_mode":           export,
+        "native_export_mode":    False,   # WC never uses the native capture path
         "photo_url":             license.player_card_photo_url,
         "portrait_photo_url":    license.card_photo_portrait_url or license.player_card_photo_url,
         "landscape_photo_url":   license.card_photo_landscape_url or license.player_card_photo_url,

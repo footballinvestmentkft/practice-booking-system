@@ -34,6 +34,8 @@ WELCOME_CARD_SPEC = CardTypeSpec(
     label="Welcome Card",
     description="Onboarding card generated from self-assessment data; single variant (FIFA Classic), not user-editable.",
     content_contract=WELCOME_CARD_CONTRACT,
+    # "fifa" here names the export template bucket (public/export/*/fifa.html),
+    # not a Player Card editor variant — different semantic from PLAYER_CARD_SPEC.
     supported_variant_ids=("fifa",),
     supported_platform_ids=WC_GALLERY_PLATFORM_IDS,
     theme_compatible=True,

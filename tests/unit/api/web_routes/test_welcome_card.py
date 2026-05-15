@@ -1225,3 +1225,39 @@ class TestLandscapeExportP0Fix:
             "Max-level suffix must be guarded: if license_current_level is '—', "
             "the '/ max_level' suffix must not render."
         )
+
+
+# ── WC-40/41: native_export_mode explicit False (Phase 4C) ────────────────────
+
+class TestWelcomeCardNativeExportMode:
+    """
+    Phase 4C: _build_welcome_card_context() must explicitly set native_export_mode=False.
+
+    Welcome Card never uses the native screenshot capture path — the key must be
+    present and False so FIFA base templates that reference it get a defined value.
+    """
+
+    def _ctx(self, export: bool) -> dict:
+        return _build_welcome_card_context(
+            request=_req(),
+            user=_user(),
+            license=_license(),
+            platform=None,
+            export=export,
+        )
+
+    def test_wc40_native_export_mode_false_in_gallery_context(self):
+        """WC-40: native_export_mode is explicitly False in non-export (gallery) context."""
+        ctx = self._ctx(export=False)
+        assert "native_export_mode" in ctx, (
+            "native_export_mode key must be present in WC context"
+        )
+        assert ctx["native_export_mode"] is False
+
+    def test_wc41_native_export_mode_false_in_export_context(self):
+        """WC-41: native_export_mode is explicitly False when export=True."""
+        ctx = self._ctx(export=True)
+        assert "native_export_mode" in ctx, (
+            "native_export_mode key must be present in WC export context"
+        )
+        assert ctx["native_export_mode"] is False
