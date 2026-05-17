@@ -113,8 +113,16 @@
         <a href="/admin/analytics"
            class="nav-item{% if p.startswith('/admin/analytics') %} active{% endif %}">📊 Analytics</a>
 
-        <a href="/admin/game-presets"
-           class="nav-item{% if p.startswith('/admin/config') or p.startswith('/admin/game-presets') %} active{% endif %}">🎮 Game Config</a>
+        <div class="nav-group{% if p.startswith('/admin/game-presets') or p.startswith('/admin/card-themes') %} active{% endif %}">
+            <a href="/admin/game-presets" class="nav-item nav-group-trigger"
+               onclick="toggleNavDropdown(event,this)">🎮 Card System ▾</a>
+            <div class="nav-dropdown">
+                <a href="/admin/game-presets"
+                   class="nav-dropdown-item{% if p.startswith('/admin/game-presets') %} active{% endif %}">Game Config</a>
+                <a href="/admin/card-themes"
+                   class="nav-dropdown-item{% if p.startswith('/admin/card-themes') %} active{% endif %}">Card Themes</a>
+            </div>
+        </div>
 
         <a href="/admin/system-events"
            class="nav-item{% if p.startswith('/admin/system-events') %} active{% endif %}">⚙️ System</a>

@@ -45,6 +45,8 @@ class ThemeDefinition:
     val_neutral: str = 'rgba(255,255,255,0.85)'  # --card-val-neutral (skill values)
     skill_up: str = '#48bb78'                     # --card-skill-up
     skill_dn: str = '#fc8181'                     # --card-skill-dn
+    # Display order — used by get_all_themes() when DB-backed; 0 in fallback THEMES dict
+    sort_order: int = 0
 
 
 # ── Hardcoded fallback registry ───────────────────────────────────────────────
@@ -55,7 +57,7 @@ THEMES: dict[str, ThemeDefinition] = {
         id="default", label="Slate", is_premium=False, credit_cost=0,
         panel_bg="linear-gradient(155deg, #1a2744 0%, #2a3a5c 60%, #1e3a4a 100%)",
         body_bg="#1a202c", tab_bg="#2d3748", accent="#667eea",
-        page_bg="#0f1923", dot_color="#667eea",
+        page_bg="#0f1923", dot_color="#667eea", sort_order=0,
     ),
     "midnight": ThemeDefinition(
         id="midnight", label="Midnight", is_premium=False, credit_cost=0,
@@ -63,6 +65,7 @@ THEMES: dict[str, ThemeDefinition] = {
         body_bg="#0f0f0f", tab_bg="#1a1a1a", accent="#00d4ff",
         page_bg="#050505", dot_color="#00d4ff",
         text_faint='rgba(255,255,255,0.35)', val_neutral='rgba(255,255,255,0.85)',
+        sort_order=1,
     ),
     "arctic": ThemeDefinition(
         id="arctic", label="Arctic", is_premium=False, credit_cost=0,
@@ -71,7 +74,7 @@ THEMES: dict[str, ThemeDefinition] = {
         page_bg="#e2e8f0", dot_color="#4299e1",
         is_light_body_bg=True,
         text_faint='rgba(0,0,0,0.30)', val_neutral='rgba(0,0,0,0.70)',
-        skill_up='#276749', skill_dn='#c53030',
+        skill_up='#276749', skill_dn='#c53030', sort_order=2,
     ),
     "gold": ThemeDefinition(
         id="gold", label="Gold", is_premium=True, credit_cost=500,
@@ -79,6 +82,7 @@ THEMES: dict[str, ThemeDefinition] = {
         body_bg="#1e1500", tab_bg="#2d1f00", accent="#f6ad3c",
         page_bg="#120d00", dot_color="#f6ad3c",
         text_faint='rgba(255,255,255,0.48)', val_neutral='rgba(255,255,255,0.68)',
+        sort_order=3,
     ),
     "emerald": ThemeDefinition(
         id="emerald", label="Emerald", is_premium=True, credit_cost=500,
@@ -86,6 +90,7 @@ THEMES: dict[str, ThemeDefinition] = {
         body_bg="#0d1f0d", tab_bg="#142b14", accent="#4cde82",
         page_bg="#060f06", dot_color="#4cde82",
         text_faint='rgba(255,255,255,0.48)', val_neutral='rgba(255,255,255,0.68)',
+        sort_order=4,
     ),
     "crimson": ThemeDefinition(
         id="crimson", label="Crimson", is_premium=True, credit_cost=500,
@@ -93,11 +98,12 @@ THEMES: dict[str, ThemeDefinition] = {
         body_bg="#1e0d0d", tab_bg="#2d1010", accent="#ff6b6b",
         page_bg="#120404", dot_color="#ff6b6b",
         text_faint='rgba(255,255,255,0.38)', val_neutral='rgba(255,255,255,0.65)',
-        skill_up='#68d391', skill_dn='#ffb3b3',
+        skill_up='#68d391', skill_dn='#ffb3b3', sort_order=5,
     ),
 }
 
-# Ordered list for the picker UI (free first, then premium)
+# Ordered list for the THEMES fallback dict only (used when DB unavailable).
+# The live picker ordering is determined exclusively by card_themes.sort_order ASC.
 THEME_ORDER = ["default", "midnight", "arctic", "gold", "emerald", "crimson"]
 
 
@@ -132,6 +138,7 @@ def _row_to_definition(row) -> ThemeDefinition:
         val_neutral=row.val_neutral,
         skill_up=row.skill_up,
         skill_dn=row.skill_dn,
+        sort_order=row.sort_order,
     )
 
 
@@ -163,12 +170,13 @@ def get_theme(theme_id: str, db=None) -> ThemeDefinition:
 
 
 def get_all_themes(db=None) -> list[ThemeDefinition]:
-    """Return all active themes in display order (free first, then premium)."""
+    """Return all active themes ordered by sort_order ASC then id ASC.
+
+    When DB is unavailable (cache empty, db=None) falls back to THEMES dict
+    which already carries sort_order values matching the DB seed.
+    """
     cache = _maybe_reload(db)
-    # Preserve THEME_ORDER for known IDs; append any DB-only themes at the end
-    ordered = [cache[tid] for tid in THEME_ORDER if tid in cache]
-    extras  = [t for tid, t in cache.items() if tid not in THEME_ORDER]
-    return ordered + extras
+    return sorted(cache.values(), key=lambda t: (t.sort_order, t.id))
 
 
 def is_unlocked(user_license, theme_id: str, db=None) -> bool:

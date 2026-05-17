@@ -3907,3 +3907,120 @@ class TestSmoke31LocationFirstEvents:
         assert camp.name == "SMOKE31c Updated Name", (
             f"Camp name not updated in DB — got '{camp.name}'"
         )
+
+
+# ── SMOKE-32  Admin Card Theme Management ─────────────────────────────────────
+
+import io as _io
+import json as _json
+
+
+class TestSmoke32AdminCardThemes:
+    """AT-01..AT-06 — card theme list, upload/preview, apply, toggle."""
+
+    def test_AT01_list_page_loads(self, admin_client):
+        """GET /admin/card-themes → 200."""
+        resp = admin_client.get("/admin/card-themes", follow_redirects=False)
+        assert resp.status_code == 200
+        assert "Card Themes" in resp.text
+
+    def test_AT02_upload_form_loads(self, admin_client):
+        """GET /admin/card-themes/upload → 200 with file input."""
+        resp = admin_client.get("/admin/card-themes/upload", follow_redirects=False)
+        assert resp.status_code == 200
+        assert "Upload" in resp.text
+        assert "schema_version" in resp.text
+
+    def test_AT03_upload_valid_json_shows_preview(self, admin_client):
+        """POST /admin/card-themes/upload with valid manifest → 200 preview."""
+        manifest = {
+            "schema_version": 1,
+            "themes": [{
+                "id": "smoke-ocean",
+                "label": "Smoke Ocean",
+                "is_premium": True,
+                "credit_cost": 500,
+                "sort_order": 99,
+                "panel_bg": "linear-gradient(155deg, #001a33 0%)",
+                "body_bg": "#001122",
+                "tab_bg": "#002244",
+                "accent": "#0099ff",
+                "page_bg": "#000811",
+                "dot_color": "#0099ff",
+                "is_light_body_bg": False,
+                "text_faint": "rgba(255,255,255,0.35)",
+                "val_neutral": "rgba(255,255,255,0.85)",
+                "skill_up": "#48bb78",
+                "skill_dn": "#fc8181",
+            }],
+        }
+        raw = _json.dumps(manifest).encode()
+        resp = admin_client.post(
+            "/admin/card-themes/upload",
+            files={"file": ("themes.json", _io.BytesIO(raw), "application/json")},
+            follow_redirects=False,
+        )
+        assert resp.status_code == 200, f"Expected 200 preview, got {resp.status_code}: {resp.text[:300]}"
+        assert "CREATE" in resp.text
+        assert "smoke-ocean" in resp.text
+        assert "preview_json" in resp.text
+
+    def test_AT04_upload_invalid_json_redirects_with_error(self, admin_client):
+        """POST /admin/card-themes/upload with invalid JSON → 303 + error param."""
+        raw = b"this is not json"
+        resp = admin_client.post(
+            "/admin/card-themes/upload",
+            files={"file": ("bad.json", _io.BytesIO(raw), "application/json")},
+            follow_redirects=False,
+        )
+        assert resp.status_code == 303
+        assert "error" in resp.headers.get("location", "")
+
+    def test_AT05_toggle_activates_and_deactivates(self, admin_client, test_db):
+        """POST /admin/card-themes/{id}/toggle → 303 + is_active flips."""
+        from app.models.card_theme import CardTheme
+        from datetime import datetime, timezone
+
+        theme = CardTheme(
+            id="smoke-toggle",
+            label="Smoke Toggle",
+            is_premium=False,
+            credit_cost=0,
+            sort_order=50,
+            panel_bg="linear-gradient(#000)",
+            body_bg="#111",
+            tab_bg="#222",
+            accent="#fff",
+            page_bg="#000",
+            dot_color="#fff",
+            is_light_body_bg=False,
+            text_faint="rgba(255,255,255,0.35)",
+            val_neutral="rgba(255,255,255,0.85)",
+            skill_up="#48bb78",
+            skill_dn="#fc8181",
+            is_active=True,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+        )
+        test_db.add(theme)
+        test_db.commit()
+
+        resp = admin_client.post(
+            "/admin/card-themes/smoke-toggle/toggle",
+            follow_redirects=False,
+        )
+        assert resp.status_code == 303
+
+        test_db.expire_all()
+        refreshed = test_db.query(CardTheme).filter(CardTheme.id == "smoke-toggle").first()
+        assert refreshed.is_active is False, "Theme should be deactivated after toggle"
+
+    def test_AT06_toggle_default_returns_redirect_with_error(self, admin_client):
+        """POST /admin/card-themes/default/toggle → 303 + error (protected)."""
+        resp = admin_client.post(
+            "/admin/card-themes/default/toggle",
+            follow_redirects=False,
+        )
+        assert resp.status_code == 303
+        location = resp.headers.get("location", "")
+        assert "error" in location or "protected" in location.lower()
