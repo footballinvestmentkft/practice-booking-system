@@ -37,7 +37,6 @@ class VariantCapabilitySpec:
     supported_card_types: tuple[str, ...]
     content_blocks: tuple[str, ...]
     animated_mode: bool
-    premium_theme_ids: tuple[str, ...]
 
 
 @dataclass(frozen=True)

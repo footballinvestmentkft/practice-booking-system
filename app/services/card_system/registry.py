@@ -20,7 +20,6 @@ FIFA_CLASSIC_CAPABILITIES = VariantCapabilitySpec(
     supported_card_types=("player_card", "welcome_card"),
     content_blocks=("hero", "skill_rows", "sponsor"),
     animated_mode=True,
-    premium_theme_ids=("midnight", "gold", "emerald", "crimson", "arctic", "lavender"),
 )
 
 _VARIANT_CAPABILITIES: dict[str, VariantCapabilitySpec] = {

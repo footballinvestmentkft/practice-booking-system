@@ -6,12 +6,17 @@ Manages colour themes for the public LFA Football Player card.
 Free themes (default, midnight, arctic) are always available.
 Premium themes (gold, emerald, crimson) require credit purchase.
 
-Adding a new theme requires only a new entry in THEMES below.
+Theme resolution order:
+  1. DB cache (_theme_cache, 60-second TTL)
+  2. Hardcoded THEMES dict (fallback when DB is unavailable or cache empty)
+
+Adding a new theme requires only a new row in the card_themes DB table.
 The browser card reads ThemeDefinition fields directly via a Jinja2 :root
 injection block in player_card_base.html — no separate CSS class needed.
 """
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 from typing import Optional
 
@@ -42,7 +47,9 @@ class ThemeDefinition:
     skill_dn: str = '#fc8181'                     # --card-skill-dn
 
 
-# ── Theme registry ────────────────────────────────────────────────────────────
+# ── Hardcoded fallback registry ───────────────────────────────────────────────
+# Used when DB is unavailable or cache is empty (e.g. unit tests with MagicMock).
+# Must stay in sync with the seed rows in 2026_05_17_1000_add_card_themes.py.
 THEMES: dict[str, ThemeDefinition] = {
     "default": ThemeDefinition(
         id="default", label="Slate", is_premium=False, credit_cost=0,
@@ -94,25 +101,85 @@ THEMES: dict[str, ThemeDefinition] = {
 THEME_ORDER = ["default", "midnight", "arctic", "gold", "emerald", "crimson"]
 
 
+# ── DB-backed cache ───────────────────────────────────────────────────────────
+_CACHE_TTL = 60.0  # seconds
+
+_theme_cache: dict[str, ThemeDefinition] = {}
+_cache_loaded_at: float = 0.0
+
+
+def _invalidate_cache() -> None:
+    """Flush the in-process cache. Useful in tests and after admin updates."""
+    global _theme_cache, _cache_loaded_at
+    _theme_cache = {}
+    _cache_loaded_at = 0.0
+
+
+def _row_to_definition(row) -> ThemeDefinition:
+    return ThemeDefinition(
+        id=row.id,
+        label=row.label,
+        is_premium=row.is_premium,
+        credit_cost=row.credit_cost,
+        panel_bg=row.panel_bg,
+        body_bg=row.body_bg,
+        tab_bg=row.tab_bg,
+        accent=row.accent,
+        page_bg=row.page_bg,
+        dot_color=row.dot_color,
+        is_light_body_bg=row.is_light_body_bg,
+        text_faint=row.text_faint,
+        val_neutral=row.val_neutral,
+        skill_up=row.skill_up,
+        skill_dn=row.skill_dn,
+    )
+
+
+def _load_cache(db) -> dict[str, ThemeDefinition]:
+    """Query all active themes from DB and return as id→ThemeDefinition dict."""
+    from app.models.card_theme import CardTheme
+    rows = db.query(CardTheme).filter(CardTheme.is_active.is_(True)).all()
+    return {r.id: _row_to_definition(r) for r in rows}
+
+
+def _maybe_reload(db=None) -> dict[str, ThemeDefinition]:
+    """Return the live cache, refreshing from DB if TTL has expired."""
+    global _theme_cache, _cache_loaded_at
+    if db is not None and (time.monotonic() - _cache_loaded_at) > _CACHE_TTL:
+        new_cache = _load_cache(db)
+        if new_cache:
+            _theme_cache = new_cache
+            _cache_loaded_at = time.monotonic()
+    # Fallback to hardcoded THEMES when cache is empty (DB unavailable / no db arg)
+    return _theme_cache if _theme_cache else THEMES
+
+
 # ── Public API ────────────────────────────────────────────────────────────────
 
-def get_theme(theme_id: str) -> ThemeDefinition:
-    """Return theme by ID, falling back to 'default' for unknown IDs."""
-    return THEMES.get(theme_id, THEMES["default"])
+def get_theme(theme_id: str, db=None) -> ThemeDefinition:
+    """Return theme by ID, falling back to 'default' for unknown/inactive IDs."""
+    cache = _maybe_reload(db)
+    return cache.get(theme_id, cache.get("default", THEMES["default"]))
 
 
-def get_all_themes() -> list[ThemeDefinition]:
-    """Return all themes in display order."""
-    return [THEMES[tid] for tid in THEME_ORDER if tid in THEMES]
+def get_all_themes(db=None) -> list[ThemeDefinition]:
+    """Return all active themes in display order (free first, then premium)."""
+    cache = _maybe_reload(db)
+    # Preserve THEME_ORDER for known IDs; append any DB-only themes at the end
+    ordered = [cache[tid] for tid in THEME_ORDER if tid in cache]
+    extras  = [t for tid, t in cache.items() if tid not in THEME_ORDER]
+    return ordered + extras
 
 
-def is_unlocked(user_license, theme_id: str) -> bool:
+def is_unlocked(user_license, theme_id: str, db=None) -> bool:
     """
     Return True if the user may use this theme.
     Free themes are always unlocked.
     Premium themes require the theme_id to be in user_license.unlocked_card_themes.
+    Unknown or inactive theme IDs return False.
     """
-    theme = THEMES.get(theme_id)
+    cache = _maybe_reload(db)
+    theme = cache.get(theme_id)
     if theme is None:
         return False
     if not theme.is_premium:
@@ -124,12 +191,13 @@ def is_unlocked(user_license, theme_id: str) -> bool:
 def apply_theme(db, user_license, theme_id: str) -> None:
     """
     Set the active draft theme on the player CardDraft and commit.
-    Raises ValueError if theme unknown or not yet unlocked.
+    Raises ValueError if theme unknown, inactive, or not yet unlocked.
     """
-    if theme_id not in THEMES:
-        raise ValueError(f"Unknown theme: {theme_id!r}")
-    if not is_unlocked(user_license, theme_id):
-        theme = THEMES[theme_id]
+    cache = _maybe_reload(db)
+    if theme_id not in cache:
+        raise ValueError(f"Unknown or inactive theme: {theme_id!r}")
+    if not is_unlocked(user_license, theme_id, db=db):
+        theme = cache[theme_id]
         raise ValueError(
             f"Theme '{theme.label}' is locked. Required: {theme.credit_cost} CR"
         )
@@ -147,9 +215,10 @@ def unlock_theme(db, user, user_license, theme_id: str) -> None:
     Raises ValueError (InsufficientCreditsError) if theme unknown, already
     unlocked, or insufficient balance.
     """
-    if theme_id not in THEMES:
-        raise ValueError(f"Unknown theme: {theme_id!r}")
-    theme = THEMES[theme_id]
+    cache = _maybe_reload(db)
+    if theme_id not in cache:
+        raise ValueError(f"Unknown or inactive theme: {theme_id!r}")
+    theme = cache[theme_id]
     if not theme.is_premium:
         return  # free themes don't need unlocking
     unlocked: list = list(user_license.unlocked_card_themes or [])

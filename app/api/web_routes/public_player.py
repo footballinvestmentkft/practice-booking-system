@@ -189,7 +189,7 @@ def public_player_card(
     # Reads the PUBLISHED snapshot from card_drafts (primary source after 4D-2).
     # Falls back to UserLicense.published_card_* for users who have never visited
     # the editor after the Phase 4D-1 migration (card_drafts row absent).
-    from app.services.card_theme_service import get_theme as _get_theme, THEMES as _THEMES
+    from app.services.card_theme_service import get_theme as _get_theme, get_all_themes as _get_all_themes
     from app.services.card_variant_service import get_variant as _get_variant, VARIANTS as _VARIANTS
     from app.services.card_draft_service import CardDraftService as _CardDraftService
 
@@ -200,11 +200,12 @@ def public_player_card(
         or "default"
     )
     # Editor preview override: ?theme= reflects the draft theme for live preview.
-    # Mirrors the ?preview= pattern used for variants. Compatible with a future
-    # DB-backed theme service — _get_theme() remains the sole resolution path.
-    if theme and theme in _THEMES:
-        card_theme_id = theme
-    theme = _get_theme(card_theme_id)  # falls back to "default" for unknown IDs
+    # Mirrors the ?preview= pattern used for variants.
+    if theme:
+        _valid_ids = {t.id for t in _get_all_themes(db=db)}
+        if theme in _valid_ids:
+            card_theme_id = theme
+    theme = _get_theme(card_theme_id, db=db)  # falls back to "default" for unknown IDs
 
     # Variant: ?preview= overrides published value (preview only, not persisted).
     card_variant_id = (

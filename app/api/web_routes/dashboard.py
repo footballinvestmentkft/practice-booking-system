@@ -389,9 +389,9 @@ async def lfa_player_card_editor(
             "dot_color": t.dot_color,
             "is_premium": t.is_premium,
             "credit_cost": t.credit_cost,
-            "unlocked": _is_theme_unlocked(user_license, t.id),
+            "unlocked": _is_theme_unlocked(user_license, t.id, db=db),
         }
-        for t in _get_all_themes()
+        for t in _get_all_themes(db=db)
     ]
     active_card_theme = card_draft.draft_theme
 

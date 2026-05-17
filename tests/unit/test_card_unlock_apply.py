@@ -137,7 +137,7 @@ class TestUnlockThemeAutoApply:
     def test_unknown_theme_raises(self):
         db = _mock_db()
         from app.services.card_theme_service import unlock_theme
-        with pytest.raises(ValueError, match="Unknown theme"):
+        with pytest.raises(ValueError, match="Unknown or inactive theme"):
             unlock_theme(db, _make_user(), _make_license(), "nonexistent")
 
 
