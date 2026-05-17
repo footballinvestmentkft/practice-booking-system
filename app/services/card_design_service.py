@@ -46,11 +46,43 @@ class CardDesignDefinition:
     supported_export_buckets: tuple[str, ...] = ()
     # Platform IDs that support animated video export for this design
     animated_platforms: tuple[str, ...] = ()
+    # CS-4c: bucket-keyed driver config; {} = file-based Level C routing for all buckets
+    component_config: dict = None  # type: ignore[assignment]
+
+    def __post_init__(self) -> None:
+        if self.component_config is None:
+            object.__setattr__(self, "component_config", {})
 
 
 # ── Fallback registry (warm-start when DB is empty / unavailable) ─────────────
 # Mirrors the card_designs table seed exactly.
 # Display order: free first, then premium ascending by credit_cost.
+_FIFA_COMPONENT_CONFIG: dict = {
+    "portrait": {
+        "skill_slice": 6,
+        "show_dominant_badge": False,
+        "show_height_weight": False,
+        "show_sponsor": False,
+        "platform_vars": {},
+    },
+    "story": {
+        "skill_slice": 8,
+        "show_dominant_badge": True,
+        "show_height_weight": True,
+        "show_sponsor": True,
+        "platform_vars": {
+            "--ex-hero-h":      "460px",
+            "--ex-avatar-sz":   "180px",
+            "--ex-avatar-font": "60px",
+            "--ex-ovr-font":    "96px",
+            "--ex-name-font":   "48px",
+            "--ex-row-max-h":   "66px",
+            "--ex-sname-w":     "155px",
+            "--ex-font-skill":  "14px",
+        },
+    },
+}
+
 DESIGNS: dict[str, CardDesignDefinition] = {
     "fifa": CardDesignDefinition(
         id="fifa",
@@ -62,6 +94,7 @@ DESIGNS: dict[str, CardDesignDefinition] = {
         sort_order=0,
         supported_export_buckets=("square", "portrait", "story", "tiktok", "landscape", "banner"),
         animated_platforms=("instagram_square",),
+        component_config=_FIFA_COMPONENT_CONFIG,
     ),
     "compact": CardDesignDefinition(
         id="compact",
@@ -152,6 +185,7 @@ def _row_to_definition(row) -> CardDesignDefinition:
         archetype_id=row.archetype_id,
         supported_export_buckets=tuple(row.supported_export_buckets or []),
         animated_platforms=tuple(row.animated_platforms or []),
+        component_config=dict(row.component_config or {}),
     )
 
 

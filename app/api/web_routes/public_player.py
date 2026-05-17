@@ -46,7 +46,17 @@ _FALLBACK_TEMPLATE = "public/player_card.html"
 # Template path resolved as: public/export/{bucket}/{card_variant_id}.html
 # Falls back to existing editor template + export-mode class if no file found.
 from app.services.card_constants import EXPORT_FORMAT_BUCKETS as _EXPORT_FORMAT_BUCKETS
-from app.services.card_design_service import get_supported_buckets as _get_supported_buckets
+from app.services.card_design_service import (
+    get_supported_buckets as _get_supported_buckets,
+    get_design as _get_design,
+)
+
+# CS-4c: bucket → driver filename; presence signals driver routing is supported.
+# Absence → file-based Level C fallback applies (unchanged behaviour).
+_ARCHETYPE_DRIVERS: dict[str, str] = {
+    "portrait": "column_driver.html",
+    "story":    "column_driver.html",
+}
 
 
 @router.get("/players/{user_id}/card", response_class=HTMLResponse)
@@ -253,19 +263,25 @@ def public_player_card(
     platform_preset = _get_preset(effective_platform)
 
     # ── Export render layer ──────────────────────────────────────────────────
-    # Prefer a dedicated export template when one exists for this combination.
-    # Lookup key: public/export/{format_bucket}/{card_variant_id}.html
-    # No match → unchanged template_path → existing editor template + export-mode class.
-    # Prefer a dedicated export template when one exists for this platform+design pair.
+    # Routing priority (CS-4c):
+    #   1. Driver routing: design has component_config for this bucket AND bucket is
+    #      in _ARCHETYPE_DRIVERS → use shared/drivers/<driver>.html + inject config.
+    #   2. File-based Level C: public/export/{bucket}/{design_id}.html exists → use it.
+    #   3. Fallback: unchanged template_path (editor template + export-mode class).
     # Covers both export=True (Playwright PNG/video) and browser-preview (export=False).
-    # File-existence is the defensive layer; semantic validation (supported_export_buckets)
-    # happens at the export endpoint before Playwright is launched.
-    # Path convention: public/export/{bucket}/{design_id}.html
+    # Semantic 422 validation (supported_export_buckets) happens at the export endpoint.
+    _driver_config = None
     if platform_preset.id in _EXPORT_FORMAT_BUCKETS:
         _fmt = _EXPORT_FORMAT_BUCKETS[platform_preset.id]
-        _tpl = f"public/export/{_fmt}/{card_variant_id}.html"
-        if os.path.isfile(os.path.join(_TEMPLATES_DIR, _tpl)):
-            template_path = _tpl
+        _design_def = _get_design(card_variant_id, db)
+        _bucket_cfg = _design_def.component_config.get(_fmt)
+        if _bucket_cfg and _fmt in _ARCHETYPE_DRIVERS:
+            template_path = f"public/export/shared/drivers/{_ARCHETYPE_DRIVERS[_fmt]}"
+            _driver_config = _bucket_cfg
+        else:
+            _tpl = f"public/export/{_fmt}/{card_variant_id}.html"
+            if os.path.isfile(os.path.join(_TEMPLATES_DIR, _tpl)):
+                template_path = _tpl
 
     # animated_mode: True only when both export=1 AND animated=1 are present.
     # The PNG endpoint never passes animated=1 → this is always False for PNG renders.
@@ -331,6 +347,8 @@ def public_player_card(
         "position_nodes":       position_nodes,
         "primary_pos_label":    primary_pos_label,
         "secondary_pos_labels": secondary_pos_labels,
+        # CS-4c: populated when driver routing is active; None for file-based routes
+        "_driver_config": _driver_config,
     })
 
 

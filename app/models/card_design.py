@@ -69,6 +69,16 @@ class CardDesign(Base):
         comment='JSON list of platform_ids, e.g. ["instagram_square"]',
     )
 
+    # ── CS-4c driver config ───────────────────────────────────────────────────
+    # Bucket-keyed config enabling column_driver.html routing without Level C files.
+    # Presence of a bucket key signals driver routing; absence → file-based fallback.
+    # Schema: {"portrait": {"skill_slice": 6, "show_dominant_badge": false,
+    #          "show_height_weight": false, "show_sponsor": false, "platform_vars": {}}}
+    component_config = Column(
+        JSONB, nullable=False, default=dict,
+        comment='Bucket-keyed driver config; {} = file-based Level C routing for all buckets',
+    )
+
     # ── Audit ─────────────────────────────────────────────────────────────────
     created_at = Column(
         DateTime(timezone=True), nullable=False,

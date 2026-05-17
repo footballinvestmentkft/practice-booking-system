@@ -1,0 +1,181 @@
+{% extends "public/export/shared/column_archetype.html" %}
+{#
+ * column_driver.html — Parameterised column-archetype driver  (CS-4c, 2026-05-17)
+ *
+ * Extends column_archetype.html (Level B) and reads all per-bucket decisions from
+ * the _driver_config context variable injected by the route handler.
+ *
+ * _driver_config schema (bucket-specific slice of card_design.component_config):
+ *   skill_slice          int | null  — [:N] slice applied to cat.skills (null = all)
+ *   show_dominant_badge  bool        — renders ex-foot-badge in tag_row
+ *   show_height_weight   bool        — renders Height / Weight items in meta_row
+ *   show_sponsor         bool        — renders sponsor_slot macro in sponsor_zone
+ *   platform_vars        dict        — CSS custom property overrides, e.g.
+ *                                      {"--ex-hero-h": "460px", ...}
+ *                                      Applied after column_archetype defaults;
+ *                                      empty dict → defaults used unchanged.
+ *
+ * FIFA portrait mapping  → skill_slice=6, show_*=False, platform_vars={}
+ * FIFA story   mapping   → skill_slice=8, show_*=True,  platform_vars={8 vars}
+ *
+ * CS-5 manifest-only:  new design adds component_config entry in DB only.
+ * No new Jinja2 files required for any column-archetype bucket.
+ #}
+
+{% block platform_vars %}
+{{ super() }}
+{# Emit additional :root block only when overrides exist — column_archetype defaults apply first. #}
+{% if _driver_config.platform_vars %}
+:root {
+{% for var, val in _driver_config.platform_vars.items() %}
+    {{ var }}: {{ val }};
+{% endfor %}
+}
+{% endif %}
+{% endblock %}
+
+{% block column_extra_css %}
+{% if _driver_config.show_dominant_badge %}
+.ex-foot-badge {
+    font-size: 12px;
+    font-weight: 800;
+    color: white;
+    background: rgba(255,255,255,0.12);
+    padding: 4px 12px;
+    border-radius: 99px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+{% endif %}
+{% if _driver_config.show_sponsor %}
+.ex-sponsor-slot {
+    flex-shrink: 0;
+    height: 70px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ex-sponsor-slot-img {
+    max-height: 48px;
+    max-width: 70%;
+    object-fit: contain;
+    opacity: 0.85;
+}
+{% endif %}
+{% if animated_mode %}
+@keyframes ex-ovr-in {
+    from { opacity: 0; transform: scale(0.7); }
+    to   { opacity: 1; transform: scale(1); }
+}
+.ex-ovr-num    { animation: ex-ovr-in 0.5s cubic-bezier(.34,1.56,.64,1) forwards; }
+.ex-tier-badge { opacity: 0; animation: ex-ovr-in 0.4s 0.4s ease-out forwards; }
+
+@keyframes ex-bar-in { from { width: 0%; } }
+.ex-bar-fill { animation: ex-bar-in 0.8s ease-out forwards; }
+{% set _slice = _driver_config.skill_slice or 10 %}
+{% for i in range(1, _slice + 1) %}
+.ex-row:nth-child({{ i }})  .ex-bar-fill { animation-delay: {{ "%.2f" | format(0.30 + (i - 1) * 0.05) }}s; }
+{% endfor %}
+
+@keyframes ex-cat-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.ex-cat { opacity: 0; animation: ex-cat-in 0.4s ease-out forwards; }
+.ex-cat:nth-child(1) { animation-delay: 0.15s; }
+.ex-cat:nth-child(2) { animation-delay: 0.25s; }
+
+@keyframes ex-hero-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(102,126,234,0); }
+    50%       { box-shadow: 0 0 60px 12px rgba(102,126,234,0.15); }
+}
+.ex-hero { animation: ex-hero-glow 3s ease-in-out infinite; }
+{% endif %}
+{% endblock %}
+
+{% block tag_row %}
+<div class="ex-tag-row">
+    {% if player.position and player.position != "Unknown" %}
+    <span class="ex-pos-badge" style="background: {{ pos_color }};">{{ player.position }}</span>
+    {% endif %}
+    {% if _driver_config.show_dominant_badge and dominant_badge %}
+    <span class="ex-foot-badge">{{ dominant_badge }}</span>
+    {% endif %}
+    <span class="ex-brand-tag">⚽ LFA Education</span>
+</div>
+{% endblock %}
+
+{% block meta_row %}
+<div class="ex-meta-row">
+    {% if player.nationality %}
+    <div class="ex-meta-item">
+        <span class="ex-meta-label">Nationality</span>
+        <span class="ex-meta-value">{{ player.nationality | nationalities_display(player.secondary_nationality) }}</span>
+    </div>
+    {% endif %}
+    <div class="ex-meta-item">
+        <span class="ex-meta-label">Age Group</span>
+        <span class="ex-meta-value">{{ player.age_group }}</span>
+    </div>
+    <div class="ex-meta-item">
+        <span class="ex-meta-label">Events</span>
+        <span class="ex-meta-value">{{ player.total_tournaments }}</span>
+    </div>
+    {% if _driver_config.show_height_weight %}
+    {% if player_height_cm %}
+    <div class="ex-meta-item">
+        <span class="ex-meta-label">Height</span>
+        <span class="ex-meta-value">{{ player_height_cm }} cm</span>
+    </div>
+    {% endif %}
+    {% if player_weight_kg %}
+    <div class="ex-meta-item">
+        <span class="ex-meta-label">Weight</span>
+        <span class="ex-meta-value">{{ player_weight_kg }} kg</span>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block skill_rows scoped %}
+{% set _slice = _driver_config.skill_slice %}
+{% for skill in (cat.skills[:_slice] if _slice else cat.skills) %}
+{% set sdata = player.skills.get(skill.key, {}) %}
+{% set sval  = sdata.get('current_level', 50) | round(0) | int %}
+{% set fill  = [sval, 100] | min %}
+{% set delta = last_skill_delta.get(skill.key, 0) %}
+{% if delta > 0 %}
+    {% set bar_clr  = '#48bb78' %}
+    {% set val_clr  = '#48bb78' %}
+    {% set trend    = '↑' %}
+    {% set trend_vis = 'visible' %}
+{% elif delta < 0 %}
+    {% set bar_clr  = '#fc8181' %}
+    {% set val_clr  = '#fc8181' %}
+    {% set trend    = '↓' %}
+    {% set trend_vis = 'visible' %}
+{% else %}
+    {% set bar_clr  = 'rgba(255,255,255,0.20)' %}
+    {% set val_clr  = 'rgba(255,255,255,0.85)' %}
+    {% set trend    = '↑' %}
+    {% set trend_vis = 'hidden' %}
+{% endif %}
+<div class="ex-row">
+    <span class="ex-sname">{{ skill.name_en }}</span>
+    <div class="ex-bar-bg">
+        <div class="ex-bar-fill" style="width:{{ fill }}%; background:{{ bar_clr }};"></div>
+    </div>
+    <span class="ex-sval" style="color:{{ val_clr }};">{{ sval }}</span>
+    <span class="ex-trend" style="color:{{ bar_clr }}; visibility:{{ trend_vis }};">{{ trend }}</span>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block sponsor_zone %}
+{% if _driver_config.show_sponsor %}
+{%- from "macros/card_sponsor_block.html" import sponsor_slot -%}
+{{ sponsor_slot(sponsor_logo_url, app_logo_url) }}
+{% endif %}
+{% endblock %}
