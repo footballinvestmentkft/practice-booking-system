@@ -76,7 +76,7 @@ def _make_user(user_id: int = 4, role: UserRole = UserRole.STUDENT) -> MagicMock
 
 def _make_license() -> MagicMock:
     lic = MagicMock()
-    lic.card_variant = "compact"
+    lic.card_variant = "fifa"  # fifa supports all export buckets (CS-4a: supported_export_buckets validated)
     lic.specialization_type = "LFA_FOOTBALL_PLAYER"
     lic.is_active = True
     return lic

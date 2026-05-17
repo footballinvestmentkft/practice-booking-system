@@ -46,6 +46,7 @@ _FALLBACK_TEMPLATE = "public/player_card.html"
 # Template path resolved as: public/export/{bucket}/{card_variant_id}.html
 # Falls back to existing editor template + export-mode class if no file found.
 from app.services.card_constants import EXPORT_FORMAT_BUCKETS as _EXPORT_FORMAT_BUCKETS
+from app.services.card_design_service import get_supported_buckets as _get_supported_buckets
 
 
 @router.get("/players/{user_id}/card", response_class=HTMLResponse)
@@ -255,51 +256,16 @@ def public_player_card(
     # Prefer a dedicated export template when one exists for this combination.
     # Lookup key: public/export/{format_bucket}/{card_variant_id}.html
     # No match → unchanged template_path → existing editor template + export-mode class.
-    if export and platform_preset.id in _EXPORT_FORMAT_BUCKETS:
+    # Prefer a dedicated export template when one exists for this platform+design pair.
+    # Covers both export=True (Playwright PNG/video) and browser-preview (export=False).
+    # File-existence is the defensive layer; semantic validation (supported_export_buckets)
+    # happens at the export endpoint before Playwright is launched.
+    # Path convention: public/export/{bucket}/{design_id}.html
+    if platform_preset.id in _EXPORT_FORMAT_BUCKETS:
         _fmt = _EXPORT_FORMAT_BUCKETS[platform_preset.id]
-        _exp_tpl = f"public/export/{_fmt}/{card_variant_id}.html"
-        if os.path.isfile(os.path.join(_TEMPLATES_DIR, _exp_tpl)):
-            template_path = _exp_tpl
-
-    # Landscape FIFA browser-preview: use the same standalone export template as PNG.
-    # Covers facebook_post, facebook_landscape, og — all map to the landscape bucket.
-    # Single source of truth — no separate preview template to avoid visual drift.
-    if not export and platform_preset.id in {"facebook_post", "facebook_landscape", "og"} and card_variant_id == "fifa":
-        _fb_tpl = "public/export/landscape/fifa.html"
-        if os.path.isfile(os.path.join(_TEMPLATES_DIR, _fb_tpl)):
-            template_path = _fb_tpl
-
-    # Square FIFA browser-preview: same pattern as landscape — single source of truth.
-    # Covers instagram_square and facebook_square (both map to the square bucket).
-    if not export and platform_preset.id in {"instagram_square", "facebook_square"} and card_variant_id == "fifa":
-        _sq_tpl = "public/export/square/fifa.html"
-        if os.path.isfile(os.path.join(_TEMPLATES_DIR, _sq_tpl)):
-            template_path = _sq_tpl
-
-    # Instagram Story FIFA browser-preview — single source of truth, prevents editor drift.
-    if not export and platform_preset.id == "instagram_story" and card_variant_id == "fifa":
-        _st_tpl = "public/export/story/fifa.html"
-        if os.path.isfile(os.path.join(_TEMPLATES_DIR, _st_tpl)):
-            template_path = _st_tpl
-
-    # TikTok FIFA browser-preview — single source of truth, dedicated tiktok template.
-    if not export and platform_preset.id == "tiktok" and card_variant_id == "fifa":
-        _tk_tpl = "public/export/tiktok/fifa.html"
-        if os.path.isfile(os.path.join(_TEMPLATES_DIR, _tk_tpl)):
-            template_path = _tk_tpl
-
-    # Portrait FIFA browser-preview — same single-source pattern; previously missing,
-    # causing no-export requests to fall back to the default card template.
-    if not export and platform_preset.id == "instagram_portrait" and card_variant_id == "fifa":
-        _pr_tpl = "public/export/portrait/fifa.html"
-        if os.path.isfile(os.path.join(_TEMPLATES_DIR, _pr_tpl)):
-            template_path = _pr_tpl
-
-    # Banner FIFA browser-preview — same single-source pattern; previously missing.
-    if not export and platform_preset.id == "banner_custom" and card_variant_id == "fifa":
-        _bn_tpl = "public/export/banner/fifa.html"
-        if os.path.isfile(os.path.join(_TEMPLATES_DIR, _bn_tpl)):
-            template_path = _bn_tpl
+        _tpl = f"public/export/{_fmt}/{card_variant_id}.html"
+        if os.path.isfile(os.path.join(_TEMPLATES_DIR, _tpl)):
+            template_path = _tpl
 
     # animated_mode: True only when both export=1 AND animated=1 are present.
     # The PNG endpoint never passes animated=1 → this is always False for PNG renders.
@@ -422,6 +388,21 @@ async def export_player_card(
     if not target_license:
         raise HTTPException(status_code=404, detail="No active LFA Player license")
 
+    # Semantic validation: reject unsupported design/platform pairs before Playwright.
+    # "default" platform uses ?native_export=1 (browser template, no bucket) → skip.
+    card_variant_id = target_license.card_variant or "fifa"
+    if platform != "default":
+        _bucket = _EXPORT_FORMAT_BUCKETS[platform]  # safe: CANVAS_SIZES invariant guarantees coverage
+        _supported = _get_supported_buckets(card_variant_id, db)
+        if _bucket not in _supported:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Design {card_variant_id!r} does not support export to {platform!r} "
+                    f"(bucket={_bucket!r}). Supported buckets: {list(_supported)}"
+                ),
+            )
+
     # Render URL — constructed server-side only; no user-controlled string.
     # "default" platform: use ?native_export=1 so the template applies
     # native-export-mode CSS (card fills 820px width at natural auto height).
@@ -536,15 +517,22 @@ async def export_player_card_video(
             ),
         )
 
-    # Dedicated export template existence check (guards registry/template drift)
-    if platform in _EXPORT_FORMAT_BUCKETS:
-        _fmt = _EXPORT_FORMAT_BUCKETS[platform]
-        _tpl = f"public/export/{_fmt}/{card_variant_id}.html"
-        if not os.path.isfile(os.path.join(_TEMPLATES_DIR, _tpl)):
-            raise HTTPException(
-                status_code=422,
-                detail=f"No export template found for variant={card_variant_id!r} and platform={platform!r}.",
-            )
+    # Validate design export support using supported_export_buckets.
+    _bucket = _EXPORT_FORMAT_BUCKETS.get(platform)
+    if _bucket is None:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Platform {platform!r} is not an export platform.",
+        )
+    _supported = _get_supported_buckets(card_variant_id, db)
+    if _bucket not in _supported:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"Design {card_variant_id!r} does not support video export to {platform!r} "
+                f"(bucket={_bucket!r}). Supported buckets: {list(_supported)}"
+            ),
+        )
 
     # Rate limit: 2 video exports / 60 s per (user_id, client_ip)
     client_ip = request.client.host if request.client else "unknown"
