@@ -41,8 +41,12 @@ _SPEC_DASHBOARD_MAP = {
     "GANCUJU_PLAYER":       ("/dashboard/gancuju-player",      "🥋"),
 }
 
+_SPEC_PROFILE_MAP = {
+    "LFA_FOOTBALL_PLAYER": ("/profile/lfa-football-player", "🪪"),
+}
+
 def _spec_ctx(user: User, db: Session = None) -> dict:
-    """Return spec_dashboard_url + spec_dashboard_icon for sub-page headers.
+    """Return spec_dashboard_url + spec_dashboard_icon + spec_profile_url + spec_profile_icon.
     Falls back to UserLicense query if user.specialization is not set."""
     sv = user.specialization.value if user and user.specialization else ""
     if not sv and db and user:
@@ -53,7 +57,13 @@ def _spec_ctx(user: User, db: Session = None) -> dict:
         if lic and lic.specialization_type:
             sv = lic.specialization_type.value if hasattr(lic.specialization_type, "value") else str(lic.specialization_type)
     url, icon = _SPEC_DASHBOARD_MAP.get(sv, ("", ""))
-    return {"spec_dashboard_url": url, "spec_dashboard_icon": icon}
+    purl, picon = _SPEC_PROFILE_MAP.get(sv, ("/profile", "👤"))
+    return {
+        "spec_dashboard_url":  url,
+        "spec_dashboard_icon": icon,
+        "spec_profile_url":    purl,
+        "spec_profile_icon":   picon,
+    }
 
 
 @router.get("/about-specializations", response_class=HTMLResponse)

@@ -2241,3 +2241,73 @@ class TestInitialPlayerPhoto:
 
         assert lic.player_card_photo_url == "/static/uploads/lfa_player_photos/42_orig_8888.png"
         assert lic.wc_photo_url          == "/initial.png"   # untouched
+
+
+# ── Spec-nav header (SN-01..SN-07) ────────────────────────────────────────────
+
+class TestSpecNavHeader:
+    """
+    SN-01..SN-07: spec_subpage_hdr.html Profile link is spec-aware and _spec_ctx()
+    returns spec_profile_url + spec_profile_icon in addition to dashboard vars.
+    """
+
+    _HDR = pathlib.Path(__file__).resolve().parents[4] / \
+           "app" / "templates" / "includes" / "spec_subpage_hdr.html"
+
+    @property
+    def _hdr_src(self):
+        return self._HDR.read_text(encoding="utf-8")
+
+    # SN-01: template no longer has a bare hardcoded /profile href
+    def test_sn01_profile_link_not_hardcoded(self):
+        """Profile anchor must use {{ _purl }} — no literal href='/profile'."""
+        assert 'href="/profile"' not in self._hdr_src
+
+    # SN-02: template renders _purl variable in the profile anchor
+    def test_sn02_profile_link_uses_purl_variable(self):
+        """Profile anchor must reference the {{ _purl }} Jinja2 variable."""
+        assert "{{ _purl }}" in self._hdr_src
+
+    # SN-03: template has the spec_profile_url derivation block
+    def test_sn03_template_has_spec_profile_url_guard(self):
+        """Header template must check spec_profile_url context var before falling back."""
+        assert "spec_profile_url" in self._hdr_src
+
+    # SN-04: _spec_ctx returns spec_profile_url for LFA_FOOTBALL_PLAYER
+    def test_sn04_spec_ctx_returns_profile_url_for_lfa(self):
+        from app.api.web_routes.student_features import _spec_ctx
+        user = MagicMock()
+        user.specialization = MagicMock()
+        user.specialization.value = "LFA_FOOTBALL_PLAYER"
+        ctx = _spec_ctx(user)
+        assert ctx["spec_profile_url"] == "/profile/lfa-football-player"
+
+    # SN-05: _spec_ctx returns spec_profile_icon for LFA_FOOTBALL_PLAYER
+    def test_sn05_spec_ctx_returns_profile_icon_for_lfa(self):
+        from app.api.web_routes.student_features import _spec_ctx
+        user = MagicMock()
+        user.specialization = MagicMock()
+        user.specialization.value = "LFA_FOOTBALL_PLAYER"
+        ctx = _spec_ctx(user)
+        assert ctx["spec_profile_icon"] == "🪪"
+
+    # SN-06: _spec_ctx falls back to /profile + 👤 for unknown spec
+    def test_sn06_spec_ctx_profile_fallback_for_unknown_spec(self):
+        from app.api.web_routes.student_features import _spec_ctx
+        user = MagicMock()
+        user.specialization = None
+        ctx = _spec_ctx(user)
+        assert ctx["spec_profile_url"] == "/profile"
+        assert ctx["spec_profile_icon"] == "👤"
+
+    # SN-07: gallery route context includes spec_profile_url
+    def test_sn07_gallery_context_has_spec_profile_url(self):
+        """Gallery hub context must pass spec_profile_url for spec_subpage_hdr.html."""
+        lic = _license()
+        db  = _mock_db(license_return=lic)
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(onboarding_welcome_card(_req(), platform=None, db=db, user=_user()))
+        _, ctx = mock_tmpl.TemplateResponse.call_args.args
+        assert ctx.get("spec_profile_url") == "/profile/lfa-football-player"
+        assert ctx.get("spec_profile_icon") == "🪪"

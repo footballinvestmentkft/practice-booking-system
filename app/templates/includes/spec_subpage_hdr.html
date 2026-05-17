@@ -38,6 +38,19 @@
   {% endif %}
 {% endif %}
 
+{# Profile link: spec-aware when route passes spec_profile_url, else derive from specialization. #}
+{% if spec_profile_url %}
+  {% set _purl  = spec_profile_url %}
+  {% set _picon = spec_profile_icon | default('👤') %}
+{% else %}
+  {% set _sv2 = (user.specialization.value if user.specialization else '') if user else '' %}
+  {% if _sv2 == 'LFA_FOOTBALL_PLAYER' %}
+    {% set _purl = '/profile/lfa-football-player' %}{% set _picon = '🪪' %}
+  {% else %}
+    {% set _purl = '/profile' %}{% set _picon = '👤' %}
+  {% endif %}
+{% endif %}
+
 <div class="student-header spec-pg-hdr">
     <div class="student-header-inner">
         <a href="/dashboard" class="s-hdr-btn" title="Hub">🏠</a>
@@ -46,7 +59,7 @@
         <div class="student-header-actions">
             <span class="credit-pill">💰 {{ user.credit_balance if user else 0 }}</span>
             <a href="/credits" class="s-hdr-btn" title="Credits">💳</a>
-            <a href="/profile" class="s-hdr-btn" title="Profile">👤</a>
+            <a href="{{ _purl }}" class="s-hdr-btn" title="Profile">{{ _picon }}</a>
             <a href="/logout"  class="s-hdr-btn" title="Logout">🚪</a>
         </div>
     </div>

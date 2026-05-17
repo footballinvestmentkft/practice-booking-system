@@ -220,6 +220,8 @@ def _lfa_profile_ctx(request, user, license, error=None) -> dict:
         "error":              error,
         "spec_dashboard_url":  "/dashboard/lfa-football-player",
         "spec_dashboard_icon": "⚽",
+        "spec_profile_url":    "/profile/lfa-football-player",
+        "spec_profile_icon":   "🪪",
         "show_spec_nav":      True,
     }
 
@@ -264,6 +266,8 @@ async def lfa_player_profile_page(
             "pos_error":              request.query_params.get("pos_error", ""),
             "spec_dashboard_url":     "/dashboard/lfa-football-player",
             "spec_dashboard_icon":    "⚽",
+            "spec_profile_url":       "/profile/lfa-football-player",
+            "spec_profile_icon":      "🪪",
             "show_spec_nav":          True,
         },
     )
@@ -1007,6 +1011,8 @@ async def onboarding_welcome_card(
                 "use_nickname":        use_nickname,
                 "spec_dashboard_url":  "/dashboard/lfa-football-player",
                 "spec_dashboard_icon": "⚽",
+                "spec_profile_url":    "/profile/lfa-football-player",
+                "spec_profile_icon":   "🪪",
             },
         )
 
