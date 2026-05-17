@@ -2,11 +2,19 @@
 LFA Football Player card photo service.
 
 Stores spec-specific photos in app/static/uploads/lfa_player_photos/:
-  {user_id}_orig_{epoch}.png          — card photo (full-figure, aspect-ratio preserved, alpha kept)
-  {user_id}_portrait_{epoch}.png      — variant portrait photo (9:16, alpha preserved)
-  {user_id}_landscape_{epoch}.png     — variant landscape photo (16:9, alpha preserved)
+  {user_id}_orig_{epoch}.png          — Player Card photo (full-figure, aspect-ratio preserved, alpha kept)
+  {user_id}_portrait_{epoch}.png      — Player Card portrait photo (9:16, alpha preserved)
+  {user_id}_landscape_{epoch}.png     — Player Card landscape photo (16:9, alpha preserved)
   {user_id}_bg_compact_{epoch}.png    — compact-variant background (800×800 max, alpha preserved)
   {user_id}_bg_showcase_{epoch}.png   — showcase-variant background (800×800 max, alpha preserved)
+  {user_id}_wc_orig_{epoch}.png       — Welcome Card photo (separate from Player Card)
+  {user_id}_wc_portrait_{epoch}.png   — Welcome Card portrait photo (9:16)
+  {user_id}_wc_landscape_{epoch}.png  — Welcome Card landscape photo (16:9)
+
+Player Card and Welcome Card photo slots are fully independent:
+  uploading to one never overwrites the other.
+  Each slot falls back to its Player Card counterpart at the context-builder
+  level (profile.py) when the WC-specific field is null.
 
 Every upload writes a NEW epoch-timestamped filename, so the URL always changes.
 This guarantees browser/CDN cache-busting: the old URL is never reused.
@@ -204,6 +212,72 @@ def delete_compact_bg_photo(user_id: int) -> None:
 def save_showcase_bg_photo(file_bytes: bytes, content_type: str, user_id: int) -> str:
     """Fit into 800×800 box, preserve alpha, save as PNG. Returns static URL."""
     return _save_variant_photo(file_bytes, content_type, user_id, _BG_SIZE, "bg_showcase", max_bytes=MAX_BG_BYTES)
+
+
+# ── Onboarding initial photo (atomic dual-write) ──────────────────────────────
+
+def save_initial_player_photo(file_bytes: bytes, content_type: str, user_id: int) -> str:
+    """Save the onboarding photo and return its URL.
+
+    Identical processing to save_player_photo (fit inside MAX_CARD_SIZE, PNG,
+    alpha-preserved).  The URL is then written to BOTH player_card_photo_url
+    AND wc_photo_url by the calling route in a single db.commit(), so the two
+    fields start life as identical copies and diverge independently from that
+    point.  There is no WC-specific file variant — both fields point to the
+    same _orig_ filename, which is correct: the physical file is shared, but
+    the DB fields are independent (either can be overwritten later without
+    affecting the other URL string).
+
+    Deletes any previous _orig_ files for this user before saving (same as
+    save_player_photo).
+    """
+    return save_player_photo(file_bytes, content_type, user_id)
+
+
+# ── Welcome Card photo helpers ────────────────────────────────────────────────
+# These slots are fully independent from the Player Card slots above.
+# Suffix convention: wc_orig / wc_portrait / wc_landscape avoids any
+# glob-pattern collision with Player Card suffixes (orig / portrait / landscape).
+
+
+def save_wc_photo(file_bytes: bytes, content_type: str, user_id: int) -> str:
+    """Fit into MAX_CARD_SIZE box, preserve alpha, save as PNG. Returns static URL.
+
+    Welcome Card primary photo.  Uses wc_orig suffix — never collides with the
+    Player Card _orig_ files.
+    """
+    return _save_variant_photo(file_bytes, content_type, user_id, MAX_CARD_SIZE, "wc_orig")
+
+
+def delete_wc_photo(user_id: int) -> None:
+    """Remove all Welcome Card primary PNG files. Silent no-op if missing."""
+    _delete_variant_files(user_id, "wc_orig")
+
+
+def save_wc_portrait_photo(file_bytes: bytes, content_type: str, user_id: int) -> str:
+    """Fit into 9:16 box, preserve alpha, save as PNG. Returns static URL.
+
+    Welcome Card portrait slot.  Uses wc_portrait suffix.
+    """
+    return _save_variant_photo(file_bytes, content_type, user_id, _PORTRAIT_SIZE, "wc_portrait")
+
+
+def delete_wc_portrait_photo(user_id: int) -> None:
+    """Remove all Welcome Card portrait PNG files. Silent no-op if missing."""
+    _delete_variant_files(user_id, "wc_portrait")
+
+
+def save_wc_landscape_photo(file_bytes: bytes, content_type: str, user_id: int) -> str:
+    """Fit into 16:9 box, preserve alpha, save as PNG. Returns static URL.
+
+    Welcome Card landscape slot.  Uses wc_landscape suffix.
+    """
+    return _save_variant_photo(file_bytes, content_type, user_id, _LANDSCAPE_SIZE, "wc_landscape")
+
+
+def delete_wc_landscape_photo(user_id: int) -> None:
+    """Remove all Welcome Card landscape PNG files. Silent no-op if missing."""
+    _delete_variant_files(user_id, "wc_landscape")
 
 
 def delete_showcase_bg_photo(user_id: int) -> None:

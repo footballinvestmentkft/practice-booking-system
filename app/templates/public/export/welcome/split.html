@@ -1,0 +1,225 @@
+{% extends "public/export/shared/wc_base.html" %}
+{#
+ * Welcome Card — Split layout (Dir C: Athlete Spotlight)
+ * Canvas  : 1200×630 (~1.91:1)
+ * Platforms: facebook_landscape · facebook_post
+ *
+ * Structure: 2-column (photo 40% | content 60%)
+ *   Photo column:   full-height photo with right-edge gradient fade
+ *   Content column: header bar (72px, logo + org + player name)
+ *                   headline zone (ghost subtitle + "LION FOOTBALL ACADEMY")
+ *                   content panel (flex:1):
+ *                     breathing zone (accent line + player name + tagline)
+ *                     tags row · skill badges (4 in a row)
+ #}
+
+{% block theme_root %}{{ export_root_vars(theme) }}{% endblock %}
+
+{% block platform_vars %}
+:root {
+    --wc-photo-w:       480px;
+    --wc-hl-sz:          92px;
+    --wc-sub-sz:         12px;    /* Fix C: ghost = JSX subSz(15)*0.8=12 */
+    --wc-tagline-sz:      9px;   /* compact landscape: readable at 1200×630 */
+    --wc-name-sz:        38px;
+    --wc-tag-sz:         13px;
+    --wc-tag-pad:     4px 13px;
+    --wc-cat-h:         100px;   /* +4px breathing room */
+    --wc-cat-score-sz:   20px;   /* +2px legibility within landscape constraint */
+    --wc-cat-name-sz:     8px;   /* legibility floor: 6.5→8px */
+    --wc-cat-dot-sz:      8px;   /* score*0.30→8 */
+    --wc-pad-x:          48px;
+    --wc-initials-sz:   140px;
+}
+{% endblock %}
+
+{% block extra_css %}
+/* ── CARD: 2-column row ─────────────────────────────────────────────────── */
+.wc-card { flex-direction: row; }
+
+/* Photo column (left, fixed width) */
+.wc-photo {
+    width: var(--wc-photo-w); height: 100%; flex-shrink: 0;
+    background: var(--ex-panel-bg);
+}
+.wc-photo-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to right, rgba(0,0,0,0.04), rgba(0,0,0,0.92));
+}
+
+/* Content column (right, flex:1) */
+.wc-content {
+    flex: 1; display: flex; flex-direction: column;
+    background: var(--ex-panel-bg); min-width: 0; overflow: hidden;
+}
+
+/* Header bar: player name only — logo in identity block */
+.wc-hdr {
+    height: 72px; flex-shrink: 0;
+    padding: 0 var(--wc-pad-x);
+    display: flex; align-items: center; justify-content: flex-end;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.wc-hdr-name {
+    font-size: 14px; font-weight: 600; letter-spacing: 0.10em;
+    color: rgba(255,255,255,0.50); text-transform: uppercase;
+    max-width: 80%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+
+/* Headline zone */
+.wc-hl-zone {
+    padding: 18px var(--wc-pad-x) 0; flex-shrink: 0;
+}
+.wc-hl-welcome {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: var(--wc-sub-sz); font-weight: 800;
+    color: var(--wc-accent); letter-spacing: 0.35em;
+    text-transform: uppercase; margin-bottom: 6px;
+    text-shadow: 0 0 20px rgba(167,139,250,0.45);
+}
+.wc-hl-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: var(--wc-hl-sz); line-height: 0.88; color: #fff;
+    letter-spacing: 0.02em;
+}
+
+/* Content panel (flex:1, distributes remaining height) */
+.wc-panel {
+    flex: 1; display: flex; flex-direction: column;
+    min-height: 0; overflow: hidden;
+}
+
+/* Breathing zone */
+.wc-breathe {
+    flex: 1; display: flex; flex-direction: column;
+    justify-content: flex-end;
+    padding: 10px var(--wc-pad-x) 8px; overflow: hidden;
+}
+.wc-accent-line {
+    height: 1.5px; flex-shrink: 0; margin-bottom: 8px;
+    background: linear-gradient(90deg, var(--wc-accent), rgba(167,139,250,0.1), transparent);
+}
+/* Identity block: name (left, flex:1) · logo (right, fixed) */
+.wc-identity-block {
+    display: flex; flex-direction: row; align-items: flex-end;
+    gap: 12px; overflow: hidden; min-width: 0; flex-shrink: 0;
+}
+.wc-identity-block .wc-name {
+    flex: 1; min-width: 0;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.wc-identity-logo {
+    height: 65px; width: auto; object-fit: contain; flex-shrink: 0;
+}
+.wc-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: var(--wc-name-sz); line-height: 1;
+    color: #fff; letter-spacing: 0.01em; text-transform: uppercase;
+    word-break: break-word; overflow: hidden; flex-shrink: 0;
+}
+.wc-tagline {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: var(--wc-tagline-sz); font-weight: 600; letter-spacing: 0.20em;
+    color: var(--wc-accent); text-transform: uppercase;
+    margin-top: 5px; flex-shrink: 0;
+}
+
+/* Tags */
+.wc-tag-zone { padding: 6px var(--wc-pad-x); flex-shrink: 0; }
+
+/* Skill badges — 4 in a row */
+.wc-cats {
+    height: var(--wc-cat-h); flex-shrink: 0;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+.wc-cat {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3px;
+    border-left: 1px solid rgba(255,255,255,0.06); padding: 6px 3px;
+}
+.wc-cat:first-child { border-left: none; }
+.wc-cat-dot {
+    width: var(--wc-cat-dot-sz); height: var(--wc-cat-dot-sz); border-radius: 2px;
+}
+.wc-cat-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: var(--wc-cat-score-sz); line-height: 1; color: #fff;
+}
+.wc-cat-lbl {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: var(--wc-cat-name-sz); font-weight: 700; letter-spacing: 0.06em;
+    color: rgba(255,255,255,0.38); text-transform: uppercase; text-align: center;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    width: 100%; padding: 0 2px;
+}
+{% endblock %}
+
+{% block body_content %}
+{% set _photo = landscape_photo_url if landscape_photo_url else (photo_url if photo_url else None) %}
+<div class="wc-card {{ platform_class }}">
+
+    <!-- ── PHOTO COLUMN ─────────────────────────────────────────────────────── -->
+    <div class="wc-photo">
+        {% if _photo %}
+        <img src="{{ _photo }}" alt="{{ initials }}">
+        {% else %}
+        <div class="wc-initials" style="background:{{ avatar_bg }};">{{ initials }}</div>
+        {% endif %}
+        <div class="wc-photo-overlay"></div>
+    </div>
+
+    <!-- ── CONTENT COLUMN ───────────────────────────────────────────────────── -->
+    <div class="wc-content">
+
+        <!-- Header bar: player name only — logo in identity block -->
+        <div class="wc-hdr">
+            <span class="wc-hdr-name">{{ player.name }}</span>
+        </div>
+
+        <!-- Headline zone -->
+        <div class="wc-hl-zone">
+            <div class="wc-hl-welcome">WELCOME TO</div>
+            <div class="wc-hl-title">LION FOOTBALL<br>ACADEMY</div>
+        </div>
+
+        <!-- Content panel (breathing + tags + skills) -->
+        <div class="wc-panel">
+            <div class="wc-breathe">
+                <div class="wc-accent-line"></div>
+                <div class="wc-identity-block">
+                    <div class="wc-name">{{ player.name | upper }}</div>
+                    {% if app_logo_url %}
+                    <img class="wc-identity-logo" src="{{ app_logo_url }}" alt="LFA"
+                         onerror="this.style.display='none'">
+                    {% endif %}
+                </div>
+            </div>
+            <div class="wc-tag-zone">
+                <div class="wc-tags">
+                    {% if player.position and player.position != "Unknown" %}
+                    <span class="wc-tag wc-tag--pos">{{ player.position | replace("_"," ") | upper }}</span>
+                    {% endif %}
+                    {% if player.nationality %}
+                    <span class="wc-tag">{{ player.nationality | nationalities_display(player.secondary_nationality) }}</span>
+                    {% endif %}
+                    {% if player.age_group %}
+                    <span class="wc-tag">{{ player.age_group }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="wc-cats">
+                {% for avg in category_averages %}
+                <div class="wc-cat">
+                    <div class="wc-cat-dot" style="background:{{ avg.color }};"></div>
+                    <div class="wc-cat-score">{{ avg.avg }}</div>
+                    <div class="wc-cat-lbl">{{ avg.name }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

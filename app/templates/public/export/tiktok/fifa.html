@@ -1,52 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>{{ player.name }} — LFA Player Card</title>
-<style>
-/*
- * FIFA Classic × TikTok — Dedicated export template
+{% extends "public/export/shared/fifa_base.html" %}
+{#
+ * FIFA Classic × TikTok — export template  (Phase 3b-3: extends fifa_base.html)
  * Canvas  : 1080 × 1920 px  (Playwright viewport, 9:16 ratio)
- * Purpose : static social export ONLY — no editor UI, no responsive CSS
- * Classes : ex- prefix throughout, no inheritance from editor templates
- * Platform: TikTok only — export/story/fifa.html serves Instagram Story
  *
- * Layout zones:
- *   Hero          0–720px   (37.5%)  full-bleed photo + gradient overlay
- *   Identity    720–860px   ( 7.3%)  stats strip: nationality/age/height/weight/foot
- *   Skills      860–1840px  (51.0%)  2×2 grid; Outfield unsliced (all 11 skills)
- *   Sponsor    1840–1920px  ( 4.2%)  80px unconditional slot; logo conditional
+ * Extends fifa_base.html directly (not column intermediate — unique overlay layout).
+ * vs. story/fifa.html (column base):
+ *   hero       full-bleed photo + position:absolute overlays (not circular avatar)
+ *   identity   140px stat strip below hero (nationality/age/height/weight/foot)
+ *   skills     flex:1 zone; Set Pieces uses big-number display, not bars
+ *   sponsor    unconditional 80px sibling of .ex-skills (not inside skills zone)
+ *   slicing    no [:N] — all skills per category rendered
  *
- * Set Pieces uses big-number display (.ex-cat--set-pieces) instead of bars.
- * Sponsor slot is always rendered; logo appears only when sponsor_logo_url is set.
- */
+ * Inherited from base:
+ *   HTML shell, CSS reset, export_root_vars(theme), semantic text tokens,
+ *   .ex-skill-cats, .ex-skill-rows, .ex-cat, .ex-cat-name, .ex-row,
+ *   .ex-sname, .ex-bar-bg/.ex-bar-fill, .ex-sval, .ex-trend
+ #}
 
+{% block platform_vars %}
 :root {
-    --ex-panel-bg: {{ theme.panel_bg if theme is defined else 'linear-gradient(155deg, #1a2744 0%, #2a3a5c 60%, #1e3a4a 100%)' }};
-    --ex-body-bg:  {{ theme.body_bg  if theme is defined else '#1a202c' }};
-    --ex-accent:   {{ theme.accent   if theme is defined else '#667eea' }};
-    --ex-bar-bg:      rgba(255,255,255,0.10);
-    --ex-cat-bg:      rgba(255,255,255,0.05);
+    --ex-sname-w:     140px;
+    --ex-font-skill:  13px;
+    --ex-bar-h:       7px;
+    --ex-sval-w:      38px;
+    --ex-trend-w:     16px;
+    --ex-font-trend:  13px;
+    --ex-grid-gap:    10px;
+    --ex-cat-pad:     12px;
+    --ex-font-cat:    12px;
 }
+{% endblock %}
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html, body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-}
-
-/* Root card — fills the 1080×1920 viewport exactly */
-.ex-card {
-    width:  100vw;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
+{% block extra_css %}
 /* ── HERO ZONE ────────────────────────────────────────────────────────────────
    720px full-bleed photo.  Photo + gradient overlay use position:absolute;
    text overlays use position:absolute with z-index:1.
@@ -217,7 +202,6 @@ html, body {
 
 /* ── SKILLS ZONE ──────────────────────────────────────────────────────────────
    flex:1 → takes 1920 − 720 − 140 − 80(sponsor) = 980px.
-   Internal: title (flex-shrink:0) + 2×2 grid (flex:1) + sponsor slot (flex-shrink:0).
    ─────────────────────────────────────────────────────────────────────────── */
 .ex-skills {
     flex: 1;
@@ -234,117 +218,17 @@ html, body {
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.14em;
-    color: rgba(255,255,255,0.30);
+    color: var(--ex-text-muted);
     margin-bottom: 12px;
 }
 
-/* 2×2 category grid */
-.ex-skill-cats {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 10px;
-    overflow: hidden;
-    min-height: 0;
-}
-
-/* Category cell — standard */
-.ex-cat {
-    background: var(--ex-cat-bg);
-    border-radius: 12px;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-height: 0;
-}
-.ex-cat-name {
-    flex-shrink: 0;
-    font-size: 12px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.10em;
-    color: rgba(255,255,255,0.48);
-    margin-bottom: 8px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Skill rows container */
-.ex-skill-rows {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    overflow: hidden;
-}
-
-/* Individual skill row — max-height: 44px keeps 11-row Outfield cells tidy */
-.ex-row {
-    flex: 1;
-    min-height: 0;
-    max-height: 44px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-/* Fixed-width name column */
-.ex-sname {
-    flex: 0 0 140px;
-    font-size: 13px;
-    font-weight: 500;
-    color: rgba(255,255,255,0.72);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1;
-}
-
-/* Skill bar */
-.ex-bar-bg {
-    flex: 1;
-    min-width: 0;
-    height: 7px;
-    background: var(--ex-bar-bg);
-    border-radius: 4px;
-    overflow: hidden;
-}
-.ex-bar-fill {
-    height: 100%;
-    border-radius: 4px;
-    min-width: 3px;
-}
-
-/* Value */
-.ex-sval {
-    flex: 0 0 38px;
-    font-size: 13px;
-    font-weight: 700;
-    text-align: right;
-    line-height: 1;
-}
-
-/* Trend arrow */
-.ex-trend {
-    flex: 0 0 16px;
-    font-size: 13px;
-    font-weight: 900;
-    text-align: center;
-    line-height: 1;
-}
+/* Override base .ex-cat-name margin/padding (base: 10px/8px; tiktok: 8px/6px) */
+.ex-cat-name { margin-bottom: 8px; padding-bottom: 6px; }
 
 /* ── SET PIECES — big-number display ─────────────────────────────────────────
-   .ex-cat--set-pieces replaces the bar layout with 3 large stat blocks.
+   .ex-cat--set-pieces replaces the bar layout with large stat blocks.
    The cell still uses flex-column, but .ex-sp-grid fills the remaining space.
    ─────────────────────────────────────────────────────────────────────────── */
-.ex-cat--set-pieces {
-    /* inherits .ex-cat */
-}
 .ex-sp-grid {
     flex: 1;
     display: flex;
@@ -365,7 +249,7 @@ html, body {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: rgba(255,255,255,0.42);
+    color: var(--ex-text-secondary);
     text-align: center;
     white-space: nowrap;
 }
@@ -394,9 +278,11 @@ html, body {
     object-fit: contain;
     opacity: 0.85;
 }
-</style>
-</head>
-<body>
+{% endblock %}
+
+{% block body_content %}
+{% from "macros/card_skill_row.html" import export_skill_rows %}
+{% from "macros/card_sponsor_block.html" import sponsor_slot %}
 <div class="ex-card">
 
     <!-- ── HERO ────────────────────────────────────────────────────────────── -->
@@ -489,41 +375,10 @@ html, body {
             </div>
 
             {% else %}
-            <!-- Standard skill category: bar layout, no [:8] slice -->
+            <!-- Standard skill category: bar layout, all skills (no slicing) -->
             <div class="ex-cat">
                 <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
-                <div class="ex-skill-rows">
-                    {% for skill in cat.skills %}
-                    {% set sdata = player.skills.get(skill.key, {}) %}
-                    {% set sval  = sdata.get('current_level', 50) | round(0) | int %}
-                    {% set fill  = [sval, 100] | min %}
-                    {% set delta = last_skill_delta.get(skill.key, 0) %}
-                    {% if delta > 0 %}
-                        {% set bar_clr  = '#48bb78' %}
-                        {% set val_clr  = '#48bb78' %}
-                        {% set trend    = '↑' %}
-                        {% set trend_vis = 'visible' %}
-                    {% elif delta < 0 %}
-                        {% set bar_clr  = '#fc8181' %}
-                        {% set val_clr  = '#fc8181' %}
-                        {% set trend    = '↓' %}
-                        {% set trend_vis = 'visible' %}
-                    {% else %}
-                        {% set bar_clr  = 'rgba(255,255,255,0.20)' %}
-                        {% set val_clr  = 'rgba(255,255,255,0.85)' %}
-                        {% set trend    = '↑' %}
-                        {% set trend_vis = 'hidden' %}
-                    {% endif %}
-                    <div class="ex-row">
-                        <span class="ex-sname">{{ skill.name_en }}</span>
-                        <div class="ex-bar-bg">
-                            <div class="ex-bar-fill" style="width:{{ fill }}%; background:{{ bar_clr }};"></div>
-                        </div>
-                        <span class="ex-sval" style="color:{{ val_clr }};">{{ sval }}</span>
-                        <span class="ex-trend" style="color:{{ bar_clr }}; visibility:{{ trend_vis }};">{{ trend }}</span>
-                    </div>
-                    {% endfor %}
-                </div>
+                {{ export_skill_rows(cat, player.skills, last_skill_delta) }}
             </div>
             {% endif %}
 
@@ -533,14 +388,7 @@ html, body {
     {% endif %}
 
     <!-- Sponsor slot — unconditional 80px zone; logo renders only if provided -->
-    <div class="ex-sponsor-slot">
-        {% if sponsor_logo_url %}
-        <img class="ex-sponsor-slot-img" src="{{ sponsor_logo_url }}" alt="Sponsor">
-        {% elif app_logo_url %}
-        <img class="ex-sponsor-slot-img" src="{{ app_logo_url }}" alt="LFA">
-        {% endif %}
-    </div>
+    {{ sponsor_slot(sponsor_logo_url, app_logo_url) }}
 
 </div>
-</body>
-</html>
+{% endblock %}

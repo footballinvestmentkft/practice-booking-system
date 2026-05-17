@@ -1,0 +1,169 @@
+{% extends "public/export/shared/wc_base.html" %}
+{#
+ * Welcome Card — Band layout (Dir C: Athlete Spotlight)
+ * Canvas  : 1200×630 (~1.91:1)
+ * Platform: og
+ *
+ * Structure: full-bleed photo with two vertical regions.
+ *   Left overlay band (640px):
+ *     heavy gradient → logo + player name + tagline + tags
+ *   Right stats strip (560px, semi-transparent):
+ *     4 rows: colored dot · score · category label
+ *
+ * Design intent: photo fills full canvas; content anchors left.
+ * Stats strip on right gives editorial OG-card feel.
+ #}
+
+{% block theme_root %}{{ export_root_vars(theme) }}{% endblock %}
+
+{% block platform_vars %}
+:root {
+    --wc-name-sz:        72px;
+    --wc-pad-x:          48px;
+    --wc-tag-sz:         13px;
+    --wc-tag-pad:     4px 13px;
+    --wc-cat-score-sz:   36px;
+    --wc-cat-name-sz:    10px;
+    --wc-cat-dot-sz:     10px;
+    --wc-initials-sz:   200px;
+    --wc-band-w:        640px;
+    --wc-strip-w:       220px;
+}
+{% endblock %}
+
+{% block extra_css %}
+/* Relative root for layered absolute elements */
+.wc-card { position: relative; }
+
+/* Full-canvas photo */
+.wc-photo { position: absolute; inset: 0; }
+
+/* Left gradient overlay band */
+.wc-band {
+    position: absolute; inset: 0 0 0 0;
+    width: var(--wc-band-w);
+    background: linear-gradient(to right,
+        rgba(0,0,0,0.94) 0%,
+        rgba(0,0,0,0.88) 55%,
+        rgba(0,0,0,0.60) 80%,
+        transparent 100%);
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 32px var(--wc-pad-x);
+}
+
+/* Top: LFA logo */
+.wc-band-logo { height: 44px; width: auto; object-fit: contain; }
+
+/* Middle: player name + tagline */
+.wc-band-mid { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.wc-accent-line {
+    height: 1.5px; width: 100%; margin-bottom: 12px;
+    background: linear-gradient(90deg, var(--wc-accent), rgba(167,139,250,0.1), transparent);
+}
+.wc-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: var(--wc-name-sz); line-height: 0.88; color: #fff;
+    letter-spacing: 0.01em; word-break: break-word; overflow: hidden;
+    text-shadow: 0 4px 24px rgba(0,0,0,0.8);
+}
+.wc-tagline {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.22em;
+    color: var(--wc-accent); text-transform: uppercase;
+    margin-top: 8px;
+}
+
+/* Bottom: tags */
+.wc-band-foot { flex-shrink: 0; }
+
+/* Right stats strip */
+.wc-strip {
+    position: absolute; top: 0; right: 0; bottom: 0;
+    width: var(--wc-strip-w);
+    background: rgba(0,0,0,0.62);
+    backdrop-filter: blur(8px);
+    border-left: 1px solid rgba(255,255,255,0.07);
+    display: flex; flex-direction: column;
+    justify-content: center;
+    padding: 0 18px;
+    gap: 0;
+}
+.wc-strip-row {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding: 14px 0;
+}
+.wc-strip-row:last-child { border-bottom: none; }
+.wc-strip-dot {
+    width: var(--wc-cat-dot-sz); height: var(--wc-cat-dot-sz);
+    border-radius: 2px; flex-shrink: 0;
+}
+.wc-strip-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: var(--wc-cat-score-sz); line-height: 1; color: #fff;
+}
+.wc-strip-lbl {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: var(--wc-cat-name-sz); font-weight: 700; letter-spacing: 0.06em;
+    color: rgba(255,255,255,0.40); text-transform: uppercase; text-align: center;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    width: 100%; padding: 0 2px;
+}
+{% endblock %}
+
+{% block body_content %}
+{% set _photo = landscape_photo_url if landscape_photo_url else (photo_url if photo_url else None) %}
+<div class="wc-card {{ platform_class }}">
+
+    <!-- Full photo -->
+    <div class="wc-photo">
+        {% if _photo %}
+        <img src="{{ _photo }}" alt="{{ initials }}">
+        {% else %}
+        <div class="wc-initials" style="background:{{ avatar_bg }};">{{ initials }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Left overlay band -->
+    <div class="wc-band">
+        <div>
+            {% if app_logo_url %}
+            <img class="wc-band-logo" src="{{ app_logo_url }}" alt="LFA" onerror="this.style.display='none'">
+            {% endif %}
+        </div>
+
+        <div class="wc-band-mid">
+            <div class="wc-accent-line"></div>
+            <div class="wc-name">{{ player.name | upper }}</div>
+            <div class="wc-tagline">{{ welcome_subtitle }}</div>
+        </div>
+
+        <div class="wc-band-foot">
+            <div class="wc-tags">
+                {% if player.position and player.position != "Unknown" %}
+                <span class="wc-tag wc-tag--pos">{{ player.position | replace("_"," ") | upper }}</span>
+                {% endif %}
+                {% if player.nationality %}
+                <span class="wc-tag">{{ player.nationality | nationalities_display(player.secondary_nationality) }}</span>
+                {% endif %}
+                {% if player.age_group %}
+                <span class="wc-tag">{{ player.age_group }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right stats strip -->
+    <div class="wc-strip">
+        {% for avg in category_averages %}
+        <div class="wc-strip-row">
+            <div class="wc-strip-dot" style="background:{{ avg.color }};"></div>
+            <div class="wc-strip-score">{{ avg.avg }}</div>
+            <div class="wc-strip-lbl">{{ avg.name }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

@@ -361,9 +361,9 @@ body.export-mode .skill-bar-bg { max-width: none !important; }
 {% block extra_styles %}{% endblock %}
 </style>
 </head>
-<body class="theme-{{ card_theme }}{% if platform_class %} {{ platform_class }}{% endif %}{% if export_mode %} export-mode{% endif %}">
+<body class="theme-{{ card_theme }}{% if platform_class %} {{ platform_class }}{% endif %}{% if export_mode %} export-mode{% endif %}{% block extra_body_classes %}{% endblock %}">
 
-<div class="page-brand">⚽ LFA Education Center — Player Card</div>
+{% block page_header %}<div class="page-brand">⚽ LFA Education Center — Player Card</div>{% endblock %}
 
 {% block content %}{% endblock %}
 

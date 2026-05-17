@@ -1,0 +1,71 @@
+{# ─────────────────────────────────────────────────────────────────────────────
+   card_skill_row.html — shared skill-bar macros for player card templates
+   Two macros:
+     • export_skill_rows  — export templates (ex-* CSS prefix)
+     • card_skill_rows    — editor template   (card-* CSS prefix)
+   ───────────────────────────────────────────────────────────────────────────── #}
+
+{% macro export_skill_rows(cat, skills_dict, delta_dict,
+                           neutral_bar='var(--ex-text-secondary)',
+                           neutral_val='var(--ex-text-strong)') %}
+<div class="ex-skill-rows">
+    {% for skill in cat.skills %}
+    {% set sdata = skills_dict.get(skill.key, {}) %}
+    {% set sval  = sdata.get('current_level', 50) | round(0) | int %}
+    {% set fill  = [sval, 100] | min %}
+    {% set delta = delta_dict.get(skill.key, 0) %}
+    {% if delta > 0 %}
+        {% set bar_clr  = '#48bb78' %}
+        {% set val_clr  = '#48bb78' %}
+        {% set trend    = '↑' %}
+        {% set trend_vis = 'visible' %}
+    {% elif delta < 0 %}
+        {% set bar_clr  = '#fc8181' %}
+        {% set val_clr  = '#fc8181' %}
+        {% set trend    = '↓' %}
+        {% set trend_vis = 'visible' %}
+    {% else %}
+        {% set bar_clr  = neutral_bar %}
+        {% set val_clr  = neutral_val %}
+        {% set trend    = '↑' %}
+        {% set trend_vis = 'hidden' %}
+    {% endif %}
+    <div class="ex-row">
+        <span class="ex-sname">{{ skill.name_en }}</span>
+        <div class="ex-bar-bg">
+            <div class="ex-bar-fill" style="width:{{ fill }}%; background:{{ bar_clr }};"></div>
+        </div>
+        <span class="ex-sval" style="color:{{ val_clr }};">{{ sval }}</span>
+        <span class="ex-trend" style="color:{{ bar_clr }}; visibility:{{ trend_vis }};">{{ trend }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+
+{% macro card_skill_rows(cat, skills_dict, delta_dict) %}
+{% for skill in cat.skills %}
+{% set sdata = skills_dict.get(skill.key, {}) %}
+{% set sval = sdata.get('current_level', 50) | round(1) %}
+{% set fill_pct = [sval, 100] | min %}
+{% set sdelta = delta_dict.get(skill.key, 0) %}
+{% if sdelta > 0 %}
+    {% set bar_color = '#48bb78' %}
+    {% set val_color = '#48bb78' %}
+{% elif sdelta < 0 %}
+    {% set bar_color = '#fc8181' %}
+    {% set val_color = '#fc8181' %}
+{% else %}
+    {% set bar_color = 'var(--card-bar-neutral)' %}
+    {% set val_color = 'var(--card-val-neutral)' %}
+{% endif %}
+<div class="skill-row">
+    <span class="skill-name" title="{{ skill.name_en }}">{{ skill.name_en }}</span>
+    <div class="skill-bar-bg"><div class="skill-bar-fill" style="width:{{ fill_pct }}%; background:{{ bar_color }};"></div></div>
+    <span class="skill-val" style="color:{{ val_color }};">{{ sval }}</span>
+    {% if sdelta > 0 %}<span class="skill-up">↑</span>
+    {% elif sdelta < 0 %}<span class="skill-up" style="color:#fc8181;">↓</span>
+    {% else %}<span class="skill-up" style="visibility:hidden">↑</span>{% endif %}
+</div>
+{% endfor %}
+{% endmacro %}

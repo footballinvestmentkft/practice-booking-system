@@ -65,7 +65,7 @@ PLATFORM_PRESETS: dict[str, PlatformPresetDefinition] = {
     "facebook_square": PlatformPresetDefinition(
         "facebook_square", "Facebook Square",
         "platform-facebook-square",
-        "Facebook Post · 1080×1080",
+        "Facebook Square · 1080×1080",
         LayoutStrategy.PORTRAIT,
     ),
     "facebook_landscape": PlatformPresetDefinition(

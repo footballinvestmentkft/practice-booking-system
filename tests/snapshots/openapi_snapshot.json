@@ -3615,6 +3615,11 @@
             "title": "Height Cm Raw",
             "type": "string"
           },
+          "nickname_raw": {
+            "default": "",
+            "title": "Nickname Raw",
+            "type": "string"
+          },
           "position": {
             "title": "Position",
             "type": "string"
@@ -4041,6 +4046,20 @@
         "title": "Body_student_upload_compact_bg_photo_dashboard_lfa_player_photo_compact_bg_post",
         "type": "object"
       },
+      "Body_student_upload_initial_player_photo_dashboard_initial_player_photo_post": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_student_upload_initial_player_photo_dashboard_initial_player_photo_post",
+        "type": "object"
+      },
       "Body_student_upload_landscape_photo_dashboard_lfa_player_photo_landscape_post": {
         "properties": {
           "file": {
@@ -4109,6 +4128,48 @@
           "file"
         ],
         "title": "Body_student_upload_sponsor_logo_dashboard_lfa_player_sponsor_logo_post",
+        "type": "object"
+      },
+      "Body_student_upload_wc_landscape_photo_dashboard_wc_photo_landscape_post": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_student_upload_wc_landscape_photo_dashboard_wc_photo_landscape_post",
+        "type": "object"
+      },
+      "Body_student_upload_wc_photo_dashboard_wc_photo_post": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_student_upload_wc_photo_dashboard_wc_photo_post",
+        "type": "object"
+      },
+      "Body_student_upload_wc_portrait_photo_dashboard_wc_photo_portrait_post": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_student_upload_wc_portrait_photo_dashboard_wc_photo_portrait_post",
         "type": "object"
       },
       "Body_submit_quiz_quizzes__quiz_id__submit_post": {
@@ -58213,6 +58274,45 @@
         ]
       }
     },
+    "/dashboard/initial-player-photo": {
+      "post": {
+        "operationId": "student_upload_initial_player_photo_dashboard_initial_player_photo_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_student_upload_initial_player_photo_dashboard_initial_player_photo_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Upload Initial Player Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/dashboard/lfa-football-player/card-editor": {
       "get": {
         "description": "Dedicated sub-page for LFA Football Player card editing (Phase 1 extraction).",
@@ -58583,6 +58683,26 @@
         ]
       }
     },
+    "/dashboard/publish-card": {
+      "post": {
+        "description": "Copy the current editor draft state to the published public card state.\n\nIdempotent: calling it multiple times with the same draft produces the same result.\nThe public card route (/players/{id}/card) reads published_card_* fields only,\nso a user's public card is frozen until they explicitly call this endpoint.",
+        "operationId": "student_publish_card_dashboard_publish_card_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Student Publish Card",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/dashboard/unlock-theme": {
       "post": {
         "description": "Unlock a premium card theme by spending credits.",
@@ -58658,6 +58778,180 @@
           }
         },
         "summary": "Student Unlock Variant",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/wc-photo": {
+      "post": {
+        "operationId": "student_upload_wc_photo_dashboard_wc_photo_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_student_upload_wc_photo_dashboard_wc_photo_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Upload Wc Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/wc-photo-landscape": {
+      "post": {
+        "operationId": "student_upload_wc_landscape_photo_dashboard_wc_photo_landscape_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_student_upload_wc_landscape_photo_dashboard_wc_photo_landscape_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Upload Wc Landscape Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/wc-photo-landscape/delete": {
+      "post": {
+        "operationId": "student_delete_wc_landscape_photo_dashboard_wc_photo_landscape_delete_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Student Delete Wc Landscape Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/wc-photo-portrait": {
+      "post": {
+        "operationId": "student_upload_wc_portrait_photo_dashboard_wc_photo_portrait_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_student_upload_wc_portrait_photo_dashboard_wc_photo_portrait_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Upload Wc Portrait Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/wc-photo-portrait/delete": {
+      "post": {
+        "operationId": "student_delete_wc_portrait_photo_dashboard_wc_photo_portrait_delete_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Student Delete Wc Portrait Photo",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/wc-photo/delete": {
+      "post": {
+        "operationId": "student_delete_wc_photo_dashboard_wc_photo_delete_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Student Delete Wc Photo",
         "tags": [
           "web"
         ]
@@ -59375,6 +59669,71 @@
         "summary": "Metrics Alerts"
       }
     },
+    "/my-cards": {
+      "get": {
+        "description": "Hub page listing all card types \u2014 active (v\u22651) and coming-soon (v0).",
+        "operationId": "my_cards_hub_my_cards_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "My Cards Hub",
+        "tags": [
+          "web",
+          "my-cards"
+        ]
+      }
+    },
+    "/my-cards/player-card": {
+      "get": {
+        "description": "Detail entry point for Player Card \u2014 redirects to the card editor.",
+        "operationId": "my_cards_player_card_my_cards_player_card_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "My Cards Player Card",
+        "tags": [
+          "web",
+          "my-cards"
+        ]
+      }
+    },
+    "/my-cards/welcome-card": {
+      "get": {
+        "description": "Detail entry point for Welcome Card \u2014 redirects to the onboarding card.",
+        "operationId": "my_cards_welcome_card_my_cards_welcome_card_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "My Cards Welcome Card",
+        "tags": [
+          "web",
+          "my-cards"
+        ]
+      }
+    },
     "/notifications": {
       "get": {
         "operationId": "notifications_page_notifications_get",
@@ -59932,7 +60291,7 @@
         ]
       },
       "post": {
-        "description": "Validate and save LFA Football Player spec-profile fields (motivation_scores only).",
+        "description": "Validate and save LFA Football Player spec-profile fields and nickname.",
         "operationId": "lfa_player_profile_edit_submit_profile_lfa_football_player_edit_post",
         "requestBody": {
           "content": {
@@ -60013,7 +60372,7 @@
     },
     "/profile/onboarding-card": {
       "get": {
-        "description": "Welcome Card preview \u2014 private self-assessment view.\n\nData source: football_skills[*].self_assessment ONLY.\nNEVER reads current_level, baseline, system_baseline, tournament_delta,\nassessment_delta, or any EMA output.\n\nWithout ?platform=: renders the gallery hub (iframe + download buttons).\nWith ?platform=X:   renders the FIFA Classic card for that platform size.\nWith ?export=1:     switches the FIFA template to export-mode (Playwright use).\n\nAuth: own card only (get_current_user_web enforces login; ownership is\nimplicit because we query by user.id).\nVisibility: private, no-index (meta tag in template).",
+        "description": "Welcome Card preview \u2014 private self-assessment view.\n\nData source: football_skills[*].self_assessment ONLY.\nNEVER reads current_level, baseline, system_baseline, tournament_delta,\nassessment_delta, or any EMA output.\n\nWithout ?platform=: renders the gallery hub (iframe + download buttons).\nWith ?platform=X:   renders the FIFA Classic card for that platform size.\nWith ?export=1:     switches the FIFA template to export-mode (Playwright use).\n\nAuth: cookie session (browser) OR short-lived render JWT (Playwright export).\nrender_token is generated by export_onboarding_welcome_card, expires in 60 s,\nand is only accepted when purpose==\"wc_render\".\nVisibility: private, no-index (meta tag in template).",
         "operationId": "onboarding_welcome_card_profile_onboarding_card_get",
         "parameters": [
           {
@@ -60040,6 +60399,32 @@
               "default": false,
               "title": "Export",
               "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "use_nickname",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Use Nickname",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "render_token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Render Token"
             }
           }
         ],
@@ -60084,6 +60469,16 @@
               "default": "instagram_square",
               "title": "Platform",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "use_nickname",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Use Nickname",
+              "type": "boolean"
             }
           }
         ],

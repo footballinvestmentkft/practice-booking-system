@@ -44,8 +44,21 @@ Coverage:
          .ex-sec-pos-chips absent from photo column (chips moved to pos panel)
   SQ-31  No PRIMARY/SECONDARY/OTHER legend in Position Map panel — v9
   SQ-32  v10 flat layout: .ex-col-right and .ex-col-right-skills absent from HTML body
-  SQ-33  v11 column modifiers: ex-col-outfield, ex-col-mental-pos, ex-col-sets-phys present
-         Position Map inside ex-col-mental-pos; panel height 160px; info col 140px
+  SQ-33  v13 column structure: ex-col-outfield, ex-right-section, ex-right-skills,
+         ex-col-mental-pos, ex-col-sets-phys; Position Map full-width bottom bar of ex-right-section;
+         panel height 200px; info col 140px; panel NOT inside Col 2 or Col 3
+  SQ-35  Human-view page shell gated by {% if not export_mode %} Jinja2 block
+         — background #0f1923 present in human block; base html/body has no background
+         — human-view .ex-card override: fixed 1080px canvas (wrapper+scale strategy)
+         — Playwright base .ex-card still uses min(100vw, 100vh) unchanged
+  SQ-36  Human-view wrapper + scale engine contract (Opció C — transform: scale)
+         — .ex-card-viewport CSS defined in human-view block
+         — .ex-card fixed 1080×1080px in human-view block
+         — transform-origin: top left present in human-view CSS
+         — .ex-card-viewport HTML wrapper present in template body
+         — HTML wrapper gated by {% if not export_mode %}
+         — applyScale JS function present and gated by {% if not export_mode %}
+         — base .ex-card uses min(100vw, 100vh) — not 1080px — export unchanged
 """
 from __future__ import annotations
 
@@ -116,14 +129,14 @@ class TestPositionBadge:
 
     def test_sq06_no_pos_badge_on_photo(self, tpl):
         """v9: .ex-pos-badge class must be absent from the HTML body (photo is clean portrait)."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'class="ex-pos-badge"' not in html_body, (
             ".ex-pos-badge must not appear in the HTML body — photo badges were removed in v9"
         )
 
     def test_sq06_primary_pos_in_panel_context(self, tpl):
         """v9: primary_pos_label must appear inside the .ex-pos-panel-landscape block."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         panel_start = html_body.find('class="ex-pos-panel-landscape"')
         assert panel_start != -1
         panel_region = html_body[panel_start: panel_start + 1200]
@@ -133,7 +146,7 @@ class TestPositionBadge:
 
     def test_sq07_secondary_chips_in_pos_panel(self, tpl):
         """v9: secondary chips container must be in the Position Map panel, not the photo column."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         # Chips container must exist somewhere in the body
         assert 'class="ex-pos-secondary-chips"' in html_body, (
             ".ex-pos-secondary-chips must be present inside the Position Map panel"
@@ -147,7 +160,7 @@ class TestPositionBadge:
 
     def test_sq07_chips_no_artificial_slice(self, tpl):
         """v9: secondary_pos_labels loop must not use [:4] slice — domain guarantees max 3."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         panel_start = html_body.find('class="ex-pos-panel-landscape"')
         panel_region = html_body[panel_start: panel_start + 1200]
         assert "secondary_pos_labels[:4]" not in panel_region, (
@@ -222,36 +235,44 @@ class TestAnimationStagger:
         assert ".ex-cat:nth-child(4)" not in anim_block
 
 
-# ── SQ-13: Sponsor placement (v8 — hero layer) ───────────────────────────────
+# ── SQ-13: Sponsor placement (v14 — outfield column bottom) ──────────────────
 
 class TestSponsorSlot:
-    def test_sq13_sponsor_in_hero_layer(self, tpl):
-        """v8: sponsor must use .ex-hero-sponsor class (moved to hero layer)."""
-        html_body = tpl[tpl.rfind("</style>"):]
-        assert 'class="ex-hero-sponsor"' in html_body
+    def test_sq13_hero_sponsor_absent(self, tpl):
+        """v14: ex-hero-sponsor removed from hero layer — must not appear anywhere in HTML body."""
+        html_body = tpl[tpl.find("{% block body_content %}"):]
+        assert 'class="ex-hero-sponsor"' not in html_body
+        assert 'class="ex-hero-sponsor-img"' not in html_body
 
-    def test_sq13_sponsor_inside_profile_col(self, tpl):
-        """v8: .ex-hero-sponsor must appear inside .ex-profile-col (hero layer, not skills zone)."""
-        html_body = tpl[tpl.rfind("</style>"):]
-        profile_col_idx = html_body.find('class="ex-profile-col"')
-        sponsor_idx = html_body.find('class="ex-hero-sponsor"', profile_col_idx)
-        skill_cats_idx = html_body.find('class="ex-skill-cats"')
-        assert profile_col_idx != -1
-        assert sponsor_idx != -1, ".ex-hero-sponsor not found after .ex-profile-col"
-        # sponsor must come before skill-cats (it's in the hero zone, above the skills zone)
-        assert sponsor_idx < skill_cats_idx, (
-            ".ex-hero-sponsor must be in the hero layer (before .ex-skill-cats), not in the skills zone"
+    def test_sq13_outfield_logo_in_outfield_col(self, tpl):
+        """v14: ex-outfield-logo must appear inside ex-col-outfield (Col 1), not in hero layer."""
+        html_body = tpl[tpl.find("{% block body_content %}"):]
+        outfield_start = html_body.find('class="ex-skill-col ex-col-outfield"')
+        right_section_start = html_body.find('class="ex-right-section"')
+        logo_idx = html_body.find('class="ex-outfield-logo"')
+        assert outfield_start != -1
+        assert logo_idx != -1, "ex-outfield-logo not found in HTML body"
+        # logo must be inside ex-col-outfield (before ex-right-section)
+        assert outfield_start < logo_idx < right_section_start, (
+            "ex-outfield-logo must be inside ex-col-outfield, before ex-right-section"
         )
+
+    def test_sq13_outfield_logo_css_defined(self, tpl):
+        """v14: .ex-outfield-logo and .ex-outfield-logo-img CSS must be defined."""
+        assert ".ex-outfield-logo {" in tpl or ".ex-outfield-logo\n{" in tpl
+        assert ".ex-outfield-logo-img" in tpl
+        assert "max-height: 44px" in tpl
+        assert "opacity: 0.50" in tpl
+
+    def test_sq13_outfield_logo_gated(self, tpl):
+        """v14: outfield logo must be Jinja2-gated by sponsor_logo_url or app_logo_url."""
+        assert "sponsor_logo_url" in tpl
+        assert "{% if sponsor_logo_url" in tpl or "{% if sponsor_logo_url or" in tpl
 
     def test_sq13_no_ex_sponsor_slot_in_body(self, tpl):
         """v8: old .ex-sponsor-slot class must be absent — skills zone is fully freed."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'class="ex-sponsor-slot"' not in html_body
-
-    def test_sq13_sponsor_gated_by_jinja2_condition(self, tpl):
-        """Sponsor block must be gated — no layout break when sponsor_logo_url is absent."""
-        assert "sponsor_logo_url" in tpl
-        assert "{% if sponsor_logo_url" in tpl or "{% if sponsor_logo_url or" in tpl
 
 
 # ── SQ-14: Animated mode gating ───────────────────────────────────────────────
@@ -277,8 +298,10 @@ class TestFileIntegrity:
         assert _TPL_PATH.exists(), f"Template not found: {_TPL_PATH}"
 
     def test_sq15_has_doctype(self, tpl):
-        """Must be a complete HTML document."""
-        assert "<!DOCTYPE html>" in tpl
+        """Must produce a complete HTML document — via extends fifa_base.html."""
+        assert '{% extends' in tpl and 'fifa_base.html' in tpl, (
+            "Template must extend fifa_base.html (which provides the DOCTYPE declaration)"
+        )
 
     def test_sq15_has_ex_card_root(self, tpl):
         """Root card div with class ex-card must be present."""
@@ -291,12 +314,12 @@ class TestRemovedV4Artefacts:
     def test_sq16_no_logo_host_class_in_html(self, tpl):
         """ex-cat--logo-host must not appear in HTML (v4 filler pattern removed)."""
         # Only check the HTML body part (after </style>)
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert "ex-cat--logo-host" not in html_body
 
     def test_sq16_no_logo_slot_in_html(self, tpl):
         """ex-logo-slot div must not appear in HTML body (v5 has no empty filler slots)."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'class="ex-logo-slot"' not in html_body
 
 
@@ -305,7 +328,7 @@ class TestRemovedV4Artefacts:
 class TestPositionMiniPanel:
     def test_sq17_pos_panel_class_in_html(self, tpl):
         """v7 landscape panel: .ex-pos-panel-landscape div must be present in the HTML body."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'class="ex-pos-panel-landscape"' in html_body
 
     def test_sq18_landscape_pitch_svg_viewbox(self, tpl):
@@ -320,13 +343,13 @@ class TestPositionMiniPanel:
 
     def test_sq19_position_nodes_in_svg(self, tpl):
         """SVG rendering must reference position_nodes from template context."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         # position_nodes must be used in the for loop inside the SVG block
         assert "position_nodes" in html_body
 
     def test_sq19_coordinate_transform_formula(self, tpl):
         """v8: SVG must use real-geometry coordinate transform (cx=node.x*105, cy=node.y*68)."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert "node.x * 105" in html_body, (
             "SVG coordinate transform must use node.x * 105 (105m pitch width), not node.x * 100"
         )
@@ -336,7 +359,7 @@ class TestPositionMiniPanel:
 
     def test_sq20_pos_panel_inside_skill_col(self, tpl):
         """v11: panel is INSIDE .ex-skill-cats and appears after skill_categories[2] (Mental)."""
-        html_body      = tpl[tpl.rfind("</style>"):]
+        html_body      = tpl[tpl.find("{% block body_content %}"):]
         idx_skill_cats = html_body.find('class="ex-skill-cats"')
         idx_mental     = html_body.find("skill_categories[2]", idx_skill_cats)
         idx_panel      = html_body.find('class="ex-pos-panel-landscape"', idx_mental)
@@ -380,7 +403,7 @@ class TestPositionPanelIntegrity:
 
     def test_sq24_pos_panel_not_ex_cat(self, tpl):
         """Landscape panel must NOT use .ex-cat class — immune to cat fade-slide animation."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'class="ex-pos-panel-landscape"' in html_body
         assert 'class="ex-cat ex-pos-panel-landscape"' not in html_body
         assert 'class="ex-pos-panel-landscape ex-cat"' not in html_body
@@ -399,7 +422,7 @@ class TestPositionPanelIntegrity:
 
     def test_sq27_no_node_label_in_landscape_svg(self, tpl):
         """Landscape SVG must not render node.label text — position name is in the hero badge."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         panel_start = html_body.find('class="ex-pos-panel-landscape"')
         panel_end   = html_body.find("{% endif %}", panel_start)
         assert panel_start > 0 and panel_end > panel_start
@@ -414,7 +437,7 @@ class TestPositionPanelIntegrity:
 class TestAspectRatioIntegrity:
     def test_sq28_preserve_aspect_ratio_meet(self, tpl):
         """v8: landscape SVG must declare preserveAspectRatio='xMidYMid meet' — no stretch, no crop."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         panel_start = html_body.find('class="ex-pos-panel-landscape"')
         assert panel_start != -1
         # Scope to the <svg>…</svg> element directly — avoids inner {% endif %} ambiguity
@@ -435,7 +458,7 @@ class TestAspectRatioIntegrity:
 class TestPositionMapInfoColumn:
     def test_sq29_pos_info_div_in_html(self, tpl):
         """v9: .ex-pos-info div must be present inside .ex-pos-panel-landscape."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         panel_start = html_body.find('class="ex-pos-panel-landscape"')
         assert panel_start != -1
         panel_region = html_body[panel_start: panel_start + 1500]
@@ -471,7 +494,7 @@ class TestPositionMapInfoColumn:
 class TestCleanPhotoColumn:
     def test_sq30_no_pos_badge_in_body(self, tpl):
         """v9: .ex-pos-badge class must not appear anywhere in the HTML body."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'class="ex-pos-badge"' not in html_body, (
             ".ex-pos-badge removed in v9 — all position info lives in Position Map panel"
         )
@@ -482,7 +505,7 @@ class TestCleanPhotoColumn:
 
     def test_sq30_no_photo_sec_chips(self, tpl):
         """v9: secondary chips must NOT appear inside the photo column block."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         photo_col_start = html_body.find('class="ex-photo-col"')
         photo_col_end   = html_body.find('class="ex-profile-col"', photo_col_start)
         assert photo_col_start != -1 and photo_col_end > photo_col_start
@@ -497,7 +520,7 @@ class TestCleanPhotoColumn:
 class TestNoPositionLegend:
     def test_sq31_no_legend_marker_elements(self, tpl):
         """v9: Position Map panel must not contain a PRIMARY/SECONDARY/OTHER legend."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         panel_start = html_body.find('class="ex-pos-panel-landscape"')
         panel_end   = html_body.find("{% endif %}", panel_start)
         assert panel_start > 0 and panel_end > panel_start
@@ -519,14 +542,14 @@ class TestNoPositionLegend:
 class TestV10FlatLayout:
     def test_sq32_no_ex_col_right_in_html(self, tpl):
         """v10: .ex-col-right wrapper removed — Mental and Set Pieces are flat siblings."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'class="ex-col-right"' not in html_body, (
             ".ex-col-right wrapper must be absent in v10 — all three skill columns are flat siblings"
         )
 
     def test_sq32_no_ex_col_right_skills_in_html(self, tpl):
         """v10: .ex-col-right-skills inner wrapper also removed."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'class="ex-col-right-skills"' not in html_body, (
             ".ex-col-right-skills inner wrapper must be absent in v10"
         )
@@ -537,58 +560,420 @@ class TestV10FlatLayout:
 class TestV11ColumnModifiers:
     def test_sq33_col_outfield_class_present(self, tpl):
         """v11: Col 1 must carry ex-col-outfield modifier class."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'ex-col-outfield' in html_body, (
             "ex-col-outfield modifier class must be present on Col 1 (Outfield)"
         )
 
     def test_sq33_col_mental_pos_class_present(self, tpl):
         """v11: Col 2 must carry ex-col-mental-pos modifier class."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'ex-col-mental-pos' in html_body, (
             "ex-col-mental-pos modifier class must be present on Col 2 (Mental + PosMap)"
         )
 
     def test_sq33_col_sets_phys_class_present(self, tpl):
         """v11: Col 3 must carry ex-col-sets-phys modifier class."""
-        html_body = tpl[tpl.rfind("</style>"):]
+        html_body = tpl[tpl.find("{% block body_content %}"):]
         assert 'ex-col-sets-phys' in html_body, (
             "ex-col-sets-phys modifier class must be present on Col 3 (Set Pieces + Physical)"
         )
 
-    def test_sq33_panel_inside_col_mental_pos(self, tpl):
-        """v11: Position Map panel must be inside .ex-col-mental-pos column."""
-        html_body   = tpl[tpl.rfind("</style>"):]
-        col2_start  = html_body.find('ex-col-mental-pos')
-        col3_start  = html_body.find('ex-col-sets-phys')
-        panel_idx   = html_body.find('class="ex-pos-panel-landscape"')
-        assert col2_start > 0 and col3_start > 0 and panel_idx > 0
-        assert col2_start < panel_idx < col3_start, (
-            "v11: ex-pos-panel-landscape must be inside ex-col-mental-pos (after Mental, before Col 3)"
+    def test_sq33_right_section_wrapper_present(self, tpl):
+        """v13: ex-right-section wrapper div must be present (wraps Col 2 + Col 3 + PosMap)."""
+        html_body = tpl[tpl.find("{% block body_content %}"):]
+        assert 'class="ex-right-section"' in html_body, (
+            "v13: ex-right-section wrapper div must be present as the Col 2+Col 3+PosMap container"
         )
 
-    def test_sq33_panel_height_160px(self, tpl):
-        """v11: .ex-pos-panel-landscape CSS must declare height: 160px."""
+    def test_sq33_right_skills_inner_row_present(self, tpl):
+        """v13: ex-right-skills flex-row must be present inside ex-right-section."""
+        html_body = tpl[tpl.find("{% block body_content %}"):]
+        assert 'class="ex-right-skills"' in html_body, (
+            "v13: ex-right-skills flex-row div must be present (holds Mental + Set Pieces+Physical)"
+        )
+
+    def test_sq33_right_section_flex_css_defined(self, tpl):
+        """v13: .ex-right-section and .ex-right-skills CSS rules must be defined."""
+        assert ".ex-right-section" in tpl, ".ex-right-section CSS rule must be defined"
+        assert ".ex-right-skills" in tpl, ".ex-right-skills CSS rule must be defined"
+
+    def test_sq33_panel_inside_right_section(self, tpl):
+        """v13: Position Map must be inside ex-right-section (after Col 3 in DOM order)."""
+        html_body   = tpl[tpl.find("{% block body_content %}"):]
+        right_start = html_body.find('class="ex-right-section"')
+        col3_start  = html_body.find('ex-col-sets-phys')
+        panel_idx   = html_body.find('class="ex-pos-panel-landscape"')
+        assert right_start > 0 and panel_idx > 0, (
+            "ex-right-section or ex-pos-panel-landscape not found in HTML body"
+        )
+        assert panel_idx > right_start, (
+            "v13: ex-pos-panel-landscape must be inside ex-right-section (appears after it opens)"
+        )
+        assert panel_idx > col3_start, (
+            "v13: ex-pos-panel-landscape must come after ex-col-sets-phys in DOM order"
+        )
+
+    def test_sq33_panel_not_inside_col_mental_pos(self, tpl):
+        """v13 regression guard: Position Map must NOT be inside ex-col-mental-pos."""
+        html_body  = tpl[tpl.find("{% block body_content %}"):]
+        col2_start = html_body.find('class="ex-skill-col ex-col-mental-pos"')
+        col3_start = html_body.find('class="ex-skill-col ex-col-sets-phys"')
+        panel_idx  = html_body.find('class="ex-pos-panel-landscape"')
+        assert col2_start > 0 and col3_start > 0 and panel_idx > 0
+        assert not (col2_start < panel_idx < col3_start), (
+            "v13: ex-pos-panel-landscape must NOT be inside ex-col-mental-pos"
+        )
+
+    def test_sq33_panel_not_inside_col_sets_phys(self, tpl):
+        """v13 regression guard: Position Map must NOT be inside ex-col-sets-phys (v12 revert guard)."""
+        html_body  = tpl[tpl.find("{% block body_content %}"):]
+        col3_open  = html_body.find('class="ex-skill-col ex-col-sets-phys"')
+        panel_idx  = html_body.find('class="ex-pos-panel-landscape"')
+        # Col 3 closing </div> — look for next </div> after the col3 for loop endfor
+        endfor_idx = html_body.find('{% endfor %}', col3_open)
+        col3_close = html_body.find('</div>', endfor_idx) if endfor_idx > 0 else -1
+        assert col3_open > 0 and panel_idx > 0 and col3_close > 0
+        assert not (col3_open < panel_idx < col3_close), (
+            "v13 regression guard: ex-pos-panel-landscape must NOT be inside ex-col-sets-phys — "
+            "it is a direct child of ex-right-section (full Col 2+Col 3 width)"
+        )
+
+    def test_sq33_panel_height_200px(self, tpl):
+        """v13: .ex-pos-panel-landscape CSS must declare height: 200px (full-width bar)."""
         panel_css_start = tpl.find(".ex-pos-panel-landscape {")
         assert panel_css_start != -1
         panel_css_end = tpl.find("}", panel_css_start)
         panel_css = tpl[panel_css_start: panel_css_end + 1]
-        assert "height: 160px" in panel_css, (
-            ".ex-pos-panel-landscape must be 160px tall in v11 for legible pitch rendering"
+        assert "height: 200px" in panel_css, (
+            ".ex-pos-panel-landscape must be 200px tall in v13 — full-width bar renders 309×200px pitch"
+        )
+        assert "height: 160px" not in panel_css, (
+            "v13: old 160px height must not remain — panel is now full Col 2+Col 3 width"
         )
 
-    def test_sq33_info_col_140px(self, tpl):
-        """v11: .ex-pos-info CSS must declare flex: 0 0 140px (narrowed to widen SVG area)."""
+    def test_sq33_pos_info_220px(self, tpl):
+        """v14: .ex-pos-info CSS must declare flex: 0 0 220px (widened for better info readability)."""
         info_css_start = tpl.find(".ex-pos-info {")
         assert info_css_start != -1
         info_css_end = tpl.find("}", info_css_start)
         info_css = tpl[info_css_start: info_css_end + 1]
-        assert "140px" in info_css, (
-            ".ex-pos-info must be 140px wide in v11 — wider SVG area for legible pitch"
+        assert "220px" in info_css, (
+            ".ex-pos-info must be 220px wide in v14 — wider info column reduces letterboxing"
         )
+        assert "140px" not in info_css, ".ex-pos-info must not still declare 140px (stale v11 value)"
+
+    def test_sq33_pos_panel_title_13px(self, tpl):
+        """v14: .ex-pos-panel-title must be 13px (up from 11px for legibility)."""
+        title_css_start = tpl.find(".ex-pos-panel-title {")
+        assert title_css_start != -1
+        title_css_end = tpl.find("}", title_css_start)
+        title_css = tpl[title_css_start: title_css_end + 1]
+        assert "font-size: 13px" in title_css, ".ex-pos-panel-title must be 13px in v14"
+
+    def test_sq33_pos_primary_name_17px(self, tpl):
+        """v14: .ex-pos-primary-name must be 17px (up from 14px for prominence)."""
+        name_css_start = tpl.find(".ex-pos-primary-name {")
+        assert name_css_start != -1
+        name_css_end = tpl.find("}", name_css_start)
+        name_css = tpl[name_css_start: name_css_end + 1]
+        assert "font-size: 17px" in name_css, ".ex-pos-primary-name must be 17px in v14"
 
     def test_sq33_flex_fill_css_rules_present(self, tpl):
         """v11: column flex-fill CSS rules must be defined for all three modifier classes."""
         assert ".ex-col-outfield .ex-cat" in tpl, "flex-fill rule for ex-col-outfield missing"
         assert ".ex-col-mental-pos .ex-cat" in tpl, "flex-fill rule for ex-col-mental-pos missing"
-        assert ".ex-col-sets-phys .ex-cat:last-child" in tpl, "flex-fill rule for ex-col-sets-phys missing"
+        assert ".ex-col-sets-phys .ex-cat:last-child" in tpl, (
+            "v13: flex-fill rule must target :last-child (Physical is last .ex-cat in Col 3 — "
+            "PosMap is in ex-right-section, not in ex-col-sets-phys)"
+        )
+        assert ".ex-col-sets-phys .ex-cat:nth-child(2)" not in tpl, (
+            "v13: :nth-child(2) selector must be absent — Physical is :last-child in Col 3"
+        )
+        assert ".ex-right-section" in tpl, "v13: .ex-right-section flex rule missing"
+        assert ".ex-right-skills" in tpl, "v13: .ex-right-skills flex rule missing"
+
+
+# ── SQ-34: v15/v16 consistency fixes ─────────────────────────────────────────
+
+class TestV15ConsistencyFixes:
+    def _card_css(self, tpl: str) -> str:
+        start = tpl.find(".ex-card {")
+        assert start != -1, ".ex-card CSS rule not found"
+        end = tpl.find("}", start)
+        return tpl[start: end + 1]
+
+    def test_sq34_card_uses_min_sizing(self, tpl):
+        """v16: .ex-card must use min(100vw, 100vh) for both width and height.
+
+        min() guarantees 1:1 at any viewport:
+          Playwright 1080×1080 → min(1080, 1080) = 1080px (PNG/WebM unchanged).
+          Browser 1440×900    → min(1440,  900) =  900px (fully visible, square).
+        """
+        card_css = self._card_css(tpl)
+        assert "min(100vw, 100vh)" in card_css, (
+            ".ex-card must use min(100vw, 100vh) for square-specific sizing "
+            "(v16 fix — ensures 1:1 aspect ratio at any viewport)"
+        )
+
+    def test_sq34_card_no_plain_100vw_100vh(self, tpl):
+        """v16: plain width:100vw / height:100vh must NOT appear in .ex-card — replaced by min()."""
+        card_css = self._card_css(tpl)
+        assert "width:  100vw" not in card_css and "width: 100vw" not in card_css, (
+            "Plain width:100vw must not appear in .ex-card — use min(100vw, 100vh) instead. "
+            "100vw alone produces a non-square card at non-square viewports."
+        )
+        assert "height: 100vh" not in card_css and "height:  100vh" not in card_css, (
+            "Plain height:100vh must not appear in .ex-card — covered by min(100vw, 100vh)."
+        )
+
+    def test_sq34_card_no_aspect_ratio(self, tpl):
+        """v15: .ex-card must NOT use aspect-ratio — replaced by explicit min() sizing."""
+        card_css = self._card_css(tpl)
+        assert "aspect-ratio" not in card_css, (
+            ".ex-card must not use aspect-ratio — v16 uses min(100vw, 100vh) for explicit square sizing"
+        )
+
+    def test_sq34_body_has_flex_centering(self, tpl):
+        """v16: body must declare flex centering so the card is centered in wide viewports."""
+        style_block = tpl[:tpl.find("{% block body_content %}")]
+        body_start = style_block.find("body {")
+        assert body_start != -1, "body rule not found in CSS block"
+        body_end = style_block.find("}", body_start)
+        body_css = style_block[body_start: body_end + 1]
+        assert "display: flex" in body_css, (
+            "body must declare display: flex for horizontal card centering at wide viewports"
+        )
+        assert "justify-content: center" in body_css, (
+            "body must declare justify-content: center to center the square card horizontally"
+        )
+
+    def test_sq34_svg_no_green_css_background(self, tpl):
+        """v15: .ex-pos-svg-landscape must NOT have background: #1a5c2a in CSS.
+
+        Green comes from <rect fill='#1a5c2a'> inside the SVG viewBox only —
+        same pattern as Default card .pitch-svg (no CSS background property).
+        """
+        svg_css_start = tpl.find(".ex-pos-svg-landscape {")
+        assert svg_css_start != -1
+        svg_css_end = tpl.find("}", svg_css_start)
+        svg_css = tpl[svg_css_start: svg_css_end + 1]
+        assert "background" not in svg_css, (
+            ".ex-pos-svg-landscape must have no CSS background — "
+            "green is provided by internal <rect fill='#1a5c2a'> only (Default card pattern)"
+        )
+
+    def test_sq34_node_label_pass4_present(self, tpl):
+        """v15: Pass 4 node.label must be rendered inside the SVG block."""
+        html_body = tpl[tpl.find("{% block body_content %}"):]
+        svg_start = html_body.find('class="ex-pos-svg-landscape"')
+        assert svg_start != -1
+        svg_end = html_body.find("</svg>", svg_start)
+        svg_block = html_body[svg_start: svg_end + len("</svg>")]
+        assert "node.label" in svg_block, (
+            "Pass 4 node.label text must be rendered inside ex-pos-svg-landscape "
+            "(adapted from player_card_fifa.html:611-618)"
+        )
+
+    def test_sq34_node_label_landscape_coords(self, tpl):
+        """v15: Pass 4 text elements must use landscape coordinate transform (x*105, y*68).
+
+        Portrait transform (node.y*65, (1-node.x)*100) must NOT appear in the SVG label block.
+        """
+        html_body = tpl[tpl.find("{% block body_content %}"):]
+        svg_start = html_body.find('class="ex-pos-svg-landscape"')
+        svg_end = html_body.find("</svg>", svg_start)
+        svg_block = html_body[svg_start: svg_end + len("</svg>")]
+        assert "node.x * 105" in svg_block, (
+            "Pass 4 text x-coordinate must use node.x * 105 (landscape: longitudinal → horizontal)"
+        )
+        assert "node.y * 68" in svg_block, (
+            "Pass 4 text y-coordinate must use node.y * 68 (landscape: lateral → vertical)"
+        )
+        assert "1 - node.x" not in svg_block, (
+            "Portrait inversion (1 - node.x) must not appear in landscape SVG"
+        )
+
+
+# ── SQ-35: Human-view page shell contract ─────────────────────────────────────
+
+class TestHumanViewPageShell:
+    """SQ-35 — {% if not export_mode %} page shell for human-browseable public card.
+
+    The export templates are Playwright-first (raw canvas, no page background).
+    When a human opens the URL without ?export=1 the route passes export_mode=False,
+    and this Jinja2 block renders a dark page shell so the card feels like a real page.
+
+    SQ-35a  {% if not export_mode %} block is present in the template
+    SQ-35b  Page background #0f1923 is inside the conditional (not in base rules)
+    SQ-35c  Base html/body rule has no background — Playwright gets transparent body
+    SQ-35d  Human-view .ex-card override uses min(90vw, 90vh) for breathing room
+    SQ-35e  Playwright base .ex-card still uses min(100vw, 100vh) before the block
+    """
+
+    def _human_block(self, tpl: str) -> str:
+        start = tpl.find("{% if not export_mode %}")
+        end   = tpl.find("{% endif %}", start)
+        assert start != -1 and end != -1, "{% if not export_mode %} block not found"
+        return tpl[start: end]
+
+    def _base_style(self, tpl: str) -> str:
+        """CSS before the human-view conditional block."""
+        return tpl[:tpl.find("{% if not export_mode %}")]
+
+    def test_sq35a_human_view_gate_present(self, tpl):
+        """SQ-35a: Template must contain the {% if not export_mode %} Jinja2 gate."""
+        assert "{% if not export_mode %}" in tpl, (
+            "SQ-35a: {% if not export_mode %} block missing — human-view page shell not guarded; "
+            "Playwright exports would inherit page-shell CSS breaking the raw canvas contract"
+        )
+
+    def test_sq35b_page_bg_inside_conditional(self, tpl):
+        """SQ-35b: background: #0f1923 must appear inside the conditional block."""
+        human = self._human_block(tpl)
+        assert "background: #0f1923" in human, (
+            "SQ-35b: dark page background (#0f1923) not found inside {% if not export_mode %} — "
+            "human-view page shell is missing the background color"
+        )
+
+    def test_sq35c_base_html_body_has_no_background(self, tpl):
+        """SQ-35c: The base body rule must NOT declare a background color."""
+        base = self._base_style(tpl)
+        body_start = base.find("body {")
+        assert body_start != -1, "body rule not found in base CSS"
+        body_end   = base.find("}", body_start)
+        base_body  = base[body_start: body_end + 1]
+        assert "background" not in base_body, (
+            "SQ-35c: base body rule declares a background — Playwright would inherit this; "
+            "background must only appear inside {% if not export_mode %} block"
+        )
+
+    def test_sq35d_human_view_card_uses_fixed_canvas(self, tpl):
+        """SQ-35d: Human-view overrides .ex-card to fixed 1080px canvas (wrapper+scale strategy).
+
+        Opció C replaces the old min(90vw, 90vh) approach: the card always renders at its
+        native 1080px calibration and is scaled atomically via transform: scale(), preventing
+        the internal flex-budget collapse that caused Position Map overlap.
+        """
+        human = self._human_block(tpl)
+        assert "width: 1080px" in human and "height: 1080px" in human, (
+            "SQ-35d: human-view .ex-card CSS override does not set fixed 1080×1080px canvas — "
+            "scale-down strategy requires the card to render at its native 1080px calibration"
+        )
+
+    def test_sq35e_playwright_base_card_still_100vw_vh(self, tpl):
+        """SQ-35e: The Playwright base .ex-card must still use min(100vw, 100vh)."""
+        before_gate = self._base_style(tpl)
+        assert "min(100vw, 100vh)" in before_gate, (
+            "SQ-35e: Playwright base .ex-card sizing min(100vw, 100vh) not found before the "
+            "{% if not export_mode %} block — PNG/WebM export canvas contract broken"
+        )
+
+
+# ── SQ-36: Human-view wrapper + scale engine (Opció C) ───────────────────────
+
+class TestHumanViewScaleEngine:
+    """SQ-36 — transform: scale() wrapper strategy for human-browseable Square card.
+
+    Opció C: .ex-card always renders at its native 1080×1080px canvas.
+    A .ex-card-viewport wrapper is sized by JS, and transform: scale() shrinks
+    the canvas to fit the browser window without triggering internal reflowing.
+
+    SQ-36a  .ex-card-viewport CSS class defined in the human-view CSS block
+    SQ-36b  .ex-card fixed 1080×1080px in the human-view CSS block
+    SQ-36c  transform-origin: top left present in the human-view CSS block
+    SQ-36d  .ex-card-viewport HTML wrapper div present in the template body
+    SQ-36e  HTML wrapper is guarded by {% if not export_mode %}
+    SQ-36f  applyScale JS function present and guarded by {% if not export_mode %}
+    SQ-36g  base .ex-card (before the gate) uses min(100vw, 100vh) — not 1080px
+    SQ-36h  1080px override does NOT appear in the base CSS (before the gate)
+    """
+
+    def _css_block(self, tpl: str) -> str:
+        """Content of the FIRST {% if not export_mode %} block (CSS overrides)."""
+        start = tpl.find("{% if not export_mode %}")
+        end   = tpl.find("{% endif %}", start)
+        assert start != -1 and end != -1, "First {% if not export_mode %} block not found"
+        return tpl[start:end]
+
+    def _base_css(self, tpl: str) -> str:
+        """CSS content before the first human-view gate."""
+        return tpl[:tpl.find("{% if not export_mode %}")]
+
+    def test_sq36a_viewport_css_defined(self, tpl):
+        """SQ-36a: .ex-card-viewport CSS class must be defined in the human-view CSS block."""
+        human = self._css_block(tpl)
+        assert ".ex-card-viewport" in human, (
+            "SQ-36a: .ex-card-viewport CSS class not found in {% if not export_mode %} block — "
+            "wrapper has no CSS rules; layout will be broken in human-view mode"
+        )
+
+    def test_sq36b_card_fixed_1080px(self, tpl):
+        """SQ-36b: Human-view CSS block must override .ex-card to fixed 1080×1080px."""
+        human = self._css_block(tpl)
+        assert "width: 1080px" in human, (
+            "SQ-36b: 'width: 1080px' not in human-view CSS block — "
+            ".ex-card must be fixed at native canvas size for scale strategy to work"
+        )
+        assert "height: 1080px" in human, (
+            "SQ-36b: 'height: 1080px' not in human-view CSS block — "
+            ".ex-card must be fixed at native canvas size for scale strategy to work"
+        )
+
+    def test_sq36c_transform_origin_top_left(self, tpl):
+        """SQ-36c: transform-origin: top left must be in the human-view CSS block."""
+        human = self._css_block(tpl)
+        assert "transform-origin: top left" in human, (
+            "SQ-36c: 'transform-origin: top left' not in human-view CSS — "
+            "without this, scale() will offset the card inside the viewport wrapper"
+        )
+
+    def test_sq36d_html_wrapper_present(self, tpl):
+        """SQ-36d: .ex-card-viewport HTML wrapper div must be present in the template body."""
+        assert 'class="ex-card-viewport"' in tpl or "ex-card-viewport" in tpl, (
+            "SQ-36d: .ex-card-viewport wrapper div not found in template — "
+            "scale engine needs the wrapper to constrain layout space"
+        )
+
+    def test_sq36e_html_wrapper_gated(self, tpl):
+        """SQ-36e: HTML wrapper div must be guarded by {% if not export_mode %}."""
+        idx = tpl.find("ex-card-viewport", tpl.find("{% block body_content %}"))
+        assert idx != -1, "ex-card-viewport not found in HTML body section"
+        gate = tpl.rfind("{% if not export_mode %}", 0, idx)
+        assert gate != -1, (
+            "SQ-36e: ex-card-viewport HTML wrapper is NOT inside {% if not export_mode %} — "
+            "wrapper div would appear in Playwright export HTML, breaking the raw canvas contract"
+        )
+
+    def test_sq36f_js_apply_scale_gated(self, tpl):
+        """SQ-36f: applyScale JS function must be present and inside {% if not export_mode %}."""
+        idx = tpl.find("applyScale")
+        assert idx != -1, (
+            "SQ-36f: applyScale function not found in template — "
+            "JS scale engine missing; human-view card will render at 1080px unscaled"
+        )
+        gate = tpl.rfind("{% if not export_mode %}", 0, idx)
+        assert gate != -1, (
+            "SQ-36f: applyScale JS not inside {% if not export_mode %} — "
+            "scale script would be injected into Playwright export HTML"
+        )
+
+    def test_sq36g_base_card_not_1080px(self, tpl):
+        """SQ-36g: Base .ex-card (before the gate) must NOT declare 1080px dimensions."""
+        base = self._base_css(tpl)
+        assert "width: 1080px" not in base, (
+            "SQ-36g: 'width: 1080px' found in base CSS (before {% if not export_mode %}) — "
+            "this would override the Playwright canvas size from min(100vw,100vh) to 1080px"
+        )
+        assert "height: 1080px" not in base, (
+            "SQ-36g: 'height: 1080px' found in base CSS (before {% if not export_mode %}) — "
+            "Playwright export canvas contract would be broken"
+        )
+
+    def test_sq36h_base_card_uses_min_vw_vh(self, tpl):
+        """SQ-36h: Base .ex-card must still use min(100vw, 100vh) for Playwright export."""
+        base = self._base_css(tpl)
+        assert "min(100vw, 100vh)" in base, (
+            "SQ-36h: min(100vw, 100vh) not found in base .ex-card CSS — "
+            "Playwright 1080×1080 export canvas contract is broken"
+        )

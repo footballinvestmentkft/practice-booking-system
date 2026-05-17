@@ -265,14 +265,6 @@ class TestLfaPlayerProfileTemplate:
     def test_has_page_title(self, tpl_src):
         assert "LFA Player Profile" in tpl_src
 
-    # ── Welcome Card CTAs ──────────────────────────────────────────────────
-
-    def test_view_welcome_card_link_present(self, tpl_src):
-        assert 'href="/profile/onboarding-card"' in tpl_src
-
-    def test_download_cta_points_to_export_route(self, tpl_src):
-        assert '/profile/onboarding-card/export?platform=instagram_square' in tpl_src
-
     def test_no_player_card_route_linked(self, tpl_src):
         assert '/players/' not in tpl_src
 
@@ -316,10 +308,6 @@ class TestLfaPlayerProfileTemplate:
     def test_edit_profile_cta_present(self, tpl_src):
         """View page header must have an Edit Profile CTA."""
         assert 'href="/profile/lfa-football-player/edit"' in tpl_src
-
-    def test_welcome_card_cta_in_header(self, tpl_src):
-        """View page header must link to Welcome Card."""
-        assert '🎴 Welcome Card' in tpl_src
 
     # ── New read-only data fields ──────────────────────────────────────────────
 
@@ -396,14 +384,18 @@ def wc_gallery_src():
     return _WC_GALLERY_TPL_PATH.read_text(encoding="utf-8")
 
 
-class TestWelcomeCardBackLink:
-    """welcome_card.html back link now points to /profile/lfa-football-player."""
+class TestWelcomeCardNavigation:
+    """welcome_card.html navigation — now via student_base.html (Option A).
 
-    def test_back_link_points_to_lfa_player_profile(self, wc_gallery_src):
-        assert 'href="/profile/lfa-football-player"' in wc_gallery_src
+    The manual back-link was removed; app navigation is provided by the inherited
+    student_base.html navbar, which includes the LFA Player and Hub links.
+    """
 
-    def test_back_link_does_not_point_to_global_profile(self, wc_gallery_src):
-        # Must not have the bare /profile back link (would be regression)
+    def test_inherits_student_base_for_navigation(self, wc_gallery_src):
+        assert '{% extends "student_base.html" %}' in wc_gallery_src
+
+    def test_no_manual_back_link_to_global_profile(self, wc_gallery_src):
+        # Bare /profile back link must not exist (would be regression to old nav)
         assert 'href="/profile">← Back' not in wc_gallery_src
 
 
@@ -543,6 +535,7 @@ def _post(
     secondary_positions=None,
     height_cm_raw="178",
     weight_kg_raw="74",
+    nickname_raw="",
     lic=None,
 ):
     """Call lfa_player_profile_edit_submit with controllable parameters."""
@@ -561,6 +554,7 @@ def _post(
             goals=goals,
             height_cm_raw=height_cm_raw,
             weight_kg_raw=weight_kg_raw,
+            nickname_raw=nickname_raw,
             db=db,
             user=_user(),
         ))
@@ -626,6 +620,7 @@ class TestLfaEditPost:
                 goals="enjoy_game",
                 height_cm_raw="",
                 weight_kg_raw="",
+                nickname_raw="",
                 db=db,
                 user=user,
             ))
@@ -882,15 +877,15 @@ class TestLfaNavigationCTAs:
         assert 'href="/profile"' not in card_editor_src or \
                'href="/profile/lfa-football-player"' in card_editor_src
 
-    # ── My Card tile icon — must be 🎴, not 🪪 ────────────────────────────────
+    # ── My Cards tile icon — Phase 4B: 🃏, hero title: My Cards ─────────────
 
-    def test_dashboard_my_card_tile_uses_playing_card_icon(self, dashboard_src):
-        """My Card mod-nav tile must use 🎴 (card/deck icon), not 🪪 (ID card)."""
-        assert '🎴' in dashboard_src
+    def test_dashboard_my_cards_tile_uses_joker_card_icon(self, dashboard_src):
+        """My Cards mod-nav tile must use 🃏 (Phase 4B rename from My Card → My Cards)."""
+        assert '🃏' in dashboard_src
 
-    def test_dashboard_my_card_hero_title_uses_playing_card_icon(self, dashboard_src):
-        """My Player Card hero section title must use 🎴."""
-        assert '🎴 My Player Card' in dashboard_src
+    def test_dashboard_my_cards_hero_title_updated(self, dashboard_src):
+        """My Cards hero section title must reflect Phase 4B rename."""
+        assert '🃏 My Cards' in dashboard_src
 
     def test_card_editor_page_title_uses_playing_card_icon(self, card_editor_src):
         """Card editor page title must use 🎴 My Player Card."""
@@ -915,10 +910,14 @@ class TestLfaNavigationCTAs:
 
     # ── Welcome card back link (regression guard — must not revert) ───────────
 
-    def test_welcome_card_back_link_still_on_lfa_profile(self):
-        """Welcome card back link was updated in Fázis 2; must not revert to /profile."""
+    def test_welcome_card_uses_student_base_navigation(self):
+        """Welcome card gallery inherits student_base.html (Option A nav refactor).
+
+        The manual back-link was removed; the LFA Player link lives in the inherited
+        student_base.html navbar.  This guards against reverting to the standalone layout.
+        """
         src = _WC_GALLERY_TPL_PATH.read_text()
-        assert "/profile/lfa-football-player" in src
+        assert '{% extends "student_base.html" %}' in src
 
 
 # ── Group 11: Design integration — header, icon, theme ─────────────────────────
@@ -1047,10 +1046,13 @@ class TestLfaDesignIntegration:
         """Global /profile template must not have been modified by this fix."""
         assert '{% extends "student_base.html" %}' in profile_src
 
-    def test_welcome_card_back_link_unchanged(self):
-        """Welcome Card back link must still point to /profile/lfa-football-player."""
+    def test_welcome_card_nav_via_student_base(self):
+        """Welcome Card gallery navigates via student_base.html (Option A nav refactor).
+
+        The manual back-link is gone; navigation is provided by the inherited navbar.
+        """
         src = _WC_GALLERY_TPL_PATH.read_text()
-        assert '/profile/lfa-football-player' in src
+        assert '{% extends "student_base.html" %}' in src
 
 
 # ── Group 12a: View data completeness — old-license compatibility ──────────────

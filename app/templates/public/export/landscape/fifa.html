@@ -1,48 +1,42 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>{{ player.name }} — LFA Player Card</title>
-<style>
-/*
- * FIFA Classic × FB Landscape / OG / Facebook Post — Dedicated export template
+{% extends "public/export/shared/fifa_base.html" %}
+{#
+ * FIFA Classic × FB Landscape / OG / Facebook Post — export template
+ * (Phase 3b-4: extends fifa_base.html)
  * Canvas  : 1200 × 630 px  (Playwright viewport, 1.91:1 ratio)
- * Purpose : static social export ONLY — no editor UI, no responsive CSS
- * Classes : ex- prefix throughout, no inheritance from editor templates
  * Covers  : facebook_landscape, og, facebook_post (all map to 'landscape' bucket)
  *
- * 3-COLUMN LAYOUT — equal thirds (flex:1 each ≈ 400px at 1200px canvas):
- *   .ex-left    flex:1 — dark FIFA panel: photo zone (58%) + OVR zone (42%)
- *   .ex-center  flex:1 — profile panel: name, team subtitle, 9 profile rows
- *   .ex-skills  flex:1 — 2×2 skill grid: ALL skills per category (no slicing)
- */
+ * Extends fifa_base.html directly (not column intermediate — 3-col row layout).
+ * vs. banner/fifa.html (also row, but 2-col):
+ *   columns   2 (left fixed 420px + skills) → 3 (left + center + skills, each flex:1)
+ *   center    absent → white profile panel (.ex-center, background:#ffffff)
+ *   ovr       panel element → photo-zone + ovr-zone column in .ex-left
+ *   watermark absent → .ex-ovr-watermark decorative background number
+ *   dom badge absent → .ex-dom-badge Rl/rL/RL/rl monospace display
+ *   cat_bg    inherited 0.05 → explicit 0.04 (render-equivalence kept)
+ *   neutral   default bar/val → explicit rgba(255,255,255,0.18 / 0.80)
+ *   photo     landscape→portrait→generic → portrait→landscape→generic
+ *   slicing   [:4] → none (all skills per category rendered)
+ #}
 
+{% block theme_root %}{{ export_root_vars(theme, cat_bg='rgba(255,255,255,0.04)') }}{% endblock %}
+
+{% block platform_vars %}
 :root {
-    --ex-panel-bg:  {{ theme.panel_bg if theme is defined else 'linear-gradient(155deg,#1a2744 0%,#2a3a5c 60%,#1e3a4a 100%)' }};
-    --ex-body-bg:   {{ theme.body_bg  if theme is defined else '#1a202c' }};
-    --ex-accent:    {{ theme.accent   if theme is defined else '#667eea' }};
-    --ex-bar-bg:    rgba(255,255,255,0.10);
-    --ex-cat-bg:    rgba(255,255,255,0.04);
+    --ex-card-direction: row;
+    --ex-sname-w:        80px;
+    --ex-font-skill:     9px;
+    --ex-bar-h:          4px;
+    --ex-sval-w:         24px;
+    --ex-trend-w:        10px;
+    --ex-font-trend:     8px;
+    --ex-grid-gap:       6px;
+    --ex-cat-radius:     8px;
+    --ex-cat-pad:        8px 10px;
+    --ex-row-max-h:      26px;
 }
+{% endblock %}
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html, body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-}
-
-/* Root card — fills the 1200×630 viewport exactly, ROW direction */
-.ex-card {
-    width:  100vw;
-    height: 100vh;
-    display: flex;
-    flex-direction: row;
-    overflow: hidden;
-}
-
+{% block extra_css %}
 /* ── LEFT PANEL ───────────────────────────────────────────────────────────────
    flex:1 (~400px at 1200px). Two zones stacked vertically:
      .ex-photo-zone — top 58%  (portrait photo, full-cover, no border/radius)
@@ -289,9 +283,8 @@ html, body {
     max-width: 155px;
 }
 
-/* ── SKILLS PANEL — 2×2 category grid, ALL skills ────────────────────────────
-   flex:1 — equal third at ~400px.
-   No [:4] slicing — all skills in every category are rendered.
+/* ── SKILLS PANEL ─────────────────────────────────────────────────────────────
+   flex:1 — equal third at ~400px. No [:N] slicing.
    ─────────────────────────────────────────────────────────────────────────── */
 .ex-skills {
     flex: 1;
@@ -308,120 +301,39 @@ html, body {
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.14em;
-    color: rgba(255,255,255,0.25);
+    color: var(--ex-text-muted);
     margin-bottom: 6px;
 }
 
-/* 2×2 category grid */
-.ex-skill-cats {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 6px;
-    overflow: hidden;
-    min-height: 0;
+/* Category average score — right-aligned in cat-name row */
+.ex-cat-avg {
+    font-size: 9px;
+    font-weight: 900;
+    color: var(--ex-text-secondary);
 }
 
-/* Category cell */
-.ex-cat {
-    background: var(--ex-cat-bg);
-    border-radius: 8px;
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-height: 0;
-}
+/* Override base .ex-cat-name: flex layout for cat_avg; margin/padding differ */
 .ex-cat-name {
-    flex-shrink: 0;
-    font-size: 9px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.10em;
-    color: rgba(255,255,255,0.40);
     margin-bottom: 5px;
     padding-bottom: 4px;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    border-bottom-color: rgba(255,255,255,0.07);
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
-.ex-cat-avg {
-    font-size: 9px;
-    font-weight: 900;
-    color: rgba(255,255,255,0.50);
-}
 
-/* Skill rows container */
-.ex-skill-rows {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    overflow: hidden;
-}
+/* Override base .ex-row: gap 5px (base: 8px hardcoded) */
+.ex-row { gap: 5px; }
 
-/* Individual skill row */
-.ex-row {
-    flex: 1;
-    min-height: 0;
-    max-height: 26px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
+/* Override base .ex-bar-bg: compact fixed 32px max-width (base: flex:1) */
+.ex-bar-bg { flex: 0 1 32px; }
 
-/* Skill name — fixed width */
-.ex-sname {
-    flex: 0 0 80px;
-    font-size: 9px;
-    font-weight: 500;
-    color: rgba(255,255,255,0.60);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1;
-}
+/* Override base .ex-bar-fill: 3px radius (base: 4px) */
+.ex-bar-fill { border-radius: 3px; }
+{% endblock %}
 
-/* Skill bar — compact 32px */
-.ex-bar-bg {
-    flex: 0 1 32px;
-    min-width: 0;
-    height: 4px;
-    background: var(--ex-bar-bg);
-    border-radius: 3px;
-    overflow: hidden;
-}
-.ex-bar-fill {
-    height: 100%;
-    border-radius: 3px;
-    min-width: 3px;
-}
-
-/* Value */
-.ex-sval {
-    flex: 0 0 24px;
-    font-size: 9px;
-    font-weight: 700;
-    text-align: right;
-    line-height: 1;
-}
-
-/* Trend arrow */
-.ex-trend {
-    flex: 0 0 10px;
-    font-size: 8px;
-    font-weight: 900;
-    text-align: center;
-    line-height: 1;
-}
-</style>
-</head>
-<body>
+{% block body_content %}
+{% from "macros/card_skill_row.html" import export_skill_rows %}
 <div class="ex-card">
 
     <!-- ── LEFT PANEL — photo zone (58%) + OVR zone (42%) ────────────────── -->
@@ -524,6 +436,7 @@ html, body {
                 <span class="ex-profile-label">Events</span>
                 <span class="ex-profile-value">{{ player.total_tournaments }}</span>
             </div>
+            {% if not welcome_card_mode %}
             <div class="ex-profile-row">
                 <span class="ex-profile-label">License</span>
                 <span class="ex-profile-value">Lv. {{ license_current_level or "—" }}{% if license_current_level and license_max_level is defined and license_max_level > license_current_level %} / {{ license_max_level }}{% endif %}</span>
@@ -532,6 +445,7 @@ html, body {
                 <span class="ex-profile-label">XP</span>
                 <span class="ex-profile-value">{{ "{:,}".format(xp_balance | int) }} ✦</span>
             </div>
+            {% endif %}
 
         </div>
 
@@ -551,38 +465,7 @@ html, body {
                     {{ cat.emoji }} {{ cat.name_en }}
                     <span class="ex-cat-avg">{{ cat_avg }}</span>
                 </div>
-                <div class="ex-skill-rows">
-                    {% for skill in cat.skills %}
-                    {% set sdata = player.skills.get(skill.key, {}) %}
-                    {% set sval  = sdata.get('current_level', 50) | round(0) | int %}
-                    {% set fill  = [sval, 100] | min %}
-                    {% set delta = last_skill_delta.get(skill.key, 0) %}
-                    {% if delta > 0 %}
-                        {% set bar_clr   = '#48bb78' %}
-                        {% set val_clr   = '#48bb78' %}
-                        {% set trend_chr = '↑' %}
-                        {% set trend_vis = 'visible' %}
-                    {% elif delta < 0 %}
-                        {% set bar_clr   = '#fc8181' %}
-                        {% set val_clr   = '#fc8181' %}
-                        {% set trend_chr = '↓' %}
-                        {% set trend_vis = 'visible' %}
-                    {% else %}
-                        {% set bar_clr   = 'rgba(255,255,255,0.18)' %}
-                        {% set val_clr   = 'rgba(255,255,255,0.80)' %}
-                        {% set trend_chr = '↑' %}
-                        {% set trend_vis = 'hidden' %}
-                    {% endif %}
-                    <div class="ex-row">
-                        <span class="ex-sname">{{ skill.name_en }}</span>
-                        <div class="ex-bar-bg">
-                            <div class="ex-bar-fill" style="width:{{ fill }}%; background:{{ bar_clr }};"></div>
-                        </div>
-                        <span class="ex-sval" style="color:{{ val_clr }};">{{ sval }}</span>
-                        <span class="ex-trend" style="color:{{ bar_clr }}; visibility:{{ trend_vis }};">{{ trend_chr }}</span>
-                    </div>
-                    {% endfor %}
-                </div>
+                {{ export_skill_rows(cat, player.skills, last_skill_delta, neutral_bar='rgba(255,255,255,0.18)', neutral_val='rgba(255,255,255,0.80)') }}
             </div>
             {% endfor %}
         </div>
@@ -590,5 +473,4 @@ html, body {
     {% endif %}
 
 </div>
-</body>
-</html>
+{% endblock %}

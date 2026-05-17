@@ -1,0 +1,178 @@
+{% extends "public/export/shared/wc_base.html" %}
+{#
+ * Welcome Card — Full Bleed layout (Dir C: Athlete Spotlight)
+ * Canvas  : 1080×1080 (1:1)
+ * Platform: facebook_square
+ *
+ * Structure: full-bleed photo with dual gradient overlay.
+ *   Top overlay:    LFA logo (left) · player name (right)
+ *   Bottom content: symmetric accent line · player name hero (Bebas 96px)
+ *                   welcome tagline · tags · skill badges row
+ *
+ * Player name is the visual hero — no structured content panel.
+ #}
+
+{% block theme_root %}{{ export_root_vars(theme) }}{% endblock %}
+
+{% block platform_vars %}
+:root {
+    --wc-name-sz:       96px;
+    --wc-pad-x:         44px;
+    --wc-tag-sz:        17px;
+    --wc-tag-pad:    5px 17px;
+    --wc-cat-h:        100px;
+    --wc-cat-score-sz:  38px;
+    --wc-cat-name-sz:   10px;
+    --wc-cat-dot-sz:     9px;
+    --wc-initials-sz:  240px;
+}
+{% endblock %}
+
+{% block extra_css %}
+/* Relative root for absolute photo + content layers */
+.wc-card { position: relative; }
+
+/* Full-canvas photo */
+.wc-photo { position: absolute; inset: 0; }
+.wc-photo-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top,
+        rgba(0,0,0,0.97) 0%,
+        rgba(0,0,0,0.55) 38%,
+        rgba(0,0,0,0.12) 72%,
+        rgba(0,0,0,0.32) 100%);
+    pointer-events: none;
+}
+
+/* Top header bar: player name only — logo lives in identity block */
+.wc-hdr {
+    position: absolute; top: 0; left: 0; right: 0;
+    padding: 30px var(--wc-pad-x);
+    display: flex; align-items: center; justify-content: flex-end;
+}
+.wc-hdr-name {
+    font-size: 16px; font-weight: 600; letter-spacing: 0.18em;
+    color: rgba(255,255,255,0.55); text-transform: uppercase;
+}
+
+/* Bottom content stack */
+.wc-bottom {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 0 var(--wc-pad-x) 44px;
+}
+.wc-sym-line {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--wc-accent), transparent);
+    margin-bottom: 24px;
+}
+/* Identity block: name (left, flex:1) · logo (right, fixed) */
+.wc-identity-block {
+    display: flex; flex-direction: row; align-items: flex-end;
+    gap: 16px; overflow: hidden; min-width: 0; margin-bottom: 14px;
+}
+.wc-identity-block .wc-name {
+    flex: 1; min-width: 0;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.wc-identity-logo {
+    height: 120px; width: auto; object-fit: contain; flex-shrink: 0;
+}
+.wc-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: var(--wc-name-sz); line-height: 1; color: #fff;
+    letter-spacing: 0.01em; word-break: break-word; overflow: hidden;
+    margin-bottom: 0;
+}
+.wc-tagline {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 17px; font-weight: 600; letter-spacing: 0.20em;
+    color: var(--wc-accent); text-transform: uppercase; margin-bottom: 18px;
+}
+
+/* Skill category badges — 4 in a row */
+.wc-cats {
+    margin-top: 22px;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    height: var(--wc-cat-h);
+    border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px;
+}
+.wc-cat {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 5px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 6px; margin: 0 3px;
+    padding: 6px 4px;
+    border-left: 1px solid rgba(255,255,255,0.06);
+}
+.wc-cat:first-child { border-left: none; }
+.wc-cat-dot {
+    width: var(--wc-cat-dot-sz); height: var(--wc-cat-dot-sz);
+    border-radius: 2px;
+}
+.wc-cat-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: var(--wc-cat-score-sz); line-height: 1; color: #fff;
+}
+.wc-cat-lbl {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: var(--wc-cat-name-sz); font-weight: 700; letter-spacing: 0.06em;
+    color: rgba(255,255,255,0.38); text-transform: uppercase; text-align: center;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    width: 100%; padding: 0 3px;
+}
+{% endblock %}
+
+{% block body_content %}
+{% set _photo = portrait_photo_url if portrait_photo_url else (photo_url if photo_url else None) %}
+<div class="wc-card {{ platform_class }}">
+
+    <!-- Full photo + gradient overlay -->
+    <div class="wc-photo">
+        {% if _photo %}
+        <img src="{{ _photo }}" alt="{{ initials }}">
+        {% else %}
+        <div class="wc-initials" style="background:{{ avatar_bg }};">{{ initials }}</div>
+        {% endif %}
+        <div class="wc-photo-overlay"></div>
+    </div>
+
+    <!-- Top header: player name only — logo in identity block below -->
+    <div class="wc-hdr">
+        <span class="wc-hdr-name">{{ player.name }}</span>
+    </div>
+
+    <!-- Bottom content stack -->
+    <div class="wc-bottom">
+        <div class="wc-sym-line"></div>
+        <div class="wc-identity-block">
+            <div class="wc-name">{{ player.name | upper }}</div>
+            {% if app_logo_url %}
+            <img class="wc-identity-logo" src="{{ app_logo_url }}" alt="LFA"
+                 onerror="this.style.display='none'">
+            {% endif %}
+        </div>
+        <div class="wc-tagline">{{ welcome_subtitle }}</div>
+        <div class="wc-tags">
+            {% if player.position and player.position != "Unknown" %}
+            <span class="wc-tag wc-tag--pos">{{ player.position | replace("_"," ") | upper }}</span>
+            {% endif %}
+            {% if player.nationality %}
+            <span class="wc-tag">{{ player.nationality | nationalities_display(player.secondary_nationality) }}</span>
+            {% endif %}
+            {% if player.age_group %}
+            <span class="wc-tag">{{ player.age_group }}</span>
+            {% endif %}
+        </div>
+        <div class="wc-cats">
+            {% for avg in category_averages %}
+            <div class="wc-cat">
+                <div class="wc-cat-dot" style="background:{{ avg.color }};"></div>
+                <div class="wc-cat-score">{{ avg.avg }}</div>
+                <div class="wc-cat-lbl">{{ avg.name }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

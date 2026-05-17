@@ -151,7 +151,10 @@ def test_cc12_wc_gallery_ids_all_exist_in_canvas_sizes():
 
 
 def test_cc13_wc_gallery_ids_intentional_exclusions():
-    excluded = {"facebook_square", "og", "facebook_post"}
+    # facebook_square is intentionally INCLUDED (full_bleed editorial layout — added in S5).
+    # og and facebook_post remain excluded: og duplicates banner_custom at a different ratio;
+    # facebook_post duplicates facebook_landscape at the same 1200×630 dimensions.
+    excluded = {"og", "facebook_post"}
     for pid in excluded:
         assert pid not in WC_GALLERY_PLATFORM_IDS, (
             f"{pid!r} found in WC_GALLERY_PLATFORM_IDS — it should be intentionally excluded. "

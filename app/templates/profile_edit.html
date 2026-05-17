@@ -222,7 +222,7 @@
 
             <div class="form-group">
                 <label for="nickname">Nickname (Optional)</label>
-                <input type="text" id="nickname" name="nickname" value="{{ user.nickname or '' }}">
+                <input type="text" id="nickname" name="nickname" value="{{ user.nickname or '' }}" maxlength="30">
                 <small>How would you like others to address you?</small>
             </div>
 

@@ -1,0 +1,15 @@
+{# ─────────────────────────────────────────────────────────────────────────────
+   card_sponsor_block.html — sponsor slot macro for story + tiktok export templates
+   One macro:
+     • sponsor_slot — renders the ex-sponsor-slot div with conditional logo img
+   ───────────────────────────────────────────────────────────────────────────── #}
+
+{% macro sponsor_slot(sponsor_logo_url, app_logo_url) %}
+<div class="ex-sponsor-slot">
+    {% if sponsor_logo_url %}
+    <img class="ex-sponsor-slot-img" src="{{ sponsor_logo_url }}" alt="Sponsor">
+    {% elif app_logo_url %}
+    <img class="ex-sponsor-slot-img" src="{{ app_logo_url }}" alt="LFA">
+    {% endif %}
+</div>
+{% endmacro %}

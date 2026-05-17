@@ -1,0 +1,111 @@
+{%- from "macros/card_theme_root.html" import export_root_vars -%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<title>{{ player.name }} — Welcome Card | LFA</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800;900&display=swap');
+
+/* ── THEME TOKENS (midnight default) — export_root_vars emits --ex-* vars ── */
+{% block theme_root %}{{ export_root_vars(theme) }}{% endblock %}
+
+/* ── PLATFORM SIZING (override per template in platform_vars block) ──────── */
+{% block platform_vars %}{% endblock %}
+
+/* ── DIR C: ATHLETE SPOTLIGHT — fixed visual-direction tokens ────────────── */
+:root {
+    --wc-accent:         #a78bfa;
+    --wc-tag-pos-bg:     rgba(167,139,250,0.15);
+    --wc-tag-pos-border: rgba(167,139,250,0.50);
+    --wc-tag-pos-color:  #c4b5fd;
+}
+
+/* ── RESET ───────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+
+/* ── ROOT CARD ───────────────────────────────────────────────────────────── */
+.wc-card {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+    background: var(--ex-panel-bg);
+    font-family: 'Barlow Condensed', -apple-system, sans-serif;
+}
+
+/* ── PHOTO ZONE PRIMITIVES ────────────────────────────────────────────────
+   Each layout positions .wc-photo differently, but the image and initials
+   fallback rendering is always the same.
+   ─────────────────────────────────────────────────────────────────────── */
+.wc-photo { position: relative; overflow: hidden; }
+.wc-photo > img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: 50% 15%;
+}
+.wc-initials {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: var(--wc-initials-sz, 200px);
+    font-weight: 900; letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.06);
+    text-transform: uppercase; user-select: none;
+}
+
+/* ── TAG PRIMITIVES ───────────────────────────────────────────────────── */
+.wc-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.wc-tag {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: var(--wc-tag-sz, 10px);
+    font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+    color: rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 4px; padding: var(--wc-tag-pad, 3px 9px);
+    white-space: nowrap;
+}
+.wc-tag--pos {
+    color: var(--wc-tag-pos-color);
+    background: var(--wc-tag-pos-bg);
+    border-color: var(--wc-tag-pos-border);
+}
+
+/* ── LAYOUT-SPECIFIC CSS (defined per template) ──────────────────────── */
+{% block extra_css %}{% endblock %}
+</style>
+</head>
+<body>
+{% block body_content %}{% endblock %}
+<script>
+/* Auto-fit name font-size inside .wc-identity-block so the name never clips.
+   Algorithm: proportional one-shot estimate → 1px fine-tune loop.
+   Ellipsis in CSS is the emergency fallback only if the minimum floor is hit. */
+document.fonts.ready.then(function () {
+    document.querySelectorAll('.wc-identity-block').forEach(function (block) {
+        var nameEl = block.querySelector('.wc-name');
+        if (!nameEl) return;
+
+        var fs    = parseFloat(getComputedStyle(nameEl).fontSize);
+        var minFs = Math.max(20, Math.floor(fs * 0.25));
+
+        if (nameEl.scrollWidth <= nameEl.offsetWidth) return; /* already fits */
+
+        /* One proportional estimate: scale font by the overflow ratio */
+        var ratio = nameEl.offsetWidth / nameEl.scrollWidth;
+        fs = Math.max(minFs, Math.floor(fs * ratio * 0.95));
+        nameEl.style.fontSize = fs + 'px';
+
+        /* Fine-tune: step down 1px until it fits or floor is reached */
+        while (nameEl.scrollWidth > nameEl.offsetWidth && fs > minFs) {
+            fs -= 1;
+            nameEl.style.fontSize = fs + 'px';
+        }
+    });
+});
+</script>
+</body>
+</html>

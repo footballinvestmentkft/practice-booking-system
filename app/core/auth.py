@@ -52,3 +52,15 @@ def verify_token(token: str, token_type: str = "access") -> Optional[str]:
         return username
     except JWTError:
         return None
+
+
+def create_render_token(user_id: int, expires_seconds: int = 60) -> str:
+    """Short-lived JWT for internal Playwright render auth (Welcome Card export).
+
+    Claims: sub=str(user_id), purpose="wc_render", exp=now+expires_seconds.
+    Only accepted by the Welcome Card render route when purpose=="wc_render".
+    """
+    return create_access_token(
+        data={"sub": str(user_id), "purpose": "wc_render"},
+        expires_delta=timedelta(seconds=expires_seconds),
+    )

@@ -1,0 +1,185 @@
+{% extends "public/export/shared/wc_base.html" %}
+{#
+ * Welcome Card — Cinematic layout (Dir C: Athlete Spotlight)
+ * Canvas  : 1080×1920 (9:16)
+ * Platform: tiktok
+ *
+ * Structure: full-bleed photo with heavy bottom gradient.
+ *   Top:          LFA logo
+ *   Right side:   vertical brand accent bar (line · "Lion Football Academy" · line)
+ *   Bottom stack: player name (200px Bebas hero) · purple tagline
+ *                 tags · glassmorphism skill container
+ *
+ * Design intent: photo fills 65% of canvas; content stack anchors at bottom.
+ #}
+
+{% block theme_root %}{{ export_root_vars(theme) }}{% endblock %}
+
+{% block platform_vars %}
+:root {
+    --wc-name-sz:       200px;
+    --wc-pad-x:          56px;
+    --wc-tag-sz:         20px;
+    --wc-tag-pad:    6px 20px;
+    --wc-cat-h:         140px;   /* balance-corrected: glass/name=70% vs JSX 60% */
+    --wc-cat-score-sz:   28px;   /* legibility +2px, scaled to 140px container */
+    --wc-cat-name-sz:    10px;   /* legibility fix: 8→10px */
+    --wc-cat-dot-sz:     10px;   /* score*0.30=8.4→10 */
+    --wc-initials-sz:   300px;
+}
+{% endblock %}
+
+{% block extra_css %}
+/* Relative root for layered absolute elements */
+.wc-card { position: relative; }
+
+/* Full-canvas photo */
+.wc-photo { position: absolute; inset: 0; }
+.wc-photo-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top,
+        rgba(0,0,0,0.97) 0%,
+        rgba(0,0,0,0.72) 30%,
+        rgba(0,0,0,0.08) 62%,
+        rgba(0,0,0,0.35) 100%);
+}
+
+/* Top: LFA logo */
+.wc-top {
+    position: absolute; top: 0; left: 0; right: 0;
+    padding: 52px var(--wc-pad-x);
+    display: flex; align-items: center;
+}
+.wc-top-logo { height: 64px; width: auto; object-fit: contain; }
+
+/* Vertical brand bar (right edge, centered vertically in photo zone) */
+.wc-brand-bar {
+    position: absolute; top: 28%; right: 44px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.wc-brand-line {
+    width: 1.5px; height: 80px;
+}
+.wc-brand-line--top  { background: linear-gradient(to bottom, transparent, var(--wc-accent)); }
+.wc-brand-line--bot  { background: linear-gradient(to top, transparent, var(--wc-accent)); }
+.wc-brand-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.24em;
+    color: var(--wc-accent); text-transform: uppercase;
+    writing-mode: vertical-rl; transform: rotate(180deg);
+}
+
+/* Bottom content stack */
+.wc-bottom {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 0 var(--wc-pad-x) 56px;
+}
+/* Identity block: name (left, flex:1) · logo (right, fixed) */
+.wc-identity-block {
+    display: flex; flex-direction: row; align-items: flex-end;
+    gap: 16px; overflow: hidden; min-width: 0; margin-bottom: 18px;
+}
+.wc-identity-block .wc-name {
+    flex: 1; min-width: 0;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.wc-identity-logo {
+    height: 200px; width: auto; object-fit: contain; flex-shrink: 0;
+}
+.wc-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: var(--wc-name-sz); line-height: 1; color: #fff;
+    letter-spacing: 0.01em; word-break: break-word; overflow: hidden;
+    text-shadow: 0 8px 40px rgba(0,0,0,0.9); margin-bottom: 0;
+}
+.wc-tagline {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px; font-weight: 600; letter-spacing: 0.22em;
+    color: var(--wc-accent); text-transform: uppercase; margin-bottom: 16px;
+}
+
+/* Glassmorphism skill container */
+.wc-skill-glass {
+    margin-top: 28px;
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(16px);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.10);
+    overflow: hidden; height: var(--wc-cat-h);
+    display: grid; grid-template-columns: repeat(4, 1fr);
+}
+.wc-cat {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px;
+    border-left: 1px solid rgba(255,255,255,0.07); padding: 8px 4px;
+}
+.wc-cat:first-child { border-left: none; }
+.wc-cat-dot { width: var(--wc-cat-dot-sz); height: var(--wc-cat-dot-sz); border-radius: 2px; }
+.wc-cat-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: var(--wc-cat-score-sz); line-height: 1; color: #fff;
+}
+.wc-cat-lbl {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: var(--wc-cat-name-sz); font-weight: 700; letter-spacing: 0.06em;
+    color: rgba(255,255,255,0.38); text-transform: uppercase; text-align: center;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    width: 100%; padding: 0 3px;
+}
+{% endblock %}
+
+{% block body_content %}
+{% set _photo = portrait_photo_url if portrait_photo_url else (photo_url if photo_url else None) %}
+<div class="wc-card {{ platform_class }}">
+
+    <!-- Full photo + gradient overlay -->
+    <div class="wc-photo">
+        {% if _photo %}
+        <img src="{{ _photo }}" alt="{{ initials }}">
+        {% else %}
+        <div class="wc-initials" style="background:{{ avatar_bg }};">{{ initials }}</div>
+        {% endif %}
+        <div class="wc-photo-overlay"></div>
+    </div>
+
+    <!-- Vertical brand bar (right side) -->
+    <div class="wc-brand-bar">
+        <div class="wc-brand-line wc-brand-line--top"></div>
+        <div class="wc-brand-text">LION FOOTBALL ACADEMY</div>
+        <div class="wc-brand-line wc-brand-line--bot"></div>
+    </div>
+
+    <!-- Bottom content stack -->
+    <div class="wc-bottom">
+        <div class="wc-identity-block">
+            <div class="wc-name">{{ player.name | upper }}</div>
+            {% if app_logo_url %}
+            <img class="wc-identity-logo" src="{{ app_logo_url }}" alt="LFA"
+                 onerror="this.style.display='none'">
+            {% endif %}
+        </div>
+        <div class="wc-tagline">{{ welcome_subtitle }}</div>
+        <div class="wc-tags">
+            {% if player.position and player.position != "Unknown" %}
+            <span class="wc-tag wc-tag--pos">{{ player.position | replace("_"," ") | upper }}</span>
+            {% endif %}
+            {% if player.nationality %}
+            <span class="wc-tag">{{ player.nationality | nationalities_display(player.secondary_nationality) }}</span>
+            {% endif %}
+            {% if player.age_group %}
+            <span class="wc-tag">{{ player.age_group }}</span>
+            {% endif %}
+        </div>
+        <div class="wc-skill-glass">
+            {% for avg in category_averages %}
+            <div class="wc-cat">
+                <div class="wc-cat-dot" style="background:{{ avg.color }};"></div>
+                <div class="wc-cat-score">{{ avg.avg }}</div>
+                <div class="wc-cat-lbl">{{ avg.name }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

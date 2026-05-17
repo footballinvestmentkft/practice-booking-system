@@ -377,6 +377,9 @@ async def lfa_player_card_editor(
 
     credit_balance = user.credit_balance if hasattr(user, "credit_balance") else 0
 
+    # Load (or create) the singleton card draft — single source of truth after 4D-2
+    card_draft = _CardDraftService.get_player_card_draft(db, user.id)
+
     # Card theme picker data — identical logic to spec_dashboard
     from ...services.card_theme_service import get_all_themes as _get_all_themes, is_unlocked as _is_theme_unlocked
     card_themes = [
@@ -390,7 +393,12 @@ async def lfa_player_card_editor(
         }
         for t in _get_all_themes()
     ]
-    active_card_theme = user_license.card_theme or "default"
+    active_card_theme = card_draft.draft_theme
+
+    # Published public card state (read-only in the editor — shown as indicator)
+    published_card_theme    = card_draft.published_theme    or "default"
+    published_card_variant  = card_draft.published_variant  or "fifa"
+    published_card_platform = card_draft.published_platform or "default"
 
     # Card variant picker data — identical logic to spec_dashboard
     from ...services.card_variant_service import (  # noqa: E402
@@ -409,7 +417,7 @@ async def lfa_player_card_editor(
         }
         for v in _get_all_variants()
     ]
-    active_card_variant = user_license.card_variant or "fifa"
+    active_card_variant = card_draft.draft_variant
 
     # Animated video export capability: list of platforms supported for the
     # current variant. Used by the card editor to show/hide the video button.
@@ -442,11 +450,15 @@ async def lfa_player_card_editor(
             "active_card_theme": active_card_theme,
             "card_variants": card_variants,
             "active_card_variant": active_card_variant,
-            "active_card_platform": user_license.public_card_platform or "default",
+            "active_card_platform": card_draft.draft_platform or "default",
             "show_variant_picker": True,  # page is LFA Football Player only
             "animated_capable_platforms": animated_capable_platforms,
             "platforms": editor_platforms,
             "canvas_sizes": canvas_sizes,
+            # Published state — used for "Unpublished changes" indicator + View Public Card CTA
+            "published_card_theme":    published_card_theme,
+            "published_card_variant":  published_card_variant,
+            "published_card_platform": published_card_platform,
         },
     )
 
@@ -651,6 +663,13 @@ from ...services.player_photo_service import (  # noqa: E402
     delete_showcase_bg_photo,
     save_sponsor_logo,
     delete_sponsor_logo,
+    save_wc_photo,
+    delete_wc_photo,
+    save_wc_portrait_photo,
+    delete_wc_portrait_photo,
+    save_wc_landscape_photo,
+    delete_wc_landscape_photo,
+    save_initial_player_photo,
 )
 
 
@@ -882,6 +901,168 @@ async def student_upload_sponsor_logo(
         return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# ONBOARDING INITIAL PHOTO  (atomic dual-write — PC + WC in one transaction)
+# Used exclusively by onboarding Step 7.  Writes player_card_photo_url AND
+# wc_photo_url to the same URL in one db.commit() so the two fields start life
+# as independent copies with no fallback dependency between them.
+# ══════════════════════════════════════════════════════════════════════════════
+
+@router.post("/dashboard/initial-player-photo")
+async def student_upload_initial_player_photo(
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "Nincs aktív LFA Football Player licensz"}, status_code=404)
+    try:
+        url = save_initial_player_photo(await file.read(), file.content_type or "", user.id)
+        # Atomic dual-write: both fields set in a single commit.
+        # If commit fails, neither field is updated — no partial state.
+        lfa_license.player_card_photo_url = url
+        lfa_license.wc_photo_url          = url
+        db.commit()
+        return JSONResponse({"ok": True, "photo_url": url})
+    except ValueError as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# WELCOME CARD PHOTOS  (student self-upload — fully separate from Player Card)
+# Route naming: /dashboard/wc-photo* mirrors /dashboard/lfa-player-photo* but
+# writes to the independent wc_photo_* fields on UserLicense.
+# ══════════════════════════════════════════════════════════════════════════════
+
+@router.post("/dashboard/wc-photo")
+async def student_upload_wc_photo(
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "Nincs aktív LFA Football Player licensz"}, status_code=404)
+    try:
+        url = save_wc_photo(await file.read(), file.content_type or "", user.id)
+        lfa_license.wc_photo_url = url
+        db.commit()
+        return JSONResponse({"ok": True, "photo_url": url})
+    except ValueError as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+
+
+@router.post("/dashboard/wc-photo/delete")
+async def student_delete_wc_photo(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if lfa_license:
+        delete_wc_photo(user.id)
+        lfa_license.wc_photo_url = None
+        db.commit()
+    return JSONResponse({"ok": True})
+
+
+@router.post("/dashboard/wc-photo-portrait")
+async def student_upload_wc_portrait_photo(
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "Nincs aktív LFA Football Player licensz"}, status_code=404)
+    try:
+        url = save_wc_portrait_photo(await file.read(), file.content_type or "", user.id)
+        lfa_license.wc_photo_portrait_url = url
+        db.commit()
+        return JSONResponse({"ok": True, "photo_url": url})
+    except ValueError as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+
+
+@router.post("/dashboard/wc-photo-portrait/delete")
+async def student_delete_wc_portrait_photo(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if lfa_license:
+        delete_wc_portrait_photo(user.id)
+        lfa_license.wc_photo_portrait_url = None
+        db.commit()
+    return JSONResponse({"ok": True})
+
+
+@router.post("/dashboard/wc-photo-landscape")
+async def student_upload_wc_landscape_photo(
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "Nincs aktív LFA Football Player licensz"}, status_code=404)
+    try:
+        url = save_wc_landscape_photo(await file.read(), file.content_type or "", user.id)
+        lfa_license.wc_photo_landscape_url = url
+        db.commit()
+        return JSONResponse({"ok": True, "photo_url": url})
+    except ValueError as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+
+
+@router.post("/dashboard/wc-photo-landscape/delete")
+async def student_delete_wc_landscape_photo(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if lfa_license:
+        delete_wc_landscape_photo(user.id)
+        lfa_license.wc_photo_landscape_url = None
+        db.commit()
+    return JSONResponse({"ok": True})
+
+
 @router.post("/dashboard/lfa-player-sponsor-logo/delete")
 async def student_delete_sponsor_logo(
     request: Request,
@@ -942,6 +1123,7 @@ async def student_set_card_photo_focus(
 from ...services.card_theme_service import apply_theme as _apply_theme, unlock_theme as _unlock_theme  # noqa: E402
 from ...services.card_variant_service import apply_variant as _apply_variant, unlock_variant as _unlock_variant  # noqa: E402
 from ...services.card_platform_service import PLATFORM_PRESETS as _PLATFORM_PRESETS  # noqa: E402
+from ...services.card_draft_service import CardDraftService as _CardDraftService  # noqa: E402
 from pydantic import BaseModel as _BaseModel  # noqa: E402
 
 _VALID_PLATFORM_IDS: frozenset = frozenset(_PLATFORM_PRESETS.keys())
@@ -1053,7 +1235,35 @@ async def student_set_card_platform(
     lfa_license = _get_lfa_license(db, user.id)
     if not lfa_license:
         return JSONResponse({"ok": False, "error": "No active LFA Football Player license"}, status_code=404)
-    # "default" is stored as NULL (backward-compatible; NULL == default everywhere)
-    lfa_license.public_card_platform = None if payload.platform == "default" else payload.platform
-    db.commit()
+    draft = _CardDraftService.get_player_card_draft(db, user.id)
+    # "default" stored as NULL (NULL == platform default everywhere)
+    _CardDraftService.update_draft_platform(
+        db, draft, None if payload.platform == "default" else payload.platform
+    )
     return JSONResponse({"ok": True, "platform": payload.platform})
+
+
+@router.post("/dashboard/publish-card")
+async def student_publish_card(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Copy the current editor draft state to the published public card state.
+
+    Idempotent: calling it multiple times with the same draft produces the same result.
+    The public card route (/players/{id}/card) reads published_card_* fields only,
+    so a user's public card is frozen until they explicitly call this endpoint.
+    """
+    lfa_license = _get_lfa_license(db, user.id)
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "No active LFA Football Player license"}, status_code=404)
+    draft = _CardDraftService.get_player_card_draft(db, user.id)
+    _CardDraftService.publish_draft(db, draft)
+    return JSONResponse({
+        "ok": True,
+        "published": {
+            "theme":    draft.published_theme,
+            "variant":  draft.published_variant,
+            "platform": draft.published_platform or "default",
+        },
+    })

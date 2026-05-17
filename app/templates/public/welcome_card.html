@@ -1,247 +1,379 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="noindex, nofollow">
-    <title>Welcome Card — {{ display_name }} | LFA</title>
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+{% extends "student_base.html" %}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica', sans-serif;
-            background: #0f0f1a;
-            min-height: 100vh;
-            padding: 1.5rem 1rem 3rem;
-            color: #e2e8f0;
-        }
+{# Gallery hub for the Welcome Card.
+   Renders the platform selector, iframe preview, photo upload, and download buttons.
+   Auth: standard cookie session (same as all student pages).
+   Visibility: noindex — private self-assessment view.
 
-        .wc-page { max-width: 900px; margin: 0 auto; }
+   Render/export path (?platform=X) uses wc_base.html-extending templates and is
+   completely separate — this template is never rendered for that path. #}
 
-        /* ── Header ── */
-        .wc-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1.2rem;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-        .wc-header-left h1 {
-            font-size: 1.4rem;
-            font-weight: 800;
-            color: #f1f5f9;
-        }
-        .wc-header-left p {
-            font-size: 0.8rem;
-            color: #94a3b8;
-            margin-top: 0.15rem;
-        }
-        .wc-back-link {
-            font-size: 0.85rem;
-            color: #94a3b8;
-            text-decoration: none;
-        }
-        .wc-back-link:hover { color: #f1f5f9; }
+{% block active_page %}lfa-player{% endblock %}
 
-        /* ── Disclaimer ── */
-        .wc-disclaimer {
-            background: linear-gradient(135deg, #1e3a5f 0%, #1a3a5c 100%);
-            border: 1px solid rgba(245,158,11,0.4);
-            border-radius: 10px;
-            padding: 0.8rem 1.1rem;
-            margin-bottom: 1.4rem;
-            font-size: 0.82rem;
-            color: #cbd5e1;
-            display: flex;
-            align-items: flex-start;
-            gap: 0.6rem;
-            line-height: 1.5;
-        }
-        .wc-disclaimer .icon { font-size: 1rem; flex-shrink: 0; margin-top: 0.1rem; }
+{% block student_header %}
+{% set _page_icon = '🎴' %}
+{% set _page_name = 'Welcome Card' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
 
-        /* ── Layout: preview left, platforms right ── */
-        .wc-layout {
-            display: grid;
-            grid-template-columns: 1fr 280px;
-            gap: 1.2rem;
-            align-items: start;
-        }
-        @media (max-width: 700px) {
-            .wc-layout { grid-template-columns: 1fr; }
-        }
+{% block extra_styles %}
+<meta name="robots" content="noindex, nofollow">
+<style>
+    /* ── Gallery page theme — all colours via hub tokens from theme.css ───────
+       --hub-* tokens are defined in theme.css (loaded by base.html) and
+       automatically flip between light and dark via prefers-color-scheme.
+       body.padding omitted — student-main handles layout spacing.            ── */
+    body {
+        background: var(--hub-bg);
+        color: var(--hub-text-primary);
+    }
 
-        /* ── iframe preview panel ── */
-        .wc-preview-panel {
-            background: #1e2436;
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 14px;
-            overflow: hidden;
-        }
-        .wc-preview-label {
-            padding: 0.6rem 1rem;
-            font-size: 0.78rem;
-            font-weight: 700;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .wc-preview-label span { color: #94a3b8; font-weight: 400; text-transform: none; letter-spacing: 0; }
-        .wc-preview-frame-wrap {
-            position: relative;
-            width: 100%;
-            overflow: hidden;
-            background: #0f0f1a;
-        }
-        #wc-preview-iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            border: none;
-            transform-origin: top left;
-            display: block;
-        }
+    .wc-page { max-width: 900px; margin: 0 auto; padding-bottom: 2rem; }
 
-        /* ── Platform list panel ── */
-        .wc-platforms-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .wc-platform-label {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            margin-bottom: 0.25rem;
-        }
-        .wc-platform-card {
-            background: #1e2436;
-            border: 1px solid rgba(255,255,255,0.07);
-            border-radius: 10px;
-            padding: 0.65rem 0.85rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.5rem;
-            cursor: pointer;
-            transition: border-color 0.15s;
-        }
-        .wc-platform-card:hover,
-        .wc-platform-card.active {
-            border-color: rgba(245,158,11,0.5);
-        }
-        .wc-platform-card.active { background: #1e2d3d; }
-        .wc-platform-info { display: flex; flex-direction: column; gap: 0.1rem; }
-        .wc-platform-name { font-size: 0.85rem; font-weight: 700; color: #e2e8f0; }
-        .wc-platform-dims { font-size: 0.72rem; color: #64748b; }
-        .wc-download-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            padding: 0.3rem 0.7rem;
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: #1a1a2e;
-            font-size: 0.75rem;
-            font-weight: 700;
-            border-radius: 6px;
-            text-decoration: none;
-            white-space: nowrap;
-            transition: opacity 0.15s;
-            flex-shrink: 0;
-        }
-        .wc-download-btn:hover { opacity: 0.85; }
+    /* ── Page title block ── */
+    .wc-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.2rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    .wc-header-left h1 {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--hub-text-primary);
+    }
+    .wc-header-left p {
+        font-size: 0.8rem;
+        color: var(--hub-text-muted);
+        margin-top: 0.15rem;
+    }
 
-        /* ── Card Photo panel ── */
-        .wc-photo-panel {
-            margin-top: 1.2rem;
-            background: #1e2436;
-            border: 1px solid rgba(255,255,255,0.07);
-            border-radius: 12px;
-            padding: 0.9rem 1rem;
-        }
-        .wc-photo-panel-label {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            margin-bottom: 0.65rem;
-        }
-        .wc-photo-content {
-            display: flex;
-            align-items: center;
-            gap: 0.85rem;
-            flex-wrap: wrap;
-        }
-        .wc-photo-thumb {
-            width: 64px;
-            height: 64px;
-            border-radius: 8px;
-            object-fit: cover;
-            border: 1px solid rgba(255,255,255,0.12);
-        }
-        .wc-photo-placeholder {
-            width: 64px;
-            height: 64px;
-            border-radius: 8px;
-            border: 1px dashed rgba(255,255,255,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.4rem;
-            color: #64748b;
-        }
-        .wc-photo-actions {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .wc-upload-label {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            padding: 0.35rem 0.75rem;
-            background: rgba(255,255,255,0.07);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 6px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            color: #cbd5e1;
-            cursor: pointer;
-            transition: background 0.15s;
-        }
-        .wc-upload-label:hover { background: rgba(255,255,255,0.12); }
-        .wc-delete-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            padding: 0.35rem 0.75rem;
-            background: transparent;
-            border: 1px solid rgba(239,68,68,0.4);
-            border-radius: 6px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            color: #f87171;
-            cursor: pointer;
-            transition: background 0.15s;
-        }
-        .wc-delete-btn:hover { background: rgba(239,68,68,0.1); }
-        .wc-photo-status {
-            font-size: 0.78rem;
-            margin-top: 0.5rem;
-            color: #94a3b8;
-            min-height: 1.1em;
-        }
-    </style>
-</head>
-<body>
+    /* ── Disclaimer — uses hub info-box tokens (warm amber tint) ── */
+    .wc-disclaimer {
+        background: var(--hub-info-bg);
+        border: 1px solid var(--hub-info-border);
+        border-radius: 10px;
+        padding: 0.8rem 1.1rem;
+        margin-bottom: 1.4rem;
+        font-size: 0.82rem;
+        color: var(--hub-text-secondary);
+        display: flex;
+        align-items: flex-start;
+        gap: 0.6rem;
+        line-height: 1.5;
+    }
+    .wc-disclaimer .icon { font-size: 1rem; flex-shrink: 0; margin-top: 0.1rem; }
+
+    /* ── Layout: preview left, platforms right ── */
+    .wc-layout {
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        gap: 1.2rem;
+        align-items: start;
+    }
+    @media (max-width: 700px) {
+        .wc-layout { grid-template-columns: 1fr; }
+    }
+
+    /* ── iframe preview panel ── */
+    .wc-preview-panel {
+        background: var(--hub-card-bg);
+        border: 1px solid var(--hub-card-border);
+        border-radius: 14px;
+        box-shadow: var(--hub-card-shadow);
+        overflow: hidden;
+    }
+    .wc-preview-label {
+        padding: 0.6rem 1rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--hub-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        border-bottom: 1px solid var(--hub-card-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .wc-preview-label span {
+        color: var(--hub-text-secondary);
+        font-weight: 400;
+        text-transform: none;
+        letter-spacing: 0;
+    }
+    /* --wc-frame-bg: light=#E5E7EB / dark=#0B0B0B — neutral vs max-contrast
+       keeps the scaled iframe visually lifted from the panel background       */
+    .wc-preview-frame-wrap {
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+        background: var(--wc-frame-bg);
+    }
+
+    /* ── Watermark overlay — preview-only deterrence layer ──────────────────
+       Two pseudo-elements sit above the scaled iframe in wrapper coordinates.
+       pointer-events:none preserves all gallery interactions.
+       Export isolation is architectural: Playwright loads the card template
+       URL directly and never renders this gallery page.
+
+       ::before — monochrome logo mask
+         mask-image uses logo-wc.png alpha as shape stencil; background-color
+         (white) shows through the stencil. Original gold colour is irrelevant.
+         mask-position(50px 30px) offsets the logo grid from the text grid so
+         the two layers interleave diagonally rather than stack.
+
+       ::after — repeating "LFA" SVG text tile
+         200×90px tile, 26px Barlow Condensed 800, rotate(-30°), white 70%.
+         SVG is base64-embedded — zero HTTP requests.                         */
+    .wc-preview-frame-wrap::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+        pointer-events: none;
+        user-select: none;
+        background-color: rgba(255, 255, 255, 1);
+        -webkit-mask-image: url('/static/images/logo-wc.png');
+                mask-image: url('/static/images/logo-wc.png');
+        -webkit-mask-repeat: repeat;
+                mask-repeat: repeat;
+        -webkit-mask-size: 220px auto;
+                mask-size: 220px auto;
+        -webkit-mask-position: 80px 45px;
+                mask-position: 80px 45px;
+        opacity: 0.07;
+    }
+    .wc-preview-frame-wrap::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 11;
+        pointer-events: none;
+        user-select: none;
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMjAiIGhlaWdodD0iMTUwIj48dGV4dCB4PSIxNjAiIHk9IjgyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQmFybG93IENvbmRlbnNlZCxzeXN0ZW0tdWksc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMiIgZm9udC13ZWlnaHQ9IjgwMCIgbGV0dGVyLXNwYWNpbmc9IjQiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC42MCkiIHRyYW5zZm9ybT0icm90YXRlKC0zMCwxNjAsODIpIj5MRkE8L3RleHQ+PC9zdmc+");
+        background-repeat: repeat;
+        background-size: 320px 150px;
+        background-position: 0px 0px;
+        opacity: 0.10;
+    }
+
+    #wc-preview-iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        border: none;
+        transform-origin: top left;
+        display: block;
+    }
+
+    /* ── Platform list panel ── */
+    .wc-platforms-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .wc-platform-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--hub-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.25rem;
+    }
+    .wc-platform-card {
+        background: var(--hub-card-bg);
+        border: 1px solid var(--hub-card-border);
+        border-radius: 10px;
+        padding: 0.65rem 0.85rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        cursor: pointer;
+        transition: border-color 0.15s, background 0.15s;
+    }
+    .wc-platform-card:hover,
+    .wc-platform-card.active {
+        border-color: rgba(255,210,0,0.5);
+    }
+    /* active: warm amber tint — same surface as hub info boxes */
+    .wc-platform-card.active { background: var(--hub-info-bg); }
+    .wc-platform-info { display: flex; flex-direction: column; gap: 0.1rem; }
+    .wc-platform-name { font-size: 0.85rem; font-weight: 700; color: var(--hub-text-primary); }
+    .wc-platform-dims { font-size: 0.72rem; color: var(--hub-text-muted); }
+    .wc-platform-desc { font-size: 0.65rem; color: var(--hub-text-secondary); line-height: 1.2; margin-top: 0.05rem; }
+    /* style badge: brand yellow (was purple — off-brand) */
+    .wc-platform-badge {
+        display: inline-block;
+        margin-top: 0.28rem;
+        padding: 1px 6px;
+        font-size: 0.60rem;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: rgba(255,210,0,0.85);
+        background: rgba(255,210,0,0.10);
+        border: 1px solid rgba(255,210,0,0.30);
+        border-radius: 3px;
+        white-space: nowrap;
+    }
+    /* download CTA: brand yellow gradient — same as hub primary button */
+    .wc-download-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.3rem 0.7rem;
+        background: var(--hub-btn-bg);
+        color: var(--hub-btn-text);
+        font-size: 0.75rem;
+        font-weight: 700;
+        border-radius: 6px;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: opacity 0.15s;
+        flex-shrink: 0;
+    }
+    .wc-download-btn:hover { opacity: 0.85; }
+
+    /* ── Card Name panel ── */
+    .wc-name-panel {
+        margin-top: 0.8rem;
+        background: var(--hub-card-bg);
+        border: 1px solid var(--hub-card-border);
+        border-radius: 12px;
+        padding: 0.9rem 1rem;
+        box-shadow: var(--hub-card-shadow);
+    }
+    .wc-name-panel-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--hub-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.65rem;
+    }
+    .wc-name-btns {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .wc-name-btn {
+        flex: 1;
+        min-width: 0;
+        padding: 0.5rem 0.75rem;
+        background: var(--hub-card-bg);
+        border: 1px solid var(--hub-card-border);
+        border-radius: 8px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--hub-text-muted);
+        cursor: pointer;
+        transition: border-color 0.15s, color 0.15s, background 0.15s;
+        text-align: left;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+    .wc-name-btn.active {
+        border-color: rgba(255,210,0,0.5);
+        background: var(--hub-info-bg);
+        color: var(--hub-text-primary);
+    }
+    .wc-name-btn:hover:not(.active) {
+        border-color: rgba(255,210,0,0.35);
+        color: var(--hub-text-secondary);
+    }
+
+    /* ── Card Photo panel ── */
+    .wc-photo-panel {
+        margin-top: 1.2rem;
+        background: var(--hub-card-bg);
+        border: 1px solid var(--hub-card-border);
+        border-radius: 12px;
+        padding: 0.9rem 1rem;
+        box-shadow: var(--hub-card-shadow);
+    }
+    .wc-photo-panel-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--hub-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.65rem;
+    }
+    .wc-photo-content {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        flex-wrap: wrap;
+    }
+    .wc-photo-thumb {
+        width: 64px;
+        height: 64px;
+        border-radius: 8px;
+        object-fit: cover;
+        border: 1px solid var(--hub-card-border);
+    }
+    .wc-photo-placeholder {
+        width: 64px;
+        height: 64px;
+        border-radius: 8px;
+        border: 1px dashed rgba(255,210,0,0.30);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        color: var(--hub-text-muted);
+    }
+    .wc-photo-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    /* upload: yellow-tinted ghost button */
+    .wc-upload-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.35rem 0.75rem;
+        background: rgba(255,210,0,0.07);
+        border: 1px solid rgba(255,210,0,0.28);
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--hub-text-secondary);
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .wc-upload-label:hover { background: rgba(255,210,0,0.14); }
+    /* delete: semantic red — unchanged in both modes */
+    .wc-delete-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.35rem 0.75rem;
+        background: transparent;
+        border: 1px solid rgba(239,68,68,0.4);
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #f87171;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .wc-delete-btn:hover { background: rgba(239,68,68,0.1); }
+    .wc-photo-status {
+        font-size: 0.78rem;
+        margin-top: 0.5rem;
+        color: var(--hub-text-muted);
+        min-height: 1.1em;
+    }
+</style>
+{% endblock %}
+
+{% block student_content %}
 <div class="wc-page">
 
     <div class="wc-header">
@@ -249,7 +381,6 @@
             <h1>🎴 Welcome Card</h1>
             <p>Based on your onboarding self-assessment</p>
         </div>
-        <a class="wc-back-link" href="/profile/lfa-football-player">← Back to Profile</a>
     </div>
 
     <div class="wc-disclaimer">
@@ -267,11 +398,11 @@
         <div class="wc-preview-panel">
             <div class="wc-preview-label">
                 Preview
-                <span id="wc-active-label">Instagram Square · 1080 × 1080</span>
+                <span id="wc-active-label"></span>
             </div>
             <div class="wc-preview-frame-wrap" id="wc-frame-wrap">
                 <iframe id="wc-preview-iframe"
-                        src="/profile/onboarding-card?platform=instagram_square"
+                        src="/profile/onboarding-card?platform={{ default_platform }}"
                         title="Welcome Card Preview"
                         scrolling="no"></iframe>
             </div>
@@ -279,16 +410,19 @@
 
         <!-- Platform selector + download buttons -->
         <div class="wc-platforms-panel">
-            <div class="wc-platform-label">Download sizes</div>
+            <div class="wc-platform-label">Publishing Formats</div>
             {% for p in platforms %}
             <div class="wc-platform-card{% if p.id == default_platform %} active{% endif %}"
                  data-platform="{{ p.id }}"
                  data-label="{{ p.label }}"
                  data-dims="{{ p.dims }}"
+                 title="{{ p.title }}"
                  onclick="selectPlatform(this)">
                 <div class="wc-platform-info">
                     <div class="wc-platform-name">{{ p.label }}</div>
                     <div class="wc-platform-dims">{{ p.dims }}</div>
+                    {% if p.title %}<div class="wc-platform-desc">{{ p.title }}</div>{% endif %}
+                    {% if p.style_tag %}<span class="wc-platform-badge">{{ p.style_tag }}</span>{% endif %}
                 </div>
                 <a class="wc-download-btn"
                    id="wc-dl-{{ p.id }}"
@@ -301,6 +435,23 @@
         </div>
 
     </div>
+
+    <!-- Card Name -->
+    {% if user.nickname %}
+    <div class="wc-name-panel">
+        <div class="wc-name-panel-label">Card Name</div>
+        <div class="wc-name-btns">
+            <button id="wc-name-btn-full"
+                    class="wc-name-btn{% if not use_nickname %} active{% endif %}"
+                    title="{{ user.name }}"
+                    onclick="setNameMode(false)">{{ user.name }}</button>
+            <button id="wc-name-btn-nick"
+                    class="wc-name-btn{% if use_nickname %} active{% endif %}"
+                    title="{{ user.nickname }}"
+                    onclick="setNameMode(true)">{{ user.nickname }}</button>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Card Photo -->
     <div class="wc-photo-panel">
@@ -330,7 +481,9 @@
     </div>
 
 </div>
+{% endblock %}
 
+{% block extra_scripts %}
 <script>
 // ── Canvas size map — server-rendered from card_constants.CANVAS_SIZES ───────
 var CANVAS_SIZES = (function () {
@@ -340,7 +493,8 @@ var CANVAS_SIZES = (function () {
     return out;
 }());
 
-var _activePlatform = 'instagram_square';
+var _activePlatform = '{{ default_platform }}';
+var _useNickname    = {{ 'true' if use_nickname else 'false' }};
 
 // ── iframe scaling: fit the platform canvas into the preview wrapper ─────────
 function scaleIframe(pid) {
@@ -356,7 +510,15 @@ function scaleIframe(pid) {
     iframe.style.transform = 'scale(' + scale + ')';
     wrap.style.height      = Math.round(ch * scale) + 'px';
 }
-window.addEventListener('load',   function() { scaleIframe(_activePlatform); });
+window.addEventListener('load', function() {
+    var activeCard = document.querySelector('.wc-platform-card.active');
+    if (activeCard) {
+        document.getElementById('wc-active-label').textContent =
+            activeCard.dataset.label + ' \xb7 ' + activeCard.dataset.dims;
+    }
+    scaleIframe(_activePlatform);
+    _syncDownloadLinks();
+});
 window.addEventListener('resize', function() { scaleIframe(_activePlatform); });
 
 // ── Platform selector ────────────────────────────────────────────────────────
@@ -369,11 +531,38 @@ function selectPlatform(card) {
     var label = card.dataset.label;
     var dims  = card.dataset.dims;
     _activePlatform = pid;
-    document.getElementById('wc-preview-iframe').src =
-        '/profile/onboarding-card?platform=' + pid;
+    document.getElementById('wc-preview-iframe').src = _buildPreviewUrl(pid);
     document.getElementById('wc-active-label').textContent =
         label + ' · ' + dims;
     scaleIframe(pid);
+}
+
+// ── Name mode helpers ─────────────────────────────────────────────────────────
+function _buildPreviewUrl(pid) {
+    return '/profile/onboarding-card?platform=' + pid +
+           (_useNickname ? '&use_nickname=1' : '');
+}
+
+function _buildExportUrl(pid) {
+    return '/profile/onboarding-card/export?platform=' + pid +
+           (_useNickname ? '&use_nickname=1' : '');
+}
+
+function _syncDownloadLinks() {
+    document.querySelectorAll('.wc-download-btn').forEach(function(a) {
+        var pid = a.id.replace('wc-dl-', '');
+        a.href = _buildExportUrl(pid);
+    });
+}
+
+function setNameMode(useNick) {
+    _useNickname = useNick;
+    var btnFull = document.getElementById('wc-name-btn-full');
+    var btnNick = document.getElementById('wc-name-btn-nick');
+    if (btnFull) btnFull.classList.toggle('active', !useNick);
+    if (btnNick) btnNick.classList.toggle('active',  useNick);
+    document.getElementById('wc-preview-iframe').src = _buildPreviewUrl(_activePlatform);
+    _syncDownloadLinks();
 }
 
 // ── CSRF ──────────────────────────────────────────────────────────────────────
@@ -396,7 +585,7 @@ document.getElementById('wc-photo-input').addEventListener('change', async funct
     var status = document.getElementById('wc-photo-status');
     status.textContent = 'Uploading…';
     try {
-        var resp = await fetch('/dashboard/lfa-player-photo', {
+        var resp = await fetch('/dashboard/wc-photo', {
             method: 'POST',
             headers: { 'X-CSRF-Token': getCsrfToken() },
             body: formData,
@@ -423,7 +612,7 @@ async function deletePhoto() {
     var status = document.getElementById('wc-photo-status');
     status.textContent = 'Removing…';
     try {
-        var resp = await fetch('/dashboard/lfa-player-photo/delete', {
+        var resp = await fetch('/dashboard/wc-photo/delete', {
             method: 'POST',
             headers: { 'X-CSRF-Token': getCsrfToken() },
         });
@@ -443,5 +632,4 @@ async function deletePhoto() {
     }
 }
 </script>
-</body>
-</html>
+{% endblock %}

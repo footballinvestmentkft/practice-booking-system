@@ -306,7 +306,6 @@
         </div>
         <div class="page-header-actions">
             <a href="/profile/lfa-football-player/edit" class="btn btn-primary">✏️ Edit Profile</a>
-            <a href="/profile/onboarding-card" class="btn btn-secondary">🎴 Welcome Card</a>
             <a href="/dashboard/lfa-football-player" class="btn btn-secondary">⚽ Dashboard</a>
         </div>
     </div>
@@ -484,45 +483,6 @@
             {% else %}
             <p style="color: var(--hub-text-muted); font-size:0.9rem;">No foot assessment data recorded during onboarding.</p>
             {% endif %}
-        </div>
-
-        <!-- Card Photo -->
-        <div class="card">
-            <h2>📸 Card Photo</h2>
-            <div class="photo-thumb-wrap">
-                {% if license.player_card_photo_url %}
-                <img class="photo-thumb"
-                     src="{{ license.player_card_photo_url }}"
-                     alt="Card photo">
-                <div class="photo-meta">
-                    <strong>Photo uploaded</strong><br>
-                    Used on Welcome Card and Player Card.
-                </div>
-                {% else %}
-                <div class="photo-placeholder">📸</div>
-                <div class="photo-meta">
-                    No photo yet.<br>
-                    Upload from the Welcome Card page.
-                </div>
-                {% endif %}
-            </div>
-            <a href="/profile/onboarding-card" class="btn btn-secondary btn-sm">🎴 Manage in Welcome Card</a>
-        </div>
-
-        <!-- Welcome Card -->
-        <div class="card">
-            <h2>🎴 Welcome Card</h2>
-            <p style="font-size:0.85rem; color: var(--hub-text-secondary); margin-bottom:0.5rem;">
-                Your onboarding self-assessment card — a personal snapshot from when you joined.
-            </p>
-            <p style="font-size:0.82rem; color: var(--hub-text-muted); margin-bottom:1rem;">
-                Not the same as the regular Player Card. Based on self-assessment, not EMA scores.
-            </p>
-            <div class="wc-cta-row">
-                <a href="/profile/onboarding-card" class="btn btn-primary btn-sm">View Welcome Card</a>
-                <a href="/profile/onboarding-card/export?platform=instagram_square"
-                   class="btn btn-secondary btn-sm">⬇️ Download</a>
-            </div>
         </div>
 
     </div>

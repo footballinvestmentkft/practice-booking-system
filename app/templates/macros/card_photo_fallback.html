@@ -1,0 +1,30 @@
+{# ─────────────────────────────────────────────────────────────────────────────
+   card_photo_fallback.html — DOCUMENTATION ONLY, no macros to apply yet.
+
+   The photo rendering HTML is too divergent across templates for a single macro.
+   Each template uses different CSS classes, different fallback div structures,
+   and different conditional logic:
+
+   • square/fifa.html    — <div class="ex-photo-zone"> … <div class="ex-photo-placeholder">
+   • landscape/fifa.html — <div class="ex-photo"> … <div class="ex-photo-fallback">
+   • tiktok/fifa.html    — <div class="ex-hero-photo"> … <div class="ex-hero-photo-placeholder">
+   • story/fifa.html     — <div class="ex-hero-photo"> … <div class="ex-hero-photo-placeholder">
+   • player_card_fifa.html — <div class="fifa-photo-area"> … JS-driven cropping logic
+
+   URL-resolution pattern used across ALL export templates:
+   ──────────────────────────────────────────────────────
+   The route passes these context variables:
+     photo_url        — absolute URL to the player's stored photo (or None)
+     app_logo_url     — absolute URL to the LFA app logo PNG
+
+   Templates resolve the display URL with:
+     {% if photo_url %}
+         <img src="{{ photo_url }}" ...>
+     {% else %}
+         <div class="...-placeholder">{{ player.name[0] | upper }}</div>
+     {% endif %}
+
+   The fallback initials div uses player.name[0] | upper as the monogram.
+   No shared macro is applied here; this file documents the pattern for future
+   unification once CSS classes are harmonised across card sizes.
+   ───────────────────────────────────────────────────────────────────────────── #}

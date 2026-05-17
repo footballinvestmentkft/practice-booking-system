@@ -251,9 +251,9 @@
                 <div class="radio-group">
                     {% for pos in group.positions %}
                     <label class="radio-option">
-                        <input type="radio" name="position" value="{{ pos }}"
-                               {% if pos == primary_pos %}checked{% endif %} required>
-                        {{ position_labels.get(pos, pos) }}
+                        <input type="radio" name="position" value="{{ pos.value }}"
+                               {% if pos.value == primary_pos %}checked{% endif %} required>
+                        {{ pos.label }}
                     </label>
                     {% endfor %}
                 </div>
@@ -269,15 +269,29 @@
                 <div class="checkbox-group">
                     {% for pos in group.positions %}
                     <label class="check-option">
-                        <input type="checkbox" name="secondary_positions" value="{{ pos }}"
+                        <input type="checkbox" name="secondary_positions" value="{{ pos.value }}"
                                class="sec-pos-check"
-                               {% if pos in secondary_pos %}checked{% endif %}>
-                        {{ position_labels.get(pos, pos) }}
+                               {% if pos.value in secondary_pos %}checked{% endif %}>
+                        {{ pos.label }}
                     </label>
                     {% endfor %}
                 </div>
                 {% endfor %}
                 <small>The primary position is automatically excluded from secondary positions on save. Max 3.</small>
+            </div>
+        </div>
+
+        <!-- Display Name / Nickname -->
+        <div class="edit-card">
+            <h2>🏷️ Display Name</h2>
+            <div class="form-group">
+                <label for="nickname">Nickname (optional)</label>
+                <input type="text" id="nickname" name="nickname_raw"
+                       class="form-control"
+                       maxlength="30"
+                       value="{{ user.nickname or '' }}"
+                       placeholder="e.g. Messi, CR7, …">
+                <small>Shown on your Welcome Card and Player Card instead of your full name. Leave empty to use your full name. Max 30 characters.</small>
             </div>
         </div>
 

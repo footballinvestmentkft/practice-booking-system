@@ -55,6 +55,7 @@ from .match_structure import MatchStructure, MatchResult, MatchFormat, ScoringTy
 from .club import Club, CsvImportLog
 from .sponsor import Sponsor, SponsorCampaign, SponsorContact, SponsorAudienceEntry
 from .tournament_instructor_slot import TournamentInstructorSlot, SlotRole, SlotStatus
+from .card_draft import CardDraft
 
 # 🎓 New Track-Based Modular Education System
 from .track import Track, Module, ModuleComponent
@@ -219,4 +220,6 @@ __all__ = [
     "TournamentInstructorSlot",
     "SlotRole",
     "SlotStatus",
+    # Card system
+    "CardDraft",
 ]

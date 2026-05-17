@@ -1,0 +1,32 @@
+{#
+  macros/card_theme_root.html
+  Single source of truth for the export :root CSS variable block.
+
+  export_root_vars(theme, cat_bg, bar_bg)
+    theme   — ThemeDefinition object (or undefined for default colours)
+    cat_bg  — rgba() for --ex-cat-bg; differs per platform (0.04–0.06);
+              ignored on light themes (replaced by dark rgba automatically)
+    bar_bg  — rgba() for --ex-bar-bg; uniform across dark-theme platforms (0.10);
+              ignored on light themes
+
+  Light-theme detection:
+    When theme.is_light_body_bg is True, --ex-text-* tokens flip to dark
+    rgba values and bar/cat backgrounds become dark-on-light equivalents.
+    Currently only arctic has is_light_body_bg=True.
+#}
+{% macro export_root_vars(theme,
+                          cat_bg='rgba(255,255,255,0.05)',
+                          bar_bg='rgba(255,255,255,0.10)') %}
+{%- set _light = theme is defined and theme.is_light_body_bg -%}
+:root {
+    --ex-panel-bg:       {{ theme.panel_bg if theme is defined else 'linear-gradient(155deg, #1a2744 0%, #2a3a5c 60%, #1e3a4a 100%)' }};
+    --ex-body-bg:        {{ theme.body_bg  if theme is defined else '#1a202c' }};
+    --ex-accent:         {{ theme.accent   if theme is defined else '#667eea' }};
+    --ex-bar-bg:         {% if _light %}rgba(0,0,0,0.08){% else %}{{ bar_bg }}{% endif %};
+    --ex-cat-bg:         {% if _light %}rgba(0,0,0,0.06){% else %}{{ cat_bg }}{% endif %};
+    --ex-text-strong:    {% if _light %}rgba(0,0,0,0.87){% else %}rgba(255,255,255,0.85){% endif %};
+    --ex-text-body:      {% if _light %}rgba(0,0,0,0.75){% else %}rgba(255,255,255,0.72){% endif %};
+    --ex-text-secondary: {% if _light %}rgba(0,0,0,0.55){% else %}rgba(255,255,255,0.48){% endif %};
+    --ex-text-muted:     {% if _light %}rgba(0,0,0,0.38){% else %}rgba(255,255,255,0.30){% endif %};
+}
+{% endmacro %}

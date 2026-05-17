@@ -636,7 +636,10 @@
     }
 
     // ── Step 7 photo upload ───────────────────────────────────────────────────
-    // Reuses existing /dashboard/lfa-player-photo endpoint — no new backend route.
+    // Uses /dashboard/initial-player-photo — a single atomic endpoint that
+    // writes player_card_photo_url AND wc_photo_url in one DB commit.
+    // This ensures the two card types start with independent copies of the
+    // same photo and are never cross-contaminated by future uploads.
     document.getElementById('step7-photo-input').addEventListener('change', async function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -645,7 +648,7 @@
         const statusEl = document.getElementById('step7-photo-status');
         statusEl.textContent = 'Uploading…';
         try {
-            const resp = await fetch('/dashboard/lfa-player-photo', {
+            const resp = await fetch('/dashboard/initial-player-photo', {
                 method: 'POST',
                 headers: { 'X-CSRF-Token': getCsrfToken() },
                 body: formData,

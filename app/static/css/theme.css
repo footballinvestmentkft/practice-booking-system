@@ -79,6 +79,9 @@
     --hub-warn-border:          #E6BD00;
     --hub-warn-text:            #6B5A00;
 
+    /* ── Welcome Card Gallery ────────────────────────────────────────────── */
+    --wc-frame-bg:              #E5E7EB;    /* iframe preview container — neutral contrast */
+
     /* ── LFA Player Onboarding ──────────────────────────────────────────── */
     --onboarding-bg:                      #FFFDF5;
     --onboarding-card-bg:                 #FFFFFF;
@@ -199,6 +202,9 @@
         --hub-warn-bg:              #1A1500;
         --hub-warn-border:          #FFD200;
         --hub-warn-text:            #B8A000;
+
+        /* ── Welcome Card Gallery — dark mode ────────────────────────────── */
+        --wc-frame-bg:          #0B0B0B;    /* iframe preview container — maximum contrast */
 
         /* ── LFA Player Onboarding — dark mode ─────────────────────────── */
         --onboarding-bg:                      #0B0B0B;

@@ -1,67 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ player.name }} — LFA Player Card</title>
-    <meta property="og:title" content="{{ player.name }} — LFA Player Card">
-    <meta property="og:description" content="{{ player.position }} · {{ player.nationality | nationalities_display(player.secondary_nationality) }} · {{ tier_label }} {{ overall }}">
-<style>
+{% extends "public/player_card_base.html" %}
+{#
+ * FIFA Classic — Player Card (child of player_card_base.html)
+ * Phase 2b migration: theme tokens + page-shell inherited from base.
+ * FIFA-specific: lavender right panel, split header, position pitch, native-export-mode.
+ * The 6 standalone export templates (export/*/fifa.html) are NOT affected.
+ #}
+
+{% block extra_styles %}
+/* ── FIFA lavender right-panel defaults (overrides base :root #ffffff) ────── */
 :root {
-    --card-panel-bg: {{ theme.panel_bg if theme is defined else 'linear-gradient(155deg, #1a2744 0%, #2a3a5c 60%, #1e3a4a 100%)' }};
-    --card-body-bg:  {{ theme.body_bg  if theme is defined else '#1a202c' }};
-    --card-tab-bg:   {{ theme.tab_bg   if theme is defined else '#2d3748' }};
-    --card-accent:   {{ theme.accent   if theme is defined else '#667eea' }};
-    /* Right panel tokens — light lavender tint aligned with card accent #667eea family */
-    --card-right-bg:       #eef2ff;
-    --card-right-text:     #1a202c;
-    --card-right-subtext:  #718096;
-    --card-right-value:    #2d3748;
-    --card-pill-bg:        #dde4ff;
-    --card-pill-border:    #c7d2fe;
-    --card-pill-text:      #4a5568;
-    /* Dark panel text tokens */
-    --card-text-primary:   rgba(255,255,255,0.88);
-    --card-text-secondary: rgba(255,255,255,0.60);
-    --card-text-muted:     rgba(255,255,255,0.40);
-    --card-text-faint:     rgba(255,255,255,0.35);
-    --card-text-tab:       rgba(255,255,255,0.50);
-    --card-tab-border:     rgba(255,255,255,0.08);
-    /* Skill tokens */
-    --card-cat-bg:         rgba(255,255,255,0.04);
-    --card-bar-bg:         rgba(255,255,255,0.08);
-    --card-bar-neutral:    rgba(255,255,255,0.12);
-    --card-val-neutral:    rgba(255,255,255,0.85);
-    --card-ev-border:      rgba(255,255,255,0.05);
-    /* Badge / pill tokens */
-    --card-badge-xp-bg:    rgba(102,126,234,0.20);
-    --card-badge-xp-text:  #a3bffa;
-    --card-badge-cr-bg:    rgba(72,187,120,0.15);
-    --card-badge-cr-text:  #9ae6b4;
-    --card-pill-up-bg:     rgba(72,187,120,0.15);
-    --card-pill-up-text:   #9ae6b4;
-    --card-pill-dn-bg:     rgba(252,129,129,0.15);
-    --card-pill-dn-text:   #feb2b2;
+    --card-right-bg:    #eef2ff;
+    --card-pill-bg:     #dde4ff;
+    --card-pill-border: #c7d2fe;
 }
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { overflow-x: hidden; }
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    background: #0f1923;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 1.5rem 0.75rem 4rem;
-    color: #e2e8f0;
-    overflow-x: hidden;
-    width: 100%;
+/* Dark themes would otherwise override right-panel tokens via base .theme-* classes;
+   reset them to lavender so FIFA card always shows the accent-aligned right panel. */
+.theme-midnight,
+.theme-gold,
+.theme-emerald,
+.theme-crimson {
+    --card-right-bg:    #eef2ff;
+    --card-pill-bg:     #dde4ff;
+    --card-pill-border: #c7d2fe;
 }
-.page-brand {
-    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.16em;
-    text-transform: uppercase; color: rgba(255,255,255,0.35);
-    margin-bottom: 1.25rem; text-align: center;
-}
+
 .page-logo {
     display: block; height: 36px; width: auto; opacity: 0.9;
     margin: 0 auto 1.25rem;
@@ -74,34 +36,8 @@ body {
     border: 1px solid rgba(255,255,255,0.06);
 }
 
-/* ── Platform preset overrides — PREVIEW mode ────────────────────────────── */
-/* TODO: migrate this template to extend player_card_base.html so platform   */
-/* CSS is inherited from the central source (E2 standalone fix).              */
-.platform-instagram-square .card-wrap,
-.platform-facebook-square .card-wrap  { width: min(400px, 100vw); max-width: none; aspect-ratio: 1/1; overflow: hidden; }
-.platform-instagram-portrait .card-wrap { width: min(360px, 100vw); max-width: none; aspect-ratio: 4/5; overflow: hidden; }
-.platform-instagram-story .card-wrap,
-.platform-tiktok .card-wrap           { width: min(260px, 100vw); max-width: none; aspect-ratio: 9/16; overflow: hidden; }
-.platform-facebook-landscape .card-wrap,
-.platform-og .card-wrap               { width: min(600px, 100vw); max-width: none; aspect-ratio: 1.91/1; overflow: hidden; }
-.platform-banner-custom .card-wrap    { width: min(720px, 100vw); max-width: none; aspect-ratio: 3/1; overflow: hidden; }
-
-/* ── Sprint A+B: Export canvas fill + deterministic content ──────────────── */
-body.export-mode {
-    padding: 0; margin: 0; align-items: stretch;
-    justify-content: flex-start; overflow: hidden;
-}
-body.export-mode .page-brand { display: none; }
-body.export-mode .card-wrap  {
-    width: 100vw !important; height: 100vh !important;
-    max-width: none !important; border-radius: 0; overflow: hidden;
-}
-body.export-mode .tab-bar        { display: none !important; }
-body.export-mode .card-body      { display: grid !important; }
-body.export-mode .events-section { display: none !important; }
-
-/* ── Default/native export: card fills width at natural height ─────────── */
-/* Used by the ?native_export=1 render path (Default platform PNG download). */
+/* ── Default/native export: card fills width at natural height ─────────────
+   Used by the ?native_export=1 render path (Default platform PNG download). */
 body.native-export-mode {
     padding: 0; margin: 0; align-items: flex-start;
     justify-content: flex-start;
@@ -115,6 +51,9 @@ body.native-export-mode .card-wrap {
 body.native-export-mode .tab-bar        { display: none !important; }
 body.native-export-mode .card-body      { display: grid !important; }
 body.native-export-mode .events-section { display: none !important; }
+
+/* Sprint B: ensure skills card-body stays visible in export-mode */
+body.export-mode .card-body { display: grid !important; }
 
 /* ── Split header ─────────────────────────────────────────── */
 .fifa-header {
@@ -141,7 +80,7 @@ div.fifa-avatar {
     background: var(--card-right-bg);
     padding: 1.25rem 1.25rem 1rem;
     display: flex; flex-direction: column; gap: 0;
-    min-width: 0; /* prevent grid blowout */
+    min-width: 0;
     position: relative; overflow: hidden;
 }
 .fifa-right-body {
@@ -225,7 +164,6 @@ div.fifa-avatar {
 }
 .skill-row { display: flex; align-items: center; gap: 0.3rem; margin-bottom: 0.25rem; }
 .skill-row:last-child { margin-bottom: 0; }
-/* Truncate names in the narrower 4-col split-layout context */
 .skill-name { font-size: 0.62rem; color: var(--card-text-secondary); flex: 1; min-width: 0;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
 .skill-val { font-size: 0.67rem; font-weight: 700; width: 26px; text-align: right; flex-shrink: 0; }
@@ -317,13 +255,10 @@ div.fifa-avatar {
     .fifa-right { padding: 1rem; gap: 0.6rem; }
     .fifa-name { font-size: 1.2rem; }
     .identity-grid { grid-template-columns: 1fr 1fr; }
-    /* Stack panels vertically; position panel above skills */
     .card-body { grid-template-columns: 1fr; }
     .position-panel { order: -1; }
-    /* In stacked layout, names can wrap again */
     .skill-name { white-space: normal; overflow-wrap: break-word; overflow: visible; text-overflow: clip; }
     .skills-panel { padding: 0.9rem; }
-    /* Portrait pitch: cap height when stacked full-width */
     .pitch-svg { max-height: 200px; width: auto; display: block; margin: 0 auto; }
 }
 @media (max-width: 440px) {
@@ -340,7 +275,6 @@ div.fifa-avatar {
 }
 
 /* ── Sprint C: Landscape layout ─────────────────────────────────────────── */
-/* Left panel: split header (identity). Right panel: skills grid.           */
 body.export-mode.platform-facebook-landscape .fifa-header,
 body.export-mode.platform-og .fifa-header {
     flex: 0 0 320px;
@@ -371,24 +305,10 @@ body.export-mode.platform-banner-custom .fifa-right { min-height: 100%; justify-
 body.export-mode.platform-banner-custom .fifa-overall { font-size: var(--ex-font-ovr); }
 body.export-mode.platform-banner-custom .fifa-name    { font-size: var(--ex-font-name); }
 
-/* ── P0: Export scaling ──────────────────────────────────────────────────── */
-body.export-mode {
-    --ex-font-ovr:   clamp(3rem, 7vw, 10rem);
-    --ex-font-name:  clamp(1.5rem, 3.5vw, 5rem);
-    --ex-font-skill: clamp(0.75rem, 1.1vw, 1.5rem);
-    --ex-photo-w:    clamp(180px, 28vw, 440px);
-}
-body.export-mode.platform-instagram-story,
-body.export-mode.platform-tiktok {
-    --ex-font-ovr:   clamp(5rem, 9vw, 11rem);
-    --ex-font-name:  clamp(2.5rem, 5vw, 6rem);
-    --ex-font-skill: clamp(0.9rem, 1.4vw, 1.8rem);
-    --ex-photo-w:    clamp(220px, 35vw, 500px);
-}
+/* ── P0: FIFA-specific export scaling ────────────────────────────────────── */
+/* Banner --ex-photo-w differs from base (150/17vw/300 vs 120/15vw/280) */
 body.export-mode.platform-banner-custom {
-    --ex-font-ovr:  clamp(3rem, 6vw, 8rem);
-    --ex-font-name: clamp(1.5rem, 3vw, 4rem);
-    --ex-photo-w:   clamp(150px, 17vw, 300px);
+    --ex-photo-w: clamp(150px, 17vw, 300px);
 }
 body.export-mode .fifa-header   { grid-template-columns: var(--ex-photo-w) 1fr; }
 body.export-mode .fifa-overall  { font-size: var(--ex-font-ovr); }
@@ -396,15 +316,20 @@ body.export-mode .fifa-name     { font-size: var(--ex-font-name); }
 body.export-mode .skill-name,
 body.export-mode .skill-val     { font-size: var(--ex-font-skill); }
 body.export-mode .skill-bar-bg  { flex: 1 1 0 !important; max-width: none !important; }
-</style>
-</head>
-<body class="{% if platform_class %}{{ platform_class }}{% endif %}{% if native_export_mode %} native-export-mode{% elif export_mode %} export-mode{% endif %}">
+{% endblock %}
 
+{% block extra_body_classes %}{% if native_export_mode %} native-export-mode{% endif %}{% endblock %}
+
+{% block page_header %}
 {% if app_logo_url %}
 <img class="page-logo" src="{{ app_logo_url }}" alt="LFA">
 {% else %}
 <div class="page-brand">⚽ LFA Education Center — Player Card</div>
 {% endif %}
+{% endblock %}
+
+{% block content %}
+{% from "macros/card_skill_row.html" import card_skill_rows %}
 
 <div class="card-wrap">
 
@@ -493,31 +418,7 @@ body.export-mode .skill-bar-bg  { flex: 1 1 0 !important; max-width: none !impor
                 {% for cat in skill_categories[:2] %}
                 <div class="skill-cat">
                     <div class="skill-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
-                    {% for skill in cat.skills %}
-                    {% set sdata = player.skills.get(skill.key, {}) %}
-                    {% set sval = sdata.get('current_level', 50) | round(1) %}
-                    {% set fill_pct = [sval, 100] | min %}
-                    {% set sdelta = last_skill_delta.get(skill.key, 0) %}
-                    {# Color driven solely by last-tournament delta, not by level tier. #}
-                    {% if sdelta > 0 %}
-                        {% set bar_color = '#48bb78' %}
-                        {% set val_color = '#48bb78' %}
-                    {% elif sdelta < 0 %}
-                        {% set bar_color = '#fc8181' %}
-                        {% set val_color = '#fc8181' %}
-                    {% else %}
-                        {% set bar_color = 'var(--card-bar-neutral)' %}
-                        {% set val_color = 'var(--card-val-neutral)' %}
-                    {% endif %}
-                    <div class="skill-row">
-                        <span class="skill-name" title="{{ skill.name_en }}">{{ skill.name_en }}</span>
-                        <div class="skill-bar-bg"><div class="skill-bar-fill" style="width:{{ fill_pct }}%; background:{{ bar_color }};"></div></div>
-                        <span class="skill-val" style="color:{{ val_color }};">{{ sval }}</span>
-                        {% if sdelta > 0 %}<span class="skill-up">↑</span>
-                        {% elif sdelta < 0 %}<span class="skill-up" style="color:#fc8181;">↓</span>
-                        {% else %}<span class="skill-up" style="visibility:hidden">↑</span>{% endif %}
-                    </div>
-                    {% endfor %}
+                    {{ card_skill_rows(cat, player.skills, last_skill_delta) }}
                 </div>
                 {% endfor %}
                 </div>
@@ -526,31 +427,7 @@ body.export-mode .skill-bar-bg  { flex: 1 1 0 !important; max-width: none !impor
                 {% for cat in skill_categories[2:] %}
                 <div class="skill-cat">
                     <div class="skill-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
-                    {% for skill in cat.skills %}
-                    {% set sdata = player.skills.get(skill.key, {}) %}
-                    {% set sval = sdata.get('current_level', 50) | round(1) %}
-                    {% set fill_pct = [sval, 100] | min %}
-                    {% set sdelta = last_skill_delta.get(skill.key, 0) %}
-                    {# Color driven solely by last-tournament delta, not by level tier. #}
-                    {% if sdelta > 0 %}
-                        {% set bar_color = '#48bb78' %}
-                        {% set val_color = '#48bb78' %}
-                    {% elif sdelta < 0 %}
-                        {% set bar_color = '#fc8181' %}
-                        {% set val_color = '#fc8181' %}
-                    {% else %}
-                        {% set bar_color = 'var(--card-bar-neutral)' %}
-                        {% set val_color = 'var(--card-val-neutral)' %}
-                    {% endif %}
-                    <div class="skill-row">
-                        <span class="skill-name" title="{{ skill.name_en }}">{{ skill.name_en }}</span>
-                        <div class="skill-bar-bg"><div class="skill-bar-fill" style="width:{{ fill_pct }}%; background:{{ bar_color }};"></div></div>
-                        <span class="skill-val" style="color:{{ val_color }};">{{ sval }}</span>
-                        {% if sdelta > 0 %}<span class="skill-up">↑</span>
-                        {% elif sdelta < 0 %}<span class="skill-up" style="color:#fc8181;">↓</span>
-                        {% else %}<span class="skill-up" style="visibility:hidden">↑</span>{% endif %}
-                    </div>
-                    {% endfor %}
+                    {{ card_skill_rows(cat, player.skills, last_skill_delta) }}
                 </div>
                 {% endfor %}
                 </div>
@@ -665,7 +542,9 @@ body.export-mode .skill-bar-bg  { flex: 1 1 0 !important; max-width: none !impor
     </div>
 
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
 function switchTab(name) {
     document.getElementById('tab-skills').style.display = (name === 'skills') ? '' : 'none';
@@ -674,6 +553,4 @@ function switchTab(name) {
     document.getElementById('btn-events').classList.toggle('active', name === 'events');
 }
 </script>
-
-</body>
-</html>
+{% endblock %}
