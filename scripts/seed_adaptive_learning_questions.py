@@ -121,11 +121,14 @@ def _validate_question(q: dict[str, Any], idx: int) -> None:
     if not isinstance(options, list):
         raise ValidationError(f"{prefix}.options must be a list")
 
-    expected_option_count = 2 if qtype_str == "TRUE_FALSE" else 4
-    if len(options) != expected_option_count:
+    if qtype_str == "TRUE_FALSE":
+        if len(options) != 2:
+            raise ValidationError(
+                f"{prefix} ({qtype_str}) must have exactly 2 options (got {len(options)})"
+            )
+    elif len(options) < 4:
         raise ValidationError(
-            f"{prefix} ({qtype_str}) must have exactly {expected_option_count} options "
-            f"(got {len(options)})"
+            f"{prefix} ({qtype_str}) must have at least 4 options (got {len(options)})"
         )
 
     correct_count = sum(1 for o in options if o.get("is_correct"))

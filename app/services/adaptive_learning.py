@@ -89,7 +89,7 @@ class AdaptiveLearningService:
         return {
             "id": selected_question.id,
             "text": selected_question.question_text,
-            "options": [{"id": opt.id, "text": opt.option_text} for opt in selected_question.answer_options],
+            "options": self._build_presented_options(selected_question),
             "type": selected_question.question_type.value if selected_question.question_type else "multiple_choice",
             "difficulty": self._get_question_difficulty(selected_question.id),
             "session_time_remaining": self._get_session_time_remaining(session),
@@ -359,7 +359,27 @@ class AdaptiveLearningService:
             for q in candidates
         ]
         return random.choices(candidates, weights=weights, k=1)[0]
-    
+
+    def _build_presented_options(self, question) -> list[dict]:
+        """Select and shuffle options for presentation.
+
+        Legacy (≤4 options): return all options.
+        Pool (>4 options): pick 1 correct + 3 random distractors.
+        Always returns exactly 4 items as {"id", "text"} dicts.
+        """
+        options = list(question.answer_options)
+        correct = [o for o in options if o.is_correct]
+        incorrect = [o for o in options if not o.is_correct]
+
+        if len(options) <= 4:
+            selected = options
+        else:
+            distractors = random.sample(incorrect, 3)
+            selected = correct + distractors
+
+        random.shuffle(selected)
+        return [{"id": o.id, "text": o.option_text} for o in selected]
+
     def _calculate_performance_trend(self, session: AdaptiveLearningSession) -> float:
         """Teljesítménytrend számítása"""
         if session.questions_presented < 3:
