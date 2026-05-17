@@ -1,0 +1,175 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Card Designs{% endblock %}
+{% block page_heading %}🃏 Card Designs{% endblock %}
+{% block page_subtitle %}Manage player card design families. Upload a JSON manifest to create or update designs.{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .section-header h2 { font-size: 1.3rem; color: #2d3748; }
+    .alert { padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1.25rem; font-size: 0.875rem; }
+    .alert-error   { background: #fff5f5; border: 1px solid #fed7d7; color: #c53030; }
+    .alert-success { background: #f0fff4; border: 1px solid #9ae6b4; color: #276749; }
+    .alert-warning { background: #fffbeb; border: 1px solid #f6e05e; color: #744210; }
+
+    .design-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .design-table thead th {
+        background: #f7fafc; color: #718096; font-size: 0.72rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.06em;
+        padding: 0.55rem 0.75rem; border-bottom: 2px solid #e2e8f0; white-space: nowrap;
+    }
+    .design-table tbody tr { border-bottom: 1px solid #f0f0f0; transition: background 0.1s; }
+    .design-table tbody tr:last-child { border-bottom: none; }
+    .design-table tbody tr:hover { background: #fafbff; }
+    .design-table td { padding: 0.5rem 0.75rem; vertical-align: middle; }
+
+    .id-code { font-family: monospace; font-size: 0.78rem; background: #f0f0f0; padding: 0.1rem 0.4rem; border-radius: 4px; color: #4a5568; }
+    .badge { display: inline-block; padding: 0.15rem 0.45rem; border-radius: 4px; font-size: 0.72rem; font-weight: 700; }
+    .badge-premium   { background: #fef3c7; color: #92400e; }
+    .badge-free      { background: #e0f2fe; color: #0369a1; }
+    .badge-active    { background: #dcfce7; color: #166534; }
+    .badge-inactive  { background: #f3f4f6; color: #6b7280; }
+    .badge-protected { background: #e9d8fd; color: #553c9a; }
+    .badge-driver    { background: #fef9c3; color: #854d0e; }
+    .badge-bucket    { background: #eff6ff; color: #1e40af; font-size: 0.68rem; margin: 0.1rem; }
+
+    .btn-sm { padding: 0.3rem 0.65rem; font-size: 0.78rem; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; text-decoration: none; display: inline-block; white-space: nowrap; }
+    .btn-danger   { background: white; color: #c53030; border: 1px solid #fed7d7; }
+    .btn-danger:hover   { background: #fff5f5; }
+    .btn-success  { background: white; color: #276749; border: 1px solid #9ae6b4; }
+    .btn-success:hover  { background: #f0fff4; }
+    .btn-primary  { background: #5a4a9a; color: white; border: 1px solid #5a4a9a; }
+    .btn-primary:hover  { background: #4a3a8a; }
+    .btn-disabled { background: #f3f4f6; color: #9ca3af; border: 1px solid #e5e7eb; cursor: not-allowed; }
+
+    .sort-input { width: 55px; padding: 0.25rem 0.4rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.85rem; text-align: center; }
+    .reorder-form-wrap { margin-top: 0.5rem; text-align: right; }
+    .card-wrap { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 1.5rem; }
+
+    .buckets-cell { display: flex; flex-wrap: wrap; gap: 0.15rem; }
+    .tpl-code { font-family: monospace; font-size: 0.72rem; color: #718096; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+
+{% if error %}
+<div class="alert alert-error">{{ error }}</div>
+{% endif %}
+{% if success %}
+<div class="alert alert-success">{{ success }}</div>
+{% endif %}
+{% if warning %}
+<div class="alert alert-warning">
+    ⚠️ {{ warning | replace('+', ' ') }}
+    {% if pending_toggle %}
+    <br><br>
+    <form method="post" action="/admin/card-designs/{{ pending_toggle }}/toggle?confirm=1" style="display:inline;">
+        <button type="submit" class="btn-sm btn-danger">Confirm Deactivate "{{ pending_toggle }}"</button>
+    </form>
+    &nbsp;
+    <a href="/admin/card-designs" class="btn-sm btn-success">Cancel</a>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="section-header">
+    <h2>All Designs ({{ designs | length }})</h2>
+    <a href="/admin/card-designs/upload" class="btn-sm btn-primary">+ Upload JSON Manifest</a>
+</div>
+
+<div class="card-wrap">
+<form method="post" action="/admin/card-designs/reorder" id="reorder-form">
+<table class="design-table">
+    <thead>
+        <tr>
+            <th>Sort</th>
+            <th>ID</th>
+            <th>Label</th>
+            <th>Tier</th>
+            <th>Cost</th>
+            <th>Export Buckets</th>
+            <th>Driver</th>
+            <th>Browser Template</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for d in designs %}
+        <tr>
+            <td>
+                {% if d.id == 'fifa' %}
+                <input class="sort-input" type="number" value="{{ d.sort_order }}" disabled title="Protected design">
+                {% else %}
+                <input class="sort-input" type="number" name="sort_{{ d.id }}" value="{{ d.sort_order }}" min="0" max="999">
+                {% endif %}
+            </td>
+            <td><span class="id-code">{{ d.id }}</span></td>
+            <td>{{ d.label }}</td>
+            <td>
+                {% if d.is_premium %}
+                <span class="badge badge-premium">Premium</span>
+                {% else %}
+                <span class="badge badge-free">Free</span>
+                {% endif %}
+            </td>
+            <td>{% if d.credit_cost %}{{ d.credit_cost }} CR{% else %}—{% endif %}</td>
+            <td>
+                <div class="buckets-cell">
+                {% if d.supported_export_buckets %}
+                    {% for b in d.supported_export_buckets %}
+                    <span class="badge badge-bucket">{{ b }}</span>
+                    {% endfor %}
+                {% else %}
+                    <span style="color:#a0aec0; font-size:0.78rem;">—</span>
+                {% endif %}
+                </div>
+            </td>
+            <td>
+                {% if d.component_config %}
+                <span class="badge badge-driver" title="{{ d.component_config.keys() | list | join(', ') }}">DRIVER</span>
+                {% else %}
+                <span style="color:#a0aec0; font-size:0.78rem;">file-based</span>
+                {% endif %}
+            </td>
+            <td><span class="tpl-code" title="{{ d.browser_template }}">{{ d.browser_template }}</span></td>
+            <td>
+                {% if d.id == 'fifa' %}
+                <span class="badge badge-protected">🔒 Protected</span>
+                {% elif d.is_active %}
+                <span class="badge badge-active">Active</span>
+                {% else %}
+                <span class="badge badge-inactive">Inactive</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if d.id == 'fifa' %}
+                <button type="button" class="btn-sm btn-disabled" disabled title="Protected — cannot be deactivated">Deactivate</button>
+                {% elif d.is_active %}
+                <form method="post" action="/admin/card-designs/{{ d.id }}/toggle" style="display:inline;">
+                    <button type="submit" class="btn-sm btn-danger">Deactivate</button>
+                </form>
+                {% else %}
+                <form method="post" action="/admin/card-designs/{{ d.id }}/toggle" style="display:inline;">
+                    <button type="submit" class="btn-sm btn-success">Activate</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="reorder-form-wrap">
+    <button type="submit" class="btn-sm btn-primary">Save Sort Order</button>
+</div>
+</form>
+</div>
+
+{% if not designs %}
+<div style="text-align:center; padding: 3rem; color: #718096;">No designs found. Upload a JSON manifest to get started.</div>
+{% endif %}
+
+{% endblock %}

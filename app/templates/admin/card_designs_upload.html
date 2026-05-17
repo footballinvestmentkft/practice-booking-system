@@ -1,0 +1,250 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Upload Card Designs{% endblock %}
+{% block page_heading %}🃏 Upload Card Designs{% endblock %}
+{% block page_subtitle %}Upload a JSON manifest to create or update card designs. Preview is shown before any changes are applied.{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .card-wrap { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 2rem; margin-bottom: 1.5rem; }
+    .card-wrap h3 { font-size: 1.1rem; color: #2d3748; margin-bottom: 1rem; }
+
+    .alert { padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1.25rem; font-size: 0.875rem; }
+    .alert-error { background: #fff5f5; border: 1px solid #fed7d7; color: #c53030; }
+    .alert-info  { background: #ebf8ff; border: 1px solid #bee3f8; color: #2b6cb0; }
+
+    .upload-zone { border: 2px dashed #e2e8f0; border-radius: 10px; padding: 2rem; text-align: center; cursor: pointer; transition: border-color 0.2s; }
+    .upload-zone:hover { border-color: #667eea; }
+    .upload-zone label { cursor: pointer; font-size: 0.9rem; color: #718096; }
+    .upload-zone input[type="file"] { display: none; }
+    .upload-zone .file-name { margin-top: 0.5rem; font-size: 0.85rem; color: #4a5568; font-weight: 600; }
+
+    .btn { padding: 0.55rem 1.25rem; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; border: none; text-decoration: none; display: inline-block; }
+    .btn-primary   { background: #5a4a9a; color: white; }
+    .btn-primary:hover   { background: #4a3a8a; }
+    .btn-secondary { background: white; color: #4a5568; border: 1px solid #e2e8f0; }
+    .btn-secondary:hover { background: #f7fafc; }
+    .btn-success   { background: #38a169; color: white; }
+    .btn-success:hover   { background: #2f855a; }
+
+    .preview-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .preview-table thead th {
+        background: #f7fafc; color: #718096; font-size: 0.72rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.06em;
+        padding: 0.5rem 0.75rem; border-bottom: 2px solid #e2e8f0; white-space: nowrap;
+    }
+    .preview-table tbody tr { border-bottom: 1px solid #f0f0f0; }
+    .preview-table tbody tr:last-child { border-bottom: none; }
+    .preview-table td { padding: 0.5rem 0.75rem; vertical-align: top; }
+
+    .action-badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+    .action-create     { background: #dcfce7; color: #166534; }
+    .action-update     { background: #dbeafe; color: #1e40af; }
+    .action-reactivate { background: #fef9c3; color: #854d0e; }
+
+    .diff-list { list-style: none; margin: 0; padding: 0; font-size: 0.78rem; }
+    .diff-list li { margin-bottom: 0.25rem; }
+    .diff-field { font-weight: 700; color: #4a5568; }
+    .diff-old   { color: #c53030; text-decoration: line-through; }
+    .diff-new   { color: #276749; }
+    .diff-arrow { color: #a0aec0; margin: 0 0.25rem; }
+
+    .id-code { font-family: monospace; font-size: 0.78rem; background: #f0f0f0; padding: 0.1rem 0.4rem; border-radius: 4px; color: #4a5568; }
+    .badge-bucket { display: inline-block; background: #eff6ff; color: #1e40af; padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.68rem; font-weight: 700; margin: 0.1rem; }
+
+    .action-bar { display: flex; gap: 0.75rem; align-items: center; margin-top: 1.25rem; }
+    .schema-hint { font-size: 0.8rem; color: #718096; margin-top: 0.75rem; }
+    pre.schema-example {
+        background: #1a202c; color: #e2e8f0; border-radius: 8px;
+        padding: 1rem 1.25rem; font-size: 0.75rem; overflow-x: auto;
+        margin-top: 0.75rem; line-height: 1.6;
+    }
+    details summary { cursor: pointer; font-size: 0.72rem; color: #718096; margin-top: 0.25rem; }
+    details pre { font-size: 0.7rem; max-height: 140px; overflow: auto; background: #f7fafc; padding: 0.5rem; border-radius: 4px; margin-top: 0.25rem; white-space: pre-wrap; word-break: break-all; }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+
+{% if error %}
+<div class="alert alert-error">{{ error }}</div>
+{% endif %}
+
+{% if preview_rows is none %}
+{# ── Step 1: Upload form ────────────────────────────────────────────────── #}
+<div class="card-wrap">
+    <h3>Step 1 — Select JSON Manifest</h3>
+    <form method="post" action="/admin/card-designs/upload" enctype="multipart/form-data">
+        <div class="upload-zone" id="upload-zone">
+            <label for="file-input">
+                📂 Click to select a .json file (max 32 KB)
+                <input type="file" id="file-input" name="file" accept=".json,application/json" required
+                       onchange="document.getElementById('file-label').textContent = this.files[0].name;">
+            </label>
+            <div class="file-name" id="file-label">No file selected</div>
+        </div>
+        <div class="action-bar">
+            <button type="submit" class="btn btn-primary">Upload + Preview</button>
+            <a href="/admin/card-designs" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<div class="card-wrap">
+    <h3>JSON Manifest Format</h3>
+    <div class="schema-hint">
+        The manifest must include <code>schema_version: 1</code> and a <code>designs</code> array.
+        The <code>fifa</code> design ID is protected and cannot be included.
+        <strong>browser_template</strong> must reference an already-deployed template file.
+        <strong>component_config</strong> enables column-driver routing without Level C template files;
+        supported keys in CS-2: <code>portrait</code>, <code>story</code>.
+    </div>
+    <pre class="schema-example">{
+  "schema_version": 1,
+  "designs": [
+    {
+      "id": "classic_lite",
+      "label": "Classic Lite",
+      "description": "Column archetype, portrait and story export only.",
+      "is_premium": false,
+      "credit_cost": 0,
+      "sort_order": 1,
+      "browser_template": "public/player_card_fifa.html",
+      "supported_export_buckets": ["portrait", "story"],
+      "animated_platforms": [],
+      "component_config": {
+        "portrait": {
+          "skill_slice": 4,
+          "show_dominant_badge": true,
+          "show_height_weight": true,
+          "show_sponsor": true,
+          "platform_vars": { "--ex-hero-h": "380px", "--ex-avatar-sz": "170px" }
+        },
+        "story": {
+          "skill_slice": 6,
+          "show_dominant_badge": true,
+          "show_height_weight": true,
+          "show_sponsor": false,
+          "platform_vars": { "--ex-hero-h": "440px", "--ex-avatar-sz": "175px" }
+        }
+      }
+    }
+  ]
+}</pre>
+    <div class="schema-hint" style="margin-top:0.75rem;">
+        <strong>Scope note (CS-2):</strong>
+        portrait/story designs are manifest-only (no template files needed).
+        Browser-side card design is not yet manifest-only — <code>browser_template</code>
+        must already exist on the server. This is a separate, later architectural phase.
+    </div>
+</div>
+
+{% else %}
+{# ── Step 2: Preview + Confirm ────────────────────────────────────────────── #}
+<div class="card-wrap">
+    <h3>Step 2 — Preview Changes ({{ preview_rows | length }} design(s))</h3>
+    <div class="alert alert-info">
+        Review the changes below. No database writes have occurred yet.
+        Click <strong>Apply All Changes</strong> to commit.
+    </div>
+
+    <table class="preview-table">
+        <thead>
+            <tr>
+                <th>Action</th>
+                <th>ID</th>
+                <th>Label</th>
+                <th>Tier</th>
+                <th>Export Buckets</th>
+                <th>Driver</th>
+                <th>Sort</th>
+                <th>Diff (changed fields)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in preview_rows %}
+            <tr>
+                <td>
+                    {% if row.action == 'CREATE' %}
+                    <span class="action-badge action-create">CREATE</span>
+                    {% elif row.action == 'REACTIVATE_UPDATE' %}
+                    <span class="action-badge action-reactivate">REACTIVATE + UPDATE</span>
+                    {% else %}
+                    <span class="action-badge action-update">UPDATE</span>
+                    {% endif %}
+                </td>
+                <td><span class="id-code">{{ row.item.id }}</span></td>
+                <td>{{ row.item.label }}</td>
+                <td>
+                    {% if row.item.is_premium %}
+                    <span style="font-size:0.78rem; color:#92400e;">Premium<br>{{ row.item.credit_cost }} CR</span>
+                    {% else %}
+                    <span style="font-size:0.78rem; color:#0369a1;">Free</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% for b in row.item.supported_export_buckets %}
+                    <span class="badge-bucket">{{ b }}</span>
+                    {% endfor %}
+                    {% if not row.item.supported_export_buckets %}
+                    <span style="color:#a0aec0; font-size:0.78rem;">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if row.item.component_config %}
+                    <span style="font-size:0.78rem; color:#854d0e;">✅ {{ row.item.component_config.keys() | list | join(', ') }}</span>
+                    {% else %}
+                    <span style="color:#a0aec0; font-size:0.78rem;">file-based</span>
+                    {% endif %}
+                </td>
+                <td>{{ row.item.sort_order }}</td>
+                <td>
+                    {% if row.action == 'CREATE' %}
+                    <span style="color: #718096; font-size: 0.78rem;">—</span>
+                    {% elif row.diff %}
+                    <ul class="diff-list">
+                        {% for field_name, (old, new) in row.diff.items() %}
+                        <li>
+                            {% if field_name == 'component_config' %}
+                            <span class="diff-field">component_config:</span>
+                            <span style="color:#718096; font-size:0.78rem;">changed</span>
+                            <details>
+                                <summary>Show diff</summary>
+                                <pre>old: {{ old | tojson(indent=2) }}
+new: {{ new | tojson(indent=2) }}</pre>
+                            </details>
+                            {% elif field_name in ('supported_export_buckets', 'animated_platforms') %}
+                            <span class="diff-field">{{ field_name }}:</span>
+                            <span class="diff-old">{{ old | tojson }}</span>
+                            <span class="diff-arrow">→</span>
+                            <span class="diff-new">{{ new | tojson }}</span>
+                            {% else %}
+                            <span class="diff-field">{{ field_name }}:</span>
+                            <span class="diff-old">{{ old }}</span>
+                            <span class="diff-arrow">→</span>
+                            <span class="diff-new">{{ new }}</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <span style="color: #718096; font-size: 0.78rem;">No field changes</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <form method="post" action="/admin/card-designs/apply">
+        <input type="hidden" name="preview_json" value="{{ preview_json | e }}">
+        <div class="action-bar">
+            <button type="submit" class="btn btn-success">Apply All Changes</button>
+            <a href="/admin/card-designs/upload" class="btn btn-secondary">Upload Different File</a>
+            <a href="/admin/card-designs" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+{% endblock %}

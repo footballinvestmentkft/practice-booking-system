@@ -32,6 +32,7 @@ from . import (  # noqa: E402
     enrollments,
     sponsors,
     card_themes,
+    card_designs,
 )
 
 router = APIRouter()
@@ -50,5 +51,6 @@ for _mod in [
     enrollments,
     sponsors,
     card_themes,
+    card_designs,
 ]:
     router.include_router(_mod.router)
