@@ -651,6 +651,24 @@ class TestWelcomeCardGalleryTemplate:
     def test_sh03_active_page_is_lfa_player(self, gallery_src):
         assert "active_page %}lfa-player" in gallery_src
 
+    # ── Watermark assertions (WM-01..WM-05) ──────────────────────────────────
+
+    def test_wm01_preview_wrapper_has_before_pseudo(self, gallery_src):
+        assert "wc-preview-frame-wrap::before" in gallery_src
+
+    def test_wm02_preview_wrapper_has_after_pseudo(self, gallery_src):
+        assert "wc-preview-frame-wrap::after" in gallery_src
+
+    def test_wm03_logo_layer_uses_mask_image(self, gallery_src):
+        assert "mask-image" in gallery_src
+        assert "logo-wc.png" in gallery_src
+
+    def test_wm04_text_layer_uses_svg_data_uri(self, gallery_src):
+        assert "data:image/svg+xml;base64," in gallery_src
+
+    def test_wm05_watermark_is_pointer_events_none(self, gallery_src):
+        assert "pointer-events: none" in gallery_src
+
     def test_gallery_renders_with_minimal_context(self):
         """Jinja2 render: gallery template must not error with minimal context.
 

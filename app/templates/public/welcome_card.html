@@ -111,6 +111,54 @@
         overflow: hidden;
         background: var(--wc-frame-bg);
     }
+
+    /* ── Watermark overlay — preview-only deterrence layer ──────────────────
+       Two pseudo-elements sit above the scaled iframe in wrapper coordinates.
+       pointer-events:none preserves all gallery interactions.
+       Export isolation is architectural: Playwright loads the card template
+       URL directly and never renders this gallery page.
+
+       ::before — monochrome logo mask
+         mask-image uses logo-wc.png alpha as shape stencil; background-color
+         (white) shows through the stencil. Original gold colour is irrelevant.
+         mask-position(50px 30px) offsets the logo grid from the text grid so
+         the two layers interleave diagonally rather than stack.
+
+       ::after — repeating "LFA" SVG text tile
+         200×90px tile, 26px Barlow Condensed 800, rotate(-30°), white 70%.
+         SVG is base64-embedded — zero HTTP requests.                         */
+    .wc-preview-frame-wrap::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+        pointer-events: none;
+        user-select: none;
+        background-color: rgba(255, 255, 255, 1);
+        -webkit-mask-image: url('/static/images/logo-wc.png');
+                mask-image: url('/static/images/logo-wc.png');
+        -webkit-mask-repeat: repeat;
+                mask-repeat: repeat;
+        -webkit-mask-size: 100px auto;
+                mask-size: 100px auto;
+        -webkit-mask-position: 50px 30px;
+                mask-position: 50px 30px;
+        opacity: 0.12;
+    }
+    .wc-preview-frame-wrap::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 11;
+        pointer-events: none;
+        user-select: none;
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iOTAiPjx0ZXh0IHg9IjEwMCIgeT0iNTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJCYXJsb3cgQ29uZGVuc2VkLHN5c3RlbS11aSxzYW5zLXNlcmlmIiBmb250LXNpemU9IjI2IiBmb250LXdlaWdodD0iODAwIiBsZXR0ZXItc3BhY2luZz0iNiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjcwKSIgdHJhbnNmb3JtPSJyb3RhdGUoLTMwLDEwMCw1MikiPkxGQTwvdGV4dD48L3N2Zz4=");
+        background-repeat: repeat;
+        background-size: 200px 90px;
+        background-position: 0px 0px;
+        opacity: 0.17;
+    }
+
     #wc-preview-iframe {
         position: absolute;
         top: 0;
