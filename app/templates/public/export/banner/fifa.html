@@ -464,7 +464,7 @@
             {% if outfield_cat %}
             <div class="ex-skills-title">{{ outfield_cat.emoji }} {{ outfield_cat.name_en }}</div>
             <div class="ex-cat">
-                {{ export_skill_rows(outfield_cat, player.skills, last_skill_delta) }}
+                {{ export_skill_rows(outfield_cat, player.skills, last_skill_delta, neutral_bar='var(--ex-cat-color-0)') }}
             </div>
             {% endif %}
         </div>
@@ -479,7 +479,7 @@
                     {% set mental_cat = skill_categories[1] %}
                     <div class="ex-skills-title">{{ mental_cat.emoji }} {{ mental_cat.name_en }}</div>
                     <div class="ex-cat">
-                        {{ export_skill_rows(mental_cat, player.skills, last_skill_delta) }}
+                        {{ export_skill_rows(mental_cat, player.skills, last_skill_delta, neutral_bar='var(--ex-cat-color-1)') }}
                     </div>
                 </div>
                 {% endif %}
@@ -490,7 +490,7 @@
                     {% for cat in skill_categories[2:] %}
                     <div class="ex-skills-title" style="{% if not loop.first %}margin-top:8px;{% endif %}">{{ cat.emoji }} {{ cat.name_en }}</div>
                     <div class="ex-cat">
-                        {{ export_skill_rows(cat, player.skills, last_skill_delta) }}
+                        {{ export_skill_rows(cat, player.skills, last_skill_delta, neutral_bar='var(--ex-cat-color-' ~ (loop.index0 + 2) ~ ')') }}
                     </div>
                     {% endfor %}
                 </div>

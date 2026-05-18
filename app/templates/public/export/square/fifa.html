@@ -827,7 +827,7 @@ body {
                 {% set cat = skill_categories[0] %}
                 <div class="ex-cat">
                     <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
-                    {{ export_skill_rows(cat, player.skills, last_skill_delta) }}
+                    {{ export_skill_rows(cat, player.skills, last_skill_delta, neutral_bar='var(--ex-cat-color-0)') }}
                     {% if sponsor_logo_url or app_logo_url %}
                     <div class="ex-outfield-logo">
                         <img src="{{ sponsor_logo_url or app_logo_url }}" alt="" class="ex-outfield-logo-img"
@@ -848,16 +848,17 @@ body {
                         {% set cat = skill_categories[2] %}
                         <div class="ex-cat">
                             <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
-                            {{ export_skill_rows(cat, player.skills, last_skill_delta) }}
+                            {{ export_skill_rows(cat, player.skills, last_skill_delta, neutral_bar='var(--ex-cat-color-2)') }}
                         </div>
                     </div>
 
                     <!-- Col 3: Set Pieces (natural) + Physical (flex:1 last-child) -->
                     <div class="ex-skill-col ex-col-sets-phys">
                         {% for cat in [skill_categories[1], skill_categories[3]] %}
+                        {%- set _sq_cat_clr = 'var(--ex-cat-color-1)' if loop.first else 'var(--ex-cat-color-3)' -%}
                         <div class="ex-cat">
                             <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
-                            {{ export_skill_rows(cat, player.skills, last_skill_delta) }}
+                            {{ export_skill_rows(cat, player.skills, last_skill_delta, neutral_bar=_sq_cat_clr) }}
                         </div>
                         {% endfor %}
                     </div>

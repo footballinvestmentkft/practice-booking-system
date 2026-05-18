@@ -469,6 +469,7 @@
             <div class="ex-cat ex-cat-outfield">
                 <div class="ex-cat-name">{{ cat_outfield.name }}</div>
                 <div class="ex-skill-rows">
+                    {%- set cat_neutral_clr = 'var(--ex-cat-color-0)' -%}
                     {% for skill in cat_outfield.skills[:skill_slice] %}
                     {%- set sdata = player.skills.get(skill.key, {}) -%}
                     {%- set sval  = sdata.get('current_level', 50) | round(0) | int -%}
@@ -481,7 +482,7 @@
                         {%- set bar_clr = '#fc8181' -%}{%- set val_clr = '#fc8181' -%}
                         {%- set trend = '↓' -%}{%- set trend_vis = 'visible' -%}
                     {%- else -%}
-                        {%- set bar_clr = 'rgba(255,255,255,0.20)' -%}{%- set val_clr = 'rgba(255,255,255,0.85)' -%}
+                        {%- set bar_clr = cat_neutral_clr -%}{%- set val_clr = 'rgba(255,255,255,0.85)' -%}
                         {%- set trend = '↑' -%}{%- set trend_vis = 'hidden' -%}
                     {%- endif -%}
                     <div class="ex-row">
@@ -503,6 +504,7 @@
             <div class="ex-cat ex-cat-mental">
                 <div class="ex-cat-name">{{ cat_mental.name }}</div>
                 <div class="ex-skill-rows">
+                    {%- set cat_neutral_clr = 'var(--ex-cat-color-2)' -%}
                     {% for skill in cat_mental.skills[:skill_slice] %}
                     {%- set sdata = player.skills.get(skill.key, {}) -%}
                     {%- set sval  = sdata.get('current_level', 50) | round(0) | int -%}
@@ -515,7 +517,7 @@
                         {%- set bar_clr = '#fc8181' -%}{%- set val_clr = '#fc8181' -%}
                         {%- set trend = '↓' -%}{%- set trend_vis = 'visible' -%}
                     {%- else -%}
-                        {%- set bar_clr = 'rgba(255,255,255,0.20)' -%}{%- set val_clr = 'rgba(255,255,255,0.85)' -%}
+                        {%- set bar_clr = cat_neutral_clr -%}{%- set val_clr = 'rgba(255,255,255,0.85)' -%}
                         {%- set trend = '↑' -%}{%- set trend_vis = 'hidden' -%}
                     {%- endif -%}
                     <div class="ex-row">
@@ -534,6 +536,7 @@
             <div class="ex-cat ex-cat-sets">
                 <div class="ex-cat-name">{{ cat_setpieces.name }}</div>
                 <div class="ex-skill-rows">
+                    {%- set cat_neutral_clr = 'var(--ex-cat-color-1)' -%}
                     {% for skill in cat_setpieces.skills[:skill_slice] %}
                     {%- set sdata = player.skills.get(skill.key, {}) -%}
                     {%- set sval  = sdata.get('current_level', 50) | round(0) | int -%}
@@ -546,7 +549,7 @@
                         {%- set bar_clr = '#fc8181' -%}{%- set val_clr = '#fc8181' -%}
                         {%- set trend = '↓' -%}{%- set trend_vis = 'visible' -%}
                     {%- else -%}
-                        {%- set bar_clr = 'rgba(255,255,255,0.20)' -%}{%- set val_clr = 'rgba(255,255,255,0.85)' -%}
+                        {%- set bar_clr = cat_neutral_clr -%}{%- set val_clr = 'rgba(255,255,255,0.85)' -%}
                         {%- set trend = '↑' -%}{%- set trend_vis = 'hidden' -%}
                     {%- endif -%}
                     <div class="ex-row">
@@ -565,6 +568,7 @@
             <div class="ex-cat ex-cat-phys">
                 <div class="ex-cat-name">{{ cat_physical.name }}</div>
                 <div class="ex-skill-rows">
+                    {%- set cat_neutral_clr = 'var(--ex-cat-color-3)' -%}
                     {% for skill in cat_physical.skills[:skill_slice] %}
                     {%- set sdata = player.skills.get(skill.key, {}) -%}
                     {%- set sval  = sdata.get('current_level', 50) | round(0) | int -%}
@@ -577,7 +581,7 @@
                         {%- set bar_clr = '#fc8181' -%}{%- set val_clr = '#fc8181' -%}
                         {%- set trend = '↓' -%}{%- set trend_vis = 'visible' -%}
                     {%- else -%}
-                        {%- set bar_clr = 'rgba(255,255,255,0.20)' -%}{%- set val_clr = 'rgba(255,255,255,0.85)' -%}
+                        {%- set bar_clr = cat_neutral_clr -%}{%- set val_clr = 'rgba(255,255,255,0.85)' -%}
                         {%- set trend = '↑' -%}{%- set trend_vis = 'hidden' -%}
                     {%- endif -%}
                     <div class="ex-row">

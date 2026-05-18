@@ -570,7 +570,7 @@
                     {{ cat.emoji }} {{ cat.name_en }}
                     <span class="ex-cat-avg">{{ cat_avg }}</span>
                 </div>
-                {{ export_skill_rows(cat, player.skills, last_skill_delta, neutral_bar='rgba(255,255,255,0.18)', neutral_val='rgba(255,255,255,0.80)') }}
+                {{ export_skill_rows(cat, player.skills, last_skill_delta, neutral_bar='var(--ex-cat-color-' ~ loop.index0 ~ ')', neutral_val='rgba(255,255,255,0.80)') }}
             </div>
             {% endfor %}
         </div>

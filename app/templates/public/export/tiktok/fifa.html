@@ -520,7 +520,7 @@
             <!-- Standard skill category: bar layout, all skills (no slicing) -->
             <div class="ex-cat">
                 <div class="ex-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
-                {{ export_skill_rows(cat, player.skills, last_skill_delta) }}
+                {{ export_skill_rows(cat, player.skills, last_skill_delta, neutral_bar='var(--ex-cat-color-' ~ loop.index0 ~ ')') }}
             </div>
             {% endif %}
 
