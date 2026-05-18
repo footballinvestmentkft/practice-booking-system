@@ -186,6 +186,14 @@ def public_player_card(
     parts = (user.name or user.email).split()
     initials = "".join(p[0].upper() for p in parts[:2]) if parts else "?"
 
+    # ── CardDraft (hoisted) ───────────────────────────────────────────────────
+    # Must be resolved before the early return so the public profile can read
+    # the authoritative published_platform from card_drafts (written by publish_draft).
+    # UserLicense.published_card_platform is kept as a legacy fallback for users
+    # who existed before the Phase 4D-1 migration (card_drafts row absent / platform NULL).
+    from app.services.card_draft_service import CardDraftService as _CardDraftService
+    _card_draft = _CardDraftService.get_player_card_draft(db, user_id=lfa_license.user_id)
+
     # ── Public profile early return ───────────────────────────────────────────
     # No ?platform= AND no &export=1 AND no ?preview= → human-browseable public link.
     # Render a clean, read-only profile page — no platform picker, no download UI.
@@ -193,9 +201,10 @@ def public_player_card(
     # ?preview= is the editor draft-variant parameter — skip public profile for those too.
     if not platform and not export and not preview:
         from app.services.card_constants import CANVAS_SIZES as _CANVAS_SIZES_ALL
-        # Use the player's published platform; fallback to instagram_portrait if unset or invalid.
-        # Explicitly exclude "default" — it's a sentinel, not a real export platform.
-        _raw_pub_platform = lfa_license.published_card_platform
+        # Priority: CardDraft.published_platform (written by publish_draft())
+        #         > UserLicense.published_card_platform (legacy pre-4D-1 fallback).
+        # Sentinel guard: "default" has no canvas size and is not a real export platform.
+        _raw_pub_platform = _card_draft.published_platform or lfa_license.published_card_platform
         _pub_platform = (
             _raw_pub_platform
             if (
@@ -249,11 +258,10 @@ def public_player_card(
     # Reads the PUBLISHED snapshot from card_drafts (primary source after 4D-2).
     # Falls back to UserLicense.published_card_* for users who have never visited
     # the editor after the Phase 4D-1 migration (card_drafts row absent).
+    # _card_draft was already fetched above (hoisted for the public profile early return).
     from app.services.card_theme_service import get_theme as _get_theme, get_all_themes as _get_all_themes
     from app.services.card_variant_service import get_variant as _get_variant
-    from app.services.card_draft_service import CardDraftService as _CardDraftService
 
-    _card_draft = _CardDraftService.get_player_card_draft(db, user_id=lfa_license.user_id)
     card_theme_id = (
         _card_draft.published_theme
         or lfa_license.published_card_theme

@@ -4,24 +4,32 @@ PCP_ — Player Card Public Profile tests.
 Route semantics — GET /players/{uid}/card (no params):
   • Serves a clean, read-only public profile page (player_card_public.html)
   • No platform picker, no export-format panel, no PNG download buttons
-  • Uses player's published_card_platform; falls back to instagram_portrait if unset/invalid
+  • Resolves published platform from CardDraft.published_platform (primary),
+    then UserLicense.published_card_platform (legacy fallback), then "instagram_portrait"
 
-PCP-01  No platform + no export → public profile template returned
-PCP-02  Public profile context includes all required keys
-PCP-03  published_card_platform=None → public_platform falls back to instagram_portrait
-PCP-04  published_card_platform set to valid platform → public_platform uses it
-PCP-05  pub_card_w / pub_card_h match CANVAS_SIZES for public_platform
-PCP-06  public_iframe_src contains platform={platform}&export=1
-PCP-07  export=True with no platform bypasses public profile (Playwright path)
-PCP-08  platform=X bypasses public profile (direct platform render)
-PCP-08b preview=X bypasses public profile (editor draft-variant param)
-PCP-09  Public profile template: pcp-card-wrap iframe container present
-PCP-10  Public profile template: NO platform picker and NO download buttons
-PCP-11  Public profile template: scaleCard JS function present
-PCP-12  Public profile template: _PUB_CARD_W / _PUB_CARD_H injected
-PCP-13  Editor initial Jinja2 iframe src uses instagram_portrait&export=1 for default platform
-PCP-14  Editor _cardIframeSrc JS uses instagram_portrait&export=1 for default platform
-PCP-15  Editor _applyIframeSize JS uses instagram_portrait canvas dims for default platform
+PCP-01   No platform + no export → public profile template returned
+PCP-02   Public profile context includes all required keys
+PCP-02b  Public profile context has no export-gallery keys
+PCP-03   Both sources None → public_platform falls back to instagram_portrait
+PCP-04   CardDraft.published_platform set → public_platform uses it (primary source)
+PCP-04b  "default" in either source → treated as invalid, falls back to instagram_portrait
+PCP-04c  CardDraft square + license None  → square  [BUG regression guard]
+PCP-04d  CardDraft square + license portrait → square (CardDraft wins)
+PCP-04e  CardDraft None  + license tiktok → tiktok  (UserLicense fallback)
+PCP-04f  CardDraft None  + license None   → instagram_portrait (final fallback)
+PCP-05   pub_card_w / pub_card_h match CANVAS_SIZES for public_platform
+PCP-06   public_iframe_src contains platform={platform}&export=1
+PCP-07   export=True with no platform bypasses public profile (Playwright path)
+PCP-08   platform=X bypasses public profile (direct platform render)
+PCP-08b  preview=X bypasses public profile (editor draft-variant param)
+PCP-09   Public profile template: pcp-card-wrap iframe container present
+PCP-10   Public profile template: NO platform picker and NO download buttons
+PCP-10b  Public profile template: NO download buttons
+PCP-11   Public profile template: scaleCard JS function present
+PCP-12   Public profile template: _PUB_CARD_W / _PUB_CARD_H injected
+PCP-13   Editor initial Jinja2 iframe src uses instagram_portrait&export=1 for default platform
+PCP-14   Editor _cardIframeSrc JS uses instagram_portrait&export=1 for default platform
+PCP-15   Editor _applyIframeSize JS uses instagram_portrait canvas dims for default platform
 """
 from __future__ import annotations
 
@@ -30,6 +38,11 @@ import pytest
 from unittest.mock import MagicMock, patch
 
 _BASE = "app.api.web_routes.public_player"
+
+# Sentinel: distinguishes "caller did not pass draft_published_platform" from passing None.
+# When _UNSET, _make_db() seeds draft.published_platform from license_.published_card_platform
+# (preserving backward compatibility with tests that don't care about the CardDraft layer).
+_UNSET = object()
 
 # ── Paths ───────────────────────────────────────────────────────────────────────
 _REPO_ROOT  = pathlib.Path(__file__).resolve().parents[4]
@@ -89,10 +102,24 @@ def _make_license(public_card_platform: str | None = None):
     return lic
 
 
-def _make_db(user, license_):
+def _make_db(user, license_, draft_published_platform=_UNSET):
+    """Build a mock db session.
+
+    draft_published_platform:
+      _UNSET (default) → CardDraft.published_platform mirrors license_.published_card_platform
+                         (backward-compatible; tests that don't care about CardDraft layer).
+      None             → CardDraft.published_platform = None (CardDraft has no published state).
+      str              → CardDraft.published_platform = that string.
+    """
     from app.models.card_draft import CardDraft as _CardDraft
     db = MagicMock()
     _calls = [0]
+
+    _draft_platform = (
+        license_.published_card_platform
+        if draft_published_platform is _UNSET
+        else draft_published_platform
+    )
 
     def _side(*args):
         _calls[0] += 1
@@ -102,7 +129,7 @@ def _make_db(user, license_):
             draft = MagicMock()
             draft.published_theme    = "default"
             draft.published_variant  = "fifa"
-            draft.published_platform = license_.published_card_platform
+            draft.published_platform = _draft_platform
             q.filter.return_value.first.return_value = draft
         elif _calls[0] == 1:
             q.filter.return_value.first.return_value = user
@@ -119,14 +146,19 @@ def _make_db(user, license_):
     return db
 
 
-def _call_route(platform=None, export=False, user=None, license_=None):
-    """Call public_player_card and capture the TemplateResponse call args."""
+def _call_route(platform=None, export=False, user=None, license_=None,
+                draft_published_platform=_UNSET):
+    """Call public_player_card and capture the TemplateResponse call args.
+
+    draft_published_platform: forwarded to _make_db — controls CardDraft.published_platform
+    independently of license_.published_card_platform.
+    """
     from fastapi import Request as _Request
     from app.api.web_routes.public_player import public_player_card
 
     user_    = user     or _make_user()
     license_ = license_ or _make_license()
-    db       = _make_db(user_, license_)
+    db       = _make_db(user_, license_, draft_published_platform=draft_published_platform)
     request  = MagicMock(spec=_Request)
 
     captured = {}
@@ -193,8 +225,50 @@ class TestPlayerCardPublicRoute:
     def test_pcp04b_invalid_published_platform_falls_back(self):
         """An invalid/unrecognised published_card_platform must fall back to instagram_portrait."""
         lic = _make_license(public_card_platform="default")
-        ctx = _call_route(license_=lic)
+        ctx = _call_route(license_=lic, draft_published_platform="default")
         assert ctx.get("public_platform") == "instagram_portrait"
+
+    # ── Priority chain regression tests (PCP-04c/d/e/f) ──────────────────────
+    # These four tests prove the correct read priority:
+    #   CardDraft.published_platform  >  UserLicense.published_card_platform  >  fallback
+
+    def test_pcp04c_card_draft_platform_used_when_license_has_none(self):
+        """CardDraft.published_platform wins even when UserLicense.published_card_platform is None.
+
+        This is the direct regression guard for the original bug: publish_draft() writes to
+        card_drafts.published_platform but the old early return read only UserLicense — always
+        seeing NULL and falling back to instagram_portrait regardless of what was published.
+        """
+        lic = _make_license(public_card_platform=None)
+        ctx = _call_route(license_=lic, draft_published_platform="instagram_square")
+        assert ctx.get("public_platform") == "instagram_square", (
+            "CardDraft.published_platform must be used as the primary source; "
+            "UserLicense being NULL must not trigger the fallback"
+        )
+
+    def test_pcp04d_card_draft_wins_over_license_when_both_set(self):
+        """CardDraft.published_platform takes precedence over UserLicense when both are set."""
+        lic = _make_license(public_card_platform="instagram_portrait")
+        ctx = _call_route(license_=lic, draft_published_platform="instagram_square")
+        assert ctx.get("public_platform") == "instagram_square", (
+            "CardDraft must win over UserLicense even when UserLicense has a valid platform"
+        )
+
+    def test_pcp04e_license_fallback_when_draft_platform_is_none(self):
+        """UserLicense.published_card_platform is used when CardDraft.published_platform is None."""
+        lic = _make_license(public_card_platform="tiktok")
+        ctx = _call_route(license_=lic, draft_published_platform=None)
+        assert ctx.get("public_platform") == "tiktok", (
+            "UserLicense.published_card_platform must be the fallback when CardDraft has no published platform"
+        )
+
+    def test_pcp04f_instagram_portrait_fallback_when_both_sources_are_none(self):
+        """instagram_portrait is the final fallback when both CardDraft and UserLicense are None."""
+        lic = _make_license(public_card_platform=None)
+        ctx = _call_route(license_=lic, draft_published_platform=None)
+        assert ctx.get("public_platform") == "instagram_portrait", (
+            "Final fallback must be instagram_portrait when both CardDraft and UserLicense have no published platform"
+        )
 
     def test_pcp05_pub_card_dims_match_canvas_sizes(self):
         """pub_card_w / pub_card_h must match CANVAS_SIZES for the resolved public_platform."""
