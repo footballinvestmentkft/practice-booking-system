@@ -1,4 +1,6 @@
 {% extends "public/export/shared/export_base.html" %}
+{%- from "macros/card_position_map.html" import position_map_landscape -%}
+{%- from "macros/card_sponsor_block.html" import sponsor_slot -%}
 {#
  * FIFA Classic × FB Landscape / OG / Facebook Post — export template
  * (Phase 3b-4: extends export_base.html)
@@ -22,7 +24,6 @@
 
 {% block platform_vars %}
 :root {
-    --ex-card-direction: row;
     --ex-sname-w:        80px;
     --ex-font-skill:     9px;
     --ex-bar-h:          4px;
@@ -92,7 +93,7 @@
 .ex-pos-corner {
     position: absolute;
     top: 8px; left: 8px;
-    font-size: 7px;
+    font-size: 11px;
     font-weight: 800;
     color: white;
     padding: 2px 7px;
@@ -331,6 +332,63 @@
 /* Override base .ex-bar-fill: 3px radius (base: 4px) */
 .ex-bar-fill { border-radius: 3px; }
 
+/* ── COLUMN LAYOUT — cols-row wraps three panels; PosMap is a full-width footer ─ */
+.ex-card { flex-direction: column; }
+.ex-cols-row {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    min-height: 0;
+}
+
+/* ── POSITION MAP — compact 130px footer strip (no info column) ──────────────── */
+.ex-pos-panel-landscape {
+    flex: 0 0 130px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    background: rgba(26, 92, 42, 0.55);
+    position: relative;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+.ex-pos-compact-label {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    font-weight: 800;
+    color: #ECC94B;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.60);
+    z-index: 1;
+    pointer-events: none;
+}
+.ex-pos-svg-landscape {
+    flex: 1;
+    min-width: 0;
+    display: block;
+    align-self: stretch;
+}
+
+/* ── SPONSOR ZONE — compact bar at bottom of center panel ────────────────────── */
+.ex-ls-sponsor {
+    flex-shrink: 0;
+    height: 36px;
+    border-top: 1px solid rgba(0,0,0,0.07);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 8px;
+}
+.ex-ls-sponsor-img {
+    max-height: 26px;
+    max-width: 70%;
+    object-fit: contain;
+    opacity: 0.75;
+}
+
 {% if animated_mode %}
 @keyframes ex-ovr-in {
     from { opacity: 0; transform: scale(0.7); }
@@ -372,6 +430,7 @@
 {% block body_content %}
 {% from "macros/card_skill_row.html" import export_skill_rows %}
 <div class="ex-card">
+<div class="ex-cols-row">
 
     <!-- ── LEFT PANEL — photo zone (58%) + OVR zone (42%) ────────────────── -->
     <div class="ex-left">
@@ -450,6 +509,18 @@
                 <span class="ex-profile-value">{{ player_gender }}</span>
             </div>
             {% endif %}
+            {% if player_height_cm %}
+            <div class="ex-profile-row">
+                <span class="ex-profile-label">Height</span>
+                <span class="ex-profile-value">{{ player_height_cm }} cm</span>
+            </div>
+            {% endif %}
+            {% if player_weight_kg %}
+            <div class="ex-profile-row">
+                <span class="ex-profile-label">Weight</span>
+                <span class="ex-profile-value">{{ player_weight_kg }} kg</span>
+            </div>
+            {% endif %}
             {% if player_location %}
             <div class="ex-profile-row">
                 <span class="ex-profile-label">Location</span>
@@ -486,6 +557,12 @@
 
         </div>
 
+        {% if sponsor_logo_url %}
+        <div class="ex-ls-sponsor">
+            <img src="{{ sponsor_logo_url }}" alt="Sponsor" class="ex-ls-sponsor-img">
+        </div>
+        {% endif %}
+
     </div>
 
     <!-- ── SKILLS PANEL — 2×2 grid, ALL skills ───────────────────────────── -->
@@ -509,5 +586,11 @@
     </div>
     {% endif %}
 
-</div>
+</div><!-- /.ex-cols-row -->
+
+    <!-- ── POSITION MAP — compact 130px full-width footer ────────────────── -->
+    {{ position_map_landscape(position_nodes, primary_pos_label, secondary_pos_labels,
+                              player_position=player.position, show_info_col=False) }}
+
+</div><!-- /.ex-card -->
 {% endblock %}

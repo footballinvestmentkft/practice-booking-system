@@ -1,4 +1,5 @@
 {% extends "public/export/shared/export_base.html" %}
+{%- from "macros/card_position_map.html" import position_map_landscape -%}
 {#
  * FIFA Classic × TikTok — export template  (Phase 3b-3: extends export_base.html)
  * Canvas  : 1080 × 1920 px  (Playwright viewport, 9:16 ratio)
@@ -146,27 +147,35 @@
 }
 
 /* ── IDENTITY STRIP ───────────────────────────────────────────────────────────
-   140px dark band below the hero.  Stats displayed as label/value columns
-   separated by thin vertical dividers.
+   160px dark band below the hero.  Stats in 2-row flex layout:
+   Row 1: NAT / AGE_GROUP / HEIGHT / WEIGHT / FOOT
+   Row 2: TEAM / EVENTS / LICENSE / XP
    ─────────────────────────────────────────────────────────────────────────── */
 .ex-identity-strip {
-    flex: 0 0 140px;
+    flex: 0 0 160px;
     background: var(--ex-body-bg);
     border-top: 1px solid rgba(255,255,255,0.08);
     border-bottom: 1px solid rgba(255,255,255,0.06);
     display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.ex-identity-row {
+    flex: 1;
+    display: flex;
     align-items: center;
     justify-content: space-around;
     padding: 0 24px;
-    gap: 0;
-    overflow: hidden;
+}
+.ex-identity-row + .ex-identity-row {
+    border-top: 1px solid rgba(255,255,255,0.06);
 }
 
 .ex-stat-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     flex: 1;
     min-width: 0;
     padding: 0 8px;
@@ -190,7 +199,7 @@
     white-space: nowrap;
 }
 .ex-stat-value {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
     color: rgba(255,255,255,0.92);
     white-space: nowrap;
@@ -198,6 +207,78 @@
     text-overflow: ellipsis;
     max-width: 100%;
     text-align: center;
+}
+
+/* ── POSITION MAP ─────────────────────────────────────────────────────────────
+   200px full-width bar between skills and sponsor slot.
+   ─────────────────────────────────────────────────────────────────────────── */
+.ex-pos-panel-landscape {
+    flex: 0 0 200px;
+    background: rgba(26, 92, 42, 0.55);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+}
+.ex-pos-info {
+    flex: 0 0 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    padding: 12px 16px;
+    border-right: 1px solid rgba(255,255,255,0.08);
+}
+.ex-pos-panel-title {
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 4px;
+}
+.ex-pos-primary-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.45);
+}
+.ex-pos-primary-name {
+    font-size: 17px;
+    font-weight: 800;
+    color: #ECC94B;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    margin-bottom: 4px;
+}
+.ex-pos-secondary-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.40);
+}
+.ex-pos-secondary-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: 2px;
+}
+.ex-sec-pos-chip {
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.80);
+    background: rgba(255,255,255,0.12);
+    padding: 2px 8px;
+    border-radius: 99px;
+}
+.ex-pos-svg-landscape {
+    flex: 1;
+    min-width: 0;
+    display: block;
+    align-self: stretch;
 }
 
 /* ── SKILLS ZONE ──────────────────────────────────────────────────────────────
@@ -352,34 +433,62 @@
 
     <!-- ── IDENTITY STRIP ────────────────────────────────────────────────── -->
     <div class="ex-identity-strip">
-        {% if player.nationality %}
-        <div class="ex-stat-item">
-            <span class="ex-stat-label">Nationality</span>
-            <span class="ex-stat-value">{{ player.nationality | nationalities_display(player.secondary_nationality) }}</span>
+        <!-- Row 1: physical profile -->
+        <div class="ex-identity-row">
+            {% if player.nationality %}
+            <div class="ex-stat-item">
+                <span class="ex-stat-label">Nationality</span>
+                <span class="ex-stat-value">{{ player.nationality | nationalities_display(player.secondary_nationality) }}</span>
+            </div>
+            {% endif %}
+            <div class="ex-stat-item">
+                <span class="ex-stat-label">Age Group</span>
+                <span class="ex-stat-value">{{ player.age_group }}</span>
+            </div>
+            {% if player_height_cm %}
+            <div class="ex-stat-item">
+                <span class="ex-stat-label">Height</span>
+                <span class="ex-stat-value">{{ player_height_cm }} cm</span>
+            </div>
+            {% endif %}
+            {% if player_weight_kg %}
+            <div class="ex-stat-item">
+                <span class="ex-stat-label">Weight</span>
+                <span class="ex-stat-value">{{ player_weight_kg }} kg</span>
+            </div>
+            {% endif %}
+            {% if dominant_badge %}
+            <div class="ex-stat-item">
+                <span class="ex-stat-label">Foot</span>
+                <span class="ex-stat-value">{{ dominant_badge }}</span>
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
-        <div class="ex-stat-item">
-            <span class="ex-stat-label">Age Group</span>
-            <span class="ex-stat-value">{{ player.age_group }}</span>
+        <!-- Row 2: career & license -->
+        <div class="ex-identity-row">
+            {% if teams_info %}
+            <div class="ex-stat-item">
+                <span class="ex-stat-label">Team</span>
+                <span class="ex-stat-value">{{ teams_info[0].team_name or '—' }}</span>
+            </div>
+            {% endif %}
+            <div class="ex-stat-item">
+                <span class="ex-stat-label">Events</span>
+                <span class="ex-stat-value">{{ total_tournaments }}</span>
+            </div>
+            {% if license_current_level %}
+            <div class="ex-stat-item">
+                <span class="ex-stat-label">License</span>
+                <span class="ex-stat-value">Lv {{ license_current_level }}</span>
+            </div>
+            {% endif %}
+            {% if xp_balance is defined and xp_balance %}
+            <div class="ex-stat-item">
+                <span class="ex-stat-label">XP</span>
+                <span class="ex-stat-value">{{ xp_balance | int }}</span>
+            </div>
+            {% endif %}
         </div>
-        {% if player_height_cm %}
-        <div class="ex-stat-item">
-            <span class="ex-stat-label">Height</span>
-            <span class="ex-stat-value">{{ player_height_cm }} cm</span>
-        </div>
-        {% endif %}
-        {% if player_weight_kg %}
-        <div class="ex-stat-item">
-            <span class="ex-stat-label">Weight</span>
-            <span class="ex-stat-value">{{ player_weight_kg }} kg</span>
-        </div>
-        {% endif %}
-        {% if dominant_badge %}
-        <div class="ex-stat-item">
-            <span class="ex-stat-label">Foot</span>
-            <span class="ex-stat-value">{{ dominant_badge }}</span>
-        </div>
-        {% endif %}
     </div>
 
     <!-- ── SKILLS ──────────────────────────────────────────────────────────── -->
@@ -425,6 +534,10 @@
         </div>
     </div>
     {% endif %}
+
+    <!-- ── POSITION MAP ──────────────────────────────────────────────────── -->
+    {{ position_map_landscape(position_nodes, primary_pos_label, secondary_pos_labels,
+                              player_position=player.position, show_info_col=True) }}
 
     <!-- Sponsor slot — unconditional 80px zone; logo renders only if provided -->
     {{ sponsor_slot(sponsor_logo_url, app_logo_url) }}

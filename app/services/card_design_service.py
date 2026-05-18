@@ -59,17 +59,23 @@ class CardDesignDefinition:
 # Display order: free first, then premium ascending by credit_cost.
 _FIFA_COMPONENT_CONFIG: dict = {
     "portrait": {
-        "skill_slice": 6,
-        "show_dominant_badge": False,
-        "show_height_weight": False,
-        "show_sponsor": False,
-        "platform_vars": {},
+        "skill_slice":          None,   # all 44 skills
+        "show_dominant_badge":  True,
+        "show_height_weight":   True,
+        "show_extended_profile": True,
+        "show_position_map":    True,
+        "show_sponsor":         False,
+        "platform_vars": {
+            "--ex-posmap-h": "200px",
+        },
     },
     "story": {
-        "skill_slice": 8,
-        "show_dominant_badge": True,
-        "show_height_weight": True,
-        "show_sponsor": True,
+        "skill_slice":          None,   # all 44 skills
+        "show_dominant_badge":  True,
+        "show_height_weight":   True,
+        "show_extended_profile": True,
+        "show_position_map":    True,
+        "show_sponsor":         True,
         "platform_vars": {
             "--ex-hero-h":      "460px",
             "--ex-avatar-sz":   "180px",
@@ -79,6 +85,7 @@ _FIFA_COMPONENT_CONFIG: dict = {
             "--ex-row-max-h":   "66px",
             "--ex-sname-w":     "155px",
             "--ex-font-skill":  "14px",
+            "--ex-posmap-h":    "250px",
         },
     },
 }

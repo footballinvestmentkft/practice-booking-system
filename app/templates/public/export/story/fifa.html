@@ -1,5 +1,10 @@
 {% extends "public/export/shared/column_archetype.html" %}
 {#
+ * DEAD CODE — never reached at runtime for FIFA (CS-5, 2026-05-17).
+ * The export route always satisfies (_bucket_cfg AND _driver_tpl) for FIFA story
+ * because FIFA has archetype_id="column" + component_config["story"] populated.
+ * column_driver.html is the actual renderer. Do not delete — may be used by other designs.
+ *
  * FIFA Classic × IG Story — export template  (CS-4b: extends column_archetype.html)
  * Canvas  : 1080 × 1920 px  (Playwright viewport, 9:16 ratio)
  *

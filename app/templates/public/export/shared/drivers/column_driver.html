@@ -1,4 +1,5 @@
 {% extends "public/export/shared/column_archetype.html" %}
+{%- from "macros/card_position_map.html" import position_map_landscape -%}
 {#
  * column_driver.html — Parameterised column-archetype driver  (CS-4c, 2026-05-17)
  *
@@ -35,6 +36,77 @@
 {% endblock %}
 
 {% block column_extra_css %}
+{% if _driver_config.show_position_map %}
+.ex-pos-panel-landscape {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    width: 100%;
+    height: var(--ex-posmap-h, 200px);
+    background: rgba(26, 92, 42, 0.55);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+}
+.ex-pos-info {
+    width: 220px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 14px 16px;
+    gap: 4px;
+}
+.ex-pos-panel-title {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 6px;
+}
+.ex-pos-primary-label {
+    font-size: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255,255,255,0.45);
+}
+.ex-pos-primary-name {
+    font-size: 16px;
+    font-weight: 800;
+    color: #ECC94B;
+    line-height: 1.1;
+    margin-bottom: 6px;
+}
+.ex-pos-secondary-label {
+    font-size: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255,255,255,0.40);
+}
+.ex-pos-secondary-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: 3px;
+}
+.ex-sec-pos-chip {
+    font-size: 8px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.80);
+    background: rgba(255,255,255,0.12);
+    padding: 2px 6px;
+    border-radius: 99px;
+}
+.ex-pos-svg-landscape {
+    flex: 1;
+    min-width: 0;
+    display: block;
+}
+{% endif %}
 {% if _driver_config.show_dominant_badge %}
 .ex-foot-badge {
     font-size: 12px;
@@ -73,7 +145,7 @@
 
 @keyframes ex-bar-in { from { width: 0%; } }
 .ex-bar-fill { animation: ex-bar-in 0.8s ease-out forwards; }
-{% set _slice = _driver_config.skill_slice or 10 %}
+{% set _slice = _driver_config.skill_slice or 44 %}
 {% for i in range(1, _slice + 1) %}
 .ex-row:nth-child({{ i }})  .ex-bar-fill { animation-delay: {{ "%.2f" | format(0.30 + (i - 1) * 0.05) }}s; }
 {% endfor %}
@@ -136,6 +208,32 @@
     </div>
     {% endif %}
     {% endif %}
+    {% if _driver_config.show_extended_profile %}
+    {% if player_age %}
+    <div class="ex-meta-item">
+        <span class="ex-meta-label">Age</span>
+        <span class="ex-meta-value">{{ player_age }}</span>
+    </div>
+    {% endif %}
+    {% if player_gender %}
+    <div class="ex-meta-item">
+        <span class="ex-meta-label">Gender</span>
+        <span class="ex-meta-value">{{ player_gender | title }}</span>
+    </div>
+    {% endif %}
+    {% if license_current_level %}
+    <div class="ex-meta-item">
+        <span class="ex-meta-label">License</span>
+        <span class="ex-meta-value">Lv {{ license_current_level }}</span>
+    </div>
+    {% endif %}
+    {% if xp_balance is defined and xp_balance %}
+    <div class="ex-meta-item">
+        <span class="ex-meta-label">XP</span>
+        <span class="ex-meta-value">{{ xp_balance | int }}</span>
+    </div>
+    {% endif %}
+    {% endif %}
 </div>
 {% endblock %}
 
@@ -177,5 +275,12 @@
 {% if _driver_config.show_sponsor %}
 {%- from "macros/card_sponsor_block.html" import sponsor_slot -%}
 {{ sponsor_slot(sponsor_logo_url, app_logo_url) }}
+{% endif %}
+{% endblock %}
+
+{% block pre_skills %}
+{% if _driver_config.show_position_map %}
+{{ position_map_landscape(position_nodes, primary_pos_label, secondary_pos_labels,
+                          player_position=player.position, show_info_col=True) }}
 {% endif %}
 {% endblock %}

@@ -208,7 +208,7 @@ def public_player_card(
     # Falls back to UserLicense.published_card_* for users who have never visited
     # the editor after the Phase 4D-1 migration (card_drafts row absent).
     from app.services.card_theme_service import get_theme as _get_theme, get_all_themes as _get_all_themes
-    from app.services.card_variant_service import get_variant as _get_variant, VARIANTS as _VARIANTS
+    from app.services.card_variant_service import get_variant as _get_variant
     from app.services.card_draft_service import CardDraftService as _CardDraftService
 
     _card_draft = _CardDraftService.get_player_card_draft(db, user_id=lfa_license.user_id)
@@ -226,13 +226,17 @@ def public_player_card(
     theme = _get_theme(card_theme_id, db=db)  # falls back to "default" for unknown IDs
 
     # Variant: ?preview= overrides published value (preview only, not persisted).
+    # Validation uses _get_design(preview, db) so DB-backed manifest designs are
+    # accepted in addition to designs in the static DESIGNS fallback dict.
     card_variant_id = (
         _card_draft.published_variant
         or lfa_license.published_card_variant
         or "fifa"
     )
-    if preview and preview in _VARIANTS:
-        card_variant_id = preview
+    if preview:
+        _preview_def = _get_design(preview, db)
+        if _preview_def.id == preview:
+            card_variant_id = preview
     variant = _get_variant(card_variant_id)  # falls back to "fifa" for unknown IDs
 
     # Template selection: use variant.template if the file exists.

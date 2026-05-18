@@ -1770,8 +1770,13 @@ class TestLandscapeFifaPhase3b4:
     # --- platform_vars ---
 
     def test_LS4_row_direction(self):
+        # CS-5 (2026-05-17): --ex-card-direction removed from platform_vars; row layout
+        # is now set via .ex-card { flex-direction: column } + .ex-cols-row { flex-direction: row }
+        # to allow the full-width PosMap footer below the three-column row.
         html = _render_landscape()
-        assert "--ex-card-direction: row;" in html
+        assert "ex-cols-row" in html, (
+            "landscape: .ex-cols-row wrapper not found — column layout restructure for PosMap footer failed"
+        )
 
     def test_LS4_sname_width_80px(self):
         html = _render_landscape()

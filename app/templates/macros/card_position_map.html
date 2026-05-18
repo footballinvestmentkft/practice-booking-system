@@ -1,0 +1,115 @@
+{#
+ * card_position_map.html — Position Map Jinja2 macro
+ * HTML-only. CSS is the calling template's responsibility.
+ *
+ * position_map_landscape(nodes, primary_label, secondary_labels,
+ *                        player_position='', show_info_col=True)
+ *
+ *   nodes            list[PositionNode]  — from position_nodes context var
+ *   primary_label    str|None            — from primary_pos_label context var
+ *   secondary_labels list[str]|None      — from secondary_pos_labels context var
+ *   player_position  str                 — fallback label (player.position)
+ *   show_info_col    bool
+ *     True  → renders 220px info column (title, primary pos in gold, secondary
+ *              chips) left of pitch; SVG preserveAspectRatio="xMidYMid meet"
+ *     False → compact pitch-only; primary label as .ex-pos-compact-label
+ *              overlay; SVG preserveAspectRatio="xMidYMid slice" (fills
+ *              container width, height cropped to show centre band)
+ #}
+{% macro position_map_landscape(nodes, primary_label, secondary_labels,
+                                player_position='', show_info_col=True) %}
+{% if nodes %}
+<div class="ex-pos-panel-landscape">
+    {% if show_info_col %}
+    <div class="ex-pos-info">
+        <div class="ex-pos-panel-title">Position Map</div>
+        <div class="ex-pos-primary-label">Primary Position</div>
+        <div class="ex-pos-primary-name">
+            {%- if primary_label -%}{{ primary_label }}
+            {%- elif player_position -%}{{ player_position | replace("_", " ") | title }}
+            {%- endif -%}
+        </div>
+        {% if secondary_labels %}
+        <div class="ex-pos-secondary-label">Secondary Positions</div>
+        <div class="ex-pos-secondary-chips">
+            {% for sp in secondary_labels %}<span class="ex-sec-pos-chip">{{ sp }}</span>{% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    {% if primary_label or player_position %}
+    <div class="ex-pos-compact-label">{{ primary_label or (player_position | replace("_", " ") | title) }}</div>
+    {% endif %}
+    {% endif %}
+    <svg class="ex-pos-svg-landscape" viewBox="0 0 105 68"
+         xmlns="http://www.w3.org/2000/svg" aria-label="Position map"
+         preserveAspectRatio="{{ 'xMidYMid meet' if show_info_col else 'xMidYMid slice' }}">
+        <!-- Pitch background (105m × 68m real geometry) -->
+        <rect width="105" height="68" fill="#1a5c2a"/>
+        <!-- Field border -->
+        <rect x="0.5" y="0.5" width="104" height="67"
+              fill="none" stroke="rgba(255,255,255,0.30)" stroke-width="0.5"/>
+        <!-- Center line (vertical at x=52.5) -->
+        <line x1="52.5" y1="0" x2="52.5" y2="68"
+              stroke="rgba(255,255,255,0.22)" stroke-width="0.4"/>
+        <!-- Center circle (r=9.15m) -->
+        <circle cx="52.5" cy="34" r="9.15"
+                fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="0.4"/>
+        <!-- Center spot -->
+        <circle cx="52.5" cy="34" r="0.6" fill="rgba(255,255,255,0.40)"/>
+        <!-- GK penalty area (16.5m deep × 40.32m wide) -->
+        <rect x="0" y="13.84" width="16.5" height="40.32"
+              fill="none" stroke="rgba(255,255,255,0.20)" stroke-width="0.4"/>
+        <!-- ST penalty area -->
+        <rect x="88.5" y="13.84" width="16.5" height="40.32"
+              fill="none" stroke="rgba(255,255,255,0.20)" stroke-width="0.4"/>
+        <!-- GK 6-yard box (5.5m deep × 18.32m wide) -->
+        <rect x="0" y="24.84" width="5.5" height="18.32"
+              fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="0.3"/>
+        <!-- ST 6-yard box -->
+        <rect x="99.5" y="24.84" width="5.5" height="18.32"
+              fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="0.3"/>
+        <!-- Penalty spots (11m from goal line) -->
+        <circle cx="11" cy="34" r="0.5" fill="rgba(255,255,255,0.40)"/>
+        <circle cx="94" cy="34" r="0.5" fill="rgba(255,255,255,0.40)"/>
+
+        <!-- Pass 1: inactive nodes (very faint) -->
+        {% for node in nodes %}
+        {% if not node.is_selected and not node.is_primary %}
+        <circle cx="{{ (node.x * 105) | round(1) }}" cy="{{ (node.y * 68) | round(1) }}"
+                r="0.8" fill="rgba(255,255,255,0.12)"/>
+        {% endif %}
+        {% endfor %}
+
+        <!-- Pass 2: secondary selected positions -->
+        {% for node in nodes %}
+        {% if node.is_selected and not node.is_primary %}
+        <circle cx="{{ (node.x * 105) | round(1) }}" cy="{{ (node.y * 68) | round(1) }}"
+                r="1.4" fill="rgba(255,255,255,0.68)"/>
+        <circle cx="{{ (node.x * 105) | round(1) }}" cy="{{ (node.y * 68) | round(1) }}"
+                r="2.0" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.4"/>
+        {% endif %}
+        {% endfor %}
+
+        <!-- Pass 3: primary position — gold, topmost -->
+        {% for node in nodes %}
+        {% if node.is_primary %}
+        <circle cx="{{ (node.x * 105) | round(1) }}" cy="{{ (node.y * 68) | round(1) }}"
+                r="1.8" fill="#ECC94B" opacity="0.95"/>
+        <circle cx="{{ (node.x * 105) | round(1) }}" cy="{{ (node.y * 68) | round(1) }}"
+                r="2.6" fill="none" stroke="#ECC94B" stroke-width="0.5" opacity="0.45"/>
+        {% endif %}
+        {% endfor %}
+
+        <!-- Pass 4: abbreviated labels — primary + secondary selected nodes only -->
+        {% for node in nodes %}
+        {% if node.is_primary or node.is_selected %}
+        <text x="{{ (node.x * 105) | round(1) }}" y="{{ (node.y * 68) | round(1) }}"
+              font-size="2" font-family="sans-serif" font-weight="800"
+              fill="rgba(0,0,0,0.72)" text-anchor="middle" dominant-baseline="middle">{{ node.label }}</text>
+        {% endif %}
+        {% endfor %}
+    </svg>
+</div>
+{% endif %}
+{% endmacro %}
