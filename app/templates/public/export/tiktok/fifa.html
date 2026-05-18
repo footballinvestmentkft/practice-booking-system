@@ -1,5 +1,6 @@
 {% extends "public/export/shared/export_base.html" %}
 {%- from "macros/card_position_map.html" import position_map_landscape -%}
+{%- from "macros/card_ovr_badge.html"    import ovr_badge -%}
 {#
  * FIFA Classic × TikTok — export template  (Phase 3b-3: extends export_base.html)
  * Canvas  : 1080 × 1920 px  (Playwright viewport, 9:16 ratio)
@@ -127,14 +128,7 @@
     align-items: center;
     gap: 8px;
 }
-.ex-ovr-num {
-    font-size: 120px;
-    font-weight: 900;
-    line-height: 1;
-    color: white;
-    letter-spacing: -0.04em;
-    text-shadow: 0 2px 16px rgba(0,0,0,0.60);
-}
+/* ex-ovr-num removed — replaced by card_ovr_badge macro (size=110, dark=false) */
 .ex-tier-badge {
     font-size: 12px;
     font-weight: 800;
@@ -365,7 +359,7 @@
     from { opacity: 0; transform: scale(0.7); }
     to   { opacity: 1; transform: scale(1); }
 }
-.ex-ovr-num    { animation: ex-ovr-in 0.5s cubic-bezier(.34,1.56,.64,1) forwards; }
+.ex-ovr-badge  { animation: ex-ovr-in 0.5s cubic-bezier(.34,1.56,.64,1) forwards; }
 .ex-tier-badge { opacity: 0; animation: ex-ovr-in 0.4s 0.4s ease-out forwards; }
 
 @keyframes ex-bar-in { from { width: 0%; } }
@@ -425,7 +419,7 @@
         <div class="ex-name">{{ player.name }}</div>
 
         <div class="ex-ovr-block">
-            <div class="ex-ovr-num">{{ overall | round(0) | int }}</div>
+            {{ ovr_badge(overall | round(0) | int, size=110, dark=false) }}
             <span class="ex-tier-badge" style="background: {{ tier_color }};">{{ tier_label }}</span>
         </div>
 

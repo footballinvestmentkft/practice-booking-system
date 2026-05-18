@@ -1,5 +1,6 @@
 {% extends "public/export/shared/export_base.html" %}
 {%- from "macros/card_position_map.html" import position_map_landscape -%}
+{%- from "macros/card_ovr_badge.html"    import ovr_badge -%}
 {#
  * FIFA Classic × FB Square — export template
  * (Phase 3b-5: extends export_base.html)
@@ -304,13 +305,7 @@ body {
     align-items: center;
     gap: 5px;
 }
-.ex-ovr-num {
-    font-size: 96px;
-    font-weight: 900;
-    line-height: 1;
-    color: white;
-    letter-spacing: -0.02em;
-}
+/* ex-ovr-num removed — replaced by card_ovr_badge macro (size=100, dark=true) */
 .ex-tier-badge {
     font-size: 12px;
     font-weight: 800;
@@ -622,7 +617,7 @@ body {
     from { opacity: 0; transform: scale(0.7); }
     to   { opacity: 1; transform: scale(1); }
 }
-.ex-ovr-num  { animation: ex-ovr-in 0.5s cubic-bezier(.34,1.56,.64,1) forwards; }
+.ex-ovr-badge { animation: ex-ovr-in 0.5s cubic-bezier(.34,1.56,.64,1) forwards; }
 .ex-tier-badge { opacity: 0; animation: ex-ovr-in 0.4s 0.4s ease-out forwards; }
 
 /* Skill bar fill: animate from width 0 → actual value (staggered per row).
@@ -725,7 +720,7 @@ body {
                     {% endif %}
                 </div>
                 <div class="ex-ovr-block">
-                    <div class="ex-ovr-num" style="text-shadow: 0 0 28px {{ tier_color }}66;">{{ overall | round(0) | int }}</div>
+                    {{ ovr_badge(overall | round(0) | int, size=100, dark=true) }}
                     <span class="ex-tier-badge" style="background: {{ tier_color }};">{{ tier_label }}</span>
                 </div>
             </div>
