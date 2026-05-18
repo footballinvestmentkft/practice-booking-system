@@ -101,14 +101,6 @@
         {% endif %}
         {% endfor %}
 
-        <!-- Pass 4: abbreviated labels — primary + secondary selected nodes only -->
-        {% for node in nodes %}
-        {% if node.is_primary or node.is_selected %}
-        <text x="{{ (node.x * 105) | round(1) }}" y="{{ (node.y * 68) | round(1) }}"
-              font-size="2" font-family="sans-serif" font-weight="800"
-              fill="rgba(0,0,0,0.72)" text-anchor="middle" dominant-baseline="middle">{{ node.label }}</text>
-        {% endif %}
-        {% endfor %}
     </svg>
 </div>
 {% endif %}

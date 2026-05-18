@@ -2113,6 +2113,34 @@
         "title": "Body_admin_booking_cancel_admin_bookings__booking_id__cancel_post",
         "type": "object"
       },
+      "Body_admin_card_designs_upload_preview_admin_card_designs_upload_post": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_admin_card_designs_upload_preview_admin_card_designs_upload_post",
+        "type": "object"
+      },
+      "Body_admin_card_themes_upload_preview_admin_card_themes_upload_post": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_admin_card_themes_upload_preview_admin_card_themes_upload_post",
+        "type": "object"
+      },
       "Body_admin_club_csv_import_admin_clubs__club_id__csv_import_post": {
         "properties": {
           "file": {
@@ -24488,6 +24516,336 @@
           }
         },
         "summary": "Admin Toggle Campus",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/card-designs": {
+      "get": {
+        "operationId": "admin_card_designs_list_admin_card_designs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Admin Card Designs List",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/card-designs/apply": {
+      "post": {
+        "operationId": "admin_card_designs_apply_admin_card_designs_apply_post",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Admin Card Designs Apply",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/card-designs/reorder": {
+      "post": {
+        "operationId": "admin_card_designs_reorder_admin_card_designs_reorder_post",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Admin Card Designs Reorder",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/card-designs/upload": {
+      "get": {
+        "operationId": "admin_card_designs_upload_form_admin_card_designs_upload_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Admin Card Designs Upload Form",
+        "tags": [
+          "web"
+        ]
+      },
+      "post": {
+        "operationId": "admin_card_designs_upload_preview_admin_card_designs_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_admin_card_designs_upload_preview_admin_card_designs_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Card Designs Upload Preview",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/card-designs/{design_id}/toggle": {
+      "post": {
+        "operationId": "admin_card_designs_toggle_admin_card_designs__design_id__toggle_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "design_id",
+            "required": true,
+            "schema": {
+              "title": "Design Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Card Designs Toggle",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/card-themes": {
+      "get": {
+        "operationId": "admin_card_themes_list_admin_card_themes_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Admin Card Themes List",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/card-themes/apply": {
+      "post": {
+        "operationId": "admin_card_themes_apply_admin_card_themes_apply_post",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Admin Card Themes Apply",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/card-themes/reorder": {
+      "post": {
+        "operationId": "admin_card_themes_reorder_admin_card_themes_reorder_post",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Admin Card Themes Reorder",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/card-themes/upload": {
+      "get": {
+        "operationId": "admin_card_themes_upload_form_admin_card_themes_upload_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Admin Card Themes Upload Form",
+        "tags": [
+          "web"
+        ]
+      },
+      "post": {
+        "operationId": "admin_card_themes_upload_preview_admin_card_themes_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_admin_card_themes_upload_preview_admin_card_themes_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Card Themes Upload Preview",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/card-themes/{theme_id}/toggle": {
+      "post": {
+        "operationId": "admin_card_themes_toggle_admin_card_themes__theme_id__toggle_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "theme_id",
+            "required": true,
+            "schema": {
+              "title": "Theme Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Admin Card Themes Toggle",
         "tags": [
           "web"
         ]

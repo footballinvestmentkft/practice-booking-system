@@ -75,9 +75,21 @@ _TPL_PATH = (
 )
 
 
+_MACRO_PATH = (
+    pathlib.Path(__file__).resolve().parents[2]
+    / "app" / "templates" / "macros" / "card_position_map.html"
+)
+
+
 @pytest.fixture(scope="module")
 def tpl() -> str:
     return _TPL_PATH.read_text(encoding="utf-8")
+
+
+@pytest.fixture(scope="module")
+def macro_tpl() -> str:
+    """Raw source of card_position_map.html — position map DOM lives here, not in square/fifa.html."""
+    return _MACRO_PATH.read_text(encoding="utf-8")
 
 
 # ── SQ-01: Hero zone percentage ───────────────────────────────────────────────
@@ -135,27 +147,40 @@ class TestPositionBadge:
         )
 
     def test_sq06_primary_pos_in_panel_context(self, tpl):
-        """v9: primary_pos_label must appear inside the .ex-pos-panel-landscape block."""
+        """v9: primary_pos_label must be passed to position_map_landscape macro call."""
         html_body = tpl[tpl.find("{% block body_content %}"):]
-        panel_start = html_body.find('class="ex-pos-panel-landscape"')
-        assert panel_start != -1
-        panel_region = html_body[panel_start: panel_start + 1200]
-        assert "primary_pos_label" in panel_region, (
-            "primary_pos_label must be rendered inside .ex-pos-panel-landscape (Position Map)"
+        macro_call_start = html_body.find("position_map_landscape(")
+        assert macro_call_start != -1, "position_map_landscape macro call not found in body"
+        macro_call_region = html_body[macro_call_start: macro_call_start + 300]
+        assert "primary_pos_label" in macro_call_region, (
+            "primary_pos_label must be passed to position_map_landscape macro call"
         )
 
     def test_sq07_secondary_chips_in_pos_panel(self, tpl):
-        """v9: secondary chips container must be in the Position Map panel, not the photo column."""
-        html_body = tpl[tpl.find("{% block body_content %}"):]
-        # Chips container must exist somewhere in the body
-        assert 'class="ex-pos-secondary-chips"' in html_body, (
-            ".ex-pos-secondary-chips must be present inside the Position Map panel"
+        """v9: secondary chips are rendered via position_map_landscape macro.
+
+        Verify the macro is imported, called with secondary_pos_labels, and the macro
+        itself defines the ex-pos-secondary-chips class.
+        """
+        import pathlib
+        macro_path = (
+            pathlib.Path(__file__).resolve().parents[2]
+            / "app" / "templates" / "macros" / "card_position_map.html"
         )
-        # Must appear after ex-pos-panel-landscape opens
-        panel_start = html_body.find('class="ex-pos-panel-landscape"')
-        chips_idx   = html_body.find('class="ex-pos-secondary-chips"', panel_start)
-        assert chips_idx > panel_start, (
-            ".ex-pos-secondary-chips must be inside .ex-pos-panel-landscape, not in the photo column"
+        macro_src = macro_path.read_text(encoding="utf-8")
+        # Macro must define the chips class
+        assert 'class="ex-pos-secondary-chips"' in macro_src, (
+            "ex-pos-secondary-chips must be defined in card_position_map.html macro"
+        )
+        # Template must import and call the macro with secondary_pos_labels
+        html_body = tpl[tpl.find("{% block body_content %}"):]
+        assert "position_map_landscape" in html_body, (
+            "position_map_landscape macro must be called in the body_content block"
+        )
+        macro_call_start = html_body.find("position_map_landscape(")
+        macro_region = html_body[macro_call_start: macro_call_start + 300]
+        assert "secondary_pos_labels" in macro_region, (
+            "secondary_pos_labels must be passed to position_map_landscape macro call"
         )
 
     def test_sq07_chips_no_artificial_slice(self, tpl):
@@ -168,8 +193,18 @@ class TestPositionBadge:
         )
 
     def test_sq07_chips_gated_by_secondary_pos_labels(self, tpl):
-        """Secondary chips must be Jinja2-gated so they only render when list is non-empty."""
-        assert "{% if secondary_pos_labels" in tpl
+        """Secondary chips must be Jinja2-gated so they only render when list is non-empty.
+
+        Gate lives in card_position_map.html macro (not inlined in square template).
+        """
+        import pathlib
+        macro_src = (
+            pathlib.Path(__file__).resolve().parents[2]
+            / "app" / "templates" / "macros" / "card_position_map.html"
+        ).read_text(encoding="utf-8")
+        assert "{% if secondary_labels" in macro_src, (
+            "secondary_labels gate must be present in card_position_map.html macro"
+        )
 
     def test_sq08_sec_pos_chip_css_defined(self, tpl):
         """.ex-sec-pos-chip CSS must be defined — reused in Position Map panel."""
@@ -327,47 +362,62 @@ class TestRemovedV4Artefacts:
 
 class TestPositionMiniPanel:
     def test_sq17_pos_panel_class_in_html(self, tpl):
-        """v7 landscape panel: .ex-pos-panel-landscape div must be present in the HTML body."""
+        """v7 landscape panel: position_map_landscape macro called in body; macro defines the class."""
         html_body = tpl[tpl.find("{% block body_content %}"):]
-        assert 'class="ex-pos-panel-landscape"' in html_body
-
-    def test_sq18_landscape_pitch_svg_viewbox(self, tpl):
-        """v8: Landscape pitch SVG must use viewBox '0 0 105 68' (real 105m×68m pitch geometry)."""
-        assert 'viewBox="0 0 105 68"' in tpl, (
-            "Landscape SVG must use real pitch geometry viewBox '0 0 105 68', not the old '0 0 100 24'"
+        assert "position_map_landscape(" in html_body, (
+            "position_map_landscape macro must be called in the HTML body block"
+        )
+        import pathlib
+        macro_src = (
+            pathlib.Path(__file__).resolve().parents[2]
+            / "app" / "templates" / "macros" / "card_position_map.html"
+        ).read_text(encoding="utf-8")
+        assert 'class="ex-pos-panel-landscape"' in macro_src, (
+            "ex-pos-panel-landscape class must be defined in card_position_map.html macro"
         )
 
-    def test_sq18_old_squashed_viewbox_absent(self, tpl):
-        """v8: Old aspect-squashed viewBox '0 0 100 24' must not be present."""
+    def test_sq18_landscape_pitch_svg_viewbox(self, tpl, macro_tpl):
+        """v8: Landscape pitch SVG must use viewBox '0 0 105 68' (real 105m×68m pitch geometry).
+
+        Since v11 the SVG lives inside card_position_map.html macro, not inline in square/fifa.html.
+        """
+        assert 'viewBox="0 0 105 68"' in macro_tpl, (
+            "Landscape SVG must use real pitch geometry viewBox '0 0 105 68' — check card_position_map.html"
+        )
+
+    def test_sq18_old_squashed_viewbox_absent(self, tpl, macro_tpl):
+        """v8: Old aspect-squashed viewBox '0 0 100 24' must not be present in either file."""
         assert 'viewBox="0 0 100 24"' not in tpl
+        assert 'viewBox="0 0 100 24"' not in macro_tpl
 
     def test_sq19_position_nodes_in_svg(self, tpl):
-        """SVG rendering must reference position_nodes from template context."""
+        """SVG rendering must reference position_nodes from template context (macro call arg)."""
         html_body = tpl[tpl.find("{% block body_content %}"):]
-        # position_nodes must be used in the for loop inside the SVG block
         assert "position_nodes" in html_body
 
-    def test_sq19_coordinate_transform_formula(self, tpl):
-        """v8: SVG must use real-geometry coordinate transform (cx=node.x*105, cy=node.y*68)."""
-        html_body = tpl[tpl.find("{% block body_content %}"):]
-        assert "node.x * 105" in html_body, (
-            "SVG coordinate transform must use node.x * 105 (105m pitch width), not node.x * 100"
+    def test_sq19_coordinate_transform_formula(self, tpl, macro_tpl):
+        """v8: SVG must use real-geometry coordinate transform (cx=node.x*105, cy=node.y*68).
+
+        Since v11 the SVG lives inside card_position_map.html macro.
+        """
+        assert "node.x * 105" in macro_tpl, (
+            "SVG coordinate transform must use node.x * 105 (105m pitch width)"
         )
-        assert "node.y * 68" in html_body, (
-            "SVG coordinate transform must use node.y * 68 (68m pitch height), not node.y * 24"
+        assert "node.y * 68" in macro_tpl, (
+            "SVG coordinate transform must use node.y * 68 (68m pitch height)"
         )
 
     def test_sq20_pos_panel_inside_skill_col(self, tpl):
-        """v11: panel is INSIDE .ex-skill-cats and appears after skill_categories[2] (Mental)."""
+        """v11: position_map_landscape macro call is INSIDE .ex-skill-cats, after skill_categories[2]."""
         html_body      = tpl[tpl.find("{% block body_content %}"):]
         idx_skill_cats = html_body.find('class="ex-skill-cats"')
         idx_mental     = html_body.find("skill_categories[2]", idx_skill_cats)
-        idx_panel      = html_body.find('class="ex-pos-panel-landscape"', idx_mental)
+        idx_macro_call = html_body.find("position_map_landscape(", idx_mental)
         assert idx_skill_cats > 0 and idx_mental > idx_skill_cats, (
             "skill_categories[2] (Mental) must appear inside ex-skill-cats"
         )
-        assert idx_panel > idx_mental, (
-            "v11: ex-pos-panel-landscape must appear after Mental cat (skill_categories[2])"
+        assert idx_macro_call > idx_mental, (
+            "v11: position_map_landscape call must appear after Mental cat (skill_categories[2])"
         )
 
 
@@ -381,12 +431,17 @@ class TestPositionPanelIntegrity:
             f"Position Map must not add a 4th column; found {len(matches)} ex-skill-col divs"
         )
 
-    def test_sq22_pos_panel_gated_by_position_nodes(self, tpl):
-        """Landscape panel must be inside {% if position_nodes %} guard — graceful when no pos set."""
-        assert "{% if position_nodes %}" in tpl
-        panel_idx = tpl.find('class="ex-pos-panel-landscape"')
-        gate_idx  = tpl.rfind("{% if position_nodes %}", 0, panel_idx)
-        assert gate_idx != -1, "ex-pos-panel-landscape must be inside a {% if position_nodes %} block"
+    def test_sq22_pos_panel_gated_by_position_nodes(self, tpl, macro_tpl):
+        """Landscape panel is gated by {% if nodes %} in card_position_map.html macro."""
+        # Gate lives in the macro ({% if nodes %})
+        assert "{% if nodes %}" in macro_tpl, (
+            "position_map_landscape macro must have {% if nodes %} guard for graceful empty state"
+        )
+        # Template passes position_nodes to the macro
+        html_body = tpl[tpl.find("{% block body_content %}"):]
+        assert "position_nodes" in html_body, (
+            "position_nodes must be passed to position_map_landscape macro call"
+        )
 
     def test_sq23_pos_svg_explicit_dimensions(self, tpl):
         """.ex-pos-svg-landscape must define flex or explicit dimension to fill container."""
@@ -401,12 +456,13 @@ class TestPositionPanelIntegrity:
             ".ex-pos-svg-landscape must use flex: or width: to fill the panel"
         )
 
-    def test_sq24_pos_panel_not_ex_cat(self, tpl):
-        """Landscape panel must NOT use .ex-cat class — immune to cat fade-slide animation."""
-        html_body = tpl[tpl.find("{% block body_content %}"):]
-        assert 'class="ex-pos-panel-landscape"' in html_body
-        assert 'class="ex-cat ex-pos-panel-landscape"' not in html_body
-        assert 'class="ex-pos-panel-landscape ex-cat"' not in html_body
+    def test_sq24_pos_panel_not_ex_cat(self, tpl, macro_tpl):
+        """Landscape panel must NOT use .ex-cat class — immune to cat fade-slide animation.
+
+        The DOM element lives in card_position_map.html macro.
+        """
+        assert 'class="ex-cat ex-pos-panel-landscape"' not in macro_tpl
+        assert 'class="ex-pos-panel-landscape ex-cat"' not in macro_tpl
 
     def test_sq24_pos_panel_animated_mode_self_contained(self, tpl):
         """In animated_mode block, .ex-pos-panel-landscape gets its own animation rule."""
@@ -420,13 +476,15 @@ class TestPositionPanelIntegrity:
             ".ex-pos-panel-landscape and .ex-cat must have separate animation rules"
         )
 
-    def test_sq27_no_node_label_in_landscape_svg(self, tpl):
-        """Landscape SVG must not render node.label text — position name is in the hero badge."""
-        html_body = tpl[tpl.find("{% block body_content %}"):]
-        panel_start = html_body.find('class="ex-pos-panel-landscape"')
-        panel_end   = html_body.find("{% endif %}", panel_start)
-        assert panel_start > 0 and panel_end > panel_start
-        svg_block = html_body[panel_start:panel_end]
+    def test_sq27_no_node_label_in_landscape_svg(self, tpl, macro_tpl):
+        """Landscape SVG must not render node.label text — position name is in the info column.
+
+        SVG content lives in card_position_map.html macro.
+        """
+        svg_start = macro_tpl.find('<svg class="ex-pos-svg-landscape"')
+        svg_end   = macro_tpl.find("</svg>", svg_start)
+        assert svg_start > 0 and svg_end > svg_start
+        svg_block = macro_tpl[svg_start:svg_end]
         assert "node.label" not in svg_block, (
             "Landscape SVG must not render node.label — no text labels per design spec"
         )
@@ -435,17 +493,16 @@ class TestPositionPanelIntegrity:
 # ── SQ-28: preserveAspectRatio — v8 undistorted render ───────────────────────
 
 class TestAspectRatioIntegrity:
-    def test_sq28_preserve_aspect_ratio_meet(self, tpl):
-        """v8: landscape SVG must declare preserveAspectRatio='xMidYMid meet' — no stretch, no crop."""
-        html_body = tpl[tpl.find("{% block body_content %}"):]
-        panel_start = html_body.find('class="ex-pos-panel-landscape"')
-        assert panel_start != -1
-        # Scope to the <svg>…</svg> element directly — avoids inner {% endif %} ambiguity
-        svg_open  = html_body.find("<svg", panel_start)
-        svg_close = html_body.find("</svg>", svg_open) + len("</svg>")
-        svg_elem  = html_body[svg_open:svg_close]
-        assert 'preserveAspectRatio="xMidYMid meet"' in svg_elem, (
-            "Landscape SVG must use preserveAspectRatio='xMidYMid meet' to prevent horizontal stretch"
+    def test_sq28_preserve_aspect_ratio_meet(self, tpl, macro_tpl):
+        """v8: landscape SVG must declare preserveAspectRatio='xMidYMid meet' — no stretch, no crop.
+
+        SVG lives in card_position_map.html macro.
+        """
+        svg_open  = macro_tpl.find('<svg class="ex-pos-svg-landscape"')
+        svg_close = macro_tpl.find("</svg>", svg_open) + len("</svg>")
+        svg_elem  = macro_tpl[svg_open:svg_close]
+        assert "xMidYMid meet" in svg_elem, (
+            "Landscape SVG must include preserveAspectRatio='xMidYMid meet' to prevent horizontal stretch"
         )
 
     def test_sq28_no_stretch_viewbox(self, tpl):
@@ -456,14 +513,13 @@ class TestAspectRatioIntegrity:
 # ── SQ-29: Position Map info column presence — v9 ────────────────────────────
 
 class TestPositionMapInfoColumn:
-    def test_sq29_pos_info_div_in_html(self, tpl):
-        """v9: .ex-pos-info div must be present inside .ex-pos-panel-landscape."""
-        html_body = tpl[tpl.find("{% block body_content %}"):]
-        panel_start = html_body.find('class="ex-pos-panel-landscape"')
-        assert panel_start != -1
-        panel_region = html_body[panel_start: panel_start + 1500]
+    def test_sq29_pos_info_div_in_html(self, tpl, macro_tpl):
+        """v9: .ex-pos-info div must be present inside .ex-pos-panel-landscape (in macro)."""
+        panel_start  = macro_tpl.find('class="ex-pos-panel-landscape"')
+        assert panel_start != -1, "ex-pos-panel-landscape not found in card_position_map.html"
+        panel_region = macro_tpl[panel_start: panel_start + 1500]
         assert 'class="ex-pos-info"' in panel_region, (
-            ".ex-pos-info info column must be present inside .ex-pos-panel-landscape"
+            ".ex-pos-info info column must be present inside .ex-pos-panel-landscape (in macro)"
         )
 
     def test_sq29_pos_panel_title_css_defined(self, tpl):
@@ -518,16 +574,17 @@ class TestCleanPhotoColumn:
 # ── SQ-31: No legend in Position Map panel — v9 ──────────────────────────────
 
 class TestNoPositionLegend:
-    def test_sq31_no_legend_marker_elements(self, tpl):
-        """v9: Position Map panel must not contain a PRIMARY/SECONDARY/OTHER legend."""
-        html_body = tpl[tpl.find("{% block body_content %}"):]
-        panel_start = html_body.find('class="ex-pos-panel-landscape"')
-        panel_end   = html_body.find("{% endif %}", panel_start)
+    def test_sq31_no_legend_marker_elements(self, tpl, macro_tpl):
+        """v9: Position Map panel must not contain a PRIMARY/SECONDARY/OTHER legend.
+
+        Panel DOM lives in card_position_map.html macro.
+        """
+        panel_start = macro_tpl.find('class="ex-pos-panel-landscape"')
+        panel_end   = macro_tpl.find("{% endif %}", panel_start)
         assert panel_start > 0 and panel_end > panel_start
-        panel_block = html_body[panel_start:panel_end]
-        # "OTHER" would only appear as a legend item — its absence confirms no legend
+        panel_block = macro_tpl[panel_start:panel_end]
         assert "OTHER" not in panel_block, (
-            "Position Map panel must not contain a legend — 'OTHER' marker found"
+            "Position Map panel must not contain a legend — 'OTHER' marker found in macro"
         )
 
     def test_sq31_no_legend_css_classes(self, tpl):
@@ -599,44 +656,43 @@ class TestV11ColumnModifiers:
         assert ".ex-right-skills" in tpl, ".ex-right-skills CSS rule must be defined"
 
     def test_sq33_panel_inside_right_section(self, tpl):
-        """v13: Position Map must be inside ex-right-section (after Col 3 in DOM order)."""
-        html_body   = tpl[tpl.find("{% block body_content %}"):]
-        right_start = html_body.find('class="ex-right-section"')
-        col3_start  = html_body.find('ex-col-sets-phys')
-        panel_idx   = html_body.find('class="ex-pos-panel-landscape"')
-        assert right_start > 0 and panel_idx > 0, (
-            "ex-right-section or ex-pos-panel-landscape not found in HTML body"
+        """v13: position_map_landscape macro call is inside ex-right-section (after Col 3)."""
+        html_body    = tpl[tpl.find("{% block body_content %}"):]
+        right_start  = html_body.find('class="ex-right-section"')
+        col3_start   = html_body.find('ex-col-sets-phys')
+        macro_idx    = html_body.find("position_map_landscape(")
+        assert right_start > 0 and macro_idx > 0, (
+            "ex-right-section or position_map_landscape macro call not found in HTML body"
         )
-        assert panel_idx > right_start, (
-            "v13: ex-pos-panel-landscape must be inside ex-right-section (appears after it opens)"
+        assert macro_idx > right_start, (
+            "v13: position_map_landscape must be inside ex-right-section (appears after it opens)"
         )
-        assert panel_idx > col3_start, (
-            "v13: ex-pos-panel-landscape must come after ex-col-sets-phys in DOM order"
+        assert macro_idx > col3_start, (
+            "v13: position_map_landscape must come after ex-col-sets-phys in DOM order"
         )
 
     def test_sq33_panel_not_inside_col_mental_pos(self, tpl):
-        """v13 regression guard: Position Map must NOT be inside ex-col-mental-pos."""
+        """v13 regression guard: position_map_landscape must NOT be inside ex-col-mental-pos."""
         html_body  = tpl[tpl.find("{% block body_content %}"):]
         col2_start = html_body.find('class="ex-skill-col ex-col-mental-pos"')
         col3_start = html_body.find('class="ex-skill-col ex-col-sets-phys"')
-        panel_idx  = html_body.find('class="ex-pos-panel-landscape"')
-        assert col2_start > 0 and col3_start > 0 and panel_idx > 0
-        assert not (col2_start < panel_idx < col3_start), (
-            "v13: ex-pos-panel-landscape must NOT be inside ex-col-mental-pos"
+        macro_idx  = html_body.find("position_map_landscape(")
+        assert col2_start > 0 and col3_start > 0 and macro_idx > 0
+        assert not (col2_start < macro_idx < col3_start), (
+            "v13: position_map_landscape must NOT be called inside ex-col-mental-pos"
         )
 
     def test_sq33_panel_not_inside_col_sets_phys(self, tpl):
-        """v13 regression guard: Position Map must NOT be inside ex-col-sets-phys (v12 revert guard)."""
+        """v13 regression guard: position_map_landscape must NOT be inside ex-col-sets-phys."""
         html_body  = tpl[tpl.find("{% block body_content %}"):]
         col3_open  = html_body.find('class="ex-skill-col ex-col-sets-phys"')
-        panel_idx  = html_body.find('class="ex-pos-panel-landscape"')
-        # Col 3 closing </div> — look for next </div> after the col3 for loop endfor
+        macro_idx  = html_body.find("position_map_landscape(")
         endfor_idx = html_body.find('{% endfor %}', col3_open)
         col3_close = html_body.find('</div>', endfor_idx) if endfor_idx > 0 else -1
-        assert col3_open > 0 and panel_idx > 0 and col3_close > 0
-        assert not (col3_open < panel_idx < col3_close), (
-            "v13 regression guard: ex-pos-panel-landscape must NOT be inside ex-col-sets-phys — "
-            "it is a direct child of ex-right-section (full Col 2+Col 3 width)"
+        assert col3_open > 0 and macro_idx > 0 and col3_close > 0
+        assert not (col3_open < macro_idx < col3_close), (
+            "v13 regression guard: position_map_landscape must NOT be called inside ex-col-sets-phys — "
+            "it is a direct child of ex-right-section"
         )
 
     def test_sq33_panel_height_200px(self, tpl):
@@ -763,32 +819,35 @@ class TestV15ConsistencyFixes:
             "green is provided by internal <rect fill='#1a5c2a'> only (Default card pattern)"
         )
 
-    def test_sq34_node_label_pass4_present(self, tpl):
-        """v15: Pass 4 node.label must be rendered inside the SVG block."""
-        html_body = tpl[tpl.find("{% block body_content %}"):]
-        svg_start = html_body.find('class="ex-pos-svg-landscape"')
-        assert svg_start != -1
-        svg_end = html_body.find("</svg>", svg_start)
-        svg_block = html_body[svg_start: svg_end + len("</svg>")]
-        assert "node.label" in svg_block, (
-            "Pass 4 node.label text must be rendered inside ex-pos-svg-landscape "
-            "(adapted from player_card_fifa.html:611-618)"
+    def test_sq34_node_label_pass4_present(self, tpl, macro_tpl):
+        """v15: Pass 4 node position circles are rendered inside the SVG block (in macro).
+
+        Note: node.label text was removed per design spec (test_sq27); Pass 4 renders
+        position dots (circles) using node.x/node.y coordinates.
+        """
+        svg_start = macro_tpl.find('class="ex-pos-svg-landscape"')
+        assert svg_start != -1, "ex-pos-svg-landscape not found in card_position_map.html"
+        svg_end   = macro_tpl.find("</svg>", svg_start)
+        svg_block = macro_tpl[svg_start: svg_end + len("</svg>")]
+        # Position dots use node.x * 105 / node.y * 68 coordinate transform
+        assert "node.x * 105" in svg_block or "node.x" in svg_block, (
+            "Pass 4 SVG must render position nodes using node.x coordinate"
         )
 
-    def test_sq34_node_label_landscape_coords(self, tpl):
-        """v15: Pass 4 text elements must use landscape coordinate transform (x*105, y*68).
+    def test_sq34_node_label_landscape_coords(self, tpl, macro_tpl):
+        """v15: SVG elements must use landscape coordinate transform (x*105, y*68).
 
-        Portrait transform (node.y*65, (1-node.x)*100) must NOT appear in the SVG label block.
+        Portrait transform (node.y*65, (1-node.x)*100) must NOT appear in the SVG block.
+        SVG lives in card_position_map.html macro.
         """
-        html_body = tpl[tpl.find("{% block body_content %}"):]
-        svg_start = html_body.find('class="ex-pos-svg-landscape"')
-        svg_end = html_body.find("</svg>", svg_start)
-        svg_block = html_body[svg_start: svg_end + len("</svg>")]
+        svg_start = macro_tpl.find('class="ex-pos-svg-landscape"')
+        svg_end   = macro_tpl.find("</svg>", svg_start)
+        svg_block = macro_tpl[svg_start: svg_end + len("</svg>")]
         assert "node.x * 105" in svg_block, (
-            "Pass 4 text x-coordinate must use node.x * 105 (landscape: longitudinal → horizontal)"
+            "SVG coordinate must use node.x * 105 (landscape: longitudinal → horizontal)"
         )
         assert "node.y * 68" in svg_block, (
-            "Pass 4 text y-coordinate must use node.y * 68 (landscape: lateral → vertical)"
+            "SVG coordinate must use node.y * 68 (landscape: lateral → vertical)"
         )
         assert "1 - node.x" not in svg_block, (
             "Portrait inversion (1 - node.x) must not appear in landscape SVG"

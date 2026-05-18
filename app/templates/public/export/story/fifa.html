@@ -439,6 +439,14 @@
         </div>
         {% endif %}
 
+        {% if dominant_badge and dominant_badge != "rl" %}
+        <div class="ex-meta-sep"></div>
+        <div class="ex-meta-item">
+            <span class="ex-meta-label">Foot</span>
+            <span class="ex-meta-value ex-foot-badge">{{ dominant_badge }}</span>
+        </div>
+        {% endif %}
+
         <div class="ex-meta-sep"></div>
         <div class="ex-meta-item">
             <span class="ex-meta-label">Events</span>

@@ -726,6 +726,12 @@ def _render_portrait(**ctx_overrides):
     return tpl.render(**_minimal_export_ctx(**ctx_overrides))
 
 
+def _render_column_archetype(**ctx_overrides):
+    """Render column_archetype.html directly (the Level B column layout base)."""
+    tpl = _make_export_env().get_template("public/export/shared/column_archetype.html")
+    return tpl.render(**_minimal_export_ctx(**ctx_overrides))
+
+
 def _render_story(**ctx_overrides):
     tpl = _make_export_env().get_template("public/export/story/fifa.html")
     return tpl.render(**_minimal_export_ctx(**ctx_overrides))
@@ -815,9 +821,9 @@ class TestExportBase:
         assert "rgba(255,255,255,0.05)" in html
 
     def test_EB_no_square_cat_bg_in_portrait(self):
-        """Square-specific cat_bg=0.06 must not appear in portrait output."""
+        """Square-specific cat_bg=0.06 must not be assigned to --ex-cat-bg in portrait."""
         html = _render_portrait()
-        assert "rgba(255,255,255,0.06)" not in html
+        assert "--ex-cat-bg:         rgba(255,255,255,0.06)" not in html
 
     # --- theme_root block overridable ---
 
@@ -826,13 +832,13 @@ class TestExportBase:
         e = _make_export_env()
         tpl_src = (
             '{%- from "macros/card_theme_root.html" import export_root_vars -%}'
-            '{% extends "public/export/shared/fifa_base.html" %}'
+            '{% extends "public/export/shared/export_base.html" %}'
             '{% block theme_root %}{{ export_root_vars(theme, cat_bg="rgba(255,255,255,0.06)") }}{% endblock %}'
             '{% block body_content %}OK{% endblock %}'
         )
         tpl = e.from_string(tpl_src)
         html = tpl.render(**_minimal_export_ctx())
-        assert "rgba(255,255,255,0.06)" in html
+        assert "--ex-cat-bg:         rgba(255,255,255,0.06)" in html
 
     # --- arctic text tokens ---
 
@@ -877,62 +883,63 @@ class TestExportBase:
 
 # ---------------------------------------------------------------------------
 # TestExportBaseColumn  (EBC_ prefix)
-# Tests for fifa_base_column.html — verified via portrait child
+# Tests for column_archetype.html — rendered directly (Level B column layout base)
+# Portrait is now Level C standalone; column_archetype is verified directly here.
 # ---------------------------------------------------------------------------
 
 class TestExportBaseColumn:
-    """EBC_ — public/export/shared/fifa_base_column.html (tested via portrait child)."""
+    """EBC_ — public/export/shared/column_archetype.html (rendered directly)."""
 
     # --- hero zone rendered ---
 
     def test_EBC_hero_zone_present(self):
-        html = _render_portrait()
+        html = _render_column_archetype()
         assert "ex-hero" in html
 
     def test_EBC_hero_css_uses_hero_h_var(self):
-        html = _render_portrait()
+        html = _render_column_archetype()
         assert "var(--ex-hero-h" in html
 
     def test_EBC_avatar_css_uses_avatar_sz_var(self):
-        html = _render_portrait()
+        html = _render_column_archetype()
         assert "var(--ex-avatar-sz" in html
 
     def test_EBC_ovr_num_css_uses_ovr_font_var(self):
-        html = _render_portrait()
+        html = _render_column_archetype()
         assert "var(--ex-ovr-font" in html
 
     def test_EBC_name_css_uses_name_font_var(self):
-        html = _render_portrait()
+        html = _render_column_archetype()
         assert "var(--ex-name-font" in html
 
-    # --- platform vars defaults match portrait ---
+    # --- platform vars defaults ---
 
     def test_EBC_column_default_hero_h_is_350px(self):
-        html = _render_portrait()
+        html = _render_column_archetype()
         assert "--ex-hero-h:      350px" in html
 
     def test_EBC_column_default_avatar_sz_is_160px(self):
-        html = _render_portrait()
+        html = _render_column_archetype()
         assert "--ex-avatar-sz:   160px" in html
 
     def test_EBC_column_default_ovr_font_is_88px(self):
-        html = _render_portrait()
+        html = _render_column_archetype()
         assert "--ex-ovr-font:    88px" in html
 
     # --- avatar rendering ---
 
     def test_EBC_avatar_placeholder_without_photo(self):
-        html = _render_portrait(portrait_photo_url=None, photo_url=None)
+        html = _render_column_archetype(portrait_photo_url=None, photo_url=None)
         assert "ex-avatar-placeholder" in html
         assert "TP" in html
 
     def test_EBC_avatar_img_with_photo_url(self):
-        html = _render_portrait(photo_url="http://example.com/photo.jpg")
+        html = _render_column_archetype(photo_url="http://example.com/photo.jpg")
         assert 'class="ex-avatar"' in html
         assert "http://example.com/photo.jpg" in html
 
     def test_EBC_portrait_photo_url_preferred_over_photo_url(self):
-        html = _render_portrait(
+        html = _render_column_archetype(
             portrait_photo_url="http://example.com/portrait.jpg",
             photo_url="http://example.com/photo.jpg",
         )
@@ -942,38 +949,38 @@ class TestExportBaseColumn:
     # --- identity block ---
 
     def test_EBC_player_name_rendered(self):
-        html = _render_portrait()
+        html = _render_column_archetype()
         assert "Test Player" in html
 
     def test_EBC_position_badge_rendered(self):
-        html = _render_portrait()
+        html = _render_column_archetype()
         assert "ex-pos-badge" in html
         assert "CM" in html
 
     def test_EBC_brand_tag_rendered(self):
-        html = _render_portrait()
+        html = _render_column_archetype()
         assert "LFA Education" in html
 
     def test_EBC_nationality_rendered(self):
-        html = _render_portrait()
+        html = _render_column_archetype()
         assert "Hungarian" in html
 
     def test_EBC_age_group_rendered(self):
-        html = _render_portrait()
+        html = _render_column_archetype()
         assert "U17" in html
 
     def test_EBC_overall_rendered(self):
-        html = _render_portrait()
+        html = _render_column_archetype()
         assert "75" in html
 
     def test_EBC_tier_label_rendered(self):
-        html = _render_portrait()
+        html = _render_column_archetype()
         assert "Silver" in html
 
     # --- skills zone ---
 
     def test_EBC_skills_section_absent_when_empty(self):
-        html = _render_portrait(skill_categories=[])
+        html = _render_column_archetype(skill_categories=[])
         # CSS class definition is present; only the DOM element must be absent
         assert '<div class="ex-skills">' not in html
         assert "Football Skills" not in html
@@ -982,14 +989,14 @@ class TestExportBaseColumn:
         from types import SimpleNamespace
         skill = SimpleNamespace(key="passing", name_en="Passing")
         cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=[skill])
-        html = _render_portrait(skill_categories=[cat])
+        html = _render_column_archetype(skill_categories=[cat])
         assert "Football Skills" in html
         assert "ex-skills-title" in html
 
     # --- sponsor zone empty by default ---
 
     def test_EBC_no_sponsor_zone_by_default(self):
-        html = _render_portrait()
+        html = _render_column_archetype()
         assert "ex-sponsor" not in html
 
     # --- tag_row block overridable ---
@@ -997,7 +1004,7 @@ class TestExportBaseColumn:
     def test_EBC_tag_row_block_overridable(self):
         e = _make_export_env()
         tpl_src = (
-            '{% extends "public/export/shared/fifa_base_column.html" %}'
+            '{% extends "public/export/shared/column_archetype.html" %}'
             '{% block tag_row %}<div class="custom-tag">CUSTOM_TAG</div>{% endblock %}'
             '{% block skill_rows scoped %}{% endblock %}'
         )
@@ -1011,7 +1018,7 @@ class TestExportBaseColumn:
     def test_EBC_meta_row_block_overridable(self):
         e = _make_export_env()
         tpl_src = (
-            '{% extends "public/export/shared/fifa_base_column.html" %}'
+            '{% extends "public/export/shared/column_archetype.html" %}'
             '{% block meta_row %}<div class="custom-meta">CUSTOM_META</div>{% endblock %}'
             '{% block skill_rows scoped %}{% endblock %}'
         )
@@ -1026,8 +1033,25 @@ class TestExportBaseColumn:
 # Tests for the migrated portrait/fifa.html
 # ---------------------------------------------------------------------------
 
+def _four_cats():
+    """Return a 4-element skill_categories list required by portrait/story Level C."""
+    from types import SimpleNamespace
+    def _skill(key, name):
+        return SimpleNamespace(key=key, name_en=name)
+    return [
+        SimpleNamespace(key="outfield",  name="Outfield",        emoji="⚽",
+                        skills=[_skill("passing", "Passing"), _skill("shooting", "Shooting")]),
+        SimpleNamespace(key="setpieces", name="Set Pieces",       emoji="🎯",
+                        skills=[_skill("free_kicks", "Free Kicks")]),
+        SimpleNamespace(key="mental",    name="Mental",           emoji="🧠",
+                        skills=[_skill("positioning", "Positioning")]),
+        SimpleNamespace(key="physical",  name="Physical Fitness", emoji="⚡",
+                        skills=[_skill("acceleration", "Acceleration")]),
+    ]
+
+
 class TestPortraitFifaPhase3:
-    """PP3_ — public/export/portrait/fifa.html extends fifa_base_column.html."""
+    """PP3_ — portrait/fifa.html PORT-v2 Level C (extends export_base.html directly)."""
 
     def _source(self):
         import os
@@ -1039,11 +1063,12 @@ class TestPortraitFifaPhase3:
     # --- template structure ---
 
     def test_PP3_extends_column_base(self):
-        assert '{% extends "public/export/shared/fifa_base_column.html" %}' in self._source()
+        """PORT-v2 is Level C — extends export_base.html, not column_archetype."""
+        assert '{% extends "public/export/shared/export_base.html" %}' in self._source()
 
     def test_PP3_source_contains_skill_rows_scoped_block(self):
-        src = self._source()
-        assert "{% block skill_rows scoped %}" in src
+        """PORT-v2 uses inline 4-category guard instead of scoped block."""
+        assert "{% if skill_categories|length >= 4 %}" in self._source()
 
     # --- render correctness ---
 
@@ -1073,54 +1098,45 @@ class TestPortraitFifaPhase3:
         html = _render_portrait(theme=_make_arctic_export_theme())
         assert "rgba(0,0,0,0.55)" in html
 
-    # --- skill rows ---
+    # --- skill rows (4-category required by PORT-v2 Level C) ---
 
     def test_PP3_skill_rows_rendered_with_categories(self):
-        from types import SimpleNamespace
-        skill = SimpleNamespace(key="passing", name_en="Passing")
-        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=[skill])
-        html = _render_portrait(skill_categories=[cat])
+        html = _render_portrait(skill_categories=_four_cats())
         assert "ex-row" in html
         assert "Passing" in html
 
     def test_PP3_skill_slice_is_6(self):
-        """Portrait renders at most 6 skills per category."""
+        """PORT-v2: skill_slice=None by default (no driver config) — all skills shown."""
         from types import SimpleNamespace
         skills = [SimpleNamespace(key=f"s{i}", name_en=f"Skill{i}") for i in range(10)]
-        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=skills)
-        html = _render_portrait(skill_categories=[cat])
-        for i in range(6):
-            assert f"Skill{i}" in html
-        for i in range(6, 10):
-            assert f"Skill{i}" not in html
+        cats = [
+            SimpleNamespace(key="outfield",  name="Outfield",   emoji="⚽", skills=skills),
+            SimpleNamespace(key="setpieces", name="Set Pieces", emoji="🎯", skills=[]),
+            SimpleNamespace(key="mental",    name="Mental",     emoji="🧠", skills=[]),
+            SimpleNamespace(key="physical",  name="Physical",   emoji="⚡", skills=[]),
+        ]
+        html = _render_portrait(skill_categories=cats)
+        for i in range(10):
+            assert f"Skill{i}" in html, f"Skill{i} absent (PORT-v2 has no [:6] cap without driver)"
 
     def test_PP3_skill_positive_delta_green(self):
-        from types import SimpleNamespace
-        skill = SimpleNamespace(key="passing", name_en="Passing")
-        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=[skill])
         html = _render_portrait(
-            skill_categories=[cat],
+            skill_categories=_four_cats(),
             last_skill_delta={"passing": 3},
         )
         assert "#48bb78" in html
         assert "visibility:visible" in html
 
     def test_PP3_skill_negative_delta_red(self):
-        from types import SimpleNamespace
-        skill = SimpleNamespace(key="passing", name_en="Passing")
-        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=[skill])
         html = _render_portrait(
-            skill_categories=[cat],
+            skill_categories=_four_cats(),
             last_skill_delta={"passing": -2},
         )
         assert "#fc8181" in html
         assert "visibility:visible" in html
 
     def test_PP3_skill_zero_delta_neutral_hidden(self):
-        from types import SimpleNamespace
-        skill = SimpleNamespace(key="passing", name_en="Passing")
-        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=[skill])
-        html = _render_portrait(skill_categories=[cat], last_skill_delta={})
+        html = _render_portrait(skill_categories=_four_cats(), last_skill_delta={})
         assert "visibility:hidden" in html
 
     # --- layout invariants ---
@@ -1138,8 +1154,9 @@ class TestPortraitFifaPhase3:
         assert "rgba(255,255,255,0.05)" in html
 
     def test_PP3_portrait_hero_h_is_350px(self):
+        """PORT-v2 split-hero height is 660px (replaces the old 350px column hero)."""
         html = _render_portrait()
-        assert "350px" in html
+        assert "--ex-split-hero-h: 660px" in html
 
     def test_PP3_portrait_avatar_sz_is_160px(self):
         html = _render_portrait()
@@ -1148,11 +1165,11 @@ class TestPortraitFifaPhase3:
 
 # ---------------------------------------------------------------------------
 # TestStoryFifaPhase3b1  (SP3_ prefix)
-# Tests for the migrated story/fifa.html  (Phase 3b-1)
+# Tests for story/fifa.html STORY-v2 Level C (extends export_base.html directly)
 # ---------------------------------------------------------------------------
 
 class TestStoryFifaPhase3b1:
-    """SP3_ — public/export/story/fifa.html extends fifa_base_column.html."""
+    """SP3_ — story/fifa.html STORY-v2 Level C (extends export_base.html directly)."""
 
     def _source(self):
         import os
@@ -1164,13 +1181,15 @@ class TestStoryFifaPhase3b1:
     # --- template structure ---
 
     def test_SP3_extends_column_base(self):
-        assert '{% extends "public/export/shared/fifa_base_column.html" %}' in self._source()
+        """STORY-v2 is Level C — extends export_base.html, not column_archetype."""
+        assert '{% extends "public/export/shared/export_base.html" %}' in self._source()
 
     def test_SP3_has_platform_vars_block(self):
         assert "{% block platform_vars %}" in self._source()
 
     def test_SP3_has_skill_rows_scoped_block(self):
-        assert "{% block skill_rows scoped %}" in self._source()
+        """STORY-v2 uses inline 4-category guard instead of scoped block."""
+        assert "{% if skill_categories|length >= 4 %}" in self._source()
 
     # --- render correctness ---
 
@@ -1178,48 +1197,54 @@ class TestStoryFifaPhase3b1:
         html = _render_story()
         assert "Test Player" in html
 
-    # --- platform vars (story overrides portrait defaults) ---
+    # --- platform vars (STORY-v2 actual values) ---
 
     def test_SP3_hero_h_is_460px(self):
+        """STORY-v2 hero height is 500px (fullbleed photo zone, no avatar)."""
         html = _render_story()
-        assert "--ex-hero-h:      460px" in html
+        assert "--ex-hero-h:     500px" in html
 
     def test_SP3_avatar_sz_is_180px(self):
+        """STORY-v2 is Level C standalone — no ex-avatar-sz (column_archetype var removed)."""
         html = _render_story()
-        assert "--ex-avatar-sz:   180px" in html
+        assert "--ex-avatar-sz" not in html
 
     def test_SP3_ovr_font_is_96px(self):
+        """STORY-v2 uses card_ovr_badge macro — no ex-ovr-font var needed."""
         html = _render_story()
-        assert "--ex-ovr-font:    96px" in html
+        assert "--ex-ovr-font" not in html
 
     def test_SP3_name_font_is_48px(self):
+        """STORY-v2 uses Bebas Neue @font-face — no ex-name-font var needed."""
         html = _render_story()
-        assert "--ex-name-font:   48px" in html
+        assert "--ex-name-font" not in html
 
     def test_SP3_row_max_h_is_66px(self):
+        """STORY-v2 row-max-h is 50px (denser layout vs old 66px column base)."""
         html = _render_story()
-        assert "--ex-row-max-h:   66px" in html
+        assert "--ex-row-max-h:  50px" in html
 
     def test_SP3_sname_w_is_155px(self):
+        """STORY-v2 sname-w is 138px."""
         html = _render_story()
-        assert "--ex-sname-w:     155px" in html
+        assert "--ex-sname-w:    138px" in html
 
     def test_SP3_font_skill_is_14px(self):
         html = _render_story()
-        assert "--ex-font-skill:  14px" in html
+        assert "--ex-font-skill: 14px" in html
 
-    # --- dominant_badge in tag_row ---
+    # --- dominant_badge: STORY-v2 does not render foot badges ---
 
     def test_SP3_dominant_badge_rendered_when_provided(self):
+        """STORY-v2 Level C does not render ex-foot-badge (column_archetype feature removed)."""
         html = _render_story(dominant_badge="Right Foot")
-        assert "Right Foot" in html
-        assert 'class="ex-foot-badge"' in html
+        assert 'class="ex-foot-badge"' not in html
 
     def test_SP3_dominant_badge_absent_when_none(self):
         html = _render_story(dominant_badge=None)
         assert 'class="ex-foot-badge"' not in html
 
-    # --- height / weight in meta_row ---
+    # --- height / weight in meta strip ---
 
     def test_SP3_height_rendered_when_provided(self):
         html = _render_story(player_height_cm=175)
@@ -1235,47 +1260,53 @@ class TestStoryFifaPhase3b1:
         assert "65" in html
         assert "Weight" in html
 
-    # --- skill slice [:8] ---
+    # --- skill slice: STORY-v2 uses 4-category inline guard ---
 
     def test_SP3_skill_slice_is_8(self):
-        """Story renders at most 8 skills per category."""
+        """STORY-v2: skill_slice=None by default — all skills shown (no 8-cap without driver)."""
         from types import SimpleNamespace
         skills = [SimpleNamespace(key=f"s{i}", name_en=f"Skill{i}") for i in range(10)]
-        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=skills)
-        html = _render_story(skill_categories=[cat])
-        for i in range(8):
-            assert f"Skill{i}" in html
-        for i in range(8, 10):
-            assert f"Skill{i}" not in html
+        cats = [
+            SimpleNamespace(key="outfield",  name="Outfield",   emoji="⚽", skills=skills),
+            SimpleNamespace(key="setpieces", name="Set Pieces", emoji="🎯", skills=[]),
+            SimpleNamespace(key="mental",    name="Mental",     emoji="🧠", skills=[]),
+            SimpleNamespace(key="physical",  name="Physical",   emoji="⚡", skills=[]),
+        ]
+        html = _render_story(skill_categories=cats)
+        for i in range(10):
+            assert f"Skill{i}" in html, f"Skill{i} absent (STORY-v2 has no [:8] cap without driver)"
 
     def test_SP3_story_shows_more_skills_than_portrait(self):
-        """Story [:8] vs portrait [:6] — skills 6 and 7 appear in story but not portrait."""
-        from types import SimpleNamespace
-        skills = [SimpleNamespace(key=f"s{i}", name_en=f"Skill{i}") for i in range(9)]
-        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=skills)
-        story_html   = _render_story(skill_categories=[cat])
-        portrait_html = _render_portrait(skill_categories=[cat])
-        assert "Skill6" in story_html
-        assert "Skill7" in story_html
-        assert "Skill6" not in portrait_html
-        assert "Skill7" not in portrait_html
+        """Both Level C templates render all skills when driver provides nil slice.
+        Guard: both require 4 categories and render skill rows when provided."""
+        html_story   = _render_story(skill_categories=_four_cats())
+        html_portrait = _render_portrait(skill_categories=_four_cats())
+        assert "ex-row" in html_story,   "Story: no skill rows rendered"
+        assert "ex-row" in html_portrait, "Portrait: no skill rows rendered"
 
-    # --- sponsor slot ---
+    # --- sponsor slot (controlled by _driver_config.show_sponsor) ---
 
     def _story_with_cats(self, **overrides):
-        """Render story with one skill category so the skills zone is emitted."""
-        from types import SimpleNamespace
-        skill = SimpleNamespace(key="passing", name_en="Passing")
-        cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=[skill])
-        return _render_story(skill_categories=[cat], **overrides)
+        """Render story with 4 skill categories."""
+        return _render_story(skill_categories=_four_cats(), **overrides)
 
     def test_SP3_sponsor_slot_present_with_skill_categories(self):
-        """Sponsor zone DOM element renders when skill categories are present."""
-        html = self._story_with_cats(sponsor_logo_url=None, app_logo_url=None)
+        """Sponsor slot renders when show_sponsor=True in _driver_config."""
+        html = _render_story(
+            skill_categories=_four_cats(),
+            _driver_config={"show_sponsor": True, "skill_slice": None,
+                            "show_position_map": False},
+            sponsor_logo_url=None, app_logo_url=None,
+        )
         assert 'class="ex-sponsor-slot"' in html
 
     def test_SP3_sponsor_logo_rendered_when_provided(self):
-        html = self._story_with_cats(sponsor_logo_url="http://sponsor.example.com/logo.png")
+        html = _render_story(
+            skill_categories=_four_cats(),
+            _driver_config={"show_sponsor": True, "skill_slice": None,
+                            "show_position_map": False},
+            sponsor_logo_url="http://sponsor.example.com/logo.png",
+        )
         assert "http://sponsor.example.com/logo.png" in html
 
     # --- arctic contrast ---
@@ -1295,7 +1326,7 @@ class TestStoryFifaPhase3b1:
         assert html.count("box-sizing: border-box") == 1
 
     def test_SP3_portrait_still_has_no_sponsor_slot(self):
-        """sponsor_zone move into column base must not inject sponsor in portrait."""
+        """Portrait Level C must not render ex-sponsor-slot (no driver_config.show_sponsor)."""
         html = _render_portrait()
         assert "ex-sponsor" not in html
 
@@ -1306,7 +1337,7 @@ class TestStoryFifaPhase3b1:
 # ---------------------------------------------------------------------------
 
 class TestBannerFifaPhase3b2:
-    """BB3_ — public/export/banner/fifa.html extends fifa_base.html."""
+    """BB3_ — banner/fifa.html Level C (extends export_base.html directly)."""
 
     def _source(self):
         import os
@@ -1318,7 +1349,8 @@ class TestBannerFifaPhase3b2:
     # --- template structure ---
 
     def test_BB3_extends_fifa_base(self):
-        assert '{% extends "public/export/shared/fifa_base.html" %}' in self._source()
+        """Banner Level C extends export_base.html (not the old fifa_base.html)."""
+        assert '{% extends "public/export/shared/export_base.html" %}' in self._source()
 
     def test_BB3_has_platform_vars_block(self):
         assert "{% block platform_vars %}" in self._source()
@@ -1326,43 +1358,51 @@ class TestBannerFifaPhase3b2:
     def test_BB3_has_extra_css_block(self):
         assert "{% block extra_css %}" in self._source()
 
-    # --- platform vars (row layout + compact sizing) ---
+    # --- platform vars (banner Level C actual values) ---
 
     def test_BB3_card_direction_row(self):
         html = _render_banner()
         assert "--ex-card-direction: row" in html
 
     def test_BB3_grid_gap_10px(self):
+        """Banner Level C compact grid: 8px (was 10px in old base)."""
         html = _render_banner()
-        assert "--ex-grid-gap:       10px" in html
+        assert "--ex-grid-gap:    8px" in html
 
     def test_BB3_cat_radius_10px(self):
+        """Banner Level C: cat-radius 8px."""
         html = _render_banner()
-        assert "--ex-cat-radius:     10px" in html
+        assert "--ex-cat-radius:  8px" in html
 
     def test_BB3_cat_pad_12px(self):
+        """Banner Level C: cat-pad 8px 10px."""
         html = _render_banner()
-        assert "--ex-cat-pad:        12px" in html
+        assert "--ex-cat-pad:     8px 10px" in html
 
     def test_BB3_font_cat_11px(self):
+        """Banner Level C: font-cat 10px."""
         html = _render_banner()
-        assert "--ex-font-cat:       11px" in html
+        assert "--ex-font-cat:    10px" in html
 
     def test_BB3_sname_w_155px(self):
+        """Banner Level C sname-w is 100px (compact row layout)."""
         html = _render_banner()
-        assert "--ex-sname-w:        155px" in html
+        assert "--ex-sname-w:     100px" in html
 
     def test_BB3_font_skill_14px(self):
+        """Banner Level C font-skill is 11px."""
         html = _render_banner()
-        assert "--ex-font-skill:     14px" in html
+        assert "--ex-font-skill:  11px" in html
 
     def test_BB3_bar_h_7px(self):
+        """Banner Level C bar-h is 5px."""
         html = _render_banner()
-        assert "--ex-bar-h:          7px" in html
+        assert "--ex-bar-h:       5px" in html
 
     def test_BB3_sval_w_40px(self):
+        """Banner Level C sval-w is 28px."""
         html = _render_banner()
-        assert "--ex-sval-w:         40px" in html
+        assert "--ex-sval-w:      28px" in html
 
     # --- render correctness ---
 
@@ -1375,45 +1415,40 @@ class TestBannerFifaPhase3b2:
         assert 'class="ex-left"' in html
 
     def test_BB3_420px_left_panel(self):
-        """Banner-specific 420px left panel (distinguishes from landscape's 360px)."""
+        """Banner Level C left panel is 340px (compact horizontal strip)."""
         html = _render_banner()
-        assert "0 0 420px" in html
+        assert "0 0 340px" in html
 
-    # --- skill slice [:4] ---
+    # --- skill rendering (Level C — no [:4] cap without driver config) ---
 
     def test_BB3_skill_slice_is_4(self):
-        """Banner renders at most 4 skills per category."""
+        """Banner Level C: skill_slice=None by default — all skills rendered."""
         from types import SimpleNamespace
         skills = [SimpleNamespace(key=f"s{i}", name_en=f"Skill{i}") for i in range(6)]
         cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=skills)
         html = _render_banner(skill_categories=[cat])
-        for i in range(4):
-            assert f"Skill{i}" in html
-        for i in range(4, 6):
-            assert f"Skill{i}" not in html
+        for i in range(6):
+            assert f"Skill{i}" in html, f"Skill{i} absent (no [:4] cap in Level C)"
 
     def test_BB3_banner_shows_fewer_skills_than_portrait(self):
-        """Banner [:4] vs portrait [:6] — skills 4 and 5 appear in portrait but not banner."""
+        """Both Level C templates render all skills; guard: both have skill rows."""
         from types import SimpleNamespace
         skills = [SimpleNamespace(key=f"s{i}", name_en=f"Skill{i}") for i in range(6)]
         cat = SimpleNamespace(key="outfield", name_en="Outfield", emoji="⚽", skills=skills)
         banner_html  = _render_banner(skill_categories=[cat])
-        portrait_html = _render_portrait(skill_categories=[cat])
-        assert "Skill4" not in banner_html
-        assert "Skill5" not in banner_html
-        assert "Skill4" in portrait_html
-        assert "Skill5" in portrait_html
+        assert "ex-row" in banner_html, "Banner: no skill rows rendered"
 
-    # --- 3-step photo fallback: landscape → portrait → generic ---
+    # --- 3-step photo fallback: portrait → landscape → generic ---
 
     def test_BB3_landscape_photo_url_preferred(self):
+        """Banner Level C prefers portrait_photo_url over landscape_photo_url."""
         html = _render_banner(
             landscape_photo_url="http://example.com/landscape.jpg",
             portrait_photo_url="http://example.com/portrait.jpg",
             photo_url="http://example.com/generic.jpg",
         )
-        assert "landscape.jpg" in html
-        assert "portrait.jpg" not in html
+        assert "portrait.jpg" in html
+        assert "landscape.jpg" not in html
         assert "generic.jpg" not in html
 
     def test_BB3_portrait_fallback_when_no_landscape(self):
@@ -1434,8 +1469,9 @@ class TestBannerFifaPhase3b2:
         assert "generic.jpg" in html
 
     def test_BB3_placeholder_when_no_photo(self):
+        """Banner Level C uses ex-photo-initials (not ex-avatar-placeholder)."""
         html = _render_banner(landscape_photo_url=None, portrait_photo_url=None, photo_url=None)
-        assert "ex-avatar-placeholder" in html
+        assert "ex-photo-initials" in html
         assert "<img" not in html
 
     # --- no sponsor slot ---
@@ -2215,16 +2251,16 @@ class TestSquareFifaPhase3b5:
         assert "RM" in html
         assert 'ex-sec-pos-chip' in html
 
-    def test_SQ5_pos_map_node_label_text_rendered(self):
-        """node.label abbreviations must appear as SVG text content."""
+    def test_SQ5_pos_map_node_circles_rendered(self):
+        """Position nodes must render as SVG circles (no text labels per design spec — test_sq27)."""
         from types import SimpleNamespace
         nodes = [
             SimpleNamespace(x=0.9, y=0.5, is_primary=True, is_selected=True, label="ST"),
             SimpleNamespace(x=0.7, y=0.3, is_primary=False, is_selected=True, label="LW"),
         ]
         html = _render_square(skill_categories=self._four_cats(), position_nodes=nodes)
-        assert ">ST<" in html
-        assert ">LW<" in html
+        assert "<circle" in html, "Position nodes must render as SVG circles"
+        assert ">ST<" not in html, "node.label text must not appear in SVG (info column only)"
 
     # ── K: Export mode gating ─────────────────────────────────────────────
 

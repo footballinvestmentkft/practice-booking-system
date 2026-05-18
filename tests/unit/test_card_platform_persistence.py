@@ -334,7 +334,7 @@ class TestPublicCardPlatformResolution:
 
 _APP_PORT = int(os.getenv("APP_INTERNAL_PORT", "8000"))
 _BASE_URL  = f"http://127.0.0.1:{_APP_PORT}"
-_TEST_UID  = 7   # user whose card is publicly readable in the dev DB
+_TEST_UID  = 19310   # Rafael Cardoso — seeded dev user with portrait photo + valid card
 
 
 def _playwright_available() -> bool:
@@ -401,17 +401,15 @@ class TestPlatformPersistencePlaywright:
     def test_pp06_url_param_overrides_saved_platform(self):
         """
         Explicit ?platform=og must override any saved platform.
-        (og has no dedicated export template yet — falls back to editor template)
+        og now has a dedicated export template — .ex-card must be present.
         """
         page = self._page({"width": 1200, "height": 630})
         page.goto(
-            f"{_BASE_URL}/players/{_TEST_UID}/card?platform=og",
+            f"{_BASE_URL}/players/{_TEST_UID}/card?platform=og&export=1",
             wait_until="networkidle",
         )
-        # og has no export template → editor template renders
-        body_class = page.evaluate("() => document.body.className")
-        assert "platform-og" in body_class, \
-            "body must carry platform-og CSS class when ?platform=og is set"
+        assert page.query_selector(".ex-card") is not None, \
+            "OG export template (.ex-card) must be present when ?platform=og is set"
         page.close()
 
     def test_pp07_default_renders_editor_template(self):

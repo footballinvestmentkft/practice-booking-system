@@ -1059,8 +1059,9 @@ class TestWelcomeCardRenderingFixes:
         assert "dominant_badge" in public_player_src
 
     def test_story_template_guards_dominant_badge(self, story_export_src):
-        """Story template must guard dominant_badge with {% if %}."""
-        assert "{% if dominant_badge %}" in story_export_src
+        """Story template must guard dominant_badge with {% if %} (and suppress unassessed 'rl')."""
+        assert "{% if dominant_badge" in story_export_src
+        assert 'dominant_badge != "rl"' in story_export_src
 
     def test_tiktok_template_guards_player_height_cm(self, tiktok_export_src):
         """TikTok template must guard player_height_cm with {% if %}."""

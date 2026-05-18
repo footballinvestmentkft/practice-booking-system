@@ -305,7 +305,7 @@ body {
     align-items: center;
     gap: 5px;
 }
-/* ex-ovr-num removed — replaced by card_ovr_badge macro (size=100, dark=true) */
+/* ex-ovr-num removed — replaced by card_ovr_badge macro (size=130, dark=true) */
 .ex-tier-badge {
     font-size: 12px;
     font-weight: 800;
@@ -720,7 +720,7 @@ body {
                     {% endif %}
                 </div>
                 <div class="ex-ovr-block">
-                    {{ ovr_badge(overall | round(0) | int, size=100, dark=true) }}
+                    {{ ovr_badge(overall | round(0) | int, size=130, dark=true) }}
                     <span class="ex-tier-badge" style="background: {{ tier_color }};">{{ tier_label }}</span>
                 </div>
             </div>

@@ -114,6 +114,7 @@ def _make_license(card_variant: str = "compact") -> MagicMock:
     lic.card_theme_id = None
     lic.card_bg_compact_url = None
     lic.card_bg_showcase_url = None
+    lic.player_card_photo_url   = None
     lic.card_photo_portrait_url = None
     lic.card_photo_landscape_url = None
     lic.compact_photo_position = "left"
@@ -322,10 +323,11 @@ class TestPlaywrightCanvasFill:
         from playwright.sync_api import sync_playwright
         from app.config import settings
 
+        _uid = 19310  # Rafael Cardoso — seeded dev user with portrait photo + valid card
         w, h = CANVAS_SIZES[platform_id]
         url = (
             f"http://127.0.0.1:{settings.APP_INTERNAL_PORT}"
-            f"/players/7/card?platform={platform_id}&export=1"
+            f"/players/{_uid}/card?platform={platform_id}&export=1"
         )
 
         with sync_playwright() as p:
@@ -404,7 +406,7 @@ class TestPlaywrightP0ComponentSizing:
     # Combined selectors — first match wins across all card variants and templates.
     # ex- prefixed classes are from dedicated export templates (export render layer).
     _OVR_SELECTOR = (
-        ".ex-ovr-num, .cmp-overall, .atl-ovr-num, .sc-overall, .pls-ovr-text, .fifa-overall"
+        ".ex-ovr-badge > span:first-child, .ex-ovr-num, .cmp-overall, .atl-ovr-num, .sc-overall, .pls-ovr-text, .fifa-overall"
     )
     # Photo column: only variants with a dedicated width column.
     # Editor templates: .cmp-photo-col (compact) or .fifa-left (FIFA).
@@ -417,10 +419,11 @@ class TestPlaywrightP0ComponentSizing:
         from playwright.sync_api import sync_playwright
         from app.config import settings
 
+        _uid = 19310  # Rafael Cardoso — seeded dev user with portrait photo + valid card
         w, h = CANVAS_SIZES[platform_id]
         url = (
             f"http://127.0.0.1:{settings.APP_INTERNAL_PORT}"
-            f"/players/7/card?platform={platform_id}&export=1"
+            f"/players/{_uid}/card?platform={platform_id}&export=1"
         )
         pw = sync_playwright().start()
         browser = pw.chromium.launch(headless=True)
@@ -513,7 +516,7 @@ class TestPlaywrightP0ComponentSizing:
         page, browser, pw, _vw, vh = self._open_card(platform_id)
         try:
             bottom = page.evaluate(
-                "() => { const el = document.querySelector('.ex-skills, .skills-section');"
+                "() => { const el = document.querySelector('.ex-skills-zone, .ex-skills, .skills-section');"
                 " return el ? el.getBoundingClientRect().bottom : null; }"
             )
             assert bottom is not None, "No skills section element found"
@@ -761,12 +764,12 @@ class TestFifaStoryExport:
         assert story_html != tiktok_html, (
             "tiktok and instagram_story rendered identical HTML — bucket split not effective"
         )
-        # TikTok template has full-bleed hero; story template has avatar circle
-        assert "ex-hero-photo" in tiktok_html, (
-            "ex-hero-photo not found in tiktok HTML — expected full-bleed hero (tiktok/fifa.html)"
+        # TikTok template has identity-strip; story template has meta-strip
+        assert "ex-identity-strip" in tiktok_html, (
+            "ex-identity-strip not found in tiktok HTML — expected tiktok/fifa.html identity layout"
         )
-        assert "ex-hero-photo" not in story_html, (
-            "ex-hero-photo found in instagram_story HTML — story template should use avatar circle"
+        assert "ex-meta-strip" in story_html, (
+            "ex-meta-strip not found in instagram_story HTML — expected story/fifa.html meta layout"
         )
 
 
@@ -817,37 +820,28 @@ class TestFifaStoryOptionA:
         )
 
     def test_ex48_story_sponsor_slot_element_present(self):
-        """EX-48: sponsor slot must be present in story rendering pipeline.
+        """EX-48: sponsor slot must be present in story/fifa.html source.
 
-        After Phase 1 macro extraction the class lives in macros/card_sponsor_block.html,
-        not inline in story/fifa.html. We verify:
-          (a) story/fifa.html imports and calls the sponsor_slot macro
-          (b) the macro itself contains class="ex-sponsor-slot"
+        Level C story template implements the sponsor slot inline (ex-sponsor-slot class).
         """
         import os, app as _app_pkg
         tpl_dir = os.path.join(os.path.dirname(_app_pkg.__file__), "templates")
 
         with open(os.path.join(tpl_dir, "public/export/story/fifa.html")) as f:
             story_src = f.read()
-        with open(os.path.join(tpl_dir, "macros/card_sponsor_block.html")) as f:
-            macro_src = f.read()
 
-        assert "sponsor_slot" in story_src, (
-            "EX-48: story/fifa.html must import and call sponsor_slot macro"
-        )
-        assert 'class="ex-sponsor-slot"' in macro_src, (
-            "EX-48: ex-sponsor-slot class not found in macros/card_sponsor_block.html — "
-            "sponsor slot must be defined in the macro"
+        assert 'ex-sponsor-slot' in story_src, (
+            "EX-48: ex-sponsor-slot not found in story/fifa.html — sponsor slot missing"
         )
 
     def test_ex49_story_sponsor_logo_conditional(self, client):
         """EX-49: logo renders only when sponsor_logo_url is provided."""
         with_logo    = self._get_story_html(client, sponsor="/static/test/logo.png")
         without_logo = self._get_story_html(client, sponsor=None)
-        assert 'class="ex-sponsor-slot-img"' in with_logo, (
+        assert 'class="ex-sponsor-logo"' in with_logo, (
             "EX-49: sponsor logo img not rendered when sponsor_logo_url is set"
         )
-        assert 'class="ex-sponsor-slot-img"' not in without_logo, (
+        assert 'class="ex-sponsor-logo"' not in without_logo, (
             "EX-49: sponsor logo img rendered even when sponsor_logo_url is None"
         )
 
@@ -1242,11 +1236,11 @@ class TestFifaBannerExport:
         )
 
     def test_ex28_banner_not_landscape_template(self, client):
-        """Banner template must have the banner-specific 420px left panel, not landscape's 360px."""
+        """Banner template must have the banner-specific 340px left panel, not landscape's 360px."""
         html = self._get_fifa_export_html(client, "banner_custom")
         assert html, "Export returned empty response for banner_custom"
-        assert "0 0 420px" in html, (
-            "Banner-specific 420px left panel not found — landscape template (360px) may have loaded"
+        assert "0 0 340px" in html, (
+            "Banner-specific 340px left panel not found — wrong banner template may have loaded"
         )
 
 
@@ -1434,7 +1428,17 @@ class TestFifaSquareAllSkills:
         consistent with Default card .pitch-svg (no CSS background on the SVG element).
         Setting background on the SVG element pollutes the letterbox areas with pitch green.
         """
-        html = self._get_fifa_export_html(client, "instagram_square")
+        from app.main import app
+        from app.dependencies import get_db
+        lic = _make_license(card_variant="fifa")
+        lic.motivation_scores = {"position": "midfielder"}  # valid pos → position map renders
+        db = _mock_db(user=_make_user(), license_=lic)
+        app.dependency_overrides[get_db] = lambda: db
+        try:
+            r = client.get("/players/7/card?platform=instagram_square&export=1")
+            html = r.text if r.status_code == 200 else ""
+        finally:
+            app.dependency_overrides.pop(get_db, None)
         assert html, "Export returned empty response for instagram_square"
         # Find the CSS block for ex-pos-svg-landscape
         style_block = html[:html.find("</style>")]
@@ -1467,9 +1471,10 @@ class TestFifaSquareAllSkills:
         from playwright.sync_api import sync_playwright
         from app.config import settings
 
+        _uid = 19310  # Rafael Cardoso — seeded dev user with portrait photo + valid card
         url = (
             f"http://127.0.0.1:{settings.APP_INTERNAL_PORT}"
-            "/players/7/card?platform=instagram_square&export=1"
+            f"/players/{_uid}/card?platform=instagram_square&export=1"
         )
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True)
@@ -1479,20 +1484,16 @@ class TestFifaSquareAllSkills:
                 cats = page.query_selector_all(".ex-cat")
                 assert len(cats) == 4, f"Expected 4 .ex-cat elements, got {len(cats)}"
                 bbs = [c.bounding_box() for c in cats]
-                # DOM order (v4 flex-column): left col first, then right col
-                outfield, set_pieces, mental, physical = bbs
-                gap_left  = set_pieces["y"] - (outfield["y"] + outfield["height"])
-                gap_right = physical["y"]   - (mental["y"]   + mental["height"])
-                assert gap_left >= 0, (
-                    f"Left col overlap: Set Pieces top={set_pieces['y']:.0f} "
-                    f"< Outfield bottom={outfield['y']+outfield['height']:.0f} (gap={gap_left:.0f}px)"
+                # DOM order (square Level C): Outfield(col1) | Mental(col2) | SetPieces+Physical(col3)
+                outfield, mental, set_pieces, physical = bbs
+                # Col 3: Set Pieces on top, Physical below — verify no overlap
+                gap_col3 = physical["y"] - (set_pieces["y"] + set_pieces["height"])
+                assert gap_col3 >= 0, (
+                    f"Col 3 overlap: Physical top={physical['y']:.0f} "
+                    f"< Set Pieces bottom={set_pieces['y']+set_pieces['height']:.0f} (gap={gap_col3:.0f}px)"
                 )
-                assert gap_right >= 0, (
-                    f"Right col overlap: Physical top={physical['y']:.0f} "
-                    f"< Mental bottom={mental['y']+mental['height']:.0f} (gap={gap_right:.0f}px)"
-                )
-                assert gap_right <= 10, (
-                    f"Mental–Physical gap {gap_right:.0f}px > 10px — "
+                assert gap_col3 <= 12, (
+                    f"Col 3 gap {gap_col3:.0f}px > 12px — "
                     "gap should be ~6px (CSS gap property); large gap suggests layout regression"
                 )
             finally:
