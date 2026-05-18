@@ -117,9 +117,9 @@
         margin-bottom: 1.5rem;
     }
 
-    /* ── Player Card live preview (hero, full-width) ─────────────────────────── */
-    .player-card-embed-wrap { border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.13); }
-    .player-card-embed-wrap iframe { display: block; width: 100%; border: none; }
+    /* ── Player Card live preview (compact thumbnail) ────────────────────────── */
+    .player-card-embed-wrap { border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.13); max-height: 240px; }
+    .player-card-embed-wrap iframe { display: block; border: none; }
 
     /* ── Last Result ─────────────────────────────────────────────────────────── */
     .s-last-result-card { background: var(--app-card); border-left: 4px solid #667eea; border-radius: 0 10px 10px 0; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
@@ -185,7 +185,7 @@
             {% set _preview_platform = active_card_platform if (active_card_platform and active_card_platform != 'default') else 'instagram_portrait' %}
             <iframe id="spec-player-card-iframe"
                     src="/players/{{ user.id }}/card?platform={{ _preview_platform }}&export=1"
-                    height="760" scrolling="no" title="My Player Card"></iframe>
+                    scrolling="no" title="My Player Card"></iframe>
         </div>
     </section>
     <script>
@@ -208,8 +208,11 @@
             var wrap   = document.getElementById('spec-card-wrap');
             if (!iframe || !wrap) return;
             var cw = dims[0], ch = dims[1];
-            var availW = wrap.clientWidth || 840;
-            var scale  = availW / cw;
+            var availW   = wrap.clientWidth || 840;
+            var maxH     = window.innerWidth < 700 ? 160 : 240;
+            var scaleByW = availW / cw;
+            var scaleByH = maxH / ch;
+            var scale    = Math.min(scaleByW, scaleByH);
             iframe.style.width           = cw + 'px';
             iframe.style.height          = ch + 'px';
             iframe.style.transform       = 'scale(' + scale + ')';

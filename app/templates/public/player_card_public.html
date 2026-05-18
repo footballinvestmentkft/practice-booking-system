@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ player_name }} — LFA Player Card</title>
+    <meta property="og:title"       content="{{ player_name }} — LFA Player Card">
+    <meta property="og:description" content="{{ tier_label }} · OVR {{ overall | int }}">
+    <meta name="robots" content="noindex, nofollow">
+    <style>
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { overflow-x: hidden; }
+
+    /* ── Page theme — dark, matching FIFA Classic card background ── */
+    :root {
+        --pg-bg:           #0f1923;
+        --pg-surface:      #1a2332;
+        --pg-border:       rgba(255,255,255,0.07);
+        --pg-text-primary: rgba(255,255,255,0.90);
+        --pg-text-muted:   rgba(255,255,255,0.45);
+        --pg-text-faint:   rgba(255,255,255,0.28);
+        --pg-tier-color:   {{ tier_color }};
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        background: var(--pg-bg);
+        color: var(--pg-text-primary);
+        min-height: 100vh;
+    }
+
+    /* ── Page header ── */
+    .pcp-topbar {
+        display: flex;
+        align-items: center;
+        padding: 0.8rem 1.5rem;
+        border-bottom: 1px solid var(--pg-border);
+        background: var(--pg-surface);
+    }
+    .pcp-brand {
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--pg-text-faint);
+    }
+
+    /* ── Player identity strip ── */
+    .pcp-identity {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.2rem 1.5rem 1rem;
+        border-bottom: 1px solid var(--pg-border);
+        background: var(--pg-surface);
+    }
+    .pcp-initials {
+        width: 48px; height: 48px; border-radius: 50%;
+        background: linear-gradient(135deg, #2a3a5c 0%, #1a2744 100%);
+        border: 2px solid var(--pg-border);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem; font-weight: 800; color: rgba(255,255,255,0.70);
+        flex-shrink: 0;
+    }
+    .pcp-identity-info { flex: 1; min-width: 0; }
+    .pcp-name {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: var(--pg-text-primary);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pcp-meta {
+        font-size: 0.72rem;
+        color: var(--pg-text-muted);
+        margin-top: 0.15rem;
+    }
+    .pcp-ovr-pill {
+        display: flex; align-items: center; gap: 0.4rem;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid var(--pg-border);
+        border-radius: 20px;
+        padding: 0.3rem 0.75rem;
+        flex-shrink: 0;
+    }
+    .pcp-ovr-num {
+        font-size: 1.3rem; font-weight: 900;
+        color: var(--pg-text-primary);
+        line-height: 1;
+    }
+    .pcp-ovr-label {
+        font-size: 0.58rem; font-weight: 700;
+        letter-spacing: 0.1em; text-transform: uppercase;
+        color: var(--pg-text-muted);
+        line-height: 1;
+    }
+    .pcp-tier-badge {
+        font-size: 0.62rem; font-weight: 700;
+        letter-spacing: 0.1em; text-transform: uppercase;
+        color: var(--pg-tier-color);
+        background: rgba(255,255,255,0.04);
+        border: 1px solid var(--pg-tier-color);
+        border-radius: 10px;
+        padding: 0.18rem 0.5rem;
+        flex-shrink: 0;
+    }
+
+    /* ── Card preview ── */
+    .pcp-card-outer {
+        padding: 1.5rem;
+        display: flex;
+        justify-content: center;
+    }
+    @media (max-width: 600px) {
+        .pcp-card-outer { padding: 1rem 0.75rem; }
+    }
+    .pcp-card-wrap {
+        width: 100%;
+        max-width: 480px;
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+        border: 1px solid var(--pg-border);
+        background: #0a0f18;
+        /* height set by JS */
+    }
+    #pcp-card-iframe {
+        display: block;
+        border: none;
+        transform-origin: top left;
+        pointer-events: none;
+    }
+    </style>
+</head>
+<body>
+
+<!-- topbar -->
+<div class="pcp-topbar">
+    <span class="pcp-brand">⚽ LFA Education Center</span>
+</div>
+
+<!-- identity strip -->
+<div class="pcp-identity">
+    <div class="pcp-initials">{{ initials }}</div>
+    <div class="pcp-identity-info">
+        <div class="pcp-name">{{ player_name }}</div>
+        <div class="pcp-meta">{{ player.position }}{% if player.nationality %} · {{ player.nationality }}{% endif %}</div>
+    </div>
+    <div class="pcp-ovr-pill">
+        <span class="pcp-ovr-num">{{ overall | int }}</span>
+        <span class="pcp-ovr-label">OVR</span>
+    </div>
+    <span class="pcp-tier-badge">{{ tier_label }}</span>
+</div>
+
+<!-- card preview — single platform, read-only, no download UI -->
+<div class="pcp-card-outer">
+    <div class="pcp-card-wrap" id="pcp-card-wrap">
+        <iframe id="pcp-card-iframe"
+                src="{{ public_iframe_src }}"
+                scrolling="no"
+                title="Player Card"></iframe>
+    </div>
+</div>
+
+<script>
+var _PUB_CARD_W = {{ pub_card_w }};
+var _PUB_CARD_H = {{ pub_card_h }};
+function scaleCard() {
+    var wrap   = document.getElementById('pcp-card-wrap');
+    var iframe = document.getElementById('pcp-card-iframe');
+    if (!wrap || !iframe) return;
+    var availW = wrap.clientWidth || 400;
+    var scale  = availW / _PUB_CARD_W;
+    iframe.style.width           = _PUB_CARD_W + 'px';
+    iframe.style.height          = _PUB_CARD_H + 'px';
+    iframe.style.transform       = 'scale(' + scale + ')';
+    iframe.style.transformOrigin = 'top left';
+    wrap.style.height            = Math.round(_PUB_CARD_H * scale) + 'px';
+}
+window.addEventListener('load', scaleCard);
+window.addEventListener('resize', scaleCard);
+</script>
+
+</body>
+</html>
