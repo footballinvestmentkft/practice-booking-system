@@ -412,16 +412,14 @@ class TestPlatformPersistencePlaywright:
             "OG export template (.ex-card) must be present when ?platform=og is set"
         page.close()
 
-    def test_pp07_default_renders_editor_template(self):
+    def test_pp07_no_param_renders_gallery_hub(self):
         """
-        /players/{uid}/card with no params and no saved platform must show
-        the editor template (card-wrap present, no ex-card).
+        /players/{uid}/card with no params must render the gallery hub —
+        iframe preview + platform picker (pcg-frame-wrap and pcg-platform-card present).
         """
         page = self._page({"width": 1200, "height": 900})
         page.goto(f"{_BASE_URL}/players/{_TEST_UID}/card", wait_until="networkidle")
-        # Only valid when no platform saved in DB — tests the fallback path
-        has_card_wrap = page.query_selector(".card-wrap") is not None
-        has_ex_card   = page.query_selector(".ex-card") is not None
-        # One or the other must be present (card renders at all)
-        assert has_card_wrap or has_ex_card, "Card must render in some form"
+        has_frame_wrap    = page.query_selector(".pcg-frame-wrap") is not None
+        has_platform_card = page.query_selector(".pcg-platform-card") is not None
+        assert has_frame_wrap and has_platform_card, "Gallery hub must render with iframe wrap and platform cards"
         page.close()

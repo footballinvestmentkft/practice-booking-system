@@ -141,3 +141,16 @@ CARD_EDITOR_PLATFORM_IDS: tuple[str, ...] = (
     "banner_custom",
     "facebook_post",
 )
+
+# Platforms shown in the public Player Card gallery hub.
+# Subset of CARD_EDITOR_PLATFORM_IDS: excludes facebook_post (secondary landscape variant)
+# and facebook_square (alias of instagram_square). Ordered for visual hierarchy.
+CARD_GALLERY_PLATFORM_IDS: tuple[str, ...] = (
+    "instagram_portrait",
+    "instagram_story",
+    "instagram_square",
+    "tiktok",
+    "facebook_landscape",
+    "og",
+    "banner_custom",
+)

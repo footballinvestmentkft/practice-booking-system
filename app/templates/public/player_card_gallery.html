@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ player_name }} — LFA Player Card</title>
+    <meta property="og:title"       content="{{ player_name }} — LFA Player Card">
+    <meta property="og:description" content="{{ tier_label }} · OVR {{ overall }}">
+    <meta name="robots" content="noindex, nofollow">
+    <style>
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { overflow-x: hidden; }
+
+    /* ── Page theme — dark, matching FIFA Classic card background ── */
+    :root {
+        --pg-bg:           #0f1923;
+        --pg-surface:      #1a2332;
+        --pg-border:       rgba(255,255,255,0.07);
+        --pg-text-primary: rgba(255,255,255,0.90);
+        --pg-text-muted:   rgba(255,255,255,0.45);
+        --pg-text-faint:   rgba(255,255,255,0.28);
+        --pg-accent:       #667eea;
+        --pg-tier-color:   {{ tier_color }};
+        --pg-platform-hover: rgba(255,255,255,0.05);
+        --pg-platform-active: rgba(102,126,234,0.12);
+        --pg-platform-active-border: rgba(102,126,234,0.40);
+        --pg-dl-bg:        rgba(102,126,234,0.15);
+        --pg-dl-hover:     rgba(102,126,234,0.28);
+        --pg-dl-text:      #a3bffa;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        background: var(--pg-bg);
+        color: var(--pg-text-primary);
+        min-height: 100vh;
+    }
+
+    /* ── Page header ── */
+    .pcg-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.8rem 1.5rem;
+        border-bottom: 1px solid var(--pg-border);
+        background: var(--pg-surface);
+    }
+    .pcg-brand {
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--pg-text-faint);
+    }
+
+    /* ── Player identity strip ── */
+    .pcg-identity {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.2rem 1.5rem 1rem;
+        border-bottom: 1px solid var(--pg-border);
+        background: var(--pg-surface);
+    }
+    .pcg-initials {
+        width: 48px; height: 48px; border-radius: 50%;
+        background: linear-gradient(135deg, #2a3a5c 0%, #1a2744 100%);
+        border: 2px solid var(--pg-border);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem; font-weight: 800; color: rgba(255,255,255,0.70);
+        flex-shrink: 0;
+    }
+    .pcg-identity-info { flex: 1; min-width: 0; }
+    .pcg-name {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: var(--pg-text-primary);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pcg-meta {
+        font-size: 0.72rem;
+        color: var(--pg-text-muted);
+        margin-top: 0.15rem;
+    }
+    .pcg-ovr-pill {
+        display: flex; align-items: center; gap: 0.4rem;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid var(--pg-border);
+        border-radius: 20px;
+        padding: 0.3rem 0.75rem;
+        flex-shrink: 0;
+    }
+    .pcg-ovr-num {
+        font-size: 1.3rem; font-weight: 900;
+        color: var(--pg-text-primary);
+        line-height: 1;
+    }
+    .pcg-ovr-label {
+        font-size: 0.58rem; font-weight: 700;
+        letter-spacing: 0.1em; text-transform: uppercase;
+        color: var(--pg-text-muted);
+        line-height: 1;
+    }
+    .pcg-tier-badge {
+        font-size: 0.62rem; font-weight: 700;
+        letter-spacing: 0.1em; text-transform: uppercase;
+        color: var(--pg-tier-color);
+        background: rgba(255,255,255,0.04);
+        border: 1px solid var(--pg-tier-color);
+        border-radius: 10px;
+        padding: 0.18rem 0.5rem;
+        flex-shrink: 0;
+    }
+
+    /* ── Main layout ── */
+    .pcg-layout {
+        display: flex;
+        gap: 0;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 1.5rem;
+        gap: 1.5rem;
+        align-items: flex-start;
+    }
+    @media (max-width: 700px) {
+        .pcg-layout { flex-direction: column; padding: 1rem; }
+    }
+
+    /* ── Preview panel ── */
+    .pcg-preview-panel {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+    .pcg-preview-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--pg-text-faint);
+        margin-bottom: 0.6rem;
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .pcg-preview-active-label {
+        font-weight: 600;
+        color: var(--pg-text-muted);
+        text-transform: none;
+        letter-spacing: 0;
+    }
+    .pcg-frame-wrap {
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+        border: 1px solid var(--pg-border);
+        background: #0a0f18;
+        /* height set by JS */
+    }
+    #pcg-preview-iframe {
+        display: block;
+        border: none;
+        transform-origin: top left;
+        pointer-events: none;   /* iframe is view-only */
+    }
+
+    /* ── Platform panel ── */
+    .pcg-platforms-panel {
+        flex: 0 0 220px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    @media (max-width: 700px) {
+        .pcg-platforms-panel { flex: none; width: 100%; flex-direction: row; flex-wrap: wrap; }
+    }
+    .pcg-platforms-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--pg-text-faint);
+        margin-bottom: 0.1rem;
+    }
+    .pcg-platform-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding: 0.6rem 0.75rem;
+        border-radius: 8px;
+        border: 1px solid var(--pg-border);
+        cursor: pointer;
+        transition: background 0.12s, border-color 0.12s;
+        background: var(--pg-surface);
+    }
+    .pcg-platform-card:hover { background: var(--pg-platform-hover); }
+    .pcg-platform-card.active {
+        background: var(--pg-platform-active);
+        border-color: var(--pg-platform-active-border);
+    }
+    .pcg-plat-info { flex: 1; min-width: 0; }
+    .pcg-plat-name {
+        font-size: 0.80rem; font-weight: 700;
+        color: var(--pg-text-primary);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pcg-plat-dims {
+        font-size: 0.65rem;
+        color: var(--pg-text-faint);
+        margin-top: 0.05rem;
+    }
+    .pcg-dl-btn {
+        display: inline-flex; align-items: center; gap: 0.3rem;
+        background: var(--pg-dl-bg);
+        color: var(--pg-dl-text);
+        border: none; border-radius: 6px;
+        padding: 0.28rem 0.55rem;
+        font-size: 0.68rem; font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.12s;
+        flex-shrink: 0;
+    }
+    .pcg-dl-btn:hover { background: var(--pg-dl-hover); }
+    </style>
+</head>
+<body>
+
+<!-- topbar -->
+<div class="pcg-topbar">
+    <span class="pcg-brand">⚽ LFA Education Center</span>
+</div>
+
+<!-- identity strip -->
+<div class="pcg-identity">
+    <div class="pcg-initials">{{ initials }}</div>
+    <div class="pcg-identity-info">
+        <div class="pcg-name">{{ player_name }}</div>
+        <div class="pcg-meta">{{ player.position }}{% if player.nationality %} · {{ player.nationality }}{% endif %}</div>
+    </div>
+    <div class="pcg-ovr-pill">
+        <span class="pcg-ovr-num">{{ overall | int }}</span>
+        <span class="pcg-ovr-label">OVR</span>
+    </div>
+    <span class="pcg-tier-badge">{{ tier_label }}</span>
+</div>
+
+<!-- main layout -->
+<div class="pcg-layout">
+
+    <!-- preview panel -->
+    <div class="pcg-preview-panel">
+        <div class="pcg-preview-label">
+            Preview
+            <span class="pcg-preview-active-label" id="pcg-active-label"></span>
+        </div>
+        <div class="pcg-frame-wrap" id="pcg-frame-wrap">
+            <iframe id="pcg-preview-iframe"
+                    src="{{ default_iframe_src }}"
+                    scrolling="no"
+                    title="Player Card Preview"></iframe>
+        </div>
+    </div>
+
+    <!-- platform panel -->
+    <div class="pcg-platforms-panel">
+        <div class="pcg-platforms-label">Export Formats</div>
+        {% for p in platforms %}
+        <div class="pcg-platform-card{% if p.id == default_platform %} active{% endif %}"
+             data-platform="{{ p.id }}"
+             data-label="{{ p.label }}"
+             data-dims="{{ p.dims }}"
+             onclick="selectPlatform(this)">
+            <div class="pcg-plat-info">
+                <div class="pcg-plat-name">{{ p.label }}</div>
+                <div class="pcg-plat-dims">{{ p.dims }}</div>
+            </div>
+            <a class="pcg-dl-btn"
+               id="pcg-dl-{{ p.id }}"
+               href="/players/{{ user_id }}/card/export?platform={{ p.id }}"
+               onclick="event.stopPropagation();">
+                ↓ PNG
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<script>
+var CANVAS_SIZES = (function() {
+    var raw = {{ canvas_sizes | tojson }};
+    var out = {};
+    for (var pid in raw) { out[pid] = [raw[pid].w, raw[pid].h]; }
+    return out;
+}());
+
+var _USER_ID       = {{ user_id }};
+var _activePlatform = '{{ default_platform }}';
+
+function _buildIframeSrc(pid) {
+    return '/players/' + _USER_ID + '/card?platform=' + pid + '&export=1';
+}
+
+function scaleIframe(pid) {
+    var dims  = CANVAS_SIZES[pid] || [1080, 1350];
+    var cw    = dims[0];
+    var ch    = dims[1];
+    var wrap  = document.getElementById('pcg-frame-wrap');
+    var iframe = document.getElementById('pcg-preview-iframe');
+    if (!wrap || !iframe) return;
+    var wrapW = wrap.offsetWidth || 500;
+    var scale = wrapW / cw;
+    iframe.style.width     = cw + 'px';
+    iframe.style.height    = ch + 'px';
+    iframe.style.transform = 'scale(' + scale + ')';
+    wrap.style.height      = Math.round(ch * scale) + 'px';
+}
+
+function selectPlatform(card) {
+    document.querySelectorAll('.pcg-platform-card').forEach(function(c) {
+        c.classList.remove('active');
+    });
+    card.classList.add('active');
+    var pid   = card.dataset.platform;
+    var label = card.dataset.label;
+    var dims  = card.dataset.dims;
+    _activePlatform = pid;
+    document.getElementById('pcg-preview-iframe').src = _buildIframeSrc(pid);
+    document.getElementById('pcg-active-label').textContent = label + ' · ' + dims;
+    scaleIframe(pid);
+}
+
+window.addEventListener('load', function() {
+    var active = document.querySelector('.pcg-platform-card.active');
+    if (active) {
+        document.getElementById('pcg-active-label').textContent =
+            active.dataset.label + ' · ' + active.dataset.dims;
+    }
+    scaleIframe(_activePlatform);
+});
+window.addEventListener('resize', function() { scaleIframe(_activePlatform); });
+</script>
+
+</body>
+</html>

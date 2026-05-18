@@ -186,6 +186,38 @@ def public_player_card(
     parts = (user.name or user.email).split()
     initials = "".join(p[0].upper() for p in parts[:2]) if parts else "?"
 
+    # ── Gallery hub early return ──────────────────────────────────────────────
+    # No ?platform= AND no &export=1 AND no ?preview= → human-browseable public link.
+    # Return the gallery hub page (iframe preview + platform picker) instead of
+    # rendering a raw Level C card without page chrome.
+    # Playwright + card editor always supply ?platform=…&export=1, so they skip this.
+    # ?preview= is the editor draft-variant parameter — skip gallery for those too.
+    if not platform and not export and not preview:
+        from app.services.card_constants import (
+            CARD_GALLERY_PLATFORM_IDS as _CARD_GALLERY_PLATFORM_IDS,
+            CANVAS_SIZES as _CANVAS_SIZES_ALL,
+        )
+        from app.services.card_platform_service import build_platform_list as _build_platform_list
+        _gallery_platforms = _build_platform_list(_CARD_GALLERY_PLATFORM_IDS)
+        _canvas_sizes_json = {pid: {"w": w, "h": h} for pid, (w, h) in _CANVAS_SIZES_ALL.items()}
+        _default_pid = "instagram_portrait"
+        return templates.TemplateResponse(request, "public/player_card_gallery.html", {
+            "player_name":        user.name or user.email,
+            "user_id":            user_id,
+            "player": {
+                "position":    position,
+                "nationality": user.nationality,
+            },
+            "overall":            overall,
+            "tier_label":         tier_label,
+            "tier_color":         tier_color,
+            "initials":           initials,
+            "platforms":          _gallery_platforms,
+            "canvas_sizes":       _canvas_sizes_json,
+            "default_platform":   _default_pid,
+            "default_iframe_src": f"/players/{user_id}/card?platform={_default_pid}&export=1",
+        })
+
     # Teams
     teams_info = []
     for tm in db.query(TeamMember).filter(TeamMember.user_id == user_id).all():
