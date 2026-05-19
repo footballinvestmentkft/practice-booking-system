@@ -146,12 +146,13 @@ def _make_db(user, license_, draft_published_platform=_UNSET):
     return db
 
 
-def _call_route(platform=None, export=False, user=None, license_=None,
-                draft_published_platform=_UNSET):
+def _call_route(platform=None, export=False, native_export=False, user=None,
+                license_=None, draft_published_platform=_UNSET):
     """Call public_player_card and capture the TemplateResponse call args.
 
     draft_published_platform: forwarded to _make_db — controls CardDraft.published_platform
     independently of license_.published_card_platform.
+    native_export: mirrors the ?native_export=1 query param (default platform PNG export path).
     """
     from fastapi import Request as _Request
     from app.api.web_routes.public_player import public_player_card
@@ -178,7 +179,7 @@ def _call_route(platform=None, export=False, user=None, license_=None,
             theme=None,
             export=export,
             animated=False,
-            native_export=False,
+            native_export=native_export,
             db=db,
         )
     return captured
@@ -291,6 +292,19 @@ class TestPlayerCardPublicRoute:
         """export=True must skip the public profile and render the export template."""
         ctx = _call_route(platform=None, export=True)
         assert ctx.get("template") != "public/player_card_public.html"
+
+    def test_pcp07b_native_export_bypasses_public_profile(self):
+        """?native_export=1 (default platform PNG path) must skip public profile.
+
+        The export service builds ?native_export=1 for platform=="default" Playwright renders.
+        Without this guard, Playwright loads the public profile page, finds no .card-wrap,
+        and raises ValueError → 500 → "Export failed".
+        """
+        ctx = _call_route(platform=None, export=False, native_export=True)
+        assert ctx.get("template") != "public/player_card_public.html", (
+            "?native_export=1 must bypass the public profile early return "
+            "so Playwright can screenshot the .card-wrap element"
+        )
 
     def test_pcp08_platform_param_bypasses_public_profile(self):
         """?platform=X must skip public profile and render the card directly."""

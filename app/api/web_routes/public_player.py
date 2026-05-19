@@ -195,11 +195,12 @@ def public_player_card(
     _card_draft = _CardDraftService.get_player_card_draft(db, user_id=lfa_license.user_id)
 
     # ── Public profile early return ───────────────────────────────────────────
-    # No ?platform= AND no &export=1 AND no ?preview= → human-browseable public link.
-    # Render a clean, read-only profile page — no platform picker, no download UI.
-    # Playwright + card editor always supply ?platform=…&export=1, so they skip this.
-    # ?preview= is the editor draft-variant parameter — skip public profile for those too.
-    if not platform and not export and not preview:
+    # No ?platform= AND no &export=1 AND no ?preview= AND no ?native_export=1
+    # → human-browseable public link → render read-only profile page.
+    # Playwright always supplies one of: ?platform=…&export=1 OR ?native_export=1.
+    # ?preview= is the editor draft-variant parameter.
+    # All machine callers bypass this early return; only bare human-browseable URLs hit it.
+    if not platform and not export and not preview and not native_export:
         from app.services.card_constants import CANVAS_SIZES as _CANVAS_SIZES_ALL
         # Priority: CardDraft.published_platform (written by publish_draft())
         #         > UserLicense.published_card_platform (legacy pre-4D-1 fallback).
