@@ -30,6 +30,7 @@ PCP-12   Public profile template: _PUB_CARD_W / _PUB_CARD_H injected
 PCP-13   Editor initial Jinja2 iframe src uses instagram_portrait&export=1 for default platform
 PCP-14   Editor _cardIframeSrc JS uses instagram_portrait&export=1 for default platform
 PCP-15   Editor _applyIframeSize JS uses instagram_portrait canvas dims for default platform
+PCP-16   Editor exportCard JS maps 'default' platform to 'instagram_portrait' (WYSIWYG export)
 """
 from __future__ import annotations
 
@@ -420,4 +421,17 @@ class TestEditorDefaultPlatformFix:
         body = self._html[start: start + 600]
         assert "instagram_portrait" in body, (
             "_applyIframeSize default branch must reference instagram_portrait canvas size"
+        )
+
+    def test_pcp16_export_card_js_maps_default_to_instagram_portrait(self):
+        """exportCard() must map _currentPlatform==='default' to instagram_portrait.
+
+        The preview shows instagram_portrait for the default platform slot (P-1 fix).
+        The export must match — otherwise the user sees Portrait but downloads FIFA Classic.
+        """
+        start = self._html.find("async function exportCard(")
+        assert start != -1, "exportCard function must exist"
+        body = self._html[start: start + 400]
+        assert "_currentPlatform === 'default' ? 'instagram_portrait'" in body, (
+            "exportCard must map 'default' platform to 'instagram_portrait' to match the preview"
         )

@@ -723,9 +723,9 @@ async function publishCard() {
 }
 
 async function exportCard() {
-    // "default" exports the FIFA Classic card at native proportions (820×auto).
-    // No instagram_square fallback — the export route handles "default" explicitly.
-    const platform = _currentPlatform;
+    // 'default' previews as instagram_portrait (P-1 fix) — export must match the preview.
+    // Map 'default' → 'instagram_portrait' so what you see is what you download.
+    const platform = _currentPlatform === 'default' ? 'instagram_portrait' : _currentPlatform;
     const btn = document.getElementById('btn-export-card');
     const origText = btn.textContent;
     btn.disabled = true;
