@@ -677,31 +677,10 @@
                 <div class="ce-tab-panel active" id="panel-design"
                      role="tabpanel" aria-labelledby="tab-design">
 
+                    {# Section 1: Card Layout — structural template family (card_variants) #}
+                    {% if show_variant_picker and card_variants is defined %}
                     <div class="ce-section">
-                        <div class="ce-section-title">Card Design</div>
-
-                        {# Theme tiles — 2-column grid #}
-                        <div class="ce-design-grid" id="theme-picker">
-                            {% for t in card_themes %}
-                            <button class="ce-design-tile
-                                           {% if t.id == active_card_theme %}active{% endif %}
-                                           {% if not t.unlocked %}locked{% endif %}"
-                                    style="--tile-accent: {{ t.dot_color }};"
-                                    onclick="setCardTheme('{{ t.id }}', {{ 'true' if t.unlocked else 'false' }}, '{{ t.label }}', {{ t.credit_cost }})"
-                                    title="{{ t.label }}{% if t.is_premium and not t.unlocked %} · Unlock for {{ t.credit_cost }} CR{% endif %}">
-                                <div class="ce-design-tile-art"></div>
-                                <div class="ce-design-tile-footer">
-                                    <span class="ce-design-tile-name">{{ t.label }}</span>
-                                    {% if t.is_premium and not t.unlocked %}
-                                    <span class="ce-design-tile-lock">🔒 {{ t.credit_cost }}&thinsp;CR</span>
-                                    {% endif %}
-                                </div>
-                            </button>
-                            {% endfor %}
-                        </div>
-
-                        {# Variant strip — pills below tiles #}
-                        {% if show_variant_picker and card_variants is defined %}
+                        <div class="ce-section-title">Card Layout</div>
                         <div class="ce-variant-strip" id="variant-picker">
                             {% for v in card_variants %}
                             <button class="ce-variant-btn
@@ -723,7 +702,30 @@
                             </button>
                             {% endfor %}
                         </div>
-                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {# Section 2: Color Theme — palette applied to the selected layout (card_themes) #}
+                    <div class="ce-section">
+                        <div class="ce-section-title">Color Theme</div>
+                        <div class="ce-design-grid" id="theme-picker">
+                            {% for t in card_themes %}
+                            <button class="ce-design-tile
+                                           {% if t.id == active_card_theme %}active{% endif %}
+                                           {% if not t.unlocked %}locked{% endif %}"
+                                    style="--tile-accent: {{ t.dot_color }};"
+                                    onclick="setCardTheme('{{ t.id }}', {{ 'true' if t.unlocked else 'false' }}, '{{ t.label }}', {{ t.credit_cost }})"
+                                    title="{{ t.label }}{% if t.is_premium and not t.unlocked %} · Unlock for {{ t.credit_cost }} CR{% endif %}">
+                                <div class="ce-design-tile-art"></div>
+                                <div class="ce-design-tile-footer">
+                                    <span class="ce-design-tile-name">{{ t.label }}</span>
+                                    {% if t.is_premium and not t.unlocked %}
+                                    <span class="ce-design-tile-lock">🔒 {{ t.credit_cost }}&thinsp;CR</span>
+                                    {% endif %}
+                                </div>
+                            </button>
+                            {% endfor %}
+                        </div>
                     </div>
 
                 </div>{# /panel-design #}

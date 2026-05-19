@@ -435,3 +435,55 @@ class TestEditorDefaultPlatformFix:
         assert "_currentPlatform === 'default' ? 'instagram_portrait'" in body, (
             "exportCard must map 'default' platform to 'instagram_portrait' to match the preview"
         )
+
+
+# ── 4. Card Design tab — information architecture (CE-01..CE-04) ──────────────
+
+class TestCardDesignTabStructure:
+    """CE-01..CE-04 — Design tab must present Card Layout and Color Theme as two
+    distinct, clearly labelled sections.  IDs and handlers must be unchanged.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _src(self, editor_src):
+        self._html = editor_src
+
+    def test_ce01_card_layout_section_title_present(self):
+        """Design tab must contain a 'Card Layout' section title (card_variants)."""
+        assert "Card Layout" in self._html, (
+            "The card_variants picker section must be labelled 'Card Layout'"
+        )
+
+    def test_ce02_color_theme_section_title_present(self):
+        """Design tab must contain a 'Color Theme' section title (card_themes)."""
+        assert "Color Theme" in self._html, (
+            "The card_themes picker section must be labelled 'Color Theme'"
+        )
+
+    def test_ce03_old_combined_section_title_absent(self):
+        """The old merged 'Card Design' section-title must no longer appear as a
+        ce-section-title — it was replaced by the two distinct section headings.
+        """
+        assert 'class="ce-section-title">Card Design<' not in self._html, (
+            "Merged 'Card Design' section-title must be replaced by 'Card Layout' "
+            "and 'Color Theme' headings"
+        )
+
+    def test_ce04_picker_ids_preserved(self):
+        """Both picker element IDs must survive the restructure."""
+        assert 'id="variant-picker"' in self._html, (
+            "variant-picker ID must be preserved"
+        )
+        assert 'id="theme-picker"' in self._html, (
+            "theme-picker ID must be preserved"
+        )
+
+    def test_ce05_card_layout_above_color_theme(self):
+        """'Card Layout' section must appear before 'Color Theme' in DOM order."""
+        layout_pos = self._html.find("Card Layout")
+        theme_pos  = self._html.find("Color Theme")
+        assert layout_pos != -1, "Card Layout section must exist"
+        assert theme_pos  != -1, "Color Theme section must exist"
+        assert layout_pos < theme_pos, (
+            "Card Layout section must precede Color Theme section in DOM order"
+        )
