@@ -486,7 +486,7 @@
         {# Col 1 — Outfield (19 skills) #}
         <div class="ex-skills-col-left">
             <div class="ex-cat ex-cat-outfield">
-                <div class="ex-cat-name">{{ cat_outfield.name }}</div>
+                <div class="ex-cat-name">{{ cat_outfield.name_en }}</div>
                 <div class="ex-skill-rows">
                     {%- set cat_neutral_clr = 'var(--ex-cat-color-0)' -%}
                     {% for skill in cat_outfield.skills[:skill_slice] %}
@@ -520,7 +520,7 @@
         {# Col 2 — Mental (14 skills) #}
         <div class="ex-skills-col-mid">
             <div class="ex-cat ex-cat-mental">
-                <div class="ex-cat-name">{{ cat_mental.name }}</div>
+                <div class="ex-cat-name">{{ cat_mental.name_en }}</div>
                 <div class="ex-skill-rows">
                     {%- set cat_neutral_clr = 'var(--ex-cat-color-2)' -%}
                     {% for skill in cat_mental.skills[:skill_slice] %}
@@ -555,7 +555,7 @@
         <div class="ex-skills-col-right">
 
             <div class="ex-cat ex-cat-sets">
-                <div class="ex-cat-name">{{ cat_setpieces.name }}</div>
+                <div class="ex-cat-name">{{ cat_setpieces.name_en }}</div>
                 <div class="ex-skill-rows">
                     {%- set cat_neutral_clr = 'var(--ex-cat-color-1)' -%}
                     {% for skill in cat_setpieces.skills[:skill_slice] %}
@@ -586,7 +586,7 @@
             </div>
 
             <div class="ex-cat ex-cat-phys">
-                <div class="ex-cat-name">{{ cat_physical.name }}</div>
+                <div class="ex-cat-name">{{ cat_physical.name_en }}</div>
                 <div class="ex-skill-rows">
                     {%- set cat_neutral_clr = 'var(--ex-cat-color-3)' -%}
                     {% for skill in cat_physical.skills[:skill_slice] %}
