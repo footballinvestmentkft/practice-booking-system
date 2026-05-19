@@ -331,8 +331,10 @@
 .ex-cat-mental   { flex: 0 0 auto; margin-top: auto; }
 /* Sets: fixed height — exactly 3 rows guaranteed */
 /* 10(top pad) + 13(font) + 8(pad-b) + 8(mar-b) + 3×32(rows) + 10(bot pad) = 145px */
-.ex-cat-sets     { flex: 0 0 145px; }
-.ex-cat-phys     { flex: 1; }
+/* margin-top:auto anchors Sets+Physical to the card bottom (same as Mental's pattern) */
+/* Mental height = 10+30+14×32+10 = 498px; 145(sets)+6(gap)+347(phys) = 498 → tops align */
+.ex-cat-sets     { flex: 0 0 145px; margin-top: auto; }
+.ex-cat-phys     { flex: 0 0 347px; }
 
 /* Category heading — editorial, clear */
 .ex-cat-name {
