@@ -229,24 +229,27 @@
 }
 
 /* PosMap inline — bottom anchor of info column, conditional */
-/* No fixed height: SVG uses height:auto to render at its native 1.54:1 aspect ratio.
-   At 447px wide → natural height ≈ 290px → no slice clipping. */
+/* SVG is landscape 105×68 (1.54:1). At ~472px wide, height:auto → ~306px — too tall for
+   the remaining info-panel space, and SVG painted content escapes CSS overflow:hidden on
+   the parent (browser quirk). Fix: cap height and close the overflow gate on the container. */
 .ex-posmap-inline {
     flex-shrink: 0;
     border-top: 1px solid rgba(255,255,255,0.08);
     padding-top: 10px;
-    overflow: visible;
+    overflow: hidden;
 }
 .ex-posmap-inline > div {
     display: flex;
 }
-/* height:auto lets the SVG size itself from viewBox (105×68, 1.54:1) at full width */
+/* Fixed 200 px height — slice preserveAspectRatio crops top/bottom symmetrically,
+   keeping the full pitch width and all position dots visible. */
 .ex-posmap-inline .ex-pos-svg-landscape {
     flex: 1;
     width: 100%;
-    height: auto;
+    height: 200px;
     display: block;
     max-width: 100%;
+    overflow: hidden;
 }
 
 /* Position labels row — above inline PosMap, below meta */
