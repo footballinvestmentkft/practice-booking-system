@@ -98,15 +98,55 @@
 }
 .ce-sidebar-fs-link:hover { color: #a3b3f7; text-decoration: underline; }
 
-.ce-sidebar-body {
+/* ── Tab bar ──────────────────────────────────────────────────────────────── */
+.ce-tab-bar {
+    flex-shrink: 0;
+    display: flex;
+    background: var(--ce-sidebar-bg);
+    border-bottom: 1px solid var(--ce-sidebar-border);
+}
+.ce-tab {
     flex: 1;
+    padding: 0.52rem 0.35rem;
+    font-size: 0.6rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.38);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    text-align: center;
+    line-height: 1.2;
+}
+.ce-tab:hover { color: rgba(255,255,255,0.7); }
+.ce-tab.active {
+    color: #a3b3f7;
+    border-bottom-color: var(--ce-accent);
+}
+
+/* ── Tab panels ────────────────────────────────────────────────────────────── */
+.ce-tab-panels {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    position: relative;
+}
+.ce-tab-panel {
+    display: none;
+    height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
     padding: 0.7rem 0 1.25rem;
 }
-.ce-sidebar-body::-webkit-scrollbar { width: 3px; }
-.ce-sidebar-body::-webkit-scrollbar-track { background: transparent; }
-.ce-sidebar-body::-webkit-scrollbar-thumb {
+.ce-tab-panel.active { display: block; }
+.ce-tab-panel::-webkit-scrollbar { width: 3px; }
+.ce-tab-panel::-webkit-scrollbar-track { background: transparent; }
+.ce-tab-panel::-webkit-scrollbar-thumb {
     background: rgba(255,255,255,0.1);
     border-radius: 2px;
 }
@@ -493,7 +533,12 @@
         border-right: none;
         border-bottom: 1px solid var(--ce-sidebar-border);
     }
-    .ce-sidebar-body { overflow-y: visible; overflow-x: visible; }
+    /* Tab bar scrolls horizontally if labels overflow narrow mobile */
+    .ce-tab-bar { overflow-x: auto; }
+    .ce-tab     { flex: 0 0 auto; padding: 0.5rem 0.9rem; }
+    /* Tab panels are not fixed-height on mobile — page scrolls */
+    .ce-tab-panels { overflow: visible; }
+    .ce-tab-panel  { height: auto; overflow-y: visible; overflow-x: visible; }
     .ce-preview-area  { overflow: visible; min-height: 300px; }
     .ce-preview-stage { overflow: visible; padding: 16px 12px; }
     .ce-action-bar { padding: 0 0.75rem; }
@@ -564,6 +609,16 @@
 .light .btn-publish-card { border-color: rgba(56,161,105,0.5); background: rgba(56,161,105,0.1); color: #276749; }
 .light .btn-export-card  { border-color: rgba(102,126,234,0.4); background: rgba(102,126,234,0.1); color: #3730a3; }
 .light .btn-export-video { border-color: rgba(56,161,105,0.5); background: rgba(56,161,105,0.1); color: #276749; }
+
+/* Tab light-mode overrides */
+@media (prefers-color-scheme: light) {
+    .ce-tab       { color: rgba(0,0,0,0.38); }
+    .ce-tab:hover { color: rgba(0,0,0,0.7);  }
+    .ce-tab.active { color: #3730a3; border-bottom-color: var(--ce-accent); }
+}
+.light .ce-tab       { color: rgba(0,0,0,0.38); }
+.light .ce-tab:hover { color: rgba(0,0,0,0.7);  }
+.light .ce-tab.active { color: #3730a3; border-bottom-color: var(--ce-accent); }
 </style>
 {% endblock %}
 
@@ -602,182 +657,212 @@
                    class="ce-sidebar-fs-link">Open ↗</a>
             </div>
 
-            <div class="ce-sidebar-body">
+            {# ── Tab bar ──────────────────────────────────────────────────────── #}
+            <div class="ce-tab-bar" role="tablist">
+                <button class="ce-tab active" id="tab-design"
+                        role="tab" aria-selected="true" aria-controls="panel-design"
+                        onclick="switchTab('design')">Card Design</button>
+                <button class="ce-tab" id="tab-format"
+                        role="tab" aria-selected="false" aria-controls="panel-format"
+                        onclick="switchTab('format')">Format</button>
+                <button class="ce-tab" id="tab-media"
+                        role="tab" aria-selected="false" aria-controls="panel-media"
+                        onclick="switchTab('media')">Media</button>
+            </div>
 
-                {# ── S1: Design ───────────────────────────────────────────────── #}
-                <div class="ce-section">
-                    <div class="ce-section-title">Design</div>
+            {# ── Tab panels ────────────────────────────────────────────────────── #}
+            <div class="ce-tab-panels">
 
-                    {# Theme tiles — 2-column grid #}
-                    <div class="ce-design-grid" id="theme-picker">
-                        {% for t in card_themes %}
-                        <button class="ce-design-tile
-                                       {% if t.id == active_card_theme %}active{% endif %}
-                                       {% if not t.unlocked %}locked{% endif %}"
-                                style="--tile-accent: {{ t.dot_color }};"
-                                onclick="setCardTheme('{{ t.id }}', {{ 'true' if t.unlocked else 'false' }}, '{{ t.label }}', {{ t.credit_cost }})"
-                                title="{{ t.label }}{% if t.is_premium and not t.unlocked %} · Unlock for {{ t.credit_cost }} CR{% endif %}">
-                            <div class="ce-design-tile-art"></div>
-                            <div class="ce-design-tile-footer">
-                                <span class="ce-design-tile-name">{{ t.label }}</span>
-                                {% if t.is_premium and not t.unlocked %}
-                                <span class="ce-design-tile-lock">🔒 {{ t.credit_cost }}&thinsp;CR</span>
+                {# ── Panel: Card Design ─────────────────────────────────────────── #}
+                <div class="ce-tab-panel active" id="panel-design"
+                     role="tabpanel" aria-labelledby="tab-design">
+
+                    <div class="ce-section">
+                        <div class="ce-section-title">Card Design</div>
+
+                        {# Theme tiles — 2-column grid #}
+                        <div class="ce-design-grid" id="theme-picker">
+                            {% for t in card_themes %}
+                            <button class="ce-design-tile
+                                           {% if t.id == active_card_theme %}active{% endif %}
+                                           {% if not t.unlocked %}locked{% endif %}"
+                                    style="--tile-accent: {{ t.dot_color }};"
+                                    onclick="setCardTheme('{{ t.id }}', {{ 'true' if t.unlocked else 'false' }}, '{{ t.label }}', {{ t.credit_cost }})"
+                                    title="{{ t.label }}{% if t.is_premium and not t.unlocked %} · Unlock for {{ t.credit_cost }} CR{% endif %}">
+                                <div class="ce-design-tile-art"></div>
+                                <div class="ce-design-tile-footer">
+                                    <span class="ce-design-tile-name">{{ t.label }}</span>
+                                    {% if t.is_premium and not t.unlocked %}
+                                    <span class="ce-design-tile-lock">🔒 {{ t.credit_cost }}&thinsp;CR</span>
+                                    {% endif %}
+                                </div>
+                            </button>
+                            {% endfor %}
+                        </div>
+
+                        {# Variant strip — pills below tiles #}
+                        {% if show_variant_picker and card_variants is defined %}
+                        <div class="ce-variant-strip" id="variant-picker">
+                            {% for v in card_variants %}
+                            <button class="ce-variant-btn
+                                           {% if v.id == active_card_variant %}active{% endif %}
+                                           {% if not v.unlocked %}locked{% endif %}
+                                           {% if not v.available %}unavailable{% endif %}"
+                                    data-variant="{{ v.id }}"
+                                    title="{{ v.description }}{% if not v.available %} · Preview only{% elif v.is_premium and not v.unlocked %} · Unlock for {{ v.credit_cost }} CR{% endif %}"
+                                    onclick="{% if v.available %}setCardVariant('{{ v.id }}', {{ 'true' if v.unlocked else 'false' }}, '{{ v.label }}', {{ v.credit_cost }}){% else %}previewVariant('{{ v.id }}'){% endif %}">
+                                {% if not v.available %}⏳{% elif v.is_premium and not v.unlocked %}🔒{% endif %}
+                                {{ v.label }}
+                                {% if v.is_premium and not v.unlocked and v.available %}
+                                <span class="var-cost">{{ v.credit_cost }} CR</span>
                                 {% endif %}
-                            </div>
-                        </button>
-                        {% endfor %}
+                                <a href="/players/{{ user.id }}/card?preview={{ v.id }}" target="_blank"
+                                   onclick="event.stopPropagation();"
+                                   title="Preview {{ v.label }} in new tab"
+                                   style="font-size:0.58rem; opacity:0.6; text-decoration:none; color:inherit;">↗</a>
+                            </button>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
 
-                    {# Variant strip — pills below tiles #}
-                    {% if show_variant_picker and card_variants is defined %}
-                    <div class="ce-variant-strip" id="variant-picker">
-                        {% for v in card_variants %}
-                        <button class="ce-variant-btn
-                                       {% if v.id == active_card_variant %}active{% endif %}
-                                       {% if not v.unlocked %}locked{% endif %}
-                                       {% if not v.available %}unavailable{% endif %}"
-                                data-variant="{{ v.id }}"
-                                title="{{ v.description }}{% if not v.available %} · Preview only{% elif v.is_premium and not v.unlocked %} · Unlock for {{ v.credit_cost }} CR{% endif %}"
-                                onclick="{% if v.available %}setCardVariant('{{ v.id }}', {{ 'true' if v.unlocked else 'false' }}, '{{ v.label }}', {{ v.credit_cost }}){% else %}previewVariant('{{ v.id }}'){% endif %}">
-                            {% if not v.available %}⏳{% elif v.is_premium and not v.unlocked %}🔒{% endif %}
-                            {{ v.label }}
-                            {% if v.is_premium and not v.unlocked and v.available %}
-                            <span class="var-cost">{{ v.credit_cost }} CR</span>
+                </div>{# /panel-design #}
+
+                {# ── Panel: Format ──────────────────────────────────────────────── #}
+                <div class="ce-tab-panel" id="panel-format"
+                     role="tabpanel" aria-labelledby="tab-format">
+
+                    <div class="ce-section">
+                        <div class="ce-section-title">Export Format</div>
+                        <div class="ce-platform-grid" id="platform-picker">
+                            {# Default tile — always first #}
+                            <button class="ce-platform-tile {% if not active_card_platform or active_card_platform == 'default' %}active{% endif %}"
+                                    data-platform="default"
+                                    onclick="setPlatform('default')"
+                                    title="Native card proportions">
+                                <div class="ce-platform-icon ce-platform-icon--portrait"></div>
+                                <div class="ce-platform-tile-name">Default</div>
+                                <div class="ce-platform-tile-dims">1080 × 1350</div>
+                            </button>
+                            {# Per-platform tiles #}
+                            {% for p in platforms %}
+                            <button class="ce-platform-tile {% if active_card_platform == p.id %}active{% endif %}"
+                                    data-platform="{{ p.id }}"
+                                    onclick="setPlatform('{{ p.id }}')"
+                                    title="{{ p.title }}">
+                                <div class="ce-platform-icon ce-platform-icon--{{ _orient_map.get(p.id, 'portrait') }}"></div>
+                                <div class="ce-platform-tile-name">{{ p.label }}</div>
+                                <div class="ce-platform-tile-dims">
+                                    {% if p.id in canvas_sizes %}{{ canvas_sizes[p.id].w }} × {{ canvas_sizes[p.id].h }}{% endif %}
+                                </div>
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                </div>{# /panel-format #}
+
+                {# ── Panel: Media ───────────────────────────────────────────────── #}
+                <div class="ce-tab-panel" id="panel-media"
+                     role="tabpanel" aria-labelledby="tab-media">
+
+                    {# Player Photo #}
+                    <div class="ce-section">
+                        <div class="ce-section-title">Player Photo</div>
+                        <div class="player-photo-body">
+                            {% if user_license.player_card_photo_url %}
+                            <img src="{{ user_license.player_card_photo_url }}"
+                                 class="player-photo-preview" alt="Player card photo">
+                            {% else %}
+                            <div class="player-photo-placeholder">📷</div>
+                            <p class="player-photo-empty">Nincs kép — tölts fel!</p>
                             {% endif %}
-                            <a href="/players/{{ user.id }}/card?preview={{ v.id }}" target="_blank"
-                               onclick="event.stopPropagation();"
-                               title="Preview {{ v.label }} in new tab"
-                               style="font-size:0.58rem; opacity:0.6; text-decoration:none; color:inherit;">↗</a>
-                        </button>
-                        {% endfor %}
+                            <label class="btn-photo-upload-student">
+                                📷 Feltöltés
+                                <input type="file" accept="image/jpeg,image/png,image/webp"
+                                       onchange="uploadMyPhoto(this)" hidden>
+                            </label>
+                            {% if user_license.player_card_photo_url %}
+                            <button class="btn-photo-delete-student" onclick="deleteMyPhoto()">✕</button>
+                            {% endif %}
+                            <p class="player-photo-hint">Max 2 MB · JPEG/PNG/WEBP · 400×400 px vágás</p>
+                        </div>
+                    </div>
+
+                    {# Background photos (conditional on unlocked variants) #}
+                    {% set _unlocked = user_license.unlocked_card_variants or [] %}
+                    {% if 'compact_bg' in _unlocked %}
+                    <div class="ce-section">
+                        <div class="ce-section-title">Compact+BG Háttér</div>
+                        <div class="player-photo-body">
+                            {% if user_license.card_bg_compact_url %}
+                            <img src="{{ user_license.card_bg_compact_url }}"
+                                 class="player-photo-preview" alt="Compact BG photo">
+                            {% else %}
+                            <div class="player-photo-placeholder">🖼️</div>
+                            {% endif %}
+                            <label class="btn-photo-upload-student">
+                                🖼️ Háttér
+                                <input type="file" accept="image/jpeg,image/png,image/webp"
+                                       onchange="uploadCompactBg(this)" hidden>
+                            </label>
+                            {% if user_license.card_bg_compact_url %}
+                            <button class="btn-photo-delete-student" onclick="deleteCompactBg()">✕</button>
+                            {% endif %}
+                            <p class="player-photo-hint">Max 8 MB · JPEG/PNG/WEBP · 800×800 px max</p>
+                        </div>
                     </div>
                     {% endif %}
-                </div>
 
-                {# ── S2: Export Format ────────────────────────────────────────── #}
-                <div class="ce-section">
-                    <div class="ce-section-title">Export Format</div>
-                    <div class="ce-platform-grid" id="platform-picker">
-                        {# Default tile — always first #}
-                        <button class="ce-platform-tile {% if not active_card_platform or active_card_platform == 'default' %}active{% endif %}"
-                                data-platform="default"
-                                onclick="setPlatform('default')"
-                                title="Native card proportions">
-                            <div class="ce-platform-icon ce-platform-icon--portrait"></div>
-                            <div class="ce-platform-tile-name">Default</div>
-                            <div class="ce-platform-tile-dims">1080 × 1350</div>
-                        </button>
-                        {# Per-platform tiles #}
-                        {% for p in platforms %}
-                        <button class="ce-platform-tile {% if active_card_platform == p.id %}active{% endif %}"
-                                data-platform="{{ p.id }}"
-                                onclick="setPlatform('{{ p.id }}')"
-                                title="{{ p.title }}">
-                            <div class="ce-platform-icon ce-platform-icon--{{ _orient_map.get(p.id, 'portrait') }}"></div>
-                            <div class="ce-platform-tile-name">{{ p.label }}</div>
-                            <div class="ce-platform-tile-dims">
-                                {% if p.id in canvas_sizes %}{{ canvas_sizes[p.id].w }} × {{ canvas_sizes[p.id].h }}{% endif %}
-                            </div>
-                        </button>
-                        {% endfor %}
+                    {% if 'showcase_bg' in _unlocked %}
+                    <div class="ce-section">
+                        <div class="ce-section-title">Showcase+BG Háttér</div>
+                        <div class="player-photo-body">
+                            {% if user_license.card_bg_showcase_url %}
+                            <img src="{{ user_license.card_bg_showcase_url }}"
+                                 class="player-photo-preview" alt="Showcase BG photo">
+                            {% else %}
+                            <div class="player-photo-placeholder">🖼️</div>
+                            {% endif %}
+                            <label class="btn-photo-upload-student">
+                                🖼️ Háttér
+                                <input type="file" accept="image/jpeg,image/png,image/webp"
+                                       onchange="uploadShowcaseBg(this)" hidden>
+                            </label>
+                            {% if user_license.card_bg_showcase_url %}
+                            <button class="btn-photo-delete-student" onclick="deleteShowcaseBg()">✕</button>
+                            {% endif %}
+                            <p class="player-photo-hint">Max 8 MB · JPEG/PNG/WEBP · 800×800 px max</p>
+                        </div>
                     </div>
-                </div>
+                    {% endif %}
 
-                {# ── S3: Player Photo ─────────────────────────────────────────── #}
-                <div class="ce-section">
-                    <div class="ce-section-title">Player Photo</div>
-                    <div class="player-photo-body">
-                        {% if user_license.player_card_photo_url %}
-                        <img src="{{ user_license.player_card_photo_url }}"
-                             class="player-photo-preview" alt="Player card photo">
-                        {% else %}
-                        <div class="player-photo-placeholder">📷</div>
-                        <p class="player-photo-empty">Nincs kép — tölts fel!</p>
-                        {% endif %}
-                        <label class="btn-photo-upload-student">
-                            📷 Feltöltés
-                            <input type="file" accept="image/jpeg,image/png,image/webp"
-                                   onchange="uploadMyPhoto(this)" hidden>
-                        </label>
-                        {% if user_license.player_card_photo_url %}
-                        <button class="btn-photo-delete-student" onclick="deleteMyPhoto()">✕</button>
-                        {% endif %}
-                        <p class="player-photo-hint">Max 2 MB · JPEG/PNG/WEBP · 400×400 px vágás</p>
+                    {# Sponsor Logo #}
+                    <div class="ce-section">
+                        <div class="ce-section-title">Sponsor Logo</div>
+                        <div class="player-photo-body">
+                            {% if user_license.sponsor_logo_url %}
+                            <img src="{{ user_license.sponsor_logo_url }}"
+                                 class="player-photo-preview" alt="Sponsor logo"
+                                 style="object-fit: contain; background: rgba(255,255,255,0.05);">
+                            {% else %}
+                            <div class="player-photo-placeholder">🏷️</div>
+                            {% endif %}
+                            <label class="btn-photo-upload-student">
+                                🏷️ Logó
+                                <input type="file" accept="image/jpeg,image/png,image/webp"
+                                       onchange="uploadSponsorLogo(this)" hidden>
+                            </label>
+                            {% if user_license.sponsor_logo_url %}
+                            <button class="btn-photo-delete-student" onclick="deleteSponsorLogo()">✕</button>
+                            {% endif %}
+                            <p class="player-photo-hint">Max 2 MB · JPEG/PNG/WEBP · PNG transparent ajánlott</p>
+                        </div>
                     </div>
-                </div>
 
-                {# ── S4: Background photos (conditional on unlocked variants) ─── #}
-                {% set _unlocked = user_license.unlocked_card_variants or [] %}
-                {% if 'compact_bg' in _unlocked %}
-                <div class="ce-section">
-                    <div class="ce-section-title">Compact+BG Háttér</div>
-                    <div class="player-photo-body">
-                        {% if user_license.card_bg_compact_url %}
-                        <img src="{{ user_license.card_bg_compact_url }}"
-                             class="player-photo-preview" alt="Compact BG photo">
-                        {% else %}
-                        <div class="player-photo-placeholder">🖼️</div>
-                        {% endif %}
-                        <label class="btn-photo-upload-student">
-                            🖼️ Háttér
-                            <input type="file" accept="image/jpeg,image/png,image/webp"
-                                   onchange="uploadCompactBg(this)" hidden>
-                        </label>
-                        {% if user_license.card_bg_compact_url %}
-                        <button class="btn-photo-delete-student" onclick="deleteCompactBg()">✕</button>
-                        {% endif %}
-                        <p class="player-photo-hint">Max 8 MB · JPEG/PNG/WEBP · 800×800 px max</p>
-                    </div>
-                </div>
-                {% endif %}
+                </div>{# /panel-media #}
 
-                {% if 'showcase_bg' in _unlocked %}
-                <div class="ce-section">
-                    <div class="ce-section-title">Showcase+BG Háttér</div>
-                    <div class="player-photo-body">
-                        {% if user_license.card_bg_showcase_url %}
-                        <img src="{{ user_license.card_bg_showcase_url }}"
-                             class="player-photo-preview" alt="Showcase BG photo">
-                        {% else %}
-                        <div class="player-photo-placeholder">🖼️</div>
-                        {% endif %}
-                        <label class="btn-photo-upload-student">
-                            🖼️ Háttér
-                            <input type="file" accept="image/jpeg,image/png,image/webp"
-                                   onchange="uploadShowcaseBg(this)" hidden>
-                        </label>
-                        {% if user_license.card_bg_showcase_url %}
-                        <button class="btn-photo-delete-student" onclick="deleteShowcaseBg()">✕</button>
-                        {% endif %}
-                        <p class="player-photo-hint">Max 8 MB · JPEG/PNG/WEBP · 800×800 px max</p>
-                    </div>
-                </div>
-                {% endif %}
-
-                {# ── S5: Sponsor Logo ─────────────────────────────────────────── #}
-                <div class="ce-section">
-                    <div class="ce-section-title">Sponsor Logo</div>
-                    <div class="player-photo-body">
-                        {% if user_license.sponsor_logo_url %}
-                        <img src="{{ user_license.sponsor_logo_url }}"
-                             class="player-photo-preview" alt="Sponsor logo"
-                             style="object-fit: contain; background: rgba(255,255,255,0.05);">
-                        {% else %}
-                        <div class="player-photo-placeholder">🏷️</div>
-                        {% endif %}
-                        <label class="btn-photo-upload-student">
-                            🏷️ Logó
-                            <input type="file" accept="image/jpeg,image/png,image/webp"
-                                   onchange="uploadSponsorLogo(this)" hidden>
-                        </label>
-                        {% if user_license.sponsor_logo_url %}
-                        <button class="btn-photo-delete-student" onclick="deleteSponsorLogo()">✕</button>
-                        {% endif %}
-                        <p class="player-photo-hint">Max 2 MB · JPEG/PNG/WEBP · PNG transparent ajánlott</p>
-                    </div>
-                </div>
-
-            </div>{# /ce-sidebar-body #}
+            </div>{# /ce-tab-panels #}
         </aside>{# /ce-sidebar #}
 
         {# ══════════════════ RIGHT: PREVIEW AREA ══════════════════ #}
@@ -822,6 +907,20 @@
 
 {% block scripts %}
 <script>
+function switchTab(tabId) {
+    document.querySelectorAll('.ce-tab').forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+    });
+    document.querySelectorAll('.ce-tab-panel').forEach(p =>
+        p.classList.remove('active')
+    );
+    const tabEl   = document.getElementById('tab-' + tabId);
+    const panelEl = document.getElementById('panel-' + tabId);
+    if (tabEl)   { tabEl.classList.add('active'); tabEl.setAttribute('aria-selected', 'true'); }
+    if (panelEl) { panelEl.classList.add('active'); }
+}
+
 function _csrf() {
     return (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
 }
