@@ -248,36 +248,120 @@
     flex-shrink: 0;
 }
 
-/* ── Variant strip (below design tiles) ─────────────────────────────────────── */
-.ce-variant-strip {
-    display: flex;
-    gap: 0.35rem;
-    flex-wrap: wrap;
-    margin-bottom: 0.15rem;
+/* ── Layout tiles (Card Layout section) ─────────────────────────────────────── */
+/* Unavailable / previewing states not in base ce-design-tile — added here */
+.ce-layout-tile.unavailable { opacity: 0.55; cursor: pointer; }
+.ce-layout-tile.previewing {
+    border-color: rgba(102,126,234,0.38) !important;
+    background: rgba(102,126,234,0.09) !important;
+    box-shadow: none !important;
 }
-.ce-variant-btn {
-    font-size: 0.63rem; font-weight: 700; padding: 3px 9px; border-radius: 99px;
-    cursor: pointer; border: 1.5px solid transparent; transition: all .15s;
-    background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.65);
-    display: flex; align-items: center; gap: 0.3rem; white-space: nowrap;
+
+/* Art area — neutral studio-blue, no per-tile accent variable */
+.ce-layout-tile .ce-design-tile-art {
+    background: #080c14;
+    aspect-ratio: 16 / 9;   /* landscape composition better suggests "card structure" */
 }
-.ce-variant-btn:hover { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.88); }
-.ce-variant-btn.active {
-    background: rgba(102,126,234,0.2); border-color: rgba(102,126,234,0.6); color: #a3b3f7;
+/* Default base art for unknown/future variants */
+.ce-layout-tile .ce-design-tile-art::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 58% 0;
+    background: rgba(102,126,234,0.22);
 }
-.ce-variant-btn.locked { opacity: 0.6; }
-.ce-variant-btn.unavailable { opacity: 0.55; cursor: pointer; }
-.ce-variant-btn.previewing {
-    border-color: rgba(102,126,234,0.35);
-    background: rgba(102,126,234,0.1);
-    color: rgba(163,179,247,0.8);
+.ce-layout-tile .ce-design-tile-art::after {
+    content: '';
+    position: absolute;
+    top: 5px; left: 5px;
+    width: 11px; height: 9px;
+    border-radius: 2px;
+    background: rgba(102,126,234,0.85);
+    opacity: 1;
 }
-.ce-variant-btn .var-cost { font-size: 0.58rem; opacity: 0.75; }
+
+/* fifa — classic portrait: tall hero, rectangular OVR badge top-left */
+.ce-layout-tile[data-variant="fifa"] .ce-design-tile-art::before {
+    inset: 0 0 52% 0;
+    background: linear-gradient(180deg, rgba(102,126,234,0.32) 0%, rgba(102,126,234,0.10) 100%);
+}
+.ce-layout-tile[data-variant="fifa"] .ce-design-tile-art::after {
+    width: 12px; height: 12px; border-radius: 3px;
+    top: 5px; left: 5px;
+    background: rgba(102,126,234,0.90);
+}
+
+/* compact — small hero band, condensed layout */
+.ce-layout-tile[data-variant="compact"] .ce-design-tile-art::before {
+    inset: 0 0 78% 0;
+    background: rgba(102,126,234,0.30);
+}
+.ce-layout-tile[data-variant="compact"] .ce-design-tile-art::after {
+    width: 9px; height: 9px; border-radius: 2px;
+    top: 3px; left: 4px;
+}
+
+/* compact_bg — compact + full-bleed tinted background */
+.ce-layout-tile[data-variant="compact_bg"] .ce-design-tile-art::before {
+    inset: 0;
+    background: linear-gradient(150deg, rgba(102,126,234,0.22) 0%, rgba(4,4,12,0.55) 100%);
+}
+.ce-layout-tile[data-variant="compact_bg"] .ce-design-tile-art::after {
+    width: 9px; height: 9px; border-radius: 2px;
+    top: 3px; left: 4px;
+}
+
+/* showcase — large photo zone, circle badge top-right */
+.ce-layout-tile[data-variant="showcase"] .ce-design-tile-art::before {
+    inset: 0 0 26% 0;
+    background: linear-gradient(180deg, rgba(102,126,234,0.12) 0%, rgba(102,126,234,0.26) 100%);
+}
+.ce-layout-tile[data-variant="showcase"] .ce-design-tile-art::after {
+    width: 12px; height: 12px; border-radius: 50%;
+    top: 5px; left: auto; right: 5px;
+    background: rgba(102,126,234,0.85);
+}
+
+/* showcase_bg — fullbleed photo showcase */
+.ce-layout-tile[data-variant="showcase_bg"] .ce-design-tile-art::before {
+    inset: 0;
+    background: linear-gradient(150deg, rgba(102,126,234,0.16) 0%, rgba(8,4,18,0.58) 100%);
+}
+.ce-layout-tile[data-variant="showcase_bg"] .ce-design-tile-art::after {
+    width: 12px; height: 12px; border-radius: 50%;
+    top: 5px; left: auto; right: 5px;
+    background: rgba(102,126,234,0.80);
+}
+
+/* atlas — diagonal split composition */
+.ce-layout-tile[data-variant="atlas"] .ce-design-tile-art::before {
+    inset: 0;
+    background: linear-gradient(135deg, rgba(102,126,234,0.32) 45%, rgba(102,126,234,0.07) 45%);
+}
+.ce-layout-tile[data-variant="atlas"] .ce-design-tile-art::after {
+    width: 10px; height: 10px; border-radius: 2px;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    background: rgba(102,126,234,0.85);
+}
+
+/* pulse — radial glow + ring badge */
+.ce-layout-tile[data-variant="pulse"] .ce-design-tile-art::before {
+    inset: 0;
+    background: radial-gradient(circle at 50% 42%, rgba(102,126,234,0.40) 0%, rgba(0,0,0,0) 72%);
+}
+.ce-layout-tile[data-variant="pulse"] .ce-design-tile-art::after {
+    width: 15px; height: 15px; border-radius: 50%;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -58%);
+    background: transparent;
+    border: 2px solid rgba(102,126,234,0.78);
+    box-shadow: 0 0 7px rgba(102,126,234,0.50);
+}
 
 /* ── Platform tiles (S2) ─────────────────────────────────────────────────────── */
 .ce-platform-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));   /* minmax(0) prevents auto min-width overflow */
     gap: 6px;
 }
 .ce-platform-tile {
@@ -291,6 +375,8 @@
     align-items: center;
     gap: 4px;
     transition: border-color 0.15s, background 0.15s;
+    min-width: 0;        /* allow grid to shrink tile below content width */
+    overflow: hidden;    /* clip anything that still exceeds tile bounds */
 }
 .ce-platform-tile:hover {
     border-color: rgba(255,255,255,0.2);
@@ -340,6 +426,9 @@
     color: rgba(255,255,255,0.28);
     text-align: center;
     white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .ce-platform-tile.active .ce-platform-tile-dims { color: rgba(163,179,247,0.55); }
 
@@ -543,15 +632,15 @@
     .ce-preview-stage { overflow: visible; padding: 16px 12px; }
     .ce-action-bar { padding: 0 0.75rem; }
 
-    /* Wider tile grids on mobile */
+    /* Design grid wider on mobile; platform grid stays 3-col (stable, no overflow) */
     .ce-design-grid   { grid-template-columns: repeat(3, 1fr); }
-    .ce-platform-grid { grid-template-columns: repeat(4, 1fr); }
+    .ce-platform-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 /* ── Tablet (768–1023px) ─────────────────────────────────────────────────────── */
 @media (min-width: 768px) and (max-width: 1023px) {
     .ce-shell { --ce-sidebar-w: 260px; }
-    .ce-platform-grid { grid-template-columns: repeat(2, 1fr); }
+    .ce-platform-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* ── Light mode ──────────────────────────────────────────────────────────────── */
@@ -577,9 +666,8 @@
     .ce-platform-tile.active .ce-platform-tile-name { color: #3730a3; }
     .ce-platform-tile-dims { color: rgba(0,0,0,0.32); }
     .ce-platform-tile.active .ce-platform-tile-dims { color: rgba(55,48,163,0.55); }
-    .ce-variant-btn { background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.72); border-color: rgba(0,0,0,0.12); }
-    .ce-variant-btn:hover { background: rgba(0,0,0,0.10); color: rgba(0,0,0,0.9); }
-    .ce-variant-btn.active { background: rgba(102,126,234,0.15); border-color: rgba(102,126,234,0.5); color: #3730a3; }
+    .ce-layout-tile .ce-design-tile-art { background: #c8cedc; }
+    .ce-layout-tile.previewing { border-color: rgba(55,48,163,0.38) !important; background: rgba(55,48,163,0.07) !important; }
     .publish-status-text { color: rgba(0,0,0,0.5); }
     .publish-view-link   { color: rgba(55,48,163,0.75); }
     .publish-view-link:hover { color: #3730a3; }
@@ -681,24 +769,31 @@
                     {% if show_variant_picker and card_variants is defined %}
                     <div class="ce-section">
                         <div class="ce-section-title">Card Layout</div>
-                        <div class="ce-variant-strip" id="variant-picker">
+                        <div class="ce-design-grid" id="variant-picker">
                             {% for v in card_variants %}
-                            <button class="ce-variant-btn
+                            <button class="ce-design-tile ce-layout-tile
                                            {% if v.id == active_card_variant %}active{% endif %}
                                            {% if not v.unlocked %}locked{% endif %}
                                            {% if not v.available %}unavailable{% endif %}"
                                     data-variant="{{ v.id }}"
                                     title="{{ v.description }}{% if not v.available %} · Preview only{% elif v.is_premium and not v.unlocked %} · Unlock for {{ v.credit_cost }} CR{% endif %}"
                                     onclick="{% if v.available %}setCardVariant('{{ v.id }}', {{ 'true' if v.unlocked else 'false' }}, '{{ v.label }}', {{ v.credit_cost }}){% else %}previewVariant('{{ v.id }}'){% endif %}">
-                                {% if not v.available %}⏳{% elif v.is_premium and not v.unlocked %}🔒{% endif %}
-                                {{ v.label }}
-                                {% if v.is_premium and not v.unlocked and v.available %}
-                                <span class="var-cost">{{ v.credit_cost }} CR</span>
-                                {% endif %}
-                                <a href="/players/{{ user.id }}/card?preview={{ v.id }}" target="_blank"
-                                   onclick="event.stopPropagation();"
-                                   title="Preview {{ v.label }} in new tab"
-                                   style="font-size:0.58rem; opacity:0.6; text-decoration:none; color:inherit;">↗</a>
+                                <div class="ce-design-tile-art"></div>
+                                <div class="ce-design-tile-footer">
+                                    <span class="ce-design-tile-name">
+                                        {%- if not v.available -%}⏳&thinsp;
+                                        {%- elif v.is_premium and not v.unlocked -%}🔒&thinsp;
+                                        {%- endif -%}
+                                        {{ v.label }}
+                                        {%- if v.is_premium and not v.unlocked and v.available -%}
+                                        <span class="var-cost">&thinsp;{{ v.credit_cost }}&thinsp;CR</span>
+                                        {%- endif -%}
+                                    </span>
+                                    <a href="/players/{{ user.id }}/card?preview={{ v.id }}" target="_blank"
+                                       onclick="event.stopPropagation();"
+                                       title="Preview {{ v.label }} in new tab"
+                                       style="font-size:0.58rem;opacity:0.55;text-decoration:none;color:inherit;flex-shrink:0;">↗</a>
+                                </div>
                             </button>
                             {% endfor %}
                         </div>
@@ -1262,8 +1357,8 @@ function previewVariant(variantId) {
         ? `&platform=${_currentPlatform}&export=1`
         : '';
     if (iframe) { iframe.src = `/players/${_cardUserId}/card?preview=${variantId}${p}&_t=${Date.now()}`; }
-    document.querySelectorAll('.ce-variant-btn').forEach(b => b.classList.remove('previewing'));
-    const btn = document.querySelector(`.ce-variant-btn[data-variant="${variantId}"]`);
+    document.querySelectorAll('#variant-picker [data-variant]').forEach(b => b.classList.remove('previewing'));
+    const btn = document.querySelector(`#variant-picker [data-variant="${variantId}"]`);
     if (btn) btn.classList.add('previewing');
 }
 
@@ -1279,8 +1374,8 @@ async function setCardVariant(variantId, unlocked, label, cost) {
         const data = await r.json();
         if (data.ok) {
             _currentVariant = variantId;
-            document.querySelectorAll('.ce-variant-btn').forEach(b => b.classList.remove('active', 'previewing'));
-            const active = document.querySelector(`.ce-variant-btn[data-variant="${variantId}"]`);
+            document.querySelectorAll('#variant-picker [data-variant]').forEach(b => b.classList.remove('active', 'previewing'));
+            const active = document.querySelector(`#variant-picker [data-variant="${variantId}"]`);
             if (active) active.classList.add('active');
             const iframe = document.getElementById('player-card-iframe');
             if (iframe) { iframe.src = _cardIframeSrc(); }

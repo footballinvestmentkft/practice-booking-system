@@ -487,3 +487,74 @@ class TestCardDesignTabStructure:
         assert layout_pos < theme_pos, (
             "Card Layout section must precede Color Theme section in DOM order"
         )
+
+
+# ── 5. Card Layout tile upgrade + platform grid fix (CE-06..CE-10) ────────────
+
+class TestLayoutTileAndPlatformGridFix:
+    """CE-06..CE-10 — Layout tiles must use the design-tile system;
+    platform grid must use minmax(0) to prevent overflow clipping.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _src(self, editor_src):
+        self._html = editor_src
+
+    def test_ce06_layout_tile_css_class_present(self):
+        """CSS must define .ce-layout-tile rules for per-variant art."""
+        assert "ce-layout-tile" in self._html, (
+            "ce-layout-tile CSS class must be defined for the Card Layout tile system"
+        )
+
+    def test_ce07_variant_picker_uses_design_tile_structure(self):
+        """#variant-picker must use ce-design-tile structure, not pill buttons."""
+        picker_start = self._html.find('id="variant-picker"')
+        assert picker_start != -1, "variant-picker must exist"
+        # The picker container must be a design-grid, not variant-strip
+        ctx = self._html[picker_start - 80: picker_start + 20]
+        assert "ce-design-grid" in ctx, (
+            "variant-picker must be wrapped in a ce-design-grid container"
+        )
+
+    def test_ce08_layout_tile_buttons_have_design_tile_class(self):
+        """Layout tile buttons must carry ce-design-tile class for visual system."""
+        assert 'ce-design-tile ce-layout-tile' in self._html, (
+            "Layout tile buttons must have both ce-design-tile and ce-layout-tile classes"
+        )
+
+    def test_ce09_platform_grid_uses_minmax(self):
+        """Platform grid must use minmax(0, 1fr) to prevent column overflow clipping."""
+        assert "minmax(0, 1fr)" in self._html, (
+            "ce-platform-grid must use repeat(N, minmax(0, 1fr)) to suppress auto min-width"
+        )
+
+    def test_ce10_platform_tile_has_min_width_zero(self):
+        """Platform tile must have min-width: 0 to allow grid shrinking."""
+        platform_tile_start = self._html.find(".ce-platform-tile {")
+        assert platform_tile_start != -1
+        block = self._html[platform_tile_start: platform_tile_start + 500]
+        assert "min-width: 0" in block, (
+            ".ce-platform-tile must set min-width: 0 to prevent grid overflow"
+        )
+
+    def test_ce11_platform_dims_has_overflow_hidden(self):
+        """Platform dims must have overflow: hidden + text-overflow: ellipsis to clip long text."""
+        dims_start = self._html.find(".ce-platform-tile-dims {")
+        assert dims_start != -1
+        block = self._html[dims_start: dims_start + 250]
+        assert "text-overflow: ellipsis" in block, (
+            ".ce-platform-tile-dims must have text-overflow: ellipsis to prevent dims text overflow"
+        )
+
+    def test_ce12_variant_js_selectors_use_data_attribute(self):
+        """setCardVariant and previewVariant must target tiles via data-variant attribute."""
+        assert "#variant-picker [data-variant]" in self._html, (
+            "JS variant selectors must use #variant-picker [data-variant] attribute targeting"
+        )
+
+    def test_ce13_per_variant_art_defined_for_key_designs(self):
+        """CSS must define art rules for the main card design families."""
+        for variant in ("fifa", "compact", "pulse", "showcase"):
+            assert f'[data-variant="{variant}"]' in self._html, (
+                f"Per-variant art CSS rule must exist for '{variant}'"
+            )
