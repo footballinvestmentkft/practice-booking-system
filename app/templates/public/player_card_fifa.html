@@ -127,15 +127,20 @@ div.fifa-avatar {
     opacity: 0.75;
 }
 
-/* ── Card body: skills (left ~60%) + position panel (right ~40%) ── */
+/* ── Card body: spacer (170px) | skills (~60%) | position panel (~40%) ── */
 .card-body {
     display: grid;
-    grid-template-columns: 3fr 2fr;
+    grid-template-columns: 170px 3fr 2fr;
     background: var(--card-body-bg);
     min-height: 0;
 }
+/* 170px empty column — keeps Outfield left edge vertically aligned with
+   the header photo right edge. Hidden in export-mode and on mobile. */
+.card-body-photo-spacer {
+    background: var(--card-body-bg);
+}
 .skills-panel {
-    padding: 1rem;
+    padding: 1rem 1rem 1rem 0;
     min-width: 0;
 }
 .skills-title {
@@ -234,6 +239,12 @@ div.fifa-avatar {
 .ev-skill-pill.dn { background: rgba(252,129,129,0.15); color: #feb2b2; }
 .ev-empty { text-align: center; color: var(--card-text-faint); font-size: 0.8rem; padding: 2rem 0; }
 
+/* ── Export-mode overrides for photo-spacer ──────────────────────────────
+   In export-mode the header photo width uses --ex-photo-w (variable), so the
+   fixed 170px spacer would mis-align. Hide it and restore skills padding. */
+body.export-mode .card-body-photo-spacer { display: none; }
+body.export-mode .skills-panel           { padding-left: 1rem; }
+
 /* ── Responsive ─────────────────────────────────────────────
    Breakpoints:
    < 560px : tablet/large phone — stack card-body, 2-col skills, smaller left
@@ -248,6 +259,7 @@ div.fifa-avatar {
     .fifa-name { font-size: 1.2rem; }
     .identity-grid { grid-template-columns: 1fr 1fr; }
     .card-body { grid-template-columns: 1fr; }
+    .card-body-photo-spacer { display: none; }
     .position-panel { order: -1; }
     .skill-name { white-space: normal; overflow-wrap: break-word; overflow: visible; text-overflow: clip; }
     .skills-panel { padding: 0.9rem; }
@@ -422,8 +434,11 @@ body.export-mode .skill-bar-bg  { flex: 1 1 0 !important; max-width: none !impor
         <button class="tab-btn"        id="btn-events" onclick="switchTab('events')">🏆 Events</button>
     </div>
 
-    <!-- Skills tab: split layout — skills (left ~60%) + position panel (right ~40%) -->
+    <!-- Skills tab: spacer (170px) | skills (~60%) | position panel (~40%) -->
     <div class="card-body" id="tab-skills">
+
+        <!-- Photo-column spacer: aligns Outfield left edge with header photo right edge -->
+        <div class="card-body-photo-spacer"></div>
 
         <!-- Left: skill categories -->
         <div class="skills-panel">

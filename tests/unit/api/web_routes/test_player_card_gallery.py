@@ -49,6 +49,7 @@ _UNSET = object()
 _REPO_ROOT  = pathlib.Path(__file__).resolve().parents[4]
 _PUBLIC_TPL = _REPO_ROOT / "app" / "templates" / "public" / "player_card_public.html"
 _EDITOR_TPL = _REPO_ROOT / "app" / "templates" / "dashboard_card_editor.html"
+_FIFA_TPL   = _REPO_ROOT / "app" / "templates" / "public" / "player_card_fifa.html"
 
 # ── Shared mock helpers ─────────────────────────────────────────────────────────
 
@@ -558,3 +559,52 @@ class TestLayoutTileAndPlatformGridFix:
             assert f'[data-variant="{variant}"]' in self._html, (
                 f"Per-variant art CSS rule must exist for '{variant}'"
             )
+
+
+# ── 6. FIFA Classic header/body alignment (CE-14..CE-18) ────────────────────
+
+class TestFifaHeaderBodyAlignment:
+    """CE-14..CE-18 — Photo column right edge must align with Outfield left edge.
+
+    Design intent: .card-body uses a 3-column grid (170px spacer | 3fr skills | 2fr position).
+    The spacer width matches the header photo column (also 170px), so the Outfield section
+    left edge sits directly below the photo right edge. On mobile and in export-mode the
+    spacer is hidden and the skills panel padding is restored.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _src(self):
+        self._html = _FIFA_TPL.read_text(encoding="utf-8")
+
+    def test_ce14_card_body_has_three_column_grid(self):
+        """card-body grid must include 170px spacer column before skills and position."""
+        assert "170px 3fr 2fr" in self._html, (
+            ".card-body must use grid-template-columns: 170px 3fr 2fr "
+            "to align Outfield left edge with header photo right edge"
+        )
+
+    def test_ce15_photo_spacer_div_present_in_card_body(self):
+        """An empty card-body-photo-spacer div must be the first child of .card-body."""
+        assert "card-body-photo-spacer" in self._html, (
+            "card-body-photo-spacer div must exist in player_card_fifa.html"
+        )
+
+    def test_ce16_skills_panel_has_no_left_padding(self):
+        """skills-panel must have padding-left: 0 so Outfield starts at x=170px."""
+        assert "padding: 1rem 1rem 1rem 0" in self._html, (
+            ".skills-panel must have padding-left:0 (spacer provides left visual margin)"
+        )
+
+    def test_ce17_spacer_hidden_in_export_mode(self):
+        """export-mode must hide the spacer (header photo-width varies via --ex-photo-w)."""
+        assert "export-mode .card-body-photo-spacer" in self._html, (
+            "body.export-mode .card-body-photo-spacer { display: none } must be present"
+        )
+
+    def test_ce18_spacer_hidden_on_mobile(self):
+        """At max-width:560px the spacer must be hidden (grid collapses to 1-col)."""
+        mobile_block_start = self._html.index("@media (max-width: 560px)")
+        mobile_block = self._html[mobile_block_start: mobile_block_start + 600]
+        assert "card-body-photo-spacer" in mobile_block, (
+            ".card-body-photo-spacer must be hidden inside the max-width:560px media block"
+        )
