@@ -145,11 +145,11 @@
     overflow: hidden;
 }
 
-/* ── INFO PANEL: auto height (content-driven); right-col flex child ── */
-/* Single stacked column: brand → divider → meta → spacer → labels */
+/* ── INFO PANEL: flex:1 — grows to fill right-col above fixed skills-right ── */
+/* Spacer (flex:1 inside) absorbs the extra 145px; posmap shifts down accordingly. */
 /* OVR badge + tier moved to .ex-photo-ovr overlay in .ex-photo-panel */
 .ex-info-panel {
-    flex: 0 0 auto;
+    flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -276,11 +276,11 @@
 }
 
 /* ── SKILLS-RIGHT (right-col, below info panel) ── */
-/* padding:10px → inner w = (1080−560)−20 = 500px.
-   posmap SVG width:100% → 500px = Mental(300)+gap(10)+Sets(190). */
+/* Fixed at 851px: 10(pad)+324(posmap)+10(gap)+497(bottomRow)+10(pad).
+   bottomRow fills remaining 497px = catMental's exact 32px-row content height.
+   padding:10px → inner w = (1080−560)−20 = 500px. */
 .ex-skills-right {
-    flex: 1;
-    min-height: 0;
+    flex: 0 0 851px;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -365,16 +365,13 @@
 }
 
 .ex-cat-outfield { flex: 1; }
-/* Mental: fills column height; rows flex:1 to expand proportionally */
-/* Mental.top = Sets.top = posmap.bottom+gap; Mental.bottom = Physical.bottom */
+/* Mental: flex:1 fills bottomRow (497px) → rows 448/14 = 32px/row (Outfield pitch) */
 .ex-cat-mental            { flex: 1; }
-.ex-cat-mental .ex-row    { flex: 1; min-height: 0; max-height: none; }
-/* Sets: fixed height — exactly 3 rows guaranteed (145px) */
+/* Sets: fixed 145px = 3 × 32px rows + 49px padding+header */
 .ex-cat-sets              { flex: 0 0 145px; }
-/* Physical: fills remaining right-col height; rows flex:1 to expand proportionally */
-/* Leadership.bottom = Work Rate.bottom (both = block.bottom − pad) */
-.ex-cat-phys              { flex: 1; }
-.ex-cat-phys .ex-row      { flex: 1; min-height: 0; max-height: none; }
+/* Physical: fixed 305px = 8 × 32px rows + 49px; margin-top:41px bottom-aligns */
+/* with catMental (497−145−6−305=41). gap between Sets and Physical = 47px. */
+.ex-cat-phys              { flex: 0 0 305px; margin-top: 41px; }
 
 /* Category heading — editorial, clear */
 .ex-cat-name {
