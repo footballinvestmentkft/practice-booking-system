@@ -496,15 +496,34 @@ class TestAnsweredStateHide:
         assert "_showAnsweredState" in html, \
             "_showAnsweredState helper function missing from template"
 
-    def test_show_answered_state_called_after_answer(self):
-        """_showAnsweredState() must be called in the alsAnswer success path."""
+    def test_show_answered_state_not_in_answer_callback(self):
+        """_showAnsweredState() must NOT be called inside alsAnswer's .then() callback.
+
+        P1 UX fix: highlights must stay visible until the user clicks Next.
+        The hide must happen in alsNext, not synchronously in the answer callback.
+        """
         html = _render_session_page()
-        # Locate alsAnswer function body
         start = html.index("function alsAnswer(")
         end = html.index("\n    }", start)
         body = html[start:end]
-        assert "_showAnsweredState()" in body, \
-            "_showAnsweredState() not called inside alsAnswer success path"
+        assert "_showAnsweredState()" not in body, (
+            "_showAnsweredState() must not be called inside alsAnswer — "
+            "it fires in alsNext so the user can see the correct-answer highlight"
+        )
+
+    def test_show_answered_state_called_in_als_next(self):
+        """_showAnsweredState() must be called at the start of window.alsNext.
+
+        This is the UX fix: hide happens on Next click, after user sees highlights.
+        """
+        html = _render_session_page()
+        start = html.index("window.alsNext = function ()")
+        end = html.index("\n    };", start)
+        body = html[start:end]
+        assert "_showAnsweredState()" in body, (
+            "_showAnsweredState() must be called inside window.alsNext — "
+            "options should be hidden when the user requests the next question"
+        )
 
     def test_show_answered_state_hides_question_card(self):
         """_showAnsweredState must set display:none on als-question-card."""

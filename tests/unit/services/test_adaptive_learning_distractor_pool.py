@@ -340,3 +340,122 @@ class TestPerformanceTrackingQuestionId:
         # Multiple distractor combos observed — all mapped to the same question id
         assert len(seen_distractor_combos) >= 2
         assert q.id == 99
+
+
+# ---------------------------------------------------------------------------
+# SHUF — Production shuffle via real ORM load (no mocks)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.integration
+class TestProductionShuffleIntegration:
+    """Proves that _build_presented_options distributes the correct answer
+    across all 4 positions when options are loaded via the real ORM
+    relationship (not MagicMock).
+
+    This test catches any regression where SQLAlchemy loads answer_options
+    in a deterministic heap order that would make 'position D never correct'
+    a learnable pattern even after shuffle.
+
+    SHUF-01: 200 ORM-loaded runs cover all 4 positions
+    SHUF-02: always returns exactly 4 options
+    SHUF-03: every item contains 'id' and 'text'
+    """
+
+    @pytest.fixture(autouse=True)
+    def _seed(self, postgres_db):
+        """Insert 1 quiz + 1 question + 4 options into the real DB.
+
+        option_id ordering: correct option inserted LAST (order_index=3)
+        so that without shuffle the correct answer would always be at
+        position 3 (D). If shuffle works, all 4 positions must be observed.
+        """
+        from app.models.quiz import Quiz, QuizQuestion, QuizAnswerOption, QuizCategory, QuizDifficulty, QuestionType
+
+        quiz = Quiz(
+            title="__shuffle_integration_test__",
+            category=QuizCategory.GENERAL,
+            difficulty=QuizDifficulty.EASY,
+            time_limit_minutes=5,
+            xp_reward=0,
+            passing_score=50.0,
+            language="en",
+        )
+        postgres_db.add(quiz)
+        postgres_db.flush()
+
+        question = QuizQuestion(
+            quiz_id=quiz.id,
+            question_text="Integration shuffle test question?",
+            question_type=QuestionType.MULTIPLE_CHOICE,
+            order_index=0,
+        )
+        postgres_db.add(question)
+        postgres_db.flush()
+
+        # Insert incorrect options first (order_index 0–2), correct LAST (order_index 3)
+        # Without shuffle the ORM would return correct at position 3 every time.
+        for i in range(3):
+            postgres_db.add(QuizAnswerOption(
+                question_id=question.id,
+                option_text=f"Wrong option {i}",
+                is_correct=False,
+                order_index=i,
+            ))
+        postgres_db.add(QuizAnswerOption(
+            question_id=question.id,
+            option_text="Correct option",
+            is_correct=True,
+            order_index=3,
+        ))
+        postgres_db.commit()
+
+        self._question_id = question.id
+        self._db = postgres_db
+
+    def test_shuf01_all_4_positions_covered_via_orm(self):
+        """SHUF-01: over 200 ORM-loaded runs the correct answer appears at
+        all 4 positions (A/B/C/D).
+
+        Without shuffle: correct is always at position 3 (D).
+        P(miss any position in 200 uniform draws) ≈ (3/4)^200 ≈ 1.4e-25.
+        """
+        from app.models.quiz import QuizQuestion
+        from app.services.adaptive_learning import AdaptiveLearningService
+
+        svc = AdaptiveLearningService(self._db)
+        loaded_q = self._db.query(QuizQuestion).filter_by(id=self._question_id).first()
+        correct_id = next(o.id for o in loaded_q.answer_options if o.is_correct)
+
+        positions = set()
+        for _ in range(200):
+            presented = svc._build_presented_options(loaded_q)
+            pos = next(i for i, opt in enumerate(presented) if opt["id"] == correct_id)
+            positions.add(pos)
+
+        assert positions == {0, 1, 2, 3}, (
+            f"Correct answer only appeared at positions {positions} across 200 ORM-loaded runs. "
+            "ORM heap order may be deterministic — check relationship order_by or shuffle logic."
+        )
+
+    def test_shuf02_returns_exactly_4_options(self):
+        """SHUF-02: _build_presented_options always returns exactly 4 items."""
+        from app.models.quiz import QuizQuestion
+        from app.services.adaptive_learning import AdaptiveLearningService
+
+        svc = AdaptiveLearningService(self._db)
+        loaded_q = self._db.query(QuizQuestion).filter_by(id=self._question_id).first()
+        for _ in range(10):
+            result = svc._build_presented_options(loaded_q)
+            assert len(result) == 4
+
+    def test_shuf03_output_items_have_id_and_text(self):
+        """SHUF-03: every item in the presented list has 'id' and 'text' keys."""
+        from app.models.quiz import QuizQuestion
+        from app.services.adaptive_learning import AdaptiveLearningService
+
+        svc = AdaptiveLearningService(self._db)
+        loaded_q = self._db.query(QuizQuestion).filter_by(id=self._question_id).first()
+        result = svc._build_presented_options(loaded_q)
+        for item in result:
+            assert "id" in item, f"Missing 'id' key in {item}"
+            assert "text" in item, f"Missing 'text' key in {item}"

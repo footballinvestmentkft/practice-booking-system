@@ -726,8 +726,9 @@
         phase:              'category',
         timerSecondsLeft:   180,
         timerHandle:        null,
-        currentQuestionId:  null,
-        answerSubmitted:    false,
+        currentQuestionId:          null,
+        answerSubmitted:            false,
+        currentPresentedOptionIds:  [],  // option IDs in presented order — sent with each /answer POST
 
         poolEmptyData:      null,   // {score, xp, correct, total} for pool_empty phase
         timeRemainingSecs:  null,   // from server on resume
@@ -1059,6 +1060,7 @@
         state.recentIds = [data.id].concat(state.recentIds).slice(0, 5);
         state.currentQuestionId = data.id;
         state.answerSubmitted = false;
+        state.currentPresentedOptionIds = (data.options || []).map(function (o) { return o.id; });
 
         document.getElementById('als-question-num').textContent = 'Question ' + state.questionNum;
         document.getElementById('als-question-text').textContent = data.text;
@@ -1099,7 +1101,8 @@
         post('/adaptive-learning/session/' + state.sessionId + '/answer', {
             question_id: questionId,
             selected_option_id: selectedOptionId,
-            time_spent_seconds: state.timeLimitSeconds - state.timerSecondsLeft
+            time_spent_seconds: state.timeLimitSeconds - state.timerSecondsLeft,
+            presented_option_ids: state.currentPresentedOptionIds
         }).then(function (res) {
             if (!res) return;
             if (!res.ok) {
@@ -1139,7 +1142,6 @@
             }
             fb.style.display = 'block';
 
-            _showAnsweredState();
             _showNextButton();
         }).catch(function () {
             showError('Network error while recording answer. Please check your connection.');
@@ -1165,6 +1167,7 @@
         var btn  = document.getElementById('als-next-btn');
         var wrap = document.getElementById('als-next-btn-wrap');
         if (btn) btn.disabled = true;  // double-click guard
+        _showAnsweredState();
 
         var excludeParam = state.recentIds.join(',');
         get('/adaptive-learning/session/' + state.sessionId + '/next-question?exclude_ids=' + excludeParam)
@@ -1251,7 +1254,8 @@
             post('/adaptive-learning/session/' + state.sessionId + '/answer', {
                 question_id: state.currentQuestionId,
                 timed_out: true,
-                time_spent_seconds: state.timeLimitSeconds
+                time_spent_seconds: state.timeLimitSeconds,
+                presented_option_ids: state.currentPresentedOptionIds
             }).then(function (res) {
                 if (res && res.ok) {
                     var d = res.data;

@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, Enum as SQLEnum, Float, UniqueConstraint
+from sqlalchemy import Column, Integer, SmallInteger, String, Text, Boolean, DateTime, ForeignKey, Enum as SQLEnum, Float, UniqueConstraint
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
@@ -226,3 +227,28 @@ class QuestionMetadata(Base):
     
     # Unique constraint
     __table_args__ = (UniqueConstraint('question_id', name='unique_question_metadata'),)
+
+
+class ALAnswerLog(Base):
+    """Per-question audit log for Adaptive Learning sessions.
+
+    Records exactly which option IDs were presented (and their display order),
+    which option the user selected, and the position of the correct answer —
+    enabling retrospective positional bias analysis.
+    """
+    __tablename__ = "adaptive_learning_answer_log"
+
+    id                     = Column(Integer, primary_key=True, autoincrement=True)
+    session_id             = Column(Integer, ForeignKey("adaptive_learning_sessions.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id                = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    question_id            = Column(Integer, ForeignKey("quiz_questions.id", ondelete="CASCADE"), nullable=False)
+    selected_option_id     = Column(Integer, ForeignKey("quiz_answer_options.id", ondelete="SET NULL"), nullable=True)
+    correct_option_id      = Column(Integer, ForeignKey("quiz_answer_options.id", ondelete="SET NULL"), nullable=True)
+    is_correct             = Column(Boolean, nullable=False)
+    timed_out              = Column(Boolean, nullable=False, default=False)
+    # [id_at_pos_0, id_at_pos_1, id_at_pos_2, id_at_pos_3] — presentation order
+    presented_option_ids   = Column(ARRAY(Integer), nullable=True)
+    # 0=A, 1=B, 2=C, 3=D — derived from presented_option_ids.index(correct_option_id)
+    correct_option_position = Column(SmallInteger, nullable=True)
+    time_spent_seconds     = Column(Float, nullable=True)
+    answered_at            = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
