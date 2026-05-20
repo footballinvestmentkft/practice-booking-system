@@ -228,27 +228,42 @@
     min-height: 12px;
 }
 
-/* PosMap inline — bottom anchor of info column, conditional */
-/* SVG is landscape 105×68 (1.54:1). At ~472px wide, height:auto → ~306px — too tall for
-   the remaining info-panel space, and SVG painted content escapes CSS overflow:hidden on
-   the parent (browser quirk). Fix: cap height and close the overflow gate on the container. */
-.ex-posmap-inline {
-    flex-shrink: 0;
-    border-top: 1px solid rgba(255,255,255,0.08);
-    padding-top: 10px;
+/* ── SKILLS ZONE: right-side stack — PosMap (top) + Mental+Sets (bottom) ── */
+/* Replaces col-mid + col-right as direct children of .ex-skills-zone. */
+.ex-skills-col-right-stack {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     overflow: hidden;
 }
-.ex-posmap-inline > div {
-    display: flex;
+
+/* PosMap in skills zone — compact pitch, no text column */
+.ex-posmap-skills {
+    flex-shrink: 0;
+    overflow: hidden;
 }
-/* Fixed 200 px height — slice preserveAspectRatio crops top/bottom symmetrically,
-   keeping the full pitch width and all position dots visible. */
-.ex-posmap-inline .ex-pos-svg-landscape {
-    flex: 1;
-    width: 100%;
-    height: 200px;
-    display: block;
+/* Hide macro's .ex-pos-info text column; pitch-only display */
+.ex-posmap-skills .ex-pos-info { display: none; }
+/* meet aspect: full pitch visible (no cropping), centered in 500px area.
+   SVG viewBox 105×68 → at h=140px, natural width = 216px. */
+.ex-posmap-skills .ex-pos-svg-landscape {
+    width: auto;
+    height: 140px;
     max-width: 100%;
+    display: block;
+    margin: 0 auto;
+    overflow: visible;
+}
+
+/* Bottom row: Mental + Sets+Physical side-by-side (same content, new wrapper) */
+.ex-skills-bottom-row {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
     overflow: hidden;
 }
 
@@ -477,17 +492,13 @@
             {# Spacer — premium breathing room between meta and PosMap #}
             <div class="ex-info-spacer"></div>
 
-            {# PosMap — bottom anchor of info column, conditional on known position #}
+            {# Position labels — primary name (gold) + secondary chips; pitch map moved to skills zone #}
             {% if show_posmap and position_nodes and primary_pos_label %}
             <div class="ex-pos-labels-row">
                 <span class="ex-pos-primary">{{ primary_pos_label }}</span>
                 {% for sec in secondary_pos_labels[:3] %}
                 <span class="ex-pos-sec-chip">{{ sec }}</span>
                 {% endfor %}
-            </div>
-            <div class="ex-posmap-inline">
-                {{ position_map_landscape(position_nodes, primary_pos_label, secondary_pos_labels,
-                                          player_position=player.position, show_info_col=False) }}
             </div>
             {% endif %}
 
@@ -538,7 +549,19 @@
             </div>
         </div>
 
-        {# Col 2 — Mental (14 skills) #}
+        {# Col 2 — PosMap (top, conditional) + Mental + Sets+Physical (bottom) #}
+        <div class="ex-skills-col-right-stack">
+
+        {% if show_posmap and position_nodes and primary_pos_label %}
+        <div class="ex-posmap-skills">
+            {{ position_map_landscape(position_nodes, primary_pos_label, secondary_pos_labels,
+                                      player_position=player.position, show_info_col=True) }}
+        </div>
+        {% endif %}
+
+        <div class="ex-skills-bottom-row">
+
+        {# Mental (14 skills) #}
         <div class="ex-skills-col-mid">
             <div class="ex-cat ex-cat-mental">
                 <div class="ex-cat-name">{{ cat_mental.name_en }}</div>
@@ -637,8 +660,12 @@
                 </div>
             </div>
 
-        </div>
-    </div>
+        </div>{# /ex-skills-col-right #}
+
+        </div>{# /ex-skills-bottom-row #}
+        </div>{# /ex-skills-col-right-stack #}
+
+    </div>{# /ex-skills-zone #}
     {% endif %}{# skill_categories|length >= 4 #}
 
     {# ── SPONSOR LOGO BAR: bottom-center, only when a logo is uploaded ── #}
