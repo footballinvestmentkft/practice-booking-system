@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from ...database import get_db
 from ...dependencies import get_current_user_web
-from ...models.quiz import AdaptiveLearningSession, ALAnswerLog, Quiz, QuizAnswerOption, QuizCategory, QuizQuestion, QuestionMetadata
+from ...models.quiz import AdaptiveLearningSession, ALAnswerLog, ContentStatus, Quiz, QuizAnswerOption, QuizCategory, QuizQuestion, QuestionMetadata
 from ...models.user import User
 from ...models.xp_transaction import XPTransaction
 from ...services.adaptive_learning import AdaptiveLearningService
@@ -99,7 +99,7 @@ async def adaptive_learning_session_page(
         db.query(Quiz.category)
         .join(QuizQuestion, QuizQuestion.quiz_id == Quiz.id)
         .join(QuestionMetadata, QuestionMetadata.question_id == QuizQuestion.id)
-        .filter(Quiz.is_active == True, Quiz.language == language)
+        .filter(Quiz.content_status == ContentStatus.PUBLISHED.value, Quiz.language == language)
         .group_by(Quiz.category)
         .having(func.count(QuizQuestion.id) >= MIN_QUESTIONS_PER_CATEGORY)
         .all()
@@ -150,7 +150,7 @@ async def al_available_categories(
         db.query(Quiz.category, func.count(QuizQuestion.id).label("q_count"))
         .join(QuizQuestion, QuizQuestion.quiz_id == Quiz.id)
         .filter(
-            Quiz.is_active == True,
+            Quiz.content_status == ContentStatus.PUBLISHED.value,
             Quiz.language == language,
             Quiz.title.like("AL — % - %"),
             *_module_exclusion_filters(),
@@ -206,7 +206,7 @@ async def al_modules(
         db.query(prefix_expr.label("module_prefix"), func.count(QuizQuestion.id).label("q_count"))
         .join(QuizQuestion, QuizQuestion.quiz_id == Quiz.id)
         .filter(
-            Quiz.is_active == True,
+            Quiz.content_status == ContentStatus.PUBLISHED.value,
             Quiz.language == language,
             Quiz.category == quiz_category,
             Quiz.title.like("AL — % - %"),
@@ -315,7 +315,7 @@ async def al_session_start(
         .filter(
             Quiz.category == quiz_category,
             Quiz.language == language,
-            Quiz.is_active == True,
+            Quiz.content_status == ContentStatus.PUBLISHED.value,
             Quiz.title.like(f"{module_prefix} -%"),
             *_module_exclusion_filters(),
         )

@@ -1,0 +1,219 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Edit Question — {{ question.question_text[:60] }}{% endblock %}
+{% block page_heading %}✏️ Edit Question{% endblock %}
+{% block page_subtitle %}Quiz: {{ quiz.title }} &bull; Q#{{ question.id }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .breadcrumb { font-size: 0.85rem; color: #718096; margin-bottom: 1rem; }
+    .breadcrumb a { color: #718096; text-decoration: none; }
+    .breadcrumb a:hover { color: #5a4a9a; }
+    .alert { padding: 0.65rem 1rem; border-radius: 7px; font-size: 0.88rem; margin-bottom: 1rem; }
+    .alert-error   { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .status-chip { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.7rem; border-radius: 20px; font-size: 0.78rem; font-weight: 700; }
+    .badge-published { background: #dcfce7; color: #166534; }
+    .badge-draft     { background: #fef9c3; color: #92400e; }
+    .badge-archived  { background: #fee2e2; color: #991b1b; }
+    .card-wrap { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 1.5rem; margin-bottom: 1.5rem; }
+    .section-title { font-size: 0.9rem; font-weight: 700; color: #4a5568; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.9rem; }
+    .form-group label { font-size: 0.78rem; font-weight: 700; color: #4a5568; text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-group input, .form-group textarea, .form-group select {
+        padding: 0.5rem 0.7rem; border: 1px solid #e2e8f0; border-radius: 6px;
+        font-size: 0.9rem; color: #2d3748; background: #fafafa; transition: border-color .15s;
+    }
+    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #5a4a9a; background: white; }
+    .field-hint { font-size: 0.75rem; color: #718096; }
+    .meta-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+    .btn-save { background: #5a4a9a; color: white; padding: 0.5rem 1.4rem; font-size: 0.9rem; font-weight: 700; border: none; border-radius: 7px; cursor: pointer; }
+    .btn-save:hover { background: #4a3a8a; }
+    .options-table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+    .options-table thead th { background: #f7fafc; color: #718096; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.45rem 0.7rem; border-bottom: 2px solid #e2e8f0; }
+    .options-table tbody tr { border-bottom: 1px solid #f0f0f0; }
+    .options-table tbody tr:hover { background: #fafbff; }
+    .options-table td { padding: 0.45rem 0.7rem; vertical-align: middle; }
+    .option-type-badge { display: inline-block; padding: 0.12rem 0.4rem; border-radius: 4px; font-size: 0.7rem; font-weight: 700; }
+    .ot-fixed    { background: #e0f2fe; color: #0369a1; }
+    .ot-variant  { background: #f0fdf4; color: #166534; }
+    .ot-distract { background: #fef9c3; color: #92400e; }
+    .ot-correct  { font-size: 0.85rem; }
+    .inline-edit-form { display: flex; gap: 0.5rem; align-items: center; }
+    .inline-edit-form input { flex: 1; padding: 0.3rem 0.55rem; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 0.87rem; }
+    .btn-inline { padding: 0.3rem 0.65rem; font-size: 0.78rem; border-radius: 5px; font-weight: 600; border: none; cursor: pointer; }
+    .btn-inline-save    { background: #5a4a9a; color: white; }
+    .btn-inline-save:hover { background: #4a3a8a; }
+    .pool-section-label { font-size: 0.8rem; font-weight: 700; color: #4a5568; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.4rem 0.7rem; background: #f7fafc; border-bottom: 1px solid #e2e8f0; }
+    .info-note { font-size: 0.8rem; color: #718096; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 7px; padding: 0.6rem 0.9rem; margin-bottom: 1rem; }
+    .published-warn { font-size: 0.78rem; background: #fefce8; color: #713f12; border: 1px solid #fde68a; border-radius: 7px; padding: 0.5rem 0.8rem; margin-bottom: 0.8rem; }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="breadcrumb">
+    <a href="/admin/adaptive-learning/dashboard">Dashboard</a> /
+    <a href="/admin/adaptive-learning/quizzes">Quizzes</a> /
+    <a href="/admin/adaptive-learning/quizzes/{{ quiz.id }}/edit">{{ quiz.title }}</a> /
+    Q#{{ question.id }} Edit
+</div>
+
+{% if error %}
+<div class="alert alert-error">{{ error }}</div>
+{% endif %}
+{% if success %}
+<div class="alert alert-success">{{ success }}</div>
+{% endif %}
+
+{# ── Quiz status context ── #}
+<div style="margin-bottom:1rem;">
+    {% if quiz.content_status == ContentStatus.PUBLISHED.value %}
+        <span class="status-chip badge-published">● PUBLISHED</span>
+    {% elif quiz.content_status == ContentStatus.DRAFT.value %}
+        <span class="status-chip badge-draft">◎ DRAFT</span>
+    {% else %}
+        <span class="status-chip badge-archived">✕ ARCHIVED</span>
+    {% endif %}
+</div>
+
+{% if quiz.content_status == ContentStatus.PUBLISHED.value %}
+<div class="published-warn">
+    ⚠ This quiz is PUBLISHED. Text and metadata edits take effect immediately.
+    To change correct answers or add/delete questions, move the quiz to DRAFT first.
+</div>
+{% endif %}
+
+{# ── Question text + metadata form ── #}
+<div class="card-wrap">
+    <div class="section-title">Question Text &amp; Metadata</div>
+    <form method="post" action="/admin/adaptive-learning/quizzes/{{ quiz.id }}/questions/{{ question.id }}/edit">
+        <div class="form-group">
+            <label>Question Text</label>
+            <textarea name="question_text" rows="3" required style="resize:vertical">{{ question.question_text }}</textarea>
+        </div>
+        <div class="form-group">
+            <label>Explanation</label>
+            <textarea name="explanation" rows="2" style="resize:vertical">{{ question.explanation or '' }}</textarea>
+        </div>
+        <div class="meta-row">
+            <div class="form-group">
+                <label>Estimated Difficulty</label>
+                <input type="number" name="estimated_difficulty" step="0.01" min="0" max="1"
+                    value="{{ (metadata.estimated_difficulty or 0.5)|round(2) if metadata else 0.5 }}">
+                <span class="field-hint">0.0 = easy, 1.0 = hard</span>
+            </div>
+            <div class="form-group">
+                <label>Cognitive Load</label>
+                <input type="number" name="cognitive_load" step="0.01" min="0" max="1"
+                    value="{{ (metadata.cognitive_load or 0.5)|round(2) if metadata else 0.5 }}">
+                <span class="field-hint">0.0 = low, 1.0 = high</span>
+            </div>
+            <div class="form-group">
+                <label>Avg. Time (seconds)</label>
+                <input type="number" name="average_time_seconds" step="0.5" min="1"
+                    value="{{ (metadata.average_time_seconds or 30.0)|round(1) if metadata else 30.0 }}">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Concept Tags</label>
+            <input type="text" name="concept_tags_raw"
+                value="{{ concept_tags|join(', ') }}"
+                placeholder="e.g. pressing, gegenpressing, transition">
+            <span class="field-hint">Comma-separated tags</span>
+        </div>
+        <div style="margin-top:1rem;">
+            <button type="submit" class="btn-save">Save Question</button>
+        </div>
+    </form>
+</div>
+
+{# ── Answer options ── #}
+<div class="card-wrap">
+    {% if is_pool %}
+    {# Pool-mode question: show CORRECT_VARIANT + DISTRACTOR sections separately #}
+    <div class="section-title">Answer Options — Pool Mode</div>
+    <div class="info-note">
+        This is a <strong>v2.0 pool-mode question</strong>.
+        During each session the runtime randomly picks 1 variant and 3 distractors to present.
+        Min: {{ variants|length }} variant(s), {{ distractors|length }} distractor(s) currently stored.
+    </div>
+
+    <div class="pool-section-label">✔ Correct Answer Variants ({{ variants|length }})</div>
+    <table class="options-table" style="margin-bottom:1.2rem;">
+        <thead><tr>
+            <th>#</th><th>Text</th><th></th>
+        </tr></thead>
+        <tbody>
+        {% for opt in variants %}
+        <tr>
+            <td style="color:#718096;">{{ loop.index }}</td>
+            <td>
+                <form class="inline-edit-form" method="post"
+                    action="/admin/adaptive-learning/quizzes/{{ quiz.id }}/questions/{{ question.id }}/options/{{ opt.id }}/edit">
+                    <input type="text" name="option_text" value="{{ opt.option_text }}" required>
+                    <button type="submit" class="btn-inline btn-inline-save">Save</button>
+                </form>
+            </td>
+            <td><span class="option-type-badge ot-variant">VARIANT</span></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="pool-section-label">✗ Distractor Pool ({{ distractors|length }})</div>
+    <table class="options-table">
+        <thead><tr>
+            <th>#</th><th>Text</th><th></th>
+        </tr></thead>
+        <tbody>
+        {% for opt in distractors %}
+        <tr>
+            <td style="color:#718096;">{{ loop.index }}</td>
+            <td>
+                <form class="inline-edit-form" method="post"
+                    action="/admin/adaptive-learning/quizzes/{{ quiz.id }}/questions/{{ question.id }}/options/{{ opt.id }}/edit">
+                    <input type="text" name="option_text" value="{{ opt.option_text }}" required>
+                    <button type="submit" class="btn-inline btn-inline-save">Save</button>
+                </form>
+            </td>
+            <td><span class="option-type-badge ot-distract">DISTRACTOR</span></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    {% else %}
+    {# v1.0 FIXED question ── show all options with correct/incorrect indicator #}
+    <div class="section-title">Answer Options — Fixed</div>
+    <div class="info-note">
+        This is a <strong>legacy FIXED question</strong>.
+        All four options are always presented; is_correct designates the right answer.
+        To change which option is correct, move the quiz to DRAFT first.
+    </div>
+    <table class="options-table">
+        <thead><tr>
+            <th>#</th><th>Text</th><th>Correct?</th><th>Type</th><th></th>
+        </tr></thead>
+        <tbody>
+        {% for opt in fixed_opts %}
+        <tr>
+            <td style="color:#718096;">{{ loop.index }}</td>
+            <td>
+                <form class="inline-edit-form" method="post"
+                    action="/admin/adaptive-learning/quizzes/{{ quiz.id }}/questions/{{ question.id }}/options/{{ opt.id }}/edit">
+                    <input type="text" name="option_text" value="{{ opt.option_text }}" required>
+                    <button type="submit" class="btn-inline btn-inline-save">Save</button>
+                </form>
+            </td>
+            <td class="ot-correct">
+                {% if opt.is_correct %}✔{% else %}✗{% endif %}
+            </td>
+            <td><span class="option-type-badge ot-fixed">FIXED</span></td>
+            <td></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endblock %}

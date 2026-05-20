@@ -6,6 +6,7 @@ import random
 import math
 
 from ..models.quiz import (
+    ContentStatus,
     Quiz, QuizQuestion, UserQuestionPerformance, AdaptiveLearningSession,
     QuestionMetadata, QuizCategory, OptionType,
 )
@@ -280,7 +281,7 @@ class AdaptiveLearningService:
         base_filters = [
             Quiz.category == category,
             Quiz.language == language,
-            Quiz.is_active == True,
+            Quiz.content_status == ContentStatus.PUBLISHED.value,
         ]
         if module_prefix:
             base_filters.append(Quiz.title.like(f"{module_prefix} -%"))

@@ -35,19 +35,30 @@ class QuizDifficulty(enum.Enum):
     MEDIUM = "MEDIUM"
     HARD = "HARD"
 
+
+class ContentStatus(enum.Enum):
+    DRAFT     = "DRAFT"      # being edited; hidden from students
+    PUBLISHED = "PUBLISHED"  # live; served by the runtime AL engine
+    ARCHIVED  = "ARCHIVED"   # retired; never shown again
+
+
 class Quiz(Base):
     __tablename__ = "quizzes"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     category = Column(SQLEnum(QuizCategory), nullable=False)
     difficulty = Column(SQLEnum(QuizDifficulty), nullable=False, default=QuizDifficulty.MEDIUM)
-    time_limit_minutes = Column(Integer, nullable=False, default=15)  # időkorlát percekben
-    xp_reward = Column(Integer, nullable=False, default=50)  # XP jutalom sikeres kitöltésért
-    passing_score = Column(Float, nullable=False, default=70.0)  # minimum pont százalékban
+    time_limit_minutes = Column(Integer, nullable=False, default=15)
+    xp_reward = Column(Integer, nullable=False, default=50)
+    passing_score = Column(Float, nullable=False, default=70.0)
     language = Column(String(10), nullable=False, default='en')
+    # Legacy flag — kept for backward compatibility; always synced with content_status:
+    #   PUBLISHED → is_active=True,  DRAFT/ARCHIVED → is_active=False
     is_active = Column(Boolean, default=True)
+    # Authoritative lifecycle state (migration 2026_05_20_1300)
+    content_status = Column(String(20), nullable=False, default=ContentStatus.PUBLISHED.value)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     

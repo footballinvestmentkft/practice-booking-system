@@ -3504,6 +3504,100 @@
         "title": "Body_al_import_validate_admin_adaptive_learning_import_validate_post",
         "type": "object"
       },
+      "Body_al_option_edit_post_admin_adaptive_learning_quizzes__quiz_id__questions__question_id__options__option_id__edit_post": {
+        "properties": {
+          "option_text": {
+            "title": "Option Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "option_text"
+        ],
+        "title": "Body_al_option_edit_post_admin_adaptive_learning_quizzes__quiz_id__questions__question_id__options__option_id__edit_post",
+        "type": "object"
+      },
+      "Body_al_question_edit_post_admin_adaptive_learning_quizzes__quiz_id__questions__question_id__edit_post": {
+        "properties": {
+          "average_time_seconds": {
+            "default": 30.0,
+            "title": "Average Time Seconds",
+            "type": "number"
+          },
+          "cognitive_load": {
+            "default": 0.5,
+            "title": "Cognitive Load",
+            "type": "number"
+          },
+          "concept_tags_raw": {
+            "default": "",
+            "title": "Concept Tags Raw",
+            "type": "string"
+          },
+          "estimated_difficulty": {
+            "default": 0.5,
+            "title": "Estimated Difficulty",
+            "type": "number"
+          },
+          "explanation": {
+            "default": "",
+            "title": "Explanation",
+            "type": "string"
+          },
+          "question_text": {
+            "title": "Question Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question_text"
+        ],
+        "title": "Body_al_question_edit_post_admin_adaptive_learning_quizzes__quiz_id__questions__question_id__edit_post",
+        "type": "object"
+      },
+      "Body_al_quiz_edit_post_admin_adaptive_learning_quizzes__quiz_id__edit_post": {
+        "properties": {
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "difficulty": {
+            "default": "MEDIUM",
+            "title": "Difficulty",
+            "type": "string"
+          },
+          "language": {
+            "default": "en",
+            "title": "Language",
+            "type": "string"
+          },
+          "passing_score": {
+            "default": 70.0,
+            "title": "Passing Score",
+            "type": "number"
+          },
+          "time_limit_minutes": {
+            "default": 15,
+            "title": "Time Limit Minutes",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "xp_reward": {
+            "default": 50,
+            "title": "Xp Reward",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "Body_al_quiz_edit_post_admin_adaptive_learning_quizzes__quiz_id__edit_post",
+        "type": "object"
+      },
       "Body_confirm_attendance_sessions__session_id__attendance_confirm_post": {
         "properties": {
           "action": {
@@ -24139,6 +24233,224 @@
         ]
       }
     },
+    "/admin/adaptive-learning/quizzes/{quiz_id}/archive": {
+      "post": {
+        "operationId": "al_quiz_archive_admin_adaptive_learning_quizzes__quiz_id__archive_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "title": "Quiz Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Al Quiz Archive",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/adaptive-learning/quizzes/{quiz_id}/draft": {
+      "post": {
+        "operationId": "al_quiz_draft_admin_adaptive_learning_quizzes__quiz_id__draft_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "title": "Quiz Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Al Quiz Draft",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/adaptive-learning/quizzes/{quiz_id}/edit": {
+      "get": {
+        "operationId": "al_quiz_edit_get_admin_adaptive_learning_quizzes__quiz_id__edit_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "title": "Quiz Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Al Quiz Edit Get",
+        "tags": [
+          "web"
+        ]
+      },
+      "post": {
+        "operationId": "al_quiz_edit_post_admin_adaptive_learning_quizzes__quiz_id__edit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "title": "Quiz Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_al_quiz_edit_post_admin_adaptive_learning_quizzes__quiz_id__edit_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Al Quiz Edit Post",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/adaptive-learning/quizzes/{quiz_id}/publish": {
+      "post": {
+        "operationId": "al_quiz_publish_admin_adaptive_learning_quizzes__quiz_id__publish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "title": "Quiz Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Al Quiz Publish",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/admin/adaptive-learning/quizzes/{quiz_id}/questions/{question_id}": {
       "get": {
         "operationId": "al_question_detail_admin_adaptive_learning_quizzes__quiz_id__questions__question_id__get",
@@ -24185,6 +24497,186 @@
           }
         },
         "summary": "Al Question Detail",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/adaptive-learning/quizzes/{quiz_id}/questions/{question_id}/edit": {
+      "get": {
+        "operationId": "al_question_edit_get_admin_adaptive_learning_quizzes__quiz_id__questions__question_id__edit_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "title": "Quiz Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "question_id",
+            "required": true,
+            "schema": {
+              "title": "Question Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Al Question Edit Get",
+        "tags": [
+          "web"
+        ]
+      },
+      "post": {
+        "operationId": "al_question_edit_post_admin_adaptive_learning_quizzes__quiz_id__questions__question_id__edit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "title": "Quiz Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "question_id",
+            "required": true,
+            "schema": {
+              "title": "Question Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_al_question_edit_post_admin_adaptive_learning_quizzes__quiz_id__questions__question_id__edit_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Al Question Edit Post",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/adaptive-learning/quizzes/{quiz_id}/questions/{question_id}/options/{option_id}/edit": {
+      "post": {
+        "operationId": "al_option_edit_post_admin_adaptive_learning_quizzes__quiz_id__questions__question_id__options__option_id__edit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "title": "Quiz Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "question_id",
+            "required": true,
+            "schema": {
+              "title": "Question Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "option_id",
+            "required": true,
+            "schema": {
+              "title": "Option Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_al_option_edit_post_admin_adaptive_learning_quizzes__quiz_id__questions__question_id__options__option_id__edit_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Al Option Edit Post",
         "tags": [
           "web"
         ]
