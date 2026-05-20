@@ -319,7 +319,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-bottom: 7px;
+    margin-bottom: 10px;
     flex-shrink: 0;
     flex-wrap: wrap;
 }
@@ -533,6 +533,16 @@
                 {# Divider #}
                 <div class="ex-info-divider"></div>
 
+                {# Position labels: primary (gold) + secondary chips — above meta #}
+                {% if show_posmap and position_nodes and primary_pos_label %}
+                <div class="ex-pos-labels-row">
+                    <span class="ex-pos-primary">{{ primary_pos_label }}</span>
+                    {% for sec in secondary_pos_labels[:3] %}
+                    <span class="ex-pos-sec-chip">{{ sec }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
                 {# Meta — editorial key-value pairs #}
                 <div class="ex-meta-list">
                     {% if player.nationality %}
@@ -565,16 +575,6 @@
 
                 {# Spacer — breathing room; resolves to min-height (30px) in auto-height col #}
                 <div class="ex-info-spacer"></div>
-
-                {# Position labels: primary (gold) + secondary chips #}
-                {% if show_posmap and position_nodes and primary_pos_label %}
-                <div class="ex-pos-labels-row">
-                    <span class="ex-pos-primary">{{ primary_pos_label }}</span>
-                    {% for sec in secondary_pos_labels[:3] %}
-                    <span class="ex-pos-sec-chip">{{ sec }}</span>
-                    {% endfor %}
-                </div>
-                {% endif %}
 
             </div>{# /ex-info-panel #}
 
