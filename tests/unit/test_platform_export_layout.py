@@ -516,7 +516,7 @@ class TestPlaywrightP0ComponentSizing:
         page, browser, pw, _vw, vh = self._open_card(platform_id)
         try:
             bottom = page.evaluate(
-                "() => { const el = document.querySelector('.ex-skills-zone, .ex-skills, .skills-section');"
+                "() => { const el = document.querySelector('.ex-skills-zone, .ex-skills, .skills-section, .ex-skills-right, .ex-outfield-col');"
                 " return el ? el.getBoundingClientRect().bottom : null; }"
             )
             assert bottom is not None, "No skills section element found"

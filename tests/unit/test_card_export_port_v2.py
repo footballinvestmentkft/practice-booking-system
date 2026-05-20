@@ -247,20 +247,20 @@ class TestPortV2Rendering:
         )
 
     def test_pv_06_known_position_posmap_rendered(self, client):
-        """Known position (CM) + show_position_map=True → ex-posmap-inline div rendered in info col."""
+        """Known position (CM) + show_position_map=True → ex-posmap-skills div rendered in skills zone."""
         status, html = _render(client, position="CM", positions=["CM", "RB"])
         assert status == 200, f"HTTP {status}"
-        assert '<div class="ex-posmap-inline">' in html, (
-            "ex-posmap-inline div missing for known position — PosMap not rendered in info column"
+        assert '<div class="ex-posmap-skills">' in html, (
+            "ex-posmap-skills div missing for known position — PosMap not rendered in skills zone"
         )
 
     def test_pv_07_posmap_guard_primary_pos_label(self, client):
-        """PosMap guard: position='Unknown' sets primary_pos_label=None → no inline PosMap div
+        """PosMap guard: position='Unknown' sets primary_pos_label=None → no posmap div
         even if position_nodes returns non-empty list (guard checks primary_pos_label)."""
         status, html = _render(client, position="Unknown", positions=[])
         assert status == 200
         # Confirm guard is tight: div element absent even if CSS class exists in stylesheet
-        assert '<div class="ex-posmap-inline">' not in html
+        assert '<div class="ex-posmap-skills">' not in html
 
     def test_pv_08_full_44_skill_rows(self, client):
         """Portrait must render all 44 skill rows (skill_slice=None from CS-5 config)."""
@@ -289,10 +289,10 @@ class TestPortV2Structure:
     """Structural and content assertions for PORT-v2 rendered output."""
 
     def test_pv_10_three_column_skills_zone(self, client):
-        """Skills zone must have 3-column structure: left (Outfield) + mid (Mental) + right (Sets+Phys)."""
+        """Skills zone must have 3-column structure: outfield (left-col) + mid (Mental) + right (Sets+Phys)."""
         status, html = _render(client)
         assert status == 200
-        assert "ex-skills-col-left"  in html, "ex-skills-col-left missing (Outfield column)"
+        assert "ex-outfield-col"     in html, "ex-outfield-col missing (Outfield column)"
         assert "ex-skills-col-mid"   in html, "ex-skills-col-mid missing (Mental column)"
         assert "ex-skills-col-right" in html, "ex-skills-col-right missing (Sets+Physical column)"
 

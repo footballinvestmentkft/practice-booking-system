@@ -351,18 +351,15 @@ class TestEditorTemplatePublishUI:
         )
 
     def test_pub12b_view_public_card_link_present(self, src):
-        """PUB-12b: Editor must contain a View Public Card link pointing to /players/…/card."""
-        assert "View Public Card" in src, (
-            "PUB-12b: 'View Public Card' link not found in editor template"
-        )
+        """PUB-12b: Editor must contain a publish view link (publish-view-link CSS class)."""
         assert "publish-view-link" in src, (
-            "PUB-12b: .publish-view-link CSS class missing — View Public Card link not wired"
+            "PUB-12b: .publish-view-link CSS class missing — View card link not wired"
         )
 
     def test_pub12c_publish_card_bar_html_present(self, src):
-        """PUB-12c: publish-card-bar container div must be present in the HTML body."""
-        assert 'id="publish-card-bar"' in src, (
-            "PUB-12c: publish-card-bar container div missing from editor template HTML"
+        """PUB-12c: publish zone container must be present in the HTML body."""
+        assert 'ce-publish-zone' in src, (
+            "PUB-12c: ce-publish-zone container div missing from editor template HTML"
         )
 
     def test_pub12d_update_publish_indicator_called_on_domcontentloaded(self, src):

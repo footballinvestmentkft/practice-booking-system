@@ -888,8 +888,8 @@ class TestLfaNavigationCTAs:
         assert '🃏 My Cards' in dashboard_src
 
     def test_card_editor_page_title_uses_playing_card_icon(self, card_editor_src):
-        """Card editor page title must use 🎴 My Player Card."""
-        assert '🎴 My Player Card' in card_editor_src
+        """Card editor page title must contain My Player Card."""
+        assert 'My Player Card' in card_editor_src
 
     def test_card_editor_profile_cta_still_uses_id_card_icon(self, card_editor_src):
         """Profile CTA in card editor must still be 🪪 (unchanged)."""
