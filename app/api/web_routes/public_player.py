@@ -434,6 +434,7 @@ async def export_player_card(
     request: Request,
     user_id: int,
     platform: str = Query("instagram_square"),
+    theme: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user_web),
 ):
@@ -496,15 +497,29 @@ async def export_player_card(
                 ),
             )
 
+    # Theme validation: mirror the render-route's logic — accept only known IDs.
+    # Invalid or unknown IDs are silently dropped so the export falls back to the
+    # published theme (same semantics as the preview route).
+    _theme_qs = ""
+    if theme:
+        from app.services.card_theme_service import get_all_themes as _get_all_themes
+        _valid_theme_ids = {t.id for t in _get_all_themes(db=db)}
+        if theme not in _valid_theme_ids:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Unknown theme {theme!r}. Valid values: {sorted(_valid_theme_ids)}",
+            )
+        _theme_qs = f"&theme={theme}"
+
     # Render URL — constructed server-side only; no user-controlled string.
     # "default" platform: use ?native_export=1 so the template applies
     # native-export-mode CSS (card fills 820px width at natural auto height).
     # All other platforms: standard export render with ?platform=…&export=1.
     _base = f"http://127.0.0.1:{settings.APP_INTERNAL_PORT}/players/{user_id}/card"
     if platform == "default":
-        render_url = f"{_base}?native_export=1"
+        render_url = f"{_base}?native_export=1{_theme_qs}"
     else:
-        render_url = f"{_base}?platform={platform}&export=1"
+        render_url = f"{_base}?platform={platform}&export=1{_theme_qs}"
 
     # Screenshot runs in a thread so it does not block the event loop
     try:

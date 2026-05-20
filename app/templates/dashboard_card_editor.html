@@ -1273,7 +1273,7 @@ async function exportCard() {
     btn.disabled = true;
     btn.textContent = '⏳ Generating…';
     try {
-        const r = await fetch(`/players/${_cardUserId}/card/export?platform=${platform}`);
+        const r = await fetch(`/players/${_cardUserId}/card/export?platform=${platform}&theme=${_currentTheme}`);
         if (r.status === 429) { alert('Too many exports — please wait a moment and try again.'); return; }
         if (!r.ok) { alert('Export failed — please try again.'); return; }
         const blob = await r.blob();
