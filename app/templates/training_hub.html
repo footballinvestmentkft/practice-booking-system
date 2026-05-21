@@ -1,0 +1,219 @@
+{% extends "student_base.html" %}
+
+{% block title %}Training - LFA{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '🎓' %}
+{% set _page_name = 'Training' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .trn-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    .trn-header {
+        margin-bottom: 2rem;
+    }
+
+    .trn-header h1 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: var(--app-text);
+        margin: 0 0 0.4rem;
+    }
+
+    .trn-header p {
+        color: var(--app-text-muted);
+        font-size: 0.95rem;
+        margin: 0;
+    }
+
+    /* ── Mode grid ───────────────────────────────────────────────────────────── */
+    .trn-mode-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    @media (max-width: 640px) {
+        .trn-mode-grid { grid-template-columns: 1fr; }
+    }
+
+    .trn-mode-card {
+        background: var(--app-card);
+        border-radius: 14px;
+        padding: 1.5rem 1.25rem 1.25rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        position: relative;
+        border-top: 4px solid transparent;
+    }
+
+    .trn-mode-card.trn-active   { border-top-color: #4f46e5; }
+    .trn-mode-card.trn-planned  { border-top-color: #d1d5db; opacity: 0.7; }
+
+    .trn-mode-icon {
+        font-size: 2rem;
+        line-height: 1;
+    }
+
+    .trn-mode-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--app-text);
+        margin: 0;
+    }
+
+    .trn-mode-desc {
+        font-size: 0.85rem;
+        color: var(--app-text-muted);
+        line-height: 1.5;
+        margin: 0;
+        flex: 1;
+    }
+
+    .trn-badge {
+        display: inline-block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.2rem 0.65rem;
+        border-radius: 20px;
+        width: fit-content;
+    }
+
+    .trn-badge-planned {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .trn-badge-active {
+        background: #ede9fe;
+        color: #5b21b6;
+    }
+
+    /* ── Sub-module list inside Virtual card ─────────────────────────────────── */
+    .trn-submodule-list {
+        margin-top: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        border-top: 1px solid var(--app-border, #e5e7eb);
+        padding-top: 0.75rem;
+    }
+
+    .trn-submodule-link {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        background: #f5f3ff;
+        border: 1px solid #ddd6fe;
+        border-radius: 8px;
+        padding: 0.55rem 0.85rem;
+        text-decoration: none;
+        color: #4f46e5;
+        font-size: 0.88rem;
+        font-weight: 600;
+        transition: background 0.15s, border-color 0.15s;
+    }
+
+    .trn-submodule-link:hover {
+        background: #ede9fe;
+        border-color: #a78bfa;
+    }
+
+    .trn-submodule-link .trn-sub-icon {
+        font-size: 1.1rem;
+    }
+
+    .trn-submodule-link .trn-sub-arrow {
+        margin-left: auto;
+        color: #a78bfa;
+        font-size: 0.9rem;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────────────────────── */
+    .trn-footer {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .trn-footer a {
+        color: #667eea;
+        text-decoration: none;
+        margin: 0 1rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .trn-footer a:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="trn-container">
+
+    <div class="trn-header">
+        <h1>🎓 Training</h1>
+        <p>Choose your training mode. On-site and hybrid programs are coming soon — virtual training is available now.</p>
+    </div>
+
+    <div class="trn-mode-grid">
+
+        {# ── On-site ────────────────────────────────────────────────────────── #}
+        <div class="trn-mode-card trn-planned">
+            <span class="trn-mode-icon">🏟️</span>
+            <p class="trn-mode-title">On-site</p>
+            <p class="trn-mode-desc">
+                In-person training sessions at LFA facilities. Coached sessions, drills and match play.
+            </p>
+            <span class="trn-badge trn-badge-planned">Coming soon</span>
+        </div>
+
+        {# ── Hybrid ─────────────────────────────────────────────────────────── #}
+        <div class="trn-mode-card trn-planned">
+            <span class="trn-mode-icon">🔄</span>
+            <p class="trn-mode-title">Hybrid</p>
+            <p class="trn-mode-desc">
+                Combined on-site and digital training. Structured programmes with in-person coaching and virtual reinforcement.
+            </p>
+            <span class="trn-badge trn-badge-planned">Coming soon</span>
+        </div>
+
+        {# ── Virtual ────────────────────────────────────────────────────────── #}
+        <div class="trn-mode-card trn-active">
+            <span class="trn-mode-icon">💻</span>
+            <p class="trn-mode-title">Virtual</p>
+            <p class="trn-mode-desc">
+                Digital learning modules you can complete anywhere. XP-rewarded sessions that adapt to your skill level.
+            </p>
+            <span class="trn-badge trn-badge-active">Active</span>
+            <div class="trn-submodule-list">
+                <a href="/adaptive-learning" class="trn-submodule-link">
+                    <span class="trn-sub-icon">🧠</span>
+                    <span>Adaptive Learning</span>
+                    <span class="trn-sub-arrow">→</span>
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="trn-footer">
+        <a href="/dashboard/lfa-football-player">⚽ Dashboard</a>
+        <a href="/progress">📊 Progress</a>
+        <a href="/events">📅 Events</a>
+    </div>
+
+</div>
+{% endblock %}

@@ -63874,6 +63874,29 @@
         ]
       }
     },
+    "/training": {
+      "get": {
+        "description": "Training hub \u2014 top-level entry point for all training modes.",
+        "operationId": "training_hub_page_training_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Training Hub Page",
+        "tags": [
+          "web",
+          "training"
+        ]
+      }
+    },
     "/unread-counts": {
       "get": {
         "description": "Return unread notification + message counts for the header badge.\nUses the optional dependency so unauthenticated requests get 0/0\ninstead of a redirect (this endpoint is called by JS polling).",
