@@ -229,7 +229,7 @@ describe('A. Student Core Journey — Skill Progression', {
     // 2×3 mod-nav: 6 primary domain cards must be present
     cy.get('.mod-nav-card[href="/events"]').should('exist');
     cy.get('.mod-nav-card[href="/my-cards"]').should('exist');
-    cy.get('.mod-nav-card[href="/adaptive-learning"]').should('exist');
+    cy.get('.mod-nav-card[href="/training"]').should('exist');
     cy.get('.mod-nav-card[href="/skills/history?skill=passing"]').should('exist');
     cy.get('.mod-nav-card[href="/calendar"]').should('exist');
     cy.get('.mod-nav-card[href="/achievements"]').should('exist');
