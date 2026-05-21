@@ -6,6 +6,7 @@ import random
 import math
 
 from ..models.quiz import (
+    ALSessionStatus,
     ContentStatus,
     Quiz, QuizQuestion, UserQuestionPerformance, AdaptiveLearningSession,
     QuestionMetadata, QuizCategory, OptionType,
@@ -113,14 +114,16 @@ class AdaptiveLearningService:
                 
             # Update performance trend
             session.performance_trend = self._calculate_performance_trend(session)
-            
+
             # Adjust target difficulty
             session.target_difficulty = self._adjust_target_difficulty(
-                session.target_difficulty, 
-                is_correct, 
+                session.target_difficulty,
+                is_correct,
                 session.performance_trend
             )
-        
+
+            session.last_activity_at = datetime.now(timezone.utc)
+
         # Update user question performance
         self._update_user_question_performance(user_id, question_id, is_correct, time_spent_seconds)
         
@@ -153,6 +156,7 @@ class AdaptiveLearningService:
             return {}
             
         session.ended_at = datetime.now(timezone.utc)
+        session.status = ALSessionStatus.COMPLETED.value
 
         success_rate = (session.questions_correct / session.questions_presented) if session.questions_presented > 0 else 0
         score = (session.questions_correct or 0) * 2 - (session.questions_presented or 0)

@@ -210,6 +210,48 @@
     }
 
     .al-footer a:hover { text-decoration: underline; }
+
+    /* ── Recovery banner ────────────────────────────────────────────────────── */
+    .al-recovery-banner {
+        background: #fffbeb;
+        border: 1.5px solid #f59e0b;
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .al-recovery-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #92400e;
+        margin: 0;
+    }
+    .al-recovery-meta {
+        font-size: 0.85rem;
+        color: #78350f;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .al-recovery-meta span { white-space: nowrap; }
+    .al-recovery-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .btn-continue {
+        background: #d97706; color: white;
+        border: none; border-radius: 7px;
+        padding: 0.55rem 1.2rem; font-size: 0.9rem; font-weight: 700;
+        cursor: pointer; text-decoration: none; display: inline-block;
+        transition: background .15s;
+    }
+    .btn-continue:hover { background: #b45309; }
+    .btn-discard {
+        background: white; color: #6b7280;
+        border: 1px solid #d1d5db; border-radius: 7px;
+        padding: 0.55rem 1.2rem; font-size: 0.9rem; font-weight: 600;
+        cursor: pointer; transition: border-color .15s, color .15s;
+    }
+    .btn-discard:hover { border-color: #ef4444; color: #ef4444; }
 </style>
 {% endblock %}
 
@@ -242,6 +284,37 @@
             <div class="al-stat-lbl">Last Session</div>
         </div>
     </div>
+
+    {# ── Recovery banner (only when there is a resumable session) ────────────── #}
+    {% if resumable_session %}
+    {% set rs = resumable_session %}
+    {% set module_display = rs.module_prefix.removeprefix('AL — ') if rs.module_prefix else rs.category.value.replace('_', ' ').title() %}
+    <div class="al-recovery-banner" id="al-recovery-banner">
+        <p class="al-recovery-title">⚠️ Van egy félbehagyott Adaptive Learning sessionöd. Szeretnéd folytatni?</p>
+        <div class="al-recovery-meta">
+            <span>📚 {{ module_display }}</span>
+            <span>Kérdések megválaszolva: {{ rs.questions_presented }}</span>
+            <span>Helyes: {{ rs.questions_correct or 0 }}</span>
+            <span>Kezdés: {{ rs.started_at.strftime('%Y-%m-%d %H:%M') if rs.started_at else '—' }}</span>
+            {% if rs.last_activity_at %}
+            <span>Utolsó aktivitás: {{ rs.last_activity_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            {% endif %}
+        </div>
+        <div class="al-recovery-actions">
+            <a href="/adaptive-learning/session?resume={{ rs.id }}" class="btn-continue">▶ Folytatás</a>
+            <button class="btn-discard" onclick="discardSession({{ rs.id }})">🗑 Eldobás</button>
+        </div>
+    </div>
+    <script>
+    function discardSession(sessionId) {
+        if (!confirm('Biztosan eldobod a félbehagyott sessiont? A válaszok statisztikai célból megmaradnak, de XP nem jár érte.')) return;
+        fetch('/adaptive-learning/session/' + sessionId + '/discard', {method: 'POST'})
+            .then(r => r.json())
+            .then(() => document.getElementById('al-recovery-banner').remove())
+            .catch(() => alert('Hiba történt. Kérlek próbáld újra.'));
+    }
+    </script>
+    {% endif %}
 
     {# ── CTA block ─────────────────────────────────────────────────────────── #}
     <div class="al-cta-block">

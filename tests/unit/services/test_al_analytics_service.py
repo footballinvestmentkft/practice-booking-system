@@ -47,8 +47,9 @@ class TestGetGlobalStats:
         # query().first() for ALAnswerLog aggregate
         q1 = MagicMock()
         q1.first.return_value = agg_row
-        # query(func.count(...)).scalar() for sessions
+        # query(func.count(...)).filter(...).scalar() for sessions
         q2 = MagicMock()
+        q2.filter.return_value = q2
         q2.scalar.return_value = sessions
         db.query.side_effect = [q1, q2]
         return db

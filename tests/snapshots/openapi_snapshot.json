@@ -23928,6 +23928,48 @@
         ]
       }
     },
+    "/adaptive-learning/session/{session_id}/discard": {
+      "post": {
+        "description": "Void an in-progress session without awarding XP.\n\nSets status=VOIDED so analytics never counts it as completed.\nThe session row and ALAnswerLog rows are preserved for data analysis.",
+        "operationId": "al_session_discard_adaptive_learning_session__session_id__discard_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Al Session Discard",
+        "tags": [
+          "web",
+          "adaptive-learning"
+        ]
+      }
+    },
     "/adaptive-learning/session/{session_id}/next-question": {
       "get": {
         "description": "Return the next adaptive question for this session.",

@@ -5,6 +5,14 @@ from sqlalchemy.sql import func
 import enum
 from app.database import Base
 
+class ALSessionStatus(str, enum.Enum):
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED   = "COMPLETED"
+    EXPIRED     = "EXPIRED"    # auto-retired; questions were answered
+    ABANDONED   = "ABANDONED"  # auto-retired; 0 questions answered
+    VOIDED      = "VOIDED"     # user explicitly discarded
+
+
 class OptionType(enum.Enum):
     FIXED           = "FIXED"            # legacy — all 375 existing options
     CORRECT_VARIANT = "CORRECT_VARIANT"  # one of several correct phrasings
@@ -217,6 +225,15 @@ class AdaptiveLearningSession(Base):
 
     # Spaced-repetition cap: how many due questions have been served this session
     session_due_shown = Column(Integer, nullable=False, default=0)
+
+    # Explicit lifecycle status (replaces binary ended_at IS NULL/NOT NULL check)
+    status = Column(String(20), nullable=False, default=ALSessionStatus.IN_PROGRESS.value)
+
+    # Timestamp of the last answer recorded — used by recovery prompt
+    last_activity_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Populated when status=VOIDED; e.g. 'user_discarded'
+    void_reason = Column(String(100), nullable=True)
 
     # Relationships
     user = relationship("User")

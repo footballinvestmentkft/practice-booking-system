@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from ...database import get_db
 from ...dependencies import get_current_user_web
-from ...models.quiz import AdaptiveLearningSession, ALAnswerLog, ContentStatus, Quiz, QuizAnswerOption, QuizCategory, QuizQuestion, QuestionMetadata
+from ...models.quiz import ALSessionStatus, AdaptiveLearningSession, ALAnswerLog, ContentStatus, Quiz, QuizAnswerOption, QuizCategory, QuizQuestion, QuestionMetadata
 from ...models.user import User
 from ...models.xp_transaction import XPTransaction
 from ...services.adaptive_learning import AdaptiveLearningService
@@ -44,19 +44,42 @@ async def adaptive_learning_page(
     # ── Stats from adaptive_learning_sessions (safe — table exists) ──────────
     total_xp = (
         db.query(func.sum(AdaptiveLearningSession.xp_earned))
-        .filter(AdaptiveLearningSession.user_id == user.id)
+        .filter(
+            AdaptiveLearningSession.user_id == user.id,
+            AdaptiveLearningSession.status == ALSessionStatus.COMPLETED.value,
+        )
         .scalar()
     ) or 0
 
+    # Only count explicitly completed sessions (not EXPIRED/ABANDONED/VOIDED/IN_PROGRESS)
     session_count = (
         db.query(func.count(AdaptiveLearningSession.id))
-        .filter(AdaptiveLearningSession.user_id == user.id)
+        .filter(
+            AdaptiveLearningSession.user_id == user.id,
+            AdaptiveLearningSession.status == ALSessionStatus.COMPLETED.value,
+        )
         .scalar()
     ) or 0
+
+    # Recovery: find the most recent in-progress session with answered questions
+    resumable_session = (
+        db.query(AdaptiveLearningSession)
+        .filter(
+            AdaptiveLearningSession.user_id == user.id,
+            AdaptiveLearningSession.status == ALSessionStatus.IN_PROGRESS.value,
+            AdaptiveLearningSession.ended_at.is_(None),
+            AdaptiveLearningSession.questions_presented > 0,
+        )
+        .order_by(AdaptiveLearningSession.started_at.desc())
+        .first()
+    )
 
     recent_sessions = (
         db.query(AdaptiveLearningSession)
-        .filter(AdaptiveLearningSession.user_id == user.id)
+        .filter(
+            AdaptiveLearningSession.user_id == user.id,
+            AdaptiveLearningSession.status == ALSessionStatus.COMPLETED.value,
+        )
         .order_by(AdaptiveLearningSession.started_at.desc())
         .limit(5)
         .all()
@@ -74,6 +97,7 @@ async def adaptive_learning_page(
             "session_count": session_count,
             "recent_sessions": recent_sessions,
             "last_session": last_session,
+            "resumable_session": resumable_session,
         },
     )
 
@@ -353,10 +377,20 @@ async def al_session_start(
         if existing.session_time_limit_seconds and elapsed >= existing.session_time_limit_seconds:
             # Expired — retire silently, fall through to CREATE
             existing.ended_at = datetime.now(timezone.utc)
+            existing.status = (
+                ALSessionStatus.EXPIRED.value
+                if (existing.questions_presented or 0) > 0
+                else ALSessionStatus.ABANDONED.value
+            )
             db.commit()
 
         elif force_new:
             existing.ended_at = datetime.now(timezone.utc)
+            existing.status = (
+                ALSessionStatus.EXPIRED.value
+                if (existing.questions_presented or 0) > 0
+                else ALSessionStatus.ABANDONED.value
+            )
             db.commit()
             prior_retired = True
 
@@ -365,6 +399,11 @@ async def al_session_start(
               or existing.module_prefix != module_prefix):
             # Any mismatch (category / language / module) → auto-retire, no prompt
             existing.ended_at = datetime.now(timezone.utc)
+            existing.status = (
+                ALSessionStatus.EXPIRED.value
+                if (existing.questions_presented or 0) > 0
+                else ALSessionStatus.ABANDONED.value
+            )
             db.commit()
             prior_retired = True
 
@@ -638,4 +677,49 @@ async def al_session_complete(
         "questions_correct": correct,
         "xp_earned": xp,
         "accuracy_pct": accuracy_pct,
+    })
+
+
+@router.post("/adaptive-learning/session/{session_id}/discard")
+async def al_session_discard(
+    session_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Void an in-progress session without awarding XP.
+
+    Sets status=VOIDED so analytics never counts it as completed.
+    The session row and ALAnswerLog rows are preserved for data analysis.
+    """
+    guard = require_student_onboarding(user)
+    if guard:
+        return JSONResponse({"error": "onboarding required"}, status_code=403)
+
+    session = (
+        db.query(AdaptiveLearningSession)
+        .filter(
+            AdaptiveLearningSession.id == session_id,
+            AdaptiveLearningSession.user_id == user.id,
+        )
+        .with_for_update()
+        .first()
+    )
+    if not session:
+        return JSONResponse({"error": "session not found"}, status_code=404)
+    if session.ended_at is not None:
+        return JSONResponse(
+            {"error": "session already closed", "status": session.status},
+            status_code=410,
+        )
+
+    session.ended_at = datetime.now(timezone.utc)
+    session.status = ALSessionStatus.VOIDED.value
+    session.void_reason = "user_discarded"
+    db.commit()
+
+    return JSONResponse({
+        "session_id": session_id,
+        "status": "voided",
+        "void_reason": "user_discarded",
     })

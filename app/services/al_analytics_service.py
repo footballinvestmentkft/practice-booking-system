@@ -20,6 +20,7 @@ from sqlalchemy import Float, Integer, func
 from sqlalchemy.orm import Session
 
 from ..models.quiz import (
+    ALSessionStatus,
     AdaptiveLearningSession,
     ALAnswerLog,
     QuizAnswerOption,
@@ -102,7 +103,12 @@ def get_global_stats(db: Session) -> GlobalStats:
     timeouts = int(row.timeouts or 0)
     avg_time = float(row.avg_time or 0.0)
 
-    sessions = int(db.query(func.count(AdaptiveLearningSession.id)).scalar() or 0)
+    sessions = int(
+        db.query(func.count(AdaptiveLearningSession.id))
+        .filter(AdaptiveLearningSession.status == ALSessionStatus.COMPLETED.value)
+        .scalar()
+        or 0
+    )
 
     return GlobalStats(
         total_answers    = total,

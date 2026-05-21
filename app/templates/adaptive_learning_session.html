@@ -1358,7 +1358,21 @@
     };
 
     /* ── Bootstrap ─────────────────────────────────────────────────────────── */
-    alsLoadCategories();
+    // If ?resume=<session_id> is present (from the recovery banner), bypass the
+    // category/module picker and jump directly into the existing session.
+    (function () {
+        var params = new URLSearchParams(window.location.search);
+        var resumeId = params.get('resume');
+        if (resumeId && /^\d+$/.test(resumeId)) {
+            state.sessionId = parseInt(resumeId, 10);
+            showPhase('loading');
+            // Reset the timer with the default limit; the server counts elapsed time
+            startTimer(state.timeLimitSeconds);
+            alsNextQuestion();
+            return;
+        }
+        alsLoadCategories();
+    })();
 
 })();
 </script>
