@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from ....database import get_db
 from ....dependencies import get_current_user_web
 from ....models.al_import_log import ALImportLog, ImportStatus
+from ....models.audit_log import AuditAction, AuditLog
 from ....models.quiz import (
     ContentStatus,
     OptionType,
@@ -25,7 +26,9 @@ from ....services.al_import_service import (
     validate_files,
     apply_import,
 )
+from ....services import al_analytics_service as analytics
 from ....services import al_editor_service as editor
+from ....services import al_quality_service as quality
 from ....services.al_editor_service import (
     EditorError,
     InvalidTransitionError,
@@ -439,6 +442,9 @@ async def al_quiz_edit_post(
             status_code=303,
         )
 
+    _write_audit(db, user.id, AuditAction.AL_QUIZ_METADATA_UPDATED, "quiz", quiz_id, {
+        "title": title.strip(), "difficulty": difficulty,
+    })
     return RedirectResponse(
         f"/admin/adaptive-learning/quizzes/{quiz_id}/edit?success=Quiz+metadata+updated",
         status_code=303,
@@ -465,6 +471,8 @@ async def al_quiz_publish(
             f"/admin/adaptive-learning/quizzes/{quiz_id}/edit?error={str(exc)[:200]}",
             status_code=303,
         )
+    _write_audit(db, user.id, AuditAction.AL_QUIZ_STATUS_CHANGED, "quiz", quiz_id,
+                 {"new_status": "PUBLISHED"})
     return RedirectResponse(
         f"/admin/adaptive-learning/quizzes/{quiz_id}/edit?success=Quiz+published",
         status_code=303,
@@ -491,6 +499,8 @@ async def al_quiz_draft(
             f"/admin/adaptive-learning/quizzes/{quiz_id}/edit?error={str(exc)[:200]}",
             status_code=303,
         )
+    _write_audit(db, user.id, AuditAction.AL_QUIZ_STATUS_CHANGED, "quiz", quiz_id,
+                 {"new_status": "DRAFT"})
     return RedirectResponse(
         f"/admin/adaptive-learning/quizzes/{quiz_id}/edit?success=Quiz+moved+to+draft",
         status_code=303,
@@ -517,6 +527,8 @@ async def al_quiz_archive(
             f"/admin/adaptive-learning/quizzes/{quiz_id}/edit?error={str(exc)[:200]}",
             status_code=303,
         )
+    _write_audit(db, user.id, AuditAction.AL_QUIZ_STATUS_CHANGED, "quiz", quiz_id,
+                 {"new_status": "ARCHIVED"})
     return RedirectResponse(
         f"/admin/adaptive-learning/quizzes/{quiz_id}/edit?success=Quiz+archived",
         status_code=303,
@@ -607,6 +619,9 @@ async def al_question_edit_post(
             f"?error={str(exc)[:200]}",
             status_code=303,
         )
+    _write_audit(db, user.id, AuditAction.AL_QUESTION_UPDATED, "quiz_question", question_id, {
+        "quiz_id": quiz_id,
+    })
     return RedirectResponse(
         f"/admin/adaptive-learning/quizzes/{quiz_id}/questions/{question_id}/edit"
         f"?success=Question+updated",
@@ -640,8 +655,188 @@ async def al_option_edit_post(
             f"?error={str(exc)[:200]}",
             status_code=303,
         )
+    _write_audit(db, user.id, AuditAction.AL_OPTION_UPDATED, "quiz_answer_option", option_id, {
+        "quiz_id": quiz_id, "question_id": question_id,
+    })
     return RedirectResponse(
         f"/admin/adaptive-learning/quizzes/{quiz_id}/questions/{question_id}/edit"
         f"?success=Option+updated",
         status_code=303,
     )
+
+
+# ── Internal audit helper ──────────────────────────────────────────────────────
+
+def _write_audit(
+    db: Session,
+    user_id: int,
+    action: str,
+    resource_type: str,
+    resource_id: int | None,
+    details: dict | None = None,
+) -> None:
+    """Fire-and-forget audit log write; never raises."""
+    try:
+        db.add(AuditLog(
+            user_id       = user_id,
+            action        = action,
+            resource_type = resource_type,
+            resource_id   = resource_id,
+            details       = details or {},
+        ))
+        db.commit()
+    except Exception:
+        logger.exception("Audit log write failed (non-fatal)")
+        db.rollback()
+
+
+# ── AA-01  Global analytics dashboard ────────────────────────────────────────
+
+@router.get("/admin/adaptive-learning/analytics", response_class=HTMLResponse)
+async def al_analytics_global(
+    request: Request,
+    db:   Session = Depends(get_db),
+    user: User    = Depends(get_current_user_web),
+):
+    _admin_guard(user)
+
+    global_stats     = analytics.get_global_stats(db)
+    position_heatmap = analytics.get_position_heatmap(db)
+    top_distractors  = analytics.get_top_distractors(db, limit=10)
+    category_stats   = analytics.get_session_category_stats(db)
+
+    return templates.TemplateResponse("admin/al_analytics.html", {
+        "request":          request,
+        "global_stats":     global_stats,
+        "position_heatmap": position_heatmap,
+        "top_distractors":  top_distractors,
+        "category_stats":   category_stats,
+    })
+
+
+# ── AA-02  Per-quiz analytics ─────────────────────────────────────────────────
+
+@router.get(
+    "/admin/adaptive-learning/quizzes/{quiz_id}/analytics",
+    response_class=HTMLResponse,
+)
+async def al_quiz_analytics(
+    quiz_id: int,
+    request: Request,
+    db:   Session = Depends(get_db),
+    user: User    = Depends(get_current_user_web),
+):
+    _admin_guard(user)
+
+    quiz = db.query(Quiz).filter(Quiz.id == quiz_id).first()
+    if not quiz:
+        return RedirectResponse(
+            "/admin/adaptive-learning/quizzes?error=Quiz+not+found",
+            status_code=303,
+        )
+
+    question_stats   = analytics.get_per_quiz_question_stats(db, quiz_id)
+    position_heatmap = analytics.get_position_heatmap(db, quiz_id=quiz_id)
+    top_distractors  = analytics.get_top_distractors(db, quiz_id=quiz_id, limit=10)
+
+    return templates.TemplateResponse("admin/al_quiz_analytics.html", {
+        "request":          request,
+        "quiz":             quiz,
+        "question_stats":   question_stats,
+        "position_heatmap": position_heatmap,
+        "top_distractors":  top_distractors,
+    })
+
+
+# ── AT-01  Audit trail ────────────────────────────────────────────────────────
+
+_AUDIT_ACTIONS_AL = {
+    AuditAction.AL_QUIZ_METADATA_UPDATED,
+    AuditAction.AL_QUIZ_STATUS_CHANGED,
+    AuditAction.AL_QUESTION_UPDATED,
+    AuditAction.AL_OPTION_UPDATED,
+}
+_AUDIT_PER_PAGE = 50
+
+
+@router.get("/admin/adaptive-learning/audit-trail", response_class=HTMLResponse)
+async def al_audit_trail(
+    request: Request,
+    page: int = 1,
+    db:   Session = Depends(get_db),
+    user: User    = Depends(get_current_user_web),
+):
+    _admin_guard(user)
+
+    base_q = db.query(AuditLog).filter(AuditLog.action.in_(_AUDIT_ACTIONS_AL))
+    total  = base_q.count()
+    offset = (page - 1) * _AUDIT_PER_PAGE
+    entries = (
+        base_q
+        .order_by(AuditLog.timestamp.desc())
+        .offset(offset)
+        .limit(_AUDIT_PER_PAGE)
+        .all()
+    )
+    total_pages = math.ceil(total / _AUDIT_PER_PAGE) if total else 1
+
+    return templates.TemplateResponse("admin/al_audit_trail.html", {
+        "request":     request,
+        "entries":     entries,
+        "page":        page,
+        "total_pages": total_pages,
+        "total":       total,
+    })
+
+
+# ── CQ-01  Global content quality report ─────────────────────────────────────
+
+@router.get("/admin/adaptive-learning/content-quality", response_class=HTMLResponse)
+async def al_content_quality_global(
+    request: Request,
+    db:   Session = Depends(get_db),
+    user: User    = Depends(get_current_user_web),
+):
+    _admin_guard(user)
+
+    report = quality.get_global_quality_report(db)
+    ready_count    = sum(1 for s in report if s.ready_to_publish)
+    not_ready_count = len(report) - ready_count
+
+    return templates.TemplateResponse("admin/al_content_quality.html", {
+        "request":         request,
+        "report":          report,
+        "ready_count":     ready_count,
+        "not_ready_count": not_ready_count,
+        "quiz_id":         None,
+    })
+
+
+# ── CQ-02  Per-quiz content quality ──────────────────────────────────────────
+
+@router.get(
+    "/admin/adaptive-learning/quizzes/{quiz_id}/quality",
+    response_class=HTMLResponse,
+)
+async def al_quiz_quality(
+    quiz_id: int,
+    request: Request,
+    db:   Session = Depends(get_db),
+    user: User    = Depends(get_current_user_web),
+):
+    _admin_guard(user)
+
+    summary = quality.get_quiz_quality_summary(db, quiz_id)
+    if not summary:
+        return RedirectResponse(
+            "/admin/adaptive-learning/quizzes?error=Quiz+not+found",
+            status_code=303,
+        )
+
+    return templates.TemplateResponse("admin/al_content_quality.html", {
+        "request": request,
+        "report":  [summary],
+        "ready_count":     1 if summary.ready_to_publish else 0,
+        "not_ready_count": 0 if summary.ready_to_publish else 1,
+        "quiz_id":  quiz_id,
+    })

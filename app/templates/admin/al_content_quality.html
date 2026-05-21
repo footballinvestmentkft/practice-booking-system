@@ -1,0 +1,116 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}{% if quiz_id %}Quality — Quiz #{{ quiz_id }}{% else %}Content Quality Report{% endif %}{% endblock %}
+{% block page_heading %}Content Quality{% endblock %}
+{% block page_subtitle %}{% if quiz_id %}Quiz #{{ quiz_id }}{% else %}All active quizzes{% endif %}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .breadcrumb { font-size: 0.85rem; color: #718096; margin-bottom: 1rem; }
+    .breadcrumb a { color: #718096; text-decoration: none; }
+    .breadcrumb a:hover { color: #5a4a9a; }
+    .summary-row { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .summary-chip { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.82rem; font-weight: 700; }
+    .chip-green { background: #dcfce7; color: #166534; }
+    .chip-red   { background: #fee2e2; color: #991b1b; }
+    .quiz-card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 1.2rem 1.5rem; margin-bottom: 1rem; border-left: 4px solid #e2e8f0; }
+    .quiz-card.ready  { border-left-color: #16a34a; }
+    .quiz-card.issues { border-left-color: #dc2626; }
+    .quiz-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+    .quiz-title { font-weight: 700; font-size: 1rem; color: #2d3748; }
+    .score-badge { padding: 0.2rem 0.6rem; border-radius: 5px; font-size: 0.78rem; font-weight: 700; }
+    .score-high { background: #dcfce7; color: #166534; }
+    .score-mid  { background: #fef9c3; color: #92400e; }
+    .score-low  { background: #fee2e2; color: #991b1b; }
+    .status-chip { font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.45rem; border-radius: 4px; }
+    .badge-published { background: #dcfce7; color: #166534; }
+    .badge-draft     { background: #fef9c3; color: #92400e; }
+    .badge-archived  { background: #fee2e2; color: #991b1b; }
+    .flag-list { margin: 0.3rem 0 0.5rem 1.2rem; font-size: 0.82rem; color: #b91c1c; }
+    .flag-list li { margin-bottom: 0.15rem; }
+    .qflag-section { margin-top: 0.6rem; }
+    .qflag-title { font-size: 0.78rem; font-weight: 700; color: #4a5568; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+    .qflag-item { font-size: 0.8rem; color: #92400e; background: #fefce8; border: 1px solid #fde68a; border-radius: 5px; padding: 0.25rem 0.6rem; margin-bottom: 0.3rem; }
+    .meta-row { font-size: 0.78rem; color: #718096; display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 0.25rem; }
+    .btn-link { display: inline-block; padding: 0.3rem 0.7rem; font-size: 0.78rem; font-weight: 600; border-radius: 6px; border: 1px solid #5a4a9a; color: #5a4a9a; text-decoration: none; margin-top: 0.5rem; }
+    .btn-link:hover { background: #f5f3ff; }
+    .zero-note { color: #a0aec0; font-size: 0.9rem; font-style: italic; }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="breadcrumb">
+    <a href="/admin/adaptive-learning/dashboard">Dashboard</a> /
+    {% if quiz_id %}
+    <a href="/admin/adaptive-learning/quizzes/{{ quiz_id }}/edit">Quiz #{{ quiz_id }}</a> /
+    {% endif %}
+    Content Quality
+</div>
+
+{% if not quiz_id %}
+<div class="summary-row">
+    <span class="summary-chip chip-green">✔ {{ ready_count }} quiz(zes) ready</span>
+    <span class="summary-chip chip-red">✗ {{ not_ready_count }} quiz(zes) with issues</span>
+</div>
+{% endif %}
+
+{% for s in report %}
+{% set is_ready = s.ready_to_publish %}
+<div class="quiz-card {{ 'ready' if is_ready else 'issues' }}">
+    <div class="quiz-header">
+        <span class="quiz-title">{{ s.quiz_title }}</span>
+        {% set sc = s.quality_score %}
+        <span class="score-badge {{ 'score-high' if sc >= 0.8 else ('score-mid' if sc >= 0.5 else 'score-low') }}">
+            Score: {{ (sc * 100)|round|int }}%
+        </span>
+        {% if s.content_status == 'PUBLISHED' %}
+            <span class="status-chip badge-published">PUBLISHED</span>
+        {% elif s.content_status == 'DRAFT' %}
+            <span class="status-chip badge-draft">DRAFT</span>
+        {% else %}
+            <span class="status-chip badge-archived">ARCHIVED</span>
+        {% endif %}
+        {% if is_ready %}
+        <span style="color:#16a34a; font-size:0.82rem; font-weight:700;">✔ Ready to publish</span>
+        {% else %}
+        <span style="color:#dc2626; font-size:0.82rem; font-weight:700;">✗ Needs fixes</span>
+        {% endif %}
+    </div>
+
+    <div class="meta-row">
+        <span>{{ s.total_questions }} question(s)</span>
+        <span>{{ s.flagged_questions }} flagged</span>
+        <span>Explanations: {{ (s.explanation_ratio * 100)|round|int }}%</span>
+        <span>Difficulty spread: {{ s.difficulty_spread }}</span>
+    </div>
+
+    {% if s.flags %}
+    <ul class="flag-list">
+        {% for f in s.flags %}<li>{{ f }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if s.question_flags %}
+    <div class="qflag-section">
+        <div class="qflag-title">Per-question issues ({{ s.question_flags|length }})</div>
+        {% for qf in s.question_flags %}
+        <div class="qflag-item">
+            <strong>Q#{{ qf.question_id }}</strong> {{ qf.question_text[:60] }}
+            — {{ qf.flags | join('; ') }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div>
+        <a href="/admin/adaptive-learning/quizzes/{{ s.quiz_id }}/edit" class="btn-link">Edit</a>
+        {% if not quiz_id %}
+        <a href="/admin/adaptive-learning/quizzes/{{ s.quiz_id }}/quality" class="btn-link" style="margin-left:0.4rem;">Detail</a>
+        {% endif %}
+        <a href="/admin/adaptive-learning/quizzes/{{ s.quiz_id }}/analytics" class="btn-link" style="margin-left:0.4rem;">Analytics</a>
+    </div>
+</div>
+{% else %}
+<p class="zero-note">No quizzes to report.</p>
+{% endfor %}
+{% endblock %}

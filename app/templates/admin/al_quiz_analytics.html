@@ -1,0 +1,130 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Analytics — {{ quiz.title[:50] }}{% endblock %}
+{% block page_heading %}Quiz Analytics{% endblock %}
+{% block page_subtitle %}{{ quiz.title }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .breadcrumb { font-size: 0.85rem; color: #718096; margin-bottom: 1rem; }
+    .breadcrumb a { color: #718096; text-decoration: none; }
+    .breadcrumb a:hover { color: #5a4a9a; }
+    .card-wrap { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 1.5rem; margin-bottom: 1.5rem; }
+    .section-title { font-size: 0.9rem; font-weight: 700; color: #4a5568; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem; }
+    .q-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .q-table thead th { background: #f7fafc; color: #718096; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.55rem 0.75rem; border-bottom: 2px solid #e2e8f0; }
+    .q-table tbody tr { border-bottom: 1px solid #f0f0f0; }
+    .q-table tbody tr:hover { background: #fafbff; }
+    .q-table td { padding: 0.5rem 0.75rem; vertical-align: middle; }
+    .q-text { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bar-cell { width: 120px; }
+    .mini-bar { height: 8px; border-radius: 4px; background: #e2e8f0; }
+    .mini-bar-fill { height: 100%; border-radius: 4px; background: #5a4a9a; }
+    .dt-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .dt-table thead th { background: #f7fafc; color: #718096; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.55rem 0.75rem; border-bottom: 2px solid #e2e8f0; }
+    .dt-table tbody tr { border-bottom: 1px solid #f0f0f0; }
+    .dt-table tbody tr:hover { background: #fafbff; }
+    .dt-table td { padding: 0.5rem 0.75rem; }
+    .heat-row { display: flex; gap: 0.5rem; align-items: flex-end; height: 100px; margin-bottom: 0.5rem; }
+    .heat-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; }
+    .heat-bar { width: 100%; background: #c4b5fd; border-radius: 4px 4px 0 0; }
+    .heat-label { font-size: 0.8rem; font-weight: 700; color: #4a5568; margin-top: 0.3rem; }
+    .heat-pct { font-size: 0.72rem; color: #718096; }
+    .zero-note { color: #a0aec0; font-size: 0.9rem; font-style: italic; }
+    .btn-back { display: inline-block; padding: 0.35rem 0.85rem; font-size: 0.82rem; font-weight: 600; border-radius: 6px; border: 1px solid #5a4a9a; color: #5a4a9a; text-decoration: none; margin-bottom: 1rem; }
+    .btn-back:hover { background: #f5f3ff; }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="breadcrumb">
+    <a href="/admin/adaptive-learning/dashboard">Dashboard</a> /
+    <a href="/admin/adaptive-learning/quizzes">Quizzes</a> /
+    <a href="/admin/adaptive-learning/quizzes/{{ quiz.id }}/edit">{{ quiz.title[:40] }}</a> /
+    Analytics
+</div>
+<a href="/admin/adaptive-learning/quizzes/{{ quiz.id }}/edit" class="btn-back">← Back to Editor</a>
+
+{# ── Per-question table ── #}
+<div class="card-wrap">
+    <div class="section-title">Per-Question Breakdown ({{ question_stats|length }} questions)</div>
+    {% if question_stats %}
+    <table class="q-table">
+        <thead><tr>
+            <th>#</th>
+            <th>Question</th>
+            <th>Attempts</th>
+            <th>Success %</th>
+            <th style="width:120px;">Success Bar</th>
+            <th>Timeouts</th>
+            <th>Avg Time</th>
+            <th>Difficulty</th>
+        </tr></thead>
+        <tbody>
+        {% for qs in question_stats %}
+        <tr>
+            <td style="color:#718096;">{{ loop.index }}</td>
+            <td class="q-text">{{ qs.question_text_short }}</td>
+            <td>{{ qs.total_attempts }}</td>
+            <td>{{ (qs.success_rate * 100)|round(1) }}%</td>
+            <td class="bar-cell">
+                <div class="mini-bar">
+                    <div class="mini-bar-fill" style="width: {{ (qs.success_rate * 100)|round }}%;"></div>
+                </div>
+            </td>
+            <td>{{ qs.timeout_count }}</td>
+            <td>{{ qs.avg_time_seconds }}s</td>
+            <td>{{ qs.estimated_difficulty }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="zero-note">No questions in this quiz.</p>
+    {% endif %}
+</div>
+
+{# ── Position heatmap ── #}
+<div class="card-wrap">
+    <div class="section-title">Answer Position Heatmap (this quiz)</div>
+    {% set total_answers = position_heatmap | map(attribute='total_count') | sum %}
+    {% if total_answers == 0 %}
+    <p class="zero-note">No answer data for this quiz yet.</p>
+    {% else %}
+    <div class="heat-row">
+        {% for b in position_heatmap %}
+        <div class="heat-bar-wrap">
+            <div class="heat-bar" style="height: {{ (b.pct * 80)|round }}px; min-height: 4px;"></div>
+            <div class="heat-label">{{ b.label }}</div>
+            <div class="heat-pct">{{ (b.pct * 100)|round(1) }}%</div>
+            <div class="heat-pct" style="color:#166534;">{{ b.correct_count }}✔</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+{# ── Top Distractors ── #}
+<div class="card-wrap">
+    <div class="section-title">Most-Chosen Wrong Answers (this quiz)</div>
+    {% if top_distractors %}
+    <table class="dt-table">
+        <thead><tr>
+            <th>#</th><th>Option Text</th><th>Question</th><th>Times Chosen</th>
+        </tr></thead>
+        <tbody>
+        {% for d in top_distractors %}
+        <tr>
+            <td style="color:#718096;">{{ loop.index }}</td>
+            <td>{{ d.option_text[:80] }}</td>
+            <td style="max-width:320px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ d.question_text_short }}</td>
+            <td><strong>{{ d.chosen_count }}</strong></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="zero-note">No wrong-answer data for this quiz yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}AL Analytics — Global{% endblock %}
+{% block page_heading %}AL Analytics{% endblock %}
+{% block page_subtitle %}Aggregated answer &amp; session data{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .breadcrumb { font-size: 0.85rem; color: #718096; margin-bottom: 1rem; }
+    .breadcrumb a { color: #718096; text-decoration: none; }
+    .breadcrumb a:hover { color: #5a4a9a; }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card { background: white; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); padding: 1rem 1.2rem; }
+    .stat-label { font-size: 0.72rem; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-value { font-size: 1.7rem; font-weight: 800; color: #2d3748; margin-top: 0.25rem; }
+    .stat-sub { font-size: 0.78rem; color: #a0aec0; margin-top: 0.1rem; }
+    .card-wrap { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 1.5rem; margin-bottom: 1.5rem; }
+    .section-title { font-size: 0.9rem; font-weight: 700; color: #4a5568; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem; }
+    .heat-row { display: flex; gap: 0.5rem; align-items: flex-end; height: 120px; margin-bottom: 0.5rem; }
+    .heat-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; }
+    .heat-bar { width: 100%; background: #c4b5fd; border-radius: 4px 4px 0 0; transition: height .3s; }
+    .heat-label { font-size: 0.8rem; font-weight: 700; color: #4a5568; margin-top: 0.3rem; }
+    .heat-pct { font-size: 0.72rem; color: #718096; }
+    .dt-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .dt-table thead th { background: #f7fafc; color: #718096; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.55rem 0.75rem; border-bottom: 2px solid #e2e8f0; }
+    .dt-table tbody tr { border-bottom: 1px solid #f0f0f0; }
+    .dt-table tbody tr:hover { background: #fafbff; }
+    .dt-table td { padding: 0.5rem 0.75rem; }
+    .dt-table .q-text { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cat-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0; font-size: 0.875rem; }
+    .cat-row:last-child { border-bottom: none; }
+    .zero-note { color: #a0aec0; font-size: 0.9rem; font-style: italic; }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="breadcrumb">
+    <a href="/admin/adaptive-learning/dashboard">Dashboard</a> / Analytics
+</div>
+
+{# ── Global KPIs ── #}
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Answers</div>
+        <div class="stat-value">{{ global_stats.total_answers }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Success Rate</div>
+        <div class="stat-value">{{ (global_stats.success_rate * 100)|round(1) }}%</div>
+        <div class="stat-sub">{{ global_stats.correct_count }} correct</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Timeout Rate</div>
+        <div class="stat-value">{{ (global_stats.timeout_rate * 100)|round(1) }}%</div>
+        <div class="stat-sub">{{ global_stats.timeout_count }} timeouts</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Avg. Time</div>
+        <div class="stat-value">{{ global_stats.avg_time_seconds }}s</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Sessions</div>
+        <div class="stat-value">{{ global_stats.total_sessions }}</div>
+    </div>
+</div>
+
+{# ── Position Heatmap ── #}
+<div class="card-wrap">
+    <div class="section-title">Answer Position Heatmap</div>
+    {% if global_stats.total_answers == 0 %}
+    <p class="zero-note">No answer data yet.</p>
+    {% else %}
+    <div class="heat-row">
+        {% for b in position_heatmap %}
+        {% set bar_pct = (b.pct * 100)|round(1) %}
+        <div class="heat-bar-wrap">
+            <div class="heat-bar" style="height: {{ [bar_pct * 1.0, 4]|max }}px; max-height: 90px; height: {{ (b.pct * 90)|round }}px;"></div>
+            <div class="heat-label">{{ b.label }}</div>
+            <div class="heat-pct">{{ bar_pct }}%</div>
+            <div class="heat-pct" style="color:#166534;">{{ b.correct_count }}✔</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+{# ── Top Distractors ── #}
+<div class="card-wrap">
+    <div class="section-title">Top Wrong Answers (Distractors)</div>
+    {% if top_distractors %}
+    <table class="dt-table">
+        <thead><tr>
+            <th>#</th><th>Option Text</th><th>Question</th><th>Chosen</th>
+        </tr></thead>
+        <tbody>
+        {% for d in top_distractors %}
+        <tr>
+            <td style="color:#718096;">{{ loop.index }}</td>
+            <td>{{ d.option_text[:80] }}</td>
+            <td class="q-text">{{ d.question_text_short }}</td>
+            <td><strong>{{ d.chosen_count }}</strong></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="zero-note">No wrong-answer data yet.</p>
+    {% endif %}
+</div>
+
+{# ── Session Category Stats ── #}
+<div class="card-wrap">
+    <div class="section-title">Sessions by Category &amp; Language</div>
+    {% if category_stats %}
+    {% for s in category_stats %}
+    <div class="cat-row">
+        <span><strong>{{ s.category }}</strong> <span style="color:#a0aec0;">[{{ s.language }}]</span></span>
+        <span style="display:flex; gap:2rem;">
+            <span>{{ s.session_count }} sessions</span>
+            <span>{{ (s.avg_score * 100)|round(1) }}% avg score</span>
+            <span>{{ s.total_xp }} XP earned</span>
+        </span>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p class="zero-note">No session data yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

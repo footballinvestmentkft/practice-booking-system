@@ -23982,6 +23982,91 @@
         ]
       }
     },
+    "/admin/adaptive-learning/analytics": {
+      "get": {
+        "operationId": "al_analytics_global_admin_adaptive_learning_analytics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Al Analytics Global",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/adaptive-learning/audit-trail": {
+      "get": {
+        "operationId": "al_audit_trail_admin_adaptive_learning_audit_trail_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Al Audit Trail",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/adaptive-learning/content-quality": {
+      "get": {
+        "operationId": "al_content_quality_global_admin_adaptive_learning_content_quality_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Al Content Quality Global",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/admin/adaptive-learning/dashboard": {
       "get": {
         "operationId": "al_dashboard_admin_adaptive_learning_dashboard_get",
@@ -24233,6 +24318,48 @@
         ]
       }
     },
+    "/admin/adaptive-learning/quizzes/{quiz_id}/analytics": {
+      "get": {
+        "operationId": "al_quiz_analytics_admin_adaptive_learning_quizzes__quiz_id__analytics_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "title": "Quiz Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Al Quiz Analytics",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/admin/adaptive-learning/quizzes/{quiz_id}/archive": {
       "post": {
         "operationId": "al_quiz_archive_admin_adaptive_learning_quizzes__quiz_id__archive_post",
@@ -24446,6 +24573,48 @@
           }
         },
         "summary": "Al Quiz Publish",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/admin/adaptive-learning/quizzes/{quiz_id}/quality": {
+      "get": {
+        "operationId": "al_quiz_quality_admin_adaptive_learning_quizzes__quiz_id__quality_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "title": "Quiz Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Al Quiz Quality",
         "tags": [
           "web"
         ]

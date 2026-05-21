@@ -1,0 +1,94 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}AL Audit Trail{% endblock %}
+{% block page_heading %}AL Audit Trail{% endblock %}
+{% block page_subtitle %}Admin content-editing history{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .breadcrumb { font-size: 0.85rem; color: #718096; margin-bottom: 1rem; }
+    .breadcrumb a { color: #718096; text-decoration: none; }
+    .breadcrumb a:hover { color: #5a4a9a; }
+    .card-wrap { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 1.5rem; margin-bottom: 1.5rem; }
+    .section-title { font-size: 0.9rem; font-weight: 700; color: #4a5568; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem; }
+    .at-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .at-table thead th { background: #f7fafc; color: #718096; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.55rem 0.75rem; border-bottom: 2px solid #e2e8f0; }
+    .at-table tbody tr { border-bottom: 1px solid #f0f0f0; }
+    .at-table tbody tr:hover { background: #fafbff; }
+    .at-table td { padding: 0.5rem 0.75rem; vertical-align: top; }
+    .action-badge { display: inline-block; padding: 0.15rem 0.45rem; border-radius: 4px; font-size: 0.7rem; font-weight: 700; }
+    .act-meta    { background: #e0f2fe; color: #0369a1; }
+    .act-status  { background: #fef9c3; color: #92400e; }
+    .act-question { background: #f0fdf4; color: #166534; }
+    .act-option  { background: #faf5ff; color: #6d28d9; }
+    .details-cell { font-size: 0.78rem; color: #718096; font-family: monospace; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pager { display: flex; gap: 0.5rem; align-items: center; justify-content: center; margin-top: 1.5rem; }
+    .pager a, .pager span { padding: 0.3rem 0.7rem; border-radius: 6px; font-size: 0.82rem; text-decoration: none; border: 1px solid #e2e8f0; color: #4a5568; }
+    .pager a:hover { background: #f5f3ff; border-color: #5a4a9a; }
+    .pager .current { background: #5a4a9a; color: white; border-color: #5a4a9a; font-weight: 700; }
+    .zero-note { color: #a0aec0; font-size: 0.9rem; font-style: italic; }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="breadcrumb">
+    <a href="/admin/adaptive-learning/dashboard">Dashboard</a> / Audit Trail
+</div>
+
+<div class="card-wrap">
+    <div class="section-title">Content Edit History ({{ total }} entries)</div>
+    {% if entries %}
+    <table class="at-table">
+        <thead><tr>
+            <th>Timestamp</th>
+            <th>Admin</th>
+            <th>Action</th>
+            <th>Resource</th>
+            <th>Details</th>
+        </tr></thead>
+        <tbody>
+        {% for e in entries %}
+        <tr>
+            <td style="white-space:nowrap; color:#718096; font-size:0.78rem;">
+                {{ e.timestamp.strftime('%Y-%m-%d %H:%M') if e.timestamp else '—' }}
+            </td>
+            <td style="font-size:0.82rem;">
+                {% if e.user %}{{ e.user.email }}{% else %}#{{ e.user_id }}{% endif %}
+            </td>
+            <td>
+                {% if e.action == 'AL_QUIZ_METADATA_UPDATED' %}
+                    <span class="action-badge act-meta">Metadata</span>
+                {% elif e.action == 'AL_QUIZ_STATUS_CHANGED' %}
+                    <span class="action-badge act-status">Status</span>
+                {% elif e.action == 'AL_QUESTION_UPDATED' %}
+                    <span class="action-badge act-question">Question</span>
+                {% elif e.action == 'AL_OPTION_UPDATED' %}
+                    <span class="action-badge act-option">Option</span>
+                {% else %}
+                    <span class="action-badge" style="background:#f7fafc;color:#4a5568;">{{ e.action }}</span>
+                {% endif %}
+            </td>
+            <td style="font-size:0.82rem;">{{ e.resource_type }}:{{ e.resource_id }}</td>
+            <td class="details-cell">{{ e.details | tojson if e.details else '—' }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    {% if total_pages > 1 %}
+    <div class="pager">
+        {% if page > 1 %}
+        <a href="?page={{ page - 1 }}">← Prev</a>
+        {% endif %}
+        <span class="current">{{ page }} / {{ total_pages }}</span>
+        {% if page < total_pages %}
+        <a href="?page={{ page + 1 }}">Next →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <p class="zero-note">No admin content-editing events recorded yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

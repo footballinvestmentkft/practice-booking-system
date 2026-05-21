@@ -93,6 +93,10 @@
         <button class="state-btn btn-draft"   disabled title="Archived quizzes cannot be moved to draft">Draft</button>
     {% endif %}
     <span style="margin-left:auto; font-size:0.78rem; color:#718096;">{{ questions|length }} question(s)</span>
+    <a href="/admin/adaptive-learning/quizzes/{{ quiz.id }}/quality"
+       style="margin-left:0.5rem; font-size:0.78rem; font-weight:600; color:#5a4a9a; text-decoration:none; padding:0.25rem 0.65rem; border:1px solid #5a4a9a; border-radius:5px;">Quality</a>
+    <a href="/admin/adaptive-learning/quizzes/{{ quiz.id }}/analytics"
+       style="margin-left:0.3rem; font-size:0.78rem; font-weight:600; color:#5a4a9a; text-decoration:none; padding:0.25rem 0.65rem; border:1px solid #5a4a9a; border-radius:5px;">Analytics</a>
 </div>
 
 {# ── Quiz metadata form ── #}
