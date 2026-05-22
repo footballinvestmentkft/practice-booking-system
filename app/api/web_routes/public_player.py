@@ -113,11 +113,22 @@ def public_player_card(
         .all()
     )
     _last_part = _all_parts[0][0] if _all_parts else None
-    last_skill_delta = (
+    _tournament_delta = (
         _last_part.skill_rating_delta
         if _last_part and isinstance(_last_part.skill_rating_delta, dict)
         else {}
     )
+
+    # Merge VT/training deltas as fallback where tournament delta is absent.
+    # Tournament delta takes priority; VT delta only fills gaps.
+    # Threshold: abs(delta) < 0.005 → no trend arrow shown.
+    from app.services.segment_reward_service import get_training_skill_deltas_for_user as _get_vt_deltas
+    _vt_deltas = _get_vt_deltas(db, user_id)
+    _VT_ARROW_THRESHOLD = 0.005
+    last_skill_delta: dict = dict(_tournament_delta)
+    for _sk, _vt_d in _vt_deltas.items():
+        if _sk not in last_skill_delta and abs(_vt_d) >= _VT_ARROW_THRESHOLD:
+            last_skill_delta[_sk] = _vt_d
 
     participations_history = []
     for p, s in _all_parts:
