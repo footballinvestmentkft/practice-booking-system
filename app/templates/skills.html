@@ -243,7 +243,47 @@
     <div class="history-card">
         <h2>📈 Skill Events &nbsp;<a href="/skills/history" style="font-size:0.75rem;font-weight:500;color:#667eea;text-decoration:none;">📊 Event History Chart →</a></h2>
 
+        {% if has_any_events %}
+
+        {% if vt_history %}
+        <h3 style="margin:0 0 12px;font-size:0.95rem;color:#555;">⚡ Virtual Training</h3>
+        <table class="history-table" style="margin-bottom:28px;">
+            <thead>
+                <tr>
+                    <th>Game</th>
+                    <th>Date</th>
+                    <th>Score</th>
+                    <th>Skill Deltas</th>
+                    <th>XP</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vt in vt_history %}
+                {% set game_slug = vt.game_code | replace('_', '-') %}
+                <tr>
+                    <td><strong>{{ vt.game_name }}</strong></td>
+                    <td>{{ vt.started_at.strftime('%b %d, %Y') if vt.started_at else '—' }}</td>
+                    <td>{{ "%.0f%%"|format(vt.score_normalized * 100) if vt.score_normalized is not none else '—' }}</td>
+                    <td>
+                        {% for skill_key, delta in vt.skill_deltas.items() %}
+                            {% if delta > 0 %}
+                                <span class="skill-delta-pos" style="margin-right:6px;">+{{ "%.2f"|format(delta) }} {{ skill_key }}</span>
+                            {% elif delta < 0 %}
+                                <span class="skill-delta-neg" style="margin-right:6px;">{{ "%.2f"|format(delta) }} {{ skill_key }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>+{{ vt.xp_awarded }}</td>
+                    <td><a href="/virtual-training/{{ game_slug }}/result/{{ vt.attempt_id }}" style="color:#667eea;font-size:0.85rem;white-space:nowrap;">View details →</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
         {% if tournament_history %}
+        <h3 style="margin:0 0 12px;font-size:0.95rem;color:#555;">🏆 Tournament Events</h3>
         <table class="history-table">
             <thead>
                 <tr>
@@ -280,6 +320,8 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
+
         {% else %}
         <div class="empty-state">
             <div class="empty-icon">📈</div>
