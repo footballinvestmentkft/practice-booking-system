@@ -376,3 +376,137 @@ class TestTrainingMetaNetLabel:
         result = "not trained" if ts == 0 else "has training"
         assert result == "not trained"
         assert "net" not in result
+
+
+# ── VTSEVT-19..30: training_delta_precise / training_vt_count / fixed JS ──────
+
+class TestTrainingDeltaPrecise:
+    """VTSEVT-19..22: get_skill_profile() now emits training_delta_precise."""
+
+    def _make_profile_skill(self, training_delta_raw: float, vt_count: int = 0) -> dict:
+        """Mirror the skill dict built in _views.py get_skill_profile()."""
+        return {
+            "training_delta": round(training_delta_raw, 1),
+            "training_delta_precise": round(training_delta_raw, 2),
+            "training_vt_count": vt_count,
+            "training_sessions": 0,
+        }
+
+    def test_vtsevt19_precise_two_decimal_for_small_delta(self):
+        """VTSEVT-19: raw delta 0.0325 → precise=0.03, rounded=0.0."""
+        s = self._make_profile_skill(0.0325)
+        assert s["training_delta"] == 0.0          # 1-dec loses info
+        assert s["training_delta_precise"] == 0.03  # 2-dec preserves it
+
+    def test_vtsevt20_precise_larger_delta_unchanged(self):
+        """VTSEVT-20: raw delta 0.325 → precise=round(0.325,2), rounded=0.3."""
+        s = self._make_profile_skill(0.325)
+        assert s["training_delta"] == 0.3
+        assert s["training_delta_precise"] == round(0.325, 2)  # 0.33 in CPython float repr
+
+    def test_vtsevt21_vt_count_populated(self):
+        """VTSEVT-21: training_vt_count reflects per-skill VT attempt count."""
+        s = self._make_profile_skill(0.165, vt_count=2)
+        assert s["training_vt_count"] == 2
+
+    def test_vtsevt22_vt_count_zero_by_default(self):
+        """VTSEVT-22: skill with no VT attempts → training_vt_count=0."""
+        s = self._make_profile_skill(0.0, vt_count=0)
+        assert s["training_vt_count"] == 0
+
+
+class TestGetVtAttemptCountPerSkill:
+    """VTSEVT-23..26: get_vt_attempt_count_per_skill_for_user() unit tests."""
+
+    def _mock_db_execute(self, rows: list[tuple]) -> MagicMock:
+        db = MagicMock()
+        result = MagicMock()
+        result.fetchall.return_value = rows
+        db.execute.return_value = result
+        return db
+
+    def test_vtsevt23_returns_per_skill_counts(self):
+        """VTSEVT-23: two skills → dict with correct counts."""
+        from app.services.segment_reward_service import get_vt_attempt_count_per_skill_for_user
+        db = self._mock_db_execute([("decisions", 2), ("reactions", 3)])
+        result = get_vt_attempt_count_per_skill_for_user(db, user_id=42)
+        assert result == {"decisions": 2, "reactions": 3}
+
+    def test_vtsevt24_empty_result_returns_empty_dict(self):
+        """VTSEVT-24: no VT attempts → empty dict."""
+        from app.services.segment_reward_service import get_vt_attempt_count_per_skill_for_user
+        db = self._mock_db_execute([])
+        result = get_vt_attempt_count_per_skill_for_user(db, user_id=99)
+        assert result == {}
+
+    def test_vtsevt25_values_are_int(self):
+        """VTSEVT-25: counts are int, not string or float."""
+        from app.services.segment_reward_service import get_vt_attempt_count_per_skill_for_user
+        db = self._mock_db_execute([("composure", "5")])
+        result = get_vt_attempt_count_per_skill_for_user(db, user_id=1)
+        assert isinstance(result["composure"], int)
+        assert result["composure"] == 5
+
+    def test_vtsevt26_single_skill_single_attempt(self):
+        """VTSEVT-26: one skill, one attempt → {skill: 1}."""
+        from app.services.segment_reward_service import get_vt_attempt_count_per_skill_for_user
+        db = self._mock_db_execute([("anticipation", 1)])
+        result = get_vt_attempt_count_per_skill_for_user(db, user_id=7)
+        assert result == {"anticipation": 1}
+
+
+class TestTrainingMetaHtmlFixed:
+    """VTSEVT-27..30: trainingMetaHtml() JS logic with new fields (Python mirror)."""
+
+    def _training_meta_html(self, s: dict) -> str:
+        """Python mirror of the updated JS trainingMetaHtml() function."""
+        td_precise = s.get("training_delta_precise", s.get("training_delta", 0)) or 0
+        vtc = s.get("training_vt_count", 0) or 0
+        ts  = s.get("training_sessions", 0) or 0
+        has_any = vtc > 0 or ts > 0 or abs(td_precise) >= 0.01
+        if not has_any:
+            return '<span style="color:#bbb;">not trained</span>'
+        parts = []
+        if ts > 0:
+            parts.append(f"{ts} session{'s' if ts != 1 else ''}")
+        if vtc > 0:
+            parts.append(f"{vtc} VT")
+        count_label = " · ".join(parts)
+        if abs(td_precise) < 0.01:
+            return f'<span style="color:#95a5a6;">{count_label}</span>'
+        sign  = "+" if td_precise > 0 else ""
+        color = "#27ae60" if td_precise > 0 else "#e74c3c"
+        return (
+            f'<span style="color:{color};">{sign}{td_precise:.2f} net</span>'
+            f' <span style="color:#95a5a6;">· {count_label}</span>'
+        )
+
+    def test_vtsevt27_vt_only_user_not_trained_gone(self):
+        """VTSEVT-27: vtc=2, ts=0, precise=0.03 → no 'not trained', shows '+0.03 net'."""
+        s = {"training_delta_precise": 0.03, "training_vt_count": 2, "training_sessions": 0}
+        html = self._training_meta_html(s)
+        assert "not trained" not in html
+        assert "+0.03 net" in html
+        assert "2 VT" in html
+
+    def test_vtsevt28_zero_delta_but_vt_count(self):
+        """VTSEVT-28: vtc=1, precise≈0 → no 'not trained', shows count only."""
+        s = {"training_delta_precise": 0.005, "training_vt_count": 1, "training_sessions": 0}
+        html = self._training_meta_html(s)
+        assert "not trained" not in html
+        assert "1 VT" in html
+        assert "net" not in html
+
+    def test_vtsevt29_no_training_at_all_shows_not_trained(self):
+        """VTSEVT-29: vtc=0, ts=0, precise=0.0 → 'not trained'."""
+        s = {"training_delta_precise": 0.0, "training_vt_count": 0, "training_sessions": 0}
+        html = self._training_meta_html(s)
+        assert "not trained" in html
+
+    def test_vtsevt30_mixed_session_and_vt_label(self):
+        """VTSEVT-30: ts=1, vtc=3, precise=0.33 → shows both 'session' and 'VT' in label."""
+        s = {"training_delta_precise": 0.33, "training_vt_count": 3, "training_sessions": 1}
+        html = self._training_meta_html(s)
+        assert "+0.33 net" in html
+        assert "1 session" in html
+        assert "3 VT" in html

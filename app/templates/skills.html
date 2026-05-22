@@ -359,15 +359,20 @@
     }
 
     function trainingMetaHtml(s) {
-        const td = s.training_delta || 0;
-        const ts = s.training_sessions || 0;
-        if (ts === 0) return '<span style="color:#bbb;">not trained</span>';
-        const vtLabel = `${ts} VT session${ts !== 1 ? 's' : ''}`;
-        if (Math.abs(td) < 0.05) return `<span style="color:#95a5a6;">${vtLabel}</span>`;
-        const sign  = td > 0 ? '+' : '';
-        const color = td > 0.05 ? '#27ae60' : '#e74c3c';
-        return `<span style="color:${color};">${sign}${td.toFixed(1)} net</span>`
-             + ` <span style="color:#95a5a6;">· ${vtLabel}</span>`;
+        const tdPrecise = s.training_delta_precise != null ? s.training_delta_precise : (s.training_delta || 0);
+        const vtc = s.training_vt_count || 0;
+        const ts  = s.training_sessions || 0;
+        const hasAnyTraining = vtc > 0 || ts > 0 || Math.abs(tdPrecise) >= 0.01;
+        if (!hasAnyTraining) return '<span style="color:#bbb;">not trained</span>';
+        const sessionParts = [];
+        if (ts > 0) sessionParts.push(`${ts} session${ts !== 1 ? 's' : ''}`);
+        if (vtc > 0) sessionParts.push(`${vtc} VT`);
+        const countLabel = sessionParts.join(' · ');
+        if (Math.abs(tdPrecise) < 0.01) return `<span style="color:#95a5a6;">${countLabel}</span>`;
+        const sign  = tdPrecise > 0 ? '+' : '';
+        const color = tdPrecise > 0 ? '#27ae60' : '#e74c3c';
+        return `<span style="color:${color};">${sign}${tdPrecise.toFixed(2)} net</span>`
+             + ` <span style="color:#95a5a6;">· ${countLabel}</span>`;
     }
 
     function renderStats(data) {
