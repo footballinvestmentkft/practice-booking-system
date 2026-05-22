@@ -207,3 +207,87 @@ class TestCardMacroRenderedHtml:
             f"Expected integer '60' in export macro output, got: {html!r}"
         )
         assert "60.03" not in html, "Export macro must NOT render decimals"
+
+
+# ── PCPREC-11..14: player_card_fifa.html CSS fix verification ─────────────────
+
+class TestFifaTemplateCssFix:
+    """Verify the FIFA template CSS and macro-render path after Phase 2.4F fix."""
+
+    _FIFA_TPL = "app/templates/public/player_card_fifa.html"
+
+    def _tpl_src(self) -> str:
+        import os
+        path = os.path.join(
+            os.path.dirname(__file__),
+            "../../../../",
+            self._FIFA_TPL,
+        )
+        with open(path) as f:
+            return f.read()
+
+    def test_pcprec11_fifa_skill_val_width_36px(self):
+        """PCPREC-11: player_card_fifa.html .skill-val CSS width is 36px (not 26px)."""
+        src = self._tpl_src()
+        assert "width: 36px" in src, (
+            "Expected '.skill-val { ... width: 36px ... }' in FIFA template"
+        )
+        assert "width: 26px" not in src, (
+            "Old 26px width still present — CSS fix not applied"
+        )
+
+    def test_pcprec12_fifa_template_imports_card_skill_rows_macro(self):
+        """PCPREC-12: player_card_fifa.html imports and calls card_skill_rows macro."""
+        src = self._tpl_src()
+        assert 'import card_skill_rows' in src, (
+            "FIFA template must import card_skill_rows macro"
+        )
+        assert 'card_skill_rows(' in src, (
+            "FIFA template must call card_skill_rows macro"
+        )
+
+    def test_pcprec13_fifa_path_renders_two_decimal_value(self):
+        """PCPREC-13: card_skill_rows macro (used by FIFA template) renders '60.03'."""
+        from jinja2 import Environment, FileSystemLoader
+        import os
+        tpl_root = os.path.join(
+            os.path.dirname(__file__),
+            "../../../../app/templates",
+        )
+        env = Environment(loader=FileSystemLoader(tpl_root))
+        macro_tpl = env.get_template("macros/card_skill_row.html")
+        module = macro_tpl.make_module()
+        fn = getattr(module, "card_skill_rows")
+        cat = MagicMock()
+        skill = MagicMock()
+        skill.key = "decisions"
+        skill.name_en = "Decisions"
+        cat.skills = [skill]
+        html = fn(cat, {"decisions": {"current_level": 60.03}}, {})
+        assert "60.03" in html, (
+            f"FIFA render path (card_skill_rows) must output '60.03', got: {html!r}"
+        )
+        assert "60.0</span>" not in html, "Must not clip to one decimal"
+
+    def test_pcprec14_fifa_path_renders_trend_arrow_with_vt_delta(self):
+        """PCPREC-14: card_skill_rows renders ↑ arrow when VT delta > 0 (FIFA path)."""
+        from jinja2 import Environment, FileSystemLoader
+        import os
+        tpl_root = os.path.join(
+            os.path.dirname(__file__),
+            "../../../../app/templates",
+        )
+        env = Environment(loader=FileSystemLoader(tpl_root))
+        macro_tpl = env.get_template("macros/card_skill_row.html")
+        module = macro_tpl.make_module()
+        fn = getattr(module, "card_skill_rows")
+        cat = MagicMock()
+        skill = MagicMock()
+        skill.key = "reactions"
+        skill.name_en = "Reactions"
+        cat.skills = [skill]
+        html = fn(cat, {"reactions": {"current_level": 60.33}}, {"reactions": 0.33})
+        assert "↑" in html, (
+            f"Trend arrow ↑ must appear when VT delta > 0, got: {html!r}"
+        )
+        assert "60.33" in html
