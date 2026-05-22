@@ -160,6 +160,50 @@
         white-space: nowrap;
     }
 
+    /* VT expand row */
+    .sh-vt-row td { cursor: pointer; }
+    .sh-vt-row td:last-child { white-space: nowrap; }
+
+    .sh-expand-indicator {
+        display: inline-block;
+        transition: transform 0.2s;
+        font-style: normal;
+        margin-left: 4px;
+        color: #9ca3af;
+        font-size: 0.7rem;
+    }
+    .sh-vt-row.expanded .sh-expand-indicator { transform: rotate(180deg); }
+
+    .sh-vt-detail-row { display: none; }
+    .sh-vt-detail-row.visible { display: table-row; }
+
+    .sh-vt-detail-cell {
+        background: #f0fdf4;
+        border-bottom: 2px solid #bbf7d0;
+        padding: 0.75rem 1rem !important;
+    }
+
+    .sh-vt-detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 0.5rem 1rem;
+        margin-bottom: 0.6rem;
+    }
+
+    .sh-vt-detail-stat { text-align: center; }
+    .sh-vt-detail-label { font-size: 0.7rem; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .sh-vt-detail-value { font-size: 1.05rem; font-weight: 700; color: #14532d; }
+
+    .sh-vt-detail-link {
+        display: inline-block;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #4f46e5;
+        text-decoration: none;
+        margin-top: 0.35rem;
+    }
+    .sh-vt-detail-link:hover { text-decoration: underline; }
+
     /* Error banner */
     .sh-error {
         background: #fef2f2;
@@ -289,6 +333,7 @@
                         <th>EMA Target</th>
                         <th>Skill Level</th>
                         <th>Delta</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody id="sh-table-body"></tbody>
@@ -506,16 +551,69 @@
     }
 
     // ── Table ────────────────────────────────────────────────────────────────
+    function fmtMs(ms) {
+        if (ms == null) return '—';
+        return Math.round(ms) + ' ms';
+    }
+    function fmtSec(s) {
+        if (s == null) return '—';
+        return parseFloat(s).toFixed(1) + ' s';
+    }
+    function fmtPct(v) {
+        if (v == null) return '—';
+        return Math.round(v) + '%';
+    }
+
+    function buildVtDetailRow(t, rowId) {
+        var score   = t.score_normalized != null ? fmtPct(t.score_normalized) : '—';
+        var correct = (t.correct_count != null && t.stimuli_count != null)
+                      ? t.correct_count + '/' + t.stimuli_count : (t.correct_count != null ? t.correct_count : '—');
+        var wrong   = t.wrong_click_count != null ? t.wrong_click_count : '—';
+        var misses  = t.error_count       != null ? t.error_count       : '—';
+        var avgRt   = fmtMs(t.avg_reaction_ms);
+        var bestRt  = fmtMs(t.min_reaction_ms);
+        var dur     = fmtSec(t.duration_seconds);
+        var xp      = t.xp_awarded != null ? '+' + t.xp_awarded + ' XP' : '—';
+        var link    = t.attempt_id
+                      ? '<a class="sh-vt-detail-link" href="/virtual-training/color-reaction/result/' + t.attempt_id + '">View full detail →</a>'
+                      : '';
+
+        return '<tr class="sh-vt-detail-row" id="' + rowId + '">' +
+            '<td class="sh-vt-detail-cell" colspan="10">' +
+                '<div class="sh-vt-detail-grid">' +
+                    '<div class="sh-vt-detail-stat"><div class="sh-vt-detail-label">Score</div><div class="sh-vt-detail-value">' + score + '</div></div>' +
+                    '<div class="sh-vt-detail-stat"><div class="sh-vt-detail-label">Correct</div><div class="sh-vt-detail-value">' + correct + '</div></div>' +
+                    '<div class="sh-vt-detail-stat"><div class="sh-vt-detail-label">Wrong clicks</div><div class="sh-vt-detail-value">' + wrong + '</div></div>' +
+                    '<div class="sh-vt-detail-stat"><div class="sh-vt-detail-label">Misses</div><div class="sh-vt-detail-value">' + misses + '</div></div>' +
+                    '<div class="sh-vt-detail-stat"><div class="sh-vt-detail-label">Avg reaction</div><div class="sh-vt-detail-value">' + avgRt + '</div></div>' +
+                    '<div class="sh-vt-detail-stat"><div class="sh-vt-detail-label">Best reaction</div><div class="sh-vt-detail-value">' + bestRt + '</div></div>' +
+                    '<div class="sh-vt-detail-stat"><div class="sh-vt-detail-label">Duration</div><div class="sh-vt-detail-value">' + dur + '</div></div>' +
+                    '<div class="sh-vt-detail-stat"><div class="sh-vt-detail-label">XP</div><div class="sh-vt-detail-value">' + xp + '</div></div>' +
+                '</div>' +
+                link +
+            '</td>' +
+        '</tr>';
+    }
+
     function renderTable(data) {
         var tl = data.timeline;
         if (tl.length === 0) { tableCardEl.style.display = 'none'; return; }
         tableCardEl.style.display = 'block';
 
-        var rows = tl.map(function (t, i) {
+        var html = '';
+        tl.forEach(function (t, i) {
             var d = t.delta_from_previous;
             var evType = t.event_type || 'tournament';
             var evName = t.event_name || t.tournament_name || 'Event';
-            return '<tr>' +
+            var isVt   = evType === 'virtual_training';
+            var detailId = 'sh-vt-detail-' + i;
+
+            var expandCell = isVt
+                ? '<td><i class="sh-expand-indicator">▼</i></td>'
+                : '<td></td>';
+            var rowClass = isVt ? ' class="sh-vt-row" data-detail-id="' + detailId + '"' : '';
+
+            html += '<tr' + rowClass + '>' +
                 '<td>' + (i + 1) + '</td>' +
                 '<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + evName + '">' + evName + '</td>' +
                 '<td><span class="sh-event-badge">' + eventIcon(evType) + ' ' + eventLabel(evType) + '</span></td>' +
@@ -525,9 +623,30 @@
                 '<td style="font-weight:600;color:#3b82f6;">' + (t.placement_skill != null ? t.placement_skill.toFixed(1) : '—') + '</td>' +
                 '<td style="font-weight:700;color:#1b4332;">' + t.skill_value_after.toFixed(1) + '</td>' +
                 '<td class="' + deltaClass(d) + '">' + (d >= 0 ? '+' : '') + d.toFixed(1) + '</td>' +
+                expandCell +
             '</tr>';
+
+            if (isVt) {
+                html += buildVtDetailRow(t, detailId);
+            }
         });
-        document.getElementById('sh-table-body').innerHTML = rows.join('');
+
+        var tbody = document.getElementById('sh-table-body');
+        tbody.innerHTML = html;
+
+        // Wire up expand/collapse for VT rows
+        tbody.querySelectorAll('.sh-vt-row').forEach(function (row) {
+            row.addEventListener('click', function (e) {
+                // Don't interfere with the "View full detail" link inside expanded row
+                if (e.target && e.target.tagName === 'A') return;
+                var detailId = row.getAttribute('data-detail-id');
+                var detailRow = document.getElementById(detailId);
+                if (!detailRow) return;
+                var isOpen = detailRow.classList.contains('visible');
+                detailRow.classList.toggle('visible', !isOpen);
+                row.classList.toggle('expanded', !isOpen);
+            });
+        });
     }
 
     // ── Load ─────────────────────────────────────────────────────────────────

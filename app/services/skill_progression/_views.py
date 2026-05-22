@@ -209,6 +209,18 @@ def _collect_vt_timeline_events(db: Session, user_id: int, skill_key: str) -> Li
             "total_players":   None,
             "placement_skill": None,
             "skill_weight":    None,
+            # VH-01..03: attempt detail fields for Skill History expand row
+            "attempt_id":          attempt.id,
+            "score_normalized":    attempt.score_normalized,
+            "xp_awarded":          attempt.xp_awarded,
+            "attempt_index_today": attempt.attempt_index_today,
+            "stimuli_count":       attempt.stimuli_count,
+            "correct_count":       attempt.correct_count,
+            "wrong_click_count":   attempt.wrong_click_count,
+            "error_count":         attempt.error_count,
+            "avg_reaction_ms":     attempt.avg_reaction_ms,
+            "min_reaction_ms":     attempt.min_reaction_ms,
+            "duration_seconds":    attempt.duration_seconds,
         })
     return events
 

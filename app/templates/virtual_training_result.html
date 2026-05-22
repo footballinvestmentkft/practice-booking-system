@@ -155,6 +155,128 @@
     }
 
     .vtr-footer a:hover { text-decoration: underline; }
+
+    /* Skill delta breakdown */
+    .vtr-breakdown {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 12px;
+        padding: 1rem 1.1rem;
+        margin-bottom: 1.25rem;
+        text-align: left;
+    }
+
+    .vtr-breakdown h4 {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #166534;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0 0 0.75rem;
+    }
+
+    .vtr-breakdown-row {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        align-items: start;
+        gap: 0.5rem 1rem;
+        padding: 0.45rem 0;
+        border-bottom: 1px solid #d1fae5;
+        font-size: 0.875rem;
+    }
+
+    .vtr-breakdown-row:last-child { border-bottom: none; }
+
+    .vtr-breakdown-skill { font-weight: 700; color: #14532d; }
+    .vtr-breakdown-delta { font-weight: 800; color: #166534; white-space: nowrap; }
+    .vtr-breakdown-factors {
+        font-size: 0.78rem;
+        color: #6b7280;
+        grid-column: 1 / -1;
+        padding-top: 0.1rem;
+        padding-left: 0.1rem;
+    }
+
+    /* Per-phase / per-color tables */
+    .vtr-detail-section {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1rem 1.1rem;
+        margin-bottom: 1.25rem;
+        text-align: left;
+    }
+
+    .vtr-detail-section h4 {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #374151;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0 0 0.75rem;
+    }
+
+    .vtr-detail-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+    }
+
+    .vtr-detail-table th {
+        background: #f9fafb;
+        color: #6b7280;
+        font-weight: 700;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 0.45rem 0.6rem;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+        white-space: nowrap;
+    }
+
+    .vtr-detail-table td {
+        padding: 0.45rem 0.6rem;
+        border-bottom: 1px solid #f3f4f6;
+        color: #374151;
+        vertical-align: middle;
+    }
+
+    .vtr-detail-table tr:last-child td { border-bottom: none; }
+
+    .vtr-acc-good  { color: #16a34a; font-weight: 700; }
+    .vtr-acc-ok    { color: #d97706; font-weight: 700; }
+    .vtr-acc-poor  { color: #dc2626; font-weight: 700; }
+
+    /* Admin debug */
+    .vtr-admin-debug {
+        background: #1e293b;
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+        margin-bottom: 1.25rem;
+        text-align: left;
+    }
+
+    .vtr-admin-debug summary {
+        color: #94a3b8;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .vtr-admin-debug pre {
+        color: #e2e8f0;
+        font-size: 0.72rem;
+        overflow-x: auto;
+        margin: 0.75rem 0 0;
+        white-space: pre-wrap;
+        word-break: break-all;
+        max-height: 300px;
+        overflow-y: auto;
+    }
 </style>
 {% endblock %}
 
@@ -241,8 +363,113 @@
         </div>
         {% endif %}
 
+        {# ── Skill Delta Breakdown (VH-04/05) ─────────────────────────────── #}
+        {% if skill_scores %}
+        <div class="vtr-breakdown" id="vtr-breakdown">
+            <h4>Skill Delta Breakdown</h4>
+            {% for skill, score in skill_scores.items() %}
+            {% set delta = attempt.skill_deltas.get(skill, 0) if attempt.skill_deltas else 0 %}
+            <div class="vtr-breakdown-row">
+                <span class="vtr-breakdown-skill">{{ skill|capitalize }}</span>
+                <span class="vtr-breakdown-delta">+{{ "%.3f"|format(delta) }}</span>
+                <span class="vtr-breakdown-factors">
+                    {% if skill == "reactions" %}
+                        Speed: {{ signals_ctx.speed_score }}% · Hit rate: {{ signals_ctx.hit_rate }}% · Score: {{ "%.0f"|format(score * 100) }}%
+                    {% elif skill == "decisions" %}
+                        Hit rate: {{ signals_ctx.hit_rate }}% − Wrong click penalty ({{ signals_ctx.wrong_rate }}%) · Score: {{ "%.0f"|format(score * 100) }}%
+                    {% elif skill == "concentration" %}
+                        Miss rate: {{ signals_ctx.miss_rate }}% ({{ attempt.error_count or 0 }}/{{ attempt.stimuli_count or 0 }} stimuli) · Score: {{ "%.0f"|format(score * 100) }}%
+                    {% elif skill == "anticipation" %}
+                        Completion: {{ signals_ctx.completion_rate }}% · Accuracy: {{ signals_ctx.hit_rate }}% · Score: {{ "%.0f"|format(score * 100) }}%
+                    {% else %}
+                        Score: {{ "%.0f"|format(score * 100) }}%
+                    {% endif %}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <a href="/virtual-training/color-reaction" class="vtr-btn-play-again">Play again</a>
     </div>
+
+    {# ── Per-phase summary (VH-06/07) ────────────────────────────────────── #}
+    {% if per_phase %}
+    <div class="vtr-detail-section" id="vtr-per-phase">
+        <h4>Phase Performance</h4>
+        <table class="vtr-detail-table">
+            <thead>
+                <tr>
+                    <th>Phase</th>
+                    <th>Correct</th>
+                    <th>Accuracy</th>
+                    <th>Wrong</th>
+                    <th>Miss</th>
+                    <th>Avg RT</th>
+                    <th>Circles</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in per_phase %}
+                {% set stim = p.stimuli if p.stimuli else 1 %}
+                {% set acc = ((p.correct / stim) * 100) | round(1) %}
+                <tr>
+                    <td>Phase {{ loop.index }}</td>
+                    <td>{{ p.correct }}/{{ p.stimuli }}</td>
+                    <td class="{% if acc >= 85 %}vtr-acc-good{% elif acc >= 65 %}vtr-acc-ok{% else %}vtr-acc-poor{% endif %}">{{ acc }}%</td>
+                    <td>{{ p.wrong }}</td>
+                    <td>{{ p.miss }}</td>
+                    <td>{% if p.avg_rt_ms is not none %}{{ p.avg_rt_ms | round(0) | int }} ms{% else %}—{% endif %}</td>
+                    <td>{{ p.n_circles }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {# ── Per-color summary (VH-08) ────────────────────────────────────────── #}
+    {% if per_color %}
+    <div class="vtr-detail-section" id="vtr-per-color">
+        <h4>Color Accuracy</h4>
+        <table class="vtr-detail-table">
+            <thead>
+                <tr>
+                    <th>Color</th>
+                    <th>Shown</th>
+                    <th>Accuracy</th>
+                    <th>Wrong</th>
+                    <th>Miss</th>
+                    <th>Avg RT</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for color, stats in per_color.items() | sort %}
+                {% set shown = stats.shown if stats.shown else 1 %}
+                {% set acc = ((stats.correct / shown) * 100) | round(1) %}
+                <tr>
+                    <td style="font-weight:600;text-transform:capitalize;">{{ color }}</td>
+                    <td>{{ stats.shown }}</td>
+                    <td class="{% if acc >= 85 %}vtr-acc-good{% elif acc >= 65 %}vtr-acc-ok{% else %}vtr-acc-poor{% endif %}">{{ acc }}%</td>
+                    <td>{{ stats.wrong }}</td>
+                    <td>{{ stats.miss }}</td>
+                    <td>{% if stats.avg_rt_ms is not none %}{{ stats.avg_rt_ms | round(0) | int }} ms{% else %}—{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {# ── Admin per-stimulus debug (VH-09/10) ──────────────────────────────── #}
+    {% if is_admin and per_stimulus %}
+    <div class="vtr-admin-debug" id="vtr-admin-debug">
+        <details>
+            <summary>Admin: per-stimulus raw data ({{ per_stimulus | length }} entries)</summary>
+            <pre>{{ per_stimulus | tojson(indent=2) }}</pre>
+        </details>
+    </div>
+    {% endif %}
 
     {% else %}
     {# ── Invalid attempt ──────────────────────────────────────────────── #}
