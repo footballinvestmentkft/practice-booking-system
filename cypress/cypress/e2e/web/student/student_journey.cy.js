@@ -120,14 +120,14 @@ describe('A. Student Core Journey — Skill Progression', {
     cy.get('#sh-table-body tr').eq(0).within(() => {
       cy.contains('E2E History Tournament 1').should('exist');
       cy.get('.sh-placement-badge.sh-p2').should('exist');      // 🥈 2nd place
-      cy.get('td').last().should('have.class', 'sh-delta-neg'); // negative delta
+      cy.get('td[class*="sh-delta"]').should('have.class', 'sh-delta-neg'); // negative delta
     });
 
     // Row 2: placed 1st of 2 (winner) → skill signal was HIGH → delta POSITIVE
     cy.get('#sh-table-body tr').eq(1).within(() => {
       cy.contains('E2E History Tournament 2').should('exist');
       cy.get('.sh-placement-badge.sh-p1').should('exist');      // 🥇 1st place
-      cy.get('td').last().should('have.class', 'sh-delta-pos'); // positive delta
+      cy.get('td[class*="sh-delta"]').should('have.class', 'sh-delta-pos'); // positive delta
     });
   });
 
@@ -381,7 +381,7 @@ describe('C. Edge Case: Single Tournament — EMA Valid Range', {
     // The one row shows 2nd place badge and negative delta
     cy.get('#sh-table-body tr').eq(0).within(() => {
       cy.get('.sh-placement-badge.sh-p2').should('exist');      // 🥈 2nd
-      cy.get('td').last().should('have.class', 'sh-delta-neg'); // placed last → negative
+      cy.get('td[class*="sh-delta"]').should('have.class', 'sh-delta-neg'); // placed last → negative
     });
   });
 
