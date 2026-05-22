@@ -152,15 +152,15 @@ class TestDeltaCompute:
         assert result.get("decisions", 0) > 0
 
     def test_negdelta11_multiplier_applies_to_negative_delta(self):
-        """NEGDELTA-11: multiplier=0.3 (attempt 3) reduces negative delta proportionally."""
+        """NEGDELTA-11: multiplier scales negative delta proportionally (same as positive)."""
         from app.services.virtual_training_metrics import VTDeltaComputer
         scores = {"decisions": 0.30}
-        full   = VTDeltaComputer.compute(scores, {"decisions": 1.0}, base_xp=10, multiplier=1.0)
-        third  = VTDeltaComputer.compute(scores, {"decisions": 1.0}, base_xp=10, multiplier=0.3)
-        # Both negative, third should be ~30% of full magnitude
+        full    = VTDeltaComputer.compute(scores, {"decisions": 1.0}, base_xp=10, multiplier=1.0)
+        partial = VTDeltaComputer.compute(scores, {"decisions": 1.0}, base_xp=10, multiplier=0.3)
+        # Both negative; partial should be ~30% of full magnitude
         assert full["decisions"] < 0
-        assert third["decisions"] < 0
-        assert abs(third["decisions"]) == pytest.approx(abs(full["decisions"]) * 0.3, rel=0.02)
+        assert partial["decisions"] < 0
+        assert abs(partial["decisions"]) == pytest.approx(abs(full["decisions"]) * 0.3, rel=0.02)
 
     def test_negdelta12_zero_multiplier_returns_empty(self):
         """NEGDELTA-12: multiplier=0.0 (attempt 4+) → empty result, no skill delta."""
@@ -208,7 +208,7 @@ class TestJohny7WeakGNG:
         # concentration = 1 - 2*(14/30) = 1 - 0.933 = 0.067 → positive but below neutral
         assert 0.0 < scores["concentration"] < 0.45
 
-        deltas = VTDeltaComputer.compute(scores, _GNG_TARGETS, base_xp=_GNG_BASE_XP, multiplier=0.3)
+        deltas = VTDeltaComputer.compute(scores, _GNG_TARGETS, base_xp=_GNG_BASE_XP, multiplier=0.5)
 
         # decisions: raw score < 0 → negative delta
         assert deltas.get("decisions", 0) < 0

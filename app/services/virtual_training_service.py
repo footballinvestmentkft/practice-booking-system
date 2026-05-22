@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 
 from app.models.virtual_training import VirtualTrainingAttempt, VirtualTrainingGame
 
-_XP_MULTIPLIER_TABLE: dict[int, float] = {1: 1.0, 2: 0.6, 3: 0.3}
+_XP_MULTIPLIER_TABLE: dict[int, float] = {1: 1.00, 2: 0.75, 3: 0.50, 4: 0.30, 5: 0.15}
 _BOT_REACTION_THRESHOLD_MS   = 80.0   # Phase 2.1: tighter bot floor (was 100)
 _MIN_DURATION_SECONDS        = 25.0   # Phase 2.1: 36 stimuli × avg ~0.7 s (was 5)
 _MIN_STIMULI_COUNT           = 28     # Phase 2.1: 36 total, allow minor losses (was 5)
@@ -128,12 +128,14 @@ class VirtualTrainingService:
     @staticmethod
     def calculate_xp_multiplier(attempt_index: int) -> float:
         """
-        Diminishing returns multiplier by daily attempt index.
+        Diminishing returns multiplier by daily attempt index (per game).
 
-        Index 1 → 1.0 (full XP)
-        Index 2 → 0.6
-        Index 3 → 0.3
-        Index 4+ → 0.0 (no XP, but attempt still recorded)
+        Index 1 → 1.00 (full XP)
+        Index 2 → 0.75
+        Index 3 → 0.50
+        Index 4 → 0.30
+        Index 5 → 0.15
+        Index 6+ → 0.00 (no XP, no skill delta, no negative penalty)
         """
         return _XP_MULTIPLIER_TABLE.get(attempt_index, 0.0)
 

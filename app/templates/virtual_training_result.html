@@ -348,7 +348,7 @@
 
         {% if attempt.xp_awarded > 0 %}
         <div class="vtr-xp-badge">+{{ attempt.xp_awarded }} XP earned</div>
-        {% elif attempt.attempt_index_today > 3 %}
+        {% elif attempt.attempt_index_today > game.max_daily_attempts %}
         <div class="vtr-xp-badge" style="background: #f3f4f6; color: #6b7280;">
             No XP — daily limit reached
         </div>

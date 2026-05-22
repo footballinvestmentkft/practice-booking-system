@@ -354,12 +354,12 @@ class TestDeltaComputation:
         assert "concentration" not in deltas
 
     def test_vm_33_attempt_index_2_multiplier_applied(self):
-        """VM-33: multiplier=0.6 (attempt 2) → deltas at 60% of index-1 values."""
+        """VM-33: multiplier=0.75 (attempt 2) → deltas at 75% of index-1 values."""
         scores = {s: 1.0 for s in _SKILL_TARGETS}
         d1 = VTDeltaComputer.compute(scores, _SKILL_TARGETS, base_xp=20, multiplier=1.0)
-        d2 = VTDeltaComputer.compute(scores, _SKILL_TARGETS, base_xp=20, multiplier=0.6)
+        d2 = VTDeltaComputer.compute(scores, _SKILL_TARGETS, base_xp=20, multiplier=0.75)
         for skill in d1:
-            assert d2[skill] == pytest.approx(d1[skill] * 0.6, abs=0.001)
+            assert d2[skill] == pytest.approx(d1[skill] * 0.75, abs=0.001)
 
 
 # ── TestScoreBlindnessEliminated (VM-34..36) ──────────────────────────────────
