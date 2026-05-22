@@ -210,6 +210,8 @@ def _collect_vt_timeline_events(db: Session, user_id: int, skill_key: str) -> Li
             "placement_skill": None,
             "skill_weight":    None,
             # VH-01..03: attempt detail fields for Skill History expand row
+            # game_code used by skill_history.html to build the result URL dynamically
+            "game_code":           attempt.game.code if attempt.game else "color_reaction",
             "attempt_id":          attempt.id,
             "score_normalized":    attempt.score_normalized,
             "xp_awarded":          attempt.xp_awarded,

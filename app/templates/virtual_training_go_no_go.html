@@ -1,0 +1,696 @@
+{% extends "student_base.html" %}
+
+{% block title %}Go / No-Go Reaction - LFA{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '🛑' %}
+{% set _page_name = 'Go / No-Go Reaction' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .gng-container {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    /* ── Meta bar ───────────────────────────────────────────────────────── */
+    .gng-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--app-card);
+        border-radius: 10px;
+        padding: 0.65rem 1rem;
+        margin-bottom: 1.25rem;
+        font-size: 0.85rem;
+        color: var(--app-text-muted);
+        box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+    .gng-meta span { font-weight: 600; color: var(--app-text); }
+
+    /* ── Instruction card ───────────────────────────────────────────────── */
+    .gng-instruction {
+        background: var(--app-card);
+        border-radius: 14px;
+        padding: 1.5rem 1.5rem 1.75rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    .gng-instruction h2 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin: 0 0 0.6rem;
+        color: var(--app-text);
+    }
+    .gng-instruction p {
+        font-size: 0.9rem;
+        color: var(--app-text-muted);
+        line-height: 1.6;
+        margin: 0 0 1.25rem;
+    }
+    .gng-cue-legend {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        margin-bottom: 1.25rem;
+    }
+    .gng-cue-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .gng-cue-circle {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 800;
+        color: #fff;
+        letter-spacing: 0.03em;
+    }
+    .gng-cue-go    { background: #22c55e; }
+    .gng-cue-nogo  { background: #ef4444; }
+    .gng-cue-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--app-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .gng-skill-chips {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.25rem;
+    }
+    .gng-skill-chip {
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: #ede9fe;
+        color: #5b21b6;
+        padding: 0.2rem 0.65rem;
+        border-radius: 20px;
+    }
+    .gng-btn-start {
+        display: inline-block;
+        background: #4f46e5;
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 700;
+        padding: 0.8rem 2.5rem;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .gng-btn-start:hover { background: #4338ca; }
+    .gng-btn-start:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+    }
+
+    /* ── Game arena ─────────────────────────────────────────────────────── */
+    .gng-arena {
+        display: none;
+    }
+    .gng-arena.active {
+        display: block;
+    }
+
+    /* ── Progress + timer bar ───────────────────────────────────────────── */
+    .gng-hud {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        font-size: 0.82rem;
+        color: var(--app-text-muted);
+        font-weight: 600;
+    }
+    .gng-progress-wrap {
+        background: #e5e7eb;
+        border-radius: 6px;
+        height: 6px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+    .gng-progress-bar {
+        height: 100%;
+        background: #4f46e5;
+        border-radius: 6px;
+        transition: width 0.2s ease;
+        width: 0%;
+    }
+
+    /* ── Counters row ───────────────────────────────────────────────────── */
+    .gng-counters {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .gng-counter {
+        background: var(--app-card);
+        border-radius: 10px;
+        padding: 0.6rem 0.5rem;
+        text-align: center;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .gng-counter-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--app-text-muted);
+        margin-bottom: 0.2rem;
+    }
+    .gng-counter-value {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: var(--app-text);
+    }
+    .gng-counter-value.hit-color   { color: #16a34a; }
+    .gng-counter-value.miss-color  { color: #d97706; }
+    .gng-counter-value.hold-color  { color: #2563eb; }
+    .gng-counter-value.alarm-color { color: #dc2626; }
+
+    /* ── Stimulus field ─────────────────────────────────────────────────── */
+    .gng-field {
+        background: var(--app-card);
+        border-radius: 16px;
+        box-shadow: 0 2px 14px rgba(0,0,0,0.09);
+        min-height: 240px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+    .gng-field:active { transform: scale(0.99); }
+
+    .gng-stimulus {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .gng-stimulus.visible { display: flex; }
+
+    .gng-stim-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        font-weight: 900;
+        color: #fff;
+        letter-spacing: 0.05em;
+        transition: transform 0.08s ease;
+    }
+    .gng-stim-circle.pressed { transform: scale(0.93); }
+
+    .gng-stim-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--app-text-muted);
+    }
+
+    .gng-field-idle {
+        font-size: 0.9rem;
+        color: var(--app-text-muted);
+        font-weight: 600;
+    }
+
+    /* ── Feedback flash ─────────────────────────────────────────────────── */
+    .gng-feedback {
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.82rem;
+        font-weight: 800;
+        padding: 0.25rem 0.85rem;
+        border-radius: 20px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s;
+        white-space: nowrap;
+    }
+    .gng-feedback.show { opacity: 1; }
+    .gng-feedback.fb-hit   { background: #dcfce7; color: #166534; }
+    .gng-feedback.fb-miss  { background: #fef3c7; color: #92400e; }
+    .gng-feedback.fb-hold  { background: #dbeafe; color: #1e40af; }
+    .gng-feedback.fb-alarm { background: #fee2e2; color: #991b1b; }
+
+    /* ── Submitting overlay ─────────────────────────────────────────────── */
+    .gng-submitting {
+        display: none;
+        text-align: center;
+        padding: 3rem 1rem;
+        background: var(--app-card);
+        border-radius: 16px;
+        box-shadow: 0 2px 14px rgba(0,0,0,0.09);
+        color: var(--app-text-muted);
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+    .gng-submitting.active { display: block; }
+    .gng-submitting p { margin: 0.5rem 0 0; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="gng-container">
+
+    {# ── Meta bar ─────────────────────────────────────────────────────────── #}
+    <div class="gng-meta">
+        <div>Today: <span>{{ attempts_today }} / {{ max_daily_attempts }}</span> attempts</div>
+        <div>Remaining: <span>{{ attempts_remaining }}</span></div>
+    </div>
+
+    {# ── Daily cap reached ────────────────────────────────────────────────── #}
+    {% if attempts_remaining == 0 %}
+    <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:12px;padding:1rem 1.25rem;text-align:center;margin-bottom:1.25rem;color:#92400e;font-weight:600;font-size:0.9rem;">
+        Daily limit reached. Come back tomorrow to earn XP again.
+    </div>
+    {% endif %}
+
+    {# ── Instruction screen (pre-game) ────────────────────────────────────── #}
+    <div class="gng-instruction" id="gngInstruction">
+        <h2>🛑 Go / No-Go Reaction</h2>
+        <p>
+            React <strong>as fast as possible</strong> to GO signals.<br>
+            <strong>Do NOT click</strong> when you see NO-GO. Impulse control matters.
+        </p>
+
+        <div class="gng-cue-legend">
+            <div class="gng-cue-item">
+                <div class="gng-cue-circle gng-cue-go">GO</div>
+                <div class="gng-cue-label">Click!</div>
+            </div>
+            <div class="gng-cue-item">
+                <div class="gng-cue-circle gng-cue-nogo">STOP</div>
+                <div class="gng-cue-label">Hold!</div>
+            </div>
+        </div>
+
+        <div class="gng-skill-chips">
+            {% for skill in game.skill_targets %}
+            <span class="gng-skill-chip">{{ skill }}</span>
+            {% endfor %}
+        </div>
+
+        <button class="gng-btn-start" id="gngBtnStart"
+            {% if attempts_remaining == 0 %}disabled{% endif %}>
+            ▶ Start Game
+        </button>
+    </div>
+
+    {# ── Game arena ───────────────────────────────────────────────────────── #}
+    <div class="gng-arena" id="gngArena">
+
+        <div class="gng-hud">
+            <span id="gngProgress">0 / {{ (game.config.phases | sum(attribute='go') + game.config.phases | sum(attribute='no_go')) }}</span>
+            <span id="gngTimer">0s</span>
+        </div>
+        <div class="gng-progress-wrap">
+            <div class="gng-progress-bar" id="gngProgressBar"></div>
+        </div>
+
+        <div class="gng-counters">
+            <div class="gng-counter">
+                <div class="gng-counter-label">Hit</div>
+                <div class="gng-counter-value hit-color" id="gngHit">0</div>
+            </div>
+            <div class="gng-counter">
+                <div class="gng-counter-label">Miss</div>
+                <div class="gng-counter-value miss-color" id="gngMiss">0</div>
+            </div>
+            <div class="gng-counter">
+                <div class="gng-counter-label">Good Hold</div>
+                <div class="gng-counter-value hold-color" id="gngHold">0</div>
+            </div>
+            <div class="gng-counter">
+                <div class="gng-counter-label">False Alarm</div>
+                <div class="gng-counter-value alarm-color" id="gngAlarm">0</div>
+            </div>
+        </div>
+
+        <div class="gng-field" id="gngField">
+            <div class="gng-field-idle" id="gngFieldIdle">Get ready…</div>
+            <div class="gng-stimulus" id="gngStimulus">
+                <div class="gng-stim-circle" id="gngStimCircle"></div>
+                <div class="gng-stim-label" id="gngStimLabel"></div>
+            </div>
+            <div class="gng-feedback" id="gngFeedback"></div>
+        </div>
+
+    </div>
+
+    {# ── Submitting overlay ───────────────────────────────────────────────── #}
+    <div class="gng-submitting" id="gngSubmitting">
+        <div style="font-size:2rem;margin-bottom:0.5rem;">⏳</div>
+        <p>Saving your result…</p>
+    </div>
+
+</div>
+
+<script>
+(function () {
+    // ── Server-injected config ─────────────────────────────────────────────
+    var PHASES      = {{ game.config.phases | tojson }};
+    var GO_CUE      = {{ game.config.go_cue | tojson }};
+    var NO_GO_CUE   = {{ game.config.no_go_cue | tojson }};
+    var CSRF_TOKEN  = "{{ request.cookies.get('csrf_token', '') }}";
+    var SUBMIT_URL  = "/virtual-training/go-no-go/submit";
+
+    // Derived totals
+    var TOTAL_GO    = PHASES.reduce(function(s,p){ return s + p.go;    }, 0); // 21
+    var TOTAL_NO_GO = PHASES.reduce(function(s,p){ return s + p.no_go; }, 0); // 9
+    var TOTAL_STIM  = TOTAL_GO + TOTAL_NO_GO;                                  // 30
+
+    // ── Game state ─────────────────────────────────────────────────────────
+    var started        = false;
+    var startedAt      = null;      // ISO string, set before first stimulus
+    var globalStimIdx  = 0;         // 0-based across all 30 stimuli
+    var hitCount       = 0;         // correct GO responses
+    var missCount      = 0;         // missed GO (window expired)
+    var holdCount      = 0;         // correct NO-GO inhibitions
+    var falseAlarmCount = 0;        // clicked on NO-GO
+    var reactionTimes  = [];        // RT array, only GO hits
+    var stimTimestamp  = null;      // when stimulus appeared
+    var stimTimeout    = null;      // window timeout handle
+    var isiTimeout     = null;      // inter-stimulus interval handle
+    var elapsedInterval = null;
+    var elapsedSeconds = 0;
+    var currentType    = null;      // "go" | "no_go"
+    var clickHandled   = false;     // prevents double-click within window
+
+    // ── raw_metrics tracking ───────────────────────────────────────────────
+    var stimulusLog    = [];        // per-stimulus event objects
+    var currentPhaseIdx = 0;
+
+    // ── DOM refs ───────────────────────────────────────────────────────────
+    var elInstruction  = document.getElementById("gngInstruction");
+    var elArena        = document.getElementById("gngArena");
+    var elBtnStart     = document.getElementById("gngBtnStart");
+    var elField        = document.getElementById("gngField");
+    var elFieldIdle    = document.getElementById("gngFieldIdle");
+    var elStimulus     = document.getElementById("gngStimulus");
+    var elStimCircle   = document.getElementById("gngStimCircle");
+    var elStimLabel    = document.getElementById("gngStimLabel");
+    var elFeedback     = document.getElementById("gngFeedback");
+    var elProgress     = document.getElementById("gngProgress");
+    var elProgressBar  = document.getElementById("gngProgressBar");
+    var elTimer        = document.getElementById("gngTimer");
+    var elHit          = document.getElementById("gngHit");
+    var elMiss         = document.getElementById("gngMiss");
+    var elHold         = document.getElementById("gngHold");
+    var elAlarm        = document.getElementById("gngAlarm");
+    var elSubmitting   = document.getElementById("gngSubmitting");
+
+    // ── Build stimulus sequence ────────────────────────────────────────────
+    // Interleave GO and NO-GO within each phase, then shuffle.
+    function buildSequence() {
+        var seq = [];
+        for (var pi = 0; pi < PHASES.length; pi++) {
+            var p = PHASES[pi];
+            for (var g = 0; g < p.go;    g++) { seq.push({type: "go",    phase: pi, cfg: p}); }
+            for (var n = 0; n < p.no_go; n++) { seq.push({type: "no_go", phase: pi, cfg: p}); }
+        }
+        // Fisher-Yates shuffle within each phase block
+        var result = [];
+        var offset = 0;
+        for (var pi2 = 0; pi2 < PHASES.length; pi2++) {
+            var p2   = PHASES[pi2];
+            var size = p2.go + p2.no_go;
+            var block = seq.slice(offset, offset + size);
+            for (var i = block.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var tmp = block[i]; block[i] = block[j]; block[j] = tmp;
+            }
+            result = result.concat(block);
+            offset += size;
+        }
+        return result;
+    }
+
+    var SEQUENCE = buildSequence();
+
+    // ── Phase helper ───────────────────────────────────────────────────────
+    function getPhaseForIdx(idx) {
+        var cumulative = 0;
+        for (var pi = 0; pi < PHASES.length; pi++) {
+            cumulative += PHASES[pi].go + PHASES[pi].no_go;
+            if (idx < cumulative) { return pi; }
+        }
+        return PHASES.length - 1;
+    }
+
+    // ── Start game ─────────────────────────────────────────────────────────
+    elBtnStart.addEventListener("click", function () {
+        if (started) { return; }
+        started    = true;
+        startedAt  = new Date().toISOString();
+
+        elInstruction.style.display = "none";
+        elArena.classList.add("active");
+
+        elapsedInterval = setInterval(function () {
+            elapsedSeconds++;
+            elTimer.textContent = elapsedSeconds + "s";
+        }, 1000);
+
+        // Brief "Get ready…" then first stimulus
+        isiTimeout = setTimeout(function () {
+            showStimulus();
+        }, 800);
+    });
+
+    // ── Click / tap handler ────────────────────────────────────────────────
+    elField.addEventListener("click", function () {
+        if (!started || currentType === null || clickHandled) { return; }
+        clickHandled = true;
+
+        var rt = Date.now() - stimTimestamp;
+        clearTimeout(stimTimeout);
+
+        if (currentType === "go") {
+            // HIT
+            hitCount++;
+            reactionTimes.push(rt);
+            elHit.textContent = hitCount;
+            recordStimEvent("hit", rt);
+            showFeedback("HIT", "fb-hit");
+            elStimCircle.classList.add("pressed");
+        } else {
+            // FALSE ALARM — clicked on NO-GO
+            falseAlarmCount++;
+            elAlarm.textContent = falseAlarmCount;
+            recordStimEvent("false_alarm", rt);
+            showFeedback("FALSE ALARM", "fb-alarm");
+        }
+
+        hideStimulus();
+        scheduleNext();
+    });
+
+    // ── Show stimulus ──────────────────────────────────────────────────────
+    function showStimulus() {
+        if (globalStimIdx >= TOTAL_STIM) {
+            finishGame();
+            return;
+        }
+        clickHandled    = false;
+        stimTimestamp   = Date.now();
+        currentPhaseIdx = getPhaseForIdx(globalStimIdx);
+        var item        = SEQUENCE[globalStimIdx];
+        currentType     = item.type;
+        var cfg         = item.cfg;
+
+        var cue = currentType === "go" ? GO_CUE : NO_GO_CUE;
+        elStimCircle.style.background = cue.color;
+        elStimCircle.textContent      = cue.label;
+        elStimCircle.classList.remove("pressed");
+        elStimLabel.textContent = currentType === "go" ? "Click now!" : "Hold!";
+
+        elFieldIdle.style.display = "none";
+        elStimulus.classList.add("visible");
+
+        // Update progress
+        elProgress.textContent = (globalStimIdx + 1) + " / " + TOTAL_STIM;
+        elProgressBar.style.width = ((globalStimIdx + 1) / TOTAL_STIM * 100) + "%";
+
+        // Window timeout — if GO not clicked in time → MISS
+        stimTimeout = setTimeout(function () {
+            if (currentType === "go" && !clickHandled) {
+                missCount++;
+                elMiss.textContent = missCount;
+                recordStimEvent("miss", null);
+                showFeedback("MISS", "fb-miss");
+            } else if (currentType === "no_go" && !clickHandled) {
+                // Correct inhibition of NO-GO
+                holdCount++;
+                elHold.textContent = holdCount;
+                recordStimEvent("correct_inhibit", null);
+                showFeedback("GOOD HOLD", "fb-hold");
+            }
+            hideStimulus();
+            scheduleNext();
+        }, cfg.window_ms);
+    }
+
+    function hideStimulus() {
+        elStimulus.classList.remove("visible");
+        currentType = null;
+    }
+
+    function scheduleNext() {
+        globalStimIdx++;
+        if (globalStimIdx >= TOTAL_STIM) {
+            isiTimeout = setTimeout(finishGame, 300);
+            return;
+        }
+        var nextPhase = getPhaseForIdx(globalStimIdx);
+        var isi       = PHASES[nextPhase].isi_ms;
+        isiTimeout = setTimeout(showStimulus, isi);
+    }
+
+    // ── Feedback flash ─────────────────────────────────────────────────────
+    var fbTimeout = null;
+    function showFeedback(text, cls) {
+        if (fbTimeout) { clearTimeout(fbTimeout); }
+        elFeedback.textContent = text;
+        elFeedback.className   = "gng-feedback show " + cls;
+        fbTimeout = setTimeout(function () {
+            elFeedback.className = "gng-feedback";
+        }, 400);
+    }
+
+    // ── Record stimulus event for raw_metrics ──────────────────────────────
+    function recordStimEvent(outcome, rt_ms) {
+        var item = SEQUENCE[globalStimIdx] || {};
+        stimulusLog.push({
+            i:          globalStimIdx,
+            phase:      currentPhaseIdx,
+            type:       currentType,
+            outcome:    outcome,
+            rt_ms:      rt_ms,
+            window_ms:  item.cfg ? item.cfg.window_ms : 1000,
+        });
+    }
+
+    // ── Finish + submit ─────────────────────────────────────────────────────
+    function finishGame() {
+        clearInterval(elapsedInterval);
+        clearTimeout(stimTimeout);
+        clearTimeout(isiTimeout);
+        hideStimulus();
+        elArena.classList.remove("active");
+        elSubmitting.classList.add("active");
+
+        var durationSeconds = startedAt
+            ? Math.round((Date.now() - new Date(startedAt).getTime()) / 100) / 10
+            : null;
+
+        // GO-hit reaction stats
+        var avgMs = reactionTimes.length > 0
+            ? Math.round(reactionTimes.reduce(function(a,b){return a+b;},0) / reactionTimes.length)
+            : null;
+        var minMs = reactionTimes.length > 0
+            ? Math.min.apply(null, reactionTimes)
+            : null;
+
+        // Score formula:
+        // score_raw = 0.40*go_hit_rate + 0.35*(1-no_go_fail_rate)
+        //           + 0.15*speed_factor - 0.10*missed_go_rate
+        var goHitRate     = TOTAL_GO > 0 ? hitCount / TOTAL_GO : 0;
+        var noGoFailRate  = TOTAL_NO_GO > 0 ? falseAlarmCount / TOTAL_NO_GO : 0;
+        var missedGoRate  = TOTAL_GO > 0 ? missCount / TOTAL_GO : 0;
+        var speedFactor   = avgMs !== null ? Math.max(0, 1 - avgMs / 1000) : 0;
+        var scoreRaw      = 0.40 * goHitRate
+                          + 0.35 * (1 - noGoFailRate)
+                          + 0.15 * speedFactor
+                          - 0.10 * missedGoRate;
+        var scoreNorm     = Math.min(100, Math.max(0, Math.round(100 * scoreRaw)));
+
+        // Build raw_metrics per_phase summary
+        var perPhase = PHASES.map(function(p, pi) {
+            var pEvs           = stimulusLog.filter(function(ev){ return ev.phase === pi; });
+            var goHits         = pEvs.filter(function(e){ return e.outcome === "hit"; }).length;
+            var goMisses       = pEvs.filter(function(e){ return e.outcome === "miss"; }).length;
+            var correctInhibits = pEvs.filter(function(e){ return e.outcome === "correct_inhibit"; }).length;
+            var falseAlarms    = pEvs.filter(function(e){ return e.outcome === "false_alarm"; }).length;
+            var rtArr          = pEvs.filter(function(e){ return e.rt_ms !== null; }).map(function(e){ return e.rt_ms; });
+            var avgRtMs        = rtArr.length > 0 ? Math.round(rtArr.reduce(function(a,b){return a+b;},0)/rtArr.length) : null;
+            return {
+                phase:           pi,
+                go:              p.go,
+                no_go:           p.no_go,
+                go_hits:         goHits,
+                go_misses:       goMisses,
+                correct_inhibits: correctInhibits,
+                false_alarms:    falseAlarms,
+                avg_rt_ms:       avgRtMs,
+            };
+        });
+
+        var rawMetrics = { v: 1, per_stimulus: stimulusLog, per_phase: perPhase };
+
+        var payload = {
+            started_at:        startedAt,
+            duration_seconds:  durationSeconds,
+            stimuli_count:     TOTAL_STIM,
+            correct_count:     hitCount,
+            wrong_click_count: falseAlarmCount,
+            error_count:       missCount,
+            avg_reaction_ms:   avgMs,
+            min_reaction_ms:   minMs,
+            score_raw:         scoreRaw,
+            score_normalized:  scoreNorm,
+            raw_metrics:       rawMetrics,
+        };
+
+        fetch(SUBMIT_URL, {
+            method:  "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-Token": CSRF_TOKEN,
+            },
+            body: JSON.stringify(payload),
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            if (data.attempt_id) {
+                window.location.href = "/virtual-training/go-no-go/result/" + data.attempt_id;
+            } else {
+                elSubmitting.innerHTML = "<p>⚠️ Could not save attempt. <a href='/virtual-training'>Back to hub</a></p>";
+            }
+        })
+        .catch(function(){
+            elSubmitting.innerHTML = "<p>⚠️ Network error. <a href='/virtual-training'>Back to hub</a></p>";
+        });
+    }
+
+})();
+</script>
+{% endblock %}

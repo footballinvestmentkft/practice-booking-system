@@ -153,17 +153,36 @@ class VTSkillScorer:
         return max(0.0, min(1.0, signals.completion_rate * signals.hit_rate))
 
     @staticmethod
+    def score_composure(signals: VTSignals) -> float:
+        """
+        Impulse control — inverse of false alarm rate.
+
+        In Go/No-Go: wrong_click_count = false alarms (clicks on NO-GO stimuli).
+        Commission errors (acting when you should not) are the primary failure
+        mode of a Go/No-Go task, so penalty weight mirrors score_decisions.
+
+          composure = clamp(1.0 − 1.5 × wrong_rate, 0, 1)
+
+        wrong_rate = wrong_click_count / stimuli_count
+        At zero false alarms: composure = 1.0 (perfect impulse control).
+        At wrong_rate ≥ 0.67: composure = 0.0 (no impulse control shown).
+        """
+        score = 1.0 - 1.5 * signals.wrong_rate
+        return max(0.0, min(1.0, score))
+
+    @staticmethod
     def score_all(signals: VTSignals, skill_targets: dict[str, float]) -> dict[str, float]:
         """
         Score every skill present in skill_targets.
         Known keys dispatch to dedicated scorers.
-        Unknown keys receive the mean of the four known scores (future-proofing).
+        Unknown keys receive the mean of the known scores (future-proofing).
         """
         _scorers = {
             "reactions":     VTSkillScorer.score_reactions,
             "decisions":     VTSkillScorer.score_decisions,
             "concentration": VTSkillScorer.score_concentration,
             "anticipation":  VTSkillScorer.score_anticipation,
+            "composure":     VTSkillScorer.score_composure,
         }
         known = {k: fn(signals) for k, fn in _scorers.items()}
         fallback = sum(known.values()) / len(known) if known else 0.5

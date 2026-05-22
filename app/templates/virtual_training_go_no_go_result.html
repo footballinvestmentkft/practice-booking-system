@@ -1,0 +1,508 @@
+{% extends "student_base.html" %}
+
+{% block title %}Go / No-Go Result - LFA{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '🛑' %}
+{% set _page_name = 'Result' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .gngr-container {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    .gngr-card {
+        background: var(--app-card);
+        border-radius: 16px;
+        padding: 2rem 1.75rem;
+        box-shadow: 0 2px 14px rgba(0,0,0,0.09);
+        text-align: center;
+        margin-bottom: 1.25rem;
+    }
+
+    .gngr-status-icon {
+        font-size: 3rem;
+        margin-bottom: 0.5rem;
+        line-height: 1;
+    }
+
+    .gngr-title {
+        font-size: 1.45rem;
+        font-weight: 800;
+        color: var(--app-text);
+        margin: 0 0 0.3rem;
+    }
+
+    .gngr-subtitle {
+        font-size: 0.9rem;
+        color: var(--app-text-muted);
+        margin: 0 0 1.5rem;
+    }
+
+    /* ── Stats grid ──────────────────────────────────────────────────── */
+    .gngr-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.85rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .gngr-stat {
+        background: #f9fafb;
+        border-radius: 10px;
+        padding: 0.85rem 0.75rem;
+    }
+
+    .gngr-stat-label {
+        font-size: 0.75rem;
+        color: var(--app-text-muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.3rem;
+    }
+
+    .gngr-stat-value {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: var(--app-text);
+    }
+
+    .gngr-stat-value.good   { color: #16a34a; }
+    .gngr-stat-value.danger { color: #ef4444; }
+    .gngr-stat-value.warn   { color: #d97706; }
+
+    /* ── XP badge ────────────────────────────────────────────────────── */
+    .gngr-xp-badge {
+        display: inline-block;
+        background: #ede9fe;
+        color: #5b21b6;
+        font-size: 1.1rem;
+        font-weight: 800;
+        padding: 0.5rem 1.5rem;
+        border-radius: 20px;
+        margin-bottom: 1.5rem;
+    }
+
+    /* ── Invalid banner ──────────────────────────────────────────────── */
+    .gngr-invalid-banner {
+        background: #fef3c7;
+        border: 1px solid #f59e0b;
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+        color: #92400e;
+        font-size: 0.88rem;
+        font-weight: 600;
+        margin-bottom: 1.25rem;
+        text-align: center;
+    }
+
+    /* ── Skill deltas summary ────────────────────────────────────────── */
+    .gngr-skill-deltas {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+        margin-bottom: 1.5rem;
+        text-align: left;
+    }
+
+    .gngr-skill-deltas h4 {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #166534;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0 0 0.6rem;
+    }
+
+    .gngr-skill-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.875rem;
+        color: #14532d;
+        padding: 0.2rem 0;
+    }
+
+    /* ── Play again button ───────────────────────────────────────────── */
+    .gngr-btn-play {
+        display: inline-block;
+        background: #4f46e5;
+        color: #fff;
+        font-size: 0.95rem;
+        font-weight: 700;
+        padding: 0.7rem 2rem;
+        border-radius: 10px;
+        text-decoration: none;
+        transition: background 0.15s;
+        margin-bottom: 0.5rem;
+    }
+    .gngr-btn-play:hover { background: #4338ca; }
+
+    /* ── Skill breakdown (documented per-skill) ──────────────────────── */
+    .gngr-breakdown {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 12px;
+        padding: 1rem 1.1rem;
+        margin-bottom: 1.25rem;
+        text-align: left;
+    }
+
+    .gngr-breakdown h4 {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #166534;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0 0 0.75rem;
+    }
+
+    .gngr-breakdown-row {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        align-items: start;
+        gap: 0.5rem 1rem;
+        padding: 0.45rem 0;
+        border-bottom: 1px solid #d1fae5;
+        font-size: 0.875rem;
+    }
+    .gngr-breakdown-row:last-child { border-bottom: none; }
+
+    .gngr-breakdown-skill   { font-weight: 700; color: #14532d; }
+    .gngr-breakdown-delta   { font-weight: 800; color: #166534; white-space: nowrap; }
+    .gngr-breakdown-factors {
+        font-size: 0.78rem;
+        color: #6b7280;
+        grid-column: 1 / -1;
+        padding-top: 0.1rem;
+        padding-left: 0.1rem;
+    }
+
+    /* ── Per-phase table ─────────────────────────────────────────────── */
+    .gngr-detail-section {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1rem 1.1rem;
+        margin-bottom: 1.25rem;
+        text-align: left;
+    }
+
+    .gngr-detail-section h4 {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #374151;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0 0 0.75rem;
+    }
+
+    .gngr-detail-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+    }
+
+    .gngr-detail-table th {
+        background: #f9fafb;
+        color: #6b7280;
+        font-weight: 700;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 0.45rem 0.6rem;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+        white-space: nowrap;
+    }
+
+    .gngr-detail-table td {
+        padding: 0.45rem 0.6rem;
+        border-bottom: 1px solid #f3f4f6;
+        color: #374151;
+        vertical-align: middle;
+    }
+
+    .gngr-detail-table tr:last-child td { border-bottom: none; }
+
+    .gngr-acc-good  { color: #16a34a; font-weight: 700; }
+    .gngr-acc-ok    { color: #d97706; font-weight: 700; }
+    .gngr-acc-poor  { color: #dc2626; font-weight: 700; }
+
+    /* ── Admin debug ─────────────────────────────────────────────────── */
+    .gngr-admin-debug {
+        background: #1e293b;
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+        margin-bottom: 1.25rem;
+        text-align: left;
+    }
+    .gngr-admin-debug summary {
+        color: #94a3b8;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+    }
+    .gngr-admin-debug pre {
+        color: #e2e8f0;
+        font-size: 0.72rem;
+        overflow-x: auto;
+        margin: 0.75rem 0 0;
+        white-space: pre-wrap;
+        word-break: break-all;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────────────── */
+    .gngr-footer {
+        text-align: center;
+        margin-top: 1.25rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    .gngr-footer a {
+        color: #667eea;
+        text-decoration: none;
+        margin: 0 0.75rem;
+        font-weight: 600;
+        font-size: 0.88rem;
+    }
+    .gngr-footer a:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="gngr-container">
+
+    {% if attempt.is_valid %}
+    {# ── Valid result ──────────────────────────────────────────────────── #}
+    <div class="gngr-card">
+        <div class="gngr-status-icon">
+            {% if attempt.score_normalized >= 85 %}🏆
+            {% elif attempt.score_normalized >= 65 %}⚡
+            {% elif attempt.score_normalized >= 45 %}💪
+            {% else %}🎯{% endif %}
+        </div>
+        <h2 class="gngr-title">
+            {% if attempt.score_normalized >= 85 %}Excellent impulse control!
+            {% elif attempt.score_normalized >= 65 %}Good decision-making!
+            {% elif attempt.score_normalized >= 45 %}Keep training!
+            {% else %}Keep practicing!{% endif %}
+        </h2>
+        <p class="gngr-subtitle">Go / No-Go Reaction</p>
+
+        {# Compute per-phase totals for display #}
+        {% set _go_total    = (game.config.phases | sum(attribute='go'))    if game else 21 %}
+        {% set _no_go_total = (game.config.phases | sum(attribute='no_go')) if game else 9  %}
+
+        <div class="gngr-stats-grid">
+            <div class="gngr-stat">
+                <div class="gngr-stat-label">Score</div>
+                <div class="gngr-stat-value">
+                    {% if attempt.score_normalized is not none %}{{ attempt.score_normalized | round(0) | int }}%
+                    {% else %}—{% endif %}
+                </div>
+            </div>
+            <div class="gngr-stat">
+                <div class="gngr-stat-label">GO Accuracy</div>
+                {% set _go_pct = ((attempt.correct_count / _go_total) * 100) | round(0) | int if attempt.correct_count is not none else none %}
+                <div class="gngr-stat-value {% if _go_pct is not none %}{% if _go_pct >= 80 %}good{% elif _go_pct >= 60 %}warn{% else %}danger{% endif %}{% endif %}">
+                    {% if _go_pct is not none %}{{ _go_pct }}%{% else %}—{% endif %}
+                    <small style="font-size:0.65rem;font-weight:600;color:var(--app-text-muted);">{{ attempt.correct_count if attempt.correct_count is not none else "—" }}/{{ _go_total }}</small>
+                </div>
+            </div>
+            <div class="gngr-stat">
+                <div class="gngr-stat-label">NO-GO Success</div>
+                {% set _fa = attempt.wrong_click_count if attempt.wrong_click_count is not none else 0 %}
+                {% set _correct_inhibits = _no_go_total - _fa %}
+                {% set _nogo_pct = ((_correct_inhibits / _no_go_total) * 100) | round(0) | int %}
+                <div class="gngr-stat-value {% if _nogo_pct >= 80 %}good{% elif _nogo_pct >= 60 %}warn{% else %}danger{% endif %}">
+                    {{ _nogo_pct }}%
+                    <small style="font-size:0.65rem;font-weight:600;color:var(--app-text-muted);">{{ _correct_inhibits }}/{{ _no_go_total }}</small>
+                </div>
+            </div>
+            <div class="gngr-stat">
+                <div class="gngr-stat-label">False Alarms</div>
+                <div class="gngr-stat-value{% if _fa > 0 %} danger{% endif %}">
+                    {{ _fa }}
+                    <small style="font-size:0.65rem;font-weight:600;color:var(--app-text-muted);">/ {{ _no_go_total }} NO-GO</small>
+                </div>
+            </div>
+            <div class="gngr-stat">
+                <div class="gngr-stat-label">Missed GO</div>
+                {% set _miss = attempt.error_count if attempt.error_count is not none else 0 %}
+                <div class="gngr-stat-value{% if _miss > 0 %} warn{% endif %}">
+                    {{ _miss }}
+                    <small style="font-size:0.65rem;font-weight:600;color:var(--app-text-muted);">/ {{ _go_total }} GO</small>
+                </div>
+            </div>
+            <div class="gngr-stat">
+                <div class="gngr-stat-label">Avg GO Reaction</div>
+                <div class="gngr-stat-value">
+                    {% if attempt.avg_reaction_ms is not none %}{{ attempt.avg_reaction_ms | round(0) | int }} ms
+                    {% else %}—{% endif %}
+                </div>
+            </div>
+            <div class="gngr-stat">
+                <div class="gngr-stat-label">Duration</div>
+                <div class="gngr-stat-value">
+                    {% if attempt.duration_seconds is not none %}{{ attempt.duration_seconds | round(1) }} s
+                    {% else %}—{% endif %}
+                </div>
+            </div>
+            <div class="gngr-stat">
+                <div class="gngr-stat-label">Attempt</div>
+                <div class="gngr-stat-value">
+                    #{{ attempt.attempt_index_today }} today
+                </div>
+            </div>
+        </div>
+
+        {% if attempt.xp_awarded > 0 %}
+        <div class="gngr-xp-badge">+{{ attempt.xp_awarded }} XP earned</div>
+        {% elif attempt.attempt_index_today > 3 %}
+        <div class="gngr-xp-badge" style="background:#f3f4f6;color:#6b7280;">
+            No XP — daily limit reached
+        </div>
+        {% endif %}
+
+        {% if attempt.skill_deltas %}
+        <div class="gngr-skill-deltas">
+            <h4>Skill deltas</h4>
+            {% for skill, delta in attempt.skill_deltas.items() %}
+            <div class="gngr-skill-row">
+                <span>{{ skill }}</span>
+                <span>+{{ "%.2f"|format(delta) }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {# ── Skill Delta Breakdown — documented per-skill ───────────────── #}
+        {% if skill_scores %}
+        <div class="gngr-breakdown" id="gngr-breakdown">
+            <h4>Skill Delta Breakdown</h4>
+            {% for skill, score in skill_scores.items() %}
+            {% set delta = attempt.skill_deltas.get(skill, 0) if attempt.skill_deltas else 0 %}
+            <div class="gngr-breakdown-row">
+                <span class="gngr-breakdown-skill">{{ skill|capitalize }}</span>
+                <span class="gngr-breakdown-delta">+{{ "%.3f"|format(delta) }}</span>
+                <span class="gngr-breakdown-factors">
+                    {# Per-skill formula documentation shown to player #}
+                    {% if skill == "decisions" %}
+                        GO hit rate: {{ signals_ctx.hit_rate }}% · False alarm penalty ({{ signals_ctx.wrong_rate }}% × 1.5×) · Score: {{ "%.0f"|format(score * 100) }}%
+                        <br><span style="font-style:italic;color:#9ca3af;">Measures correct GO + correct NO-GO decisions combined</span>
+                    {% elif skill == "concentration" %}
+                        Missed GO: {{ signals_ctx.miss_rate }}% · Sustained attention score: {{ "%.0f"|format(score * 100) }}%
+                        <br><span style="font-style:italic;color:#9ca3af;">Measures ability to stay focused and not miss GO stimuli</span>
+                    {% elif skill == "composure" %}
+                        False alarm rate: {{ signals_ctx.wrong_rate }}% (× 1.5× penalty) · Score: {{ "%.0f"|format(score * 100) }}%
+                        <br><span style="font-style:italic;color:#9ca3af;">Measures impulse control — not clicking when you should hold</span>
+                    {% elif skill == "reactions" %}
+                        Speed: {{ signals_ctx.speed_score }}% · GO hit rate: {{ signals_ctx.hit_rate }}% · Score: {{ "%.0f"|format(score * 100) }}%
+                        <br><span style="font-style:italic;color:#9ca3af;">Measures how quickly you respond to GO stimuli (secondary skill)</span>
+                    {% else %}
+                        Score: {{ "%.0f"|format(score * 100) }}%
+                    {% endif %}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <a href="/virtual-training/go-no-go" class="gngr-btn-play">Play again</a>
+    </div>
+
+    {# ── Per-phase summary ─────────────────────────────────────────────── #}
+    {% if per_phase %}
+    <div class="gngr-detail-section" id="gngr-per-phase">
+        <h4>Phase Performance</h4>
+        <table class="gngr-detail-table">
+            <thead>
+                <tr>
+                    <th>Phase</th>
+                    <th>GO hits</th>
+                    <th>GO %</th>
+                    <th>NO-GO held</th>
+                    <th>False alarms</th>
+                    <th>Avg GO RT</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in per_phase %}
+                {% set go_total  = p.go    if p.go    else 1 %}
+                {% set nogo_total = p.no_go if p.no_go else 1 %}
+                {% set go_acc  = ((p.go_hits / go_total) * 100) | round(1) %}
+                {% set nogo_acc = ((p.correct_inhibits / nogo_total) * 100) | round(1) %}
+                <tr>
+                    <td>Phase {{ loop.index }}</td>
+                    <td>{{ p.go_hits }}/{{ p.go }}</td>
+                    <td class="{% if go_acc >= 85 %}gngr-acc-good{% elif go_acc >= 65 %}gngr-acc-ok{% else %}gngr-acc-poor{% endif %}">{{ go_acc }}%</td>
+                    <td>
+                        {{ p.correct_inhibits }}/{{ p.no_go }}
+                        <span class="{% if nogo_acc >= 85 %}gngr-acc-good{% elif nogo_acc >= 65 %}gngr-acc-ok{% else %}gngr-acc-poor{% endif %}">({{ nogo_acc }}%)</span>
+                    </td>
+                    <td class="{% if p.false_alarms > 0 %}gngr-acc-poor{% else %}gngr-acc-good{% endif %}">{{ p.false_alarms }}</td>
+                    <td>{% if p.avg_rt_ms is not none %}{{ p.avg_rt_ms | round(0) | int }} ms{% else %}—{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {# ── Admin per-stimulus debug ──────────────────────────────────────── #}
+    {% if is_admin and per_stimulus %}
+    <div class="gngr-admin-debug" id="gngr-admin-debug">
+        <details>
+            <summary>Admin: per-stimulus raw data ({{ per_stimulus | length }} entries)</summary>
+            <pre>{{ per_stimulus | tojson(indent=2) }}</pre>
+        </details>
+    </div>
+    {% endif %}
+
+    {% else %}
+    {# ── Invalid attempt ───────────────────────────────────────────────── #}
+    <div class="gngr-card">
+        <div class="gngr-status-icon">⚠️</div>
+        <h2 class="gngr-title">Attempt not counted</h2>
+        <p class="gngr-subtitle">Go / No-Go Reaction</p>
+        <div class="gngr-invalid-banner">
+            {% if attempt.invalid_reason == "too_short" %}
+            Session ended too quickly. Try completing the full 30-stimulus round.
+            {% elif attempt.invalid_reason == "too_few_stimuli" %}
+            Not enough stimuli were presented. Please complete a full round.
+            {% elif attempt.invalid_reason == "random_clicking" %}
+            Too many incorrect responses detected. Focus on when to click and when to hold!
+            {% elif attempt.invalid_reason == "bot_suspected" %}
+            Reaction times were unusually fast and could not be validated.
+            {% else %}
+            This attempt could not be validated ({{ attempt.invalid_reason }}).
+            {% endif %}
+        </div>
+        <p style="font-size:0.88rem;color:var(--app-text-muted);margin-bottom:1.25rem;">
+            No XP was awarded. Remaining daily attempts are not consumed.
+        </p>
+        <a href="/virtual-training/go-no-go" class="gngr-btn-play">Try again</a>
+    </div>
+    {% endif %}
+
+    <div class="gngr-footer">
+        <a href="/virtual-training">💻 All Games</a>
+        <a href="/virtual-training/history">📋 History</a>
+        <a href="/training">🎓 Training</a>
+        <a href="/dashboard/lfa-football-player">⚽ Dashboard</a>
+    </div>
+
+</div>
+{% endblock %}

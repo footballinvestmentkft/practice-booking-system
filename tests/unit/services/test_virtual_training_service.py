@@ -248,10 +248,10 @@ class TestSkillDeltas:
 class TestSeedData:
 
     def test_vt16_seed_presets_present_and_correct_active_state(self):
-        """VT-16: Seed contains 12 games; color_reaction active; stroop_challenge hidden; all others planned."""
+        """VT-16: Seed contains 12 games; color_reaction+go_no_go active; stroop_challenge hidden; rest planned."""
         from scripts.seed_virtual_training_games import _GAMES
 
-        # 1 active + 1 hidden + 10 planned = 12 total
+        # 2 active + 1 hidden + 9 planned = 12 total
         assert len(_GAMES) == 12
 
         codes = {g["code"] for g in _GAMES}
@@ -274,7 +274,8 @@ class TestSeedData:
 
         # Active state
         assert game_map["color_reaction"]["is_active"] is True, "color_reaction must remain active"
-        for code in codes - {"color_reaction"}:
+        assert game_map["go_no_go"]["is_active"] is True, "go_no_go must be active"
+        for code in codes - {"color_reaction", "go_no_go"}:
             assert game_map[code]["is_active"] is False, f"{code} must remain inactive until admin toggle"
 
         # stroop_challenge hidden from hub
