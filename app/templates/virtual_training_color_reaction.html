@@ -147,15 +147,6 @@
         color: var(--app-text-muted);
     }
 
-    .cr-target-badge .cr-badge-swatch {
-        display: inline-block;
-        width: 26px;
-        height: 26px;
-        border-radius: 50%;
-        border: 2px solid rgba(0,0,0,0.12);
-        flex-shrink: 0;
-    }
-
     .cr-target-badge .cr-badge-name {
         font-size: 1.25rem;
         font-weight: 800;
@@ -320,8 +311,7 @@
         {# Target colour badge — shown once round starts #}
         <div class="cr-target-badge" id="crTargetBadge">
             <span class="cr-badge-label">Click</span>
-            <span class="cr-badge-swatch" id="crBadgeSwatch"></span>
-            <span class="cr-badge-name"  id="crBadgeName"></span>
+            <span class="cr-badge-name" id="crBadgeName"></span>
         </div>
 
         <div class="cr-field" id="crField">
@@ -396,7 +386,6 @@
     var elTimer      = document.getElementById("crTimer");
     var elSubmitting = document.getElementById("crSubmitting");
     var targetBadge  = document.getElementById("crTargetBadge");
-    var badgeSwatch  = document.getElementById("crBadgeSwatch");
     var badgeName    = document.getElementById("crBadgeName");
 
     // ── Phase helper ───────────────────────────────────────────────────────
@@ -474,13 +463,12 @@
         var tgtIdx  = Math.floor(Math.random() * n);
         currentTargetName = pool[tgtIdx];
 
-        // Update instruction badge — swatch shows correct colour; text uses a random
-        // distractor colour (never the target) to create Stroop-like interference.
+        // Instruction badge: colour name in a random distractor ink colour (never the target).
+        // No swatch — the player must rely solely on reading the label, not colour matching.
         var distractorPool = COLOUR_NAMES.filter(function(n) { return n !== currentTargetName; });
         var distractorName = distractorPool[Math.floor(Math.random() * distractorPool.length)];
-        badgeSwatch.style.backgroundColor = COLOURS[currentTargetName];
-        badgeName.textContent             = currentTargetName;
-        badgeName.style.color             = COLOURS[distractorName];
+        badgeName.textContent = currentTargetName;
+        badgeName.style.color = COLOURS[distractorName];
         targetBadge.style.display         = "flex";
 
         // Place N circles, one per zone
