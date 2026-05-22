@@ -33,7 +33,7 @@
 
     .cr-meta span { font-weight: 600; color: var(--app-text); }
 
-    /* ── Instruction card ───────────────────────────────────────────────── */
+    /* ── Instruction card (pre-game) ────────────────────────────────────── */
     .cr-instruction {
         background: var(--app-card);
         border-radius: 14px;
@@ -87,14 +87,14 @@
         transition: background 0.15s;
     }
 
-    .cr-btn-start:hover { background: #4338ca; }
+    .cr-btn-start:hover  { background: #4338ca; }
     .cr-btn-start:disabled { background: #9ca3af; cursor: not-allowed; }
 
     /* ── Game arena ─────────────────────────────────────────────────────── */
     .cr-arena {
         display: none;
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.75rem;
     }
 
     .cr-arena.active { display: flex; }
@@ -117,13 +117,52 @@
     .cr-stats-row {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         font-size: 0.82rem;
         color: var(--app-text-muted);
     }
 
     .cr-stats-row b { color: var(--app-text); }
 
-    /* The stimulus field — fixed aspect so the circle can be placed randomly */
+    /* ── Instruction badge (which color to click) ───────────────────────── */
+    .cr-target-badge {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        background: var(--app-card);
+        border-radius: 10px;
+        padding: 0.7rem 1.25rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--app-text-muted);
+    }
+
+    .cr-target-badge .cr-badge-label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--app-text-muted);
+    }
+
+    .cr-target-badge .cr-badge-swatch {
+        display: inline-block;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 2px solid rgba(0,0,0,0.12);
+        flex-shrink: 0;
+    }
+
+    .cr-target-badge .cr-badge-name {
+        font-size: 1.25rem;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+    }
+
+    /* ── Stimulus field ─────────────────────────────────────────────────── */
     .cr-field {
         position: relative;
         background: var(--app-card);
@@ -131,7 +170,6 @@
         box-shadow: 0 2px 10px rgba(0,0,0,0.07);
         overflow: hidden;
         aspect-ratio: 4 / 3;
-        cursor: crosshair;
         user-select: none;
         -webkit-user-select: none;
     }
@@ -152,12 +190,13 @@
         position: absolute;
         border-radius: 50%;
         cursor: pointer;
-        transition: opacity 0.1s;
         box-shadow: 0 4px 16px rgba(0,0,0,0.25);
         display: none;
+        transition: transform 0.08s;
     }
 
     .cr-circle.visible { display: block; }
+    .cr-circle.visible:hover { transform: scale(1.06); }
 
     /* ── Feedback flash ─────────────────────────────────────────────────── */
     .cr-feedback {
@@ -168,9 +207,20 @@
         color: #10b981;
     }
 
-    .cr-feedback.miss { color: #ef4444; }
+    .cr-feedback.miss  { color: #ef4444; }
+    .cr-feedback.wrong { color: #f59e0b; }
 
-    /* ── Cap warning ────────────────────────────────────────────────────── */
+    /* ── Timer row ──────────────────────────────────────────────────────── */
+    .cr-timer-row {
+        display: flex;
+        justify-content: flex-end;
+        font-size: 0.8rem;
+        color: var(--app-text-muted);
+    }
+
+    .cr-timer-row b { color: var(--app-text); }
+
+    /* ── Daily cap warning ──────────────────────────────────────────────── */
     .cr-cap-warning {
         background: #fef3c7;
         border: 1px solid #f59e0b;
@@ -182,7 +232,7 @@
         font-weight: 600;
     }
 
-    /* ── Loading overlay ────────────────────────────────────────────────── */
+    /* ── Submitting overlay ─────────────────────────────────────────────── */
     .cr-submitting {
         display: none;
         text-align: center;
@@ -231,13 +281,16 @@
     </div>
     {% else %}
 
-    {# ── Instruction card (shown before game starts) ───────────────────── #}
+    {# ── Pre-game instruction card ─────────────────────────────────────── #}
     <div class="cr-instruction" id="crInstruction">
         <h2>⚡ Color Reaction</h2>
         <p>
-            A coloured circle appears at a random position on the field.
-            <strong>Tap or click it as fast as you can</strong> before it disappears.
-            {{ game.config.stimulus_count or 10 }} stimuli will be shown in total.
+            Multiple coloured circles appear at the same time.
+            <strong>Click the one that matches the colour shown in the badge above the field.</strong>
+            React fast — but pick the right one! Wrong clicks count against you.
+        </p>
+        <p style="font-size: 0.82rem; color: var(--app-text-muted); margin-bottom: 1rem;">
+            3 phases · 36 stimuli total · difficulty ramps up
         </p>
         <div class="cr-skill-chips">
             {% for skill in game.skill_targets.keys() %}
@@ -253,19 +306,34 @@
 
     {# ── Game arena (hidden until started) ────────────────────────────── #}
     <div class="cr-arena" id="crArena">
+
         <div class="cr-progress-bar-wrap">
             <div class="cr-progress-bar" id="crProgressBar"></div>
         </div>
+
         <div class="cr-stats-row">
-            <span>Stimulus <b id="crCurrent">0</b> / <b id="crTotal">{{ game.config.stimulus_count or 10 }}</b></span>
-            <span>Hits: <b id="crHits">0</b> &nbsp; Misses: <b id="crMisses">0</b></span>
+            <span>Stim <b id="crCurrent">0</b> / <b id="crTotal">36</b></span>
+            <span>✓ <b id="crCorrect">0</b> &nbsp; ✗ <b id="crWrong">0</b> &nbsp; — <b id="crMisses">0</b></span>
             <span>Avg: <b id="crAvgMs">—</b> ms</span>
         </div>
+
+        {# Target colour badge — shown once round starts #}
+        <div class="cr-target-badge" id="crTargetBadge">
+            <span class="cr-badge-label">Click</span>
+            <span class="cr-badge-swatch" id="crBadgeSwatch"></span>
+            <span class="cr-badge-name"  id="crBadgeName"></span>
+        </div>
+
         <div class="cr-field" id="crField">
             <div class="cr-field-msg" id="crFieldMsg">Get ready…</div>
-            <div class="cr-circle" id="crCircle"></div>
         </div>
+
         <div class="cr-feedback" id="crFeedback"></div>
+
+        <div class="cr-timer-row">
+            Time: <b id="crTimer" style="margin-left:0.3rem;">0:00</b>
+        </div>
+
     </div>
 
     {# ── Submitting spinner ────────────────────────────────────────────── #}
@@ -284,193 +352,313 @@
 
 <script>
 (function () {
-    // ── Config pulled from server ─────────────────────────────────────────
-    const STIMULUS_COUNT    = {{ game.config.stimulus_count or 10 }};
-    const MIN_DELAY_MS      = {{ game.config.min_delay_ms or 600 }};
-    const MAX_DELAY_MS      = {{ game.config.max_delay_ms or 2500 }};
-    const COLOURS           = {{ game.config.colours | tojson }};
-    const CIRCLE_DIAMETER   = 64;   // px — fixed size for consistent hit area
-    const WINDOW_MS         = 2500; // ms until a stimulus expires (miss)
-    const CSRF_TOKEN        = "{{ request.cookies.get('csrf_token', '') }}";
-    const SUBMIT_URL        = "/virtual-training/color-reaction/submit";
+    // ── Server-injected config ─────────────────────────────────────────────
+    var PHASES           = {{ game.config.phases | tojson }};
+    var COLOURS          = {{ game.config.colours | tojson }};  // {"RED":"#e74c3c", ...}
+    var MISS_PENALTY_MS  = {{ game.config.miss_penalty_ms  or 300 }};
+    var WRONG_PENALTY_MS = {{ game.config.wrong_penalty_ms or 200 }};
+    var CSRF_TOKEN       = "{{ request.cookies.get('csrf_token', '') }}";
+    var SUBMIT_URL       = "/virtual-training/color-reaction/submit";
 
-    // ── Game state ────────────────────────────────────────────────────────
-    let started       = false;
-    let startedAt     = null;       // ISO string set at first stimulus show
-    let stimulusTimes = [];         // reaction times for each hit (ms)
-    let hits          = 0;
-    let misses        = 0;
-    let currentStim   = 0;
-    let stimTimestamp = null;       // when current stimulus appeared
-    let stimTimeout   = null;       // timer for auto-miss
+    var COLOUR_NAMES  = Object.keys(COLOURS);
+    var TOTAL_STIMULI = PHASES.reduce(function(s, p) { return s + p.stimuli; }, 0);  // 36
+    // Average window for speed_factor reference in score formula
+    var AVG_WINDOW_MS = PHASES.reduce(function(s, p) { return s + p.window_ms; }, 0) / PHASES.length;
 
-    // ── DOM refs ──────────────────────────────────────────────────────────
-    const arena       = document.getElementById("crArena");
-    const instruction = document.getElementById("crInstruction");
-    const field       = document.getElementById("crField");
-    const circle      = document.getElementById("crCircle");
-    const fieldMsg    = document.getElementById("crFieldMsg");
-    const progressBar = document.getElementById("crProgressBar");
-    const elCurrent   = document.getElementById("crCurrent");
-    const elHits      = document.getElementById("crHits");
-    const elMisses    = document.getElementById("crMisses");
-    const elAvgMs     = document.getElementById("crAvgMs");
-    const elFeedback  = document.getElementById("crFeedback");
-    const elSubmitting= document.getElementById("crSubmitting");
+    // ── Game state ─────────────────────────────────────────────────────────
+    var started           = false;
+    var startedAt         = null;        // ISO string, set on first stimulus
+    var globalStimIdx     = 0;           // 0-based across all 36 stimuli
+    var correctCount      = 0;
+    var wrongClickCount   = 0;
+    var missCount         = 0;
+    var reactionTimes     = [];
+    var clickHandled      = false;
+    var stimTimestamp     = null;
+    var stimTimeout       = null;
+    var elapsedInterval   = null;
+    var elapsedSeconds    = 0;
+    var currentCircles    = [];          // DOM elements for the active round
+    var currentTargetName = null;        // color name the user must click
 
-    // ── Public entry ──────────────────────────────────────────────────────
+    // ── DOM refs ───────────────────────────────────────────────────────────
+    var arena        = document.getElementById("crArena");
+    var instruction  = document.getElementById("crInstruction");
+    var field        = document.getElementById("crField");
+    var fieldMsg     = document.getElementById("crFieldMsg");
+    var progressBar  = document.getElementById("crProgressBar");
+    var elCurrent    = document.getElementById("crCurrent");
+    var elCorrect    = document.getElementById("crCorrect");
+    var elWrong      = document.getElementById("crWrong");
+    var elMisses     = document.getElementById("crMisses");
+    var elAvgMs      = document.getElementById("crAvgMs");
+    var elFeedback   = document.getElementById("crFeedback");
+    var elTimer      = document.getElementById("crTimer");
+    var elSubmitting = document.getElementById("crSubmitting");
+    var targetBadge  = document.getElementById("crTargetBadge");
+    var badgeSwatch  = document.getElementById("crBadgeSwatch");
+    var badgeName    = document.getElementById("crBadgeName");
+
+    // ── Phase helper ───────────────────────────────────────────────────────
+    function getPhase(stimIndex) {
+        var cumulative = 0;
+        for (var i = 0; i < PHASES.length; i++) {
+            cumulative += PHASES[i].stimuli;
+            if (stimIndex < cumulative) { return PHASES[i]; }
+        }
+        return PHASES[PHASES.length - 1];
+    }
+
+    // ── Zone placement: N non-overlapping circles ──────────────────────────
+    // Arena divided into N equal horizontal zones; one circle per zone.
+    function getZonePositions(n, diameter) {
+        var rect  = field.getBoundingClientRect();
+        var W     = rect.width;
+        var H     = rect.height;
+        var zoneW = W / n;
+        var positions = [];
+        for (var i = 0; i < n; i++) {
+            var minX = Math.round(i * zoneW);
+            var maxX = Math.max(minX, Math.round((i + 1) * zoneW) - diameter);
+            var maxY = Math.max(0, H - diameter);
+            var x = minX + Math.floor(Math.random() * (maxX - minX + 1));
+            var y = Math.floor(Math.random() * (maxY + 1));
+            positions.push({ x: x, y: y });
+        }
+        return positions;
+    }
+
+    // ── Shuffle (Fisher-Yates) ─────────────────────────────────────────────
+    function shuffle(arr) {
+        for (var i = arr.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+        }
+        return arr;
+    }
+
+    // ── Public entry ───────────────────────────────────────────────────────
     window.crStart = function () {
-        if (started) return;
+        if (started) { return; }
         started = true;
         instruction.style.display = "none";
         arena.classList.add("active");
-        scheduleNextStimulus(800);  // brief pause before first circle
+        scheduleNextStimulus(800);
     };
 
-    // ── Stimulus lifecycle ────────────────────────────────────────────────
+    // ── Stimulus lifecycle ─────────────────────────────────────────────────
     function scheduleNextStimulus(delay) {
         fieldMsg.textContent = "";
-        setTimeout(showStimulus, delay);
+        targetBadge.style.display = "none";
+        setTimeout(showRound, delay);
     }
 
-    function showStimulus() {
-        currentStim++;
-        updateStats();
+    function showRound() {
+        if (globalStimIdx >= TOTAL_STIMULI) { finishGame(); return; }
 
+        var phase    = getPhase(globalStimIdx);
+        var n        = phase.targets;
+        var diameter = phase.diameter_px;
+
+        // Record startedAt and launch elapsed timer on very first stimulus
         if (startedAt === null) {
             startedAt = new Date().toISOString();
+            elapsedInterval = setInterval(function () {
+                elapsedSeconds++;
+                if (elTimer) { elTimer.textContent = formatTime(elapsedSeconds); }
+            }, 1000);
         }
 
-        const colour = COLOURS[Math.floor(Math.random() * COLOURS.length)];
-        const rect   = field.getBoundingClientRect();
-        const maxX   = rect.width  - CIRCLE_DIAMETER;
-        const maxY   = rect.height - CIRCLE_DIAMETER;
-        const x      = Math.floor(Math.random() * maxX);
-        const y      = Math.floor(Math.random() * maxY);
+        // Pick N distinct colours; choose one as the target
+        var pool    = shuffle(COLOUR_NAMES.slice()).slice(0, n);
+        var tgtIdx  = Math.floor(Math.random() * n);
+        currentTargetName = pool[tgtIdx];
 
-        circle.style.width            = CIRCLE_DIAMETER + "px";
-        circle.style.height           = CIRCLE_DIAMETER + "px";
-        circle.style.left             = x + "px";
-        circle.style.top              = y + "px";
-        circle.style.backgroundColor  = colour;
-        circle.classList.add("visible");
+        // Update instruction badge
+        badgeSwatch.style.backgroundColor = COLOURS[currentTargetName];
+        badgeName.textContent             = currentTargetName;
+        badgeName.style.color             = COLOURS[currentTargetName];
+        targetBadge.style.display         = "flex";
+
+        // Place N circles, one per zone
+        clearCircles();
+        var positions = getZonePositions(n, diameter);
+        clickHandled  = false;
+
+        for (var i = 0; i < n; i++) {
+            (function (colorName, pos, diam) {
+                var circle = document.createElement("div");
+                circle.className              = "cr-circle visible";
+                circle.style.width            = diam + "px";
+                circle.style.height           = diam + "px";
+                circle.style.left             = pos.x + "px";
+                circle.style.top              = pos.y + "px";
+                circle.style.backgroundColor  = COLOURS[colorName];
+                circle.dataset.colorName      = colorName;
+
+                circle.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                    onCircleClick(colorName, phase.delay_ms);
+                });
+                circle.addEventListener("touchstart", function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onCircleClick(colorName, phase.delay_ms);
+                }, { passive: false });
+
+                field.appendChild(circle);
+                currentCircles.push(circle);
+            })(pool[i], positions[i], diameter);
+        }
 
         stimTimestamp = performance.now();
-        stimTimeout   = setTimeout(handleMiss, WINDOW_MS);
+        stimTimeout   = setTimeout(handleMiss, phase.window_ms);
+
+        updateStats();
+        updateProgressBar();
     }
 
-    function hideStimulus() {
+    function clearCircles() {
+        for (var i = 0; i < currentCircles.length; i++) {
+            currentCircles[i].remove();
+        }
+        currentCircles = [];
+    }
+
+    function onCircleClick(colorName, phaseDelay) {
+        if (clickHandled) { return; }
+        clickHandled = true;
         clearTimeout(stimTimeout);
         stimTimeout = null;
-        circle.classList.remove("visible");
-    }
 
-    function handleHit(e) {
-        e.stopPropagation();
-        if (!circle.classList.contains("visible")) return;
-        const rt = Math.round(performance.now() - stimTimestamp);
-        stimulusTimes.push(rt);
-        hits++;
-        hideStimulus();
-        showFeedback("✓ " + rt + " ms", false);
-        afterStimulus();
+        var rt = Math.round(performance.now() - stimTimestamp);
+
+        if (colorName === currentTargetName) {
+            correctCount++;
+            reactionTimes.push(rt);
+            showFeedback("✓ " + rt + " ms", "hit");
+            afterRound(phaseDelay);
+        } else {
+            wrongClickCount++;
+            showFeedback("✗ Wrong color!", "wrong");
+            afterRound(WRONG_PENALTY_MS);
+        }
     }
 
     function handleMiss() {
-        if (!circle.classList.contains("visible")) return;
-        misses++;
-        hideStimulus();
-        showFeedback("✗ Miss", true);
-        afterStimulus();
+        if (clickHandled) { return; }
+        clickHandled = true;
+        missCount++;
+        showFeedback("✗ Miss!", "miss");
+        afterRound(MISS_PENALTY_MS);
     }
 
-    function afterStimulus() {
+    function afterRound(nextDelay) {
+        clearCircles();
+        globalStimIdx++;
         updateStats();
-        if (currentStim >= STIMULUS_COUNT) {
+        updateProgressBar();
+        if (globalStimIdx >= TOTAL_STIMULI) {
             finishGame();
         } else {
-            const delay = MIN_DELAY_MS + Math.random() * (MAX_DELAY_MS - MIN_DELAY_MS);
-            scheduleNextStimulus(Math.round(delay));
+            scheduleNextStimulus(nextDelay);
         }
     }
 
-    circle.addEventListener("click",     handleHit);
-    circle.addEventListener("touchstart", function(e) { handleHit(e); }, { passive: false });
-
-    // ── UI helpers ────────────────────────────────────────────────────────
+    // ── UI helpers ─────────────────────────────────────────────────────────
     function updateStats() {
-        const pct = Math.round((currentStim / STIMULUS_COUNT) * 100);
-        progressBar.style.width = pct + "%";
-        elCurrent.textContent   = currentStim;
-        elHits.textContent      = hits;
-        elMisses.textContent    = misses;
-        if (stimulusTimes.length > 0) {
-            const avg = Math.round(stimulusTimes.reduce((a, b) => a + b, 0) / stimulusTimes.length);
-            elAvgMs.textContent = avg;
+        if (elCurrent) { elCurrent.textContent = globalStimIdx; }
+        if (elCorrect) { elCorrect.textContent = correctCount; }
+        if (elWrong)   { elWrong.textContent   = wrongClickCount; }
+        if (elMisses)  { elMisses.textContent  = missCount; }
+        if (reactionTimes.length > 0) {
+            var sum = reactionTimes.reduce(function(a, b) { return a + b; }, 0);
+            if (elAvgMs) { elAvgMs.textContent = Math.round(sum / reactionTimes.length); }
         }
     }
 
-    function showFeedback(msg, isMiss) {
-        elFeedback.textContent = msg;
-        elFeedback.className   = "cr-feedback" + (isMiss ? " miss" : "");
-        clearTimeout(elFeedback._timer);
-        elFeedback._timer = setTimeout(() => { elFeedback.textContent = ""; }, 900);
+    function updateProgressBar() {
+        var pct = Math.round((globalStimIdx / TOTAL_STIMULI) * 100);
+        if (progressBar) { progressBar.style.width = pct + "%"; }
     }
 
-    // ── Finish + submit ───────────────────────────────────────────────────
+    function showFeedback(msg, type) {
+        if (!elFeedback) { return; }
+        elFeedback.textContent = msg;
+        elFeedback.className   = "cr-feedback " + type;
+        clearTimeout(elFeedback._timer);
+        elFeedback._timer = setTimeout(function () {
+            elFeedback.textContent = "";
+            elFeedback.className   = "cr-feedback";
+        }, 900);
+    }
+
+    function formatTime(secs) {
+        var m = Math.floor(secs / 60);
+        var s = secs % 60;
+        return m + ":" + (s < 10 ? "0" : "") + s;
+    }
+
+    // ── Finish + submit ────────────────────────────────────────────────────
     function finishGame() {
+        clearInterval(elapsedInterval);
+        clearCircles();
+        targetBadge.style.display = "none";
         arena.classList.remove("active");
         elSubmitting.classList.add("active");
 
-        const now = performance.now();
-        const durationMs = stimulusTimes.length > 0 || misses > 0
-            ? now - (now - (STIMULUS_COUNT * 1500))  // approximate; backend uses server time
-            : 0;
-
-        const avgMs = stimulusTimes.length > 0
-            ? Math.round(stimulusTimes.reduce((a, b) => a + b, 0) / stimulusTimes.length)
-            : null;
-        const minMs = stimulusTimes.length > 0
-            ? Math.min(...stimulusTimes)
-            : null;
-        const scoreRaw        = hits;
-        const scoreNormalized = STIMULUS_COUNT > 0 ? Math.round((hits / STIMULUS_COUNT) * 100) : 0;
-
-        // Compute duration from startedAt to now
-        const durationSeconds = startedAt
-            ? (Date.now() - new Date(startedAt).getTime()) / 1000
+        var durationSeconds = startedAt
+            ? Math.round((Date.now() - new Date(startedAt).getTime()) / 100) / 10
             : null;
 
-        const payload = {
-            started_at:       startedAt,
-            duration_seconds: durationSeconds ? Math.round(durationSeconds * 10) / 10 : null,
-            stimuli_count:    STIMULUS_COUNT,
-            correct_count:    hits,
-            error_count:      misses,
-            avg_reaction_ms:  avgMs,
-            min_reaction_ms:  minMs,
-            score_raw:        scoreRaw,
-            score_normalized: scoreNormalized,
+        var avgMs = reactionTimes.length > 0
+            ? Math.round(reactionTimes.reduce(function(a,b){return a+b;}, 0) / reactionTimes.length)
+            : null;
+        var minMs = reactionTimes.length > 0
+            ? Math.min.apply(null, reactionTimes)
+            : null;
+
+        // Score: clamp(round(100 × (0.60×accuracy + 0.30×speed_factor − 0.10×wrong_rate)), 0, 100)
+        var total       = correctCount + wrongClickCount + missCount;
+        var accuracy    = total > 0 ? correctCount / total : 0;
+        var speedFactor = avgMs !== null ? Math.max(0, 1 - avgMs / AVG_WINDOW_MS) : 0;
+        var wrongRate   = total > 0 ? wrongClickCount / total : 0;
+        var scoreRaw    = 0.60 * accuracy + 0.30 * speedFactor - 0.10 * wrongRate;
+        var scoreNorm   = Math.min(100, Math.max(0, Math.round(100 * scoreRaw)));
+
+        var payload = {
+            started_at:        startedAt,
+            duration_seconds:  durationSeconds,
+            stimuli_count:     TOTAL_STIMULI,
+            correct_count:     correctCount,
+            wrong_click_count: wrongClickCount,
+            error_count:       missCount,
+            avg_reaction_ms:   avgMs,
+            min_reaction_ms:   minMs,
+            score_raw:         scoreRaw,
+            score_normalized:  scoreNorm
         };
 
         fetch(SUBMIT_URL, {
             method:  "POST",
             headers: {
                 "Content-Type": "application/json",
-                "X-CSRF-Token": CSRF_TOKEN,
+                "X-CSRF-Token": CSRF_TOKEN
             },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(payload)
         })
-        .then(r => r.json())
-        .then(data => {
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
             if (data.attempt_id) {
                 window.location.href = "/virtual-training/color-reaction/result/" + data.attempt_id;
             } else {
-                elSubmitting.innerHTML = "<p>⚠️ Could not save attempt. <a href='/virtual-training'>Back to hub</a></p>";
+                elSubmitting.innerHTML =
+                    "<p>⚠️ Could not save attempt. <a href='/virtual-training'>Back to hub</a></p>";
             }
         })
-        .catch(() => {
-            elSubmitting.innerHTML = "<p>⚠️ Network error. <a href='/virtual-training'>Back to hub</a></p>";
+        .catch(function() {
+            elSubmitting.innerHTML =
+                "<p>⚠️ Network error. <a href='/virtual-training'>Back to hub</a></p>";
         });
     }
 })();

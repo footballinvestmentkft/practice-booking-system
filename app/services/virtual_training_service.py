@@ -19,9 +19,10 @@ from sqlalchemy.orm import Session
 from app.models.virtual_training import VirtualTrainingAttempt, VirtualTrainingGame
 
 _XP_MULTIPLIER_TABLE: dict[int, float] = {1: 1.0, 2: 0.6, 3: 0.3}
-_BOT_REACTION_THRESHOLD_MS = 100.0
-_MIN_DURATION_SECONDS = 5.0
-_MIN_STIMULI_COUNT = 5
+_BOT_REACTION_THRESHOLD_MS   = 80.0   # Phase 2.1: tighter bot floor (was 100)
+_MIN_DURATION_SECONDS        = 25.0   # Phase 2.1: 36 stimuli × avg ~0.7 s (was 5)
+_MIN_STIMULI_COUNT           = 28     # Phase 2.1: 36 total, allow minor losses (was 5)
+_RANDOM_CLICKING_THRESHOLD   = 0.55   # G4: wrong_click_count / stimuli_count > this → invalid
 
 
 class VirtualTrainingService:
@@ -56,9 +57,10 @@ class VirtualTrainingService:
 
         Returns (is_valid, invalid_reason).
         Checks (in order — first failing check wins):
-          1. duration_seconds < 5.0    → too_short
-          2. stimuli_count < 5         → too_few_stimuli
-          3. avg_reaction_ms < 100     → bot_suspected
+          1. duration_seconds < 25.0   → too_short
+          2. stimuli_count < 28        → too_few_stimuli
+          3. wrong_click_count > 0.55 × stimuli_count → random_clicking  (G4)
+          4. avg_reaction_ms < 80      → bot_suspected
         """
         duration = data.get("duration_seconds")
         if duration is not None and float(duration) < _MIN_DURATION_SECONDS:
@@ -67,6 +69,11 @@ class VirtualTrainingService:
         stimuli = data.get("stimuli_count")
         if stimuli is not None and int(stimuli) < _MIN_STIMULI_COUNT:
             return False, "too_few_stimuli"
+
+        wrong_clicks = data.get("wrong_click_count")
+        if wrong_clicks is not None and stimuli is not None and int(stimuli) > 0:
+            if int(wrong_clicks) > _RANDOM_CLICKING_THRESHOLD * int(stimuli):
+                return False, "random_clicking"
 
         avg_ms = data.get("avg_reaction_ms")
         if avg_ms is not None and float(avg_ms) < _BOT_REACTION_THRESHOLD_MS:
@@ -161,7 +168,7 @@ class VirtualTrainingService:
 
         data keys (all optional except started_at):
           started_at, duration_seconds, stimuli_count, correct_count,
-          error_count, avg_reaction_ms, min_reaction_ms,
+          error_count, wrong_click_count, avg_reaction_ms, min_reaction_ms,
           score_raw, score_normalized
         """
         from sqlalchemy.exc import IntegrityError
@@ -211,6 +218,7 @@ class VirtualTrainingService:
                 stimuli_count=data.get("stimuli_count"),
                 correct_count=data.get("correct_count"),
                 error_count=data.get("error_count"),
+                wrong_click_count=data.get("wrong_click_count"),
                 xp_awarded=xp_awarded,
                 skill_deltas=skill_deltas,
                 attempt_index_today=attempt_index,

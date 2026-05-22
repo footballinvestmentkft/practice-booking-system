@@ -76,11 +76,12 @@ class VirtualTrainingAttempt(Base):
     attempt_index_today = Column(SmallInteger, nullable=False, default=1)  # 1-based
 
     # Phase 2 gameplay columns (anti-farming + result display)
-    duration_seconds = Column(Float, nullable=True)    # elapsed seconds first stim → last click
-    stimuli_count    = Column(SmallInteger, nullable=True)  # stimuli presented
-    correct_count    = Column(SmallInteger, nullable=True)  # clicked within window
-    error_count      = Column(SmallInteger, nullable=True)  # window expired before click
-    min_reaction_ms  = Column(Float, nullable=True)    # fastest single reaction
+    duration_seconds  = Column(Float, nullable=True)         # elapsed seconds first stim → last click
+    stimuli_count     = Column(SmallInteger, nullable=True)  # stimuli presented
+    correct_count     = Column(SmallInteger, nullable=True)  # clicked within window
+    error_count       = Column(SmallInteger, nullable=True)  # window expired before click (miss)
+    min_reaction_ms   = Column(Float, nullable=True)         # fastest single reaction
+    wrong_click_count = Column(SmallInteger, nullable=True)  # wrong-color clicks (Phase 2.1)
 
     idempotency_key = Column(String(100), nullable=True, unique=True)
 

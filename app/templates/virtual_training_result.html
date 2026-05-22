@@ -73,6 +73,8 @@
         color: var(--app-text);
     }
 
+    .vtr-stat-value.danger { color: #ef4444; }
+
     .vtr-xp-badge {
         display: inline-block;
         background: #ede9fe;
@@ -163,14 +165,16 @@
     {# ── Valid result ─────────────────────────────────────────────────── #}
     <div class="vtr-card">
         <div class="vtr-status-icon">
-            {% if attempt.score_normalized >= 80 %}🏆
-            {% elif attempt.score_normalized >= 50 %}⚡
-            {% else %}💪{% endif %}
+            {% if attempt.score_normalized >= 85 %}🏆
+            {% elif attempt.score_normalized >= 65 %}⚡
+            {% elif attempt.score_normalized >= 45 %}💪
+            {% else %}🎯{% endif %}
         </div>
         <h2 class="vtr-title">
-            {% if attempt.score_normalized >= 80 %}Excellent!
-            {% elif attempt.score_normalized >= 50 %}Good effort!
-            {% else %}Keep training!{% endif %}
+            {% if attempt.score_normalized >= 85 %}Excellent!
+            {% elif attempt.score_normalized >= 65 %}Good effort!
+            {% elif attempt.score_normalized >= 45 %}Keep training!
+            {% else %}Keep practicing!{% endif %}
         </h2>
         <p class="vtr-subtitle">{{ game.name if game else "Color Reaction" }}</p>
 
@@ -183,10 +187,22 @@
                 </div>
             </div>
             <div class="vtr-stat">
-                <div class="vtr-stat-label">Hits</div>
+                <div class="vtr-stat-label">Correct</div>
                 <div class="vtr-stat-value">
                     {{ attempt.correct_count if attempt.correct_count is not none else "—" }}
                     {% if attempt.stimuli_count is not none %}/ {{ attempt.stimuli_count }}{% endif %}
+                </div>
+            </div>
+            <div class="vtr-stat">
+                <div class="vtr-stat-label">Wrong Clicks</div>
+                <div class="vtr-stat-value{% if attempt.wrong_click_count and attempt.wrong_click_count > 0 %} danger{% endif %}">
+                    {{ attempt.wrong_click_count if attempt.wrong_click_count is not none else 0 }}
+                </div>
+            </div>
+            <div class="vtr-stat">
+                <div class="vtr-stat-label">Misses</div>
+                <div class="vtr-stat-value{% if attempt.error_count and attempt.error_count > 0 %} danger{% endif %}">
+                    {{ attempt.error_count if attempt.error_count is not none else 0 }}
                 </div>
             </div>
             <div class="vtr-stat">
@@ -197,9 +213,9 @@
                 </div>
             </div>
             <div class="vtr-stat">
-                <div class="vtr-stat-label">Best Reaction</div>
+                <div class="vtr-stat-label">Duration</div>
                 <div class="vtr-stat-value">
-                    {% if attempt.min_reaction_ms is not none %}{{ attempt.min_reaction_ms | round(0) | int }} ms
+                    {% if attempt.duration_seconds is not none %}{{ attempt.duration_seconds | round(1) }} s
                     {% else %}—{% endif %}
                 </div>
             </div>
@@ -236,9 +252,11 @@
         <p class="vtr-subtitle">{{ game.name if game else "Color Reaction" }}</p>
         <div class="vtr-invalid-banner">
             {% if attempt.invalid_reason == "too_short" %}
-            Session ended too quickly. Try completing the full set of stimuli.
+            Session ended too quickly. Try completing all 36 stimuli.
             {% elif attempt.invalid_reason == "too_few_stimuli" %}
             Not enough stimuli were presented. Please complete a full round.
+            {% elif attempt.invalid_reason == "random_clicking" %}
+            Too many wrong-colour clicks detected. Focus on the instructed colour!
             {% elif attempt.invalid_reason == "bot_suspected" %}
             Reaction times were unusually fast and could not be validated.
             {% else %}

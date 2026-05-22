@@ -1,5 +1,6 @@
-"""Unit tests for Virtual Training Phase 2 — Color Reaction MVP.
+"""Unit tests for Virtual Training Phase 2 — Color Reaction MVP + Phase 2.1 Target Selection.
 
+Phase 2 (MVP):
 VT2-01   GET /virtual-training → 200 for onboarded student
 VT2-02   GET /virtual-training → lists active games only
 VT2-03   GET /virtual-training/color-reaction → 200 when game is_active=True
@@ -26,6 +27,20 @@ VT2-23   GET result → 404-style redirect for wrong user (shows hub with error)
 VT2-24   History page shows last 20 valid attempts only
 VT2-25   GET /virtual-training → 303 redirect for non-student
 VT2-26   GET /virtual-training → 303 redirect for student without onboarding
+
+Phase 2.1 (Target Selection Reaction):
+VT2.1-01  validate_attempt() G4 random_clicking fires when wrong_click_count > 0.55 × stimuli
+VT2.1-02  G4 boundary: wrong_click_count == floor(0.55×stimuli) → valid (not >)
+VT2.1-03  G4 not triggered when wrong_click_count is absent
+VT2.1-04  G4 fires before bot_suspected in priority order
+VT2.1-05  validate_attempt() passes full Phase 2.1 data (36 stimuli, 5 wrong clicks)
+VT2.1-06  Updated _MIN_STIMULI_COUNT=28: boundary 27 → invalid, 28 → valid
+VT2.1-07  Updated _MIN_DURATION_SECONDS=25.0: boundary 24.9 → invalid, 25.0 → valid
+VT2.1-08  Updated _BOT_REACTION_THRESHOLD_MS=80: boundary 79.9 → bot_suspected, 80.0 → valid
+VT2.1-09  record_attempt() stores wrong_click_count from data payload
+VT2.1-10  record_attempt() random_clicking data → is_valid=False, xp_awarded=0
+VT2.1-11  Result page renders wrong_click_count and error_count stats
+VT2.1-12  Result page renders random_clicking invalid reason message
 """
 from __future__ import annotations
 
@@ -40,13 +55,32 @@ from app.services.virtual_training_service import VirtualTrainingService
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
+_PHASE21_CONFIG = {
+    "phases": [
+        {"stimuli": 12, "targets": 3, "delay_ms": 2000, "window_ms": 4000, "diameter_px": 70},
+        {"stimuli": 12, "targets": 4, "delay_ms": 1200, "window_ms": 3000, "diameter_px": 64},
+        {"stimuli": 12, "targets": 5, "delay_ms":  700, "window_ms": 2200, "diameter_px": 58},
+    ],
+    "colours": {
+        "RED": "#e74c3c", "GREEN": "#2ecc71", "BLUE": "#3498db",
+        "YELLOW": "#f39c12", "PURPLE": "#9b59b6", "ORANGE": "#e67e22",
+    },
+    "miss_penalty_ms": 300,
+    "wrong_penalty_ms": 200,
+}
+
+_PHASE21_SKILL_TARGETS = {
+    "reactions": 0.35, "decisions": 0.30, "concentration": 0.20, "anticipation": 0.15,
+}
+
+
 def _mock_game(
     *,
     id: int = 1,
     code: str = "color_reaction",
     name: str = "Color Reaction",
     is_active: bool = True,
-    base_xp: int = 15,
+    base_xp: int = 20,
     max_daily_attempts: int = 5,
     skill_targets: dict | None = None,
     config: dict | None = None,
@@ -58,9 +92,8 @@ def _mock_game(
     g.is_active = is_active
     g.base_xp = base_xp
     g.max_daily_attempts = max_daily_attempts
-    g.skill_targets = skill_targets or {"reactions": 0.55, "concentration": 0.25, "anticipation": 0.20}
-    g.config = config or {"stimulus_count": 10, "min_delay_ms": 600, "max_delay_ms": 2500,
-                          "colours": ["#e74c3c", "#2ecc71", "#3498db", "#f39c12"]}
+    g.skill_targets = skill_targets or _PHASE21_SKILL_TARGETS
+    g.config = config or _PHASE21_CONFIG
     return g
 
 
@@ -71,16 +104,17 @@ def _mock_attempt(
     game_id: int = 1,
     is_valid: bool = True,
     invalid_reason: str | None = None,
-    xp_awarded: int = 15,
+    xp_awarded: int = 20,
     skill_deltas: dict | None = None,
     attempt_index_today: int = 1,
     score_normalized: float = 80.0,
     avg_reaction_ms: float | None = 320.0,
     min_reaction_ms: float | None = 180.0,
-    duration_seconds: float | None = 25.0,
-    stimuli_count: int | None = 10,
-    correct_count: int | None = 8,
-    error_count: int | None = 2,
+    duration_seconds: float | None = 45.0,
+    stimuli_count: int | None = 36,
+    correct_count: int | None = 30,
+    error_count: int | None = 3,
+    wrong_click_count: int | None = 3,
     idempotency_key: str | None = None,
     completed_at: datetime | None = None,
 ) -> MagicMock:
@@ -91,7 +125,9 @@ def _mock_attempt(
     a.is_valid = is_valid
     a.invalid_reason = invalid_reason
     a.xp_awarded = xp_awarded
-    a.skill_deltas = skill_deltas or {"reactions": 0.82, "concentration": 0.38}
+    a.skill_deltas = skill_deltas or {
+        "reactions": 0.70, "decisions": 0.60, "concentration": 0.40, "anticipation": 0.30,
+    }
     a.attempt_index_today = attempt_index_today
     a.score_normalized = score_normalized
     a.avg_reaction_ms = avg_reaction_ms
@@ -100,6 +136,7 @@ def _mock_attempt(
     a.stimuli_count = stimuli_count
     a.correct_count = correct_count
     a.error_count = error_count
+    a.wrong_click_count = wrong_click_count
     a.idempotency_key = idempotency_key or f"vt_cr_u{user_id}_ts"
     a.completed_at = completed_at or datetime.now(timezone.utc)
     return a
@@ -137,19 +174,19 @@ def _build_route_mocks(
 class TestValidateAttemptPhase2:
 
     def test_vt2_06_too_short_fires_first(self):
-        """VT2-06: duration_seconds < 5.0 returns too_short before other checks."""
+        """VT2-06: duration_seconds < threshold returns too_short before other checks."""
         is_valid, reason = VirtualTrainingService.validate_attempt({
             "duration_seconds": 3.0,
-            "stimuli_count": 3,   # would also fail too_few_stimuli
+            "stimuli_count": 3,     # would also fail too_few_stimuli
             "avg_reaction_ms": 42.0,  # would also fail bot_suspected
         })
         assert is_valid is False
         assert reason == "too_short"
 
     def test_vt2_07_too_few_fires_before_bot(self):
-        """VT2-07: stimuli_count < 5 returns too_few_stimuli before bot_suspected."""
+        """VT2-07: stimuli_count below threshold returns too_few_stimuli before bot_suspected."""
         is_valid, reason = VirtualTrainingService.validate_attempt({
-            "duration_seconds": 10.0,
+            "duration_seconds": 30.0,
             "stimuli_count": 2,
             "avg_reaction_ms": 42.0,  # would also fail bot_suspected
         })
@@ -159,8 +196,8 @@ class TestValidateAttemptPhase2:
     def test_vt2_08_valid_full_data(self):
         """VT2-08: All fields present and valid → passes."""
         is_valid, reason = VirtualTrainingService.validate_attempt({
-            "duration_seconds": 25.0,
-            "stimuli_count": 10,
+            "duration_seconds": 60.0,
+            "stimuli_count": 36,
             "avg_reaction_ms": 320.0,
         })
         assert is_valid is True
@@ -175,19 +212,19 @@ class TestValidateAttemptPhase2:
         assert reason is None
 
     def test_vt2_10_too_short_boundary(self):
-        """VT2-10: 4.9 → invalid; 5.0 → valid (boundary)."""
-        is_v1, r1 = VirtualTrainingService.validate_attempt({"duration_seconds": 4.9})
-        is_v2, r2 = VirtualTrainingService.validate_attempt({"duration_seconds": 5.0})
+        """VT2-10: 24.9 → invalid; 25.0 → valid (Phase 2.1 boundary)."""
+        is_v1, r1 = VirtualTrainingService.validate_attempt({"duration_seconds": 24.9})
+        is_v2, r2 = VirtualTrainingService.validate_attempt({"duration_seconds": 25.0})
         assert is_v1 is False and r1 == "too_short"
         assert is_v2 is True and r2 is None
 
     def test_vt2_11_too_few_stimuli_boundary(self):
-        """VT2-11: 4 stimuli → invalid; 5 → valid (boundary)."""
+        """VT2-11: 27 stimuli → invalid; 28 → valid (Phase 2.1 boundary)."""
         is_v1, r1 = VirtualTrainingService.validate_attempt({
-            "duration_seconds": 10.0, "stimuli_count": 4,
+            "duration_seconds": 30.0, "stimuli_count": 27,
         })
         is_v2, r2 = VirtualTrainingService.validate_attempt({
-            "duration_seconds": 10.0, "stimuli_count": 5,
+            "duration_seconds": 30.0, "stimuli_count": 28,
         })
         assert is_v1 is False and r1 == "too_few_stimuli"
         assert is_v2 is True and r2 is None
@@ -241,7 +278,7 @@ class TestRecordAttempt:
             db=db,
             user_id=42,
             game=game,
-            data={"duration_seconds": 20.0, "stimuli_count": 10, "avg_reaction_ms": 300.0,
+            data={"duration_seconds": 60.0, "stimuli_count": 36, "avg_reaction_ms": 300.0,
                   "started_at": "2026-05-21T10:00:00+00:00"},
             idempotency_key="vt_cr_u42_ts",
         )
@@ -257,12 +294,12 @@ class TestRecordAttempt:
         sp = MagicMock()
         db.begin_nested.return_value = sp
 
-        game = _mock_game(base_xp=15)
+        game = _mock_game(base_xp=20)
         result = VirtualTrainingService.record_attempt(
             db=db,
             user_id=42,
             game=game,
-            data={"duration_seconds": 20.0, "stimuli_count": 10, "avg_reaction_ms": 300.0,
+            data={"duration_seconds": 60.0, "stimuli_count": 36, "avg_reaction_ms": 300.0,
                   "started_at": "2026-05-21T10:00:00+00:00"},
             idempotency_key="vt_cr_u42_ts",
         )
@@ -279,12 +316,12 @@ class TestRecordAttempt:
         sp = MagicMock()
         db.begin_nested.return_value = sp
 
-        game = _mock_game(base_xp=15)
+        game = _mock_game(base_xp=20)
         result = VirtualTrainingService.record_attempt(
             db=db,
             user_id=42,
             game=game,
-            data={"duration_seconds": 1.0, "stimuli_count": 10,
+            data={"duration_seconds": 1.0, "stimuli_count": 36,
                   "started_at": "2026-05-21T10:00:00+00:00"},
             idempotency_key="vt_cr_u42_short",
         )
@@ -300,12 +337,12 @@ class TestRecordAttempt:
         sp = MagicMock()
         db.begin_nested.return_value = sp
 
-        game = _mock_game(base_xp=15)
+        game = _mock_game(base_xp=20)
         result = VirtualTrainingService.record_attempt(
             db=db,
             user_id=42,
             game=game,
-            data={"duration_seconds": 20.0, "stimuli_count": 10, "avg_reaction_ms": 300.0,
+            data={"duration_seconds": 60.0, "stimuli_count": 36, "avg_reaction_ms": 300.0,
                   "started_at": "2026-05-21T10:00:00+00:00"},
             idempotency_key="vt_cr_u42_4th",
         )
@@ -449,7 +486,7 @@ class TestVTRoutes:
         """VT2-12: POST submit returns 200 with attempt_id and xp_awarded."""
         user = self._onboarded_user()
         game = _mock_game(is_active=True)
-        attempt = _mock_attempt(id=7, xp_awarded=15, is_valid=True)
+        attempt = _mock_attempt(id=7, xp_awarded=20, is_valid=True)
 
         db = _mock_db()
         q = MagicMock()
@@ -464,20 +501,21 @@ class TestVTRoutes:
                 "/virtual-training/color-reaction/submit",
                 json={
                     "started_at": "2026-05-21T10:00:00+00:00",
-                    "duration_seconds": 25.0,
-                    "stimuli_count": 10,
-                    "correct_count": 8,
-                    "error_count": 2,
+                    "duration_seconds": 60.0,
+                    "stimuli_count": 36,
+                    "correct_count": 30,
+                    "wrong_click_count": 3,
+                    "error_count": 3,
                     "avg_reaction_ms": 320.0,
                     "min_reaction_ms": 180.0,
-                    "score_raw": 8,
-                    "score_normalized": 80.0,
+                    "score_raw": 0.72,
+                    "score_normalized": 72.0,
                 },
             )
         assert resp.status_code == 200
         data = resp.json()
         assert data["attempt_id"] == 7
-        assert data["xp_awarded"] == 15
+        assert data["xp_awarded"] == 20
         assert data["is_valid"] is True
 
     # VT2-13: Submit → is_valid=False when too_short
@@ -525,7 +563,7 @@ class TestVTRoutes:
             resp = client.post(
                 "/virtual-training/color-reaction/submit",
                 json={"started_at": "2026-05-21T10:00:00+00:00",
-                      "duration_seconds": 8.0, "stimuli_count": 10, "avg_reaction_ms": 42.0},
+                      "duration_seconds": 60.0, "stimuli_count": 36, "avg_reaction_ms": 42.0},
             )
         assert resp.status_code == 200
         data = resp.json()
@@ -659,3 +697,242 @@ class TestVTRoutes:
         client = self._make_client(user_override=user, db_override=db)
         resp = client.get("/virtual-training", follow_redirects=False)
         assert resp.status_code == 303
+
+
+# ── Phase 2.1: Target Selection Reaction ──────────────────────────────────────
+
+class TestVT21ValidateAttempt:
+    """VT2.1-01..08: validate_attempt() guards for Phase 2.1 Target Selection."""
+
+    def test_vt21_01_random_clicking_guard_fires(self):
+        """VT2.1-01: wrong_click_count > 0.55 × stimuli → random_clicking."""
+        # 20/36 = 55.6% > 55% threshold
+        is_valid, reason = VirtualTrainingService.validate_attempt({
+            "duration_seconds": 60.0,
+            "stimuli_count": 36,
+            "wrong_click_count": 20,
+            "avg_reaction_ms": 350.0,
+        })
+        assert is_valid is False
+        assert reason == "random_clicking"
+
+    def test_vt21_02_random_clicking_boundary_at_threshold_is_valid(self):
+        """VT2.1-02: wrong_click_count not > 0.55 × stimuli → valid (uses = not >)."""
+        # 0.55 * 36 = 19.8; wrong=19 is NOT > 19.8 → passes
+        is_valid, reason = VirtualTrainingService.validate_attempt({
+            "duration_seconds": 60.0,
+            "stimuli_count": 36,
+            "wrong_click_count": 19,
+            "avg_reaction_ms": 350.0,
+        })
+        assert is_valid is True
+        assert reason is None
+
+    def test_vt21_02b_random_clicking_one_above_threshold_fires(self):
+        """VT2.1-02b: wrong_click_count just above 0.55 × stimuli → random_clicking."""
+        # 0.55 * 36 = 19.8; wrong=20 > 19.8 → fires
+        is_valid, reason = VirtualTrainingService.validate_attempt({
+            "duration_seconds": 60.0,
+            "stimuli_count": 36,
+            "wrong_click_count": 20,
+            "avg_reaction_ms": 350.0,
+        })
+        assert is_valid is False
+        assert reason == "random_clicking"
+
+    def test_vt21_03_g4_not_triggered_when_field_absent(self):
+        """VT2.1-03: Missing wrong_click_count → G4 not checked, attempt may pass."""
+        is_valid, reason = VirtualTrainingService.validate_attempt({
+            "duration_seconds": 60.0,
+            "stimuli_count": 36,
+            "avg_reaction_ms": 350.0,
+            # no wrong_click_count key
+        })
+        assert is_valid is True
+        assert reason is None
+
+    def test_vt21_04_g4_fires_before_bot_suspected(self):
+        """VT2.1-04: random_clicking check precedes bot_suspected in priority order."""
+        # Both G4 and G5 would fail; G4 must win
+        is_valid, reason = VirtualTrainingService.validate_attempt({
+            "duration_seconds": 60.0,
+            "stimuli_count": 36,
+            "wrong_click_count": 25,   # > 0.55*36=19.8 → random_clicking
+            "avg_reaction_ms": 42.0,   # < 80 → would also trigger bot_suspected
+        })
+        assert is_valid is False
+        assert reason == "random_clicking"
+
+    def test_vt21_05_valid_phase21_full_payload(self):
+        """VT2.1-05: Full valid Phase 2.1 payload (36 stimuli, 5 wrong) → passes."""
+        is_valid, reason = VirtualTrainingService.validate_attempt({
+            "duration_seconds": 65.0,
+            "stimuli_count": 36,
+            "wrong_click_count": 5,
+            "avg_reaction_ms": 380.0,
+            "correct_count": 28,
+            "error_count": 3,
+        })
+        assert is_valid is True
+        assert reason is None
+
+    def test_vt21_06_updated_min_stimuli_boundary(self):
+        """VT2.1-06: Phase 2.1 boundary — 27 stimuli → invalid, 28 → valid."""
+        is_v1, r1 = VirtualTrainingService.validate_attempt({
+            "duration_seconds": 60.0, "stimuli_count": 27,
+        })
+        is_v2, r2 = VirtualTrainingService.validate_attempt({
+            "duration_seconds": 60.0, "stimuli_count": 28,
+        })
+        assert is_v1 is False and r1 == "too_few_stimuli"
+        assert is_v2 is True  and r2 is None
+
+    def test_vt21_07_updated_min_duration_boundary(self):
+        """VT2.1-07: Phase 2.1 boundary — 24.9 s → invalid, 25.0 s → valid."""
+        is_v1, r1 = VirtualTrainingService.validate_attempt({"duration_seconds": 24.9})
+        is_v2, r2 = VirtualTrainingService.validate_attempt({"duration_seconds": 25.0})
+        assert is_v1 is False and r1 == "too_short"
+        assert is_v2 is True  and r2 is None
+
+    def test_vt21_08_updated_bot_threshold_boundary(self):
+        """VT2.1-08: Phase 2.1 boundary — avg_ms 79.9 → bot_suspected, 80.0 → valid."""
+        is_v1, r1 = VirtualTrainingService.validate_attempt({
+            "duration_seconds": 60.0, "stimuli_count": 36, "avg_reaction_ms": 79.9,
+        })
+        is_v2, r2 = VirtualTrainingService.validate_attempt({
+            "duration_seconds": 60.0, "stimuli_count": 36, "avg_reaction_ms": 80.0,
+        })
+        assert is_v1 is False and r1 == "bot_suspected"
+        assert is_v2 is True  and r2 is None
+
+
+class TestVT21RecordAttempt:
+    """VT2.1-09..10: record_attempt() Phase 2.1 behaviour."""
+
+    def _make_db(self, count: int = 0):
+        db = _mock_db()
+        q = MagicMock()
+        q.filter.return_value = q
+        q.count.return_value = count
+        q.first.return_value = None
+        q.all.return_value = []
+        db.query.return_value = q
+        sp = MagicMock()
+        db.begin_nested.return_value = sp
+        return db
+
+    @patch("app.services.virtual_training_service.VirtualTrainingService.calculate_daily_attempt_index", return_value=1)
+    @patch("app.services.segment_reward_service._load_conversion_rates", return_value={})
+    @patch("app.services.gamification.xp_service.award_xp")
+    def test_vt21_09_wrong_click_count_persisted(self, mock_xp, mock_rates, mock_idx):
+        """VT2.1-09: wrong_click_count from payload is stored in the ORM object."""
+        db = self._make_db()
+        game = _mock_game(base_xp=20)
+        result = VirtualTrainingService.record_attempt(
+            db=db,
+            user_id=42,
+            game=game,
+            data={
+                "duration_seconds": 60.0,
+                "stimuli_count": 36,
+                "wrong_click_count": 5,
+                "avg_reaction_ms": 350.0,
+                "started_at": "2026-05-22T10:00:00+00:00",
+            },
+            idempotency_key="vt_cr_u42_p21",
+        )
+        assert result.wrong_click_count == 5
+
+    @patch("app.services.virtual_training_service.VirtualTrainingService.calculate_daily_attempt_index", return_value=1)
+    @patch("app.services.segment_reward_service._load_conversion_rates", return_value={})
+    @patch("app.services.gamification.xp_service.award_xp")
+    def test_vt21_10_random_clicking_gives_invalid_no_xp(self, mock_xp, mock_rates, mock_idx):
+        """VT2.1-10: wrong_click_count > 0.55 × stimuli → is_valid=False, xp=0, award_xp not called."""
+        db = self._make_db()
+        game = _mock_game(base_xp=20)
+        result = VirtualTrainingService.record_attempt(
+            db=db,
+            user_id=42,
+            game=game,
+            data={
+                "duration_seconds": 60.0,
+                "stimuli_count": 36,
+                "wrong_click_count": 25,   # 25/36 = 69% > 55%
+                "avg_reaction_ms": 350.0,
+                "started_at": "2026-05-22T10:00:00+00:00",
+            },
+            idempotency_key="vt_cr_u42_random",
+        )
+        assert result.is_valid is False
+        assert result.invalid_reason == "random_clicking"
+        assert result.xp_awarded == 0
+        mock_xp.assert_not_called()
+
+
+class TestVT21ResultPage:
+    """VT2.1-11..12: Result page rendering for Phase 2.1 attempts."""
+
+    def _make_client(self, user_override=None, db_override=None):
+        from fastapi import FastAPI
+        from app.api.web_routes import virtual_training as vt_module
+        from app.dependencies import get_current_user_web
+        from app.database import get_db
+
+        app = FastAPI()
+        app.include_router(vt_module.router)
+        if user_override is not None:
+            app.dependency_overrides[get_current_user_web] = lambda: user_override
+        if db_override is not None:
+            app.dependency_overrides[get_db] = lambda: db_override
+        return TestClient(app, raise_server_exceptions=False)
+
+    def _onboarded_user(self):
+        from app.models.user import UserRole
+        user = MagicMock()
+        user.id = 42
+        user.role = UserRole.STUDENT
+        user.onboarding_completed = True
+        user.specialization = MagicMock()
+        user.specialization.value = "LFA_FOOTBALL_PLAYER"
+        return user
+
+    def test_vt21_11_result_shows_wrong_click_count(self):
+        """VT2.1-11: Result page renders wrong_click_count stat when present."""
+        user = self._onboarded_user()
+        attempt = _mock_attempt(id=10, user_id=42, wrong_click_count=4, is_valid=True)
+        game = _mock_game()
+
+        db = _mock_db()
+        q = MagicMock()
+        q.filter.return_value = q
+        q.first.return_value = attempt
+        db.query.return_value = q
+
+        client = self._make_client(user_override=user, db_override=db)
+        resp = client.get("/virtual-training/color-reaction/result/10",
+                          follow_redirects=False)
+        assert resp.status_code == 200
+        # The stat grid includes Wrong Clicks label
+        assert b"Wrong Clicks" in resp.content or b"wrong" in resp.content.lower()
+
+    def test_vt21_12_result_shows_random_clicking_message(self):
+        """VT2.1-12: Invalid attempt with random_clicking reason shows the correct message."""
+        user = self._onboarded_user()
+        attempt = _mock_attempt(
+            id=11, user_id=42, is_valid=False, invalid_reason="random_clicking",
+            xp_awarded=0, wrong_click_count=25,
+        )
+        game = _mock_game()
+
+        db = _mock_db()
+        q = MagicMock()
+        q.filter.return_value = q
+        q.first.return_value = attempt
+        db.query.return_value = q
+
+        client = self._make_client(user_override=user, db_override=db)
+        resp = client.get("/virtual-training/color-reaction/result/11",
+                          follow_redirects=False)
+        assert resp.status_code == 200
+        assert b"random_clicking" not in resp.content  # must be translated to human message
+        assert b"wrong" in resp.content.lower()        # user-facing message mentions "wrong"
