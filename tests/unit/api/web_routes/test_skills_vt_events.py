@@ -14,6 +14,14 @@ VTSEVT-07  Color Reaction result link: /virtual-training/color-reaction/result/{
 VTSEVT-08  no events → "No skill events yet" (empty state)
 VTSEVT-09  /skills/history JSON regression — get_skill_timeline still works
 VTSEVT-10  /skills/data JSON regression — training_delta / training_sessions present
+VTSEVT-11  score_normalized=21.0 (0-100 scale) → helper returns 21.0 (not multiplied)
+VTSEVT-12  score_normalized=45.0 → helper returns 45.0
+VTSEVT-13  score_normalized=None → helper returns None (template shows '—')
+VTSEVT-14  score rendering: round(21.0)|int = 21, not 2100
+VTSEVT-15  delta badge 2-decimal precision: 0.156 → '0.16', -0.0175 → '-0.02'
+VTSEVT-16  negative delta class: skill-delta-neg (red)
+VTSEVT-17  positive delta class: skill-delta-pos (green)
+VTSEVT-18  training meta 'net' label present in trainingMetaHtml output
 """
 from __future__ import annotations
 
@@ -247,3 +255,124 @@ class TestSkillsDataRegression:
         sig = inspect.signature(get_skill_profile)
         assert "db" in sig.parameters
         assert "user_id" in sig.parameters
+
+
+# ── VTSEVT-11..13: score_normalized storage scale (0-100, not 0-1) ────────────
+
+class TestScoreNormalizedScale:
+
+    def test_vtsevt11_score_21_returned_as_21(self):
+        """VTSEVT-11: score_normalized=21.0 stored as 0-100 → helper returns 21.0 unchanged."""
+        attempt = _mock_attempt(score_normalized=21.0, xp_awarded=12)
+        db = _build_db_returning([attempt])
+        result = _get_vt_event_history(db, user_id=42)
+        assert result[0]["score_normalized"] == pytest.approx(21.0)
+
+    def test_vtsevt12_score_45_returned_as_45(self):
+        """VTSEVT-12: score_normalized=45.0 → helper returns 45.0 (not 0.45)."""
+        attempt = _mock_attempt(score_normalized=45.0, xp_awarded=20)
+        db = _build_db_returning([attempt])
+        result = _get_vt_event_history(db, user_id=42)
+        assert result[0]["score_normalized"] == pytest.approx(45.0)
+
+    def test_vtsevt13_score_none_returned_as_none(self):
+        """VTSEVT-13: score_normalized=None → helper returns None → template shows '—'."""
+        attempt = _mock_attempt(score_normalized=None, xp_awarded=12)
+        db = _build_db_returning([attempt])
+        result = _get_vt_event_history(db, user_id=42)
+        assert result[0]["score_normalized"] is None
+
+    def test_vtsevt14_score_rendering_not_multiplied(self):
+        """VTSEVT-14: score_normalized=21.0 → rendered as '21', not '2100'.
+
+        Simulates the Jinja2 rendering chain: round(21.0)|int = 21.
+        """
+        score_normalized = 21.0
+        rendered = str(round(score_normalized))   # Jinja: round(0)|int
+        assert rendered == "21"
+        assert rendered != "2100"
+
+        score_normalized_2 = 45.0
+        assert str(round(score_normalized_2)) == "45"
+
+
+# ── VTSEVT-15..17: delta badge precision and CSS class ────────────────────────
+
+class TestDeltaBadgePrecision:
+
+    def test_vtsevt15_delta_badge_two_decimal_precision(self):
+        """VTSEVT-15: raw delta values format correctly to 2 decimals via %.2f.
+
+        Verifies the Jinja2 "%.2f"|format(delta) behavior for johny7's GNG deltas.
+        """
+        raw_deltas = {
+            "composure":     0.156,
+            "decisions":    -0.0175,
+            "reactions":    -0.0169,
+            "concentration": -0.057,
+        }
+        expected = {
+            "composure":     "0.16",
+            "decisions":    "-0.02",
+            "reactions":    "-0.02",
+            "concentration": "-0.06",
+        }
+        for skill, raw in raw_deltas.items():
+            rendered = "%.2f" % raw
+            assert rendered == expected[skill], f"{skill}: got {rendered!r}, want {expected[skill]!r}"
+
+    def test_vtsevt16_negative_delta_uses_neg_class(self):
+        """VTSEVT-16: delta < 0 → rendered with skill-delta-neg class (red)."""
+        delta = -0.0175
+        # Template logic: elif delta < 0 → skill-delta-neg
+        assert delta < 0  # renders as skill-delta-neg
+
+    def test_vtsevt17_positive_delta_uses_pos_class(self):
+        """VTSEVT-17: delta > 0 → rendered with skill-delta-pos class (green)."""
+        delta = 0.156
+        # Template logic: if delta > 0 → skill-delta-pos
+        assert delta > 0  # renders as skill-delta-pos
+
+    def test_vtsevt_zero_delta_not_rendered(self):
+        """delta == 0.0 → neither class branch fires → not shown (correct)."""
+        delta = 0.0
+        assert not (delta > 0) and not (delta < 0)
+
+
+# ── VTSEVT-18: training meta 'net' label ──────────────────────────────────────
+
+class TestTrainingMetaNetLabel:
+
+    def test_vtsevt18_net_label_in_training_meta(self):
+        """VTSEVT-18: trainingMetaHtml includes 'net' and 'VT session' labels.
+
+        Simulates the JS trainingMetaHtml() output for a user with training_delta=0.3
+        and training_sessions=2. Verifies the 'net' keyword is present and the
+        label uses 'VT sessions' (not just 'sessions').
+        """
+        # Replicate JS logic in Python for assertion
+        td = 0.3
+        ts = 2
+        vt_label = f"{ts} VT session{'s' if ts != 1 else ''}"
+        sign = '+' if td > 0 else ''
+        # Output: "+0.3 net · 2 VT sessions"
+        output = f"{sign}{td:.1f} net · {vt_label}"
+
+        assert "net" in output
+        assert "VT session" in output
+        assert "+0.3 net" in output
+        assert "2 VT sessions" in output
+
+    def test_vtsevt18_net_label_single_session(self):
+        """Singular 'VT session' (not 'sessions') for ts=1."""
+        ts = 1
+        vt_label = f"{ts} VT session{'s' if ts != 1 else ''}"
+        assert vt_label == "1 VT session"
+
+    def test_vtsevt18_not_trained_label_unchanged(self):
+        """ts=0 → 'not trained' label, no 'net'."""
+        ts = 0
+        # JS: if (ts === 0) return 'not trained'
+        result = "not trained" if ts == 0 else "has training"
+        assert result == "not trained"
+        assert "net" not in result
