@@ -2,7 +2,7 @@
 
 Phase 2 (MVP):
 VT2-01   GET /virtual-training → 200 for onboarded student
-VT2-02   GET /virtual-training → lists active games only
+VT2-02   GET /virtual-training → all_games context key populated via get_hub_games()
 VT2-03   GET /virtual-training/color-reaction → 200 when game is_active=True
 VT2-04   GET /virtual-training/color-reaction → renders hub with error when game inactive
 VT2-05   GET /virtual-training/history → 200 for onboarded student
@@ -424,18 +424,18 @@ class TestVTRoutes:
         resp = client.get("/virtual-training", follow_redirects=False)
         assert resp.status_code == 200
 
-    # VT2-02: Hub lists active games only
-    def test_vt2_02_hub_lists_active_games(self):
-        """VT2-02: Hub page context contains only active games from get_games()."""
+    # VT2-02: Hub uses get_hub_games (all_games context key)
+    def test_vt2_02_hub_all_games_via_get_hub_games(self):
+        """VT2-02: Hub page calls get_hub_games() and passes all_games to template."""
         user = self._onboarded_user()
         game = _mock_game(is_active=True)
-        with patch(f"{_ROUTE_BASE}.VirtualTrainingService.get_games", return_value=[game]) as mock_games:
+        with patch(f"{_ROUTE_BASE}.VirtualTrainingService.get_hub_games", return_value=[game]) as mock_hub:
             db = _mock_db()
             db.query.return_value = MagicMock()
             client = self._make_client(user_override=user, db_override=db)
             resp = client.get("/virtual-training", follow_redirects=False)
         assert resp.status_code == 200
-        mock_games.assert_called_once()
+        mock_hub.assert_called_once()
 
     # VT2-03: Color Reaction → 200 when active
     def test_vt2_03_color_reaction_200_when_active(self):

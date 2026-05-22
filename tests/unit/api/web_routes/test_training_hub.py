@@ -1,10 +1,11 @@
-"""Unit tests for Training hub (TRN-01..05) + regression.
+"""Unit tests for Training hub (TRN-01..06) + regression.
 
 TRN-01   GET /training returns 200 for an authenticated, onboarded student
 TRN-02   GET /training redirects to /dashboard for a non-student / non-onboarded user
 TRN-03   training_hub.html contains On-site / Hybrid / Virtual sections and /adaptive-learning link
 TRN-04   dashboard_student_new.html mod-nav contains /training card
 TRN-05   dashboard_student_new.html mod-nav does NOT contain direct /adaptive-learning card
+TRN-06   training_hub.html Virtual Games link text says "Virtual Games" (not "Virtual Training")
 REG-01   GET /adaptive-learning handler still exists and is reachable (regression guard)
 """
 import asyncio
@@ -70,7 +71,7 @@ class TestTrainingHubAuth:
 
         with patch(f"{_ROUTES}.require_student_onboarding", return_value=None), \
              patch(f"{_ROUTES}._spec_ctx", return_value={}), \
-             patch(f"{_ROUTES}.VirtualTrainingService.get_game", return_value=None), \
+             patch(f"{_ROUTES}.VirtualTrainingService.get_games", return_value=[]), \
              patch(f"{_ROUTES}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = fake_response
             result = _run(training_hub_page(request=request, db=db, user=user))
@@ -136,6 +137,13 @@ class TestTrainingHubTemplate:
         assert 'href="/training/on-site"' not in html
         assert 'href="/training/hybrid"' not in html
         assert "Coming soon" in html
+
+    def test_trn06_virtual_games_label_in_training_hub(self):
+        """TRN-06: training_hub.html Virtual sub-link uses 'Virtual Games' (not 'Virtual Training')."""
+        html = self._read("training_hub.html")
+        assert "Virtual Games" in html
+        # URL stays unchanged
+        assert 'href="/virtual-training"' in html
 
 
 # ── TRN-04 + TRN-05: dashboard mod-nav ───────────────────────────────────────

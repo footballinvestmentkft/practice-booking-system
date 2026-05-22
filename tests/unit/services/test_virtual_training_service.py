@@ -15,7 +15,7 @@ VT-12   calculate_xp_awarded() floors base_xp * multiplier to int
 VT-13   calculate_xp_awarded() returns 0 when multiplier is 0.0
 VT-14   calculate_skill_deltas() produces correct per-skill deltas
 VT-15   calculate_skill_deltas() returns empty dict when xp_awarded=0
-VT-16   seed data: 3 games present, all is_active=False (regression guard)
+VT-16   seed data: 12 games present; color_reaction active; stroop_challenge show_in_hub=False
 VT-17   get_training_skill_deltas_for_user() merges VT attempt deltas with segment deltas
 """
 from __future__ import annotations
@@ -248,17 +248,43 @@ class TestSkillDeltas:
 class TestSeedData:
 
     def test_vt16_seed_presets_present_and_correct_active_state(self):
-        """VT-16: Seed data defines exactly 3 presets; color_reaction is_active=True (Phase 2), others False."""
+        """VT-16: Seed contains 12 games; color_reaction active; stroop_challenge hidden; all others planned."""
         from scripts.seed_virtual_training_games import _GAMES
 
-        assert len(_GAMES) == 3
-        codes = {g["code"] for g in _GAMES}
-        assert codes == {"color_reaction", "stroop_challenge", "go_no_go"}
+        # 1 active + 1 hidden + 10 planned = 12 total
+        assert len(_GAMES) == 12
 
-        active_map = {g["code"]: g["is_active"] for g in _GAMES}
-        assert active_map["color_reaction"] is True, "color_reaction must be active in Phase 2"
-        assert active_map["stroop_challenge"] is False, "stroop_challenge not yet active"
-        assert active_map["go_no_go"] is False, "go_no_go not yet active"
+        codes = {g["code"] for g in _GAMES}
+        # Core games present
+        assert "color_reaction" in codes
+        assert "stroop_challenge" in codes
+        assert "go_no_go" in codes
+        # Catalog games present
+        assert "direction_swipe" in codes
+        assert "number_color_conflict" in codes
+        assert "memory_sequence" in codes
+        assert "target_tracking" in codes
+        assert "peripheral_vision" in codes
+        assert "dual_task" in codes
+        assert "fake_target" in codes
+        assert "audio_visual_reaction" in codes
+        assert "pattern_break" in codes
+
+        game_map = {g["code"]: g for g in _GAMES}
+
+        # Active state
+        assert game_map["color_reaction"]["is_active"] is True, "color_reaction must remain active"
+        for code in codes - {"color_reaction"}:
+            assert game_map[code]["is_active"] is False, f"{code} must remain inactive until admin toggle"
+
+        # stroop_challenge hidden from hub
+        assert game_map["stroop_challenge"]["config"].get("show_in_hub") is False
+
+        # All hub-visible games have football_benefit in config
+        hub_games = [g for g in _GAMES if g["config"].get("show_in_hub", True) is not False]
+        for g in hub_games:
+            assert g["config"].get("football_benefit"), f"{g['code']} missing football_benefit in config"
+            assert g["config"].get("icon"), f"{g['code']} missing icon in config"
 
 
 # ── VT-17: get_training_skill_deltas_for_user merges VT deltas ───────────────

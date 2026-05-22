@@ -48,6 +48,20 @@ class VirtualTrainingService:
             .first()
         )
 
+    @staticmethod
+    def get_hub_games(db: Session) -> list[VirtualTrainingGame]:
+        """Return all games visible in the Virtual Games hub (active + planned).
+
+        Excludes any game where config.show_in_hub == false.
+        Ordered by id (insertion / catalog order).
+        """
+        all_games = (
+            db.query(VirtualTrainingGame)
+            .order_by(VirtualTrainingGame.id)
+            .all()
+        )
+        return [g for g in all_games if (g.config or {}).get("show_in_hub", True) is not False]
+
     # ── Validation ────────────────────────────────────────────────────────────
 
     @staticmethod

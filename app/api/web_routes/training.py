@@ -30,8 +30,7 @@ async def training_hub_page(
     if redirect:
         return redirect
 
-    color_reaction = VirtualTrainingService.get_game(db, "color_reaction")
-    vt_active = color_reaction is not None and color_reaction.is_active
+    vt_active = bool(VirtualTrainingService.get_games(db))
 
     return templates.TemplateResponse(
         "training_hub.html",

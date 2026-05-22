@@ -63919,7 +63919,7 @@
     },
     "/virtual-training": {
       "get": {
-        "description": "Virtual Training hub \u2014 lists active mini-games.",
+        "description": "Virtual Games hub \u2014 lists all hub-visible games (active + planned).",
         "operationId": "virtual_training_hub_virtual_training_get",
         "responses": {
           "200": {

@@ -29,19 +29,19 @@ async def virtual_training_hub(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
-    """Virtual Training hub — lists active mini-games."""
+    """Virtual Games hub — lists all hub-visible games (active + planned)."""
     guard = require_student_onboarding(user)
     if guard:
         return guard
 
-    active_games = VirtualTrainingService.get_games(db)
+    all_games = VirtualTrainingService.get_hub_games(db)
     return templates.TemplateResponse(
         "virtual_training_hub.html",
         {
             "request": request,
             "user": user,
             **_spec_ctx(user, db),
-            "active_games": active_games,
+            "all_games": all_games,
         },
     )
 

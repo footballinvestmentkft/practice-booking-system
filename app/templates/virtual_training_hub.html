@@ -1,40 +1,40 @@
 {% extends "student_base.html" %}
 
-{% block title %}Virtual Training - LFA{% endblock %}
+{% block title %}Virtual Games - LFA{% endblock %}
 {% block active_page %}lfa-player{% endblock %}
 
 {% block student_header %}
-{% set _page_icon = '💻' %}
-{% set _page_name = 'Virtual Training' %}
+{% set _page_icon = '🎮' %}
+{% set _page_name = 'Virtual Games' %}
 {% include "includes/spec_subpage_hdr.html" %}
 {% endblock %}
 
 {% block extra_styles %}
 <style>
-    .vt-container {
-        max-width: 700px;
+    .vg-container {
+        max-width: 860px;
         margin: 0 auto;
         padding: 1.5rem 1rem 3rem;
     }
 
-    .vt-header {
+    .vg-header {
         margin-bottom: 2rem;
     }
 
-    .vt-header h1 {
+    .vg-header h1 {
         font-size: 1.6rem;
         font-weight: 700;
         color: var(--app-text);
         margin: 0 0 0.4rem;
     }
 
-    .vt-header p {
+    .vg-header p {
         color: var(--app-text-muted);
         font-size: 0.95rem;
         margin: 0;
     }
 
-    .vt-alert {
+    .vg-alert {
         background: #fef3c7;
         border: 1px solid #f59e0b;
         border-radius: 10px;
@@ -44,69 +44,157 @@
         margin-bottom: 1.5rem;
     }
 
-    .vt-game-card {
+    /* ── Game grid ───────────────────────────────────────────────────────── */
+    .vg-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+    }
+
+    @media (max-width: 640px) {
+        .vg-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Single game card ────────────────────────────────────────────────── */
+    .vg-card {
         background: var(--app-card);
         border-radius: 14px;
-        padding: 1.5rem 1.25rem;
+        padding: 1.4rem 1.25rem 1.1rem;
         box-shadow: 0 2px 10px rgba(0,0,0,0.07);
         display: flex;
         flex-direction: column;
-        gap: 0.6rem;
-        margin-bottom: 1.25rem;
-        border-left: 4px solid #4f46e5;
-        text-decoration: none;
-        color: inherit;
-        transition: box-shadow 0.15s;
+        gap: 0.65rem;
+        border-top: 4px solid transparent;
+        position: relative;
     }
 
-    .vt-game-card:hover {
-        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    .vg-card-active  { border-top-color: #4f46e5; }
+    .vg-card-planned { border-top-color: #d1d5db; }
+
+    /* ── Card header row ─────────────────────────────────────────────────── */
+    .vg-card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.5rem;
     }
 
-    .vt-game-card h3 {
-        font-size: 1.1rem;
+    .vg-card-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex: 1;
+    }
+
+    .vg-icon {
+        font-size: 1.3rem;
+        line-height: 1;
+        flex-shrink: 0;
+    }
+
+    .vg-name {
+        font-size: 1.0rem;
         font-weight: 700;
         color: var(--app-text);
         margin: 0;
+        line-height: 1.3;
     }
 
-    .vt-game-card p {
-        font-size: 0.88rem;
+    /* ── Status badge ────────────────────────────────────────────────────── */
+    .vg-status {
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.18rem 0.6rem;
+        border-radius: 20px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .vg-status-active {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .vg-status-planned {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    /* ── Mechanic description ────────────────────────────────────────────── */
+    .vg-mechanic {
+        font-size: 0.85rem;
         color: var(--app-text-muted);
         margin: 0;
         line-height: 1.5;
     }
 
-    .vt-game-meta {
+    /* ── Skill badges ────────────────────────────────────────────────────── */
+    .vg-skills {
         display: flex;
-        gap: 0.75rem;
         flex-wrap: wrap;
-        margin-top: 0.25rem;
+        gap: 0.4rem;
     }
 
-    .vt-meta-chip {
-        font-size: 0.75rem;
+    .vg-skill-badge {
+        font-size: 0.72rem;
         font-weight: 600;
         background: #ede9fe;
         color: #5b21b6;
-        padding: 0.2rem 0.6rem;
+        padding: 0.18rem 0.55rem;
         border-radius: 20px;
     }
 
-    .vt-no-games {
-        text-align: center;
-        padding: 3rem 1rem;
+    /* ── Football benefit ────────────────────────────────────────────────── */
+    .vg-football-benefit {
+        font-size: 0.82rem;
         color: var(--app-text-muted);
+        margin: 0;
+        line-height: 1.45;
+        border-left: 3px solid #bbf7d0;
+        padding-left: 0.6rem;
     }
 
-    .vt-footer {
+    /* ── CTA area ────────────────────────────────────────────────────────── */
+    .vg-cta {
+        margin-top: auto;
+        padding-top: 0.4rem;
+    }
+
+    .vg-btn-play {
+        display: inline-block;
+        background: #4f46e5;
+        color: #fff;
+        font-size: 0.88rem;
+        font-weight: 700;
+        padding: 0.55rem 1.2rem;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: background 0.15s;
+    }
+
+    .vg-btn-play:hover { background: #4338ca; }
+
+    .vg-btn-coming-soon {
+        display: inline-block;
+        background: #f3f4f6;
+        color: #9ca3af;
+        font-size: 0.88rem;
+        font-weight: 600;
+        padding: 0.55rem 1.2rem;
+        border-radius: 8px;
+        border: none;
+        cursor: not-allowed;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────────────────── */
+    .vg-footer {
         text-align: center;
         margin-top: 2rem;
         padding-top: 1.5rem;
         border-top: 1px solid #e2e8f0;
     }
 
-    .vt-footer a {
+    .vg-footer a {
         color: #667eea;
         text-decoration: none;
         margin: 0 1rem;
@@ -114,50 +202,79 @@
         font-size: 0.9rem;
     }
 
-    .vt-footer a:hover { text-decoration: underline; }
+    .vg-footer a:hover { text-decoration: underline; }
 </style>
 {% endblock %}
 
 {% block student_content %}
-<div class="vt-container">
+<div class="vg-container">
 
-    <div class="vt-header">
-        <h1>💻 Virtual Training</h1>
+    <div class="vg-header">
+        <h1>🎮 Virtual Games</h1>
         <p>Cognitive mini-games that sharpen your football skills. Train your reactions, decisions and concentration anywhere.</p>
     </div>
 
     {% if error %}
-    <div class="vt-alert">{{ error }}</div>
+    <div class="vg-alert">{{ error }}</div>
     {% endif %}
 
-    {% if active_games %}
-        {% for game in active_games %}
-        <a href="/virtual-training/{{ game.code | replace('_', '-') }}" class="vt-game-card">
-            <h3>⚡ {{ game.name }}</h3>
-            <p>{{ game.description }}</p>
-            <div class="vt-game-meta">
-                <span class="vt-meta-chip">{{ game.base_xp }} XP</span>
-                <span class="vt-meta-chip">{{ game.max_daily_attempts }}× per day</span>
+    {% if all_games %}
+    <div class="vg-grid">
+        {% for game in all_games %}
+        {% set is_active = game.is_active %}
+        {% set icon = game.config.get('icon', '🎮') if game.config else '🎮' %}
+        {% set benefit = game.config.get('football_benefit', '') if game.config else '' %}
+        <div class="vg-card {% if is_active %}vg-card-active{% else %}vg-card-planned{% endif %}">
+
+            <div class="vg-card-header">
+                <div class="vg-card-title">
+                    <span class="vg-icon">{{ icon }}</span>
+                    <h3 class="vg-name">{{ game.name }}</h3>
+                </div>
+                <span class="vg-status {% if is_active %}vg-status-active{% else %}vg-status-planned{% endif %}">
+                    {% if is_active %}● Active{% else %}○ Coming soon{% endif %}
+                </span>
+            </div>
+
+            <p class="vg-mechanic">{{ game.description }}</p>
+
+            {% if game.skill_targets %}
+            <div class="vg-skills">
                 {% for skill in game.skill_targets.keys() %}
-                <span class="vt-meta-chip">{{ skill }}</span>
+                <span class="vg-skill-badge">{{ skill }}</span>
                 {% endfor %}
             </div>
-        </a>
-        {% endfor %}
-    {% else %}
-        <div class="vt-no-games">
-            <p style="font-size: 2rem; margin-bottom: 0.75rem;">🎮</p>
-            <p>No virtual training games are active yet. Check back soon.</p>
+            {% endif %}
+
+            {% if benefit %}
+            <p class="vg-football-benefit">⚽ {{ benefit }}</p>
+            {% endif %}
+
+            <div class="vg-cta">
+                {% if is_active %}
+                <a href="/virtual-training/{{ game.code | replace('_', '-') }}" class="vg-btn-play">▶ Play</a>
+                {% else %}
+                <button class="vg-btn-coming-soon" disabled>Coming soon</button>
+                {% endif %}
+            </div>
+
         </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:3rem 1rem;color:var(--app-text-muted);">
+        <p style="font-size:2rem;margin-bottom:0.75rem;">🎮</p>
+        <p>No games available yet. Check back soon.</p>
+    </div>
     {% endif %}
 
-    <div style="margin-top: 1rem; text-align: right;">
+    <div style="margin-top: 1.25rem; text-align: right;">
         <a href="/virtual-training/history" style="color: #667eea; font-size: 0.88rem; font-weight: 600; text-decoration: none;">
             📋 View my history →
         </a>
     </div>
 
-    <div class="vt-footer">
+    <div class="vg-footer">
         <a href="/training">🎓 Training</a>
         <a href="/dashboard/lfa-football-player">⚽ Dashboard</a>
         <a href="/adaptive-learning">🧠 Adaptive Learning</a>
