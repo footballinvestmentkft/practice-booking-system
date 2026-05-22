@@ -197,32 +197,49 @@ class TestXpCalculation:
         assert xp == 0
 
 
-# ── VT-14..15: calculate_skill_deltas ────────────────────────────────────────
+# ── VT-14..15: compute_vt_skill_deltas (Phase 2.2 — performance-based) ───────
 
 class TestSkillDeltas:
 
     def test_vt14_deltas_computed_correctly(self):
-        """VT-14: Skill deltas match compute_skill_deltas with same inputs."""
+        """VT-14: compute_vt_skill_deltas() produces per-skill deltas from gameplay signals.
+
+        Phase 2.2: skill delta is based on actual performance (reactions, concentration,
+        anticipation) not solely on XP. A clean perfect run produces positive deltas
+        for all skill keys; total ≤ base_xp / 10 (max at speed=1.0, hit=1.0).
+        """
+        from app.services.virtual_training_metrics import compute_vt_skill_deltas
+
         game = _mock_game(
             skill_targets={"reactions": 0.55, "concentration": 0.25, "anticipation": 0.20},
             base_xp=15,
         )
-        rates: dict[str, int] = {}  # use default 10 xp/point
-        deltas = VirtualTrainingService.calculate_skill_deltas(game, xp_awarded=15, conversion_rates=rates)
+        game.config = {}  # no phase config → defaults (36 stimuli, 3067 ms window)
 
-        # sum of weights = 1.0; rate fallback = 10
-        # reactions: (0.55/1.0) * 15 / 10 = 0.825 → 0.82
-        # concentration: (0.25/1.0) * 15 / 10 = 0.375 → 0.38
-        # anticipation: (0.20/1.0) * 15 / 10 = 0.30
+        deltas = compute_vt_skill_deltas(
+            data={"stimuli_count": 36, "correct_count": 36, "wrong_click_count": 0,
+                  "error_count": 0, "avg_reaction_ms": 300.0},
+            game=game,
+            multiplier=1.0,
+        )
+
         assert set(deltas.keys()) == {"reactions", "concentration", "anticipation"}
-        assert deltas["reactions"] == pytest.approx(0.82, abs=0.01)
-        assert deltas["concentration"] == pytest.approx(0.38, abs=0.01)
-        assert deltas["anticipation"] == pytest.approx(0.30, abs=0.01)
+        for skill, delta in deltas.items():
+            assert delta > 0, f"Expected positive delta for {skill}"
+        # Total must be ≤ base_xp/10 = 1.5 (ceiling at perfect performance)
+        assert sum(deltas.values()) <= 1.5 + 0.01
 
-    def test_vt15_zero_xp_returns_empty_deltas(self):
-        """VT-15: xp_awarded=0 → empty skill deltas dict."""
-        game = _mock_game(skill_targets={"reactions": 1.0})
-        deltas = VirtualTrainingService.calculate_skill_deltas(game, xp_awarded=0, conversion_rates={})
+    def test_vt15_zero_multiplier_returns_empty_deltas(self):
+        """VT-15: multiplier=0.0 (4th+ attempt) → empty skill deltas dict."""
+        from app.services.virtual_training_metrics import compute_vt_skill_deltas
+
+        game = _mock_game(skill_targets={"reactions": 1.0}, base_xp=15)
+        game.config = {}
+        deltas = compute_vt_skill_deltas(
+            data={"stimuli_count": 36, "correct_count": 36, "avg_reaction_ms": 300.0},
+            game=game,
+            multiplier=0.0,
+        )
         assert deltas == {}
 
 

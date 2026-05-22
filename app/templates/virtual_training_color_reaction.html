@@ -371,6 +371,12 @@
     var currentCircles    = [];          // DOM elements for the active round
     var currentTargetName = null;        // color name the user must click
 
+    // ── raw_metrics tracking (Phase 2.2) ───────────────────────────────────
+    var stimulusLog       = [];          // per-stimulus event objects
+    var currentPhaseIdx   = 0;          // phase index of the active round
+    var currentDistractor = null;       // Stroop ink color name of active round
+    var currentPool       = [];         // color names shown in active round
+
     // ── DOM refs ───────────────────────────────────────────────────────────
     var arena        = document.getElementById("crArena");
     var instruction  = document.getElementById("crInstruction");
@@ -388,7 +394,7 @@
     var targetBadge  = document.getElementById("crTargetBadge");
     var badgeName    = document.getElementById("crBadgeName");
 
-    // ── Phase helper ───────────────────────────────────────────────────────
+    // ── Phase helpers ──────────────────────────────────────────────────────
     function getPhase(stimIndex) {
         var cumulative = 0;
         for (var i = 0; i < PHASES.length; i++) {
@@ -396,6 +402,15 @@
             if (stimIndex < cumulative) { return PHASES[i]; }
         }
         return PHASES[PHASES.length - 1];
+    }
+
+    function getPhaseIndex(stimIndex) {
+        var cumulative = 0;
+        for (var i = 0; i < PHASES.length; i++) {
+            cumulative += PHASES[i].stimuli;
+            if (stimIndex < cumulative) { return i; }
+        }
+        return PHASES.length - 1;
     }
 
     // ── Zone placement: N non-overlapping circles ──────────────────────────
@@ -469,7 +484,12 @@
         var distractorName = distractorPool[Math.floor(Math.random() * distractorPool.length)];
         badgeName.textContent = currentTargetName;
         badgeName.style.color = COLOURS[distractorName];
-        targetBadge.style.display         = "flex";
+        targetBadge.style.display = "flex";
+
+        // Track round metadata for raw_metrics
+        currentPhaseIdx   = getPhaseIndex(globalStimIdx);
+        currentDistractor = distractorName;
+        currentPool       = pool.slice();
 
         // Place N circles, one per zone
         clearCircles();
@@ -527,10 +547,22 @@
         if (colorName === currentTargetName) {
             correctCount++;
             reactionTimes.push(rt);
+            stimulusLog.push({
+                i: globalStimIdx, phase: currentPhaseIdx,
+                n_circles: currentPool.length, target: currentTargetName,
+                distractor_ink: currentDistractor, outcome: "hit",
+                rt_ms: rt, pool: currentPool.slice()
+            });
             showFeedback("✓ " + rt + " ms", "hit");
             afterRound(phaseDelay);
         } else {
             wrongClickCount++;
+            stimulusLog.push({
+                i: globalStimIdx, phase: currentPhaseIdx,
+                n_circles: currentPool.length, target: currentTargetName,
+                distractor_ink: currentDistractor, outcome: "wrong",
+                rt_ms: null, pool: currentPool.slice()
+            });
             showFeedback("✗ Wrong color!", "wrong");
             afterRound(WRONG_PENALTY_MS);
         }
@@ -540,6 +572,12 @@
         if (clickHandled) { return; }
         clickHandled = true;
         missCount++;
+        stimulusLog.push({
+            i: globalStimIdx, phase: currentPhaseIdx,
+            n_circles: currentPool.length, target: currentTargetName,
+            distractor_ink: currentDistractor, outcome: "miss",
+            rt_ms: null, pool: currentPool.slice()
+        });
         showFeedback("✗ Miss!", "miss");
         afterRound(MISS_PENALTY_MS);
     }
@@ -617,6 +655,46 @@
         var scoreRaw    = 0.60 * accuracy + 0.30 * speedFactor - 0.10 * wrongRate;
         var scoreNorm   = Math.min(100, Math.max(0, Math.round(100 * scoreRaw)));
 
+        // ── Build raw_metrics (per_stimulus, per_color, per_phase) ────────
+        var perColorMap = {};
+        for (var ci = 0; ci < stimulusLog.length; ci++) {
+            var ev  = stimulusLog[ci];
+            var tgt = ev.target;
+            if (!perColorMap[tgt]) {
+                perColorMap[tgt] = { shown: 0, correct: 0, wrong: 0, miss: 0, rt_sum: 0, rt_count: 0 };
+            }
+            perColorMap[tgt].shown++;
+            if (ev.outcome === "hit")   { perColorMap[tgt].correct++; perColorMap[tgt].rt_sum += ev.rt_ms; perColorMap[tgt].rt_count++; }
+            if (ev.outcome === "wrong") { perColorMap[tgt].wrong++; }
+            if (ev.outcome === "miss")  { perColorMap[tgt].miss++;  }
+        }
+        var perColor = {};
+        for (var cn in perColorMap) {
+            var c = perColorMap[cn];
+            perColor[cn] = {
+                shown: c.shown, correct: c.correct, wrong: c.wrong, miss: c.miss,
+                avg_rt_ms: c.rt_count > 0 ? Math.round(c.rt_sum / c.rt_count) : null
+            };
+        }
+
+        var perPhase = PHASES.map(function(p, pi) {
+            var pEvs = stimulusLog.filter(function(ev) { return ev.phase === pi; });
+            var pC = 0, pW = 0, pM = 0, pRtSum = 0, pRtN = 0;
+            for (var ei = 0; ei < pEvs.length; ei++) {
+                var e = pEvs[ei];
+                if (e.outcome === "hit")   { pC++; pRtSum += e.rt_ms; pRtN++; }
+                if (e.outcome === "wrong") { pW++; }
+                if (e.outcome === "miss")  { pM++; }
+            }
+            return {
+                phase: pi, stimuli: pEvs.length, correct: pC, wrong: pW, miss: pM,
+                avg_rt_ms: pRtN > 0 ? Math.round(pRtSum / pRtN) : null,
+                n_circles: p.targets
+            };
+        });
+
+        var rawMetrics = { v: 1, per_stimulus: stimulusLog, per_color: perColor, per_phase: perPhase };
+
         var payload = {
             started_at:        startedAt,
             duration_seconds:  durationSeconds,
@@ -627,7 +705,8 @@
             avg_reaction_ms:   avgMs,
             min_reaction_ms:   minMs,
             score_raw:         scoreRaw,
-            score_normalized:  scoreNorm
+            score_normalized:  scoreNorm,
+            raw_metrics:       rawMetrics
         };
 
         fetch(SUBMIT_URL, {

@@ -82,6 +82,7 @@ class VirtualTrainingAttempt(Base):
     error_count       = Column(SmallInteger, nullable=True)  # window expired before click (miss)
     min_reaction_ms   = Column(Float, nullable=True)         # fastest single reaction
     wrong_click_count = Column(SmallInteger, nullable=True)  # wrong-color clicks (Phase 2.1)
+    raw_metrics       = Column(JSONB, nullable=True)          # per-stimulus/color/phase (Phase 2.2)
 
     idempotency_key = Column(String(100), nullable=True, unique=True)
 

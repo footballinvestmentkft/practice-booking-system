@@ -127,28 +127,6 @@ class VirtualTrainingService:
         """Compute floor(base_xp * multiplier). Returns 0 when multiplier is 0."""
         return int(game.base_xp * multiplier)
 
-    # ── Skill deltas ──────────────────────────────────────────────────────────
-
-    @staticmethod
-    def calculate_skill_deltas(
-        game: VirtualTrainingGame,
-        xp_awarded: int,
-        conversion_rates: dict[str, int],
-    ) -> dict[str, float]:
-        """
-        Translate game skill_targets + XP into per-skill additive deltas.
-
-        Delegates to segment_reward_service.compute_skill_deltas() so the
-        formula is identical to the session training pipeline.
-        """
-        from app.services.segment_reward_service import compute_skill_deltas
-
-        return compute_skill_deltas(
-            skill_targets=game.skill_targets or {},
-            xp_awarded=xp_awarded,
-            conversion_rates=conversion_rates,
-        )
-
     # ── Write path ────────────────────────────────────────────────────────────
 
     @staticmethod
@@ -172,8 +150,8 @@ class VirtualTrainingService:
           score_raw, score_normalized
         """
         from sqlalchemy.exc import IntegrityError
-        from app.services.segment_reward_service import _load_conversion_rates
         from app.services.gamification import xp_service
+        from app.services.virtual_training_metrics import compute_vt_skill_deltas
 
         now = datetime.now(timezone.utc)
 
@@ -185,9 +163,8 @@ class VirtualTrainingService:
         multiplier = VirtualTrainingService.calculate_xp_multiplier(attempt_index)
         xp_awarded = VirtualTrainingService.calculate_xp_awarded(game, multiplier) if is_valid else 0
 
-        rates = _load_conversion_rates(db)
         skill_deltas = (
-            VirtualTrainingService.calculate_skill_deltas(game, xp_awarded, rates)
+            compute_vt_skill_deltas(data=data, game=game, multiplier=multiplier)
             if is_valid and xp_awarded > 0
             else {}
         )
@@ -219,6 +196,7 @@ class VirtualTrainingService:
                 correct_count=data.get("correct_count"),
                 error_count=data.get("error_count"),
                 wrong_click_count=data.get("wrong_click_count"),
+                raw_metrics=data.get("raw_metrics"),
                 xp_awarded=xp_awarded,
                 skill_deltas=skill_deltas,
                 attempt_index_today=attempt_index,
