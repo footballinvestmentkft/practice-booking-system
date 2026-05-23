@@ -140,16 +140,16 @@ _GAMES = [
         },
     },
 
-    # ── 4. Direction Swipe ────────────────────────────────────────────────────
+    # ── 4. Direction Swipe (ACTIVE — Phase 2.3) ──────────────────────────────
     {
         "code": "direction_swipe",
         "name": "Direction Swipe",
         "description": (
-            "An arrow or directional cue appears on screen — swipe or click in the "
-            "indicated direction as quickly as possible. Speed and motor accuracy tested."
+            "An arrow appears — swipe or press the matching direction key as fast as "
+            "possible. Three phases test speed, accuracy and sustained directional focus."
         ),
-        "game_type": "direction_recognition",
-        "is_active": False,
+        "game_type": "direction_reaction",
+        "is_active": True,
         "base_xp": 12,
         "max_daily_attempts": 5,
         "skill_targets": {
@@ -159,6 +159,18 @@ _GAMES = [
             "concentration": 0.15,
         },
         "config": {
+            # gameplay parameters
+            "phases": [
+                {"stimuli": 10, "window_ms": 1500, "isi_ms": 900},
+                {"stimuli": 12, "window_ms": 1100, "isi_ms": 700},
+                {"stimuli": 14, "window_ms":  750, "isi_ms": 550},
+            ],
+            "directions":           ["up", "down", "left", "right"],
+            "late_grace_ms":        300,
+            "jitter_ms":            150,
+            "swipe_min_px":         30,
+            "swipe_max_duration_ms": 500,
+            # display keys
             "show_in_hub":      True,
             "icon":             "↕️",
             "football_benefit": (

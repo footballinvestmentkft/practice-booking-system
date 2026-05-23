@@ -274,6 +274,22 @@ class VTSkillScorer:
         return max(0.0, min(1.0, 0.65 * signals.hit_rate + 0.35 * signals.completion_rate))
 
     @staticmethod
+    def score_coordination(signals: VTSignals) -> float:
+        """
+        Motor-visual coordination for directional-response games.
+
+        Rewards correct directional responses and fast execution.
+        Wrong-direction errors (commission errors in motor accuracy) penalised
+        at 1.0× — heavier than misses, lighter than in score_decisions.
+
+          coordination = 0.55 × hit_rate − 1.0 × wrong_rate + 0.45 × speed_score
+
+        Range: (−∞, 1.0].  Negative when wrong-direction errors dominate.
+        """
+        score = 0.55 * signals.hit_rate - 1.0 * signals.wrong_rate + 0.45 * signals.speed_score
+        return min(1.0, score)
+
+    @staticmethod
     def score_all(signals: VTSignals, skill_targets: dict[str, float]) -> dict[str, float]:
         """
         Score every skill present in skill_targets.
@@ -287,6 +303,7 @@ class VTSkillScorer:
             "anticipation":       VTSkillScorer.score_anticipation,
             "composure":          VTSkillScorer.score_composure,
             "tactical_awareness": VTSkillScorer.score_tactical_awareness,
+            "coordination":       VTSkillScorer.score_coordination,
         }
         known = {k: fn(signals) for k, fn in _scorers.items()}
         fallback = sum(known.values()) / len(known) if known else 0.5
