@@ -132,7 +132,7 @@ body { background: var(--card-page-bg); }
 .skill-row { display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.3rem; }
 .skill-row:last-child { margin-bottom: 0; }
 .skill-name { font-size: 0.62rem; color: var(--card-text-secondary); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.skill-val { font-size: 0.67rem; font-weight: 700; width: 28px; text-align: right; flex-shrink: 0; }
+.skill-val { font-size: 0.67rem; font-weight: 700; width: 38px; text-align: right; flex-shrink: 0; }
 .skill-up { font-size: 0.6rem; font-weight: 900; flex-shrink: 0; line-height: 1; }
 .skill-bar-bg { flex: 1 1 0; max-width: 56px; height: 5px; background: var(--card-bar-bg); border-radius: 3px; }
 .skill-bar-fill { height: 100%; border-radius: 2px; }
@@ -280,7 +280,7 @@ body.export-mode .skill-val   { font-size: var(--ex-font-skill); }
                 <div class="skill-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
                 {% for skill in cat.skills %}
                 {% set sdata = player.skills.get(skill.key, {}) %}
-                {% set sval = sdata.get('current_level', 50) | round(1) %}
+                {% set sval = sdata.get('current_level', 50) | round(2) %}
                 {% set fill_pct = [sval, 100] | min %}
                 {% set sdelta = last_skill_delta.get(skill.key, 0) %}
                 {% if sdelta > 0 %}

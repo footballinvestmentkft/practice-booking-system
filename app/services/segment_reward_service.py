@@ -359,3 +359,34 @@ def get_training_session_count_for_user(
         .scalar()
         or 0
     )
+
+
+def get_vt_attempt_count_per_skill_for_user(
+    db: Session,
+    user_id: int,
+) -> dict[str, int]:
+    """
+    Return per-skill count of reward-eligible VT attempts that produced a delta
+    for each skill key.
+
+    Only counts attempts where is_valid=True and xp_awarded>0 (i.e. skill_deltas
+    is non-empty). Counts are per-skill (not global): a user who played 2 GNG
+    attempts affecting decisions/reactions gets {decisions: 2, reactions: 2}.
+
+    Used by get_skill_profile() to populate training_vt_count per skill.
+    """
+    rows = db.execute(
+        text(
+            """
+            SELECT kv.key, COUNT(*) AS cnt
+            FROM virtual_training_attempts vta,
+                 jsonb_each_text(vta.skill_deltas) AS kv(key, value)
+            WHERE vta.user_id = :uid
+              AND vta.is_valid = true
+              AND vta.xp_awarded > 0
+            GROUP BY kv.key
+            """
+        ),
+        {"uid": user_id},
+    ).fetchall()
+    return {row[0]: int(row[1]) for row in rows}

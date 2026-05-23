@@ -64028,6 +64028,94 @@
         ]
       }
     },
+    "/virtual-training/go-no-go": {
+      "get": {
+        "description": "Go / No-Go Reaction game page \u2014 instructions + Vanilla JS game loop.",
+        "operationId": "virtual_training_go_no_go_virtual_training_go_no_go_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Virtual Training Go No Go",
+        "tags": [
+          "web",
+          "virtual-training"
+        ]
+      }
+    },
+    "/virtual-training/go-no-go/result/{attempt_id}": {
+      "get": {
+        "description": "Result screen for a completed Go / No-Go Reaction attempt.",
+        "operationId": "virtual_training_go_no_go_result_virtual_training_go_no_go_result__attempt_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "title": "Attempt Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Virtual Training Go No Go Result",
+        "tags": [
+          "web",
+          "virtual-training"
+        ]
+      }
+    },
+    "/virtual-training/go-no-go/submit": {
+      "post": {
+        "description": "Record a Go / No-Go Reaction attempt. Returns attempt_id, xp_awarded, is_valid.",
+        "operationId": "virtual_training_go_no_go_submit_virtual_training_go_no_go_submit_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Virtual Training Go No Go Submit",
+        "tags": [
+          "web",
+          "virtual-training"
+        ]
+      }
+    },
     "/virtual-training/history": {
       "get": {
         "description": "Attempt history \u2014 last 20 valid attempts across all VT games.",

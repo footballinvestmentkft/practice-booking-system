@@ -124,6 +124,8 @@
         padding: 0.2rem 0;
     }
 
+    .vtr-skill-row.neg { color: #dc2626; }
+
     .vtr-btn-play-again {
         display: inline-block;
         background: #4f46e5;
@@ -187,8 +189,9 @@
 
     .vtr-breakdown-row:last-child { border-bottom: none; }
 
-    .vtr-breakdown-skill { font-weight: 700; color: #14532d; }
-    .vtr-breakdown-delta { font-weight: 800; color: #166534; white-space: nowrap; }
+    .vtr-breakdown-skill      { font-weight: 700; color: #14532d; }
+    .vtr-breakdown-delta      { font-weight: 800; color: #166534; white-space: nowrap; }
+    .vtr-breakdown-delta.neg  { color: #dc2626; }
     .vtr-breakdown-factors {
         font-size: 0.78rem;
         color: #6b7280;
@@ -345,7 +348,7 @@
 
         {% if attempt.xp_awarded > 0 %}
         <div class="vtr-xp-badge">+{{ attempt.xp_awarded }} XP earned</div>
-        {% elif attempt.attempt_index_today > 3 %}
+        {% elif attempt.attempt_index_today > game.max_daily_attempts %}
         <div class="vtr-xp-badge" style="background: #f3f4f6; color: #6b7280;">
             No XP — daily limit reached
         </div>
@@ -355,9 +358,9 @@
         <div class="vtr-skill-deltas">
             <h4>Skill deltas</h4>
             {% for skill, delta in attempt.skill_deltas.items() %}
-            <div class="vtr-skill-row">
+            <div class="vtr-skill-row {% if delta < 0 %}neg{% endif %}">
                 <span>{{ skill }}</span>
-                <span>+{{ "%.2f"|format(delta) }}</span>
+                <span>{{ "%+.2f"|format(delta) }}</span>
             </div>
             {% endfor %}
         </div>
@@ -371,7 +374,7 @@
             {% set delta = attempt.skill_deltas.get(skill, 0) if attempt.skill_deltas else 0 %}
             <div class="vtr-breakdown-row">
                 <span class="vtr-breakdown-skill">{{ skill|capitalize }}</span>
-                <span class="vtr-breakdown-delta">+{{ "%.3f"|format(delta) }}</span>
+                <span class="vtr-breakdown-delta {% if delta < 0 %}neg{% endif %}">{{ "%+.3f"|format(delta) }}</span>
                 <span class="vtr-breakdown-factors">
                     {% if skill == "reactions" %}
                         Speed: {{ signals_ctx.speed_score }}% · Hit rate: {{ signals_ctx.hit_rate }}% · Score: {{ "%.0f"|format(score * 100) }}%
@@ -383,6 +386,9 @@
                         Completion: {{ signals_ctx.completion_rate }}% · Accuracy: {{ signals_ctx.hit_rate }}% · Score: {{ "%.0f"|format(score * 100) }}%
                     {% else %}
                         Score: {{ "%.0f"|format(score * 100) }}%
+                    {% endif %}
+                    {% if delta < 0 %}
+                    <br><span style="color:#dc2626;font-style:italic;">Performance below training threshold — skill decreased this attempt.</span>
                     {% endif %}
                 </span>
             </div>

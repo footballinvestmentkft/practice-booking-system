@@ -574,8 +574,9 @@
         var bestRt  = fmtMs(t.min_reaction_ms);
         var dur     = fmtSec(t.duration_seconds);
         var xp      = t.xp_awarded != null ? '+' + t.xp_awarded + ' XP' : '—';
+        var gameSlug = (t.game_code || 'color-reaction').replace(/_/g, '-');
         var link    = t.attempt_id
-                      ? '<a class="sh-vt-detail-link" href="/virtual-training/color-reaction/result/' + t.attempt_id + '">View full detail →</a>'
+                      ? '<a class="sh-vt-detail-link" href="/virtual-training/' + gameSlug + '/result/' + t.attempt_id + '">View full detail →</a>'
                       : '';
 
         return '<tr class="sh-vt-detail-row" id="' + rowId + '">' +

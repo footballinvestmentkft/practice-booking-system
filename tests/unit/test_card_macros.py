@@ -195,10 +195,10 @@ class TestCardSkillRowsMacro:
         html = self._render(cat, {}, {})
         assert html.count('class="skill-row"') == 3
 
-    def test_MR_card_uses_round_1_for_score(self):
+    def test_MR_card_uses_round_2_for_score(self):
         cat = _make_cat(skills=[_make_skill("pace", "Pace")])
         html = self._render(cat, {"pace": {"current_level": 77.3}}, {})
-        # round(1) → 77.3
+        # round(2) → 77.3 (77.30 contains "77.3")
         assert "77.3" in html
 
     def test_MR_card_no_wrapping_container_div(self):

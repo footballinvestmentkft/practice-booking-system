@@ -191,130 +191,137 @@ def _call_route(platform=None, export=False, native_export=False, user=None,
 
 class TestPlayerCardPublicRoute:
 
-    def test_pcp01_no_platform_returns_public_profile_template(self):
-        """No platform + no export must render the public profile template."""
+    def test_pcp01_no_platform_returns_interactive_fifa_card(self):
+        """No platform + no export → bare URL serves the interactive FIFA card directly.
+        Phase 2.4F: player_card_public.html iframe wrapper retired from this path."""
         ctx = _call_route(platform=None, export=False)
-        assert ctx.get("template") == "public/player_card_public.html"
+        assert ctx.get("template") == "public/player_card_fifa.html", (
+            "Bare URL must render the interactive FIFA card, not the old iframe wrapper"
+        )
 
-    def test_pcp02_public_profile_context_required_keys(self):
-        """Public profile context must include all keys consumed by player_card_public.html."""
+    def test_pcp02_interactive_card_context_required_keys(self):
+        """Bare URL context must include keys consumed by player_card_fifa.html."""
         ctx = _call_route()
-        for key in ("player_name", "user_id", "overall", "tier_label", "tier_color",
-                    "initials", "player", "public_platform", "public_iframe_src",
-                    "pub_card_w", "pub_card_h"):
-            assert key in ctx, f"Public profile context missing required key: {key!r}"
+        for key in ("player", "overall", "tier_label", "tier_color", "initials",
+                    "skill_categories", "last_skill_delta", "participations_history",
+                    "theme", "card_theme_id", "card_variant_id"):
+            assert key in ctx, f"Interactive card context missing required key: {key!r}"
 
     def test_pcp02b_public_profile_has_no_export_gallery_keys(self):
-        """Public profile context must NOT include platform picker or gallery-specific keys."""
+        """Bare URL context must NOT include platform picker or gallery-specific keys."""
         ctx = _call_route()
         for key in ("platforms", "canvas_sizes", "default_platform", "default_iframe_src"):
             assert key not in ctx, (
-                f"Export-gallery key {key!r} must not appear on public profile — "
+                f"Export-gallery key {key!r} must not appear on the bare card URL — "
                 "download/export UI belongs exclusively in the card editor"
             )
 
-    def test_pcp03_fallback_to_instagram_portrait_when_platform_unset(self):
-        """published_card_platform=None must resolve public_platform to instagram_portrait."""
+    def test_pcp03_bare_url_uses_default_platform_preset(self):
+        """Bare URL with no published platform → effective_platform is None → 'default' preset.
+        The export layer must NOT activate, so the interactive FIFA card is always served."""
         lic = _make_license(public_card_platform=None)
-        ctx = _call_route(license_=lic)
-        assert ctx.get("public_platform") == "instagram_portrait"
+        ctx = _call_route(platform=None, export=False, license_=lic, draft_published_platform=None)
+        assert ctx.get("template") == "public/player_card_fifa.html"
+        assert ctx.get("platform_id") == "default"
 
-    def test_pcp04_published_platform_used_when_set(self):
-        """A valid published_card_platform must be used as public_platform."""
+    def test_pcp04_explicit_export_uses_published_platform(self):
+        """export=True with no URL ?platform= → effective_platform picks up published_platform."""
         lic = _make_license(public_card_platform="instagram_story")
-        ctx = _call_route(license_=lic)
-        assert ctx.get("public_platform") == "instagram_story"
+        ctx = _call_route(export=True, license_=lic)
+        assert ctx.get("platform_id") == "instagram_story"
 
-    def test_pcp04b_invalid_published_platform_falls_back(self):
-        """An invalid/unrecognised published_card_platform must fall back to instagram_portrait."""
-        lic = _make_license(public_card_platform="default")
-        ctx = _call_route(license_=lic, draft_published_platform="default")
-        assert ctx.get("public_platform") == "instagram_portrait"
+    def test_pcp04b_bare_url_ignores_published_platform(self):
+        """Bare URL must NOT activate the export layer even when published_platform is set.
+        The interactive FIFA card must be served regardless of the user's published platform."""
+        lic = _make_license(public_card_platform="instagram_portrait")
+        ctx = _call_route(platform=None, export=False, license_=lic)
+        assert ctx.get("template") == "public/player_card_fifa.html"
 
     # ── Priority chain regression tests (PCP-04c/d/e/f) ──────────────────────
-    # These four tests prove the correct read priority:
-    #   CardDraft.published_platform  >  UserLicense.published_card_platform  >  fallback
+    # These four tests prove the correct read priority for explicit export path:
+    #   CardDraft.published_platform  >  UserLicense.published_card_platform  >  None
+    # The chain now applies to effective_platform when export=True (not bare URL).
 
     def test_pcp04c_card_draft_platform_used_when_license_has_none(self):
-        """CardDraft.published_platform wins even when UserLicense.published_card_platform is None.
+        """CardDraft.published_platform wins for export=True even when UserLicense is None.
 
-        This is the direct regression guard for the original bug: publish_draft() writes to
-        card_drafts.published_platform but the old early return read only UserLicense — always
-        seeing NULL and falling back to instagram_portrait regardless of what was published.
+        Regression guard: publish_draft() writes to card_drafts.published_platform;
+        if the route reads only UserLicense, it always falls back (NULL) and ignores
+        what was published.
         """
         lic = _make_license(public_card_platform=None)
-        ctx = _call_route(license_=lic, draft_published_platform="instagram_square")
-        assert ctx.get("public_platform") == "instagram_square", (
-            "CardDraft.published_platform must be used as the primary source; "
-            "UserLicense being NULL must not trigger the fallback"
+        ctx = _call_route(export=True, license_=lic, draft_published_platform="instagram_square")
+        assert ctx.get("platform_id") == "instagram_square", (
+            "CardDraft.published_platform must be used as the primary source for export path; "
+            "UserLicense being NULL must not override it"
         )
 
     def test_pcp04d_card_draft_wins_over_license_when_both_set(self):
-        """CardDraft.published_platform takes precedence over UserLicense when both are set."""
+        """CardDraft.published_platform takes precedence over UserLicense on export path."""
         lic = _make_license(public_card_platform="instagram_portrait")
-        ctx = _call_route(license_=lic, draft_published_platform="instagram_square")
-        assert ctx.get("public_platform") == "instagram_square", (
+        ctx = _call_route(export=True, license_=lic, draft_published_platform="instagram_square")
+        assert ctx.get("platform_id") == "instagram_square", (
             "CardDraft must win over UserLicense even when UserLicense has a valid platform"
         )
 
     def test_pcp04e_license_fallback_when_draft_platform_is_none(self):
-        """UserLicense.published_card_platform is used when CardDraft.published_platform is None."""
+        """UserLicense.published_card_platform is used on export path when CardDraft is None."""
         lic = _make_license(public_card_platform="tiktok")
-        ctx = _call_route(license_=lic, draft_published_platform=None)
-        assert ctx.get("public_platform") == "tiktok", (
+        ctx = _call_route(export=True, license_=lic, draft_published_platform=None)
+        assert ctx.get("platform_id") == "tiktok", (
             "UserLicense.published_card_platform must be the fallback when CardDraft has no published platform"
         )
 
-    def test_pcp04f_instagram_portrait_fallback_when_both_sources_are_none(self):
-        """instagram_portrait is the final fallback when both CardDraft and UserLicense are None."""
+    def test_pcp04f_default_preset_when_both_sources_are_none_on_export(self):
+        """Default preset used for export=True when both CardDraft and UserLicense are None."""
         lic = _make_license(public_card_platform=None)
-        ctx = _call_route(license_=lic, draft_published_platform=None)
-        assert ctx.get("public_platform") == "instagram_portrait", (
-            "Final fallback must be instagram_portrait when both CardDraft and UserLicense have no published platform"
+        ctx = _call_route(export=True, license_=lic, draft_published_platform=None)
+        assert ctx.get("platform_id") == "default", (
+            "When both CardDraft and UserLicense have no published platform on export path, "
+            "effective_platform is None → 'default' preset"
         )
 
-    def test_pcp05_pub_card_dims_match_canvas_sizes(self):
-        """pub_card_w / pub_card_h must match CANVAS_SIZES for the resolved public_platform."""
-        from app.services.card_constants import CANVAS_SIZES
+    def test_pcp05_bare_url_context_has_last_skill_delta(self):
+        """Bare URL context must include last_skill_delta (VT trend arrows rely on it)."""
         ctx = _call_route()
-        pid = ctx.get("public_platform")
-        expected_w, expected_h = CANVAS_SIZES[pid]
-        assert ctx.get("pub_card_w") == expected_w
-        assert ctx.get("pub_card_h") == expected_h
+        assert "last_skill_delta" in ctx, (
+            "last_skill_delta must be present in bare URL context for VT trend arrows"
+        )
 
-    def test_pcp06_public_iframe_src_contains_platform_and_export(self):
-        """public_iframe_src must encode platform and export=1."""
+    def test_pcp06_bare_url_context_has_skill_categories(self):
+        """Bare URL context must include skill_categories (FIFA card skill panel)."""
         ctx = _call_route()
-        src = ctx.get("public_iframe_src", "")
-        pid = ctx.get("public_platform")
-        assert f"platform={pid}" in src
-        assert "export=1" in src
+        assert "skill_categories" in ctx, (
+            "skill_categories must be present in bare URL context for the FIFA skill panel"
+        )
 
-    def test_pcp07_export_true_bypasses_public_profile(self):
-        """export=True must skip the public profile and render the export template."""
+    def test_pcp07_export_true_serves_export_template(self):
+        """export=True must serve an export template (not the interactive FIFA card for bare URL)."""
         ctx = _call_route(platform=None, export=True)
         assert ctx.get("template") != "public/player_card_public.html"
 
-    def test_pcp07b_native_export_bypasses_public_profile(self):
-        """?native_export=1 (default platform PNG path) must skip public profile.
+    def test_pcp07b_native_export_serves_interactive_card(self):
+        """?native_export=1 must serve the interactive FIFA card without export layer activation.
 
-        The export service builds ?native_export=1 for platform=="default" Playwright renders.
-        Without this guard, Playwright loads the public profile page, finds no .card-wrap,
-        and raises ValueError → 500 → "Export failed".
+        The Playwright PNG service uses ?native_export=1 for the 'default' platform path.
+        effective_platform must remain None (no published_platform inherited) so the FIFA card
+        is rendered in native-export-mode — Playwright then screenshots .card-wrap.
         """
         ctx = _call_route(platform=None, export=False, native_export=True)
-        assert ctx.get("template") != "public/player_card_public.html", (
-            "?native_export=1 must bypass the public profile early return "
-            "so Playwright can screenshot the .card-wrap element"
+        assert ctx.get("template") == "public/player_card_fifa.html", (
+            "?native_export=1 must serve the interactive FIFA card so Playwright can "
+            "screenshot the .card-wrap element"
         )
+        assert ctx.get("native_export_mode") is True
 
-    def test_pcp08_platform_param_bypasses_public_profile(self):
-        """?platform=X must skip public profile and render the card directly."""
+    def test_pcp08_platform_param_uses_export_layer(self):
+        """?platform=X must activate the export layer and route to the matching template."""
         ctx = _call_route(platform="instagram_portrait", export=False)
         assert ctx.get("template") != "public/player_card_public.html"
+        assert ctx.get("platform_id") == "instagram_portrait"
 
-    def test_pcp08b_preview_param_bypasses_public_profile(self):
-        """?preview=fifa (draft-variant param) must skip public profile."""
+    def test_pcp08b_preview_param_serves_variant_card(self):
+        """?preview=fifa (draft-variant param) must serve a card template (not the old wrapper)."""
         from app.api.web_routes.public_player import public_player_card
         from fastapi import Request as _Request
 
@@ -343,7 +350,7 @@ class TestPlayerCardPublicRoute:
                 db=db,
             )
         assert captured.get("template") != "public/player_card_public.html", (
-            "?preview= param must bypass the public profile"
+            "?preview= param must not serve the old iframe wrapper"
         )
 
 
@@ -399,29 +406,36 @@ class TestEditorDefaultPlatformFix:
     def _src(self, editor_src):
         self._html = editor_src
 
-    def test_pcp13_initial_iframe_src_uses_portrait_for_default(self):
-        """When platform is default/unset, initial iframe src must use instagram_portrait&export=1."""
-        assert "platform=instagram_portrait&export=1" in self._html
+    def test_pcp13_initial_iframe_src_uses_native_export_for_default(self):
+        """When platform is default/unset, initial iframe src must use native_export=1
+        so the editor preview shows the interactive FIFA card with 2-decimal values."""
+        assert "native_export=1" in self._html
+        assert "platform=instagram_portrait&export=1" not in self._html, (
+            "Editor must not use portrait export for the default platform preview — "
+            "that renders integers via export_skill_rows"
+        )
 
-    def test_pcp14_card_iframe_src_js_uses_portrait_for_default(self):
-        """_cardIframeSrc() for default must include platform=instagram_portrait&export=1."""
+    def test_pcp14_card_iframe_src_js_uses_native_export_for_default(self):
+        """_cardIframeSrc() for default must use native_export=1 — not instagram_portrait&export=1."""
         assert "_currentPlatform === 'default'" in self._html
         idx     = self._html.index("_currentPlatform === 'default'")
         snippet = self._html[idx: idx + 300]
-        assert "instagram_portrait" in snippet, (
-            "_cardIframeSrc default branch must reference instagram_portrait"
+        assert "native_export=1" in snippet, (
+            "_cardIframeSrc default branch must use native_export=1"
         )
-        assert "export=1" in snippet, (
-            "_cardIframeSrc default branch must pass export=1"
+        assert "instagram_portrait" not in snippet, (
+            "_cardIframeSrc default branch must not reference instagram_portrait"
         )
 
-    def test_pcp15_apply_iframe_size_js_uses_portrait_dims_for_default(self):
-        """_applyIframeSize() for default must look up instagram_portrait canvas dimensions."""
+    def test_pcp15_apply_iframe_size_js_uses_default_dims(self):
+        """_applyIframeSize() for default must look up 'default' canvas (820×800),
+        not instagram_portrait, since the preview now shows the native FIFA card."""
         start = self._html.find("function _applyIframeSize(")
         assert start != -1, "_applyIframeSize function must exist"
         body = self._html[start: start + 600]
-        assert "instagram_portrait" in body, (
-            "_applyIframeSize default branch must reference instagram_portrait canvas size"
+        assert "instagram_portrait" not in body, (
+            "_applyIframeSize must not hard-code instagram_portrait for the default platform — "
+            "use the 'default' key from CANVAS_SIZES (820×800)"
         )
 
     def test_pcp16_export_card_js_maps_default_to_instagram_portrait(self):

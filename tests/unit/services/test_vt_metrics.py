@@ -211,12 +211,13 @@ class TestDecisionsScore:
         assert score == pytest.approx(0.85, abs=0.001)
 
     def test_vm_15_high_wrong_rate_low_score(self):
-        """VM-15: wrong_rate=0.4, hit_rate=0.5 → score penalised below hit_rate."""
+        """VM-15: wrong_rate=0.4, hit_rate=0.5 → score penalised to negative (lower clamp removed)."""
         sig = _signals(hit_rate=0.5, wrong_rate=0.4)
         score = VTSkillScorer.score_decisions(sig)
-        expected = max(0.0, 0.5 - 1.5 * 0.4)
+        # 0.5 - 1.5*0.4 = -0.1; only upper clamp (min(1.0)) applies now
+        expected = min(1.0, 0.5 - 1.5 * 0.4)
         assert score == pytest.approx(expected, abs=0.001)
-        assert score < 0.5
+        assert score < 0
 
     def test_vm_16_moderate_wrong_reasonable_score(self):
         """VM-16: wrong_rate=0.1, hit_rate=0.85 → reasonable decision score."""
@@ -226,19 +227,21 @@ class TestDecisionsScore:
         assert score == pytest.approx(expected, abs=0.001)
         assert 0.5 < score < 0.85
 
-    def test_vm_17_all_wrong_clicks_score_zero(self):
-        """VM-17: wrong_rate=1.0, hit_rate=0.0 → clamped to 0."""
+    def test_vm_17_all_wrong_clicks_score_very_negative(self):
+        """VM-17: wrong_rate=1.0, hit_rate=0.0 → -1.5 (lower clamp removed)."""
         sig = _signals(hit_rate=0.0, wrong_rate=1.0)
         score = VTSkillScorer.score_decisions(sig)
-        assert score == pytest.approx(0.0)
+        # min(1.0, 0 - 1.5*1.0) = -1.5
+        assert score == pytest.approx(-1.5)
+        assert score < 0
 
-    def test_vm_18_wrong_pushes_below_zero_clamped(self):
-        """VM-18: formula result < 0 → clamped to 0 (not negative)."""
-        # hit_rate=0.1, wrong_rate=0.5 → 0.1 - 1.5×0.5 = -0.65 → 0
+    def test_vm_18_wrong_pushes_below_zero_negative(self):
+        """VM-18: formula result < 0 → negative score (lower clamp removed)."""
+        # hit_rate=0.1, wrong_rate=0.5 → 0.1 - 0.75 = -0.65
         sig = _signals(hit_rate=0.1, wrong_rate=0.5)
         score = VTSkillScorer.score_decisions(sig)
-        assert score == pytest.approx(0.0)
-        assert score >= 0.0
+        assert score == pytest.approx(-0.65)
+        assert score < 0
 
 
 # ── TestConcentrationScore (VM-19..23) ────────────────────────────────────────
@@ -250,10 +253,11 @@ class TestConcentrationScore:
         sig = _signals(miss_rate=0.0)
         assert VTSkillScorer.score_concentration(sig) == pytest.approx(1.0)
 
-    def test_vm_20_all_misses_score_zero(self):
-        """VM-20: miss_rate=1.0 → 1−2×1 = -1 → clamped to 0."""
+    def test_vm_20_all_misses_score_negative(self):
+        """VM-20: miss_rate=1.0 → 1−2×1 = -1.0 (lower clamp removed)."""
         sig = _signals(miss_rate=1.0)
-        assert VTSkillScorer.score_concentration(sig) == pytest.approx(0.0)
+        assert VTSkillScorer.score_concentration(sig) == pytest.approx(-1.0)
+        assert VTSkillScorer.score_concentration(sig) < 0
 
     def test_vm_21_quarter_miss_rate(self):
         """VM-21: miss_rate=0.25 → concentration = 1 - 2×0.25 = 0.5."""
@@ -318,11 +322,13 @@ class TestDeltaComputation:
         assert sum(deltas.values()) == pytest.approx(2.0, abs=0.01)
         assert set(deltas.keys()) == set(_SKILL_TARGETS.keys())
 
-    def test_vm_29_zero_score_gives_zero_delta(self):
-        """VM-29: All scores=0.0 → all deltas are 0 → empty dict returned."""
+    def test_vm_29_zero_score_gives_negative_delta(self):
+        """VM-29: All scores=0.0 (below NEUTRAL=0.45) → all deltas negative."""
         scores = {s: 0.0 for s in _SKILL_TARGETS}
         deltas = VTDeltaComputer.compute(scores, _SKILL_TARGETS, base_xp=20, multiplier=1.0)
-        assert deltas == {}
+        assert len(deltas) > 0
+        for skill, delta in deltas.items():
+            assert delta < 0, f"Expected negative delta for {skill}, got {delta}"
 
     def test_vm_30_zero_multiplier_returns_empty(self):
         """VM-30: multiplier=0.0 (4th+ attempt) → {} regardless of scores."""
@@ -348,12 +354,12 @@ class TestDeltaComputation:
         assert "concentration" not in deltas
 
     def test_vm_33_attempt_index_2_multiplier_applied(self):
-        """VM-33: multiplier=0.6 (attempt 2) → deltas at 60% of index-1 values."""
+        """VM-33: multiplier=0.75 (attempt 2) → deltas at 75% of index-1 values."""
         scores = {s: 1.0 for s in _SKILL_TARGETS}
         d1 = VTDeltaComputer.compute(scores, _SKILL_TARGETS, base_xp=20, multiplier=1.0)
-        d2 = VTDeltaComputer.compute(scores, _SKILL_TARGETS, base_xp=20, multiplier=0.6)
+        d2 = VTDeltaComputer.compute(scores, _SKILL_TARGETS, base_xp=20, multiplier=0.75)
         for skill in d1:
-            assert d2[skill] == pytest.approx(d1[skill] * 0.6, abs=0.001)
+            assert d2[skill] == pytest.approx(d1[skill] * 0.75, abs=0.001)
 
 
 # ── TestScoreBlindnessEliminated (VM-34..36) ──────────────────────────────────

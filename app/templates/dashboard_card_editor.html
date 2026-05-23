@@ -969,7 +969,7 @@
                 <div class="ce-preview-wrap">
                     <iframe id="player-card-iframe"
                             width="1080" height="1350"
-                            src="{% if active_card_platform and active_card_platform != 'default' %}/players/{{ user.id }}/card?preview={{ active_card_variant }}&theme={{ active_card_theme }}&platform={{ active_card_platform }}&export=1{% if active_card_platform in animated_capable_platforms %}&animated=1{% endif %}{% else %}/players/{{ user.id }}/card?preview={{ active_card_variant }}&theme={{ active_card_theme }}&platform=instagram_portrait&export=1{% endif %}"
+                            src="{% if active_card_platform and active_card_platform != 'default' %}/players/{{ user.id }}/card?preview={{ active_card_variant }}&theme={{ active_card_theme }}&platform={{ active_card_platform }}&export=1{% if active_card_platform in animated_capable_platforms %}&animated=1{% endif %}{% else %}/players/{{ user.id }}/card?preview={{ active_card_variant }}&theme={{ active_card_theme }}&native_export=1{% endif %}"
                             scrolling="no" title="My Player Card"></iframe>
                 </div>
             </div>
@@ -1034,7 +1034,7 @@ function _cardIframeSrc() {
     // the editor iframe shows the in-progress draft, not the last-published state.
     // animated=1 on export platforms shows entrance animations in the editor preview.
     if (_currentPlatform === 'default') {
-        return `/players/${_cardUserId}/card?preview=${_currentVariant}&theme=${_currentTheme}&platform=instagram_portrait&export=1&_t=${Date.now()}`;
+        return `/players/${_cardUserId}/card?preview=${_currentVariant}&theme=${_currentTheme}&native_export=1&_t=${Date.now()}`;
     }
     return `/players/${_cardUserId}/card?preview=${_currentVariant}&theme=${_currentTheme}&platform=${_currentPlatform}&export=1&animated=1&_t=${Date.now()}`;
 }
@@ -1045,8 +1045,8 @@ function _applyIframeSize() {
     const wrap   = document.querySelector('.ce-preview-wrap');
     if (!iframe || !stage || !wrap) return;
 
-    // Always resolve 'default' to instagram_portrait for canvas size lookup
-    const platformKey = _currentPlatform === 'default' ? 'instagram_portrait' : _currentPlatform;
+    // 'default' maps to 820×800 (native FIFA card) — same key as CANVAS_SIZES["default"]
+    const platformKey = _currentPlatform || 'default';
     const dims = _CANVAS_SIZES[platformKey];
     if (!dims) return;
     const [cw, ch] = dims;

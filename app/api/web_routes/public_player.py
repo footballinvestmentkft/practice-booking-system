@@ -113,11 +113,22 @@ def public_player_card(
         .all()
     )
     _last_part = _all_parts[0][0] if _all_parts else None
-    last_skill_delta = (
+    _tournament_delta = (
         _last_part.skill_rating_delta
         if _last_part and isinstance(_last_part.skill_rating_delta, dict)
         else {}
     )
+
+    # Merge VT/training deltas as fallback where tournament delta is absent.
+    # Tournament delta takes priority; VT delta only fills gaps.
+    # Threshold: abs(delta) < 0.005 → no trend arrow shown.
+    from app.services.segment_reward_service import get_training_skill_deltas_for_user as _get_vt_deltas
+    _vt_deltas = _get_vt_deltas(db, user_id)
+    _VT_ARROW_THRESHOLD = 0.005
+    last_skill_delta: dict = dict(_tournament_delta)
+    for _sk, _vt_d in _vt_deltas.items():
+        if _sk not in last_skill_delta and abs(_vt_d) >= _VT_ARROW_THRESHOLD:
+            last_skill_delta[_sk] = _vt_d
 
     participations_history = []
     for p, s in _all_parts:
@@ -194,44 +205,10 @@ def public_player_card(
     from app.services.card_draft_service import CardDraftService as _CardDraftService
     _card_draft = _CardDraftService.get_player_card_draft(db, user_id=lfa_license.user_id)
 
-    # ── Public profile early return ───────────────────────────────────────────
-    # No ?platform= AND no &export=1 AND no ?preview= AND no ?native_export=1
-    # → human-browseable public link → render read-only profile page.
-    # Playwright always supplies one of: ?platform=…&export=1 OR ?native_export=1.
-    # ?preview= is the editor draft-variant parameter.
-    # All machine callers bypass this early return; only bare human-browseable URLs hit it.
-    if not platform and not export and not preview and not native_export:
-        from app.services.card_constants import CANVAS_SIZES as _CANVAS_SIZES_ALL
-        # Priority: CardDraft.published_platform (written by publish_draft())
-        #         > UserLicense.published_card_platform (legacy pre-4D-1 fallback).
-        # Sentinel guard: "default" has no canvas size and is not a real export platform.
-        _raw_pub_platform = _card_draft.published_platform or lfa_license.published_card_platform
-        _pub_platform = (
-            _raw_pub_platform
-            if (
-                _raw_pub_platform
-                and _raw_pub_platform != "default"
-                and _raw_pub_platform in _CANVAS_SIZES_ALL
-            )
-            else "instagram_portrait"
-        )
-        _pub_dims = _CANVAS_SIZES_ALL[_pub_platform]
-        return templates.TemplateResponse(request, "public/player_card_public.html", {
-            "player_name":       user.name or user.email,
-            "user_id":           user_id,
-            "player": {
-                "position":    position,
-                "nationality": user.nationality,
-            },
-            "overall":           overall,
-            "tier_label":        tier_label,
-            "tier_color":        tier_color,
-            "initials":          initials,
-            "public_platform":   _pub_platform,
-            "public_iframe_src": f"/players/{user_id}/card?platform={_pub_platform}&export=1",
-            "pub_card_w":        _pub_dims[0],
-            "pub_card_h":        _pub_dims[1],
-        })
+    # Bare URL (/players/{id}/card with no params) falls through to the full
+    # interactive FIFA card render below.  The export portrait iframe wrapper
+    # (player_card_public.html) has been retired from this route: the
+    # interactive card already provides a complete, branded, responsive page.
 
     # Teams
     teams_info = []
@@ -259,7 +236,7 @@ def public_player_card(
     # Reads the PUBLISHED snapshot from card_drafts (primary source after 4D-2).
     # Falls back to UserLicense.published_card_* for users who have never visited
     # the editor after the Phase 4D-1 migration (card_drafts row absent).
-    # _card_draft was already fetched above (hoisted for the public profile early return).
+    # _card_draft is fetched above (hoisted before the teams query).
     from app.services.card_theme_service import get_theme as _get_theme, get_all_themes as _get_all_themes
     from app.services.card_variant_service import get_variant as _get_variant
 
@@ -317,11 +294,17 @@ def public_player_card(
 
     # ── Platform preset resolution ────────────────────────────────────────────
     # Precedence: URL ?platform= param > published_card_platform > default.
-    # URL override is used by the editor iframe / Playwright export; human-browseable
-    # "View Public Card" links omit ?platform= so the published state governs.
+    # published_card_platform is only inherited when an explicit export/preview
+    # is requested (?export=1 or ?preview=).  Bare URL and ?native_export=1
+    # resolve to None → "default" preset → export layer stays inactive so the
+    # interactive FIFA card is served (not a Level-C export template).
     from app.services.card_platform_service import get_preset as _get_preset
     _published_platform = _card_draft.published_platform or lfa_license.published_card_platform
-    effective_platform = platform or _published_platform or None
+    effective_platform = platform or (
+        _published_platform
+        if bool(export)
+        else None
+    )
     platform_preset = _get_preset(effective_platform)
 
     # ── Export render layer ──────────────────────────────────────────────────

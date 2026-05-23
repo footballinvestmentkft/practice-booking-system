@@ -360,7 +360,7 @@
                     <div class="s-snap-bar-wrap">
                         <div class="s-snap-bar" style="width:${width}%;background:${color};"></div>
                     </div>
-                    <span class="s-snap-val">${s.current_level.toFixed(1)}</span>
+                    <span class="s-snap-val">${s.current_level.toFixed(2)}</span>
                 </div>`;
             }).join('');
 
@@ -398,9 +398,9 @@
             const delta = last.delta_from_previous;
             let deltaHtml = '';
             if (delta !== null && delta !== undefined) {
-                if      (delta >  0.05) deltaHtml = `<span class="s-delta-pos">+${delta.toFixed(1)} ↑</span>`;
-                else if (delta < -0.05) deltaHtml = `<span class="s-delta-neg">${delta.toFixed(1)} ↓</span>`;
-                else                    deltaHtml = `<span class="s-delta-zero">±0</span>`;
+                if      (delta >  0.005) deltaHtml = `<span class="s-delta-pos">+${delta.toFixed(2)} ↑</span>`;
+                else if (delta < -0.005) deltaHtml = `<span class="s-delta-neg">${delta.toFixed(2)} ↓</span>`;
+                else                     deltaHtml = `<span class="s-delta-zero">±0.00</span>`;
             }
 
             const playersInfo = last.total_players

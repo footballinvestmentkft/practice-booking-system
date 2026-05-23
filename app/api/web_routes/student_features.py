@@ -557,6 +557,40 @@ def _get_tournament_history(db: Session, user_id: int) -> List[dict]:
     return history
 
 
+def _get_vt_event_history(db: Session, user_id: int, limit: int = 20) -> List[dict]:
+    """Return up to `limit` most recent reward-eligible VT attempts for dashboard display.
+
+    Filters: is_valid=True, xp_awarded>0 (equivalent to non-empty skill_deltas).
+    """
+    from ...models.virtual_training import VirtualTrainingAttempt
+
+    rows = (
+        db.query(VirtualTrainingAttempt)
+        .filter(
+            VirtualTrainingAttempt.user_id == user_id,
+            VirtualTrainingAttempt.is_valid == True,
+            VirtualTrainingAttempt.xp_awarded > 0,
+        )
+        .order_by(VirtualTrainingAttempt.started_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+    result = []
+    for a in rows:
+        result.append({
+            "event_type":       "virtual_training",
+            "game_name":        a.game.name if a.game else "Virtual Training",
+            "game_code":        a.game.code if a.game else "color_reaction",
+            "attempt_id":       a.id,
+            "started_at":       a.started_at,
+            "score_normalized": a.score_normalized,
+            "xp_awarded":       a.xp_awarded,
+            "skill_deltas":     dict(a.skill_deltas or {}),
+        })
+    return result
+
+
 # ─── Skill Progression routes ─────────────────────────────────────────────────
 
 @router.get("/skills/data")
@@ -595,6 +629,7 @@ async def skills_page(
         return guard
 
     tournament_history = _get_tournament_history(db, user.id)
+    vt_history = _get_vt_event_history(db, user.id)
     has_lfa_license = (
         db.query(UserLicense)
         .filter(
@@ -613,6 +648,8 @@ async def skills_page(
             "spec_header_class": "hdr-hub",
             **_spec_ctx(user, db),
             "tournament_history": tournament_history,
+            "vt_history": vt_history,
+            "has_any_events": bool(tournament_history or vt_history),
             "has_lfa_license": has_lfa_license,
         },
     )

@@ -39,6 +39,7 @@ from ._ema_engine import calculate_tournament_skill_contribution
 from app.services.segment_reward_service import (
     get_training_skill_deltas_for_user,
     get_training_session_count_for_user,
+    get_vt_attempt_count_per_skill_for_user,
 )
 
 
@@ -119,6 +120,7 @@ def get_skill_profile(db: Session, user_id: int) -> Dict[str, any]:
     # Training contributions (additive on top of EMA; EMA state is not touched)
     training_deltas = get_training_skill_deltas_for_user(db, user_id)
     training_session_count = get_training_session_count_for_user(db, user_id)
+    vt_counts_per_skill = get_vt_attempt_count_per_skill_for_user(db, user_id)
 
     # Build skill profile
     skill_profile = {}
@@ -133,12 +135,13 @@ def get_skill_profile(db: Session, user_id: int) -> Dict[str, any]:
         })
 
         tournament_delta = data["contribution"]
-        training_delta = round(training_deltas.get(skill_key, 0.0), 1)
-        current_level = min(
-            MAX_SKILL_CAP,
-            max(MIN_SKILL_VALUE, data["current_value"] + training_delta),
+        training_delta_raw = training_deltas.get(skill_key, 0.0)
+        training_delta = round(training_delta_raw, 1)
+        current_level = round(
+            min(MAX_SKILL_CAP, max(MIN_SKILL_VALUE, data["current_value"] + training_delta_raw)),
+            2,
         )
-        total_delta = round(tournament_delta + training_delta, 1)
+        total_delta = round(tournament_delta + training_delta_raw, 2)
 
         # Determine tier
         tier, tier_emoji = get_skill_tier(current_level)
@@ -149,6 +152,8 @@ def get_skill_profile(db: Session, user_id: int) -> Dict[str, any]:
             "total_delta": total_delta,
             "tournament_delta": tournament_delta,
             "training_delta": training_delta,
+            "training_delta_precise": round(training_delta_raw, 2),
+            "training_vt_count": vt_counts_per_skill.get(skill_key, 0),
             "assessment_delta": round(assessed_map.get(skill_key, data["baseline"]) - data["baseline"], 1),
             "tournament_count": data["tournament_count"],
             "assessment_count": assessed_count_map.get(skill_key, 0),
@@ -210,6 +215,8 @@ def _collect_vt_timeline_events(db: Session, user_id: int, skill_key: str) -> Li
             "placement_skill": None,
             "skill_weight":    None,
             # VH-01..03: attempt detail fields for Skill History expand row
+            # game_code used by skill_history.html to build the result URL dynamically
+            "game_code":           attempt.game.code if attempt.game else "color_reaction",
             "attempt_id":          attempt.id,
             "score_normalized":    attempt.score_normalized,
             "xp_awarded":          attempt.xp_awarded,

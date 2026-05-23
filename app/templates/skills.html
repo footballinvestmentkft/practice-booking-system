@@ -243,7 +243,47 @@
     <div class="history-card">
         <h2>📈 Skill Events &nbsp;<a href="/skills/history" style="font-size:0.75rem;font-weight:500;color:#667eea;text-decoration:none;">📊 Event History Chart →</a></h2>
 
+        {% if has_any_events %}
+
+        {% if vt_history %}
+        <h3 style="margin:0 0 12px;font-size:0.95rem;color:#555;">⚡ Virtual Training</h3>
+        <table class="history-table" style="margin-bottom:28px;">
+            <thead>
+                <tr>
+                    <th>Game</th>
+                    <th>Date</th>
+                    <th>Score</th>
+                    <th>Skill Deltas</th>
+                    <th>XP</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vt in vt_history %}
+                {% set game_slug = vt.game_code | replace('_', '-') %}
+                <tr>
+                    <td><strong>{{ vt.game_name }}</strong></td>
+                    <td>{{ vt.started_at.strftime('%b %d, %Y') if vt.started_at else '—' }}</td>
+                    <td>{{ (vt.score_normalized | round(0) | int)|string + '%' if vt.score_normalized is not none else '—' }}</td>
+                    <td>
+                        {% for skill_key, delta in vt.skill_deltas.items() %}
+                            {% if delta > 0 %}
+                                <span class="skill-delta-pos" style="margin-right:6px;">+{{ "%.2f"|format(delta) }} {{ skill_key }}</span>
+                            {% elif delta < 0 %}
+                                <span class="skill-delta-neg" style="margin-right:6px;">{{ "%.2f"|format(delta) }} {{ skill_key }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>+{{ vt.xp_awarded }}</td>
+                    <td><a href="/virtual-training/{{ game_slug }}/result/{{ vt.attempt_id }}" style="color:#667eea;font-size:0.85rem;white-space:nowrap;">View details →</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
         {% if tournament_history %}
+        <h3 style="margin:0 0 12px;font-size:0.95rem;color:#555;">🏆 Tournament Events</h3>
         <table class="history-table">
             <thead>
                 <tr>
@@ -280,6 +320,8 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
+
         {% else %}
         <div class="empty-state">
             <div class="empty-icon">📈</div>
@@ -311,21 +353,26 @@
     }
 
     function deltaHtml(delta) {
-        if (delta > 0.05)  return `<span class="skill-delta-pos">+${delta.toFixed(1)} ↑</span>`;
-        if (delta < -0.05) return `<span class="skill-delta-neg">${delta.toFixed(1)} ↓</span>`;
-        return `<span class="skill-delta-zero">±0</span>`;
+        if (delta > 0.005)  return `<span class="skill-delta-pos">+${delta.toFixed(2)} ↑</span>`;
+        if (delta < -0.005) return `<span class="skill-delta-neg">${delta.toFixed(2)} ↓</span>`;
+        return `<span class="skill-delta-zero">±0.00</span>`;
     }
 
     function trainingMetaHtml(s) {
-        const td = s.training_delta || 0;
-        const ts = s.training_sessions || 0;
-        if (ts === 0) return '<span style="color:#bbb;">not trained</span>';
-        const sessLabel = `${ts} session${ts !== 1 ? 's' : ''}`;
-        if (Math.abs(td) < 0.05) return `<span style="color:#95a5a6;">${sessLabel}</span>`;
-        const sign  = td > 0 ? '+' : '';
-        const color = td > 0.05 ? '#27ae60' : '#e74c3c';
-        return `<span style="color:${color};">${sign}${td.toFixed(1)}</span>`
-             + ` <span style="color:#95a5a6;">· ${sessLabel}</span>`;
+        const tdPrecise = s.training_delta_precise != null ? s.training_delta_precise : (s.training_delta || 0);
+        const vtc = s.training_vt_count || 0;
+        const ts  = s.training_sessions || 0;
+        const hasAnyTraining = vtc > 0 || ts > 0 || Math.abs(tdPrecise) >= 0.01;
+        if (!hasAnyTraining) return '<span style="color:#bbb;">not trained</span>';
+        const sessionParts = [];
+        if (ts > 0) sessionParts.push(`${ts} session${ts !== 1 ? 's' : ''}`);
+        if (vtc > 0) sessionParts.push(`${vtc} VT`);
+        const countLabel = sessionParts.join(' · ');
+        if (Math.abs(tdPrecise) < 0.01) return `<span style="color:#95a5a6;">${countLabel}</span>`;
+        const sign  = tdPrecise > 0 ? '+' : '';
+        const color = tdPrecise > 0 ? '#27ae60' : '#e74c3c';
+        return `<span style="color:${color};">${sign}${tdPrecise.toFixed(2)} net</span>`
+             + ` <span style="color:#95a5a6;">· ${countLabel}</span>`;
     }
 
     function renderStats(data) {
@@ -397,7 +444,7 @@
                     ${presetBadge}
                 </div>
                 <div class="skill-level-row">
-                    <span class="skill-level">${s.current_level.toFixed(1)}</span>
+                    <span class="skill-level">${s.current_level.toFixed(2)}</span>
                     ${deltaHtml(s.total_delta || 0)}
                 </div>
                 <div class="skill-bar-wrap">

@@ -412,17 +412,28 @@ class TestPlatformPersistencePlaywright:
             "OG export template (.ex-card) must be present when ?platform=og is set"
         page.close()
 
-    def test_pp07_no_param_renders_public_profile(self):
+    def test_pp07_no_param_renders_interactive_card(self):
         """
-        /players/{uid}/card with no params must render the public profile page —
-        single card iframe (pcp-card-wrap present) with no download buttons or platform picker.
+        /players/{uid}/card with no params must render the interactive FIFA card directly
+        (Phase 2.4F: bare URL no longer serves the export-portrait iframe wrapper).
+        The interactive card has .card-wrap / .tab-bar; no iframe wrapper (.pcp-card-wrap)
+        and no download or platform-picker UI.
         """
         page = self._page({"width": 1200, "height": 900})
         page.goto(f"{_BASE_URL}/players/{_TEST_UID}/card", wait_until="networkidle")
-        has_card_wrap      = page.query_selector(".pcp-card-wrap") is not None
-        has_dl_btn         = page.query_selector(".pcg-dl-btn") is not None
+        has_interactive_card = (
+            page.query_selector(".card-wrap") is not None
+            or page.query_selector(".tab-bar") is not None
+        )
+        has_iframe_wrapper  = page.query_selector(".pcp-card-wrap") is not None
+        has_dl_btn          = page.query_selector(".pcg-dl-btn") is not None
         has_platform_picker = page.query_selector(".pcg-platform-card") is not None
-        assert has_card_wrap, "Public profile must render the single card iframe wrap (pcp-card-wrap)"
-        assert not has_dl_btn, "Public profile must NOT render download buttons (pcg-dl-btn)"
-        assert not has_platform_picker, "Public profile must NOT render platform picker cards (pcg-platform-card)"
+        assert has_interactive_card, (
+            "Bare URL must render the interactive FIFA card (.card-wrap or .tab-bar)"
+        )
+        assert not has_iframe_wrapper, (
+            "Bare URL must NOT render the old iframe wrapper (.pcp-card-wrap)"
+        )
+        assert not has_dl_btn, "Bare URL must NOT render download buttons (pcg-dl-btn)"
+        assert not has_platform_picker, "Bare URL must NOT render platform picker cards"
         page.close()

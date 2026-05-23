@@ -46,7 +46,7 @@
 {% macro card_skill_rows(cat, skills_dict, delta_dict) %}
 {% for skill in cat.skills %}
 {% set sdata = skills_dict.get(skill.key, {}) %}
-{% set sval = sdata.get('current_level', 50) | round(1) %}
+{% set sval = sdata.get('current_level', 50) | round(2) %}
 {% set fill_pct = [sval, 100] | min %}
 {% set sdelta = delta_dict.get(skill.key, 0) %}
 {% if sdelta > 0 %}

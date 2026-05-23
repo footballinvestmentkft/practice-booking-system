@@ -137,9 +137,11 @@
                 {% for attempt in attempts %}
                 <tr>
                     <td>
-                        <a href="/virtual-training/color-reaction/result/{{ attempt.id }}"
+                        {% set _game = games[attempt.game_id] if attempt.game_id in games else none %}
+                        {% set _slug = _game.code | replace('_', '-') if _game else 'color-reaction' %}
+                        <a href="/virtual-training/{{ _slug }}/result/{{ attempt.id }}"
                            style="color: #4f46e5; font-weight: 600; text-decoration: none;">
-                            {{ games[attempt.game_id].name if attempt.game_id in games else "—" }}
+                            {{ _game.name if _game else "—" }}
                         </a>
                     </td>
                     <td>

@@ -4,8 +4,8 @@ Virtual Training Metrics — Phase 2.2 (Performance-based Skill Delta)
 Three-layer pipeline replacing the old XP-based compute_skill_deltas():
 
   VTSignalExtractor  → normalised signals from aggregate payload fields
-  VTSkillScorer      → per-skill score 0–1 from signals
-  VTDeltaComputer    → additive skill deltas from scores
+  VTSkillScorer      → per-skill score 0–1 (or negative) from signals
+  VTDeltaComputer    → additive skill deltas from scores (positive or negative)
 
 Design constraints:
   - Works from aggregate DB fields alone; raw_metrics enriches but is optional
@@ -13,10 +13,27 @@ Design constraints:
   - XP computation stays in VirtualTrainingService (fully decoupled)
   - Immutability: past attempt rows keep their old skill_deltas unchanged
 
+Scoring model (Phase 2.4 — bidirectional deltas):
+  Scorers return a value in (-∞, 1.0].  The lower clamp was intentionally
+  removed so that very weak performance can produce a negative delta.
+
+  Delta model uses a neutral zone:
+    score ≥ NEUTRAL_THRESHOLD (0.45)  → positive delta (performance × multiplier)
+    0 ≤ score < NEUTRAL_THRESHOLD     → small negative delta (below-threshold × NEG_SCALE × multiplier)
+    score < 0                         → negative delta (raw score × NEG_SCALE × multiplier)
+
+  NEG_SCALE = 0.5 keeps the negative direction half as intense as positive.
+  A per-skill per-user per-day cap of −0.5 limits cumulative daily loss.
+
+  reactions and anticipation scorers are always ≥ 0 (component structure),
+  so they never produce negative deltas in practice.
+
+  Invalid attempts and attempts 4+ always produce zero skill deltas.
+
 Calibration note:
   At perfect performance (score=1.0, attempt_index=1) the total delta across
   all skills equals base_xp / _DEFAULT_XP_PER_POINT — identical to the old
-  formula maximum. Poor performance now yields proportionally lower deltas.
+  formula maximum. Poor performance now yields negative deltas per skill.
 """
 from __future__ import annotations
 
@@ -24,6 +41,14 @@ from dataclasses import dataclass
 from typing import Optional
 
 _DEFAULT_XP_PER_POINT: int = 10   # mirrors segment_reward_service constant
+
+# ── Bidirectional delta calibration constants ─────────────────────────────────
+# score below this threshold → negative delta instead of positive
+_NEUTRAL_THRESHOLD: float = 0.45
+# negative delta intensity relative to an equivalent positive (50%)
+_NEG_SCALE:         float = 0.50
+# maximum cumulative negative delta per skill per user per UTC calendar day
+_DAILY_NEG_CAP:     float = -0.50
 
 
 # ── Signal dataclass ──────────────────────────────────────────────────────────
@@ -117,20 +142,20 @@ class VTSkillScorer:
         """
         Decision accuracy under Stroop interference.
         Wrong clicks penalised 1.5× (active error) vs misses (omission).
-          decisions = clamp(hit_rate − 1.5 × wrong_rate, 0, 1)
+          decisions = min(1.0, hit_rate − 1.5 × wrong_rate)
+        Range: (−∞, 1.0] — negative when false alarms dominate hits.
         """
-        score = signals.hit_rate - 1.5 * signals.wrong_rate
-        return max(0.0, min(1.0, score))
+        return min(1.0, signals.hit_rate - 1.5 * signals.wrong_rate)
 
     @staticmethod
     def score_concentration(signals: VTSignals) -> float:
         """
         Sustained-attention proxy.
         Misses penalised 2× because ignoring a stimulus is a full attention lapse.
-          concentration = clamp(1 − 2 × miss_rate, 0, 1)
+          concentration = min(1.0, 1 − 2 × miss_rate)
+        Range: (−∞, 1.0] — negative when miss_rate > 0.5.
         """
-        score = 1.0 - 2.0 * signals.miss_rate
-        return max(0.0, min(1.0, score))
+        return min(1.0, 1.0 - 2.0 * signals.miss_rate)
 
     @staticmethod
     def score_anticipation(signals: VTSignals) -> float:
@@ -153,17 +178,36 @@ class VTSkillScorer:
         return max(0.0, min(1.0, signals.completion_rate * signals.hit_rate))
 
     @staticmethod
+    def score_composure(signals: VTSignals) -> float:
+        """
+        Impulse control — inverse of false alarm rate.
+
+        In Go/No-Go: wrong_click_count = false alarms (clicks on NO-GO stimuli).
+        Commission errors (acting when you should not) are the primary failure
+        mode of a Go/No-Go task, so penalty weight mirrors score_decisions.
+
+          composure = min(1.0, 1.0 − 1.5 × wrong_rate)
+
+        wrong_rate = wrong_click_count / stimuli_count
+        At zero false alarms: composure = 1.0 (perfect impulse control).
+        At wrong_rate = 0.67: composure = 0.0 (neutral boundary).
+        Range: (−∞, 1.0] — negative when wrong_rate > 0.67.
+        """
+        return min(1.0, 1.0 - 1.5 * signals.wrong_rate)
+
+    @staticmethod
     def score_all(signals: VTSignals, skill_targets: dict[str, float]) -> dict[str, float]:
         """
         Score every skill present in skill_targets.
         Known keys dispatch to dedicated scorers.
-        Unknown keys receive the mean of the four known scores (future-proofing).
+        Unknown keys receive the mean of the known scores (future-proofing).
         """
         _scorers = {
             "reactions":     VTSkillScorer.score_reactions,
             "decisions":     VTSkillScorer.score_decisions,
             "concentration": VTSkillScorer.score_concentration,
             "anticipation":  VTSkillScorer.score_anticipation,
+            "composure":     VTSkillScorer.score_composure,
         }
         known = {k: fn(signals) for k, fn in _scorers.items()}
         fallback = sum(known.values()) / len(known) if known else 0.5
@@ -177,27 +221,36 @@ class VTSkillScorer:
 # ── Layer 3: Delta computation ────────────────────────────────────────────────
 
 class VTDeltaComputer:
-    """Convert per-skill scores to additive skill deltas."""
+    """Convert per-skill scores to additive skill deltas (positive or negative)."""
 
     @staticmethod
     def compute(
-        scores:        dict[str, float],
-        skill_targets: dict[str, float],
-        base_xp:       int,
-        multiplier:    float,
+        scores:             dict[str, float],
+        skill_targets:      dict[str, float],
+        base_xp:            int,
+        multiplier:         float,
+        existing_neg_today: dict[str, float] | None = None,
     ) -> dict[str, float]:
         """
         Compute per-skill additive deltas from performance scores.
 
-        Formula:
-            delta(skill) = score(skill)
-                           × (weight(skill) / Σ weights)
-                           × (base_xp / _DEFAULT_XP_PER_POINT)
-                           × multiplier
+        Positive delta formula (score ≥ NEUTRAL_THRESHOLD):
+            delta = score × (weight / Σweights) × base_max × multiplier
+
+        Negative delta formula (score < NEUTRAL_THRESHOLD):
+            score ≥ 0: delta = (score − NEUTRAL_THRESHOLD) × NEG_SCALE × unit × multiplier
+            score < 0: delta = score × NEG_SCALE × unit × multiplier
+        where unit = (weight / Σweights) × base_max
+
+        The multiplier applies to both directions (attempt-index fairness).
+        A per-skill daily cap of _DAILY_NEG_CAP (−0.5) limits cumulative loss.
+
+        existing_neg_today: {skill: sum_of_neg_deltas_already_stored_today}
+          — passed by VirtualTrainingService.record_attempt() before writing.
+          — omit (None) in pure-formula unit tests.
 
         Calibration: at score=1.0, multiplier=1.0, sum_weights=1.0 the total
-        delta equals base_xp / _DEFAULT_XP_PER_POINT — same ceiling as the
-        old XP-only formula, now scaled by actual performance.
+        delta equals base_xp / _DEFAULT_XP_PER_POINT — same ceiling as before.
         """
         if not scores or multiplier <= 0:
             return {}
@@ -206,13 +259,32 @@ class VTDeltaComputer:
         if sum_weights <= 0:
             return {}
 
-        base_max = base_xp / _DEFAULT_XP_PER_POINT
+        base_max        = base_xp / _DEFAULT_XP_PER_POINT
+        existing_neg    = existing_neg_today or {}
 
         result: dict[str, float] = {}
         for skill, score in scores.items():
             weight = skill_targets.get(skill, 0.0)
-            delta  = round(score * (weight / sum_weights) * base_max * multiplier, 4)
-            if delta > 0:
+            unit   = (weight / sum_weights) * base_max  # max per-skill at score=1.0
+
+            if score >= _NEUTRAL_THRESHOLD:
+                delta = round(score * unit * multiplier, 4)
+            elif score >= 0.0:
+                # below neutral, still non-negative raw score → small negative
+                delta = round((score - _NEUTRAL_THRESHOLD) * _NEG_SCALE * unit * multiplier, 4)
+            else:
+                # raw score below zero (e.g. decisions = hit_rate − 1.5×wrong_rate < 0)
+                delta = round(score * _NEG_SCALE * unit * multiplier, 4)
+
+            # Apply daily negative cap (write-time enforcement)
+            if delta < 0:
+                current_neg = existing_neg.get(skill, 0.0)
+                if current_neg <= _DAILY_NEG_CAP:
+                    delta = 0.0  # cap already reached today
+                else:
+                    delta = max(delta, _DAILY_NEG_CAP - current_neg)
+
+            if delta != 0:
                 result[skill] = delta
 
         return result
@@ -221,9 +293,10 @@ class VTDeltaComputer:
 # ── Entry point used by VirtualTrainingService ────────────────────────────────
 
 def compute_vt_skill_deltas(
-    data:       dict,
-    game,              # VirtualTrainingGame ORM object
-    multiplier: float,
+    data:               dict,
+    game,                           # VirtualTrainingGame ORM object
+    multiplier:         float,
+    existing_neg_today: dict[str, float] | None = None,
 ) -> dict[str, float]:
     """
     Full three-layer pipeline: extract → score → compute.
@@ -231,6 +304,10 @@ def compute_vt_skill_deltas(
     Called from VirtualTrainingService.record_attempt() instead of the old
     XP-routed compute_skill_deltas() from segment_reward_service.
     Returns {} on any guard condition (no targets, zero multiplier, etc.).
+
+    existing_neg_today: today's already-stored negative deltas per skill for
+    this user, queried by record_attempt() before calling this function.
+    Pass None (default) in unit tests that test the formula in isolation.
     """
     skill_targets = game.skill_targets or {}
     if not skill_targets or multiplier <= 0:
@@ -241,4 +318,6 @@ def compute_vt_skill_deltas(
 
     signals = VTSignalExtractor.extract(data, phase_config)
     scores  = VTSkillScorer.score_all(signals, skill_targets)
-    return VTDeltaComputer.compute(scores, skill_targets, game.base_xp, multiplier)
+    return VTDeltaComputer.compute(
+        scores, skill_targets, game.base_xp, multiplier, existing_neg_today
+    )

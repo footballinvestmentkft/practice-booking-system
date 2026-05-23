@@ -97,7 +97,7 @@ _GAMES = [
             "Trains impulse control alongside rapid reaction."
         ),
         "game_type": "go_no_go",
-        "is_active": False,
+        "is_active": True,
         "base_xp": 12,
         "max_daily_attempts": 5,
         "skill_targets": {
@@ -107,12 +107,32 @@ _GAMES = [
             "reactions":     0.15,
         },
         "config": {
-            "trial_count":          20,
-            "go_ratio":             0.75,
-            "stimulus_duration_ms": 800,
-            "inter_trial_ms":       1000,
-            "show_in_hub":      True,
-            "icon":             "🛑",
+            # ── runtime gameplay keys ──────────────────────────────────────
+            # 2-phase session: Phase 0 slower, Phase 1 faster ISI
+            # go + no_go per phase must sum to 30 total (21 GO + 9 NO-GO)
+            "phases": [
+                {"go": 10, "no_go": 5, "isi_ms": 900,  "window_ms": 1000, "stimulus_ms": 800},
+                {"go": 11, "no_go": 4, "isi_ms": 650,  "window_ms": 1000, "stimulus_ms": 800},
+            ],
+            "go_cue":    {"color": "#22c55e", "label": "GO"},
+            "no_go_cue": {"color": "#ef4444", "label": "STOP"},
+            # Score formula weights — kept in config for transparency / future tuning
+            # score_raw = 0.40*go_hit_rate + 0.35*(1-no_go_fail_rate)
+            #           + 0.15*speed_factor - 0.10*missed_go_rate
+            "score_weights": {
+                "go_hit_rate":      0.40,
+                "no_go_success":    0.35,
+                "speed_factor":     0.15,
+                "missed_go_penalty": 0.10,
+            },
+            # Skill delta scorers reference (for result page documentation):
+            # decisions    = hit_rate - 1.5 * wrong_rate (GO perf + false alarm penalty)
+            # concentration = 1 - 2 * miss_rate          (missed GO = attention lapse)
+            # composure    = 1 - 1.5 * wrong_rate        (false alarm = impulse failure)
+            # reactions    = 0.65 * speed_score + 0.35 * hit_rate (GO hit speed)
+            # ── display keys ──────────────────────────────────────────────
+            "show_in_hub": True,
+            "icon": "🛑",
             "football_benefit": (
                 "Impulse control, avoiding premature commitments, and executing "
                 "responses only at the right moment under pressure."

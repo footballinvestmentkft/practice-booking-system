@@ -21,7 +21,7 @@ VT2-17   POST submit → 403 when not onboarded
 VT2-18   record_attempt() returns existing row on duplicate idempotency_key
 VT2-19   record_attempt() awards XP for valid attempt
 VT2-20   record_attempt() xp_awarded=0 when is_valid=False
-VT2-21   record_attempt() xp_awarded=0 when multiplier=0 (4th+ attempt)
+VT2-21   record_attempt() xp_awarded=0 when multiplier=0 (6th+ attempt)
 VT2-22   GET /virtual-training/color-reaction/result/{id} → 200 for owner
 VT2-23   GET result → 404-style redirect for wrong user (shows hub with error)
 VT2-24   History page shows last 20 valid attempts only
@@ -328,11 +328,11 @@ class TestRecordAttempt:
         assert result.xp_awarded == 0
         mock_xp.assert_not_called()
 
-    @patch("app.services.virtual_training_service.VirtualTrainingService.calculate_daily_attempt_index", return_value=4)
+    @patch("app.services.virtual_training_service.VirtualTrainingService.calculate_daily_attempt_index", return_value=6)
     @patch("app.services.segment_reward_service._load_conversion_rates", return_value={})
     @patch("app.services.gamification.xp_service.award_xp")
     def test_vt2_21_no_xp_for_4th_attempt(self, mock_xp, mock_rates, mock_idx):
-        """VT2-21: 4th attempt → multiplier=0.0 → xp_awarded=0, award_xp not called."""
+        """VT2-21: 6th attempt → multiplier=0.0 → xp_awarded=0, award_xp not called."""
         db = self._make_db()
         sp = MagicMock()
         db.begin_nested.return_value = sp
@@ -344,7 +344,7 @@ class TestRecordAttempt:
             game=game,
             data={"duration_seconds": 60.0, "stimuli_count": 36, "avg_reaction_ms": 300.0,
                   "started_at": "2026-05-21T10:00:00+00:00"},
-            idempotency_key="vt_cr_u42_4th",
+            idempotency_key="vt_cr_u42_6th",
         )
         assert result.xp_awarded == 0
         mock_xp.assert_not_called()

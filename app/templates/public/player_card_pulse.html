@@ -273,7 +273,7 @@ body { background: var(--card-page-bg); font-family: 'DM Mono', 'SF Mono', 'Fira
 .pls-skill-bar-fill { height: 100%; border-radius: 3px; }
 .pls-skill-val {
     font-size: 0.65rem; font-weight: 800;
-    width: 22px; text-align: right; flex-shrink: 0;
+    width: 34px; text-align: right; flex-shrink: 0;
     font-variant-numeric: tabular-nums; letter-spacing: -0.01em;
 }
 .pls-skill-arrow {
@@ -684,7 +684,7 @@ body.export-mode .pls-skill-val  { font-size: var(--ex-font-skill); }
 
             {% for skill in cat.skills %}
             {% set sdata  = player.skills.get(skill.key, {}) %}
-            {% set sval   = sdata.get('current_level', 50) | round(1) %}
+            {% set sval   = sdata.get('current_level', 50) | round(2) %}
             {% set fill   = [sval, 100] | min %}
             {% set sdelta = last_skill_delta.get(skill.key, 0) %}
             {% if sdelta > 0 %}
