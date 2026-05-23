@@ -205,16 +205,70 @@ _GAMES = [
             "clicking the targets in the same pattern. Sequence length increases each round."
         ),
         "game_type": "memory_span",
-        "is_active": False,
+        "is_active": True,
         "base_xp": 12,
         "max_daily_attempts": 5,
         "skill_targets": {
-            "concentration":    0.35,
+            "concentration":      0.35,
             "tactical_awareness": 0.25,
-            "decisions":        0.25,
-            "composure":        0.15,
+            "decisions":          0.25,
+            "composure":          0.15,
         },
         "config": {
+            # ── runtime gameplay keys ──────────────────────────────────────
+            # 3-phase session: 3+3+3 = 9 rounds, max 45 expected positions
+            # No hand/finger protocol — raw_metrics v=2 (pure memory task)
+            # Score formula:
+            #   hit_rate      = correct_positions / total_expected_positions (45)
+            #   wrong_rate    = wrong_positions / total_expected_positions
+            #   miss_rate     = timed_out_positions / total_expected_positions
+            #   completion    = attempted_positions / total_expected_positions
+            #   speed_factor  = max(0, 1 − avg_first_tap_ms / 13000)
+            #   score_raw     = 0.55×hit_rate + 0.25×completion + 0.20×speed_factor
+            "phases": [
+                {
+                    "phase": 0,
+                    "sequence_length":  3,
+                    "rounds":           3,
+                    "show_ms_per_item": 800,
+                    "isi_ms":           500,
+                    "recall_window_ms": 8000,
+                },
+                {
+                    "phase": 1,
+                    "sequence_length":  5,
+                    "rounds":           3,
+                    "show_ms_per_item": 650,
+                    "isi_ms":           400,
+                    "recall_window_ms": 13000,
+                },
+                {
+                    "phase": 2,
+                    "sequence_length":  7,
+                    "rounds":           3,
+                    "show_ms_per_item": 500,
+                    "isi_ms":           300,
+                    "recall_window_ms": 18000,
+                },
+            ],
+            # 3×4 grid — 12 uniquely coloured tiles
+            "grid_rows":    3,
+            "grid_cols":    4,
+            "tile_colors": [
+                "#ef4444",  # 0  red
+                "#f97316",  # 1  orange
+                "#eab308",  # 2  yellow
+                "#22c55e",  # 3  green
+                "#14b8a6",  # 4  teal
+                "#3b82f6",  # 5  blue
+                "#8b5cf6",  # 6  violet
+                "#ec4899",  # 7  pink
+                "#6b7280",  # 8  grey
+                "#78716c",  # 9  stone
+                "#0ea5e9",  # 10 sky
+                "#84cc16",  # 11 lime
+            ],
+            # ── display keys ──────────────────────────────────────────────
             "show_in_hub":      True,
             "icon":             "🧩",
             "football_benefit": (

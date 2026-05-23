@@ -64138,6 +64138,94 @@
           "virtual-training"
         ]
       }
+    },
+    "/virtual-training/memory-sequence": {
+      "get": {
+        "description": "Memory Sequence game page \u2014 instruction + 3\u00d74 grid recall game loop.",
+        "operationId": "virtual_training_memory_sequence_virtual_training_memory_sequence_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Virtual Training Memory Sequence",
+        "tags": [
+          "web",
+          "virtual-training"
+        ]
+      }
+    },
+    "/virtual-training/memory-sequence/result/{attempt_id}": {
+      "get": {
+        "description": "Result screen for a completed Memory Sequence attempt.",
+        "operationId": "virtual_training_memory_sequence_result_virtual_training_memory_sequence_result__attempt_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "title": "Attempt Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Virtual Training Memory Sequence Result",
+        "tags": [
+          "web",
+          "virtual-training"
+        ]
+      }
+    },
+    "/virtual-training/memory-sequence/submit": {
+      "post": {
+        "description": "Record a Memory Sequence attempt. Returns attempt_id, xp_awarded, is_valid.",
+        "operationId": "virtual_training_memory_sequence_submit_virtual_training_memory_sequence_submit_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Virtual Training Memory Sequence Submit",
+        "tags": [
+          "web",
+          "virtual-training"
+        ]
+      }
     }
   }
 }

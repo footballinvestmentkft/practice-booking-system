@@ -232,6 +232,40 @@ class VTSkillScorer:
         return min(1.0, 1.0 - 1.5 * signals.wrong_rate - 0.3 * signals.late_nogo_rate)
 
     @staticmethod
+    def score_tactical_awareness(signals: VTSignals) -> float:
+        """
+        Visuospatial working memory span (Memory Sequence primary scorer).
+
+        Measures how much of the shown sequence the player correctly recalled,
+        with emphasis on completing longer, harder sequences (Phase 3).
+
+        Aggregate path (always available):
+          tactical_awareness = 0.65 × hit_rate + 0.35 × completion_rate
+
+          hit_rate        = correct_positions / total_expected_positions
+          completion_rate = positions_attempted / total_expected_positions
+
+        Per-phase upgrade (auto-activates when per_phase[2] present):
+          Phase 3 (sequence_length=7) carries more signal about span capacity.
+            score = 0.4 × completion_rate × hit_rate  +  0.6 × phase_3_accuracy
+
+          Reads 'correct_positions'/'total_positions' (Memory Sequence format);
+          falls back to 'correct'/'stimuli' for CR/NCC legacy compatibility.
+
+        Range: [0, 1] — always non-negative. Wrong positions already reduce
+        hit_rate; no additional wrong-rate penalty here.
+        """
+        if signals.per_phase and len(signals.per_phase) >= 3:
+            p3 = signals.per_phase[2]
+            p3_total = p3.get("total_positions", 0) or p3.get("stimuli", 0)
+            if p3_total > 0:
+                p3_correct = p3.get("correct_positions", 0) or p3.get("correct", 0)
+                p3_acc = max(0.0, min(1.0, p3_correct / p3_total))
+                score = 0.4 * signals.completion_rate * signals.hit_rate + 0.6 * p3_acc
+                return max(0.0, min(1.0, score))
+        return max(0.0, min(1.0, 0.65 * signals.hit_rate + 0.35 * signals.completion_rate))
+
+    @staticmethod
     def score_all(signals: VTSignals, skill_targets: dict[str, float]) -> dict[str, float]:
         """
         Score every skill present in skill_targets.
@@ -239,11 +273,12 @@ class VTSkillScorer:
         Unknown keys receive the mean of the known scores (future-proofing).
         """
         _scorers = {
-            "reactions":     VTSkillScorer.score_reactions,
-            "decisions":     VTSkillScorer.score_decisions,
-            "concentration": VTSkillScorer.score_concentration,
-            "anticipation":  VTSkillScorer.score_anticipation,
-            "composure":     VTSkillScorer.score_composure,
+            "reactions":          VTSkillScorer.score_reactions,
+            "decisions":          VTSkillScorer.score_decisions,
+            "concentration":      VTSkillScorer.score_concentration,
+            "anticipation":       VTSkillScorer.score_anticipation,
+            "composure":          VTSkillScorer.score_composure,
+            "tactical_awareness": VTSkillScorer.score_tactical_awareness,
         }
         known = {k: fn(signals) for k, fn in _scorers.items()}
         fallback = sum(known.values()) / len(known) if known else 0.5

@@ -1,0 +1,589 @@
+{% extends "student_base.html" %}
+
+{% block title %}Memory Sequence - LFA{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '🧠' %}
+{% set _page_name = 'Memory Sequence' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+.ms-container { max-width: 560px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+.ms-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--app-card); border-radius: 10px; padding: 0.65rem 1rem;
+    margin-bottom: 1.25rem; font-size: 0.85rem; color: var(--app-text-muted);
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+.ms-meta span { font-weight: 600; color: var(--app-text); }
+
+.ms-instruction {
+    background: var(--app-card); border-radius: 14px;
+    padding: 1.5rem 1.5rem 1.75rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    text-align: center; margin-bottom: 1.25rem;
+}
+.ms-instruction h2 { font-size: 1.3rem; font-weight: 700; margin: 0 0 0.6rem; color: var(--app-text); }
+.ms-instruction p  { font-size: 0.9rem; color: var(--app-text-muted); line-height: 1.6; margin: 0 0 1rem; }
+
+.ms-phase-pills { display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.ms-phase-pill {
+    font-size: 0.72rem; font-weight: 600;
+    background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;
+    padding: 0.2rem 0.65rem; border-radius: 20px;
+}
+.ms-skill-chips { display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+.ms-skill-chip {
+    font-size: 0.75rem; font-weight: 600;
+    background: #dbeafe; color: #1e40af;
+    padding: 0.2rem 0.65rem; border-radius: 20px;
+}
+
+.ms-btn-start {
+    background: #4f46e5; color: #fff; font-size: 1rem; font-weight: 700;
+    padding: 0.8rem 2.5rem; border-radius: 10px; border: none;
+    cursor: pointer; transition: background 0.15s;
+}
+.ms-btn-start:hover { background: #4338ca; }
+.ms-btn-start:disabled { background: #9ca3af; cursor: not-allowed; }
+
+/* Arena */
+.ms-arena { display: none; }
+.ms-arena.active { display: block; }
+
+.ms-hud {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 0.5rem; font-size: 0.82rem; color: var(--app-text-muted); font-weight: 600;
+}
+.ms-progress-wrap { background: #e5e7eb; border-radius: 6px; height: 6px; margin-bottom: 0.85rem; overflow: hidden; }
+.ms-progress-bar  { height: 100%; background: #4f46e5; border-radius: 6px; transition: width 0.3s ease; width: 0%; }
+
+.ms-phase-label {
+    text-align: center; font-size: 0.75rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--app-text-muted); margin-bottom: 0.5rem;
+}
+.ms-status-bar {
+    text-align: center; min-height: 2rem; margin-bottom: 0.6rem;
+    font-size: 1.05rem; font-weight: 800; letter-spacing: 0.02em;
+}
+.ms-tap-row {
+    text-align: center; font-size: 0.82rem; font-weight: 600;
+    color: var(--app-text-muted); min-height: 1.2rem; margin-bottom: 0.6rem;
+}
+
+/* Tile grid */
+.ms-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem; margin-bottom: 0.85rem;
+}
+.ms-tile {
+    aspect-ratio: 1 / 1; border-radius: 10px;
+    cursor: not-allowed; opacity: 0.22;
+    transition: opacity 0.12s, transform 0.1s, box-shadow 0.12s;
+    user-select: none; -webkit-user-select: none;
+}
+.ms-tile.clickable { cursor: pointer; opacity: 0.42; }
+.ms-tile.clickable:hover { opacity: 0.65; }
+.ms-tile.clickable:active { transform: scale(0.93); }
+.ms-tile.glow {
+    opacity: 1;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.6), 0 0 20px 6px rgba(255,255,255,0.35);
+    transform: scale(1.07);
+}
+.ms-tile.correct-tap {
+    opacity: 1;
+    box-shadow: 0 0 0 3px #22c55e, 0 0 14px 2px rgba(34,197,94,0.45);
+    transform: scale(1.05);
+}
+.ms-tile.wrong-tap {
+    opacity: 1;
+    box-shadow: 0 0 0 3px #ef4444, 0 0 12px 2px rgba(239,68,68,0.4);
+}
+
+/* Round result banner */
+.ms-round-banner {
+    text-align: center; border-radius: 12px; padding: 0.75rem 1rem;
+    font-size: 0.9rem; font-weight: 700; margin-bottom: 0.85rem;
+    display: none;
+}
+.ms-round-banner.show    { display: block; }
+.ms-round-banner.perfect { background: #dcfce7; color: #166534; }
+.ms-round-banner.partial  { background: #fef3c7; color: #92400e; }
+.ms-round-banner.timeout  { background: #f1f5f9; color: #475569; }
+
+/* Score counters */
+.ms-counters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.85rem; }
+.ms-counter { background: var(--app-card); border-radius: 10px; padding: 0.6rem 0.5rem; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+.ms-counter-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--app-text-muted); margin-bottom: 0.2rem; }
+.ms-counter-value { font-size: 1.1rem; font-weight: 800; color: var(--app-text); }
+.ms-counter-value.c-green { color: #16a34a; }
+.ms-counter-value.c-red   { color: #dc2626; }
+.ms-counter-value.c-amber { color: #d97706; }
+
+/* Submitting overlay */
+.ms-submitting { display: none; text-align: center; padding: 3rem 1rem; background: var(--app-card); border-radius: 16px; box-shadow: 0 2px 14px rgba(0,0,0,0.09); color: var(--app-text-muted); font-size: 0.95rem; font-weight: 600; }
+.ms-submitting.active { display: block; }
+.ms-submitting p { margin: 0.5rem 0 0; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="ms-container">
+
+    <div class="ms-meta">
+        <div>Today: <span>{{ attempts_today }} / {{ max_daily_attempts }}</span> attempts</div>
+        <div>Remaining: <span>{{ attempts_remaining }}</span></div>
+    </div>
+
+    {% if attempts_remaining == 0 %}
+    <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:12px;padding:1rem 1.25rem;text-align:center;margin-bottom:1.25rem;color:#92400e;font-weight:600;font-size:0.9rem;">
+        Daily limit reached. Come back tomorrow to earn XP again.
+    </div>
+    {% endif %}
+
+    <div class="ms-instruction" id="msInstruction">
+        <h2>🧠 Memory Sequence</h2>
+        <p>
+            <strong>Watch</strong> the tiles light up in order, then <strong>tap them back</strong> in the same sequence.<br>
+            Sequences get longer as you progress through three phases.
+        </p>
+        <div class="ms-phase-pills">
+            {% for phase in game.config.phases %}
+            <span class="ms-phase-pill">Phase {{ loop.index }}: {{ phase.sequence_length }} tiles × {{ phase.rounds }} rounds</span>
+            {% endfor %}
+        </div>
+        <div class="ms-skill-chips">
+            {% for skill in game.skill_targets %}
+            <span class="ms-skill-chip">{{ skill }}</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div style="text-align:center;margin-bottom:1.5rem;" id="msStartWrap">
+        <button class="ms-btn-start" id="msBtnStart"
+            {% if attempts_remaining == 0 %}disabled{% endif %}>
+            ▶ Start Game
+        </button>
+    </div>
+
+    <div class="ms-arena" id="msArena">
+        <div class="ms-hud">
+            <span id="msRoundHud">Round 1 / 9</span>
+            <span id="msTimerHud">0s</span>
+        </div>
+        <div class="ms-progress-wrap">
+            <div class="ms-progress-bar" id="msProgressBar"></div>
+        </div>
+        <div class="ms-phase-label" id="msPhaseLabel">Phase 1 · 3 tiles</div>
+        <div class="ms-status-bar" id="msStatusBar">&nbsp;</div>
+        <div class="ms-tap-row" id="msTapRow">&nbsp;</div>
+
+        <div class="ms-grid" id="msGrid">
+            {% for i in range(12) %}
+            <div class="ms-tile" id="msTile{{ i }}"></div>
+            {% endfor %}
+        </div>
+
+        <div class="ms-round-banner" id="msRoundBanner"></div>
+
+        <div class="ms-counters">
+            <div class="ms-counter">
+                <div class="ms-counter-label">Correct</div>
+                <div class="ms-counter-value c-green" id="msCorrect">0</div>
+            </div>
+            <div class="ms-counter">
+                <div class="ms-counter-label">Wrong</div>
+                <div class="ms-counter-value c-red" id="msWrong">0</div>
+            </div>
+            <div class="ms-counter">
+                <div class="ms-counter-label">Timeout</div>
+                <div class="ms-counter-value c-amber" id="msTimeoutCt">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ms-submitting" id="msSubmitting">
+        <div style="font-size:2rem;margin-bottom:0.5rem;">⏳</div>
+        <p>Saving your result…</p>
+    </div>
+
+</div>
+<script>
+(function () {
+    var PHASES      = {{ game.config.phases | tojson }};
+    var TILE_COLORS = {{ game.config.tile_colors | tojson }};
+    var CSRF_TOKEN  = "{{ request.cookies.get('csrf_token', '') }}";
+    var SUBMIT_URL  = "/virtual-training/memory-sequence/submit";
+
+    // Build flat round list (9 rounds: 3 phases × 3 rounds each)
+    var ROUNDS = [];
+    for (var pi = 0; pi < PHASES.length; pi++) {
+        var ph = PHASES[pi];
+        for (var ri = 0; ri < ph.rounds; ri++) {
+            ROUNDS.push({
+                phase:            pi,
+                round_in_phase:   ri,
+                sequence_length:  ph.sequence_length,
+                show_ms_per_item: ph.show_ms_per_item,
+                isi_ms:           ph.isi_ms,
+                recall_window_ms: ph.recall_window_ms
+            });
+        }
+    }
+    var TOTAL_ROUNDS = ROUNDS.length;
+
+    // DOM refs
+    var elInstruction = document.getElementById("msInstruction");
+    var elStartWrap   = document.getElementById("msStartWrap");
+    var elArena       = document.getElementById("msArena");
+    var elSubmitting  = document.getElementById("msSubmitting");
+    var elRoundHud    = document.getElementById("msRoundHud");
+    var elTimerHud    = document.getElementById("msTimerHud");
+    var elProgressBar = document.getElementById("msProgressBar");
+    var elPhaseLabel  = document.getElementById("msPhaseLabel");
+    var elStatusBar   = document.getElementById("msStatusBar");
+    var elTapRow      = document.getElementById("msTapRow");
+    var elRoundBanner = document.getElementById("msRoundBanner");
+    var elCorrect     = document.getElementById("msCorrect");
+    var elWrong       = document.getElementById("msWrong");
+    var elTimeoutCt   = document.getElementById("msTimeoutCt");
+
+    // Tiles — apply colors and attach click listeners
+    var tiles = [];
+    for (var ti = 0; ti < 12; ti++) {
+        var el = document.getElementById("msTile" + ti);
+        el.style.background = TILE_COLORS[ti] || "#6b7280";
+        tiles.push(el);
+    }
+    for (var ci = 0; ci < 12; ci++) {
+        (function (idx) {
+            tiles[idx].addEventListener("click", function () { tileTap(idx); });
+        })(ci);
+    }
+
+    document.getElementById("msBtnStart").addEventListener("click", startGame);
+
+    // Game state
+    var started       = false;
+    var startedAt     = null;
+    var roundIdx      = 0;
+    var currentSeq    = [];
+    var tapCount      = 0;
+    var recallActive  = false;
+    var recallTimer   = null;
+    var recallStartTs = null;
+    var firstTapMs    = null;
+
+    // Per-round counters (reset each round)
+    var roundCorrect = 0;
+    var roundWrong   = 0;
+    var roundTimeout = 0;
+
+    // Game-wide aggregates
+    var totalPositions   = 0;
+    var correctPositions = 0;
+    var wrongPositions   = 0;
+    var timeoutPositions = 0;
+    var completedRounds  = 0;
+    var firstTapTimes    = [];
+    var roundLog         = [];
+
+    // Elapsed timer
+    var elapsedSeconds  = 0;
+    var elapsedInterval = null;
+
+    // ── Start game ──────────────────────────────────────────────────────────
+    function startGame() {
+        if (started) { return; }
+        started   = true;
+        startedAt = new Date().toISOString();
+
+        elInstruction.style.display = "none";
+        elStartWrap.style.display   = "none";
+        elArena.classList.add("active");
+
+        elapsedInterval = setInterval(function () {
+            elapsedSeconds++;
+            elTimerHud.textContent = elapsedSeconds + "s";
+        }, 1000);
+
+        startRound();
+    }
+
+    // ── Start round ─────────────────────────────────────────────────────────
+    function startRound() {
+        if (roundIdx >= TOTAL_ROUNDS) { finishGame(); return; }
+
+        var round = ROUNDS[roundIdx];
+        roundCorrect = 0; roundWrong = 0; roundTimeout = 0;
+        tapCount = 0; recallActive = false; firstTapMs = null;
+        currentSeq = sampleIndices(12, round.sequence_length);
+
+        updateHUD();
+        hideBanner();
+        setTilesClickable(false);
+        resetTileClasses();
+        setStatus("👀 Watch!", "#1d4ed8");
+        elTapRow.textContent = "";
+
+        setTimeout(function () { showPhase(round, 0); }, 700);
+    }
+
+    // ── Show phase: highlight tiles one by one ───────────────────────────────
+    function showPhase(round, pos) {
+        if (pos >= currentSeq.length) {
+            setStatus("Recall!", "#d97706");
+            setTimeout(function () { startRecall(round); }, round.isi_ms);
+            return;
+        }
+        var tileIdx = currentSeq[pos];
+        tiles[tileIdx].classList.add("glow");
+        setTimeout(function () {
+            tiles[tileIdx].classList.remove("glow");
+            setTimeout(function () { showPhase(round, pos + 1); }, round.isi_ms);
+        }, round.show_ms_per_item);
+    }
+
+    // ── Recall phase ────────────────────────────────────────────────────────
+    function startRecall(round) {
+        recallActive  = true;
+        recallStartTs = Date.now();
+        setTilesClickable(true);
+        elTapRow.textContent = "Tap: 0 / " + round.sequence_length;
+
+        recallTimer = setTimeout(function () {
+            if (!recallActive) { return; }
+            endRound(round, true);
+        }, round.recall_window_ms);
+    }
+
+    // ── Tile tap ────────────────────────────────────────────────────────────
+    function tileTap(idx) {
+        if (!recallActive) { return; }
+        var round = ROUNDS[roundIdx];
+
+        if (firstTapMs === null) { firstTapMs = Date.now() - recallStartTs; }
+
+        var expected = currentSeq[tapCount];
+        var tile     = tiles[idx];
+
+        if (idx === expected) {
+            roundCorrect++;
+            correctPositions++;
+            tile.classList.add("correct-tap");
+            setTimeout(function () { tile.classList.remove("correct-tap"); }, 280);
+            setStatus("✓", "#16a34a");
+        } else {
+            roundWrong++;
+            wrongPositions++;
+            tile.classList.add("wrong-tap");
+            setTimeout(function () { tile.classList.remove("wrong-tap"); }, 280);
+            setStatus("✗", "#dc2626");
+        }
+
+        totalPositions++;
+        tapCount++;
+        elTapRow.textContent = "Tap: " + tapCount + " / " + round.sequence_length;
+        updateCounters();
+
+        if (tapCount >= round.sequence_length) { endRound(round, false); }
+    }
+
+    // ── End round ───────────────────────────────────────────────────────────
+    function endRound(round, timedOut) {
+        if (!recallActive) { return; }
+        recallActive = false;
+        clearTimeout(recallTimer);
+        setTilesClickable(false);
+        resetTileClasses();
+
+        if (timedOut) {
+            roundTimeout      = round.sequence_length - tapCount;
+            timeoutPositions += roundTimeout;
+            totalPositions   += roundTimeout;
+        }
+
+        if (firstTapMs !== null) { firstTapTimes.push(firstTapMs); }
+        if (roundCorrect === round.sequence_length) { completedRounds++; }
+
+        updateCounters();
+
+        var outcome, bannerText, bannerCls;
+        if (timedOut && tapCount === 0) {
+            outcome = "timeout"; bannerText = "Time's up! ⏱"; bannerCls = "timeout";
+        } else if (roundCorrect === round.sequence_length) {
+            outcome = "correct";
+            bannerText = "Perfect! " + roundCorrect + "/" + round.sequence_length + " ✓";
+            bannerCls  = "perfect";
+        } else if (timedOut) {
+            outcome = "timeout";
+            bannerText = roundCorrect + "/" + round.sequence_length + " correct — Time's up! ⏱";
+            bannerCls  = "timeout";
+        } else {
+            outcome = roundCorrect > 0 ? "partial" : "wrong";
+            bannerText = roundCorrect + "/" + round.sequence_length + " correct";
+            bannerCls  = roundCorrect > 0 ? "partial" : "timeout";
+        }
+        showBanner(bannerText, bannerCls);
+
+        roundLog.push({
+            round:             roundIdx,
+            phase:             round.phase,
+            sequence_length:   round.sequence_length,
+            sequence_positions: currentSeq.slice(),
+            correct_positions: roundCorrect,
+            wrong_positions:   roundWrong,
+            timeout_positions: roundTimeout,
+            outcome:           outcome,
+            first_tap_ms:      firstTapMs
+        });
+
+        roundIdx++;
+        if (roundIdx >= TOTAL_ROUNDS) {
+            setTimeout(function () { hideBanner(); finishGame(); }, 1400);
+        } else {
+            setTimeout(function () { hideBanner(); startRound(); }, 1400);
+        }
+    }
+
+    // ── Finish + submit ──────────────────────────────────────────────────────
+    function finishGame() {
+        clearInterval(elapsedInterval);
+        elArena.classList.remove("active");
+        elSubmitting.classList.add("active");
+
+        var durationSeconds = startedAt
+            ? Math.round((Date.now() - new Date(startedAt).getTime()) / 100) / 10
+            : null;
+
+        var hitRate        = totalPositions > 0 ? correctPositions / totalPositions : 0;
+        var completionRate = TOTAL_ROUNDS   > 0 ? completedRounds  / TOTAL_ROUNDS   : 0;
+        var avgFirstTapMs  = firstTapTimes.length > 0
+            ? Math.round(firstTapTimes.reduce(function (a, b) { return a + b; }, 0) / firstTapTimes.length)
+            : null;
+        var minFirstTapMs  = firstTapTimes.length > 0 ? Math.min.apply(null, firstTapTimes) : null;
+        var speedFactor    = avgFirstTapMs !== null ? Math.max(0, 1 - avgFirstTapMs / 13000) : 0;
+        // score: 0.55×hit_rate + 0.25×completion_rate + 0.20×speed_factor
+        var scoreRaw  = 0.55 * hitRate + 0.25 * completionRate + 0.20 * speedFactor;
+        var scoreNorm = Math.min(100, Math.max(0, Math.round(100 * scoreRaw)));
+
+        var perPhase = PHASES.map(function (ph, pi) {
+            var pRounds  = roundLog.filter(function (r) { return r.phase === pi; });
+            var pTotal   = pRounds.reduce(function (s, r) { return s + r.sequence_length; }, 0);
+            var pCorrect = pRounds.reduce(function (s, r) { return s + r.correct_positions; }, 0);
+            var pWrong   = pRounds.reduce(function (s, r) { return s + r.wrong_positions; }, 0);
+            var pTimeout = pRounds.reduce(function (s, r) { return s + r.timeout_positions; }, 0);
+            var tapArr   = pRounds.map(function (r) { return r.first_tap_ms; }).filter(function (v) { return v !== null; });
+            var avgTap   = tapArr.length > 0
+                ? Math.round(tapArr.reduce(function (a, b) { return a + b; }, 0) / tapArr.length)
+                : null;
+            return {
+                phase:             pi,
+                sequence_length:   ph.sequence_length,
+                rounds:            pRounds.length,
+                total_positions:   pTotal,
+                correct_positions: pCorrect,
+                wrong_positions:   pWrong,
+                timeout_positions: pTimeout,
+                avg_first_tap_ms:  avgTap
+            };
+        });
+
+        var timeoutRounds = roundLog.filter(function (r) { return r.timeout_positions > 0; }).length;
+
+        var rawMetrics = {
+            v:           2,
+            per_round:   roundLog,
+            per_phase:   perPhase,
+            late_summary: { timeout_count: timeoutPositions, timeout_rounds: timeoutRounds }
+        };
+
+        var payload = {
+            started_at:        startedAt,
+            duration_seconds:  durationSeconds,
+            stimuli_count:     totalPositions,
+            correct_count:     correctPositions,
+            wrong_click_count: wrongPositions,
+            error_count:       timeoutPositions,
+            avg_reaction_ms:   avgFirstTapMs,
+            min_reaction_ms:   minFirstTapMs,
+            score_raw:         scoreRaw,
+            score_normalized:  scoreNorm,
+            raw_metrics:       rawMetrics
+        };
+
+        fetch(SUBMIT_URL, {
+            method:  "POST",
+            headers: { "Content-Type": "application/json", "X-CSRF-Token": CSRF_TOKEN },
+            body:    JSON.stringify(payload)
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.attempt_id) {
+                window.location.href = "/virtual-training/memory-sequence/result/" + data.attempt_id;
+            } else {
+                elSubmitting.innerHTML = "<p>⚠️ Could not save attempt. <a href='/virtual-training'>Back to hub</a></p>";
+            }
+        })
+        .catch(function () {
+            elSubmitting.innerHTML = "<p>⚠️ Network error. <a href='/virtual-training'>Back to hub</a></p>";
+        });
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────────────────
+    function sampleIndices(max, n) {
+        var pool = [];
+        for (var i = 0; i < max; i++) { pool.push(i); }
+        for (var j = pool.length - 1; j > 0; j--) {
+            var k = Math.floor(Math.random() * (j + 1));
+            var tmp = pool[j]; pool[j] = pool[k]; pool[k] = tmp;
+        }
+        return pool.slice(0, n);
+    }
+
+    function setTilesClickable(on) {
+        for (var i = 0; i < 12; i++) {
+            if (on) { tiles[i].classList.add("clickable"); }
+            else     { tiles[i].classList.remove("clickable"); }
+        }
+    }
+
+    function resetTileClasses() {
+        for (var i = 0; i < 12; i++) {
+            tiles[i].classList.remove("glow", "correct-tap", "wrong-tap");
+        }
+    }
+
+    function setStatus(text, color) {
+        elStatusBar.textContent  = text;
+        elStatusBar.style.color  = color || "";
+    }
+
+    function showBanner(text, cls) {
+        elRoundBanner.textContent = text;
+        elRoundBanner.className   = "ms-round-banner show " + cls;
+    }
+    function hideBanner() { elRoundBanner.className = "ms-round-banner"; }
+
+    function updateHUD() {
+        elRoundHud.textContent    = "Round " + (roundIdx + 1) + " / " + TOTAL_ROUNDS;
+        elProgressBar.style.width = ((roundIdx / TOTAL_ROUNDS) * 100) + "%";
+        if (roundIdx < TOTAL_ROUNDS) {
+            var r = ROUNDS[roundIdx];
+            elPhaseLabel.textContent = "Phase " + (r.phase + 1) + " · " + r.sequence_length + " tiles";
+        }
+    }
+
+    function updateCounters() {
+        elCorrect.textContent   = correctPositions;
+        elWrong.textContent     = wrongPositions;
+        elTimeoutCt.textContent = timeoutPositions;
+    }
+})();
+</script>
+{% endblock %}

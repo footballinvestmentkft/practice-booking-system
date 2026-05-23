@@ -543,3 +543,229 @@ async def virtual_training_history(
             "games": games,
         },
     )
+
+
+# ── Memory Sequence game page ─────────────────────────────────────────────────
+
+@router.get("/virtual-training/memory-sequence", response_class=HTMLResponse)
+async def virtual_training_memory_sequence(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Memory Sequence game page — instruction + 3×4 grid recall game loop."""
+    guard = require_student_onboarding(user)
+    if guard:
+        return guard
+
+    game = VirtualTrainingService.get_game(db, "memory_sequence")
+    if game is None or not game.is_active:
+        all_games = VirtualTrainingService.get_hub_games(db)
+        return templates.TemplateResponse(
+            "virtual_training_hub.html",
+            {
+                "request": request,
+                "user": user,
+                **_spec_ctx(user, db),
+                "all_games": all_games,
+                "error": "Memory Sequence is not available at this time.",
+            },
+        )
+
+    today_start = datetime.combine(
+        datetime.now(timezone.utc).date(),
+        datetime.min.time(),
+    ).replace(tzinfo=timezone.utc)
+    attempts_today = (
+        db.query(VirtualTrainingAttempt)
+        .filter(
+            VirtualTrainingAttempt.user_id == user.id,
+            VirtualTrainingAttempt.game_id == game.id,
+            VirtualTrainingAttempt.started_at >= today_start,
+            VirtualTrainingAttempt.is_valid == True,  # noqa: E712
+        )
+        .count()
+    )
+
+    return templates.TemplateResponse(
+        "virtual_training_memory_sequence.html",
+        {
+            "request": request,
+            "user": user,
+            **_spec_ctx(user, db),
+            "game": game,
+            "attempts_today": attempts_today,
+            "max_daily_attempts": game.max_daily_attempts,
+            "attempts_remaining": max(0, game.max_daily_attempts - attempts_today),
+        },
+    )
+
+
+# ── Memory Sequence submit (JSON API) ─────────────────────────────────────────
+
+@router.post("/virtual-training/memory-sequence/submit")
+async def virtual_training_memory_sequence_submit(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Record a Memory Sequence attempt. Returns attempt_id, xp_awarded, is_valid."""
+    guard = require_student_onboarding(user)
+    if guard:
+        return JSONResponse({"error": "onboarding required"}, status_code=403)
+
+    game = VirtualTrainingService.get_game(db, "memory_sequence")
+    if game is None or not game.is_active:
+        return JSONResponse({"error": "game not available"}, status_code=404)
+
+    body = await request.json()
+
+    today_start = datetime.combine(
+        datetime.now(timezone.utc).date(),
+        datetime.min.time(),
+    ).replace(tzinfo=timezone.utc)
+    valid_today = (
+        db.query(VirtualTrainingAttempt)
+        .filter(
+            VirtualTrainingAttempt.user_id == user.id,
+            VirtualTrainingAttempt.game_id == game.id,
+            VirtualTrainingAttempt.started_at >= today_start,
+            VirtualTrainingAttempt.is_valid == True,  # noqa: E712
+        )
+        .count()
+    )
+    if valid_today >= game.max_daily_attempts:
+        return JSONResponse(
+            {"error": "daily_cap", "message": "Daily attempt limit reached for this game."},
+            status_code=429,
+        )
+
+    started_at_raw = body.get("started_at", "")
+    idem_key = f"vt_ms_u{user.id}_{started_at_raw}"
+
+    attempt = VirtualTrainingService.record_attempt(
+        db=db,
+        user_id=user.id,
+        game=game,
+        data=body,
+        idempotency_key=idem_key,
+    )
+
+    db.commit()
+
+    return JSONResponse({
+        "attempt_id": attempt.id,
+        "is_valid": attempt.is_valid,
+        "invalid_reason": attempt.invalid_reason,
+        "xp_awarded": attempt.xp_awarded,
+        "skill_deltas": attempt.skill_deltas,
+        "attempt_index_today": attempt.attempt_index_today,
+        "score_normalized": attempt.score_normalized,
+    })
+
+
+# ── Memory Sequence result page ───────────────────────────────────────────────
+
+@router.get("/virtual-training/memory-sequence/result/{attempt_id}",
+            response_class=HTMLResponse)
+async def virtual_training_memory_sequence_result(
+    attempt_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Result screen for a completed Memory Sequence attempt."""
+    guard = require_student_onboarding(user)
+    if guard:
+        return guard
+
+    attempt = (
+        db.query(VirtualTrainingAttempt)
+        .filter(
+            VirtualTrainingAttempt.id == attempt_id,
+            VirtualTrainingAttempt.user_id == user.id,
+        )
+        .first()
+    )
+    if attempt is None:
+        all_games = VirtualTrainingService.get_hub_games(db)
+        return templates.TemplateResponse(
+            "virtual_training_hub.html",
+            {
+                "request": request,
+                "user": user,
+                **_spec_ctx(user, db),
+                "all_games": all_games,
+                "error": "Attempt not found.",
+            },
+        )
+
+    game = db.query(VirtualTrainingGame).filter(
+        VirtualTrainingGame.id == attempt.game_id
+    ).first()
+
+    # Skill delta breakdown — recompute per-skill scores from stored fields
+    skill_scores: dict = {}
+    signals_ctx: dict = {}
+    if attempt.skill_deltas and game is not None:
+        from ...services.virtual_training_metrics import VTSignalExtractor, VTSkillScorer
+        cfg          = game.config or {}
+        phase_config = cfg.get("phases", []) if isinstance(cfg, dict) else []
+        data_for_signals = {
+            "stimuli_count":     attempt.stimuli_count,
+            "correct_count":     attempt.correct_count,
+            "wrong_click_count": attempt.wrong_click_count,
+            "error_count":       attempt.error_count,
+            "avg_reaction_ms":   attempt.avg_reaction_ms,
+            "raw_metrics":       attempt.raw_metrics,
+        }
+        signals = VTSignalExtractor.extract(data_for_signals, phase_config)
+        skill_scores = VTSkillScorer.score_all(signals, game.skill_targets or {})
+        signals_ctx = {
+            "hit_rate":        round(signals.hit_rate * 100, 1),
+            "wrong_rate":      round(signals.wrong_rate * 100, 1),
+            "miss_rate":       round(signals.miss_rate * 100, 1),
+            "speed_score":     round(signals.speed_score * 100, 1),
+            "completion_rate": round(signals.completion_rate * 100, 1),
+            "avg_reaction_ms": signals.avg_reaction_ms,
+        }
+
+    # Decompose raw_metrics — per_round and per_phase (v=2, no hand_profile)
+    per_phase: list = []
+    per_round: list = []
+    raw = attempt.raw_metrics
+    if isinstance(raw, dict) and raw.get("v", 1) >= 1:
+        per_phase = raw.get("per_phase") or []
+        per_round = raw.get("per_round") or []
+
+    # Best sequence reached
+    best_sequence_length = 0
+    if per_round:
+        completed = [r for r in per_round if r.get("outcome") == "correct"]
+        if completed:
+            best_sequence_length = max(r.get("sequence_length", 0) for r in completed)
+    elif game is not None:
+        cfg = game.config or {}
+        phases = cfg.get("phases", []) if isinstance(cfg, dict) else []
+        if phases:
+            best_sequence_length = phases[0].get("sequence_length", 3)
+
+    from ...models.user import UserRole
+    is_admin = user.role == UserRole.ADMIN
+
+    return templates.TemplateResponse(
+        "virtual_training_memory_sequence_result.html",
+        {
+            "request": request,
+            "user": user,
+            **_spec_ctx(user, db),
+            "attempt": attempt,
+            "game": game,
+            "skill_scores": skill_scores,
+            "signals_ctx":  signals_ctx,
+            "per_phase":    per_phase,
+            "per_round":    per_round,
+            "best_sequence_length": best_sequence_length,
+            "is_admin":     is_admin,
+        },
+    )

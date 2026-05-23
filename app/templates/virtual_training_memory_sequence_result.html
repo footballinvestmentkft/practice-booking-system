@@ -1,0 +1,318 @@
+{% extends "student_base.html" %}
+
+{% block title %}Memory Sequence Result - LFA{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '🧠' %}
+{% set _page_name = 'Result' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+.msr-container { max-width: 560px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+.msr-card {
+    background: var(--app-card); border-radius: 16px;
+    padding: 2rem 1.75rem; box-shadow: 0 2px 14px rgba(0,0,0,0.09);
+    text-align: center; margin-bottom: 1.25rem;
+}
+.msr-status-icon { font-size: 3rem; margin-bottom: 0.5rem; line-height: 1; }
+.msr-title    { font-size: 1.45rem; font-weight: 800; color: var(--app-text); margin: 0 0 0.3rem; }
+.msr-subtitle { font-size: 0.9rem; color: var(--app-text-muted); margin: 0 0 1.5rem; }
+
+.msr-stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.85rem; margin-bottom: 1.5rem; }
+.msr-stat { background: #f9fafb; border-radius: 10px; padding: 0.85rem 0.75rem; }
+.msr-stat-label { font-size: 0.75rem; color: var(--app-text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+.msr-stat-value { font-size: 1.35rem; font-weight: 800; color: var(--app-text); }
+.msr-stat-value.good   { color: #16a34a; }
+.msr-stat-value.danger { color: #ef4444; }
+.msr-stat-value.warn   { color: #d97706; }
+
+.msr-xp-badge { display: inline-block; background: #ede9fe; color: #5b21b6; font-size: 1.1rem; font-weight: 800; padding: 0.5rem 1.5rem; border-radius: 20px; margin-bottom: 1.5rem; }
+
+.msr-invalid-banner { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 10px; padding: 0.85rem 1rem; color: #92400e; font-size: 0.88rem; font-weight: 600; margin-bottom: 1.25rem; text-align: center; }
+
+.msr-skill-deltas { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1.5rem; text-align: left; }
+.msr-skill-deltas h4 { font-size: 0.78rem; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.6rem; }
+.msr-skill-row { display: flex; justify-content: space-between; font-size: 0.875rem; color: #14532d; padding: 0.2rem 0; }
+.msr-skill-row.neg { color: #dc2626; }
+
+.msr-breakdown { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 1rem 1.1rem; margin-bottom: 1.25rem; text-align: left; }
+.msr-breakdown h4 { font-size: 0.78rem; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.75rem; }
+.msr-breakdown-row { display: grid; grid-template-columns: 1fr auto auto; align-items: start; gap: 0.5rem 1rem; padding: 0.45rem 0; border-bottom: 1px solid #d1fae5; font-size: 0.875rem; }
+.msr-breakdown-row:last-child { border-bottom: none; }
+.msr-breakdown-skill   { font-weight: 700; color: #14532d; }
+.msr-breakdown-delta   { font-weight: 800; color: #166534; white-space: nowrap; }
+.msr-breakdown-delta.neg { color: #dc2626; }
+.msr-breakdown-factors { font-size: 0.78rem; color: #6b7280; grid-column: 1 / -1; padding-top: 0.1rem; }
+
+.msr-detail-section { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem 1.1rem; margin-bottom: 1.25rem; text-align: left; }
+.msr-detail-section h4 { font-size: 0.78rem; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.75rem; }
+.msr-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.msr-table th { background: #f9fafb; color: #6b7280; font-weight: 700; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.45rem 0.6rem; text-align: left; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
+.msr-table td { padding: 0.45rem 0.6rem; border-bottom: 1px solid #f3f4f6; color: #374151; vertical-align: middle; }
+.msr-table tr:last-child td { border-bottom: none; }
+.msr-acc-good { color: #16a34a; font-weight: 700; }
+.msr-acc-ok   { color: #d97706; font-weight: 700; }
+.msr-acc-poor { color: #dc2626; font-weight: 700; }
+
+.msr-admin-debug { background: #1e293b; border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; text-align: left; }
+.msr-admin-debug summary { color: #94a3b8; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; }
+.msr-admin-debug pre { color: #e2e8f0; font-size: 0.72rem; overflow-x: auto; margin: 0.75rem 0 0; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto; }
+
+.msr-btn-play { display: inline-block; background: #4f46e5; color: #fff; font-size: 0.95rem; font-weight: 700; padding: 0.7rem 2rem; border-radius: 10px; text-decoration: none; transition: background 0.15s; margin-bottom: 0.5rem; }
+.msr-btn-play:hover { background: #4338ca; }
+
+.msr-footer { text-align: center; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid #e2e8f0; }
+.msr-footer a { color: #667eea; text-decoration: none; margin: 0 0.75rem; font-weight: 600; font-size: 0.88rem; }
+.msr-footer a:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="msr-container">
+
+    {% if attempt.is_valid %}
+    <div class="msr-card">
+        <div class="msr-status-icon">
+            {% if attempt.score_normalized >= 85 %}🏆
+            {% elif attempt.score_normalized >= 65 %}⚡
+            {% elif attempt.score_normalized >= 45 %}💪
+            {% else %}🎯{% endif %}
+        </div>
+        <h2 class="msr-title">
+            {% if attempt.score_normalized >= 85 %}Excellent memory!
+            {% elif attempt.score_normalized >= 65 %}Good recall!
+            {% elif attempt.score_normalized >= 45 %}Keep training!
+            {% else %}Keep practicing!{% endif %}
+        </h2>
+        <p class="msr-subtitle">Memory Sequence</p>
+
+        {% set _total   = attempt.stimuli_count    if attempt.stimuli_count    else 45 %}
+        {% set _correct = attempt.correct_count    if attempt.correct_count    is not none else 0 %}
+        {% set _wrong   = attempt.wrong_click_count if attempt.wrong_click_count is not none else 0 %}
+        {% set _timeout = attempt.error_count      if attempt.error_count      is not none else 0 %}
+
+        <div class="msr-stats-grid">
+            <div class="msr-stat">
+                <div class="msr-stat-label">Score</div>
+                <div class="msr-stat-value">
+                    {% if attempt.score_normalized is not none %}{{ attempt.score_normalized | round(0) | int }}%
+                    {% else %}—{% endif %}
+                </div>
+            </div>
+            <div class="msr-stat">
+                <div class="msr-stat-label">Hit Rate</div>
+                {% set _hit_pct = ((_correct / _total) * 100) | round(0) | int if _total > 0 else none %}
+                <div class="msr-stat-value {% if _hit_pct is not none %}{% if _hit_pct >= 80 %}good{% elif _hit_pct >= 60 %}warn{% else %}danger{% endif %}{% endif %}">
+                    {% if _hit_pct is not none %}{{ _hit_pct }}%{% else %}—{% endif %}
+                    <small style="font-size:0.65rem;font-weight:600;color:var(--app-text-muted);">{{ _correct }}/{{ _total }}</small>
+                </div>
+            </div>
+            <div class="msr-stat">
+                <div class="msr-stat-label">Best Sequence</div>
+                <div class="msr-stat-value {% if best_sequence_length >= 7 %}good{% elif best_sequence_length >= 5 %}warn{% endif %}">
+                    {{ best_sequence_length }} tiles
+                </div>
+            </div>
+            <div class="msr-stat">
+                <div class="msr-stat-label">Avg First Tap</div>
+                <div class="msr-stat-value">
+                    {% if attempt.avg_reaction_ms is not none %}{{ attempt.avg_reaction_ms | round(0) | int }} ms
+                    {% else %}—{% endif %}
+                </div>
+            </div>
+            <div class="msr-stat">
+                <div class="msr-stat-label">Wrong Taps</div>
+                <div class="msr-stat-value{% if _wrong > 0 %} danger{% endif %}">{{ _wrong }}</div>
+            </div>
+            <div class="msr-stat">
+                <div class="msr-stat-label">Timeouts</div>
+                <div class="msr-stat-value{% if _timeout > 0 %} warn{% endif %}">
+                    {{ _timeout }}
+                    <small style="font-size:0.65rem;font-weight:600;color:var(--app-text-muted);">positions</small>
+                </div>
+            </div>
+            <div class="msr-stat">
+                <div class="msr-stat-label">Duration</div>
+                <div class="msr-stat-value">
+                    {% if attempt.duration_seconds is not none %}{{ attempt.duration_seconds | round(1) }} s
+                    {% else %}—{% endif %}
+                </div>
+            </div>
+            <div class="msr-stat">
+                <div class="msr-stat-label">Attempt</div>
+                <div class="msr-stat-value">#{{ attempt.attempt_index_today }} today</div>
+            </div>
+        </div>
+
+        {% if attempt.xp_awarded > 0 %}
+        <div class="msr-xp-badge">+{{ attempt.xp_awarded }} XP earned</div>
+        {% elif attempt.attempt_index_today > game.max_daily_attempts %}
+        <div class="msr-xp-badge" style="background:#f3f4f6;color:#6b7280;">
+            No XP — daily limit reached
+        </div>
+        {% endif %}
+
+        {% if attempt.skill_deltas %}
+        <div class="msr-skill-deltas">
+            <h4>Skill deltas</h4>
+            {% for skill, delta in attempt.skill_deltas.items() %}
+            <div class="msr-skill-row {% if delta < 0 %}neg{% endif %}">
+                <span>{{ skill }}</span>
+                <span>{{ "%+.2f"|format(delta) }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if skill_scores %}
+        <div class="msr-breakdown">
+            <h4>Skill Delta Breakdown</h4>
+            {% for skill, score in skill_scores.items() %}
+            {% set delta = attempt.skill_deltas.get(skill, 0) if attempt.skill_deltas else 0 %}
+            <div class="msr-breakdown-row">
+                <span class="msr-breakdown-skill">{{ skill|capitalize }}</span>
+                <span class="msr-breakdown-delta {% if delta < 0 %}neg{% endif %}">{{ "%+.3f"|format(delta) }}</span>
+                <span class="msr-breakdown-factors">
+                    {% if skill == "tactical_awareness" %}
+                        Hit rate: {{ signals_ctx.hit_rate }}% · Completion: {{ signals_ctx.completion_rate }}% · Score: {{ "%.0f"|format(score * 100) }}%
+                        <br><span style="font-style:italic;color:#9ca3af;">Visuospatial working memory span (0.65×hit + 0.35×completion)</span>
+                    {% elif skill == "concentration" %}
+                        Sustained attention score: {{ "%.0f"|format(score * 100) }}%
+                        <br><span style="font-style:italic;color:#9ca3af;">Measures ability to stay focused across all 9 rounds</span>
+                    {% elif skill == "anticipation" %}
+                        Speed score: {{ signals_ctx.speed_score }}% · Score: {{ "%.0f"|format(score * 100) }}%
+                        <br><span style="font-style:italic;color:#9ca3af;">Measures how quickly you recall and tap the sequence</span>
+                    {% else %}
+                        Score: {{ "%.0f"|format(score * 100) }}%
+                    {% endif %}
+                    {% if delta < 0 %}
+                    <br><span style="color:#dc2626;font-style:italic;">Performance below training threshold — skill decreased this attempt.</span>
+                    {% endif %}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <a href="/virtual-training/memory-sequence" class="msr-btn-play">Play again</a>
+    </div>
+
+    {# ── Per-phase table ──────────────────────────────────────────────────── #}
+    {% if per_phase %}
+    <div class="msr-detail-section">
+        <h4>Phase Performance</h4>
+        <table class="msr-table">
+            <thead>
+                <tr>
+                    <th>Phase</th>
+                    <th>Seq</th>
+                    <th>Correct</th>
+                    <th>Accuracy</th>
+                    <th>Wrong</th>
+                    <th>Timeout</th>
+                    <th>Avg tap</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in per_phase %}
+                {% set p_total = p.total_positions if p.total_positions else 1 %}
+                {% set p_acc   = ((p.correct_positions / p_total) * 100) | round(1) %}
+                <tr>
+                    <td>Phase {{ loop.index }}</td>
+                    <td>{{ p.sequence_length }}</td>
+                    <td>{{ p.correct_positions }}/{{ p.total_positions }}</td>
+                    <td class="{% if p_acc >= 85 %}msr-acc-good{% elif p_acc >= 65 %}msr-acc-ok{% else %}msr-acc-poor{% endif %}">{{ p_acc }}%</td>
+                    <td class="{% if p.wrong_positions > 0 %}msr-acc-poor{% else %}msr-acc-good{% endif %}">{{ p.wrong_positions }}</td>
+                    <td class="{% if p.timeout_positions > 0 %}msr-acc-ok{% else %}msr-acc-good{% endif %}">{{ p.timeout_positions }}</td>
+                    <td>{% if p.avg_first_tap_ms is not none %}{{ p.avg_first_tap_ms | round(0) | int }} ms{% else %}—{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {# ── Per-round table ───────────────────────────────────────────────────── #}
+    {% if per_round %}
+    <div class="msr-detail-section">
+        <h4>Round-by-Round</h4>
+        <table class="msr-table">
+            <thead>
+                <tr>
+                    <th>Round</th>
+                    <th>Phase</th>
+                    <th>Seq</th>
+                    <th>Correct</th>
+                    <th>Outcome</th>
+                    <th>1st tap</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in per_round %}
+                {% set r_total = r.sequence_length if r.sequence_length else 1 %}
+                {% set r_acc   = ((r.correct_positions / r_total) * 100) | round(0) | int %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ r.phase + 1 }}</td>
+                    <td>{{ r.sequence_length }}</td>
+                    <td class="{% if r_acc == 100 %}msr-acc-good{% elif r_acc >= 60 %}msr-acc-ok{% else %}msr-acc-poor{% endif %}">{{ r.correct_positions }}/{{ r.sequence_length }}</td>
+                    <td>
+                        {% if r.outcome == "correct" %}<span class="msr-acc-good">✓ Perfect</span>
+                        {% elif r.outcome == "timeout" %}<span class="msr-acc-ok">⏱ Timeout</span>
+                        {% else %}<span class="msr-acc-poor">✗ Partial</span>{% endif %}
+                    </td>
+                    <td>{% if r.first_tap_ms is not none %}{{ r.first_tap_ms | round(0) | int }} ms{% else %}—{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {# ── Admin raw_metrics ────────────────────────────────────────────────── #}
+    {% if is_admin %}
+    <div class="msr-admin-debug">
+        <details>
+            <summary>Admin: raw_metrics (v={{ attempt.raw_metrics.get('v', '?') if attempt.raw_metrics else '?' }})</summary>
+            <pre>{{ attempt.raw_metrics | tojson(indent=2) }}</pre>
+        </details>
+    </div>
+    {% endif %}
+
+    {% else %}
+    {# ── Invalid attempt ──────────────────────────────────────────────────── #}
+    <div class="msr-card">
+        <div class="msr-status-icon">⚠️</div>
+        <h2 class="msr-title">Attempt not counted</h2>
+        <p class="msr-subtitle">Memory Sequence</p>
+        <div class="msr-invalid-banner">
+            {% if attempt.invalid_reason == "too_short" %}
+            Session ended too quickly. Try completing all 9 rounds.
+            {% elif attempt.invalid_reason == "too_few_stimuli" %}
+            Not enough tiles were recalled. Please complete a full game.
+            {% elif attempt.invalid_reason == "random_clicking" %}
+            Incorrect responses were too frequent. Focus on remembering the sequence!
+            {% else %}
+            This attempt could not be validated ({{ attempt.invalid_reason }}).
+            {% endif %}
+        </div>
+        <p style="font-size:0.88rem;color:var(--app-text-muted);margin-bottom:1.25rem;">
+            No XP was awarded. Remaining daily attempts are not consumed.
+        </p>
+        <a href="/virtual-training/memory-sequence" class="msr-btn-play">Try again</a>
+    </div>
+    {% endif %}
+
+    <div class="msr-footer">
+        <a href="/virtual-training">💻 All Games</a>
+        <a href="/virtual-training/history">📋 History</a>
+        <a href="/training">🎓 Training</a>
+        <a href="/dashboard/lfa-football-player">⚽ Dashboard</a>
+    </div>
+
+</div>
+{% endblock %}
