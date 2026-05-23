@@ -1,4 +1,5 @@
 {% extends "student_base.html" %}
+{% from "macros/vt_protocol_hand.html" import protocol_hand_diagram %}
 
 {% block title %}Color Reaction - LFA{% endblock %}
 {% block active_page %}lfa-player{% endblock %}
@@ -249,6 +250,67 @@
     }
 
     .cr-footer a:hover { text-decoration: underline; }
+
+    /* ── System-assigned protocol card ──────────────────────────────────── */
+    .cr-protocol-card {
+        background: var(--app-card);
+        border: 1px solid #c7d2fe;
+        border-radius: 14px;
+        padding: 1.1rem 1.4rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        margin-bottom: 1.5rem;
+    }
+
+    .cr-protocol-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        margin-bottom: 0.55rem;
+    }
+
+    .cr-protocol-card-title {
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--app-text-muted);
+    }
+
+    .cr-protocol-card-combo {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #3730a3;
+        letter-spacing: 0.02em;
+        margin-bottom: 0.15rem;
+    }
+
+    .cr-protocol-card-mult {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #4f46e5;
+        margin-bottom: 0.6rem;
+    }
+
+    .cr-protocol-card-info {
+        font-size: 0.75rem;
+        color: var(--app-text-muted);
+        line-height: 1.5;
+        border-top: 1px solid #e0e7ff;
+        padding-top: 0.5rem;
+    }
+
+    /* ── Hand/finger diagram ────────────────────────────────────── */
+    .vt-hd-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 4px;
+        margin: 0.4rem 0 0.85rem;
+    }
+    .vt-hd-svg {
+        width: 60px;
+        height: 88px;
+    }
 </style>
 {% endblock %}
 
@@ -292,6 +354,31 @@
             Up to <strong>{{ game.base_xp }} XP</strong> per attempt •
             Diminishing returns apply to repeated attempts
         </p>
+    </div>
+
+    {# ── System-assigned protocol card ────────────────────────────────────── #}
+    {% set _ap = assigned_protocol %}
+    <div class="cr-protocol-card" id="crProtocol">
+        <div class="cr-protocol-card-header">
+            <span>🎯</span>
+            <span class="cr-protocol-card-title">Today's Protocol</span>
+        </div>
+        {{ protocol_hand_diagram(_ap.hand, _ap.finger) }}
+        {% if _ap.hand == "free" %}
+        <div class="cr-protocol-card-combo">Free — No Protocol Assigned</div>
+        <div class="cr-protocol-card-mult">×1.00 (standard)</div>
+        {% else %}
+        <div class="cr-protocol-card-combo">{{ _ap.hand | upper }} HAND — {{ _ap.finger | upper }}</div>
+        <div class="cr-protocol-card-mult">Difficulty multiplier: ×{{ "%.2f" | format(_ap.protocol_difficulty_multiplier | float) }}</div>
+        {% endif %}
+        <div class="cr-protocol-card-info">
+            System assigned · Self-declared · Not verified<br>
+            Skill deltas will reflect this protocol. XP and score are unaffected.
+        </div>
+    </div>
+
+    {# ── Start button ─────────────────────────────────────────────────────── #}
+    <div style="text-align:center;margin-bottom:1.5rem;">
         <button class="cr-btn-start" id="btnStart" onclick="crStart()">Start Game</button>
     </div>
 
@@ -384,6 +471,9 @@
     var lateHandled     = false;
     var windowExpiredAt = null;
 
+    // ── Protocol difficulty (Phase 2.4 — system-assigned) ─────────────────
+    var handProfile = {{ assigned_protocol | tojson }};
+
     // ── DOM refs ───────────────────────────────────────────────────────────
     var arena        = document.getElementById("crArena");
     var instruction  = document.getElementById("crInstruction");
@@ -453,6 +543,8 @@
         if (started) { return; }
         started = true;
         instruction.style.display = "none";
+        var protocolEl = document.getElementById("crProtocol");
+        if (protocolEl) { protocolEl.style.display = "none"; }
         arena.classList.add("active");
         scheduleNextStimulus(800);
     };
@@ -728,7 +820,7 @@
             ? Math.max.apply(null, lateClickTimes)
             : null;
         var rawMetrics = {
-            v: 2,
+            v: 3,
             per_stimulus: stimulusLog,
             per_color:    perColor,
             per_phase:    perPhase,
@@ -738,7 +830,8 @@
                 late_click_max_ms: lateMaxMs,
                 late_go_count:     0,
                 late_no_go_count:  0
-            }
+            },
+            hand_profile: handProfile
         };
 
         var payload = {

@@ -1,4 +1,5 @@
 {% extends "student_base.html" %}
+{% from "macros/vt_protocol_hand.html" import protocol_hand_diagram %}
 
 {% block title %}Go / No-Go Reaction - LFA{% endblock %}
 {% block active_page %}lfa-player{% endblock %}
@@ -275,6 +276,67 @@
     }
     .gng-submitting.active { display: block; }
     .gng-submitting p { margin: 0.5rem 0 0; }
+
+    /* ── System-assigned protocol card ──────────────────────────────────── */
+    .gng-protocol-card {
+        background: var(--app-card);
+        border: 1px solid #c7d2fe;
+        border-radius: 14px;
+        padding: 1.1rem 1.4rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        margin-bottom: 1.5rem;
+    }
+
+    .gng-protocol-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        margin-bottom: 0.55rem;
+    }
+
+    .gng-protocol-card-title {
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--app-text-muted);
+    }
+
+    .gng-protocol-card-combo {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #3730a3;
+        letter-spacing: 0.02em;
+        margin-bottom: 0.15rem;
+    }
+
+    .gng-protocol-card-mult {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #4f46e5;
+        margin-bottom: 0.6rem;
+    }
+
+    .gng-protocol-card-info {
+        font-size: 0.75rem;
+        color: var(--app-text-muted);
+        line-height: 1.5;
+        border-top: 1px solid #e0e7ff;
+        padding-top: 0.5rem;
+    }
+
+    /* ── Hand/finger diagram ────────────────────────────────────── */
+    .vt-hd-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 4px;
+        margin: 0.4rem 0 0.85rem;
+    }
+    .vt-hd-svg {
+        width: 60px;
+        height: 88px;
+    }
 </style>
 {% endblock %}
 
@@ -319,8 +381,34 @@
             {% endfor %}
         </div>
 
+    </div>
+
+    {# ── System-assigned protocol card ────────────────────────────────────── #}
+    {% set _ap = assigned_protocol %}
+    <div class="gng-protocol-card" id="gngProtocol">
+        <div class="gng-protocol-card-header">
+            <span>🎯</span>
+            <span class="gng-protocol-card-title">Today's Protocol</span>
+        </div>
+        {{ protocol_hand_diagram(_ap.hand, _ap.finger) }}
+        {% if _ap.hand == "free" %}
+        <div class="gng-protocol-card-combo">Free — No Protocol Assigned</div>
+        <div class="gng-protocol-card-mult">×1.00 (standard)</div>
+        {% else %}
+        <div class="gng-protocol-card-combo">{{ _ap.hand | upper }} HAND — {{ _ap.finger | upper }}</div>
+        <div class="gng-protocol-card-mult">Difficulty multiplier: ×{{ "%.2f" | format(_ap.protocol_difficulty_multiplier | float) }}</div>
+        {% endif %}
+        <div class="gng-protocol-card-info">
+            System assigned · Self-declared · Not verified<br>
+            Skill deltas will reflect this protocol. XP and score are unaffected.
+        </div>
+    </div>
+
+    {# ── Start button ─────────────────────────────────────────────────────── #}
+    <div style="text-align:center;margin-bottom:1.5rem;">
         <button class="gng-btn-start" id="gngBtnStart"
-            {% if attempts_remaining == 0 %}disabled{% endif %}>
+            {% if attempts_remaining == 0 %}disabled{% endif %}
+            onclick="gngStart()">
             ▶ Start Game
         </button>
     </div>
@@ -415,6 +503,9 @@
     var expiredStimType = null;     // "go" | "no_go" captured when window expires
     var expiredStimIdx  = null;     // globalStimIdx captured when window expires
 
+    // ── Protocol difficulty (Phase 2.4 — system-assigned) ─────────────────
+    var handProfile = {{ assigned_protocol | tojson }};
+
     // ── raw_metrics tracking ───────────────────────────────────────────────
     var stimulusLog    = [];        // per-stimulus event objects
     var currentPhaseIdx = 0;
@@ -483,6 +574,8 @@
         startedAt  = new Date().toISOString();
 
         elInstruction.style.display = "none";
+        var protocolEl = document.getElementById("gngProtocol");
+        if (protocolEl) { protocolEl.style.display = "none"; }
         elArena.classList.add("active");
 
         elapsedInterval = setInterval(function () {
@@ -697,7 +790,7 @@
             ? Math.max.apply(null, lateClickTimes)
             : null;
         var rawMetrics = {
-            v: 2,
+            v: 3,
             per_stimulus: stimulusLog,
             per_phase:    perPhase,
             late_summary: {
@@ -706,7 +799,8 @@
                 late_click_max_ms: lateMaxMs,
                 late_go_count:     lateGoCount,
                 late_no_go_count:  lateNoGoCount
-            }
+            },
+            hand_profile: handProfile
         };
 
         var payload = {

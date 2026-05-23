@@ -354,6 +354,20 @@
         </div>
         {% endif %}
 
+        {# ── Protocol badge (v3 hand_profile) ─────────────────────────────── #}
+        {% set _hp = hand_profile %}
+        {% if _hp and _hp.get("protocol_difficulty_multiplier", 1.0) | float > 1.0 %}
+        <div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px;padding:0.65rem 1rem;margin-bottom:0.85rem;font-size:0.85rem;">
+            <div style="font-weight:700;color:#3730a3;margin-bottom:0.15rem;">
+                🖐 Protocol: {{ _hp.get("label", "—") }} &nbsp;·&nbsp;
+                ×{{ "%.2f"|format(_hp.get("protocol_difficulty_multiplier", 1.0) | float) }}
+            </div>
+            <div style="color:#4f46e5;font-size:0.78rem;">
+                {% if _hp.get("assignment_source") == "system" %}System assigned · {% endif %}Self-declared · Not verified
+            </div>
+        </div>
+        {% endif %}
+
         {% if attempt.skill_deltas %}
         <div class="vtr-skill-deltas">
             <h4>Skill deltas</h4>
@@ -370,6 +384,12 @@
         {% if skill_scores %}
         <div class="vtr-breakdown" id="vtr-breakdown">
             <h4>Skill Delta Breakdown</h4>
+            {% if _hp and _hp.get("protocol_difficulty_multiplier", 1.0) | float > 1.0 %}
+            <p style="font-size:0.78rem;color:#4f46e5;margin:0 0 0.6rem;font-style:italic;">
+                Skill deltas include ×{{ "%.2f"|format(_hp.get("protocol_difficulty_multiplier", 1.0) | float) }} protocol difficulty multiplier.
+                Applied to skill deltas only · XP and score unaffected.
+            </p>
+            {% endif %}
             {% for skill, score in skill_scores.items() %}
             {% set delta = attempt.skill_deltas.get(skill, 0) if attempt.skill_deltas else 0 %}
             <div class="vtr-breakdown-row">

@@ -1,0 +1,98 @@
+{#
+ * vt_protocol_hand.html — Hand / finger protocol diagram macro
+ * ============================================================
+ * Renders a top-down schematic of both hands (left on left,
+ * right on right, thumbs facing each other at center).
+ * The active hand and active finger are indigo-highlighted;
+ * the inactive hand is gray.  Free protocol → both hands gray.
+ *
+ * Parameters:
+ *   hand   (str) — "left" | "right" | "free"
+ *   finger (str) — "index" | "thumb" | "middle" | "ring" | "pinky" | "free"
+ *
+ * Phase 2.5-ready: middle / ring / pinky SVG slots modelled now,
+ * even though Phase 2.4 only uses index + thumb.
+ *
+ * Self-contained: all layout is inline style; the only external
+ * classes are .vt-hd-wrap and .vt-hd-svg (added by the host template).
+ #}
+{% macro protocol_hand_diagram(hand, finger) %}
+{%- set _al = (hand == "left") -%}
+{%- set _ar = (hand == "right") -%}
+
+{# ── colour tokens ───────────────────────────────────────────────── #}
+{%- set _palm_a  = "#dde6ff" -%}
+{%- set _fing_a  = "#a5b4fc" -%}
+{%- set _hi      = "#4338ca" -%}
+{%- set _strk_a  = "#818cf8" -%}
+{%- set _palm_i  = "#f0f1f3" -%}
+{%- set _fing_i  = "#d1d5db" -%}
+{%- set _strk_i  = "#9ca3af" -%}
+
+{# ── per-hand palette ────────────────────────────────────────────── #}
+{%- set _lp = _palm_a if _al else _palm_i -%}
+{%- set _ls = _strk_a if _al else _strk_i -%}
+{%- set _rp = _palm_a if _ar else _palm_i -%}
+{%- set _rs = _strk_a if _ar else _strk_i -%}
+
+{# ── left-hand per-finger fills ──────────────────────────────────── #}
+{%- set _l_pinky  = _hi if (_al and finger == "pinky")  else (_fing_a if _al else _fing_i) -%}
+{%- set _l_ring   = _hi if (_al and finger == "ring")   else (_fing_a if _al else _fing_i) -%}
+{%- set _l_middle = _hi if (_al and finger == "middle") else (_fing_a if _al else _fing_i) -%}
+{%- set _l_index  = _hi if (_al and finger == "index")  else (_fing_a if _al else _fing_i) -%}
+{%- set _l_thumb  = _hi if (_al and finger == "thumb")  else (_fing_a if _al else _fing_i) -%}
+
+{# ── right-hand per-finger fills ─────────────────────────────────── #}
+{%- set _r_thumb  = _hi if (_ar and finger == "thumb")  else (_fing_a if _ar else _fing_i) -%}
+{%- set _r_index  = _hi if (_ar and finger == "index")  else (_fing_a if _ar else _fing_i) -%}
+{%- set _r_middle = _hi if (_ar and finger == "middle") else (_fing_a if _ar else _fing_i) -%}
+{%- set _r_ring   = _hi if (_ar and finger == "ring")   else (_fing_a if _ar else _fing_i) -%}
+{%- set _r_pinky  = _hi if (_ar and finger == "pinky")  else (_fing_a if _ar else _fing_i) -%}
+
+{# ── aria label ──────────────────────────────────────────────────── #}
+{%- if hand == "free" -%}
+  {%- set _aria = "No hand protocol assigned" -%}
+{%- elif hand == "left" -%}
+  {%- set _aria = "Left hand, " ~ finger ~ " finger highlighted" -%}
+{%- else -%}
+  {%- set _aria = "Right hand, " ~ finger ~ " finger highlighted" -%}
+{%- endif -%}
+
+<div class="vt-hd-wrap" role="img" aria-label="{{ _aria }}">
+
+  {# ── Left hand — thumb faces RIGHT (center) ──────────────────── #}
+  {# Draw order: fingers → palm (covers bases) → thumb (on palm edge) #}
+  <svg class="vt-hd-svg" viewBox="0 0 62 90" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect x="4"  y="14" width="9" height="32" rx="4"
+          fill="{{ _l_pinky }}"  stroke="{{ _ls }}" stroke-width="1.5"/>
+    <rect x="15" y="8"  width="9" height="38" rx="4"
+          fill="{{ _l_ring }}"   stroke="{{ _ls }}" stroke-width="1.5"/>
+    <rect x="26" y="4"  width="9" height="42" rx="4"
+          fill="{{ _l_middle }}" stroke="{{ _ls }}" stroke-width="1.5"/>
+    <rect x="37" y="9"  width="9" height="37" rx="4"
+          fill="{{ _l_index }}"  stroke="{{ _ls }}" stroke-width="1.5"/>
+    <rect x="4"  y="44" width="43" height="40" rx="9"
+          fill="{{ _lp }}"       stroke="{{ _ls }}" stroke-width="1.5"/>
+    <rect x="46" y="50" width="16" height="12" rx="6"
+          fill="{{ _l_thumb }}"  stroke="{{ _ls }}" stroke-width="1.5"/>
+  </svg>
+
+  {# ── Right hand — thumb faces LEFT (center) ───────────────────── #}
+  {# Draw order: fingers → palm (covers bases) → thumb (on palm edge) #}
+  <svg class="vt-hd-svg" viewBox="0 0 62 90" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect x="16" y="9"  width="9" height="37" rx="4"
+          fill="{{ _r_index }}"  stroke="{{ _rs }}" stroke-width="1.5"/>
+    <rect x="27" y="4"  width="9" height="42" rx="4"
+          fill="{{ _r_middle }}" stroke="{{ _rs }}" stroke-width="1.5"/>
+    <rect x="38" y="8"  width="9" height="38" rx="4"
+          fill="{{ _r_ring }}"   stroke="{{ _rs }}" stroke-width="1.5"/>
+    <rect x="49" y="14" width="9" height="32" rx="4"
+          fill="{{ _r_pinky }}"  stroke="{{ _rs }}" stroke-width="1.5"/>
+    <rect x="15" y="44" width="43" height="40" rx="9"
+          fill="{{ _rp }}"       stroke="{{ _rs }}" stroke-width="1.5"/>
+    <rect x="0"  y="50" width="16" height="12" rx="6"
+          fill="{{ _r_thumb }}"  stroke="{{ _rs }}" stroke-width="1.5"/>
+  </svg>
+
+</div>
+{% endmacro %}

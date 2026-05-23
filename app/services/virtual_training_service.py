@@ -25,6 +25,27 @@ _MIN_DURATION_SECONDS        = 25.0   # Phase 2.1: 36 stimuli × avg ~0.7 s (was
 _MIN_STIMULI_COUNT           = 28     # Phase 2.1: 36 total, allow minor losses (was 5)
 _RANDOM_CLICKING_THRESHOLD   = 0.55   # G4: wrong_click_count / stimuli_count > this → invalid
 
+# ── Protocol assignment pool (Phase 2.4 — 4 combos) ──────────────────────────
+# Phase 2.5 TODO: expand to 10-combo pool (left/right × thumb/index/middle/ring/pinky).
+# Requires: UX study for middle/ring/pinky, multiplier calibration from collected
+# attempt data, and balanced scheduler validation across all 10 slots before activation.
+_PROTOCOL_POOL: list[dict] = [
+    {"hand": "right", "finger": "index", "label": "Right Index",
+     "protocol_difficulty_multiplier": 1.00},
+    {"hand": "right", "finger": "thumb", "label": "Right Thumb",
+     "protocol_difficulty_multiplier": 1.05},
+    {"hand": "left",  "finger": "index", "label": "Left Index",
+     "protocol_difficulty_multiplier": 1.10},
+    {"hand": "left",  "finger": "thumb", "label": "Left Thumb",
+     "protocol_difficulty_multiplier": 1.15},
+]
+
+_FREE_PROTOCOL: dict = {
+    "hand": "free", "finger": "free", "label": "Free / No Protocol",
+    "protocol_difficulty_multiplier": 1.00,
+    "assignment_source": "system", "self_declared": True, "not_verified": True,
+}
+
 
 class VirtualTrainingService:
 
@@ -123,6 +144,132 @@ class VirtualTrainingService:
         )
         return count + 1
 
+    # ── Protocol assignment ───────────────────────────────────────────────────
+
+    @staticmethod
+    def _select_protocol_from_history(history: list[str]) -> dict:
+        """
+        Pure scheduler logic — no DB.
+
+        history: combo keys most-recent first, e.g. ["right_index", "left_thumb", ...]
+        Each key is "{hand}_{finger}" for a valid v3 attempt.
+
+        Rules:
+        1. Seeded first-rotation: first 4 valid v3 attempts → pool[0..3] in order
+        2. Consecutive guard: last 2 same combo → exclude from candidates
+        3. Frequency-based: least-used wins; tiebreak by pool index (deterministic)
+        """
+        from collections import Counter
+
+        def _key(slot: dict) -> str:
+            return f"{slot['hand']}_{slot['finger']}"
+
+        if len(history) < 4:
+            return dict(_PROTOCOL_POOL[len(history)])
+
+        excluded: str | None = None
+        if len(history) >= 2 and history[0] == history[1]:
+            excluded = history[0]
+
+        candidates = [s for s in _PROTOCOL_POOL if _key(s) != excluded]
+        counts = Counter(history)
+        return dict(min(candidates, key=lambda s: counts.get(_key(s), 0)))
+
+    @staticmethod
+    def assign_protocol(db: Session, user_id: int, game_id: int) -> dict:
+        """
+        Balanced scheduler — returns the next protocol dict for this user+game.
+
+        Priority order:
+        1. Feature flag game.config["protocol_assignment"] == "free" → Free
+        2. _select_protocol_from_history() with last-30 valid v3 attempt history
+        3. Exception fallback → Free (gameplay must never crash)
+
+        History scope: last 30 valid attempts with raw_metrics.v >= 3 and
+        hand_profile present, per-user per-game. Invalid attempts excluded.
+        Returns a dict with all required keys including assignment_source="system".
+        """
+        import json as _json
+
+        def _make_result(slot: dict) -> dict:
+            r = dict(slot)
+            r["assignment_source"] = "system"
+            r["self_declared"]     = True
+            r["not_verified"]      = True
+            return r
+
+        try:
+            game = (
+                db.query(VirtualTrainingGame)
+                .filter(VirtualTrainingGame.id == game_id)
+                .first()
+            )
+            if game is None:
+                return dict(_FREE_PROTOCOL)
+
+            cfg = game.config or {}
+            if isinstance(cfg, dict) and cfg.get("protocol_assignment") == "free":
+                return dict(_FREE_PROTOCOL)
+
+            rows = db.execute(
+                text(
+                    """
+                    SELECT raw_metrics->'hand_profile' AS hp
+                    FROM virtual_training_attempts
+                    WHERE user_id    = :uid
+                      AND game_id    = :gid
+                      AND is_valid   = true
+                      AND raw_metrics IS NOT NULL
+                      AND (raw_metrics->>'v')::int >= 3
+                      AND raw_metrics ? 'hand_profile'
+                    ORDER BY completed_at DESC
+                    LIMIT 30
+                    """
+                ),
+                {"uid": user_id, "gid": game_id},
+            ).fetchall()
+
+            history: list[str] = []
+            for row in rows:
+                hp = row.hp
+                if isinstance(hp, str):
+                    try:
+                        hp = _json.loads(hp)
+                    except Exception:
+                        continue
+                if isinstance(hp, dict):
+                    hand   = hp.get("hand", "")
+                    finger = hp.get("finger", "")
+                    if hand and finger and hand != "free":
+                        history.append(f"{hand}_{finger}")
+
+            slot = VirtualTrainingService._select_protocol_from_history(history)
+            return _make_result(slot)
+
+        except Exception:
+            return dict(_FREE_PROTOCOL)
+
+    # ── Protocol difficulty ───────────────────────────────────────────────────
+
+    @staticmethod
+    def extract_protocol_difficulty(data: dict) -> float:
+        """
+        Extract and clamp the self-declared protocol difficulty multiplier.
+
+        Returns 1.00 when raw_metrics is absent, v<3, or hand_profile missing.
+        Server-side clamp: floor=1.00, hard cap=1.25 (ignores client values).
+        Affects skill deltas only — XP and score_normalized are unaffected.
+        """
+        raw = data.get("raw_metrics")
+        if not isinstance(raw, dict) or int(raw.get("v", 1)) < 3:
+            return 1.00
+        hp = raw.get("hand_profile") or {}
+        try:
+            pdm = float(hp.get("protocol_difficulty_multiplier", 1.00))
+        except (TypeError, ValueError):
+            return 1.00
+        return max(1.00, min(1.25, pdm))
+
     # ── XP calculation ────────────────────────────────────────────────────────
 
     @staticmethod
@@ -177,8 +324,13 @@ class VirtualTrainingService:
         attempt_index = VirtualTrainingService.calculate_daily_attempt_index(
             db, user_id, game.id
         )
-        multiplier = VirtualTrainingService.calculate_xp_multiplier(attempt_index)
-        xp_awarded = VirtualTrainingService.calculate_xp_awarded(game, multiplier) if is_valid else 0
+        # xp_multiplier: diminishing returns by attempt index (affects XP + delta ceiling)
+        xp_multiplier = VirtualTrainingService.calculate_xp_multiplier(attempt_index)
+        xp_awarded = VirtualTrainingService.calculate_xp_awarded(game, xp_multiplier) if is_valid else 0
+
+        # protocol_mult: self-declared hand/finger difficulty (affects delta only)
+        protocol_mult     = VirtualTrainingService.extract_protocol_difficulty(data)
+        effective_multiplier = xp_multiplier * protocol_mult
 
         if is_valid and xp_awarded > 0:
             today_start = datetime.combine(date.today(), datetime.min.time()).replace(
@@ -201,7 +353,7 @@ class VirtualTrainingService:
             ).fetchall()
             existing_neg_today: dict[str, float] = {row.key: row.neg_today for row in neg_rows}
             skill_deltas = compute_vt_skill_deltas(
-                data=data, game=game, multiplier=multiplier,
+                data=data, game=game, multiplier=effective_multiplier,
                 existing_neg_today=existing_neg_today,
             )
         else:
