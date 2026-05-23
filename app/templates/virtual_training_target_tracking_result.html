@@ -1,0 +1,423 @@
+{% extends "student_base.html" %}
+
+{% block title %}Target Tracking Result — Virtual Games{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '👁️' %}
+{% set _page_name = 'Target Tracking — Result' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .ttr-container {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    /* ── Score hero ─────────────────────────────────────────────────────────── */
+    .ttr-hero {
+        background: var(--app-card);
+        border-radius: 14px;
+        padding: 1.6rem 1.5rem 1.25rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+        text-align: center;
+        margin-bottom: 1.25rem;
+    }
+
+    .ttr-score-ring {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        background: conic-gradient(#4f46e5 calc({{ attempt.score_normalized or 0 }}% * 3.6deg), #e5e7eb 0);
+        margin-bottom: 0.75rem;
+        position: relative;
+    }
+
+    .ttr-score-ring::after {
+        content: '';
+        position: absolute;
+        width: 86px;
+        height: 86px;
+        background: var(--app-card);
+        border-radius: 50%;
+    }
+
+    .ttr-score-val {
+        position: absolute;
+        z-index: 1;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--app-text);
+    }
+
+    .ttr-hero h2 {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--app-text);
+        margin: 0 0 0.25rem;
+    }
+
+    .ttr-invalid-banner {
+        background: #fef3c7;
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
+        padding: 0.6rem 0.9rem;
+        font-size: 0.85rem;
+        color: #92400e;
+        margin-bottom: 0.75rem;
+        text-align: left;
+    }
+
+    .ttr-xp {
+        display: inline-block;
+        background: #fef9c3;
+        color: #713f12;
+        font-size: 0.85rem;
+        font-weight: 700;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        margin-top: 0.4rem;
+    }
+
+    /* ── Stats grid ─────────────────────────────────────────────────────────── */
+    .ttr-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+    }
+
+    @media (max-width: 480px) {
+        .ttr-stats { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .ttr-stat {
+        background: var(--app-card);
+        border-radius: 10px;
+        padding: 0.85rem 0.75rem;
+        text-align: center;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+
+    .ttr-stat-val {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: var(--app-text);
+        margin-bottom: 0.15rem;
+    }
+
+    .ttr-stat-lbl {
+        font-size: 0.72rem;
+        color: var(--app-text-muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    /* ── Section card ───────────────────────────────────────────────────────── */
+    .ttr-card {
+        background: var(--app-card);
+        border-radius: 12px;
+        padding: 1.1rem 1.25rem;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+        margin-bottom: 1.1rem;
+    }
+
+    .ttr-card h3 {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--app-text);
+        margin: 0 0 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    /* ── Phase table ────────────────────────────────────────────────────────── */
+    .ttr-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.83rem;
+    }
+
+    .ttr-table th {
+        text-align: left;
+        font-weight: 700;
+        color: var(--app-text-muted);
+        padding: 0.3rem 0.5rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .ttr-table td {
+        padding: 0.4rem 0.5rem;
+        border-bottom: 1px solid #f3f4f6;
+        color: var(--app-text);
+    }
+
+    /* ── Round dots strip ───────────────────────────────────────────────────── */
+    .ttr-round-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+    }
+
+    .ttr-round-dot {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .ttr-round-dot.correct { background: #22c55e; }
+    .ttr-round-dot.wrong   { background: #ef4444; }
+    .ttr-round-dot.timeout { background: #f59e0b; color: #713f12; }
+
+    /* ── Skill breakdown ────────────────────────────────────────────────────── */
+    .ttr-skill-row {
+        margin-bottom: 0.75rem;
+    }
+
+    .ttr-skill-header {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.82rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .ttr-skill-name { font-weight: 700; color: var(--app-text); }
+    .ttr-skill-pct  { color: var(--app-text-muted); }
+
+    .ttr-skill-bar-bg {
+        background: #e5e7eb;
+        border-radius: 4px;
+        height: 6px;
+        overflow: hidden;
+    }
+
+    .ttr-skill-bar {
+        height: 100%;
+        border-radius: 4px;
+        background: #4f46e5;
+        transition: width 0.4s ease;
+    }
+
+    .ttr-skill-formula {
+        font-size: 0.72rem;
+        color: var(--app-text-muted);
+        margin-top: 0.2rem;
+    }
+
+    /* ── Actions ────────────────────────────────────────────────────────────── */
+    .ttr-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-top: 1.25rem;
+    }
+
+    .ttr-btn {
+        display: inline-block;
+        padding: 0.55rem 1.1rem;
+        border-radius: 8px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: background 0.15s;
+    }
+
+    .ttr-btn-primary { background: #4f46e5; color: #fff; }
+    .ttr-btn-primary:hover { background: #4338ca; }
+    .ttr-btn-secondary { background: #f3f4f6; color: var(--app-text); }
+    .ttr-btn-secondary:hover { background: #e5e7eb; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="ttr-container">
+
+    <!-- ── Score hero ───────────────────────────────────────────────────────── -->
+    <div class="ttr-hero">
+        <div class="ttr-score-ring">
+            <span class="ttr-score-val">{{ attempt.score_normalized or 0 }}</span>
+        </div>
+        <h2>Target Tracking Complete</h2>
+
+        {% if not attempt.is_valid %}
+        <div class="ttr-invalid-banner">
+            ⚠ This attempt was flagged as invalid
+            {% if attempt.invalid_reason == 'too_short' %}(session ended too fast)
+            {% elif attempt.invalid_reason == 'too_few_stimuli' %}(too few rounds recorded)
+            {% elif attempt.invalid_reason == 'random_clicking' %}(response pattern inconsistent)
+            {% elif attempt.invalid_reason == 'bot_suspected' %}(responses too fast)
+            {% else %}({{ attempt.invalid_reason }})
+            {% endif %}
+            and will not earn XP or skill progress.
+        </div>
+        {% endif %}
+
+        {% if attempt.xp_awarded %}
+        <span class="ttr-xp">+{{ attempt.xp_awarded }} XP</span>
+        {% endif %}
+    </div>
+
+    <!-- ── Key stats ────────────────────────────────────────────────────────── -->
+    {% set _stimuli = attempt.stimuli_count or 0 %}
+    {% set _correct = attempt.correct_count or 0 %}
+    {% set _wrong   = attempt.wrong_click_count or 0 %}
+    {% set _timeout = attempt.error_count or 0 %}
+
+    <div class="ttr-stats">
+        <div class="ttr-stat">
+            <div class="ttr-stat-val">{{ attempt.score_normalized or 0 }}%</div>
+            <div class="ttr-stat-lbl">Score</div>
+        </div>
+        <div class="ttr-stat">
+            <div class="ttr-stat-val">{{ _correct }}/{{ _stimuli }}</div>
+            <div class="ttr-stat-lbl">Correct</div>
+        </div>
+        <div class="ttr-stat">
+            <div class="ttr-stat-val">
+                {% if attempt.avg_reaction_ms %}{{ attempt.avg_reaction_ms | int }} ms{% else %}—{% endif %}
+            </div>
+            <div class="ttr-stat-lbl">Avg Response</div>
+        </div>
+        <div class="ttr-stat">
+            <div class="ttr-stat-val">{{ _wrong }}</div>
+            <div class="ttr-stat-lbl">Wrong taps</div>
+        </div>
+        <div class="ttr-stat">
+            <div class="ttr-stat-val">{{ _timeout }}</div>
+            <div class="ttr-stat-lbl">Timeouts</div>
+        </div>
+        <div class="ttr-stat">
+            <div class="ttr-stat-val">
+                {% if attempt.duration_seconds %}{{ (attempt.duration_seconds) | round(0) | int }}s{% else %}—{% endif %}
+            </div>
+            <div class="ttr-stat-lbl">Duration</div>
+        </div>
+    </div>
+
+    <!-- ── Round-by-round ───────────────────────────────────────────────────── -->
+    {% if per_round %}
+    <div class="ttr-card">
+        <h3>Round Results</h3>
+        <div class="ttr-round-strip">
+            {% for r in per_round %}
+            <div class="ttr-round-dot {{ r.outcome }}" title="Round {{ r.round + 1 }}: {{ r.outcome }}{% if r.response_ms %} ({{ r.response_ms }}ms){% endif %}">
+                {{ r.round + 1 }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Phase breakdown ──────────────────────────────────────────────────── -->
+    {% if per_phase %}
+    <div class="ttr-card">
+        <h3>Phase Breakdown</h3>
+        <table class="ttr-table">
+            <thead>
+                <tr>
+                    <th>Phase</th>
+                    <th>Objects</th>
+                    <th>Correct</th>
+                    <th>Wrong</th>
+                    <th>Timeout</th>
+                    <th>Accuracy</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in per_phase %}
+                {% set _r = p.rounds if p.rounds else 1 %}
+                {% set _acc = ((p.correct / _r) * 100) | round(0) | int %}
+                <tr>
+                    <td>Phase {{ p.phase + 1 }}</td>
+                    <td>{{ p.get('object_count', '—') }}</td>
+                    <td style="color:#16a34a;font-weight:700">{{ p.correct }}</td>
+                    <td style="color:#dc2626">{{ p.wrong }}</td>
+                    <td style="color:#d97706">{{ p.timeout }}</td>
+                    <td><strong>{{ _acc }}%</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- ── Skill breakdown ──────────────────────────────────────────────────── -->
+    {% if skill_scores %}
+    <div class="ttr-card">
+        <h3>Skill Breakdown</h3>
+        {% for skill, score in skill_scores.items() %}
+        {% set pct = [[(score * 100) | round(0) | int, 0] | max, 100] | min %}
+        <div class="ttr-skill-row">
+            <div class="ttr-skill-header">
+                <span class="ttr-skill-name">{{ skill | replace('_', ' ') | title }}</span>
+                <span class="ttr-skill-pct">{{ pct }}%</span>
+            </div>
+            <div class="ttr-skill-bar-bg">
+                <div class="ttr-skill-bar" style="width:{{ pct }}%"></div>
+            </div>
+            {% if skill == 'anticipation' %}
+            <div class="ttr-skill-formula">completion × hit_rate (+ phase-3 accuracy when available)</div>
+            {% elif skill == 'concentration' %}
+            <div class="ttr-skill-formula">1 − 2 × timeout_rate</div>
+            {% elif skill == 'tactical_awareness' %}
+            <div class="ttr-skill-formula">0.65 × hit_rate + 0.35 × completion_rate</div>
+            {% elif skill == 'reactions' %}
+            <div class="ttr-skill-formula">0.65 × speed_score + 0.35 × hit_rate</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        {% if signals_ctx %}
+        <div style="margin-top:0.75rem;font-size:0.78rem;color:var(--app-text-muted);
+                    border-top:1px solid #e5e7eb;padding-top:0.6rem;">
+            Signals — hit {{ signals_ctx.hit_rate }}% ·
+            wrong {{ signals_ctx.wrong_rate }}% ·
+            timeout {{ signals_ctx.miss_rate }}% ·
+            speed {{ signals_ctx.speed_score }}%
+            {% if signals_ctx.avg_reaction_ms %}
+            · avg {{ signals_ctx.avg_reaction_ms | int }} ms
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- ── Score formula note ───────────────────────────────────────────────── -->
+    <div style="font-size:0.78rem;color:var(--app-text-muted);margin-bottom:1.1rem;padding:0 0.25rem;">
+        Score = 0.60 × hit_rate + 0.25 × (1 − timeout_rate) + 0.15 × speed_factor
+        &nbsp;·&nbsp; speed_factor = max(0, 1 − avg_ms / 3000)
+    </div>
+
+    <!-- ── Admin debug ───────────────────────────────────────────────────────── -->
+    {% if is_admin and attempt.raw_metrics %}
+    <details style="margin-bottom:1rem;">
+        <summary style="font-size:0.8rem;color:var(--app-text-muted);cursor:pointer;">
+            [Admin] raw_metrics JSON
+        </summary>
+        <pre style="font-size:0.72rem;overflow-x:auto;background:#f8fafc;padding:0.75rem;
+                    border-radius:8px;margin-top:0.4rem;">{{ attempt.raw_metrics | tojson(indent=2) }}</pre>
+    </details>
+    {% endif %}
+
+    <!-- ── Navigation ───────────────────────────────────────────────────────── -->
+    <div class="ttr-actions">
+        <a href="/virtual-training/target-tracking" class="ttr-btn ttr-btn-primary">▶ Play again</a>
+        <a href="/virtual-training" class="ttr-btn ttr-btn-secondary">← All games</a>
+        <a href="/virtual-training/history" class="ttr-btn ttr-btn-secondary">📋 History</a>
+    </div>
+
+</div>
+{% endblock %}

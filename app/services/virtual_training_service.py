@@ -87,32 +87,43 @@ class VirtualTrainingService:
     # ── Validation ────────────────────────────────────────────────────────────
 
     @staticmethod
-    def validate_attempt(data: dict) -> tuple[bool, Optional[str]]:
+    def validate_attempt(
+        data: dict, overrides: dict | None = None
+    ) -> tuple[bool, Optional[str]]:
         """
         Run anti-abuse checks on raw attempt data.
 
         Returns (is_valid, invalid_reason).
         Checks (in order — first failing check wins):
-          1. duration_seconds < 25.0   → too_short
-          2. stimuli_count < 28        → too_few_stimuli
-          3. wrong_click_count > 0.55 × stimuli_count → random_clicking  (G4)
-          4. avg_reaction_ms < 80      → bot_suspected
+          1. duration_seconds < min_dur     → too_short
+          2. stimuli_count < min_stim       → too_few_stimuli
+          3. wrong_click_count > rand_thresh × stimuli_count → random_clicking
+          4. avg_reaction_ms < bot_thresh   → bot_suspected
+
+        overrides: per-game threshold overrides from game.config["validation_overrides"].
+        Backward-compatible: None → module-level defaults (existing game behaviour unchanged).
         """
+        _ov = overrides or {}
+        min_dur     = float(_ov.get("min_duration_seconds",      _MIN_DURATION_SECONDS))
+        min_stim    = int(_ov.get("min_stimuli_count",           _MIN_STIMULI_COUNT))
+        bot_thresh  = float(_ov.get("bot_threshold_ms",          _BOT_REACTION_THRESHOLD_MS))
+        rand_thresh = float(_ov.get("random_clicking_threshold", _RANDOM_CLICKING_THRESHOLD))
+
         duration = data.get("duration_seconds")
-        if duration is not None and float(duration) < _MIN_DURATION_SECONDS:
+        if duration is not None and float(duration) < min_dur:
             return False, "too_short"
 
         stimuli = data.get("stimuli_count")
-        if stimuli is not None and int(stimuli) < _MIN_STIMULI_COUNT:
+        if stimuli is not None and int(stimuli) < min_stim:
             return False, "too_few_stimuli"
 
         wrong_clicks = data.get("wrong_click_count")
         if wrong_clicks is not None and stimuli is not None and int(stimuli) > 0:
-            if int(wrong_clicks) > _RANDOM_CLICKING_THRESHOLD * int(stimuli):
+            if int(wrong_clicks) > rand_thresh * int(stimuli):
                 return False, "random_clicking"
 
         avg_ms = data.get("avg_reaction_ms")
-        if avg_ms is not None and float(avg_ms) < _BOT_REACTION_THRESHOLD_MS:
+        if avg_ms is not None and float(avg_ms) < bot_thresh:
             return False, "bot_suspected"
 
         return True, None
@@ -319,7 +330,13 @@ class VirtualTrainingService:
 
         now = datetime.now(timezone.utc)
 
-        is_valid, invalid_reason = VirtualTrainingService.validate_attempt(data)
+        validation_overrides = (
+            game.config.get("validation_overrides")
+            if isinstance(game.config, dict) else None
+        )
+        is_valid, invalid_reason = VirtualTrainingService.validate_attempt(
+            data, overrides=validation_overrides
+        )
 
         attempt_index = VirtualTrainingService.calculate_daily_attempt_index(
             db, user_id, game.id

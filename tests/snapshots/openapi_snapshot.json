@@ -64226,6 +64226,94 @@
           "virtual-training"
         ]
       }
+    },
+    "/virtual-training/target-tracking": {
+      "get": {
+        "description": "Target Tracking game page \u2014 instruction + MOT arena (moving objects).",
+        "operationId": "virtual_training_target_tracking_virtual_training_target_tracking_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Virtual Training Target Tracking",
+        "tags": [
+          "web",
+          "virtual-training"
+        ]
+      }
+    },
+    "/virtual-training/target-tracking/result/{attempt_id}": {
+      "get": {
+        "description": "Result screen for a completed Target Tracking attempt.",
+        "operationId": "virtual_training_target_tracking_result_virtual_training_target_tracking_result__attempt_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "title": "Attempt Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Virtual Training Target Tracking Result",
+        "tags": [
+          "web",
+          "virtual-training"
+        ]
+      }
+    },
+    "/virtual-training/target-tracking/submit": {
+      "post": {
+        "description": "Record a Target Tracking attempt. Returns attempt_id, xp_awarded, is_valid.",
+        "operationId": "virtual_training_target_tracking_submit_virtual_training_target_tracking_submit_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Virtual Training Target Tracking Submit",
+        "tags": [
+          "web",
+          "virtual-training"
+        ]
+      }
     }
   }
 }

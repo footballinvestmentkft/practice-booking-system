@@ -1,0 +1,588 @@
+{% extends "student_base.html" %}
+
+{% block title %}Target Tracking — Virtual Games{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '👁️' %}
+{% set _page_name = 'Target Tracking' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* ── Page shell ─────────────────────────────────────────────────────────── */
+    .tt-container {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    /* ── Intro card ─────────────────────────────────────────────────────────── */
+    .tt-intro {
+        background: var(--app-card);
+        border-radius: 14px;
+        padding: 1.6rem 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    }
+
+    .tt-intro h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--app-text);
+        margin: 0 0 0.75rem;
+    }
+
+    .tt-how-to {
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+        margin-bottom: 1.2rem;
+        font-size: 0.88rem;
+        color: #0369a1;
+        line-height: 1.6;
+    }
+
+    .tt-how-to strong { display: block; margin-bottom: 0.3rem; color: #075985; }
+
+    .tt-meta {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1.25rem;
+        font-size: 0.85rem;
+        color: var(--app-text-muted);
+    }
+
+    .tt-meta span strong { color: var(--app-text); }
+
+    .tt-cap-warn {
+        background: #fef9c3;
+        border: 1px solid #fde047;
+        border-radius: 8px;
+        padding: 0.6rem 0.9rem;
+        font-size: 0.85rem;
+        color: #713f12;
+        margin-bottom: 1rem;
+    }
+
+    .tt-btn-start {
+        display: inline-block;
+        background: #4f46e5;
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 700;
+        padding: 0.7rem 2rem;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+
+    .tt-btn-start:hover { background: #4338ca; }
+    .tt-btn-start:disabled { background: #9ca3af; cursor: not-allowed; }
+
+    /* ── Game wrap (hidden until started) ──────────────────────────────────── */
+    .tt-game-wrap { display: none; }
+
+    .tt-hud {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.6rem;
+        font-size: 0.85rem;
+        color: var(--app-text-muted);
+    }
+
+    .tt-hud-round {
+        font-weight: 700;
+        color: var(--app-text);
+        font-size: 0.95rem;
+    }
+
+    .tt-status {
+        text-align: center;
+        font-size: 1.05rem;
+        font-weight: 700;
+        min-height: 1.6rem;
+        color: var(--app-text);
+        margin-bottom: 0.5rem;
+    }
+
+    /* ── Arena ──────────────────────────────────────────────────────────────── */
+    .tt-arena {
+        position: relative;
+        width: 480px;
+        height: 360px;
+        background: #1e1b4b;
+        border-radius: 14px;
+        overflow: hidden;
+        margin: 0 auto;
+        touch-action: none;
+        user-select: none;
+    }
+
+    @media (max-width: 520px) {
+        .tt-arena {
+            width: 100%;
+            height: 0;
+            padding-bottom: 75%;
+        }
+    }
+
+    /* ── Moving objects ─────────────────────────────────────────────────────── */
+    .tt-obj {
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: #6366f1;
+        border: 4px solid rgba(255,255,255,0.25);
+        cursor: pointer;
+        transition: border-color 0.1s;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    }
+
+    /* Highlighted target during show phase */
+    .tt-obj.tt-highlight {
+        background: #f59e0b;
+        border-color: #fbbf24;
+        box-shadow: 0 0 20px rgba(251,191,36,0.7), 0 2px 12px rgba(0,0,0,0.4);
+    }
+
+    /* After response: reveal target */
+    .tt-obj.tt-reveal {
+        background: #22c55e;
+        border-color: #4ade80;
+    }
+
+    /* Correct tap */
+    .tt-obj.tt-correct {
+        background: #22c55e;
+        border-color: #4ade80;
+        box-shadow: 0 0 24px rgba(34,197,94,0.8);
+    }
+
+    /* Wrong tap */
+    .tt-obj.tt-wrong {
+        background: #ef4444;
+        border-color: #f87171;
+        box-shadow: 0 0 20px rgba(239,68,68,0.7);
+    }
+
+    /* ── Phase progress dots ────────────────────────────────────────────────── */
+    .tt-phase-dots {
+        display: flex;
+        gap: 0.35rem;
+        justify-content: center;
+        margin-top: 0.6rem;
+    }
+
+    .tt-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #e5e7eb;
+    }
+
+    .tt-dot.done    { background: #22c55e; }
+    .tt-dot.wrong   { background: #ef4444; }
+    .tt-dot.timeout { background: #f59e0b; }
+    .tt-dot.active  { background: #4f46e5; }
+
+    /* ── Submit overlay ─────────────────────────────────────────────────────── */
+    .tt-submitting {
+        display: none;
+        text-align: center;
+        padding: 2rem;
+        font-size: 1rem;
+        color: var(--app-text-muted);
+    }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="tt-container">
+
+    <!-- ── Intro ──────────────────────────────────────────────────────────── -->
+    <div class="tt-intro" id="tt-intro">
+        <h2>👁️ Target Tracking</h2>
+
+        <div class="tt-how-to">
+            <strong>How to play</strong>
+            One object is <span style="color:#d97706;font-weight:700;">highlighted in amber</span> at the start of each round.<br>
+            All objects then become identical and start moving. <strong>Track it mentally.</strong><br>
+            When the objects stop, tap the one you believe was the target.
+        </div>
+
+        <div class="tt-meta">
+            <span>⚽ <strong>9 rounds</strong> · 3 phases</span>
+            <span>👁️ <strong>3–5 objects</strong> per phase</span>
+            <span>🎯 <strong>1 target</strong> per round</span>
+        </div>
+
+        {% if attempts_today >= max_daily_attempts %}
+        <div class="tt-cap-warn">
+            ✓ You've completed all {{ max_daily_attempts }} attempts for today. Come back tomorrow!
+        </div>
+        {% else %}
+        <p style="font-size:0.85rem;color:var(--app-text-muted);margin-bottom:1rem;">
+            Attempts today: <strong>{{ attempts_today }}/{{ max_daily_attempts }}</strong>
+            &nbsp;·&nbsp; {{ attempts_remaining }} remaining
+        </p>
+        {% endif %}
+
+        <button class="tt-btn-start" id="tt-btn-start"
+                {% if attempts_today >= max_daily_attempts %}disabled{% endif %}
+                onclick="startGame()">
+            ▶ Start Game
+        </button>
+
+        <div style="margin-top:1.25rem;">
+            <a href="/virtual-training" style="font-size:0.85rem;color:#667eea;">← Back to Virtual Games</a>
+        </div>
+    </div>
+
+    <!-- ── Game ───────────────────────────────────────────────────────────── -->
+    <div class="tt-game-wrap" id="tt-game-wrap">
+
+        <div class="tt-hud">
+            <span class="tt-hud-round" id="tt-hud-round">Round 1 / 9</span>
+            <span id="tt-hud-phase">Phase 1 · 3 objects</span>
+        </div>
+
+        <div class="tt-status" id="tt-status">Get ready…</div>
+
+        <div class="tt-arena" id="tt-arena"></div>
+
+        <div class="tt-phase-dots" id="tt-dots"></div>
+    </div>
+
+    <!-- ── Submitting overlay ─────────────────────────────────────────────── -->
+    <div class="tt-submitting" id="tt-submitting">
+        <p style="font-size:2rem;">⏳</p>
+        <p>Saving your result…</p>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+'use strict';
+
+/* ── Game config from server ──────────────────────────────────────────────── */
+const PHASES       = {{ (game.config.get('phases', []) if game.config else []) | tojson }};
+const ARENA_W      = {{ (game.config.get('arena_width',      480) if game.config else 480) }};
+const ARENA_H      = {{ (game.config.get('arena_height',     360) if game.config else 360) }};
+const RADIUS       = {{ (game.config.get('object_radius_px',  40) if game.config else 40)  }};
+const SUBMIT_URL   = '/virtual-training/target-tracking/submit';
+
+/* ── Flatten phases into per-round descriptors ────────────────────────────── */
+const ROUNDS = [];
+PHASES.forEach(function (p, pi) {
+    for (let r = 0; r < p.rounds; r++) {
+        ROUNDS.push({
+            phase:        pi,
+            roundInPhase: r,
+            objectCount:  p.object_count,
+            speed:        p.object_speed,
+            highlightMs:  p.highlight_ms,
+            trackingMs:   p.tracking_ms,
+            windowMs:     p.window_ms,
+        });
+    }
+});
+const TOTAL_ROUNDS = ROUNDS.length;   // 9
+const BASE_SPEED   = 2.0;             // px per frame at 60 fps, before phase multiplier
+
+/* ── State ────────────────────────────────────────────────────────────────── */
+let roundIdx     = 0;
+let objects      = [];          // [{x, y, vx, vy, el}]
+let targetIdx    = 0;
+let rafId        = null;
+let responded    = false;
+let roundStartMs = 0;
+let roundResults = [];
+let startedAt    = null;
+
+/* ── DOM helpers ──────────────────────────────────────────────────────────── */
+const arena      = document.getElementById('tt-arena');
+const statusEl   = document.getElementById('tt-status');
+const roundLabel = document.getElementById('tt-hud-round');
+const phaseLabel = document.getElementById('tt-hud-phase');
+const dotsEl     = document.getElementById('tt-dots');
+
+function setStatus(msg) { statusEl.textContent = msg; }
+
+function updateHUD() {
+    roundLabel.textContent = 'Round ' + (roundIdx + 1) + ' / ' + TOTAL_ROUNDS;
+    const r = ROUNDS[Math.min(roundIdx, TOTAL_ROUNDS - 1)];
+    phaseLabel.textContent = 'Phase ' + (r.phase + 1) + ' · ' + r.objectCount + ' objects';
+}
+
+function buildDots() {
+    dotsEl.innerHTML = '';
+    for (let i = 0; i < TOTAL_ROUNDS; i++) {
+        const d = document.createElement('div');
+        d.className = 'tt-dot';
+        d.id = 'tt-dot-' + i;
+        dotsEl.appendChild(d);
+    }
+}
+
+function setDot(i, cls) {
+    const d = document.getElementById('tt-dot-' + i);
+    if (d) d.className = 'tt-dot ' + cls;
+}
+
+/* ── Object management ────────────────────────────────────────────────────── */
+function clearObjects() {
+    objects.forEach(function (o) { if (o.el.parentNode) o.el.parentNode.removeChild(o.el); });
+    objects = [];
+}
+
+function spawnObjects(count) {
+    for (let i = 0; i < count; i++) {
+        const el = document.createElement('div');
+        el.className = 'tt-obj';
+        el.dataset.idx = i;
+
+        /* Random non-overlapping start position */
+        let x, y, ok, tries = 0;
+        do {
+            ok = true;
+            x = RADIUS + Math.random() * (ARENA_W - 2 * RADIUS);
+            y = RADIUS + Math.random() * (ARENA_H - 2 * RADIUS);
+            for (let j = 0; j < objects.length; j++) {
+                const dx = x - objects[j].x;
+                const dy = y - objects[j].y;
+                if (Math.sqrt(dx*dx + dy*dy) < RADIUS * 2.8) { ok = false; break; }
+            }
+        } while (!ok && ++tries < 80);
+
+        el.style.left = (x - RADIUS) + 'px';
+        el.style.top  = (y - RADIUS) + 'px';
+        arena.appendChild(el);
+        objects.push({ x, y, vx: 0, vy: 0, el });
+    }
+}
+
+function moveObjects() {
+    objects.forEach(function (o) {
+        o.x += o.vx;
+        o.y += o.vy;
+        if (o.x < RADIUS)            { o.x = RADIUS;            o.vx = Math.abs(o.vx); }
+        if (o.x > ARENA_W - RADIUS)  { o.x = ARENA_W - RADIUS;  o.vx = -Math.abs(o.vx); }
+        if (o.y < RADIUS)            { o.y = RADIUS;             o.vy = Math.abs(o.vy); }
+        if (o.y > ARENA_H - RADIUS)  { o.y = ARENA_H - RADIUS;  o.vy = -Math.abs(o.vy); }
+        o.el.style.left = (o.x - RADIUS) + 'px';
+        o.el.style.top  = (o.y - RADIUS) + 'px';
+    });
+}
+
+/* ── Game flow ────────────────────────────────────────────────────────────── */
+function startGame() {
+    startedAt = new Date().toISOString();
+    document.getElementById('tt-intro').style.display    = 'none';
+    document.getElementById('tt-game-wrap').style.display = 'block';
+    buildDots();
+    startRound();
+}
+
+function startRound() {
+    if (roundIdx >= TOTAL_ROUNDS) { finishGame(); return; }
+    const round = ROUNDS[roundIdx];
+    updateHUD();
+    setDot(roundIdx, 'active');
+    setStatus('Get ready…');
+    clearObjects();
+
+    targetIdx = Math.floor(Math.random() * round.objectCount);
+    spawnObjects(round.objectCount);
+
+    /* Short pre-highlight pause so player can orient */
+    setTimeout(function () { highlightPhase(round); }, 400);
+}
+
+function highlightPhase(round) {
+    setStatus('Memorise the target!');
+    objects[targetIdx].el.classList.add('tt-highlight');
+
+    setTimeout(function () {
+        objects[targetIdx].el.classList.remove('tt-highlight');
+        trackingPhase(round);
+    }, round.highlightMs);
+}
+
+function trackingPhase(round) {
+    setStatus('Track it…');
+    const spd = BASE_SPEED * round.speed;
+    objects.forEach(function (o) {
+        const angle = Math.random() * Math.PI * 2;
+        o.vx = Math.cos(angle) * spd;
+        o.vy = Math.sin(angle) * spd;
+    });
+
+    const deadline = Date.now() + round.trackingMs;
+    rafId = requestAnimationFrame(function loop() {
+        moveObjects();
+        if (Date.now() < deadline) {
+            rafId = requestAnimationFrame(loop);
+        } else {
+            cancelAnimationFrame(rafId);
+            responsePhase(round);
+        }
+    });
+}
+
+function responsePhase(round) {
+    setStatus('Tap the object you tracked!');
+    responded = false;
+    roundStartMs = Date.now();
+
+    objects.forEach(function (o, i) {
+        o.el.onclick = function () { handleTap(i, round); };
+    });
+
+    setTimeout(function () {
+        if (!responded) { handleTimeout(round); }
+    }, round.windowMs);
+}
+
+function handleTap(tappedIdx, round) {
+    if (responded) return;
+    responded = true;
+    const responseMs = Date.now() - roundStartMs;
+    const correct    = tappedIdx === targetIdx;
+
+    objects.forEach(function (o) { o.el.onclick = null; });
+    objects[targetIdx].el.classList.add('tt-reveal');
+    objects[tappedIdx].el.classList.add(correct ? 'tt-correct' : 'tt-wrong');
+
+    setStatus(correct ? '✓ Correct!' : '✗ Wrong object');
+    setDot(roundIdx, correct ? 'done' : 'wrong');
+
+    roundResults.push({
+        round:        roundIdx,
+        phase:        round.phase,
+        object_count: round.objectCount,
+        outcome:      correct ? 'correct' : 'wrong',
+        response_ms:  responseMs,
+        tapped_index: tappedIdx,
+        target_index: targetIdx,
+    });
+
+    setTimeout(function () { roundIdx++; startRound(); }, 900);
+}
+
+function handleTimeout(round) {
+    if (responded) return;
+    responded = true;
+
+    objects.forEach(function (o) { o.el.onclick = null; });
+    objects[targetIdx].el.classList.add('tt-reveal');
+
+    setStatus('⏱ Time up!');
+    setDot(roundIdx, 'timeout');
+
+    roundResults.push({
+        round:        roundIdx,
+        phase:        round.phase,
+        object_count: round.objectCount,
+        outcome:      'timeout',
+        response_ms:  null,
+        tapped_index: null,
+        target_index: targetIdx,
+    });
+
+    setTimeout(function () { roundIdx++; startRound(); }, 900);
+}
+
+/* ── Finish & submit ──────────────────────────────────────────────────────── */
+function finishGame() {
+    document.getElementById('tt-game-wrap').style.display  = 'none';
+    document.getElementById('tt-submitting').style.display = 'block';
+
+    const stimuli_count     = roundResults.length;
+    const correct_count     = roundResults.filter(function (r) { return r.outcome === 'correct';  }).length;
+    const wrong_click_count = roundResults.filter(function (r) { return r.outcome === 'wrong';    }).length;
+    const error_count       = roundResults.filter(function (r) { return r.outcome === 'timeout';  }).length;
+
+    const rts = roundResults
+        .filter(function (r) { return r.response_ms !== null; })
+        .map(function (r) { return r.response_ms; });
+    const avg_reaction_ms = rts.length
+        ? Math.round(rts.reduce(function (a, b) { return a + b; }, 0) / rts.length)
+        : null;
+    const min_reaction_ms = rts.length ? Math.min.apply(null, rts) : null;
+
+    const durationSec = (Date.now() - new Date(startedAt).getTime()) / 1000;
+
+    const safe        = Math.max(stimuli_count, 1);
+    const hit_rate    = correct_count  / safe;
+    const miss_rate   = error_count    / safe;
+    const speed_factor = avg_reaction_ms !== null
+        ? Math.max(0, 1 - avg_reaction_ms / 3000)
+        : 0.5;
+    const score_raw  = 0.60 * hit_rate + 0.25 * (1 - miss_rate) + 0.15 * speed_factor;
+    const score_norm = Math.round(score_raw * 100);
+
+    const per_phase = PHASES.map(function (p, pi) {
+        const pr = roundResults.filter(function (r) { return r.phase === pi; });
+        return {
+            phase:        pi,
+            rounds:       pr.length,
+            correct:      pr.filter(function (r) { return r.outcome === 'correct'; }).length,
+            wrong:        pr.filter(function (r) { return r.outcome === 'wrong';   }).length,
+            timeout:      pr.filter(function (r) { return r.outcome === 'timeout'; }).length,
+            object_count: p.object_count,
+        };
+    });
+
+    const payload = {
+        started_at:       startedAt,
+        duration_seconds: Math.round(durationSec * 10) / 10,
+        stimuli_count,
+        correct_count,
+        error_count,
+        wrong_click_count,
+        avg_reaction_ms,
+        min_reaction_ms,
+        score_raw:        Math.round(score_raw * 1000) / 1000,
+        score_normalized: score_norm,
+        raw_metrics: {
+            v:            2,
+            per_round:    roundResults,
+            per_phase,
+            late_summary: null,
+        },
+    };
+
+    fetch(SUBMIT_URL, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+        if (data.attempt_id) {
+            window.location.href = '/virtual-training/target-tracking/result/' + data.attempt_id;
+        } else {
+            document.getElementById('tt-submitting').innerHTML =
+                '<p style="color:#ef4444">⚠ Could not save result. <a href="/virtual-training">Back to hub</a></p>';
+        }
+    })
+    .catch(function () {
+        document.getElementById('tt-submitting').innerHTML =
+            '<p style="color:#ef4444">⚠ Network error. <a href="/virtual-training">Back to hub</a></p>';
+    });
+}
+
+/* Expose for inline onclick */
+window.startGame = startGame;
+
+})();
+</script>
+{% endblock %}

@@ -287,7 +287,7 @@ _GAMES = [
             "while distractors overlap and change direction."
         ),
         "game_type": "tracking",
-        "is_active": False,
+        "is_active": True,
         "base_xp": 12,
         "max_daily_attempts": 5,
         "skill_targets": {
@@ -297,6 +297,57 @@ _GAMES = [
             "reactions":          0.10,
         },
         "config": {
+            # ── runtime gameplay keys ──────────────────────────────────────
+            # 3-phase session: 3+3+3 = 9 rounds, MOT paradigm
+            # Phase 0: 3 objects, slow speed — warm-up
+            # Phase 1: 4 objects, medium speed
+            # Phase 2: 5 objects, faster speed — peak difficulty
+            # No hand/finger protocol — raw_metrics v=2 (pure cognitive task)
+            # Score formula:
+            #   hit_rate    = correct_count / stimuli_count
+            #   miss_rate   = error_count / stimuli_count (timeouts only)
+            #   speed_factor = max(0, 1 − avg_reaction_ms / 3000)
+            #   score_raw   = 0.60×hit_rate + 0.25×(1−miss_rate) + 0.15×speed_factor
+            "phases": [
+                {
+                    "phase":         0,
+                    "rounds":        3,
+                    "object_count":  3,
+                    "object_speed":  1.00,
+                    "highlight_ms":  1500,
+                    "tracking_ms":   4000,
+                    "window_ms":     3000,
+                },
+                {
+                    "phase":         1,
+                    "rounds":        3,
+                    "object_count":  4,
+                    "object_speed":  1.15,
+                    "highlight_ms":  1500,
+                    "tracking_ms":   5000,
+                    "window_ms":     3000,
+                },
+                {
+                    "phase":         2,
+                    "rounds":        3,
+                    "object_count":  5,
+                    "object_speed":  1.30,
+                    "highlight_ms":  1500,
+                    "tracking_ms":   6000,
+                    "window_ms":     3000,
+                },
+            ],
+            "object_radius_px": 40,
+            "arena_width":      480,
+            "arena_height":     360,
+            # Anti-farming overrides — MOT has only 9 rounds (not 36+ stimuli)
+            "validation_overrides": {
+                "min_stimuli_count":           3,
+                "min_duration_seconds":        20.0,
+                "bot_threshold_ms":            200,
+                "random_clicking_threshold":   0.70,
+            },
+            # ── display keys ──────────────────────────────────────────────
             "show_in_hub":      True,
             "icon":             "👁️",
             "football_benefit": (
