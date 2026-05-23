@@ -174,7 +174,7 @@
                         {% else %}—{% endif %}
                     </td>
                     <td>
-                        {% if _hp and _hp.get("protocol_difficulty_multiplier", 1.0) | float > 1.0 %}
+                        {% if _hp and _hp.get("assignment_source") == "system" and _hp.get("hand") != "free" %}
                         <span class="vth-protocol-badge"
                               title="{{ _hp.get('label', '') }} · Self-declared · Not automatically verified">
                             🖐 {{ _hp.get("label", "—") }} ×{{ "%.2f"|format(_hp.get("protocol_difficulty_multiplier", 1.0) | float) }}
@@ -200,6 +200,7 @@
 
     <div class="vth-footer">
         <a href="/virtual-training">💻 All Games</a>
+        <a href="/virtual-training/hand-finger-stats">🖐 Hand Stats</a>
         <a href="/virtual-training/color-reaction">⚡ Play Color Reaction</a>
         <a href="/training">🎓 Training</a>
     </div>

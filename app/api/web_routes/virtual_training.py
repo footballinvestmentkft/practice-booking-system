@@ -543,3 +543,44 @@ async def virtual_training_history(
             "games": games,
         },
     )
+
+
+# ── Hand/Finger Performance Stats ─────────────────────────────────────────────
+
+_VALID_GAME_CODES: frozenset[str] = frozenset({"color_reaction", "go_no_go"})
+
+
+@router.get("/virtual-training/hand-finger-stats", response_class=HTMLResponse)
+async def virtual_training_hand_finger_stats(
+    request: Request,
+    game: str = "all",
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Hand/Finger performance aggregation — system-assigned v3 attempts only."""
+    guard = require_student_onboarding(user)
+    if guard:
+        return guard
+
+    # Resolve game query param → game_id (invalid param falls back to "all")
+    game_code = game if game in _VALID_GAME_CODES else "all"
+    game_id: int | None = None
+    if game_code != "all":
+        g = VirtualTrainingService.get_game(db, game_code)
+        if g:
+            game_id = g.id
+        else:
+            game_code = "all"
+
+    stats = VirtualTrainingService.get_hand_finger_stats(db, user.id, game_id)
+
+    return templates.TemplateResponse(
+        "virtual_training_hand_finger_stats.html",
+        {
+            "request":     request,
+            "user":        user,
+            **_spec_ctx(user, db),
+            "stats":       stats,
+            "game_filter": game_code,
+        },
+    )
