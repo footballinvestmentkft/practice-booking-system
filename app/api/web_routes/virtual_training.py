@@ -35,6 +35,26 @@ async def virtual_training_hub(
         return guard
 
     all_games = VirtualTrainingService.get_hub_games(db)
+
+    today_start = datetime.combine(
+        datetime.now(timezone.utc).date(),
+        datetime.min.time(),
+    ).replace(tzinfo=timezone.utc)
+    game_attempts: dict[int, int] = {
+        g.id: (
+            db.query(VirtualTrainingAttempt)
+            .filter(
+                VirtualTrainingAttempt.user_id == user.id,
+                VirtualTrainingAttempt.game_id == g.id,
+                VirtualTrainingAttempt.started_at >= today_start,
+                VirtualTrainingAttempt.is_valid == True,  # noqa: E712
+            )
+            .count()
+        )
+        for g in all_games
+        if g.is_active
+    }
+
     return templates.TemplateResponse(
         "virtual_training_hub.html",
         {
@@ -42,6 +62,7 @@ async def virtual_training_hub(
             "user": user,
             **_spec_ctx(user, db),
             "all_games": all_games,
+            "game_attempts": game_attempts,
         },
     )
 

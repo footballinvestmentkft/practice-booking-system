@@ -154,6 +154,42 @@
         padding-left: 0.6rem;
     }
 
+    /* ── Daily attempt bar ───────────────────────────────────────────────── */
+    .vg-attempts {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-top: 0.1rem;
+    }
+
+    .vg-attempts-bar-wrap {
+        flex: 1;
+        background: #e5e7eb;
+        border-radius: 4px;
+        height: 5px;
+        overflow: hidden;
+    }
+
+    .vg-attempts-bar {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+
+    .vg-attempts-bar.full  { background: #9ca3af; }
+    .vg-attempts-bar.used  { background: #4f46e5; }
+    .vg-attempts-bar.fresh { background: #22c55e; }
+
+    .vg-attempts-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        white-space: nowrap;
+        color: var(--app-text-muted);
+    }
+
+    .vg-attempts-label.capped { color: #9ca3af; }
+    .vg-attempts-label.active { color: #4f46e5; }
+
     /* ── CTA area ────────────────────────────────────────────────────────── */
     .vg-cta {
         margin-top: auto;
@@ -173,6 +209,12 @@
     }
 
     .vg-btn-play:hover { background: #4338ca; }
+
+    .vg-btn-play.vg-btn-capped {
+        background: #6b7280;
+        cursor: default;
+    }
+    .vg-btn-play.vg-btn-capped:hover { background: #6b7280; }
 
     .vg-btn-coming-soon {
         display: inline-block;
@@ -250,9 +292,28 @@
             <p class="vg-football-benefit">⚽ {{ benefit }}</p>
             {% endif %}
 
+            {% if is_active %}
+            {% set _used = game_attempts.get(game.id, 0) %}
+            {% set _max  = game.max_daily_attempts %}
+            {% set _rem  = [_max - _used, 0] | max %}
+            {% set _pct  = ((_used / _max) * 100) | round(0) | int if _max > 0 else 0 %}
+            <div class="vg-attempts">
+                <div class="vg-attempts-bar-wrap">
+                    <div class="vg-attempts-bar {% if _used == 0 %}fresh{% elif _used >= _max %}full{% else %}used{% endif %}"
+                         style="width:{{ _pct }}%"></div>
+                </div>
+                <span class="vg-attempts-label {% if _used >= _max %}capped{% else %}active{% endif %}">
+                    {% if _used >= _max %}Cap reached{% else %}{{ _used }}/{{ _max }} · {{ _rem }} left{% endif %}
+                </span>
+            </div>
+            {% endif %}
+
             <div class="vg-cta">
                 {% if is_active %}
-                <a href="/virtual-training/{{ game.code | replace('_', '-') }}" class="vg-btn-play">▶ Play</a>
+                <a href="/virtual-training/{{ game.code | replace('_', '-') }}"
+                   class="vg-btn-play {% if _used >= _max %}vg-btn-capped{% endif %}">
+                    {% if _used >= _max %}✓ Done today{% else %}▶ Play{% endif %}
+                </a>
                 {% else %}
                 <button class="vg-btn-coming-soon" disabled>Coming soon</button>
                 {% endif %}

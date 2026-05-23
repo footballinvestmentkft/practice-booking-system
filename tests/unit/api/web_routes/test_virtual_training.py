@@ -431,7 +431,10 @@ class TestVTRoutes:
         game = _mock_game(is_active=True)
         with patch(f"{_ROUTE_BASE}.VirtualTrainingService.get_hub_games", return_value=[game]) as mock_hub:
             db = _mock_db()
-            db.query.return_value = MagicMock()
+            q = MagicMock()
+            q.filter.return_value = q
+            q.count.return_value = 0   # attempt count must be int for template arithmetic
+            db.query.return_value = q
             client = self._make_client(user_override=user, db_override=db)
             resp = client.get("/virtual-training", follow_redirects=False)
         assert resp.status_code == 200
