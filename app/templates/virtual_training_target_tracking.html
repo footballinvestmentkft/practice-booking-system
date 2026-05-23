@@ -140,6 +140,18 @@
         margin-top: 0.25rem;
     }
 
+    /* Config unavailable warning ───────────────────────────────────────────────*/
+    .tt-config-warn {
+        background: #fef2f2;
+        border: 1px solid #fca5a5;
+        border-radius: 8px;
+        padding: 0.6rem 0.9rem;
+        font-size: 0.83rem;
+        color: #7f1d1d;
+        margin-bottom: 1rem;
+        display: none;
+    }
+
     /* Flash notice ────────────────────────────────────────────────────────────*/
     .tt-flash-notice {
         background: #fffbeb;
@@ -361,6 +373,11 @@
             </div>
         </div>
 
+        <!-- Config unavailable guard (shown if DB difficulties key missing) -->
+        <div class="tt-config-warn" id="tt-config-warn">
+            ⚠ Difficulty configuration unavailable. Running Easy mode only.
+        </div>
+
         <!-- Flash warning (shown for Medium+) -->
         <div class="tt-flash-notice" id="tt-flash-notice">
             ⚠ Distractor flashes may appear during tracking (amber colour). Ignore them — only follow the original target.
@@ -436,6 +453,28 @@ const DIFFICULTIES = {
 
 const CSRF_TOKEN = "{{ request.cookies.get('csrf_token', '') }}";
 const BASE_SPEED = 2.0;   /* px per frame at 60 fps, before phase speed multiplier */
+
+/* ── Difficulty config guard ──────────────────────────────────────────────── */
+const _DIFF_CONFIG_OK = Boolean(
+    _DIFFICULTIES_RAW.medium &&
+    _DIFFICULTIES_RAW.hard &&
+    _DIFFICULTIES_RAW.expert
+);
+if (!_DIFF_CONFIG_OK) {
+    console.warn('[TT] Difficulty configuration missing from game config — ' +
+                 'running Easy mode only. Re-run seed_virtual_training_games.py.');
+    /* Disable non-easy selector cards so user cannot pick unavailable levels */
+    ['medium', 'hard', 'expert'].forEach(function (l) {
+        var card = document.getElementById('tt-diff-' + l);
+        if (card) {
+            card.classList.add('tt-diff-disabled');
+            card.onclick = null;
+        }
+    });
+    /* Show the config-warn banner */
+    var _warnEl = document.getElementById('tt-config-warn');
+    if (_warnEl) _warnEl.style.display = 'block';
+}
 
 /* ── Responsive arena dimensions (read at runtime, not frozen at load) ────── */
 let arenaW, arenaH;

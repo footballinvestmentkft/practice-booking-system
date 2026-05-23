@@ -56,6 +56,7 @@ TT-53   Template: responsive radius formula uses arenaW / 480
 TT-54   Template: resize + orientationchange listeners registered
 TT-55   Template: object size set from radius * 2 in JS
 TT-56   Template: X-CSRF-Token header present in fetch call
+TT-57   Template: _DIFF_CONFIG_OK guard present — disables Medium/Hard/Expert when difficulties missing
 """
 from __future__ import annotations
 
@@ -1212,3 +1213,13 @@ class TestTTTemplateResponsiveGuards:
         src = self._src()
         assert "CSRF_TOKEN" in src
         assert "X-CSRF-Token" in src
+
+    def test_tt57_diff_config_ok_guard_present(self):
+        """TT-57: _DIFF_CONFIG_OK guard disables Medium/Hard/Expert when difficulties missing."""
+        src = self._src()
+        assert "_DIFF_CONFIG_OK" in src
+        assert "tt-config-warn" in src
+        assert "console.warn" in src
+        # Guard must disable each non-easy card
+        assert "tt-diff-disabled" in src
+        assert "Difficulty configuration unavailable" in src
