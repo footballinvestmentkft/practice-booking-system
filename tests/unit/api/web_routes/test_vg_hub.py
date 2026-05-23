@@ -43,6 +43,7 @@ def _make_game(
     g.code = code
     g.name = name
     g.is_active = is_active
+    g.max_daily_attempts = 5   # required for hub template attempt-bar arithmetic
     g.description = f"Description for {name}"
     g.skill_targets = skill_targets or {"reactions": 0.5, "decisions": 0.5}
     g.config = config if config is not None else {
