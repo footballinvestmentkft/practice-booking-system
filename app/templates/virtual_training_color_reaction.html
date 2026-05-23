@@ -1,4 +1,5 @@
 {% extends "student_base.html" %}
+{% from "macros/vt_protocol_hand.html" import protocol_hand_diagram %}
 
 {% block title %}Color Reaction - LFA{% endblock %}
 {% block active_page %}lfa-player{% endblock %}
@@ -297,6 +298,19 @@
         border-top: 1px solid #e0e7ff;
         padding-top: 0.5rem;
     }
+
+    /* ── Hand/finger diagram ────────────────────────────────────── */
+    .vt-hd-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 4px;
+        margin: 0.4rem 0 0.85rem;
+    }
+    .vt-hd-svg {
+        width: 60px;
+        height: 88px;
+    }
 </style>
 {% endblock %}
 
@@ -349,6 +363,7 @@
             <span>🎯</span>
             <span class="cr-protocol-card-title">Today's Protocol</span>
         </div>
+        {{ protocol_hand_diagram(_ap.hand, _ap.finger) }}
         {% if _ap.hand == "free" %}
         <div class="cr-protocol-card-combo">Free — No Protocol Assigned</div>
         <div class="cr-protocol-card-mult">×1.00 (standard)</div>
