@@ -467,6 +467,34 @@
     </div>
     {% endif %}
 
+    {# ── Late-click summary (LC-01 / raw_metrics v2) ────────────────────── #}
+    {% if late_summary and late_summary.late_click_count %}
+    <div class="gngr-detail-section" id="gngr-late-clicks">
+        <h4>Late Clicks</h4>
+        <p class="gngr-late-note">Taps detected within 600 ms after the stimulus window expired.</p>
+        <table class="gngr-detail-table">
+            <thead>
+                <tr>
+                    <th>Total</th>
+                    <th>Late GO</th>
+                    <th>Late NO-GO</th>
+                    <th>Avg delay</th>
+                    <th>Max delay</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ late_summary.late_click_count }}</td>
+                    <td>{{ late_summary.late_go_count }}</td>
+                    <td class="{% if late_summary.late_no_go_count > 0 %}gngr-acc-poor{% else %}gngr-acc-good{% endif %}">{{ late_summary.late_no_go_count }}</td>
+                    <td>{% if late_summary.late_click_avg_ms is not none %}{{ late_summary.late_click_avg_ms }} ms{% else %}—{% endif %}</td>
+                    <td>{% if late_summary.late_click_max_ms is not none %}{{ late_summary.late_click_max_ms }} ms{% else %}—{% endif %}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
     {# ── Admin per-stimulus debug ──────────────────────────────────────── #}
     {% if is_admin and per_stimulus %}
     <div class="gngr-admin-debug" id="gngr-admin-debug">

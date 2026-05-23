@@ -377,6 +377,13 @@
     var currentDistractor = null;       // Stroop ink color name of active round
     var currentPool       = [];         // color names shown in active round
 
+    // ── Late-click detection (Phase 2.3) ───────────────────────────────────
+    var LATE_WINDOW_MS  = 600;
+    var lateClickCount  = 0;
+    var lateClickTimes  = [];
+    var lateHandled     = false;
+    var windowExpiredAt = null;
+
     // ── DOM refs ───────────────────────────────────────────────────────────
     var arena        = document.getElementById("crArena");
     var instruction  = document.getElementById("crInstruction");
@@ -493,8 +500,10 @@
 
         // Place N circles, one per zone
         clearCircles();
-        var positions = getZonePositions(n, diameter);
-        clickHandled  = false;
+        var positions   = getZonePositions(n, diameter);
+        clickHandled    = false;
+        lateHandled     = false;
+        windowExpiredAt = null;
 
         for (var i = 0; i < n; i++) {
             (function (colorName, pos, diam) {
@@ -536,6 +545,23 @@
         currentCircles = [];
     }
 
+    // ── Late-click listener — fires after window expires, within LATE_WINDOW_MS ──
+    field.addEventListener("pointerdown", function () {
+        if (!clickHandled || lateHandled || windowExpiredAt === null) { return; }
+        var now    = performance.now();
+        var lateBy = Math.round(now - windowExpiredAt);
+        if (lateBy < 0 || lateBy > LATE_WINDOW_MS) { return; }
+        lateHandled = true;
+        lateClickCount++;
+        lateClickTimes.push(lateBy);
+        for (var i = stimulusLog.length - 1; i >= 0; i--) {
+            if (stimulusLog[i].outcome === "miss") {
+                stimulusLog[i].late_click = { late_by_ms: lateBy };
+                break;
+            }
+        }
+    });
+
     function onCircleClick(colorName, phaseDelay) {
         if (clickHandled) { return; }
         clickHandled = true;
@@ -570,7 +596,9 @@
 
     function handleMiss() {
         if (clickHandled) { return; }
-        clickHandled = true;
+        clickHandled    = true;
+        windowExpiredAt = performance.now();
+        lateHandled     = false;
         missCount++;
         stimulusLog.push({
             i: globalStimIdx, phase: currentPhaseIdx,
@@ -693,7 +721,25 @@
             };
         });
 
-        var rawMetrics = { v: 1, per_stimulus: stimulusLog, per_color: perColor, per_phase: perPhase };
+        var lateAvgMs = lateClickTimes.length > 0
+            ? Math.round(lateClickTimes.reduce(function(a,b){return a+b;},0) / lateClickTimes.length)
+            : null;
+        var lateMaxMs = lateClickTimes.length > 0
+            ? Math.max.apply(null, lateClickTimes)
+            : null;
+        var rawMetrics = {
+            v: 2,
+            per_stimulus: stimulusLog,
+            per_color:    perColor,
+            per_phase:    perPhase,
+            late_summary: {
+                late_click_count:  lateClickCount,
+                late_click_avg_ms: lateAvgMs,
+                late_click_max_ms: lateMaxMs,
+                late_go_count:     0,
+                late_no_go_count:  0
+            }
+        };
 
         var payload = {
             started_at:        startedAt,

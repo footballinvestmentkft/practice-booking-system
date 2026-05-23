@@ -63,6 +63,9 @@ class VTSignals:
     completion_rate: float          # stimuli_count / expected_total
     avg_reaction_ms: Optional[float] = None
     per_phase:       Optional[list]  = None   # raw_metrics.per_phase if available
+    late_click_rate: float = 0.0   # late clicks / stimuli (v2+)
+    late_go_rate:    float = 0.0   # late GO responses / stimuli (v2+ GNG only)
+    late_nogo_rate:  float = 0.0   # late NO-GO false alarms / stimuli (v2+ GNG only)
 
 
 # ── Layer 1: Signal extraction ────────────────────────────────────────────────
@@ -105,11 +108,19 @@ class VTSignalExtractor:
         else:
             speed_score = 0.5  # neutral when RT not recorded (non-RT game path)
 
-        # Enrich with per-phase from raw_metrics if structurally valid
+        # Enrich with per-phase and late_summary from raw_metrics if structurally valid
         per_phase = None
+        late_click_rate = 0.0
+        late_go_rate    = 0.0
+        late_nogo_rate  = 0.0
         raw = data.get("raw_metrics")
-        if isinstance(raw, dict) and raw.get("v") == 1:
+        if isinstance(raw, dict) and raw.get("v", 1) >= 1:
             per_phase = raw.get("per_phase")
+        if isinstance(raw, dict) and raw.get("v", 1) >= 2:
+            ls = raw.get("late_summary") or {}
+            late_click_rate = max(0.0, min(1.0, int(ls.get("late_click_count") or 0) / safe))
+            late_go_rate    = max(0.0, min(1.0, int(ls.get("late_go_count")    or 0) / safe))
+            late_nogo_rate  = max(0.0, min(1.0, int(ls.get("late_no_go_count") or 0) / safe))
 
         return VTSignals(
             hit_rate=hit_rate,
@@ -119,6 +130,9 @@ class VTSignalExtractor:
             completion_rate=completion,
             avg_reaction_ms=float(avg_ms) if avg_ms is not None else None,
             per_phase=per_phase,
+            late_click_rate=late_click_rate,
+            late_go_rate=late_go_rate,
+            late_nogo_rate=late_nogo_rate,
         )
 
 
@@ -151,11 +165,16 @@ class VTSkillScorer:
     def score_concentration(signals: VTSignals) -> float:
         """
         Sustained-attention proxy.
-        Misses penalised 2× because ignoring a stimulus is a full attention lapse.
-          concentration = min(1.0, 1 − 2 × miss_rate)
-        Range: (−∞, 1.0] — negative when miss_rate > 0.5.
+        Late clicks (post-window taps) are partial attention lapses: penalised at 0.8×
+        instead of 2× for a full miss.  Excludes late NO-GO (composure domain, not attention).
+          late_for_conc = max(0, late_click_rate − late_nogo_rate)
+          pure_miss     = max(0, miss_rate − late_for_conc)
+          concentration = min(1.0, 1 − 2×pure_miss − 0.8×late_for_conc)
+        Range: (−∞, 1.0].  v1 payloads: late_* = 0.0 → identical to old formula.
         """
-        return min(1.0, 1.0 - 2.0 * signals.miss_rate)
+        late_for_conc = max(0.0, signals.late_click_rate - signals.late_nogo_rate)
+        pure_miss     = max(0.0, signals.miss_rate - late_for_conc)
+        return min(1.0, 1.0 - 2.0 * pure_miss - 0.8 * late_for_conc)
 
     @staticmethod
     def score_anticipation(signals: VTSignals) -> float:
@@ -186,14 +205,14 @@ class VTSkillScorer:
         Commission errors (acting when you should not) are the primary failure
         mode of a Go/No-Go task, so penalty weight mirrors score_decisions.
 
-          composure = min(1.0, 1.0 − 1.5 × wrong_rate)
+          composure = min(1.0, 1.0 − 1.5 × wrong_rate − 0.3 × late_nogo_rate)
 
         wrong_rate = wrong_click_count / stimuli_count
-        At zero false alarms: composure = 1.0 (perfect impulse control).
-        At wrong_rate = 0.67: composure = 0.0 (neutral boundary).
-        Range: (−∞, 1.0] — negative when wrong_rate > 0.67.
+        late_nogo_rate: late clicks after a NO-GO window (impulse-control failure, 0.3× penalty).
+        At zero false alarms and zero late NO-GO: composure = 1.0 (perfect).
+        Range: (−∞, 1.0].  v1 payloads: late_nogo_rate = 0.0 → identical to old formula.
         """
-        return min(1.0, 1.0 - 1.5 * signals.wrong_rate)
+        return min(1.0, 1.0 - 1.5 * signals.wrong_rate - 0.3 * signals.late_nogo_rate)
 
     @staticmethod
     def score_all(signals: VTSignals, skill_targets: dict[str, float]) -> dict[str, float]:

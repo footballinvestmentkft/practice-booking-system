@@ -405,6 +405,16 @@
     var currentType    = null;      // "go" | "no_go"
     var clickHandled   = false;     // prevents double-click within window
 
+    // ── Late-click detection (Phase 2.3) ───────────────────────────────────
+    var LATE_WINDOW_MS  = 600;
+    var lateGoCount     = 0;
+    var lateNoGoCount   = 0;
+    var lateClickTimes  = [];
+    var lateHandled     = false;
+    var windowExpiredAt = null;
+    var expiredStimType = null;     // "go" | "no_go" captured when window expires
+    var expiredStimIdx  = null;     // globalStimIdx captured when window expires
+
     // ── raw_metrics tracking ───────────────────────────────────────────────
     var stimulusLog    = [];        // per-stimulus event objects
     var currentPhaseIdx = 0;
@@ -514,6 +524,23 @@
         scheduleNext();
     });
 
+    // ── Late-click listener — fires after window expires, within LATE_WINDOW_MS ──
+    elField.addEventListener("pointerdown", function () {
+        if (!clickHandled || lateHandled || windowExpiredAt === null || expiredStimType === null) { return; }
+        var lateBy = Math.round(performance.now() - windowExpiredAt);
+        if (lateBy < 0 || lateBy > LATE_WINDOW_MS) { return; }
+        lateHandled = true;
+        lateClickTimes.push(lateBy);
+        var classification = expiredStimType === "go" ? "late_go_response" : "late_no_go_false_alarm";
+        if (expiredStimType === "go") { lateGoCount++; } else { lateNoGoCount++; }
+        for (var i = stimulusLog.length - 1; i >= 0; i--) {
+            if (stimulusLog[i].i === expiredStimIdx) {
+                stimulusLog[i].late_click = { late_by_ms: lateBy, classification: classification };
+                break;
+            }
+        }
+    });
+
     // ── Show stimulus ──────────────────────────────────────────────────────
     function showStimulus() {
         if (globalStimIdx >= TOTAL_STIM) {
@@ -521,6 +548,10 @@
             return;
         }
         clickHandled    = false;
+        lateHandled     = false;
+        windowExpiredAt = null;
+        expiredStimType = null;
+        expiredStimIdx  = null;
         stimTimestamp   = Date.now();
         currentPhaseIdx = getPhaseForIdx(globalStimIdx);
         var item        = SEQUENCE[globalStimIdx];
@@ -554,6 +585,10 @@
                 recordStimEvent("correct_inhibit", null);
                 showFeedback("GOOD HOLD", "fb-hold");
             }
+            windowExpiredAt = performance.now();
+            expiredStimType = currentType;
+            expiredStimIdx  = globalStimIdx;
+            lateHandled     = false;
             hideStimulus();
             scheduleNext();
         }, cfg.window_ms);
@@ -654,7 +689,24 @@
             };
         });
 
-        var rawMetrics = { v: 1, per_stimulus: stimulusLog, per_phase: perPhase };
+        var lateAvgMs = lateClickTimes.length > 0
+            ? Math.round(lateClickTimes.reduce(function(a,b){return a+b;},0) / lateClickTimes.length)
+            : null;
+        var lateMaxMs = lateClickTimes.length > 0
+            ? Math.max.apply(null, lateClickTimes)
+            : null;
+        var rawMetrics = {
+            v: 2,
+            per_stimulus: stimulusLog,
+            per_phase:    perPhase,
+            late_summary: {
+                late_click_count:  lateGoCount + lateNoGoCount,
+                late_click_avg_ms: lateAvgMs,
+                late_click_max_ms: lateMaxMs,
+                late_go_count:     lateGoCount,
+                late_no_go_count:  lateNoGoCount
+            }
+        };
 
         var payload = {
             started_at:        startedAt,

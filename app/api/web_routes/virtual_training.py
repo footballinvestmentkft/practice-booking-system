@@ -236,11 +236,14 @@ async def virtual_training_color_reaction_result(
     per_phase: list = []
     per_color: dict = {}
     per_stimulus: list = []
+    late_summary: dict | None = None
     raw = attempt.raw_metrics
-    if isinstance(raw, dict) and raw.get("v") == 1:
+    if isinstance(raw, dict) and raw.get("v", 1) >= 1:
         per_phase    = raw.get("per_phase")    or []
         per_color    = raw.get("per_color")    or {}
         per_stimulus = raw.get("per_stimulus") or []
+    if isinstance(raw, dict) and raw.get("v", 1) >= 2:
+        late_summary = raw.get("late_summary") or None
 
     from ...models.user import UserRole
     is_admin = user.role == UserRole.ADMIN
@@ -258,6 +261,7 @@ async def virtual_training_color_reaction_result(
             "per_phase":     per_phase,
             "per_color":     per_color,
             "per_stimulus":  per_stimulus,
+            "late_summary":  late_summary,
             "is_admin":      is_admin,
         },
     )
@@ -451,10 +455,13 @@ async def virtual_training_go_no_go_result(
     # Decompose raw_metrics — per_phase and per_stimulus (no per_color for Go/No-Go)
     per_phase: list = []
     per_stimulus: list = []
+    late_summary: dict | None = None
     raw = attempt.raw_metrics
-    if isinstance(raw, dict) and raw.get("v") == 1:
+    if isinstance(raw, dict) and raw.get("v", 1) >= 1:
         per_phase    = raw.get("per_phase")    or []
         per_stimulus = raw.get("per_stimulus") or []
+    if isinstance(raw, dict) and raw.get("v", 1) >= 2:
+        late_summary = raw.get("late_summary") or None
 
     from ...models.user import UserRole
     is_admin = user.role == UserRole.ADMIN
@@ -471,6 +478,7 @@ async def virtual_training_go_no_go_result(
             "signals_ctx":  signals_ctx,
             "per_phase":     per_phase,
             "per_stimulus":  per_stimulus,
+            "late_summary":  late_summary,
             "is_admin":      is_admin,
         },
     )

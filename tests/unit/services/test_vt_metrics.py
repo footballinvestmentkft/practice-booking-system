@@ -1,4 +1,4 @@
-"""Unit tests for Virtual Training Metrics — Phase 2.2 (Performance-based Skill Delta).
+"""Unit tests for Virtual Training Metrics — Phase 2.2 + Phase 2.3 late-click.
 
 VM-01..08   VTSignalExtractor.extract()
 VM-09..13   VTSkillScorer.score_reactions()
@@ -7,6 +7,7 @@ VM-19..23   VTSkillScorer.score_concentration()
 VM-24..27   VTSkillScorer.score_anticipation()
 VM-28..33   VTDeltaComputer.compute()
 VM-34..36   End-to-end: score-blindness eliminated (same XP, different performance → different delta)
+LC-01..16   Late-click detection: raw_metrics v2 extraction + scorer v2 behaviour
 """
 from __future__ import annotations
 
@@ -150,11 +151,11 @@ class TestSignalExtraction:
         assert len(sig.per_phase) == 3
         assert sig.per_phase[2]["correct"] == 8
 
-    def test_vm_08_raw_metrics_wrong_version_gives_none(self):
-        """VM-08: raw_metrics with v≠1 → per_phase remains None."""
+    def test_vm_08_raw_metrics_v0_gives_none(self):
+        """VM-08: raw_metrics with v=0 (below minimum) → per_phase remains None."""
         sig = VTSignalExtractor.extract(
             {"stimuli_count": 36, "correct_count": 30,
-             "raw_metrics": {"v": 2, "per_phase": [{"phase": 0}]}},
+             "raw_metrics": {"v": 0, "per_phase": [{"phase": 0}]}},
             _PHASE21_CONFIG,
         )
         assert sig.per_phase is None
@@ -408,3 +409,189 @@ class TestScoreBlindnessEliminated:
             "wrong_click_count": 0, "error_count": 11, "avg_reaction_ms": 400.0,
         })
         assert delta_focused.get("concentration", 0) > delta_distracted.get("concentration", 0)
+
+
+# ── TestLateClickDetection (LC-01..16) ───────────────────────────────────────
+# raw_metrics v2 signal extraction and scorer behaviour.
+
+class TestLateClickDetection:
+
+    _BASE = {
+        "stimuli_count": 36, "correct_count": 28,
+        "wrong_click_count": 2, "error_count": 6, "avg_reaction_ms": 380.0,
+    }
+
+    @staticmethod
+    def _v2_raw(late_click_count=0, late_go_count=0, late_no_go_count=0, per_phase=None):
+        return {
+            "v": 2,
+            "per_stimulus": [],
+            "per_color": {},
+            "per_phase": per_phase or [],
+            "late_summary": {
+                "late_click_count":  late_click_count,
+                "late_click_avg_ms": 200 if late_click_count else None,
+                "late_click_max_ms": 450 if late_click_count else None,
+                "late_go_count":     late_go_count,
+                "late_no_go_count":  late_no_go_count,
+            },
+        }
+
+    # ── Signal extraction ─────────────────────────────────────────────────────
+
+    def test_lc_01_v2_late_click_count_sets_late_click_rate(self):
+        """LC-01: v2 payload with 4 late clicks → late_click_rate = 4/36."""
+        data = {**self._BASE, "raw_metrics": self._v2_raw(late_click_count=4)}
+        sig = VTSignalExtractor.extract(data, _PHASE21_CONFIG)
+        assert sig.late_click_rate == pytest.approx(4 / 36, abs=0.001)
+
+    def test_lc_02_v2_late_go_and_nogo_rates_extracted_independently(self):
+        """LC-02: 3 late GO + 2 late NO-GO → rates extracted separately."""
+        data = {**self._BASE, "raw_metrics": self._v2_raw(
+            late_click_count=5, late_go_count=3, late_no_go_count=2)}
+        sig = VTSignalExtractor.extract(data, _PHASE21_CONFIG)
+        assert sig.late_go_rate   == pytest.approx(3 / 36, abs=0.001)
+        assert sig.late_nogo_rate == pytest.approx(2 / 36, abs=0.001)
+
+    def test_lc_03_v1_payload_late_rates_default_to_zero(self):
+        """LC-03: v1 raw_metrics (no late_summary) → all late rates = 0.0."""
+        data = {**self._BASE, "raw_metrics": {"v": 1, "per_stimulus": [], "per_phase": []}}
+        sig = VTSignalExtractor.extract(data, _PHASE21_CONFIG)
+        assert sig.late_click_rate == 0.0
+        assert sig.late_go_rate    == 0.0
+        assert sig.late_nogo_rate  == 0.0
+
+    def test_lc_04_v2_missing_late_summary_late_rates_default_to_zero(self):
+        """LC-04: v2 raw_metrics but late_summary absent → late rates = 0.0."""
+        data = {**self._BASE, "raw_metrics": {"v": 2, "per_stimulus": [], "per_phase": []}}
+        sig = VTSignalExtractor.extract(data, _PHASE21_CONFIG)
+        assert sig.late_click_rate == 0.0
+        assert sig.late_nogo_rate  == 0.0
+
+    def test_lc_05_late_click_rate_clamped_to_one(self):
+        """LC-05: late_click_count > stimuli → late_click_rate clamped to 1.0."""
+        data = {**self._BASE, "raw_metrics": self._v2_raw(late_click_count=50)}
+        sig = VTSignalExtractor.extract(data, _PHASE21_CONFIG)
+        assert sig.late_click_rate == pytest.approx(1.0)
+
+    def test_lc_06_v2_per_phase_also_extracted(self):
+        """LC-06: v=2 still extracts per_phase (≥1 condition handles both versions)."""
+        pp = [{"phase": 0, "correct": 10}]
+        data = {**self._BASE, "raw_metrics": self._v2_raw(late_click_count=2, per_phase=pp)}
+        sig = VTSignalExtractor.extract(data, _PHASE21_CONFIG)
+        assert sig.per_phase is not None
+        assert sig.per_phase[0]["correct"] == 10
+
+    # ── score_concentration v2 behaviour ─────────────────────────────────────
+
+    def test_lc_07_concentration_v1_path_unchanged_when_no_late_clicks(self):
+        """LC-07: v1-style signals (late_* = 0) → formula identical to old implementation."""
+        sig = VTSignals(hit_rate=0.8, wrong_rate=0.05, miss_rate=0.15,
+                        speed_score=0.8, completion_rate=1.0)
+        score = VTSkillScorer.score_concentration(sig)
+        expected = min(1.0, 1.0 - 2.0 * 0.15)
+        assert score == pytest.approx(expected, abs=0.001)
+
+    def test_lc_08_late_clicks_reduce_concentration_less_than_full_misses(self):
+        """LC-08: Same total lapse rate split between miss+late → higher score than all-miss."""
+        sig_all_miss = VTSignals(hit_rate=0.8, wrong_rate=0.0, miss_rate=0.2,
+                                 speed_score=0.8, completion_rate=1.0)
+        sig_mixed = VTSignals(hit_rate=0.8, wrong_rate=0.0, miss_rate=0.1,
+                              speed_score=0.8, completion_rate=1.0,
+                              late_click_rate=0.1, late_go_rate=0.1, late_nogo_rate=0.0)
+        assert VTSkillScorer.score_concentration(sig_mixed) > VTSkillScorer.score_concentration(sig_all_miss)
+
+    def test_lc_09_late_nogo_clicks_excluded_from_concentration_penalty(self):
+        """LC-09: Late NO-GO clicks attributed to composure, not concentration."""
+        sig = VTSignals(hit_rate=0.8, wrong_rate=0.0, miss_rate=0.1,
+                        speed_score=0.8, completion_rate=1.0,
+                        late_click_rate=0.1, late_go_rate=0.0, late_nogo_rate=0.1)
+        score = VTSkillScorer.score_concentration(sig)
+        # late_for_conc = max(0, 0.1 − 0.1) = 0.0 → pure_miss = 0.1, no late penalty
+        expected = min(1.0, 1.0 - 2.0 * 0.1)
+        assert score == pytest.approx(expected, abs=0.001)
+
+    def test_lc_10_concentration_pure_miss_does_not_go_negative(self):
+        """LC-10: late_click_rate > miss_rate → pure_miss clamped to 0, no double-count."""
+        sig = VTSignals(hit_rate=0.9, wrong_rate=0.0, miss_rate=0.05,
+                        speed_score=0.9, completion_rate=1.0,
+                        late_click_rate=0.1, late_go_rate=0.1, late_nogo_rate=0.0)
+        score = VTSkillScorer.score_concentration(sig)
+        # pure_miss = max(0, 0.05 − 0.1) = 0.0 → late_for_conc = 0.1 only
+        expected = min(1.0, 1.0 - 0.8 * 0.1)
+        assert score == pytest.approx(expected, abs=0.001)
+
+    # ── score_composure v2 behaviour ──────────────────────────────────────────
+
+    def test_lc_11_composure_v1_path_unchanged_when_no_late_nogo(self):
+        """LC-11: v1-style signals (late_nogo_rate=0) → composure = 1 − 1.5 × wrong_rate."""
+        sig = VTSignals(hit_rate=0.8, wrong_rate=0.1, miss_rate=0.1,
+                        speed_score=0.8, completion_rate=1.0)
+        score = VTSkillScorer.score_composure(sig)
+        assert score == pytest.approx(1.0 - 1.5 * 0.1, abs=0.001)
+
+    def test_lc_12_late_nogo_clicks_reduce_composure(self):
+        """LC-12: late_nogo_rate > 0 → composure lower than identical run without late NO-GO."""
+        sig_clean = VTSignals(hit_rate=0.8, wrong_rate=0.05, miss_rate=0.15,
+                              speed_score=0.8, completion_rate=1.0)
+        sig_late  = VTSignals(hit_rate=0.8, wrong_rate=0.05, miss_rate=0.15,
+                              speed_score=0.8, completion_rate=1.0,
+                              late_click_rate=0.1, late_go_rate=0.0, late_nogo_rate=0.1)
+        assert VTSkillScorer.score_composure(sig_late) < VTSkillScorer.score_composure(sig_clean)
+
+    def test_lc_13_late_go_clicks_do_not_affect_composure(self):
+        """LC-13: late GO clicks (late_go_rate only) → composure unchanged."""
+        sig_no_late = VTSignals(hit_rate=0.8, wrong_rate=0.05, miss_rate=0.1,
+                                speed_score=0.8, completion_rate=1.0)
+        sig_late_go = VTSignals(hit_rate=0.8, wrong_rate=0.05, miss_rate=0.1,
+                                speed_score=0.8, completion_rate=1.0,
+                                late_click_rate=0.1, late_go_rate=0.1, late_nogo_rate=0.0)
+        assert VTSkillScorer.score_composure(sig_no_late) == pytest.approx(
+            VTSkillScorer.score_composure(sig_late_go), abs=0.001)
+
+    # ── End-to-end ────────────────────────────────────────────────────────────
+
+    def test_lc_14_e2e_v2_late_clicks_lower_concentration_delta(self):
+        """LC-14: v2 clean run (no misses/late) beats run with late GO clicks on concentration."""
+        _perfect_base = {
+            "stimuli_count": 36, "correct_count": 36,
+            "wrong_click_count": 0, "error_count": 0, "avg_reaction_ms": 280.0,
+        }
+
+        def _run(raw_metrics):
+            return compute_vt_skill_deltas(
+                data={**_perfect_base, "raw_metrics": raw_metrics},
+                game=_mock_game(skill_targets={"concentration": 1.0}),
+                multiplier=1.0,
+            )
+        clean = _run(self._v2_raw(late_click_count=0))
+        # Inject 6 late GO clicks; error_count stays 0 (no pure misses)
+        late  = _run(self._v2_raw(late_click_count=6, late_go_count=6))
+        assert clean.get("concentration", 0) >= late.get("concentration", 0)
+
+    def test_lc_15_e2e_v2_late_nogo_lower_composure_delta(self):
+        """LC-15: v2 run with late NO-GO clicks → composure delta ≤ clean run."""
+        def _run(raw_metrics):
+            return compute_vt_skill_deltas(
+                data={
+                    "stimuli_count": 30, "correct_count": 20,
+                    "wrong_click_count": 2, "error_count": 5, "avg_reaction_ms": 500.0,
+                    "raw_metrics": raw_metrics,
+                },
+                game=_mock_game(skill_targets={"composure": 1.0}),
+                multiplier=1.0,
+            )
+        clean = _run(self._v2_raw(late_click_count=0))
+        late  = _run(self._v2_raw(late_click_count=4, late_no_go_count=4))
+        assert clean.get("composure", 0) >= late.get("composure", 0)
+
+    def test_lc_16_v1_backward_compat_concentration_formula_identical(self):
+        """LC-16: v1 payload → late_* = 0.0, concentration formula reduces to original."""
+        data = {**self._BASE, "raw_metrics": {"v": 1, "per_stimulus": [], "per_phase": []}}
+        sig = VTSignalExtractor.extract(data, _PHASE21_CONFIG)
+        assert sig.late_click_rate == 0.0
+        assert sig.late_go_rate    == 0.0
+        assert sig.late_nogo_rate  == 0.0
+        score    = VTSkillScorer.score_concentration(sig)
+        expected = min(1.0, 1.0 - 2.0 * sig.miss_rate)
+        assert score == pytest.approx(expected, abs=0.001)

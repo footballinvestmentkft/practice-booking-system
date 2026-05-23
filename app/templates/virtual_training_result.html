@@ -434,6 +434,30 @@
     </div>
     {% endif %}
 
+    {# ── Late-click summary (LC-01 / raw_metrics v2) ────────────────────────── #}
+    {% if late_summary and late_summary.late_click_count %}
+    <div class="vtr-detail-section" id="vtr-late-clicks">
+        <h4>Late Clicks</h4>
+        <p class="vtr-late-note">Taps detected within 600 ms after the stimulus window expired.</p>
+        <table class="vtr-detail-table">
+            <thead>
+                <tr>
+                    <th>Count</th>
+                    <th>Avg delay</th>
+                    <th>Max delay</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ late_summary.late_click_count }}</td>
+                    <td>{% if late_summary.late_click_avg_ms is not none %}{{ late_summary.late_click_avg_ms }} ms{% else %}—{% endif %}</td>
+                    <td>{% if late_summary.late_click_max_ms is not none %}{{ late_summary.late_click_max_ms }} ms{% else %}—{% endif %}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
     {# ── Per-color summary (VH-08) ────────────────────────────────────────── #}
     {% if per_color %}
     <div class="vtr-detail-section" id="vtr-per-color">
