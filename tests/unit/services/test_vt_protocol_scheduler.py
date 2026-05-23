@@ -82,7 +82,7 @@ def _assign_with_mock(history_combos: list[str], protocol_assignment: str | None
         _make_row(c) for c in history_combos
     ]
 
-    return VirtualTrainingService.assign_protocol(db, user_id=1, game_id=42)
+    return VirtualTrainingService.assign_protocol(db, user_id=101, game_id=42)
 
 
 # ── PS-01..04: Seeded first-rotation ─────────────────────────────────────────
