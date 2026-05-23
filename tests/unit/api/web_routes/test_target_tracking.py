@@ -47,6 +47,14 @@ TT-44   compute_vt_skill_deltas: hard (1.70×) gives larger delta than easy (1.0
 TT-45   compute_vt_skill_deltas: expert (2.20×) delta >= hard (1.70×) at same score
 TT-46   POST expert submit when not unlocked → 403 expert_locked
 TT-47   POST expert submit when unlocked → 200 (record_attempt called)
+TT-48   Template: arena CSS uses aspect-ratio: 4 / 3
+TT-49   Template: arena width uses min(480px, 100%), no padding-bottom hack
+TT-50   Template: JS reads arena.clientWidth at runtime
+TT-51   Template: JS reads arena.clientHeight at runtime
+TT-52   Template: frozen const ARENA_W / ARENA_H absent
+TT-53   Template: responsive radius formula uses arenaW / 480
+TT-54   Template: resize + orientationchange listeners registered
+TT-55   Template: object size set from radius * 2 in JS
 """
 from __future__ import annotations
 
@@ -1133,3 +1141,67 @@ class TestTTExpertLock:
 
         assert resp.status_code == 200
         mock_record.assert_called_once()
+
+
+# ── TT-48..TT-55: Template static guard — mobile responsiveness ───────────────
+
+_TT_TEMPLATE_PATH = (
+    __file__.replace(
+        "tests/unit/api/web_routes/test_target_tracking.py",
+        "app/templates/virtual_training_target_tracking.html",
+    )
+)
+
+
+class TestTTTemplateResponsiveGuards:
+    """Static checks that the template uses runtime-responsive arena sizing."""
+
+    @staticmethod
+    def _src() -> str:
+        with open(_TT_TEMPLATE_PATH, encoding="utf-8") as f:
+            return f.read()
+
+    def test_tt48_arena_uses_aspect_ratio(self):
+        """TT-48: Arena CSS uses aspect-ratio: 4 / 3 (no fixed height fallback)."""
+        src = self._src()
+        assert "aspect-ratio: 4 / 3" in src
+
+    def test_tt49_arena_width_uses_min_function(self):
+        """TT-49: Arena CSS width uses min(480px, 100%) — not a bare fixed pixel value."""
+        src = self._src()
+        assert "width: min(480px, 100%)" in src
+        # Fixed-only width:480px must NOT appear inside .tt-arena (the media-query hack is gone)
+        assert "height: 0" not in src
+        assert "padding-bottom: 75%" not in src
+
+    def test_tt50_js_reads_arena_client_width(self):
+        """TT-50: JS reads arena.clientWidth at runtime (not a frozen ARENA_W constant)."""
+        src = self._src()
+        assert "arena.clientWidth" in src
+
+    def test_tt51_js_reads_arena_client_height(self):
+        """TT-51: JS reads arena.clientHeight at runtime (not a frozen ARENA_H constant)."""
+        src = self._src()
+        assert "arena.clientHeight" in src
+
+    def test_tt52_no_frozen_arena_constants(self):
+        """TT-52: Frozen const ARENA_W / ARENA_H assignments are absent."""
+        src = self._src()
+        assert "const ARENA_W" not in src
+        assert "const ARENA_H" not in src
+
+    def test_tt53_responsive_radius_calc_present(self):
+        """TT-53: Responsive radius formula uses arenaW / 480 scale."""
+        src = self._src()
+        assert "arenaW / 480" in src
+
+    def test_tt54_resize_handler_registered(self):
+        """TT-54: resize and orientationchange event listeners registered."""
+        src = self._src()
+        assert "addEventListener('resize'" in src
+        assert "addEventListener('orientationchange'" in src
+
+    def test_tt55_object_size_set_from_radius(self):
+        """TT-55: Object element width/height set from radius*2 in JS (not CSS-only)."""
+        src = self._src()
+        assert "radius * 2" in src

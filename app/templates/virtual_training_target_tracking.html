@@ -199,22 +199,15 @@
     /* ── Arena ──────────────────────────────────────────────────────────────── */
     .tt-arena {
         position: relative;
-        width: 480px;
-        height: 360px;
+        width: min(480px, 100%);
+        max-width: 100%;
+        aspect-ratio: 4 / 3;
         background: #1e1b4b;
         border-radius: 14px;
         overflow: hidden;
         margin: 0 auto;
         touch-action: none;
         user-select: none;
-    }
-
-    @media (max-width: 520px) {
-        .tt-arena {
-            width: 100%;
-            height: 0;
-            padding-bottom: 75%;
-        }
     }
 
     /* ── Moving objects ─────────────────────────────────────────────────────── */
@@ -441,10 +434,20 @@ const DIFFICULTIES = {
     expert: _DIFFICULTIES_RAW.expert || _EASY_FALLBACK,
 };
 
-const ARENA_W  = {{ (game.config.get('arena_width',      480) if game.config else 480) }};
-const ARENA_H  = {{ (game.config.get('arena_height',     360) if game.config else 360) }};
-const RADIUS   = {{ (game.config.get('object_radius_px',  40) if game.config else 40)  }};
 const BASE_SPEED = 2.0;   /* px per frame at 60 fps, before phase speed multiplier */
+
+/* ── Responsive arena dimensions (read at runtime, not frozen at load) ────── */
+let arenaW, arenaH;
+
+function getArenaDimensions() {
+    arenaW = arena.clientWidth  || 480;
+    arenaH = arena.clientHeight || 360;
+}
+
+function getRadius() {
+    var scale = arenaW / 480;
+    return Math.max(24, Math.round(40 * scale));
+}
 
 const SUBMIT_URL = '/virtual-training/target-tracking/submit';
 
@@ -534,40 +537,44 @@ function clearObjects() {
 }
 
 function spawnObjects(count) {
+    var radius = getRadius();
     for (var i = 0; i < count; i++) {
         var el = document.createElement('div');
         el.className = 'tt-obj';
         el.dataset.idx = i;
+        el.style.width  = (radius * 2) + 'px';
+        el.style.height = (radius * 2) + 'px';
 
         var x, y, ok, tries = 0;
         do {
             ok = true;
-            x = RADIUS + Math.random() * (ARENA_W - 2 * RADIUS);
-            y = RADIUS + Math.random() * (ARENA_H - 2 * RADIUS);
+            x = radius + Math.random() * (arenaW - 2 * radius);
+            y = radius + Math.random() * (arenaH - 2 * radius);
             for (var j = 0; j < objects.length; j++) {
                 var dx = x - objects[j].x;
                 var dy = y - objects[j].y;
-                if (Math.sqrt(dx*dx + dy*dy) < RADIUS * 2.8) { ok = false; break; }
+                if (Math.sqrt(dx*dx + dy*dy) < radius * 2.8) { ok = false; break; }
             }
         } while (!ok && ++tries < 80);
 
-        el.style.left = (x - RADIUS) + 'px';
-        el.style.top  = (y - RADIUS) + 'px';
+        el.style.left = (x - radius) + 'px';
+        el.style.top  = (y - radius) + 'px';
         arena.appendChild(el);
         objects.push({ x: x, y: y, vx: 0, vy: 0, el: el });
     }
 }
 
 function moveObjects() {
+    var radius = getRadius();
     objects.forEach(function (o) {
         o.x += o.vx;
         o.y += o.vy;
-        if (o.x < RADIUS)           { o.x = RADIUS;           o.vx =  Math.abs(o.vx); }
-        if (o.x > ARENA_W - RADIUS) { o.x = ARENA_W - RADIUS; o.vx = -Math.abs(o.vx); }
-        if (o.y < RADIUS)           { o.y = RADIUS;           o.vy =  Math.abs(o.vy); }
-        if (o.y > ARENA_H - RADIUS) { o.y = ARENA_H - RADIUS; o.vy = -Math.abs(o.vy); }
-        o.el.style.left = (o.x - RADIUS) + 'px';
-        o.el.style.top  = (o.y - RADIUS) + 'px';
+        if (o.x < radius)           { o.x = radius;           o.vx =  Math.abs(o.vx); }
+        if (o.x > arenaW - radius)  { o.x = arenaW - radius;  o.vx = -Math.abs(o.vx); }
+        if (o.y < radius)           { o.y = radius;            o.vy =  Math.abs(o.vy); }
+        if (o.y > arenaH - radius)  { o.y = arenaH - radius;  o.vy = -Math.abs(o.vy); }
+        o.el.style.left = (o.x - radius) + 'px';
+        o.el.style.top  = (o.y - radius) + 'px';
     });
 }
 
@@ -669,6 +676,7 @@ window.startGame = startGame;
 
 function startRound() {
     if (roundIdx >= TOTAL_ROUNDS) { finishGame(); return; }
+    getArenaDimensions();
     var round = ROUNDS[roundIdx];
     updateHUD();
     setDot(roundIdx, 'active');
@@ -927,6 +935,24 @@ function finishGame() {
             '<p style="color:#ef4444">⚠ Network error. <a href="/virtual-training">Back to hub</a></p>';
     });
 }
+
+/* ── Resize / orientation handler ─────────────────────────────────────────── */
+function handleResize() {
+    getArenaDimensions();
+    if (!objects.length) return;
+    var radius = getRadius();
+    objects.forEach(function (o) {
+        o.x = Math.max(radius, Math.min(arenaW - radius, o.x));
+        o.y = Math.max(radius, Math.min(arenaH - radius, o.y));
+        o.el.style.left   = (o.x - radius) + 'px';
+        o.el.style.top    = (o.y - radius) + 'px';
+        o.el.style.width  = (radius * 2) + 'px';
+        o.el.style.height = (radius * 2) + 'px';
+    });
+}
+
+window.addEventListener('resize',            handleResize);
+window.addEventListener('orientationchange', handleResize);
 
 })();
 </script>
