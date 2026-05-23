@@ -260,6 +260,58 @@ class VirtualTrainingService:
         except Exception:
             return dict(_FREE_PROTOCOL)
 
+    # ── Difficulty config helpers (Target Tracking) ───────────────────────────
+
+    @staticmethod
+    def get_difficulty_config(game: VirtualTrainingGame, level: str) -> dict:
+        """Return the difficulty block for *level*, falling back to 'easy'.
+
+        Returns {} when the game has no 'difficulties' config key.
+        """
+        cfg = game.config if isinstance(game.config, dict) else {}
+        difficulties = cfg.get("difficulties")
+        if not isinstance(difficulties, dict):
+            return {}
+        return difficulties.get(level) or difficulties.get("easy") or {}
+
+    @staticmethod
+    def is_expert_unlocked(db: Session, user_id: int, game_id: int) -> bool:
+        """Return True when the user has ≥3 valid Hard attempts with score_normalized ≥ 70."""
+        try:
+            row = db.execute(
+                text(
+                    """
+                    SELECT COUNT(*) AS cnt
+                    FROM virtual_training_attempts
+                    WHERE user_id          = :uid
+                      AND game_id          = :gid
+                      AND is_valid         = true
+                      AND score_normalized >= 70
+                      AND raw_metrics IS NOT NULL
+                      AND raw_metrics->>'difficulty_level' = 'hard'
+                    """
+                ),
+                {"uid": user_id, "gid": game_id},
+            ).first()
+            return (row.cnt if row else 0) >= 3
+        except Exception:
+            return False
+
+    @staticmethod
+    def extract_difficulty_multiplier(data: dict) -> float:
+        """Extract difficulty_multiplier from raw_metrics (v=3, TT difficulty games).
+
+        Returns 1.00 when absent, v < 3, or invalid.  Clamp: [1.00, 2.50].
+        """
+        raw = data.get("raw_metrics")
+        if not isinstance(raw, dict) or int(raw.get("v", 1)) < 3:
+            return 1.00
+        try:
+            dm = float(raw.get("difficulty_multiplier", 1.00))
+            return max(1.00, min(2.50, dm))
+        except (TypeError, ValueError):
+            return 1.00
+
     # ── Protocol difficulty ───────────────────────────────────────────────────
 
     @staticmethod
@@ -330,10 +382,20 @@ class VirtualTrainingService:
 
         now = datetime.now(timezone.utc)
 
-        validation_overrides = (
-            game.config.get("validation_overrides")
-            if isinstance(game.config, dict) else None
-        )
+        # For games with per-difficulty validation (e.g. TT), use difficulty-specific
+        # overrides when difficulty_level is present in raw_metrics.
+        _cfg = game.config if isinstance(game.config, dict) else {}
+        _difficulties = _cfg.get("difficulties")
+        if isinstance(_difficulties, dict):
+            _raw = data.get("raw_metrics")
+            _level = (
+                _raw.get("difficulty_level", "easy")
+                if isinstance(_raw, dict) else "easy"
+            )
+            _diff_block = _difficulties.get(_level) or _difficulties.get("easy") or {}
+            validation_overrides = _diff_block.get("validation_overrides") or _cfg.get("validation_overrides")
+        else:
+            validation_overrides = _cfg.get("validation_overrides")
         is_valid, invalid_reason = VirtualTrainingService.validate_attempt(
             data, overrides=validation_overrides
         )
@@ -345,9 +407,16 @@ class VirtualTrainingService:
         xp_multiplier = VirtualTrainingService.calculate_xp_multiplier(attempt_index)
         xp_awarded = VirtualTrainingService.calculate_xp_awarded(game, xp_multiplier) if is_valid else 0
 
-        # protocol_mult: self-declared hand/finger difficulty (affects delta only)
-        protocol_mult     = VirtualTrainingService.extract_protocol_difficulty(data)
-        effective_multiplier = xp_multiplier * protocol_mult
+        # game_mult: difficulty multiplier affecting skill delta only (XP unchanged).
+        # Games with a 'difficulties' config (e.g. TT) use the level-based multiplier
+        # from raw_metrics.difficulty_multiplier.  All others use the hand/finger
+        # protocol multiplier from raw_metrics.hand_profile.protocol_difficulty_multiplier.
+        _game_cfg = game.config if isinstance(game.config, dict) else {}
+        if _game_cfg.get("difficulties"):
+            game_mult = VirtualTrainingService.extract_difficulty_multiplier(data)
+        else:
+            game_mult = VirtualTrainingService.extract_protocol_difficulty(data)
+        effective_multiplier = xp_multiplier * game_mult
 
         if is_valid and xp_awarded > 0:
             today_start = datetime.combine(date.today(), datetime.min.time()).replace(

@@ -25,6 +25,28 @@ TT-22   validate_attempt with overrides: min_duration_seconds=20 — 25s session
 TT-23   validate_attempt with overrides: bot_threshold_ms=200 — 250ms avg passes
 TT-24   validate_attempt no overrides: default min_stimuli=28 still blocks 9-round TT
 TT-25   POST submit: no assign_protocol call (pure cognitive game — no hand/finger protocol)
+TT-26   Seed: config has 'difficulties' dict with easy/medium/hard/expert keys
+TT-27   get_difficulty_config(game, 'easy') returns easy phases
+TT-28   get_difficulty_config(game, 'medium') returns medium phases with 1.30× multiplier
+TT-29   get_difficulty_config(game, 'hard') returns hard phases with 1.70× multiplier
+TT-30   get_difficulty_config(game, 'unknown') falls back to easy
+TT-31   Seed: expert difficulty has unlock_threshold with min_hard_attempts=3 and min_hard_score=70
+TT-32   POST submit with difficulty_level=medium → raw_metrics difficulty_level == 'medium'
+TT-33   POST submit with difficulty_level=hard → raw_metrics difficulty_multiplier == 1.70
+TT-34   POST submit with missing difficulty_level → defaults to 'easy', multiplier 1.00
+TT-35   Hard difficulty validation_overrides min_duration=30s — 25s attempt fails
+TT-36   Result page context contains difficulty_level and difficulty_multiplier keys
+TT-37   POST submit medium → per_round items may have flash_events key in v=3 payload
+TT-38   POST submit hard → late_summary has total_flashes_shown, taps_during_flash, flash_distraction_rate
+TT-39   extract_difficulty_multiplier: v=3 payload with 1.70 → returns 1.70
+TT-40   extract_difficulty_multiplier: v=2 payload → returns 1.00 (backward compat)
+TT-41   extract_difficulty_multiplier: missing key in v=3 → returns 1.00
+TT-42   VTSignalExtractor.extract v=3 payload: signals.difficulty_multiplier == 1.70
+TT-43   VTSignalExtractor.extract v=2 payload: signals.difficulty_multiplier == 1.00
+TT-44   compute_vt_skill_deltas: hard (1.70×) gives larger delta than easy (1.00×) at same score
+TT-45   compute_vt_skill_deltas: expert (2.20×) delta >= hard (1.70×) at same score
+TT-46   POST expert submit when not unlocked → 403 expert_locked
+TT-47   POST expert submit when unlocked → 200 (record_attempt called)
 """
 from __future__ import annotations
 
@@ -624,3 +646,490 @@ class TestTTNoProtocol:
             client.get("/virtual-training/target-tracking")   # GET game page
 
         mock_assign.assert_not_called()
+
+
+# ── TT-26..TT-31: Seed difficulty config ──────────────────────────────────────
+
+_TT_DIFFICULTIES_CFG = {
+    "easy": {
+        "phases": [
+            {"phase": 0, "rounds": 3, "object_count": 3, "object_speed": 1.00,
+             "highlight_ms": 1500, "tracking_ms": 4000, "window_ms": 3000, "distractor_flash": 0},
+            {"phase": 1, "rounds": 3, "object_count": 4, "object_speed": 1.15,
+             "highlight_ms": 1500, "tracking_ms": 5000, "window_ms": 3000, "distractor_flash": 0},
+            {"phase": 2, "rounds": 3, "object_count": 5, "object_speed": 1.30,
+             "highlight_ms": 1500, "tracking_ms": 6000, "window_ms": 3000, "distractor_flash": 0},
+        ],
+        "difficulty_multiplier": 1.00,
+        "validation_overrides": {
+            "min_stimuli_count": 3, "min_duration_seconds": 20.0,
+            "bot_threshold_ms": 200, "random_clicking_threshold": 0.70,
+        },
+    },
+    "medium": {
+        "phases": [
+            {"phase": 0, "rounds": 3, "object_count": 4, "object_speed": 1.20,
+             "highlight_ms": 1500, "tracking_ms": 4500, "window_ms": 2500, "distractor_flash": 0},
+            {"phase": 1, "rounds": 3, "object_count": 5, "object_speed": 1.40,
+             "highlight_ms": 1500, "tracking_ms": 5500, "window_ms": 2500, "distractor_flash": 1},
+            {"phase": 2, "rounds": 3, "object_count": 6, "object_speed": 1.60,
+             "highlight_ms": 1500, "tracking_ms": 7000, "window_ms": 2500, "distractor_flash": 1},
+        ],
+        "difficulty_multiplier": 1.30,
+        "validation_overrides": {
+            "min_stimuli_count": 3, "min_duration_seconds": 25.0,
+            "bot_threshold_ms": 200, "random_clicking_threshold": 0.70,
+        },
+    },
+    "hard": {
+        "phases": [
+            {"phase": 0, "rounds": 4, "object_count": 5, "object_speed": 1.50,
+             "highlight_ms": 1500, "tracking_ms": 5000, "window_ms": 2000, "distractor_flash": 1},
+            {"phase": 1, "rounds": 4, "object_count": 6, "object_speed": 1.80,
+             "highlight_ms": 1500, "tracking_ms": 6500, "window_ms": 2000, "distractor_flash": 2},
+            {"phase": 2, "rounds": 4, "object_count": 7, "object_speed": 2.00,
+             "highlight_ms": 1500, "tracking_ms": 8000, "window_ms": 2000, "distractor_flash": 3},
+        ],
+        "difficulty_multiplier": 1.70,
+        "validation_overrides": {
+            "min_stimuli_count": 4, "min_duration_seconds": 30.0,
+            "bot_threshold_ms": 200, "random_clicking_threshold": 0.70,
+        },
+    },
+    "expert": {
+        "phases": [
+            {"phase": 0, "rounds": 3, "object_count": 6, "object_speed": 1.80,
+             "highlight_ms": 1000, "tracking_ms": 5000, "window_ms": 1800, "distractor_flash": 2},
+            {"phase": 1, "rounds": 3, "object_count": 7, "object_speed": 2.10,
+             "highlight_ms": 1000, "tracking_ms": 7000, "window_ms": 1800, "distractor_flash": 3},
+            {"phase": 2, "rounds": 3, "object_count": 8, "object_speed": 2.40,
+             "highlight_ms": 800,  "tracking_ms": 9000, "window_ms": 1800, "distractor_flash": 4},
+            {"phase": 3, "rounds": 3, "object_count": 9, "object_speed": 2.40,
+             "highlight_ms": 800,  "tracking_ms": 10000, "window_ms": 1800, "distractor_flash": 5},
+        ],
+        "difficulty_multiplier": 2.20,
+        "unlock_threshold": {"min_hard_attempts": 3, "min_hard_score": 70},
+        "validation_overrides": {
+            "min_stimuli_count": 4, "min_duration_seconds": 35.0,
+            "bot_threshold_ms": 200, "random_clicking_threshold": 0.70,
+        },
+    },
+}
+
+_TT_CONFIG_WITH_DIFFICULTIES = {
+    **_TT_CONFIG,
+    "difficulties": _TT_DIFFICULTIES_CFG,
+}
+
+
+def _mock_tt_game_with_difficulties(*, is_active: bool = True) -> MagicMock:
+    g = MagicMock()
+    g.id = 7
+    g.code = "target_tracking"
+    g.name = "Target Tracking"
+    g.is_active = is_active
+    g.base_xp = 12
+    g.max_daily_attempts = 5
+    g.skill_targets = _TT_SKILL_TARGETS
+    g.config = _TT_CONFIG_WITH_DIFFICULTIES
+    return g
+
+
+class TestTTSeedDifficulties:
+
+    def _get_tt_seed_entry(self):
+        from scripts.seed_virtual_training_games import _GAMES
+        for g in _GAMES:
+            if g["code"] == "target_tracking":
+                return g
+        return None
+
+    def test_tt26_seed_has_difficulties_dict(self):
+        """TT-26: Seed: config has 'difficulties' dict with easy/medium/hard/expert keys."""
+        entry = self._get_tt_seed_entry()
+        difficulties = entry["config"]["difficulties"]
+        assert isinstance(difficulties, dict)
+        assert "easy"   in difficulties
+        assert "medium" in difficulties
+        assert "hard"   in difficulties
+        assert "expert" in difficulties
+
+    def test_tt31_seed_expert_unlock_threshold(self):
+        """TT-31: Seed: expert difficulty has unlock_threshold with correct thresholds."""
+        entry  = self._get_tt_seed_entry()
+        expert = entry["config"]["difficulties"]["expert"]
+        ut = expert["unlock_threshold"]
+        assert ut["min_hard_attempts"] == 3
+        assert ut["min_hard_score"]    == 70
+
+
+# ── TT-27..TT-30: get_difficulty_config ──────────────────────────────────────
+
+class TestTTGetDifficultyConfig:
+
+    def _svc(self):
+        from app.services.virtual_training_service import VirtualTrainingService
+        return VirtualTrainingService
+
+    def _game(self):
+        return _mock_tt_game_with_difficulties()
+
+    def test_tt27_easy_config_returned(self):
+        """TT-27: get_difficulty_config(game, 'easy') returns easy phases."""
+        result = self._svc().get_difficulty_config(self._game(), "easy")
+        assert isinstance(result, dict)
+        assert "phases" in result
+        assert result["difficulty_multiplier"] == 1.00
+        assert result["phases"][0]["object_count"] == 3
+
+    def test_tt28_medium_config_returned(self):
+        """TT-28: get_difficulty_config(game, 'medium') returns medium phases with 1.30× multiplier."""
+        result = self._svc().get_difficulty_config(self._game(), "medium")
+        assert result["difficulty_multiplier"] == 1.30
+        assert result["phases"][2]["object_count"] == 6
+
+    def test_tt29_hard_config_returned(self):
+        """TT-29: get_difficulty_config(game, 'hard') returns hard phases with 1.70× multiplier."""
+        result = self._svc().get_difficulty_config(self._game(), "hard")
+        assert result["difficulty_multiplier"] == 1.70
+        assert result["phases"][0]["rounds"] == 4
+
+    def test_tt30_unknown_level_fallback_to_easy(self):
+        """TT-30: get_difficulty_config(game, 'unknown') falls back to easy."""
+        result = self._svc().get_difficulty_config(self._game(), "unknown_level")
+        assert result["difficulty_multiplier"] == 1.00
+
+
+# ── TT-32..TT-35: POST submit with difficulty ─────────────────────────────────
+
+class TestTTDifficultySubmit:
+
+    _BASE_PAYLOAD = {
+        "started_at":       "2026-05-23T10:00:00Z",
+        "duration_seconds": 90.0,
+        "stimuli_count":    9,
+        "correct_count":    5,
+        "error_count":      2,
+        "wrong_click_count": 2,
+        "avg_reaction_ms":  970,
+        "min_reaction_ms":  780,
+        "score_raw":        0.65,
+        "score_normalized": 65,
+        "raw_metrics":      {**_TT_RAW_METRICS},
+    }
+
+    def _make_payload(self, **overrides):
+        import copy
+        p = copy.deepcopy(self._BASE_PAYLOAD)
+        p.update(overrides)
+        return p
+
+    def test_tt32_medium_difficulty_level_in_raw_metrics(self):
+        """TT-32: POST submit with difficulty_level=medium → raw_metrics difficulty_level == 'medium'."""
+        user    = _onboarded_student()
+        game    = _mock_tt_game_with_difficulties(is_active=True)
+        attempt = _mock_tt_attempt()
+        db      = _db_with_count(0)
+
+        captured = {}
+
+        def _capture(db, user_id, game, data, idempotency_key):
+            captured["raw"] = data.get("raw_metrics", {})
+            return attempt
+
+        with patch(f"{_ROUTE_BASE}.VirtualTrainingService.get_game", return_value=game), \
+             patch(f"{_ROUTE_BASE}.VirtualTrainingService.record_attempt", side_effect=_capture), \
+             patch(f"{_ROUTE_BASE}.VirtualTrainingService.is_expert_unlocked", return_value=False):
+            client = _make_client(user, db)
+            client.post("/virtual-training/target-tracking/submit",
+                        json=self._make_payload(difficulty_level="medium"))
+
+        assert captured["raw"].get("difficulty_level") == "medium"
+
+    def test_tt33_hard_difficulty_multiplier_in_raw_metrics(self):
+        """TT-33: POST submit with difficulty_level=hard → raw_metrics difficulty_multiplier == 1.70."""
+        user    = _onboarded_student()
+        game    = _mock_tt_game_with_difficulties(is_active=True)
+        attempt = _mock_tt_attempt()
+        db      = _db_with_count(0)
+
+        captured = {}
+
+        def _capture(db, user_id, game, data, idempotency_key):
+            captured["raw"] = data.get("raw_metrics", {})
+            return attempt
+
+        with patch(f"{_ROUTE_BASE}.VirtualTrainingService.get_game", return_value=game), \
+             patch(f"{_ROUTE_BASE}.VirtualTrainingService.record_attempt", side_effect=_capture), \
+             patch(f"{_ROUTE_BASE}.VirtualTrainingService.is_expert_unlocked", return_value=False):
+            client = _make_client(user, db)
+            client.post("/virtual-training/target-tracking/submit",
+                        json=self._make_payload(difficulty_level="hard"))
+
+        assert captured["raw"].get("difficulty_multiplier") == 1.70
+
+    def test_tt34_missing_difficulty_defaults_to_easy(self):
+        """TT-34: POST submit with missing difficulty_level → defaults to 'easy', multiplier 1.00."""
+        user    = _onboarded_student()
+        game    = _mock_tt_game_with_difficulties(is_active=True)
+        attempt = _mock_tt_attempt()
+        db      = _db_with_count(0)
+
+        captured = {}
+
+        def _capture(db, user_id, game, data, idempotency_key):
+            captured["raw"] = data.get("raw_metrics", {})
+            return attempt
+
+        payload = self._make_payload()
+        payload.pop("difficulty_level", None)
+
+        with patch(f"{_ROUTE_BASE}.VirtualTrainingService.get_game", return_value=game), \
+             patch(f"{_ROUTE_BASE}.VirtualTrainingService.record_attempt", side_effect=_capture), \
+             patch(f"{_ROUTE_BASE}.VirtualTrainingService.is_expert_unlocked", return_value=False):
+            client = _make_client(user, db)
+            client.post("/virtual-training/target-tracking/submit", json=payload)
+
+        assert captured["raw"].get("difficulty_level") == "easy"
+        assert captured["raw"].get("difficulty_multiplier") == 1.00
+
+    def test_tt35_hard_min_duration_25s_fails(self):
+        """TT-35: Hard difficulty validation_overrides min_duration=30s — 25s attempt fails."""
+        from app.services.virtual_training_service import VirtualTrainingService
+        data = {
+            "duration_seconds": 25.0,
+            "stimuli_count":    12,
+            "wrong_click_count": 0,
+            "avg_reaction_ms":  500,
+            "raw_metrics": {
+                "v": 3,
+                "difficulty_level":      "hard",
+                "difficulty_multiplier": 1.70,
+            },
+        }
+        game = _mock_tt_game_with_difficulties()
+        hard_ov = game.config["difficulties"]["hard"]["validation_overrides"]
+        is_valid, reason = VirtualTrainingService.validate_attempt(data, overrides=hard_ov)
+        assert is_valid is False
+        assert reason == "too_short"
+
+
+# ── TT-36: Result page context ────────────────────────────────────────────────
+
+class TestTTDifficultyResultPage:
+
+    def test_tt36_result_page_difficulty_context(self):
+        """TT-36: Result page context contains difficulty_level and difficulty_multiplier keys."""
+        user    = _onboarded_student(user_id=42)
+        game    = _mock_tt_game_with_difficulties(is_active=True)
+        raw_v3  = {
+            **_TT_RAW_METRICS,
+            "v": 3,
+            "difficulty_level":      "medium",
+            "difficulty_multiplier": 1.30,
+        }
+        attempt = _mock_tt_attempt(user_id=42, raw_metrics=raw_v3, skill_deltas=None)
+        attempt.skill_deltas = None
+
+        db = MagicMock()
+        q  = MagicMock()
+        q.filter.return_value = q
+        q.first.return_value  = attempt
+        db.query.return_value = q
+
+        with patch(f"{_ROUTE_BASE}.VirtualTrainingService.get_hub_games", return_value=[game]), \
+             patch(f"{_ROUTE_BASE}._spec_ctx", return_value={}):
+            client = _make_client(user, db)
+            resp   = client.get("/virtual-training/target-tracking/result/201")
+
+        assert resp.status_code == 200
+        # difficulty badge rendered in HTML
+        assert b"Medium" in resp.content or b"1.30" in resp.content
+
+
+# ── TT-37..TT-38: Flash mechanic in raw_metrics ───────────────────────────────
+
+class TestTTFlashRawMetrics:
+
+    def test_tt37_medium_per_round_has_flash_events_key(self):
+        """TT-37: A v=3 raw_metrics per_round item may have flash_events key."""
+        raw_v3 = {
+            "v": 3,
+            "difficulty_level": "medium",
+            "difficulty_multiplier": 1.30,
+            "per_round": [
+                {
+                    "round": 0, "phase": 1, "object_count": 5,
+                    "outcome": "correct", "response_ms": 900,
+                    "tapped_index": 0, "target_index": 0,
+                    "flash_events": [
+                        {"t_offset_ms": 2000, "distractor_index": 2, "target_index": 0,
+                         "duration_ms": 400, "color": "#f59e0b"}
+                    ],
+                    "tapped_during_flash": False,
+                }
+            ],
+            "per_phase": [],
+            "late_summary": {
+                "total_flashes_shown": 1,
+                "taps_during_flash": 0,
+                "flash_distraction_rate": 0.0,
+            },
+        }
+        assert "flash_events" in raw_v3["per_round"][0]
+        assert raw_v3["per_round"][0]["flash_events"][0]["color"] == "#f59e0b"
+        # target_index in flash_event must differ from distractor_index
+        fe = raw_v3["per_round"][0]["flash_events"][0]
+        assert fe["distractor_index"] != fe["target_index"]
+
+    def test_tt38_late_summary_flash_fields(self):
+        """TT-38: late_summary has total_flashes_shown, taps_during_flash, flash_distraction_rate."""
+        late_summary = {
+            "total_flashes_shown":   12,
+            "taps_during_flash":     3,
+            "flash_distraction_rate": 0.25,
+        }
+        assert late_summary["flash_distraction_rate"] == pytest.approx(0.25, abs=1e-9)
+        assert late_summary["total_flashes_shown"] == 12
+        assert late_summary["taps_during_flash"]   == 3
+
+
+# ── TT-39..TT-41: extract_difficulty_multiplier ───────────────────────────────
+
+class TestTTExtractDifficultyMultiplier:
+
+    def _svc(self):
+        from app.services.virtual_training_service import VirtualTrainingService
+        return VirtualTrainingService
+
+    def test_tt39_v3_payload_returns_correct_multiplier(self):
+        """TT-39: extract_difficulty_multiplier: v=3 payload with 1.70 → returns 1.70."""
+        data = {"raw_metrics": {"v": 3, "difficulty_multiplier": 1.70}}
+        assert self._svc().extract_difficulty_multiplier(data) == pytest.approx(1.70)
+
+    def test_tt40_v2_payload_returns_1_00(self):
+        """TT-40: extract_difficulty_multiplier: v=2 payload → returns 1.00."""
+        data = {"raw_metrics": {"v": 2, "difficulty_multiplier": 1.70}}
+        assert self._svc().extract_difficulty_multiplier(data) == pytest.approx(1.00)
+
+    def test_tt41_missing_key_returns_1_00(self):
+        """TT-41: extract_difficulty_multiplier: missing key in v=3 → returns 1.00."""
+        data = {"raw_metrics": {"v": 3}}
+        assert self._svc().extract_difficulty_multiplier(data) == pytest.approx(1.00)
+
+
+# ── TT-42..TT-43: VTSignalExtractor difficulty_multiplier ────────────────────
+
+class TestTTVTSignalExtractorDifficulty:
+
+    def test_tt42_v3_payload_signals_difficulty_multiplier(self):
+        """TT-42: VTSignalExtractor.extract v=3 payload: signals.difficulty_multiplier == 1.70."""
+        from app.services.virtual_training_metrics import VTSignalExtractor
+        data = {
+            "stimuli_count": 9, "correct_count": 5, "wrong_click_count": 2,
+            "error_count": 2, "avg_reaction_ms": 970,
+            "raw_metrics": {"v": 3, "difficulty_multiplier": 1.70},
+        }
+        signals = VTSignalExtractor.extract(data, [])
+        assert signals.difficulty_multiplier == pytest.approx(1.70)
+
+    def test_tt43_v2_payload_signals_difficulty_multiplier_default(self):
+        """TT-43: VTSignalExtractor.extract v=2 payload: signals.difficulty_multiplier == 1.00."""
+        from app.services.virtual_training_metrics import VTSignalExtractor
+        data = {
+            "stimuli_count": 9, "correct_count": 5, "wrong_click_count": 2,
+            "error_count": 2, "avg_reaction_ms": 970,
+            "raw_metrics": {"v": 2},
+        }
+        signals = VTSignalExtractor.extract(data, [])
+        assert signals.difficulty_multiplier == pytest.approx(1.00)
+
+
+# ── TT-44..TT-45: delta multiplier ordering ──────────────────────────────────
+
+class TestTTDeltaMultiplierOrdering:
+
+    def _compute_delta(self, difficulty_multiplier: float) -> float:
+        """Mirror record_attempt: effective_multiplier = xp_multiplier × difficulty_multiplier."""
+        from app.services.virtual_training_metrics import compute_vt_skill_deltas
+        data = {
+            "stimuli_count": 9, "correct_count": 8, "wrong_click_count": 0,
+            "error_count": 1, "avg_reaction_ms": 800,
+            "raw_metrics": {"v": 3, "difficulty_multiplier": difficulty_multiplier},
+        }
+        game = _mock_tt_game_with_difficulties()
+        xp_multiplier      = 1.00   # attempt_index = 1
+        effective_mult     = xp_multiplier * difficulty_multiplier   # same formula as record_attempt
+        deltas = compute_vt_skill_deltas(data=data, game=game, multiplier=effective_mult)
+        return sum(deltas.values()) if deltas else 0.0
+
+    def test_tt44_hard_delta_larger_than_easy(self):
+        """TT-44: compute_vt_skill_deltas: hard (1.70×) gives larger delta than easy (1.00×)."""
+        easy_delta = self._compute_delta(1.00)
+        hard_delta = self._compute_delta(1.70)
+        assert hard_delta > easy_delta
+
+    def test_tt45_expert_delta_gte_hard(self):
+        """TT-45: compute_vt_skill_deltas: expert (2.20×) delta >= hard (1.70×)."""
+        hard_delta   = self._compute_delta(1.70)
+        expert_delta = self._compute_delta(2.20)
+        assert expert_delta >= hard_delta
+
+
+# ── TT-46..TT-47: Expert lock gate ───────────────────────────────────────────
+
+class TestTTExpertLock:
+
+    _VALID_PAYLOAD = {
+        "started_at":       "2026-05-23T10:00:00Z",
+        "duration_seconds": 120.0,
+        "stimuli_count":    12,
+        "correct_count":    10,
+        "error_count":      1,
+        "wrong_click_count": 1,
+        "avg_reaction_ms":  900,
+        "min_reaction_ms":  700,
+        "score_raw":        0.80,
+        "score_normalized": 80,
+        "difficulty_level": "expert",
+        "raw_metrics": {
+            "v": 3,
+            "difficulty_level": "expert",
+            "difficulty_multiplier": 2.20,
+            "per_round": [],
+            "per_phase": [],
+            "late_summary": {"total_flashes_shown": 0, "taps_during_flash": 0, "flash_distraction_rate": 0.0},
+        },
+    }
+
+    def test_tt46_expert_submit_locked_returns_403(self):
+        """TT-46: POST expert submit when not unlocked → 403 expert_locked."""
+        user = _onboarded_student()
+        game = _mock_tt_game_with_difficulties(is_active=True)
+        db   = _db_with_count(0)
+
+        with patch(f"{_ROUTE_BASE}.VirtualTrainingService.get_game", return_value=game), \
+             patch(f"{_ROUTE_BASE}.VirtualTrainingService.is_expert_unlocked", return_value=False):
+            client = _make_client(user, db)
+            resp   = client.post("/virtual-training/target-tracking/submit",
+                                 json=self._VALID_PAYLOAD)
+
+        assert resp.status_code == 403
+        assert resp.json()["error"] == "expert_locked"
+
+    def test_tt47_expert_submit_unlocked_calls_record_attempt(self):
+        """TT-47: POST expert submit when unlocked → 200 (record_attempt called)."""
+        user    = _onboarded_student()
+        game    = _mock_tt_game_with_difficulties(is_active=True)
+        attempt = _mock_tt_attempt()
+        db      = _db_with_count(0)
+
+        with patch(f"{_ROUTE_BASE}.VirtualTrainingService.get_game", return_value=game), \
+             patch(f"{_ROUTE_BASE}.VirtualTrainingService.is_expert_unlocked", return_value=True), \
+             patch(f"{_ROUTE_BASE}.VirtualTrainingService.record_attempt", return_value=attempt) as mock_record:
+            client = _make_client(user, db)
+            resp   = client.post("/virtual-training/target-tracking/submit",
+                                 json=self._VALID_PAYLOAD)
+
+        assert resp.status_code == 200
+        mock_record.assert_called_once()

@@ -63,6 +63,24 @@
         margin: 0 0 0.25rem;
     }
 
+    .ttr-difficulty-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: #f3f4f6;
+        color: #374151;
+        font-size: 0.8rem;
+        font-weight: 700;
+        padding: 0.25rem 0.7rem;
+        border-radius: 20px;
+        margin-bottom: 0.5rem;
+    }
+
+    .ttr-difficulty-badge.easy   { background: #d1fae5; color: #065f46; }
+    .ttr-difficulty-badge.medium { background: #dbeafe; color: #1e40af; }
+    .ttr-difficulty-badge.hard   { background: #fce7f3; color: #9d174d; }
+    .ttr-difficulty-badge.expert { background: #4f46e5; color: #fff; }
+
     .ttr-invalid-banner {
         background: #fef3c7;
         border: 1px solid #f59e0b;
@@ -73,6 +91,48 @@
         margin-bottom: 0.75rem;
         text-align: left;
     }
+
+    .ttr-flash-card {
+        background: #fffbeb;
+        border: 1px solid #fcd34d;
+        border-radius: 10px;
+        padding: 0.85rem 1.1rem;
+        margin-bottom: 1.1rem;
+        font-size: 0.83rem;
+        color: #78350f;
+    }
+
+    .ttr-flash-card h3 {
+        font-size: 0.82rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem;
+        color: #92400e;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .ttr-flash-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.2rem 0;
+        border-bottom: 1px solid #fde68a;
+    }
+
+    .ttr-flash-row:last-child { border-bottom: none; }
+
+    .ttr-try-harder {
+        display: inline-block;
+        padding: 0.45rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-decoration: none;
+        background: #f3f4f6;
+        color: var(--app-text);
+        transition: background 0.15s;
+    }
+
+    .ttr-try-harder:hover { background: #e5e7eb; }
 
     .ttr-xp {
         display: inline-block;
@@ -252,6 +312,16 @@
         </div>
         <h2>Target Tracking Complete</h2>
 
+        {% set _diff = difficulty_level | default('easy') %}
+        <div class="ttr-difficulty-badge {{ _diff }}">
+            {% if _diff == 'easy' %}⬤ Easy · 1.00×
+            {% elif _diff == 'medium' %}⬤ Medium · 1.30×
+            {% elif _diff == 'hard' %}⬤ Hard · 1.70×
+            {% elif _diff == 'expert' %}⬤ Expert · 2.20×
+            {% else %}⬤ {{ _diff | title }} · {{ difficulty_multiplier | default(1.00) }}×
+            {% endif %}
+        </div>
+
         {% if not attempt.is_valid %}
         <div class="ttr-invalid-banner">
             ⚠ This attempt was flagged as invalid
@@ -395,10 +465,33 @@
     </div>
     {% endif %}
 
+    <!-- ── Flash distraction stats ─────────────────────────────────────────── -->
+    {% if flash_summary and flash_summary.total_flashes_shown %}
+    <div class="ttr-flash-card">
+        <h3>Distractor Flash Stats</h3>
+        <div class="ttr-flash-row">
+            <span>Flashes shown</span>
+            <strong>{{ flash_summary.total_flashes_shown }}</strong>
+        </div>
+        <div class="ttr-flash-row">
+            <span>Tapped during flash</span>
+            <strong>{{ flash_summary.taps_during_flash }}</strong>
+        </div>
+        <div class="ttr-flash-row">
+            <span>Flash distraction rate</span>
+            <strong>{{ (flash_summary.flash_distraction_rate * 100) | round(1) }}%</strong>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- ── Score formula note ───────────────────────────────────────────────── -->
     <div style="font-size:0.78rem;color:var(--app-text-muted);margin-bottom:1.1rem;padding:0 0.25rem;">
         Score = 0.60 × hit_rate + 0.25 × (1 − timeout_rate) + 0.15 × speed_factor
         &nbsp;·&nbsp; speed_factor = max(0, 1 − avg_ms / 3000)
+        {% set _diff = difficulty_level | default('easy') %}
+        {% if _diff != 'easy' %}
+        &nbsp;·&nbsp; skill delta ×{{ difficulty_multiplier | default(1.00) }} ({{ _diff }} difficulty)
+        {% endif %}
     </div>
 
     <!-- ── Admin debug ───────────────────────────────────────────────────────── -->
@@ -418,6 +511,23 @@
         <a href="/virtual-training" class="ttr-btn ttr-btn-secondary">← All games</a>
         <a href="/virtual-training/history" class="ttr-btn ttr-btn-secondary">📋 History</a>
     </div>
+    {% set _diff = difficulty_level | default('easy') %}
+    {% if _diff == 'easy' %}
+    <div style="margin-top:0.85rem;font-size:0.82rem;">
+        <a href="/virtual-training/target-tracking" class="ttr-try-harder">Try Medium →</a>
+        <span style="margin-left:0.5rem;color:var(--app-text-muted);">1.30× skill delta</span>
+    </div>
+    {% elif _diff == 'medium' %}
+    <div style="margin-top:0.85rem;font-size:0.82rem;">
+        <a href="/virtual-training/target-tracking" class="ttr-try-harder">Try Hard →</a>
+        <span style="margin-left:0.5rem;color:var(--app-text-muted);">1.70× skill delta</span>
+    </div>
+    {% elif _diff == 'hard' %}
+    <div style="margin-top:0.85rem;font-size:0.82rem;">
+        <a href="/virtual-training/target-tracking" class="ttr-try-harder">Try Expert →</a>
+        <span style="margin-left:0.5rem;color:var(--app-text-muted);">2.20× skill delta · requires 3× Hard 70%+</span>
+    </div>
+    {% endif %}
 
 </div>
 {% endblock %}

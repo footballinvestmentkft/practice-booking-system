@@ -563,6 +563,8 @@ async def virtual_training_target_tracking(
         .count()
     )
 
+    expert_unlocked = VirtualTrainingService.is_expert_unlocked(db, user.id, game.id)
+
     return templates.TemplateResponse(
         "virtual_training_target_tracking.html",
         {
@@ -573,6 +575,7 @@ async def virtual_training_target_tracking(
             "attempts_today": attempts_today,
             "max_daily_attempts": game.max_daily_attempts,
             "attempts_remaining": max(0, game.max_daily_attempts - attempts_today),
+            "expert_unlocked": expert_unlocked,
         },
     )
 
@@ -596,6 +599,18 @@ async def virtual_training_target_tracking_submit(
 
     body = await request.json()
 
+    # Difficulty guard — Expert requires unlock
+    difficulty_level = str(body.get("difficulty_level", "easy")).lower()
+    if difficulty_level not in ("easy", "medium", "hard", "expert"):
+        difficulty_level = "easy"
+    if difficulty_level == "expert":
+        if not VirtualTrainingService.is_expert_unlocked(db, user.id, game.id):
+            return JSONResponse(
+                {"error": "expert_locked",
+                 "message": "Expert requires 3 Hard attempts with 70%+ score."},
+                status_code=403,
+            )
+
     today_start = datetime.combine(
         datetime.now(timezone.utc).date(),
         datetime.min.time(),
@@ -615,6 +630,16 @@ async def virtual_training_target_tracking_submit(
             {"error": "daily_cap", "message": "Daily attempt limit reached for this game."},
             status_code=429,
         )
+
+    # Inject difficulty metadata into raw_metrics so record_attempt can read it
+    diff_cfg = VirtualTrainingService.get_difficulty_config(game, difficulty_level)
+    diff_mult = float(diff_cfg.get("difficulty_multiplier", 1.00))
+    raw = body.get("raw_metrics")
+    if isinstance(raw, dict):
+        raw["difficulty_level"]      = difficulty_level
+        raw["difficulty_multiplier"] = diff_mult
+        raw["v"]                     = 3
+        body["raw_metrics"]          = raw
 
     started_at_raw = body.get("started_at", "")
     idem_key = f"vt_tt_u{user.id}_{started_at_raw}"
@@ -706,13 +731,26 @@ async def virtual_training_target_tracking_result(
             "avg_reaction_ms": signals.avg_reaction_ms,
         }
 
-    # Decompose raw_metrics — per_round and per_phase (v=2, no hand_profile)
+    # Decompose raw_metrics — per_round, per_phase, difficulty info, flash summary
     per_phase: list = []
     per_round: list = []
+    difficulty_level      = "easy"
+    difficulty_multiplier = 1.00
+    flash_summary: dict   = {}
     raw = attempt.raw_metrics
     if isinstance(raw, dict) and raw.get("v", 1) >= 1:
         per_phase = raw.get("per_phase") or []
         per_round = raw.get("per_round") or []
+    if isinstance(raw, dict) and raw.get("v", 1) >= 3:
+        difficulty_level      = raw.get("difficulty_level", "easy")
+        difficulty_multiplier = float(raw.get("difficulty_multiplier", 1.00))
+        ls = raw.get("late_summary") or {}
+        if ls.get("total_flashes_shown"):
+            flash_summary = {
+                "total_flashes_shown":  ls.get("total_flashes_shown", 0),
+                "taps_during_flash":    ls.get("taps_during_flash", 0),
+                "flash_distraction_rate": ls.get("flash_distraction_rate", 0.0),
+            }
 
     from ...models.user import UserRole
     is_admin = user.role == UserRole.ADMIN
@@ -725,11 +763,14 @@ async def virtual_training_target_tracking_result(
             **_spec_ctx(user, db),
             "attempt": attempt,
             "game": game,
-            "skill_scores": skill_scores,
-            "signals_ctx":  signals_ctx,
-            "per_phase":    per_phase,
-            "per_round":    per_round,
-            "is_admin":     is_admin,
+            "skill_scores":          skill_scores,
+            "signals_ctx":           signals_ctx,
+            "per_phase":             per_phase,
+            "per_round":             per_round,
+            "is_admin":              is_admin,
+            "difficulty_level":      difficulty_level,
+            "difficulty_multiplier": difficulty_multiplier,
+            "flash_summary":         flash_summary,
         },
     )
 

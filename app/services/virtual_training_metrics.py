@@ -73,6 +73,7 @@ class VTSignals:
     late_go_rate:                  float = 0.0   # late GO responses / stimuli (v2+ GNG only)
     late_nogo_rate:                float = 0.0   # late NO-GO false alarms / stimuli (v2+ GNG only)
     protocol_difficulty_multiplier: float = 1.0  # self-declared; 1.00=free, max 1.25 (v3+)
+    difficulty_multiplier:          float = 1.0  # TT difficulty level multiplier (v3+); max 2.50
 
 
 # ── Layer 1: Signal extraction ────────────────────────────────────────────────
@@ -130,6 +131,7 @@ class VTSignalExtractor:
             late_nogo_rate  = max(0.0, min(1.0, int(ls.get("late_no_go_count") or 0) / safe))
 
         protocol_difficulty_multiplier = 1.0
+        difficulty_multiplier          = 1.0
         if isinstance(raw, dict) and raw.get("v", 1) >= 3:
             hp = raw.get("hand_profile") or {}
             try:
@@ -137,6 +139,11 @@ class VTSignalExtractor:
                 protocol_difficulty_multiplier = max(1.0, min(1.25, pdm))
             except (TypeError, ValueError):
                 protocol_difficulty_multiplier = 1.0
+            try:
+                dm = float(raw.get("difficulty_multiplier", 1.0))
+                difficulty_multiplier = max(1.0, min(2.50, dm))
+            except (TypeError, ValueError):
+                difficulty_multiplier = 1.0
 
         return VTSignals(
             hit_rate=hit_rate,
@@ -150,6 +157,7 @@ class VTSignalExtractor:
             late_go_rate=late_go_rate,
             late_nogo_rate=late_nogo_rate,
             protocol_difficulty_multiplier=protocol_difficulty_multiplier,
+            difficulty_multiplier=difficulty_multiplier,
         )
 
 
