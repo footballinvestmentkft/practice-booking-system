@@ -345,8 +345,8 @@
     // ── Server-injected config ─────────────────────────────────────────────
     var PHASES           = {{ game.config.phases | tojson }};
     var COLOURS          = {{ game.config.colours | tojson }};  // {"RED":"#e74c3c", ...}
-    var MISS_PENALTY_MS  = {{ game.config.miss_penalty_ms  or 300 }};
-    var WRONG_PENALTY_MS = {{ game.config.wrong_penalty_ms or 200 }};
+    var MISS_PENALTY_MS  = {{ game.config.miss_penalty_ms  or 500 }};
+    var WRONG_PENALTY_MS = {{ game.config.wrong_penalty_ms or 300 }};
     var CSRF_TOKEN       = "{{ request.cookies.get('csrf_token', '') }}";
     var SUBMIT_URL       = "/virtual-training/color-reaction/submit";
 
@@ -378,7 +378,7 @@
     var currentPool       = [];         // color names shown in active round
 
     // ── Late-click detection (Phase 2.3) ───────────────────────────────────
-    var LATE_WINDOW_MS  = 600;
+    var LATE_WINDOW_MS  = 350;
     var lateClickCount  = 0;
     var lateClickTimes  = [];
     var lateHandled     = false;

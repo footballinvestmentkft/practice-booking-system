@@ -48,8 +48,8 @@ _GAMES = [
                 "PURPLE": "#9b59b6",
                 "ORANGE": "#e67e22",
             },
-            "miss_penalty_ms":  300,
-            "wrong_penalty_ms": 200,
+            "miss_penalty_ms":  500,
+            "wrong_penalty_ms": 300,
             # display keys (used by hub template)
             "show_in_hub":      True,
             "icon":             "⚡",

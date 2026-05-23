@@ -406,7 +406,7 @@
     var clickHandled   = false;     // prevents double-click within window
 
     // ── Late-click detection (Phase 2.3) ───────────────────────────────────
-    var LATE_WINDOW_MS  = 600;
+    var LATE_WINDOW_MS  = 350;
     var lateGoCount     = 0;
     var lateNoGoCount   = 0;
     var lateClickTimes  = [];
@@ -585,6 +585,7 @@
                 recordStimEvent("correct_inhibit", null);
                 showFeedback("GOOD HOLD", "fb-hold");
             }
+            clickHandled    = true;
             windowExpiredAt = performance.now();
             expiredStimType = currentType;
             expiredStimIdx  = globalStimIdx;
