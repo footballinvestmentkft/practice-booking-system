@@ -245,6 +245,10 @@ async def virtual_training_color_reaction_result(
     if isinstance(raw, dict) and raw.get("v", 1) >= 2:
         late_summary = raw.get("late_summary") or None
 
+    hand_profile: dict | None = None
+    if isinstance(raw, dict) and int(raw.get("v", 1)) >= 3:
+        hand_profile = raw.get("hand_profile") or None
+
     from ...models.user import UserRole
     is_admin = user.role == UserRole.ADMIN
 
@@ -262,6 +266,7 @@ async def virtual_training_color_reaction_result(
             "per_color":     per_color,
             "per_stimulus":  per_stimulus,
             "late_summary":  late_summary,
+            "hand_profile":  hand_profile,
             "is_admin":      is_admin,
         },
     )
@@ -463,6 +468,10 @@ async def virtual_training_go_no_go_result(
     if isinstance(raw, dict) and raw.get("v", 1) >= 2:
         late_summary = raw.get("late_summary") or None
 
+    hand_profile: dict | None = None
+    if isinstance(raw, dict) and int(raw.get("v", 1)) >= 3:
+        hand_profile = raw.get("hand_profile") or None
+
     from ...models.user import UserRole
     is_admin = user.role == UserRole.ADMIN
 
@@ -479,6 +488,7 @@ async def virtual_training_go_no_go_result(
             "per_phase":     per_phase,
             "per_stimulus":  per_stimulus,
             "late_summary":  late_summary,
+            "hand_profile":  hand_profile,
             "is_admin":      is_admin,
         },
     )

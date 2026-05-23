@@ -123,6 +123,27 @@ class VirtualTrainingService:
         )
         return count + 1
 
+    # ── Protocol difficulty ───────────────────────────────────────────────────
+
+    @staticmethod
+    def extract_protocol_difficulty(data: dict) -> float:
+        """
+        Extract and clamp the self-declared protocol difficulty multiplier.
+
+        Returns 1.00 when raw_metrics is absent, v<3, or hand_profile missing.
+        Server-side clamp: floor=1.00, hard cap=1.25 (ignores client values).
+        Affects skill deltas only — XP and score_normalized are unaffected.
+        """
+        raw = data.get("raw_metrics")
+        if not isinstance(raw, dict) or int(raw.get("v", 1)) < 3:
+            return 1.00
+        hp = raw.get("hand_profile") or {}
+        try:
+            pdm = float(hp.get("protocol_difficulty_multiplier", 1.00))
+        except (TypeError, ValueError):
+            return 1.00
+        return max(1.00, min(1.25, pdm))
+
     # ── XP calculation ────────────────────────────────────────────────────────
 
     @staticmethod
@@ -177,8 +198,13 @@ class VirtualTrainingService:
         attempt_index = VirtualTrainingService.calculate_daily_attempt_index(
             db, user_id, game.id
         )
-        multiplier = VirtualTrainingService.calculate_xp_multiplier(attempt_index)
-        xp_awarded = VirtualTrainingService.calculate_xp_awarded(game, multiplier) if is_valid else 0
+        # xp_multiplier: diminishing returns by attempt index (affects XP + delta ceiling)
+        xp_multiplier = VirtualTrainingService.calculate_xp_multiplier(attempt_index)
+        xp_awarded = VirtualTrainingService.calculate_xp_awarded(game, xp_multiplier) if is_valid else 0
+
+        # protocol_mult: self-declared hand/finger difficulty (affects delta only)
+        protocol_mult     = VirtualTrainingService.extract_protocol_difficulty(data)
+        effective_multiplier = xp_multiplier * protocol_mult
 
         if is_valid and xp_awarded > 0:
             today_start = datetime.combine(date.today(), datetime.min.time()).replace(
@@ -201,7 +227,7 @@ class VirtualTrainingService:
             ).fetchall()
             existing_neg_today: dict[str, float] = {row.key: row.neg_today for row in neg_rows}
             skill_deltas = compute_vt_skill_deltas(
-                data=data, game=game, multiplier=multiplier,
+                data=data, game=game, multiplier=effective_multiplier,
                 existing_neg_today=existing_neg_today,
             )
         else:

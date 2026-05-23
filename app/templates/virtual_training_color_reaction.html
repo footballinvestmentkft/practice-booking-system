@@ -249,6 +249,79 @@
     }
 
     .cr-footer a:hover { text-decoration: underline; }
+
+    /* ── Protocol chooser ───────────────────────────────────────────────── */
+    .cr-protocol {
+        background: var(--app-card);
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+        margin-bottom: 1.5rem;
+    }
+
+    .cr-protocol h3 {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--app-text);
+        margin: 0 0 0.25rem;
+    }
+
+    .cr-protocol-desc {
+        font-size: 0.8rem;
+        color: var(--app-text-muted);
+        margin: 0 0 1rem;
+        line-height: 1.5;
+    }
+
+    .cr-protocol-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .cr-protocol-btn {
+        flex: 1 1 calc(50% - 0.25rem);
+        min-width: 140px;
+        background: #f3f4f6;
+        border: 2px solid transparent;
+        border-radius: 10px;
+        padding: 0.6rem 0.75rem;
+        text-align: left;
+        cursor: pointer;
+        transition: background 0.12s, border-color 0.12s;
+    }
+
+    .cr-protocol-btn:hover { background: #e9eaf0; }
+
+    .cr-protocol-btn.selected {
+        background: #eef2ff;
+        border-color: #4f46e5;
+    }
+
+    .cr-protocol-btn-label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--app-text);
+    }
+
+    .cr-protocol-btn-mult {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #4f46e5;
+        margin-top: 0.1rem;
+    }
+
+    .cr-protocol-warning {
+        font-size: 0.78rem;
+        color: #92400e;
+        background: #fef3c7;
+        border-radius: 8px;
+        padding: 0.55rem 0.8rem;
+        line-height: 1.5;
+    }
 </style>
 {% endblock %}
 
@@ -292,6 +365,50 @@
             Up to <strong>{{ game.base_xp }} XP</strong> per attempt •
             Diminishing returns apply to repeated attempts
         </p>
+    </div>
+
+    {# ── Protocol chooser ─────────────────────────────────────────────────── #}
+    <div class="cr-protocol" id="crProtocol">
+        <h3>🖐 Training Protocol</h3>
+        <p class="cr-protocol-desc">
+            Which hand and finger are you using? Your choice affects skill deltas only —
+            not XP or score.
+        </p>
+        <div class="cr-protocol-options">
+            <button class="cr-protocol-btn selected" data-hand="right" data-finger="index"
+                    data-label="Right Index" data-mult="1.00" onclick="crSelectProtocol(this)">
+                <span class="cr-protocol-btn-label">Right Index</span>
+                <span class="cr-protocol-btn-mult">×1.00 (standard)</span>
+            </button>
+            <button class="cr-protocol-btn" data-hand="right" data-finger="thumb"
+                    data-label="Right Thumb" data-mult="1.05" onclick="crSelectProtocol(this)">
+                <span class="cr-protocol-btn-label">Right Thumb</span>
+                <span class="cr-protocol-btn-mult">×1.05</span>
+            </button>
+            <button class="cr-protocol-btn" data-hand="left" data-finger="index"
+                    data-label="Left Index" data-mult="1.10" onclick="crSelectProtocol(this)">
+                <span class="cr-protocol-btn-label">Left Index</span>
+                <span class="cr-protocol-btn-mult">×1.10</span>
+            </button>
+            <button class="cr-protocol-btn" data-hand="left" data-finger="thumb"
+                    data-label="Left Thumb" data-mult="1.15" onclick="crSelectProtocol(this)">
+                <span class="cr-protocol-btn-label">Left Thumb</span>
+                <span class="cr-protocol-btn-mult">×1.15</span>
+            </button>
+            <button class="cr-protocol-btn" data-hand="free" data-finger="free"
+                    data-label="Free / No Protocol" data-mult="1.00" onclick="crSelectProtocol(this)">
+                <span class="cr-protocol-btn-label">Free / No Protocol</span>
+                <span class="cr-protocol-btn-mult">×1.00</span>
+            </button>
+        </div>
+        <div class="cr-protocol-warning">
+            This is self-declared. Your protocol choice affects skill deltas, not XP or score.<br>
+            Follow the selected protocol honestly for accurate development tracking.
+        </div>
+    </div>
+
+    {# ── Start button ─────────────────────────────────────────────────────── #}
+    <div style="text-align:center;margin-bottom:1.5rem;">
         <button class="cr-btn-start" id="btnStart" onclick="crStart()">Start Game</button>
     </div>
 
@@ -384,6 +501,16 @@
     var lateHandled     = false;
     var windowExpiredAt = null;
 
+    // ── Protocol difficulty (Phase 2.4) ────────────────────────────────────
+    var handProfile = {
+        hand:                          "right",
+        finger:                        "index",
+        label:                         "Right Index",
+        protocol_difficulty_multiplier: 1.00,
+        self_declared:                 true,
+        selected_at_ms:                null
+    };
+
     // ── DOM refs ───────────────────────────────────────────────────────────
     var arena        = document.getElementById("crArena");
     var instruction  = document.getElementById("crInstruction");
@@ -448,11 +575,30 @@
         return arr;
     }
 
+    // ── Protocol selection ─────────────────────────────────────────────────
+    window.crSelectProtocol = function (btn) {
+        document.querySelectorAll(".cr-protocol-btn").forEach(function(b) {
+            b.classList.remove("selected");
+        });
+        btn.classList.add("selected");
+        var isFree = btn.dataset.hand === "free";
+        handProfile = {
+            hand:                          isFree ? null : btn.dataset.hand,
+            finger:                        isFree ? null : btn.dataset.finger,
+            label:                         btn.dataset.label,
+            protocol_difficulty_multiplier: parseFloat(btn.dataset.mult),
+            self_declared:                 true,
+            selected_at_ms:                Date.now()
+        };
+    };
+
     // ── Public entry ───────────────────────────────────────────────────────
     window.crStart = function () {
         if (started) { return; }
         started = true;
         instruction.style.display = "none";
+        var protocolEl = document.getElementById("crProtocol");
+        if (protocolEl) { protocolEl.style.display = "none"; }
         arena.classList.add("active");
         scheduleNextStimulus(800);
     };
@@ -728,7 +874,7 @@
             ? Math.max.apply(null, lateClickTimes)
             : null;
         var rawMetrics = {
-            v: 2,
+            v: 3,
             per_stimulus: stimulusLog,
             per_color:    perColor,
             per_phase:    perPhase,
@@ -738,7 +884,8 @@
                 late_click_max_ms: lateMaxMs,
                 late_go_count:     0,
                 late_no_go_count:  0
-            }
+            },
+            hand_profile: handProfile
         };
 
         var payload = {

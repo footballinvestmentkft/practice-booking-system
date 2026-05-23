@@ -106,6 +106,17 @@
 
     .vth-footer a:hover { text-decoration: underline; }
 
+    .vth-protocol-badge {
+        display: inline-block;
+        font-size: 0.73rem;
+        font-weight: 700;
+        color: #4f46e5;
+        background: #eef2ff;
+        border-radius: 6px;
+        padding: 0.15rem 0.45rem;
+        white-space: nowrap;
+    }
+
     @media (max-width: 520px) {
         .vth-table th:nth-child(4),
         .vth-table td:nth-child(4) { display: none; }
@@ -130,11 +141,14 @@
                     <th>Score</th>
                     <th>Avg RT</th>
                     <th>XP</th>
+                    <th>Protocol</th>
                     <th>Date</th>
                 </tr>
             </thead>
             <tbody>
                 {% for attempt in attempts %}
+                {% set _raw = attempt.raw_metrics %}
+                {% set _hp = _raw.get("hand_profile") if (_raw and _raw is mapping and _raw.get("v", 1) | int >= 3) else none %}
                 <tr>
                     <td>
                         {% set _game = games[attempt.game_id] if attempt.game_id in games else none %}
@@ -157,6 +171,14 @@
                     <td>
                         {% if attempt.xp_awarded > 0 %}
                         <span class="vth-xp-chip">+{{ attempt.xp_awarded }}</span>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if _hp and _hp.get("protocol_difficulty_multiplier", 1.0) | float > 1.0 %}
+                        <span class="vth-protocol-badge"
+                              title="{{ _hp.get('label', '') }} · Self-declared · Not automatically verified">
+                            🖐 {{ _hp.get("label", "—") }} ×{{ "%.2f"|format(_hp.get("protocol_difficulty_multiplier", 1.0) | float) }}
+                        </span>
                         {% else %}—{% endif %}
                     </td>
                     <td>
