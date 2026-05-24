@@ -1,0 +1,254 @@
+{% extends "student_base.html" %}
+
+{% block title %}Send Challenge — Virtual Training{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '⚔️' %}
+{% set _page_name = 'Send Challenge' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+.cs-container { max-width: 520px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+.cs-card {
+    background: var(--app-card); border-radius: 16px;
+    padding: 1.75rem 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    margin-bottom: 1rem;
+}
+.cs-card h2 { font-size: 1.15rem; font-weight: 800; color: var(--app-text);
+              margin: 0 0 1.25rem; }
+
+.cs-field { margin-bottom: 1.1rem; }
+.cs-label { display: block; font-size: 0.82rem; font-weight: 700;
+            color: var(--app-text-muted); text-transform: uppercase;
+            letter-spacing: 0.04em; margin-bottom: 0.4rem; }
+.cs-select, .cs-textarea {
+    width: 100%; font-size: 0.92rem; padding: 0.55rem 0.75rem;
+    border: 1px solid #d1d5db; border-radius: 8px;
+    background: #fafafa; color: var(--app-text); box-sizing: border-box;
+}
+.cs-select:focus, .cs-textarea:focus {
+    outline: none; border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
+}
+.cs-textarea { min-height: 80px; resize: vertical; }
+
+/* Difficulty grid */
+.cs-diff-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
+.cs-diff-card {
+    border: 2px solid #e5e7eb; border-radius: 10px; padding: 0.65rem 0.75rem;
+    cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    background: #fff;
+}
+.cs-diff-card:hover { border-color: #4f46e5; }
+.cs-diff-card.selected { border-color: #4f46e5; background: #eef2ff; }
+.cs-diff-card.disabled { opacity: 0.45; cursor: not-allowed; }
+.cs-diff-name  { font-size: 0.88rem; font-weight: 700; color: var(--app-text); }
+.cs-diff-mult  { font-size: 0.75rem; color: #4f46e5; font-weight: 700; }
+.cs-diff-meta  { font-size: 0.72rem; color: var(--app-text-muted); margin-top: 0.15rem; }
+.cs-diff-locked { font-size: 0.7rem; color: #d97706; margin-top: 0.2rem; }
+
+#cs-diff-section { display: none; }
+
+.cs-flash-err {
+    background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5;
+    border-radius: 8px; padding: 0.7rem 1rem; font-size: 0.88rem;
+    font-weight: 600; margin-bottom: 1rem;
+}
+
+.cs-btn-submit {
+    width: 100%; background: #4f46e5; color: #fff; font-size: 1rem;
+    font-weight: 700; padding: 0.7rem 1rem; border: none;
+    border-radius: 10px; cursor: pointer; transition: background 0.15s;
+}
+.cs-btn-submit:hover { background: #4338ca; }
+.cs-btn-submit:disabled { background: #a5b4fc; cursor: not-allowed; }
+
+.cs-no-friends { text-align: center; padding: 2rem 1rem; color: var(--app-text-muted); }
+.cs-no-games   { text-align: center; padding: 1rem; color: var(--app-text-muted); font-size: 0.9rem; }
+
+.cs-footer { margin-top: 1rem; text-align: center; }
+.cs-footer a { color: #667eea; font-size: 0.88rem; font-weight: 600; text-decoration: none; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="cs-container">
+
+{% if error %}
+<div class="cs-flash-err">
+    {% if error == "self_challenge"      %}You cannot challenge yourself.
+    {% elif error == "not_friends"       %}You can only challenge accepted friends.
+    {% elif error == "challenge_active"  %}There is already an active challenge between you and this player on that game.
+    {% elif error == "game_not_found"    %}Game not found.
+    {% elif error == "game_not_compatible" %}This game does not support challenges.
+    {% elif error == "invalid_difficulty" %}Invalid difficulty selected.
+    {% elif error == "expert_locked"     %}Expert difficulty is not unlocked yet (need 70%+ on 3 Hard attempts).
+    {% elif error == "user_not_found"    %}Player not found.
+    {% else %}{{ error }}
+    {% endif %}
+</div>
+{% endif %}
+
+{% if not friends_rows %}
+<div class="cs-card">
+    <div class="cs-no-friends">
+        <p style="font-size:1.5rem;margin-bottom:0.5rem;">👥</p>
+        <p>You have no accepted friends yet.</p>
+        <p style="margin-top:0.5rem;">
+            <a href="/friends" style="color:#4f46e5;font-weight:700;">Add friends →</a>
+        </p>
+    </div>
+</div>
+{% elif not compatible_games %}
+<div class="cs-card">
+    <div class="cs-no-games">No challenge-compatible games are available right now.</div>
+</div>
+{% else %}
+
+<div class="cs-card">
+    <h2>⚔ New Challenge</h2>
+    <form method="post" action="/challenges/send" id="cs-form">
+        <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
+        <input type="hidden" name="difficulty_level" id="cs-diff-input" value="easy">
+
+        {# ── Friend selector ── #}
+        <div class="cs-field">
+            <label class="cs-label" for="cs-friend">Opponent</label>
+            <select name="challenged_user_id" id="cs-friend" class="cs-select" required>
+                <option value="">— select a friend —</option>
+                {% for f in friends_rows %}
+                <option value="{{ f.id }}"
+                    {% if preselected_friend_id and f.id == preselected_friend_id %}selected{% endif %}>
+                    {{ f.nickname or f.email }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {# ── Game selector ── #}
+        <div class="cs-field">
+            <label class="cs-label" for="cs-game">Game</label>
+            <select name="game_id" id="cs-game" class="cs-select" required>
+                <option value="">— select a game —</option>
+                {% for g in compatible_games %}
+                <option value="{{ g.id }}" data-code="{{ g.code }}"
+                    {% if preselected_game_code and g.code == preselected_game_code %}selected{% endif %}>
+                    {{ g.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {# ── Difficulty (shown only for Target Tracking) ── #}
+        <div class="cs-field" id="cs-diff-section">
+            <label class="cs-label">Difficulty</label>
+            <div class="cs-diff-grid">
+                <div class="cs-diff-card selected" id="cs-diff-easy" onclick="selectDiff('easy')">
+                    <div class="cs-diff-name">Easy</div>
+                    <div class="cs-diff-mult">1.00×</div>
+                    <div class="cs-diff-meta">3–5 objects · 9 rounds</div>
+                </div>
+                <div class="cs-diff-card" id="cs-diff-medium" onclick="selectDiff('medium')">
+                    <div class="cs-diff-name">Medium</div>
+                    <div class="cs-diff-mult">1.30×</div>
+                    <div class="cs-diff-meta">5–7 objects · 9 rounds</div>
+                </div>
+                <div class="cs-diff-card" id="cs-diff-hard" onclick="selectDiff('hard')">
+                    <div class="cs-diff-name">Hard</div>
+                    <div class="cs-diff-mult">1.70×</div>
+                    <div class="cs-diff-meta">6–8 objects · 12 rounds</div>
+                </div>
+                {% if expert_unlocked %}
+                <div class="cs-diff-card" id="cs-diff-expert" onclick="selectDiff('expert')">
+                    <div class="cs-diff-name">Expert</div>
+                    <div class="cs-diff-mult">2.20×</div>
+                    <div class="cs-diff-meta">7–9 objects · 12 rounds</div>
+                </div>
+                {% else %}
+                <div class="cs-diff-card disabled" id="cs-diff-expert">
+                    <div class="cs-diff-name">Expert 🔒</div>
+                    <div class="cs-diff-mult">2.20×</div>
+                    <div class="cs-diff-meta">7–9 objects · 12 rounds</div>
+                    <div class="cs-diff-locked">Unlock: 70%+ on 3 Hard attempts</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# ── Optional message ── #}
+        <div class="cs-field">
+            <label class="cs-label" for="cs-msg">Message (optional)</label>
+            <textarea name="message" id="cs-msg" class="cs-textarea"
+                      maxlength="500" placeholder="Trash-talk or encouragement…"></textarea>
+        </div>
+
+        <button type="submit" class="cs-btn-submit" id="cs-submit">⚔ Send Challenge</button>
+    </form>
+</div>
+{% endif %}
+
+<div class="cs-footer">
+    <a href="/challenges">← Back to Challenges</a>
+</div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+'use strict';
+
+var EXPERT_UNLOCKED = {{ 'true' if expert_unlocked else 'false' }};
+var selectedDiff    = 'easy';
+
+function selectDiff(level) {
+    if (level === 'expert' && !EXPERT_UNLOCKED) return;
+    selectedDiff = level;
+    ['easy', 'medium', 'hard', 'expert'].forEach(function (l) {
+        var card = document.getElementById('cs-diff-' + l);
+        if (!card) return;
+        if (card.classList.contains('disabled')) return;
+        card.classList.toggle('selected', l === level);
+    });
+    document.getElementById('cs-diff-input').value = level;
+}
+window.selectDiff = selectDiff;
+
+// Show/hide difficulty section based on game selection
+var gameSelect = document.getElementById('cs-game');
+var diffSection = document.getElementById('cs-diff-section');
+
+function updateDiffVisibility() {
+    var opt = gameSelect.options[gameSelect.selectedIndex];
+    var code = opt ? opt.getAttribute('data-code') : '';
+    if (diffSection) {
+        diffSection.style.display = (code === 'target_tracking') ? 'block' : 'none';
+    }
+}
+
+if (gameSelect) {
+    gameSelect.addEventListener('change', updateDiffVisibility);
+    updateDiffVisibility(); // init
+}
+
+// Preselect game from URL ?game_code= param if present
+var urlParams = new URLSearchParams(window.location.search);
+var preCode   = urlParams.get('game_code');
+if (preCode && gameSelect) {
+    for (var i = 0; i < gameSelect.options.length; i++) {
+        if (gameSelect.options[i].getAttribute('data-code') === preCode) {
+            gameSelect.selectedIndex = i;
+            updateDiffVisibility();
+            break;
+        }
+    }
+}
+
+})();
+</script>
+{% endblock %}

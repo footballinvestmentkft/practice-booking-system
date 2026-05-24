@@ -182,6 +182,8 @@
                 <div class="fr-card-name">{{ f.nickname or f.email }}</div>
                 <div class="fr-card-meta">{{ f.email }}</div>
                 <div class="fr-card-actions">
+                    <a href="/challenges/send?friend_id={{ f.id }}"
+                       class="fr-btn fr-btn-muted" style="text-decoration:none;">⚔ Challenge</a>
                     <form method="post" action="/friends/remove/{{ f.id }}">
                         <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
                         <button type="submit" class="fr-btn fr-btn-danger"

@@ -489,7 +489,10 @@ function getRadius() {
     return Math.max(24, Math.round(40 * scale));
 }
 
-const SUBMIT_URL = '/virtual-training/target-tracking/submit';
+const SUBMIT_URL   = '/virtual-training/target-tracking/submit';
+const _ttUrlParams = new URLSearchParams(window.location.search);
+const CHALLENGE_ID = _ttUrlParams.get('challenge_id') || null;
+const LOCKED_DIFF  = _ttUrlParams.get('difficulty')   || null;
 
 /* Flash mechanic constants */
 const FLASH_DURATION_MS  = 400;
@@ -517,6 +520,18 @@ function selectDifficulty(level) {
 
 /* Expose for onclick in markup */
 window.selectDifficulty = selectDifficulty;
+
+/* If challenge locks difficulty: preselect and disable all other cards */
+if (LOCKED_DIFF && ['easy', 'medium', 'hard', 'expert'].includes(LOCKED_DIFF)) {
+    selectDifficulty(LOCKED_DIFF);
+    ['easy', 'medium', 'hard', 'expert'].forEach(function (l) {
+        var card = document.getElementById('tt-diff-' + l);
+        if (card && l !== LOCKED_DIFF) {
+            card.classList.add('tt-diff-disabled');
+            card.onclick = null;
+        }
+    });
+}
 
 /* ── Game state ───────────────────────────────────────────────────────────── */
 let PHASES       = [];
@@ -1013,6 +1028,7 @@ function finishGame() {
             },
         },
     };
+    if (CHALLENGE_ID) { payload.challenge_id = parseInt(CHALLENGE_ID, 10); }
 
     fetch(SUBMIT_URL, {
         method:  'POST',
@@ -1022,7 +1038,9 @@ function finishGame() {
     .then(function (r) { return r.json(); })
     .then(function (data) {
         if (data.attempt_id) {
-            window.location.href = '/virtual-training/target-tracking/result/' + data.attempt_id;
+            var dest = '/virtual-training/target-tracking/result/' + data.attempt_id;
+            if (CHALLENGE_ID) { dest += '?challenge_id=' + CHALLENGE_ID; }
+            window.location.href = dest;
         } else {
             document.getElementById('tt-submitting').innerHTML =
                 '<p style="color:#ef4444">⚠ Could not save result. <a href="/virtual-training">Back to hub</a></p>';

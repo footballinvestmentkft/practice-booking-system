@@ -217,8 +217,10 @@
 (function () {
     var PHASES      = {{ game.config.phases | tojson }};
     var TILE_COLORS = {{ game.config.tile_colors | tojson }};
-    var CSRF_TOKEN  = "{{ request.cookies.get('csrf_token', '') }}";
-    var SUBMIT_URL  = "/virtual-training/memory-sequence/submit";
+    var CSRF_TOKEN   = "{{ request.cookies.get('csrf_token', '') }}";
+    var SUBMIT_URL   = "/virtual-training/memory-sequence/submit";
+    var _urlParams   = new URLSearchParams(window.location.search);
+    var CHALLENGE_ID = _urlParams.get('challenge_id') || null;
 
     // Build flat round list (9 rounds: 3 phases × 3 rounds each)
     var ROUNDS = [];
@@ -516,6 +518,7 @@
             score_normalized:  scoreNorm,
             raw_metrics:       rawMetrics
         };
+        if (CHALLENGE_ID) { payload.challenge_id = parseInt(CHALLENGE_ID, 10); }
 
         fetch(SUBMIT_URL, {
             method:  "POST",
@@ -525,7 +528,9 @@
         .then(function (r) { return r.json(); })
         .then(function (data) {
             if (data.attempt_id) {
-                window.location.href = "/virtual-training/memory-sequence/result/" + data.attempt_id;
+                var dest = "/virtual-training/memory-sequence/result/" + data.attempt_id;
+                if (CHALLENGE_ID) { dest += "?challenge_id=" + CHALLENGE_ID; }
+                window.location.href = dest;
             } else {
                 elSubmitting.innerHTML = "<p>⚠️ Could not save attempt. <a href='/virtual-training'>Back to hub</a></p>";
             }

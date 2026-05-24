@@ -24,7 +24,7 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import (
     Boolean, CheckConstraint, Column, DateTime, Enum,
-    ForeignKey, Integer, Text, UniqueConstraint,
+    ForeignKey, Integer, String, Text, UniqueConstraint,
 )
 from sqlalchemy.orm import Session, relationship
 
@@ -80,6 +80,7 @@ class VirtualTrainingChallenge(Base):
     challenged_attempt_id = Column(Integer,
                                    ForeignKey("virtual_training_attempts.id", ondelete="SET NULL"),
                                    nullable=True)
+    difficulty_level      = Column(String(20), nullable=True)   # TT only; NULL for MS
     winner_id             = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"),
                                    nullable=True)
     is_draw               = Column(Boolean, nullable=False, default=False)

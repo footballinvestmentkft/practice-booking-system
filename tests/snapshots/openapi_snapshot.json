@@ -4155,6 +4155,17 @@
             "title": "Challenged User Id",
             "type": "integer"
           },
+          "difficulty_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Difficulty Level"
+          },
           "game_id": {
             "title": "Game Id",
             "type": "integer"
@@ -59475,7 +59486,91 @@
         ]
       }
     },
+    "/challenges": {
+      "get": {
+        "operationId": "challenge_inbox_challenges_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Challenge Inbox",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/challenges/send": {
+      "get": {
+        "operationId": "challenge_send_form_challenges_send_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "friend_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Friend Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "game_code",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Game Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Challenge Send Form",
+        "tags": [
+          "web"
+        ]
+      },
       "post": {
         "operationId": "send_challenge_challenges_send_post",
         "requestBody": {
@@ -64623,6 +64718,22 @@
               "title": "Attempt Id",
               "type": "integer"
             }
+          },
+          {
+            "in": "query",
+            "name": "challenge_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Challenge Id"
+            }
           }
         ],
         "responses": {
@@ -64710,6 +64821,22 @@
             "schema": {
               "title": "Attempt Id",
               "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "challenge_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Challenge Id"
             }
           }
         ],

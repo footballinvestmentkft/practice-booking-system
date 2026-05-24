@@ -505,11 +505,60 @@
     </details>
     {% endif %}
 
+    {# ── Challenge context block ─────────────────────────────────────────────── #}
+    {% if challenge_ctx %}
+    <div style="background:var(--app-card);border-radius:14px;padding:1.1rem 1.25rem;
+                box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:1.25rem;
+                border-left:4px solid
+                {% if challenge_ctx.outcome == 'won' %}#16a34a
+                {% elif challenge_ctx.outcome == 'lost' %}#dc2626
+                {% elif challenge_ctx.outcome == 'draw' %}#6b7280
+                {% else %}#4f46e5{% endif %};">
+        <div style="font-size:0.78rem;font-weight:700;color:var(--app-text-muted);
+                    text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">
+            Challenge vs {{ challenge_ctx.opponent_name }}
+            {% if challenge_ctx.difficulty_level %} · {{ challenge_ctx.difficulty_level | title }}{% endif %}
+        </div>
+        {% if challenge_ctx.outcome == 'won' %}
+        <div style="font-size:1.05rem;font-weight:800;color:#16a34a;margin-bottom:0.4rem;">🏆 You won!</div>
+        {% elif challenge_ctx.outcome == 'lost' %}
+        <div style="font-size:1.05rem;font-weight:800;color:#dc2626;margin-bottom:0.4rem;">✗ You lost</div>
+        {% elif challenge_ctx.outcome == 'draw' %}
+        <div style="font-size:1.05rem;font-weight:800;color:#6b7280;margin-bottom:0.4rem;">= Draw</div>
+        {% elif challenge_ctx.outcome == 'waiting_for_opponent' %}
+        <div style="font-size:0.95rem;color:#4f46e5;margin-bottom:0.4rem;">
+            ⏳ Waiting for {{ challenge_ctx.opponent_name }} to play…
+        </div>
+        {% elif challenge_ctx.outcome == 'waiting_for_resolution' %}
+        <div style="font-size:0.95rem;color:#4f46e5;margin-bottom:0.4rem;">
+            ⏳ Both attempts submitted — result pending…
+        </div>
+        {% endif %}
+        {% if challenge_ctx.outcome in ['won', 'lost', 'draw'] and (challenge_ctx.my_score is not none or challenge_ctx.opp_score is not none) %}
+        <div style="display:flex;gap:1.5rem;font-size:0.85rem;flex-wrap:wrap;margin-bottom:0.4rem;">
+            <div>
+                <span style="font-size:0.7rem;color:var(--app-text-muted);text-transform:uppercase;display:block;">You</span>
+                <strong>{% if challenge_ctx.my_score is not none %}{{ challenge_ctx.my_score | round(0) | int }}%{% else %}—{% endif %}</strong>
+            </div>
+            <div style="align-self:center;color:var(--app-text-muted);">vs</div>
+            <div>
+                <span style="font-size:0.7rem;color:var(--app-text-muted);text-transform:uppercase;display:block;">{{ challenge_ctx.opponent_name }}</span>
+                <strong>{% if challenge_ctx.opp_score is not none %}{{ challenge_ctx.opp_score | round(0) | int }}%{% else %}—{% endif %}</strong>
+            </div>
+        </div>
+        {% endif %}
+        <a href="/challenges" style="font-size:0.82rem;color:#4f46e5;font-weight:700;text-decoration:none;">
+            → View all challenges
+        </a>
+    </div>
+    {% endif %}
+
     <!-- ── Navigation ───────────────────────────────────────────────────────── -->
     <div class="ttr-actions">
         <a href="/virtual-training/target-tracking" class="ttr-btn ttr-btn-primary">▶ Play again</a>
         <a href="/virtual-training" class="ttr-btn ttr-btn-secondary">← All games</a>
         <a href="/virtual-training/history" class="ttr-btn ttr-btn-secondary">📋 History</a>
+        <a href="/challenges" class="ttr-btn ttr-btn-secondary">⚔ Challenges</a>
     </div>
     {% set _diff = difficulty_level | default('easy') %}
     {% if _diff == 'easy' %}
