@@ -1,4 +1,4 @@
-"""PSP-01..PSP-22 — Public Player Profile page + cancel / next= social actions.
+"""PSP-01..PSP-30 — Public Player Profile page + cancel / next= social actions.
 
 PSP-01  Anonymous user gets 200, friendship_panel state=anonymous
 PSP-02  Logged-in user views own profile → state=own_profile
@@ -15,7 +15,7 @@ PSP-12  next= param — /players/ prefix accepted in cancel
 PSP-13  next= param — /friends prefix accepted in accept
 PSP-14  next= param — external URL falls back to default /friends
 PSP-15  Portrait variant (fifa) → card_is_landscape=False, card_native_w=820, card_native_h=1080
-PSP-16  Landscape variant (showcase) → card_is_landscape=True, card_native_w=720, card_native_h=405
+PSP-16  Landscape variant (showcase) → card_is_landscape=True, card_native_w=720, card_native_h=700
 PSP-17  Unknown variant → fallback portrait defaults (is_landscape=False, native_w=820)
 PSP-18  Narrow variant (compact) → card_native_w=520
 PSP-19  Template: psp-showcase-grid class present
@@ -403,13 +403,13 @@ class TestProfileVariantContext:
         assert ctx["card_native_w"] == 820
         assert ctx["card_native_h"] == 1080
 
-    # PSP-16 — landscape (showcase): is_landscape=True, native_w=720, native_h=405
+    # PSP-16 — landscape (showcase): is_landscape=True, native_w=720, native_h=700
     def test_psp16_showcase_landscape_context(self):
         ctx = self._call_variant("showcase")
         assert ctx["card_variant_id"] == "showcase"
         assert ctx["card_is_landscape"] is True
         assert ctx["card_native_w"] == 720
-        assert ctx["card_native_h"] == 405
+        assert ctx["card_native_h"] == 700
 
     # PSP-17 — unknown variant: fallback to portrait defaults
     def test_psp17_unknown_variant_fallback_portrait(self):
@@ -462,3 +462,115 @@ class TestProfileLayoutTemplate:
     # PSP-22 — right rail Highlight Video placeholder present
     def test_psp22_right_highlight_video_placeholder(self):
         assert "Highlight Video" in self._html()
+
+    # PSP-23 — card route sets Cache-Control: no-store (structural: route source has header)
+    def test_psp23_card_route_cache_control_no_store(self):
+        route_path = _os.path.normpath(_os.path.join(
+            _os.path.dirname(__file__),
+            "..", "..", "..", "..",
+            "app", "api", "web_routes", "public_player.py",
+        ))
+        with open(route_path, encoding="utf-8") as f:
+            src = f.read()
+        assert "Cache-Control" in src
+        assert "no-store" in src
+        assert "Pragma" in src
+        assert "no-cache" in src
+
+    # PSP-24 — profile template iframe src has versioned ?v= conditional
+    def test_psp24_iframe_src_version_param_conditional(self):
+        html = self._html()
+        assert "{% if card_published_v %}?v={{ card_published_v }}{% endif %}" in html
+
+    # PSP-28 — template conditional: ?v= appears only when card_published_v is truthy
+    def test_psp28_iframe_no_hardcoded_v_param(self):
+        html = self._html()
+        # Must be conditional, not a hardcoded bare ?v= suffix
+        assert '"/card?v=' not in html
+        assert "{% if card_published_v %}" in html
+
+
+# ── PSP-25..PSP-27, PSP-29..PSP-30: card_published_v context ─────────────────
+
+class TestCardPublishedVersion:
+    """card_published_v: unix timestamp from card_drafts.published_at."""
+
+    def _call_with_published_at(self, published_at):
+        from app.api.web_routes.public_player import public_player_profile
+        profile_user = _user(uid=2)
+        lic = _license(user_id=2)
+        lic.published_card_variant = None
+        db  = _profile_db(user=profile_user, license=lic)
+        _draft = MagicMock()
+        _draft.published_variant = "fifa"
+        _draft.published_at      = published_at
+        with patch(f"{_BASE_PP}.templates") as mock_tmpl, \
+             patch(f"{_SKILL_SVC}.get_skill_profile", return_value={"average_level": 65.0, "skills": {}, "total_tournaments": 3}), \
+             patch(f"{_FRIEND_MOD}.get_friendship_panel_ctx", return_value=_PANEL_NONE), \
+             patch(f"{_DRAFT_SVC}.get_player_card_draft", return_value=_draft):
+            _run(public_player_profile(request=_req(), user_id=2, db=db, current_user=None))
+            ctx = mock_tmpl.TemplateResponse.call_args
+        return ctx[0][2] if ctx else ctx.args[2]
+
+    # PSP-25 — card_published_v > 0 when published_at is set
+    def test_psp25_published_at_gives_positive_version(self):
+        from datetime import datetime, timezone
+        published_at = datetime(2026, 5, 24, 17, 18, 21, tzinfo=timezone.utc)
+        ctx = self._call_with_published_at(published_at)
+        assert ctx["card_published_v"] == int(published_at.timestamp())
+        assert ctx["card_published_v"] > 0
+
+    # PSP-26 — card_published_v == 0 when published_at is None
+    def test_psp26_no_published_at_gives_zero(self):
+        ctx = self._call_with_published_at(None)
+        assert ctx["card_published_v"] == 0
+
+    # PSP-27 — preview= param on card route: source still contains preview handling
+    def test_psp27_card_route_preview_param_present(self):
+        route_path = _os.path.normpath(_os.path.join(
+            _os.path.dirname(__file__),
+            "..", "..", "..", "..",
+            "app", "api", "web_routes", "public_player.py",
+        ))
+        with open(route_path, encoding="utf-8") as f:
+            src = f.read()
+        assert "preview" in src
+        assert "published_variant" in src
+
+    # PSP-29 — published_variant from card_drafts takes priority over license value
+    def test_psp29_draft_published_variant_wins_over_license(self):
+        from app.api.web_routes.public_player import public_player_profile
+        profile_user = _user(uid=2)
+        lic = _license(user_id=2)
+        lic.published_card_variant = "compact"   # legacy fallback
+        db  = _profile_db(user=profile_user, license=lic)
+        _draft = MagicMock()
+        _draft.published_variant = "atlas"       # card_drafts primary source
+        _draft.published_at      = None
+        with patch(f"{_BASE_PP}.templates") as mock_tmpl, \
+             patch(f"{_SKILL_SVC}.get_skill_profile", return_value={"average_level": 65.0, "skills": {}, "total_tournaments": 3}), \
+             patch(f"{_FRIEND_MOD}.get_friendship_panel_ctx", return_value=_PANEL_NONE), \
+             patch(f"{_DRAFT_SVC}.get_player_card_draft", return_value=_draft):
+            _run(public_player_profile(request=_req(), user_id=2, db=db, current_user=None))
+            ctx = mock_tmpl.TemplateResponse.call_args[0][2]
+        assert ctx["card_variant_id"] == "atlas"
+
+    # PSP-30 — showcase_bg also gets landscape h=700 (consistent with showcase)
+    def test_psp30_showcase_bg_landscape_native_h_700(self):
+        from app.api.web_routes.public_player import public_player_profile
+        profile_user = _user(uid=2)
+        lic = _license(user_id=2)
+        lic.published_card_variant = None
+        db  = _profile_db(user=profile_user, license=lic)
+        _draft = MagicMock()
+        _draft.published_variant = "showcase_bg"
+        _draft.published_at      = None
+        with patch(f"{_BASE_PP}.templates") as mock_tmpl, \
+             patch(f"{_SKILL_SVC}.get_skill_profile", return_value={"average_level": 65.0, "skills": {}, "total_tournaments": 3}), \
+             patch(f"{_FRIEND_MOD}.get_friendship_panel_ctx", return_value=_PANEL_NONE), \
+             patch(f"{_DRAFT_SVC}.get_player_card_draft", return_value=_draft):
+            _run(public_player_profile(request=_req(), user_id=2, db=db, current_user=None))
+            ctx = mock_tmpl.TemplateResponse.call_args[0][2]
+        assert ctx["card_is_landscape"] is True
+        assert ctx["card_native_h"] == 700
+        assert ctx["card_native_w"] == 720

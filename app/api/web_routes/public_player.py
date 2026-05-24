@@ -165,7 +165,12 @@ async def public_player_profile(
     _NARROW_VARIANTS    = frozenset({"compact", "compact_bg"})
     card_is_landscape   = card_variant_id in _LANDSCAPE_VARIANTS
     card_native_w       = 720 if card_is_landscape else (520 if card_variant_id in _NARROW_VARIANTS else 820)
-    card_native_h       = 405 if card_is_landscape else 1080
+    card_native_h       = 700 if card_is_landscape else 1080
+    card_published_v    = (
+        int(_profile_draft.published_at.timestamp())
+        if _profile_draft and _profile_draft.published_at
+        else 0
+    )
 
     return templates.TemplateResponse(request, "public/player_profile.html", {
         "profile_user":    user,
@@ -185,6 +190,7 @@ async def public_player_profile(
         "card_is_landscape": card_is_landscape,
         "card_native_w":    card_native_w,
         "card_native_h":    card_native_h,
+        "card_published_v": card_published_v,
     })
 
 
@@ -463,7 +469,7 @@ def public_player_card(
     animated_mode = bool(export) and bool(animated)
     native_export_mode = bool(native_export)
 
-    return templates.TemplateResponse(request, template_path, {
+    _card_resp = templates.TemplateResponse(request, template_path, {
         "player": player,
         "overall": overall,
         "tier_label": tier_label,
@@ -525,6 +531,10 @@ def public_player_card(
         # CS-4c: populated when driver routing is active; None for file-based routes
         "_driver_config": _driver_config,
     })
+    _card_resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    _card_resp.headers["Pragma"]        = "no-cache"
+    _card_resp.headers["Expires"]       = "0"
+    return _card_resp
 
 
 # ── Export endpoint ───────────────────────────────────────────────────────────

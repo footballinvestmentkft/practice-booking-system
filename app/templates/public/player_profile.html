@@ -383,7 +383,7 @@
              data-card-w="{{ card_native_w }}"
              data-card-h="{{ card_native_h }}">
             <iframe id="psp-card-frame"
-                    src="/players/{{ profile_user.id }}/card"
+                    src="/players/{{ profile_user.id }}/card{% if card_published_v %}?v={{ card_published_v }}{% endif %}"
                     scrolling="no"
                     sandbox="allow-scripts allow-same-origin"
                     title="Player Card"></iframe>
