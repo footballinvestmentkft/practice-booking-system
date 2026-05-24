@@ -4,11 +4,16 @@ Phase 4D-1: service layer only.  Routes still use UserLicense legacy columns.
 Phase 4D-2 will wire routes to this service.
 """
 from datetime import datetime, timezone
+from typing import Any
 
 from sqlalchemy.orm import Session
 
 from app.models.card_draft import CardDraft
 from app.models.license import UserLicense
+from app.services.highlight_video_service import (
+    extract_youtube_id,
+    build_youtube_embed_url,
+)
 
 
 class CardDraftService:
@@ -132,12 +137,25 @@ class CardDraftService:
 
         Idempotent: calling twice with identical draft state yields same result.
         Sets published_at to now() on every call (tracks most-recent publish).
+        Merges draft_data.highlight_video → published_data.highlight_video;
+        absence of the key in draft_data removes it from published_data.
         """
         draft.published_theme    = draft.draft_theme
         draft.published_variant  = draft.draft_variant
         draft.published_platform = draft.draft_platform
         draft.published_at       = datetime.now(timezone.utc)
         draft.updated_at         = datetime.now(timezone.utc)
+
+        # Merge highlight_video from draft_data into published_data.
+        # Uses copy+reassign pattern so SQLAlchemy detects the JSON mutation.
+        published_data: dict[str, Any] = dict(draft.published_data or {})
+        draft_hv = (draft.draft_data or {}).get("highlight_video")
+        if draft_hv:
+            published_data["highlight_video"] = draft_hv
+        else:
+            published_data.pop("highlight_video", None)
+        draft.published_data = published_data if published_data else None
+
         if commit:
             db.commit()
             db.refresh(draft)
@@ -149,11 +167,62 @@ class CardDraftService:
 
         A draft that was never published (published_theme is None) is always
         considered unpublished regardless of draft field values.
+        Also compares draft_data.highlight_video.video_id vs published equivalent.
         """
         if draft.published_theme is None:
             return False
-        return (
+        theme_ok = (
             draft.draft_theme    == draft.published_theme
             and draft.draft_variant  == draft.published_variant
             and draft.draft_platform == draft.published_platform
         )
+        if not theme_ok:
+            return False
+        draft_hv  = (draft.draft_data    or {}).get("highlight_video") or {}
+        pub_hv    = (draft.published_data or {}).get("highlight_video") or {}
+        return draft_hv.get("video_id") == pub_hv.get("video_id")
+
+    @staticmethod
+    def update_draft_highlight_video(
+        db: Session, draft: CardDraft, video_url: str, *, commit: bool = True
+    ) -> CardDraft:
+        """Validate YouTube URL, extract video_id, write into draft_data.highlight_video.
+
+        Raises ValueError for invalid / non-YouTube URLs.
+        source_url is stored for audit/prefill only — never used as iframe src.
+        """
+        video_id = extract_youtube_id(video_url)
+        if video_id is None:
+            raise ValueError(
+                "Invalid or unsupported video URL. Only YouTube watch/shorts/youtu.be URLs are accepted."
+            )
+        draft_data: dict[str, Any] = dict(draft.draft_data or {})
+        draft_data["highlight_video"] = {
+            "provider":   "youtube",
+            "video_id":   video_id,
+            "source_url": video_url,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        draft.draft_data = draft_data
+        draft.updated_at = datetime.now(timezone.utc)
+        if commit:
+            db.commit()
+            db.refresh(draft)
+        return draft
+
+    @staticmethod
+    def remove_draft_highlight_video(
+        db: Session, draft: CardDraft, *, commit: bool = True
+    ) -> CardDraft:
+        """Remove highlight_video from draft_data.
+
+        Publish is required for the removal to be reflected on the public profile.
+        """
+        draft_data: dict[str, Any] = dict(draft.draft_data or {})
+        draft_data.pop("highlight_video", None)
+        draft.draft_data = draft_data if draft_data else None
+        draft.updated_at = datetime.now(timezone.utc)
+        if commit:
+            db.commit()
+            db.refresh(draft)
+        return draft

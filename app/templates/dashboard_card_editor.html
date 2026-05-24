@@ -478,6 +478,41 @@
     display: flex; align-items: center; justify-content: center;
 }
 
+/* ── Highlight Video ─────────────────────────────────────────────────────────── */
+.hv-url-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.hv-url-input {
+    flex: 1; padding: 8px 10px; border-radius: 6px; border: 1.5px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.06); color: inherit; font-size: 13px;
+}
+.hv-url-input::placeholder { color: rgba(255,255,255,0.35); }
+.btn-hv-save {
+    padding: 8px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 13px;
+    background: rgba(102,126,234,0.85); color: #fff; white-space: nowrap;
+}
+.btn-hv-save:hover { background: rgba(102,126,234,1); }
+.btn-hv-save:disabled { opacity: 0.5; cursor: default; }
+.btn-hv-remove {
+    padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px;
+    background: rgba(220,53,69,0.55); color: #fff; margin-top: 6px;
+}
+.btn-hv-remove:hover { background: rgba(220,53,69,0.75); }
+.hv-preview-wrap {
+    position: relative; width: 100%; padding-top: 56.25%; /* 16:9 */
+    background: #000; border-radius: 6px; overflow: hidden; margin-top: 10px;
+}
+.hv-preview-wrap iframe {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;
+}
+.hv-badge {
+    display: inline-block; padding: 3px 9px; border-radius: 12px; font-size: 11px;
+    font-weight: 600; margin-top: 8px; letter-spacing: 0.03em;
+}
+.hv-badge-draft     { background: rgba(255,193,7,0.18);  color: #ffc107; }
+.hv-badge-published { background: rgba(40,167,69,0.18);  color: #28a745; }
+.hv-badge-pending   { background: rgba(255,100,0,0.18);  color: #ff8c00; }
+.hv-badge-will-remove { background: rgba(220,53,69,0.18); color: #dc3545; }
+.hv-error { color: #ff6b6b; font-size: 12px; margin-top: 6px; }
+
 /* ── RIGHT: Preview area ─────────────────────────────────────────────────────── */
 .ce-preview-area {
     flex: 1;
@@ -957,6 +992,67 @@
                         </div>
                     </div>
 
+                    {# Highlight Video #}
+                    <div class="ce-section">
+                        <div class="ce-section-title">Highlight Video</div>
+
+                        {# State 1 — no draft video #}
+                        {% if not draft_highlight_video %}
+                        <div id="hv-no-video">
+                            <div class="hv-url-row">
+                                <input id="hv-url-input" class="hv-url-input" type="url"
+                                       placeholder="https://www.youtube.com/watch?v=..."
+                                       oninput="document.getElementById('hv-error').textContent=''">
+                                <button class="btn-hv-save" onclick="saveHighlightVideo()">Save Draft</button>
+                            </div>
+                            <p id="hv-error" class="hv-error"></p>
+                        </div>
+
+                        {# State 2 / 3 / 4 / 5 — draft video exists #}
+                        {% else %}
+                        <div id="hv-has-video">
+                            <div class="hv-preview-wrap">
+                                <iframe id="hv-iframe"
+                                        src="{{ draft_highlight_video.embed_url }}"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowfullscreen
+                                        loading="lazy"></iframe>
+                            </div>
+
+                            {% if not published_highlight_video %}
+                                {# State 2: draft saved, never published #}
+                                <span class="hv-badge hv-badge-draft">Draft saved — not yet published</span>
+                            {% elif highlight_video_unpublished %}
+                                {# State 4: draft differs from published #}
+                                <span class="hv-badge hv-badge-pending">Unpublished change</span>
+                            {% else %}
+                                {# State 3: published and in sync #}
+                                <span class="hv-badge hv-badge-published">Published</span>
+                            {% endif %}
+
+                            <div class="hv-url-row" style="margin-top:10px;">
+                                <input id="hv-url-input" class="hv-url-input" type="url"
+                                       value="{{ draft_highlight_video.source_url }}"
+                                       placeholder="https://www.youtube.com/watch?v=..."
+                                       oninput="document.getElementById('hv-error').textContent=''">
+                                <button class="btn-hv-save" onclick="saveHighlightVideo()">Update</button>
+                            </div>
+                            <p id="hv-error" class="hv-error"></p>
+                            <button class="btn-hv-remove" onclick="removeHighlightVideo()">Remove</button>
+                        </div>
+                        {% endif %}
+
+                        {# State 5: removed from draft, but published video still live #}
+                        {% if not draft_highlight_video and published_highlight_video %}
+                        <div id="hv-will-remove-notice" style="margin-top:8px;">
+                            <span class="hv-badge hv-badge-will-remove">Will be removed on next publish</span>
+                        </div>
+                        {% endif %}
+
+                        {# JS state holders for dynamic UI updates #}
+                        <div id="hv-dynamic-section" style="display:none;"></div>
+                    </div>
+
                 </div>{# /panel-media #}
 
             </div>{# /ce-tab-panels #}
@@ -1146,6 +1242,11 @@ let _publishedCardTheme    = '{{ published_card_theme }}';
 let _publishedCardVariant  = '{{ published_card_variant }}';
 let _publishedCardPlatform = '{{ published_card_platform }}';
 
+// Highlight video unpublished flag — true if draft_data.highlight_video.video_id
+// differs from published_data.highlight_video.video_id (server-rendered).
+// Updated on JS save/remove before the next page reload.
+let _hvUnpublished = {{ highlight_video_unpublished | tojson }};
+
 function _isVideoCapable() {
     if (_currentPlatform === 'default') return false;
     return _ANIMATED_CAPABLE_PLATFORMS.has(_currentPlatform);
@@ -1220,9 +1321,10 @@ document.addEventListener('DOMContentLoaded', function() {
 function _isDraftPublished() {
     const draftPlatform = _currentPlatform || 'default';
     const pubPlatform   = _publishedCardPlatform || 'default';
-    return draftPlatform === pubPlatform
+    const cardInSync = draftPlatform === pubPlatform
         && _currentTheme   === _publishedCardTheme
         && _currentVariant === _publishedCardVariant;
+    return cardInSync && !_hvUnpublished;
 }
 
 function _updatePublishIndicator() {
@@ -1250,6 +1352,7 @@ async function publishCard() {
             _publishedCardTheme    = data.published.theme;
             _publishedCardVariant  = data.published.variant;
             _publishedCardPlatform = data.published.platform === 'default' ? '' : data.published.platform;
+            _hvUnpublished = false;  // publish_draft() merged draft_data.highlight_video → published_data
             _updatePublishIndicator();
         } else {
             alert('❌ ' + (data.error || 'Could not publish card.'));
@@ -1462,6 +1565,73 @@ async function deleteSponsorLogo() {
     });
     const data = await r.json();
     if (data.ok) location.reload();
+}
+
+// ── Highlight Video ───────────────────────────────────────────────────────────
+
+async function saveHighlightVideo() {
+    const input = document.getElementById('hv-url-input');
+    const errEl = document.getElementById('hv-error');
+    if (!input) return;
+    const video_url = input.value.trim();
+    if (!video_url) { if (errEl) errEl.textContent = 'Please enter a YouTube URL.'; return; }
+    if (errEl) errEl.textContent = '';
+    try {
+        const r = await fetch('/dashboard/lfa-football-player/card-editor/media/highlight-video', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf() },
+            body: JSON.stringify({ video_url }),
+        });
+        const data = await r.json();
+        if (r.status === 403) { alert('Session expired — reloading page.'); location.reload(); return; }
+        if (!data.ok) {
+            if (errEl) errEl.textContent = data.error || 'Invalid URL. Only YouTube URLs are accepted.';
+            return;
+        }
+        _updateHvAfterSave(data);
+    } catch(e) { if (errEl) errEl.textContent = 'Network error — please try again.'; }
+}
+
+function _updateHvAfterSave(data) {
+    // Replace the entire section with the "has video" state.
+    const noVideoDiv  = document.getElementById('hv-no-video');
+    const hasVideoDiv = document.getElementById('hv-has-video');
+    if (noVideoDiv) {
+        // Transition from "no video" → "has video": reload so Jinja2 state renders correctly.
+        location.reload();
+        return;
+    }
+    if (hasVideoDiv) {
+        // Already showing preview — update iframe src and badge.
+        const iframe = document.getElementById('hv-iframe');
+        if (iframe && data.embed_url) iframe.src = data.embed_url;
+        // Update badge to "draft saved / unpublished"
+        const badges = hasVideoDiv.querySelectorAll('.hv-badge');
+        badges.forEach(b => { b.className = 'hv-badge hv-badge-draft'; b.textContent = 'Draft saved — not yet published'; });
+        // Remove "will be removed" notice if present
+        const willRemove = document.getElementById('hv-will-remove-notice');
+        if (willRemove) willRemove.style.display = 'none';
+        // Mark overall card as having unpublished HV changes → enables Publish Card button.
+        _hvUnpublished = true;
+        _updatePublishIndicator();
+    }
+}
+
+async function removeHighlightVideo() {
+    const errEl = document.getElementById('hv-error');
+    try {
+        const r = await fetch('/dashboard/lfa-football-player/card-editor/media/highlight-video', {
+            method: 'DELETE',
+            headers: { 'X-CSRF-Token': _csrf() },
+        });
+        const data = await r.json();
+        if (r.status === 403) { alert('Session expired — reloading page.'); location.reload(); return; }
+        if (!data.ok) {
+            if (errEl) errEl.textContent = data.error || 'Could not remove video.';
+            return;
+        }
+        location.reload();
+    } catch(e) { if (errEl) errEl.textContent = 'Network error — please try again.'; }
 }
 </script>
 {% endblock %}

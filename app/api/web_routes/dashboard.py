@@ -439,6 +439,34 @@ async def lfa_player_card_editor(
         pid: {"w": w, "h": h} for pid, (w, h) in _editor_canvas_sizes.items()
     }
 
+    # Highlight video state — draft and published snapshots for Media tab UI.
+    from ...services.highlight_video_service import (
+        build_youtube_embed_url as _build_yt_embed,
+    )
+    _dd = card_draft.draft_data or {}
+    _pd = card_draft.published_data or {}
+    _draft_hv_raw = _dd.get("highlight_video")
+    _pub_hv_raw   = _pd.get("highlight_video")
+
+    def _hv_ctx(raw: dict | None) -> dict | None:
+        if not raw or not isinstance(raw, dict):
+            return None
+        vid = raw.get("video_id")
+        if not vid:
+            return None
+        return {
+            "video_id":   vid,
+            "embed_url":  _build_yt_embed(vid),
+            "source_url": raw.get("source_url", ""),
+        }
+
+    draft_highlight_video     = _hv_ctx(_draft_hv_raw)
+    published_highlight_video = _hv_ctx(_pub_hv_raw)
+    # draft differs from published when video_ids diverge (includes remove case)
+    _draft_vid = (_draft_hv_raw or {}).get("video_id")
+    _pub_vid   = (_pub_hv_raw   or {}).get("video_id")
+    highlight_video_unpublished = (_draft_vid != _pub_vid)
+
     return templates.TemplateResponse(
         "dashboard_card_editor.html",
         {
@@ -459,6 +487,10 @@ async def lfa_player_card_editor(
             "published_card_theme":    published_card_theme,
             "published_card_variant":  published_card_variant,
             "published_card_platform": published_card_platform,
+            # Highlight video state — Media tab
+            "draft_highlight_video":       draft_highlight_video,
+            "published_highlight_video":   published_highlight_video,
+            "highlight_video_unpublished": highlight_video_unpublished,
         },
     )
 
@@ -1141,6 +1173,10 @@ class _CardPlatformRequest(_BaseModel):
     platform: str
 
 
+class _HighlightVideoRequest(_BaseModel):
+    video_url: str
+
+
 def _get_lfa_license(db, user_id: int):
     """Return the active LFA Football Player license, or None."""
     return db.query(UserLicense).filter(
@@ -1266,4 +1302,59 @@ async def student_publish_card(
             "variant":  draft.published_variant,
             "platform": draft.published_platform or "default",
         },
+    })
+
+
+@router.post("/dashboard/lfa-football-player/card-editor/media/highlight-video")
+async def student_save_highlight_video(
+    payload: _HighlightVideoRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Save a YouTube highlight video URL to the player card draft.
+
+    Validates YouTube URL, extracts video_id, writes draft_data.highlight_video.
+    The video is NOT visible on the public profile until the card is published.
+    CSRF protection is enforced by the global CSRF middleware.
+    """
+    from ...services.highlight_video_service import build_youtube_embed_url as _build_yt_embed
+    lfa_license = _get_lfa_license(db, user.id)
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "No active LFA Football Player license"}, status_code=404)
+    draft = _CardDraftService.get_player_card_draft(db, user.id)
+    try:
+        _CardDraftService.update_draft_highlight_video(db, draft, payload.video_url)
+    except ValueError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+    hv = (draft.draft_data or {}).get("highlight_video", {})
+    video_id = hv.get("video_id", "")
+    return JSONResponse({
+        "ok":        True,
+        "video_id":  video_id,
+        "embed_url": _build_yt_embed(video_id),
+        "status":    "draft",
+    })
+
+
+@router.delete("/dashboard/lfa-football-player/card-editor/media/highlight-video")
+async def student_remove_highlight_video(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Remove the highlight video from the player card draft.
+
+    Removal only affects draft state. The published profile still shows the
+    previous video until the card is published again.
+    CSRF protection is enforced by the global CSRF middleware.
+    """
+    lfa_license = _get_lfa_license(db, user.id)
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "No active LFA Football Player license"}, status_code=404)
+    draft = _CardDraftService.get_player_card_draft(db, user.id)
+    _CardDraftService.remove_draft_highlight_video(db, draft)
+    pub_hv = (draft.published_data or {}).get("highlight_video")
+    return JSONResponse({
+        "ok":     True,
+        "status": "removed_from_draft",
+        "published_video_still_live": pub_hv is not None,
     })
