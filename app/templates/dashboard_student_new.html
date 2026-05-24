@@ -142,6 +142,22 @@
     /* ── Loading ─────────────────────────────────────────────────────────────── */
     .s-loading { color: #a0aec0; font-size: 0.9rem; padding: 0.5rem 0; }
 
+    /* ── Public Profile entry point ──────────────────────────────────────────── */
+    .s-pp-section { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .s-pp-info { display: flex; flex-direction: column; gap: 0.3rem; }
+    .s-pp-title { font-size: 1rem; font-weight: 800; color: var(--app-text); }
+    .s-pp-meta  { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .s-pp-chip  { font-size: 0.78rem; font-weight: 600; padding: 0.18rem 0.6rem; border-radius: 20px; }
+    .s-pp-chip-pub   { background: #d1fae5; color: #065f46; }
+    .s-pp-chip-unpub { background: #fef3c7; color: #92400e; }
+    .s-pp-chip-grid  { background: #e0e7ff; color: #3730a3; }
+    .s-pp-chip-hv    { background: #fce7f3; color: #9d174d; }
+    .s-pp-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    .s-pp-btn { padding: 0.45rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 700; text-decoration: none; border: none; cursor: pointer; transition: opacity 0.2s; }
+    .s-pp-btn:hover { opacity: 0.82; }
+    .s-pp-btn-view { background: #e8f0fe; color: #1a56db; }
+    .s-pp-btn-edit { background: #0B0B0B; color: #FFD200; }
+
     /* ── Responsive ──────────────────────────────────────────────────────────── */
     @media (max-width: 768px) {
         .s-kpi-row      { grid-template-columns: repeat(2, 1fr); }
@@ -256,6 +272,35 @@
             </a>
         </div>
     </section>
+
+    {# ── Public Profile entry point (LFA_FOOTBALL_PLAYER only) ───────────────── #}
+    {% if specialization == "LFA_FOOTBALL_PLAYER" %}
+    <section class="section-block">
+        <div class="section-header">
+            <span class="section-title" style="font-weight:800;font-size:1rem;">Public Profile</span>
+        </div>
+        <div class="s-pp-section">
+            <div class="s-pp-info">
+                <div class="s-pp-title">Your public player profile</div>
+                <div class="s-pp-meta">
+                    {% if is_profile_published %}
+                    <span class="s-pp-chip s-pp-chip-pub">✓ Published</span>
+                    {% else %}
+                    <span class="s-pp-chip s-pp-chip-unpub">Unpublished</span>
+                    {% endif %}
+                    <span class="s-pp-chip s-pp-chip-grid">Grid {{ profile_grid_filled_slots }}/{{ profile_grid_total_slots }}</span>
+                    {% if has_published_highlight_video %}
+                    <span class="s-pp-chip s-pp-chip-hv">▶ Highlight video</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="s-pp-actions">
+                <a href="{{ public_profile_url }}" target="_blank" class="s-pp-btn s-pp-btn-view">View Profile ↗</a>
+                <a href="{{ grid_editor_url }}" class="s-pp-btn s-pp-btn-edit">Edit Grid</a>
+            </div>
+        </div>
+    </section>
+    {% endif %}
 
     {# ── KPI Row ───────────────────────────────────────────────────────────────── #}
     <div class="s-kpi-row">

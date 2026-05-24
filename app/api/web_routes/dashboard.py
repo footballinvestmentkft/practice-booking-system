@@ -651,6 +651,26 @@ async def spec_dashboard(
     }
     spec_header_class = _spec_header_map.get(spec_enum, "hdr-football")
 
+    # Public profile context (LFA_FOOTBALL_PLAYER only)
+    public_profile_url = None
+    grid_editor_url = None
+    is_profile_published = False
+    profile_grid_filled_slots = 0
+    profile_grid_total_slots = _MAX_SLOTS
+    has_published_highlight_video = False
+
+    if spec_enum == "LFA_FOOTBALL_PLAYER":
+        card_draft = _CardDraftService.get_player_card_draft(db, user.id)
+        public_profile_url = f"/players/{user.id}"
+        grid_editor_url = "/dashboard/lfa-football-player/public-profile-editor"
+        is_profile_published = _CardDraftService.is_published(card_draft)
+        _pub_grid = _build_published_grid_state(card_draft)
+        profile_grid_filled_slots = len(_pub_grid) if _pub_grid else 0
+        has_published_highlight_video = bool(
+            (card_draft.published_data or {}).get("highlight_video")
+            if card_draft else False
+        )
+
     return templates.TemplateResponse(
         "dashboard_student_new.html",
         {
@@ -675,6 +695,13 @@ async def spec_dashboard(
             "age_description": age_description,
             "user_age": user_age,
             "spec_header_class": spec_header_class,
+            # Public profile entry point (LFA_FOOTBALL_PLAYER only)
+            "public_profile_url": public_profile_url,
+            "grid_editor_url": grid_editor_url,
+            "is_profile_published": is_profile_published,
+            "profile_grid_filled_slots": profile_grid_filled_slots,
+            "profile_grid_total_slots": profile_grid_total_slots,
+            "has_published_highlight_video": has_published_highlight_video,
         }
     )
 
@@ -1369,9 +1396,10 @@ async def student_remove_highlight_video(
 # ── Public Profile Grid Designer routes ───────────────────────────────────────
 
 from app.services.profile_grid_service import (  # noqa: E402
-    build_draft_grid_state  as _build_draft_grid_state,
+    build_draft_grid_state     as _build_draft_grid_state,
     build_published_grid_state as _build_published_grid_state,
-    SLOT_REGISTRY           as _SLOT_REGISTRY,
+    SLOT_REGISTRY              as _SLOT_REGISTRY,
+    MAX_SLOTS                  as _MAX_SLOTS,
 )
 
 

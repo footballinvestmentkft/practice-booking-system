@@ -329,7 +329,11 @@ class TestSpecDashboard:
         db.query.return_value.filter.return_value.all.return_value = []
 
         with patch(f"{_BASE}.get_lfa_age_category", return_value=("PRE", "PRE (Foundation Years)", "5-13 years", "Age 10")), \
+             patch(f"{_BASE}._CardDraftService") as mock_cds, \
+             patch(f"{_BASE}._build_published_grid_state", return_value=None), \
              patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_cds.get_player_card_draft.return_value = MagicMock(published_data={})
+            mock_cds.is_published.return_value = False
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(spec_dashboard(request=_req(), spec_type="lfa-football-player", db=db, user=user))
 
@@ -349,7 +353,11 @@ class TestSpecDashboard:
         db.query.return_value.filter.return_value.all.return_value = []
 
         with patch(f"{_BASE}.get_lfa_age_category", return_value=(None, None, None, "Below minimum age")), \
+             patch(f"{_BASE}._CardDraftService") as mock_cds, \
+             patch(f"{_BASE}._build_published_grid_state", return_value=None), \
              patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_cds.get_player_card_draft.return_value = MagicMock(published_data={})
+            mock_cds.is_published.return_value = False
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(spec_dashboard(request=_req(), spec_type="lfa-football-player", db=db, user=user))
 
@@ -369,7 +377,11 @@ class TestSpecDashboard:
         db.query.return_value.filter.return_value.all.return_value = []
 
         with patch(f"{_BASE}.get_lfa_age_category", return_value=("PRE", "PRE", "5-13 years", "Age 13")), \
+             patch(f"{_BASE}._CardDraftService") as mock_cds, \
+             patch(f"{_BASE}._build_published_grid_state", return_value=None), \
              patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_cds.get_player_card_draft.return_value = MagicMock(published_data={})
+            mock_cds.is_published.return_value = False
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(spec_dashboard(request=_req(), spec_type="lfa-football-player", db=db, user=user))
 
