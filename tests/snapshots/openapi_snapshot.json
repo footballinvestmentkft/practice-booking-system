@@ -4149,6 +4149,35 @@
         "title": "Body_register_submit_register_post",
         "type": "object"
       },
+      "Body_send_challenge_challenges_send_post": {
+        "properties": {
+          "challenged_user_id": {
+            "title": "Challenged User Id",
+            "type": "integer"
+          },
+          "game_id": {
+            "title": "Game Id",
+            "type": "integer"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "required": [
+          "challenged_user_id",
+          "game_id"
+        ],
+        "title": "Body_send_challenge_challenges_send_post",
+        "type": "object"
+      },
       "Body_send_friend_request_by_identifier_friends_send_post": {
         "properties": {
           "identifier": {
@@ -11302,7 +11331,13 @@
           "tournament_instructor_declined",
           "skill_tier_reached",
           "friend_request_received",
-          "friend_request_accepted"
+          "friend_request_accepted",
+          "vt_challenge_received",
+          "vt_challenge_accepted",
+          "vt_challenge_declined",
+          "vt_challenge_cancelled",
+          "vt_challenge_expired",
+          "vt_challenge_completed"
         ],
         "title": "NotificationType",
         "type": "string"
@@ -59435,6 +59470,165 @@
           }
         },
         "summary": "Camp Unenroll",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/challenges/send": {
+      "post": {
+        "operationId": "send_challenge_challenges_send_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_send_challenge_challenges_send_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Send Challenge",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/challenges/{challenge_id}/accept": {
+      "post": {
+        "operationId": "accept_challenge_challenges__challenge_id__accept_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "challenge_id",
+            "required": true,
+            "schema": {
+              "title": "Challenge Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Accept Challenge",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/challenges/{challenge_id}/cancel": {
+      "post": {
+        "operationId": "cancel_challenge_challenges__challenge_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "challenge_id",
+            "required": true,
+            "schema": {
+              "title": "Challenge Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Challenge",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/challenges/{challenge_id}/decline": {
+      "post": {
+        "operationId": "decline_challenge_challenges__challenge_id__decline_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "challenge_id",
+            "required": true,
+            "schema": {
+              "title": "Challenge Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Decline Challenge",
         "tags": [
           "web"
         ]

@@ -31,6 +31,14 @@ class NotificationType(enum.Enum):
     FRIEND_REQUEST_RECEIVED = "friend_request_received"
     FRIEND_REQUEST_ACCEPTED = "friend_request_accepted"
 
+    # Virtual Training challenge notifications
+    VT_CHALLENGE_RECEIVED  = "vt_challenge_received"
+    VT_CHALLENGE_ACCEPTED  = "vt_challenge_accepted"
+    VT_CHALLENGE_DECLINED  = "vt_challenge_declined"
+    VT_CHALLENGE_CANCELLED = "vt_challenge_cancelled"
+    VT_CHALLENGE_EXPIRED   = "vt_challenge_expired"
+    VT_CHALLENGE_COMPLETED = "vt_challenge_completed"
+
 
 class Notification(Base):
     __tablename__ = "notifications"

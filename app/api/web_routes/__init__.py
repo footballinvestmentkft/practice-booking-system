@@ -29,6 +29,7 @@ from . import (
     sport_director,
     my_cards,
     friends,
+    vt_challenges,
 )
 from .admin import router as admin_router
 from .tournaments import router as tournaments_router
@@ -63,3 +64,4 @@ router.include_router(public_tournament.router)  # 🌐 Public event detail page
 router.include_router(sport_director.router)     # 🏅 Sport Director team enrollment
 router.include_router(my_cards.router)           # 🃏 My Cards hub (/my-cards)
 router.include_router(friends.router)            # 👥 Friendship system (/friends)
+router.include_router(vt_challenges.router)      # 🎮 VT Challenges (/challenges)

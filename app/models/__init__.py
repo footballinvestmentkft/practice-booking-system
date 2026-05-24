@@ -60,6 +60,10 @@ from .card_theme import CardTheme
 from .card_design import CardDesign
 from .virtual_training import VirtualTrainingGame, VirtualTrainingAttempt
 from .friendship import Friendship, FriendshipStatus, is_friends, get_friendship
+from .vt_challenge import (
+    VirtualTrainingChallenge, ChallengeStatus,
+    CHALLENGE_COMPATIBLE_GAMES, make_expires_at, get_active_challenge,
+)
 
 # 🎓 New Track-Based Modular Education System
 from .track import Track, Module, ModuleComponent
