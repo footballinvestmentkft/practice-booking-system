@@ -38909,6 +38909,94 @@
         }
       }
     },
+    "/virtual-training/direction-swipe": {
+      "get": {
+        "description": "Direction Swipe game page — swipe or press arrow keys to match the shown direction.",
+        "operationId": "virtual_training_direction_swipe_virtual_training_direction_swipe_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Virtual Training Direction Swipe",
+        "tags": [
+          "web",
+          "virtual-training"
+        ]
+      }
+    },
+    "/virtual-training/direction-swipe/result/{attempt_id}": {
+      "get": {
+        "description": "Result screen for a completed Direction Swipe attempt.",
+        "operationId": "virtual_training_direction_swipe_result_virtual_training_direction_swipe_result__attempt_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "title": "Attempt Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Virtual Training Direction Swipe Result",
+        "tags": [
+          "web",
+          "virtual-training"
+        ]
+      }
+    },
+    "/virtual-training/direction-swipe/submit": {
+      "post": {
+        "description": "Record a Direction Swipe attempt. Returns attempt_id, xp_awarded, is_valid.",
+        "operationId": "virtual_training_direction_swipe_submit_virtual_training_direction_swipe_submit_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Virtual Training Direction Swipe Submit",
+        "tags": [
+          "web",
+          "virtual-training"
+        ]
+      }
+    },
     "/virtual-training/go-no-go": {
       "get": {
         "tags": [

@@ -1,0 +1,749 @@
+{% extends "student_base.html" %}
+
+{% block title %}Direction Swipe - LFA{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '↕️' %}
+{% set _page_name = 'Direction Swipe' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .ds-container {
+        max-width: 520px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    /* ── Meta bar ─────────────────────────────────────────────────────────── */
+    .ds-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--app-card);
+        border-radius: 10px;
+        padding: 0.65rem 1rem;
+        margin-bottom: 1.25rem;
+        font-size: 0.85rem;
+        color: var(--app-text-muted);
+        box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+    .ds-meta span { font-weight: 600; color: var(--app-text); }
+
+    /* ── Instruction card ─────────────────────────────────────────────────── */
+    .ds-instruction {
+        background: var(--app-card);
+        border-radius: 14px;
+        padding: 1.5rem 1.5rem 1.75rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    .ds-instruction h2 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin: 0 0 0.6rem;
+        color: var(--app-text);
+    }
+    .ds-instruction p {
+        font-size: 0.9rem;
+        color: var(--app-text-muted);
+        line-height: 1.6;
+        margin: 0 0 1.25rem;
+    }
+
+    /* ── Direction legend ─────────────────────────────────────────────────── */
+    .ds-dir-legend {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+        max-width: 240px;
+        margin: 0 auto 1.25rem;
+    }
+    .ds-dir-legend-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.2rem;
+    }
+    .ds-dir-arrow {
+        font-size: 1.8rem;
+        line-height: 1;
+    }
+    .ds-dir-key {
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: var(--app-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .ds-dir-legend-item.center { grid-column: 2; }
+    .ds-dir-legend-item.left   { grid-column: 1; }
+    .ds-dir-legend-item.right  { grid-column: 3; }
+
+    .ds-skill-chips {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.25rem;
+    }
+    .ds-skill-chip {
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: #ede9fe;
+        color: #5b21b6;
+        padding: 0.2rem 0.65rem;
+        border-radius: 20px;
+    }
+    .ds-btn-start {
+        display: inline-block;
+        background: #4f46e5;
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 700;
+        padding: 0.8rem 2.5rem;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .ds-btn-start:hover { background: #4338ca; }
+    .ds-btn-start:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+    }
+
+    /* ── Game arena ───────────────────────────────────────────────────────── */
+    .ds-arena { display: none; }
+    .ds-arena.active { display: block; }
+
+    /* ── HUD ──────────────────────────────────────────────────────────────── */
+    .ds-hud {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        font-size: 0.82rem;
+        color: var(--app-text-muted);
+        font-weight: 600;
+    }
+    .ds-progress-wrap {
+        background: #e5e7eb;
+        border-radius: 6px;
+        height: 6px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+    .ds-progress-bar {
+        height: 100%;
+        background: #4f46e5;
+        border-radius: 6px;
+        transition: width 0.2s ease;
+        width: 0%;
+    }
+
+    /* ── Counters ─────────────────────────────────────────────────────────── */
+    .ds-counters {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .ds-counter {
+        background: var(--app-card);
+        border-radius: 10px;
+        padding: 0.6rem 0.5rem;
+        text-align: center;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .ds-counter-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--app-text-muted);
+        margin-bottom: 0.2rem;
+    }
+    .ds-counter-value {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: var(--app-text);
+    }
+    .ds-counter-value.hit-color   { color: #16a34a; }
+    .ds-counter-value.wrong-color { color: #dc2626; }
+    .ds-counter-value.late-color  { color: #d97706; }
+    .ds-counter-value.miss-color  { color: #6b7280; }
+
+    /* ── Stimulus field ───────────────────────────────────────────────────── */
+    .ds-field {
+        background: var(--app-card);
+        border-radius: 16px;
+        box-shadow: 0 2px 14px rgba(0,0,0,0.09);
+        min-height: 240px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        position: relative;
+        overflow: hidden;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: none;
+    }
+
+    .ds-field-idle {
+        font-size: 0.9rem;
+        color: var(--app-text-muted);
+        font-weight: 600;
+    }
+
+    .ds-stimulus {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .ds-stimulus.visible { display: flex; }
+
+    .ds-arrow-display {
+        font-size: 5rem;
+        line-height: 1;
+        transition: transform 0.08s ease;
+    }
+    .ds-arrow-display.correct-flash  { color: #16a34a; }
+    .ds-arrow-display.wrong-flash    { color: #dc2626; }
+
+    .ds-stim-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--app-text-muted);
+    }
+
+    /* ── Keyboard hint ────────────────────────────────────────────────────── */
+    .ds-keyboard-hint {
+        font-size: 0.72rem;
+        color: var(--app-text-muted);
+        text-align: center;
+        margin-top: 0.35rem;
+    }
+
+    /* ── Feedback flash ───────────────────────────────────────────────────── */
+    .ds-feedback {
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.82rem;
+        font-weight: 800;
+        padding: 0.25rem 0.85rem;
+        border-radius: 20px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s;
+        white-space: nowrap;
+    }
+    .ds-feedback.show { opacity: 1; }
+    .ds-feedback.fb-hit   { background: #dcfce7; color: #166534; }
+    .ds-feedback.fb-wrong { background: #fee2e2; color: #991b1b; }
+    .ds-feedback.fb-late  { background: #fef3c7; color: #92400e; }
+    .ds-feedback.fb-miss  { background: #f3f4f6; color: #6b7280; }
+
+    /* ── Submitting overlay ───────────────────────────────────────────────── */
+    .ds-submitting {
+        display: none;
+        text-align: center;
+        padding: 3rem 1rem;
+        background: var(--app-card);
+        border-radius: 16px;
+        box-shadow: 0 2px 14px rgba(0,0,0,0.09);
+        color: var(--app-text-muted);
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+    .ds-submitting.active { display: block; }
+    .ds-submitting p { margin: 0.5rem 0 0; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="ds-container">
+
+    {# ── Meta bar ──────────────────────────────────────────────────────────── #}
+    <div class="ds-meta">
+        <div>Today: <span>{{ attempts_today }} / {{ max_daily_attempts }}</span> attempts</div>
+        <div>Remaining: <span>{{ attempts_remaining }}</span></div>
+    </div>
+
+    {# ── Daily cap reached ─────────────────────────────────────────────────── #}
+    {% if attempts_remaining == 0 %}
+    <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:12px;padding:1rem 1.25rem;text-align:center;margin-bottom:1.25rem;color:#92400e;font-weight:600;font-size:0.9rem;">
+        Daily limit reached. Come back tomorrow to earn XP again.
+    </div>
+    {% endif %}
+
+    {# ── Instruction screen ────────────────────────────────────────────────── #}
+    <div class="ds-instruction" id="dsInstruction">
+        <h2>↕️ Direction Swipe</h2>
+        <p>
+            An arrow appears — <strong>swipe</strong> (touch) or press the matching
+            <strong>arrow key</strong> as fast as possible.<br>
+            Three phases get progressively faster. React quickly and accurately.
+        </p>
+
+        <div class="ds-dir-legend">
+            <div class="ds-dir-legend-item center" style="grid-row:1;grid-column:2;">
+                <div class="ds-dir-arrow">↑</div>
+                <div class="ds-dir-key">Up</div>
+            </div>
+            <div class="ds-dir-legend-item" style="grid-row:2;grid-column:1;">
+                <div class="ds-dir-arrow">←</div>
+                <div class="ds-dir-key">Left</div>
+            </div>
+            <div class="ds-dir-legend-item" style="grid-row:2;grid-column:3;">
+                <div class="ds-dir-arrow">→</div>
+                <div class="ds-dir-key">Right</div>
+            </div>
+            <div class="ds-dir-legend-item" style="grid-row:3;grid-column:2;">
+                <div class="ds-dir-arrow">↓</div>
+                <div class="ds-dir-key">Down</div>
+            </div>
+        </div>
+
+        <div class="ds-skill-chips">
+            {% for skill in game.skill_targets %}
+            <span class="ds-skill-chip">{{ skill }}</span>
+            {% endfor %}
+        </div>
+
+        <button class="ds-btn-start" id="dsBtnStart"
+            {% if attempts_remaining == 0 %}disabled{% endif %}>
+            ▶ Start Game
+        </button>
+    </div>
+
+    {# ── Game arena ────────────────────────────────────────────────────────── #}
+    <div class="ds-arena" id="dsArena">
+
+        <div class="ds-hud">
+            <span id="dsProgress">0 / {{ game.config.phases | sum(attribute='stimuli') }}</span>
+            <span id="dsTimer">0s</span>
+        </div>
+        <div class="ds-progress-wrap">
+            <div class="ds-progress-bar" id="dsProgressBar"></div>
+        </div>
+
+        <div class="ds-counters">
+            <div class="ds-counter">
+                <div class="ds-counter-label">Correct</div>
+                <div class="ds-counter-value hit-color" id="dsHit">0</div>
+            </div>
+            <div class="ds-counter">
+                <div class="ds-counter-label">Wrong Dir</div>
+                <div class="ds-counter-value wrong-color" id="dsWrong">0</div>
+            </div>
+            <div class="ds-counter">
+                <div class="ds-counter-label">Late</div>
+                <div class="ds-counter-value late-color" id="dsLate">0</div>
+            </div>
+            <div class="ds-counter">
+                <div class="ds-counter-label">Missed</div>
+                <div class="ds-counter-value miss-color" id="dsMiss">0</div>
+            </div>
+        </div>
+
+        <div class="ds-field" id="dsField">
+            <div class="ds-field-idle" id="dsFieldIdle">Get ready…</div>
+            <div class="ds-stimulus" id="dsStimulus">
+                <div class="ds-arrow-display" id="dsArrow"></div>
+                <div class="ds-stim-label" id="dsStimLabel">Swipe or press arrow key</div>
+            </div>
+            <div class="ds-feedback" id="dsFeedback"></div>
+        </div>
+
+        <div class="ds-keyboard-hint">⌨️ Arrow keys · 📱 Swipe on touch</div>
+
+    </div>
+
+    {# ── Submitting overlay ────────────────────────────────────────────────── #}
+    <div class="ds-submitting" id="dsSubmitting">
+        <div style="font-size:2rem;margin-bottom:0.5rem;">⏳</div>
+        <p>Saving your result…</p>
+    </div>
+
+</div>
+
+<script>
+(function () {
+    // ── Server-injected config ─────────────────────────────────────────────
+    var PHASES        = {{ game.config.phases | tojson }};
+    var DIRECTIONS    = {{ game.config.directions | tojson }};    // ["up","down","left","right"]
+    var LATE_GRACE_MS = {{ game.config.late_grace_ms | tojson }}; // 300
+    var JITTER_MS     = {{ game.config.jitter_ms | tojson }};     // 150
+    var SWIPE_MIN_PX  = {{ game.config.swipe_min_px | tojson }};  // 30
+    var SWIPE_MAX_DUR_MS = {{ game.config.swipe_max_duration_ms | tojson }}; // 500
+    var CSRF_TOKEN    = "{{ request.cookies.get('csrf_token', '') }}";
+    var SUBMIT_URL    = "/virtual-training/direction-swipe/submit";
+
+    var TOTAL_STIM = PHASES.reduce(function(s, p){ return s + p.stimuli; }, 0); // 36
+
+    // ── Arrow glyphs ───────────────────────────────────────────────────────
+    var ARROW_GLYPH = { up: "↑", down: "↓", left: "←", right: "→" };
+
+    // ── Game state ─────────────────────────────────────────────────────────
+    var started         = false;
+    var startedAt       = null;
+    var globalStimIdx   = 0;
+    var hitCount        = 0;
+    var wrongCount      = 0;
+    var lateCount       = 0;
+    var missCount       = 0;
+    var reactionTimes   = [];        // RT of correct hits only
+    var stimTimestamp   = null;
+    var stimTimeout     = null;
+    var lateTimeout     = null;
+    var isiTimeout      = null;
+    var elapsedInterval = null;
+    var elapsedSeconds  = 0;
+    var currentDir      = null;
+    var responseHandled = false;
+    var stimulusLog     = [];
+    var perPhaseData    = [];
+
+    // Touch tracking
+    var touchStartX = null;
+    var touchStartY = null;
+    var touchStartT = null;
+
+    // DOM refs
+    var elInstruction = document.getElementById("dsInstruction");
+    var elArena       = document.getElementById("dsArena");
+    var elBtnStart    = document.getElementById("dsBtnStart");
+    var elField       = document.getElementById("dsField");
+    var elFieldIdle   = document.getElementById("dsFieldIdle");
+    var elStimulus    = document.getElementById("dsStimulus");
+    var elArrowDisp   = document.getElementById("dsArrow");
+    var elFeedback    = document.getElementById("dsFeedback");
+    var elProgress    = document.getElementById("dsProgress");
+    var elProgressBar = document.getElementById("dsProgressBar");
+    var elTimer       = document.getElementById("dsTimer");
+    var elHit         = document.getElementById("dsHit");
+    var elWrong       = document.getElementById("dsWrong");
+    var elLate        = document.getElementById("dsLate");
+    var elMiss        = document.getElementById("dsMiss");
+    var elSubmitting  = document.getElementById("dsSubmitting");
+
+    // ── Build randomised sequence ──────────────────────────────────────────
+    function buildSequence() {
+        var seq = [];
+        for (var pi = 0; pi < PHASES.length; pi++) {
+            var p = PHASES[pi];
+            var block = [];
+            for (var s = 0; s < p.stimuli; s++) {
+                block.push({ phase: pi, cfg: p, dir: DIRECTIONS[s % DIRECTIONS.length] });
+            }
+            // Fisher-Yates shuffle direction assignment
+            for (var i = block.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var tmp = block[i]; block[i] = block[j]; block[j] = tmp;
+            }
+            // Re-assign directions randomly
+            for (var k = 0; k < block.length; k++) {
+                block[k].dir = DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)];
+            }
+            seq = seq.concat(block);
+        }
+        return seq;
+    }
+
+    var SEQUENCE = buildSequence();
+
+    // ── Phase lookup ───────────────────────────────────────────────────────
+    function getPhaseForIdx(idx) {
+        var cumulative = 0;
+        for (var pi = 0; pi < PHASES.length; pi++) {
+            cumulative += PHASES[pi].stimuli;
+            if (idx < cumulative) { return pi; }
+        }
+        return PHASES.length - 1;
+    }
+
+    // ── Start ──────────────────────────────────────────────────────────────
+    elBtnStart.addEventListener("click", function () {
+        if (started) { return; }
+        started   = true;
+        startedAt = new Date().toISOString();
+
+        elInstruction.style.display = "none";
+        elArena.classList.add("active");
+
+        elapsedInterval = setInterval(function () {
+            elapsedSeconds++;
+            elTimer.textContent = elapsedSeconds + "s";
+        }, 1000);
+
+        isiTimeout = setTimeout(showStimulus, 800);
+    });
+
+    // ── Keyboard input ─────────────────────────────────────────────────────
+    document.addEventListener("keydown", function (e) {
+        if (!started || responseHandled || currentDir === null) { return; }
+        var keyMap = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" };
+        var pressed = keyMap[e.key];
+        if (!pressed) { return; }
+        e.preventDefault();
+        var rt = Date.now() - stimTimestamp;
+        handleResponse(pressed, rt, "keyboard");
+    });
+
+    // ── Touch input ────────────────────────────────────────────────────────
+    elField.addEventListener("touchstart", function (e) {
+        var t = e.changedTouches[0];
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+        touchStartT = Date.now();
+    }, { passive: true });
+
+    elField.addEventListener("touchend", function (e) {
+        if (!started || responseHandled || currentDir === null) { return; }
+        if (touchStartX === null) { return; }
+        var t    = e.changedTouches[0];
+        var dx   = t.clientX - touchStartX;
+        var dy   = t.clientY - touchStartY;
+        var dur  = Date.now() - touchStartT;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        touchStartX = touchStartY = touchStartT = null;
+
+        if (dist < SWIPE_MIN_PX || dur > SWIPE_MAX_DUR_MS) { return; }
+
+        var swipeDir;
+        if (Math.abs(dx) >= Math.abs(dy)) {
+            swipeDir = dx > 0 ? "right" : "left";
+        } else {
+            swipeDir = dy > 0 ? "down" : "up";
+        }
+        var rt = Date.now() - stimTimestamp;
+        handleResponse(swipeDir, rt, "touch");
+    }, { passive: true });
+
+    // ── Handle a response (correct / wrong) ───────────────────────────────
+    function handleResponse(dir, rt, inputMode) {
+        if (responseHandled) { return; }
+        responseHandled = true;
+        clearTimeout(stimTimeout);
+        clearTimeout(lateTimeout);
+
+        if (dir === currentDir) {
+            hitCount++;
+            reactionTimes.push(rt);
+            elHit.textContent = hitCount;
+            recordStimEvent("correct", rt, inputMode);
+            showFeedback("CORRECT", "fb-hit");
+        } else {
+            wrongCount++;
+            elWrong.textContent = wrongCount;
+            recordStimEvent("wrong_direction", rt, inputMode, dir);
+            showFeedback("WRONG DIR", "fb-wrong");
+        }
+
+        hideStimulus();
+        scheduleNext();
+    }
+
+    // ── Show stimulus ──────────────────────────────────────────────────────
+    function showStimulus() {
+        if (globalStimIdx >= TOTAL_STIM) { finishGame(); return; }
+
+        responseHandled = false;
+        stimTimestamp   = Date.now();
+        var item        = SEQUENCE[globalStimIdx];
+        currentDir      = item.dir;
+        var cfg         = item.cfg;
+
+        // ISI jitter already applied at scheduleNext; show arrow now
+        elArrowDisp.textContent = ARROW_GLYPH[currentDir];
+        elArrowDisp.className   = "ds-arrow-display";
+
+        elFieldIdle.style.display = "none";
+        elStimulus.classList.add("visible");
+
+        elProgress.textContent    = (globalStimIdx + 1) + " / " + TOTAL_STIM;
+        elProgressBar.style.width = ((globalStimIdx + 1) / TOTAL_STIM * 100) + "%";
+
+        // Window timeout — missed
+        stimTimeout = setTimeout(function () {
+            if (responseHandled) { return; }
+            responseHandled = true;
+            missCount++;
+            elMiss.textContent = missCount;
+            recordStimEvent("missed", null, null);
+            showFeedback("MISS", "fb-miss");
+            hideStimulus();
+
+            // Late grace window
+            lateTimeout = setTimeout(function () {}, LATE_GRACE_MS);
+            scheduleNextAfterLate(cfg);
+        }, cfg.window_ms);
+    }
+
+    function hideStimulus() {
+        elStimulus.classList.remove("visible");
+        currentDir = null;
+    }
+
+    function scheduleNext() {
+        globalStimIdx++;
+        if (globalStimIdx >= TOTAL_STIM) {
+            isiTimeout = setTimeout(finishGame, 300);
+            return;
+        }
+        var pi  = getPhaseForIdx(globalStimIdx);
+        var isi = PHASES[pi].isi_ms + (Math.random() * JITTER_MS * 2 - JITTER_MS);
+        isi = Math.max(100, Math.round(isi));
+        isiTimeout = setTimeout(showStimulus, isi);
+    }
+
+    // After a miss: allow late swipe within LATE_GRACE_MS, then advance
+    function scheduleNextAfterLate(cfg) {
+        // We re-attach a one-shot late listener
+        var lateDir = currentDir; // capture before hideStimulus clears it
+        var lateMissIdx = globalStimIdx;
+
+        setTimeout(function () {
+            globalStimIdx++;
+            if (globalStimIdx >= TOTAL_STIM) {
+                isiTimeout = setTimeout(finishGame, 300);
+                return;
+            }
+            var pi  = getPhaseForIdx(globalStimIdx);
+            var isi = PHASES[pi].isi_ms + (Math.random() * JITTER_MS * 2 - JITTER_MS);
+            isi = Math.max(100, Math.round(isi));
+            isiTimeout = setTimeout(showStimulus, isi);
+        }, LATE_GRACE_MS);
+    }
+
+    // ── Feedback ───────────────────────────────────────────────────────────
+    var fbTimeout = null;
+    function showFeedback(text, cls) {
+        if (fbTimeout) { clearTimeout(fbTimeout); }
+        elFeedback.textContent = text;
+        elFeedback.className   = "ds-feedback show " + cls;
+        fbTimeout = setTimeout(function () {
+            elFeedback.className = "ds-feedback";
+        }, 380);
+    }
+
+    // ── Record stimulus event ──────────────────────────────────────────────
+    function recordStimEvent(outcome, rtMs, inputMode, pressedDir) {
+        var entry = {
+            i:          globalStimIdx,
+            phase:      getPhaseForIdx(globalStimIdx),
+            direction:  SEQUENCE[globalStimIdx] ? SEQUENCE[globalStimIdx].dir : null,
+            outcome:    outcome,
+            rt_ms:      rtMs,
+            input_mode: inputMode || null,
+        };
+        if (pressedDir !== undefined) { entry.pressed_dir = pressedDir; }
+        stimulusLog.push(entry);
+    }
+
+    // ── Finish + submit ─────────────────────────────────────────────────────
+    function finishGame() {
+        clearInterval(elapsedInterval);
+        clearTimeout(stimTimeout);
+        clearTimeout(lateTimeout);
+        clearTimeout(isiTimeout);
+        hideStimulus();
+        elArena.classList.remove("active");
+        elSubmitting.classList.add("active");
+
+        var durationSeconds = startedAt
+            ? Math.round((Date.now() - new Date(startedAt).getTime()) / 100) / 10
+            : null;
+
+        var avgMs = reactionTimes.length > 0
+            ? Math.round(reactionTimes.reduce(function(a,b){return a+b;},0) / reactionTimes.length)
+            : null;
+        var minMs = reactionTimes.length > 0
+            ? Math.min.apply(null, reactionTimes)
+            : null;
+
+        // Score: hit_rate weighted with speed
+        var hitRate    = TOTAL_STIM > 0 ? hitCount / TOTAL_STIM : 0;
+        var wrongRate  = TOTAL_STIM > 0 ? wrongCount / TOTAL_STIM : 0;
+        var speedFactor = avgMs !== null ? Math.max(0, 1 - avgMs / 1500) : 0;
+        var scoreRaw   = 0.50 * hitRate + 0.30 * (1 - wrongRate) + 0.20 * speedFactor;
+        var scoreNorm  = Math.min(100, Math.max(0, Math.round(100 * scoreRaw)));
+
+        // per_phase summary
+        var perPhase = PHASES.map(function(p, pi) {
+            var evs     = stimulusLog.filter(function(e){ return e.phase === pi; });
+            var correct = evs.filter(function(e){ return e.outcome === "correct"; }).length;
+            var wrong   = evs.filter(function(e){ return e.outcome === "wrong_direction"; }).length;
+            var missed  = evs.filter(function(e){ return e.outcome === "missed"; }).length;
+            var late    = evs.filter(function(e){ return e.outcome === "late_swipe"; }).length;
+            var rtArr   = evs.filter(function(e){ return e.rt_ms !== null; }).map(function(e){ return e.rt_ms; });
+            var avgRtMs = rtArr.length > 0 ? Math.round(rtArr.reduce(function(a,b){return a+b;},0)/rtArr.length) : null;
+            return {
+                phase:   pi,
+                stimuli: p.stimuli,
+                correct: correct,
+                wrong:   wrong,
+                missed:  missed,
+                late:    late,
+                avg_rt_ms: avgRtMs,
+            };
+        });
+
+        var rawMetrics = {
+            v:            2,
+            per_stimulus: stimulusLog,
+            per_phase:    perPhase,
+            late_summary: {
+                late_click_count: lateCount,
+            },
+        };
+
+        var payload = {
+            started_at:        startedAt,
+            duration_seconds:  durationSeconds,
+            stimuli_count:     TOTAL_STIM,
+            correct_count:     hitCount,
+            wrong_click_count: wrongCount,
+            error_count:       missCount,
+            avg_reaction_ms:   avgMs,
+            min_reaction_ms:   minMs,
+            score_raw:         scoreRaw,
+            score_normalized:  scoreNorm,
+            raw_metrics:       rawMetrics,
+        };
+
+        fetch(SUBMIT_URL, {
+            method:  "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-Token": CSRF_TOKEN,
+            },
+            body: JSON.stringify(payload),
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            if (data.attempt_id) {
+                window.location.href = "/virtual-training/direction-swipe/result/" + data.attempt_id;
+            } else {
+                elSubmitting.innerHTML = "<p>⚠️ Could not save attempt. <a href='/virtual-training'>Back to hub</a></p>";
+            }
+        })
+        .catch(function(){
+            elSubmitting.innerHTML = "<p>⚠️ Network error. <a href='/virtual-training'>Back to hub</a></p>";
+        });
+    }
+
+})();
+</script>
+{% endblock %}
