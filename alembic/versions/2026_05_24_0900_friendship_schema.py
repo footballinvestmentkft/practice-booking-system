@@ -24,35 +24,39 @@ depends_on    = None
 
 def upgrade() -> None:
     # ── 1. Extend notificationtype enum ──────────────────────────────────────
-    # PostgreSQL stores Python enum member NAMEs (uppercase).
-    # ADD VALUE IF NOT EXISTS is safe and idempotent.
+    # ADD VALUE IF NOT EXISTS is safe and idempotent in PostgreSQL 9.3+.
     op.execute("ALTER TYPE notificationtype ADD VALUE IF NOT EXISTS 'FRIEND_REQUEST_RECEIVED'")
     op.execute("ALTER TYPE notificationtype ADD VALUE IF NOT EXISTS 'FRIEND_REQUEST_ACCEPTED'")
 
-    # ── 2. Create friendshipstatus enum ──────────────────────────────────────
-    friendshipstatus = sa.Enum(
-        "pending", "accepted", "declined", "blocked",
-        name="friendshipstatus",
-    )
-    friendshipstatus.create(op.get_bind(), checkfirst=True)
+    # ── 2. Create friendshipstatus enum (idempotent) ─────────────────────────
+    # op.create_table() with sa.Enum ignores create_type=False in this
+    # Alembic/SQLAlchemy version and always emits CREATE TYPE. We use raw SQL
+    # via a PL/pgSQL exception block so the type creation is idempotent even
+    # when the type already exists in a CI shared-DB environment.
+    # create_table() is then called with sa.Text() for the status column to
+    # avoid any SQLAlchemy-level CREATE TYPE emission, and the real enum
+    # constraint is enforced by the server_default + ORM layer.
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE friendshipstatus AS ENUM
+                ('pending', 'accepted', 'declined', 'blocked');
+        EXCEPTION WHEN duplicate_object THEN null;
+        END $$;
+    """)
 
-    # ── 3. Create friendships table ──────────────────────────────────────────
-    op.create_table(
-        "friendships",
-        sa.Column("id",           sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column("requester_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"),
-                  nullable=False),
-        sa.Column("addressee_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"),
-                  nullable=False),
-        sa.Column("status", sa.Enum("pending", "accepted", "declined", "blocked",
-                                    name="friendshipstatus", create_type=False),
-                  nullable=False, server_default="pending"),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False,
-                  server_default=sa.text("NOW()")),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
-        sa.UniqueConstraint("requester_id", "addressee_id", name="uq_friendship_pair"),
-        sa.CheckConstraint("requester_id != addressee_id", name="ck_no_self_friendship"),
-    )
+    # ── 3. Create friendships table (raw SQL — avoids double CREATE TYPE) ────
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS friendships (
+            id           SERIAL PRIMARY KEY,
+            requester_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            addressee_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            status       friendshipstatus NOT NULL DEFAULT 'pending',
+            created_at   TIMESTAMPTZ      NOT NULL DEFAULT NOW(),
+            updated_at   TIMESTAMPTZ,
+            CONSTRAINT uq_friendship_pair    UNIQUE  (requester_id, addressee_id),
+            CONSTRAINT ck_no_self_friendship CHECK   (requester_id != addressee_id)
+        )
+    """)
     op.create_index("ix_friendships_requester_id", "friendships", ["requester_id"])
     op.create_index("ix_friendships_addressee_id", "friendships", ["addressee_id"])
     op.create_index("ix_friendships_status",       "friendships", ["status"])
@@ -63,6 +67,6 @@ def downgrade() -> None:
     op.drop_index("ix_friendships_addressee_id", table_name="friendships")
     op.drop_index("ix_friendships_requester_id", table_name="friendships")
     op.drop_table("friendships")
-    # Cannot remove enum values from PostgreSQL without recreating the type —
-    # leave notificationtype values in place on downgrade.
-    sa.Enum(name="friendshipstatus").drop(op.get_bind(), checkfirst=True)
+    # Cannot remove enum values from notificationtype without recreating it —
+    # leave FRIEND_REQUEST_* values in place on downgrade.
+    op.execute("DROP TYPE IF EXISTS friendshipstatus")
