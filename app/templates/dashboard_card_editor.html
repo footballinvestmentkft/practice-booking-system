@@ -1242,6 +1242,11 @@ let _publishedCardTheme    = '{{ published_card_theme }}';
 let _publishedCardVariant  = '{{ published_card_variant }}';
 let _publishedCardPlatform = '{{ published_card_platform }}';
 
+// Highlight video unpublished flag — true if draft_data.highlight_video.video_id
+// differs from published_data.highlight_video.video_id (server-rendered).
+// Updated on JS save/remove before the next page reload.
+let _hvUnpublished = {{ highlight_video_unpublished | tojson }};
+
 function _isVideoCapable() {
     if (_currentPlatform === 'default') return false;
     return _ANIMATED_CAPABLE_PLATFORMS.has(_currentPlatform);
@@ -1316,9 +1321,10 @@ document.addEventListener('DOMContentLoaded', function() {
 function _isDraftPublished() {
     const draftPlatform = _currentPlatform || 'default';
     const pubPlatform   = _publishedCardPlatform || 'default';
-    return draftPlatform === pubPlatform
+    const cardInSync = draftPlatform === pubPlatform
         && _currentTheme   === _publishedCardTheme
         && _currentVariant === _publishedCardVariant;
+    return cardInSync && !_hvUnpublished;
 }
 
 function _updatePublishIndicator() {
@@ -1346,6 +1352,7 @@ async function publishCard() {
             _publishedCardTheme    = data.published.theme;
             _publishedCardVariant  = data.published.variant;
             _publishedCardPlatform = data.published.platform === 'default' ? '' : data.published.platform;
+            _hvUnpublished = false;  // publish_draft() merged draft_data.highlight_video → published_data
             _updatePublishIndicator();
         } else {
             alert('❌ ' + (data.error || 'Could not publish card.'));
@@ -1598,16 +1605,14 @@ function _updateHvAfterSave(data) {
         // Already showing preview — update iframe src and badge.
         const iframe = document.getElementById('hv-iframe');
         if (iframe && data.embed_url) iframe.src = data.embed_url;
-        // Update badge to "draft saved"
+        // Update badge to "draft saved / unpublished"
         const badges = hasVideoDiv.querySelectorAll('.hv-badge');
         badges.forEach(b => { b.className = 'hv-badge hv-badge-draft'; b.textContent = 'Draft saved — not yet published'; });
         // Remove "will be removed" notice if present
         const willRemove = document.getElementById('hv-will-remove-notice');
         if (willRemove) willRemove.style.display = 'none';
-        // Update URL input value
-        const inp = document.getElementById('hv-url-input');
-        if (inp) inp.value = inp.value;  // keep user-entered value
-        // Mark overall card as having unpublished changes
+        // Mark overall card as having unpublished HV changes → enables Publish Card button.
+        _hvUnpublished = true;
         _updatePublishIndicator();
     }
 }
