@@ -140,6 +140,34 @@
 .psp-btn-remove  { background: transparent; color: #9ca3af; border: 1px solid #d1d5db; }
 .psp-btn-login   { background: #0B0B0B; color: #FFD200; }
 
+/* ── Highlight video (16:9 responsive) ─────────────────────────────────────── */
+.psp-video-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 6px;
+    background: #0B0B0B;
+}
+.psp-video-wrapper iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+.psp-video-provider {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    color: #9ca3af;
+    margin-top: 0.5rem;
+    padding: 0 0.85rem 0.75rem;
+}
+.psp-video-provider a { color: #6b7280; text-decoration: none; }
+.psp-video-provider a:hover { color: #374151; }
+
 /* ── Card slot — viewport-aware max-height ─────────────────────────────────── */
 .psp-card-slot {
     --psp-card-max-h: clamp(420px, calc(100vh - 238px), 620px);
@@ -427,10 +455,27 @@
     <div class="psp-right-rail">
         <div class="psp-module">
             <div class="psp-module-head">Highlight Video</div>
+            {% if highlight_video %}
+            <div class="psp-video-wrapper">
+                <iframe
+                    src="{{ highlight_video.embed_url }}"
+                    loading="lazy"
+                    title="Player highlight video"
+                    sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen>
+                </iframe>
+            </div>
+            <div class="psp-video-provider">
+                <span>YouTube</span>
+                <a href="{{ highlight_video.watch_url }}" target="_blank" rel="noopener noreferrer">↗ Open</a>
+            </div>
+            {% else %}
             <div class="psp-module-placeholder">
                 <div class="psp-module-dot"></div>
                 <div class="psp-module-coming">Coming Soon</div>
             </div>
+            {% endif %}
         </div>
 
         <div class="psp-module">
