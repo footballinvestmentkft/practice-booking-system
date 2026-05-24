@@ -42,8 +42,12 @@ class Friendship(Base):
                           nullable=False, index=True)
     addressee_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"),
                           nullable=False, index=True)
-    status       = Column(Enum(FriendshipStatus), nullable=False,
-                          default=FriendshipStatus.PENDING)
+    status       = Column(
+                      Enum(FriendshipStatus,
+                           values_callable=lambda obj: [e.value for e in obj]),
+                      nullable=False,
+                      default=FriendshipStatus.PENDING,
+                  )
     created_at   = Column(DateTime(timezone=True), nullable=False,
                           default=lambda: datetime.now(timezone.utc))
     updated_at   = Column(DateTime(timezone=True), nullable=True)
