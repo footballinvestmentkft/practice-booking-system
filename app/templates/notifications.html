@@ -141,6 +141,15 @@
             'tournament_direct_invitation':    '📩',
             'tournament_instructor_accepted':  '🤝',
             'tournament_instructor_declined':  '❌',
+            'skill_tier_reached':              '⭐',
+            'friend_request_received':         '👥',
+            'friend_request_accepted':         '🤝',
+            'vt_challenge_received':           '⚔️',
+            'vt_challenge_accepted':           '✅',
+            'vt_challenge_declined':           '✗',
+            'vt_challenge_cancelled':          '✕',
+            'vt_challenge_expired':            '⌛',
+            'vt_challenge_completed':          '🏆',
         }.get(n.type.value, '📢') %}
         <div class="notif-card {% if not n.is_read %}unread{% endif %}" id="notif-{{ n.id }}">
             <div class="notif-icon">{{ icon }}</div>

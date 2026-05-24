@@ -192,6 +192,78 @@ def _link_attempt_to_challenge(
     }
 
 
+# ── PR-C3 Challenge Result Context ────────────────────────────────────────────
+
+def _build_challenge_result_ctx(
+    db: Session,
+    challenge_id: int,
+    user_id: int,
+    attempt_id: int,
+) -> dict | None:
+    """Build challenge context block for result pages.
+
+    Returns None if the challenge_id is invalid, the user is not a participant,
+    or the given attempt_id doesn't belong to this user's challenge slot.
+    """
+    ch = db.query(VirtualTrainingChallenge).filter(
+        VirtualTrainingChallenge.id == challenge_id
+    ).first()
+    if ch is None:
+        return None
+    if user_id not in (ch.challenger_id, ch.challenged_id):
+        return None
+
+    is_challenger   = ch.challenger_id == user_id
+    my_attempt_id   = ch.challenger_attempt_id if is_challenger else ch.challenged_attempt_id
+    opp_attempt_id  = ch.challenged_attempt_id if is_challenger else ch.challenger_attempt_id
+
+    # Only bind the block if this attempt belongs to the user's challenge slot
+    if my_attempt_id != attempt_id:
+        return None
+
+    opponent_id = ch.challenged_id if is_challenger else ch.challenger_id
+    opponent = db.query(User).filter(User.id == opponent_id).first()
+    opponent_name = (opponent.nickname or opponent.email) if opponent else "Unknown"
+
+    ctx: dict = {
+        "challenge_id":    ch.id,
+        "status":          ch.status.value,
+        "is_challenger":   is_challenger,
+        "opponent_name":   opponent_name,
+        "difficulty_level": ch.difficulty_level,
+        "my_score":        None,
+        "opp_score":       None,
+        "outcome":         ch.status.value,
+    }
+
+    if ch.status == ChallengeStatus.COMPLETED:
+        # Load both attempt scores
+        my_a  = db.query(VirtualTrainingAttempt).filter(
+            VirtualTrainingAttempt.id == my_attempt_id
+        ).first() if my_attempt_id else None
+        opp_a = db.query(VirtualTrainingAttempt).filter(
+            VirtualTrainingAttempt.id == opp_attempt_id
+        ).first() if opp_attempt_id else None
+
+        ctx["my_score"]  = my_a.score_normalized  if my_a  else None
+        ctx["opp_score"] = opp_a.score_normalized if opp_a else None
+
+        if ch.is_draw:
+            ctx["outcome"] = "draw"
+        elif ch.winner_id == user_id:
+            ctx["outcome"] = "won"
+        else:
+            ctx["outcome"] = "lost"
+
+    elif ch.status == ChallengeStatus.ACCEPTED:
+        if opp_attempt_id is None:
+            ctx["outcome"] = "waiting_for_opponent"
+        else:
+            ctx["outcome"] = "waiting_for_resolution"
+
+    return ctx
+
+
 # ── Hub ───────────────────────────────────────────────────────────────────────
 
 @router.get("/virtual-training", response_class=HTMLResponse)
@@ -870,6 +942,7 @@ async def virtual_training_target_tracking_submit(
 async def virtual_training_target_tracking_result(
     attempt_id: int,
     request: Request,
+    challenge_id: int | None = None,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
@@ -953,6 +1026,10 @@ async def virtual_training_target_tracking_result(
     from ...models.user import UserRole
     is_admin = user.role == UserRole.ADMIN
 
+    challenge_ctx = None
+    if challenge_id is not None:
+        challenge_ctx = _build_challenge_result_ctx(db, challenge_id, user.id, attempt_id)
+
     return templates.TemplateResponse(
         "virtual_training_target_tracking_result.html",
         {
@@ -969,6 +1046,7 @@ async def virtual_training_target_tracking_result(
             "difficulty_level":      difficulty_level,
             "difficulty_multiplier": difficulty_multiplier,
             "flash_summary":         flash_summary,
+            "challenge_ctx":         challenge_ctx,
         },
     )
 
@@ -1171,6 +1249,7 @@ async def virtual_training_memory_sequence_submit(
 async def virtual_training_memory_sequence_result(
     attempt_id: int,
     request: Request,
+    challenge_id: int | None = None,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
@@ -1253,6 +1332,10 @@ async def virtual_training_memory_sequence_result(
     from ...models.user import UserRole
     is_admin = user.role == UserRole.ADMIN
 
+    challenge_ctx = None
+    if challenge_id is not None:
+        challenge_ctx = _build_challenge_result_ctx(db, challenge_id, user.id, attempt_id)
+
     return templates.TemplateResponse(
         "virtual_training_memory_sequence_result.html",
         {
@@ -1267,5 +1350,6 @@ async def virtual_training_memory_sequence_result(
             "per_round":    per_round,
             "best_sequence_length": best_sequence_length,
             "is_admin":     is_admin,
+            "challenge_ctx": challenge_ctx,
         },
     )

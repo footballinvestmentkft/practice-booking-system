@@ -1,0 +1,269 @@
+{% extends "student_base.html" %}
+
+{% block title %}Challenges — Virtual Training{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '⚔️' %}
+{% set _page_name = 'Challenges' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+.ch-container { max-width: 620px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+.ch-flash { padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem;
+            font-size: 0.9rem; font-weight: 600; }
+.ch-flash-ok  { background: #f0fdf4; color: #166534; border: 1px solid #86efac; }
+.ch-flash-err { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; }
+
+.ch-actions-top {
+    display: flex; justify-content: flex-end; margin-bottom: 1.25rem;
+}
+.ch-btn-send {
+    display: inline-block; background: #4f46e5; color: #fff;
+    font-size: 0.9rem; font-weight: 700; padding: 0.55rem 1.25rem;
+    border-radius: 8px; text-decoration: none; transition: background 0.15s;
+}
+.ch-btn-send:hover { background: #4338ca; }
+
+.ch-section-title {
+    font-size: 0.8rem; font-weight: 700; color: var(--app-text-muted);
+    text-transform: uppercase; letter-spacing: 0.05em;
+    margin: 1.5rem 0 0.75rem;
+}
+.ch-section-title:first-of-type { margin-top: 0; }
+
+.ch-card {
+    background: var(--app-card); border-radius: 14px;
+    padding: 1rem 1.1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    margin-bottom: 0.75rem;
+}
+
+.ch-card-top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 0.5rem; margin-bottom: 0.5rem;
+}
+.ch-opponent { font-size: 0.95rem; font-weight: 700; color: var(--app-text); }
+.ch-game     { font-size: 0.82rem; color: var(--app-text-muted); margin-top: 0.15rem; }
+
+.ch-badge {
+    display: inline-block; font-size: 0.75rem; font-weight: 700;
+    padding: 0.2rem 0.65rem; border-radius: 20px; white-space: nowrap;
+}
+.ch-badge-pending   { background: #fef9c3; color: #854d0e; }
+.ch-badge-accepted  { background: #dbeafe; color: #1e40af; }
+.ch-badge-won       { background: #dcfce7; color: #166534; }
+.ch-badge-lost      { background: #fee2e2; color: #991b1b; }
+.ch-badge-draw      { background: #f3f4f6; color: #374151; }
+.ch-badge-declined  { background: #f3f4f6; color: #6b7280; }
+.ch-badge-cancelled { background: #f3f4f6; color: #6b7280; }
+.ch-badge-expired   { background: #fef3c7; color: #92400e; }
+
+.ch-meta { font-size: 0.78rem; color: var(--app-text-muted); margin-bottom: 0.6rem; }
+.ch-message {
+    font-size: 0.85rem; color: var(--app-text); font-style: italic;
+    background: #f9fafb; border-radius: 6px; padding: 0.45rem 0.6rem;
+    margin-bottom: 0.6rem;
+}
+.ch-scores {
+    display: flex; gap: 1.5rem; font-size: 0.85rem;
+    margin-bottom: 0.6rem; flex-wrap: wrap;
+}
+.ch-score-item { display: flex; flex-direction: column; align-items: center; }
+.ch-score-lbl  { font-size: 0.7rem; color: var(--app-text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.1rem; }
+.ch-score-val  { font-size: 1.1rem; font-weight: 800; color: var(--app-text); }
+.ch-score-val.win  { color: #16a34a; }
+.ch-score-val.lose { color: #dc2626; }
+
+.ch-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+.ch-btn {
+    display: inline-block; font-size: 0.82rem; font-weight: 700;
+    padding: 0.35rem 0.85rem; border-radius: 7px; text-decoration: none;
+    cursor: pointer; border: none; transition: opacity 0.15s;
+}
+.ch-btn:hover { opacity: 0.85; }
+.ch-btn-play     { background: #4f46e5; color: #fff; }
+.ch-btn-accept   { background: #16a34a; color: #fff; }
+.ch-btn-decline  { background: #f3f4f6; color: #374151; }
+.ch-btn-cancel   { background: #fef2f2; color: #b91c1c; }
+
+.ch-waiting { font-size: 0.85rem; color: var(--app-text-muted); font-style: italic; padding: 0.3rem 0; }
+
+.ch-empty { text-align: center; padding: 2.5rem 1rem; color: var(--app-text-muted); }
+.ch-empty p { font-size: 0.95rem; }
+
+.ch-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;
+             text-align: center; }
+.ch-footer a { color: #667eea; text-decoration: none; margin: 0 0.6rem;
+               font-size: 0.88rem; font-weight: 600; }
+.ch-footer a:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="ch-container">
+
+{% if success %}
+<div class="ch-flash ch-flash-ok">
+    {% if success == "challenge_sent"      %}✓ Challenge sent!
+    {% elif success == "challenge_accepted" %}✓ Challenge accepted — go play!
+    {% elif success == "challenge_declined" %}✓ Challenge declined.
+    {% elif success == "challenge_cancelled" %}✓ Challenge cancelled.
+    {% else %}✓ Done.
+    {% endif %}
+</div>
+{% endif %}
+
+{% if error %}
+<div class="ch-flash ch-flash-err">
+    {% if error == "not_found"          %}Challenge not found.
+    {% elif error == "not_pending"      %}That challenge is no longer pending.
+    {% elif error == "cannot_cancel"    %}This challenge can no longer be cancelled.
+    {% elif error == "challenge_expired" %}Challenge expired — it has been marked as expired.
+    {% else %}{{ error }}
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="ch-actions-top">
+    <a href="/challenges/send" class="ch-btn-send">⚔ New challenge</a>
+</div>
+
+{# ── Active challenges ── #}
+<div class="ch-section-title">Active ({{ active_rows | length }})</div>
+
+{% if active_rows %}
+{% for row in active_rows %}
+<div class="ch-card">
+    <div class="ch-card-top">
+        <div>
+            <div class="ch-opponent">
+                {% if row.is_challenger %}You → {{ row.opponent_name }}
+                {% else %}{{ row.opponent_name }} → You{% endif %}
+            </div>
+            <div class="ch-game">
+                {{ row.game_name }}
+                {% if row.difficulty_level %} · {{ row.difficulty_level | title }}{% endif %}
+            </div>
+        </div>
+        <span class="ch-badge ch-badge-{{ row.status }}">
+            {% if row.status == "pending" %}Pending
+            {% elif row.status == "accepted" %}Accepted
+            {% else %}{{ row.status | title }}
+            {% endif %}
+        </span>
+    </div>
+
+    <div class="ch-meta">
+        Sent {{ row.created_at.strftime('%Y-%m-%d') }} ·
+        Expires {{ row.expires_at.strftime('%Y-%m-%d') }}
+    </div>
+
+    {% if row.message %}
+    <div class="ch-message">"{{ row.message }}"</div>
+    {% endif %}
+
+    <div class="ch-btns">
+        {% if row.outcome == "play_now" %}
+        <a href="{{ row.play_url }}" class="ch-btn ch-btn-play">▶ Play now</a>
+
+        {% elif row.outcome == "waiting_for_opponent" %}
+        <span class="ch-waiting">⏳ Waiting for {{ row.opponent_name }} to play…</span>
+
+        {% elif row.outcome == "received" %}
+        <form method="post" action="/challenges/{{ row.id }}/accept" style="margin:0;">
+            <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
+            <button type="submit" class="ch-btn ch-btn-accept">✓ Accept</button>
+        </form>
+        <form method="post" action="/challenges/{{ row.id }}/decline" style="margin:0;">
+            <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
+            <button type="submit" class="ch-btn ch-btn-decline">✗ Decline</button>
+        </form>
+
+        {% elif row.outcome == "sent" %}
+        <form method="post" action="/challenges/{{ row.id }}/cancel" style="margin:0;">
+            <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
+            <button type="submit" class="ch-btn ch-btn-cancel">✕ Cancel</button>
+        </form>
+        <span class="ch-waiting">Awaiting {{ row.opponent_name }}'s response…</span>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="ch-empty"><p>No active challenges.</p></div>
+{% endif %}
+
+{# ── Terminal challenges ── #}
+{% if terminal_rows %}
+<div class="ch-section-title">Recent (last {{ terminal_rows | length }})</div>
+{% for row in terminal_rows %}
+<div class="ch-card">
+    <div class="ch-card-top">
+        <div>
+            <div class="ch-opponent">
+                {% if row.is_challenger %}You vs {{ row.opponent_name }}
+                {% else %}{{ row.opponent_name }} vs You{% endif %}
+            </div>
+            <div class="ch-game">
+                {{ row.game_name }}
+                {% if row.difficulty_level %} · {{ row.difficulty_level | title }}{% endif %}
+            </div>
+        </div>
+        {% if row.outcome == "won" %}
+        <span class="ch-badge ch-badge-won">🏆 Won</span>
+        {% elif row.outcome == "lost" %}
+        <span class="ch-badge ch-badge-lost">✗ Lost</span>
+        {% elif row.outcome == "draw" %}
+        <span class="ch-badge ch-badge-draw">= Draw</span>
+        {% elif row.status == "declined" %}
+        <span class="ch-badge ch-badge-declined">Declined</span>
+        {% elif row.status == "cancelled" %}
+        <span class="ch-badge ch-badge-cancelled">Cancelled</span>
+        {% elif row.status == "expired" %}
+        <span class="ch-badge ch-badge-expired">Expired</span>
+        {% else %}
+        <span class="ch-badge ch-badge-declined">{{ row.status | title }}</span>
+        {% endif %}
+    </div>
+
+    <div class="ch-meta">
+        {{ row.created_at.strftime('%Y-%m-%d') }}
+        {% if row.completed_at %} · Completed {{ row.completed_at.strftime('%Y-%m-%d') }}{% endif %}
+    </div>
+
+    {% if row.message %}
+    <div class="ch-message">"{{ row.message }}"</div>
+    {% endif %}
+
+    {% if row.outcome in ["won", "lost", "draw"] and (row.my_score is not none or row.opp_score is not none) %}
+    <div class="ch-scores">
+        <div class="ch-score-item">
+            <span class="ch-score-lbl">You</span>
+            <span class="ch-score-val {% if row.outcome == 'won' %}win{% elif row.outcome == 'lost' %}lose{% endif %}">
+                {% if row.my_score is not none %}{{ row.my_score | round(0) | int }}%{% else %}—{% endif %}
+            </span>
+        </div>
+        <div class="ch-score-item" style="color:var(--app-text-muted);align-self:center;font-size:1.2rem;">vs</div>
+        <div class="ch-score-item">
+            <span class="ch-score-lbl">{{ row.opponent_name }}</span>
+            <span class="ch-score-val {% if row.outcome == 'lost' %}win{% elif row.outcome == 'won' %}lose{% endif %}">
+                {% if row.opp_score is not none %}{{ row.opp_score | round(0) | int }}%{% else %}—{% endif %}
+            </span>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+<div class="ch-footer">
+    <a href="/virtual-training">💻 All Games</a>
+    <a href="/friends">👥 Friends</a>
+    <a href="/training">🎓 Training</a>
+</div>
+
+</div>
+{% endblock %}

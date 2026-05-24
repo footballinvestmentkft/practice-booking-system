@@ -314,6 +314,14 @@
                    class="vg-btn-play {% if _used >= _max %}vg-btn-capped{% endif %}">
                     {% if _used >= _max %}✓ Done today{% else %}▶ Play{% endif %}
                 </a>
+                {% if game.code in ['memory_sequence', 'target_tracking'] %}
+                <a href="/challenges/send?game_code={{ game.code }}"
+                   style="display:inline-block;margin-left:0.5rem;font-size:0.8rem;font-weight:700;
+                          color:#4f46e5;text-decoration:none;padding:0.3rem 0.7rem;
+                          border:1.5px solid #4f46e5;border-radius:7px;">
+                    ⚔ Challenge
+                </a>
+                {% endif %}
                 {% else %}
                 <button class="vg-btn-coming-soon" disabled>Coming soon</button>
                 {% endif %}
