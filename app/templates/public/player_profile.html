@@ -4,94 +4,104 @@
 
 {% block extra_head %}
 <style>
-/* ── Layout ────────────────────────────────────────────────────────────────── */
-.psp-page     { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+/* ── Main content — reset double padding ───────────────────────────────────── */
+.main-content { padding: 0 !important; max-width: none !important; margin: 0 !important; }
 
-/* ── Topbar ────────────────────────────────────────────────────────────────── */
+/* ── Sticky topbar ─────────────────────────────────────────────────────────── */
 .psp-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #0B0B0B;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 1.5rem;
+    padding: 0.7rem 1.5rem;
     gap: 1rem;
-    flex-wrap: wrap;
 }
-.psp-topbar-brand { font-weight: 700; font-size: 1.05rem; color: #2d3748; text-decoration: none; }
-.psp-topbar-actions { display: flex; gap: 0.75rem; align-items: center; }
+.psp-topbar-brand {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #FFD200;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+.psp-topbar-actions { display: flex; gap: 0.55rem; align-items: center; flex-shrink: 0; }
 .psp-topbar-btn {
-    padding: 0.45rem 1rem;
-    border-radius: 8px;
-    font-size: 0.9rem;
+    padding: 0.38rem 0.9rem;
+    border-radius: 7px;
+    font-size: 0.85rem;
     font-weight: 600;
     text-decoration: none;
-    background: #667eea;
-    color: white;
+    background: #FFD200;
+    color: #0B0B0B;
     border: none;
     cursor: pointer;
+    display: inline-block;
+    transition: opacity 0.2s;
 }
 .psp-topbar-btn-ghost {
     background: transparent;
-    color: #667eea;
-    border: 2px solid #667eea;
+    color: #FFD200;
+    border: 1.5px solid #FFD200;
 }
-.psp-topbar-btn:hover { opacity: 0.85; }
+.psp-topbar-btn:hover { opacity: 0.82; }
 
-/* ── Hero ──────────────────────────────────────────────────────────────────── */
-.psp-hero {
+/* ── Page container ────────────────────────────────────────────────────────── */
+.psp-page { max-width: 860px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+/* ── Identity strip — no white box ────────────────────────────────────────── */
+.psp-identity {
     display: flex;
-    gap: 1.5rem;
+    gap: 1.2rem;
     align-items: flex-start;
-    background: white;
-    border-radius: 16px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
     flex-wrap: wrap;
 }
 .psp-avatar {
-    width: 100px;
-    height: 100px;
+    width: 68px;
+    height: 68px;
     border-radius: 50%;
-    object-fit: cover;
     flex-shrink: 0;
-    background: #667eea;
+    background: #0B0B0B;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: 700;
-    color: white;
+    color: #FFD200;
 }
-.psp-avatar-img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-.psp-hero-info { flex: 1; min-width: 180px; }
-.psp-name { font-size: 1.6rem; font-weight: 800; color: #1a202c; margin-bottom: 0.4rem; line-height: 1.2; }
-.psp-pills { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+.psp-avatar-img {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.psp-identity-info { flex: 1; min-width: 180px; }
+.psp-name { font-size: 1.45rem; font-weight: 800; color: #111111; margin-bottom: 0.3rem; line-height: 1.2; }
+.psp-pills { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.35rem; }
 .psp-pill {
-    padding: 0.25rem 0.7rem;
+    padding: 0.18rem 0.6rem;
     border-radius: 20px;
-    font-size: 0.78rem;
+    font-size: 0.73rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
-.psp-pill-ovr  { background: #1a202c; color: #d69e2e; }
+.psp-pill-ovr  { background: #0B0B0B; color: #FFD200; }
 .psp-pill-tier { color: white; }
-.psp-pill-pos  { background: #ebf4ff; color: #2b6cb0; }
-.psp-meta { font-size: 0.88rem; color: #718096; }
+.psp-pill-pos  { background: #e8f0fe; color: #1a56db; }
+.psp-meta { font-size: 0.83rem; color: #6b7280; }
 
 /* ── Social panel ──────────────────────────────────────────────────────────── */
-.psp-social {
-    display: flex;
-    gap: 0.6rem;
-    flex-wrap: wrap;
-    margin-top: 0.75rem;
-    align-items: center;
-}
-.psp-social-msg { font-size: 0.88rem; color: #718096; font-style: italic; }
+.psp-social { display: flex; gap: 0.45rem; flex-wrap: wrap; margin-top: 0.6rem; align-items: center; }
+.psp-social-msg { font-size: 0.82rem; color: #6b7280; font-style: italic; }
 .psp-btn {
-    padding: 0.45rem 1.1rem;
-    border-radius: 8px;
-    font-size: 0.88rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: 7px;
+    font-size: 0.83rem;
     font-weight: 700;
     border: none;
     cursor: pointer;
@@ -99,85 +109,77 @@
     display: inline-block;
     transition: opacity 0.2s;
 }
-.psp-btn:hover { opacity: 0.85; }
-.psp-btn-add     { background: #667eea; color: white; }
-.psp-btn-cancel  { background: #e2e8f0; color: #4a5568; }
-.psp-btn-accept  { background: #48bb78; color: white; }
-.psp-btn-decline { background: #e2e8f0; color: #c53030; }
-.psp-btn-remove  { background: #fff5f5; color: #c53030; border: 1px solid #fed7d7; }
-.psp-btn-login   { background: #667eea; color: white; }
+.psp-btn:hover { opacity: 0.82; }
+.psp-btn-add     { background: #0B0B0B; color: #FFD200; }
+.psp-btn-cancel  { background: #e5e7eb; color: #374151; }
+.psp-btn-accept  { background: #16a34a; color: white; }
+.psp-btn-decline { background: #e5e7eb; color: #b91c1c; }
+.psp-btn-remove  { background: transparent; color: #9ca3af; border: 1px solid #d1d5db; }
+.psp-btn-login   { background: #0B0B0B; color: #FFD200; }
 
-/* ── Card preview ──────────────────────────────────────────────────────────── */
-.psp-card-panel {
-    background: white;
-    border-radius: 16px;
-    padding: 1.2rem;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    margin-bottom: 1rem;
-}
-.psp-section-title { font-size: 0.82rem; font-weight: 700; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
-.psp-card-wrap { position: relative; overflow: hidden; }
-.psp-card-wrap iframe {
-    border: none;
-    display: block;
-    transform-origin: top left;
-}
+/* ── Card — no wrapper box ─────────────────────────────────────────────────── */
+.psp-card-wrap { position: relative; overflow: hidden; margin-bottom: 1.5rem; }
+.psp-card-wrap iframe { border: none; display: block; transform-origin: top left; }
 
-/* ── Recent events ─────────────────────────────────────────────────────────── */
-.psp-events-panel {
-    background: white;
-    border-radius: 16px;
-    padding: 1.2rem;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    margin-bottom: 1rem;
+/* ── Recent events — compact, no box ──────────────────────────────────────── */
+.psp-events-title {
+    font-size: 0.73rem;
+    font-weight: 700;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.5rem;
 }
 .psp-event-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.6rem 0;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e5e7eb;
     gap: 0.5rem;
     flex-wrap: wrap;
 }
 .psp-event-row:last-child { border-bottom: none; }
-.psp-event-name { font-size: 0.9rem; font-weight: 600; color: #2d3748; flex: 1; min-width: 120px; }
-.psp-event-meta { font-size: 0.82rem; color: #718096; display: flex; gap: 0.75rem; flex-wrap: wrap; }
-.psp-event-placement { font-weight: 700; color: #d69e2e; }
-.psp-no-events { font-size: 0.9rem; color: #a0aec0; text-align: center; padding: 2rem 0; }
+.psp-event-name { font-size: 0.86rem; font-weight: 600; color: #374151; flex: 1; min-width: 120px; }
+.psp-event-meta { font-size: 0.78rem; color: #9ca3af; display: flex; gap: 0.65rem; flex-wrap: wrap; }
+.psp-event-placement { font-weight: 700; color: #d97706; }
 
 @media (max-width: 640px) {
-    .psp-hero { flex-direction: column; align-items: center; text-align: center; }
+    .psp-topbar { padding: 0.6rem 1rem; }
+    .psp-topbar-brand { font-size: 0.9rem; }
+    .psp-identity { flex-direction: column; align-items: center; text-align: center; }
+    .psp-pills { justify-content: center; }
     .psp-social { justify-content: center; }
 }
 </style>
 {% endblock %}
 
 {% block content %}
+
+{# ── Sticky topbar ──────────────────────────────────────────────────────────── #}
+<div class="psp-topbar">
+    <a href="/" class="psp-topbar-brand">🏫 LFA Education Center</a>
+    <div class="psp-topbar-actions">
+        {% if current_user %}
+        <a href="/dashboard" class="psp-topbar-btn">Dashboard</a>
+        {% else %}
+        <a href="/login" class="psp-topbar-btn psp-topbar-btn-ghost">Log in</a>
+        <a href="/register" class="psp-topbar-btn">Sign up</a>
+        {% endif %}
+    </div>
+</div>
+
 <div class="psp-page">
 
-    {# ── Topbar ─────────────────────────────────────────────────────────────── #}
-    <div class="psp-topbar">
-        <a href="/" class="psp-topbar-brand">🏫 LFA Education Center</a>
-        <div class="psp-topbar-actions">
-            {% if current_user %}
-            <a href="/dashboard" class="psp-topbar-btn">Dashboard</a>
-            {% else %}
-            <a href="/login" class="psp-topbar-btn psp-topbar-btn-ghost">Log in</a>
-            <a href="/register" class="psp-topbar-btn">Sign up</a>
-            {% endif %}
-        </div>
-    </div>
-
-    {# ── Hero ───────────────────────────────────────────────────────────────── #}
-    <div class="psp-hero">
+    {# ── Identity strip ─────────────────────────────────────────────────────── #}
+    <div class="psp-identity">
         {% if photo_url %}
         <img src="{{ photo_url }}" alt="{{ profile_user.name }}" class="psp-avatar-img">
         {% else %}
         <div class="psp-avatar">{{ initials }}</div>
         {% endif %}
 
-        <div class="psp-hero-info">
+        <div class="psp-identity-info">
             <div class="psp-name">{{ profile_user.name or profile_user.nickname or profile_user.email }}</div>
             <div class="psp-pills">
                 <span class="psp-pill psp-pill-ovr">OVR {{ overall }}</span>
@@ -199,7 +201,7 @@
                 <a href="/login" class="psp-btn psp-btn-login">Log in to add friend</a>
 
                 {% elif fp.state == "own_profile" %}
-                <a href="/profile/lfa-football-player" class="psp-btn psp-btn-cancel">Edit your profile</a>
+                <a href="/profile/lfa-football-player" class="psp-btn psp-btn-cancel">Edit profile</a>
 
                 {% elif fp.state == "none" or fp.state == "declined" %}
                 <form method="POST" action="/friends/request/{{ profile_user.id }}" style="margin:0">
@@ -211,7 +213,7 @@
                 <span class="psp-social-msg">Friend request sent</span>
                 <form method="POST" action="/friends/cancel/{{ fp.friendship_id }}" style="margin:0">
                     <input type="hidden" name="next" value="/players/{{ profile_user.id }}">
-                    <button type="submit" class="psp-btn psp-btn-cancel">Cancel request</button>
+                    <button type="submit" class="psp-btn psp-btn-cancel">Cancel</button>
                 </form>
 
                 {% elif fp.state == "pending_received" %}
@@ -226,10 +228,10 @@
                 </form>
 
                 {% elif fp.state == "accepted" %}
-                <span class="psp-social-msg">Friends</span>
+                <span class="psp-social-msg">Friends ✓</span>
                 <form method="POST" action="/friends/remove/{{ profile_user.id }}" style="margin:0">
                     <input type="hidden" name="next" value="/players/{{ profile_user.id }}">
-                    <button type="submit" class="psp-btn psp-btn-remove">Remove friend</button>
+                    <button type="submit" class="psp-btn psp-btn-remove">Remove</button>
                 </form>
 
                 {% elif fp.state == "blocked" %}
@@ -239,40 +241,27 @@
         </div>
     </div>
 
-    {# ── Card preview ───────────────────────────────────────────────────────── #}
-    <div class="psp-card-panel">
-        <div class="psp-section-title">Player Card</div>
-        <div class="psp-card-wrap" id="psp-card-wrap">
-            <iframe id="psp-card-iframe"
-                    src="/players/{{ profile_user.id }}/card"
-                    scrolling="no" title="Player Card"></iframe>
-        </div>
+    {# ── Card preview — no wrapper box ──────────────────────────────────────── #}
+    <div class="psp-card-wrap" id="psp-card-wrap">
+        <iframe id="psp-card-iframe"
+                src="/players/{{ profile_user.id }}/card"
+                scrolling="no" title="Player Card"></iframe>
     </div>
 
     {# ── Recent events ──────────────────────────────────────────────────────── #}
-    <div class="psp-events-panel">
-        <div class="psp-section-title">Recent Events</div>
-        {% if recent_events %}
-        {% for ev in recent_events %}
-        <div class="psp-event-row">
-            <span class="psp-event-name">{{ ev.event_name }}</span>
-            <div class="psp-event-meta">
-                {% if ev.placement %}
-                <span class="psp-event-placement">#{{ ev.placement }}</span>
-                {% endif %}
-                {% if ev.xp_awarded %}
-                <span>+{{ ev.xp_awarded }} XP</span>
-                {% endif %}
-                {% if ev.achieved_at %}
-                <span>{{ ev.achieved_at.strftime('%Y-%m-%d') }}</span>
-                {% endif %}
-            </div>
+    {% if recent_events %}
+    <div class="psp-events-title">Recent Events</div>
+    {% for ev in recent_events %}
+    <div class="psp-event-row">
+        <span class="psp-event-name">{{ ev.event_name }}</span>
+        <div class="psp-event-meta">
+            {% if ev.placement %}<span class="psp-event-placement">#{{ ev.placement }}</span>{% endif %}
+            {% if ev.xp_awarded %}<span>+{{ ev.xp_awarded }} XP</span>{% endif %}
+            {% if ev.achieved_at %}<span>{{ ev.achieved_at.strftime('%Y-%m-%d') }}</span>{% endif %}
         </div>
-        {% endfor %}
-        {% else %}
-        <div class="psp-no-events">No tournament events yet</div>
-        {% endif %}
     </div>
+    {% endfor %}
+    {% endif %}
 
 </div>
 
@@ -283,7 +272,7 @@
         var wrap  = document.getElementById('psp-card-wrap');
         var frame = document.getElementById('psp-card-iframe');
         if (!wrap || !frame) return;
-        var avail = wrap.parentElement.clientWidth - 40;
+        var avail = wrap.clientWidth;
         var scale = Math.min(avail / CARD_W, 1);
         frame.style.width           = CARD_W + 'px';
         frame.style.height          = CARD_H + 'px';
