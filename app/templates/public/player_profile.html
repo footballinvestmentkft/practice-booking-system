@@ -281,7 +281,7 @@
             <div class="psp-skill-category">
                 <div class="psp-cat-name">{{ cat.emoji }} {{ cat.name_en }}</div>
                 {% for sk in cat_skills[:4] %}
-                {% set val = skills_data[sk.key] | default(50) | round(1) %}
+                {% set val = (skills_data[sk.key].current_level | default(50)) | round(1) %}
                 <div class="psp-skill-row">
                     <span class="psp-skill-name">{{ sk.name_en }}</span>
                     <div class="psp-skill-bar-bg">
