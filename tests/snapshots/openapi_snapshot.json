@@ -4149,6 +4149,17 @@
         "title": "Body_register_submit_register_post",
         "type": "object"
       },
+      "Body_send_friend_request_by_identifier_friends_send_post": {
+        "properties": {
+          "identifier": {
+            "default": "",
+            "title": "Identifier",
+            "type": "string"
+          }
+        },
+        "title": "Body_send_friend_request_by_identifier_friends_send_post",
+        "type": "object"
+      },
       "Body_specialization_select_submit_specialization_select_post": {
         "properties": {
           "specialization": {
@@ -60665,6 +60676,45 @@
           }
         },
         "summary": "Friends Requests Page",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/friends/send": {
+      "post": {
+        "description": "Add Friend form \u2014 looks up target by email or nickname, then delegates.",
+        "operationId": "send_friend_request_by_identifier_friends_send_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_send_friend_request_by_identifier_friends_send_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Send Friend Request By Identifier",
         "tags": [
           "web"
         ]

@@ -1,6 +1,10 @@
 """Unit tests for PR-F1 — Minimal Friendship System.
 
 FR-01   Friendship model has id, requester_id, addressee_id, status, created_at, updated_at
+FR-18   POST /friends/send with valid email → PENDING row created + redirect ?success=request_sent
+FR-19   POST /friends/send with unknown identifier → redirect ?error=user_not_found
+FR-20   POST /friends/send with own email → redirect ?error=self_request
+FR-21   POST /friends/send when already PENDING → redirect ?error=request_pending
 FR-02   CheckConstraint 'ck_no_self_friendship' present in __table_args__
 FR-03   UniqueConstraint 'uq_friendship_pair' present in __table_args__
 FR-04   POST /friends/request/{self} → redirect ?error=self_request
@@ -309,3 +313,90 @@ class TestFriendsPages:
         assert context.get("active_tab") == "requests"
         assert "incoming" in context
         assert "outgoing" in context
+
+
+# ── Route: send_friend_request_by_identifier (/friends/send) ─────────────────
+
+class TestSendFriendRequestByIdentifier:
+
+    def _target(self, uid=2, email="player@lfa.com", nickname="player"):
+        t = _user(uid=uid)
+        t.email = email
+        t.nickname = nickname
+        return t
+
+    def test_fr18_valid_email_creates_pending(self):
+        from app.api.web_routes.friends import send_friend_request_by_identifier
+        user = _user(uid=1)
+        user.email = "me@lfa.com"
+        target = self._target()
+        db = _db()
+        db.query.return_value.filter.return_value.first.return_value = target
+
+        with patch(f"{_BASE}.get_friendship", return_value=None), \
+             patch(f"{_BASE}.notification_service"):
+            result = _run(
+                send_friend_request_by_identifier(
+                    request=_req(), identifier="player@lfa.com",
+                    db=db, user=user,
+                )
+            )
+
+        assert isinstance(result, RedirectResponse)
+        assert "success=request_sent" in result.headers["location"]
+        db.add.assert_called_once()
+        db.commit.assert_called_once()
+
+    def test_fr19_unknown_identifier_returns_user_not_found(self):
+        from app.api.web_routes.friends import send_friend_request_by_identifier
+        user = _user(uid=1)
+        db = _db()
+        db.query.return_value.filter.return_value.first.return_value = None
+
+        result = _run(
+            send_friend_request_by_identifier(
+                request=_req(), identifier="nobody@nowhere.com",
+                db=db, user=user,
+            )
+        )
+
+        assert isinstance(result, RedirectResponse)
+        assert "error=user_not_found" in result.headers["location"]
+
+    def test_fr20_own_identifier_blocked_as_self_request(self):
+        from app.api.web_routes.friends import send_friend_request_by_identifier
+        user = _user(uid=1)
+        user.email = "me@lfa.com"
+        # target lookup returns the same user
+        db = _db()
+        db.query.return_value.filter.return_value.first.return_value = user
+
+        result = _run(
+            send_friend_request_by_identifier(
+                request=_req(), identifier="me@lfa.com",
+                db=db, user=user,
+            )
+        )
+
+        assert isinstance(result, RedirectResponse)
+        assert "error=self_request" in result.headers["location"]
+
+    def test_fr21_duplicate_pending_returns_request_pending(self):
+        from app.api.web_routes.friends import send_friend_request_by_identifier
+        user = _user(uid=1)
+        target = self._target()
+        db = _db()
+        db.query.return_value.filter.return_value.first.return_value = target
+        existing = _friendship(requester_id=1, addressee_id=2,
+                               status=FriendshipStatus.PENDING)
+
+        with patch(f"{_BASE}.get_friendship", return_value=existing):
+            result = _run(
+                send_friend_request_by_identifier(
+                    request=_req(), identifier="player@lfa.com",
+                    db=db, user=user,
+                )
+            )
+
+        assert isinstance(result, RedirectResponse)
+        assert "error=request_pending" in result.headers["location"]

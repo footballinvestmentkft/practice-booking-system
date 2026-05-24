@@ -25,7 +25,7 @@ from __future__ import annotations
 import pathlib
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -135,6 +135,65 @@ async def friends_requests_page(
 
 
 # ── Actions (POST) ─────────────────────────────────────────────────────────────
+
+@router.post("/friends/send")
+async def send_friend_request_by_identifier(
+    request: Request,
+    identifier: str = Form(default=""),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Add Friend form — looks up target by email or nickname, then delegates."""
+    identifier = identifier.strip()
+    if not identifier:
+        return RedirectResponse(url="/friends?error=user_not_found", status_code=303)
+
+    target = (
+        db.query(User)
+        .filter(
+            User.is_active == True,
+            (User.email == identifier) | (User.nickname == identifier),
+        )
+        .first()
+    )
+    if not target:
+        return RedirectResponse(url="/friends?error=user_not_found", status_code=303)
+
+    if target.id == user.id:
+        return RedirectResponse(url="/friends?error=self_request", status_code=303)
+
+    existing = get_friendship(db, user.id, target.id)
+    if existing:
+        if existing.status == FriendshipStatus.ACCEPTED:
+            return RedirectResponse(url="/friends?error=already_friends", status_code=303)
+        if existing.status == FriendshipStatus.PENDING:
+            return RedirectResponse(url="/friends?error=request_pending", status_code=303)
+        if existing.status == FriendshipStatus.BLOCKED:
+            return RedirectResponse(url="/friends?error=blocked", status_code=303)
+        db.delete(existing)
+        db.flush()
+
+    row = Friendship(
+        requester_id=user.id,
+        addressee_id=target.id,
+        status=FriendshipStatus.PENDING,
+        created_at=datetime.now(timezone.utc),
+    )
+    db.add(row)
+    db.flush()
+
+    notification_service.create_notification(
+        db=db,
+        user_id=target.id,
+        title="New Friend Request",
+        message=f"{user.nickname or user.email} sent you a friend request.",
+        notification_type=NotificationType.FRIEND_REQUEST_RECEIVED,
+        link="/friends/requests",
+    )
+
+    db.commit()
+    return RedirectResponse(url="/friends?success=request_sent", status_code=303)
+
 
 @router.post("/friends/request/{user_id}")
 async def send_friend_request(

@@ -163,6 +163,18 @@
 
     <!-- Friends tab -->
     {% if active_tab != 'requests' %}
+
+        <!-- Add Friend form -->
+        <form method="post" action="/friends/send" style="display:flex;gap:0.5rem;margin-bottom:1.25rem;flex-wrap:wrap;">
+            <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
+            <input type="text" name="identifier" placeholder="Email or nickname"
+                   required autocomplete="off"
+                   style="flex:1;min-width:180px;padding:0.45rem 0.75rem;border:1px solid #e5e7eb;
+                          border-radius:7px;font-size:0.88rem;color:var(--app-text);
+                          background:var(--app-card);outline:none;">
+            <button type="submit" class="fr-btn fr-btn-primary">Add friend</button>
+        </form>
+
         {% if friends %}
         <div class="fr-grid">
             {% for f in friends %}
