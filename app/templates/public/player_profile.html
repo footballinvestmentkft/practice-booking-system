@@ -47,18 +47,18 @@
 /* ── Profile page wrapper ──────────────────────────────────────────────────── */
 .psp-profile { max-width: 1180px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
 
-/* ── Showcase grid — portrait/square default (desktop ≥1024px) ─────────────── */
+/* ── Showcase grid — 5-column portrait/square (desktop ≥1280px) ─────────────── */
 .psp-showcase-grid {
     display: grid;
-    grid-template-columns: 200px minmax(300px, 1fr) 220px;
+    grid-template-columns: 180px 90px minmax(280px, 1fr) 90px 200px;
     grid-template-areas:
-        "identity identity identity"
-        "left     center   right"
-        "bottom   bottom   bottom";
+        "identity identity identity identity identity"
+        "left     l-slot  center   r-slot  right"
+        "bottom   bottom  bottom   bottom  bottom";
     gap: 1.25rem 1.5rem;
     align-items: start;
 }
-/* Landscape: full-width card row, rails 2-col below */
+/* Landscape: no slots — card spans full-width row, rails below */
 .psp-card-landscape .psp-showcase-grid {
     grid-template-columns: 1fr 1fr 1fr;
     grid-template-areas:
@@ -67,17 +67,42 @@
         "left     right    right"
         "bottom   bottom   bottom";
 }
-/* Square: slightly compressed rail widths */
+.psp-card-landscape .psp-l-slot,
+.psp-card-landscape .psp-r-slot { display: none; }
+/* Square: narrower slots and rails */
 .psp-card-square .psp-showcase-grid {
-    grid-template-columns: 160px minmax(360px, 1fr) 180px;
+    grid-template-columns: 150px 80px minmax(280px, 1fr) 80px 180px;
 }
 
 /* ── Grid areas ────────────────────────────────────────────────────────────── */
 .psp-identity-area { grid-area: identity; }
 .psp-left-rail     { grid-area: left; }
+.psp-l-slot        { grid-area: l-slot; }
 .psp-center-slot   { grid-area: center; }
+.psp-r-slot        { grid-area: r-slot; }
 .psp-right-rail    { grid-area: right; }
 .psp-bottom-area   { grid-area: bottom; }
+
+/* ── Slot columns — reserved for future modules; empty in Phase 1 ───────────── */
+.psp-l-slot,
+.psp-r-slot { min-height: 0; }
+
+/* ── Rail height capped to displayed card height (desktop only) ─────────────── */
+@media (min-width: 1024px) {
+    .psp-left-rail,
+    .psp-right-rail {
+        max-height: var(--psp-card-h, none);
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #d1d5db transparent;
+    }
+    .psp-left-rail::-webkit-scrollbar,
+    .psp-right-rail::-webkit-scrollbar { width: 4px; }
+    .psp-left-rail::-webkit-scrollbar-track,
+    .psp-right-rail::-webkit-scrollbar-track { background: transparent; }
+    .psp-left-rail::-webkit-scrollbar-thumb,
+    .psp-right-rail::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
+}
 
 /* ── Identity strip ────────────────────────────────────────────────────────── */
 .psp-identity {
@@ -252,8 +277,16 @@
 .psp-event-meta { font-size: 0.78rem; color: #9ca3af; display: flex; gap: 0.65rem; flex-wrap: wrap; }
 .psp-event-placement { font-weight: 700; color: #d97706; }
 
-/* ── Laptop: ≤1279px ───────────────────────────────────────────────────────── */
+/* ── Laptop: 1024–1279px — collapse slot columns → 3-col ──────────────────── */
 @media (max-width: 1279px) {
+    .psp-showcase-grid {
+        grid-template-columns: 200px minmax(300px, 1fr) 220px;
+        grid-template-areas:
+            "identity identity identity"
+            "left     center   right"
+            "bottom   bottom   bottom";
+    }
+    .psp-l-slot, .psp-r-slot { display: none; }
     .psp-card-slot {
         --psp-card-max-h: clamp(360px, calc(100vh - 238px), 520px);
     }
@@ -437,6 +470,9 @@
         </div>
     </div>
 
+    {# ── Slot: reserved placeholder (Phase 1 empty) ───────────────────────────── #}
+    <div class="psp-l-slot" aria-hidden="true"></div>
+
     {# ── Center: Featured Player Card ───────────────────────────────────────── #}
     <div class="psp-center-slot">
         <div class="psp-card-slot"
@@ -450,6 +486,9 @@
                     title="Player Card"></iframe>
         </div>
     </div>
+
+    {# ── Slot: reserved placeholder (Phase 1 empty) ───────────────────────────── #}
+    <div class="psp-r-slot" aria-hidden="true"></div>
 
     {# ── Right rail ─────────────────────────────────────────────────────────── #}
     <div class="psp-right-rail">
@@ -554,6 +593,8 @@
         frame.style.transform       = 'translateX(' + leftOff + 'px) scale(' + scale + ')';
         frame.style.transformOrigin = '0 0';
         slot.style.height           = dispH + 'px';
+        var grid = slot.closest('.psp-showcase-grid');
+        if (grid) grid.style.setProperty('--psp-card-h', dispH + 'px');
     }
 
     frame.addEventListener('load', scaleCard);
