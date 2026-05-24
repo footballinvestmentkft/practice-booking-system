@@ -1,4 +1,6 @@
 """Virtual Training web routes — Phase 2 Color Reaction MVP."""
+from __future__ import annotations
+
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -8,8 +10,11 @@ from sqlalchemy.orm import Session
 
 from ...database import get_db
 from ...dependencies import get_current_user_web
+from ...models.notification import NotificationType
 from ...models.user import User
 from ...models.virtual_training import VirtualTrainingAttempt, VirtualTrainingGame
+from ...models.vt_challenge import ChallengeStatus, VirtualTrainingChallenge
+from ...services import notification_service
 from ...services.virtual_training_service import VirtualTrainingService
 from .helpers import require_student_onboarding
 from .student_features import _spec_ctx
@@ -19,6 +24,172 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 router = APIRouter(tags=["virtual-training"])
+
+
+# ── PR-C2 Challenge Submit Helpers ────────────────────────────────────────────
+
+def _compute_winner(
+    ch: VirtualTrainingChallenge,
+    a_cr: VirtualTrainingAttempt,
+    a_cd: VirtualTrainingAttempt,
+) -> tuple[int | None, bool]:
+    """Determine challenge winner. Returns (winner_id | None, is_draw)."""
+    s_cr = a_cr.score_normalized or 0.0
+    s_cd = a_cd.score_normalized or 0.0
+    if s_cr != s_cd:
+        return (ch.challenger_id if s_cr > s_cd else ch.challenged_id, False)
+
+    def _acc(a: VirtualTrainingAttempt) -> float:
+        if a.stimuli_count and a.stimuli_count > 0 and a.correct_count is not None:
+            return a.correct_count / a.stimuli_count
+        return 0.0
+
+    acc_cr, acc_cd = _acc(a_cr), _acc(a_cd)
+    if acc_cr != acc_cd:
+        return (ch.challenger_id if acc_cr > acc_cd else ch.challenged_id, False)
+
+    r_cr, r_cd = a_cr.avg_reaction_ms, a_cd.avg_reaction_ms
+    if r_cr is not None and r_cd is not None and r_cr != r_cd:
+        return (ch.challenger_id if r_cr < r_cd else ch.challenged_id, False)
+
+    t_cr, t_cd = a_cr.completed_at, a_cd.completed_at
+    if t_cr and t_cd and t_cr != t_cd:
+        return (ch.challenger_id if t_cr < t_cd else ch.challenged_id, False)
+
+    return (None, True)
+
+
+def _validate_challenge_pre_submit(
+    db: Session,
+    challenge_id: int,
+    user_id: int,
+    game_id: int,
+) -> tuple[VirtualTrainingChallenge | None, JSONResponse | None]:
+    """
+    Validate all challenge guards before the attempt is recorded.
+    Returns (challenge, None) on success, (None, error_response) on failure.
+    The caller must return the error_response immediately on failure.
+    """
+    challenge = db.query(VirtualTrainingChallenge).filter(
+        VirtualTrainingChallenge.id == challenge_id
+    ).first()
+    if challenge is None:
+        return None, JSONResponse({"error": "challenge_not_found"}, status_code=404)
+
+    if user_id not in (challenge.challenger_id, challenge.challenged_id):
+        return None, JSONResponse({"error": "not_participant"}, status_code=403)
+
+    if challenge.game_id != game_id:
+        return None, JSONResponse({"error": "wrong_game"}, status_code=400)
+
+    if challenge.status != ChallengeStatus.ACCEPTED:
+        return None, JSONResponse(
+            {"error": "challenge_not_accepted", "status": challenge.status.value},
+            status_code=409,
+        )
+
+    now = datetime.now(timezone.utc)
+    if challenge.expires_at is not None and challenge.expires_at <= now:
+        challenge.status = ChallengeStatus.EXPIRED
+        challenge.updated_at = now
+        db.commit()
+        return None, JSONResponse({"error": "challenge_expired"}, status_code=410)
+
+    # Idempotency: already submitted on this side
+    side = "challenger" if user_id == challenge.challenger_id else "challenged"
+    already_set = (
+        challenge.challenger_attempt_id if side == "challenger"
+        else challenge.challenged_attempt_id
+    )
+    if already_set is not None:
+        return None, JSONResponse(
+            {
+                "error": "already_submitted",
+                "challenge_context": {
+                    "challenge_id": challenge_id,
+                    "status": challenge.status.value,
+                },
+            },
+            status_code=409,
+        )
+
+    return challenge, None
+
+
+def _send_completion_notifications(
+    db: Session,
+    challenge: VirtualTrainingChallenge,
+    winner_id: int | None,
+    is_draw: bool,
+) -> None:
+    """Send VT_CHALLENGE_COMPLETED to both participants."""
+    def _msg(for_user_id: int) -> str:
+        if is_draw:
+            return "Your VT challenge ended in a draw!"
+        if winner_id == for_user_id:
+            return "You won the VT challenge!"
+        return "You lost the VT challenge."
+
+    for uid in (challenge.challenger_id, challenge.challenged_id):
+        notification_service.create_notification(
+            db=db,
+            user_id=uid,
+            title="VT Challenge Completed",
+            message=_msg(uid),
+            notification_type=NotificationType.VT_CHALLENGE_COMPLETED,
+            link="/friends",
+        )
+
+
+def _link_attempt_to_challenge(
+    db: Session,
+    challenge: VirtualTrainingChallenge,
+    user_id: int,
+    attempt: VirtualTrainingAttempt,
+) -> dict:
+    """
+    Link a valid attempt to the challenge; complete if both sides have submitted.
+    Runs inside the caller's open transaction (before db.commit()).
+    Returns challenge_context dict for the submit response.
+    """
+    now = datetime.now(timezone.utc)
+    side = "challenger" if user_id == challenge.challenger_id else "challenged"
+
+    if side == "challenger":
+        challenge.challenger_attempt_id = attempt.id
+    else:
+        challenge.challenged_attempt_id = attempt.id
+    challenge.updated_at = now
+    db.flush()
+
+    winner_id: int | None = None
+    is_draw = False
+
+    if challenge.challenger_attempt_id and challenge.challenged_attempt_id:
+        a_cr = db.query(VirtualTrainingAttempt).filter(
+            VirtualTrainingAttempt.id == challenge.challenger_attempt_id
+        ).first()
+        a_cd = db.query(VirtualTrainingAttempt).filter(
+            VirtualTrainingAttempt.id == challenge.challenged_attempt_id
+        ).first()
+        winner_id, is_draw = _compute_winner(challenge, a_cr, a_cd)
+        challenge.status     = ChallengeStatus.COMPLETED
+        challenge.winner_id  = winner_id
+        challenge.is_draw    = is_draw
+        challenge.completed_at = now
+        challenge.updated_at   = now
+        db.flush()
+        _send_completion_notifications(db, challenge, winner_id, is_draw)
+
+    is_winner = (winner_id == user_id) if challenge.status == ChallengeStatus.COMPLETED else None
+    is_draw_ctx = is_draw if challenge.status == ChallengeStatus.COMPLETED else None
+
+    return {
+        "challenge_id": challenge.id,
+        "status": challenge.status.value,
+        "is_winner": is_winner,
+        "is_draw": is_draw_ctx,
+    }
 
 
 # ── Hub ───────────────────────────────────────────────────────────────────────
@@ -599,6 +770,18 @@ async def virtual_training_target_tracking_submit(
 
     body = await request.json()
 
+    # Challenge pre-validation (before daily cap / attempt recording)
+    raw_challenge_id = body.get("challenge_id")
+    challenge: VirtualTrainingChallenge | None = None
+    if raw_challenge_id is not None:
+        try:
+            cid = int(raw_challenge_id)
+        except (ValueError, TypeError):
+            return JSONResponse({"error": "invalid_challenge_id"}, status_code=400)
+        challenge, err = _validate_challenge_pre_submit(db, cid, user.id, game.id)
+        if err is not None:
+            return err
+
     # Difficulty guard — Expert requires unlock
     difficulty_level = str(body.get("difficulty_level", "easy")).lower()
     if difficulty_level not in ("easy", "medium", "hard", "expert"):
@@ -626,6 +809,7 @@ async def virtual_training_target_tracking_submit(
         .count()
     )
     if valid_today >= game.max_daily_attempts:
+        # challenge not mutated — guard returned before any write
         return JSONResponse(
             {"error": "daily_cap", "message": "Daily attempt limit reached for this game."},
             status_code=429,
@@ -652,9 +836,20 @@ async def virtual_training_target_tracking_submit(
         idempotency_key=idem_key,
     )
 
+    # Challenge linking — only for valid attempts, inside the same transaction
+    challenge_context: dict | None = None
+    if challenge is not None and attempt.is_valid:
+        challenge_context = _link_attempt_to_challenge(db, challenge, user.id, attempt)
+    elif challenge is not None and not attempt.is_valid:
+        challenge_context = {
+            "challenge_id": challenge.id,
+            "status": challenge.status.value,
+            "note": "invalid_attempt_not_linked",
+        }
+
     db.commit()
 
-    return JSONResponse({
+    resp: dict = {
         "attempt_id": attempt.id,
         "is_valid": attempt.is_valid,
         "invalid_reason": attempt.invalid_reason,
@@ -662,7 +857,10 @@ async def virtual_training_target_tracking_submit(
         "skill_deltas": attempt.skill_deltas,
         "attempt_index_today": attempt.attempt_index_today,
         "score_normalized": attempt.score_normalized,
-    })
+    }
+    if challenge_context is not None:
+        resp["challenge_context"] = challenge_context
+    return JSONResponse(resp)
 
 
 # ── Target Tracking result page ───────────────────────────────────────────────
@@ -895,6 +1093,18 @@ async def virtual_training_memory_sequence_submit(
 
     body = await request.json()
 
+    # Challenge pre-validation (before daily cap / attempt recording)
+    raw_challenge_id = body.get("challenge_id")
+    challenge: VirtualTrainingChallenge | None = None
+    if raw_challenge_id is not None:
+        try:
+            cid = int(raw_challenge_id)
+        except (ValueError, TypeError):
+            return JSONResponse({"error": "invalid_challenge_id"}, status_code=400)
+        challenge, err = _validate_challenge_pre_submit(db, cid, user.id, game.id)
+        if err is not None:
+            return err
+
     today_start = datetime.combine(
         datetime.now(timezone.utc).date(),
         datetime.min.time(),
@@ -910,6 +1120,7 @@ async def virtual_training_memory_sequence_submit(
         .count()
     )
     if valid_today >= game.max_daily_attempts:
+        # challenge not mutated — guard returned before any write
         return JSONResponse(
             {"error": "daily_cap", "message": "Daily attempt limit reached for this game."},
             status_code=429,
@@ -926,9 +1137,20 @@ async def virtual_training_memory_sequence_submit(
         idempotency_key=idem_key,
     )
 
+    # Challenge linking — only for valid attempts, inside the same transaction
+    challenge_context: dict | None = None
+    if challenge is not None and attempt.is_valid:
+        challenge_context = _link_attempt_to_challenge(db, challenge, user.id, attempt)
+    elif challenge is not None and not attempt.is_valid:
+        challenge_context = {
+            "challenge_id": challenge.id,
+            "status": challenge.status.value,
+            "note": "invalid_attempt_not_linked",
+        }
+
     db.commit()
 
-    return JSONResponse({
+    resp: dict = {
         "attempt_id": attempt.id,
         "is_valid": attempt.is_valid,
         "invalid_reason": attempt.invalid_reason,
@@ -936,7 +1158,10 @@ async def virtual_training_memory_sequence_submit(
         "skill_deltas": attempt.skill_deltas,
         "attempt_index_today": attempt.attempt_index_today,
         "score_normalized": attempt.score_normalized,
-    })
+    }
+    if challenge_context is not None:
+        resp["challenge_context"] = challenge_context
+    return JSONResponse(resp)
 
 
 # ── Memory Sequence result page ───────────────────────────────────────────────
