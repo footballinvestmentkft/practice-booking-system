@@ -35,6 +35,7 @@ from ...dependencies import get_current_user_web
 from ...models.friendship import (
     Friendship, FriendshipStatus, get_friendship, is_friends,
 )
+from typing import Optional
 from ...models.notification import NotificationType
 from ...models.user import User
 from ...services import notification_service
@@ -43,6 +44,17 @@ BASE_DIR  = pathlib.Path(__file__).resolve().parent.parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 router = APIRouter()
+
+_NEXT_WHITELIST = ("/players/", "/friends")
+
+
+def _safe_next(next_url: str | None, default: str = "/friends") -> str:
+    """Return next_url if it matches the whitelist, otherwise the default."""
+    if next_url and isinstance(next_url, str):
+        for prefix in _NEXT_WHITELIST:
+            if next_url.startswith(prefix):
+                return next_url
+    return default
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -140,6 +152,7 @@ async def friends_requests_page(
 async def send_friend_request_by_identifier(
     request: Request,
     identifier: str = Form(default=""),
+    next: Optional[str] = Form(default=None),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
@@ -192,12 +205,13 @@ async def send_friend_request_by_identifier(
     )
 
     db.commit()
-    return RedirectResponse(url="/friends?success=request_sent", status_code=303)
+    return RedirectResponse(url=_safe_next(next, "/friends?success=request_sent"), status_code=303)
 
 
 @router.post("/friends/request/{user_id}")
 async def send_friend_request(
     user_id: int,
+    next: Optional[str] = Form(default=None),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
@@ -242,12 +256,13 @@ async def send_friend_request(
     )
 
     db.commit()
-    return RedirectResponse(url="/friends?success=request_sent", status_code=303)
+    return RedirectResponse(url=_safe_next(next, "/friends?success=request_sent"), status_code=303)
 
 
 @router.post("/friends/accept/{friendship_id}")
 async def accept_friend_request(
     friendship_id: int,
+    next: Optional[str] = Form(default=None),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
@@ -270,12 +285,13 @@ async def accept_friend_request(
     )
 
     db.commit()
-    return RedirectResponse(url="/friends?success=request_accepted", status_code=303)
+    return RedirectResponse(url=_safe_next(next, "/friends?success=request_accepted"), status_code=303)
 
 
 @router.post("/friends/decline/{friendship_id}")
 async def decline_friend_request(
     friendship_id: int,
+    next: Optional[str] = Form(default=None),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
@@ -288,12 +304,13 @@ async def decline_friend_request(
     row.status     = FriendshipStatus.DECLINED
     row.updated_at = datetime.now(timezone.utc)
     db.commit()
-    return RedirectResponse(url="/friends/requests?success=request_declined", status_code=303)
+    return RedirectResponse(url=_safe_next(next, "/friends/requests?success=request_declined"), status_code=303)
 
 
 @router.post("/friends/remove/{user_id}")
 async def remove_friend(
     user_id: int,
+    next: Optional[str] = Form(default=None),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
@@ -305,4 +322,23 @@ async def remove_friend(
 
     db.delete(row)
     db.commit()
-    return RedirectResponse(url="/friends?success=friend_removed", status_code=303)
+    return RedirectResponse(url=_safe_next(next, "/friends?success=friend_removed"), status_code=303)
+
+
+@router.post("/friends/cancel/{friendship_id}")
+async def cancel_friend_request(
+    friendship_id: int,
+    next: Optional[str] = Form(default=None),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Cancel an outgoing PENDING friend request (requester only)."""
+    row = db.query(Friendship).filter(Friendship.id == friendship_id).first()
+    if not row or row.requester_id != user.id:
+        return RedirectResponse(url="/friends?error=not_found", status_code=303)
+    if row.status != FriendshipStatus.PENDING:
+        return RedirectResponse(url="/friends?error=not_pending", status_code=303)
+
+    db.delete(row)
+    db.commit()
+    return RedirectResponse(url=_safe_next(next, "/friends?success=request_cancelled"), status_code=303)

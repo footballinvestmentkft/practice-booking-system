@@ -17,7 +17,7 @@ from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_current_user_web, get_db
+from app.dependencies import get_current_user_optional, get_current_user_web, get_db
 from app.models.user import User, UserRole
 from app.models.license import UserLicense
 from app.models.team import Team, TeamMember
@@ -69,6 +69,163 @@ _ARCHETYPE_DRIVERS: dict[str, dict[str, str]] = {
 # Used when a design has a dedicated Level C template that supersedes the shared driver.
 # Add new buckets here as each platform gets its PORT-v2 implementation.
 _LEVEL_C_PRIORITY_BUCKETS: frozenset[str] = frozenset({"portrait", "story", "og"})
+
+
+@router.get("/players/{user_id}", response_class=HTMLResponse)
+async def public_player_profile(
+    request: Request,
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+):
+    """Public player profile page — auth-optional, social panel, card preview."""
+    from app.models.friendship import get_friendship_panel_ctx
+    from app.models.license import UserLicense
+    from app.models.tournament_achievement import TournamentParticipation
+    from app.models.semester import Semester
+    from app.services.skill_progression_service import get_skill_profile
+
+    user = db.query(User).filter(User.id == user_id, User.is_active == True).first()
+    if not user:
+        return HTMLResponse("<h2>Player not found</h2>", status_code=404)
+
+    lfa_license = db.query(UserLicense).filter(
+        UserLicense.user_id == user_id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+    if not lfa_license:
+        return HTMLResponse("<h2>No public player profile available</h2>", status_code=404)
+
+    # Skill profile
+    skill_profile = (
+        get_skill_profile(db, user_id)
+        if lfa_license.onboarding_completed
+        else None
+    )
+    overall     = round(skill_profile["average_level"], 1) if skill_profile else 50.0
+    skills_data = skill_profile["skills"]                  if skill_profile else {}
+
+    # Tier
+    if overall >= 90:
+        tier_label, tier_color = "ELITE",      "#d69e2e"
+    elif overall >= 75:
+        tier_label, tier_color = "ADVANCED",   "#48bb78"
+    elif overall >= 60:
+        tier_label, tier_color = "COMPETENT",  "#667eea"
+    elif overall >= 50:
+        tier_label, tier_color = "DEVELOPING", "#ed8936"
+    else:
+        tier_label, tier_color = "BEGINNER",   "#fc8181"
+
+    # Position
+    ms       = lfa_license.motivation_scores or {}
+    position = ms.get("position", "Unknown")
+
+    # Recent participations (last 5)
+    recent_parts = (
+        db.query(TournamentParticipation, Semester)
+        .join(Semester, Semester.id == TournamentParticipation.semester_id)
+        .filter(TournamentParticipation.user_id == user_id)
+        .order_by(TournamentParticipation.achieved_at.desc())
+        .limit(5)
+        .all()
+    )
+    recent_events = [
+        {
+            "event_name":      s.name,
+            "placement":       p.placement,
+            "xp_awarded":      p.xp_awarded,
+            "credits_awarded": p.credits_awarded,
+            "achieved_at":     p.achieved_at,
+        }
+        for p, s in recent_parts
+    ]
+
+    # Friendship panel context
+    friendship_panel = get_friendship_panel_ctx(
+        db,
+        current_user_id=current_user.id if current_user else None,
+        profile_user_id=user_id,
+    )
+
+    # Initials fallback avatar
+    parts    = (user.name or user.email).split()
+    initials = "".join(p[0].upper() for p in parts[:2]) if parts else "?"
+
+    # Card display state — platform-first sizing
+    from app.services.card_draft_service import CardDraftService as _CardDraftSvc
+    from app.services.card_constants import CANVAS_SIZES as _CANVAS_SIZES
+    _profile_draft = _CardDraftSvc.get_player_card_draft(db, user_id=lfa_license.user_id)
+    card_variant_id = (
+        _profile_draft.published_variant
+        or lfa_license.published_card_variant
+        or "fifa"
+    )
+    card_published_v = (
+        int(_profile_draft.published_at.timestamp())
+        if _profile_draft and _profile_draft.published_at
+        else 0
+    )
+
+    # Resolve published platform; guard against MagicMock in tests
+    _pub_platform = _profile_draft.published_platform if _profile_draft else None
+    if not isinstance(_pub_platform, str):
+        _pub_platform = None
+
+    if _pub_platform and _pub_platform in _CANVAS_SIZES:
+        card_native_w, card_native_h = _CANVAS_SIZES[_pub_platform]
+        if card_native_w == card_native_h:
+            card_orientation = "square"
+        elif card_native_w > card_native_h:
+            card_orientation = "landscape"
+        else:
+            card_orientation = "portrait"
+        card_platform_id = _pub_platform
+    else:
+        _LANDSCAPE_VARIANTS = frozenset({"showcase", "showcase_bg"})
+        _NARROW_VARIANTS    = frozenset({"compact", "compact_bg"})
+        card_is_landscape   = card_variant_id in _LANDSCAPE_VARIANTS
+        card_native_w       = 720 if card_is_landscape else (520 if card_variant_id in _NARROW_VARIANTS else 820)
+        card_native_h       = 700 if card_is_landscape else 1080
+        card_orientation    = "landscape" if card_is_landscape else "portrait"
+        card_platform_id    = "default"
+
+    # Build iframe URL with platform and cache-bust version
+    _v_suffix = f"&v={card_published_v}" if card_published_v else ""
+    if _pub_platform:
+        card_url = f"/players/{user_id}/card?platform={_pub_platform}{_v_suffix}"
+    elif card_published_v:
+        card_url = f"/players/{user_id}/card?v={card_published_v}"
+    else:
+        card_url = f"/players/{user_id}/card"
+
+    # Highlight video — YouTube-only Phase 1; reads published_data JSONB
+    from app.services.highlight_video_service import get_published_highlight_video as _get_hv
+    highlight_video = _get_hv(_profile_draft)
+
+    return templates.TemplateResponse(request, "public/player_profile.html", {
+        "profile_user":    user,
+        "lfa_license":     lfa_license,
+        "current_user":    current_user,
+        "overall":         overall,
+        "tier_label":      tier_label,
+        "tier_color":      tier_color,
+        "position":        position,
+        "skills_data":     skills_data,
+        "skill_categories": SKILL_CATEGORIES,
+        "recent_events":   recent_events,
+        "friendship_panel": friendship_panel,
+        "initials":        initials,
+        "photo_url":       lfa_license.player_card_photo_url,
+        "card_variant_id":  card_variant_id,
+        "card_native_w":    card_native_w,
+        "card_native_h":    card_native_h,
+        "card_orientation": card_orientation,
+        "card_platform_id": card_platform_id,
+        "card_url":         card_url,
+        "highlight_video":  highlight_video,
+    })
 
 
 @router.get("/players/{user_id}/card", response_class=HTMLResponse)
@@ -346,7 +503,7 @@ def public_player_card(
     animated_mode = bool(export) and bool(animated)
     native_export_mode = bool(native_export)
 
-    return templates.TemplateResponse(request, template_path, {
+    _card_resp = templates.TemplateResponse(request, template_path, {
         "player": player,
         "overall": overall,
         "tier_label": tier_label,
@@ -408,6 +565,10 @@ def public_player_card(
         # CS-4c: populated when driver routing is active; None for file-based routes
         "_driver_config": _driver_config,
     })
+    _card_resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    _card_resp.headers["Pragma"]        = "no-cache"
+    _card_resp.headers["Expires"]       = "0"
+    return _card_resp
 
 
 # ── Export endpoint ───────────────────────────────────────────────────────────
