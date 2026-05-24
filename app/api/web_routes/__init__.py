@@ -28,6 +28,7 @@ from . import (
     public_tournament,
     sport_director,
     my_cards,
+    friends,
 )
 from .admin import router as admin_router
 from .tournaments import router as tournaments_router
@@ -61,3 +62,4 @@ router.include_router(public_player.router)      # 🌐 Public player card (no a
 router.include_router(public_tournament.router)  # 🌐 Public event detail page (no auth)
 router.include_router(sport_director.router)     # 🏅 Sport Director team enrollment
 router.include_router(my_cards.router)           # 🃏 My Cards hub (/my-cards)
+router.include_router(friends.router)            # 👥 Friendship system (/friends)

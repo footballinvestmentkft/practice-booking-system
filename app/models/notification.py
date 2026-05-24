@@ -27,6 +27,10 @@ class NotificationType(enum.Enum):
     # Skill progression notifications
     SKILL_TIER_REACHED = "skill_tier_reached"
 
+    # Social / friendship notifications
+    FRIEND_REQUEST_RECEIVED = "friend_request_received"
+    FRIEND_REQUEST_ACCEPTED = "friend_request_accepted"
+
 
 class Notification(Base):
     __tablename__ = "notifications"

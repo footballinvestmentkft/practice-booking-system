@@ -1,0 +1,255 @@
+{% extends "student_base.html" %}
+
+{% block title %}Friends — LFA{% endblock %}
+{% block active_page %}friends{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .fr-container { max-width: 860px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+    .fr-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    .fr-header h2 { font-size: 1.5rem; font-weight: 700; color: var(--app-text); margin: 0; }
+
+    /* Tabs */
+    .fr-tabs {
+        display: flex;
+        gap: 0.25rem;
+        border-bottom: 2px solid #e5e7eb;
+        margin-bottom: 1.5rem;
+    }
+    .fr-tab {
+        padding: 0.55rem 1.1rem;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--app-text-muted);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        text-decoration: none;
+        transition: color 0.15s, border-color 0.15s;
+    }
+    .fr-tab:hover { color: var(--app-text); }
+    .fr-tab.active { color: #4f46e5; border-bottom-color: #4f46e5; }
+    .fr-tab .badge {
+        display: inline-block;
+        background: #ef4444;
+        color: #fff;
+        font-size: 0.7rem;
+        font-weight: 700;
+        border-radius: 20px;
+        padding: 0.1rem 0.45rem;
+        margin-left: 0.3rem;
+    }
+
+    /* Alert banners */
+    .fr-alert {
+        border-radius: 8px;
+        padding: 0.65rem 1rem;
+        font-size: 0.88rem;
+        margin-bottom: 1rem;
+    }
+    .fr-alert.success { background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
+    .fr-alert.error   { background: #fef2f2; border: 1px solid #fca5a5; color: #7f1d1d; }
+
+    /* Friend / request cards */
+    .fr-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 1rem;
+    }
+    .fr-card {
+        background: var(--app-card);
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1rem 1.1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.7rem;
+    }
+    .fr-card-name {
+        font-weight: 700;
+        font-size: 0.98rem;
+        color: var(--app-text);
+    }
+    .fr-card-meta {
+        font-size: 0.78rem;
+        color: var(--app-text-muted);
+    }
+    .fr-card-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: auto; }
+
+    /* Buttons */
+    .fr-btn {
+        font-size: 0.82rem;
+        font-weight: 600;
+        padding: 0.42rem 0.9rem;
+        border-radius: 7px;
+        border: none;
+        cursor: pointer;
+        transition: opacity 0.15s;
+    }
+    .fr-btn:hover { opacity: 0.85; }
+    .fr-btn-danger  { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; }
+    .fr-btn-primary { background: #4f46e5; color: #fff; }
+    .fr-btn-success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .fr-btn-muted   { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
+
+    /* Empty state */
+    .fr-empty {
+        text-align: center;
+        padding: 2.5rem 1rem;
+        color: var(--app-text-muted);
+        font-size: 0.92rem;
+    }
+    .fr-empty p { margin: 0.4rem 0; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="fr-container">
+
+    <div class="fr-header">
+        <h2>Friends</h2>
+    </div>
+
+    {% if success %}
+    <div class="fr-alert success">
+        {% if success == "request_sent" %}Friend request sent.
+        {% elif success == "request_accepted" %}Friend request accepted.
+        {% elif success == "request_declined" %}Request declined.
+        {% elif success == "friend_removed" %}Friend removed.
+        {% else %}Done.{% endif %}
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="fr-alert error">
+        {% if error == "self_request" %}You cannot send a friend request to yourself.
+        {% elif error == "user_not_found" %}User not found or inactive.
+        {% elif error == "already_friends" %}You are already friends with this user.
+        {% elif error == "request_pending" %}A friend request is already pending.
+        {% elif error == "blocked" %}Cannot send a request to this user.
+        {% elif error == "not_found" %}Request not found.
+        {% elif error == "not_pending" %}Request is no longer pending.
+        {% elif error == "not_friends" %}You are not friends with this user.
+        {% elif error == "not_participant" %}You are not a participant in this friendship.
+        {% else %}An error occurred.{% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Tabs -->
+    <nav class="fr-tabs">
+        <a href="/friends"
+           class="fr-tab {% if active_tab != 'requests' %}active{% endif %}">
+            Friends
+            {% if friends %}
+            <span class="badge" style="background:#6366f1;">{{ friends|length }}</span>
+            {% endif %}
+        </a>
+        <a href="/friends/requests"
+           class="fr-tab {% if active_tab == 'requests' %}active{% endif %}">
+            Requests
+            {% if incoming_count > 0 %}
+            <span class="badge">{{ incoming_count }}</span>
+            {% endif %}
+        </a>
+    </nav>
+
+    <!-- Friends tab -->
+    {% if active_tab != 'requests' %}
+
+        <!-- Add Friend form -->
+        <form method="post" action="/friends/send" style="display:flex;gap:0.5rem;margin-bottom:1.25rem;flex-wrap:wrap;">
+            <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
+            <input type="text" name="identifier" placeholder="Email or nickname"
+                   required autocomplete="off"
+                   style="flex:1;min-width:180px;padding:0.45rem 0.75rem;border:1px solid #e5e7eb;
+                          border-radius:7px;font-size:0.88rem;color:var(--app-text);
+                          background:var(--app-card);outline:none;">
+            <button type="submit" class="fr-btn fr-btn-primary">Add friend</button>
+        </form>
+
+        {% if friends %}
+        <div class="fr-grid">
+            {% for f in friends %}
+            <div class="fr-card">
+                <div class="fr-card-name">{{ f.nickname or f.email }}</div>
+                <div class="fr-card-meta">{{ f.email }}</div>
+                <div class="fr-card-actions">
+                    <form method="post" action="/friends/remove/{{ f.id }}">
+                        <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
+                        <button type="submit" class="fr-btn fr-btn-danger"
+                                onclick="return confirm('Remove {{ f.nickname or f.email }} from friends?')">
+                            Remove
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="fr-empty">
+            <p>You have no friends yet.</p>
+            <p>Send friend requests to connect with other players.</p>
+        </div>
+        {% endif %}
+
+    <!-- Requests tab -->
+    {% else %}
+        <h3 style="font-size:0.85rem;font-weight:700;color:var(--app-text-muted);
+                   text-transform:uppercase;letter-spacing:0.04em;margin:0 0 0.75rem;">
+            Incoming ({{ incoming|length }})
+        </h3>
+        {% if incoming %}
+        <div class="fr-grid" style="margin-bottom:1.5rem;">
+            {% for row in incoming %}
+            <div class="fr-card">
+                <div class="fr-card-name">{{ row.requester.nickname or row.requester.email }}</div>
+                <div class="fr-card-meta">{{ row.created_at.strftime('%Y-%m-%d') }}</div>
+                <div class="fr-card-actions">
+                    <form method="post" action="/friends/accept/{{ row.id }}">
+                        <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
+                        <button type="submit" class="fr-btn fr-btn-success">Accept</button>
+                    </form>
+                    <form method="post" action="/friends/decline/{{ row.id }}">
+                        <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
+                        <button type="submit" class="fr-btn fr-btn-muted">Decline</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="fr-empty" style="padding:1rem 0;">
+            <p>No incoming requests.</p>
+        </div>
+        {% endif %}
+
+        <h3 style="font-size:0.85rem;font-weight:700;color:var(--app-text-muted);
+                   text-transform:uppercase;letter-spacing:0.04em;margin:1rem 0 0.75rem;">
+            Sent ({{ outgoing|length }})
+        </h3>
+        {% if outgoing %}
+        <div class="fr-grid">
+            {% for row in outgoing %}
+            <div class="fr-card">
+                <div class="fr-card-name">{{ row.addressee.nickname or row.addressee.email }}</div>
+                <div class="fr-card-meta">Pending · {{ row.created_at.strftime('%Y-%m-%d') }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="fr-empty" style="padding:1rem 0;">
+            <p>No outgoing requests.</p>
+        </div>
+        {% endif %}
+    {% endif %}
+
+</div>
+{% endblock %}

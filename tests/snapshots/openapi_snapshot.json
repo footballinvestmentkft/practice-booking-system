@@ -4149,6 +4149,17 @@
         "title": "Body_register_submit_register_post",
         "type": "object"
       },
+      "Body_send_friend_request_by_identifier_friends_send_post": {
+        "properties": {
+          "identifier": {
+            "default": "",
+            "title": "Identifier",
+            "type": "string"
+          }
+        },
+        "title": "Body_send_friend_request_by_identifier_friends_send_post",
+        "type": "object"
+      },
       "Body_specialization_select_submit_specialization_select_post": {
         "properties": {
           "specialization": {
@@ -11289,7 +11300,9 @@
           "tournament_direct_invitation",
           "tournament_instructor_accepted",
           "tournament_instructor_declined",
-          "skill_tier_reached"
+          "skill_tier_reached",
+          "friend_request_received",
+          "friend_request_accepted"
         ],
         "title": "NotificationType",
         "type": "string"
@@ -60461,6 +60474,247 @@
           }
         },
         "summary": "Public Event Detail",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/friends": {
+      "get": {
+        "operationId": "friends_page_friends_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Friends Page",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/friends/accept/{friendship_id}": {
+      "post": {
+        "operationId": "accept_friend_request_friends_accept__friendship_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "friendship_id",
+            "required": true,
+            "schema": {
+              "title": "Friendship Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Accept Friend Request",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/friends/decline/{friendship_id}": {
+      "post": {
+        "operationId": "decline_friend_request_friends_decline__friendship_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "friendship_id",
+            "required": true,
+            "schema": {
+              "title": "Friendship Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Decline Friend Request",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/friends/remove/{user_id}": {
+      "post": {
+        "operationId": "remove_friend_friends_remove__user_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "title": "User Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Friend",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/friends/request/{user_id}": {
+      "post": {
+        "operationId": "send_friend_request_friends_request__user_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "title": "User Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Send Friend Request",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/friends/requests": {
+      "get": {
+        "operationId": "friends_requests_page_friends_requests_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Friends Requests Page",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/friends/send": {
+      "post": {
+        "description": "Add Friend form \u2014 looks up target by email or nickname, then delegates.",
+        "operationId": "send_friend_request_by_identifier_friends_send_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_send_friend_request_by_identifier_friends_send_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Send Friend Request By Identifier",
         "tags": [
           "web"
         ]
