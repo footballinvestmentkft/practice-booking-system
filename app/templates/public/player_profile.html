@@ -47,15 +47,15 @@
 /* ── Profile page wrapper ──────────────────────────────────────────────────── */
 .psp-profile { max-width: 1180px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
 
-/* ── Showcase grid — 5-column portrait/square (desktop ≥1280px) ─────────────── */
+/* ── Showcase grid — 5-column portrait/square (laptop ≥1024px) ──────────────── */
 .psp-showcase-grid {
     display: grid;
-    grid-template-columns: 180px 90px minmax(280px, 1fr) 90px 200px;
+    grid-template-columns: 170px 36px minmax(420px, 1fr) 36px 190px;
     grid-template-areas:
         "identity identity identity identity identity"
         "left     l-slot  center   r-slot  right"
         "bottom   bottom  bottom   bottom  bottom";
-    gap: 1.25rem 1.5rem;
+    gap: 1rem;
     align-items: start;
 }
 /* Landscape: no slots — card spans full-width row, rails below */
@@ -69,9 +69,9 @@
 }
 .psp-card-landscape .psp-l-slot,
 .psp-card-landscape .psp-r-slot { display: none; }
-/* Square: narrower slots and rails */
+/* Square: narrower rails, minimal slots */
 .psp-card-square .psp-showcase-grid {
-    grid-template-columns: 150px 80px minmax(280px, 1fr) 80px 180px;
+    grid-template-columns: 150px 32px minmax(380px, 1fr) 32px 170px;
 }
 
 /* ── Grid areas ────────────────────────────────────────────────────────────── */
@@ -102,6 +102,17 @@
     .psp-right-rail::-webkit-scrollbar-track { background: transparent; }
     .psp-left-rail::-webkit-scrollbar-thumb,
     .psp-right-rail::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
+}
+
+/* ── Large desktop: ≥1440px — wider slots, more breathing room ──────────────── */
+@media (min-width: 1440px) {
+    .psp-showcase-grid {
+        grid-template-columns: 180px 56px minmax(460px, 1fr) 56px 200px;
+        gap: 1rem 1.5rem;
+    }
+    .psp-card-square .psp-showcase-grid {
+        grid-template-columns: 155px 48px minmax(420px, 1fr) 48px 185px;
+    }
 }
 
 /* ── Identity strip ────────────────────────────────────────────────────────── */
@@ -277,21 +288,6 @@
 .psp-event-meta { font-size: 0.78rem; color: #9ca3af; display: flex; gap: 0.65rem; flex-wrap: wrap; }
 .psp-event-placement { font-weight: 700; color: #d97706; }
 
-/* ── Laptop: 1024–1279px — collapse slot columns → 3-col ──────────────────── */
-@media (max-width: 1279px) {
-    .psp-showcase-grid {
-        grid-template-columns: 200px minmax(300px, 1fr) 220px;
-        grid-template-areas:
-            "identity identity identity"
-            "left     center   right"
-            "bottom   bottom   bottom";
-    }
-    .psp-l-slot, .psp-r-slot { display: none; }
-    .psp-card-slot {
-        --psp-card-max-h: clamp(360px, calc(100vh - 238px), 520px);
-    }
-}
-
 /* ── Tablet: ≤1023px ───────────────────────────────────────────────────────── */
 @media (max-width: 1023px) {
     .psp-showcase-grid {
@@ -302,6 +298,7 @@
             "left     left"
             "bottom   bottom";
     }
+    .psp-l-slot, .psp-r-slot { display: none; }
     .psp-card-landscape .psp-showcase-grid {
         grid-template-columns: 1fr 1fr;
         grid-template-areas:
