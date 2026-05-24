@@ -57,6 +57,17 @@ TT-54   Template: resize + orientationchange listeners registered
 TT-55   Template: object size set from radius * 2 in JS
 TT-56   Template: X-CSRF-Token header present in fetch call
 TT-57   Template: _DIFF_CONFIG_OK guard present — disables Medium/Hard/Expert when difficulties missing
+
+TT-C01  Template: .tt-obj::before pseudo-element present (football visual CSS)
+TT-C02  Template: SVG data URI background-image present on ::before
+TT-C03  Template: pointer-events: none present on ::before
+TT-C04  Template: .tt-highlight class unchanged after Track C
+TT-C05  Template: .tt-flash class unchanged after Track C
+TT-C06  Template: .tt-correct and .tt-wrong classes unchanged after Track C
+TT-C07  Template: raw_metrics version not bumped to v=4 (no schema change)
+TT-C08  Template: responsive arena guards unchanged (aspect-ratio: 4 / 3)
+TT-C09  Template: JS object lifecycle (spawnObjects) unchanged — no new DOM elements
+TT-C10  Template: overflow: hidden added to .tt-obj for ::before boundary clip
 """
 from __future__ import annotations
 
@@ -1491,3 +1502,85 @@ class TestTTTrackBFlashMotion:
             resp   = client.get("/virtual-training/target-tracking/result/201")
 
         assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
+
+
+# ── TT-C01..TT-C10: Track C — Football Ball Visual ────────────────────────────
+
+_TEMPLATE_PATH_TT = (
+    "app/templates/virtual_training_target_tracking.html"
+)
+
+
+def _tt_template_source() -> str:
+    import pathlib
+    return pathlib.Path(_TEMPLATE_PATH_TT).read_text(encoding="utf-8")
+
+
+class TestTTTrackCFootballVisual:
+    """Track C: SVG data URI football seam pattern via ::before pseudo-element."""
+
+    def test_ttc01_before_pseudo_element_present(self):
+        """TT-C01: .tt-obj::before CSS block present in template."""
+        src = _tt_template_source()
+        assert ".tt-obj::before" in src
+
+    def test_ttc02_svg_data_uri_background_image_present(self):
+        """TT-C02: SVG data URI used as background-image on ::before."""
+        src = _tt_template_source()
+        assert "data:image/svg+xml" in src
+        assert "background-image" in src
+
+    def test_ttc03_pointer_events_none_on_before(self):
+        """TT-C03: pointer-events: none present (hitbox not blocked by ::before)."""
+        src = _tt_template_source()
+        assert "pointer-events: none" in src
+
+    def test_ttc04_tt_highlight_class_unchanged(self):
+        """TT-C04: .tt-highlight state class unchanged after Track C."""
+        src = _tt_template_source()
+        assert ".tt-obj.tt-highlight" in src
+        assert "background: #ef4444" in src
+
+    def test_ttc05_tt_flash_class_unchanged(self):
+        """TT-C05: .tt-flash state class unchanged after Track C."""
+        src = _tt_template_source()
+        assert ".tt-obj.tt-flash" in src
+        assert "background: #f59e0b" in src
+
+    def test_ttc06_correct_and_wrong_classes_unchanged(self):
+        """TT-C06: .tt-correct and .tt-wrong classes unchanged after Track C."""
+        src = _tt_template_source()
+        assert ".tt-obj.tt-correct" in src
+        assert ".tt-obj.tt-wrong" in src
+        assert "background: #22c55e" in src
+
+    def test_ttc07_raw_metrics_version_not_bumped(self):
+        """TT-C07: raw_metrics v stays at 3 — no schema change in Track C."""
+        src = _tt_template_source()
+        assert "v:                    3" in src or "v: 3" in src
+        assert "v:                    4" not in src and "v: 4" not in src
+
+    def test_ttc08_responsive_arena_guards_unchanged(self):
+        """TT-C08: aspect-ratio: 4 / 3 arena guard still present."""
+        src = _tt_template_source()
+        assert "aspect-ratio: 4 / 3" in src
+
+    def test_ttc09_spawn_objects_no_new_dom_elements(self):
+        """TT-C09: spawnObjects creates only one div per object — no innerHTML or child elements."""
+        src = _tt_template_source()
+        spawn_start = src.find("function spawnObjects(")
+        spawn_end   = src.find("\n}", spawn_start) + 2
+        spawn_block = src[spawn_start:spawn_end]
+        assert "createElement('div')" in spawn_block
+        assert "innerHTML" not in spawn_block
+        assert "appendChild" not in spawn_block.replace(
+            "arena.appendChild(el)", ""
+        )
+
+    def test_ttc10_overflow_hidden_on_tt_obj(self):
+        """TT-C10: overflow: hidden added to .tt-obj to clip ::before at circle boundary."""
+        src = _tt_template_source()
+        tt_obj_start = src.find(".tt-obj {")
+        tt_obj_end   = src.find("}", tt_obj_start) + 1
+        tt_obj_block = src[tt_obj_start:tt_obj_end]
+        assert "overflow: hidden" in tt_obj_block
