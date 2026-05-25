@@ -22017,6 +22017,27 @@
         "title": "_HighlightVideoRequest",
         "type": "object"
       },
+      "_ReorderRequest": {
+        "properties": {
+          "slot_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Slot Ids",
+            "type": "array"
+          },
+          "zone": {
+            "title": "Zone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "zone",
+          "slot_ids"
+        ],
+        "title": "_ReorderRequest",
+        "type": "object"
+      },
       "_SlotModuleRequest": {
         "properties": {
           "title": {
@@ -60240,6 +60261,46 @@
           }
         },
         "summary": "Lfa Public Profile Editor",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/dashboard/lfa-football-player/public-profile-editor/reorder": {
+      "post": {
+        "description": "Reorder filled modules within a zone in the draft profile grid.\n\nReturns {\"ok\": true, \"status\": \"noop\"} when \u22641 filled slot \u2014 no DB write.\nReturns {\"ok\": true, \"status\": \"reordered\"} on successful reorder.\nCSRF protection enforced by global middleware.",
+        "operationId": "lfa_profile_editor_reorder_zone_dashboard_lfa_football_player_public_profile_editor_reorder_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_ReorderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Lfa Profile Editor Reorder Zone",
         "tags": [
           "web"
         ]

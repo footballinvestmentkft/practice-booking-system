@@ -42,6 +42,7 @@ SLOT_REGISTRY: list[dict] = [
 ]
 
 SLOT_IDS: frozenset[str] = frozenset(s["slot_id"] for s in SLOT_REGISTRY)
+VALID_ZONES: frozenset[str] = frozenset(s["zone"] for s in SLOT_REGISTRY)
 MAX_SLOTS: int = 15
 TITLE_MAX_LEN: int = 80
 
@@ -184,6 +185,69 @@ def build_published_grid_state(draft: Any) -> list[dict] | None:
         for slot_def in SLOT_REGISTRY
         if slot_def["slot_id"] in occupied
     ]
+
+
+def _zone_slot_ids(zone: str) -> list[str]:
+    """Return slot_ids for a zone ordered by sort_order."""
+    return [
+        s["slot_id"]
+        for s in sorted(
+            (s for s in SLOT_REGISTRY if s["zone"] == zone),
+            key=lambda s: s["sort_order"],
+        )
+    ]
+
+
+def reorder_zone(
+    profile_grid: dict | None,
+    zone: str,
+    slot_ids: list[str],
+) -> dict | None:
+    """Reorder filled modules within a zone by reassigning to sorted slot positions.
+
+    slot_ids: the slot_ids of the zone's slots in their desired visual order
+    (may include empty slots; they are ignored — only filled entries are moved).
+    Returns the same profile_grid object unchanged when ≤1 filled slot (no-op).
+    Raises ValueError for unknown zone or slot_ids not belonging to that zone.
+    """
+    if zone not in VALID_ZONES:
+        raise ValueError(
+            f"Unknown zone: {zone!r}. Valid zones: {sorted(VALID_ZONES)}"
+        )
+    zone_sid_set = frozenset(_zone_slot_ids(zone))
+    for sid in slot_ids:
+        if sid not in SLOT_IDS:
+            raise ValueError(
+                f"Unknown slot_id: {sid!r}. Valid slot IDs: {sorted(SLOT_IDS)}"
+            )
+        if sid not in zone_sid_set:
+            raise ValueError(
+                f"slot_id {sid!r} does not belong to zone {zone!r}."
+            )
+
+    if not profile_grid:
+        return None
+
+    occupied = _slot_map(profile_grid)
+    filled_ordered = [
+        (sid, occupied[sid])
+        for sid in slot_ids
+        if sid in occupied and occupied[sid] is not None
+    ]
+
+    if len(filled_ordered) <= 1:
+        return profile_grid  # no-op — return same object so caller can detect
+
+    target_slots = _zone_slot_ids(zone)
+    other_slots = [
+        s for s in profile_grid.get("slots", [])
+        if s["slot_id"] not in zone_sid_set
+    ]
+    new_zone_entries = [
+        {"slot_id": target_slots[i], "module": filled_ordered[i][1]}
+        for i in range(len(filled_ordered))
+    ]
+    return {"version": 1, "slots": other_slots + new_zone_entries}
 
 
 def grid_fingerprint(profile_grid: dict | None) -> frozenset:

@@ -1400,12 +1400,18 @@ from app.services.profile_grid_service import (  # noqa: E402
     build_published_grid_state as _build_published_grid_state,
     SLOT_REGISTRY              as _SLOT_REGISTRY,
     MAX_SLOTS                  as _MAX_SLOTS,
+    VALID_ZONES                as _VALID_ZONES,
 )
 
 
 class _SlotModuleRequest(_BaseModel):
     video_url: str
     title:     str = ""
+
+
+class _ReorderRequest(_BaseModel):
+    zone:     str
+    slot_ids: list[str]
 
 
 @router.get(
@@ -1516,4 +1522,45 @@ async def lfa_profile_editor_remove_slot(
         "slot_id":                   slot_id,
         "status":                    "removed_from_draft",
         "published_slot_still_live": pub_has_slot,
+    })
+
+
+@router.post(
+    "/dashboard/lfa-football-player/public-profile-editor/reorder",
+)
+async def lfa_profile_editor_reorder_zone(
+    payload: _ReorderRequest,
+    db:   Session = Depends(get_db),
+    user: User    = Depends(get_current_user_web),
+):
+    """Reorder filled modules within a zone in the draft profile grid.
+
+    Returns {"ok": true, "status": "noop"} when ≤1 filled slot — no DB write.
+    Returns {"ok": true, "status": "reordered"} on successful reorder.
+    CSRF protection enforced by global middleware.
+    """
+    lfa_license = _get_lfa_license(db, user.id)
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "No active LFA Football Player license"}, status_code=404)
+
+    draft = _CardDraftService.get_player_card_draft(db, user.id)
+
+    # Count filled slots in zone before calling service (detect noop for response)
+    existing_pg = (draft.draft_data or {}).get("profile_grid")
+    _occupied = {
+        s["slot_id"]: s.get("module")
+        for s in (existing_pg or {}).get("slots", [])
+        if isinstance(s.get("slot_id"), str)
+    }
+    filled_count = sum(1 for sid in payload.slot_ids if _occupied.get(sid) is not None)
+
+    try:
+        _CardDraftService.reorder_draft_zone(db, draft, payload.zone, payload.slot_ids)
+    except ValueError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+
+    return JSONResponse({
+        "ok":     True,
+        "zone":   payload.zone,
+        "status": "noop" if filled_count <= 1 else "reordered",
     })

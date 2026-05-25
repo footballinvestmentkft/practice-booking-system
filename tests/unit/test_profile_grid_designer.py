@@ -585,3 +585,226 @@ class TestSlotNaming:
             ))
             ctx = mock_tmpl.TemplateResponse.call_args.args[1]
         assert ctx["profile_grid_total_slots"] == 15
+
+
+# ── WT-01..17: Reorder — zone-level drag-and-drop ─────────────────────────────
+
+from app.services.profile_grid_service import reorder_zone  # noqa: E402
+
+
+def _filled_pg(*entries) -> dict:
+    """Build a v1 profile_grid with the given (slot_id, provider, video_id) tuples."""
+    return {"version": 1, "slots": [
+        {"slot_id": sid, "module": {"provider": prov, "video_id": vid, "type": f"video_{prov}", "title": ""}}
+        for sid, prov, vid in entries
+    ]}
+
+
+class TestReorderZone:
+
+    def test_wt_01_reorder_two_filled_slots_swaps_modules(self):
+        """WT-01: reorder_zone with 2 filled slots in reversed order swaps their modules."""
+        profile_grid = {"version": 1, "slots": [
+            {"slot_id": "side_b_1", "module": {"provider": "youtube", "video_id": "VID_A"}},
+            {"slot_id": "side_b_2", "module": {"provider": "tiktok",  "video_id": "VID_B"}},
+        ]}
+        # Request: put side_b_2 first (TikTok should become side_b_1)
+        result = reorder_zone(profile_grid, "side_b", ["side_b_2", "side_b_1"])
+        slot_map = {s["slot_id"]: s["module"] for s in result["slots"]}
+        assert slot_map["side_b_1"]["provider"] == "tiktok",  "side_b_1 should now be TikTok"
+        assert slot_map["side_b_1"]["video_id"] == "VID_B"
+        assert slot_map["side_b_2"]["provider"] == "youtube", "side_b_2 should now be YouTube"
+        assert slot_map["side_b_2"]["video_id"] == "VID_A"
+
+    def test_wt_02_reorder_one_filled_slot_is_noop(self):
+        """WT-02: reorder_zone with 1 filled slot returns the same profile_grid object (no-op)."""
+        profile_grid = {"version": 1, "slots": [
+            {"slot_id": "side_b_1", "module": {"provider": "youtube", "video_id": "VID_A"}},
+        ]}
+        result = reorder_zone(profile_grid, "side_b", ["side_b_1", "side_b_2", "side_b_3"])
+        assert result is profile_grid, "Should return the same object for no-op"
+
+    def test_wt_03_reorder_zero_filled_slots_is_noop(self):
+        """WT-03: reorder_zone with no filled slots in zone returns same profile_grid (no-op)."""
+        profile_grid = {"version": 1, "slots": [
+            {"slot_id": "side_a_1", "module": {"provider": "youtube", "video_id": "OTHER"}},
+        ]}
+        result = reorder_zone(profile_grid, "side_b", ["side_b_1", "side_b_2"])
+        assert result is profile_grid
+
+    def test_wt_04_reorder_unknown_zone_raises_value_error(self):
+        """WT-04: reorder_zone raises ValueError for an unrecognised zone name."""
+        profile_grid = {"version": 1, "slots": []}
+        with pytest.raises(ValueError, match="Unknown zone"):
+            reorder_zone(profile_grid, "not_a_zone", [])
+
+    def test_wt_05_reorder_slot_from_wrong_zone_raises_value_error(self):
+        """WT-05: reorder_zone raises ValueError when a slot_id belongs to a different zone."""
+        profile_grid = {"version": 1, "slots": [
+            {"slot_id": "side_b_1", "module": {"provider": "youtube", "video_id": "V"}},
+            {"slot_id": "side_b_2", "module": {"provider": "youtube", "video_id": "W"}},
+        ]}
+        with pytest.raises(ValueError, match="does not belong to zone"):
+            reorder_zone(profile_grid, "side_b", ["side_b_1", "side_a_1"])  # side_a_1 is wrong zone
+
+    def test_wt_06_reorder_three_filled_slots_redistributes_correctly(self):
+        """WT-06: reorder_zone with 3 filled slots assigns modules in new order to sorted positions."""
+        profile_grid = {"version": 1, "slots": [
+            {"slot_id": "side_c_1", "module": {"provider": "youtube", "video_id": "C1"}},
+            {"slot_id": "side_c_2", "module": {"provider": "tiktok",  "video_id": "C2"}},
+            {"slot_id": "side_c_3", "module": {"provider": "youtube", "video_id": "C3"}},
+        ]}
+        # New order: C3, C1, C2
+        result = reorder_zone(profile_grid, "side_c", ["side_c_3", "side_c_1", "side_c_2"])
+        slot_map = {s["slot_id"]: s["module"] for s in result["slots"]}
+        assert slot_map["side_c_1"]["video_id"] == "C3"
+        assert slot_map["side_c_2"]["video_id"] == "C1"
+        assert slot_map["side_c_3"]["video_id"] == "C2"
+
+    def test_wt_07_reorder_none_profile_grid_returns_none(self):
+        """WT-07: reorder_zone with profile_grid=None returns None (no-op)."""
+        result = reorder_zone(None, "side_b", ["side_b_1"])
+        assert result is None
+
+    def test_wt_08_reorder_preserves_other_zone_slots_unchanged(self):
+        """WT-08: reorder_zone does not touch slots outside the target zone."""
+        profile_grid = {"version": 1, "slots": [
+            {"slot_id": "side_a_1", "module": {"provider": "youtube", "video_id": "A1"}},
+            {"slot_id": "side_b_1", "module": {"provider": "youtube", "video_id": "B1"}},
+            {"slot_id": "side_b_2", "module": {"provider": "tiktok",  "video_id": "B2"}},
+        ]}
+        result = reorder_zone(profile_grid, "side_b", ["side_b_2", "side_b_1"])
+        slot_map = {s["slot_id"]: s["module"] for s in result["slots"]}
+        assert slot_map.get("side_a_1", {}).get("video_id") == "A1", (
+            "side_a_1 must be preserved unchanged after reordering side_b"
+        )
+
+    def test_wt_09_reorder_empty_slot_ids_list_is_noop(self):
+        """WT-09: reorder_zone with empty slot_ids list is a no-op."""
+        profile_grid = {"version": 1, "slots": [
+            {"slot_id": "side_b_1", "module": {"provider": "youtube", "video_id": "VID"}},
+        ]}
+        result = reorder_zone(profile_grid, "side_b", [])
+        assert result is profile_grid
+
+
+class TestReorderDraftZone:
+
+    def test_wt_10_reorder_draft_zone_mutates_draft_data(self):
+        """WT-10: CardDraftService.reorder_draft_zone mutates draft_data and calls db.commit."""
+        draft = _draft(draft_data={"profile_grid": {
+            "version": 1, "slots": [
+                {"slot_id": "side_b_1", "module": {"provider": "youtube", "video_id": "V1"}},
+                {"slot_id": "side_b_2", "module": {"provider": "tiktok",  "video_id": "V2"}},
+            ],
+        }})
+        db = MagicMock()
+        CardDraftService.reorder_draft_zone(db, draft, "side_b", ["side_b_2", "side_b_1"])
+        pg = (draft.draft_data or {}).get("profile_grid", {})
+        slot_map = {s["slot_id"]: s["module"] for s in pg.get("slots", [])}
+        assert slot_map["side_b_1"]["video_id"] == "V2", "V2 should now be at side_b_1"
+        assert slot_map["side_b_2"]["video_id"] == "V1", "V1 should now be at side_b_2"
+        db.commit.assert_called_once()
+
+    def test_wt_11_reorder_draft_zone_one_slot_is_noop_no_commit(self):
+        """WT-11: reorder_draft_zone with 1 filled slot does NOT call db.commit."""
+        draft = _draft(draft_data={"profile_grid": {
+            "version": 1, "slots": [
+                {"slot_id": "side_b_1", "module": {"provider": "youtube", "video_id": "V1"}},
+            ],
+        }})
+        db = MagicMock()
+        CardDraftService.reorder_draft_zone(db, draft, "side_b", ["side_b_1", "side_b_2", "side_b_3"])
+        db.commit.assert_not_called()
+
+
+class TestReorderRoute:
+
+    _BASE = "app.api.web_routes.dashboard"
+
+    def _run_reorder(self, payload_dict, draft, *, license_present=True):
+        from app.api.web_routes.dashboard import lfa_profile_editor_reorder_zone
+        from app.api.web_routes.dashboard import _ReorderRequest
+        mock_license = MagicMock() if license_present else None
+        db = MagicMock()
+        db.query.return_value.filter.return_value.first.return_value = mock_license
+        payload = _ReorderRequest(**payload_dict)
+        with patch(f"{self._BASE}._get_lfa_license", return_value=mock_license), \
+             patch(f"{self._BASE}._CardDraftService") as MockCDS:
+            MockCDS.get_player_card_draft.return_value = draft
+            # reorder_draft_zone: actually call the real service method
+            MockCDS.reorder_draft_zone.side_effect = lambda db, d, zone, slot_ids, **kw: \
+                CardDraftService.reorder_draft_zone(db, d, zone, slot_ids, commit=False)
+            return asyncio.run(lfa_profile_editor_reorder_zone(payload=payload, db=db, user=MagicMock()))
+
+    def test_wt_12_reorder_two_filled_slots_returns_reordered(self):
+        """WT-12: POST /reorder with 2 filled slots returns {"ok": true, "status": "reordered"}."""
+        draft = _draft(draft_data={"profile_grid": {
+            "version": 1, "slots": [
+                {"slot_id": "side_b_1", "module": {"provider": "youtube", "video_id": "V1"}},
+                {"slot_id": "side_b_2", "module": {"provider": "tiktok",  "video_id": "V2"}},
+            ],
+        }})
+        resp = self._run_reorder({"zone": "side_b", "slot_ids": ["side_b_2", "side_b_1"]}, draft)
+        body = resp.body
+        import json
+        data = json.loads(body)
+        assert data["ok"] is True
+        assert data["status"] == "reordered"
+
+    def test_wt_13_reorder_one_filled_slot_returns_noop(self):
+        """WT-13: POST /reorder with 1 filled slot returns {"ok": true, "status": "noop"}."""
+        draft = _draft(draft_data={"profile_grid": {
+            "version": 1, "slots": [
+                {"slot_id": "side_b_1", "module": {"provider": "youtube", "video_id": "V1"}},
+            ],
+        }})
+        resp = self._run_reorder({"zone": "side_b", "slot_ids": ["side_b_1", "side_b_2", "side_b_3"]}, draft)
+        import json
+        data = json.loads(resp.body)
+        assert data["ok"] is True
+        assert data["status"] == "noop"
+
+    def test_wt_14_reorder_no_license_returns_404(self):
+        """WT-14: POST /reorder with no LFA license returns 404."""
+        from app.api.web_routes.dashboard import lfa_profile_editor_reorder_zone, _ReorderRequest
+        draft = _draft()
+        db = MagicMock()
+        payload = _ReorderRequest(zone="side_b", slot_ids=["side_b_1"])
+        with patch(f"{self._BASE}._get_lfa_license", return_value=None), \
+             patch(f"{self._BASE}._CardDraftService"):
+            resp = asyncio.run(lfa_profile_editor_reorder_zone(payload=payload, db=db, user=MagicMock()))
+        assert resp.status_code == 404
+
+    def test_wt_15_reorder_unknown_zone_returns_400(self):
+        """WT-15: POST /reorder with unknown zone returns 400."""
+        draft = _draft(draft_data=None)
+        resp = self._run_reorder({"zone": "not_a_zone", "slot_ids": []}, draft)
+        assert resp.status_code == 400
+        import json
+        data = json.loads(resp.body)
+        assert data["ok"] is False
+        assert "Unknown zone" in data["error"]
+
+    def test_wt_16_reorder_slot_from_wrong_zone_returns_400(self):
+        """WT-16: POST /reorder with a slot_id from the wrong zone returns 400."""
+        draft = _draft(draft_data={"profile_grid": {
+            "version": 1, "slots": [
+                {"slot_id": "side_b_1", "module": {"provider": "youtube", "video_id": "V1"}},
+                {"slot_id": "side_b_2", "module": {"provider": "tiktok",  "video_id": "V2"}},
+            ],
+        }})
+        resp = self._run_reorder({"zone": "side_b", "slot_ids": ["side_b_1", "side_a_1"]}, draft)
+        assert resp.status_code == 400
+        import json
+        data = json.loads(resp.body)
+        assert data["ok"] is False
+
+    def test_wt_17_reorder_empty_draft_returns_noop(self):
+        """WT-17: POST /reorder on an empty draft (no profile_grid) returns noop."""
+        draft = _draft(draft_data=None)
+        resp = self._run_reorder({"zone": "side_b", "slot_ids": ["side_b_1", "side_b_2"]}, draft)
+        import json
+        data = json.loads(resp.body)
+        assert data["ok"] is True
+        assert data["status"] == "noop"

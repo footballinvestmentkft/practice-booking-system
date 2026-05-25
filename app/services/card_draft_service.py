@@ -18,6 +18,7 @@ from app.services.profile_grid_service import (
     build_video_module as _build_video_module,
     grid_fingerprint as _grid_fingerprint,
     remove_slot as _remove_slot,
+    reorder_zone as _reorder_zone,
     set_slot as _set_slot,
     validate_slot_id as _validate_slot_id,
 )
@@ -246,6 +247,37 @@ class CardDraftService:
         else:
             draft_data.pop("profile_grid", None)
         draft.draft_data = draft_data if draft_data else None
+        draft.updated_at = datetime.now(timezone.utc)
+        if commit:
+            db.commit()
+            db.refresh(draft)
+        return draft
+
+    @staticmethod
+    def reorder_draft_zone(
+        db: Session,
+        draft: CardDraft,
+        zone: str,
+        slot_ids: list[str],
+        *,
+        commit: bool = True,
+    ) -> CardDraft:
+        """Reorder filled modules within a zone in draft_data.profile_grid.
+
+        slot_ids: slot_ids of the zone's slots in desired visual order.
+        No-op (no DB write) when ≤1 filled slot.
+        Raises ValueError for unknown zone or mismatched slot_ids.
+        """
+        draft_data: dict[str, Any] = dict(draft.draft_data or {})
+        existing_pg = draft_data.get("profile_grid")
+        new_pg = _reorder_zone(existing_pg, zone, slot_ids)
+        if new_pg is existing_pg:
+            return draft  # no-op — ≤1 filled slot
+        if new_pg:
+            draft_data["profile_grid"] = new_pg
+        else:
+            draft_data.pop("profile_grid", None)
+        draft.draft_data = draft_data
         draft.updated_at = datetime.now(timezone.utc)
         if commit:
             db.commit()

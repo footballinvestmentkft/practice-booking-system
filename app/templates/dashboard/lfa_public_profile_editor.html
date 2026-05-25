@@ -279,6 +279,19 @@
 .ppe-panel-error.visible { display: block; }
 .ppe-panel-actions { display: flex; gap: 0.4rem; margin-top: 0.1rem; }
 
+/* ── Drag handle ────────────────────────────────────────────────────────────── */
+.ppe-drag-handle {
+    cursor: grab;
+    color: #d1d5db;
+    font-size: 0.9rem;
+    padding: 0 0.35rem 0 0;
+    user-select: none;
+    line-height: 1;
+}
+.ppe-drag-handle:active { cursor: grabbing; }
+.ppe-slot.sortable-ghost  { opacity: 0.4; }
+.ppe-slot.sortable-chosen { box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+
 /* ── Publish toast ──────────────────────────────────────────────────────────── */
 #ppe-toast {
     position: fixed;
@@ -308,6 +321,7 @@
      data-slot="{{ slot.slot_id }}">
 
     <div class="ppe-slot-head">
+        <span class="ppe-drag-handle" title="Drag to reorder">⠿</span>
         <span>{{ slot.label }}</span>
         {% if not slot.is_empty %}
         <span class="ppe-slot-head-actions">
@@ -397,17 +411,21 @@
         {# ── Side A (outer left on desktop) ───────────────────────────────────── #}
         <div class="ppe-side-a-col">
             <div class="ppe-zone-label">Side A</div>
-            {% for slot in draft_slots if slot.zone == "side_a" %}
-            {{ _render_slot(slot) }}
-            {% endfor %}
+            <div class="ppe-zone-slots" data-zone="side_a">
+                {% for slot in draft_slots if slot.zone == "side_a" %}
+                {{ _render_slot(slot) }}
+                {% endfor %}
+            </div>
         </div>
 
         {# ── Side B (inner left on desktop) ───────────────────────────────────── #}
         <div class="ppe-side-b-col">
             <div class="ppe-zone-label">Side B</div>
-            {% for slot in draft_slots if slot.zone == "side_b" %}
-            {{ _render_slot(slot) }}
-            {% endfor %}
+            <div class="ppe-zone-slots" data-zone="side_b">
+                {% for slot in draft_slots if slot.zone == "side_b" %}
+                {{ _render_slot(slot) }}
+                {% endfor %}
+            </div>
         </div>
 
         {# ── Center: Featured Card (read-only anchor) ──────────────────────────── #}
@@ -424,23 +442,27 @@
         {# ── Side C (inner right on desktop) ──────────────────────────────────── #}
         <div class="ppe-side-c-col">
             <div class="ppe-zone-label">Side C</div>
-            {% for slot in draft_slots if slot.zone == "side_c" %}
-            {{ _render_slot(slot) }}
-            {% endfor %}
+            <div class="ppe-zone-slots" data-zone="side_c">
+                {% for slot in draft_slots if slot.zone == "side_c" %}
+                {{ _render_slot(slot) }}
+                {% endfor %}
+            </div>
         </div>
 
         {# ── Side D (outer right on desktop) ──────────────────────────────────── #}
         <div class="ppe-side-d-col">
             <div class="ppe-zone-label">Side D</div>
-            {% for slot in draft_slots if slot.zone == "side_d" %}
-            {{ _render_slot(slot) }}
-            {% endfor %}
+            <div class="ppe-zone-slots" data-zone="side_d">
+                {% for slot in draft_slots if slot.zone == "side_d" %}
+                {{ _render_slot(slot) }}
+                {% endfor %}
+            </div>
         </div>
 
         {# ── Bottom row ───────────────────────────────────────────────────────── #}
         <div class="ppe-bottom-row">
             <div class="ppe-zone-label">Bottom Row</div>
-            <div class="ppe-bottom-grid">
+            <div class="ppe-bottom-grid ppe-zone-slots" data-zone="bottom">
                 {% for slot in draft_slots if slot.zone == "bottom" %}
                 {{ _render_slot(slot) }}
                 {% endfor %}
@@ -452,6 +474,8 @@
 
 <div id="ppe-toast"></div>
 
+{# SortableJS 1.15.6 — MIT license, vendored (no CDN) #}
+<script src="/static/js/vendors/sortable-1.15.6.min.js"></script>
 <script>
 (function () {
     var _CSRF_TOKEN = null;
@@ -645,6 +669,51 @@
             toast("Profile published!");
         }).catch(function () { alert("Network error — please reload and try again."); btn.disabled = false; });
     };
+
+    // ── Reorder zone (SortableJS callback) ────────────────────────────────────
+    window.reorderZone = function (container) {
+        var zone = container.getAttribute("data-zone");
+        var slotIds = Array.from(container.querySelectorAll(".ppe-slot"))
+            .map(function (el) { return el.getAttribute("data-slot"); })
+            .filter(Boolean);
+        getCsrf().then(function (csrf) {
+            return fetch("/dashboard/lfa-football-player/public-profile-editor/reorder", {
+                method:  "POST",
+                headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+                credentials: "same-origin",
+                body: JSON.stringify({zone: zone, slot_ids: slotIds}),
+            });
+        }).then(function (r) {
+            return r.json().then(function (d) { return {data: d, status: r.status}; });
+        }).then(function (res) {
+            var data = res.data; var status = res.status;
+            if (!data.ok) {
+                toast("Reorder failed: " + parseError(data, status));
+                window.location.reload();
+                return;
+            }
+            if (data.status === "reordered") {
+                setUnpublished();
+                toast("Order saved to draft.");
+                window.location.reload();
+            }
+            // noop: ≤1 filled slot — nothing to update
+        }).catch(function () {
+            toast("Network error — please reload.");
+            window.location.reload();
+        });
+    };
+
+    // ── Init SortableJS on all zone containers ─────────────────────────────────
+    document.querySelectorAll(".ppe-zone-slots").forEach(function (container) {
+        Sortable.create(container, {
+            animation:  150,
+            handle:     ".ppe-drag-handle",
+            ghostClass: "sortable-ghost",
+            chosenClass: "sortable-chosen",
+            onEnd: function () { reorderZone(container); },
+        });
+    });
 
     // ── XSS-safe HTML escaping ─────────────────────────────────────────────────
     function escHtml(str) {
