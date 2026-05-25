@@ -180,8 +180,24 @@
             </div>
         </div>
 
-        {# ── Completion window ── #}
+        {# ── Challenge mode (Async / Live) ── #}
         <div class="cs-field">
+            <label class="cs-label">Challenge Mode</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
+                <div class="cs-diff-card selected" id="cs-mode-async" onclick="selectMode('async')">
+                    <div class="cs-diff-name">Async</div>
+                    <div class="cs-diff-meta">Play any time before the deadline</div>
+                </div>
+                <div class="cs-diff-card" id="cs-mode-live" onclick="selectMode('live')">
+                    <div class="cs-diff-name">Live</div>
+                    <div class="cs-diff-meta">Both players play at the same time</div>
+                </div>
+            </div>
+            <input type="hidden" name="challenge_mode" id="cs-mode-input" value="async">
+        </div>
+
+        {# ── Completion window (async only) ── #}
+        <div class="cs-field" id="cs-window-section">
             <label class="cs-label" for="cs-window">Completion Window</label>
             <select name="completion_window_seconds" id="cs-window" class="cs-select">
                 <option value="1800">30 minutes</option>
@@ -221,6 +237,19 @@
 
 var EXPERT_UNLOCKED = {{ 'true' if expert_unlocked else 'false' }};
 var selectedDiff    = 'easy';
+var selectedMode    = 'async';
+
+function selectMode(mode) {
+    selectedMode = mode;
+    document.getElementById('cs-mode-input').value = mode;
+    document.getElementById('cs-mode-async').classList.toggle('selected', mode === 'async');
+    document.getElementById('cs-mode-live').classList.toggle('selected', mode === 'live');
+    var windowSection = document.getElementById('cs-window-section');
+    if (windowSection) {
+        windowSection.style.display = (mode === 'live') ? 'none' : 'block';
+    }
+}
+window.selectMode = selectMode;
 
 function selectDiff(level) {
     if (level === 'expert' && !EXPERT_UNLOCKED) return;

@@ -83,7 +83,14 @@ def _validate_challenge_pre_submit(
     if challenge.game_id != game_id:
         return None, JSONResponse({"error": "wrong_game"}, status_code=400)
 
-    if challenge.status != ChallengeStatus.ACCEPTED:
+    # LIVE_LOBBY is not playable — players must wait for countdown
+    if challenge.status == ChallengeStatus.LIVE_LOBBY:
+        return None, JSONResponse(
+            {"error": "challenge_not_started", "status": challenge.status.value},
+            status_code=409,
+        )
+
+    if challenge.status not in (ChallengeStatus.ACCEPTED, ChallengeStatus.LIVE_IN_PROGRESS):
         return None, JSONResponse(
             {"error": "challenge_not_accepted", "status": challenge.status.value},
             status_code=409,
@@ -114,11 +121,12 @@ def _validate_challenge_pre_submit(
             status_code=409,
         )
 
-    # Late submit guard: block if deadline passed and this side has no prior attempt
-    if challenge.completion_deadline is not None and challenge.completion_deadline <= now:
-        apply_forfeit_if_deadline_passed(db, challenge, now)
-        db.commit()
-        return None, JSONResponse({"error": "challenge_deadline_passed"}, status_code=410)
+    # Async: late submit guard
+    if challenge.status == ChallengeStatus.ACCEPTED:
+        if challenge.completion_deadline is not None and challenge.completion_deadline <= now:
+            apply_forfeit_if_deadline_passed(db, challenge, now)
+            db.commit()
+            return None, JSONResponse({"error": "challenge_deadline_passed"}, status_code=410)
 
     return challenge, None
 
@@ -801,6 +809,7 @@ async def virtual_training_target_tracking(
 
     # Challenge mode: load snapshot, guard NULL snapshot (no random fallback)
     challenge_snapshot: dict | None = None
+    live_start_at: str | None = None
     if challenge_id is not None:
         ch = db.query(VirtualTrainingChallenge).filter(
             VirtualTrainingChallenge.id == challenge_id
@@ -814,6 +823,8 @@ async def virtual_training_target_tracking(
                 url="/challenges?error=challenge_snapshot_missing", status_code=303
             )
         challenge_snapshot = ch.challenge_config_snapshot
+        if ch.live_start_at is not None:
+            live_start_at = ch.live_start_at.isoformat()
 
     today_start = datetime.combine(
         datetime.now(timezone.utc).date(),
@@ -844,6 +855,7 @@ async def virtual_training_target_tracking(
             "attempts_remaining": max(0, game.max_daily_attempts - attempts_today),
             "expert_unlocked": expert_unlocked,
             "challenge_snapshot": challenge_snapshot,
+            "live_start_at": live_start_at,
         },
     )
 
@@ -1151,6 +1163,7 @@ async def virtual_training_memory_sequence(
 
     # Challenge mode: load snapshot, guard NULL snapshot (no random fallback)
     challenge_snapshot: dict | None = None
+    live_start_at: str | None = None
     if challenge_id is not None:
         ch = db.query(VirtualTrainingChallenge).filter(
             VirtualTrainingChallenge.id == challenge_id
@@ -1164,6 +1177,8 @@ async def virtual_training_memory_sequence(
                 url="/challenges?error=challenge_snapshot_missing", status_code=303
             )
         challenge_snapshot = ch.challenge_config_snapshot
+        if ch.live_start_at is not None:
+            live_start_at = ch.live_start_at.isoformat()
 
     today_start = datetime.combine(
         datetime.now(timezone.utc).date(),
@@ -1191,6 +1206,7 @@ async def virtual_training_memory_sequence(
             "max_daily_attempts": game.max_daily_attempts,
             "attempts_remaining": max(0, game.max_daily_attempts - attempts_today),
             "challenge_snapshot": challenge_snapshot,
+            "live_start_at": live_start_at,
         },
     )
 

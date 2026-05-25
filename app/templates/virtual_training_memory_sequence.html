@@ -164,6 +164,19 @@
         </div>
     </div>
 
+    {# Live challenge countdown overlay — hidden by default, shown via JS if live_start_at is set #}
+    {% if live_start_at %}
+    <div id="ms-live-overlay" style="
+        position:fixed;inset:0;z-index:9999;
+        background:rgba(0,0,0,0.82);
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        color:#fff;text-align:center;">
+        <div style="font-size:0.9rem;letter-spacing:0.08em;text-transform:uppercase;opacity:0.75;margin-bottom:0.5rem;">Live Challenge</div>
+        <div id="ms-live-countdown" style="font-size:5rem;font-weight:900;line-height:1;">…</div>
+        <div style="font-size:0.85rem;opacity:0.65;margin-top:0.5rem;">Game starts in</div>
+    </div>
+    {% endif %}
+
     <div style="text-align:center;margin-bottom:1.5rem;" id="msStartWrap">
         <button class="ms-btn-start" id="msBtnStart"
             {% if attempts_remaining == 0 %}disabled{% endif %}>
@@ -238,6 +251,10 @@
     {% else %}
     var CHALLENGE_SNAPSHOT = null;
     {% endif %}
+
+    // Live challenge countdown overlay
+    var LIVE_START_AT = {{ live_start_at | tojson if live_start_at else 'null' }};
+    var LIVE_COUNTDOWN_SECONDS = 5;
 
     // Build flat round list (9 rounds: 3 phases × 3 rounds each)
     var ROUNDS = [];
@@ -612,6 +629,30 @@
         elCorrect.textContent   = correctPositions;
         elWrong.textContent     = wrongPositions;
         elTimeoutCt.textContent = timeoutPositions;
+    }
+
+    // Live challenge countdown — auto-start game when overlay dismisses
+    if (LIVE_START_AT) {
+        var liveStart = new Date(LIVE_START_AT);
+        var msOverlay = document.getElementById('ms-live-overlay');
+        var msCountEl = document.getElementById('ms-live-countdown');
+        var btnStart  = document.getElementById('msBtnStart');
+        if (btnStart) btnStart.disabled = true;
+
+        var liveTick = setInterval(function () {
+            var elapsed   = Math.floor((Date.now() - liveStart.getTime()) / 1000);
+            var remaining = LIVE_COUNTDOWN_SECONDS - elapsed;
+            if (remaining <= 0) {
+                clearInterval(liveTick);
+                if (msOverlay) msOverlay.style.display = 'none';
+                if (btnStart) {
+                    btnStart.disabled = false;
+                    startGame();
+                }
+            } else {
+                if (msCountEl) msCountEl.textContent = remaining;
+            }
+        }, 200);
     }
 })();
 </script>

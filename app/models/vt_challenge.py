@@ -1,35 +1,43 @@
-"""VirtualTrainingChallenge model — async friend-vs-friend VT challenge.
+"""VirtualTrainingChallenge model — async and live friend-vs-friend VT challenge.
 
-Lifecycle (PR-C1):
-  PENDING  → ACCEPTED   (challenged_id accepts, expires_at not passed)
-  PENDING  → DECLINED   (challenged_id declines)
-  PENDING  → CANCELLED  (challenger_id cancels)
-  ACCEPTED → CANCELLED  (challenger_id cancels)
+Async lifecycle (PR-C1 / PR-C2 / PR-P1):
+  PENDING  → ACCEPTED        (challenged accepts, expires_at not passed)
+  PENDING  → DECLINED        (challenged declines)
+  PENDING  → CANCELLED       (challenger cancels)
+  ACCEPTED → CANCELLED       (challenger cancels)
+  ACCEPTED → COMPLETED       (both submitted, winner_id / is_draw set)
+  ACCEPTED → COMPLETED       (one played before deadline → forfeit win)
+  ACCEPTED → EXPIRED         (neither played before deadline → no_contest)
 
-PR-C2 adds:
-  ACCEPTED → COMPLETED  (both attempts submitted, winner_id / is_draw set)
-
-PR-P1 adds:
-  ACCEPTED → COMPLETED  (one side played before deadline, other did not → forfeit win)
-  ACCEPTED → EXPIRED    (neither played before deadline → no_contest)
+Live lobby lifecycle (PR-L1):
+  PENDING     → LIVE_LOBBY       (challenged accepts a live challenge)
+  LIVE_LOBBY  → LIVE_IN_PROGRESS (both mark ready, countdown fires)
+  LIVE_LOBBY  → EXPIRED          (lobby_expires_at passed, neither/one ready)
+  LIVE_IN_PROGRESS → COMPLETED   (both submitted within post-start window)
+  LIVE_IN_PROGRESS → COMPLETED   (one submitted, other missed → forfeit win / no_show)
+  LIVE_IN_PROGRESS → EXPIRED     (neither submitted in post-start window → no_contest)
 
 Expiry:
   expires_at = created_at + 7 days (set at creation).
   Accept guard checks expires_at <= now() → rejects with EXPIRED status.
 
-Completion deadline (PR-P1):
+Completion deadline (PR-P1, async only):
   accepted_at set when challenged accepts.
   completion_deadline = accepted_at + completion_window_seconds.
   NULL completion_deadline (legacy challenges) → deadline logic skipped entirely.
 
-Forfeit (PR-P1):
+Live lobby (PR-L1):
+  lobby_expires_at  = accepted_at + LOBBY_TIMEOUT_SECONDS (900 s).
+  challenger_ready_at / challenged_ready_at set when each side POSTs /ready.
+  live_start_at set server-side when both are ready.
+  Post-start submit window = POST_START_SUBMIT_WINDOW_SECONDS (300 s).
+
+Forfeit (PR-P1 + PR-L1):
   forfeit_user_id = user who did not play in time.
-  forfeit_reason  = 'deadline_expired' | 'no_contest'.
-  Late submit (after deadline, no prior attempt on that side) is blocked.
+  forfeit_reason  = 'deadline_expired' | 'no_contest' | 'no_show' | 'post_start_timeout'.
 
 Game compatibility:
   Only games in CHALLENGE_COMPATIBLE_GAMES (by game.code) are allowed.
-  Expandable to a DB config field later.
 """
 from __future__ import annotations
 
@@ -51,7 +59,7 @@ CHALLENGE_COMPATIBLE_GAMES: frozenset[str] = frozenset({
     "target_tracking",
 })
 
-# ── Completion window options (seconds) ───────────────────────────────────────
+# ── Completion window options (seconds, async mode) ───────────────────────────
 VALID_COMPLETION_WINDOWS: frozenset[int] = frozenset({
     1800,    # 30 minutes
     3600,    # 1 hour
@@ -61,16 +69,23 @@ VALID_COMPLETION_WINDOWS: frozenset[int] = frozenset({
 })
 DEFAULT_COMPLETION_WINDOW: int = 86400
 
+# ── Live lobby constants ───────────────────────────────────────────────────────
+LOBBY_TIMEOUT_SECONDS: int        = 900   # 15 min to both mark ready
+LIVE_COUNTDOWN_SECONDS: int       = 5     # client-side countdown before game starts
+POST_START_SUBMIT_WINDOW_SECONDS: int = 300  # 5 min to submit after live_start_at
+
 
 # ── Enum ───────────────────────────────────────────────────────────────────────
 
 class ChallengeStatus(enum.Enum):
-    PENDING   = "pending"
-    ACCEPTED  = "accepted"
-    DECLINED  = "declined"
-    EXPIRED   = "expired"
-    CANCELLED = "cancelled"
-    COMPLETED = "completed"
+    PENDING         = "pending"
+    ACCEPTED        = "accepted"
+    DECLINED        = "declined"
+    EXPIRED         = "expired"
+    CANCELLED       = "cancelled"
+    COMPLETED       = "completed"
+    LIVE_LOBBY      = "live_lobby"
+    LIVE_IN_PROGRESS = "live_in_progress"
 
 
 # ── Model ──────────────────────────────────────────────────────────────────────
@@ -87,7 +102,8 @@ class VirtualTrainingChallenge(Base):
             name="ck_vt_challenge_mode_valid",
         ),
         CheckConstraint(
-            "forfeit_reason IS NULL OR forfeit_reason IN ('deadline_expired', 'no_contest')",
+            "forfeit_reason IS NULL OR forfeit_reason IN "
+            "('deadline_expired', 'no_contest', 'no_show', 'post_start_timeout')",
             name="ck_vt_forfeit_reason_valid",
         ),
     )
@@ -135,6 +151,12 @@ class VirtualTrainingChallenge(Base):
                                         nullable=True, index=True)
     forfeit_reason             = Column(String(30), nullable=True)
 
+    # PR-L1 — live lobby
+    challenger_ready_at  = Column(DateTime(timezone=True), nullable=True)
+    challenged_ready_at  = Column(DateTime(timezone=True), nullable=True)
+    live_start_at        = Column(DateTime(timezone=True), nullable=True)
+    lobby_expires_at     = Column(DateTime(timezone=True), nullable=True)
+
     challenger   = relationship("User", foreign_keys=[challenger_id])
     challenged   = relationship("User", foreign_keys=[challenged_id])
     winner       = relationship("User", foreign_keys=[winner_id])
@@ -168,14 +190,17 @@ def get_active_challenge(
     user_b_id: int,
     game_id: int,
 ) -> VirtualTrainingChallenge | None:
-    """Return PENDING or ACCEPTED challenge between two users on a game (either direction)."""
+    """Return active challenge between two users on a game (either direction)."""
     return (
         db.query(VirtualTrainingChallenge)
         .filter(
             VirtualTrainingChallenge.game_id == game_id,
-            VirtualTrainingChallenge.status.in_(
-                [ChallengeStatus.PENDING, ChallengeStatus.ACCEPTED]
-            ),
+            VirtualTrainingChallenge.status.in_([
+                ChallengeStatus.PENDING,
+                ChallengeStatus.ACCEPTED,
+                ChallengeStatus.LIVE_LOBBY,
+                ChallengeStatus.LIVE_IN_PROGRESS,
+            ]),
             (
                 (VirtualTrainingChallenge.challenger_id == user_a_id) &
                 (VirtualTrainingChallenge.challenged_id == user_b_id)

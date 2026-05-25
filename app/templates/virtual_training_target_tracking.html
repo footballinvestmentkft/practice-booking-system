@@ -305,6 +305,19 @@
 {% block student_content %}
 <div class="tt-container">
 
+    {# Live challenge countdown overlay #}
+    {% if live_start_at %}
+    <div id="tt-live-overlay" style="
+        position:fixed;inset:0;z-index:9999;
+        background:rgba(0,0,0,0.82);
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        color:#fff;text-align:center;">
+        <div style="font-size:0.9rem;letter-spacing:0.08em;text-transform:uppercase;opacity:0.75;margin-bottom:0.5rem;">Live Challenge</div>
+        <div id="tt-live-countdown" style="font-size:5rem;font-weight:900;line-height:1;">…</div>
+        <div style="font-size:0.85rem;opacity:0.65;margin-top:0.5rem;">Game starts in</div>
+    </div>
+    {% endif %}
+
     <!-- ── Intro ──────────────────────────────────────────────────────────── -->
     <div class="tt-intro" id="tt-intro">
         <h2>👁️ Target Tracking</h2>
@@ -513,6 +526,10 @@ function _ttSnapRound(roundIdx, rounds) {
 {% else %}
 const TT_CHALLENGE_SNAPSHOT = null;
 {% endif %}
+
+// Live challenge countdown
+const TT_LIVE_START_AT = {{ live_start_at | tojson if live_start_at else 'null' }};
+const TT_LIVE_COUNTDOWN_SECONDS = 5;
 
 /* Flash mechanic constants */
 const FLASH_DURATION_MS  = 400;
@@ -1116,6 +1133,30 @@ function handleResize() {
 
 window.addEventListener('resize',            handleResize);
 window.addEventListener('orientationchange', handleResize);
+
+// Live challenge countdown — auto-start game when overlay dismisses
+if (TT_LIVE_START_AT) {
+    var ttLiveStart = new Date(TT_LIVE_START_AT);
+    var ttOverlay   = document.getElementById('tt-live-overlay');
+    var ttCountEl   = document.getElementById('tt-live-countdown');
+    var ttBtnStart  = document.getElementById('tt-btn-start');
+    if (ttBtnStart) ttBtnStart.disabled = true;
+
+    var ttLiveTick = setInterval(function () {
+        var elapsed   = Math.floor((Date.now() - ttLiveStart.getTime()) / 1000);
+        var remaining = TT_LIVE_COUNTDOWN_SECONDS - elapsed;
+        if (remaining <= 0) {
+            clearInterval(ttLiveTick);
+            if (ttOverlay) ttOverlay.style.display = 'none';
+            if (ttBtnStart) {
+                ttBtnStart.disabled = false;
+                startGame();
+            }
+        } else {
+            if (ttCountEl) ttCountEl.textContent = remaining;
+        }
+    }, 200);
+}
 
 })();
 </script>
