@@ -40,12 +40,16 @@ from ...models.user import User
 from ...models.virtual_training import VirtualTrainingAttempt, VirtualTrainingGame
 from ...models.vt_challenge import (
     CHALLENGE_COMPATIBLE_GAMES,
+    DEFAULT_COMPLETION_WINDOW,
     ChallengeStatus,
     VirtualTrainingChallenge,
     get_active_challenge,
+    make_completion_deadline,
     make_expires_at,
+    validate_completion_window,
 )
 from ...services import notification_service
+from ...services.challenge_completion_service import sweep_accepted_deadlines
 from ...services.challenge_snapshot_service import (
     generate_snapshot,
     validate_challenge_mode,
@@ -105,6 +109,8 @@ def _build_inbox_row(
     if ch.status == ChallengeStatus.COMPLETED:
         if ch.is_draw:
             outcome = "draw"
+        elif ch.forfeit_user_id is not None:
+            outcome = "forfeit_win" if ch.winner_id == user_id else "forfeit_loss"
         elif ch.winner_id == user_id:
             outcome = "won"
         else:
@@ -122,23 +128,26 @@ def _build_inbox_row(
         outcome = ch.status.value
 
     return {
-        "id":            ch.id,
-        "status":        ch.status.value,
-        "is_challenger": is_challenger,
-        "opponent_name": (opponent.nickname or opponent.email) if opponent else "Unknown",
-        "game_name":     game.name if game else "—",
-        "game_code":     game_code,
-        "difficulty_level": ch.difficulty_level,
-        "message":       ch.message,
-        "expires_at":    ch.expires_at,
-        "created_at":    ch.created_at,
-        "completed_at":  ch.completed_at,
-        "outcome":       outcome,
-        "play_url":      play_url,
-        "my_score":      my_attempt.score_normalized  if my_attempt  else None,
-        "opp_score":     opp_attempt.score_normalized if opp_attempt else None,
-        "winner_id":     ch.winner_id,
-        "is_draw":       ch.is_draw,
+        "id":                    ch.id,
+        "status":                ch.status.value,
+        "is_challenger":         is_challenger,
+        "opponent_name":         (opponent.nickname or opponent.email) if opponent else "Unknown",
+        "game_name":             game.name if game else "—",
+        "game_code":             game_code,
+        "difficulty_level":      ch.difficulty_level,
+        "message":               ch.message,
+        "expires_at":            ch.expires_at,
+        "created_at":            ch.created_at,
+        "completed_at":          ch.completed_at,
+        "outcome":               outcome,
+        "play_url":              play_url,
+        "my_score":              my_attempt.score_normalized  if my_attempt  else None,
+        "opp_score":             opp_attempt.score_normalized if opp_attempt else None,
+        "winner_id":             ch.winner_id,
+        "is_draw":               ch.is_draw,
+        "completion_deadline":   ch.completion_deadline,
+        "forfeit_user_id":       ch.forfeit_user_id,
+        "forfeit_reason":        ch.forfeit_reason,
     }
 
 
@@ -171,6 +180,16 @@ async def challenge_inbox(
                      if c.status in (ChallengeStatus.PENDING, ChallengeStatus.ACCEPTED)]
     terminal_chs  = [c for c in all_challenges
                      if c.status not in (ChallengeStatus.PENDING, ChallengeStatus.ACCEPTED)]
+
+    # Lazy deadline sweep — apply forfeit/no_contest for overdue ACCEPTED challenges
+    if sweep_accepted_deadlines(db, active_chs):
+        db.commit()
+        # Re-partition after sweep: some active_chs may now be terminal
+        active_chs   = [c for c in active_chs
+                        if c.status in (ChallengeStatus.PENDING, ChallengeStatus.ACCEPTED)]
+        terminal_chs = [c for c in all_challenges
+                        if c.status not in (ChallengeStatus.PENDING, ChallengeStatus.ACCEPTED)]
+
     terminal_chs  = terminal_chs[:_COMPLETED_LIMIT]
 
     shown = active_chs + terminal_chs
@@ -292,11 +311,12 @@ async def challenge_send_form(
 
 @router.post("/challenges/send")
 async def send_challenge(
-    challenged_user_id: int           = Form(...),
-    game_id:            int           = Form(...),
-    message:            str | None    = Form(default=None),
-    difficulty_level:   str | None    = Form(default=None),
-    challenge_mode:     str | None    = Form(default=None),
+    challenged_user_id:        int        = Form(...),
+    game_id:                   int        = Form(...),
+    message:                   str | None = Form(default=None),
+    difficulty_level:          str | None = Form(default=None),
+    challenge_mode:            str | None = Form(default=None),
+    completion_window_seconds: int | None = Form(default=None),
     db: Session = Depends(get_db),
     user: User  = Depends(get_current_user_web),
 ):
@@ -354,6 +374,16 @@ async def send_challenge(
                 url="/challenges/send?error=invalid_challenge_mode", status_code=303
             )
 
+    # Completion window validation — default 86400 (24h); completion_deadline set on accept
+    resolved_window = DEFAULT_COMPLETION_WINDOW
+    if isinstance(completion_window_seconds, int):
+        try:
+            resolved_window = validate_completion_window(completion_window_seconds)
+        except ValueError:
+            return RedirectResponse(
+                url="/challenges/send?error=invalid_completion_window", status_code=303
+            )
+
     # Snapshot generation — must succeed or challenge is NOT created
     try:
         snapshot = generate_snapshot(
@@ -368,16 +398,17 @@ async def send_challenge(
 
     now = datetime.now(timezone.utc)
     challenge = VirtualTrainingChallenge(
-        challenger_id             = user.id,
-        challenged_id             = challenged_user_id,
-        game_id                   = game_id,
-        status                    = ChallengeStatus.PENDING,
-        message                   = _trim_message(message),
-        difficulty_level          = resolved_difficulty,
-        challenge_mode            = resolved_mode,
-        challenge_config_snapshot = snapshot,
-        expires_at                = make_expires_at(now),
-        created_at                = now,
+        challenger_id              = user.id,
+        challenged_id              = challenged_user_id,
+        game_id                    = game_id,
+        status                     = ChallengeStatus.PENDING,
+        message                    = _trim_message(message),
+        difficulty_level           = resolved_difficulty,
+        challenge_mode             = resolved_mode,
+        challenge_config_snapshot  = snapshot,
+        completion_window_seconds  = resolved_window,
+        expires_at                 = make_expires_at(now),
+        created_at                 = now,
     )
     db.add(challenge)
     db.flush()
@@ -420,8 +451,13 @@ async def accept_challenge(
         db.commit()
         return RedirectResponse(url="/challenges?error=challenge_expired", status_code=303)
 
-    challenge.status     = ChallengeStatus.ACCEPTED
-    challenge.updated_at = now
+    challenge.status      = ChallengeStatus.ACCEPTED
+    challenge.accepted_at = now
+    challenge.updated_at  = now
+    if challenge.completion_window_seconds is not None:
+        challenge.completion_deadline = make_completion_deadline(
+            now, challenge.completion_window_seconds
+        )
 
     notification_service.create_notification(
         db=db,

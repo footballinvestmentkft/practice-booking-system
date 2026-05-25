@@ -4234,6 +4234,17 @@
             "title": "Challenged User Id",
             "type": "integer"
           },
+          "completion_window_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completion Window Seconds"
+          },
           "difficulty_level": {
             "anyOf": [
               {
@@ -11455,7 +11466,8 @@
           "vt_challenge_declined",
           "vt_challenge_cancelled",
           "vt_challenge_expired",
-          "vt_challenge_completed"
+          "vt_challenge_completed",
+          "vt_challenge_forfeited"
         ],
         "title": "NotificationType",
         "type": "string"

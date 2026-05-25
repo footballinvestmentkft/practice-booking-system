@@ -107,6 +107,7 @@ def _challenge(
     expires_at=None,
     challenger_attempt_id=None,
     challenged_attempt_id=None,
+    completion_deadline=None,
 ):
     c = MagicMock(spec=VirtualTrainingChallenge)
     c.id = cid
@@ -117,6 +118,7 @@ def _challenge(
     c.expires_at = expires_at or (datetime.now(timezone.utc) + timedelta(days=5))
     c.challenger_attempt_id = challenger_attempt_id
     c.challenged_attempt_id = challenged_attempt_id
+    c.completion_deadline = completion_deadline
     c.winner_id = None
     c.is_draw = False
     c.completed_at = None

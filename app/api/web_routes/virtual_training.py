@@ -15,6 +15,7 @@ from ...models.user import User
 from ...models.virtual_training import VirtualTrainingAttempt, VirtualTrainingGame
 from ...models.vt_challenge import ChallengeStatus, VirtualTrainingChallenge
 from ...services import notification_service
+from ...services.challenge_completion_service import apply_forfeit_if_deadline_passed
 from ...services.virtual_training_service import VirtualTrainingService
 from .helpers import require_student_onboarding
 from .student_features import _spec_ctx
@@ -113,6 +114,12 @@ def _validate_challenge_pre_submit(
             status_code=409,
         )
 
+    # Late submit guard: block if deadline passed and this side has no prior attempt
+    if challenge.completion_deadline is not None and challenge.completion_deadline <= now:
+        apply_forfeit_if_deadline_passed(db, challenge, now)
+        db.commit()
+        return None, JSONResponse({"error": "challenge_deadline_passed"}, status_code=410)
+
     return challenge, None
 
 
@@ -137,7 +144,7 @@ def _send_completion_notifications(
             title="VT Challenge Completed",
             message=_msg(uid),
             notification_type=NotificationType.VT_CHALLENGE_COMPLETED,
-            link="/friends",
+            link="/challenges",
         )
 
 

@@ -75,6 +75,11 @@ def _challenge(
     game_id=1,
     status=ChallengeStatus.PENDING,
     expires_at=None,
+    completion_window_seconds=None,
+    completion_deadline=None,
+    accepted_at=None,
+    challenger_attempt_id=None,
+    challenged_attempt_id=None,
 ):
     c = MagicMock(spec=VirtualTrainingChallenge)
     c.id = cid
@@ -83,6 +88,11 @@ def _challenge(
     c.game_id = game_id
     c.status = status
     c.expires_at = expires_at or (datetime.now(timezone.utc) + timedelta(days=7))
+    c.completion_window_seconds = completion_window_seconds
+    c.completion_deadline = completion_deadline
+    c.accepted_at = accepted_at
+    c.challenger_attempt_id = challenger_attempt_id
+    c.challenged_attempt_id = challenged_attempt_id
     return c
 
 
@@ -650,3 +660,127 @@ class TestModelSnapshotColumns:
         args = VirtualTrainingChallenge.__table_args__
         names = {c.name for c in args if isinstance(c, CheckConstraint)}
         assert "ck_vt_challenge_mode_valid" in names
+
+
+# ── PR-P1: Completion window / deadline / forfeit ─────────────────────────────
+
+class TestCompletionWindowModel:
+    """ASYNC-01..03: model helpers."""
+
+    def test_async01_new_columns_present(self):
+        cols = {c.key for c in VirtualTrainingChallenge.__table__.columns}
+        assert {"accepted_at", "completion_window_seconds",
+                "completion_deadline", "forfeit_user_id",
+                "forfeit_reason"}.issubset(cols)
+
+    def test_async01b_forfeit_reason_check_constraint_present(self):
+        args = VirtualTrainingChallenge.__table_args__
+        names = {c.name for c in args if isinstance(c, CheckConstraint)}
+        assert "ck_vt_forfeit_reason_valid" in names
+
+    def test_async02_valid_completion_windows_has_five_values(self):
+        from app.models.vt_challenge import VALID_COMPLETION_WINDOWS
+        assert len(VALID_COMPLETION_WINDOWS) == 5
+        assert {1800, 3600, 86400, 259200, 604800} == VALID_COMPLETION_WINDOWS
+
+    def test_async03a_validate_completion_window_accepts_all_valid(self):
+        from app.models.vt_challenge import validate_completion_window, VALID_COMPLETION_WINDOWS
+        for v in VALID_COMPLETION_WINDOWS:
+            assert validate_completion_window(v) == v
+
+    def test_async03b_validate_completion_window_rejects_invalid(self):
+        from app.models.vt_challenge import validate_completion_window
+        import pytest
+        with pytest.raises(ValueError):
+            validate_completion_window(9999)
+
+    def test_async03c_make_completion_deadline_correct(self):
+        from app.models.vt_challenge import make_completion_deadline
+        t0 = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+        result = make_completion_deadline(t0, 86400)
+        assert result == t0 + timedelta(seconds=86400)
+
+
+class TestSendChallengeCompletionWindow:
+    """ASYNC-04, ASYNC-05, ASYNC-15: send_challenge completion window handling."""
+
+    def _send(self, completion_window_seconds=None):
+        from app.api.web_routes.vt_challenges import send_challenge
+        user   = _user(uid=1)
+        target = _user(uid=2)
+        game   = _game(code="memory_sequence")
+        db     = _db()
+        db.query.return_value.filter.return_value.first.side_effect = [target, game]
+
+        _snap = {"game_code": "memory_sequence", "grid_tiles": 12, "phases": []}
+        with patch(f"{_BASE}.is_friends", return_value=True), \
+             patch(f"{_BASE}.get_active_challenge", return_value=None), \
+             patch(f"{_BASE}.generate_snapshot", return_value=_snap), \
+             patch(f"{_BASE}.notification_service"):
+            result = _run(send_challenge(
+                challenged_user_id=2,
+                game_id=1,
+                message=None,
+                completion_window_seconds=completion_window_seconds,
+                db=db,
+                user=user,
+            ))
+        return result, db
+
+    def test_async04_default_window_stored_when_none(self):
+        result, db = self._send(completion_window_seconds=None)
+        assert "success=challenge_sent" in result.headers["location"]
+        added = db.add.call_args[0][0]
+        assert added.completion_window_seconds == 86400
+
+    def test_async05_explicit_valid_window_stored(self):
+        result, db = self._send(completion_window_seconds=3600)
+        assert "success=challenge_sent" in result.headers["location"]
+        added = db.add.call_args[0][0]
+        assert added.completion_window_seconds == 3600
+
+    def test_async15_invalid_window_redirects_with_error(self):
+        result, db = self._send(completion_window_seconds=9999)
+        assert isinstance(result, RedirectResponse)
+        assert "error=invalid_completion_window" in result.headers["location"]
+        db.add.assert_not_called()
+
+
+class TestAcceptChallengeDeadline:
+    """ASYNC-10: accept_challenge sets accepted_at + completion_deadline."""
+
+    def test_async10_accept_sets_accepted_at_and_deadline(self):
+        from app.api.web_routes.vt_challenges import accept_challenge
+        user = _user(uid=2)
+        row = _challenge(
+            challenger_id=1, challenged_id=2,
+            status=ChallengeStatus.PENDING,
+            completion_window_seconds=86400,
+        )
+        db = _db()
+        db.query.return_value.filter.return_value.first.return_value = row
+
+        with patch(f"{_BASE}.notification_service"):
+            _run(accept_challenge(challenge_id=10, db=db, user=user))
+
+        assert row.accepted_at is not None
+        assert row.completion_deadline is not None
+        delta = row.completion_deadline - row.accepted_at
+        assert abs(delta.total_seconds() - 86400) < 2
+
+    def test_async10b_null_window_no_deadline_set(self):
+        from app.api.web_routes.vt_challenges import accept_challenge
+        user = _user(uid=2)
+        row = _challenge(
+            challenger_id=1, challenged_id=2,
+            status=ChallengeStatus.PENDING,
+            completion_window_seconds=None,
+        )
+        db = _db()
+        db.query.return_value.filter.return_value.first.return_value = row
+
+        with patch(f"{_BASE}.notification_service"):
+            _run(accept_challenge(challenge_id=10, db=db, user=user))
+
+        # completion_deadline should remain None since window is None
+        assert row.completion_deadline is None

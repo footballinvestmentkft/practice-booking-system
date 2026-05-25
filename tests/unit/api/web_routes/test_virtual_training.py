@@ -1207,3 +1207,91 @@ class TestSnapshotGetRoutes:
         assert "_snapSeq(" in content
         # The sampleIndices function is still defined (used for normal mode in else branch)
         assert "sampleIndices" in content
+
+
+# ── PR-P1: Late submit guard + notification link ──────────────────────────────
+
+class TestLateSubmitGuard:
+    """ASYNC-06, ASYNC-13: _validate_challenge_pre_submit blocks past-deadline submits."""
+
+    _BASE_VT = "app.api.web_routes.virtual_training"
+
+    def _ch_mock(self, challenger_attempt_id=None, challenged_attempt_id=None):
+        from app.models.vt_challenge import ChallengeStatus, VirtualTrainingChallenge
+        from datetime import datetime, timezone
+        c = MagicMock(spec=VirtualTrainingChallenge)
+        c.id = 10
+        c.challenger_id = 1
+        c.challenged_id = 2
+        c.game_id = 5
+        c.status = ChallengeStatus.ACCEPTED
+        c.expires_at = datetime(2099, 1, 1, tzinfo=timezone.utc)
+        c.completion_deadline = datetime(2020, 1, 1, tzinfo=timezone.utc)  # past
+        c.challenger_attempt_id = challenger_attempt_id
+        c.challenged_attempt_id = challenged_attempt_id
+        return c
+
+    def test_async06_deadline_passed_opponent_played_returns_410(self):
+        """Late submit blocked: deadline past, opponent already has an attempt."""
+        from app.api.web_routes.virtual_training import _validate_challenge_pre_submit
+        ch = self._ch_mock(challenger_attempt_id=None, challenged_attempt_id=88)
+        db = MagicMock()
+        db.query.return_value.filter.return_value.first.return_value = ch
+
+        with patch(f"{self._BASE_VT}.apply_forfeit_if_deadline_passed") as mock_forfeit:
+            challenge_result, err = _validate_challenge_pre_submit(db, 10, user_id=1, game_id=5)
+
+        assert challenge_result is None
+        assert err is not None
+        assert err.status_code == 410
+        mock_forfeit.assert_called_once()
+        db.commit.assert_called_once()
+
+    def test_async13_deadline_passed_neither_played_returns_410(self):
+        """Late submit blocked: deadline past, neither player has attempted yet."""
+        from app.api.web_routes.virtual_training import _validate_challenge_pre_submit
+        ch = self._ch_mock(challenger_attempt_id=None, challenged_attempt_id=None)
+        db = MagicMock()
+        db.query.return_value.filter.return_value.first.return_value = ch
+
+        with patch(f"{self._BASE_VT}.apply_forfeit_if_deadline_passed") as mock_forfeit:
+            challenge_result, err = _validate_challenge_pre_submit(db, 10, user_id=1, game_id=5)
+
+        assert challenge_result is None
+        assert err is not None
+        assert err.status_code == 410
+        mock_forfeit.assert_called_once()
+        db.commit.assert_called_once()
+
+
+class TestCompletionNotificationLink:
+    """ASYNC-11: _send_completion_notifications uses /challenges not /friends."""
+
+    def test_async11_winner_notification_links_to_challenges(self):
+        from app.api.web_routes.virtual_training import _send_completion_notifications
+        from app.models.notification import NotificationType
+        ch = MagicMock()
+        ch.challenger_id = 1
+        ch.challenged_id = 2
+        db = MagicMock()
+
+        with patch("app.api.web_routes.virtual_training.notification_service") as mock_svc:
+            _send_completion_notifications(db, ch, winner_id=1, is_draw=False)
+
+        assert mock_svc.create_notification.call_count == 2
+        for call in mock_svc.create_notification.call_args_list:
+            assert call.kwargs["link"] == "/challenges"
+            assert call.kwargs["notification_type"] == NotificationType.VT_CHALLENGE_COMPLETED
+
+    def test_async11b_draw_notification_links_to_challenges(self):
+        from app.api.web_routes.virtual_training import _send_completion_notifications
+        ch = MagicMock()
+        ch.challenger_id = 1
+        ch.challenged_id = 2
+        db = MagicMock()
+
+        with patch("app.api.web_routes.virtual_training.notification_service") as mock_svc:
+            _send_completion_notifications(db, ch, winner_id=None, is_draw=True)
+
+        for call in mock_svc.create_notification.call_args_list:
+            assert call.kwargs["link"] == "/challenges"

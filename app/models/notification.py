@@ -38,6 +38,7 @@ class NotificationType(enum.Enum):
     VT_CHALLENGE_CANCELLED = "vt_challenge_cancelled"
     VT_CHALLENGE_EXPIRED   = "vt_challenge_expired"
     VT_CHALLENGE_COMPLETED = "vt_challenge_completed"
+    VT_CHALLENGE_FORFEITED = "vt_challenge_forfeited"
 
 
 class Notification(Base):

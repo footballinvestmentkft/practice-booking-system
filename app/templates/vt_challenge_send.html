@@ -86,8 +86,9 @@
     {% elif error == "game_not_found"    %}Game not found.
     {% elif error == "game_not_compatible" %}This game does not support challenges.
     {% elif error == "invalid_difficulty" %}Invalid difficulty selected.
-    {% elif error == "expert_locked"     %}Expert difficulty is not unlocked yet (need 70%+ on 3 Hard attempts).
-    {% elif error == "user_not_found"    %}Player not found.
+    {% elif error == "expert_locked"             %}Expert difficulty is not unlocked yet (need 70%+ on 3 Hard attempts).
+    {% elif error == "user_not_found"            %}Player not found.
+    {% elif error == "invalid_completion_window" %}Invalid completion window selected.
     {% else %}{{ error }}
     {% endif %}
 </div>
@@ -176,6 +177,21 @@
                     <div class="cs-diff-locked">Unlock: 70%+ on 3 Hard attempts</div>
                 </div>
                 {% endif %}
+            </div>
+        </div>
+
+        {# ── Completion window ── #}
+        <div class="cs-field">
+            <label class="cs-label" for="cs-window">Completion Window</label>
+            <select name="completion_window_seconds" id="cs-window" class="cs-select">
+                <option value="1800">30 minutes</option>
+                <option value="3600">1 hour</option>
+                <option value="86400" selected>24 hours (default)</option>
+                <option value="259200">3 days</option>
+                <option value="604800">7 days</option>
+            </select>
+            <div style="font-size:0.75rem;color:var(--app-text-muted);margin-top:0.3rem;">
+                Timer starts after opponent accepts.
             </div>
         </div>
 

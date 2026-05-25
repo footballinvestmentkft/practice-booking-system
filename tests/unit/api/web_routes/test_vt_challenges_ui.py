@@ -86,6 +86,9 @@ def _challenge(
     completed_at=None,
     message=None,
     created_at=None,
+    forfeit_user_id=None,
+    forfeit_reason=None,
+    completion_deadline=None,
 ):
     c = MagicMock(spec=VirtualTrainingChallenge)
     c.id                    = cid
@@ -102,6 +105,9 @@ def _challenge(
     c.completed_at          = completed_at
     c.message               = message
     c.created_at            = created_at or datetime.now(timezone.utc)
+    c.forfeit_user_id       = forfeit_user_id
+    c.forfeit_reason        = forfeit_reason
+    c.completion_deadline   = completion_deadline
     return c
 
 
@@ -597,11 +603,12 @@ class TestNotificationLinks:
     def test_ui25a_accept_notif_link(self):
         from app.api.web_routes.vt_challenges import accept_challenge
         ch = MagicMock()
-        ch.id             = 10
-        ch.challenged_id  = 2
-        ch.challenger_id  = 1
-        ch.status         = ChallengeStatus.PENDING
-        ch.expires_at     = datetime.now(timezone.utc) + timedelta(days=7)
+        ch.id                       = 10
+        ch.challenged_id            = 2
+        ch.challenger_id            = 1
+        ch.status                   = ChallengeStatus.PENDING
+        ch.expires_at               = datetime.now(timezone.utc) + timedelta(days=7)
+        ch.completion_window_seconds = None
         db = self._mock_db_for_challenge(ch)
         user = _user(uid=2)
 
