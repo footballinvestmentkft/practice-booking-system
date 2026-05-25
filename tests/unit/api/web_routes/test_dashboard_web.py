@@ -572,3 +572,256 @@ class TestGetLfaAgeCategory:
         cat, name, rng, desc = get_lfa_age_category(dob)
         assert cat is None
         assert "minimum" in desc
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Social card counts — DASH-SOC-01..13
+# ──────────────────────────────────────────────────────────────────────────────
+
+def _social_db(scalar_returns=(0, 0, 0)):
+    """DB mock for social count tests. Uses gancuju-player to bypass LFA PP block."""
+    license_obj = MagicMock()
+    license_obj.id = 1
+    license_obj.onboarding_completed = True
+    license_obj.football_skills = None
+    db = MagicMock()
+    # first() sequence: user_license, has_enrollment, has_active_enrollment
+    db.query.return_value.filter.return_value.first.side_effect = [license_obj, None, None]
+    db.query.return_value.filter.return_value.order_by.return_value.all.return_value = []
+    db.query.return_value.filter.return_value.all.return_value = []
+    # three scalar() calls → social_pending_friends, social_pending_challenges, social_active_challenges
+    db.query.return_value.filter.return_value.scalar.side_effect = list(scalar_returns)
+    return db
+
+
+class TestSocialCardCounts:
+
+    def test_dash_soc_01_all_zero_counts_in_context(self):
+        """DASH-SOC-01: scalar=0,0,0 → all three social vars are 0 in template context."""
+        user = _student()
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(spec_dashboard(request=_req(), spec_type="gancuju-player",
+                                db=_social_db((0, 0, 0)), user=user))
+        ctx = mock_tmpl.TemplateResponse.call_args.args[1]
+        assert ctx["social_pending_friends"] == 0
+        assert ctx["social_pending_challenges"] == 0
+        assert ctx["social_active_challenges"] == 0
+
+    def test_dash_soc_02_pending_friends_propagated(self):
+        """DASH-SOC-02: scalar=3,0,0 → social_pending_friends=3 in context."""
+        user = _student()
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(spec_dashboard(request=_req(), spec_type="gancuju-player",
+                                db=_social_db((3, 0, 0)), user=user))
+        ctx = mock_tmpl.TemplateResponse.call_args.args[1]
+        assert ctx["social_pending_friends"] == 3
+
+    def test_dash_soc_03_pending_challenges_propagated(self):
+        """DASH-SOC-03: scalar=0,2,0 → social_pending_challenges=2 in context."""
+        user = _student()
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(spec_dashboard(request=_req(), spec_type="gancuju-player",
+                                db=_social_db((0, 2, 0)), user=user))
+        ctx = mock_tmpl.TemplateResponse.call_args.args[1]
+        assert ctx["social_pending_challenges"] == 2
+
+    def test_dash_soc_04_active_challenges_propagated(self):
+        """DASH-SOC-04: scalar=0,0,5 → social_active_challenges=5 in context."""
+        user = _student()
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(spec_dashboard(request=_req(), spec_type="gancuju-player",
+                                db=_social_db((0, 0, 5)), user=user))
+        ctx = mock_tmpl.TemplateResponse.call_args.args[1]
+        assert ctx["social_active_challenges"] == 5
+
+    def test_dash_soc_05_all_counts_nonzero_simultaneously(self):
+        """DASH-SOC-05: scalar=4,3,2 → all three social vars correct simultaneously."""
+        user = _student()
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(spec_dashboard(request=_req(), spec_type="gancuju-player",
+                                db=_social_db((4, 3, 2)), user=user))
+        ctx = mock_tmpl.TemplateResponse.call_args.args[1]
+        assert ctx["social_pending_friends"] == 4
+        assert ctx["social_pending_challenges"] == 3
+        assert ctx["social_active_challenges"] == 2
+
+    def test_dash_soc_06_scalar_none_falls_back_to_zero(self):
+        """DASH-SOC-06: scalar returns None → `or 0` → context shows 0 not None."""
+        user = _student()
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(spec_dashboard(request=_req(), spec_type="gancuju-player",
+                                db=_social_db((None, None, None)), user=user))
+        ctx = mock_tmpl.TemplateResponse.call_args.args[1]
+        assert ctx["social_pending_friends"] == 0
+        assert ctx["social_pending_challenges"] == 0
+        assert ctx["social_active_challenges"] == 0
+
+    def test_dash_soc_07_social_keys_present_for_all_spec_types(self):
+        """DASH-SOC-07: social keys present for non-LFA spec (gancuju-player)."""
+        user = _student()
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(spec_dashboard(request=_req(), spec_type="gancuju-player",
+                                db=_social_db((0, 0, 0)), user=user))
+        ctx = mock_tmpl.TemplateResponse.call_args.args[1]
+        assert "social_pending_friends" in ctx
+        assert "social_pending_challenges" in ctx
+        assert "social_active_challenges" in ctx
+
+    def test_dash_soc_08_social_counts_are_int_type(self):
+        """DASH-SOC-08: social count values are int (not None, not MagicMock)."""
+        user = _student()
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(spec_dashboard(request=_req(), spec_type="gancuju-player",
+                                db=_social_db((7, 0, 1)), user=user))
+        ctx = mock_tmpl.TemplateResponse.call_args.args[1]
+        assert isinstance(ctx["social_pending_friends"], int)
+        assert isinstance(ctx["social_pending_challenges"], int)
+        assert isinstance(ctx["social_active_challenges"], int)
+
+    def test_dash_soc_09_template_is_dashboard_student_new(self):
+        """DASH-SOC-09: template name unchanged — dashboard_student_new.html."""
+        user = _student()
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(spec_dashboard(request=_req(), spec_type="gancuju-player",
+                                db=_social_db((0, 0, 0)), user=user))
+        assert mock_tmpl.TemplateResponse.call_args.args[0] == "dashboard_student_new.html"
+
+    def test_dash_soc_10_high_count_value(self):
+        """DASH-SOC-10: large pending_friends value (99) propagates correctly."""
+        user = _student()
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(spec_dashboard(request=_req(), spec_type="gancuju-player",
+                                db=_social_db((99, 0, 0)), user=user))
+        ctx = mock_tmpl.TemplateResponse.call_args.args[1]
+        assert ctx["social_pending_friends"] == 99
+
+    def test_dash_soc_11_regression_credit_balance_still_present(self):
+        """DASH-SOC-11: regression — credit_balance still in context alongside social vars."""
+        user = _student()
+        user.credit_balance = 42
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(spec_dashboard(request=_req(), spec_type="gancuju-player",
+                                db=_social_db((0, 0, 0)), user=user))
+        ctx = mock_tmpl.TemplateResponse.call_args.args[1]
+        assert ctx["credit_balance"] == 42
+        assert "social_pending_friends" in ctx  # social vars present too
+
+    def test_dash_soc_12_regression_pp_vars_absent_for_gancuju(self):
+        """DASH-SOC-12: regression — PP context vars (public_profile_url) are None for gancuju-player."""
+        user = _student()
+        with patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(spec_dashboard(request=_req(), spec_type="gancuju-player",
+                                db=_social_db((0, 0, 0)), user=user))
+        ctx = mock_tmpl.TemplateResponse.call_args.args[1]
+        assert ctx.get("public_profile_url") is None  # only set for LFA
+
+    def test_dash_soc_13_regression_lfa_spec_still_renders_with_social_vars(self):
+        """DASH-SOC-13: regression — LFA spec dashboard renders and includes social vars (no regression)."""
+        user = _student()
+        license_obj = MagicMock()
+        license_obj.id = 1
+        db = MagicMock()
+        db.query.return_value.filter.return_value.first.side_effect = [license_obj, None, None]
+        db.query.return_value.filter.return_value.order_by.return_value.all.return_value = []
+        db.query.return_value.filter.return_value.all.return_value = []
+        db.query.return_value.filter.return_value.scalar.side_effect = [1, 0, 2]
+
+        with patch(f"{_BASE}.get_lfa_age_category", return_value=("PRE", "PRE", "5-13 years", "Age 10")), \
+             patch(f"{_BASE}._CardDraftService") as mock_cds, \
+             patch(f"{_BASE}._build_published_grid_state", return_value=None), \
+             patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_cds.get_player_card_draft.return_value = MagicMock(published_data={})
+            mock_cds.is_published.return_value = False
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(spec_dashboard(request=_req(), spec_type="lfa-football-player", db=db, user=user))
+
+        ctx = mock_tmpl.TemplateResponse.call_args.args[1]
+        assert ctx["social_pending_friends"] == 1
+        assert ctx["social_active_challenges"] == 2
+        assert ctx["public_profile_url"] is not None  # PP vars still present for LFA
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Public profile — Send Challenge button states — SC-PP-01..05
+# ──────────────────────────────────────────────────────────────────────────────
+
+from jinja2 import Environment, FileSystemLoader
+import os as _os
+
+_TEMPLATE_DIR = _os.path.join(
+    _os.path.dirname(__file__), "..", "..", "..", "..", "app", "templates"
+)
+
+
+def _render_player_profile(fp_state: str, profile_user_id: int = 42, viewer_id: int = 99) -> str:
+    """Render the player_profile.html friendship panel section with given fp state."""
+    env = Environment(
+        loader=FileSystemLoader(_TEMPLATE_DIR),
+        autoescape=True,
+    )
+    # Minimal mock context — only what the friendship panel section needs
+    profile_user = MagicMock()
+    profile_user.id = profile_user_id
+    profile_user.full_name = "Test Player"
+    profile_user.username = "testplayer"
+
+    fp = MagicMock()
+    fp.state = fp_state
+
+    # Use render_string approach via get_template + render
+    template = env.get_template("public/player_profile.html")
+    return template.render(
+        request=MagicMock(),
+        profile_user=profile_user,
+        user=MagicMock(id=viewer_id),
+        fp=fp,
+        friendship_panel=fp,
+        profile_grid_slots=[],
+        is_own_profile=(fp_state == "own_profile"),
+        is_authenticated=(fp_state != "anonymous"),
+        highlight_video=None,
+        card_draft=MagicMock(published_data=None),
+    )
+
+
+class TestPublicProfileChallengeButton:
+
+    def test_sc_pp_01_accepted_state_has_challenge_link(self):
+        """SC-PP-01: accepted friendship state → Challenge link present."""
+        html = _render_player_profile("accepted", profile_user_id=42)
+        assert "/challenges/send?friend=42" in html
+        assert "⚔" in html or "Challenge" in html
+
+    def test_sc_pp_02_own_profile_no_challenge_link(self):
+        """SC-PP-02: own_profile state → no Challenge link."""
+        html = _render_player_profile("own_profile", profile_user_id=99, viewer_id=99)
+        assert "/challenges/send" not in html
+
+    def test_sc_pp_03_none_state_no_challenge_link(self):
+        """SC-PP-03: none/no-friendship state → no Challenge link."""
+        html = _render_player_profile("none", profile_user_id=42)
+        assert "/challenges/send" not in html
+
+    def test_sc_pp_04_pending_states_no_challenge_link(self):
+        """SC-PP-04: pending_sent/pending_received states → no Challenge link."""
+        for state in ("pending_sent", "pending_received"):
+            html = _render_player_profile(state, profile_user_id=42)
+            assert "/challenges/send" not in html, f"Challenge link found in state={state}"
+
+    def test_sc_pp_05_blocked_anonymous_no_challenge_link(self):
+        """SC-PP-05: blocked/anonymous states → no Challenge link."""
+        for state in ("blocked", "anonymous"):
+            html = _render_player_profile(state, profile_user_id=42)
+            assert "/challenges/send" not in html, f"Challenge link found in state={state}"

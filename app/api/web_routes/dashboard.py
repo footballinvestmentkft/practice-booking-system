@@ -12,7 +12,9 @@ import re
 
 import httpx as _httpx
 
-from sqlalchemy import func as sqlfunc
+from sqlalchemy import func as sqlfunc, or_, and_
+from ...models.friendship import Friendship, FriendshipStatus
+from ...models.vt_challenge import VirtualTrainingChallenge, ChallengeStatus
 
 from ...database import get_db
 from ...dependencies import get_current_user_web
@@ -642,6 +644,25 @@ async def spec_dashboard(
     # Get user credit balance
     credit_balance = user.credit_balance if hasattr(user, 'credit_balance') else 0
 
+    # Social counts (all spec types)
+    social_pending_friends = db.query(sqlfunc.count(Friendship.id)).filter(
+        Friendship.addressee_id == user.id,
+        Friendship.status == FriendshipStatus.PENDING
+    ).scalar() or 0
+
+    social_pending_challenges = db.query(sqlfunc.count(VirtualTrainingChallenge.id)).filter(
+        VirtualTrainingChallenge.challenged_id == user.id,
+        VirtualTrainingChallenge.status == ChallengeStatus.PENDING
+    ).scalar() or 0
+
+    social_active_challenges = db.query(sqlfunc.count(VirtualTrainingChallenge.id)).filter(
+        or_(
+            VirtualTrainingChallenge.challenger_id == user.id,
+            VirtualTrainingChallenge.challenged_id == user.id,
+        ),
+        VirtualTrainingChallenge.status == ChallengeStatus.ACCEPTED
+    ).scalar() or 0
+
     # Map spec type to header gradient class
     _spec_header_map = {
         "LFA_FOOTBALL_PLAYER": "hdr-football",
@@ -704,6 +725,10 @@ async def spec_dashboard(
             "profile_grid_filled_slots": profile_grid_filled_slots,
             "profile_grid_total_slots": profile_grid_total_slots,
             "has_published_highlight_video": has_published_highlight_video,
+            # Social counts
+            "social_pending_friends": social_pending_friends,
+            "social_pending_challenges": social_pending_challenges,
+            "social_active_challenges": social_active_challenges,
         }
     )
 
