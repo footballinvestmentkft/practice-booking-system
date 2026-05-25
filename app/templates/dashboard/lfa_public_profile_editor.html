@@ -298,6 +298,68 @@
 {% endblock %}
 
 {% block content %}
+{# ── Slot macro — must be defined before the grid loops below ─────────────── #}
+{% macro _render_slot(slot) %}
+<div class="ppe-slot {% if not slot.is_empty %}filled{% endif %}"
+     id="slot-{{ slot.slot_id }}"
+     data-slot="{{ slot.slot_id }}">
+
+    <div class="ppe-slot-head">
+        <span>{{ slot.label }}</span>
+        {% if not slot.is_empty %}
+        <span class="ppe-slot-head-actions">
+            <button class="ppe-btn ppe-btn-sm ppe-btn-ghost"
+                    onclick="openPanel('{{ slot.slot_id }}')">Edit</button>
+            <button class="ppe-btn ppe-btn-sm ppe-btn-danger"
+                    onclick="removeSlot('{{ slot.slot_id }}')">Remove</button>
+        </span>
+        {% endif %}
+    </div>
+
+    {% if slot.is_empty %}
+    <div class="ppe-slot-empty" onclick="openPanel('{{ slot.slot_id }}')">
+        <div class="ppe-slot-plus">+</div>
+        <div class="ppe-slot-add-label">Add content</div>
+    </div>
+    {% else %}
+    <div class="ppe-slot-filled" id="slot-filled-{{ slot.slot_id }}">
+        {% if slot.module.provider == "youtube" %}
+        <div class="ppe-slot-provider-badge ppe-badge-youtube">▶ YouTube</div>
+        {% else %}
+        <div class="ppe-slot-provider-badge ppe-badge-tiktok">♪ TikTok</div>
+        {% endif %}
+        <div class="ppe-slot-title">{{ slot.module.title or slot.module.video_id }}</div>
+        <div class="ppe-slot-vid-id">{{ slot.module.video_id }}</div>
+    </div>
+    {% endif %}
+
+    {# Inline add/edit panel #}
+    <div class="ppe-panel" id="panel-{{ slot.slot_id }}">
+        <label class="ppe-panel-label">Video URL</label>
+        <input class="ppe-panel-input"
+               id="panel-url-{{ slot.slot_id }}"
+               type="url"
+               placeholder="Paste YouTube or TikTok video link"
+               value="{% if not slot.is_empty %}{{ slot.module.source_url }}{% endif %}">
+        <label class="ppe-panel-label">Title (optional)</label>
+        <input class="ppe-panel-input"
+               id="panel-title-{{ slot.slot_id }}"
+               type="text"
+               maxlength="80"
+               placeholder="e.g. Best goal"
+               value="{% if not slot.is_empty %}{{ slot.module.title }}{% endif %}">
+        <div class="ppe-panel-error" id="panel-err-{{ slot.slot_id }}"></div>
+        <div class="ppe-panel-actions">
+            <button class="ppe-btn ppe-btn-ghost ppe-btn-sm"
+                    onclick="closePanel('{{ slot.slot_id }}')">Cancel</button>
+            <button class="ppe-btn ppe-btn-publish ppe-btn-sm"
+                    onclick="saveSlot('{{ slot.slot_id }}')">Save Draft</button>
+        </div>
+    </div>
+
+</div>
+{% endmacro %}
+
 <div class="ppe-page">
 
     {# ── Header ──────────────────────────────────────────────────────────────── #}
@@ -371,68 +433,6 @@
 </div>{# .ppe-page #}
 
 <div id="ppe-toast"></div>
-
-{# ── Slot macro ──────────────────────────────────────────────────────────────── #}
-{% macro _render_slot(slot) %}
-<div class="ppe-slot {% if not slot.is_empty %}filled{% endif %}"
-     id="slot-{{ slot.slot_id }}"
-     data-slot="{{ slot.slot_id }}">
-
-    <div class="ppe-slot-head">
-        <span>{{ slot.label }}</span>
-        {% if not slot.is_empty %}
-        <span class="ppe-slot-head-actions">
-            <button class="ppe-btn ppe-btn-sm ppe-btn-ghost"
-                    onclick="openPanel('{{ slot.slot_id }}')">Edit</button>
-            <button class="ppe-btn ppe-btn-sm ppe-btn-danger"
-                    onclick="removeSlot('{{ slot.slot_id }}')">Remove</button>
-        </span>
-        {% endif %}
-    </div>
-
-    {% if slot.is_empty %}
-    <div class="ppe-slot-empty" onclick="openPanel('{{ slot.slot_id }}')">
-        <div class="ppe-slot-plus">+</div>
-        <div class="ppe-slot-add-label">Add content</div>
-    </div>
-    {% else %}
-    <div class="ppe-slot-filled" id="slot-filled-{{ slot.slot_id }}">
-        {% if slot.module.provider == "youtube" %}
-        <div class="ppe-slot-provider-badge ppe-badge-youtube">▶ YouTube</div>
-        {% else %}
-        <div class="ppe-slot-provider-badge ppe-badge-tiktok">♪ TikTok</div>
-        {% endif %}
-        <div class="ppe-slot-title">{{ slot.module.title or slot.module.video_id }}</div>
-        <div class="ppe-slot-vid-id">{{ slot.module.video_id }}</div>
-    </div>
-    {% endif %}
-
-    {# Inline add/edit panel #}
-    <div class="ppe-panel" id="panel-{{ slot.slot_id }}">
-        <label class="ppe-panel-label">Video URL</label>
-        <input class="ppe-panel-input"
-               id="panel-url-{{ slot.slot_id }}"
-               type="url"
-               placeholder="Paste YouTube or TikTok video link"
-               value="{% if not slot.is_empty %}{{ slot.module.source_url }}{% endif %}">
-        <label class="ppe-panel-label">Title (optional)</label>
-        <input class="ppe-panel-input"
-               id="panel-title-{{ slot.slot_id }}"
-               type="text"
-               maxlength="80"
-               placeholder="e.g. Best goal"
-               value="{% if not slot.is_empty %}{{ slot.module.title }}{% endif %}">
-        <div class="ppe-panel-error" id="panel-err-{{ slot.slot_id }}"></div>
-        <div class="ppe-panel-actions">
-            <button class="ppe-btn ppe-btn-ghost ppe-btn-sm"
-                    onclick="closePanel('{{ slot.slot_id }}')">Cancel</button>
-            <button class="ppe-btn ppe-btn-publish ppe-btn-sm"
-                    onclick="saveSlot('{{ slot.slot_id }}')">Save Draft</button>
-        </div>
-    </div>
-
-</div>
-{% endmacro %}
 
 <script>
 (function () {
