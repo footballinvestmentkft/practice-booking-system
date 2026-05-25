@@ -292,7 +292,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "Referrer-Policy": "strict-origin-when-cross-origin",
             
             # Permissions Policy
-            "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
+            "Permissions-Policy": "geolocation=(self), microphone=(), camera=()",
             
             # Remove server information
             "Server": "Practice-Booking-API"

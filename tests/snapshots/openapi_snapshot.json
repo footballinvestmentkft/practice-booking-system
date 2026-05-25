@@ -22063,6 +22063,17 @@
       },
       "_SlotWidgetRequest": {
         "properties": {
+          "accuracy_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accuracy M"
+          },
           "alt_text": {
             "anyOf": [
               {
@@ -22095,6 +22106,28 @@
             "title": "Heading",
             "type": "string"
           },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "lon": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lon"
+          },
           "thumbnail_url": {
             "anyOf": [
               {
@@ -22109,6 +22142,11 @@
           "title": {
             "default": "",
             "title": "Title",
+            "type": "string"
+          },
+          "units": {
+            "default": "metric",
+            "title": "Units",
             "type": "string"
           },
           "url": {

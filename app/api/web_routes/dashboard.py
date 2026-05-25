@@ -10,6 +10,8 @@ from datetime import date
 import logging
 import re
 
+import httpx as _httpx
+
 from sqlalchemy import func as sqlfunc
 
 from ...database import get_db
@@ -1421,6 +1423,11 @@ class _SlotWidgetRequest(_BaseModel):
     url:       str | None = None
     alt_text:  str | None = None
     caption:   str = ""
+    # weather_current fields (browser geolocation payload)
+    lat:        float | None = None
+    lon:        float | None = None
+    accuracy_m: float | None = None
+    units:      str = "metric"
 
 
 class _ReorderRequest(_BaseModel):
@@ -1539,6 +1546,18 @@ async def lfa_profile_editor_set_slot(
             "alt_text": payload.alt_text,
             "caption":  payload.caption or "",
         }
+    elif wtype == "weather_current":
+        if payload.lat is None or payload.lon is None or payload.accuracy_m is None:
+            return JSONResponse(
+                {"ok": False, "error": "lat, lon, and accuracy_m are required for weather_current widget."},
+                status_code=422,
+            )
+        svc_payload = {
+            "lat":        payload.lat,
+            "lon":        payload.lon,
+            "accuracy_m": payload.accuracy_m,
+            "units":      payload.units or "metric",
+        }
     else:
         svc_payload = None
 
@@ -1555,6 +1574,16 @@ async def lfa_profile_editor_set_slot(
     except (ValueError, KeyError) as exc:
         http_status = 404 if "Unknown slot_id" in str(exc) else 422
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=http_status)
+    except _httpx.TimeoutException:
+        return JSONResponse(
+            {"ok": False, "error": "Weather service timed out. Please try again."},
+            status_code=503,
+        )
+    except _httpx.HTTPError:
+        return JSONResponse(
+            {"ok": False, "error": "Weather service error. Please try again."},
+            status_code=503,
+        )
 
     pg = (draft.draft_data or {}).get("profile_grid", {})
     slot_entry = next(
@@ -1562,14 +1591,19 @@ async def lfa_profile_editor_set_slot(
     )
     mod = slot_entry.get("module", {})
     return JSONResponse({
-        "ok":            True,
-        "slot_id":       slot_id,
-        "widget_type":   mod.get("type"),
-        "provider":      mod.get("provider"),
-        "video_id":      mod.get("video_id"),
-        "title":         mod.get("title", ""),
-        "thumbnail_url": mod.get("custom_thumbnail_url"),
-        "status":        "draft",
+        "ok":             True,
+        "slot_id":        slot_id,
+        "widget_type":    mod.get("type"),
+        "provider":       mod.get("provider"),
+        "video_id":       mod.get("video_id"),
+        "title":          mod.get("title", ""),
+        "thumbnail_url":  mod.get("custom_thumbnail_url"),
+        # weather_current fields:
+        "location_label": mod.get("location_label"),
+        "cached_at":      mod.get("cached_at"),
+        "fetch_error":    mod.get("fetch_error"),
+        "weather":        mod.get("weather"),
+        "status":         "draft",
     })
 
 
