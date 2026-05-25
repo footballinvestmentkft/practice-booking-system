@@ -33,6 +33,7 @@ from sqlalchemy.orm import Session
 
 from ...database import get_db
 from ...dependencies import get_current_user_web
+from .student_features import _spec_ctx
 from ...models.friendship import (
     Friendship, FriendshipStatus, get_friendship, is_friends,
 )
@@ -210,6 +211,7 @@ async def friends_page(
         "friend_levels":    friend_levels,
         "success":          request.query_params.get("success"),
         "error":            request.query_params.get("error"),
+        **_spec_ctx(user, db),
     })
 
 
@@ -232,6 +234,7 @@ async def friends_requests_page(
         "friend_levels":  {},
         "success":        request.query_params.get("success"),
         "error":          request.query_params.get("error"),
+        **_spec_ctx(user, db),
     })
 
 

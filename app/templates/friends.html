@@ -1,7 +1,13 @@
 {% extends "student_base.html" %}
 
 {% block title %}Friends — LFA{% endblock %}
-{% block active_page %}friends{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '🤝' %}
+{% set _page_name = 'Friends' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
 
 {% block extra_styles %}
 <style>

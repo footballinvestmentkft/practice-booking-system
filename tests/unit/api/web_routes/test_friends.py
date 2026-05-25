@@ -719,3 +719,115 @@ class TestFriendsCardDesign:
         assert "success=friend_removed" in result.headers["location"]
         db.delete.assert_called_once_with(row)
         db.commit.assert_called_once()
+
+
+# ── LFA Player sub-page nav tests — FR-NAV-01..FR-NAV-09 ─────────────────────
+
+class TestFriendsNavAlignment:
+    """Verify /friends uses LFA Player spec sub-page header pattern."""
+
+    def _page_context(self, route_fn, req, db, user, extra_patches=None):
+        """Call route, return the context dict passed to TemplateResponse."""
+        patches = {
+            f"{_BASE}._friend_list": [],
+            f"{_BASE}._incoming_requests": [],
+            f"{_BASE}._outgoing_requests": [],
+            f"{_BASE}._spec_ctx": {
+                "spec_dashboard_url":  "/dashboard/lfa-football-player",
+                "spec_dashboard_icon": "⚽",
+                "spec_profile_url":    "/profile/lfa-football-player",
+                "spec_profile_icon":   "🪪",
+            },
+        }
+        if extra_patches:
+            patches.update(extra_patches)
+
+        with patch(f"{_BASE}.templates") as mock_tpl:
+            mock_tpl.TemplateResponse.return_value = MagicMock(status_code=200)
+            with patch(f"{_BASE}._friend_list", return_value=patches[f"{_BASE}._friend_list"]), \
+                 patch(f"{_BASE}._incoming_requests", return_value=patches[f"{_BASE}._incoming_requests"]), \
+                 patch(f"{_BASE}._outgoing_requests", return_value=patches[f"{_BASE}._outgoing_requests"]), \
+                 patch(f"{_BASE}._spec_ctx", return_value=patches[f"{_BASE}._spec_ctx"]):
+                _run(route_fn(request=req, db=db, user=user))
+
+        call_args = mock_tpl.TemplateResponse.call_args
+        return call_args.args[1]
+
+    def test_fr_nav_01_friends_page_context_has_spec_dashboard_url(self):
+        """FR-NAV-01: friends_page context includes spec_dashboard_url."""
+        from app.api.web_routes.friends import friends_page
+        ctx = self._page_context(friends_page, _req(), _db(), _user())
+        assert "spec_dashboard_url" in ctx
+        assert ctx["spec_dashboard_url"]  # non-empty
+
+    def test_fr_nav_02_friends_page_context_has_spec_dashboard_icon(self):
+        """FR-NAV-02: friends_page context includes spec_dashboard_icon."""
+        from app.api.web_routes.friends import friends_page
+        ctx = self._page_context(friends_page, _req(), _db(), _user())
+        assert "spec_dashboard_icon" in ctx
+
+    def test_fr_nav_03_requests_page_context_has_spec_context(self):
+        """FR-NAV-03: friends_requests_page context also includes spec_dashboard_url."""
+        from app.api.web_routes.friends import friends_requests_page
+        ctx = self._page_context(friends_requests_page, _req(), _db(), _user())
+        assert "spec_dashboard_url" in ctx
+        assert "spec_dashboard_icon" in ctx
+
+    def test_fr_nav_04_active_page_block_is_lfa_player(self):
+        """FR-NAV-04: friends.html active_page block contains 'lfa-player'."""
+        tmpl_path = _os.path.join(_TMPL_DIR, "friends.html")
+        with open(tmpl_path) as fh:
+            content = fh.read()
+        assert "lfa-player" in content, "active_page block must be 'lfa-player'"
+        # Must NOT be the old value
+        assert "{% block active_page %}friends{% endblock %}" not in content
+
+    def test_fr_nav_05_template_includes_spec_subpage_hdr(self):
+        """FR-NAV-05: friends.html includes spec_subpage_hdr.html."""
+        tmpl_path = _os.path.join(_TMPL_DIR, "friends.html")
+        with open(tmpl_path) as fh:
+            content = fh.read()
+        assert "spec_subpage_hdr.html" in content
+
+    def test_fr_nav_06_rendered_html_has_spec_pg_hdr_class(self):
+        """FR-NAV-06: rendered friends.html contains spec-pg-hdr class."""
+        env = Environment(loader=FileSystemLoader(_TMPL_DIR), autoescape=True)
+        tmpl = env.get_template("friends.html")
+        u = MagicMock()
+        u.credit_balance = 0
+        u.specialization = None
+        html = tmpl.render(
+            request=MagicMock(), user=u,
+            friends=[], incoming=[], outgoing=[],
+            incoming_count=0, success=None, error=None, active_tab=None,
+            friend_levels={},
+            spec_dashboard_url="/dashboard/lfa-football-player",
+            spec_dashboard_icon="⚽",
+            spec_profile_url="/profile/lfa-football-player",
+            spec_profile_icon="🪪",
+        )
+        assert "spec-pg-hdr" in html, "spec-pg-hdr class missing from rendered friends.html"
+        assert "/dashboard/lfa-football-player" in html
+
+    def test_fr_nav_07_existing_card_tests_still_pass(self):
+        """FR-NAV-07: FR-33..FR-42 card/design tests are not broken by nav change."""
+        # Smoke: render with full context, verify pill and link presence
+        html = _render_friends(position="midfielder", friend_levels={7: 3})
+        assert "/players/7" in html
+        assert "Midfielder" in html
+        assert "Lv 3" in html
+
+    def test_fr_nav_08_search_endpoint_still_works(self):
+        """FR-NAV-08: GET /friends/search still returns JSON list (nav change regression)."""
+        from app.api.web_routes.friends import friends_search
+        import json
+        db = _db()
+        db.query.return_value.filter.return_value.limit.return_value.all.return_value = []
+        resp = _run(friends_search(request=_req(), q="test", limit=10, db=db, user=_user()))
+        assert isinstance(json.loads(resp.body), list)
+
+    def test_fr_nav_09_challenge_link_still_uses_friend_id(self):
+        """FR-NAV-09: Challenge link still uses ?friend_id= after nav change."""
+        html = _render_friends(position=None, friend_levels={7: 2})
+        assert "?friend_id=7" in html
+        assert "?friend=7" not in html
