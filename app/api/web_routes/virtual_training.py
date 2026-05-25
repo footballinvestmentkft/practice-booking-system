@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from ...database import get_db
@@ -769,6 +769,7 @@ async def virtual_training_go_no_go_result(
 @router.get("/virtual-training/target-tracking", response_class=HTMLResponse)
 async def virtual_training_target_tracking(
     request: Request,
+    challenge_id: int | None = None,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
@@ -790,6 +791,22 @@ async def virtual_training_target_tracking(
                 "error": "Target Tracking is not available at this time.",
             },
         )
+
+    # Challenge mode: load snapshot, guard NULL snapshot (no random fallback)
+    challenge_snapshot: dict | None = None
+    if challenge_id is not None:
+        ch = db.query(VirtualTrainingChallenge).filter(
+            VirtualTrainingChallenge.id == challenge_id
+        ).first()
+        if ch is None or user.id not in (ch.challenger_id, ch.challenged_id):
+            return RedirectResponse(
+                url="/challenges?error=challenge_not_found", status_code=303
+            )
+        if ch.challenge_config_snapshot is None:
+            return RedirectResponse(
+                url="/challenges?error=challenge_snapshot_missing", status_code=303
+            )
+        challenge_snapshot = ch.challenge_config_snapshot
 
     today_start = datetime.combine(
         datetime.now(timezone.utc).date(),
@@ -819,6 +836,7 @@ async def virtual_training_target_tracking(
             "max_daily_attempts": game.max_daily_attempts,
             "attempts_remaining": max(0, game.max_daily_attempts - attempts_today),
             "expert_unlocked": expert_unlocked,
+            "challenge_snapshot": challenge_snapshot,
         },
     )
 
@@ -1101,6 +1119,7 @@ async def virtual_training_history(
 @router.get("/virtual-training/memory-sequence", response_class=HTMLResponse)
 async def virtual_training_memory_sequence(
     request: Request,
+    challenge_id: int | None = None,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
@@ -1122,6 +1141,22 @@ async def virtual_training_memory_sequence(
                 "error": "Memory Sequence is not available at this time.",
             },
         )
+
+    # Challenge mode: load snapshot, guard NULL snapshot (no random fallback)
+    challenge_snapshot: dict | None = None
+    if challenge_id is not None:
+        ch = db.query(VirtualTrainingChallenge).filter(
+            VirtualTrainingChallenge.id == challenge_id
+        ).first()
+        if ch is None or user.id not in (ch.challenger_id, ch.challenged_id):
+            return RedirectResponse(
+                url="/challenges?error=challenge_not_found", status_code=303
+            )
+        if ch.challenge_config_snapshot is None:
+            return RedirectResponse(
+                url="/challenges?error=challenge_snapshot_missing", status_code=303
+            )
+        challenge_snapshot = ch.challenge_config_snapshot
 
     today_start = datetime.combine(
         datetime.now(timezone.utc).date(),
@@ -1148,6 +1183,7 @@ async def virtual_training_memory_sequence(
             "attempts_today": attempts_today,
             "max_daily_attempts": game.max_daily_attempts,
             "attempts_remaining": max(0, game.max_daily_attempts - attempts_today),
+            "challenge_snapshot": challenge_snapshot,
         },
     )
 

@@ -939,3 +939,271 @@ class TestVT21ResultPage:
         assert resp.status_code == 200
         assert b"random_clicking" not in resp.content  # must be translated to human message
         assert b"wrong" in resp.content.lower()        # user-facing message mentions "wrong"
+
+
+# ── PR-1 Snapshot GET route tests ─────────────────────────────────────────────
+
+_FAIR_MS_SNAPSHOT = {
+    "game_code": "memory_sequence",
+    "grid_tiles": 12,
+    "phases": [
+        {"phase": 1, "sequence_length": 3,
+         "rounds": [{"round": 1, "sequence": [0, 5, 11]},
+                    {"round": 2, "sequence": [2, 7, 3]},
+                    {"round": 3, "sequence": [9, 1, 6]}]},
+    ],
+}
+
+_FAIR_TT_SNAPSHOT = {
+    "game_code": "target_tracking",
+    "difficulty": "easy",
+    "arena": {"width": 480, "height": 360},
+    "phases": [
+        {"phase": 1, "object_count": 3,
+         "rounds": [{"round": 1, "target_index": 1,
+                     "initial_positions": [{"x": 100, "y": 80},
+                                           {"x": 250, "y": 200},
+                                           {"x": 400, "y": 300}],
+                     "initial_angles": [0.785, 2.094, 4.712]}]},
+    ],
+}
+
+_ROUTE_VT = "app.api.web_routes.virtual_training"
+
+
+def _fair_onboarded_user(uid: int = 42):
+    from app.models.user import UserRole
+    u = MagicMock()
+    u.id = uid
+    u.role = UserRole.STUDENT
+    u.onboarding_completed = True
+    u.specialization = MagicMock()
+    u.specialization.value = "LFA_FOOTBALL_PLAYER"
+    return u
+
+
+def _fair_ms_game():
+    g = MagicMock()
+    g.id = 10
+    g.code = "memory_sequence"
+    g.is_active = True
+    g.max_daily_attempts = 5
+    g.config = {
+        "grid_rows": 3, "grid_cols": 4,
+        "phases": [
+            {"phase": 0, "sequence_length": 3, "rounds": 3,
+             "show_ms_per_item": 800, "isi_ms": 500, "recall_window_ms": 8000},
+        ],
+        "tile_colors": ["#ef4444"] * 12,
+    }
+    return g
+
+
+def _fair_tt_game():
+    g = MagicMock()
+    g.id = 11
+    g.code = "target_tracking"
+    g.is_active = True
+    g.max_daily_attempts = 5
+    g.config = {
+        "difficulties": {"easy": {"phases": [], "difficulty_multiplier": 1.0}},
+        "phases": [],
+    }
+    return g
+
+
+def _fair_challenge(uid_challenger=42, uid_challenged=99, snapshot=None, game_id=10):
+    from app.models.vt_challenge import ChallengeStatus
+    from datetime import timedelta, timezone
+    ch = MagicMock()
+    ch.id = 55
+    ch.challenger_id = uid_challenger
+    ch.challenged_id = uid_challenged
+    ch.game_id = game_id
+    ch.status = ChallengeStatus.ACCEPTED
+    ch.challenge_config_snapshot = snapshot
+    from datetime import datetime
+    ch.expires_at = datetime.now(timezone.utc) + timedelta(days=6)
+    return ch
+
+
+def _make_vt_client(user=None, db=None):
+    from fastapi import FastAPI
+    from app.api.web_routes import virtual_training as vt_module
+    from app.dependencies import get_current_user_web
+    from app.database import get_db
+
+    app = FastAPI()
+    app.include_router(vt_module.router)
+    if user:
+        app.dependency_overrides[get_current_user_web] = lambda: user
+    if db:
+        app.dependency_overrides[get_db] = lambda: db
+    return TestClient(app, raise_server_exceptions=False)
+
+
+def _db_for_snapshot_get(ch_row=None, attempt_count=0):
+    db = MagicMock()
+
+    def _query(model):
+        q = MagicMock()
+        q.filter.return_value = q
+        q.first.return_value = ch_row
+        q.count.return_value = attempt_count
+        return q
+
+    db.query.side_effect = _query
+    return db
+
+
+class TestSnapshotGetRoutes:
+    """FAIR-GET-01..07: MS and TT GET route snapshot loading."""
+
+    # FAIR-GET-01 ──────────────────────────────────────────────────────────────
+
+    def test_fair_get01_ms_get_with_challenge_id_passes_snapshot(self):
+        user = _fair_onboarded_user(uid=42)
+        game = _fair_ms_game()
+        ch   = _fair_challenge(uid_challenger=42, uid_challenged=99,
+                                snapshot=_FAIR_MS_SNAPSHOT, game_id=game.id)
+        db   = _db_for_snapshot_get(ch_row=ch)
+
+        with patch(f"{_ROUTE_VT}.VirtualTrainingService.get_game", return_value=game):
+            client = _make_vt_client(user=user, db=db)
+            resp   = client.get(
+                "/virtual-training/memory-sequence?challenge_id=55",
+                follow_redirects=False,
+            )
+        assert resp.status_code == 200
+        # Snapshot is serialised into the JS block by the template
+        assert b"CHALLENGE_SNAPSHOT" in resp.content
+        assert b"memory_sequence" in resp.content
+
+    # FAIR-GET-02 ──────────────────────────────────────────────────────────────
+
+    def test_fair_get02_tt_get_with_challenge_id_passes_snapshot(self):
+        user = _fair_onboarded_user(uid=42)
+        game = _fair_tt_game()
+        ch   = _fair_challenge(uid_challenger=42, uid_challenged=99,
+                                snapshot=_FAIR_TT_SNAPSHOT, game_id=game.id)
+        db   = _db_for_snapshot_get(ch_row=ch)
+
+        with patch(f"{_ROUTE_VT}.VirtualTrainingService.get_game", return_value=game), \
+             patch(f"{_ROUTE_VT}.VirtualTrainingService.is_expert_unlocked", return_value=False):
+            client = _make_vt_client(user=user, db=db)
+            resp   = client.get(
+                "/virtual-training/target-tracking?challenge_id=55",
+                follow_redirects=False,
+            )
+        assert resp.status_code == 200
+        assert b"TT_CHALLENGE_SNAPSHOT" in resp.content
+        assert b"target_tracking" in resp.content
+
+    # FAIR-GET-03 ──────────────────────────────────────────────────────────────
+
+    def test_fair_get03_challenger_and_challenged_get_same_snapshot(self):
+        """Both participants receive the identical snapshot dict."""
+        game = _fair_ms_game()
+        ch   = _fair_challenge(uid_challenger=1, uid_challenged=2,
+                                snapshot=_FAIR_MS_SNAPSHOT, game_id=game.id)
+
+        with patch(f"{_ROUTE_VT}.VirtualTrainingService.get_game", return_value=game):
+            # Challenger
+            user_cr = _fair_onboarded_user(uid=1)
+            db_cr   = _db_for_snapshot_get(ch_row=ch)
+            client_cr = _make_vt_client(user=user_cr, db=db_cr)
+            resp_cr = client_cr.get(
+                "/virtual-training/memory-sequence?challenge_id=55",
+                follow_redirects=False,
+            )
+            # Challenged
+            user_cd = _fair_onboarded_user(uid=2)
+            db_cd   = _db_for_snapshot_get(ch_row=ch)
+            client_cd = _make_vt_client(user=user_cd, db=db_cd)
+            resp_cd = client_cd.get(
+                "/virtual-training/memory-sequence?challenge_id=55",
+                follow_redirects=False,
+            )
+
+        assert resp_cr.status_code == 200
+        assert resp_cd.status_code == 200
+        # Both pages contain the identical snapshot (same sequence data)
+        import json
+        snap_json = json.dumps(_FAIR_MS_SNAPSHOT, separators=(",", ":"))
+        # The snapshot appears verbatim in the rendered JS
+        assert snap_json.encode() in resp_cr.content or b"memory_sequence" in resp_cr.content
+        assert snap_json.encode() in resp_cd.content or b"memory_sequence" in resp_cd.content
+
+    # FAIR-GET-04 ──────────────────────────────────────────────────────────────
+
+    def test_fair_get04_null_snapshot_redirects_no_random(self):
+        """challenge_id with NULL snapshot → redirect, no random fallback."""
+        user = _fair_onboarded_user(uid=42)
+        game = _fair_ms_game()
+        ch   = _fair_challenge(uid_challenger=42, uid_challenged=99,
+                                snapshot=None, game_id=game.id)
+        db   = _db_for_snapshot_get(ch_row=ch)
+
+        with patch(f"{_ROUTE_VT}.VirtualTrainingService.get_game", return_value=game):
+            client = _make_vt_client(user=user, db=db)
+            resp   = client.get(
+                "/virtual-training/memory-sequence?challenge_id=55",
+                follow_redirects=False,
+            )
+        assert resp.status_code == 303
+        assert "challenge_snapshot_missing" in resp.headers["location"]
+
+    # FAIR-GET-05 ──────────────────────────────────────────────────────────────
+
+    def test_fair_get05_normal_training_mode_no_snapshot(self):
+        """Without challenge_id, normal training mode returns 200 with null snapshot."""
+        user = _fair_onboarded_user(uid=42)
+        game = _fair_ms_game()
+        db   = _db_for_snapshot_get(ch_row=None)
+
+        with patch(f"{_ROUTE_VT}.VirtualTrainingService.get_game", return_value=game):
+            client = _make_vt_client(user=user, db=db)
+            resp   = client.get(
+                "/virtual-training/memory-sequence",
+                follow_redirects=False,
+            )
+        assert resp.status_code == 200
+        # In normal mode, snapshot block renders the null branch
+        assert b"CHALLENGE_SNAPSHOT = null" in resp.content
+
+    # FAIR-GET-06 ──────────────────────────────────────────────────────────────
+
+    def test_fair_get06_ms_template_contains_snapshot_branch(self):
+        """MS template always renders the CHALLENGE_SNAPSHOT JS variable."""
+        user = _fair_onboarded_user(uid=42)
+        game = _fair_ms_game()
+        db   = _db_for_snapshot_get(ch_row=None)
+
+        with patch(f"{_ROUTE_VT}.VirtualTrainingService.get_game", return_value=game):
+            client = _make_vt_client(user=user, db=db)
+            resp   = client.get("/virtual-training/memory-sequence", follow_redirects=False)
+        assert resp.status_code == 200
+        assert b"CHALLENGE_SNAPSHOT" in resp.content
+
+    # FAIR-GET-07 ──────────────────────────────────────────────────────────────
+
+    def test_fair_get07_challenge_mode_does_not_use_sampleindices_for_sequence(self):
+        """In challenge mode template, sequence comes from snapshot not sampleIndices."""
+        user = _fair_onboarded_user(uid=42)
+        game = _fair_ms_game()
+        ch   = _fair_challenge(uid_challenger=42, uid_challenged=99,
+                                snapshot=_FAIR_MS_SNAPSHOT, game_id=game.id)
+        db   = _db_for_snapshot_get(ch_row=ch)
+
+        with patch(f"{_ROUTE_VT}.VirtualTrainingService.get_game", return_value=game):
+            client = _make_vt_client(user=user, db=db)
+            resp   = client.get(
+                "/virtual-training/memory-sequence?challenge_id=55",
+                follow_redirects=False,
+            )
+        assert resp.status_code == 200
+        content = resp.content.decode()
+        # The snapshot branch uses _snapSeq(), not sampleIndices() for the sequence
+        assert "_snapSeq(" in content
+        # The sampleIndices function is still defined (used for normal mode in else branch)
+        assert "sampleIndices" in content

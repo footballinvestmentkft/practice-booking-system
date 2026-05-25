@@ -26,6 +26,7 @@ from sqlalchemy import (
     Boolean, CheckConstraint, Column, DateTime, Enum,
     ForeignKey, Integer, String, Text, UniqueConstraint,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Session, relationship
 
 from ..database import Base
@@ -57,6 +58,10 @@ class VirtualTrainingChallenge(Base):
             "challenger_id != challenged_id",
             name="ck_challenge_no_self",
         ),
+        CheckConstraint(
+            "challenge_mode IN ('async', 'live')",
+            name="ck_vt_challenge_mode_valid",
+        ),
     )
 
     id                    = Column(Integer, primary_key=True, index=True)
@@ -80,7 +85,10 @@ class VirtualTrainingChallenge(Base):
     challenged_attempt_id = Column(Integer,
                                    ForeignKey("virtual_training_attempts.id", ondelete="SET NULL"),
                                    nullable=True)
-    difficulty_level      = Column(String(20), nullable=True)   # TT only; NULL for MS
+    difficulty_level           = Column(String(20), nullable=True)   # TT only; NULL for MS
+    challenge_mode             = Column(String(10), nullable=False, default="async",
+                                        server_default="async")
+    challenge_config_snapshot  = Column(JSONB, nullable=True)
     winner_id             = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"),
                                    nullable=True)
     is_draw               = Column(Boolean, nullable=False, default=False)

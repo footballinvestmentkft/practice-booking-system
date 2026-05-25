@@ -222,6 +222,23 @@
     var _urlParams   = new URLSearchParams(window.location.search);
     var CHALLENGE_ID = _urlParams.get('challenge_id') || null;
 
+    // ── Challenge Fairness Snapshot ──────────────────────────────────────────
+    // When CHALLENGE_SNAPSHOT is set, sequences are served from the server-side
+    // pre-drawn snapshot so both players see identical tile orders.
+    // In normal training mode CHALLENGE_SNAPSHOT is null and Math.random() is used.
+    {% if challenge_snapshot %}
+    var CHALLENGE_SNAPSHOT = {{ challenge_snapshot | tojson }};
+    function _snapSeq(phaseIdx, roundInPhase) {
+        // phaseIdx and roundInPhase are 0-based; snapshot uses 1-based phase/round
+        var ph = CHALLENGE_SNAPSHOT.phases[phaseIdx];
+        if (!ph) { return null; }
+        var rd = ph.rounds[roundInPhase];
+        return rd ? rd.sequence : null;
+    }
+    {% else %}
+    var CHALLENGE_SNAPSHOT = null;
+    {% endif %}
+
     // Build flat round list (9 rounds: 3 phases × 3 rounds each)
     var ROUNDS = [];
     for (var pi = 0; pi < PHASES.length; pi++) {
@@ -324,7 +341,14 @@
         var round = ROUNDS[roundIdx];
         roundCorrect = 0; roundWrong = 0; roundTimeout = 0;
         tapCount = 0; recallActive = false; firstTapMs = null;
-        currentSeq = sampleIndices(12, round.sequence_length);
+        if (CHALLENGE_SNAPSHOT) {
+            // Challenge mode: use server-pre-drawn sequence (fairness snapshot)
+            var _snap = _snapSeq(round.phase, round.round_in_phase);
+            currentSeq = _snap || sampleIndices(12, round.sequence_length);
+        } else {
+            // Normal training mode: random as before
+            currentSeq = sampleIndices(12, round.sequence_length);
+        }
 
         updateHUD();
         hideBanner();

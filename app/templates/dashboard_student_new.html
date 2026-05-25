@@ -158,6 +158,15 @@
     .s-pp-btn-view { background: #e8f0fe; color: #1a56db; }
     .s-pp-btn-edit { background: #0B0B0B; color: #FFD200; }
 
+    /* ── Social section ──────────────────────────────────────────────────────── */
+    .mod-social-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .mod-social-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem; background: var(--app-card-alt); border-radius: 12px; padding: 1.2rem 0.75rem; text-decoration: none; color: var(--app-text); position: relative; transition: box-shadow 0.2s, transform 0.2s; border: 1px solid var(--app-border); }
+    .mod-social-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); transform: translateY(-2px); }
+    .mod-social-icon  { font-size: 1.6rem; line-height: 1; }
+    .mod-social-title { font-size: 0.82rem; font-weight: 700; color: var(--app-text-muted); }
+    .mod-social-badge { position: absolute; top: 0.5rem; right: 0.5rem; background: #ef4444; color: white; border-radius: 999px; font-size: 0.7rem; font-weight: 700; padding: 0.1rem 0.45rem; line-height: 1.4; }
+    @media (max-width: 480px) { .mod-social-grid { grid-template-columns: 1fr; } }
+
     /* ── Responsive ──────────────────────────────────────────────────────────── */
     @media (max-width: 768px) {
         .s-kpi-row      { grid-template-columns: repeat(2, 1fr); }
@@ -301,6 +310,33 @@
         </div>
     </section>
     {% endif %}
+
+    {# ── Social ─────────────────────────────────────────────────────────────────── #}
+    <section class="section-block">
+        <div class="section-header">
+            <span class="section-title" style="font-weight:800;font-size:1rem;">Social</span>
+        </div>
+        <div class="mod-social-grid">
+            <a href="/friends" class="mod-social-card">
+                <span class="mod-social-icon">🤝</span>
+                <span class="mod-social-title">Friends</span>
+                {% if social_pending_friends > 0 %}
+                <span class="mod-social-badge">{{ social_pending_friends }}</span>
+                {% endif %}
+            </a>
+            <a href="/challenges" class="mod-social-card">
+                <span class="mod-social-icon">⚔</span>
+                <span class="mod-social-title">Challenges</span>
+                {% if (social_pending_challenges + social_active_challenges) > 0 %}
+                <span class="mod-social-badge">{{ social_pending_challenges + social_active_challenges }}</span>
+                {% endif %}
+            </a>
+            <a href="/challenges/send" class="mod-social-card">
+                <span class="mod-social-icon">📤</span>
+                <span class="mod-social-title">Send Challenge</span>
+            </a>
+        </div>
+    </section>
 
     {# ── KPI Row ───────────────────────────────────────────────────────────────── #}
     <div class="s-kpi-row">

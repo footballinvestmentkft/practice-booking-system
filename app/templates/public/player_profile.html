@@ -310,6 +310,49 @@
 }
 .psp-slot-unknown__msg { font-size: 0.8rem; color: #9ca3af; margin: 0; }
 
+/* ── Weather widget ─────────────────────────────────────────────────────────── */
+.psp-weather-card {
+    padding: 0.85rem 1rem;
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    border-radius: 8px;
+}
+.psp-weather-card__location {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #0369a1;
+    margin-bottom: 0.35rem;
+}
+.psp-weather-card__temp {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #0c4a6e;
+    line-height: 1;
+    margin-bottom: 0.2rem;
+}
+.psp-weather-card__condition {
+    font-size: 0.85rem;
+    color: #075985;
+    margin-bottom: 0.55rem;
+}
+.psp-weather-card__details {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.78rem;
+    color: #0369a1;
+}
+.psp-weather-fallback {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: #f3f4f6;
+    border-radius: 8px;
+}
+.psp-weather-fallback__icon { font-size: 1.1rem; }
+.psp-weather-fallback__msg  { font-size: 0.8rem; color: #9ca3af; }
+
 /* ── Card slot — viewport-aware max-height ─────────────────────────────────── */
 .psp-card-slot {
     --psp-card-max-h: clamp(420px, calc(100vh - 238px), 620px);
@@ -523,6 +566,28 @@
     <div class="psp-tiktok-label">Watch on TikTok ↗</div>
 </a>
 {% endif %}
+{% elif module.type == "weather_current" %}
+{% if module.fetch_error %}
+<div class="psp-weather-fallback">
+  <span class="psp-weather-fallback__icon">&#x26C5;</span>
+  <span class="psp-weather-fallback__msg">Weather unavailable</span>
+</div>
+{% elif module.weather %}
+<div class="psp-weather-card">
+  <div class="psp-weather-card__location">{{ module.location_label | e }}</div>
+  <div class="psp-weather-card__temp">{{ module.weather.temp_c }}&deg;C</div>
+  <div class="psp-weather-card__condition">{{ module.weather.condition | e }}</div>
+  <div class="psp-weather-card__details">
+    <span>&#x1F4A8; {{ module.weather.wind_kph }} km/h</span>
+    <span>&#x1F4A7; {{ module.weather.humidity }}%</span>
+  </div>
+</div>
+{% else %}
+<div class="psp-weather-fallback">
+  <span class="psp-weather-fallback__icon">&#x26C5;</span>
+  <span class="psp-weather-fallback__msg">Weather data unavailable</span>
+</div>
+{% endif %}
 {% else %}
 <div class="psp-slot-unknown">
   <p class="psp-slot-unknown__msg">Widget not available</p>
@@ -606,6 +671,7 @@
 
                     {% elif fp.state == "accepted" %}
                     <span class="psp-social-msg">Friends ✓</span>
+                    <a href="/challenges/send?friend_id={{ profile_user.id }}" class="psp-btn psp-btn-add">⚔ Challenge</a>
                     <form method="POST" action="/friends/remove/{{ profile_user.id }}" style="margin:0">
                         <input type="hidden" name="next" value="/players/{{ profile_user.id }}">
                         <button type="submit" class="psp-btn psp-btn-remove">Remove</button>

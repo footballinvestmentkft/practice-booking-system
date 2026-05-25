@@ -4219,6 +4219,17 @@
       },
       "Body_send_challenge_challenges_send_post": {
         "properties": {
+          "challenge_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Challenge Mode"
+          },
           "challenged_user_id": {
             "title": "Challenged User Id",
             "type": "integer"
@@ -22063,6 +22074,17 @@
       },
       "_SlotWidgetRequest": {
         "properties": {
+          "accuracy_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accuracy M"
+          },
           "alt_text": {
             "anyOf": [
               {
@@ -22095,6 +22117,28 @@
             "title": "Heading",
             "type": "string"
           },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "lon": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lon"
+          },
           "thumbnail_url": {
             "anyOf": [
               {
@@ -22109,6 +22153,11 @@
           "title": {
             "default": "",
             "title": "Title",
+            "type": "string"
+          },
+          "units": {
+            "default": "metric",
+            "title": "Units",
             "type": "string"
           },
           "url": {
@@ -61546,6 +61595,61 @@
         ]
       }
     },
+    "/friends/search": {
+      "get": {
+        "description": "Live search for add-friend autocomplete.\n\nReturns JSON list of users matching q (name / nickname / email ilike),\neach decorated with the current friendship state. No CSRF needed (GET, read-only).",
+        "operationId": "friends_search_friends_search_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "maxLength": 50,
+              "minLength": 2,
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 20,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Friends Search",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/friends/send": {
       "post": {
         "description": "Add Friend form \u2014 looks up target by email or nickname, then delegates.",
@@ -65393,6 +65497,24 @@
       "get": {
         "description": "Memory Sequence game page \u2014 instruction + 3\u00d74 grid recall game loop.",
         "operationId": "virtual_training_memory_sequence_virtual_training_memory_sequence_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "challenge_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Challenge Id"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -65403,6 +65525,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "Virtual Training Memory Sequence",
@@ -65585,6 +65717,24 @@
       "get": {
         "description": "Target Tracking game page \u2014 instruction + MOT arena (moving objects).",
         "operationId": "virtual_training_target_tracking_virtual_training_target_tracking_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "challenge_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Challenge Id"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -65595,6 +65745,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "Virtual Training Target Tracking",

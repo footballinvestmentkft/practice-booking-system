@@ -46,6 +46,10 @@ from ...models.vt_challenge import (
     make_expires_at,
 )
 from ...services import notification_service
+from ...services.challenge_snapshot_service import (
+    generate_snapshot,
+    validate_challenge_mode,
+)
 from ...services.virtual_training_service import VirtualTrainingService
 from .helpers import require_student_onboarding
 from .student_features import _spec_ctx
@@ -292,6 +296,7 @@ async def send_challenge(
     game_id:            int           = Form(...),
     message:            str | None    = Form(default=None),
     difficulty_level:   str | None    = Form(default=None),
+    challenge_mode:     str | None    = Form(default=None),
     db: Session = Depends(get_db),
     user: User  = Depends(get_current_user_web),
 ):
@@ -336,16 +341,43 @@ async def send_challenge(
                 return RedirectResponse(url="/challenges/send?error=expert_locked", status_code=303)
         resolved_difficulty = lvl
 
+    # Challenge mode validation — only async/live accepted; default async
+    # isinstance guard: when called directly in tests, challenge_mode may be
+    # the Form FieldInfo object rather than None (FastAPI only resolves it at
+    # request time). Treat any non-str value as "use default".
+    resolved_mode = "async"
+    if isinstance(challenge_mode, str) and challenge_mode:
+        try:
+            resolved_mode = validate_challenge_mode(challenge_mode.strip().lower())
+        except ValueError:
+            return RedirectResponse(
+                url="/challenges/send?error=invalid_challenge_mode", status_code=303
+            )
+
+    # Snapshot generation — must succeed or challenge is NOT created
+    try:
+        snapshot = generate_snapshot(
+            game_code        = game.code,
+            game_config      = game.config or {},
+            difficulty_level = resolved_difficulty,
+        )
+    except (ValueError, KeyError, TypeError) as exc:
+        return RedirectResponse(
+            url=f"/challenges/send?error=snapshot_generation_failed", status_code=303
+        )
+
     now = datetime.now(timezone.utc)
     challenge = VirtualTrainingChallenge(
-        challenger_id    = user.id,
-        challenged_id    = challenged_user_id,
-        game_id          = game_id,
-        status           = ChallengeStatus.PENDING,
-        message          = _trim_message(message),
-        difficulty_level = resolved_difficulty,
-        expires_at       = make_expires_at(now),
-        created_at       = now,
+        challenger_id             = user.id,
+        challenged_id             = challenged_user_id,
+        game_id                   = game_id,
+        status                    = ChallengeStatus.PENDING,
+        message                   = _trim_message(message),
+        difficulty_level          = resolved_difficulty,
+        challenge_mode            = resolved_mode,
+        challenge_config_snapshot = snapshot,
+        expires_at                = make_expires_at(now),
+        created_at                = now,
     )
     db.add(challenge)
     db.flush()

@@ -442,9 +442,12 @@ class TestSendChallengeDifficulty:
             created_challenge = obj
         db.add.side_effect = _capture_add
 
+        _mock_snap = {"game_code": "target_tracking", "difficulty": "hard",
+                      "arena": {"width": 480, "height": 360}, "phases": []}
         with patch(f"{_BASE}.is_friends",        return_value=True), \
              patch(f"{_BASE}.get_active_challenge", return_value=None), \
              patch(f"{_BASE}.VirtualTrainingService.is_expert_unlocked", return_value=False), \
+             patch(f"{_BASE}.generate_snapshot", return_value=_mock_snap), \
              patch(f"{_BASE}.notification_service.create_notification"), \
              patch(f"{_BASE}.VirtualTrainingChallenge") as MockCh:
             MockCh.return_value = MagicMock()
@@ -502,8 +505,10 @@ class TestSendChallengeDifficulty:
         game   = _game(gid=1, code="memory_sequence")
         db.query.return_value.filter.return_value.first.side_effect = [target, game, None]
 
+        _mock_snap = {"game_code": "memory_sequence", "grid_tiles": 12, "phases": []}
         with patch(f"{_BASE}.is_friends",          return_value=True), \
              patch(f"{_BASE}.get_active_challenge",  return_value=None), \
+             patch(f"{_BASE}.generate_snapshot", return_value=_mock_snap), \
              patch(f"{_BASE}.notification_service.create_notification"), \
              patch(f"{_BASE}.VirtualTrainingChallenge") as MockCh:
             MockCh.return_value = MagicMock()

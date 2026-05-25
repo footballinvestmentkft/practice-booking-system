@@ -25,17 +25,25 @@ from __future__ import annotations
 import pathlib
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from ...database import get_db
 from ...dependencies import get_current_user_web
+from .student_features import _spec_ctx
+from ...utils.football_positions import (
+    normalize_position as _norm_pos,
+    position_label as _raw_pos_label,
+    position_short as _pos_short,
+)
 from ...models.friendship import (
     Friendship, FriendshipStatus, get_friendship, is_friends,
 )
 from typing import Optional
+from ...models.license import UserLicense
 from ...models.notification import NotificationType
 from ...models.user import User
 from ...services import notification_service
@@ -59,8 +67,44 @@ def _safe_next(next_url: str | None, default: str = "/friends") -> str:
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
+def _format_pos(raw: str | None) -> str:
+    """Convert raw position string to human-readable label. Safe for unknown values."""
+    if not raw:
+        return ""
+    canonical = _norm_pos(raw) or raw
+    label = _raw_pos_label(canonical)
+    return label.replace("_", " ").title() if "_" in label else label
+
+
+def _extract_pos_badges(lic, user: "User") -> list[dict]:
+    """Return position badge list [{short, label}, ...] from license + user, max 4.
+
+    Source priority: motivation_scores["positions"] (plural) →
+                     motivation_scores["position"] (singular) → User.position.
+    """
+    ms = (lic.motivation_scores or {}) if lic else {}
+    raw_list = ms.get("positions")
+    if not raw_list or not isinstance(raw_list, list):
+        single = ms.get("position") or (user.position if user else None)
+        raw_list = [single] if single else []
+    badges: list[dict] = []
+    seen: set[str] = set()
+    for raw in raw_list[:4]:
+        if not raw:
+            continue
+        canonical = _norm_pos(raw) or raw
+        if canonical in seen:
+            continue
+        seen.add(canonical)
+        short = _pos_short(canonical)
+        label = _raw_pos_label(canonical)
+        label = label.replace("_", " ").title() if "_" in label else label
+        badges.append({"short": short, "label": label})
+    return badges
+
+
 def _friend_list(db: Session, user_id: int) -> list[User]:
-    """All accepted friends of user_id (either direction)."""
+    """All accepted friends of user_id (either direction). 2-query, no N+1."""
     rows = (
         db.query(Friendship)
         .filter(
@@ -69,13 +113,70 @@ def _friend_list(db: Session, user_id: int) -> list[User]:
         )
         .all()
     )
-    friends = []
-    for row in rows:
-        other_id = row.addressee_id if row.requester_id == user_id else row.requester_id
-        u = db.query(User).filter(User.id == other_id).first()
-        if u:
-            friends.append(u)
-    return friends
+    if not rows:
+        return []
+    other_ids = [
+        row.addressee_id if row.requester_id == user_id else row.requester_id
+        for row in rows
+    ]
+    users = db.query(User).filter(User.id.in_(other_ids)).all()
+    user_map = {u.id: u for u in users}
+    return [user_map[uid] for uid in other_ids if uid in user_map]
+
+
+def _friend_data_map(db: Session, friends: list[User]) -> dict[int, dict]:
+    """Return per-friend enriched data from a single UserLicense IN query.
+
+    {user_id: {"level": int|None, "photo_url": str|None,
+               "positions": [{"short": str, "label": str}, ...], "initials": str}}
+
+    Photo priority: card_photo_portrait_url → player_card_photo_url → wc_photo_url.
+    Position source: motivation_scores["positions"] → ["position"] → User.position.
+    Initials derived from User.name, falling back to email.
+    Zero extra queries beyond the one UserLicense IN fetch.
+    """
+    if not friends:
+        return {}
+    friend_ids = [f.id for f in friends]
+    user_map   = {f.id: f for f in friends}
+
+    rows = (
+        db.query(UserLicense)
+        .filter(
+            UserLicense.user_id.in_(friend_ids),
+            UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+            UserLicense.is_active == True,
+        )
+        .all()
+    )
+    license_map = {r.user_id: r for r in rows}
+
+    result = {}
+    for uid in friend_ids:
+        u        = user_map[uid]
+        parts    = (u.name or u.email or "").split()
+        initials = "".join(p[0].upper() for p in parts[:2]) if parts else "?"
+
+        lic = license_map.get(uid)
+        if lic:
+            result[uid] = {
+                "level":    lic.current_level,
+                "photo_url": (
+                    lic.card_photo_portrait_url
+                    or lic.player_card_photo_url
+                    or lic.wc_photo_url
+                ),
+                "positions": _extract_pos_badges(lic, u),
+                "initials":  initials,
+            }
+        else:
+            result[uid] = {
+                "level":    None,
+                "photo_url": None,
+                "positions": _extract_pos_badges(None, u),
+                "initials":  initials,
+            }
+    return result
 
 
 def _incoming_requests(db: Session, user_id: int) -> list[Friendship]:
@@ -102,7 +203,73 @@ def _outgoing_requests(db: Session, user_id: int) -> list[Friendship]:
     )
 
 
+def _friendship_state(
+    db: Session, viewer_id: int, target_id: int
+) -> tuple[str, int | None]:
+    """Return (state_str, friendship_id_or_None) for the viewer's relation to target.
+
+    States: none | accepted | pending_sent | pending_received | blocked
+    DECLINED is treated as "none" (re-request allowed, old row deleted by send route).
+    """
+    row = get_friendship(db, viewer_id, target_id)
+    if row is None:
+        return "none", None
+    if row.status == FriendshipStatus.ACCEPTED:
+        return "accepted", row.id
+    if row.status == FriendshipStatus.PENDING:
+        if row.requester_id == viewer_id:
+            return "pending_sent", row.id
+        return "pending_received", row.id
+    if row.status == FriendshipStatus.BLOCKED:
+        return "blocked", row.id
+    # DECLINED → allow re-request
+    return "none", None
+
+
 # ── Pages ──────────────────────────────────────────────────────────────────────
+
+@router.get("/friends/search")
+async def friends_search(
+    request: Request,
+    q: str = Query(min_length=2, max_length=50),
+    limit: int = Query(10, ge=1, le=20),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Live search for add-friend autocomplete.
+
+    Returns JSON list of users matching q (name / nickname / email ilike),
+    each decorated with the current friendship state. No CSRF needed (GET, read-only).
+    """
+    results = (
+        db.query(User)
+        .filter(
+            User.is_active == True,
+            User.id != user.id,
+            or_(
+                User.name.ilike(f"%{q}%"),
+                User.nickname.ilike(f"%{q}%"),
+                User.email.ilike(f"%{q}%"),
+            ),
+        )
+        .limit(limit)
+        .all()
+    )
+
+    items = []
+    for u in results:
+        display_name = u.nickname or u.name
+        state, friendship_id = _friendship_state(db, user.id, u.id)
+        items.append({
+            "id": u.id,
+            "display_name": display_name,
+            "email": u.email,
+            "state": state,
+            "friendship_id": friendship_id,
+        })
+
+    return JSONResponse(items)
+
 
 @router.get("/friends", response_class=HTMLResponse)
 async def friends_page(
@@ -110,18 +277,21 @@ async def friends_page(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
-    friends         = _friend_list(db, user.id)
-    incoming        = _incoming_requests(db, user.id)
-    outgoing        = _outgoing_requests(db, user.id)
+    friends     = _friend_list(db, user.id)
+    incoming    = _incoming_requests(db, user.id)
+    outgoing    = _outgoing_requests(db, user.id)
+    friend_data = _friend_data_map(db, friends)
     return templates.TemplateResponse("friends.html", {
-        "request":          request,
-        "user":             user,
-        "friends":          friends,
-        "incoming":         incoming,
-        "outgoing":         outgoing,
-        "incoming_count":   len(incoming),
-        "success":          request.query_params.get("success"),
-        "error":            request.query_params.get("error"),
+        "request":        request,
+        "user":           user,
+        "friends":        friends,
+        "incoming":       incoming,
+        "outgoing":       outgoing,
+        "incoming_count": len(incoming),
+        "friend_data":    friend_data,
+        "success":        request.query_params.get("success"),
+        "error":          request.query_params.get("error"),
+        **_spec_ctx(user, db),
     })
 
 
@@ -141,8 +311,10 @@ async def friends_requests_page(
         "outgoing":       outgoing,
         "incoming_count": len(incoming),
         "active_tab":     "requests",
+        "friend_data":    {},
         "success":        request.query_params.get("success"),
         "error":          request.query_params.get("error"),
+        **_spec_ctx(user, db),
     })
 
 

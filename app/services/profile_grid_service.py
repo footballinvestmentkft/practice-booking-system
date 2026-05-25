@@ -49,16 +49,21 @@ VALID_ZONES: frozenset[str] = frozenset(s["zone"] for s in SLOT_REGISTRY)
 MAX_SLOTS: int = 15
 TITLE_MAX_LEN: int = 80
 
+LOCATION_LABEL_MAX_LEN: int = 200
+VALID_UNITS: frozenset[str] = frozenset({"metric", "imperial"})
+MAX_ACCURACY_M: int = 200
+
 TEXT_CONTENT_MAX_LEN: int = 300
 TEXT_HEADING_MAX_LEN: int = 80
 IMAGE_ALT_MAX_LEN: int = 200
 IMAGE_CAPTION_MAX_LEN: int = 150
 
 WIDGET_REGISTRY: dict[str, dict] = {
-    "video_youtube": {"required": ["video_url"], "optional": ["title"]},
-    "video_tiktok":  {"required": ["video_url"], "optional": ["title"]},
-    "text_bio":      {"required": ["content"],   "optional": ["heading"]},
-    "image_url":     {"required": ["url", "alt_text"], "optional": ["caption"]},
+    "video_youtube":   {"required": ["video_url"], "optional": ["title"]},
+    "video_tiktok":    {"required": ["video_url"], "optional": ["title"]},
+    "text_bio":        {"required": ["content"],   "optional": ["heading"]},
+    "image_url":       {"required": ["url", "alt_text"], "optional": ["caption"]},
+    "weather_current": {"required": ["lat", "lon", "accuracy_m"], "optional": ["units"]},
 }
 VALID_WIDGET_TYPES: frozenset[str] = frozenset(WIDGET_REGISTRY)
 
@@ -176,6 +181,66 @@ def build_image_module(url: str, alt_text: str, caption: str = "") -> dict[str, 
     }
 
 
+def build_weather_module(
+    lat: float,
+    lon: float,
+    accuracy_m: float,
+    units: str = "metric",
+) -> dict[str, Any]:
+    """Validate browser geolocation coords, reverse geocode, fetch weather.
+
+    lat/lon: raw browser geolocation values (exact GPS never stored).
+    accuracy_m: GPS accuracy in metres — rejected if > MAX_ACCURACY_M.
+    Raises ValueError for invalid coords / accuracy / units.
+    Reverse geocoding timeout → location_label = "Your location" (never raises).
+    Weather API failure → fetch_error stored, weather = None (never raises 500).
+    Stored lat/lon are 1-decimal rounded (~11 km) — exact GPS is not persisted.
+    """
+    if not (-90 <= lat <= 90):
+        raise ValueError("Invalid latitude.")
+    if not (-180 <= lon <= 180):
+        raise ValueError("Invalid longitude.")
+    if accuracy_m < 0:
+        raise ValueError("accuracy_m must be >= 0.")
+    if accuracy_m > MAX_ACCURACY_M:
+        raise ValueError(
+            f"Location accuracy too low ({accuracy_m:.0f}m). "
+            "Please try again outdoors."
+        )
+    if units not in VALID_UNITS:
+        raise ValueError("units must be 'metric' or 'imperial'.")
+
+    lat_fetch  = round(lat, 2)   # ~1.1 km precision for Open-Meteo
+    lon_fetch  = round(lon, 2)
+    lat_stored = round(lat, 1)   # ~11 km precision for storage/privacy
+    lon_stored = round(lon, 1)
+
+    from app.services.location.reverse_geocode_service import reverse_geocode
+    location_label = reverse_geocode(lat_stored, lon_stored)
+
+    from app.services.location.weather_service import fetch_current_weather
+    now = datetime.now(timezone.utc).isoformat()
+    try:
+        weather_data = fetch_current_weather(lat_fetch, lon_fetch, units)
+        fetch_error  = None
+    except Exception as exc:
+        weather_data = None
+        fetch_error  = str(exc)[:200]
+
+    return {
+        "type":           "weather_current",
+        "location_label": location_label,
+        "lat":            lat_stored,
+        "lon":            lon_stored,
+        "units":          units,
+        "source":         "open-meteo",
+        "cached_at":      now,
+        "weather":        weather_data,
+        "fetch_error":    fetch_error,
+        "updated_at":     now,
+    }
+
+
 def build_module(widget_type: str, payload: dict[str, Any]) -> dict[str, Any]:
     """Dispatch to the appropriate builder by widget_type.
 
@@ -197,6 +262,13 @@ def build_module(widget_type: str, payload: dict[str, Any]) -> dict[str, Any]:
     if widget_type == "image_url":
         return build_image_module(
             payload["url"], payload["alt_text"], payload.get("caption", "")
+        )
+    if widget_type == "weather_current":
+        return build_weather_module(
+            payload["lat"],
+            payload["lon"],
+            payload["accuracy_m"],
+            payload.get("units", "metric"),
         )
     raise ValueError(f"Unhandled widget_type: {widget_type!r}")  # safety net
 
@@ -465,6 +537,9 @@ def _module_fingerprint(module: dict | None) -> str:
         ])
         h = hashlib.sha256(raw.encode()).hexdigest()[:16]
         return f"img:{h}"
+    if mtype == "weather_current":
+        label = module.get("location_label") or ""
+        return f"weather:{label}"
     h = hashlib.sha256(
         json.dumps(module, sort_keys=True, default=str).encode()
     ).hexdigest()[:16]

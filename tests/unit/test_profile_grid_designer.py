@@ -1700,3 +1700,253 @@ class TestTikTokThumbnail:
         data = json.loads(resp.body)
         assert data["ok"] is True
         assert data["thumbnail_url"] == _THUMB_URL
+
+
+# ── WC-01..20: Weather widget ─────────────────────────────────────────────────
+
+_GEO_LAT   = 47.4979
+_GEO_LON   = 19.0402
+_GEO_ACC   = 50.0
+_GEO_LABEL = "Budapest, HU"
+_WEATHER_DATA = {
+    "temp_c": 18.5, "weathercode": 1, "condition": "Mainly clear",
+    "wind_kph": 12.3, "humidity": 55,
+}
+
+_RGS_PATCH = "app.services.location.reverse_geocode_service.reverse_geocode"
+_WS_PATCH  = "app.services.location.weather_service.fetch_current_weather"
+
+
+class TestWeatherWidget:
+    """WC-01..10: build_weather_module + build_module dispatch + fingerprint."""
+
+    def _build(self, lat=_GEO_LAT, lon=_GEO_LON, accuracy_m=_GEO_ACC,
+               units="metric", label=_GEO_LABEL, weather=None):
+        from app.services.profile_grid_service import build_weather_module
+        _w = weather if weather is not None else _WEATHER_DATA
+        with patch(_RGS_PATCH, return_value=label), \
+             patch(_WS_PATCH, return_value=_w):
+            return build_weather_module(lat, lon, accuracy_m, units)
+
+    def test_wc_01_valid_coords_returns_weather_current_module(self):
+        """WC-01: valid GPS input → module type is weather_current."""
+        mod = self._build()
+        assert mod["type"] == "weather_current"
+        assert mod["location_label"] == _GEO_LABEL
+        assert mod["weather"] == _WEATHER_DATA
+        assert mod["fetch_error"] is None
+
+    def test_wc_02_exact_gps_not_stored_coords_are_1_decimal(self):
+        """WC-02: stored lat/lon are 1-decimal rounded, not exact GPS."""
+        lat_exact = 47.49791234
+        lon_exact = 19.04021234
+        mod = self._build(lat=lat_exact, lon=lon_exact)
+        assert mod["lat"] == round(lat_exact, 1)
+        assert mod["lon"] == round(lon_exact, 1)
+        assert mod["lat"] != lat_exact
+        assert mod["lon"] != lon_exact
+
+    def test_wc_03_invalid_latitude_raises_value_error(self):
+        """WC-03: lat > 90 → ValueError."""
+        from app.services.profile_grid_service import build_weather_module
+        with pytest.raises(ValueError, match="latitude"):
+            build_weather_module(91.0, 0.0, 10.0)
+
+    def test_wc_04_invalid_longitude_raises_value_error(self):
+        """WC-04: lon < -180 → ValueError."""
+        from app.services.profile_grid_service import build_weather_module
+        with pytest.raises(ValueError, match="longitude"):
+            build_weather_module(0.0, -181.0, 10.0)
+
+    def test_wc_05_accuracy_above_200m_raises_value_error(self):
+        """WC-05: accuracy_m > 200 → ValueError (poor GPS)."""
+        from app.services.profile_grid_service import build_weather_module
+        with pytest.raises(ValueError, match="accuracy"):
+            build_weather_module(_GEO_LAT, _GEO_LON, 201.0)
+
+    def test_wc_06_negative_accuracy_raises_value_error(self):
+        """WC-06: accuracy_m < 0 → ValueError."""
+        from app.services.profile_grid_service import build_weather_module
+        with pytest.raises(ValueError, match="accuracy_m"):
+            build_weather_module(_GEO_LAT, _GEO_LON, -1.0)
+
+    def test_wc_07_invalid_units_raises_value_error(self):
+        """WC-07: units not in {'metric', 'imperial'} → ValueError."""
+        from app.services.profile_grid_service import build_weather_module
+        with pytest.raises(ValueError, match="units"):
+            build_weather_module(_GEO_LAT, _GEO_LON, 10.0, units="kelvin")
+
+    def test_wc_08_weather_api_failure_stored_as_fetch_error_not_raised(self):
+        """WC-08: weather API raises → fetch_error set, weather=None, no exception propagates."""
+        import httpx
+        from app.services.profile_grid_service import build_weather_module
+        with patch(_RGS_PATCH, return_value=_GEO_LABEL), \
+             patch(_WS_PATCH, side_effect=httpx.TimeoutException("timeout")):
+            mod = build_weather_module(_GEO_LAT, _GEO_LON, _GEO_ACC)
+        assert mod["weather"] is None
+        assert mod["fetch_error"] is not None
+        assert "timeout" in mod["fetch_error"].lower()
+
+    def test_wc_09_module_fingerprint_weather_current(self):
+        """WC-09: _module_fingerprint for weather_current returns 'weather:{label}'."""
+        mod = {"type": "weather_current", "location_label": _GEO_LABEL}
+        fp = _module_fingerprint(mod)
+        assert fp == f"weather:{_GEO_LABEL}"
+
+    def test_wc_10_build_module_dispatch_weather_current(self):
+        """WC-10: build_module('weather_current', ...) dispatches to build_weather_module."""
+        with patch(_RGS_PATCH, return_value=_GEO_LABEL), \
+             patch(_WS_PATCH, return_value=_WEATHER_DATA):
+            mod = build_module("weather_current", {
+                "lat": _GEO_LAT, "lon": _GEO_LON, "accuracy_m": _GEO_ACC,
+            })
+        assert mod["type"] == "weather_current"
+
+
+class TestWeatherWidgetRoute:
+    """WC-11..15: POST /slots weather_current route handling."""
+
+    _BASE = "app.api.web_routes.dashboard"
+
+    def _run_weather_slot(self, payload_dict, draft):
+        from app.api.web_routes.dashboard import lfa_profile_editor_set_slot, _SlotWidgetRequest
+        import json as _json
+        db = MagicMock()
+        payload = _SlotWidgetRequest(**payload_dict)
+        with patch(f"{self._BASE}._get_lfa_license", return_value=MagicMock()), \
+             patch(f"{self._BASE}._CardDraftService") as MockCDS, \
+             patch(_RGS_PATCH, return_value=_GEO_LABEL), \
+             patch(_WS_PATCH, return_value=_WEATHER_DATA):
+            MockCDS.get_player_card_draft.return_value = draft
+            MockCDS.set_draft_slot.side_effect = (
+                lambda db, d, slot_id, video_url=None, title="", *, widget_type=None, payload=None, thumbnail_url=None, commit=True:
+                    CardDraftService.set_draft_slot(
+                        db, d, slot_id, video_url, title,
+                        widget_type=widget_type, payload=payload, commit=False,
+                    )
+            )
+            resp = asyncio.run(lfa_profile_editor_set_slot(
+                slot_id="side_a_1",
+                payload=payload,
+                db=db,
+                user=MagicMock(),
+            ))
+        return resp
+
+    def test_wc_11_missing_lat_lon_returns_422(self):
+        """WC-11: weather_current without lat/lon → 422."""
+        import json
+        draft = _draft()
+        resp = self._run_weather_slot({"widget_type": "weather_current"}, draft)
+        assert resp.status_code == 422
+        data = json.loads(resp.body)
+        assert data["ok"] is False
+
+    def test_wc_12_accuracy_too_low_returns_422(self):
+        """WC-12: weather_current with accuracy_m > 200 → 422 (build_weather_module ValueError)."""
+        import json
+        from app.services.profile_grid_service import build_weather_module as _bwm
+        draft = _draft()
+        resp = self._run_weather_slot({
+            "widget_type": "weather_current",
+            "lat": _GEO_LAT, "lon": _GEO_LON, "accuracy_m": 500.0,
+        }, draft)
+        assert resp.status_code == 422
+        data = json.loads(resp.body)
+        assert data["ok"] is False
+
+    def test_wc_13_valid_weather_payload_returns_200(self):
+        """WC-13: weather_current valid payload → 200 ok."""
+        import json
+        draft = _draft()
+        resp = self._run_weather_slot({
+            "widget_type": "weather_current",
+            "lat": _GEO_LAT, "lon": _GEO_LON, "accuracy_m": _GEO_ACC,
+        }, draft)
+        assert resp.status_code == 200
+        data = json.loads(resp.body)
+        assert data["ok"] is True
+        assert data["widget_type"] == "weather_current"
+
+    def test_wc_14_response_includes_location_label_and_weather(self):
+        """WC-14: weather_current 200 response includes location_label and weather fields."""
+        import json
+        draft = _draft()
+        resp = self._run_weather_slot({
+            "widget_type": "weather_current",
+            "lat": _GEO_LAT, "lon": _GEO_LON, "accuracy_m": _GEO_ACC,
+        }, draft)
+        data = json.loads(resp.body)
+        assert data["location_label"] == _GEO_LABEL
+        assert data["weather"]["temp_c"] == _WEATHER_DATA["temp_c"]
+        assert data["fetch_error"] is None
+
+    def test_wc_15_weather_timeout_graceful_degradation(self):
+        """WC-15: weather API TimeoutException → build_weather_module catches it, saves with fetch_error, route returns 200."""
+        import json, httpx
+        draft = _draft()
+        resp = None
+        from app.api.web_routes.dashboard import lfa_profile_editor_set_slot, _SlotWidgetRequest
+        db = MagicMock()
+        payload = _SlotWidgetRequest(
+            widget_type="weather_current",
+            lat=_GEO_LAT, lon=_GEO_LON, accuracy_m=_GEO_ACC,
+        )
+        with patch(f"{self._BASE}._get_lfa_license", return_value=MagicMock()), \
+             patch(f"{self._BASE}._CardDraftService") as MockCDS, \
+             patch(_RGS_PATCH, return_value=_GEO_LABEL), \
+             patch(_WS_PATCH, side_effect=httpx.TimeoutException("timed out")):
+            MockCDS.get_player_card_draft.return_value = draft
+            MockCDS.set_draft_slot.side_effect = (
+                lambda db, d, slot_id, video_url=None, title="", *, widget_type=None, payload=None, thumbnail_url=None, commit=True:
+                    CardDraftService.set_draft_slot(
+                        db, d, slot_id, video_url, title,
+                        widget_type=widget_type, payload=payload, commit=False,
+                    )
+            )
+            resp = asyncio.run(lfa_profile_editor_set_slot(
+                slot_id="side_a_1", payload=payload, db=db, user=MagicMock(),
+            ))
+        # Weather failure is stored as fetch_error — draft is saved, no 5xx.
+        assert resp.status_code == 200
+        data = json.loads(resp.body)
+        assert data["ok"] is True
+        assert data["fetch_error"] is not None
+        assert data["weather"] is None
+
+
+class TestWeatherWidgetTemplates:
+    """WC-16..20: Template rendering for weather_current."""
+
+    def test_wc_16_player_profile_contains_weather_card_css(self):
+        """WC-16: player_profile.html defines .psp-weather-card CSS class."""
+        assert "psp-weather-card" in _PLAYER_HTML
+
+    def test_wc_17_player_profile_does_not_render_raw_lat_lon(self):
+        """WC-17: player_profile.html weather branch never renders 'module.lat' or 'module.lon'."""
+        # The macro must not expose coordinates — privacy constraint.
+        import re
+        # Check that in the weather_current branch there is no reference to module.lat / module.lon
+        # Locate the weather_current block in the macro
+        weather_block_match = re.search(
+            r"weather_current.*?{% else %}\s*<div class=\"psp-slot-unknown",
+            _PLAYER_HTML, re.DOTALL
+        )
+        assert weather_block_match, "weather_current block not found in render_slot_module macro"
+        block = weather_block_match.group(0)
+        assert "module.lat" not in block
+        assert "module.lon" not in block
+
+    def test_wc_18_player_profile_weather_fallback_for_fetch_error(self):
+        """WC-18: player_profile.html weather branch handles fetch_error with fallback div."""
+        assert "psp-weather-fallback" in _PLAYER_HTML
+        assert "fetch_error" in _PLAYER_HTML
+
+    def test_wc_19_editor_contains_wp_form_weather(self):
+        """WC-19: lfa_public_profile_editor.html defines #wp-form-weather."""
+        assert "wp-form-weather" in _EDITOR_HTML
+
+    def test_wc_20_editor_contains_geolocation_js(self):
+        """WC-20: lfa_public_profile_editor.html defines wpRequestGeolocation JS function."""
+        assert "wpRequestGeolocation" in _EDITOR_HTML
+        assert "enableHighAccuracy" in _EDITOR_HTML

@@ -494,6 +494,26 @@ const _ttUrlParams = new URLSearchParams(window.location.search);
 const CHALLENGE_ID = _ttUrlParams.get('challenge_id') || null;
 const LOCKED_DIFF  = _ttUrlParams.get('difficulty')   || null;
 
+// ── Challenge Fairness Snapshot ────────────────────────────────────────────
+// When TT_CHALLENGE_SNAPSHOT is set, the initial state (targetIdx, object
+// positions, initial angles) is served from the server-side pre-drawn snapshot
+// so both players start from an identical configuration.
+// Ongoing direction-change angles during tracking remain random (P1 tech debt).
+// In normal training mode TT_CHALLENGE_SNAPSHOT is null and Math.random() is used.
+{% if challenge_snapshot %}
+const TT_CHALLENGE_SNAPSHOT = {{ challenge_snapshot | tojson }};
+function _ttSnapRound(roundIdx, rounds) {
+    // rounds is the flat ROUNDS array; each entry has .phase (0-based) and .roundInPhase (0-based)
+    var r = rounds[roundIdx];
+    if (!r || !TT_CHALLENGE_SNAPSHOT) { return null; }
+    var ph = TT_CHALLENGE_SNAPSHOT.phases[r.phase];
+    if (!ph) { return null; }
+    return ph.rounds[r.roundInPhase] || null;
+}
+{% else %}
+const TT_CHALLENGE_SNAPSHOT = null;
+{% endif %}
+
 /* Flash mechanic constants */
 const FLASH_DURATION_MS  = 400;
 const FLASH_MIN_GAP_MS   = 500;
@@ -593,7 +613,10 @@ function clearObjects() {
     objects = [];
 }
 
-function spawnObjects(count) {
+function spawnObjects(count, snapPositions) {
+    // snapPositions: optional array of {x, y} from challenge snapshot.
+    // When provided, positions are used directly (challenge mode — fair start).
+    // When absent, positions are placed randomly (normal training mode).
     var radius = getRadius();
     for (var i = 0; i < count; i++) {
         var el = document.createElement('div');
@@ -602,17 +625,26 @@ function spawnObjects(count) {
         el.style.width  = (radius * 2) + 'px';
         el.style.height = (radius * 2) + 'px';
 
-        var x, y, ok, tries = 0;
-        do {
-            ok = true;
-            x = radius + Math.random() * (arenaW - 2 * radius);
-            y = radius + Math.random() * (arenaH - 2 * radius);
-            for (var j = 0; j < objects.length; j++) {
-                var dx = x - objects[j].x;
-                var dy = y - objects[j].y;
-                if (Math.sqrt(dx*dx + dy*dy) < radius * 2.8) { ok = false; break; }
-            }
-        } while (!ok && ++tries < 80);
+        var x, y;
+        if (snapPositions && snapPositions[i]) {
+            // Challenge mode: use snapshot position, scaled to current arena
+            var scaleX = arenaW / 480;
+            var scaleY = arenaH / 360;
+            x = Math.min(Math.max(snapPositions[i].x * scaleX, radius), arenaW - radius);
+            y = Math.min(Math.max(snapPositions[i].y * scaleY, radius), arenaH - radius);
+        } else {
+            var ok, tries = 0;
+            do {
+                ok = true;
+                x = radius + Math.random() * (arenaW - 2 * radius);
+                y = radius + Math.random() * (arenaH - 2 * radius);
+                for (var j = 0; j < objects.length; j++) {
+                    var dx = x - objects[j].x;
+                    var dy = y - objects[j].y;
+                    if (Math.sqrt(dx*dx + dy*dy) < radius * 2.8) { ok = false; break; }
+                }
+            } while (!ok && ++tries < 80);
+        }
 
         el.style.left = (x - radius) + 'px';
         el.style.top  = (y - radius) + 'px';
@@ -778,27 +810,42 @@ function startRound() {
     tapWasDuringFlash     = false;
     currentDirChangeCount = 0;
 
-    targetIdx = Math.floor(Math.random() * round.objectCount);
-    spawnObjects(round.objectCount);
+    var _snapRd = TT_CHALLENGE_SNAPSHOT ? _ttSnapRound(roundIdx, ROUNDS) : null;
+    if (_snapRd) {
+        // Challenge mode: use server-pre-drawn target and positions (fairness snapshot)
+        targetIdx = _snapRd.target_index;
+        spawnObjects(round.objectCount, _snapRd.initial_positions);
+    } else {
+        // Normal training mode: random as before
+        targetIdx = Math.floor(Math.random() * round.objectCount);
+        spawnObjects(round.objectCount, null);
+    }
 
-    setTimeout(function () { highlightPhase(round); }, 400);
+    setTimeout(function () { highlightPhase(round, _snapRd); }, 400);
 }
 
-function highlightPhase(round) {
+function highlightPhase(round, snapRd) {
     setStatus('Memorise the target!');
     objects[targetIdx].el.classList.add('tt-highlight');
 
     setTimeout(function () {
         objects[targetIdx].el.classList.remove('tt-highlight');
-        trackingPhase(round);
+        trackingPhase(round, snapRd);
     }, round.highlightMs);
 }
 
-function trackingPhase(round) {
+function trackingPhase(round, snapRd) {
     setStatus('Track it…');
     var spd = BASE_SPEED * round.speed;
-    objects.forEach(function (o) {
-        var angle = Math.random() * Math.PI * 2;
+    objects.forEach(function (o, i) {
+        var angle;
+        if (snapRd && snapRd.initial_angles && snapRd.initial_angles[i] != null) {
+            // Challenge mode: use server-pre-drawn initial angle (fairness snapshot)
+            angle = snapRd.initial_angles[i];
+        } else {
+            // Normal training mode or direction changes: random as before
+            angle = Math.random() * Math.PI * 2;
+        }
         o.vx = Math.cos(angle) * spd;
         o.vy = Math.sin(angle) * spd;
     });

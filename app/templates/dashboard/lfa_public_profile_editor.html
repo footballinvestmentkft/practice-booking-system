@@ -155,6 +155,38 @@
 /* TikTok thumbnail indicator badge */
 .ppe-badge-tiktok-thumb { font-size: 0.62rem; vertical-align: middle; margin-left: 0.25rem; }
 
+/* ── Weather / Geolocation widget ──────────────────────────────────────────── */
+.wp-geo-block { }
+.wp-geo-desc { font-size: 0.82rem; color: #374151; line-height: 1.5; margin-bottom: 0.75rem; }
+.wp-geo-btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.84rem; font-weight: 700;
+    border: 1.5px solid #3b82f6; background: #eff6ff; color: #1d4ed8;
+    cursor: pointer; transition: background 0.15s;
+}
+.wp-geo-btn:hover { background: #dbeafe; }
+.wp-geo-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.wp-geo-spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid #d1d5db; border-top-color: #3b82f6;
+    border-radius: 50%; animation: wp-spin 0.7s linear infinite;
+    margin-right: 0.4rem; vertical-align: middle;
+}
+@keyframes wp-spin { to { transform: rotate(360deg); } }
+.wp-geo-ready-msg {
+    font-size: 0.82rem; color: #065f46; background: #d1fae5;
+    border-radius: 6px; padding: 0.45rem 0.75rem; margin-bottom: 0.5rem;
+}
+.wp-geo-error-msg {
+    font-size: 0.78rem; color: #b91c1c; background: #fee2e2;
+    border-radius: 6px; padding: 0.45rem 0.75rem; margin-bottom: 0.5rem;
+}
+.wp-geo-retry-btn {
+    font-size: 0.8rem; font-weight: 600; color: #1d4ed8;
+    background: none; border: none; cursor: pointer; padding: 0; text-decoration: underline;
+}
+.ppe-badge-weather { background: #e0f2fe; color: #0369a1; }
+
 /* ── Grid designer — 5-lane layout ──────────────────────────────────────────── */
 /* Desktop: side_a | side_b | featured_card | side_c | side_d                   */
 .ppe-grid {
@@ -444,6 +476,11 @@
         {% elif slot.module.type == "image_url" %}
         <div class="ppe-slot-provider-badge ppe-badge-image">&#x1F5BC; Image</div>
         <div class="ppe-slot-title">{{ slot.module.alt_text[:45] }}</div>
+        {% elif slot.module.type == "weather_current" %}
+        <div class="ppe-slot-provider-badge ppe-badge-weather">&#x26C5; Weather</div>
+        <div class="ppe-slot-title">
+            {{ (slot.module.location_label or "Your location")[:40] }}{% if slot.module.fetch_error %} <span title="Weather fetch failed" style="color:#f59e0b">&#x26A0;</span>{% endif %}{% if slot.module.weather %} &middot; {{ slot.module.weather.temp_c }}&deg;C{% endif %}
+        </div>
         {% elif slot.module.provider == "youtube" %}
         <div class="ppe-slot-provider-badge ppe-badge-youtube">&#x25B6; YouTube</div>
         <div class="ppe-slot-title">{{ slot.module.title or slot.module.video_id }}</div>
@@ -574,6 +611,7 @@
             <button class="wp-type-btn" data-wtype="video_tiktok"  onclick="wpSelectType('video_tiktok')">&#x266A; TikTok</button>
             <button class="wp-type-btn" data-wtype="text_bio"      onclick="wpSelectType('text_bio')">&#x270F; Text / Bio</button>
             <button class="wp-type-btn" data-wtype="image_url"     onclick="wpSelectType('image_url')">&#x1F5BC; Image URL</button>
+            <button class="wp-type-btn" data-wtype="weather_current" onclick="wpSelectType('weather_current')">&#x26C5; Weather</button>
         </div>
 
         {# Video form #}
@@ -607,6 +645,31 @@
             <input class="wp-input" id="wp-image-alt" type="text" maxlength="200" placeholder="Describe the image">
             <label class="wp-label" for="wp-image-caption">Caption (optional)</label>
             <input class="wp-input" id="wp-image-caption" type="text" maxlength="150" placeholder="Optional caption">
+        </div>
+
+        {# Weather / Geolocation form #}
+        <div id="wp-form-weather" class="wp-form">
+            <div class="wp-geo-block" id="wp-geo-idle">
+                <p class="wp-geo-desc">
+                    Show current weather at your location.<br>
+                    Your browser will ask for permission once — only the approximate area (~10&nbsp;km) is stored, never your exact GPS position.
+                </p>
+                <button class="wp-geo-btn" id="wp-geo-fetch-btn" onclick="wpRequestGeolocation()">
+                    &#x1F4CD; Use my current location
+                </button>
+            </div>
+            <div class="wp-geo-block" id="wp-geo-loading" style="display:none">
+                <span class="wp-geo-spinner"></span>
+                Getting your location&hellip;
+            </div>
+            <div class="wp-geo-block" id="wp-geo-error" style="display:none">
+                <div class="wp-geo-error-msg" id="wp-geo-error-msg">Location unavailable.</div>
+                <button class="wp-geo-retry-btn" onclick="wpGeoReset()">Try again</button>
+            </div>
+            <div class="wp-geo-block" id="wp-geo-ready" style="display:none">
+                <div class="wp-geo-ready-msg" id="wp-geo-ready-msg">Location ready.</div>
+                <button class="wp-geo-retry-btn" onclick="wpGeoReset()">Use a different location</button>
+            </div>
         </div>
 
         <div class="wp-error" id="wp-error"></div>
@@ -661,6 +724,7 @@
     // ── Widget Panel state ─────────────────────────────────────────────────────
     var _wpSlotId    = null;
     var _wpWidgetType = null;
+    var _wpGeoCoords  = null; // {lat, lon, accuracy_m} — held in memory only, never persisted on client
 
     function wpShowError(msg) {
         var el = document.getElementById("wp-error");
@@ -672,6 +736,17 @@
         var el = document.getElementById("wp-error");
         if (el) { el.textContent = ""; el.classList.remove("visible"); }
     }
+    function wpGeoSetState(state) {
+        ["idle","loading","error","ready"].forEach(function(s) {
+            var el = document.getElementById("wp-geo-" + s);
+            if (el) el.style.display = (s === state) ? "" : "none";
+        });
+    }
+    function wpGeoReset() {
+        _wpGeoCoords = null;
+        wpGeoSetState("idle");
+    }
+
     function wpClearForms() {
         document.getElementById("wp-video-url").value    = "";
         document.getElementById("wp-video-title").value  = "";
@@ -682,9 +757,10 @@
         document.getElementById("wp-image-url").value     = "";
         document.getElementById("wp-image-alt").value     = "";
         document.getElementById("wp-image-caption").value = "";
+        wpGeoReset();
     }
     function wpHideForms() {
-        ["wp-form-video","wp-form-text","wp-form-image"].forEach(function(id) {
+        ["wp-form-video","wp-form-text","wp-form-image","wp-form-weather"].forEach(function(id) {
             var el = document.getElementById(id);
             if (el) { el.classList.remove("active"); }
         });
@@ -694,9 +770,10 @@
     window.wpSelectType = function (wtype) {
         _wpWidgetType = wtype;
         wpHideForms();
-        var formId = wtype.startsWith("video_") ? "wp-form-video"
-                   : wtype === "text_bio"        ? "wp-form-text"
-                   :                               "wp-form-image";
+        var formId = wtype.startsWith("video_")    ? "wp-form-video"
+                   : wtype === "text_bio"           ? "wp-form-text"
+                   : wtype === "weather_current"    ? "wp-form-weather"
+                   :                                  "wp-form-image";
         var form = document.getElementById(formId);
         if (form) form.classList.add("active");
         document.querySelectorAll(".wp-type-btn").forEach(function(b) {
@@ -705,6 +782,8 @@
         // Show TikTok-only extras only when video_tiktok is selected.
         var ttExtras = document.getElementById("wp-video-tiktok-extras");
         if (ttExtras) ttExtras.classList.toggle("visible", wtype === "video_tiktok");
+        // Reset geo state when weather type is selected.
+        if (wtype === "weather_current") wpGeoReset();
         wpClearError();
     };
 
@@ -741,6 +820,18 @@
                 document.getElementById("wp-image-url").value     = mod.url || "";
                 document.getElementById("wp-image-alt").value     = mod.alt_text || "";
                 document.getElementById("wp-image-caption").value = mod.caption || "";
+            } else if (mtype === "weather_current") {
+                document.getElementById("wp-form-weather").classList.add("active");
+                // In edit mode reset GPS — user must re-fetch to update.
+                // Show previously saved label as context in the idle state description.
+                var prevLabel = mod.location_label || "Your location";
+                var descEl = document.querySelector("#wp-geo-idle .wp-geo-desc");
+                if (descEl) {
+                    descEl.innerHTML =
+                        "Previously saved: <strong>" + escHtml(prevLabel) + "</strong><br>" +
+                        "Fetch your location again to refresh the weather data.";
+                }
+                wpGeoReset();
             } else {
                 document.getElementById("wp-form-video").classList.add("active");
                 document.getElementById("wp-video-url").value   = mod.source_url || "";
@@ -798,6 +889,15 @@
             body.caption   = document.getElementById("wp-image-caption").value.trim();
             if (!body.url)      { wpShowError("Image URL is required."); return; }
             if (!body.alt_text) { wpShowError("Alt text is required."); return; }
+        } else if (_wpWidgetType === "weather_current") {
+            if (!_wpGeoCoords) {
+                wpShowError("Please tap “Use my current location” to capture your location first.");
+                return;
+            }
+            body.lat        = _wpGeoCoords.lat;
+            body.lon        = _wpGeoCoords.lon;
+            body.accuracy_m = _wpGeoCoords.accuracy_m;
+            body.units      = "metric";
         }
 
         var saveBtn = document.getElementById("wp-save-btn");
@@ -981,6 +1081,48 @@
             },
         });
     });
+
+    // ── Geolocation flow ───────────────────────────────────────────────────────
+    window.wpRequestGeolocation = function () {
+        if (!navigator.geolocation) {
+            document.getElementById("wp-geo-error-msg").textContent =
+                "Geolocation is not supported by your browser.";
+            wpGeoSetState("error");
+            return;
+        }
+        wpGeoSetState("loading");
+        navigator.geolocation.getCurrentPosition(
+            function (pos) {
+                var acc = pos.coords.accuracy;
+                if (acc > 200) {
+                    document.getElementById("wp-geo-error-msg").textContent =
+                        "Location accuracy too low (" + Math.round(acc) + " m). " +
+                        "Please try again or move to an open area.";
+                    wpGeoSetState("error");
+                    return;
+                }
+                _wpGeoCoords = {
+                    lat:        pos.coords.latitude,
+                    lon:        pos.coords.longitude,
+                    accuracy_m: acc,
+                };
+                document.getElementById("wp-geo-ready-msg").textContent =
+                    "Location captured (±" + Math.round(acc) + " m). Ready to save.";
+                wpGeoSetState("ready");
+            },
+            function (err) {
+                var msg = "Location unavailable.";
+                if      (err.code === 1) msg = "Location permission denied. Please allow location access in your browser settings.";
+                else if (err.code === 3) msg = "Location request timed out. Please try again.";
+                else if (err.code === 2) msg = "Location unavailable. Please check your GPS or network connection.";
+                document.getElementById("wp-geo-error-msg").textContent = msg;
+                wpGeoSetState("error");
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        );
+    };
+    // Expose wpGeoReset for inline onclick handlers
+    window.wpGeoReset = wpGeoReset;
 
     // ── Text content char counter ──────────────────────────────────────────────
     var _textArea = document.getElementById("wp-text-content");
