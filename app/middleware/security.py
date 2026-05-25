@@ -262,7 +262,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "default-src 'self'; "
             "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
             "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-            "img-src 'self' data: https://i.ytimg.com; "
+            "img-src 'self' data: https://i.ytimg.com https:; "
             "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com; "
             "connect-src 'self' http://localhost:8000 http://192.168.1.129:8000; "
             "font-src 'self'"

@@ -148,6 +148,13 @@
 .ppe-badge-text  { background: #ede9fe; color: #5b21b6; }
 .ppe-badge-image { background: #dcfce7; color: #166534; }
 
+/* ── TikTok extras (thumbnail URL field) ────────────────────────────────────── */
+#wp-video-tiktok-extras { display: none; }
+#wp-video-tiktok-extras.visible { display: block; }
+.wp-extras-note { font-size: 0.74rem; color: #6b7280; margin-top: 0.25rem; line-height: 1.4; }
+/* TikTok thumbnail indicator badge */
+.ppe-badge-tiktok-thumb { font-size: 0.62rem; vertical-align: middle; margin-left: 0.25rem; }
+
 /* ── Grid designer — 5-lane layout ──────────────────────────────────────────── */
 /* Desktop: side_a | side_b | featured_card | side_c | side_d                   */
 .ppe-grid {
@@ -442,7 +449,9 @@
         <div class="ppe-slot-title">{{ slot.module.title or slot.module.video_id }}</div>
         <div class="ppe-slot-vid-id">{{ slot.module.video_id }}</div>
         {% else %}
-        <div class="ppe-slot-provider-badge ppe-badge-tiktok">&#x266A; TikTok</div>
+        <div class="ppe-slot-provider-badge ppe-badge-tiktok">
+            &#x266A; TikTok{% if slot.module.custom_thumbnail_url %}<span class="ppe-badge-tiktok-thumb" title="Has thumbnail">&#x1F5BC;</span>{% endif %}
+        </div>
         <div class="ppe-slot-title">{{ slot.module.title or slot.module.video_id }}</div>
         <div class="ppe-slot-vid-id">{{ slot.module.video_id }}</div>
         {% endif %}
@@ -573,6 +582,12 @@
             <input class="wp-input" id="wp-video-url" type="url" placeholder="https://youtube.com/watch?v=... or TikTok link">
             <label class="wp-label" for="wp-video-title">Title (optional)</label>
             <input class="wp-input" id="wp-video-title" type="text" maxlength="80" placeholder="e.g. Best goal of 2024">
+            {# TikTok-only extras — shown/hidden by wpSelectType() #}
+            <div id="wp-video-tiktok-extras">
+                <label class="wp-label" for="wp-tiktok-thumb">Thumbnail URL (optional, HTTPS)</label>
+                <input class="wp-input" id="wp-tiktok-thumb" type="url" placeholder="https://example.com/thumbnail.jpg">
+                <div class="wp-extras-note">Paste a static image URL to show a visual preview on the public profile. Leave empty to use the default link card.</div>
+            </div>
         </div>
 
         {# Text bio form #}
@@ -660,6 +675,7 @@
     function wpClearForms() {
         document.getElementById("wp-video-url").value    = "";
         document.getElementById("wp-video-title").value  = "";
+        document.getElementById("wp-tiktok-thumb").value = "";
         document.getElementById("wp-text-heading").value = "";
         document.getElementById("wp-text-content").value = "";
         document.getElementById("wp-text-count").textContent = "0";
@@ -686,6 +702,9 @@
         document.querySelectorAll(".wp-type-btn").forEach(function(b) {
             b.classList.toggle("active", b.getAttribute("data-wtype") === wtype);
         });
+        // Show TikTok-only extras only when video_tiktok is selected.
+        var ttExtras = document.getElementById("wp-video-tiktok-extras");
+        if (ttExtras) ttExtras.classList.toggle("visible", wtype === "video_tiktok");
         wpClearError();
     };
 
@@ -726,6 +745,14 @@
                 document.getElementById("wp-form-video").classList.add("active");
                 document.getElementById("wp-video-url").value   = mod.source_url || "";
                 document.getElementById("wp-video-title").value = mod.title || "";
+                // TikTok: show extras and prefill thumbnail
+                var ttExtras = document.getElementById("wp-video-tiktok-extras");
+                if (mtype === "video_tiktok") {
+                    if (ttExtras) ttExtras.classList.add("visible");
+                    document.getElementById("wp-tiktok-thumb").value = mod.custom_thumbnail_url || "";
+                } else {
+                    if (ttExtras) ttExtras.classList.remove("visible");
+                }
             }
         } else {
             // Add mode — show type selector, hide delete button.
@@ -757,6 +784,10 @@
             body.video_url = document.getElementById("wp-video-url").value.trim();
             body.title     = document.getElementById("wp-video-title").value.trim();
             if (!body.video_url) { wpShowError("Video URL is required."); return; }
+            if (_wpWidgetType === "video_tiktok") {
+                var thumbVal = document.getElementById("wp-tiktok-thumb").value.trim();
+                if (thumbVal) body.thumbnail_url = thumbVal;
+            }
         } else if (_wpWidgetType === "text_bio") {
             body.content = document.getElementById("wp-text-content").value.trim();
             body.heading = document.getElementById("wp-text-heading").value.trim();

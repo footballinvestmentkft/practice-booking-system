@@ -83,12 +83,17 @@ def sanitize_title(title: str) -> str:
     return cleaned
 
 
-def build_video_module(video_url: str, title: str = "") -> dict[str, Any]:
+def build_video_module(
+    video_url: str,
+    title: str = "",
+    thumbnail_url: str | None = None,
+) -> dict[str, Any]:
     """Validate video_url, build and return a module dict.
 
     Accepts YouTube (watch/shorts/youtu.be) and canonical TikTok URLs.
     Short TikTok URLs (vm./vt.tiktok.com) raise ValueError.
     source_url is stored for audit only and is never used as an iframe src.
+    thumbnail_url: optional HTTPS URL stored only for TikTok as custom_thumbnail_url.
     """
     try:
         parsed = extract_any_video(video_url)
@@ -102,7 +107,7 @@ def build_video_module(video_url: str, title: str = "") -> dict[str, Any]:
         )
     clean_title = sanitize_title(title) if title else ""
     provider = parsed["provider"]
-    return {
+    module: dict[str, Any] = {
         "type":       f"video_{provider}",
         "title":      clean_title,
         "provider":   provider,
@@ -110,6 +115,12 @@ def build_video_module(video_url: str, title: str = "") -> dict[str, Any]:
         "source_url": video_url,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
+    if thumbnail_url and provider == "tiktok":
+        pt = urlparse(thumbnail_url)
+        if pt.scheme != "https" or not pt.netloc:
+            raise ValueError("custom_thumbnail_url must be a valid HTTPS URL.")
+        module["custom_thumbnail_url"] = thumbnail_url
+    return module
 
 
 def build_text_module(content: str, heading: str = "") -> dict[str, Any]:
@@ -176,7 +187,11 @@ def build_module(widget_type: str, payload: dict[str, Any]) -> dict[str, Any]:
             f"Valid types: {sorted(VALID_WIDGET_TYPES)}"
         )
     if widget_type in ("video_youtube", "video_tiktok"):
-        return build_video_module(payload["video_url"], payload.get("title", ""))
+        return build_video_module(
+            payload["video_url"],
+            payload.get("title", ""),
+            thumbnail_url=payload.get("thumbnail_url"),
+        )
     if widget_type == "text_bio":
         return build_text_module(payload["content"], payload.get("heading", ""))
     if widget_type == "image_url":
@@ -431,7 +446,13 @@ def _module_fingerprint(module: dict | None) -> str:
     mtype = module.get("type", "")
     # Backward-compat: old video modules stored only provider/video_id, no type field.
     if mtype.startswith("video_") or (not mtype and module.get("provider")):
-        return f"{module.get('provider', '')}:{module.get('video_id', '')}"
+        provider = module.get("provider", "")
+        video_id = module.get("video_id", "")
+        thumb = module.get("custom_thumbnail_url")
+        if provider == "tiktok" and thumb:
+            h = hashlib.sha256(thumb.encode()).hexdigest()[:8]
+            return f"tiktok:{video_id}:{h}"
+        return f"{provider}:{video_id}"
     if mtype == "text_bio":
         raw = (module.get("heading") or "") + "\x00" + (module.get("content") or "")
         h = hashlib.sha256(raw.encode()).hexdigest()[:16]

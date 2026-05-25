@@ -1410,8 +1410,10 @@ class _SlotWidgetRequest(_BaseModel):
     # Widget type — None triggers backward-compat video path when video_url present.
     widget_type: str | None = None
     # Video fields (video_youtube / video_tiktok)
-    video_url: str | None = None
-    title:     str = ""
+    video_url:     str | None = None
+    title:         str = ""
+    # TikTok-only: optional custom thumbnail HTTPS URL
+    thumbnail_url: str | None = None
     # text_bio fields
     content:   str | None = None
     heading:   str = ""
@@ -1494,6 +1496,16 @@ async def lfa_profile_editor_set_slot(
             status_code=422,
         )
 
+    # Validate thumbnail_url — HTTPS only, ignored for non-TikTok types.
+    if payload.thumbnail_url:
+        from urllib.parse import urlparse as _urlparse
+        _pt = _urlparse(payload.thumbnail_url)
+        if _pt.scheme != "https" or not _pt.netloc:
+            return JSONResponse(
+                {"ok": False, "error": "thumbnail_url must be a valid HTTPS URL."},
+                status_code=422,
+            )
+
     # Require either widget_type or video_url (backward-compat video path).
     if wtype is None and not payload.video_url:
         return JSONResponse(
@@ -1538,6 +1550,7 @@ async def lfa_profile_editor_set_slot(
             payload.title,
             widget_type=wtype,
             payload=svc_payload,
+            thumbnail_url=payload.thumbnail_url,
         )
     except (ValueError, KeyError) as exc:
         http_status = 404 if "Unknown slot_id" in str(exc) else 422
@@ -1549,13 +1562,14 @@ async def lfa_profile_editor_set_slot(
     )
     mod = slot_entry.get("module", {})
     return JSONResponse({
-        "ok":          True,
-        "slot_id":     slot_id,
-        "widget_type": mod.get("type"),
-        "provider":    mod.get("provider"),
-        "video_id":    mod.get("video_id"),
-        "title":       mod.get("title", ""),
-        "status":      "draft",
+        "ok":            True,
+        "slot_id":       slot_id,
+        "widget_type":   mod.get("type"),
+        "provider":      mod.get("provider"),
+        "video_id":      mod.get("video_id"),
+        "title":         mod.get("title", ""),
+        "thumbnail_url": mod.get("custom_thumbnail_url"),
+        "status":        "draft",
     })
 
 

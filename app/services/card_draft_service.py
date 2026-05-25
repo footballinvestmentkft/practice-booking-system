@@ -220,12 +220,14 @@ class CardDraftService:
         *,
         widget_type: str | None = None,
         payload: dict[str, Any] | None = None,
+        thumbnail_url: str | None = None,
         commit: bool = True,
     ) -> CardDraft:
         """Write a widget module into draft_data.profile_grid[slot_id].
 
         Backward-compatible: passing video_url (no widget_type) behaves as before.
         New path: pass widget_type + payload dict for text_bio / image_url / video.
+        thumbnail_url: optional HTTPS URL for TikTok custom thumbnail preview.
 
         Raises ValueError for unknown slot_id, invalid URL, or bad widget payload.
         """
@@ -234,7 +236,7 @@ class CardDraftService:
             # Legacy video path — video_url required.
             if video_url is None:
                 raise ValueError("video_url is required when widget_type is not specified.")
-            module = _build_video_module(video_url, title)
+            module = _build_video_module(video_url, title, thumbnail_url)
         else:
             _payload: dict[str, Any] = dict(payload or {})
             # Allow callers to pass video_url as positional even with widget_type for video types.
@@ -242,6 +244,8 @@ class CardDraftService:
                 _payload["video_url"] = video_url
                 if title and "title" not in _payload:
                     _payload["title"] = title
+            if thumbnail_url and "thumbnail_url" not in _payload:
+                _payload["thumbnail_url"] = thumbnail_url
             module = _build_module(widget_type, _payload)
         draft_data: dict[str, Any] = dict(draft.draft_data or {})
         draft_data["profile_grid"] = _set_slot(draft_data.get("profile_grid"), slot_id, module)

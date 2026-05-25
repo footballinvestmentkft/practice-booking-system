@@ -272,6 +272,35 @@
     margin-top: 0.4rem;
 }
 
+/* ── TikTok thumbnail preview card ─────────────────────────────────────────── */
+.psp-tiktok-thumb-card {
+    position: relative;
+    border-radius: 6px;
+    overflow: hidden;
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+.psp-tiktok-thumb-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    aspect-ratio: 9 / 16;
+    object-fit: cover;
+    max-height: 320px;
+}
+.psp-tiktok-thumb-overlay {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.65));
+    padding: 1.5rem 0.75rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+.psp-tiktok-thumb-overlay .psp-tiktok-provider { color: rgba(255,255,255,0.75); }
+.psp-tiktok-thumb-overlay .psp-tiktok-label    { color: #fff; }
+
 /* ── Unknown widget fallback ────────────────────────────────────────────────── */
 .psp-slot-unknown {
     padding: 0.75rem;
@@ -466,12 +495,34 @@
     <a href="https://www.youtube.com/watch?v={{ module.video_id }}" target="_blank" rel="noopener noreferrer">↗ Open</a>
 </div>
 {% elif module.provider == "tiktok" %}
+{% if module.custom_thumbnail_url %}
+<a href="{{ module.source_url }}"
+   target="_blank" rel="noopener noreferrer"
+   class="psp-tiktok-thumb-card">
+    <img src="{{ module.custom_thumbnail_url | e }}"
+         alt="{{ module.title or 'TikTok video' }}"
+         class="psp-tiktok-thumb-img"
+         loading="lazy">
+    <div class="psp-tiktok-thumb-overlay">
+        <div class="psp-tiktok-provider">TikTok</div>
+        <div class="psp-tiktok-label">Watch on TikTok ↗</div>
+    </div>
+</a>
+<a href="{{ module.source_url }}"
+   target="_blank" rel="noopener noreferrer"
+   class="psp-tiktok-cta psp-tiktok-cta-fallback"
+   style="display:none">
+    <div class="psp-tiktok-provider">TikTok</div>
+    <div class="psp-tiktok-label">Watch on TikTok ↗</div>
+</a>
+{% else %}
 <a href="{{ module.source_url }}"
    target="_blank" rel="noopener noreferrer"
    class="psp-tiktok-cta">
     <div class="psp-tiktok-provider">TikTok</div>
     <div class="psp-tiktok-label">Watch on TikTok ↗</div>
 </a>
+{% endif %}
 {% else %}
 <div class="psp-slot-unknown">
   <p class="psp-slot-unknown__msg">Widget not available</p>
@@ -757,6 +808,20 @@
 </div>{# .psp-profile #}
 
 <script>
+(function () {
+    // TikTok thumbnail broken-image fallback (no inline onerror — CSP-safe).
+    document.querySelectorAll('.psp-tiktok-thumb-img').forEach(function (img) {
+        img.addEventListener('error', function () {
+            var card = img.closest('.psp-tiktok-thumb-card');
+            if (!card) return;
+            card.style.display = 'none';
+            var fallback = card.nextElementSibling;
+            if (fallback && fallback.classList.contains('psp-tiktok-cta-fallback')) {
+                fallback.style.display = 'flex';
+            }
+        });
+    });
+})();
 (function () {
     var slot  = document.getElementById('psp-card-slot');
     var frame = document.getElementById('psp-card-frame');

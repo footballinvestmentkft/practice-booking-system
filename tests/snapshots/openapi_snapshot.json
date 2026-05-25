@@ -22095,6 +22095,17 @@
             "title": "Heading",
             "type": "string"
           },
+          "thumbnail_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail Url"
+          },
           "title": {
             "default": "",
             "title": "Title",

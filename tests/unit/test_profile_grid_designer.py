@@ -31,6 +31,20 @@ Test list:
   TestRegressions        PG-23  lfa_public_profile_editor.html retains HVE elements
                          PG-24  psp-tiktok-cta present on public profile (PR #170)
                          PG-25  GL grid layout invariants preserved
+  TestTikTokThumbnail    TT-P-01  build_video_module stores thumbnail for TikTok
+                         TT-P-02  thumbnail_url ignored for YouTube
+                         TT-P-03  HTTP thumbnail raises ValueError
+                         TT-P-04  invalid thumbnail URL raises ValueError
+                         TT-P-05  no thumbnail → backward-compat fingerprint "tiktok:ID"
+                         TT-P-06  thumbnail present → "tiktok:ID:<hash8>" fingerprint
+                         TT-P-07  fingerprint changes when thumbnail changes
+                         TT-P-08  build_module factory forwards thumbnail for video_tiktok
+                         TT-P-09  build_module factory ignores thumbnail for video_youtube
+                         TT-P-10  set_draft_slot stores thumbnail in draft profile_grid
+                         TT-P-11  set_draft_slot HTTP thumbnail raises ValueError
+                         TT-P-12  is_published detects thumbnail change
+                         TT-P-13  route 422 on HTTP thumbnail_url
+                         TT-P-14  route 200 with HTTPS thumbnail returns thumbnail_url in response
 """
 from __future__ import annotations
 
@@ -48,11 +62,13 @@ from app.services.profile_grid_service import (
     SLOT_IDS,
     SLOT_REGISTRY,
     VALID_WIDGET_TYPES,
+    _module_fingerprint,
     build_draft_grid_state,
     build_image_module,
     build_module,
     build_published_grid_state,
     build_text_module,
+    build_video_module,
     grid_fingerprint,
     move_slot,
     set_slot,
@@ -1372,10 +1388,10 @@ class TestSlotRouteWidgetTypes:
              patch(f"{self._BASE}._CardDraftService") as MockCDS:
             MockCDS.get_player_card_draft.return_value = draft
             MockCDS.set_draft_slot.side_effect = (
-                lambda db, d, slot_id, video_url=None, title="", *, widget_type=None, payload=None, commit=True:
+                lambda db, d, slot_id, video_url=None, title="", *, widget_type=None, payload=None, thumbnail_url=None, commit=True:
                     CardDraftService.set_draft_slot(
                         db, d, slot_id, video_url, title,
-                        widget_type=widget_type, payload=payload, commit=False,
+                        widget_type=widget_type, payload=payload, thumbnail_url=thumbnail_url, commit=False,
                     )
             )
             resp = asyncio.run(lfa_profile_editor_set_slot(
@@ -1514,3 +1530,173 @@ class TestPublicRenderWidgetTypes:
         # Both content and alt_text must be escaped.
         assert "module.content | e" in _PLAYER_HTML
         assert "module.alt_text | e" in _PLAYER_HTML
+
+
+# ── TT-P-01..14: TikTok Custom Thumbnail (Option B) ──────────────────────────
+
+import hashlib as _hashlib  # noqa: E402
+
+_THUMB_URL = "https://cdn.example.com/tiktok_thumb.jpg"
+_THUMB_URL_HTTP = "http://cdn.example.com/tiktok_thumb.jpg"
+
+
+class TestTikTokThumbnail:
+
+    # ── Service layer ──────────────────────────────────────────────────────────
+
+    def test_tt_p_01_build_video_module_stores_thumbnail_for_tiktok(self):
+        """TT-P-01: build_video_module with thumbnail_url stores custom_thumbnail_url for TikTok."""
+        mod = build_video_module(_TT_URL, "Clip", thumbnail_url=_THUMB_URL)
+        assert mod["type"] == "video_tiktok"
+        assert mod["custom_thumbnail_url"] == _THUMB_URL
+
+    def test_tt_p_02_thumbnail_url_ignored_for_youtube(self):
+        """TT-P-02: build_video_module ignores thumbnail_url for YouTube (key absent)."""
+        mod = build_video_module(_YT_URL, "Goal", thumbnail_url=_THUMB_URL)
+        assert mod["type"] == "video_youtube"
+        assert "custom_thumbnail_url" not in mod
+
+    def test_tt_p_03_http_thumbnail_raises_value_error(self):
+        """TT-P-03: HTTP (non-HTTPS) thumbnail URL raises ValueError."""
+        with pytest.raises(ValueError, match="HTTPS"):
+            build_video_module(_TT_URL, thumbnail_url=_THUMB_URL_HTTP)
+
+    def test_tt_p_04_invalid_thumbnail_url_raises_value_error(self):
+        """TT-P-04: Malformed thumbnail URL (no host) raises ValueError."""
+        with pytest.raises(ValueError, match="HTTPS"):
+            build_video_module(_TT_URL, thumbnail_url="not-a-url")
+
+    def test_tt_p_05_no_thumbnail_fingerprint_backward_compat(self):
+        """TT-P-05: TikTok module without thumbnail produces 'tiktok:VIDEO_ID' fingerprint."""
+        mod = {"type": "video_tiktok", "provider": "tiktok", "video_id": _TT_VID}
+        fp = _module_fingerprint(mod)
+        assert fp == f"tiktok:{_TT_VID}"
+
+    def test_tt_p_06_thumbnail_fingerprint_includes_hash(self):
+        """TT-P-06: TikTok module with custom_thumbnail_url produces 'tiktok:ID:<hash8>' fingerprint."""
+        mod = {
+            "type": "video_tiktok", "provider": "tiktok", "video_id": _TT_VID,
+            "custom_thumbnail_url": _THUMB_URL,
+        }
+        fp = _module_fingerprint(mod)
+        expected_h = _hashlib.sha256(_THUMB_URL.encode()).hexdigest()[:8]
+        assert fp == f"tiktok:{_TT_VID}:{expected_h}"
+
+    def test_tt_p_07_fingerprint_changes_when_thumbnail_changes(self):
+        """TT-P-07: Changing custom_thumbnail_url produces a different fingerprint."""
+        mod_a = {"type": "video_tiktok", "provider": "tiktok", "video_id": _TT_VID,
+                 "custom_thumbnail_url": _THUMB_URL}
+        mod_b = {"type": "video_tiktok", "provider": "tiktok", "video_id": _TT_VID,
+                 "custom_thumbnail_url": "https://other.example.com/new_thumb.jpg"}
+        assert _module_fingerprint(mod_a) != _module_fingerprint(mod_b)
+
+    def test_tt_p_08_build_module_factory_forwards_thumbnail_for_tiktok(self):
+        """TT-P-08: build_module factory passes thumbnail_url to build_video_module for video_tiktok."""
+        from app.services.profile_grid_service import build_module
+        mod = build_module("video_tiktok", {
+            "video_url": _TT_URL,
+            "title": "Clip",
+            "thumbnail_url": _THUMB_URL,
+        })
+        assert mod["type"] == "video_tiktok"
+        assert mod["custom_thumbnail_url"] == _THUMB_URL
+
+    def test_tt_p_09_build_module_factory_ignores_thumbnail_for_youtube(self):
+        """TT-P-09: build_module factory ignores thumbnail_url for video_youtube."""
+        from app.services.profile_grid_service import build_module
+        mod = build_module("video_youtube", {
+            "video_url": _YT_URL,
+            "thumbnail_url": _THUMB_URL,
+        })
+        assert "custom_thumbnail_url" not in mod
+
+    def test_tt_p_10_set_draft_slot_stores_thumbnail(self):
+        """TT-P-10: set_draft_slot with thumbnail_url stores custom_thumbnail_url in draft profile_grid."""
+        draft = _draft()
+        db = MagicMock()
+        CardDraftService.set_draft_slot(
+            db, draft, "side_c_1", _TT_URL, "Clip",
+            thumbnail_url=_THUMB_URL,
+        )
+        pg = (draft.draft_data or {}).get("profile_grid", {})
+        slot_entry = next((s for s in pg.get("slots", []) if s["slot_id"] == "side_c_1"), {})
+        mod = slot_entry.get("module", {})
+        assert mod.get("custom_thumbnail_url") == _THUMB_URL
+
+    def test_tt_p_11_set_draft_slot_http_thumbnail_raises(self):
+        """TT-P-11: set_draft_slot with HTTP thumbnail raises ValueError (rejected at service layer)."""
+        draft = _draft()
+        db = MagicMock()
+        with pytest.raises(ValueError, match="HTTPS"):
+            CardDraftService.set_draft_slot(
+                db, draft, "side_c_1", _TT_URL,
+                thumbnail_url=_THUMB_URL_HTTP,
+            )
+
+    def test_tt_p_12_is_published_detects_thumbnail_change(self):
+        """TT-P-12: is_published returns False when custom_thumbnail_url changes between draft and published."""
+        pub_pg = {"version": 1, "slots": [
+            {"slot_id": "side_c_1", "module": {
+                "type": "video_tiktok", "provider": "tiktok", "video_id": _TT_VID,
+            }},
+        ]}
+        draft_pg = {"version": 1, "slots": [
+            {"slot_id": "side_c_1", "module": {
+                "type": "video_tiktok", "provider": "tiktok", "video_id": _TT_VID,
+                "custom_thumbnail_url": _THUMB_URL,
+            }},
+        ]}
+        draft = _draft(
+            draft_data={"profile_grid": draft_pg},
+            published_data={"profile_grid": pub_pg},
+        )
+        assert CardDraftService.is_published(draft) is False
+
+    # ── Route layer ────────────────────────────────────────────────────────────
+
+    def _run_slot(self, body_dict, draft):
+        from app.api.web_routes.dashboard import lfa_profile_editor_set_slot, _SlotWidgetRequest
+        db = MagicMock()
+        payload = _SlotWidgetRequest(**body_dict)
+        with patch("app.api.web_routes.dashboard._get_lfa_license", return_value=MagicMock()), \
+             patch("app.api.web_routes.dashboard._CardDraftService") as MockCDS:
+            MockCDS.get_player_card_draft.return_value = draft
+            MockCDS.set_draft_slot.side_effect = (
+                lambda db, d, sid, vu=None, t="", *, widget_type=None, payload=None, thumbnail_url=None, commit=True:
+                    CardDraftService.set_draft_slot(
+                        db, d, sid, vu, t,
+                        widget_type=widget_type, payload=payload, thumbnail_url=thumbnail_url, commit=False,
+                    )
+            )
+            return asyncio.run(lfa_profile_editor_set_slot(
+                slot_id="side_c_1", payload=payload, db=db, user=MagicMock()
+            ))
+
+    def test_tt_p_13_route_422_on_http_thumbnail(self):
+        """TT-P-13: POST /slots with HTTP thumbnail_url returns 422 before service call."""
+        import json
+        draft = _draft()
+        resp = self._run_slot({
+            "widget_type": "video_tiktok",
+            "video_url": _TT_URL,
+            "thumbnail_url": _THUMB_URL_HTTP,
+        }, draft)
+        assert resp.status_code == 422
+        data = json.loads(resp.body)
+        assert data["ok"] is False
+        assert "HTTPS" in data["error"] or "https" in data["error"].lower()
+
+    def test_tt_p_14_route_200_thumbnail_in_response(self):
+        """TT-P-14: POST /slots with valid HTTPS thumbnail returns 200 and thumbnail_url in response body."""
+        import json
+        draft = _draft()
+        resp = self._run_slot({
+            "widget_type": "video_tiktok",
+            "video_url": _TT_URL,
+            "title": "Clip",
+            "thumbnail_url": _THUMB_URL,
+        }, draft)
+        assert resp.status_code == 200
+        data = json.loads(resp.body)
+        assert data["ok"] is True
+        assert data["thumbnail_url"] == _THUMB_URL
