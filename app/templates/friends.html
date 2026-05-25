@@ -84,7 +84,7 @@
     }
     .fr-card-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: auto; }
 
-    /* Buttons */
+    /* Buttons — aligned to dashboard / PP brand */
     .fr-btn {
         font-size: 0.82rem;
         font-weight: 600;
@@ -93,12 +93,14 @@
         border: none;
         cursor: pointer;
         transition: opacity 0.15s;
+        display: inline-block;
     }
     .fr-btn:hover { opacity: 0.85; }
-    .fr-btn-danger  { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; }
-    .fr-btn-primary { background: #4f46e5; color: #fff; }
-    .fr-btn-success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
-    .fr-btn-muted   { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
+    .fr-btn-danger   { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; }
+    .fr-btn-primary  { background: #0B0B0B; color: #FFD200; }
+    .fr-btn-success  { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .fr-btn-muted    { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
+    .fr-btn-view     { background: #e8f0fe; color: #1a56db; text-decoration: none; }
 
     /* Empty state */
     .fr-empty {
@@ -108,6 +110,74 @@
         font-size: 0.92rem;
     }
     .fr-empty p { margin: 0.4rem 0; }
+
+    /* ── Live search ─────────────────────────────────────────────────────────── */
+    .fr-search-section { margin-bottom: 1.5rem; }
+    .fr-search-label   { font-size: 0.8rem; font-weight: 700; color: var(--app-text-muted);
+                         text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.4rem; }
+    .fr-search-wrap    { position: relative; }
+    .fr-search-input   {
+        width: 100%;
+        padding: 0.6rem 0.95rem;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 9px;
+        font-size: 0.9rem;
+        color: var(--app-text);
+        background: var(--app-card);
+        outline: none;
+        transition: border-color 0.15s;
+        box-sizing: border-box;
+    }
+    .fr-search-input:focus { border-color: #4f46e5; }
+    .fr-search-hint { font-size: 0.76rem; color: var(--app-text-muted); margin-top: 0.3rem; }
+
+    /* Dropdown */
+    .fr-dropdown {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0; right: 0;
+        background: var(--app-card);
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        box-shadow: 0 8px 28px rgba(0,0,0,0.13);
+        z-index: 50;
+        max-height: 340px;
+        overflow-y: auto;
+    }
+    .fr-drop-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.7rem 1rem;
+        border-bottom: 1px solid #f3f4f6;
+        cursor: default;
+    }
+    .fr-drop-item:last-child { border-bottom: none; }
+    .fr-drop-item:hover      { background: var(--app-card-alt, #f9fafb); }
+    .fr-drop-avatar {
+        width: 36px; height: 36px;
+        border-radius: 50%;
+        background: #e0e7ff; color: #4f46e5;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.85rem; font-weight: 700;
+        flex-shrink: 0; user-select: none;
+    }
+    .fr-drop-info   { flex: 1; min-width: 0; }
+    .fr-drop-name   { font-size: 0.88rem; font-weight: 700; color: var(--app-text);
+                      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fr-drop-email  { font-size: 0.75rem; color: var(--app-text-muted);
+                      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fr-drop-action { flex-shrink: 0; }
+    .fr-state-pill  { font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.55rem;
+                      border-radius: 20px; white-space: nowrap; flex-shrink: 0; display: inline-block; }
+    .fr-state-accepted { background: #d1fae5; color: #065f46; }
+    .fr-state-pending  { background: #fef3c7; color: #92400e; }
+    .fr-drop-empty  { padding: 0.85rem 1rem; color: var(--app-text-muted); font-size: 0.88rem; }
+
+    @media (max-width: 480px) {
+        .fr-grid { grid-template-columns: 1fr; }
+        .fr-dropdown { left: 0; right: 0; }
+    }
 </style>
 {% endblock %}
 
@@ -124,6 +194,7 @@
         {% elif success == "request_accepted" %}Friend request accepted.
         {% elif success == "request_declined" %}Request declined.
         {% elif success == "friend_removed" %}Friend removed.
+        {% elif success == "request_cancelled" %}Request cancelled.
         {% else %}Done.{% endif %}
     </div>
     {% endif %}
@@ -164,30 +235,35 @@
     <!-- Friends tab -->
     {% if active_tab != 'requests' %}
 
-        <!-- Add Friend form -->
-        <form method="post" action="/friends/send" style="display:flex;gap:0.5rem;margin-bottom:1.25rem;flex-wrap:wrap;">
-            <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
-            <input type="text" name="identifier" placeholder="Email or nickname"
-                   required autocomplete="off"
-                   style="flex:1;min-width:180px;padding:0.45rem 0.75rem;border:1px solid #e5e7eb;
-                          border-radius:7px;font-size:0.88rem;color:var(--app-text);
-                          background:var(--app-card);outline:none;">
-            <button type="submit" class="fr-btn fr-btn-primary">Add friend</button>
-        </form>
+        <!-- Live search -->
+        <div class="fr-search-section">
+            <div class="fr-search-label">Add Friend</div>
+            <div class="fr-search-wrap">
+                <input id="fr-search"
+                       type="text"
+                       class="fr-search-input"
+                       placeholder="Search by name, nickname or email…"
+                       autocomplete="off"
+                       spellcheck="false">
+                <div id="fr-dropdown" class="fr-dropdown" hidden></div>
+            </div>
+            <div class="fr-search-hint">Type at least 2 characters to search.</div>
+        </div>
 
         {% if friends %}
         <div class="fr-grid">
             {% for f in friends %}
             <div class="fr-card">
-                <div class="fr-card-name">{{ f.nickname or f.email }}</div>
+                <div class="fr-card-name">{{ f.nickname or f.name or f.email }}</div>
                 <div class="fr-card-meta">{{ f.email }}</div>
                 <div class="fr-card-actions">
+                    <a href="/players/{{ f.id }}" class="fr-btn fr-btn-view">View Profile ↗</a>
                     <a href="/challenges/send?friend_id={{ f.id }}"
                        class="fr-btn fr-btn-muted" style="text-decoration:none;">⚔ Challenge</a>
-                    <form method="post" action="/friends/remove/{{ f.id }}">
+                    <form method="post" action="/friends/remove/{{ f.id }}" style="margin:0;">
                         <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
                         <button type="submit" class="fr-btn fr-btn-danger"
-                                onclick="return confirm('Remove {{ f.nickname or f.email }} from friends?')">
+                                onclick="return confirm('Remove {{ f.nickname or f.name or f.email }} from friends?')">
                             Remove
                         </button>
                     </form>
@@ -198,7 +274,7 @@
         {% else %}
         <div class="fr-empty">
             <p>You have no friends yet.</p>
-            <p>Send friend requests to connect with other players.</p>
+            <p>Search above to connect with other players.</p>
         </div>
         {% endif %}
 
@@ -212,14 +288,14 @@
         <div class="fr-grid" style="margin-bottom:1.5rem;">
             {% for row in incoming %}
             <div class="fr-card">
-                <div class="fr-card-name">{{ row.requester.nickname or row.requester.email }}</div>
+                <div class="fr-card-name">{{ row.requester.nickname or row.requester.name or row.requester.email }}</div>
                 <div class="fr-card-meta">{{ row.created_at.strftime('%Y-%m-%d') }}</div>
                 <div class="fr-card-actions">
-                    <form method="post" action="/friends/accept/{{ row.id }}">
+                    <form method="post" action="/friends/accept/{{ row.id }}" style="margin:0;">
                         <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
                         <button type="submit" class="fr-btn fr-btn-success">Accept</button>
                     </form>
-                    <form method="post" action="/friends/decline/{{ row.id }}">
+                    <form method="post" action="/friends/decline/{{ row.id }}" style="margin:0;">
                         <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
                         <button type="submit" class="fr-btn fr-btn-muted">Decline</button>
                     </form>
@@ -241,8 +317,14 @@
         <div class="fr-grid">
             {% for row in outgoing %}
             <div class="fr-card">
-                <div class="fr-card-name">{{ row.addressee.nickname or row.addressee.email }}</div>
+                <div class="fr-card-name">{{ row.addressee.nickname or row.addressee.name or row.addressee.email }}</div>
                 <div class="fr-card-meta">Pending · {{ row.created_at.strftime('%Y-%m-%d') }}</div>
+                <div class="fr-card-actions">
+                    <form method="post" action="/friends/cancel/{{ row.id }}" style="margin:0;">
+                        <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
+                        <button type="submit" class="fr-btn fr-btn-muted">Cancel</button>
+                    </form>
+                </div>
             </div>
             {% endfor %}
         </div>
@@ -254,4 +336,141 @@
     {% endif %}
 
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    'use strict';
+
+    const input    = document.getElementById('fr-search');
+    const dropdown = document.getElementById('fr-dropdown');
+    if (!input || !dropdown) return;
+
+    let debounceTimer = null;
+
+    function getCSRF() {
+        const m = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+        return m ? decodeURIComponent(m[1]) : '';
+    }
+
+    function closeDropdown() {
+        dropdown.hidden = true;
+        dropdown.innerHTML = '';
+    }
+
+    function renderDropdown(items) {
+        if (!items.length) {
+            dropdown.innerHTML = '<div class="fr-drop-empty">No results found.</div>';
+            dropdown.hidden = false;
+            return;
+        }
+
+        dropdown.innerHTML = items.map(function (item) {
+            const initial = (item.display_name || item.email || '?')[0].toUpperCase();
+            let stateBadge = '';
+            let actionHtml = '';
+
+            if (item.state === 'accepted') {
+                stateBadge = '<span class="fr-state-pill fr-state-accepted">Friends ✓</span>';
+                actionHtml = '<a href="/players/' + item.id + '" class="fr-btn fr-btn-view fr-drop-action" style="text-decoration:none;">View ↗</a>';
+            } else if (item.state === 'pending_sent') {
+                stateBadge = '<span class="fr-state-pill fr-state-pending">Pending</span>';
+            } else if (item.state === 'pending_received') {
+                stateBadge = '<span class="fr-state-pill fr-state-pending">Requested you</span>';
+                actionHtml = '<a href="/friends/requests" class="fr-btn fr-btn-muted fr-drop-action" style="text-decoration:none;">Requests →</a>';
+            } else if (item.state === 'none') {
+                actionHtml = '<button class="fr-btn fr-btn-primary fr-drop-action fr-add-btn" data-uid="' + item.id + '">+ Add</button>';
+            }
+            // blocked: no action shown
+
+            return '<div class="fr-drop-item">'
+                + '<div class="fr-drop-avatar">' + initial + '</div>'
+                + '<div class="fr-drop-info">'
+                + '<div class="fr-drop-name">' + _esc(item.display_name || item.email) + '</div>'
+                + '<div class="fr-drop-email">' + _esc(item.email) + '</div>'
+                + '</div>'
+                + stateBadge
+                + actionHtml
+                + '</div>';
+        }).join('');
+
+        dropdown.hidden = false;
+
+        // Wire up Add buttons
+        dropdown.querySelectorAll('.fr-add-btn').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+                const uid  = this.dataset.uid;
+                const csrf = getCSRF();
+                this.disabled    = true;
+                this.textContent = '…';
+                try {
+                    const resp = await fetch('/friends/request/' + uid, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRF-Token': csrf,
+                        },
+                        body: new URLSearchParams({ csrf_token: csrf }),
+                    });
+                    // Optimistic UI — treat success (url contains success=) or opaque redirect as sent
+                    const ok = resp.ok || (resp.url && resp.url.includes('success=')) || resp.type === 'opaqueredirect';
+                    if (ok) {
+                        this.replaceWith(_makePill('Pending', 'fr-state-pending'));
+                    } else {
+                        this.disabled    = false;
+                        this.textContent = '+ Add';
+                    }
+                } catch (_) {
+                    this.disabled    = false;
+                    this.textContent = '+ Add';
+                }
+            });
+        });
+    }
+
+    function _makePill(text, cls) {
+        const span = document.createElement('span');
+        span.className = 'fr-state-pill ' + cls;
+        span.textContent = text;
+        return span;
+    }
+
+    function _esc(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    async function doSearch(q) {
+        try {
+            const resp = await fetch('/friends/search?q=' + encodeURIComponent(q));
+            if (!resp.ok) { closeDropdown(); return; }
+            const items = await resp.json();
+            renderDropdown(items);
+        } catch (_) {
+            closeDropdown();
+        }
+    }
+
+    input.addEventListener('input', function () {
+        clearTimeout(debounceTimer);
+        const q = this.value.trim();
+        if (q.length < 2) { closeDropdown(); return; }
+        debounceTimer = setTimeout(function () { doSearch(q); }, 250);
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { closeDropdown(); input.blur(); }
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+            closeDropdown();
+        }
+    });
+})();
+</script>
 {% endblock %}

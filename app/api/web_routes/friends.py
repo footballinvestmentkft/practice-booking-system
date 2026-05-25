@@ -25,9 +25,10 @@ from __future__ import annotations
 import pathlib
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from ...database import get_db
@@ -102,7 +103,73 @@ def _outgoing_requests(db: Session, user_id: int) -> list[Friendship]:
     )
 
 
+def _friendship_state(
+    db: Session, viewer_id: int, target_id: int
+) -> tuple[str, int | None]:
+    """Return (state_str, friendship_id_or_None) for the viewer's relation to target.
+
+    States: none | accepted | pending_sent | pending_received | blocked
+    DECLINED is treated as "none" (re-request allowed, old row deleted by send route).
+    """
+    row = get_friendship(db, viewer_id, target_id)
+    if row is None:
+        return "none", None
+    if row.status == FriendshipStatus.ACCEPTED:
+        return "accepted", row.id
+    if row.status == FriendshipStatus.PENDING:
+        if row.requester_id == viewer_id:
+            return "pending_sent", row.id
+        return "pending_received", row.id
+    if row.status == FriendshipStatus.BLOCKED:
+        return "blocked", row.id
+    # DECLINED → allow re-request
+    return "none", None
+
+
 # ── Pages ──────────────────────────────────────────────────────────────────────
+
+@router.get("/friends/search")
+async def friends_search(
+    request: Request,
+    q: str = Query(min_length=2, max_length=50),
+    limit: int = Query(10, ge=1, le=20),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Live search for add-friend autocomplete.
+
+    Returns JSON list of users matching q (name / nickname / email ilike),
+    each decorated with the current friendship state. No CSRF needed (GET, read-only).
+    """
+    results = (
+        db.query(User)
+        .filter(
+            User.is_active == True,
+            User.id != user.id,
+            or_(
+                User.name.ilike(f"%{q}%"),
+                User.nickname.ilike(f"%{q}%"),
+                User.email.ilike(f"%{q}%"),
+            ),
+        )
+        .limit(limit)
+        .all()
+    )
+
+    items = []
+    for u in results:
+        display_name = u.nickname or u.name
+        state, friendship_id = _friendship_state(db, user.id, u.id)
+        items.append({
+            "id": u.id,
+            "display_name": display_name,
+            "email": u.email,
+            "state": state,
+            "friendship_id": friendship_id,
+        })
+
+    return JSONResponse(items)
+
 
 @router.get("/friends", response_class=HTMLResponse)
 async def friends_page(

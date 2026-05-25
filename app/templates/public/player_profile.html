@@ -671,7 +671,7 @@
 
                     {% elif fp.state == "accepted" %}
                     <span class="psp-social-msg">Friends ✓</span>
-                    <a href="/challenges/send?friend={{ profile_user.id }}" class="psp-btn psp-btn-add">⚔ Challenge</a>
+                    <a href="/challenges/send?friend_id={{ profile_user.id }}" class="psp-btn psp-btn-add">⚔ Challenge</a>
                     <form method="POST" action="/friends/remove/{{ profile_user.id }}" style="margin:0">
                         <input type="hidden" name="next" value="/players/{{ profile_user.id }}">
                         <button type="submit" class="psp-btn psp-btn-remove">Remove</button>

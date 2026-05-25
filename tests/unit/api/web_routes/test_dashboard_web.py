@@ -799,9 +799,9 @@ def _render_player_profile(fp_state: str, profile_user_id: int = 42, viewer_id: 
 class TestPublicProfileChallengeButton:
 
     def test_sc_pp_01_accepted_state_has_challenge_link(self):
-        """SC-PP-01: accepted friendship state → Challenge link present."""
+        """SC-PP-01: accepted friendship state → Challenge link with friend_id param present."""
         html = _render_player_profile("accepted", profile_user_id=42)
-        assert "/challenges/send?friend=42" in html
+        assert "/challenges/send?friend_id=42" in html
         assert "⚔" in html or "Challenge" in html
 
     def test_sc_pp_02_own_profile_no_challenge_link(self):

@@ -61584,6 +61584,61 @@
         ]
       }
     },
+    "/friends/search": {
+      "get": {
+        "description": "Live search for add-friend autocomplete.\n\nReturns JSON list of users matching q (name / nickname / email ilike),\neach decorated with the current friendship state. No CSRF needed (GET, read-only).",
+        "operationId": "friends_search_friends_search_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "maxLength": 50,
+              "minLength": 2,
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 20,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Friends Search",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/friends/send": {
       "post": {
         "description": "Add Friend form \u2014 looks up target by email or nickname, then delegates.",

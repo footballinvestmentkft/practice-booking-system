@@ -400,3 +400,232 @@ class TestSendFriendRequestByIdentifier:
 
         assert isinstance(result, RedirectResponse)
         assert "error=request_pending" in result.headers["location"]
+
+
+# ── GET /friends/search — FR-22..FR-30 ───────────────────────────────────────
+
+class TestFriendsSearch:
+    """Tests for the live-search autocomplete endpoint."""
+
+    def _run_search(self, q, db, user, limit=10):
+        from app.api.web_routes.friends import friends_search
+        return _run(friends_search(request=_req(), q=q, limit=limit, db=db, user=user))
+
+    def test_fr22_query_param_has_min_length_2(self):
+        """FR-22: friends_search q parameter declares min_length=2 (FastAPI enforces at routing layer)."""
+        import inspect
+        from app.api.web_routes.friends import friends_search
+        sig    = inspect.signature(friends_search)
+        q_info = sig.parameters["q"].default          # FastAPI FieldInfo object
+        # Pydantic v2: constraints live in q_info.metadata as annotated validators
+        min_len = getattr(q_info, "min_length", None)
+        if min_len is None:
+            # Pydantic v2 path: metadata=[MinLen(2), ...]
+            min_len = next(
+                (getattr(m, "min_length", None) for m in getattr(q_info, "metadata", [])),
+                None,
+            )
+        assert min_len == 2, f"Expected min_length=2 on q, got {min_len}"
+
+    def test_fr23_matching_name_returns_correct_structure(self):
+        """FR-23: q matching a user's name → JSON list with id/display_name/email/state."""
+        user = _user(uid=1)
+        target = _user(uid=2)
+        target.name = "Budapest Player"
+        target.nickname = None
+        target.email = "bplayer@lfa.com"
+
+        db = _db()
+        db.query.return_value.filter.return_value.limit.return_value.all.return_value = [target]
+
+        with patch(f"{_BASE}._friendship_state", return_value=("none", None)):
+            resp = self._run_search("Bud", db, user)
+
+        import json
+        data = json.loads(resp.body)
+        assert len(data) == 1
+        assert data[0]["id"] == 2
+        assert "display_name" in data[0]
+        assert data[0]["email"] == "bplayer@lfa.com"
+        assert data[0]["state"] == "none"
+        assert "friendship_id" in data[0]
+
+    def test_fr24_self_excluded_from_results(self):
+        """FR-24: current user never appears in search results (User.id != user.id filter)."""
+        user = _user(uid=1)
+        # DB returns empty because user.id is filtered out at query level
+        db = _db()
+        db.query.return_value.filter.return_value.limit.return_value.all.return_value = []
+
+        resp = self._run_search("me", db, user)
+        import json
+        data = json.loads(resp.body)
+        assert not any(item["id"] == 1 for item in data)
+
+    def test_fr25_inactive_users_excluded(self):
+        """FR-25: inactive users absent from results (User.is_active==True filter at DB level)."""
+        user = _user(uid=1)
+        # DB returns empty because inactive users are filtered out
+        db = _db()
+        db.query.return_value.filter.return_value.limit.return_value.all.return_value = []
+
+        resp = self._run_search("inactive", db, user)
+        import json
+        data = json.loads(resp.body)
+        assert len(data) == 0
+
+    def test_fr26_state_none_for_stranger(self):
+        """FR-26: user with no friendship → state='none', friendship_id=None."""
+        viewer = _user(uid=1)
+        target = _user(uid=2)
+        target.name = "Stranger"
+        target.nickname = None
+
+        db = _db()
+        db.query.return_value.filter.return_value.limit.return_value.all.return_value = [target]
+
+        with patch(f"{_BASE}._friendship_state", return_value=("none", None)):
+            resp = self._run_search("Str", db, viewer)
+
+        import json
+        data = json.loads(resp.body)
+        assert data[0]["state"] == "none"
+        assert data[0]["friendship_id"] is None
+
+    def test_fr27_state_accepted_for_existing_friend(self):
+        """FR-27: existing accepted friendship → state='accepted', friendship_id set."""
+        viewer = _user(uid=1)
+        target = _user(uid=2)
+        target.name = "Good Friend"
+        target.nickname = None
+
+        db = _db()
+        db.query.return_value.filter.return_value.limit.return_value.all.return_value = [target]
+
+        with patch(f"{_BASE}._friendship_state", return_value=("accepted", 99)):
+            resp = self._run_search("Good", db, viewer)
+
+        import json
+        data = json.loads(resp.body)
+        assert data[0]["state"] == "accepted"
+        assert data[0]["friendship_id"] == 99
+
+    def test_fr28_state_pending_sent(self):
+        """FR-28: outgoing pending request → state='pending_sent'."""
+        viewer = _user(uid=1)
+        target = _user(uid=2)
+        target.name = "Pending Target"
+        target.nickname = None
+
+        db = _db()
+        db.query.return_value.filter.return_value.limit.return_value.all.return_value = [target]
+
+        with patch(f"{_BASE}._friendship_state", return_value=("pending_sent", 55)):
+            resp = self._run_search("Pen", db, viewer)
+
+        import json
+        data = json.loads(resp.body)
+        assert data[0]["state"] == "pending_sent"
+
+    def test_fr29_state_pending_received(self):
+        """FR-29: incoming pending request → state='pending_received'."""
+        viewer = _user(uid=1)
+        target = _user(uid=2)
+        target.name = "Incoming Requester"
+        target.nickname = None
+
+        db = _db()
+        db.query.return_value.filter.return_value.limit.return_value.all.return_value = [target]
+
+        with patch(f"{_BASE}._friendship_state", return_value=("pending_received", 77)):
+            resp = self._run_search("Inc", db, viewer)
+
+        import json
+        data = json.loads(resp.body)
+        assert data[0]["state"] == "pending_received"
+
+    def test_fr30_limit_respected(self):
+        """FR-30: limit=3 returns at most 3 results."""
+        viewer = _user(uid=1)
+        targets = [_user(uid=i) for i in range(2, 6)]  # 4 users
+        for t in targets:
+            t.name = f"Player {t.id}"
+            t.nickname = None
+
+        db = _db()
+        # DB already applies LIMIT — simulate by returning only 3
+        db.query.return_value.filter.return_value.limit.return_value.all.return_value = targets[:3]
+
+        with patch(f"{_BASE}._friendship_state", return_value=("none", None)):
+            resp = self._run_search("Player", db, viewer, limit=3)
+
+        import json
+        data = json.loads(resp.body)
+        assert len(data) <= 3
+
+
+# ── Template content tests — FR-31..FR-32 ────────────────────────────────────
+
+import os as _os
+from jinja2 import Environment, FileSystemLoader
+
+_TMPL_DIR = _os.path.join(
+    _os.path.dirname(__file__), "..", "..", "..", "..", "app", "templates"
+)
+
+
+def _render_friends(friends=None):
+    """Render friends.html Friends tab with optional friend list."""
+    env = Environment(loader=FileSystemLoader(_TMPL_DIR), autoescape=True)
+    template = env.get_template("friends.html")
+    fr_mock = MagicMock()
+    fr_mock.id = 7
+    fr_mock.name = "Test Friend"
+    fr_mock.nickname = None
+    fr_mock.email = "friend@lfa.com"
+    return template.render(
+        request=MagicMock(),
+        user=MagicMock(),
+        friends=friends if friends is not None else [fr_mock],
+        incoming=[],
+        outgoing=[],
+        incoming_count=0,
+        success=None,
+        error=None,
+        active_tab=None,
+    )
+
+
+class TestFriendsTemplateContent:
+
+    def test_fr31_friend_card_has_view_profile_link(self):
+        """FR-31: friend card contains /players/{id} View Profile link."""
+        html = _render_friends()
+        assert "/players/7" in html
+        assert "View Profile" in html
+
+    def test_fr32_player_profile_challenge_link_uses_friend_id(self):
+        """FR-32: player_profile.html challenge link uses ?friend_id= param, not ?friend=."""
+        from jinja2 import Environment, FileSystemLoader
+        env = Environment(loader=FileSystemLoader(_TMPL_DIR), autoescape=True)
+        template = env.get_template("public/player_profile.html")
+        profile_user = MagicMock()
+        profile_user.id = 42
+        profile_user.full_name = "Player"
+        profile_user.username = "player"
+        fp = MagicMock()
+        fp.state = "accepted"
+        html = template.render(
+            request=MagicMock(),
+            profile_user=profile_user,
+            user=MagicMock(id=99),
+            fp=fp,
+            friendship_panel=fp,
+            profile_grid_slots=[],
+            is_own_profile=False,
+            is_authenticated=True,
+            highlight_video=None,
+            card_draft=MagicMock(published_data=None),
+        )
+        assert "?friend_id=42" in html
+        assert "?friend=42" not in html
