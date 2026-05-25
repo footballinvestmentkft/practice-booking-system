@@ -495,11 +495,11 @@
         </div>
     </div>
 
-    {# ── Left rail ──────────────────────────────────────────────────────────── #}
+    {# ── Left rail — Side A + Side B slots ─────────────────────────────────── #}
     <div class="psp-left-rail">
-        {# Profile grid — left zone slots #}
+        {# Profile grid — side_a and side_b zone slots (inner+outer left on desktop) #}
         {% if profile_grid_slots %}
-        {% for slot in profile_grid_slots %}{% if slot.zone == "left" %}
+        {% for slot in profile_grid_slots %}{% if slot.zone in ("side_a", "side_b") %}
         <div class="psp-module">
             <div class="psp-module-head">{{ slot.module.title or "Video" }}</div>
             <div style="padding:0">{{ render_slot_module(slot.module) }}</div>
@@ -545,7 +545,7 @@
         </div>
     </div>
 
-    {# ── Slot: reserved placeholder (Phase 1 empty) ───────────────────────────── #}
+    {# ── l-slot: spacer column (reserved for Phase 2 outer content) ────────────── #}
     <div class="psp-l-slot" aria-hidden="true"></div>
 
     {# ── Center: Featured Player Card ───────────────────────────────────────── #}
@@ -562,13 +562,14 @@
         </div>
     </div>
 
-    {# ── Slot: reserved placeholder (Phase 1 empty) ───────────────────────────── #}
+    {# ── r-slot: spacer column (reserved for Phase 2 outer content) ────────────── #}
     <div class="psp-r-slot" aria-hidden="true"></div>
 
-    {# ── Right rail ─────────────────────────────────────────────────────────── #}
+    {# ── Right rail — Side C + Side D slots ─────────────────────────────────── #}
     <div class="psp-right-rail">
-        {# Profile grid right-zone slots take priority over legacy highlight_video #}
-        {% set right_grid_slots = (profile_grid_slots | selectattr("zone", "equalto", "right") | list) if profile_grid_slots else [] %}
+        {# Profile grid — side_c and side_d zone slots (inner+outer right on desktop) #}
+        {# Falls back to legacy highlight_video when no profile_grid is published     #}
+        {% set right_grid_slots = ((profile_grid_slots | selectattr("zone", "equalto", "side_c") | list) + (profile_grid_slots | selectattr("zone", "equalto", "side_d") | list)) if profile_grid_slots else [] %}
         {% if right_grid_slots %}
         {% for slot in right_grid_slots %}
         <div class="psp-module">

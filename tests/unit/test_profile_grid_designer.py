@@ -45,6 +45,7 @@ from app.models.card_draft import CardDraft
 from app.services.card_draft_service import CardDraftService
 from app.services.profile_grid_service import (
     MAX_SLOTS,
+    SLOT_IDS,
     SLOT_REGISTRY,
     build_draft_grid_state,
     build_published_grid_state,
@@ -101,20 +102,20 @@ def _draft(
 
 class TestSlotRegistry:
 
-    def test_pg_02_slot_registry_has_9_slots_across_three_zones(self):
-        """PG-02: SLOT_REGISTRY has 9 slots: 3 left + 3 right + 3 bottom."""
-        assert len(SLOT_REGISTRY) == 9
-        assert MAX_SLOTS == 9
+    def test_pg_02_slot_registry_has_15_slots_across_five_zones(self):
+        """PG-02: SLOT_REGISTRY has 15 slots: 3×side_a + 3×side_b + 3×side_c + 3×side_d + 3×bottom."""
+        assert len(SLOT_REGISTRY) == 15
+        assert MAX_SLOTS == 15
         zones = {s["zone"] for s in SLOT_REGISTRY}
-        assert zones == {"left", "right", "bottom"}
+        assert zones == {"side_a", "side_b", "side_c", "side_d", "bottom"}
         for zone in zones:
             assert len([s for s in SLOT_REGISTRY if s["zone"] == zone]) == 3
 
     def test_pg_03_empty_draft_grid_state_all_slots_empty(self):
-        """PG-03: build_draft_grid_state on an empty draft returns 9 slots, all is_empty."""
+        """PG-03: build_draft_grid_state on an empty draft returns 15 slots, all is_empty."""
         draft = _draft()
         slots = build_draft_grid_state(draft)
-        assert len(slots) == 9
+        assert len(slots) == 15
         for slot in slots:
             assert slot["is_empty"] is True
             assert slot["module"] is None
@@ -128,13 +129,13 @@ class TestSlotYouTube:
         """PG-04: set_draft_slot writes a video_youtube module into draft_data.profile_grid."""
         draft = _draft()
         db = MagicMock()
-        CardDraftService.set_draft_slot(db, draft, "right_1", _YT_URL, "My goal")
+        CardDraftService.set_draft_slot(db, draft, "side_b_1", _YT_URL, "My goal")
         pg = (draft.draft_data or {}).get("profile_grid")
         assert pg is not None
         slots = pg.get("slots", [])
         assert len(slots) == 1
         entry = slots[0]
-        assert entry["slot_id"] == "right_1"
+        assert entry["slot_id"] == "side_b_1"
         assert entry["module"]["type"] == "video_youtube"
         assert entry["module"]["provider"] == "youtube"
         assert entry["module"]["video_id"] == _YT_VID
@@ -149,11 +150,11 @@ class TestSlotTikTok:
         """PG-05: set_draft_slot writes a video_tiktok module for canonical TikTok URL."""
         draft = _draft()
         db = MagicMock()
-        CardDraftService.set_draft_slot(db, draft, "left_1", _TT_URL, "Skill clip")
+        CardDraftService.set_draft_slot(db, draft, "side_c_1", _TT_URL, "Skill clip")
         pg = (draft.draft_data or {}).get("profile_grid")
         assert pg is not None
         entry = pg["slots"][0]
-        assert entry["slot_id"] == "left_1"
+        assert entry["slot_id"] == "side_c_1"
         assert entry["module"]["type"] == "video_tiktok"
         assert entry["module"]["provider"] == "tiktok"
         assert entry["module"]["video_id"] == _TT_VID
@@ -169,7 +170,7 @@ class TestSlotValidation:
         draft = _draft(draft_data=None)
         db = MagicMock()
         with pytest.raises(ValueError):
-            CardDraftService.set_draft_slot(db, draft, "right_1", "https://example.com/not-a-video")
+            CardDraftService.set_draft_slot(db, draft, "side_b_1", "https://example.com/not-a-video")
         assert draft.draft_data is None
         db.commit.assert_not_called()
 
@@ -178,7 +179,7 @@ class TestSlotValidation:
         draft = _draft(draft_data=None)
         db = MagicMock()
         with pytest.raises(ValueError, match="full TikTok"):
-            CardDraftService.set_draft_slot(db, draft, "right_1", "https://vm.tiktok.com/ZMeABCDEF/")
+            CardDraftService.set_draft_slot(db, draft, "side_b_1", "https://vm.tiktok.com/ZMeABCDEF/")
         assert draft.draft_data is None
 
 
@@ -191,18 +192,18 @@ class TestDraftIsolation:
         original_pub = {"highlight_video": {"provider": "youtube", "video_id": "pub123"}}
         draft = _draft(published_data=original_pub)
         db = MagicMock()
-        CardDraftService.set_draft_slot(db, draft, "right_1", _YT_URL)
+        CardDraftService.set_draft_slot(db, draft, "side_b_1", _YT_URL)
         assert draft.published_data == original_pub
 
     def test_pg_10_remove_draft_slot_does_not_touch_published_data(self):
         """PG-10: Removing a draft slot never modifies published_data."""
-        pg = {"version": 1, "slots": [{"slot_id": "right_1", "module": {
+        pg = {"version": 1, "slots": [{"slot_id": "side_b_1", "module": {
             "provider": "youtube", "video_id": "abc", "type": "video_youtube", "title": ""
         }}]}
         original_pub = {"profile_grid": pg}
         draft = _draft(draft_data={"profile_grid": pg}, published_data=original_pub)
         db = MagicMock()
-        CardDraftService.remove_draft_slot(db, draft, "right_1")
+        CardDraftService.remove_draft_slot(db, draft, "side_b_1")
         assert draft.published_data == original_pub
 
 
@@ -214,22 +215,22 @@ class TestPublishGrid:
         """PG-09: publish_draft copies draft_data.profile_grid into published_data."""
         draft = _draft()
         db = MagicMock()
-        CardDraftService.set_draft_slot(db, draft, "right_1", _YT_URL, commit=False)
+        CardDraftService.set_draft_slot(db, draft, "side_b_1", _YT_URL, commit=False)
         CardDraftService.publish_draft(db, draft)
         pub_pg = (draft.published_data or {}).get("profile_grid")
         assert pub_pg is not None
-        assert pub_pg["slots"][0]["slot_id"] == "right_1"
+        assert pub_pg["slots"][0]["slot_id"] == "side_b_1"
         assert pub_pg["slots"][0]["module"]["provider"] == "youtube"
 
     def test_pg_11_remove_and_publish_clears_profile_grid_from_published_data(self):
         """PG-11: Removing a slot from draft and publishing clears it from published_data."""
         draft = _draft()
         db = MagicMock()
-        CardDraftService.set_draft_slot(db, draft, "right_1", _YT_URL, commit=False)
+        CardDraftService.set_draft_slot(db, draft, "side_b_1", _YT_URL, commit=False)
         CardDraftService.publish_draft(db, draft, commit=False)
         assert (draft.published_data or {}).get("profile_grid") is not None
 
-        CardDraftService.remove_draft_slot(db, draft, "right_1", commit=False)
+        CardDraftService.remove_draft_slot(db, draft, "side_b_1", commit=False)
         CardDraftService.publish_draft(db, draft)
         assert (draft.published_data or {}).get("profile_grid") is None
 
@@ -246,16 +247,16 @@ class TestIsPublishedGrid:
     def test_pg_15_is_published_false_when_slot_video_id_differs(self):
         """PG-15: is_published False when draft grid slot video_id != published slot video_id."""
         draft = _draft(
-            draft_data=    {"profile_grid": self._pg("right_1", "youtube", "draft_vid")},
-            published_data={"profile_grid": self._pg("right_1", "youtube", "pub_vid")},
+            draft_data=    {"profile_grid": self._pg("side_b_1", "youtube", "draft_vid")},
+            published_data={"profile_grid": self._pg("side_b_1", "youtube", "pub_vid")},
         )
         assert CardDraftService.is_published(draft) is False
 
     def test_pg_16_is_published_false_when_slot_provider_differs(self):
         """PG-16: is_published False when draft provider != published provider (same video_id)."""
         draft = _draft(
-            draft_data=    {"profile_grid": self._pg("right_1", "youtube", "abc123")},
-            published_data={"profile_grid": self._pg("right_1", "tiktok",  "abc123")},
+            draft_data=    {"profile_grid": self._pg("side_b_1", "youtube", "abc123")},
+            published_data={"profile_grid": self._pg("side_b_1", "tiktok",  "abc123")},
         )
         assert CardDraftService.is_published(draft) is False
 
@@ -271,7 +272,7 @@ class TestPubDataIntegrity:
         """
         draft = _draft(published_data={"some_future_key": "preserved_value"})
         draft.draft_data = {"profile_grid": {"version": 1, "slots": [
-            {"slot_id": "left_1", "module": {"provider": "youtube", "video_id": "grid_vid"}}
+            {"slot_id": "side_b_1", "module": {"provider": "youtube", "video_id": "grid_vid"}}
         ]}}
         db = MagicMock()
         CardDraftService.publish_draft(db, draft)
@@ -293,21 +294,21 @@ class TestSlotIdGuards:
             CardDraftService.set_draft_slot(db, draft, "not_a_real_slot", _YT_URL)
 
     def test_pg_19_max_slots_guard_fires_when_grid_is_full(self):
-        """PG-19: set_slot raises ValueError when 9 existing non-overlapping entries are present."""
-        # Craft a grid with 9 phantom entries (not in SLOT_IDS) so "right_1" is a new slot
+        """PG-19: set_slot raises ValueError when 15 existing non-overlapping entries are present."""
+        # Craft a grid with 15 phantom entries (not in SLOT_IDS) so "side_b_1" is a new slot
         full_grid = {"version": 1, "slots": [
-            {"slot_id": f"zone_phantom_{i}", "module": {}} for i in range(9)
+            {"slot_id": f"zone_phantom_{i}", "module": {}} for i in range(15)
         ]}
         with pytest.raises(ValueError, match="Maximum"):
-            set_slot(full_grid, "right_1", {})
+            set_slot(full_grid, "side_b_1", {})
 
 
 # ── PG-01: Designer GET route ─────────────────────────────────────────────────
 
 class TestDesignerRoute:
 
-    def test_pg_01_designer_get_returns_9_draft_slots_in_context(self):
-        """PG-01: GET /dashboard/.../public-profile-editor renders with 9 draft_slots (all empty)."""
+    def test_pg_01_designer_get_returns_15_draft_slots_in_context(self):
+        """PG-01: GET /dashboard/.../public-profile-editor renders with 15 draft_slots (all empty)."""
         from app.api.web_routes.dashboard import lfa_public_profile_editor
 
         mock_request = MagicMock()
@@ -339,7 +340,7 @@ class TestDesignerRoute:
 
         ctx = captured.get("context", {})
         draft_slots = ctx.get("draft_slots", [])
-        assert len(draft_slots) == 9, f"Expected 9 draft_slots, got {len(draft_slots)}"
+        assert len(draft_slots) == 15, f"Expected 15 draft_slots, got {len(draft_slots)}"
         assert all(s["is_empty"] is True for s in draft_slots)
 
 
@@ -441,3 +442,139 @@ class TestRegressions:
         assert "grid-area: r-slot" in _PLAYER_HTML, "GL-02: r-slot grid-area must be defined"
         assert 'class="psp-l-slot"' in _PLAYER_HTML, "GL-03: psp-l-slot placeholder div must be present"
         assert 'class="psp-r-slot"' in _PLAYER_HTML, "GL-03: psp-r-slot placeholder div must be present"
+
+
+# ── SN-01..18: Slot Naming — 4B neutral ID system ────────────────────────────
+
+class TestSlotNaming:
+    """SN-* — Verify that slot IDs are layout-neutral and the 4B naming scheme is correct."""
+
+    def test_sn_01_slot_registry_has_15_slots(self):
+        """SN-01: SLOT_REGISTRY contains exactly 15 slots."""
+        assert len(SLOT_REGISTRY) == 15
+
+    def test_sn_02_max_slots_is_15(self):
+        """SN-02: MAX_SLOTS == 15."""
+        assert MAX_SLOTS == 15
+
+    def test_sn_03_side_a_1_exists(self):
+        """SN-03: side_a_1 is a valid slot_id."""
+        assert "side_a_1" in SLOT_IDS
+
+    def test_sn_04_side_b_1_exists(self):
+        """SN-04: side_b_1 is a valid slot_id."""
+        assert "side_b_1" in SLOT_IDS
+
+    def test_sn_05_side_c_1_exists(self):
+        """SN-05: side_c_1 is a valid slot_id."""
+        assert "side_c_1" in SLOT_IDS
+
+    def test_sn_06_side_d_1_exists(self):
+        """SN-06: side_d_1 is a valid slot_id."""
+        assert "side_d_1" in SLOT_IDS
+
+    def test_sn_07_bottom_slots_exist(self):
+        """SN-07: bottom_a, bottom_b, bottom_c are valid slot_ids."""
+        assert "bottom_a" in SLOT_IDS
+        assert "bottom_b" in SLOT_IDS
+        assert "bottom_c" in SLOT_IDS
+
+    def test_sn_08_no_left_prefix_in_slot_ids(self):
+        """SN-08: No slot_id starts with 'left_' — physical naming forbidden."""
+        for sid in SLOT_IDS:
+            assert not sid.startswith("left_"), f"Physical slot_id found: {sid!r}"
+
+    def test_sn_09_no_right_prefix_in_slot_ids(self):
+        """SN-09: No slot_id starts with 'right_' — physical naming forbidden."""
+        for sid in SLOT_IDS:
+            assert not sid.startswith("right_"), f"Physical slot_id found: {sid!r}"
+
+    def test_sn_10_no_outer_or_inner_in_slot_ids(self):
+        """SN-10: No slot_id contains 'outer' or 'inner' — position-relative naming forbidden."""
+        for sid in SLOT_IDS:
+            assert "outer" not in sid, f"Position-relative slot_id found: {sid!r}"
+            assert "inner" not in sid, f"Position-relative slot_id found: {sid!r}"
+
+    def test_sn_11_featured_card_not_in_slot_ids(self):
+        """SN-11: 'featured_card' is NOT a slot_id — it is a read-only anchor, not editable."""
+        assert "featured_card" not in SLOT_IDS
+
+    def test_sn_12_ui_label_differs_from_slot_id(self):
+        """SN-12: Each slot's label is distinct from its slot_id (label is a human string)."""
+        for slot in SLOT_REGISTRY:
+            assert slot["label"] != slot["slot_id"], (
+                f"slot_id and label must differ: {slot['slot_id']!r}"
+            )
+
+    def test_sn_13_designer_template_renders_all_five_zones(self):
+        """SN-13: lfa_public_profile_editor.html references Side A, Side B, Featured Card, Side C, Side D."""
+        assert "Side A" in _EDITOR_HTML, "Side A zone label missing from designer"
+        assert "Side B" in _EDITOR_HTML, "Side B zone label missing from designer"
+        assert "Featured Card" in _EDITOR_HTML, "Featured Card anchor missing from designer"
+        assert "Side C" in _EDITOR_HTML, "Side C zone label missing from designer"
+        assert "Side D" in _EDITOR_HTML, "Side D zone label missing from designer"
+        assert "Bottom Row" in _EDITOR_HTML, "Bottom Row zone label missing from designer"
+
+    def test_sn_14_public_profile_template_handles_new_lane_zones(self):
+        """SN-14: player_profile.html references side_b, side_c zone names for grid rendering."""
+        assert "side_b" in _PLAYER_HTML, "side_b zone missing from player_profile.html"
+        assert "side_c" in _PLAYER_HTML, "side_c zone missing from player_profile.html"
+
+    def test_sn_15_old_left_1_slot_id_raises_value_error(self):
+        """SN-15: validate_slot_id raises ValueError for legacy 'left_1' slot_id (no alias)."""
+        from app.services.profile_grid_service import validate_slot_id
+        with pytest.raises(ValueError, match="Unknown slot_id"):
+            validate_slot_id("left_1")
+
+    def test_sn_16_youtube_saveable_to_side_b_1(self):
+        """SN-16: YouTube URL can be saved to side_b_1 without errors."""
+        draft = _draft()
+        db = MagicMock()
+        CardDraftService.set_draft_slot(db, draft, "side_b_1", _YT_URL, "Goal reel")
+        entry = (draft.draft_data or {}).get("profile_grid", {}).get("slots", [{}])[0]
+        assert entry["slot_id"] == "side_b_1"
+        assert entry["module"]["provider"] == "youtube"
+
+    def test_sn_17_tiktok_saveable_to_side_c_1(self):
+        """SN-17: TikTok URL can be saved to side_c_1 without errors."""
+        draft = _draft()
+        db = MagicMock()
+        CardDraftService.set_draft_slot(db, draft, "side_c_1", _TT_URL, "Skill clip")
+        entry = (draft.draft_data or {}).get("profile_grid", {}).get("slots", [{}])[0]
+        assert entry["slot_id"] == "side_c_1"
+        assert entry["module"]["provider"] == "tiktok"
+
+    def test_sn_18_dashboard_context_profile_grid_total_slots_is_15(self):
+        """SN-18: spec_dashboard context passes profile_grid_total_slots == 15 for LFA."""
+        from app.api.web_routes.dashboard import spec_dashboard
+        import asyncio
+        from unittest.mock import patch
+
+        _BASE = "app.api.web_routes.dashboard"
+        user = MagicMock()
+        user.id = 77
+        user.role = __import__("app.models.user", fromlist=["UserRole"]).UserRole.STUDENT
+        user.date_of_birth = None
+        lic = MagicMock()
+        lic.id = 1
+        lic.onboarding_completed = True
+        lic.football_skills = None
+        lic.public_card_platform = None
+        db = MagicMock()
+        db.query.return_value.filter.return_value.first.side_effect = [lic, None, None]
+        db.query.return_value.filter.return_value.order_by.return_value.all.return_value = []
+        db.query.return_value.filter.return_value.all.return_value = []
+
+        with (
+            patch(f"{_BASE}.templates") as mock_tmpl,
+            patch(f"{_BASE}._CardDraftService") as mock_cds,
+            patch(f"{_BASE}._build_published_grid_state", return_value=None),
+        ):
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            mock_cds.get_player_card_draft.return_value = MagicMock(published_data={})
+            mock_cds.is_published.return_value = False
+            asyncio.run(spec_dashboard(
+                request=MagicMock(), spec_type="lfa-football-player", db=db, user=user
+            ))
+            ctx = mock_tmpl.TemplateResponse.call_args.args[1]
+        assert ctx["profile_grid_total_slots"] == 15

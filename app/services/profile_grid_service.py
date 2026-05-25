@@ -1,9 +1,17 @@
-"""Profile Grid Service — Phase 1 slot registry and module validation.
+"""Profile Grid Service — slot registry and module validation.
 
-Slots map to zones in the public profile 5-column grid:
-  left_1/2/3   → left rail (top → bottom)
-  right_1/2/3  → right rail (top → bottom)
-  bottom_1/2/3 → bottom area (left → right)
+Slot naming is layout-neutral: slot_id never encodes physical position.
+Desktop renders: side_a | side_b | featured_card | side_c | side_d
+Responsive layouts may reorder columns — slot_ids stay stable.
+
+Zones:
+  side_a_1/2/3 → Side A lane (3 slots, top→bottom)
+  side_b_1/2/3 → Side B lane (3 slots, top→bottom)
+  side_c_1/2/3 → Side C lane (3 slots, top→bottom)
+  side_d_1/2/3 → Side D lane (3 slots, top→bottom)
+  bottom_a/b/c → Bottom row (left→right)
+
+  MAX_SLOTS = 15
 
 Phase 1 module types: video_youtube, video_tiktok (link-only).
 """
@@ -16,19 +24,25 @@ from typing import Any
 from app.services.highlight_video_service import extract_any_video
 
 SLOT_REGISTRY: list[dict] = [
-    {"slot_id": "left_1",   "zone": "left",   "label": "Left — Top",      "sort_order":  1},
-    {"slot_id": "left_2",   "zone": "left",   "label": "Left — Middle",   "sort_order":  2},
-    {"slot_id": "left_3",   "zone": "left",   "label": "Left — Bottom",   "sort_order":  3},
-    {"slot_id": "right_1",  "zone": "right",  "label": "Right — Top",     "sort_order": 10},
-    {"slot_id": "right_2",  "zone": "right",  "label": "Right — Middle",  "sort_order": 11},
-    {"slot_id": "right_3",  "zone": "right",  "label": "Right — Bottom",  "sort_order": 12},
-    {"slot_id": "bottom_1", "zone": "bottom", "label": "Bottom — Left",   "sort_order": 20},
-    {"slot_id": "bottom_2", "zone": "bottom", "label": "Bottom — Center", "sort_order": 21},
-    {"slot_id": "bottom_3", "zone": "bottom", "label": "Bottom — Right",  "sort_order": 22},
+    {"slot_id": "side_a_1", "zone": "side_a", "label": "Side A — 1", "sort_order":  1},
+    {"slot_id": "side_a_2", "zone": "side_a", "label": "Side A — 2", "sort_order":  2},
+    {"slot_id": "side_a_3", "zone": "side_a", "label": "Side A — 3", "sort_order":  3},
+    {"slot_id": "side_b_1", "zone": "side_b", "label": "Side B — 1", "sort_order": 10},
+    {"slot_id": "side_b_2", "zone": "side_b", "label": "Side B — 2", "sort_order": 11},
+    {"slot_id": "side_b_3", "zone": "side_b", "label": "Side B — 3", "sort_order": 12},
+    {"slot_id": "side_c_1", "zone": "side_c", "label": "Side C — 1", "sort_order": 20},
+    {"slot_id": "side_c_2", "zone": "side_c", "label": "Side C — 2", "sort_order": 21},
+    {"slot_id": "side_c_3", "zone": "side_c", "label": "Side C — 3", "sort_order": 22},
+    {"slot_id": "side_d_1", "zone": "side_d", "label": "Side D — 1", "sort_order": 30},
+    {"slot_id": "side_d_2", "zone": "side_d", "label": "Side D — 2", "sort_order": 31},
+    {"slot_id": "side_d_3", "zone": "side_d", "label": "Side D — 3", "sort_order": 32},
+    {"slot_id": "bottom_a", "zone": "bottom", "label": "Bottom — A",  "sort_order": 40},
+    {"slot_id": "bottom_b", "zone": "bottom", "label": "Bottom — B",  "sort_order": 41},
+    {"slot_id": "bottom_c", "zone": "bottom", "label": "Bottom — C",  "sort_order": 42},
 ]
 
 SLOT_IDS: frozenset[str] = frozenset(s["slot_id"] for s in SLOT_REGISTRY)
-MAX_SLOTS: int = len(SLOT_REGISTRY)   # 9
+MAX_SLOTS: int = 15
 TITLE_MAX_LEN: int = 80
 
 _HTML_TAG_RE = re.compile(r"<[^>]+>")

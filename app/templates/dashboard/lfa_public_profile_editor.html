@@ -72,37 +72,40 @@
 .ppe-btn-danger { background: transparent; border: 1px solid #fca5a5; color: #b91c1c; }
 .ppe-btn-danger:hover { background: #fee2e2; opacity: 1; }
 
-/* ── Grid designer ──────────────────────────────────────────────────────────── */
+/* ── Grid designer — 5-lane layout ──────────────────────────────────────────── */
+/* Desktop: side_a | side_b | featured_card | side_c | side_d                   */
 .ppe-grid {
     display: grid;
-    grid-template-columns: 1fr 36px minmax(300px, 420px) 36px 1fr;
+    grid-template-columns: 1fr 1fr minmax(260px, 360px) 1fr 1fr;
     grid-template-areas:
-        "left  ls   center  rs   right"
-        "bottom bottom bottom bottom bottom";
+        "side_a  side_b  center  side_c  side_d"
+        "bottom  bottom  bottom  bottom  bottom";
     gap: 1rem;
     align-items: start;
 }
-@media (max-width: 900px) {
+/* Tablet: inner lanes beside card, outer lanes below */
+@media (max-width: 1100px) {
     .ppe-grid {
         grid-template-columns: 1fr 1fr;
         grid-template-areas:
-            "center center"
-            "left   right"
-            "bottom bottom";
+            "center  center"
+            "side_b  side_c"
+            "side_a  side_d"
+            "bottom  bottom";
     }
-    .ppe-ls, .ppe-rs { display: none; }
 }
+/* Mobile: stack */
 @media (max-width: 599px) {
     .ppe-grid {
         grid-template-columns: 1fr;
-        grid-template-areas: "center" "left" "right" "bottom";
+        grid-template-areas: "center" "side_b" "side_c" "side_a" "side_d" "bottom";
     }
 }
-.ppe-left-col   { grid-area: left; }
-.ppe-ls         { grid-area: ls; }
+.ppe-side-a-col { grid-area: side_a; }
+.ppe-side-b-col { grid-area: side_b; }
 .ppe-center-col { grid-area: center; }
-.ppe-rs         { grid-area: rs; }
-.ppe-right-col  { grid-area: right; }
+.ppe-side-c-col { grid-area: side_c; }
+.ppe-side-d-col { grid-area: side_d; }
 .ppe-bottom-row { grid-area: bottom; }
 
 /* ── Zone labels ────────────────────────────────────────────────────────────── */
@@ -385,20 +388,29 @@
         </div>
     </div>
 
-    {# ── 5-column designer grid ──────────────────────────────────────────────── #}
+    {# ── 5-lane designer grid ─────────────────────────────────────────────────── #}
+    {# Desktop:  Side A | Side B | Featured Card | Side C | Side D              #}
+    {# Tablet:   Featured Card full-width; Side B+C row; Side A+D row           #}
+    {# Mobile:   stack (Featured → Side B → C → A → D → Bottom)                #}
     <div class="ppe-grid">
 
-        {# ── Left rail ────────────────────────────────────────────────────────── #}
-        <div class="ppe-left-col">
-            <div class="ppe-zone-label">Left Rail</div>
-            {% for slot in draft_slots if slot.zone == "left" %}
+        {# ── Side A (outer left on desktop) ───────────────────────────────────── #}
+        <div class="ppe-side-a-col">
+            <div class="ppe-zone-label">Side A</div>
+            {% for slot in draft_slots if slot.zone == "side_a" %}
             {{ _render_slot(slot) }}
             {% endfor %}
         </div>
 
-        <div class="ppe-ls"></div>
+        {# ── Side B (inner left on desktop) ───────────────────────────────────── #}
+        <div class="ppe-side-b-col">
+            <div class="ppe-zone-label">Side B</div>
+            {% for slot in draft_slots if slot.zone == "side_b" %}
+            {{ _render_slot(slot) }}
+            {% endfor %}
+        </div>
 
-        {# ── Center: card preview (read-only) ─────────────────────────────────── #}
+        {# ── Center: Featured Card (read-only anchor) ──────────────────────────── #}
         <div class="ppe-center-col">
             <div class="ppe-zone-label">Featured Card (read-only)</div>
             <div class="ppe-card-preview">
@@ -409,12 +421,18 @@
             </div>
         </div>
 
-        <div class="ppe-rs"></div>
+        {# ── Side C (inner right on desktop) ──────────────────────────────────── #}
+        <div class="ppe-side-c-col">
+            <div class="ppe-zone-label">Side C</div>
+            {% for slot in draft_slots if slot.zone == "side_c" %}
+            {{ _render_slot(slot) }}
+            {% endfor %}
+        </div>
 
-        {# ── Right rail ───────────────────────────────────────────────────────── #}
-        <div class="ppe-right-col">
-            <div class="ppe-zone-label">Right Rail</div>
-            {% for slot in draft_slots if slot.zone == "right" %}
+        {# ── Side D (outer right on desktop) ──────────────────────────────────── #}
+        <div class="ppe-side-d-col">
+            <div class="ppe-zone-label">Side D</div>
+            {% for slot in draft_slots if slot.zone == "side_d" %}
             {{ _render_slot(slot) }}
             {% endfor %}
         </div>
