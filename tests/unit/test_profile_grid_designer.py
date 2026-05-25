@@ -349,12 +349,19 @@ class TestDesignerRoute:
 class TestPublicTemplate:
 
     def test_pg_12_player_profile_references_profile_grid_slots(self):
-        """PG-12: player_profile.html uses profile_grid_slots for grid slot rendering."""
+        """PG-12: player_profile.html uses profile_grid_slots for grid slot rendering.
+
+        Fix B: left rail uses pre-computed left_grid_slots (selectattr-based) to enable
+        placeholder suppression; slot.zone inline check replaced by selectattr.
+        """
         assert "profile_grid_slots" in _PLAYER_HTML, (
             "player_profile.html must reference the profile_grid_slots context variable"
         )
-        assert "slot.zone" in _PLAYER_HTML, (
-            "player_profile.html must iterate profile_grid_slots by zone"
+        assert 'selectattr("zone", "equalto"' in _PLAYER_HTML, (
+            "player_profile.html must filter slots by zone via selectattr"
+        )
+        assert "left_grid_slots" in _PLAYER_HTML, (
+            "player_profile.html must define left_grid_slots for placeholder suppression"
         )
 
     def test_pg_13_legacy_highlight_video_fallback_block_present(self):

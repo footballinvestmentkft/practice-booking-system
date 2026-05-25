@@ -496,17 +496,19 @@
     </div>
 
     {# ── Left rail — Side A + Side B slots ─────────────────────────────────── #}
+    {# Compute left rail grid slots once for reuse below #}
+    {% set left_grid_slots = ((profile_grid_slots | selectattr("zone", "equalto", "side_a") | list) + (profile_grid_slots | selectattr("zone", "equalto", "side_b") | list)) if profile_grid_slots else [] %}
     <div class="psp-left-rail">
-        {# Profile grid — side_a and side_b zone slots (inner+outer left on desktop) #}
-        {% if profile_grid_slots %}
-        {% for slot in profile_grid_slots %}{% if slot.zone in ("side_a", "side_b") %}
+        {% if left_grid_slots %}
+        {# Published grid content — hides placeholders when slots are filled #}
+        {% for slot in left_grid_slots %}
         <div class="psp-module">
             <div class="psp-module-head">{{ slot.module.title or "Video" }}</div>
             <div style="padding:0">{{ render_slot_module(slot.module) }}</div>
         </div>
-        {% endif %}{% endfor %}
-        {% endif %}
-
+        {% endfor %}
+        {% else %}
+        {# Placeholders — only shown when no grid content is published #}
         <div class="psp-module">
             <div class="psp-module-head">Gallery</div>
             <div class="psp-module-placeholder">
@@ -522,6 +524,7 @@
                 <div class="psp-module-coming">Coming Soon</div>
             </div>
         </div>
+        {% endif %}
 
         <div class="psp-module">
             <div class="psp-module-head">Achievements</div>

@@ -457,13 +457,18 @@
     var _CSRF_TOKEN = null;
     var _BASE = "/dashboard/lfa-football-player/public-profile-editor/slots/";
 
-    // Fetch CSRF token once
     function getCsrf() {
         if (_CSRF_TOKEN) return Promise.resolve(_CSRF_TOKEN);
-        return fetch("/csrf-token", {credentials: "same-origin"})
-            .then(function (r) { return r.json(); })
-            .then(function (d) { _CSRF_TOKEN = d.csrf_token; return _CSRF_TOKEN; })
-            .catch(function () { return ""; });
+        var m = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+        _CSRF_TOKEN = m ? decodeURIComponent(m[1]) : "";
+        return Promise.resolve(_CSRF_TOKEN);
+    }
+
+    function parseError(data, status) {
+        if (status === 403 || (data && data.detail === "CSRF token mismatch")) {
+            return "Session expired — please hard reload and try again.";
+        }
+        return (data && (data.error || data.detail)) || "Failed to save.";
     }
 
     function toast(msg) {
@@ -521,9 +526,12 @@
                 credentials: "same-origin",
                 body: JSON.stringify({video_url: videoUrl, title: title}),
             });
-        }).then(function (r) { return r.json(); }).then(function (data) {
+        }).then(function (r) {
+            return r.json().then(function (d) { return {data: d, status: r.status}; });
+        }).then(function (res) {
+            var data = res.data; var status = res.status;
             if (!data.ok) {
-                errEl.textContent = data.error || "Failed to save.";
+                errEl.textContent = parseError(data, status);
                 errEl.classList.add("visible");
                 return;
             }
@@ -572,7 +580,7 @@
             setUnpublished();
             toast("Saved to draft.");
         }).catch(function () {
-            errEl.textContent = "Network error. Please try again.";
+            errEl.textContent = "Network error — please reload and try again.";
             errEl.classList.add("visible");
         });
     };
@@ -621,14 +629,21 @@
                 headers: { "X-CSRF-Token": csrf },
                 credentials: "same-origin",
             });
-        }).then(function (r) { return r.json(); }).then(function (data) {
-            if (!data.ok) { alert(data.error || "Publish failed."); btn.disabled = false; return; }
+        }).then(function (r) {
+            return r.json().then(function (d) { return {data: d, status: r.status}; });
+        }).then(function (res) {
+            var data = res.data; var status = res.status;
+            if (!data.ok) {
+                alert(parseError(data, status));
+                btn.disabled = false;
+                return;
+            }
             var badge = document.getElementById("ppe-status-badge");
             var text  = document.getElementById("ppe-status-text");
             if (badge)  badge.className = "ppe-status published";
             if (text)   text.textContent = "Up to date";
             toast("Profile published!");
-        }).catch(function () { alert("Network error."); btn.disabled = false; });
+        }).catch(function () { alert("Network error — please reload and try again."); btn.disabled = false; });
     };
 
     // ── XSS-safe HTML escaping ─────────────────────────────────────────────────
