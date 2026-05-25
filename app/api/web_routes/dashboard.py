@@ -1415,6 +1415,12 @@ class _ReorderRequest(_BaseModel):
     slot_ids: list[str]
 
 
+class _MoveRequest(_BaseModel):
+    source_slot_id: str
+    target_slot_id: str
+    on_conflict:    str = "swap"
+
+
 @router.get(
     "/dashboard/lfa-football-player/public-profile-editor",
     response_class=HTMLResponse,
@@ -1569,4 +1575,55 @@ async def lfa_profile_editor_reorder_zone(
         "ok":     True,
         "zone":   payload.zone,
         "status": "noop" if is_noop else "reordered",
+    })
+
+
+@router.post(
+    "/dashboard/lfa-football-player/public-profile-editor/move",
+)
+async def lfa_profile_editor_move_slot(
+    payload: _MoveRequest,
+    db:   Session = Depends(get_db),
+    user: User    = Depends(get_current_user_web),
+):
+    """Move a slot's module to another slot (cross-zone or same-zone).
+
+    on_conflict: "swap" (default) | "overwrite" | "reject"
+    Returns {"ok": true, "status": "noop"} when source is empty — no DB write.
+    Returns {"ok": true, "status": "moved", ...} on success.
+    CSRF protection enforced by global middleware.
+    """
+    lfa_license = _get_lfa_license(db, user.id)
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "No active LFA Football Player license"}, status_code=404)
+
+    draft = _CardDraftService.get_player_card_draft(db, user.id)
+
+    # Pre-detect noop (source empty) before calling service, for response status.
+    existing_pg = (draft.draft_data or {}).get("profile_grid")
+    _occupied_move = {
+        s["slot_id"]: s.get("module")
+        for s in (existing_pg or {}).get("slots", [])
+        if isinstance(s.get("slot_id"), str)
+    }
+    is_noop = _occupied_move.get(payload.source_slot_id) is None
+
+    try:
+        _CardDraftService.move_draft_slot(
+            db, draft,
+            payload.source_slot_id,
+            payload.target_slot_id,
+            on_conflict=payload.on_conflict,
+        )
+    except ValueError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+
+    if is_noop:
+        return JSONResponse({"ok": True, "status": "noop"})
+
+    return JSONResponse({
+        "ok":            True,
+        "status":        "moved",
+        "source_slot_id": payload.source_slot_id,
+        "target_slot_id": payload.target_slot_id,
     })

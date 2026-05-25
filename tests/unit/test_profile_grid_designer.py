@@ -50,6 +50,7 @@ from app.services.profile_grid_service import (
     build_draft_grid_state,
     build_published_grid_state,
     grid_fingerprint,
+    move_slot,
     set_slot,
 )
 
@@ -953,3 +954,237 @@ class TestPositionalReorder:
         assert slot_map.get("side_a_3", {}).get("video_id") == "TT1"
         assert "side_a_1" not in slot_map or slot_map["side_a_1"] is None
         assert "side_a_2" not in slot_map or slot_map["side_a_2"] is None
+
+
+# ── CM-01..12: Cross-zone move ─────────────────────────────────────────────────
+
+def _mod(video_id: str, provider: str = "youtube") -> dict:
+    return {"provider": provider, "video_id": video_id, "type": f"video_{provider}", "title": ""}
+
+
+class TestMoveSlot:
+    """CM-01..08: Service-level move_slot() tests."""
+
+    def test_cm_01_move_to_empty_target_cross_zone(self):
+        """CM-01: side_b_1 → side_a_1 (empty target) — module moves, source cleared."""
+        pg = {"version": 1, "slots": [
+            {"slot_id": "side_b_1", "module": _mod("VID_B")},
+        ]}
+        result = move_slot(pg, "side_b_1", "side_a_1")
+        slot_map = {s["slot_id"]: s.get("module") for s in result["slots"]}
+        assert slot_map.get("side_a_1", {}).get("video_id") == "VID_B", "Module must land at side_a_1"
+        assert "side_b_1" not in slot_map, "side_b_1 must be cleared"
+
+    def test_cm_02_move_to_occupied_target_swap(self):
+        """CM-02: side_b_1 → side_a_1 (occupied, swap) — modules swap between zones."""
+        pg = {"version": 1, "slots": [
+            {"slot_id": "side_b_1", "module": _mod("VID_B")},
+            {"slot_id": "side_a_1", "module": _mod("VID_A")},
+        ]}
+        result = move_slot(pg, "side_b_1", "side_a_1", on_conflict="swap")
+        slot_map = {s["slot_id"]: s.get("module") for s in result["slots"]}
+        assert slot_map["side_a_1"]["video_id"] == "VID_B"
+        assert slot_map["side_b_1"]["video_id"] == "VID_A"
+
+    def test_cm_03_move_to_occupied_target_overwrite(self):
+        """CM-03: occupied target, overwrite — target gets source module, source cleared."""
+        pg = {"version": 1, "slots": [
+            {"slot_id": "side_b_1", "module": _mod("VID_B")},
+            {"slot_id": "side_a_1", "module": _mod("VID_A")},
+        ]}
+        result = move_slot(pg, "side_b_1", "side_a_1", on_conflict="overwrite")
+        slot_map = {s["slot_id"]: s.get("module") for s in result["slots"]}
+        assert slot_map["side_a_1"]["video_id"] == "VID_B"
+        assert "side_b_1" not in slot_map, "side_b_1 must be cleared (overwrite, not swap)"
+
+    def test_cm_04_move_to_occupied_target_reject_raises(self):
+        """CM-04: occupied target, on_conflict='reject' → ValueError with 'occupied' in message."""
+        pg = {"version": 1, "slots": [
+            {"slot_id": "side_b_1", "module": _mod("VID_B")},
+            {"slot_id": "side_a_1", "module": _mod("VID_A")},
+        ]}
+        with pytest.raises(ValueError, match="occupied"):
+            move_slot(pg, "side_b_1", "side_a_1", on_conflict="reject")
+
+    def test_cm_05_source_empty_is_noop_same_object(self):
+        """CM-05: source slot empty → noop, same profile_grid object returned, no mutation."""
+        pg = {"version": 1, "slots": [
+            {"slot_id": "side_a_1", "module": _mod("OTHER")},
+        ]}
+        result = move_slot(pg, "side_b_1", "side_a_1")
+        assert result is pg, "Must return the same object when source is empty"
+
+    def test_cm_06_source_equals_target_raises(self):
+        """CM-06: source_slot_id == target_slot_id → ValueError."""
+        pg = {"version": 1, "slots": [
+            {"slot_id": "side_b_1", "module": _mod("V")},
+        ]}
+        with pytest.raises(ValueError, match="must differ"):
+            move_slot(pg, "side_b_1", "side_b_1")
+
+    def test_cm_07_invalid_source_slot_raises(self):
+        """CM-07: unknown source slot_id → ValueError."""
+        pg = {"version": 1, "slots": []}
+        with pytest.raises(ValueError, match="Unknown slot_id"):
+            move_slot(pg, "not_a_slot", "side_a_1")
+
+    def test_cm_08_invalid_target_slot_raises(self):
+        """CM-08: unknown target slot_id → ValueError."""
+        pg = {"version": 1, "slots": [
+            {"slot_id": "side_b_1", "module": _mod("V")},
+        ]}
+        with pytest.raises(ValueError, match="Unknown slot_id"):
+            move_slot(pg, "side_b_1", "not_a_slot")
+
+
+class TestMoveDraftSlot:
+    """CM-09..11: Draft service + publish integration tests."""
+
+    def test_cm_09_move_draft_slot_modifies_draft_data_and_commits(self):
+        """CM-09: move_draft_slot with filled source — draft_data updated, db.commit called."""
+        draft = _draft(draft_data={"profile_grid": {
+            "version": 1, "slots": [
+                {"slot_id": "side_b_1", "module": _mod("V1")},
+            ],
+        }})
+        db = MagicMock()
+        CardDraftService.move_draft_slot(db, draft, "side_b_1", "side_a_1")
+        pg = (draft.draft_data or {}).get("profile_grid", {})
+        slot_map = {s["slot_id"]: s.get("module") for s in pg.get("slots", [])}
+        assert slot_map.get("side_a_1", {}).get("video_id") == "V1"
+        assert "side_b_1" not in slot_map, "side_b_1 must be empty after move"
+        db.commit.assert_called_once()
+
+    def test_cm_09b_move_draft_slot_source_empty_no_commit(self):
+        """CM-09b: move_draft_slot with empty source — no DB write."""
+        draft = _draft(draft_data=None)
+        db = MagicMock()
+        CardDraftService.move_draft_slot(db, draft, "side_b_1", "side_a_1")
+        db.commit.assert_not_called()
+
+    def test_cm_10_publish_after_move_reflects_new_zone_in_published_data(self):
+        """CM-10: publish_draft after cross-zone move reflects new zone in published_data."""
+        draft = _draft(draft_data={"profile_grid": {
+            "version": 1, "slots": [
+                {"slot_id": "side_b_1", "module": _mod("V1")},
+            ],
+        }}, published_data=None)
+        db = MagicMock()
+        CardDraftService.move_draft_slot(db, draft, "side_b_1", "side_a_1", commit=False)
+        CardDraftService.publish_draft(db, draft, commit=False)
+        pub_pg = (draft.published_data or {}).get("profile_grid", {})
+        slot_map = {s["slot_id"]: s.get("module") for s in pub_pg.get("slots", [])}
+        assert slot_map.get("side_a_1", {}).get("video_id") == "V1"
+        assert "side_b_1" not in slot_map, "side_b_1 must not appear in published_data"
+
+    def test_cm_11_public_render_new_zone_after_publish(self):
+        """CM-11: build_published_grid_state after cross-zone move + publish returns slot in new zone."""
+        draft = _draft(draft_data={"profile_grid": {
+            "version": 1, "slots": [
+                {"slot_id": "side_b_1", "module": _mod("V1")},
+            ],
+        }}, published_data=None)
+        db = MagicMock()
+        CardDraftService.move_draft_slot(db, draft, "side_b_1", "side_a_1", commit=False)
+        CardDraftService.publish_draft(db, draft, commit=False)
+        published_slots = build_published_grid_state(draft)
+        assert published_slots is not None
+        zones = {s["zone"] for s in published_slots}
+        assert "side_a" in zones, "side_a must appear in published grid after move from side_b_1"
+        assert "side_b" not in zones, "side_b must be absent — slot was moved out"
+        slot_map = {s["slot_id"]: s["module"] for s in published_slots}
+        assert slot_map.get("side_a_1", {}).get("video_id") == "V1"
+
+
+class TestMoveRoute:
+    """CM-12: Endpoint guard + happy path tests."""
+
+    _BASE = "app.api.web_routes.dashboard"
+
+    def _run_move(self, payload_dict, draft, *, license_present=True):
+        from app.api.web_routes.dashboard import lfa_profile_editor_move_slot, _MoveRequest
+        db = MagicMock()
+        payload = _MoveRequest(**payload_dict)
+        with patch(f"{self._BASE}._get_lfa_license", return_value=MagicMock() if license_present else None), \
+             patch(f"{self._BASE}._CardDraftService") as MockCDS:
+            MockCDS.get_player_card_draft.return_value = draft
+            MockCDS.move_draft_slot.side_effect = (
+                lambda db, d, src, tgt, on_conflict="swap", **kw:
+                    CardDraftService.move_draft_slot(db, d, src, tgt, on_conflict=on_conflict, commit=False)
+            )
+            return asyncio.run(lfa_profile_editor_move_slot(payload=payload, db=db, user=MagicMock()))
+
+    def test_cm_12a_move_no_license_returns_404(self):
+        """CM-12a: POST /move with no LFA license returns 404."""
+        draft = _draft()
+        resp = self._run_move({"source_slot_id": "side_b_1", "target_slot_id": "side_a_1"}, draft, license_present=False)
+        assert resp.status_code == 404
+
+    def test_cm_12b_move_successful_returns_moved(self):
+        """CM-12b: POST /move with filled source returns {"ok": true, "status": "moved"}."""
+        draft = _draft(draft_data={"profile_grid": {
+            "version": 1, "slots": [
+                {"slot_id": "side_b_1", "module": _mod("V1")},
+            ],
+        }})
+        resp = self._run_move({"source_slot_id": "side_b_1", "target_slot_id": "side_a_1"}, draft)
+        import json
+        data = json.loads(resp.body)
+        assert data["ok"] is True
+        assert data["status"] == "moved"
+        assert data["source_slot_id"] == "side_b_1"
+        assert data["target_slot_id"] == "side_a_1"
+
+    def test_cm_12c_move_empty_source_returns_noop(self):
+        """CM-12c: POST /move with empty source returns {"ok": true, "status": "noop"}."""
+        draft = _draft(draft_data=None)
+        resp = self._run_move({"source_slot_id": "side_b_1", "target_slot_id": "side_a_1"}, draft)
+        import json
+        data = json.loads(resp.body)
+        assert data["ok"] is True
+        assert data["status"] == "noop"
+
+    def test_cm_12d_move_invalid_source_returns_400(self):
+        """CM-12d: POST /move with unknown source slot_id returns 400."""
+        draft = _draft(draft_data={"profile_grid": {
+            "version": 1, "slots": [
+                {"slot_id": "side_b_1", "module": _mod("V1")},
+            ],
+        }})
+        resp = self._run_move({"source_slot_id": "not_a_slot", "target_slot_id": "side_a_1"}, draft)
+        assert resp.status_code == 400
+        import json
+        data = json.loads(resp.body)
+        assert data["ok"] is False
+
+    def test_cm_12e_move_invalid_target_returns_400(self):
+        """CM-12e: POST /move with unknown target slot_id returns 400."""
+        draft = _draft(draft_data={"profile_grid": {
+            "version": 1, "slots": [
+                {"slot_id": "side_b_1", "module": _mod("V1")},
+            ],
+        }})
+        resp = self._run_move({"source_slot_id": "side_b_1", "target_slot_id": "not_a_slot"}, draft)
+        assert resp.status_code == 400
+        import json
+        data = json.loads(resp.body)
+        assert data["ok"] is False
+
+    def test_cm_12f_move_reject_conflict_returns_400(self):
+        """CM-12f: POST /move with on_conflict='reject' and occupied target returns 400."""
+        draft = _draft(draft_data={"profile_grid": {
+            "version": 1, "slots": [
+                {"slot_id": "side_b_1", "module": _mod("V1")},
+                {"slot_id": "side_a_1", "module": _mod("V2")},
+            ],
+        }})
+        resp = self._run_move({
+            "source_slot_id": "side_b_1",
+            "target_slot_id": "side_a_1",
+            "on_conflict":    "reject",
+        }, draft)
+        assert resp.status_code == 400
+        import json
+        data = json.loads(resp.body)
+        assert data["ok"] is False
+        assert "occupied" in data["error"]

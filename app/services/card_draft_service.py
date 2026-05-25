@@ -17,6 +17,7 @@ from app.services.highlight_video_service import (
 from app.services.profile_grid_service import (
     build_video_module as _build_video_module,
     grid_fingerprint as _grid_fingerprint,
+    move_slot as _move_slot,
     remove_slot as _remove_slot,
     reorder_zone as _reorder_zone,
     set_slot as _set_slot,
@@ -277,6 +278,36 @@ class CardDraftService:
             draft_data["profile_grid"] = new_pg
         else:
             draft_data.pop("profile_grid", None)
+        draft.draft_data = draft_data
+        draft.updated_at = datetime.now(timezone.utc)
+        if commit:
+            db.commit()
+            db.refresh(draft)
+        return draft
+
+    @staticmethod
+    def move_draft_slot(
+        db: Session,
+        draft: CardDraft,
+        source_slot_id: str,
+        target_slot_id: str,
+        *,
+        on_conflict: str = "swap",
+        commit: bool = True,
+    ) -> CardDraft:
+        """Move module from source to target slot in draft_data.profile_grid.
+
+        on_conflict: "swap" (default) | "overwrite" | "reject"
+        No DB write when source is empty (no-op).
+        Raises ValueError for unknown slots, source == target, occupied reject, or
+        invalid on_conflict value.
+        """
+        draft_data: dict[str, Any] = dict(draft.draft_data or {})
+        existing_pg = draft_data.get("profile_grid")
+        new_pg = _move_slot(existing_pg, source_slot_id, target_slot_id, on_conflict=on_conflict)
+        if new_pg is existing_pg:
+            return draft  # no-op — source was empty
+        draft_data["profile_grid"] = new_pg
         draft.draft_data = draft_data
         draft.updated_at = datetime.now(timezone.utc)
         if commit:

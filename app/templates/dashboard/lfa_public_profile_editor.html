@@ -718,17 +718,71 @@
         });
     };
 
-    // ── Init SortableJS on side zone containers only (bottom is not sortable) ───
+    // ── Cross-zone move (SortableJS callback) ─────────────────────────────────
+    window.moveSlot = function (sourceSlotId, targetSlotId) {
+        getCsrf().then(function (csrf) {
+            return fetch("/dashboard/lfa-football-player/public-profile-editor/move", {
+                method:  "POST",
+                headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+                credentials: "same-origin",
+                body: JSON.stringify({
+                    source_slot_id: sourceSlotId,
+                    target_slot_id: targetSlotId,
+                    on_conflict:    "swap",
+                }),
+            });
+        }).then(function (r) {
+            return r.json().then(function (d) { return {data: d, status: r.status}; });
+        }).then(function (res) {
+            var data = res.data; var status = res.status;
+            if (!data.ok) {
+                toast("Move failed: " + parseError(data, status));
+                window.location.reload();
+                return;
+            }
+            if (data.status === "moved") {
+                setUnpublished();
+                toast("Slot moved.");
+                window.location.reload();
+            }
+            // noop: source was empty — nothing to update
+        }).catch(function () {
+            toast("Network error — please reload.");
+            window.location.reload();
+        });
+    };
+
+    // ── Init SortableJS on side zone containers (group enables cross-zone drag) ─
     document.querySelectorAll(".ppe-zone-slots").forEach(function (container) {
         if (container.getAttribute("data-zone") === "bottom") return;
         Sortable.create(container, {
+            group:       { name: "ppe-slots", pull: true, put: true },
             animation:   150,
             handle:      ".ppe-drag-handle",
             ghostClass:  "sortable-ghost",
             chosenClass: "sortable-chosen",
             onEnd: function (evt) {
-                if (evt.oldIndex === evt.newIndex) return;
-                reorderZone(container);
+                var sourceContainer = evt.from;
+                var targetContainer = evt.to;
+                if (sourceContainer === targetContainer) {
+                    // Same-zone reorder
+                    if (evt.oldIndex === evt.newIndex) return;
+                    reorderZone(sourceContainer);
+                } else {
+                    // Cross-zone move: determine which target slot received the drop.
+                    // After the insert, evt.item is at evt.newIndex in targetContainer.
+                    // Filter it out to recover the original slot list before the drag.
+                    var allTargetSlots = Array.from(targetContainer.querySelectorAll(".ppe-slot"));
+                    var originalTargetSlots = allTargetSlots.filter(function (el) {
+                        return el !== evt.item;
+                    });
+                    var targetIdx = Math.min(evt.newIndex, originalTargetSlots.length - 1);
+                    var targetSlotEl = originalTargetSlots[targetIdx];
+                    var targetSlotId = targetSlotEl ? targetSlotEl.getAttribute("data-slot") : null;
+                    var sourceSlotId = evt.item.getAttribute("data-slot");
+                    if (!targetSlotId || !sourceSlotId) { window.location.reload(); return; }
+                    moveSlot(sourceSlotId, targetSlotId);
+                }
             },
         });
     });

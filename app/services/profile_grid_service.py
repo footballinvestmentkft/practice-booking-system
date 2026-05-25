@@ -261,6 +261,69 @@ def reorder_zone(
     return {"version": 1, "slots": other_slots + mapped + preserved}
 
 
+def move_slot(
+    profile_grid: dict | None,
+    source_slot_id: str,
+    target_slot_id: str,
+    *,
+    on_conflict: str = "swap",
+) -> dict | None:
+    """Move module from source_slot_id to target_slot_id (same-zone or cross-zone).
+
+    on_conflict controls behaviour when target is already occupied:
+      "swap"      — swap the two slots' modules (default MVP policy)
+      "overwrite" — replace target's module; source becomes empty
+      "reject"    — raise ValueError if target is occupied
+
+    Returns the same profile_grid object when source is empty (no-op).
+    Raises ValueError for unknown slot_ids, source == target, or invalid on_conflict.
+    """
+    validate_slot_id(source_slot_id)
+    validate_slot_id(target_slot_id)
+    if source_slot_id == target_slot_id:
+        raise ValueError(
+            f"source_slot_id and target_slot_id must differ (both are {source_slot_id!r})."
+        )
+    if on_conflict not in ("swap", "overwrite", "reject"):
+        raise ValueError(
+            f"Invalid on_conflict value: {on_conflict!r}. Must be 'swap', 'overwrite', or 'reject'."
+        )
+
+    occupied = _slot_map(profile_grid)
+    source_module = occupied.get(source_slot_id)
+
+    if source_module is None:
+        return profile_grid  # no-op — source is empty
+
+    target_module = occupied.get(target_slot_id)
+
+    if target_module is not None and on_conflict == "reject":
+        raise ValueError(
+            f"Target slot {target_slot_id!r} is already occupied. "
+            "Use on_conflict='swap' or 'overwrite' to proceed."
+        )
+
+    new_slots: list[dict] = []
+    target_written = False
+
+    for entry in (profile_grid or {}).get("slots", []):
+        sid = entry["slot_id"]
+        if sid == source_slot_id:
+            if on_conflict == "swap" and target_module is not None:
+                new_slots.append({"slot_id": source_slot_id, "module": target_module})
+            # else: source becomes empty — entry omitted
+        elif sid == target_slot_id:
+            new_slots.append({"slot_id": target_slot_id, "module": source_module})
+            target_written = True
+        else:
+            new_slots.append(entry)
+
+    if not target_written:
+        new_slots.append({"slot_id": target_slot_id, "module": source_module})
+
+    return {"version": 1, "slots": new_slots}
+
+
 def grid_fingerprint(profile_grid: dict | None) -> frozenset:
     """Stable fingerprint for is_published() comparison.
 
