@@ -5,13 +5,17 @@ Completely independent from player_photo_service.  Never reads or writes
 player_card_photo_url, wc_photo_url, or any other UserLicense photo field.
 No fallback in either direction.
 
-Background removal (processed_png_url) is NOT implemented in this module —
-that is a future phase requiring separate approval.
+Background removal pipeline (Phase 1):
+  set_status_processing / apply_removal_result / apply_removal_failure /
+  reset_processing handle DB state transitions.  The actual image processing
+  is done by app.services.background_removal (NullProcessor in Phase 1).
+  Real background removal remains Phase 2.
 """
 from __future__ import annotations
 
 import io
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 from PIL import Image
@@ -102,9 +106,9 @@ def get_mood_photos_for_user(
     user_id: int, db: Session
 ) -> dict[str, UserMoodPhoto | None]:
     """
-    Return {slot: record_or_None} for all 4 MOOD_PHOTO_SLOTS.
+    Return {slot: record_or_None} for all 6 MOOD_PHOTO_SLOTS.
 
-    Always returns all 4 keys so callers can iterate predictably.
+    Always returns all 6 keys so callers can iterate predictably.
     """
     rows = (
         db.query(UserMoodPhoto)
@@ -167,3 +171,75 @@ def _delete_files_for_slot(user_id: int, slot: str) -> None:
             f.unlink(missing_ok=True)
         except OSError:
             pass
+
+
+# ── Background removal pipeline — Phase 1 ────────────────────────────────────
+# These functions manage DB state transitions only.  Actual image processing
+# is handled by the Celery task in app.tasks.mood_photo_tasks.
+# Real background removal remains Phase 2 (rembg + onnxruntime-cpu).
+
+def set_status_processing(user_id: int, slot: str, db: Session) -> UserMoodPhoto:
+    """Set status='processing' before the Celery task is enqueued."""
+    record = (
+        db.query(UserMoodPhoto)
+        .filter_by(user_id=user_id, slot=slot)
+        .first()
+    )
+    if record is None:
+        raise ValueError(
+            f"No mood photo record for user_id={user_id} slot={slot!r}"
+        )
+    record.status = MoodPhotoStatus.processing.value
+    db.flush()
+    return record
+
+
+def apply_removal_result(
+    user_id: int, slot: str, processed_url: str, db: Session
+) -> None:
+    """Called by the Celery task on success. Commits the DB session."""
+    record = (
+        db.query(UserMoodPhoto)
+        .filter_by(user_id=user_id, slot=slot)
+        .first()
+    )
+    if record is None:
+        return
+    record.processed_png_url = processed_url
+    record.status            = MoodPhotoStatus.ready.value
+    record.processed_at      = datetime.now(timezone.utc)
+    db.commit()
+
+
+def apply_removal_failure(user_id: int, slot: str, db: Session) -> None:
+    """Called by the Celery task on failure (including max retries). Commits."""
+    record = (
+        db.query(UserMoodPhoto)
+        .filter_by(user_id=user_id, slot=slot)
+        .first()
+    )
+    if record is None:
+        return
+    record.status       = MoodPhotoStatus.failed.value
+    record.processed_at = datetime.now(timezone.utc)
+    db.commit()
+
+
+def reset_processing(user_id: int, slot: str, db: Session) -> None:
+    """
+    Reset a stuck 'processing' record back to 'uploaded'.
+
+    Idempotent: no-op if the record does not exist or status != 'processing'.
+    Only operates on the record belonging to user_id (own record guard).
+    """
+    record = (
+        db.query(UserMoodPhoto)
+        .filter_by(user_id=user_id, slot=slot)
+        .first()
+    )
+    if record is None or record.status != MoodPhotoStatus.processing.value:
+        return
+    record.status            = MoodPhotoStatus.uploaded.value
+    record.processed_png_url = None
+    record.processed_at      = None
+    db.flush()

@@ -63875,6 +63875,129 @@
         ]
       }
     },
+    "/profile/my-mood-photos/{slot}/remove-bg": {
+      "post": {
+        "description": "Trigger background removal for a slot.\n\nState machine:\n  uploaded | failed \u2192 set processing \u2192 enqueue task \u2192 303\n  processing | ready \u2192 303 no-op (no double enqueue / no re-trigger)\n\nFast-fail: if the original file is missing from disk, status is set to\n'failed' immediately without enqueueing the task.\n\nAuth: get_current_user_web; filter_by(user_id=user.id) enforces own record only.\nCSRF: caller must supply X-CSRF-Token header (JS fetch, same as delete).",
+        "operationId": "mood_photo_remove_bg_profile_my_mood_photos__slot__remove_bg_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slot",
+            "required": true,
+            "schema": {
+              "title": "Slot",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mood Photo Remove Bg",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/profile/my-mood-photos/{slot}/reset-processing": {
+      "post": {
+        "description": "Reset a stuck 'processing' record back to 'uploaded'.\n\nIdempotent: no-op if status != 'processing' or no record exists.\nAuth: filter_by(user_id=user.id) in reset_processing \u2014 own record only.\nCSRF: caller must supply X-CSRF-Token header (JS fetch).",
+        "operationId": "mood_photo_reset_processing_profile_my_mood_photos__slot__reset_processing_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slot",
+            "required": true,
+            "schema": {
+              "title": "Slot",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mood Photo Reset Processing",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/profile/my-mood-photos/{slot}/status": {
+      "get": {
+        "description": "Return JSON status for a slot.  Used by the template JS polling loop when\nstatus='processing'.\n\nResponse shape:\n  {status, processed_png_url, updated_at, processing_timed_out}\n\nprocessing_timed_out=True when status='processing' and updated_at is older\nthan settings.PROCESSING_TIMEOUT_SECONDS \u2014 signals a stuck worker to the UI.\n\nAuth: filter_by(user_id=user.id) \u2014 own record only; no cross-user leakage.",
+        "operationId": "mood_photo_status_profile_my_mood_photos__slot__status_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slot",
+            "required": true,
+            "schema": {
+              "title": "Slot",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mood Photo Status",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/profile/my-mood-photos/{slot}/upload": {
       "post": {
         "operationId": "mood_photo_upload_profile_my_mood_photos__slot__upload_post",
