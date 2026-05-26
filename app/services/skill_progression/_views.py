@@ -180,17 +180,30 @@ _TIMELINE_EPOCH = datetime(1900, 1, 1, tzinfo=timezone.utc)
 def _collect_vt_timeline_events(db: Session, user_id: int, skill_key: str) -> List[dict]:
     """Return pre-shaped raw timeline event dicts for valid VT attempts that affect skill_key.
 
-    Filtered at DB level: is_valid=True, xp_awarded>0.
+    Filtered at DB level:
+      - is_valid=True
+      - xp_awarded>0  OR  skill_deltas != '{}'  (non-empty)
+        The second branch catches Virtual Challenge attempts where the daily
+        cap was bypassed (xp_awarded=0) but skill_deltas were still computed
+        because is_challenge=True.  Solo attempts that hit the cap produce
+        skill_deltas='{}' and are correctly excluded by the second branch.
     Filtered at Python level: skill_key present in skill_deltas JSONB.
     """
+    from sqlalchemy import cast, or_
+    from sqlalchemy.dialects.postgresql import JSONB
     from app.models.virtual_training import VirtualTrainingAttempt
+
+    _empty_jsonb = cast("{}", JSONB)
 
     attempts = (
         db.query(VirtualTrainingAttempt)
         .filter(
             VirtualTrainingAttempt.user_id == user_id,
             VirtualTrainingAttempt.is_valid == True,
-            VirtualTrainingAttempt.xp_awarded > 0,
+            or_(
+                VirtualTrainingAttempt.xp_awarded > 0,
+                VirtualTrainingAttempt.skill_deltas != _empty_jsonb,
+            ),
         )
         .order_by(VirtualTrainingAttempt.started_at.asc())
         .all()

@@ -524,6 +524,51 @@ async def accept_challenge(
         return RedirectResponse(url="/challenges?success=challenge_accepted", status_code=303)
 
 
+# ── Outcome reason helper (view-layer only, no DB column) ─────────────────────
+
+def _compute_outcome_reason(ch: VirtualTrainingChallenge) -> str:
+    """Derive a human-readable outcome category from existing DB fields.
+
+    Returns one of:
+      score_win | draw |
+      forfeit_post_start_timeout | forfeit_deadline | forfeit_no_show | forfeit |
+      no_contest | waiting_for_acceptance | waiting_for_opponent | in_lobby |
+      expired | declined | cancelled
+
+    No DB migration required — fully derived from status + winner_id +
+    forfeit_user_id + forfeit_reason.
+    """
+    s = ch.status
+
+    if s == ChallengeStatus.PENDING:
+        return "waiting_for_acceptance"
+    if s == ChallengeStatus.LIVE_LOBBY:
+        return "in_lobby"
+    if s in (ChallengeStatus.ACCEPTED, ChallengeStatus.LIVE_IN_PROGRESS):
+        return "waiting_for_opponent"
+    if s == ChallengeStatus.DECLINED:
+        return "declined"
+    if s == ChallengeStatus.CANCELLED:
+        return "cancelled"
+    if s == ChallengeStatus.EXPIRED:
+        return "no_contest" if ch.forfeit_reason == "no_contest" else "expired"
+
+    # COMPLETED
+    if ch.forfeit_user_id is not None:
+        if ch.winner_id is None:
+            return "no_contest"
+        _reason_map = {
+            "post_start_timeout": "forfeit_post_start_timeout",
+            "deadline_expired":   "forfeit_deadline",
+            "no_show":            "forfeit_no_show",
+        }
+        return _reason_map.get(ch.forfeit_reason or "", "forfeit")
+
+    if ch.is_draw:
+        return "draw"
+    return "score_win"
+
+
 # ── GET /challenges/{id} — Virtual Challenge detail ───────────────────────────
 
 @router.get("/challenges/{challenge_id}", response_class=HTMLResponse)
@@ -572,33 +617,19 @@ async def challenge_detail(
         ).first() if ch.challenged_attempt_id else None
     )
 
-    # Compute per-skill scores for each attempt (same pattern as individual result pages)
-    def _skill_scores(attempt: VirtualTrainingAttempt | None, game) -> dict:
-        if attempt is None or not attempt.skill_deltas or game is None:
+    # Return the stored skill_deltas directly — additive float values, not recomputed scores.
+    # VTSkillScorer.score_all() returns performance scores (0-1) which are semantically wrong
+    # for display as "Skill Impact"; the stored deltas (positive/negative) are the correct values.
+    def _skill_scores(attempt: VirtualTrainingAttempt | None, _game=None) -> dict[str, float]:
+        if attempt is None or not attempt.skill_deltas:
             return {}
-        try:
-            from ...services.virtual_training_metrics import VTSignalExtractor, VTSkillScorer
-            cfg          = game.config or {}
-            phase_config = cfg.get("phases", []) if isinstance(cfg, dict) else []
-            signals = VTSignalExtractor.extract(
-                {
-                    "stimuli_count":     attempt.stimuli_count,
-                    "correct_count":     attempt.correct_count,
-                    "wrong_click_count": attempt.wrong_click_count,
-                    "error_count":       attempt.error_count,
-                    "avg_reaction_ms":   attempt.avg_reaction_ms,
-                    "raw_metrics":       attempt.raw_metrics,
-                },
-                phase_config,
-            )
-            return VTSkillScorer.score_all(signals, game.skill_targets or {})
-        except Exception:
-            return {}
+        return {k: float(v) for k, v in attempt.skill_deltas.items()}
 
     game = ch.game  # ORM relationship
 
-    is_forfeit   = ch.forfeit_user_id is not None
+    is_forfeit    = ch.forfeit_user_id is not None
     is_no_contest = is_forfeit and ch.winner_id is None
+    outcome_reason = _compute_outcome_reason(ch)
 
     return templates.TemplateResponse(
         "vt_challenge_detail.html",
@@ -620,6 +651,7 @@ async def challenge_detail(
             "is_challenger":            user.id == ch.challenger_id,
             "is_forfeit":               is_forfeit,
             "is_no_contest":            is_no_contest,
+            "outcome_reason":           outcome_reason,
         },
     )
 
