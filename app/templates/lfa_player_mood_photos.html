@@ -1,0 +1,316 @@
+{% extends "student_base.html" %}
+
+{% block title %}Mood Photos — LFA Football Player{% endblock %}
+
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '📸' %}
+{% set _page_name = 'Mood Photos' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .mp-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    /* ── Page header ── */
+    .mp-page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .mp-page-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--hub-text-primary);
+        margin: 0 0 0.3rem;
+    }
+    .mp-page-sub {
+        font-size: 0.9rem;
+        color: var(--hub-text-muted);
+        margin: 0;
+    }
+
+    /* ── Back link as secondary button ── */
+    .btn {
+        padding: 0.75rem 1.4rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    }
+    .btn-secondary {
+        background: var(--hub-card-bg, #1e293b);
+        color: var(--hub-text-secondary, #94a3b8);
+        border: 1px solid var(--hub-divider, #334155);
+    }
+    .btn-primary {
+        background: var(--hub-btn-bg, #2563eb);
+        color: var(--hub-btn-text, #fff);
+        border: none;
+    }
+    .btn-danger {
+        background: transparent;
+        color: #f87171;
+        border: 1px solid #f87171;
+    }
+    .btn-danger:hover { background: rgba(248,113,113,0.1); }
+    .btn-sm { padding: 0.45rem 0.9rem; font-size: 0.85rem; }
+
+    /* ── 2×2 mood grid ── */
+    .mp-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+    @media (max-width: 600px) {
+        .mp-grid { grid-template-columns: 1fr; }
+        .mp-container { padding: 1rem; }
+    }
+
+    /* ── Individual slot card ── */
+    .mp-card {
+        background: var(--hub-card-bg, #1e293b);
+        border-radius: 14px;
+        padding: 1.5rem;
+        box-shadow: var(--hub-card-shadow, 0 2px 8px rgba(0,0,0,0.25));
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+    }
+
+    .mp-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .mp-card-emoji { font-size: 1.5rem; }
+    .mp-card-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--hub-text-primary, #f1f5f9);
+        flex: 1;
+    }
+
+    /* ── Status badge ── */
+    .mp-badge {
+        display: inline-block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.2rem 0.55rem;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        background: rgba(148,163,184,0.12);
+        color: var(--hub-text-muted, #94a3b8);
+    }
+    .mp-badge-uploaded {
+        background: rgba(134,239,172,0.15);
+        color: #86efac;
+    }
+
+    /* ── Instruction text ── */
+    .mp-instruction {
+        font-size: 0.82rem;
+        color: var(--hub-text-muted, #94a3b8);
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* ── Photo preview area ── */
+    .mp-preview {
+        width: 100%;
+        height: 150px;
+        border-radius: 10px;
+        background: rgba(15,23,42,0.6);
+        border: 1px dashed var(--hub-divider, #334155);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    .mp-preview img {
+        max-width: 100%;
+        max-height: 150px;
+        object-fit: contain;
+        border-radius: 8px;
+    }
+    .mp-preview-placeholder {
+        text-align: center;
+        color: var(--hub-text-muted, #94a3b8);
+        font-size: 0.82rem;
+        line-height: 1.6;
+    }
+
+    /* ── Action row ── */
+    .mp-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    /* ── Timestamp hint ── */
+    .mp-hint {
+        font-size: 0.75rem;
+        color: var(--hub-text-muted, #94a3b8);
+        margin: 0;
+    }
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+/* Mood photo upload: must use fetch() + X-CSRF-Token header.
+   form.submit() skips the submit event so base.html CSRF interceptor never fires.
+   Using FormData (not URLSearchParams) preserves the file as multipart/form-data. */
+function _mpCsrfToken() {
+    var m = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : null;
+}
+
+/* Upload: form.submit() bypasses submit event so base.html CSRF interceptor
+   never fires. Sending FormData directly preserves the file as multipart. */
+function _mpUpload(input) {
+    var form = input.closest('form');
+    var tok  = _mpCsrfToken();
+    if (!tok || !input.files || !input.files[0]) return;
+
+    fetch(form.action, {
+        method:      'POST',
+        headers:     { 'X-CSRF-Token': tok },
+        body:        new FormData(form),
+        credentials: 'include',
+        redirect:    'follow',
+    }).then(function (r) {
+        window.location.href = r.redirected ? r.url : '/profile/my-mood-photos';
+    }).catch(function () {
+        window.location.reload();
+    });
+}
+
+/* Delete: type="button" avoids submit event entirely; confirm() runs first so
+   the user can cancel before the request is sent. */
+function _mpDelete(url) {
+    if (!confirm('Delete this mood photo?')) return;
+    var tok = _mpCsrfToken();
+    if (!tok) { window.location.reload(); return; }
+
+    fetch(url, {
+        method:      'POST',
+        headers:     { 'X-CSRF-Token': tok, 'Content-Type': 'application/x-www-form-urlencoded' },
+        credentials: 'include',
+        redirect:    'follow',
+    }).then(function (r) {
+        window.location.href = r.redirected ? r.url : '/profile/my-mood-photos';
+    }).catch(function () {
+        window.location.reload();
+    });
+}
+</script>
+{% endblock %}
+
+{% block student_content %}
+<div class="mp-container">
+
+    <div class="mp-page-header">
+        <div>
+            <h1 class="mp-page-title">Mood Photos</h1>
+            <p class="mp-page-sub">
+                Upload a photo for each mood state. Each slot is independent —
+                uploading or deleting one does not affect the others or your
+                Player Card photos.
+            </p>
+        </div>
+        <a class="btn btn-secondary btn-sm" href="/profile/lfa-football-player">← Back to profile</a>
+    </div>
+
+    <div class="mp-grid">
+        {% for meta in slots_meta %}
+        {% set record = mood_photos[meta.slot] %}
+        <div class="mp-card">
+
+            <!-- Card header: emoji + title + status badge -->
+            <div class="mp-card-header">
+                <span class="mp-card-emoji">{{ meta.emoji }}</span>
+                <span class="mp-card-title">{{ meta.label }}</span>
+                {% if record %}
+                <span class="mp-badge mp-badge-uploaded">✓ Uploaded</span>
+                {% else %}
+                <span class="mp-badge">Not uploaded</span>
+                {% endif %}
+            </div>
+
+            <!-- Short instruction (driven by _SLOT_META description) -->
+            <p class="mp-instruction">{{ meta.description }}</p>
+
+            <!-- Photo preview -->
+            <div class="mp-preview">
+                {% if record %}
+                <img src="{{ record.original_url }}" alt="Mood photo — {{ meta.label }}">
+                {% else %}
+                <div class="mp-preview-placeholder">
+                    No photo uploaded yet<br>
+                    <small>JPEG · PNG · WebP · max 5 MB</small>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Actions: Upload/Replace + Delete -->
+            <div class="mp-actions">
+                <form method="post"
+                      action="/profile/my-mood-photos/{{ meta.slot }}/upload"
+                      enctype="multipart/form-data"
+                      style="display:contents;">
+                    <label class="btn btn-primary btn-sm" for="file-{{ meta.slot }}" style="cursor:pointer;">
+                        {% if record %}🔄 Replace{% else %}📷 Upload{% endif %}
+                    </label>
+                    <input id="file-{{ meta.slot }}"
+                           type="file"
+                           name="photo"
+                           accept="image/jpeg,image/png,image/webp"
+                           style="display:none;"
+                           onchange="_mpUpload(this)">
+                </form>
+
+                {% if record %}
+                <button type="button"
+                        class="btn btn-danger btn-sm"
+                        onclick="_mpDelete('/profile/my-mood-photos/{{ meta.slot }}/delete')">
+                    🗑 Delete
+                </button>
+                {% endif %}
+            </div>
+
+            <!-- Timestamp hint if photo exists -->
+            {% if record %}
+            <p class="mp-hint">
+                Uploaded {{ record.created_at.strftime('%Y-%m-%d %H:%M') if record.created_at else '—' }}
+                {% if record.updated_at and record.updated_at != record.created_at %}
+                · Updated {{ record.updated_at.strftime('%Y-%m-%d %H:%M') }}
+                {% endif %}
+            </p>
+            {% endif %}
+
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

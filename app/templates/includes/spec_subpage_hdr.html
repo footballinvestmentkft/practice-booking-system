@@ -51,6 +51,47 @@
   {% endif %}
 {% endif %}
 
+{# ── LFA Football Player quicknav strip ─────────────────────────────────────
+   Shown on all LFA sub-pages. Horizontal scroll on mobile (no wrapping).
+   Active item highlighted by matching request path. #}
+{% set _lfa_qn = (
+    ((user.specialization.value if user.specialization else '') if user else '') == 'LFA_FOOTBALL_PLAYER'
+    or (spec_dashboard_url | default('')) == '/dashboard/lfa-football-player'
+) %}
+
+<style>
+.spec-quicknav {
+    display: flex;
+    gap: 0.2rem;
+    padding: 0 1rem 0.5rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+.spec-quicknav::-webkit-scrollbar { display: none; }
+.spec-qn-item {
+    flex-shrink: 0;
+    padding: 0.28rem 0.7rem;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.55);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+    border: 1px solid transparent;
+}
+.spec-qn-item:hover {
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.9);
+}
+.spec-qn-item.sqn-active {
+    background: rgba(255,255,255,0.13);
+    color: #fff;
+    border-color: rgba(255,255,255,0.12);
+}
+</style>
+
 <div class="student-header spec-pg-hdr">
     <div class="student-header-inner">
         <a href="/dashboard" class="s-hdr-btn" title="Hub">🏠</a>
@@ -63,4 +104,21 @@
             <a href="/logout"  class="s-hdr-btn" title="Logout">🚪</a>
         </div>
     </div>
+    {% if _lfa_qn %}
+    {% set _rp = request.url.path %}
+    <nav class="spec-quicknav" aria-label="LFA Player quick navigation">
+        <a href="/profile/lfa-football-player"
+           class="spec-qn-item{% if _rp == '/profile/lfa-football-player' %} sqn-active{% endif %}">🪪 Profile</a>
+        <a href="/my-cards"
+           class="spec-qn-item{% if _rp.startswith('/my-cards') %} sqn-active{% endif %}">🃏 My Cards</a>
+        <a href="/dashboard/lfa-football-player/card-editor"
+           class="spec-qn-item{% if 'card-editor' in _rp %} sqn-active{% endif %}">🎴 Card Editor</a>
+        <a href="/profile/my-mood-photos"
+           class="spec-qn-item{% if _rp == '/profile/my-mood-photos' %} sqn-active{% endif %}">📸 Mood Photos</a>
+        <a href="/events"
+           class="spec-qn-item{% if _rp.startswith('/events') %} sqn-active{% endif %}">📅 Events</a>
+        <a href="/training"
+           class="spec-qn-item{% if _rp.startswith('/training') %} sqn-active{% endif %}">🎓 Training</a>
+    </nav>
+    {% endif %}
 </div>

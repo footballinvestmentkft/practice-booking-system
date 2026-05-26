@@ -158,6 +158,21 @@
     .s-pp-btn-view { background: #e8f0fe; color: #1a56db; }
     .s-pp-btn-edit { background: #0B0B0B; color: #FFD200; }
 
+    /* ── My Card Media section ───────────────────────────────────────────────── */
+    .s-cm-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    @media (max-width: 520px) { .s-cm-grid { grid-template-columns: 1fr; } }
+    .s-cm-tile {
+        display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem;
+        background: var(--app-card-alt); border: 1px solid var(--app-border);
+        border-radius: 12px; padding: 1rem 1.1rem;
+        text-decoration: none; color: var(--app-text);
+        transition: box-shadow 0.18s, transform 0.18s;
+    }
+    .s-cm-tile:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.18); transform: translateY(-2px); }
+    .s-cm-icon  { font-size: 1.5rem; }
+    .s-cm-title { font-size: 0.88rem; font-weight: 700; }
+    .s-cm-sub   { font-size: 0.75rem; color: var(--app-text-muted, #94a3b8); }
+
     /* ── Social section ──────────────────────────────────────────────────────── */
     .mod-social-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
     .mod-social-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem; background: var(--app-card-alt); border-radius: 12px; padding: 1.2rem 0.75rem; text-decoration: none; color: var(--app-text); position: relative; transition: box-shadow 0.2s, transform 0.2s; border: 1px solid var(--app-border); }
@@ -279,6 +294,19 @@
                 <span class="mod-nav-icon">🏅</span>
                 <span class="mod-nav-title">Achievements</span>
             </a>
+            {# Row 3 — profile + card tools #}
+            <a href="/profile/lfa-football-player" class="mod-nav-card">
+                <span class="mod-nav-icon">🪪</span>
+                <span class="mod-nav-title">Profile</span>
+            </a>
+            <a href="/dashboard/lfa-football-player/card-editor" class="mod-nav-card">
+                <span class="mod-nav-icon">🎴</span>
+                <span class="mod-nav-title">Card Editor</span>
+            </a>
+            <a href="/profile/my-mood-photos" class="mod-nav-card">
+                <span class="mod-nav-icon">📸</span>
+                <span class="mod-nav-title">Mood Photos</span>
+            </a>
         </div>
     </section>
 
@@ -307,6 +335,33 @@
                 <a href="{{ public_profile_url }}" target="_blank" class="s-pp-btn s-pp-btn-view">View Profile ↗</a>
                 <a href="{{ grid_editor_url }}" class="s-pp-btn s-pp-btn-edit">Edit Grid</a>
             </div>
+        </div>
+    </section>
+
+    {# ── My Card Media (LFA_FOOTBALL_PLAYER only) ─────────────────────────────── #}
+    <section class="section-block">
+        <div class="section-header">
+            <span class="section-title" style="font-weight:800;font-size:1rem;">My Card Media</span>
+        </div>
+        <p style="font-size:0.82rem;color:var(--app-text-muted,#94a3b8);margin-bottom:1rem;">
+            Photos used in your Player Cards, Welcome Cards, and Challenge Cards.
+        </p>
+        <div class="s-cm-grid">
+            <a href="/dashboard/lfa-football-player/card-editor#media" class="s-cm-tile">
+                <span class="s-cm-icon">📷</span>
+                <span class="s-cm-title">Card Photos</span>
+                <span class="s-cm-sub">Player &amp; Welcome Card photos (Media tab)</span>
+            </a>
+            <a href="/profile/my-mood-photos" class="s-cm-tile">
+                <span class="s-cm-icon">📸</span>
+                <span class="s-cm-title">Mood Photos</span>
+                <span class="s-cm-sub">4 expression slots for future card use</span>
+            </a>
+            <a href="/dashboard/lfa-football-player/card-editor" class="s-cm-tile">
+                <span class="s-cm-icon">🎴</span>
+                <span class="s-cm-title">Card Editor</span>
+                <span class="s-cm-sub">Full card design &amp; export tools</span>
+            </a>
         </div>
     </section>
     {% endif %}

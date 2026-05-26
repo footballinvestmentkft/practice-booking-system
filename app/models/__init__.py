@@ -64,6 +64,7 @@ from .vt_challenge import (
     VirtualTrainingChallenge, ChallengeStatus,
     CHALLENGE_COMPATIBLE_GAMES, make_expires_at, get_active_challenge,
 )
+from .user_mood_photos import UserMoodPhoto, MOOD_PHOTO_SLOTS, MoodPhotoStatus
 
 # 🎓 New Track-Based Modular Education System
 from .track import Track, Module, ModuleComponent
@@ -235,4 +236,8 @@ __all__ = [
     # Virtual Training
     "VirtualTrainingGame",
     "VirtualTrainingAttempt",
+    # Mood Photos (hangulatkép)
+    "UserMoodPhoto",
+    "MOOD_PHOTO_SLOTS",
+    "MoodPhotoStatus",
 ]

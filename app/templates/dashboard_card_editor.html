@@ -1150,6 +1150,12 @@ function switchTab(tabId) {
     if (panelEl) { panelEl.classList.add('active'); }
 }
 
+// Deep-link support: /card-editor#media activates the Media tab on load
+(function () {
+    var h = window.location.hash.slice(1);
+    if (h && document.getElementById('tab-' + h)) { switchTab(h); }
+}());
+
 function _csrf() {
     return (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
 }

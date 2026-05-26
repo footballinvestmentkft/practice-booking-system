@@ -4009,6 +4009,20 @@
         "title": "Body_message_send_messages_send_post",
         "type": "object"
       },
+      "Body_mood_photo_upload_profile_my_mood_photos__slot__upload_post": {
+        "properties": {
+          "photo": {
+            "format": "binary",
+            "title": "Photo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "photo"
+        ],
+        "title": "Body_mood_photo_upload_profile_my_mood_photos__slot__upload_post",
+        "type": "object"
+      },
       "Body_motivation_assessment_submit_admin_students__student_id__motivation__specialization__post": {
         "properties": {
           "commitment_level": {
@@ -63442,6 +63456,152 @@
           }
         },
         "summary": "Lfa Player Profile Positions Submit",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/profile/my-mood-photos": {
+      "get": {
+        "operationId": "mood_photos_page_profile_my_mood_photos_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Mood Photos Page",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/profile/my-mood-photos/{slot}": {
+      "delete": {
+        "operationId": "mood_photo_delete_api_profile_my_mood_photos__slot__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slot",
+            "required": true,
+            "schema": {
+              "title": "Slot",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mood Photo Delete Api",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/profile/my-mood-photos/{slot}/delete": {
+      "post": {
+        "operationId": "mood_photo_delete_form_profile_my_mood_photos__slot__delete_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slot",
+            "required": true,
+            "schema": {
+              "title": "Slot",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mood Photo Delete Form",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/profile/my-mood-photos/{slot}/upload": {
+      "post": {
+        "operationId": "mood_photo_upload_profile_my_mood_photos__slot__upload_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slot",
+            "required": true,
+            "schema": {
+              "title": "Slot",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_mood_photo_upload_profile_my_mood_photos__slot__upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mood Photo Upload",
         "tags": [
           "web"
         ]
