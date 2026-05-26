@@ -586,6 +586,35 @@ class TestSecurityHeadersMiddleware:
         csp = response.headers["Content-Security-Policy"]
         assert "default-src" in csp
 
+    # GEO-SEC-01
+    def test_geo_sec_01_connect_src_no_hardcoded_lan_ip(self):
+        """GEO-SEC-01: Default CSP connect-src must not contain hardcoded LAN IP."""
+        response = self._dispatch()
+        csp = response.headers["Content-Security-Policy"]
+        assert "192.168." not in csp, (
+            "CSP connect-src must not contain hardcoded LAN IP (192.168.x.x)"
+        )
+
+    # GEO-SEC-02
+    def test_geo_sec_02_connect_src_contains_self(self):
+        """GEO-SEC-02: Default CSP connect-src must include 'self'."""
+        response = self._dispatch()
+        csp = response.headers["Content-Security-Policy"]
+        assert "connect-src" in csp
+        connect_src_part = [p for p in csp.split(";") if "connect-src" in p][0]
+        assert "'self'" in connect_src_part, (
+            "CSP connect-src must include 'self'"
+        )
+
+    # GEO-SEC-03
+    def test_geo_sec_03_permissions_policy_geolocation_self(self):
+        """GEO-SEC-03: Permissions-Policy must allow geolocation for same origin."""
+        response = self._dispatch()
+        pp = response.headers.get("Permissions-Policy", "")
+        assert "geolocation=(self)" in pp, (
+            "Permissions-Policy must include geolocation=(self)"
+        )
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # RequestSizeLimitMiddleware
