@@ -28,6 +28,8 @@ MOOD_PHOTO_SLOTS: frozenset[str] = frozenset(
         "mood_happy_smile",
         "mood_celebration",
         "mood_sad_disappointed",
+        "mood_angry_competitive",
+        "mood_surprised_shocked",
     }
 )
 
@@ -80,7 +82,8 @@ class UserMoodPhoto(Base):
         UniqueConstraint("user_id", "slot", name="uq_mood_photo_user_slot"),
         CheckConstraint(
             "slot IN ('mood_intro_neutral','mood_happy_smile',"
-            "'mood_celebration','mood_sad_disappointed')",
+            "'mood_celebration','mood_sad_disappointed',"
+            "'mood_angry_competitive','mood_surprised_shocked')",
             name="ck_mood_photo_slot_valid",
         ),
     )

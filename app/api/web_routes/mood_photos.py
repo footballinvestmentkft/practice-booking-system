@@ -36,12 +36,45 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 router = APIRouter()
 
-# Ordered for consistent display in the template
+# Ordered for consistent display in the template.
+# description is rendered verbatim in the card; keep it to one short sentence.
 _SLOT_META: list[dict] = [
-    {"slot": "mood_intro_neutral",    "label": "Neutral",      "emoji": "😐"},
-    {"slot": "mood_happy_smile",      "label": "Happy",        "emoji": "😊"},
-    {"slot": "mood_celebration",      "label": "Celebration",  "emoji": "🎉"},
-    {"slot": "mood_sad_disappointed", "label": "Sad",          "emoji": "😔"},
+    {
+        "slot":        "mood_intro_neutral",
+        "label":       "Neutral",
+        "emoji":       "😐",
+        "description": "Your default neutral expression — shown when no other mood applies.",
+    },
+    {
+        "slot":        "mood_happy_smile",
+        "label":       "Happy",
+        "emoji":       "😊",
+        "description": "A happy or smiling photo — after a good training session.",
+    },
+    {
+        "slot":        "mood_celebration",
+        "label":       "Celebration",
+        "emoji":       "🎉",
+        "description": "A celebration shot — winning a match or achieving a goal.",
+    },
+    {
+        "slot":        "mood_sad_disappointed",
+        "label":       "Sad",
+        "emoji":       "😔",
+        "description": "A disappointed expression — after a tough defeat.",
+    },
+    {
+        "slot":        "mood_angry_competitive",
+        "label":       "Angry",
+        "emoji":       "😤",
+        "description": "A fired-up, competitive look — before a big match.",
+    },
+    {
+        "slot":        "mood_surprised_shocked",
+        "label":       "Surprised",
+        "emoji":       "😲",
+        "description": "A shocked or surprised reaction — an unexpected result.",
+    },
 ]
 
 

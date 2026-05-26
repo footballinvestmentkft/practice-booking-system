@@ -159,9 +159,9 @@ def test_mp_s07_delete_nonexistent_is_noop(tmp_path, monkeypatch):
     db.delete.assert_not_called()
 
 
-# ── MP-S08 ── get_mood_photos_for_user always returns all 4 keys ─────────────
+# ── MP-S08 ── get_mood_photos_for_user always returns all 6 keys ─────────────
 
-def test_mp_s08_get_returns_all_four_slots():
+def test_mp_s08_get_returns_all_six_slots():
     row = MagicMock()
     row.slot = "mood_happy_smile"
 
@@ -177,8 +177,12 @@ def test_mp_s08_get_returns_all_four_slots():
         "mood_happy_smile",
         "mood_celebration",
         "mood_sad_disappointed",
+        "mood_angry_competitive",
+        "mood_surprised_shocked",
     }
-    assert result["mood_happy_smile"] is row
-    assert result["mood_intro_neutral"] is None
-    assert result["mood_celebration"]   is None
-    assert result["mood_sad_disappointed"] is None
+    assert result["mood_happy_smile"]       is row
+    assert result["mood_intro_neutral"]     is None
+    assert result["mood_celebration"]       is None
+    assert result["mood_sad_disappointed"]  is None
+    assert result["mood_angry_competitive"] is None
+    assert result["mood_surprised_shocked"] is None

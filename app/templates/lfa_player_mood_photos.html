@@ -257,18 +257,8 @@ function _mpDelete(url) {
                 {% endif %}
             </div>
 
-            <!-- Short instruction -->
-            <p class="mp-instruction">
-                {% if meta.slot == 'mood_intro_neutral' %}
-                    Your default neutral expression — shown when no other mood applies.
-                {% elif meta.slot == 'mood_happy_smile' %}
-                    A happy or smiling photo — after a good training session.
-                {% elif meta.slot == 'mood_celebration' %}
-                    A celebration shot — winning a match or achieving a goal.
-                {% else %}
-                    A disappointed or sad expression — after a tough defeat.
-                {% endif %}
-            </p>
+            <!-- Short instruction (driven by _SLOT_META description) -->
+            <p class="mp-instruction">{{ meta.description }}</p>
 
             <!-- Photo preview -->
             <div class="mp-preview">
