@@ -60,9 +60,12 @@
 .ch-badge-declined     { background: #f3f4f6; color: #6b7280; }
 .ch-badge-cancelled    { background: #f3f4f6; color: #6b7280; }
 .ch-badge-expired      { background: #fef3c7; color: #92400e; }
-.ch-badge-forfeit-win  { background: #dcfce7; color: #166534; }
-.ch-badge-forfeit-loss { background: #fee2e2; color: #991b1b; }
-.ch-badge-no-contest   { background: #fef3c7; color: #92400e; }
+.ch-badge-forfeit-win      { background: #dcfce7; color: #166534; }
+.ch-badge-forfeit-loss     { background: #fee2e2; color: #991b1b; }
+.ch-badge-no-contest       { background: #fef3c7; color: #92400e; }
+.ch-badge-live-lobby       { background: #fef9c3; color: #713f12; }
+.ch-badge-live-in-progress { background: #fef3c7; color: #92400e; }
+.ch-badge-virtual          { background: #ede9fe; color: #5b21b6; font-size: 0.68rem; }
 
 .ch-deadline {
     font-size: 0.78rem; color: #6b7280; margin-bottom: 0.5rem;
@@ -125,6 +128,7 @@
     {% elif success == "challenge_cancelled" %}✓ Challenge cancelled.
     {% else %}✓ Done.
     {% endif %}
+
 </div>
 {% endif %}
 
@@ -134,6 +138,8 @@
     {% elif error == "not_pending"      %}That challenge is no longer pending.
     {% elif error == "cannot_cancel"    %}This challenge can no longer be cancelled.
     {% elif error == "challenge_expired" %}Challenge expired — it has been marked as expired.
+    {% elif error == "not_live"         %}That challenge is not in a live lobby.
+    {% elif error == "lobby_expired"    %}The lobby expired — not all players were ready in time.
     {% else %}{{ error }}
     {% endif %}
 </div>
@@ -156,16 +162,22 @@
                 {% else %}{{ row.opponent_name }} → You{% endif %}
             </div>
             <div class="ch-game">
+                <span class="ch-badge ch-badge-virtual">Virtual</span>
                 {{ row.game_name }}
                 {% if row.difficulty_level %} · {{ row.difficulty_level | title }}{% endif %}
             </div>
         </div>
-        <span class="ch-badge ch-badge-{{ row.status }}">
-            {% if row.status == "pending" %}Pending
-            {% elif row.status == "accepted" %}Accepted
-            {% else %}{{ row.status | title }}
-            {% endif %}
-        </span>
+        {% if row.status == "live_lobby" %}
+        <span class="ch-badge ch-badge-live-lobby">⚡ Live Lobby</span>
+        {% elif row.status == "live_in_progress" %}
+        <span class="ch-badge ch-badge-live-in-progress">▶ Live</span>
+        {% elif row.status == "pending" %}
+        <span class="ch-badge ch-badge-pending">Pending</span>
+        {% elif row.status == "accepted" %}
+        <span class="ch-badge ch-badge-accepted">Accepted</span>
+        {% else %}
+        <span class="ch-badge ch-badge-{{ row.status }}">{{ row.status | title }}</span>
+        {% endif %}
     </div>
 
     <div class="ch-meta">
@@ -176,6 +188,14 @@
     {% if row.status == "accepted" and row.completion_deadline %}
     <div class="ch-deadline">
         ⏱ Deadline: {{ row.completion_deadline.strftime('%Y-%m-%d %H:%M') }} UTC
+    </div>
+    {% elif row.status == "live_lobby" and row.lobby_expires_at %}
+    <div class="ch-deadline">
+        ⚡ Lobby expires: {{ row.lobby_expires_at.strftime('%Y-%m-%d %H:%M') }} UTC
+    </div>
+    {% elif row.status == "live_in_progress" and row.live_start_at %}
+    <div class="ch-deadline">
+        ▶ Live since: {{ row.live_start_at.strftime('%H:%M') }} UTC
     </div>
     {% endif %}
 
@@ -189,6 +209,16 @@
 
         {% elif row.outcome == "waiting_for_opponent" %}
         <span class="ch-waiting">⏳ Waiting for {{ row.opponent_name }} to play…</span>
+
+        {% elif row.outcome == "live_lobby" %}
+        <a href="/challenges/{{ row.id }}/lobby" class="ch-btn ch-btn-play" style="background:#f59e0b;">⚡ Enter Lobby</a>
+
+        {% elif row.outcome == "live_play_now" %}
+        <a href="/challenges/{{ row.id }}/lobby" class="ch-btn ch-btn-play" style="background:#f59e0b;">▶ Rejoin &amp; Play</a>
+
+        {% elif row.outcome == "live_waiting_for_opponent" %}
+        <span class="ch-waiting">⏳ Waiting for {{ row.opponent_name }}…</span>
+        <a href="/challenges/{{ row.id }}/lobby" class="ch-btn ch-btn-play" style="background:#f59e0b; margin-left:0.5rem;">⚡ Lobby</a>
 
         {% elif row.outcome == "received" %}
         <form method="post" action="/challenges/{{ row.id }}/accept" style="margin:0;">
@@ -226,6 +256,7 @@
                 {% else %}{{ row.opponent_name }} vs You{% endif %}
             </div>
             <div class="ch-game">
+                <span class="ch-badge ch-badge-virtual">Virtual</span>
                 {{ row.game_name }}
                 {% if row.difficulty_level %} · {{ row.difficulty_level | title }}{% endif %}
             </div>
@@ -246,6 +277,8 @@
         <span class="ch-badge ch-badge-cancelled">Cancelled</span>
         {% elif row.status == "expired" and row.forfeit_reason == "no_contest" %}
         <span class="ch-badge ch-badge-no-contest">No Contest</span>
+        {% elif row.status == "expired" and row.forfeit_reason == "no_show" %}
+        <span class="ch-badge ch-badge-expired">No Show</span>
         {% elif row.status == "expired" %}
         <span class="ch-badge ch-badge-expired">Expired</span>
         {% else %}
@@ -281,12 +314,27 @@
     {% endif %}
 
     {% if row.outcome == "forfeit_win" %}
-    <div class="ch-outcome-note">Won by forfeit — opponent did not play in time.</div>
+        {% if row.forfeit_reason == "post_start_timeout" %}
+        <div class="ch-outcome-note">Won — opponent did not submit in the live window.</div>
+        {% else %}
+        <div class="ch-outcome-note">Won by forfeit — opponent did not play in time.</div>
+        {% endif %}
     {% elif row.outcome == "forfeit_loss" %}
-    <div class="ch-outcome-note">Lost by forfeit — you did not play in time.</div>
+        {% if row.forfeit_reason == "post_start_timeout" %}
+        <div class="ch-outcome-note">Lost — you did not submit in the live window.</div>
+        {% else %}
+        <div class="ch-outcome-note">Lost by forfeit — you did not play in time.</div>
+        {% endif %}
     {% elif row.status == "expired" and row.forfeit_reason == "no_contest" %}
     <div class="ch-outcome-note">No contest — deadline passed and nobody played.</div>
+    {% elif row.status == "expired" and row.forfeit_reason == "no_show" %}
+    <div class="ch-outcome-note">No show — lobby expired before both players were ready.</div>
     {% endif %}
+    <div style="margin-top:0.5rem;">
+        <a href="/challenges/{{ row.id }}" class="ch-btn" style="background:#f3f4f6;color:#374151;font-size:0.78rem;">
+            View details →
+        </a>
+    </div>
 </div>
 {% endfor %}
 {% endif %}

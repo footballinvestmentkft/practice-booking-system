@@ -348,8 +348,14 @@
             </div>
         </div>
         {% endif %}
-        <a href="/challenges" style="font-size:0.82rem;color:#4f46e5;font-weight:700;text-decoration:none;">
-            → View all challenges
+        {% if challenge_ctx.challenge_detail_url %}
+        <a href="{{ challenge_ctx.challenge_detail_url }}"
+           style="font-size:0.82rem;color:#4f46e5;font-weight:700;text-decoration:none;margin-right:1rem;">
+            → Virtual Challenge detail
+        </a>
+        {% endif %}
+        <a href="/challenges" style="font-size:0.82rem;color:var(--app-text-muted);text-decoration:none;">
+            All challenges
         </a>
     </div>
     {% endif %}

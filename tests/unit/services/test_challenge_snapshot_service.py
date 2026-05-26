@@ -327,3 +327,225 @@ def test_tt_fallback_to_toplevel_phases():
     snap = generate_tt_snapshot(cfg_no_diff, "easy")
     assert snap["game_code"] == "target_tracking"
     assert len(snap["phases"]) == 1
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TT-FAIR tests — direction_changes + flash_schedule (PR-L1 / Option C)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Fixtures used by TT-FAIR tests.
+# Hard config: direction change enabled (interval 2000 ms), 2 distractor flashes,
+# tracking 6000 ms → expected n_changes = ceil(6000/2000)+1 = 4 per round.
+_TT_HARD_CONFIG = {
+    "difficulties": {
+        "hard": {
+            "phases": [
+                {
+                    "phase": 0, "rounds": 2, "object_count": 4,
+                    "object_speed": 2.0, "highlight_ms": 1000,
+                    "tracking_ms": 6000, "window_ms": 2500,
+                    "distractor_flash": 2,
+                },
+            ],
+            "difficulty_multiplier": 1.50,
+            "direction_change": {
+                "enabled": True,
+                "interval_ms": 2000,
+            },
+            "flash_config": {
+                "flash_duration_ms": 400,
+                "flash_gap_ms": 500,
+                "max_concurrent_flashes": 1,
+                "allow_repeat_flash": False,
+                "repeat_gap_ms": 2000,
+            },
+        },
+    }
+}
+
+# Easy config without direction_change / flash → direction_changes = [] per round.
+_TT_EASY_NO_DC = {
+    "difficulties": {
+        "easy": {
+            "phases": [
+                {
+                    "phase": 0, "rounds": 2, "object_count": 3,
+                    "object_speed": 1.0, "highlight_ms": 1500,
+                    "tracking_ms": 4000, "window_ms": 3000,
+                    "distractor_flash": 0,
+                },
+            ],
+            "difficulty_multiplier": 1.00,
+        },
+    }
+}
+
+
+# ── TT-FAIR-01 ────────────────────────────────────────────────────────────────
+
+def test_tt_fair_01_direction_changes_key_present_when_enabled():
+    snap = generate_tt_snapshot(_TT_HARD_CONFIG, "hard")
+    for ph in snap["phases"]:
+        for rd in ph["rounds"]:
+            assert "direction_changes" in rd, "direction_changes key missing from round"
+
+
+# ── TT-FAIR-02 ────────────────────────────────────────────────────────────────
+
+def test_tt_fair_02_direction_changes_length():
+    snap = generate_tt_snapshot(_TT_HARD_CONFIG, "hard")
+    # tracking_ms=6000, interval_ms=2000 → ceil(6000/2000)+1 = 4
+    expected_n = math.ceil(6000 / 2000) + 1
+    for ph in snap["phases"]:
+        for rd in ph["rounds"]:
+            assert len(rd["direction_changes"]) == expected_n, (
+                f"expected {expected_n} direction-change entries, "
+                f"got {len(rd['direction_changes'])}"
+            )
+
+
+# ── TT-FAIR-03 ────────────────────────────────────────────────────────────────
+
+def test_tt_fair_03_direction_changes_angles_valid():
+    snap = generate_tt_snapshot(_TT_HARD_CONFIG, "hard")
+    obj_count = snap["phases"][0]["object_count"]
+    for ph in snap["phases"]:
+        for rd in ph["rounds"]:
+            for entry in rd["direction_changes"]:
+                assert len(entry) == obj_count, (
+                    f"direction-change entry has {len(entry)} angles, expected {obj_count}"
+                )
+                for angle in entry:
+                    assert isinstance(angle, float)
+                    assert 0.0 <= angle <= 2 * math.pi, f"angle {angle} out of [0, 2π]"
+
+
+# ── TT-FAIR-04 ────────────────────────────────────────────────────────────────
+
+def test_tt_fair_04_direction_changes_empty_when_disabled():
+    snap = generate_tt_snapshot(_TT_EASY_NO_DC, "easy")
+    for ph in snap["phases"]:
+        for rd in ph["rounds"]:
+            assert rd["direction_changes"] == [], (
+                "direction_changes should be [] when direction_change not configured"
+            )
+
+
+# ── TT-FAIR-05 ────────────────────────────────────────────────────────────────
+
+def test_tt_fair_05_flash_schedule_key_present():
+    snap = generate_tt_snapshot(_TT_HARD_CONFIG, "hard")
+    for ph in snap["phases"]:
+        for rd in ph["rounds"]:
+            assert "flash_schedule" in rd, "flash_schedule key missing from round"
+
+
+# ── TT-FAIR-06 ────────────────────────────────────────────────────────────────
+
+def test_tt_fair_06_flash_schedule_entry_required_keys():
+    snap = generate_tt_snapshot(_TT_HARD_CONFIG, "hard")
+    required = {"distractor_index", "t_offset_ms", "duration_ms", "color"}
+    for ph in snap["phases"]:
+        for rd in ph["rounds"]:
+            for ev in rd["flash_schedule"]:
+                missing = required - ev.keys()
+                assert not missing, f"flash_schedule entry missing keys: {missing}"
+                assert ev["t_offset_ms"] >= 0
+                assert ev["duration_ms"] > 0
+
+
+# ── TT-FAIR-07 ────────────────────────────────────────────────────────────────
+
+def test_tt_fair_07_flash_schedule_excludes_target():
+    snap = generate_tt_snapshot(_TT_HARD_CONFIG, "hard")
+    for ph in snap["phases"]:
+        for rd in ph["rounds"]:
+            target = rd["target_index"]
+            for ev in rd["flash_schedule"]:
+                assert ev["distractor_index"] != target, (
+                    f"target_index={target} appears as distractor in flash_schedule"
+                )
+
+
+# ── TT-FAIR-08 ────────────────────────────────────────────────────────────────
+
+def test_tt_fair_08_validate_tt_snapshot_accepts_new_format():
+    snap = generate_tt_snapshot(_TT_HARD_CONFIG, "hard")
+    assert validate_tt_snapshot(snap) is True
+
+
+# ── TT-FAIR-09 ────────────────────────────────────────────────────────────────
+
+def test_tt_fair_09_validate_rejects_wrong_direction_changes_length():
+    snap = generate_tt_snapshot(_TT_HARD_CONFIG, "hard")
+    # Corrupt first round's first direction_changes entry to wrong length
+    snap["phases"][0]["rounds"][0]["direction_changes"][0] = [1.0]  # wrong length (need 4)
+    assert validate_tt_snapshot(snap) is False
+
+
+# ── TT-FAIR-10 ────────────────────────────────────────────────────────────────
+
+def test_tt_fair_10_validate_backward_compat_old_snapshot():
+    """Old snapshots without direction_changes/flash_schedule must still pass."""
+    old_snap = {
+        "game_code":  "target_tracking",
+        "difficulty": "easy",
+        "arena":      {"width": 480, "height": 360},
+        "phases": [{
+            "phase": 1,
+            "object_count": 3,
+            "rounds": [{
+                "round": 1,
+                "target_index": 0,
+                "initial_positions": [{"x": 100, "y": 100}, {"x": 200, "y": 200}, {"x": 300, "y": 150}],
+                "initial_angles": [1.0, 2.0, 3.0],
+                # No direction_changes, no flash_schedule — legacy format
+            }],
+        }],
+    }
+    assert validate_tt_snapshot(old_snap) is True
+
+
+# ── TT-FAIR-11 ────────────────────────────────────────────────────────────────
+
+def test_tt_fair_11_two_calls_produce_different_values():
+    snap1 = generate_tt_snapshot(_TT_HARD_CONFIG, "hard")
+    snap2 = generate_tt_snapshot(_TT_HARD_CONFIG, "hard")
+    # With overwhelming probability angles differ; structural keys must match.
+    r1 = snap1["phases"][0]["rounds"][0]
+    r2 = snap2["phases"][0]["rounds"][0]
+    assert "direction_changes" in r1 and "direction_changes" in r2
+    assert "flash_schedule" in r1 and "flash_schedule" in r2
+    # The two snapshots should not be identical (probability of collision ≈ 0)
+    assert snap1 != snap2, "Two independent snapshots should not be identical"
+
+
+# ── TT-FAIR-12..14: Template pattern verification ─────────────────────────────
+# These tests confirm the challenge-mode fairness branches exist in the JS
+# by searching the rendered template source.  They are white-box but critical:
+# if someone removes or renames the key, the test catches it before runtime.
+
+import pathlib
+
+_TT_TEMPLATE = pathlib.Path(__file__).parents[3] / "app" / "templates" / "virtual_training_target_tracking.html"
+
+
+def test_tt_fair_12_template_uses_snap_direction_changes():
+    src = _TT_TEMPLATE.read_text(encoding="utf-8")
+    assert "snapRd.direction_changes" in src, (
+        "trackingPhase() must reference snapRd.direction_changes for challenge fairness"
+    )
+
+
+def test_tt_fair_13_template_uses_snap_flash_schedule():
+    src = _TT_TEMPLATE.read_text(encoding="utf-8")
+    assert "snapRd.flash_schedule" in src, (
+        "trackingPhase() must reference snapRd.flash_schedule for challenge fairness"
+    )
+
+
+def test_tt_fair_14_template_retains_generate_flash_schedule_fallback():
+    src = _TT_TEMPLATE.read_text(encoding="utf-8")
+    assert "generateFlashSchedule(" in src, (
+        "generateFlashSchedule() fallback must be retained for normal training mode"
+    )

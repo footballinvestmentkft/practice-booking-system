@@ -83,7 +83,14 @@ def _validate_challenge_pre_submit(
     if challenge.game_id != game_id:
         return None, JSONResponse({"error": "wrong_game"}, status_code=400)
 
-    if challenge.status != ChallengeStatus.ACCEPTED:
+    # LIVE_LOBBY is not playable — players must wait for countdown
+    if challenge.status == ChallengeStatus.LIVE_LOBBY:
+        return None, JSONResponse(
+            {"error": "challenge_not_started", "status": challenge.status.value},
+            status_code=409,
+        )
+
+    if challenge.status not in (ChallengeStatus.ACCEPTED, ChallengeStatus.LIVE_IN_PROGRESS):
         return None, JSONResponse(
             {"error": "challenge_not_accepted", "status": challenge.status.value},
             status_code=409,
@@ -114,11 +121,12 @@ def _validate_challenge_pre_submit(
             status_code=409,
         )
 
-    # Late submit guard: block if deadline passed and this side has no prior attempt
-    if challenge.completion_deadline is not None and challenge.completion_deadline <= now:
-        apply_forfeit_if_deadline_passed(db, challenge, now)
-        db.commit()
-        return None, JSONResponse({"error": "challenge_deadline_passed"}, status_code=410)
+    # Async: late submit guard
+    if challenge.status == ChallengeStatus.ACCEPTED:
+        if challenge.completion_deadline is not None and challenge.completion_deadline <= now:
+            apply_forfeit_if_deadline_passed(db, challenge, now)
+            db.commit()
+            return None, JSONResponse({"error": "challenge_deadline_passed"}, status_code=410)
 
     return challenge, None
 
@@ -233,18 +241,23 @@ def _build_challenge_result_ctx(
     opponent_name = (opponent.nickname or opponent.email) if opponent else "Unknown"
 
     ctx: dict = {
-        "challenge_id":    ch.id,
-        "status":          ch.status.value,
-        "is_challenger":   is_challenger,
-        "opponent_name":   opponent_name,
-        "difficulty_level": ch.difficulty_level,
-        "my_score":        None,
-        "opp_score":       None,
-        "outcome":         ch.status.value,
+        "challenge_id":       ch.id,
+        "status":             ch.status.value,
+        "is_challenger":      is_challenger,
+        "opponent_name":      opponent_name,
+        "difficulty_level":   ch.difficulty_level,
+        "my_score":           None,
+        "opp_score":          None,
+        "opp_attempt_id":     opp_attempt_id,
+        "opp_skill_deltas":   None,
+        "opp_per_round":      None,
+        "outcome":            ch.status.value,
+        "challenge_detail_url": f"/challenges/{challenge_id}",
+        "challenge_category": "virtual",
     }
 
     if ch.status == ChallengeStatus.COMPLETED:
-        # Load both attempt scores
+        # Load both attempt scores + opponent breakdown
         my_a  = db.query(VirtualTrainingAttempt).filter(
             VirtualTrainingAttempt.id == my_attempt_id
         ).first() if my_attempt_id else None
@@ -252,8 +265,12 @@ def _build_challenge_result_ctx(
             VirtualTrainingAttempt.id == opp_attempt_id
         ).first() if opp_attempt_id else None
 
-        ctx["my_score"]  = my_a.score_normalized  if my_a  else None
-        ctx["opp_score"] = opp_a.score_normalized if opp_a else None
+        ctx["my_score"]       = my_a.score_normalized  if my_a  else None
+        ctx["opp_score"]      = opp_a.score_normalized if opp_a else None
+        ctx["opp_skill_deltas"] = opp_a.skill_deltas   if opp_a else None
+        ctx["opp_per_round"]  = (
+            (opp_a.raw_metrics or {}).get("per_round") if opp_a else None
+        )
 
         if ch.is_draw:
             ctx["outcome"] = "draw"
@@ -801,6 +818,7 @@ async def virtual_training_target_tracking(
 
     # Challenge mode: load snapshot, guard NULL snapshot (no random fallback)
     challenge_snapshot: dict | None = None
+    live_start_at: str | None = None
     if challenge_id is not None:
         ch = db.query(VirtualTrainingChallenge).filter(
             VirtualTrainingChallenge.id == challenge_id
@@ -814,6 +832,8 @@ async def virtual_training_target_tracking(
                 url="/challenges?error=challenge_snapshot_missing", status_code=303
             )
         challenge_snapshot = ch.challenge_config_snapshot
+        if ch.live_start_at is not None:
+            live_start_at = ch.live_start_at.isoformat()
 
     today_start = datetime.combine(
         datetime.now(timezone.utc).date(),
@@ -844,6 +864,7 @@ async def virtual_training_target_tracking(
             "attempts_remaining": max(0, game.max_daily_attempts - attempts_today),
             "expert_unlocked": expert_unlocked,
             "challenge_snapshot": challenge_snapshot,
+            "live_start_at": live_start_at,
         },
     )
 
@@ -905,8 +926,9 @@ async def virtual_training_target_tracking_submit(
         )
         .count()
     )
-    if valid_today >= game.max_daily_attempts:
-        # challenge not mutated — guard returned before any write
+    # Daily cap: challenge attempts bypass the 429 gate — the cap is enforced on
+    # solo play only. Challenge skill delta policy is handled in record_attempt().
+    if challenge is None and valid_today >= game.max_daily_attempts:
         return JSONResponse(
             {"error": "daily_cap", "message": "Daily attempt limit reached for this game."},
             status_code=429,
@@ -922,6 +944,13 @@ async def virtual_training_target_tracking_submit(
         raw["v"]                     = 3
         body["raw_metrics"]          = raw
 
+    # Tag challenge attempts in raw_metrics for auditability (no DB column needed)
+    if challenge is not None:
+        raw = body.get("raw_metrics")
+        if isinstance(raw, dict):
+            raw["attempt_source"] = "challenge"
+            body["raw_metrics"]   = raw
+
     started_at_raw = body.get("started_at", "")
     idem_key = f"vt_tt_u{user.id}_{started_at_raw}"
 
@@ -931,6 +960,7 @@ async def virtual_training_target_tracking_submit(
         game=game,
         data=body,
         idempotency_key=idem_key,
+        is_challenge=(challenge is not None),
     )
 
     # Challenge linking — only for valid attempts, inside the same transaction
@@ -939,9 +969,11 @@ async def virtual_training_target_tracking_submit(
         challenge_context = _link_attempt_to_challenge(db, challenge, user.id, attempt)
     elif challenge is not None and not attempt.is_valid:
         challenge_context = {
-            "challenge_id": challenge.id,
-            "status": challenge.status.value,
-            "note": "invalid_attempt_not_linked",
+            "challenge_id":   challenge.id,
+            "status":         challenge.status.value,
+            "note":           "invalid_attempt_not_linked",
+            "retry_required": True,
+            "invalid_reason": attempt.invalid_reason,
         }
 
     db.commit()
@@ -1151,6 +1183,7 @@ async def virtual_training_memory_sequence(
 
     # Challenge mode: load snapshot, guard NULL snapshot (no random fallback)
     challenge_snapshot: dict | None = None
+    live_start_at: str | None = None
     if challenge_id is not None:
         ch = db.query(VirtualTrainingChallenge).filter(
             VirtualTrainingChallenge.id == challenge_id
@@ -1164,6 +1197,8 @@ async def virtual_training_memory_sequence(
                 url="/challenges?error=challenge_snapshot_missing", status_code=303
             )
         challenge_snapshot = ch.challenge_config_snapshot
+        if ch.live_start_at is not None:
+            live_start_at = ch.live_start_at.isoformat()
 
     today_start = datetime.combine(
         datetime.now(timezone.utc).date(),
@@ -1191,6 +1226,7 @@ async def virtual_training_memory_sequence(
             "max_daily_attempts": game.max_daily_attempts,
             "attempts_remaining": max(0, game.max_daily_attempts - attempts_today),
             "challenge_snapshot": challenge_snapshot,
+            "live_start_at": live_start_at,
         },
     )
 
@@ -1240,12 +1276,19 @@ async def virtual_training_memory_sequence_submit(
         )
         .count()
     )
-    if valid_today >= game.max_daily_attempts:
-        # challenge not mutated — guard returned before any write
+    # Daily cap: challenge attempts bypass the 429 gate (same policy as TT).
+    if challenge is None and valid_today >= game.max_daily_attempts:
         return JSONResponse(
             {"error": "daily_cap", "message": "Daily attempt limit reached for this game."},
             status_code=429,
         )
+
+    # Tag challenge attempts in raw_metrics for auditability (no DB column needed)
+    if challenge is not None:
+        raw = body.get("raw_metrics")
+        if isinstance(raw, dict):
+            raw["attempt_source"] = "challenge"
+            body["raw_metrics"]   = raw
 
     started_at_raw = body.get("started_at", "")
     idem_key = f"vt_ms_u{user.id}_{started_at_raw}"
@@ -1256,6 +1299,7 @@ async def virtual_training_memory_sequence_submit(
         game=game,
         data=body,
         idempotency_key=idem_key,
+        is_challenge=(challenge is not None),
     )
 
     # Challenge linking — only for valid attempts, inside the same transaction
@@ -1264,9 +1308,11 @@ async def virtual_training_memory_sequence_submit(
         challenge_context = _link_attempt_to_challenge(db, challenge, user.id, attempt)
     elif challenge is not None and not attempt.is_valid:
         challenge_context = {
-            "challenge_id": challenge.id,
-            "status": challenge.status.value,
-            "note": "invalid_attempt_not_linked",
+            "challenge_id":   challenge.id,
+            "status":         challenge.status.value,
+            "note":           "invalid_attempt_not_linked",
+            "retry_required": True,
+            "invalid_reason": attempt.invalid_reason,
         }
 
     db.commit()

@@ -1,0 +1,317 @@
+{% extends "student_base.html" %}
+
+{% block title %}Live Lobby — Virtual Training{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '⚡' %}
+{% set _page_name = 'Live Challenge Lobby' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+.lb-container { max-width: 540px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+.lb-card {
+    background: var(--app-card); border-radius: 16px;
+    padding: 1.75rem 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    margin-bottom: 1.25rem;
+}
+.lb-card h2 { font-size: 1.15rem; font-weight: 800; color: var(--app-text);
+              margin: 0 0 1.25rem; }
+
+.lb-players { display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem; }
+.lb-player {
+    flex: 1; text-align: center; padding: 1rem 0.75rem;
+    border-radius: 12px; border: 2px solid #e5e7eb;
+    background: var(--app-bg); transition: border-color 0.2s, background 0.2s;
+}
+.lb-player.ready {
+    border-color: #22c55e;
+    background: #f0fdf4;
+}
+.lb-player-name { font-weight: 700; font-size: 0.92rem; color: var(--app-text); }
+.lb-player-status { font-size: 0.78rem; margin-top: 0.35rem; font-weight: 600; }
+.lb-player.ready .lb-player-status { color: #16a34a; }
+.lb-player:not(.ready) .lb-player-status { color: var(--app-text-muted); }
+.lb-player-you { font-size: 0.72rem; color: var(--app-text-muted); margin-top: 0.2rem; }
+
+.lb-countdown {
+    text-align: center; font-size: 3rem; font-weight: 900;
+    color: #f59e0b; line-height: 1;
+    margin: 1rem 0;
+}
+.lb-status-text {
+    text-align: center; font-size: 0.9rem; color: var(--app-text-muted);
+    margin-bottom: 1.25rem;
+}
+
+.lb-btn-ready {
+    display: block; width: 100%; padding: 0.85rem;
+    background: #22c55e; color: #fff; font-weight: 800;
+    font-size: 1rem; border: none; border-radius: 10px;
+    cursor: pointer; transition: background 0.15s;
+}
+.lb-btn-ready:disabled { background: #86efac; cursor: not-allowed; }
+.lb-btn-ready:not(:disabled):hover { background: #16a34a; }
+
+.lb-btn-play {
+    display: block; width: 100%; padding: 0.85rem;
+    background: #f59e0b; color: #fff; font-weight: 800;
+    font-size: 1rem; text-align: center; border-radius: 10px;
+    text-decoration: none; transition: background 0.15s;
+}
+.lb-btn-play:hover { background: #d97706; }
+
+.lb-expires {
+    font-size: 0.8rem; color: var(--app-text-muted);
+    text-align: center; margin-top: 0.75rem;
+}
+.lb-timer { font-variant-numeric: tabular-nums; }
+
+.lb-badge-in-progress {
+    display: inline-block; padding: 0.25rem 0.75rem;
+    background: #f59e0b; color: #fff; border-radius: 20px;
+    font-size: 0.78rem; font-weight: 700;
+}
+.lb-badge-ready { color: #16a34a; font-weight: 700; }
+.lb-badge-waiting { color: var(--app-text-muted); font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="lb-container">
+
+{% if error %}
+<div class="alert alert-warning mb-3">{{ error }}</div>
+{% endif %}
+
+<div class="lb-card">
+    <h2>
+        {{ challenge.game.name if challenge.game else 'Live Challenge' }}
+        &nbsp;<span class="lb-badge-in-progress" id="lb-status-badge">
+            {% if challenge.status.value == 'live_in_progress' %}In Progress{% else %}Waiting{% endif %}
+        </span>
+    </h2>
+
+    <div class="lb-players" id="lb-players">
+        {% set cr_ready = challenge.challenger_ready_at is not none %}
+        {% set cd_ready = challenge.challenged_ready_at is not none %}
+
+        <div class="lb-player {{ 'ready' if cr_ready else '' }}" id="lb-player-challenger">
+            <div class="lb-player-name">
+                {{ challenger.nickname or challenger.email if challenger else 'Challenger' }}
+            </div>
+            <div class="lb-player-status">
+                {{ 'Ready' if cr_ready else 'Waiting...' }}
+            </div>
+            {% if is_challenger %}
+            <div class="lb-player-you">(You)</div>
+            {% endif %}
+        </div>
+
+        <div class="lb-player {{ 'ready' if cd_ready else '' }}" id="lb-player-challenged">
+            <div class="lb-player-name">
+                {{ challenged.nickname or challenged.email if challenged else 'Challenged' }}
+            </div>
+            <div class="lb-player-status">
+                {{ 'Ready' if cd_ready else 'Waiting...' }}
+            </div>
+            {% if not is_challenger %}
+            <div class="lb-player-you">(You)</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="lb-status-text" id="lb-status-text">
+        {% if challenge.status.value == 'live_in_progress' %}
+            Both players are ready. Go to the game!
+        {% else %}
+            Waiting for both players to mark ready...
+        {% endif %}
+    </div>
+
+    <div class="lb-countdown" id="lb-countdown" style="display:none;"></div>
+
+    <div id="lb-action-area">
+        {% if challenge.status.value == 'live_lobby' %}
+            {% set my_ready = (is_challenger and challenge.challenger_ready_at) or (not is_challenger and challenge.challenged_ready_at) %}
+            <form method="POST" action="/challenges/{{ challenge.id }}/ready" id="lb-ready-form">
+                <button type="button" id="lb-ready-btn"
+                        class="lb-btn-ready"
+                        {{ 'disabled' if my_ready else '' }}>
+                    {{ 'You are ready!' if my_ready else 'I am Ready' }}
+                </button>
+            </form>
+        {% elif challenge.status.value == 'live_in_progress' %}
+            <a href="{{ play_url }}" class="lb-btn-play">Play Now</a>
+        {% endif %}
+    </div>
+
+    {% if challenge.status.value == 'live_lobby' and lobby_expires_at %}
+    <div class="lb-expires">
+        Lobby expires: <span class="lb-timer" id="lb-expire-timer">—</span>
+    </div>
+    {% endif %}
+</div>
+
+<p style="text-align:center; margin-top:1rem;">
+    <a href="/challenges" style="font-size:0.85rem; color:var(--app-text-muted);">
+        Back to Challenges
+    </a>
+</p>
+
+</div>
+
+<script>
+(function () {
+    const CHALLENGE_ID  = {{ challenge.id }};
+    const PLAY_URL      = {{ play_url | tojson }};
+    const POLL_MS       = 2000;
+    const LIVE_COUNTDOWN_SECONDS = 5;
+
+    function getCsrf() {
+        var pair = document.cookie.split('; ').find(function (r) {
+            return r.startsWith('csrf_token=');
+        });
+        return pair ? pair.split('=')[1] : '';
+    }
+
+    {% if lobby_expires_at %}
+    const LOBBY_EXPIRES = new Date({{ lobby_expires_at.isoformat() | tojson }});
+    {% else %}
+    const LOBBY_EXPIRES = null;
+    {% endif %}
+
+    {% if live_start_at %}
+    const LIVE_START_AT = new Date({{ live_start_at | tojson }});
+    {% else %}
+    const LIVE_START_AT = null;
+    {% endif %}
+
+    const elBadge      = document.getElementById('lb-status-badge');
+    const elStatusText = document.getElementById('lb-status-text');
+    const elCountdown  = document.getElementById('lb-countdown');
+    const elActionArea = document.getElementById('lb-action-area');
+    const elExpireTimer = document.getElementById('lb-expire-timer');
+    const elPlayerCr   = document.getElementById('lb-player-challenger');
+    const elPlayerCd   = document.getElementById('lb-player-challenged');
+    const elReadyBtn   = document.getElementById('lb-ready-btn');
+
+    let isRedirecting  = false;
+    let pollInterval   = null;
+    let countdownTimer = null;
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    function updateExpireTimer() {
+        if (!LOBBY_EXPIRES || !elExpireTimer) return;
+        const diff = Math.max(0, Math.floor((LOBBY_EXPIRES - Date.now()) / 1000));
+        const m = Math.floor(diff / 60);
+        const s = diff % 60;
+        elExpireTimer.textContent = pad(m) + ':' + pad(s);
+        if (diff === 0 && !isRedirecting) {
+            isRedirecting = true;
+            window.location.href = '/challenges?error=lobby_expired';
+        }
+    }
+
+    function startCountdown(liveStartAt) {
+        if (countdownTimer) return;
+        elCountdown.style.display = 'block';
+        elStatusText.textContent = 'Game starting in...';
+
+        countdownTimer = setInterval(function () {
+            const elapsed = Math.floor((Date.now() - liveStartAt.getTime()) / 1000);
+            const remaining = LIVE_COUNTDOWN_SECONDS - elapsed;
+            if (remaining <= 0) {
+                clearInterval(countdownTimer);
+                elCountdown.textContent = 'GO!';
+                if (!isRedirecting) {
+                    isRedirecting = true;
+                    setTimeout(function () {
+                        window.location.href = PLAY_URL;
+                    }, 600);
+                }
+            } else {
+                elCountdown.textContent = remaining;
+            }
+        }, 500);
+    }
+
+    function applyState(state) {
+        const status = state.status;
+        const crReady = state.challenger_ready;
+        const cdReady = state.challenged_ready;
+
+        // Update player cards
+        elPlayerCr.classList.toggle('ready', crReady);
+        elPlayerCr.querySelector('.lb-player-status').textContent = crReady ? 'Ready' : 'Waiting...';
+        elPlayerCd.classList.toggle('ready', cdReady);
+        elPlayerCd.querySelector('.lb-player-status').textContent = cdReady ? 'Ready' : 'Waiting...';
+
+        if (status === 'live_in_progress') {
+            elBadge.textContent = 'In Progress';
+            elStatusText.textContent = 'Both players are ready. Go to the game!';
+            elActionArea.innerHTML = '<a href="' + PLAY_URL + '" class="lb-btn-play">Play Now</a>';
+            clearInterval(pollInterval);
+
+            const liveStart = state.live_start_at ? new Date(state.live_start_at) : null;
+            if (liveStart && !countdownTimer) {
+                startCountdown(liveStart);
+            }
+        } else if (status === 'expired' || status === 'completed' || status === 'cancelled') {
+            if (!isRedirecting) {
+                isRedirecting = true;
+                window.location.href = '/challenges?error=lobby_expired';
+            }
+        }
+    }
+
+    function poll() {
+        if (isRedirecting) return;
+        fetch('/challenges/' + CHALLENGE_ID + '/lobby-state', {
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json' },
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) { applyState(data); })
+        .catch(function () { /* ignore network blips */ });
+    }
+
+    // Ready button click — POST then poll immediately
+    if (elReadyBtn) {
+        elReadyBtn.addEventListener('click', function () {
+            elReadyBtn.disabled = true;
+            elReadyBtn.textContent = 'You are ready!';
+            fetch('/challenges/' + CHALLENGE_ID + '/ready', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-Token': getCsrf(),
+                },
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) { applyState(data); })
+            .catch(function (err) { console.error('Ready POST failed:', err); });
+        });
+    }
+
+    // If already live_in_progress, start countdown immediately
+    if (LIVE_START_AT) {
+        startCountdown(LIVE_START_AT);
+    }
+
+    // Expire timer ticks
+    if (LOBBY_EXPIRES) {
+        updateExpireTimer();
+        setInterval(updateExpireTimer, 1000);
+    }
+
+    // Start polling
+    pollInterval = setInterval(poll, POLL_MS);
+})();
+</script>
+{% endblock %}

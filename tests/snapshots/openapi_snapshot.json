@@ -4219,6 +4219,17 @@
       },
       "Body_send_challenge_challenges_send_post": {
         "properties": {
+          "challenge_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Challenge Category"
+          },
           "challenge_mode": {
             "anyOf": [
               {
@@ -11467,7 +11478,8 @@
           "vt_challenge_cancelled",
           "vt_challenge_expired",
           "vt_challenge_completed",
-          "vt_challenge_forfeited"
+          "vt_challenge_forfeited",
+          "vt_challenge_live_lobby"
         ],
         "title": "NotificationType",
         "type": "string"
@@ -59910,6 +59922,49 @@
         ]
       }
     },
+    "/challenges/{challenge_id}": {
+      "get": {
+        "description": "Virtual Challenge detail page \u2014 participants only.",
+        "operationId": "challenge_detail_challenges__challenge_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "challenge_id",
+            "required": true,
+            "schema": {
+              "title": "Challenge Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Challenge Detail",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/challenges/{challenge_id}/accept": {
       "post": {
         "operationId": "accept_challenge_challenges__challenge_id__accept_post",
@@ -60025,6 +60080,128 @@
           }
         },
         "summary": "Decline Challenge",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/challenges/{challenge_id}/lobby": {
+      "get": {
+        "operationId": "challenge_lobby_challenges__challenge_id__lobby_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "challenge_id",
+            "required": true,
+            "schema": {
+              "title": "Challenge Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Challenge Lobby",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/challenges/{challenge_id}/lobby-state": {
+      "get": {
+        "operationId": "challenge_lobby_state_challenges__challenge_id__lobby_state_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "challenge_id",
+            "required": true,
+            "schema": {
+              "title": "Challenge Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Challenge Lobby State",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/challenges/{challenge_id}/ready": {
+      "post": {
+        "operationId": "challenge_ready_challenges__challenge_id__ready_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "challenge_id",
+            "required": true,
+            "schema": {
+              "title": "Challenge Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Challenge Ready",
         "tags": [
           "web"
         ]

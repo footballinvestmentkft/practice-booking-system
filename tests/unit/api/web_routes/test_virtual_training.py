@@ -1022,6 +1022,7 @@ def _fair_challenge(uid_challenger=42, uid_challenged=99, snapshot=None, game_id
     ch.game_id = game_id
     ch.status = ChallengeStatus.ACCEPTED
     ch.challenge_config_snapshot = snapshot
+    ch.live_start_at = None  # PR-L1: must be None for template isoformat() guard
     from datetime import datetime
     ch.expires_at = datetime.now(timezone.utc) + timedelta(days=6)
     return ch

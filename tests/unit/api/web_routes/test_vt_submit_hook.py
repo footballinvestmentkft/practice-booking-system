@@ -597,33 +597,42 @@ class TestExtraGuards:
         assert err.status_code == 409
         assert ch.challenger_attempt_id == 42  # not overwritten
 
-    def test_s26_daily_cap_challenge_not_mutated(self):
-        """S-26: 429 daily cap → pre-validation returned None (no early commit),
-        challenge fields unchanged (mutation happens AFTER cap check in route)."""
+    def test_s26_daily_cap_challenge_bypasses_429(self):
+        """S-26: challenge attempt at daily cap → cap BYPASSED (not 429).
+        Challenge accounting policy: solo cap enforced, challenge cap skipped.
+        _link_attempt_to_challenge IS called for valid challenge attempts."""
         from app.api.web_routes.virtual_training import virtual_training_memory_sequence_submit
         user = _user(uid=1)
         db = _db()
         db.query.return_value.filter.return_value.count.return_value = 5  # at cap
-        db.query.return_value.filter.return_value.first.return_value = _challenge()
         game = MagicMock()
         game.is_active = True
         game.id = 1
         game.max_daily_attempts = 5
+        game.code = "memory_sequence"
         ch = _challenge()
-        ch_original_status = ch.status
+
+        att = MagicMock()
+        att.id               = 99
+        att.is_valid         = True
+        att.invalid_reason   = None
+        att.xp_awarded       = 0
+        att.skill_deltas     = {}
+        att.attempt_index_today = 6
+        att.score_normalized = 70.0
 
         with patch(f"{_BASE_VT}.require_student_onboarding", return_value=None), \
              patch(f"{_BASE_VT}.VirtualTrainingService.get_game", return_value=game), \
              patch(f"{_BASE_VT}._validate_challenge_pre_submit", return_value=(ch, None)), \
-             patch(f"{_BASE_VT}._link_attempt_to_challenge") as mock_link:
+             patch(f"{_BASE_VT}.VirtualTrainingService.record_attempt", return_value=att), \
+             patch(f"{_BASE_VT}._link_attempt_to_challenge", return_value={"linked": True}):
             result = _run(virtual_training_memory_sequence_submit(
                 request=self._make_request({"started_at": "t", "challenge_id": 7}),
                 db=db, user=user,
             ))
 
-        assert result.status_code == 429
-        mock_link.assert_not_called()  # hook never reached
-        assert ch.status == ch_original_status  # no mutation
+        # Cap is bypassed → no 429
+        assert result.status_code != 429
 
     def test_s27_completed_challenge_blocks_submit(self):
         """S-27: challenge already COMPLETED → 409 from pre-validation."""

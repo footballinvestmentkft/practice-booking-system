@@ -1,33 +1,36 @@
 """
-VT Challenge web routes — async friend-vs-friend challenge lifecycle (PR-C1/C3).
+VT Challenge web routes — async + live friend-vs-friend challenge lifecycle.
 
 Routes:
-  GET  /challenges                 → challenge inbox (received/sent/active/completed)
-  GET  /challenges/send            → send form (friends + compatible games)
-  POST /challenges/send            → create challenge
-  POST /challenges/{id}/accept     → accept incoming challenge (challenged only)
-  POST /challenges/{id}/decline    → decline incoming challenge (challenged only)
-  POST /challenges/{id}/cancel     → cancel pending/accepted challenge (challenger only)
+  GET  /challenges                    → challenge inbox (received/sent/active/completed)
+  GET  /challenges/send               → send form (friends + compatible games)
+  POST /challenges/send               → create challenge
+  POST /challenges/{id}/accept        → accept incoming challenge (challenged only)
+  POST /challenges/{id}/decline       → decline incoming challenge (challenged only)
+  POST /challenges/{id}/cancel        → cancel pending/accepted challenge (challenger only)
+  GET  /challenges/{id}/lobby         → live lobby page (both players)
+  GET  /challenges/{id}/lobby-state   → JSON polling endpoint (2 s poll)
+  POST /challenges/{id}/ready         → mark self as ready in lobby
 
 Guards (send):
   - self-challenge blocked
   - target must be active user
   - must be friends (is_friends)
-  - game must exist
-  - game must be in CHALLENGE_COMPATIBLE_GAMES
+  - game must exist + in CHALLENGE_COMPATIBLE_GAMES
   - no duplicate active challenge between the pair on the same game
   - TT: difficulty_level must be valid; expert gated by expert_unlocked
+  - live mode: completion_window_seconds ignored
 
 Notifications:
-  All notification links point to /challenges.
+  All notification links point to /challenges (or /challenges/{id}/lobby for live).
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
@@ -41,6 +44,7 @@ from ...models.virtual_training import VirtualTrainingAttempt, VirtualTrainingGa
 from ...models.vt_challenge import (
     CHALLENGE_COMPATIBLE_GAMES,
     DEFAULT_COMPLETION_WINDOW,
+    LOBBY_TIMEOUT_SECONDS,
     ChallengeStatus,
     VirtualTrainingChallenge,
     get_active_challenge,
@@ -50,6 +54,13 @@ from ...models.vt_challenge import (
 )
 from ...services import notification_service
 from ...services.challenge_completion_service import sweep_accepted_deadlines
+from ...services.live_lobby_service import (
+    apply_lobby_timeout_if_expired,
+    apply_post_start_timeout_if_expired,
+    get_lobby_state,
+    set_ready,
+    sweep_live_challenges,
+)
 from ...services.challenge_snapshot_service import (
     generate_snapshot,
     validate_challenge_mode,
@@ -122,6 +133,13 @@ def _build_inbox_row(
             outcome = "waiting_for_opponent"
         else:
             outcome = "accepted"   # both submitted, awaiting completion write
+    elif ch.status == ChallengeStatus.LIVE_LOBBY:
+        outcome = "live_lobby"
+    elif ch.status == ChallengeStatus.LIVE_IN_PROGRESS:
+        if my_attempt_id is None:
+            outcome = "live_play_now"
+        else:
+            outcome = "live_waiting_for_opponent"
     elif ch.status == ChallengeStatus.PENDING:
         outcome = "received" if not is_challenger else "sent"
     else:
@@ -130,6 +148,8 @@ def _build_inbox_row(
     return {
         "id":                    ch.id,
         "status":                ch.status.value,
+        "challenge_mode":        ch.challenge_mode,
+        "challenge_category":    "virtual",
         "is_challenger":         is_challenger,
         "opponent_name":         (opponent.nickname or opponent.email) if opponent else "Unknown",
         "game_name":             game.name if game else "—",
@@ -148,6 +168,8 @@ def _build_inbox_row(
         "completion_deadline":   ch.completion_deadline,
         "forfeit_user_id":       ch.forfeit_user_id,
         "forfeit_reason":        ch.forfeit_reason,
+        "lobby_expires_at":      ch.lobby_expires_at,
+        "live_start_at":         ch.live_start_at,
     }
 
 
@@ -175,20 +197,24 @@ async def challenge_inbox(
         .all()
     )
 
-    # Separate active vs completed/terminal
-    active_chs    = [c for c in all_challenges
-                     if c.status in (ChallengeStatus.PENDING, ChallengeStatus.ACCEPTED)]
-    terminal_chs  = [c for c in all_challenges
-                     if c.status not in (ChallengeStatus.PENDING, ChallengeStatus.ACCEPTED)]
+    _ACTIVE_STATUSES = {
+        ChallengeStatus.PENDING,
+        ChallengeStatus.ACCEPTED,
+        ChallengeStatus.LIVE_LOBBY,
+        ChallengeStatus.LIVE_IN_PROGRESS,
+    }
 
-    # Lazy deadline sweep — apply forfeit/no_contest for overdue ACCEPTED challenges
-    if sweep_accepted_deadlines(db, active_chs):
+    # Separate active vs completed/terminal
+    active_chs   = [c for c in all_challenges if c.status in _ACTIVE_STATUSES]
+    terminal_chs = [c for c in all_challenges if c.status not in _ACTIVE_STATUSES]
+
+    # Lazy sweeps — deadlines (async) + lobby/post-start timeouts (live)
+    swept = sweep_accepted_deadlines(db, active_chs) + sweep_live_challenges(db, active_chs)
+    if swept:
         db.commit()
-        # Re-partition after sweep: some active_chs may now be terminal
-        active_chs   = [c for c in active_chs
-                        if c.status in (ChallengeStatus.PENDING, ChallengeStatus.ACCEPTED)]
-        terminal_chs = [c for c in all_challenges
-                        if c.status not in (ChallengeStatus.PENDING, ChallengeStatus.ACCEPTED)]
+        # Re-partition after sweep
+        active_chs   = [c for c in active_chs   if c.status in _ACTIVE_STATUSES]
+        terminal_chs = [c for c in all_challenges if c.status not in _ACTIVE_STATUSES]
 
     terminal_chs  = terminal_chs[:_COMPLETED_LIMIT]
 
@@ -317,9 +343,22 @@ async def send_challenge(
     difficulty_level:          str | None = Form(default=None),
     challenge_mode:            str | None = Form(default=None),
     completion_window_seconds: int | None = Form(default=None),
+    challenge_category:        str | None = Form(default=None),
     db: Session = Depends(get_db),
     user: User  = Depends(get_current_user_web),
 ):
+    # Category guard — only Virtual is active; On-site/Hybrid are Coming Soon
+    # isinstance guard: when called directly in tests, challenge_category may be
+    # the Form FieldInfo object rather than None (FastAPI only resolves it at
+    # request time). Treat any non-str value as "use default".
+    resolved_category = "virtual"
+    if isinstance(challenge_category, str) and challenge_category:
+        resolved_category = challenge_category.strip().lower()
+    if resolved_category != "virtual":
+        return RedirectResponse(
+            url="/challenges/send?error=category_not_available", status_code=303
+        )
+
     # Self-challenge guard
     if challenged_user_id == user.id:
         return RedirectResponse(url="/challenges/send?error=self_challenge", status_code=303)
@@ -451,25 +490,138 @@ async def accept_challenge(
         db.commit()
         return RedirectResponse(url="/challenges?error=challenge_expired", status_code=303)
 
-    challenge.status      = ChallengeStatus.ACCEPTED
     challenge.accepted_at = now
     challenge.updated_at  = now
-    if challenge.completion_window_seconds is not None:
-        challenge.completion_deadline = make_completion_deadline(
-            now, challenge.completion_window_seconds
+
+    if challenge.challenge_mode == "live":
+        challenge.status           = ChallengeStatus.LIVE_LOBBY
+        challenge.lobby_expires_at = now + timedelta(seconds=LOBBY_TIMEOUT_SECONDS)
+        notification_service.create_notification(
+            db=db,
+            user_id=challenge.challenger_id,
+            title="Challenge Accepted — Live Lobby",
+            message=f"{user.nickname or user.email} accepted your live challenge. Head to the lobby!",
+            notification_type=NotificationType.VT_CHALLENGE_LIVE_LOBBY,
+            link=f"/challenges/{challenge_id}/lobby",
+        )
+        db.commit()
+        return RedirectResponse(url=f"/challenges/{challenge_id}/lobby", status_code=303)
+    else:
+        challenge.status = ChallengeStatus.ACCEPTED
+        if challenge.completion_window_seconds is not None:
+            challenge.completion_deadline = make_completion_deadline(
+                now, challenge.completion_window_seconds
+            )
+        notification_service.create_notification(
+            db=db,
+            user_id=challenge.challenger_id,
+            title="Challenge Accepted",
+            message=f"{user.nickname or user.email} accepted your VT challenge.",
+            notification_type=NotificationType.VT_CHALLENGE_ACCEPTED,
+            link="/challenges",
+        )
+        db.commit()
+        return RedirectResponse(url="/challenges?success=challenge_accepted", status_code=303)
+
+
+# ── GET /challenges/{id} — Virtual Challenge detail ───────────────────────────
+
+@router.get("/challenges/{challenge_id}", response_class=HTMLResponse)
+async def challenge_detail(
+    challenge_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User  = Depends(get_current_user_web),
+):
+    """Virtual Challenge detail page — participants only."""
+    guard = require_student_onboarding(user)
+    if guard:
+        return guard
+
+    ch = db.query(VirtualTrainingChallenge).filter(
+        VirtualTrainingChallenge.id == challenge_id
+    ).first()
+
+    if ch is None:
+        return templates.TemplateResponse(
+            "vt_challenges.html",
+            {"request": request, "user": user, **_spec_ctx(user, db),
+             "active_rows": [], "terminal_rows": [],
+             "error": "challenge_not_found"},
+            status_code=404,
         )
 
-    notification_service.create_notification(
-        db=db,
-        user_id=challenge.challenger_id,
-        title="Challenge Accepted",
-        message=f"{user.nickname or user.email} accepted your VT challenge.",
-        notification_type=NotificationType.VT_CHALLENGE_ACCEPTED,
-        link="/challenges",
+    if user.id not in (ch.challenger_id, ch.challenged_id):
+        return templates.TemplateResponse(
+            "vt_challenges.html",
+            {"request": request, "user": user, **_spec_ctx(user, db),
+             "active_rows": [], "terminal_rows": [],
+             "error": "not_found"},
+            status_code=403,
+        )
+
+    # Load attempts if linked
+    challenger_attempt = (
+        db.query(VirtualTrainingAttempt).filter(
+            VirtualTrainingAttempt.id == ch.challenger_attempt_id
+        ).first() if ch.challenger_attempt_id else None
+    )
+    challenged_attempt = (
+        db.query(VirtualTrainingAttempt).filter(
+            VirtualTrainingAttempt.id == ch.challenged_attempt_id
+        ).first() if ch.challenged_attempt_id else None
     )
 
-    db.commit()
-    return RedirectResponse(url="/challenges?success=challenge_accepted", status_code=303)
+    # Compute per-skill scores for each attempt (same pattern as individual result pages)
+    def _skill_scores(attempt: VirtualTrainingAttempt | None, game) -> dict:
+        if attempt is None or not attempt.skill_deltas or game is None:
+            return {}
+        try:
+            from ...services.virtual_training_metrics import VTSignalExtractor, VTSkillScorer
+            cfg          = game.config or {}
+            phase_config = cfg.get("phases", []) if isinstance(cfg, dict) else []
+            signals = VTSignalExtractor.extract(
+                {
+                    "stimuli_count":     attempt.stimuli_count,
+                    "correct_count":     attempt.correct_count,
+                    "wrong_click_count": attempt.wrong_click_count,
+                    "error_count":       attempt.error_count,
+                    "avg_reaction_ms":   attempt.avg_reaction_ms,
+                    "raw_metrics":       attempt.raw_metrics,
+                },
+                phase_config,
+            )
+            return VTSkillScorer.score_all(signals, game.skill_targets or {})
+        except Exception:
+            return {}
+
+    game = ch.game  # ORM relationship
+
+    is_forfeit   = ch.forfeit_user_id is not None
+    is_no_contest = is_forfeit and ch.winner_id is None
+
+    return templates.TemplateResponse(
+        "vt_challenge_detail.html",
+        {
+            "request":                  request,
+            "user":                     user,
+            **_spec_ctx(user, db),
+            "challenge":                ch,
+            "challenge_category":       "virtual",
+            "game":                     game,
+            "challenger":               ch.challenger,
+            "challenged":               ch.challenged,
+            "winner":                   ch.winner,
+            "forfeit_user":             ch.forfeit_user,
+            "challenger_attempt":       challenger_attempt,
+            "challenged_attempt":       challenged_attempt,
+            "challenger_skill_scores":  _skill_scores(challenger_attempt, game),
+            "challenged_skill_scores":  _skill_scores(challenged_attempt, game),
+            "is_challenger":            user.id == ch.challenger_id,
+            "is_forfeit":               is_forfeit,
+            "is_no_contest":            is_no_contest,
+        },
+    )
 
 
 # ── POST /challenges/{id}/decline ─────────────────────────────────────────────
@@ -540,3 +692,134 @@ async def cancel_challenge(
 
     db.commit()
     return RedirectResponse(url="/challenges?success=challenge_cancelled", status_code=303)
+
+
+# ── GET /challenges/{id}/lobby ────────────────────────────────────────────────
+
+@router.get("/challenges/{challenge_id}/lobby", response_class=HTMLResponse)
+async def challenge_lobby(
+    challenge_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User  = Depends(get_current_user_web),
+):
+    guard = require_student_onboarding(user)
+    if guard:
+        return guard
+
+    challenge = db.query(VirtualTrainingChallenge).filter(
+        VirtualTrainingChallenge.id == challenge_id
+    ).first()
+
+    if not challenge or user.id not in (challenge.challenger_id, challenge.challenged_id):
+        return RedirectResponse(url="/challenges?error=not_found", status_code=303)
+
+    if challenge.status not in (ChallengeStatus.LIVE_LOBBY, ChallengeStatus.LIVE_IN_PROGRESS):
+        return RedirectResponse(url="/challenges?error=not_live", status_code=303)
+
+    now = datetime.now(timezone.utc)
+    # Apply timeouts lazily before rendering
+    changed = apply_lobby_timeout_if_expired(db, challenge, now) or \
+              apply_post_start_timeout_if_expired(db, challenge, now)
+    if changed:
+        db.commit()
+        return RedirectResponse(url="/challenges?error=lobby_expired", status_code=303)
+
+    game = db.query(VirtualTrainingGame).filter(
+        VirtualTrainingGame.id == challenge.game_id
+    ).first()
+    diff = challenge.difficulty_level or "easy"
+    if game and game.code == "memory_sequence":
+        play_url = f"/virtual-training/memory-sequence?challenge_id={challenge.id}"
+    elif game and game.code == "target_tracking":
+        play_url = f"/virtual-training/target-tracking?challenge_id={challenge.id}&difficulty={diff}"
+    else:
+        play_url = "/virtual-training"
+
+    challenger = db.query(User).filter(User.id == challenge.challenger_id).first()
+    challenged = db.query(User).filter(User.id == challenge.challenged_id).first()
+
+    is_challenger = user.id == challenge.challenger_id
+    my_ready_at  = challenge.challenger_ready_at if is_challenger else challenge.challenged_ready_at
+    opp_ready_at = challenge.challenged_ready_at if is_challenger else challenge.challenger_ready_at
+
+    return templates.TemplateResponse("vt_challenge_lobby.html", {
+        "request":        request,
+        "user":           user,
+        **_spec_ctx(user, db),
+        "challenge":      challenge,
+        "challenger":     challenger,
+        "challenged":     challenged,
+        "game":           game,
+        "play_url":       play_url,
+        "is_challenger":  is_challenger,
+        "my_ready":       my_ready_at is not None,
+        "opp_ready":      opp_ready_at is not None,
+        "live_start_at":  challenge.live_start_at,
+        "lobby_expires_at": challenge.lobby_expires_at,
+        "server_now":     now,
+        "error":          request.query_params.get("error"),
+    })
+
+
+# ── GET /challenges/{id}/lobby-state ─────────────────────────────────────────
+
+@router.get("/challenges/{challenge_id}/lobby-state")
+async def challenge_lobby_state(
+    challenge_id: int,
+    db: Session = Depends(get_db),
+    user: User  = Depends(get_current_user_web),
+):
+    challenge = db.query(VirtualTrainingChallenge).filter(
+        VirtualTrainingChallenge.id == challenge_id
+    ).first()
+
+    if not challenge or user.id not in (challenge.challenger_id, challenge.challenged_id):
+        return JSONResponse({"error": "not_found"}, status_code=404)
+
+    now = datetime.now(timezone.utc)
+    # Apply timeouts lazily
+    apply_lobby_timeout_if_expired(db, challenge, now)
+    apply_post_start_timeout_if_expired(db, challenge, now)
+    db.commit()
+
+    state = get_lobby_state(challenge, now)
+
+    # Compute game_url so the frontend can redirect without relying on
+    # the template-rendered PLAY_URL (defensive — also used by tests).
+    game = db.query(VirtualTrainingGame).filter(
+        VirtualTrainingGame.id == challenge.game_id
+    ).first()
+    diff = challenge.difficulty_level or "easy"
+    if game and game.code == "memory_sequence":
+        state["game_url"] = f"/virtual-training/memory-sequence?challenge_id={challenge.id}"
+    elif game and game.code == "target_tracking":
+        state["game_url"] = f"/virtual-training/target-tracking?challenge_id={challenge.id}&difficulty={diff}"
+    else:
+        state["game_url"] = "/virtual-training"
+
+    return JSONResponse(state)
+
+
+# ── POST /challenges/{id}/ready ───────────────────────────────────────────────
+
+@router.post("/challenges/{challenge_id}/ready")
+async def challenge_ready(
+    challenge_id: int,
+    db: Session = Depends(get_db),
+    user: User  = Depends(get_current_user_web),
+):
+    challenge = db.query(VirtualTrainingChallenge).filter(
+        VirtualTrainingChallenge.id == challenge_id
+    ).first()
+
+    if not challenge or user.id not in (challenge.challenger_id, challenge.challenged_id):
+        return JSONResponse({"error": "not_found"}, status_code=404)
+
+    if challenge.status != ChallengeStatus.LIVE_LOBBY:
+        return JSONResponse({"error": "not_in_lobby"}, status_code=409)
+
+    now = datetime.now(timezone.utc)
+    state = set_ready(db, challenge, user.id, now)
+    db.commit()
+    return JSONResponse(state)

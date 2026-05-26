@@ -1,0 +1,379 @@
+{% extends "student_base.html" %}
+
+{% block title %}Virtual Challenge — Detail{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '⚔️' %}
+{% set _page_name = 'Virtual Challenge' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+.vcd-container { max-width: 600px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+.vcd-card {
+    background: var(--app-card); border-radius: 16px;
+    padding: 1.5rem 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    margin-bottom: 1rem;
+}
+
+/* ── Header ── */
+.vcd-header-row {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap;
+}
+.vcd-title { font-size: 1.1rem; font-weight: 800; color: var(--app-text); margin: 0; }
+.vcd-meta  { font-size: 0.8rem; color: var(--app-text-muted); margin-top: 0.2rem; }
+
+.vcd-badge {
+    display: inline-block; font-size: 0.75rem; font-weight: 700;
+    padding: 0.2rem 0.65rem; border-radius: 20px; white-space: nowrap;
+}
+.vcd-badge-virtual  { background: #ede9fe; color: #5b21b6; }
+.vcd-badge-async    { background: #dbeafe; color: #1e40af; }
+.vcd-badge-live     { background: #fef9c3; color: #713f12; }
+.vcd-badge-won      { background: #dcfce7; color: #166534; }
+.vcd-badge-lost     { background: #fee2e2; color: #991b1b; }
+.vcd-badge-draw     { background: #f3f4f6; color: #374151; }
+.vcd-badge-pending  { background: #fef9c3; color: #854d0e; }
+.vcd-badge-accepted { background: #dbeafe; color: #1e40af; }
+.vcd-badge-expired  { background: #fef3c7; color: #92400e; }
+.vcd-badge-other    { background: #f3f4f6; color: #6b7280; }
+
+/* ── VS layout ── */
+.vcd-vs-grid {
+    display: grid; grid-template-columns: 1fr auto 1fr;
+    gap: 0.5rem 0.75rem; align-items: center;
+    margin: 1.25rem 0;
+}
+.vcd-player { text-align: center; }
+.vcd-player-name  { font-size: 0.9rem; font-weight: 700; color: var(--app-text); }
+.vcd-player-label { font-size: 0.7rem; color: var(--app-text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.2rem; }
+.vcd-player-score {
+    font-size: 2rem; font-weight: 800; color: var(--app-text);
+    margin: 0.25rem 0 0.1rem;
+}
+.vcd-player-score.won  { color: #16a34a; }
+.vcd-player-score.lost { color: #dc2626; }
+.vcd-vs-sep { font-size: 1.1rem; font-weight: 700; color: var(--app-text-muted); text-align: center; }
+
+/* ── Outcome banner ── */
+.vcd-outcome-banner {
+    text-align: center; padding: 0.75rem 1rem;
+    border-radius: 10px; margin: 0.5rem 0 1rem; font-weight: 700;
+}
+.vcd-outcome-banner.won  { background: #dcfce7; color: #166534; }
+.vcd-outcome-banner.lost { background: #fee2e2; color: #991b1b; }
+.vcd-outcome-banner.draw { background: #f3f4f6; color: #374151; }
+.vcd-outcome-banner.pending { background: #eff6ff; color: #1e40af; }
+.vcd-outcome-banner.forfeit-win  { background: #dcfce7; color: #166534; }
+.vcd-outcome-banner.no-contest   { background: #fef3c7; color: #92400e; }
+.vcd-outcome-banner.info { background: #f0f9ff; color: #0c4a6e; }
+
+/* ── Skill deltas ── */
+.vcd-deltas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem; }
+.vcd-deltas-block { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 0.75rem 1rem; }
+.vcd-deltas-block h4 { font-size: 0.75rem; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 0.5rem; }
+.vcd-delta-row { display: flex; justify-content: space-between; font-size: 0.82rem; color: #14532d; padding: 0.15rem 0; }
+.vcd-delta-row.neg { color: #dc2626; }
+
+/* ── Attempt link ── */
+.vcd-attempt-link {
+    display: inline-block; font-size: 0.8rem; font-weight: 700;
+    color: #4f46e5; text-decoration: none; margin-top: 0.4rem;
+}
+.vcd-attempt-link:hover { text-decoration: underline; }
+
+/* ── Info rows ── */
+.vcd-info-row { display: flex; justify-content: space-between; font-size: 0.82rem;
+                color: var(--app-text-muted); padding: 0.3rem 0;
+                border-bottom: 1px solid #f3f4f6; }
+.vcd-info-row:last-child { border-bottom: none; }
+.vcd-info-label { font-weight: 600; color: var(--app-text); }
+
+/* ── Footer ── */
+.vcd-footer { margin-top: 1.25rem; text-align: center; }
+.vcd-footer a { color: #667eea; font-size: 0.88rem; font-weight: 600;
+                text-decoration: none; margin: 0 0.5rem; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="vcd-container">
+
+{# ── Header card ── #}
+<div class="vcd-card">
+    <div class="vcd-header-row">
+        <div>
+            <p class="vcd-title">Virtual Challenge</p>
+            <p class="vcd-meta">
+                <span class="vcd-badge vcd-badge-virtual">Virtual</span>
+                &nbsp;
+                <span class="vcd-badge {% if challenge.challenge_mode == 'live' %}vcd-badge-live{% else %}vcd-badge-async{% endif %}">
+                    {{ challenge.challenge_mode | title }}
+                </span>
+                {% if game %}
+                &nbsp;<strong>{{ game.name }}</strong>
+                {% endif %}
+                {% if challenge.difficulty_level %}
+                · {{ challenge.difficulty_level | title }}
+                {% endif %}
+            </p>
+        </div>
+        {# Status badge #}
+        {% if challenge.status.value == "completed" and not is_forfeit %}
+            {% if is_challenger %}
+                {% set _my_score = challenger_attempt.score_normalized if challenger_attempt else None %}
+                {% set _op_score = challenged_attempt.score_normalized if challenged_attempt else None %}
+            {% else %}
+                {% set _my_score = challenged_attempt.score_normalized if challenged_attempt else None %}
+                {% set _op_score = challenger_attempt.score_normalized if challenger_attempt else None %}
+            {% endif %}
+            {% if challenge.is_draw %}
+                <span class="vcd-badge vcd-badge-draw">= Draw</span>
+            {% elif challenge.winner_id == user.id %}
+                <span class="vcd-badge vcd-badge-won">🏆 Won</span>
+            {% else %}
+                <span class="vcd-badge vcd-badge-lost">✗ Lost</span>
+            {% endif %}
+        {% elif is_no_contest %}
+            <span class="vcd-badge vcd-badge-expired">No Contest</span>
+        {% elif is_forfeit %}
+            {% if challenge.winner_id == user.id %}
+            <span class="vcd-badge vcd-badge-won">🏆 Won (Forfeit)</span>
+            {% else %}
+            <span class="vcd-badge vcd-badge-lost">✗ Lost (Forfeit)</span>
+            {% endif %}
+        {% elif challenge.status.value in ["accepted", "live_in_progress"] %}
+            <span class="vcd-badge vcd-badge-accepted">In Progress</span>
+        {% elif challenge.status.value == "pending" %}
+            <span class="vcd-badge vcd-badge-pending">Pending</span>
+        {% elif challenge.status.value == "live_lobby" %}
+            <span class="vcd-badge vcd-badge-live">⚡ Live Lobby</span>
+        {% elif challenge.status.value == "expired" %}
+            <span class="vcd-badge vcd-badge-expired">Expired</span>
+        {% else %}
+            <span class="vcd-badge vcd-badge-other">{{ challenge.status.value | title }}</span>
+        {% endif %}
+    </div>
+
+    {# Meta info rows #}
+    <div>
+        <div class="vcd-info-row">
+            <span class="vcd-info-label">Category</span>
+            <span>Virtual</span>
+        </div>
+        <div class="vcd-info-row">
+            <span class="vcd-info-label">Mode</span>
+            <span>{{ challenge.challenge_mode | title }}</span>
+        </div>
+        {% if game %}
+        <div class="vcd-info-row">
+            <span class="vcd-info-label">Game</span>
+            <span>{{ game.name }}</span>
+        </div>
+        {% endif %}
+        {% if challenge.difficulty_level %}
+        <div class="vcd-info-row">
+            <span class="vcd-info-label">Difficulty</span>
+            <span>{{ challenge.difficulty_level | title }}</span>
+        </div>
+        {% endif %}
+        <div class="vcd-info-row">
+            <span class="vcd-info-label">Created</span>
+            <span>{{ challenge.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</span>
+        </div>
+        {% if challenge.completed_at %}
+        <div class="vcd-info-row">
+            <span class="vcd-info-label">Completed</span>
+            <span>{{ challenge.completed_at.strftime('%Y-%m-%d %H:%M') }} UTC</span>
+        </div>
+        {% endif %}
+        {% if challenge.completion_deadline and challenge.status.value == "accepted" %}
+        <div class="vcd-info-row">
+            <span class="vcd-info-label">Deadline</span>
+            <span>{{ challenge.completion_deadline.strftime('%Y-%m-%d %H:%M') }} UTC</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{# ── Live lobby redirect notice ── #}
+{% if challenge.status.value == "live_lobby" %}
+<div class="vcd-card">
+    <div class="vcd-outcome-banner info">
+        ⚡ This challenge is in the live lobby.
+    </div>
+    <div style="text-align:center;">
+        <a href="/challenges/{{ challenge.id }}/lobby"
+           style="display:inline-block;background:#f59e0b;color:#fff;font-weight:700;
+                  padding:0.6rem 1.5rem;border-radius:8px;text-decoration:none;">
+            Enter Lobby →
+        </a>
+    </div>
+</div>
+
+{# ── In-progress notice ── #}
+{% elif challenge.status.value == "live_in_progress" %}
+<div class="vcd-card">
+    <div class="vcd-outcome-banner info">▶ Live challenge in progress.</div>
+    <div style="text-align:center;">
+        <a href="/challenges/{{ challenge.id }}/lobby"
+           style="display:inline-block;background:#4f46e5;color:#fff;font-weight:700;
+                  padding:0.6rem 1.5rem;border-radius:8px;text-decoration:none;">
+            Rejoin Lobby →
+        </a>
+    </div>
+</div>
+
+{# ── Pending / accepted ── #}
+{% elif challenge.status.value in ["pending", "accepted"] %}
+<div class="vcd-card">
+    <div class="vcd-outcome-banner pending">
+        {% if challenge.status.value == "pending" %}⏳ Waiting for opponent to accept.
+        {% else %}⏳ Challenge accepted — waiting for both players to submit.{% endif %}
+    </div>
+</div>
+
+{# ── Expired / declined / cancelled ── #}
+{% elif challenge.status.value in ["expired", "declined", "cancelled"] and not is_forfeit %}
+<div class="vcd-card">
+    <div class="vcd-outcome-banner no-contest">
+        {% if challenge.status.value == "expired" %}⏰ Challenge expired — no one played in time.
+        {% elif challenge.status.value == "declined" %}✗ Challenge was declined.
+        {% else %}✕ Challenge was cancelled.{% endif %}
+    </div>
+</div>
+
+{# ── Forfeit / no-contest ── #}
+{% elif is_forfeit %}
+<div class="vcd-card">
+    {% if is_no_contest %}
+    <div class="vcd-outcome-banner no-contest">No Contest — neither player submitted in time.</div>
+    {% elif challenge.winner_id == user.id %}
+    <div class="vcd-outcome-banner forfeit-win">🏆 You won by forfeit.</div>
+    {% else %}
+    <div class="vcd-outcome-banner lost">✗ You lost by forfeit.</div>
+    {% endif %}
+    {% if forfeit_user %}
+    <p style="font-size:0.85rem;color:var(--app-text-muted);margin:0.5rem 0 0;text-align:center;">
+        {{ forfeit_user.nickname or forfeit_user.email }}
+        {% if challenge.forfeit_reason == "deadline_expired" %} did not play before the deadline.
+        {% elif challenge.forfeit_reason == "no_show" %} did not ready up in the lobby.
+        {% elif challenge.forfeit_reason == "post_start_timeout" %} did not submit within the live window.
+        {% elif challenge.forfeit_reason == "no_contest" %} — no contest.
+        {% endif %}
+    </p>
+    {% endif %}
+</div>
+
+{# ── Completed (normal) ── #}
+{% elif challenge.status.value == "completed" %}
+<div class="vcd-card">
+    {# Outcome banner #}
+    {% if challenge.is_draw %}
+    <div class="vcd-outcome-banner draw">= It's a draw!</div>
+    {% elif challenge.winner_id == user.id %}
+    <div class="vcd-outcome-banner won">🏆 You won!</div>
+    {% else %}
+    <div class="vcd-outcome-banner lost">✗ You lost</div>
+    {% endif %}
+
+    {# VS score layout #}
+    <div class="vcd-vs-grid">
+        <div class="vcd-player">
+            <div class="vcd-player-label">{% if is_challenger %}You{% else %}{{ challenger.nickname or challenger.email }}{% endif %}</div>
+            <div class="vcd-player-name">{{ challenger.nickname or challenger.email }}</div>
+            {% if challenger_attempt %}
+            <div class="vcd-player-score {% if challenge.winner_id == challenge.challenger_id and not challenge.is_draw %}won{% elif challenge.winner_id and challenge.winner_id != challenge.challenger_id %}lost{% endif %}">
+                {% if challenger_attempt.score_normalized is not none %}{{ challenger_attempt.score_normalized | round(0) | int }}%{% else %}—{% endif %}
+            </div>
+            <a href="/virtual-training/{{ game.code | replace('_', '-') }}/result/{{ challenger_attempt.id }}?challenge_id={{ challenge.id }}"
+               class="vcd-attempt-link">View attempt →</a>
+            {% else %}
+            <div class="vcd-player-score">—</div>
+            {% endif %}
+        </div>
+        <div class="vcd-vs-sep">vs</div>
+        <div class="vcd-player">
+            <div class="vcd-player-label">{% if not is_challenger %}You{% else %}{{ challenged.nickname or challenged.email }}{% endif %}</div>
+            <div class="vcd-player-name">{{ challenged.nickname or challenged.email }}</div>
+            {% if challenged_attempt %}
+            <div class="vcd-player-score {% if challenge.winner_id == challenge.challenged_id and not challenge.is_draw %}won{% elif challenge.winner_id and challenge.winner_id != challenge.challenged_id %}lost{% endif %}">
+                {% if challenged_attempt.score_normalized is not none %}{{ challenged_attempt.score_normalized | round(0) | int }}%{% else %}—{% endif %}
+            </div>
+            <a href="/virtual-training/{{ game.code | replace('_', '-') }}/result/{{ challenged_attempt.id }}?challenge_id={{ challenge.id }}"
+               class="vcd-attempt-link">View attempt →</a>
+            {% else %}
+            <div class="vcd-player-score">—</div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Skill deltas — both players #}
+    {% if challenger_skill_scores or challenged_skill_scores %}
+    <div style="margin-top:0.75rem;">
+        <div style="font-size:0.78rem;font-weight:700;color:var(--app-text-muted);
+                    text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.5rem;">
+            Skill Impact
+        </div>
+        <div class="vcd-deltas-grid">
+            {% if challenger_skill_scores %}
+            <div class="vcd-deltas-block">
+                <h4>{{ challenger.nickname or challenger.email }}</h4>
+                {% for skill, info in challenger_skill_scores.items() %}
+                {% set delta = info.delta if info is mapping else 0 %}
+                <div class="vcd-delta-row {% if delta < 0 %}neg{% endif %}">
+                    <span>{{ skill | replace('_', ' ') | title }}</span>
+                    <span>{% if delta > 0 %}+{% endif %}{{ delta | round(3) }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="vcd-deltas-block">
+                <h4>{{ challenger.nickname or challenger.email }}</h4>
+                <p style="font-size:0.8rem;color:var(--app-text-muted);margin:0;">No data</p>
+            </div>
+            {% endif %}
+            {% if challenged_skill_scores %}
+            <div class="vcd-deltas-block">
+                <h4>{{ challenged.nickname or challenged.email }}</h4>
+                {% for skill, info in challenged_skill_scores.items() %}
+                {% set delta = info.delta if info is mapping else 0 %}
+                <div class="vcd-delta-row {% if delta < 0 %}neg{% endif %}">
+                    <span>{{ skill | replace('_', ' ') | title }}</span>
+                    <span>{% if delta > 0 %}+{% endif %}{{ delta | round(3) }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="vcd-deltas-block">
+                <h4>{{ challenged.nickname or challenged.email }}</h4>
+                <p style="font-size:0.8rem;color:var(--app-text-muted);margin:0;">No data</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{# ── Message card ── #}
+{% if challenge.message %}
+<div class="vcd-card">
+    <div style="font-size:0.78rem;font-weight:700;color:var(--app-text-muted);
+                text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.4rem;">Message</div>
+    <p style="font-size:0.9rem;font-style:italic;color:var(--app-text);margin:0;">"{{ challenge.message }}"</p>
+</div>
+{% endif %}
+
+{# ── Footer ── #}
+<div class="vcd-footer">
+    <a href="/challenges">← Back to Challenges</a>
+    <a href="/virtual-training">💻 All Games</a>
+</div>
+
+</div>
+{% endblock %}

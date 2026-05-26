@@ -130,6 +130,12 @@ _TT_RADIUS  = 40   # object_radius used in placement clearance calculations
 _TT_CLEARANCE_MULT = 2.8   # must match spawnObjects() in template
 _TT_MAX_PLACEMENT_TRIES = 80
 
+# Flash schedule constants — must mirror the JS constants in virtual_training_target_tracking.html
+_FLASH_DURATION_MS  = 400
+_FLASH_MIN_GAP_MS   = 500
+_FLASH_EARLIEST_PCT = 0.15
+_FLASH_LATEST_PCT   = 0.85
+
 
 def _place_objects(count: int, arena_w: int, arena_h: int, radius: int) -> list[dict]:
     """Non-overlapping random placement — mirrors spawnObjects() in the TT template."""
@@ -153,6 +159,101 @@ def _place_objects(count: int, arena_w: int, arena_h: int, radius: int) -> list[
     return objects
 
 
+def _generate_flash_schedule(
+    flash_count: int,
+    tracking_ms: int,
+    object_count: int,
+    flash_config: dict | None,
+    target_index: int,
+) -> list[dict]:
+    """Python port of generateFlashSchedule() from virtual_training_target_tracking.html.
+
+    Generates a deterministic list of flash events for distractor objects (never the
+    target) so both challenge players see the identical flash sequence.
+
+    Args match the JS call signature:
+        flash_count:  number of flash events to place (round.distractorFlash)
+        tracking_ms:  round tracking window duration in ms (round.trackingMs)
+        object_count: total objects in this round (round.objectCount)
+        flash_config: difficulty-level flash config dict or None
+        target_index: index of the target object — excluded from distractors
+    """
+    flash_duration = (flash_config or {}).get("flash_duration_ms", _FLASH_DURATION_MS)
+    flash_gap      = (flash_config or {}).get("flash_gap_ms",      _FLASH_MIN_GAP_MS)
+    max_concurrent = (flash_config or {}).get("max_concurrent_flashes", 1)
+    allow_repeat   = bool((flash_config or {}).get("allow_repeat_flash", False))
+    repeat_gap     = (flash_config or {}).get("repeat_gap_ms", 2000)
+
+    if flash_count <= 0 or object_count <= 1:
+        return []
+
+    non_targets = [i for i in range(object_count) if i != target_index]
+    if not non_targets:
+        return []
+
+    earliest = int(tracking_ms * _FLASH_EARLIEST_PCT)
+    latest   = int(tracking_ms * _FLASH_LATEST_PCT) - flash_duration
+    if latest <= earliest:
+        return []
+
+    schedule:    list[dict]      = []
+    used_once:   set[int]        = set()
+    last_end_ms: dict[int, int]  = {}
+    seen_once:   set[int]        = set()
+    group_id  = 0
+    t_cursor  = earliest
+    placed    = 0
+    safe_break = 0
+
+    while placed < flash_count and t_cursor <= latest:
+        safe_break += 1
+        if safe_break > 500:
+            break
+
+        pool: list[int] = []
+        for idx in non_targets:
+            if not allow_repeat and idx in used_once:
+                continue
+            if allow_repeat and idx in last_end_ms and t_cursor < last_end_ms[idx] + repeat_gap:
+                continue
+            pool.append(idx)
+
+        if not pool:
+            if not allow_repeat:
+                break
+            t_cursor += max(flash_gap, 200)
+            continue
+
+        random.shuffle(pool)
+
+        batch_size = min(max_concurrent, len(pool), flash_count - placed)
+        batch      = pool[:batch_size]
+        gid: int | None = None
+        if len(batch) > 1:
+            group_id += 1
+            gid = group_id
+
+        for dist_idx in batch:
+            is_repeat = dist_idx in seen_once
+            schedule.append({
+                "distractor_index":    dist_idx,
+                "t_offset_ms":         t_cursor,
+                "duration_ms":         flash_duration,
+                "color":               "#f59e0b",
+                "concurrent_group_id": gid,
+                "repeat":              is_repeat,
+                "is_target":           False,
+            })
+            used_once.add(dist_idx)
+            seen_once.add(dist_idx)
+            last_end_ms[dist_idx] = t_cursor + flash_duration
+            placed += 1
+
+        t_cursor += flash_duration + flash_gap
+
+    return schedule
+
+
 def generate_tt_snapshot(
     game_config: dict,
     difficulty_level: str,
@@ -167,8 +268,15 @@ def generate_tt_snapshot(
       target_index:      int   — which object is the target (0-based)
       initial_positions: list  — [{x, y}] one per object
       initial_angles:    list  — [float radians] one per object
+      direction_changes: list  — list of per-change angle lists [[float, ...], ...]
+                                 length = ceil(tracking_ms / interval_ms) + 1
+                                 empty list when direction change is disabled
+      flash_schedule:    list  — pre-generated distractor flash events (see
+                                 _generate_flash_schedule for schema); ensures
+                                 both challenge players see the identical sequence
 
-    Ongoing direction-change angles are NOT snapshotted (P1 tech debt).
+    P2 tech debt: arena/radius device-scaling differences (different screens produce
+    different pixel clearances).  Requires fixed logical coordinate system; deferred.
     """
     difficulties: dict = game_config.get("difficulties", {})
     diff_cfg: dict     = difficulties.get(difficulty_level, {})
@@ -183,6 +291,12 @@ def generate_tt_snapshot(
     arena_h = game_config.get("arena_height", _TT_ARENA_H)
     radius  = game_config.get("object_radius", _TT_RADIUS)
 
+    # Direction change and flash config live at the difficulty level (not per-phase).
+    dir_change_cfg: dict      = diff_cfg.get("direction_change") or {}
+    dir_enabled: bool         = bool(dir_change_cfg.get("enabled", False))
+    dir_interval_ms: int      = int(dir_change_cfg.get("interval_ms", 2000))
+    flash_config: dict | None = diff_cfg.get("flash_config") or None
+
     phases: list[dict] = []
     for pi, ph in enumerate(phases_cfg):
         object_count = ph.get("object_count")
@@ -193,6 +307,17 @@ def generate_tt_snapshot(
                 f"generate_tt_snapshot: phase[{pi}] missing 'object_count'"
             )
 
+        tracking_ms:     int = int(ph.get("tracking_ms", 5000))
+        distractor_flash: int = int(ph.get("distractor_flash", 0))
+
+        # Pre-generate direction-change angle sequences for this phase.
+        # We generate ceil(tracking_ms / interval_ms) + 1 entries so that even with
+        # rAF jitter the frontend never runs out of pre-drawn angles.
+        if dir_enabled and dir_interval_ms > 0:
+            n_changes = math.ceil(tracking_ms / dir_interval_ms) + 1
+        else:
+            n_changes = 0
+
         rounds: list[dict] = []
         for ri in range(num_rounds):
             target_index      = random.randint(0, object_count - 1)
@@ -201,11 +326,23 @@ def generate_tt_snapshot(
                 round(random.uniform(0, 2 * math.pi), 4)
                 for _ in range(object_count)
             ]
+
+            direction_changes: list[list[float]] = [
+                [round(random.uniform(0, 2 * math.pi), 4) for _ in range(object_count)]
+                for _ in range(n_changes)
+            ]
+
+            flash_schedule = _generate_flash_schedule(
+                distractor_flash, tracking_ms, object_count, flash_config, target_index,
+            )
+
             rounds.append({
                 "round":             ri + 1,
                 "target_index":      target_index,
                 "initial_positions": initial_positions,
                 "initial_angles":    initial_angles,
+                "direction_changes": direction_changes,
+                "flash_schedule":    flash_schedule,
             })
 
         phases.append({
@@ -255,7 +392,12 @@ def validate_ms_snapshot(snapshot: Any) -> bool:
 
 
 def validate_tt_snapshot(snapshot: Any) -> bool:
-    """Structural validation for a TT snapshot dict. Returns False on any defect."""
+    """Structural validation for a TT snapshot dict. Returns False on any defect.
+
+    direction_changes and flash_schedule are optional for backward-compatibility
+    with snapshots generated before the TT-FAIR fix.  When present they are
+    validated fully; when absent the snapshot is still accepted.
+    """
     if not isinstance(snapshot, dict):
         return False
     if snapshot.get("game_code") != "target_tracking":
@@ -293,4 +435,36 @@ def validate_tt_snapshot(snapshot: Any) -> bool:
                 x, y = p.get("x", -1), p.get("y", -1)
                 if x < 0 or x > arena_w or y < 0 or y > arena_h:
                     return False
+
+            # ── Optional: direction_changes (TT-FAIR) ──────────────────────────
+            dir_changes = r.get("direction_changes")
+            if dir_changes is not None:
+                if not isinstance(dir_changes, list):
+                    return False
+                for entry in dir_changes:
+                    if not isinstance(entry, list) or len(entry) != obj_count:
+                        return False
+                    if not all(isinstance(a, (int, float)) and 0 <= a <= 2 * math.pi for a in entry):
+                        return False
+
+            # ── Optional: flash_schedule (TT-FAIR) ────────────────────────────
+            flash_sched = r.get("flash_schedule")
+            if flash_sched is not None:
+                if not isinstance(flash_sched, list):
+                    return False
+                for ev in flash_sched:
+                    if not isinstance(ev, dict):
+                        return False
+                    d_idx = ev.get("distractor_index")
+                    t_off = ev.get("t_offset_ms")
+                    dur   = ev.get("duration_ms")
+                    if not isinstance(d_idx, int) or d_idx < 0 or d_idx >= obj_count:
+                        return False
+                    if d_idx == ti:          # target must never be a distractor
+                        return False
+                    if not isinstance(t_off, (int, float)) or t_off < 0:
+                        return False
+                    if not isinstance(dur, (int, float)) or dur <= 0:
+                        return False
+
     return True
