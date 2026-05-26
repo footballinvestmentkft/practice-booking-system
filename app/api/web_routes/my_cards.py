@@ -84,7 +84,7 @@ async def my_cards_challenge_card(
     user: User   = Depends(get_current_user_web),
 ):
     """Challenge Card design manager — theme picker + format overview."""
-    draft  = CardDraftService.get_or_create_singleton_draft(db, user.id, "challenge_card")
+    draft  = CardDraftService.get_or_create_singleton(db, user.id, "challenge_card")
     themes = get_all_themes(db=db)
     return templates.TemplateResponse(
         "my_cards_challenge_card.html",

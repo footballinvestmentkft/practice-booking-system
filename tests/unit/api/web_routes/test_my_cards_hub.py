@@ -289,7 +289,7 @@ class TestMyChallengeCardRoute:
              patch(f"{_CC_BASE}.CardDraftService") as mock_ds, \
              patch(f"{_CC_BASE}.get_all_themes", return_value=themes_mock):
             mock_tmpl.TemplateResponse.side_effect = _capture
-            mock_ds.get_or_create_singleton_draft.return_value = draft_mock
+            mock_ds.get_or_create_singleton.return_value = draft_mock
             _run(my_cards_challenge_card(
                 request=MagicMock(),
                 db=db,
