@@ -212,7 +212,7 @@ def test_mp_r08_delete_invalid_slot_raises_422():
     assert exc_info.value.status_code == 422
 
 
-# ── MP-R09 ── onboarding Step 7 contains hangulatkep offer block ──────────────
+# ── MP-R09 ── onboarding Step 7 contains English mood photo offer block ───────
 
 def test_mp_r09_onboarding_template_contains_mood_offer():
     from pathlib import Path
@@ -229,10 +229,65 @@ def test_mp_r09_onboarding_template_contains_mood_offer():
     assert "/profile/my-mood-photos" in content, (
         "lfa_player_onboarding.html missing link to /profile/my-mood-photos"
     )
-    assert "Hangulatk" in content, (
-        "lfa_player_onboarding.html missing 'Hangulatkép' text"
+    assert "Mood Photos" in content, (
+        "lfa_player_onboarding.html must use English 'Mood Photos'"
     )
-    # Onboarding completion gate must NOT mention mood in submit handler
-    assert "mood" not in content.split("lfa_player_onboarding_web_submit")[0].lower() \
-        or "onboarding_completed" not in content.split("step7-mood-offer")[0], \
-        "onboarding_completed must not be gated on mood upload"
+    assert "Hangulatk" not in content, (
+        "lfa_player_onboarding.html must not contain Hungarian 'Hangulatkép'"
+    )
+
+
+# ── MP-R10 ── /profile/my-mood-photos renders zero-state (no uploads) ────────
+
+def test_mp_r10_management_page_zero_state_renders():
+    from app.api.web_routes.mood_photos import mood_photos_page
+
+    empty_slots = {
+        "mood_intro_neutral":    None,
+        "mood_happy_smile":      None,
+        "mood_celebration":      None,
+        "mood_sad_disappointed": None,
+    }
+
+    with patch(f"{_BASE}.get_mood_photos_for_user", return_value=empty_slots), \
+         patch(f"{_BASE}.templates") as mock_tpl:
+        mock_tpl.TemplateResponse.return_value = MagicMock()
+
+        _run(mood_photos_page(request=_request(), user=_user(), db=_db()))
+
+        call_kwargs = mock_tpl.TemplateResponse.call_args
+        template_name = call_kwargs[0][0]
+        ctx = call_kwargs[0][1]
+
+        assert template_name == "lfa_player_mood_photos.html"
+        assert all(v is None for v in ctx["mood_photos"].values()), (
+            "zero-state: all slots must be None when nothing uploaded"
+        )
+        assert len(ctx["slots_meta"]) == 4
+
+
+# ── MP-R11 ── mood photo template uses English labels only ───────────────────
+
+def test_mp_r11_management_template_is_english():
+    from pathlib import Path
+
+    template_path = (
+        Path(__file__).resolve()
+        .parent.parent.parent.parent.parent
+        / "app" / "templates" / "lfa_player_mood_photos.html"
+    )
+    content = template_path.read_text(encoding="utf-8")
+
+    hungarian_markers = [
+        "Hangulat", "Feltölt", "Töröl", "Semleges", "Boldog",
+        "Ünneplés", "Szomorú", "Vissza a", "Biztosan", "Nincs feltöltve",
+    ]
+    for marker in hungarian_markers:
+        assert marker not in content, (
+            f"lfa_player_mood_photos.html contains Hungarian text: {marker!r}"
+        )
+
+    assert "Mood Photos" in content
+    assert "Upload" in content
+    assert "Delete" in content
+    assert "Not uploaded" in content

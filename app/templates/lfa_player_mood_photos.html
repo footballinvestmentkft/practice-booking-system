@@ -1,6 +1,6 @@
 {% extends "student_base.html" %}
 
-{% block title %}Hangulatképek — LFA Football Player{% endblock %}
+{% block title %}Mood Photos — LFA Football Player{% endblock %}
 
 {% block head_extra %}
 <style>
@@ -137,13 +137,13 @@
 {% block content %}
 <div class="mood-page-wrap">
 
-    <a class="mood-back-link" href="/profile/lfa-football-player">← Vissza a profilra</a>
+    <a class="mood-back-link" href="/profile/lfa-football-player">← Back to profile</a>
 
-    <h1 class="mood-page-title">📸 Hangulatképek</h1>
+    <h1 class="mood-page-title">📸 Mood Photos</h1>
     <p class="mood-page-sub">
-        Töltsd fel a saját hangulatképeidet a profilodhoz. Minden szlot
-        önállóan feltölthető, cserélhető és törölhető. Nem kötelező —
-        a profilképet és a kártyaképeket nem befolyásolja.
+        Upload your mood photos to your profile. Each slot can be uploaded,
+        replaced, or deleted independently. Optional — does not affect your
+        profile photo or card photos.
     </p>
 
     <div class="mood-grid">
@@ -155,9 +155,9 @@
                 <span class="mood-card-emoji">{{ meta.emoji }}</span>
                 <span>{{ meta.label }}</span>
                 {% if record %}
-                <span class="mood-status-badge uploaded">✓ Feltöltve</span>
+                <span class="mood-status-badge uploaded">✓ Uploaded</span>
                 {% else %}
-                <span class="mood-status-badge">— Nincs feltöltve</span>
+                <span class="mood-status-badge">— Not uploaded</span>
                 {% endif %}
             </div>
 
@@ -166,10 +166,10 @@
                 {% if record %}
                 <img class="mood-thumb"
                      src="{{ record.original_url }}"
-                     alt="Hangulatkép — {{ meta.label }}">
+                     alt="Mood photo — {{ meta.label }}">
                 {% else %}
                 <div class="mood-thumb-placeholder">
-                    Még nincs hangulatkép feltöltve<br>
+                    No mood photo uploaded yet<br>
                     <small>JPEG · PNG · WebP · max 5 MB</small>
                 </div>
                 {% endif %}
@@ -182,7 +182,7 @@
                       enctype="multipart/form-data"
                       style="display:inline-flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
                     <label class="mood-btn-upload" for="file-{{ meta.slot }}">
-                        {% if record %}🔄 Csere{% else %}📷 Feltöltés{% endif %}
+                        {% if record %}🔄 Replace{% else %}📷 Upload{% endif %}
                     </label>
                     <input id="file-{{ meta.slot }}"
                            type="file"
@@ -196,17 +196,17 @@
                 {% if record %}
                 <form method="post"
                       action="/profile/my-mood-photos/{{ meta.slot }}/delete"
-                      onsubmit="return confirm('Biztosan törlöd ezt a hangulatképet?');">
-                    <button type="submit" class="mood-btn-delete">🗑 Törlés</button>
+                      onsubmit="return confirm('Delete this mood photo?');">
+                    <button type="submit" class="mood-btn-delete">🗑 Delete</button>
                 </form>
                 {% endif %}
             </div>
 
             {% if record %}
             <div class="mood-hint">
-                Feltöltve: {{ record.created_at.strftime('%Y-%m-%d %H:%M') if record.created_at else '—' }}
+                Uploaded: {{ record.created_at.strftime('%Y-%m-%d %H:%M') if record.created_at else '—' }}
                 {% if record.updated_at and record.updated_at != record.created_at %}
-                · Frissítve: {{ record.updated_at.strftime('%Y-%m-%d %H:%M') }}
+                · Updated: {{ record.updated_at.strftime('%Y-%m-%d %H:%M') }}
                 {% endif %}
             </div>
             {% endif %}

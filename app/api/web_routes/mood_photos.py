@@ -1,5 +1,5 @@
 """
-mood_photos — web routes for the hangulatkép (mood photo) feature.
+mood_photos — web routes for the mood photo feature.
 
 Routes
 ------
@@ -38,10 +38,10 @@ router = APIRouter()
 
 # Ordered for consistent display in the template
 _SLOT_META: list[dict] = [
-    {"slot": "mood_intro_neutral",    "label": "Semleges",  "emoji": "😐"},
-    {"slot": "mood_happy_smile",      "label": "Boldog",    "emoji": "😊"},
-    {"slot": "mood_celebration",      "label": "Ünneplés",  "emoji": "🎉"},
-    {"slot": "mood_sad_disappointed", "label": "Szomorú",   "emoji": "😔"},
+    {"slot": "mood_intro_neutral",    "label": "Neutral",      "emoji": "😐"},
+    {"slot": "mood_happy_smile",      "label": "Happy",        "emoji": "😊"},
+    {"slot": "mood_celebration",      "label": "Celebration",  "emoji": "🎉"},
+    {"slot": "mood_sad_disappointed", "label": "Sad",          "emoji": "😔"},
 ]
 
 
