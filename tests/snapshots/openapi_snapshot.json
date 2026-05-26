@@ -62609,6 +62609,29 @@
         ]
       }
     },
+    "/my-cards/challenge-card": {
+      "get": {
+        "description": "Challenge Card design manager \u2014 theme picker + format overview.",
+        "operationId": "my_cards_challenge_card_my_cards_challenge_card_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "My Cards Challenge Card",
+        "tags": [
+          "web",
+          "my-cards"
+        ]
+      }
+    },
     "/my-cards/player-card": {
       "get": {
         "description": "Detail entry point for Player Card \u2014 redirects to the card editor.",

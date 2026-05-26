@@ -1,0 +1,230 @@
+{% extends "student_base.html" %}
+
+{% block title %}Challenge Card — LFA Education Center{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '⚡' %}
+{% set _page_name = 'Challenge Card' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .cc-manager {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    /* ── Section header ── */
+    .cc-section-title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--app-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin: 2rem 0 0.75rem;
+    }
+
+    /* ── Page header ── */
+    .cc-header {
+        margin-bottom: 1.5rem;
+    }
+    .cc-header h1 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: var(--app-text);
+        margin: 0 0 0.4rem;
+    }
+    .cc-header p {
+        font-size: 0.9rem;
+        color: var(--app-text-muted);
+        margin: 0;
+        max-width: 560px;
+    }
+
+    /* ── Format cards ── */
+    .cc-formats {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.5rem;
+    }
+    .cc-format-card {
+        background: var(--app-surface-2, #1e2335);
+        border: 1px solid var(--app-border, #2a3050);
+        border-radius: 10px;
+        padding: 1.1rem 1.4rem;
+        min-width: 200px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    .cc-format-label {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--app-text);
+    }
+    .cc-format-dims {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--app-text-muted);
+        font-family: monospace;
+    }
+    .cc-format-platform {
+        font-size: 0.75rem;
+        color: var(--app-text-muted);
+    }
+    .cc-format-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.3rem;
+    }
+
+    /* ── Theme grid ── */
+    .cc-theme-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        margin-bottom: 0.5rem;
+    }
+    .cc-theme-chip {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.9rem;
+        border-radius: 20px;
+        border: 1.5px solid var(--app-border, #2a3050);
+        background: var(--app-surface-2, #1e2335);
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--app-text-muted);
+        cursor: default;
+        transition: border-color 0.15s;
+    }
+    .cc-theme-chip.active {
+        border-color: var(--app-accent, #667eea);
+        color: var(--app-text);
+    }
+    .cc-theme-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .cc-theme-note {
+        font-size: 0.74rem;
+        color: var(--app-text-muted);
+        margin-top: 0.3rem;
+    }
+
+    /* ── CTA block ── */
+    .cc-cta-block {
+        display: flex;
+        align-items: center;
+        gap: 1.2rem;
+        flex-wrap: wrap;
+        padding: 1.2rem 1.4rem;
+        background: var(--app-surface-2, #1e2335);
+        border: 1px solid var(--app-border, #2a3050);
+        border-radius: 10px;
+    }
+    .cc-cta-text {
+        flex: 1;
+        min-width: 200px;
+    }
+    .cc-cta-text strong {
+        display: block;
+        font-size: 0.95rem;
+        color: var(--app-text);
+        margin-bottom: 0.2rem;
+    }
+    .cc-cta-text span {
+        font-size: 0.8rem;
+        color: var(--app-text-muted);
+    }
+    .cc-btn-challenges {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.55rem 1.2rem;
+        background: var(--app-accent, #667eea);
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.85rem;
+        border-radius: 7px;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .cc-btn-challenges:hover {
+        opacity: 0.88;
+    }
+
+    /* ── Back link ── */
+    .cc-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.8rem;
+        color: var(--app-text-muted);
+        text-decoration: none;
+        margin-bottom: 1.2rem;
+    }
+    .cc-back:hover { color: var(--app-text); }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="cc-manager">
+
+    <a href="/my-cards" class="cc-back">← My Cards</a>
+
+    <div class="cc-header">
+        <h1>⚡ Challenge Card</h1>
+        <p>Challenge cards are generated from your Virtual Challenge results. Choose your design theme below — it will be applied when you export from a challenge detail page.</p>
+    </div>
+
+    {# ── Export Formats ── #}
+    <div class="cc-section-title">Export Formats</div>
+    <div class="cc-formats">
+        {% for fmt in formats %}
+        <div class="cc-format-card">
+            <div class="cc-format-icon">
+                {%- if fmt.id == "challenge_post_16_9" %}🖼️
+                {%- elif fmt.id == "challenge_story_9_16" %}📱
+                {%- else %}🃏
+                {%- endif %}
+            </div>
+            <div class="cc-format-label">{{ fmt.label }}</div>
+            <div class="cc-format-dims">{{ fmt.dims }}</div>
+            <div class="cc-format-platform">{{ fmt.platform }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {# ── Theme Picker (read-only preview — save coming in Phase 2) ── #}
+    <div class="cc-section-title">Design Theme</div>
+    <div class="cc-theme-grid">
+        {% for theme in themes %}
+        <div class="cc-theme-chip {% if theme.id == draft.draft_theme %}active{% endif %}">
+            <span class="cc-theme-dot" style="background:{{ theme.dot_color }};"></span>
+            {{ theme.label }}
+            {% if theme.is_premium %}<span style="font-size:0.65rem;color:var(--app-text-muted);">★</span>{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    <div class="cc-theme-note">Theme selection will be saved in a future update. Current active theme: <strong>{{ draft.draft_theme }}</strong>.</div>
+
+    {# ── CTA: Go to Challenges ── #}
+    <div class="cc-section-title">Generate a Card</div>
+    <div class="cc-cta-block">
+        <div class="cc-cta-text">
+            <strong>Export from a challenge detail page</strong>
+            <span>Open any Virtual Challenge, then use the Share Card buttons to download your card.</span>
+        </div>
+        <a href="/challenges" class="cc-btn-challenges">Open Challenges →</a>
+    </div>
+
+</div>
+{% endblock %}

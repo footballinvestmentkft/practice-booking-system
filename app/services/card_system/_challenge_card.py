@@ -40,7 +40,7 @@ CHALLENGE_CARD_SPEC = CardTypeSpec(
     content_contract=CHALLENGE_CARD_CONTRACT,
     supported_variant_ids=("challenge",),
     supported_platform_ids=("challenge_post_16_9", "challenge_story_9_16"),
-    theme_compatible=False,
+    theme_compatible=True,
     has_published_state=False,
-    is_editable=False,
+    is_editable=True,
 )
