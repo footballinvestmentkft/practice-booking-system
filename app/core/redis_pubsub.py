@@ -206,3 +206,64 @@ async def subscribe_tournament_updates(
     except Exception as exc:
         logger.warning("Redis async subscribe error on %s: %s", channel, exc)
         return
+
+
+# ── Challenge event helpers ──────────────────────────────────────────────────
+
+def publish_challenge_event(user_ids: list[int], event_type: str, payload: dict) -> None:
+    """
+    Publish a challenge lifecycle event to each user's personal Redis channel
+    ``user:{user_id}:events``.
+
+    Called synchronously from HTTP handlers and services after state changes.
+    Never raises — failures are logged and swallowed so the primary challenge
+    flow is never affected.
+
+    Args:
+        user_ids:   List of user IDs who should receive the event (typically
+                    [challenger_id, challenged_id]).
+        event_type: Discriminator string, e.g. "challenge_sent", "challenge_accepted".
+        payload:    Extra fields merged into the event envelope (must be JSON-serializable).
+    """
+    try:
+        client = _get_sync_client()
+        if client is None:
+            return
+        message = json.dumps({"type": event_type, **payload})
+        for uid in user_ids:
+            channel = f"user:{uid}:events"
+            try:
+                client.publish(channel, message)
+            except Exception as exc:
+                logger.warning("Redis publish_challenge_event failed uid=%s: %s", uid, exc)
+                global _sync_client
+                _sync_client = None
+                return
+    except Exception as exc:
+        logger.warning("publish_challenge_event error event=%s: %s", event_type, exc)
+
+
+async def subscribe_user_events(user_id: int) -> AsyncIterator[str]:
+    """
+    Async generator that subscribes to ``user:{user_id}:events`` and yields
+    raw JSON strings as they arrive.
+
+    Returns cleanly (without raising) when Redis is unavailable or the connection
+    is lost — the WS handler should fall back to polling in that case.
+    """
+    channel = f"user:{user_id}:events"
+    try:
+        client = aioredis.from_url(
+            settings.REDIS_URL,
+            decode_responses=True,
+            socket_connect_timeout=2,
+            socket_timeout=2,
+        )
+        async with client.pubsub() as pubsub:
+            await pubsub.subscribe(channel)
+            async for raw in pubsub.listen():
+                if raw["type"] == "message":
+                    yield raw["data"]
+    except Exception as exc:
+        logger.warning("Redis subscribe_user_events error uid=%s: %s", user_id, exc)
+        return

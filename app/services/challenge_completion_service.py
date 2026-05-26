@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
+from ..core.redis_pubsub import publish_challenge_event
 from ..models.notification import NotificationType
 from ..models.vt_challenge import ChallengeStatus, VirtualTrainingChallenge
 from . import notification_service
@@ -111,6 +112,11 @@ def _send_forfeit_notifications(
             notification_type=NotificationType.VT_CHALLENGE_FORFEITED,
             link="/challenges",
         )
+    publish_challenge_event(
+        [challenge.challenger_id, challenge.challenged_id],
+        "challenge_forfeited",
+        {"challenge_id": challenge.id, "winner_id": winner_id, "forfeit_user_id": forfeit_uid},
+    )
 
 
 def _send_no_contest_notifications(
@@ -126,3 +132,8 @@ def _send_no_contest_notifications(
             notification_type=NotificationType.VT_CHALLENGE_FORFEITED,
             link="/challenges",
         )
+    publish_challenge_event(
+        [challenge.challenger_id, challenge.challenged_id],
+        "challenge_no_contest",
+        {"challenge_id": challenge.id},
+    )

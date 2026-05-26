@@ -30,6 +30,7 @@ from . import (
     my_cards,
     friends,
     vt_challenges,
+    ws_events,
 )
 from .admin import router as admin_router
 from .tournaments import router as tournaments_router
@@ -65,3 +66,4 @@ router.include_router(sport_director.router)     # 🏅 Sport Director team enro
 router.include_router(my_cards.router)           # 🃏 My Cards hub (/my-cards)
 router.include_router(friends.router)            # 👥 Friendship system (/friends)
 router.include_router(vt_challenges.router)      # 🎮 VT Challenges (/challenges)
+router.include_router(ws_events.router)           # 🔌 Per-user WS event stream (/ws/events)

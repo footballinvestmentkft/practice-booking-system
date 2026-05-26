@@ -519,4 +519,43 @@
 {# P1 TODO: game.config["live_submit_window_seconds"] per-game override for POST_START_SUBMIT_WINDOW_SECONDS #}
 {# P2 TECH DEBT (TRUST-VT-SCORE-01): score_normalized is client-submitted; server-side
    recomputation from raw_metrics.per_round needed to prevent score manipulation in score_win cases. #}
+
+{% block scripts %}
+<script>
+(function() {
+  var CHALLENGE_ID = {{ challenge.id }};
+  var STATUS       = {{ challenge.status.value | tojson }};
+
+  // Only listen when the challenge is not yet in a terminal state
+  var terminalStatuses = ['completed', 'expired', 'declined', 'cancelled'];
+  if (terminalStatuses.indexOf(STATUS) !== -1) return;
+
+  function _reloadPage() {
+    // Hard reload so the rendered Jinja2 state is fresh
+    window.location.reload();
+  }
+
+  function _onChallengeEvent(e) {
+    var d = e.detail || {};
+    if (d.challenge_id !== undefined && d.challenge_id !== CHALLENGE_ID) return;
+    // Brief delay so the DB commit is visible before we re-render
+    setTimeout(_reloadPage, 600);
+  }
+
+  var events = [
+    'ws:challenge_accepted',
+    'ws:challenge_declined',
+    'ws:challenge_cancelled',
+    'ws:challenge_completed',
+    'ws:challenge_forfeited',
+    'ws:challenge_no_contest',
+    'ws:challenge_live_started',
+    'ws:challenge_expired',
+  ];
+  events.forEach(function(name) {
+    document.addEventListener(name, _onChallengeEvent);
+  });
+})();
+</script>
+{% endblock %}
 {% endblock %}

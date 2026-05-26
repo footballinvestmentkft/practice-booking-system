@@ -53,6 +53,7 @@ from ...models.vt_challenge import (
     make_expires_at,
     validate_completion_window,
 )
+from ...core.redis_pubsub import publish_challenge_event
 from ...services import card_export_service as _export_svc
 from ...services import notification_service
 from ...services.challenge_completion_service import sweep_accepted_deadlines
@@ -464,6 +465,11 @@ async def send_challenge(
     )
 
     db.commit()
+    publish_challenge_event(
+        [user.id, challenged_user_id],
+        "challenge_sent",
+        {"challenge_id": challenge.id, "challenger_id": user.id, "challenged_id": challenged_user_id},
+    )
     return RedirectResponse(url="/challenges?success=challenge_sent", status_code=303)
 
 
@@ -507,6 +513,11 @@ async def accept_challenge(
             link=f"/challenges/{challenge_id}/lobby",
         )
         db.commit()
+        publish_challenge_event(
+            [challenge.challenger_id, challenge.challenged_id],
+            "challenge_accepted",
+            {"challenge_id": challenge_id, "mode": "live"},
+        )
         return RedirectResponse(url=f"/challenges/{challenge_id}/lobby", status_code=303)
     else:
         challenge.status = ChallengeStatus.ACCEPTED
@@ -523,6 +534,11 @@ async def accept_challenge(
             link="/challenges",
         )
         db.commit()
+        publish_challenge_event(
+            [challenge.challenger_id, challenge.challenged_id],
+            "challenge_accepted",
+            {"challenge_id": challenge_id, "mode": "async"},
+        )
         return RedirectResponse(url="/challenges?success=challenge_accepted", status_code=303)
 
 
@@ -1075,6 +1091,11 @@ async def decline_challenge(
     )
 
     db.commit()
+    publish_challenge_event(
+        [challenge.challenger_id, challenge.challenged_id],
+        "challenge_declined",
+        {"challenge_id": challenge_id},
+    )
     return RedirectResponse(url="/challenges?success=challenge_declined", status_code=303)
 
 
@@ -1110,6 +1131,11 @@ async def cancel_challenge(
     )
 
     db.commit()
+    publish_challenge_event(
+        [challenge.challenger_id, challenge.challenged_id],
+        "challenge_cancelled",
+        {"challenge_id": challenge_id},
+    )
     return RedirectResponse(url="/challenges?success=challenge_cancelled", status_code=303)
 
 

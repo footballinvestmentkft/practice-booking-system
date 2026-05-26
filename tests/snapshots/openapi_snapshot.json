@@ -59669,6 +59669,26 @@
         ]
       }
     },
+    "/api/ws-token": {
+      "get": {
+        "description": "Return the raw JWT access token so ws_client.js can open /ws/events.\n\nReads the HttpOnly access_token cookie server-side and returns the raw\nJWT string. Same-origin fetch only \u2014 no CORS exposure.\nThe token is already the user's access credential; this endpoint changes\nnothing about the security posture (cookie is already trusted by all routes).\nReturns {\"token\": \"\"} when not logged in.",
+        "operationId": "get_ws_token_api_ws_token_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Ws Token",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/calendar": {
       "get": {
         "description": "Display calendar page with all sessions",
