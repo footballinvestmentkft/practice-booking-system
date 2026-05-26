@@ -414,3 +414,65 @@ def test_mp_r16_template_uses_correct_blocks():
     assert "spec_subpage_hdr.html" in content, (
         "template must include spec_subpage_hdr.html for platform header"
     )
+
+
+# ── MP-R17 ── spec_subpage_hdr has LFA quicknav strip with all key links ─────
+
+def test_mp_r17_spec_subpage_hdr_has_lfa_quicknav():
+    from pathlib import Path
+
+    content = (
+        Path(__file__).resolve()
+        .parent.parent.parent.parent.parent
+        / "app" / "templates" / "includes" / "spec_subpage_hdr.html"
+    ).read_text(encoding="utf-8")
+
+    assert "spec-quicknav" in content, "spec_subpage_hdr must contain .spec-quicknav nav strip"
+    assert "LFA_FOOTBALL_PLAYER" in content, "quicknav must be gated on LFA_FOOTBALL_PLAYER"
+
+    required_links = {
+        "/profile/lfa-football-player": "Profile",
+        "/my-cards":                    "My Cards",
+        "/dashboard/lfa-football-player/card-editor": "Card Editor",
+        "/profile/my-mood-photos":      "Mood Photos",
+        "/events":                      "Events",
+        "/training":                    "Training",
+    }
+    for url, label in required_links.items():
+        assert url in content, f"spec quicknav missing link: {url!r} ({label})"
+        assert label in content, f"spec quicknav missing label: {label!r}"
+
+    assert "sqn-active" in content, "quicknav must highlight active item (sqn-active class)"
+    assert "spec-qn-item" in content, "quicknav items must use spec-qn-item class"
+
+
+# ── MP-R18 ── dashboard mod-nav has 9 items including Profile/Editor/Mood ────
+
+def test_mp_r18_dashboard_modnav_has_profile_editor_moodphotos():
+    from pathlib import Path
+
+    content = (
+        Path(__file__).resolve()
+        .parent.parent.parent.parent.parent
+        / "app" / "templates" / "dashboard_student_new.html"
+    ).read_text(encoding="utf-8")
+
+    # All 9 mod-nav destinations must be present
+    required = [
+        ("/events",                                    "Events"),
+        ("/my-cards",                                  "My Cards"),
+        ("/training",                                  "Training"),
+        ("/skills/history",                            "Skill History"),
+        ("/calendar",                                  "Calendar"),
+        ("/achievements",                              "Achievements"),
+        ("/profile/lfa-football-player",               "Profile"),
+        ("/dashboard/lfa-football-player/card-editor", "Card Editor"),
+        ("/profile/my-mood-photos",                    "Mood Photos"),
+    ]
+    modnav_start = content.find('<section class="mod-nav-section">')
+    modnav_end   = content.find("</section>", modnav_start)
+    modnav_block = content[modnav_start:modnav_end] if modnav_start != -1 else content
+
+    for url, label in required:
+        assert url in modnav_block, f"dashboard mod-nav missing: {url!r} ({label})"
+        assert label in modnav_block, f"dashboard mod-nav missing label: {label!r}"
