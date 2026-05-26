@@ -54,7 +54,10 @@
 {# ── LFA Football Player quicknav strip ─────────────────────────────────────
    Shown on all LFA sub-pages. Horizontal scroll on mobile (no wrapping).
    Active item highlighted by matching request path. #}
-{% set _lfa_qn = ((user.specialization.value if user.specialization else '') if user else '') == 'LFA_FOOTBALL_PLAYER' %}
+{% set _lfa_qn = (
+    ((user.specialization.value if user.specialization else '') if user else '') == 'LFA_FOOTBALL_PLAYER'
+    or (spec_dashboard_url | default('')) == '/dashboard/lfa-football-player'
+) %}
 
 <style>
 .spec-quicknav {

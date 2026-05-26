@@ -61,6 +61,13 @@ async def mood_photos_page(
             "user":        user,
             "mood_photos": mood_photos,
             "slots_meta":  _SLOT_META,
+            # Explicit LFA spec context — mood photos is an LFA Football Player
+            # feature; do not rely on user.specialization which can be any active
+            # spec (e.g. GANCUJU_PLAYER) on multi-spec accounts.
+            "spec_dashboard_url":  "/dashboard/lfa-football-player",
+            "spec_dashboard_icon": "⚽",
+            "spec_profile_url":    "/profile/lfa-football-player",
+            "spec_profile_icon":   "🪪",
         },
     )
 

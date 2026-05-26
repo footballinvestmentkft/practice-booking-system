@@ -180,16 +180,41 @@
 /* Mood photo upload: must use fetch() + X-CSRF-Token header.
    form.submit() skips the submit event so base.html CSRF interceptor never fires.
    Using FormData (not URLSearchParams) preserves the file as multipart/form-data. */
+function _mpCsrfToken() {
+    var m = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : null;
+}
+
+/* Upload: form.submit() bypasses submit event so base.html CSRF interceptor
+   never fires. Sending FormData directly preserves the file as multipart. */
 function _mpUpload(input) {
     var form = input.closest('form');
-    var m    = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
-    var tok  = m ? decodeURIComponent(m[1]) : null;
+    var tok  = _mpCsrfToken();
     if (!tok || !input.files || !input.files[0]) return;
 
     fetch(form.action, {
         method:      'POST',
         headers:     { 'X-CSRF-Token': tok },
-        body:        new FormData(form),   // multipart/form-data + boundary set by browser
+        body:        new FormData(form),
+        credentials: 'include',
+        redirect:    'follow',
+    }).then(function (r) {
+        window.location.href = r.redirected ? r.url : '/profile/my-mood-photos';
+    }).catch(function () {
+        window.location.reload();
+    });
+}
+
+/* Delete: type="button" avoids submit event entirely; confirm() runs first so
+   the user can cancel before the request is sent. */
+function _mpDelete(url) {
+    if (!confirm('Delete this mood photo?')) return;
+    var tok = _mpCsrfToken();
+    if (!tok) { window.location.reload(); return; }
+
+    fetch(url, {
+        method:      'POST',
+        headers:     { 'X-CSRF-Token': tok, 'Content-Type': 'application/x-www-form-urlencoded' },
         credentials: 'include',
         redirect:    'follow',
     }).then(function (r) {
@@ -275,12 +300,11 @@ function _mpUpload(input) {
                 </form>
 
                 {% if record %}
-                <form method="post"
-                      action="/profile/my-mood-photos/{{ meta.slot }}/delete"
-                      onsubmit="return confirm('Delete this mood photo?');"
-                      style="display:contents;">
-                    <button type="submit" class="btn btn-danger btn-sm">🗑 Delete</button>
-                </form>
+                <button type="button"
+                        class="btn btn-danger btn-sm"
+                        onclick="_mpDelete('/profile/my-mood-photos/{{ meta.slot }}/delete')">
+                    🗑 Delete
+                </button>
                 {% endif %}
             </div>
 

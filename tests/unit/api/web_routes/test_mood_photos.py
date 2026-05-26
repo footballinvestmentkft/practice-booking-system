@@ -425,6 +425,13 @@ def test_mp_r16_template_uses_correct_blocks():
     assert "X-CSRF-Token" in content, (
         "template must include X-CSRF-Token fetch header for CSRF validation"
     )
+    assert "_mpDelete(" in content, (
+        "delete must use _mpDelete() onclick — base.html capture listener fires "
+        "before onsubmit, so confirm() never gets to cancel the request"
+    )
+    assert 'type="button"' in content, (
+        "delete button must be type=button to avoid triggering submit event"
+    )
 
 
 # ── MP-R17 ── spec_subpage_hdr has LFA quicknav strip with all key links ─────
@@ -487,3 +494,40 @@ def test_mp_r18_dashboard_modnav_has_profile_editor_moodphotos():
     for url, label in required:
         assert url in modnav_block, f"dashboard mod-nav missing: {url!r} ({label})"
         assert label in modnav_block, f"dashboard mod-nav missing label: {label!r}"
+
+
+# ── MP-R19 ── mood_photos_page route passes explicit LFA spec context ─────────
+
+def test_mp_r19_route_passes_lfa_spec_context():
+    """
+    mood_photos_page must hardcode LFA spec context, not rely on
+    user.specialization which can be any active spec (e.g. GANCUJU_PLAYER)
+    on multi-spec accounts.
+    """
+    from app.api.web_routes.mood_photos import mood_photos_page
+
+    four_slots = {s: None for s in [
+        "mood_intro_neutral", "mood_happy_smile",
+        "mood_celebration",   "mood_sad_disappointed",
+    ]}
+
+    with patch(f"{_BASE}.get_mood_photos_for_user", return_value=four_slots), \
+         patch(f"{_BASE}.templates") as mock_tpl:
+        mock_tpl.TemplateResponse.return_value = MagicMock()
+
+        # Simulate a multi-spec user whose primary spec is NOT LFA_FOOTBALL_PLAYER
+        multi_spec_user = _user()
+        multi_spec_user.specialization = MagicMock()
+        multi_spec_user.specialization.value = "GANCUJU_PLAYER"
+
+        _run(mood_photos_page(request=_request(), user=multi_spec_user, db=_db()))
+
+        ctx = mock_tpl.TemplateResponse.call_args[0][1]
+
+        assert ctx.get("spec_dashboard_url") == "/dashboard/lfa-football-player", (
+            "mood_photos_page must pass spec_dashboard_url='/dashboard/lfa-football-player' "
+            "regardless of user.specialization — prevents wrong spec in header"
+        )
+        assert ctx.get("spec_dashboard_icon") == "⚽"
+        assert ctx.get("spec_profile_url") == "/profile/lfa-football-player"
+        assert ctx.get("spec_profile_icon") == "🪪"
