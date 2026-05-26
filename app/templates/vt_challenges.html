@@ -65,6 +65,7 @@
 .ch-badge-no-contest       { background: #fef3c7; color: #92400e; }
 .ch-badge-live-lobby       { background: #fef9c3; color: #713f12; }
 .ch-badge-live-in-progress { background: #fef3c7; color: #92400e; }
+.ch-badge-virtual          { background: #ede9fe; color: #5b21b6; font-size: 0.68rem; }
 
 .ch-deadline {
     font-size: 0.78rem; color: #6b7280; margin-bottom: 0.5rem;
@@ -161,6 +162,7 @@
                 {% else %}{{ row.opponent_name }} → You{% endif %}
             </div>
             <div class="ch-game">
+                <span class="ch-badge ch-badge-virtual">Virtual</span>
                 {{ row.game_name }}
                 {% if row.difficulty_level %} · {{ row.difficulty_level | title }}{% endif %}
             </div>
@@ -254,6 +256,7 @@
                 {% else %}{{ row.opponent_name }} vs You{% endif %}
             </div>
             <div class="ch-game">
+                <span class="ch-badge ch-badge-virtual">Virtual</span>
                 {{ row.game_name }}
                 {% if row.difficulty_level %} · {{ row.difficulty_level | title }}{% endif %}
             </div>
@@ -327,6 +330,11 @@
     {% elif row.status == "expired" and row.forfeit_reason == "no_show" %}
     <div class="ch-outcome-note">No show — lobby expired before both players were ready.</div>
     {% endif %}
+    <div style="margin-top:0.5rem;">
+        <a href="/challenges/{{ row.id }}" class="ch-btn" style="background:#f3f4f6;color:#374151;font-size:0.78rem;">
+            View details →
+        </a>
+    </div>
 </div>
 {% endfor %}
 {% endif %}

@@ -149,6 +149,7 @@ def _build_inbox_row(
         "id":                    ch.id,
         "status":                ch.status.value,
         "challenge_mode":        ch.challenge_mode,
+        "challenge_category":    "virtual",
         "is_challenger":         is_challenger,
         "opponent_name":         (opponent.nickname or opponent.email) if opponent else "Unknown",
         "game_name":             game.name if game else "—",
@@ -342,9 +343,22 @@ async def send_challenge(
     difficulty_level:          str | None = Form(default=None),
     challenge_mode:            str | None = Form(default=None),
     completion_window_seconds: int | None = Form(default=None),
+    challenge_category:        str | None = Form(default=None),
     db: Session = Depends(get_db),
     user: User  = Depends(get_current_user_web),
 ):
+    # Category guard — only Virtual is active; On-site/Hybrid are Coming Soon
+    # isinstance guard: when called directly in tests, challenge_category may be
+    # the Form FieldInfo object rather than None (FastAPI only resolves it at
+    # request time). Treat any non-str value as "use default".
+    resolved_category = "virtual"
+    if isinstance(challenge_category, str) and challenge_category:
+        resolved_category = challenge_category.strip().lower()
+    if resolved_category != "virtual":
+        return RedirectResponse(
+            url="/challenges/send?error=category_not_available", status_code=303
+        )
+
     # Self-challenge guard
     if challenged_user_id == user.id:
         return RedirectResponse(url="/challenges/send?error=self_challenge", status_code=303)
@@ -508,6 +522,106 @@ async def accept_challenge(
         )
         db.commit()
         return RedirectResponse(url="/challenges?success=challenge_accepted", status_code=303)
+
+
+# ── GET /challenges/{id} — Virtual Challenge detail ───────────────────────────
+
+@router.get("/challenges/{challenge_id}", response_class=HTMLResponse)
+async def challenge_detail(
+    challenge_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User  = Depends(get_current_user_web),
+):
+    """Virtual Challenge detail page — participants only."""
+    guard = require_student_onboarding(user)
+    if guard:
+        return guard
+
+    ch = db.query(VirtualTrainingChallenge).filter(
+        VirtualTrainingChallenge.id == challenge_id
+    ).first()
+
+    if ch is None:
+        return templates.TemplateResponse(
+            "vt_challenges.html",
+            {"request": request, "user": user, **_spec_ctx(user, db),
+             "active_rows": [], "terminal_rows": [],
+             "error": "challenge_not_found"},
+            status_code=404,
+        )
+
+    if user.id not in (ch.challenger_id, ch.challenged_id):
+        return templates.TemplateResponse(
+            "vt_challenges.html",
+            {"request": request, "user": user, **_spec_ctx(user, db),
+             "active_rows": [], "terminal_rows": [],
+             "error": "not_found"},
+            status_code=403,
+        )
+
+    # Load attempts if linked
+    challenger_attempt = (
+        db.query(VirtualTrainingAttempt).filter(
+            VirtualTrainingAttempt.id == ch.challenger_attempt_id
+        ).first() if ch.challenger_attempt_id else None
+    )
+    challenged_attempt = (
+        db.query(VirtualTrainingAttempt).filter(
+            VirtualTrainingAttempt.id == ch.challenged_attempt_id
+        ).first() if ch.challenged_attempt_id else None
+    )
+
+    # Compute per-skill scores for each attempt (same pattern as individual result pages)
+    def _skill_scores(attempt: VirtualTrainingAttempt | None, game) -> dict:
+        if attempt is None or not attempt.skill_deltas or game is None:
+            return {}
+        try:
+            from ...services.virtual_training_metrics import VTSignalExtractor, VTSkillScorer
+            cfg          = game.config or {}
+            phase_config = cfg.get("phases", []) if isinstance(cfg, dict) else []
+            signals = VTSignalExtractor.extract(
+                {
+                    "stimuli_count":     attempt.stimuli_count,
+                    "correct_count":     attempt.correct_count,
+                    "wrong_click_count": attempt.wrong_click_count,
+                    "error_count":       attempt.error_count,
+                    "avg_reaction_ms":   attempt.avg_reaction_ms,
+                    "raw_metrics":       attempt.raw_metrics,
+                },
+                phase_config,
+            )
+            return VTSkillScorer.score_all(signals, game.skill_targets or {})
+        except Exception:
+            return {}
+
+    game = ch.game  # ORM relationship
+
+    is_forfeit   = ch.forfeit_user_id is not None
+    is_no_contest = is_forfeit and ch.winner_id is None
+
+    return templates.TemplateResponse(
+        "vt_challenge_detail.html",
+        {
+            "request":                  request,
+            "user":                     user,
+            **_spec_ctx(user, db),
+            "challenge":                ch,
+            "challenge_category":       "virtual",
+            "game":                     game,
+            "challenger":               ch.challenger,
+            "challenged":               ch.challenged,
+            "winner":                   ch.winner,
+            "forfeit_user":             ch.forfeit_user,
+            "challenger_attempt":       challenger_attempt,
+            "challenged_attempt":       challenged_attempt,
+            "challenger_skill_scores":  _skill_scores(challenger_attempt, game),
+            "challenged_skill_scores":  _skill_scores(challenged_attempt, game),
+            "is_challenger":            user.id == ch.challenger_id,
+            "is_forfeit":               is_forfeit,
+            "is_no_contest":            is_no_contest,
+        },
+    )
 
 
 # ── POST /challenges/{id}/decline ─────────────────────────────────────────────

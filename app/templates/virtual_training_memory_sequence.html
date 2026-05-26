@@ -568,6 +568,22 @@
         })
         .then(function (r) { return r.json(); })
         .then(function (data) {
+            // Invalid challenge attempt: server linked nothing — ask the player to retry
+            if (data.challenge_context && data.challenge_context.retry_required) {
+                var reason = data.challenge_context.invalid_reason || "invalid_attempt";
+                var retryUrl = "/virtual-training/memory-sequence?challenge_id=" + CHALLENGE_ID;
+                elSubmitting.innerHTML =
+                    '<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;' +
+                    'padding:1rem 1.25rem;text-align:center;">' +
+                    '<p style="font-weight:700;color:#92400e;margin:0 0 0.5rem;">Attempt not recorded</p>' +
+                    '<p style="font-size:0.88rem;color:#78350f;margin:0 0 0.75rem;">' +
+                    "Your attempt was flagged as <strong>" + reason + "</strong>.<br>" +
+                    "Your challenge is still active — please try again.</p>" +
+                    '<a href="' + retryUrl + '" style="display:inline-block;background:#4f46e5;' +
+                    'color:#fff;font-weight:700;padding:0.5rem 1.25rem;border-radius:8px;' +
+                    'text-decoration:none;font-size:0.9rem;">Retry challenge</a></div>';
+                return;
+            }
             if (data.attempt_id) {
                 var dest = "/virtual-training/memory-sequence/result/" + data.attempt_id;
                 if (CHALLENGE_ID) { dest += "?challenge_id=" + CHALLENGE_ID; }

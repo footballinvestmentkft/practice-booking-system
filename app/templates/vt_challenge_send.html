@@ -72,6 +72,28 @@
 
 .cs-footer { margin-top: 1rem; text-align: center; }
 .cs-footer a { color: #667eea; font-size: 0.88rem; font-weight: 600; text-decoration: none; }
+
+/* ── Challenge category selector ── */
+.cs-cat-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem;
+    margin-bottom: 1.25rem;
+}
+.cs-cat-card {
+    border: 2px solid #e5e7eb; border-radius: 12px;
+    padding: 0.75rem 0.6rem; text-align: center;
+    background: #fff; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+}
+.cs-cat-card.active   { border-color: #4f46e5; background: #eef2ff; }
+.cs-cat-card.disabled { opacity: 0.5; cursor: not-allowed; }
+.cs-cat-name  { font-size: 0.82rem; font-weight: 800; color: var(--app-text); }
+.cs-cat-badge {
+    display: inline-block; font-size: 0.64rem; font-weight: 700;
+    background: #f3f4f6; color: #6b7280; border-radius: 20px;
+    padding: 0.1rem 0.5rem; margin-top: 0.3rem; letter-spacing: 0.03em;
+}
+.cs-cat-badge.coming { background: #fef3c7; color: #92400e; }
 </style>
 {% endblock %}
 
@@ -80,15 +102,16 @@
 
 {% if error %}
 <div class="cs-flash-err">
-    {% if error == "self_challenge"      %}You cannot challenge yourself.
-    {% elif error == "not_friends"       %}You can only challenge accepted friends.
-    {% elif error == "challenge_active"  %}There is already an active challenge between you and this player on that game.
-    {% elif error == "game_not_found"    %}Game not found.
+    {% if error == "self_challenge"        %}You cannot challenge yourself.
+    {% elif error == "not_friends"         %}You can only challenge accepted friends.
+    {% elif error == "challenge_active"    %}There is already an active challenge between you and this player on that game.
+    {% elif error == "game_not_found"      %}Game not found.
     {% elif error == "game_not_compatible" %}This game does not support challenges.
-    {% elif error == "invalid_difficulty" %}Invalid difficulty selected.
+    {% elif error == "invalid_difficulty"  %}Invalid difficulty selected.
     {% elif error == "expert_locked"             %}Expert difficulty is not unlocked yet (need 70%+ on 3 Hard attempts).
     {% elif error == "user_not_found"            %}Player not found.
     {% elif error == "invalid_completion_window" %}Invalid completion window selected.
+    {% elif error == "category_not_available"    %}On-site and Hybrid challenges are coming soon.
     {% else %}{{ error }}
     {% endif %}
 </div>
@@ -110,11 +133,30 @@
 </div>
 {% else %}
 
+{# ── Category selector ── #}
+<div class="cs-cat-grid">
+    <div class="cs-cat-card active" id="cs-cat-virtual" onclick="selectCategory('virtual')">
+        <div class="cs-cat-name">Virtual</div>
+        <div class="cs-cat-badge">Active</div>
+    </div>
+    <div class="cs-cat-card disabled" id="cs-cat-on-site" title="Coming Soon">
+        <div class="cs-cat-name">On-site</div>
+        <div class="cs-cat-badge coming">Coming Soon</div>
+    </div>
+    <div class="cs-cat-card disabled" id="cs-cat-hybrid" title="Coming Soon">
+        <div class="cs-cat-name">Hybrid</div>
+        <div class="cs-cat-badge coming">Coming Soon</div>
+    </div>
+</div>
+
+{# ── Virtual section (shown when Virtual selected — only active category) ── #}
+<div id="cs-virtual-section">
 <div class="cs-card">
-    <h2>⚔ New Challenge</h2>
+    <h2>⚔ New Virtual Challenge</h2>
     <form method="post" action="/challenges/send" id="cs-form">
         <input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}">
         <input type="hidden" name="difficulty_level" id="cs-diff-input" value="easy">
+        <input type="hidden" name="challenge_category" value="virtual">
 
         {# ── Friend selector ── #}
         <div class="cs-field">
@@ -221,6 +263,19 @@
         <button type="submit" class="cs-btn-submit" id="cs-submit">⚔ Send Challenge</button>
     </form>
 </div>
+</div>{# end #cs-virtual-section #}
+
+{# ── On-site / Hybrid coming-soon placeholder (hidden by default) ── #}
+<div id="cs-coming-soon-section" style="display:none;">
+<div class="cs-card" style="text-align:center;padding:2rem 1.5rem;">
+    <p style="font-size:1.5rem;margin:0 0 0.5rem;">🚧</p>
+    <p style="font-weight:700;color:var(--app-text);margin:0 0 0.4rem;" id="cs-coming-soon-title">Coming Soon</p>
+    <p style="font-size:0.88rem;color:var(--app-text-muted);margin:0;">
+        This challenge category is not available yet. Stay tuned for updates.
+    </p>
+</div>
+</div>
+
 {% endif %}
 
 <div class="cs-footer">
@@ -238,6 +293,17 @@
 var EXPERT_UNLOCKED = {{ 'true' if expert_unlocked else 'false' }};
 var selectedDiff    = 'easy';
 var selectedMode    = 'async';
+
+// ── Category selector ──────────────────────────────────────────────────────
+function selectCategory(cat) {
+    if (cat !== 'virtual') return; // On-site/Hybrid are disabled
+    var virtualSection    = document.getElementById('cs-virtual-section');
+    var comingSoonSection = document.getElementById('cs-coming-soon-section');
+    document.getElementById('cs-cat-virtual').classList.toggle('active', cat === 'virtual');
+    if (virtualSection)    virtualSection.style.display    = (cat === 'virtual') ? 'block' : 'none';
+    if (comingSoonSection) comingSoonSection.style.display = (cat !== 'virtual') ? 'block' : 'none';
+}
+window.selectCategory = selectCategory;
 
 function selectMode(mode) {
     selectedMode = mode;

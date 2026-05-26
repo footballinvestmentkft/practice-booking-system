@@ -363,6 +363,7 @@ class VirtualTrainingService:
         game: VirtualTrainingGame,
         data: dict,
         idempotency_key: str,
+        is_challenge: bool = False,
     ) -> VirtualTrainingAttempt:
         """
         Persist one validated VirtualTrainingAttempt and award XP.
@@ -370,6 +371,12 @@ class VirtualTrainingService:
         Idempotent: if a row with the same idempotency_key already exists,
         the existing row is returned without re-awarding XP.
         Does NOT commit — caller owns the transaction boundary.
+
+        is_challenge=True applies Virtual Challenge accounting policy:
+          - skill delta uses full game_mult (no daily-index penalty);
+          - skill delta is computed even when xp_awarded=0 (attempt_index>=6);
+          - XP diminishing returns are unchanged (reward scope excluded).
+          - Caller must inject raw_metrics["attempt_source"]="challenge" before calling.
 
         data keys (all optional except started_at):
           started_at, duration_seconds, stimuli_count, correct_count,
@@ -416,9 +423,15 @@ class VirtualTrainingService:
             game_mult = VirtualTrainingService.extract_difficulty_multiplier(data)
         else:
             game_mult = VirtualTrainingService.extract_protocol_difficulty(data)
-        effective_multiplier = xp_multiplier * game_mult
+        # Challenge attempts: skill delta always at full game_mult (no daily-index
+        # penalty). Solo attempts: existing xp_multiplier × game_mult unchanged.
+        if is_challenge:
+            skill_delta_multiplier = game_mult
+        else:
+            skill_delta_multiplier = xp_multiplier * game_mult
 
-        if is_valid and xp_awarded > 0:
+        compute_delta = is_valid and (xp_awarded > 0 or is_challenge)
+        if compute_delta:
             today_start = datetime.combine(date.today(), datetime.min.time()).replace(
                 tzinfo=timezone.utc
             )
@@ -439,7 +452,7 @@ class VirtualTrainingService:
             ).fetchall()
             existing_neg_today: dict[str, float] = {row.key: row.neg_today for row in neg_rows}
             skill_deltas = compute_vt_skill_deltas(
-                data=data, game=game, multiplier=effective_multiplier,
+                data=data, game=game, multiplier=skill_delta_multiplier,
                 existing_neg_today=existing_neg_today,
             )
         else:
