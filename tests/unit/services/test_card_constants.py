@@ -34,7 +34,7 @@ import app.services.card_export_service as _export_svc
 # ── CC-01 / CC-02: CANVAS_SIZES structure ────────────────────────────────────
 
 def test_cc01_canvas_sizes_has_9_platforms():
-    assert len(CANVAS_SIZES) == 10  # 9 social + "default" native FIFA Classic export
+    assert len(CANVAS_SIZES) == 12  # 9 social + "default" native FIFA Classic export + 2 challenge
 
 
 def test_cc02_canvas_sizes_values_are_int_tuples():
@@ -62,7 +62,7 @@ def test_cc03_export_format_buckets_keys_match_canvas_sizes():
 
 
 def test_cc04_export_format_buckets_value_set():
-    expected_buckets = {"square", "portrait", "story", "tiktok", "landscape", "og", "banner"}
+    expected_buckets = {"square", "portrait", "story", "tiktok", "landscape", "og", "banner", "challenge"}
     actual_buckets = set(EXPORT_FORMAT_BUCKETS.values())
     assert actual_buckets == expected_buckets, (
         f"Unexpected bucket values: {actual_buckets - expected_buckets}. "

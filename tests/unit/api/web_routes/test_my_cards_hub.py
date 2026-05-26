@@ -208,7 +208,7 @@ class TestMyCardsHubTemplate:
 
 class TestRegistryIntegration:
     def test_mch15_hub_spec_list_comes_from_registry(self):
-        """MCH-15: card_specs in hub context equals registry.list_card_type_ids() (6 types)."""
+        """MCH-15: card_specs in hub context equals registry.list_card_type_ids() (7 types)."""
         with patch(f"{_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(my_cards_hub(_req(), user=_user()))
@@ -217,7 +217,7 @@ class TestRegistryIntegration:
         expected_ids = set(card_registry.list_card_type_ids())
         actual_ids   = {s.card_type_id for s in ctx["card_specs"]}
         assert actual_ids == expected_ids
-        assert len(ctx["card_specs"]) == 6
+        assert len(ctx["card_specs"]) == 7
 
 
 # ── MCH-16/17: Dashboard template navigation updated ──────────────────────────
@@ -235,3 +235,129 @@ class TestDashboardNavUpdated:
     def test_mch17_hero_edit_cta_href_is_my_cards_player_card(self, dashboard_src):
         """MCH-17: dashboard hero Edit CTA href updated to /my-cards/player-card."""
         assert 'href="/my-cards/player-card"' in dashboard_src
+
+
+# ── MCH-CH-01..09: Challenge Card manager route ───────────────────────────────
+
+import pathlib as _pathlib
+
+_CC_TEMPLATE_PATH = (
+    _pathlib.Path(__file__).resolve().parents[4]
+    / "app" / "templates" / "my_cards_challenge_card.html"
+)
+
+_CC_BASE = "app.api.web_routes.my_cards"
+
+
+def _db_mock():
+    db = MagicMock()
+    db.query.return_value.filter.return_value.first.return_value = None
+    db.add = MagicMock()
+    db.commit = MagicMock()
+    db.refresh = MagicMock()
+    return db
+
+
+def _theme(tid, label, dot="#667eea", is_premium=False):
+    t = MagicMock()
+    t.id         = tid
+    t.label      = label
+    t.dot_color  = dot
+    t.is_premium = is_premium
+    return t
+
+
+class TestMyChallengeCardRoute:
+
+    def _call(self, *, user=None, db=None):
+        from app.api.web_routes.my_cards import my_cards_challenge_card
+        user = user or _user()
+        db   = db   or _db_mock()
+
+        captured = {}
+
+        def _capture(tmpl, ctx, **kw):
+            captured["template"] = tmpl
+            captured["context"]  = ctx
+            return MagicMock(status_code=200)
+
+        draft_mock = MagicMock()
+        draft_mock.draft_theme = "default"
+        themes_mock = [_theme("default", "Slate"), _theme("midnight", "Midnight")]
+
+        with patch(f"{_CC_BASE}.templates") as mock_tmpl, \
+             patch(f"{_CC_BASE}.CardDraftService") as mock_ds, \
+             patch(f"{_CC_BASE}.get_all_themes", return_value=themes_mock):
+            mock_tmpl.TemplateResponse.side_effect = _capture
+            mock_ds.get_or_create_singleton.return_value = draft_mock
+            _run(my_cards_challenge_card(
+                request=MagicMock(),
+                db=db,
+                user=user,
+            ))
+
+        return captured
+
+    def test_mch_ch01_returns_200(self):
+        """MCH-CH-01: GET /my-cards/challenge-card logged-in user → 200."""
+        cap = self._call()
+        assert cap.get("template") == "my_cards_challenge_card.html"
+
+    def test_mch_ch02_route_has_auth_dependency(self):
+        """MCH-CH-02: route signature requires authenticated user."""
+        import inspect
+        from app.api.web_routes.my_cards import my_cards_challenge_card
+        sig = inspect.signature(my_cards_challenge_card)
+        assert "user" in sig.parameters
+
+    def test_mch_ch03_hub_card_specs_contains_challenge_card(self):
+        """MCH-CH-03: /my-cards hub card_specs includes challenge_card."""
+        with patch(f"{_CC_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(my_cards_hub(_req(), user=_user()))
+        _, ctx = mock_tmpl.TemplateResponse.call_args.args
+        ids = [s.card_type_id for s in ctx["card_specs"]]
+        assert "challenge_card" in ids
+
+    def test_mch_ch04_hub_tile_link_is_challenge_card_url(self):
+        """MCH-CH-04: hub template builds /my-cards/challenge-card via card_type_id replace('_','-').
+
+        The link is generated dynamically: /my-cards/{{ spec.card_type_id | replace('_', '-') }}
+        so the literal string 'challenge_card' does not appear in the source.
+        Verify the generation pattern is present and challenge_card is in the registry.
+        """
+        hub_html = _CC_TEMPLATE_PATH.parent.joinpath("my_cards_hub.html").read_text()
+        # Template uses dynamic generation — verify the replace pattern is present
+        assert "replace('_', '-')" in hub_html or "replace(\"_\", \"-\")" in hub_html
+        # Registry contains challenge_card → link will be /my-cards/challenge-card
+        from app.services.card_system import card_registry
+        assert "challenge_card" in card_registry.list_card_type_ids()
+
+    def test_mch_ch05_template_contains_post_16_9(self):
+        """MCH-CH-05: template references challenge_post_16_9 format."""
+        html = _CC_TEMPLATE_PATH.read_text()
+        assert "challenge_post_16_9" in html
+
+    def test_mch_ch06_template_contains_story_9_16(self):
+        """MCH-CH-06: template references challenge_story_9_16 format."""
+        html = _CC_TEMPLATE_PATH.read_text()
+        assert "challenge_story_9_16" in html
+
+    def test_mch_ch07_template_contains_challenges_link(self):
+        """MCH-CH-07: template contains /challenges CTA link."""
+        html = _CC_TEMPLATE_PATH.read_text()
+        assert "/challenges" in html
+
+    def test_mch_ch08_spec_is_editable_and_theme_compatible(self):
+        """MCH-CH-08: CHALLENGE_CARD_SPEC.is_editable=True, theme_compatible=True."""
+        from app.services.card_system._challenge_card import CHALLENGE_CARD_SPEC
+        assert CHALLENGE_CARD_SPEC.is_editable is True
+        assert CHALLENGE_CARD_SPEC.theme_compatible is True
+        assert CHALLENGE_CARD_SPEC.has_published_state is False
+
+    def test_mch_ch09_context_contains_formats_with_both_ids(self):
+        """MCH-CH-09: route context formats list contains both platform IDs."""
+        cap = self._call()
+        fmt_ids = [f["id"] for f in cap["context"]["formats"]]
+        assert "challenge_post_16_9"  in fmt_ids
+        assert "challenge_story_9_16" in fmt_ids

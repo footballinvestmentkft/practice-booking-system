@@ -12,6 +12,18 @@ from sqlalchemy.orm import Session
 from ..models.notification import Notification, NotificationType
 from ..models.user import User
 from ..models.semester import Semester
+from ..core.redis_pubsub import publish_challenge_event
+
+_VT_CHALLENGE_TYPES = frozenset({
+    NotificationType.VT_CHALLENGE_RECEIVED,
+    NotificationType.VT_CHALLENGE_ACCEPTED,
+    NotificationType.VT_CHALLENGE_DECLINED,
+    NotificationType.VT_CHALLENGE_CANCELLED,
+    NotificationType.VT_CHALLENGE_EXPIRED,
+    NotificationType.VT_CHALLENGE_COMPLETED,
+    NotificationType.VT_CHALLENGE_FORFEITED,
+    NotificationType.VT_CHALLENGE_LIVE_LOBBY,
+})
 
 
 def create_notification(
@@ -60,9 +72,19 @@ def create_notification(
 
     db.add(notification)
     # NOTE: Do NOT commit here - let the caller manage the transaction
-    # This allows notification creation to be part of a larger transaction
-    # db.commit()
-    # db.refresh(notification)
+
+    # Publish WS event for VT challenge notifications so the client can
+    # update the badge and show a toast without polling.
+    if notification_type in _VT_CHALLENGE_TYPES:
+        publish_challenge_event(
+            [user_id],
+            "notification_created",
+            {
+                "notification_type": notification_type.value,
+                "title": title,
+                "link": link,
+            },
+        )
 
     return notification
 

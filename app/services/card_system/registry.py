@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from app.services.card_constants import ANIMATED_EXPORT_CAPABLE
+from app.services.card_system._challenge_card import CHALLENGE_CARD_SPEC
 from app.services.card_system._player_card import PLAYER_CARD_SPEC
 from app.services.card_system._skeletal_specs import (
     BADGE_CARD_SPEC,
@@ -29,6 +30,7 @@ _VARIANT_CAPABILITIES: dict[str, VariantCapabilitySpec] = {
 _ALL_SPECS: tuple[CardTypeSpec, ...] = (
     PLAYER_CARD_SPEC,
     WELCOME_CARD_SPEC,
+    CHALLENGE_CARD_SPEC,
     MATCH_CARD_SPEC,
     EVENT_CARD_SPEC,
     BIRTHDAY_CARD_SPEC,

@@ -29,31 +29,35 @@ from __future__ import annotations
 # to the card-wrap bounding rect — height is content-determined at render time,
 # so the export is never truncated regardless of what this constant says.
 CANVAS_SIZES: dict[str, tuple[int, int]] = {
-    "default":            ( 820,  800),   # native FIFA Classic; clip = card-wrap bbox (est. 2026-05-12)
-    "instagram_square":   (1080, 1080),
-    "instagram_portrait": (1080, 1350),
-    "instagram_story":    (1080, 1920),
-    "tiktok":             (1080, 1920),
-    "facebook_square":    (1080, 1080),
-    "facebook_landscape": (1200,  630),
-    "og":                 (1200,  630),
-    "banner_custom":      (1500,  500),
-    "facebook_post":      (1200,  630),
+    "default":               ( 820,  800),   # native FIFA Classic; clip = card-wrap bbox (est. 2026-05-12)
+    "instagram_square":      (1080, 1080),
+    "instagram_portrait":    (1080, 1350),
+    "instagram_story":       (1080, 1920),
+    "tiktok":                (1080, 1920),
+    "facebook_square":       (1080, 1080),
+    "facebook_landscape":    (1200,  630),
+    "og":                    (1200,  630),
+    "banner_custom":         (1500,  500),
+    "facebook_post":         (1200,  630),
+    "challenge_post_16_9":   (1280,  720),
+    "challenge_story_9_16":  (1080, 1920),
 }
 
 # ── Export template routing ───────────────────────────────────────────────────
 # Maps platform preset id → template bucket directory.
 # Template path resolved as: public/export/{bucket}/{card_variant_id}.html
 EXPORT_FORMAT_BUCKETS: dict[str, str] = {
-    "instagram_square":   "square",
-    "facebook_square":    "square",
-    "instagram_portrait": "portrait",
-    "instagram_story":    "story",
-    "tiktok":             "tiktok",
-    "facebook_landscape": "landscape",
-    "og":                 "og",
-    "banner_custom":      "banner",
-    "facebook_post":      "landscape",
+    "instagram_square":     "square",
+    "facebook_square":      "square",
+    "instagram_portrait":   "portrait",
+    "instagram_story":      "story",
+    "tiktok":               "tiktok",
+    "facebook_landscape":   "landscape",
+    "og":                   "og",
+    "banner_custom":        "banner",
+    "facebook_post":        "landscape",
+    "challenge_post_16_9":  "challenge",
+    "challenge_story_9_16": "challenge",
 }
 
 # ── Animated video export capability registry ─────────────────────────────────

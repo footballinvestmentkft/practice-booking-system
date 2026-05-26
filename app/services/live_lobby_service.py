@@ -21,6 +21,7 @@ from ..models.vt_challenge import (
     POST_START_SUBMIT_WINDOW_SECONDS,
     VirtualTrainingChallenge,
 )
+from ..core.redis_pubsub import publish_challenge_event
 from . import notification_service
 
 
@@ -192,6 +193,11 @@ def _send_live_start_notifications(
             notification_type=NotificationType.VT_CHALLENGE_LIVE_LOBBY,
             link=f"/challenges/{challenge.id}/lobby",
         )
+    publish_challenge_event(
+        [challenge.challenger_id, challenge.challenged_id],
+        "challenge_live_started",
+        {"challenge_id": challenge.id},
+    )
 
 
 def _send_lobby_timeout_notifications(
@@ -207,6 +213,11 @@ def _send_lobby_timeout_notifications(
             notification_type=NotificationType.VT_CHALLENGE_EXPIRED,
             link="/challenges",
         )
+    publish_challenge_event(
+        [challenge.challenger_id, challenge.challenged_id],
+        "challenge_expired",
+        {"challenge_id": challenge.id},
+    )
 
 
 def _send_forfeit_notifications(
@@ -229,6 +240,11 @@ def _send_forfeit_notifications(
             notification_type=NotificationType.VT_CHALLENGE_FORFEITED,
             link="/challenges",
         )
+    publish_challenge_event(
+        [challenge.challenger_id, challenge.challenged_id],
+        "challenge_forfeited",
+        {"challenge_id": challenge.id, "winner_id": winner_id},
+    )
 
 
 def _send_no_contest_notifications(
@@ -244,3 +260,8 @@ def _send_no_contest_notifications(
             notification_type=NotificationType.VT_CHALLENGE_FORFEITED,
             link="/challenges",
         )
+    publish_challenge_event(
+        [challenge.challenger_id, challenge.challenged_id],
+        "challenge_no_contest",
+        {"challenge_id": challenge.id},
+    )

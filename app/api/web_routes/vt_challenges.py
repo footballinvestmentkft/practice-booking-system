@@ -26,17 +26,18 @@ Notifications:
 """
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from ...database import get_db
-from ...dependencies import get_current_user_web
+from ...dependencies import get_current_user_optional, get_current_user_web
 from ...models.friendship import Friendship, FriendshipStatus, is_friends
 from ...models.notification import NotificationType
 from ...models.user import User
@@ -45,13 +46,17 @@ from ...models.vt_challenge import (
     CHALLENGE_COMPATIBLE_GAMES,
     DEFAULT_COMPLETION_WINDOW,
     LOBBY_TIMEOUT_SECONDS,
+    MAX_ACTIVE_PER_CATEGORY,
     ChallengeStatus,
     VirtualTrainingChallenge,
+    count_active_challenges_in_category,
     get_active_challenge,
     make_completion_deadline,
     make_expires_at,
     validate_completion_window,
 )
+from ...core.redis_pubsub import publish_challenge_event
+from ...services import card_export_service as _export_svc
 from ...services import notification_service
 from ...services.challenge_completion_service import sweep_accepted_deadlines
 from ...services.live_lobby_service import (
@@ -330,6 +335,7 @@ async def challenge_send_form(
         "preselected_friend_id": preselected_friend_id,
         "preselected_game_code": preselected_game_code,
         "error":                 request.query_params.get("error"),
+        "max_per_cat":           MAX_ACTIVE_PER_CATEGORY,
     })
 
 
@@ -385,9 +391,14 @@ async def send_challenge(
     if game.code not in CHALLENGE_COMPATIBLE_GAMES:
         return RedirectResponse(url="/challenges/send?error=game_not_compatible", status_code=303)
 
-    # Duplicate active challenge guard (bidirectional)
-    if get_active_challenge(db, user.id, challenged_user_id, game_id):
-        return RedirectResponse(url="/challenges/send?error=challenge_active", status_code=303)
+    # Category-level active challenge limit (bidirectional, per game_type)
+    active_in_cat = count_active_challenges_in_category(
+        db, user.id, challenged_user_id, game.game_type
+    )
+    if active_in_cat >= MAX_ACTIVE_PER_CATEGORY:
+        return RedirectResponse(
+            url="/challenges/send?error=challenge_limit_reached", status_code=303
+        )
 
     # Difficulty validation (TT only)
     resolved_difficulty: str | None = None
@@ -462,6 +473,11 @@ async def send_challenge(
     )
 
     db.commit()
+    publish_challenge_event(
+        [user.id, challenged_user_id],
+        "challenge_sent",
+        {"challenge_id": challenge.id, "challenger_id": user.id, "challenged_id": challenged_user_id},
+    )
     return RedirectResponse(url="/challenges?success=challenge_sent", status_code=303)
 
 
@@ -505,6 +521,11 @@ async def accept_challenge(
             link=f"/challenges/{challenge_id}/lobby",
         )
         db.commit()
+        publish_challenge_event(
+            [challenge.challenger_id, challenge.challenged_id],
+            "challenge_accepted",
+            {"challenge_id": challenge_id, "mode": "live"},
+        )
         return RedirectResponse(url=f"/challenges/{challenge_id}/lobby", status_code=303)
     else:
         challenge.status = ChallengeStatus.ACCEPTED
@@ -521,6 +542,11 @@ async def accept_challenge(
             link="/challenges",
         )
         db.commit()
+        publish_challenge_event(
+            [challenge.challenger_id, challenge.challenged_id],
+            "challenge_accepted",
+            {"challenge_id": challenge_id, "mode": "async"},
+        )
         return RedirectResponse(url="/challenges?success=challenge_accepted", status_code=303)
 
 
@@ -656,6 +682,391 @@ async def challenge_detail(
     )
 
 
+# ── Challenge Social Card routes ─────────────────────────────────────────────
+
+CHALLENGE_CARD_PLATFORMS = frozenset({"challenge_post_16_9", "challenge_story_9_16"})
+
+VALID_CHALLENGE_CARD_PHASES = frozenset({
+    "challenge_sent",
+    "challenge_received",
+    "challenge_accepted",
+    "waiting_for_opponent",
+    "live_lobby_ready",
+    "live_in_progress",
+    "completed_score_win",
+    "completed_draw",
+    "completed_forfeit_win",
+    "completed_forfeit_loss",
+    "no_contest",
+    "skill_delta_result",
+})
+
+# Phases that are exportable (unlocked) — remaining phases are preview-only when relevant
+_EXPORTABLE_PHASES = frozenset({
+    "completed_score_win",
+    "completed_draw",
+    "completed_forfeit_win",
+    "completed_forfeit_loss",
+    "no_contest",
+    "skill_delta_result",
+})
+
+_TERMINAL_STATUSES = frozenset({
+    ChallengeStatus.COMPLETED, ChallengeStatus.EXPIRED,
+    ChallengeStatus.DECLINED,  ChallengeStatus.CANCELLED,
+})
+
+_PHASE_CTA = {
+    "challenge_sent":          "View challenge",
+    "challenge_received":      "Accept challenge",
+    "challenge_accepted":      "Play now",
+    "waiting_for_opponent":    "Waiting…",
+    "live_lobby_ready":        "Join lobby",
+    "live_in_progress":        "Playing now",
+    "completed_score_win":     "Play again",
+    "completed_draw":          "Play again",
+    "completed_forfeit_win":   "Play again",
+    "completed_forfeit_loss":  "Play again",
+    "no_contest":              "Challenge again",
+    "skill_delta_result":      "View profile",
+}
+
+
+def _display_name(user: Any) -> str:
+    return user.nickname if (user and user.nickname) else (user.email if user else "Unknown")
+
+
+def _resolve_challenge_render_token(token: str, challenge_id: int, db: Session) -> "User | None":
+    """Validate a vt_card_render JWT and return the corresponding User, or None.
+
+    Rejects tokens with wrong purpose, mismatched challenge_id, expired tokens,
+    and invalid signatures.
+    """
+    try:
+        from jose import JWTError, jwt as _jwt
+        from ...config import settings
+        payload = _jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if payload.get("purpose") != "vt_card_render":
+            return None
+        if int(payload.get("cid") or -1) != challenge_id:
+            return None
+        user_id = int(payload.get("sub") or 0)
+        if not user_id:
+            return None
+        return db.query(User).filter(User.id == user_id, User.is_active == True).first()
+    except Exception:
+        return None
+
+
+def get_unlocked_challenge_card_phases(
+    ch: VirtualTrainingChallenge,
+    viewer_id: int,
+    my_attempt: Any = None,
+) -> list[str]:
+    """Return phases that are available and exportable for this viewer."""
+    s = ch.status
+    is_challenger = viewer_id == ch.challenger_id
+    has_my_attempt = (
+        (ch.challenger_attempt_id if is_challenger else ch.challenged_attempt_id) is not None
+    )
+
+    phases: list[str] = []
+
+    if s == ChallengeStatus.PENDING:
+        phases.append("challenge_sent" if is_challenger else "challenge_received")
+
+    elif s in (ChallengeStatus.ACCEPTED, ChallengeStatus.LIVE_IN_PROGRESS):
+        phases.append("challenge_accepted")
+        if has_my_attempt:
+            phases.append("waiting_for_opponent")
+
+    elif s == ChallengeStatus.LIVE_LOBBY:
+        phases.append("live_lobby_ready")
+
+    elif s == ChallengeStatus.COMPLETED:
+        outcome = _compute_outcome_reason(ch)
+        if outcome == "score_win":
+            phases.append("completed_score_win")
+        elif outcome == "draw":
+            phases.append("completed_draw")
+        elif outcome in ("forfeit_post_start_timeout", "forfeit_deadline",
+                         "forfeit_no_show", "forfeit"):
+            phases.append(
+                "completed_forfeit_win" if ch.winner_id == viewer_id
+                else "completed_forfeit_loss"
+            )
+        elif outcome == "no_contest":
+            phases.append("no_contest")
+        if my_attempt is not None and my_attempt.skill_deltas:
+            phases.append("skill_delta_result")
+
+    elif s == ChallengeStatus.EXPIRED:
+        outcome = _compute_outcome_reason(ch)
+        if outcome == "no_contest":
+            phases.append("no_contest")
+
+    return phases
+
+
+def get_locked_challenge_card_phases(
+    ch: VirtualTrainingChallenge,
+    viewer_id: int,
+) -> list[str]:
+    """Return historical phases that are shown as locked (preview only, no export)."""
+    s = ch.status
+    is_challenger = viewer_id == ch.challenger_id
+    initial = "challenge_sent" if is_challenger else "challenge_received"
+
+    locked: list[str] = []
+
+    # For non-pending challenges, the initial send/receive phase is historical
+    if s not in (ChallengeStatus.PENDING, ChallengeStatus.DECLINED,
+                 ChallengeStatus.CANCELLED, ChallengeStatus.EXPIRED):
+        locked.append(initial)
+
+    # For completed challenges, the accepted phase is also historical
+    if s == ChallengeStatus.COMPLETED:
+        locked.append("challenge_accepted")
+
+    return locked
+
+
+def validate_challenge_card_phase(
+    ch: VirtualTrainingChallenge,
+    viewer_id: int,
+    phase: str,
+    for_export: bool,
+    my_attempt: Any = None,
+) -> None:
+    """Raise HTTPException if the phase is invalid, not applicable, or locked for export."""
+    if phase not in VALID_CHALLENGE_CARD_PHASES:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid phase: {phase!r}. Valid: {sorted(VALID_CHALLENGE_CARD_PHASES)}",
+        )
+    unlocked = get_unlocked_challenge_card_phases(ch, viewer_id, my_attempt)
+    locked   = get_locked_challenge_card_phases(ch, viewer_id)
+    all_relevant = set(unlocked) | set(locked)
+
+    if phase not in all_relevant:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Phase {phase!r} is not applicable to this challenge.",
+        )
+    if for_export and phase not in unlocked:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Phase {phase!r} is locked — export not available.",
+        )
+
+
+def _build_challenge_card_context(
+    ch: VirtualTrainingChallenge,
+    viewer: User,
+    challenger_attempt: Any,
+    challenged_attempt: Any,
+    phase: str,
+    my_attempt: Any = None,
+) -> dict:
+    def _skill_scores_map(attempt: Any) -> dict[str, float]:
+        if attempt is None or not attempt.skill_deltas:
+            return {}
+        return {k: float(v) for k, v in attempt.skill_deltas.items()}
+
+    is_challenger = viewer.id == ch.challenger_id
+    if my_attempt is None:
+        my_attempt  = challenger_attempt if is_challenger else challenged_attempt
+    opp_attempt = challenged_attempt if is_challenger else challenger_attempt
+
+    my_score  = float(my_attempt.score_normalized)  if my_attempt  else None
+    opp_score = float(opp_attempt.score_normalized) if opp_attempt else None
+
+    outcome_reason = _compute_outcome_reason(ch)
+    unlocked = get_unlocked_challenge_card_phases(ch, viewer.id, my_attempt)
+    is_locked = phase not in unlocked
+
+    return {
+        "challenge_id":     ch.id,
+        "phase":            phase,
+        "challenger_name":  _display_name(ch.challenger),
+        "challenged_name":  _display_name(ch.challenged),
+        "game_name":        ch.game.name if ch.game else "Unknown Game",
+        "challenge_mode":   ch.challenge_mode or "async",
+        "outcome_reason":   outcome_reason,
+        "challenger_score": float(challenger_attempt.score_normalized) if challenger_attempt else None,
+        "challenged_score": float(challenged_attempt.score_normalized) if challenged_attempt else None,
+        "winner_name":      _display_name(ch.winner) if ch.winner else None,
+        "is_draw":          bool(ch.is_draw),
+        "my_score":         my_score,
+        "opp_score":        opp_score,
+        "my_skill_scores":  _skill_scores_map(my_attempt),
+        "is_viewer_winner": ch.winner_id is not None and ch.winner_id == viewer.id,
+        "cta_label":        _PHASE_CTA.get(phase, "View challenge"),
+        "completed_at":     ch.completed_at if ch.status == ChallengeStatus.COMPLETED else None,
+        "is_locked":        is_locked,
+        "unlocked_phases":  unlocked,
+    }
+
+
+@router.get("/challenges/{challenge_id}/card/preview", response_class=HTMLResponse)
+async def challenge_card_preview(
+    challenge_id: int,
+    request: Request,
+    platform: str           = Query(...),
+    phase: str              = Query(...),
+    render_token: str | None = Query(default=None),
+    export: bool            = Query(default=False),
+    db: Session             = Depends(get_db),
+    user: "User | None"     = Depends(get_current_user_optional),
+):
+    """Render a challenge social card as HTML.
+
+    Auth: session cookie (browser) OR short-lived render JWT (Playwright export).
+    render_token is generated by challenge_card_export, expires in 60 s,
+    and is only accepted when purpose=='vt_card_render' and cid==challenge_id.
+    """
+    if render_token is not None:
+        token_user = _resolve_challenge_render_token(render_token, challenge_id, db)
+        if token_user is None:
+            raise HTTPException(status_code=401, detail="Invalid or expired render token")
+        user = token_user
+    elif user is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    if platform not in CHALLENGE_CARD_PLATFORMS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Unsupported platform: {platform!r}. Valid: {sorted(CHALLENGE_CARD_PLATFORMS)}",
+        )
+    if phase not in VALID_CHALLENGE_CARD_PHASES:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid phase: {phase!r}. Valid: {sorted(VALID_CHALLENGE_CARD_PHASES)}",
+        )
+
+    ch = db.query(VirtualTrainingChallenge).filter(
+        VirtualTrainingChallenge.id == challenge_id
+    ).first()
+    if ch is None:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+    if user.id not in (ch.challenger_id, ch.challenged_id):
+        raise HTTPException(status_code=403, detail="Participants only")
+
+    challenger_attempt = (
+        db.query(VirtualTrainingAttempt).filter(
+            VirtualTrainingAttempt.id == ch.challenger_attempt_id
+        ).first() if ch.challenger_attempt_id else None
+    )
+    challenged_attempt = (
+        db.query(VirtualTrainingAttempt).filter(
+            VirtualTrainingAttempt.id == ch.challenged_attempt_id
+        ).first() if ch.challenged_attempt_id else None
+    )
+
+    is_challenger = user.id == ch.challenger_id
+    my_attempt = challenger_attempt if is_challenger else challenged_attempt
+
+    # Validate phase is relevant (locked phases are allowed for preview)
+    unlocked = get_unlocked_challenge_card_phases(ch, user.id, my_attempt)
+    locked   = get_locked_challenge_card_phases(ch, user.id)
+    if phase not in set(unlocked) | set(locked):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Phase {phase!r} is not applicable to this challenge.",
+        )
+
+    ctx = _build_challenge_card_context(
+        ch, user, challenger_attempt, challenged_attempt, phase, my_attempt
+    )
+    template_name = (
+        "public/export/challenge/post_16_9.html"
+        if platform == "challenge_post_16_9"
+        else "public/export/challenge/story_9_16.html"
+    )
+    return templates.TemplateResponse(template_name, {"request": request, **ctx})
+
+
+@router.get("/challenges/{challenge_id}/card/export")
+async def challenge_card_export(
+    challenge_id: int,
+    request: Request,
+    platform: str = Query(...),
+    phase: str    = Query(...),
+    db: Session   = Depends(get_db),
+    user: User    = Depends(get_current_user_web),
+):
+    """Export a challenge social card as PNG. Participants only. Rate-limited 5/60s.
+
+    Only exportable (unlocked) phases are accepted — locked phases return 403.
+    """
+    from app.config import settings  # noqa: PLC0415
+    from ...core.auth import create_challenge_render_token  # noqa: PLC0415
+
+    if platform not in CHALLENGE_CARD_PLATFORMS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Unsupported platform: {platform!r}. Valid: {sorted(CHALLENGE_CARD_PLATFORMS)}",
+        )
+    if phase not in VALID_CHALLENGE_CARD_PHASES:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid phase: {phase!r}. Valid: {sorted(VALID_CHALLENGE_CARD_PHASES)}",
+        )
+
+    ch = db.query(VirtualTrainingChallenge).filter(
+        VirtualTrainingChallenge.id == challenge_id
+    ).first()
+    if ch is None:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+    if user.id not in (ch.challenger_id, ch.challenged_id):
+        raise HTTPException(status_code=403, detail="Participants only")
+
+    is_challenger = user.id == ch.challenger_id
+    my_attempt_id = ch.challenger_attempt_id if is_challenger else ch.challenged_attempt_id
+    my_attempt = (
+        db.query(VirtualTrainingAttempt).filter(
+            VirtualTrainingAttempt.id == my_attempt_id
+        ).first() if my_attempt_id else None
+    )
+
+    # Enforce export only for unlocked phases
+    validate_challenge_card_phase(ch, user.id, phase, for_export=True, my_attempt=my_attempt)
+
+    client_ip = request.client.host if request.client else "unknown"
+    rate_key  = f"vt_card:{challenge_id}:{user.id}:{client_ip}"
+    if not _export_svc.check_export_rate_limit(rate_key):
+        raise HTTPException(
+            status_code=429,
+            detail="Export rate limit exceeded (5 per minute). Please wait before exporting again.",
+        )
+
+    token = create_challenge_render_token(user.id, challenge_id)
+    render_url = (
+        f"http://127.0.0.1:{settings.APP_INTERNAL_PORT}"
+        f"/challenges/{challenge_id}/card/preview"
+        f"?platform={platform}&phase={phase}&export=1&render_token={token}"
+    )
+
+    try:
+        png_bytes = await asyncio.to_thread(
+            _export_svc._sync_take_screenshot, render_url, platform
+        )
+    except _export_svc.CardExportTimeoutError:
+        raise HTTPException(status_code=504, detail="Card render timed out")
+
+    filename = f"lfa_challenge_{challenge_id}_{phase}_{platform}.png"
+    return Response(
+        content=png_bytes,
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control":       "no-store",
+            "X-Export-Platform":   platform,
+            "X-Export-Phase":      phase,
+        },
+    )
+
+
 # ── POST /challenges/{id}/decline ─────────────────────────────────────────────
 
 @router.post("/challenges/{challenge_id}/decline")
@@ -688,6 +1099,11 @@ async def decline_challenge(
     )
 
     db.commit()
+    publish_challenge_event(
+        [challenge.challenger_id, challenge.challenged_id],
+        "challenge_declined",
+        {"challenge_id": challenge_id},
+    )
     return RedirectResponse(url="/challenges?success=challenge_declined", status_code=303)
 
 
@@ -723,6 +1139,11 @@ async def cancel_challenge(
     )
 
     db.commit()
+    publish_challenge_event(
+        [challenge.challenger_id, challenge.challenged_id],
+        "challenge_cancelled",
+        {"challenge_id": challenge_id},
+    )
     return RedirectResponse(url="/challenges?success=challenge_cancelled", status_code=303)
 
 

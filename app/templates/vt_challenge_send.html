@@ -102,16 +102,17 @@
 
 {% if error %}
 <div class="cs-flash-err">
-    {% if error == "self_challenge"        %}You cannot challenge yourself.
-    {% elif error == "not_friends"         %}You can only challenge accepted friends.
-    {% elif error == "challenge_active"    %}There is already an active challenge between you and this player on that game.
-    {% elif error == "game_not_found"      %}Game not found.
-    {% elif error == "game_not_compatible" %}This game does not support challenges.
-    {% elif error == "invalid_difficulty"  %}Invalid difficulty selected.
-    {% elif error == "expert_locked"             %}Expert difficulty is not unlocked yet (need 70%+ on 3 Hard attempts).
-    {% elif error == "user_not_found"            %}Player not found.
-    {% elif error == "invalid_completion_window" %}Invalid completion window selected.
-    {% elif error == "category_not_available"    %}On-site and Hybrid challenges are coming soon.
+    {% if error == "self_challenge"          %}You cannot challenge yourself.
+    {% elif error == "not_friends"           %}You can only challenge accepted friends.
+    {% elif error == "challenge_limit_reached" %}You already have {{ max_per_cat }} active challenges with this player in this category (max {{ max_per_cat }}).
+    {% elif error == "challenge_active"      %}There is already an active challenge between you and this player on that game.
+    {% elif error == "game_not_found"        %}Game not found.
+    {% elif error == "game_not_compatible"   %}This game does not support challenges.
+    {% elif error == "invalid_difficulty"    %}Invalid difficulty selected.
+    {% elif error == "expert_locked"               %}Expert difficulty is not unlocked yet (need 70%+ on 3 Hard attempts).
+    {% elif error == "user_not_found"              %}Player not found.
+    {% elif error == "invalid_completion_window"   %}Invalid completion window selected.
+    {% elif error == "category_not_available"      %}On-site and Hybrid challenges are coming soon.
     {% else %}{{ error }}
     {% endif %}
 </div>

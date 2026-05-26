@@ -26,6 +26,10 @@ UI-23  GET /challenges: renders inbox template (200)
 UI-24  GET /challenges/send: renders send form (200, friends + games in context)
 UI-25  Notification links: all POST actions redirect to /challenges
 UI-26  _accepted_friends: returns User objects for both FK directions
+UI-27  WS publish: accept_challenge → challenge_accepted to both challenger + challenged
+UI-28  WS publish: send_challenge → challenge_sent to both sender + recipient
+UI-29  WS publish: decline_challenge → challenge_declined published
+UI-30  WS publish: cancel_challenge → challenge_cancelled published
 """
 from __future__ import annotations
 
@@ -451,7 +455,7 @@ class TestSendChallengeDifficulty:
         _mock_snap = {"game_code": "target_tracking", "difficulty": "hard",
                       "arena": {"width": 480, "height": 360}, "phases": []}
         with patch(f"{_BASE}.is_friends",        return_value=True), \
-             patch(f"{_BASE}.get_active_challenge", return_value=None), \
+             patch(f"{_BASE}.count_active_challenges_in_category", return_value=0), \
              patch(f"{_BASE}.VirtualTrainingService.is_expert_unlocked", return_value=False), \
              patch(f"{_BASE}.generate_snapshot", return_value=_mock_snap), \
              patch(f"{_BASE}.notification_service.create_notification"), \
@@ -477,7 +481,7 @@ class TestSendChallengeDifficulty:
         db.query.return_value.filter.return_value.first.side_effect = [target, game, None]
 
         with patch(f"{_BASE}.is_friends",        return_value=True), \
-             patch(f"{_BASE}.get_active_challenge", return_value=None):
+             patch(f"{_BASE}.count_active_challenges_in_category", return_value=0):
             result = _run(send_challenge(
                 challenged_user_id=2, game_id=2, message=None,
                 difficulty_level="legendary",
@@ -493,9 +497,9 @@ class TestSendChallengeDifficulty:
         game   = _game(gid=2, code="target_tracking")
         db.query.return_value.filter.return_value.first.side_effect = [target, game, None]
 
-        with patch(f"{_BASE}.is_friends",                return_value=True), \
-             patch(f"{_BASE}.get_active_challenge",        return_value=None), \
-             patch(f"{_BASE}.VirtualTrainingService.is_expert_unlocked", return_value=False):
+        with patch(f"{_BASE}.is_friends",                                    return_value=True), \
+             patch(f"{_BASE}.count_active_challenges_in_category",           return_value=0), \
+             patch(f"{_BASE}.VirtualTrainingService.is_expert_unlocked",     return_value=False):
             result = _run(send_challenge(
                 challenged_user_id=2, game_id=2, message=None,
                 difficulty_level="expert",
@@ -512,8 +516,8 @@ class TestSendChallengeDifficulty:
         db.query.return_value.filter.return_value.first.side_effect = [target, game, None]
 
         _mock_snap = {"game_code": "memory_sequence", "grid_tiles": 12, "phases": []}
-        with patch(f"{_BASE}.is_friends",          return_value=True), \
-             patch(f"{_BASE}.get_active_challenge",  return_value=None), \
+        with patch(f"{_BASE}.is_friends",                              return_value=True), \
+             patch(f"{_BASE}.count_active_challenges_in_category",   return_value=0), \
              patch(f"{_BASE}.generate_snapshot", return_value=_mock_snap), \
              patch(f"{_BASE}.notification_service.create_notification"), \
              patch(f"{_BASE}.VirtualTrainingChallenge") as MockCh:
@@ -672,8 +676,8 @@ class TestNotificationLinks:
         def _capture(**kwargs):
             captured_link["link"] = kwargs.get("link")
 
-        with patch(f"{_BASE}.is_friends",           return_value=True), \
-             patch(f"{_BASE}.get_active_challenge",   return_value=None), \
+        with patch(f"{_BASE}.is_friends",                             return_value=True), \
+             patch(f"{_BASE}.count_active_challenges_in_category",  return_value=0), \
              patch(f"{_BASE}.VirtualTrainingChallenge", MagicMock), \
              patch(f"{_BASE}.notification_service.create_notification", side_effect=_capture):
             _run(send_challenge(
@@ -682,6 +686,103 @@ class TestNotificationLinks:
             ))
 
         assert captured_link.get("link") == "/challenges"
+
+
+# ── UI-27..30: WS publish contract ───────────────────────────────────────────
+
+class TestChallengeWsPublish:
+    """Verify that lifecycle actions publish the right event to the right user_ids.
+
+    These tests guard the real-time UX chain: if the publish call is missing or
+    sends to wrong IDs, the other party's browser never updates.
+    """
+
+    def _pending_challenge(self, challenger_id=1, challenged_id=2):
+        ch = MagicMock()
+        ch.id             = 10
+        ch.challenger_id  = challenger_id
+        ch.challenged_id  = challenged_id
+        ch.status         = ChallengeStatus.PENDING
+        ch.expires_at     = datetime.now(timezone.utc) + timedelta(days=7)
+        ch.completion_window_seconds = None
+        return ch
+
+    def test_ui27_accept_publishes_to_both_users(self):
+        """accept_challenge fires challenge_accepted to BOTH challenger and challenged."""
+        from app.api.web_routes.vt_challenges import accept_challenge
+
+        ch = self._pending_challenge(challenger_id=1, challenged_id=2)
+        db = _db()
+        db.query.return_value.filter.return_value.first.return_value = ch
+        user = _user(uid=2)
+
+        calls = []
+        with patch(f"{_BASE}.publish_challenge_event", side_effect=lambda *a, **kw: calls.append(a)) as mock_pub, \
+             patch(f"{_BASE}.notification_service.create_notification"):
+            _run(accept_challenge(challenge_id=10, db=db, user=user))
+
+        assert mock_pub.called, "publish_challenge_event must be called on accept"
+        published_ids, event_type = calls[0][0], calls[0][1]
+        assert set(published_ids) == {1, 2}, "both challenger and challenged must receive the event"
+        assert event_type == "challenge_accepted"
+
+    def test_ui28_send_publishes_to_both_users(self):
+        """send_challenge fires challenge_sent to sender AND recipient."""
+        from app.api.web_routes.vt_challenges import send_challenge
+
+        user   = _user(uid=1)
+        target = _user(uid=2)
+        game   = _game(code="memory_sequence")
+        db     = _db()
+        db.query.return_value.filter.return_value.first.side_effect = [target, game, None]
+
+        calls = []
+        with patch(f"{_BASE}.is_friends", return_value=True), \
+             patch(f"{_BASE}.count_active_challenges_in_category", return_value=0), \
+             patch(f"{_BASE}.VirtualTrainingChallenge", MagicMock), \
+             patch(f"{_BASE}.publish_challenge_event", side_effect=lambda *a, **kw: calls.append(a)) as mock_pub, \
+             patch(f"{_BASE}.notification_service.create_notification"):
+            _run(send_challenge(
+                challenged_user_id=2, game_id=1, message=None,
+                difficulty_level=None, db=db, user=user,
+            ))
+
+        assert mock_pub.called, "publish_challenge_event must be called on send"
+        published_ids, event_type = calls[0][0], calls[0][1]
+        assert 1 in published_ids and 2 in published_ids
+        assert event_type == "challenge_sent"
+
+    def test_ui29_decline_publishes_event(self):
+        """decline_challenge fires challenge_declined."""
+        from app.api.web_routes.vt_challenges import decline_challenge
+
+        ch = self._pending_challenge(challenger_id=1, challenged_id=2)
+        db = _db()
+        db.query.return_value.filter.return_value.first.return_value = ch
+        user = _user(uid=2)
+
+        with patch(f"{_BASE}.publish_challenge_event") as mock_pub, \
+             patch(f"{_BASE}.notification_service.create_notification"):
+            _run(decline_challenge(challenge_id=10, db=db, user=user))
+
+        mock_pub.assert_called_once()
+        assert mock_pub.call_args[0][1] == "challenge_declined"
+
+    def test_ui30_cancel_publishes_event(self):
+        """cancel_challenge fires challenge_cancelled."""
+        from app.api.web_routes.vt_challenges import cancel_challenge
+
+        ch = self._pending_challenge(challenger_id=1, challenged_id=2)
+        db = _db()
+        db.query.return_value.filter.return_value.first.return_value = ch
+        user = _user(uid=1)
+
+        with patch(f"{_BASE}.publish_challenge_event") as mock_pub, \
+             patch(f"{_BASE}.notification_service.create_notification"):
+            _run(cancel_challenge(challenge_id=10, db=db, user=user))
+
+        mock_pub.assert_called_once()
+        assert mock_pub.call_args[0][1] == "challenge_cancelled"
 
 
 # ── UI-26: _accepted_friends ──────────────────────────────────────────────────

@@ -347,3 +347,39 @@
 
 </div>
 {% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+  var _refreshed = false;
+  var LABELS = {
+    'ws:challenge_sent':         'New challenge received',
+    'ws:challenge_accepted':     'Challenge accepted — go play!',
+    'ws:challenge_declined':     'Challenge declined',
+    'ws:challenge_cancelled':    'Challenge cancelled',
+    'ws:challenge_completed':    'Challenge completed!',
+    'ws:challenge_forfeited':    'Challenge ended by forfeit',
+    'ws:challenge_no_contest':   'Challenge: no contest',
+    'ws:challenge_live_started': 'Live game started!',
+    'ws:challenge_expired':      'Challenge expired',
+  };
+
+  function _onChallengeUpdate(label) {
+    if (_refreshed) return;
+    _refreshed = true;
+    var banner = document.createElement('div');
+    banner.className = 'ch-flash ch-flash-ok';
+    banner.style.cssText = 'cursor:pointer;';
+    banner.textContent = '🔔 ' + label + ' — updating…';
+    var container = document.querySelector('.ch-container');
+    if (container) container.insertBefore(banner, container.firstChild);
+    setTimeout(function () { window.location.reload(); }, 800);
+  }
+
+  Object.keys(LABELS).forEach(function (name) {
+    document.addEventListener(name, function () { _onChallengeUpdate(LABELS[name]); });
+  });
+})();
+</script>
+{% endblock %}

@@ -450,6 +450,64 @@
 </div>
 {% endif %}
 
+{# ── Social card export — COMPLETED challenges only, with explicit phase ── #}
+{% if challenge.status.value == 'completed' %}
+{% set _is_viewer_winner = (winner is not none) and ((is_challenger and winner.id == challenge.challenger_id) or (not is_challenger and winner.id == challenge.challenged_id)) %}
+{% set _card_phase = outcome_reason if outcome_reason in (
+    'score_win', 'draw', 'no_contest'
+) else (
+    'completed_forfeit_win'  if (outcome_reason in ('forfeit_post_start_timeout','forfeit_deadline','forfeit_no_show','forfeit') and _is_viewer_winner)
+    else 'completed_forfeit_loss' if outcome_reason in ('forfeit_post_start_timeout','forfeit_deadline','forfeit_no_show','forfeit')
+    else outcome_reason
+) %}
+{% set _card_phase = _card_phase | replace('score_win','completed_score_win') | replace('draw','completed_draw') %}
+{% set _my_skill_scores = challenger_skill_scores if is_challenger else challenged_skill_scores %}
+<div class="vcd-card" style="margin-top:1.5rem;">
+    <div style="font-size:0.78rem;font-weight:700;color:var(--app-text-muted);
+                text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.5rem;">Share Card</div>
+    <div style="font-size:0.8rem;color:var(--app-text-muted);margin-bottom:0.75rem;">
+        Quick export — or
+        <a href="/my-cards/challenge-card#challenge-{{ challenge.id }}"
+           style="color:var(--app-accent,#667eea);text-decoration:none;font-weight:600;">
+            view in My Cards →
+        </a>
+    </div>
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+        <a href="/challenges/{{ challenge.id }}/card/export?platform=challenge_post_16_9&phase={{ _card_phase }}"
+           style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.45rem 1rem;
+                  background:var(--app-surface-2,#1e2335);border:1px solid var(--app-border,#2a3050);
+                  border-radius:6px;font-size:0.8rem;font-weight:600;color:var(--app-text-muted);
+                  text-decoration:none;" download>
+            ↓ Post (16:9)
+        </a>
+        <a href="/challenges/{{ challenge.id }}/card/export?platform=challenge_story_9_16&phase={{ _card_phase }}"
+           style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.45rem 1rem;
+                  background:var(--app-surface-2,#1e2335);border:1px solid var(--app-border,#2a3050);
+                  border-radius:6px;font-size:0.8rem;font-weight:600;color:var(--app-text-muted);
+                  text-decoration:none;" download>
+            ↓ Story (9:16)
+        </a>
+        {% if _my_skill_scores %}
+        <a href="/challenges/{{ challenge.id }}/card/export?platform=challenge_post_16_9&phase=skill_delta_result"
+           style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.45rem 1rem;
+                  background:var(--app-surface-2,#1e2335);border:1px solid var(--app-border,#2a3050);
+                  border-radius:6px;font-size:0.8rem;font-weight:600;color:var(--app-text-muted);
+                  text-decoration:none;" download>
+            ↓ Skill Progress Card
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+{# Non-completed: show "View in My Cards" link only, no direct export #}
+<div style="margin-top:1rem;font-size:0.8rem;color:var(--app-text-muted);">
+    <a href="/my-cards/challenge-card#challenge-{{ challenge.id }}"
+       style="color:var(--app-accent,#667eea);text-decoration:none;font-weight:600;">
+        ⚡ View in My Cards →
+    </a>
+</div>
+{% endif %}
+
 {# ── Footer ── #}
 <div class="vcd-footer">
     <a href="/challenges">← Back to Challenges</a>
@@ -461,4 +519,43 @@
 {# P1 TODO: game.config["live_submit_window_seconds"] per-game override for POST_START_SUBMIT_WINDOW_SECONDS #}
 {# P2 TECH DEBT (TRUST-VT-SCORE-01): score_normalized is client-submitted; server-side
    recomputation from raw_metrics.per_round needed to prevent score manipulation in score_win cases. #}
+
+{% block scripts %}
+<script>
+(function() {
+  var CHALLENGE_ID = {{ challenge.id }};
+  var STATUS       = {{ challenge.status.value | tojson }};
+
+  // Only listen when the challenge is not yet in a terminal state
+  var terminalStatuses = ['completed', 'expired', 'declined', 'cancelled'];
+  if (terminalStatuses.indexOf(STATUS) !== -1) return;
+
+  function _reloadPage() {
+    // Hard reload so the rendered Jinja2 state is fresh
+    window.location.reload();
+  }
+
+  function _onChallengeEvent(e) {
+    var d = e.detail || {};
+    if (d.challenge_id !== undefined && d.challenge_id !== CHALLENGE_ID) return;
+    // Brief delay so the DB commit is visible before we re-render
+    setTimeout(_reloadPage, 600);
+  }
+
+  var events = [
+    'ws:challenge_accepted',
+    'ws:challenge_declined',
+    'ws:challenge_cancelled',
+    'ws:challenge_completed',
+    'ws:challenge_forfeited',
+    'ws:challenge_no_contest',
+    'ws:challenge_live_started',
+    'ws:challenge_expired',
+  ];
+  events.forEach(function(name) {
+    document.addEventListener(name, _onChallengeEvent);
+  });
+})();
+</script>
+{% endblock %}
 {% endblock %}

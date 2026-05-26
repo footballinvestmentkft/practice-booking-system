@@ -14,6 +14,7 @@ from ...models.notification import NotificationType
 from ...models.user import User
 from ...models.virtual_training import VirtualTrainingAttempt, VirtualTrainingGame
 from ...models.vt_challenge import ChallengeStatus, VirtualTrainingChallenge
+from ...core.redis_pubsub import publish_challenge_event
 from ...services import notification_service
 from ...services.challenge_completion_service import apply_forfeit_if_deadline_passed
 from ...services.virtual_training_service import VirtualTrainingService
@@ -195,6 +196,15 @@ def _link_attempt_to_challenge(
         challenge.updated_at   = now
         db.flush()
         _send_completion_notifications(db, challenge, winner_id, is_draw)
+        publish_challenge_event(
+            [challenge.challenger_id, challenge.challenged_id],
+            "challenge_completed",
+            {
+                "challenge_id": challenge.id,
+                "winner_id": winner_id,
+                "is_draw": is_draw,
+            },
+        )
 
     is_winner = (winner_id == user_id) if challenge.status == ChallengeStatus.COMPLETED else None
     is_draw_ctx = is_draw if challenge.status == ChallengeStatus.COMPLETED else None

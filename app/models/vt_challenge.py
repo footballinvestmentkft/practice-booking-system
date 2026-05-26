@@ -59,6 +59,18 @@ CHALLENGE_COMPATIBLE_GAMES: frozenset[str] = frozenset({
     "target_tracking",
 })
 
+# ── Per-category active challenge limit ────────────────────────────────────────
+# Maximum number of simultaneously active challenges between two users within
+# the same game category (VirtualTrainingGame.game_type).  Application-level
+# only — no DB constraint backs this. See count_active_challenges_in_category().
+#
+# Race-condition note: because this is a read-then-write guard without a DB lock,
+# concurrent requests from the same user pair in the same category could
+# theoretically exceed this limit by 1 in a multi-worker deployment.  The risk
+# is negligible for single-worker production; add SELECT FOR UPDATE or a Redis
+# advisory lock before scaling horizontally.
+MAX_ACTIVE_PER_CATEGORY: int = 3
+
 # ── Completion window options (seconds, async mode) ───────────────────────────
 VALID_COMPLETION_WINDOWS: frozenset[int] = frozenset({
     1800,    # 30 minutes
@@ -190,7 +202,11 @@ def get_active_challenge(
     user_b_id: int,
     game_id: int,
 ) -> VirtualTrainingChallenge | None:
-    """Return active challenge between two users on a game (either direction)."""
+    """Return active challenge between two users on a specific game (either direction).
+
+    Kept for backward compatibility and direct per-game lookups.
+    The send_challenge guard now uses count_active_challenges_in_category().
+    """
     return (
         db.query(VirtualTrainingChallenge)
         .filter(
@@ -210,4 +226,42 @@ def get_active_challenge(
             ),
         )
         .first()
+    )
+
+
+def count_active_challenges_in_category(
+    db: Session,
+    user_a_id: int,
+    user_b_id: int,
+    game_type: str,
+) -> int:
+    """Count active challenges between two users within a game category (bidirectional).
+
+    Used by send_challenge to enforce MAX_ACTIVE_PER_CATEGORY.
+    ``game_type`` is VirtualTrainingGame.game_type (e.g. "memory_span", "tracking").
+    """
+    from sqlalchemy import func
+    from app.models.virtual_training import VirtualTrainingGame
+
+    _ACTIVE = [
+        ChallengeStatus.PENDING,
+        ChallengeStatus.ACCEPTED,
+        ChallengeStatus.LIVE_LOBBY,
+        ChallengeStatus.LIVE_IN_PROGRESS,
+    ]
+    return (
+        db.query(func.count(VirtualTrainingChallenge.id))
+        .join(VirtualTrainingGame, VirtualTrainingChallenge.game_id == VirtualTrainingGame.id)
+        .filter(
+            VirtualTrainingGame.game_type == game_type,
+            VirtualTrainingChallenge.status.in_(_ACTIVE),
+            (
+                (VirtualTrainingChallenge.challenger_id == user_a_id) &
+                (VirtualTrainingChallenge.challenged_id == user_b_id)
+            ) | (
+                (VirtualTrainingChallenge.challenger_id == user_b_id) &
+                (VirtualTrainingChallenge.challenged_id == user_a_id)
+            ),
+        )
+        .scalar()
     )

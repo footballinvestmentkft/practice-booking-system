@@ -11,7 +11,7 @@ CH-08  POST /challenges/send — target not found → error=user_not_found
 CH-09  POST /challenges/send — not friends → error=not_friends
 CH-10  POST /challenges/send — game not found → error=game_not_found
 CH-11  POST /challenges/send — incompatible game → error=game_not_compatible
-CH-12  POST /challenges/send — duplicate active challenge → error=challenge_active
+CH-12  POST /challenges/send — category limit reached (count==3) → error=challenge_limit_reached
 CH-13  POST /challenges/send — success: PENDING row created + VT_CHALLENGE_RECEIVED notification
 CH-14  POST /challenges/{id}/accept — wrong challenged_id → error=not_found
 CH-15  POST /challenges/{id}/accept — expired → status=EXPIRED + error=challenge_expired
@@ -242,24 +242,22 @@ class TestSendChallenge:
             ))
         assert "error=game_not_compatible" in result.headers["location"]
 
-    def test_ch12_duplicate_active_challenge(self):
+    def test_ch12_category_limit_reached_blocks_send(self):
+        """count_active_challenges_in_category == MAX → error=challenge_limit_reached."""
         from app.api.web_routes.vt_challenges import send_challenge
-        user = _user(uid=1)
+        user   = _user(uid=1)
         target = _user(uid=2)
-        game = _game(code="memory_sequence")
-        existing = _challenge()
-        db = _db()
-
-        call_results = [target, game]
-        db.query.return_value.filter.return_value.first.side_effect = call_results
+        game   = _game(code="memory_sequence")
+        db     = _db()
+        db.query.return_value.filter.return_value.first.side_effect = [target, game]
 
         with patch(f"{_BASE}.is_friends", return_value=True), \
-             patch(f"{_BASE}.get_active_challenge", return_value=existing):
+             patch(f"{_BASE}.count_active_challenges_in_category", return_value=3):
             result = _run(send_challenge(
                 challenged_user_id=2, game_id=1, message=None,
                 db=db, user=user,
             ))
-        assert "error=challenge_active" in result.headers["location"]
+        assert "error=challenge_limit_reached" in result.headers["location"]
 
     def test_ch13_success_creates_pending_and_notifies(self):
         from app.api.web_routes.vt_challenges import send_challenge
@@ -273,7 +271,7 @@ class TestSendChallenge:
 
         _mock_snap = {"game_code": "memory_sequence", "grid_tiles": 12, "phases": []}
         with patch(f"{_BASE}.is_friends", return_value=True), \
-             patch(f"{_BASE}.get_active_challenge", return_value=None), \
+             patch(f"{_BASE}.count_active_challenges_in_category", return_value=0), \
              patch(f"{_BASE}.generate_snapshot", return_value=_mock_snap), \
              patch(f"{_BASE}.notification_service") as mock_svc:
             result = _run(send_challenge(
@@ -533,7 +531,7 @@ class TestSendChallengeSnapshot:
 
         snap = snapshot or _MOCK_MS_SNAPSHOT
         with patch(f"{_BASE}.is_friends", return_value=True), \
-             patch(f"{_BASE}.get_active_challenge", return_value=None), \
+             patch(f"{_BASE}.count_active_challenges_in_category", return_value=0), \
              patch(f"{_BASE}.generate_snapshot", return_value=snap), \
              patch(f"{_BASE}.notification_service"):
             result = _run(send_challenge(
@@ -582,7 +580,7 @@ class TestSendChallengeSnapshot:
         db.query.return_value.filter.return_value.first.side_effect = [target, game]
 
         with patch(f"{_BASE}.is_friends", return_value=True), \
-             patch(f"{_BASE}.get_active_challenge", return_value=None):
+             patch(f"{_BASE}.count_active_challenges_in_category", return_value=0):
             result = _run(send_challenge(
                 challenged_user_id=2, game_id=1, message=None,
                 challenge_mode="invalid_mode",
@@ -615,7 +613,7 @@ class TestSendChallengeSnapshot:
         db.query.return_value.filter.return_value.first.side_effect = [target, game]
 
         with patch(f"{_BASE}.is_friends", return_value=True), \
-             patch(f"{_BASE}.get_active_challenge", return_value=None), \
+             patch(f"{_BASE}.count_active_challenges_in_category", return_value=0), \
              patch(f"{_BASE}.VirtualTrainingService") as mock_vts, \
              patch(f"{_BASE}.generate_snapshot", return_value=_MOCK_TT_SNAPSHOT), \
              patch(f"{_BASE}.notification_service"):
@@ -642,7 +640,7 @@ class TestSendChallengeSnapshot:
         db.query.return_value.filter.return_value.first.side_effect = [target, game]
 
         with patch(f"{_BASE}.is_friends", return_value=True), \
-             patch(f"{_BASE}.get_active_challenge", return_value=None), \
+             patch(f"{_BASE}.count_active_challenges_in_category", return_value=0), \
              patch(f"{_BASE}.generate_snapshot",
                    side_effect=ValueError("boom")):
             result = _run(send_challenge(
@@ -725,7 +723,7 @@ class TestSendChallengeCompletionWindow:
 
         _snap = {"game_code": "memory_sequence", "grid_tiles": 12, "phases": []}
         with patch(f"{_BASE}.is_friends", return_value=True), \
-             patch(f"{_BASE}.get_active_challenge", return_value=None), \
+             patch(f"{_BASE}.count_active_challenges_in_category", return_value=0), \
              patch(f"{_BASE}.generate_snapshot", return_value=_snap), \
              patch(f"{_BASE}.notification_service"):
             result = _run(send_challenge(
@@ -1285,3 +1283,76 @@ class TestLiveBugFixes:
         body = json.loads(resp.body)
         expected = f"/virtual-training/target-tracking?challenge_id={ch.id}&difficulty=medium"
         assert body["game_url"] == expected
+
+
+# ── CH-24/CH-25: category-level limit boundary tests ─────────────────────────
+
+class TestCategoryLimitBoundary:
+    """
+    CH-24  count < MAX_ACTIVE_PER_CATEGORY → send succeeds (not blocked)
+    CH-25  count in other category does NOT affect this category (isolated limit)
+    """
+
+    def _send(self, db, user, target, game, count_return):
+        from app.api.web_routes.vt_challenges import send_challenge
+        _snap = {"game_code": "memory_sequence", "grid_tiles": 12, "phases": []}
+        with patch(f"{_BASE}.is_friends", return_value=True), \
+             patch(f"{_BASE}.count_active_challenges_in_category", return_value=count_return), \
+             patch(f"{_BASE}.generate_snapshot", return_value=_snap), \
+             patch(f"{_BASE}.notification_service"):
+            return _run(send_challenge(
+                challenged_user_id=target.id,
+                game_id=1,
+                message=None,
+                db=db,
+                user=user,
+            ))
+
+    def test_ch24_below_limit_allows_send(self):
+        """2 active in category < 3 → challenge is created."""
+        user   = _user(uid=1)
+        target = _user(uid=2)
+        game   = _game(code="memory_sequence")
+        db     = _db()
+        db.query.return_value.filter.return_value.first.side_effect = [target, game]
+
+        result = self._send(db, user, target, game, count_return=2)
+        assert "success=challenge_sent" in result.headers["location"]
+        db.add.assert_called_once()
+
+    def test_ch25_category_limit_is_isolated_per_game_type(self):
+        """count_active_challenges_in_category is called with game.game_type,
+        not a cross-category count.  If tracking category has 3 active challenges
+        but memory_span has 0, a new memory_sequence challenge must still succeed.
+        """
+        from app.api.web_routes.vt_challenges import send_challenge
+        from app.models.vt_challenge import MAX_ACTIVE_PER_CATEGORY
+
+        user   = _user(uid=1)
+        target = _user(uid=2)
+        game   = _game(code="memory_sequence")
+        db     = _db()
+        db.query.return_value.filter.return_value.first.side_effect = [target, game]
+
+        _snap = {"game_code": "memory_sequence", "grid_tiles": 12, "phases": []}
+
+        captured_game_type = {}
+
+        def _count_mock(db, uid_a, uid_b, game_type):
+            captured_game_type["value"] = game_type
+            # Simulate: tracking has 3 active challenges, memory_span has 0
+            return MAX_ACTIVE_PER_CATEGORY if game_type == "tracking" else 0
+
+        with patch(f"{_BASE}.is_friends", return_value=True), \
+             patch(f"{_BASE}.count_active_challenges_in_category", side_effect=_count_mock), \
+             patch(f"{_BASE}.generate_snapshot", return_value=_snap), \
+             patch(f"{_BASE}.notification_service"):
+            result = _run(send_challenge(
+                challenged_user_id=2, game_id=1, message=None,
+                db=db, user=user,
+            ))
+
+        # memory_sequence → game_type should be passed, not "tracking"
+        assert captured_game_type.get("value") == game.game_type
+        # Since memory_span count == 0 < 3, challenge succeeds
+        assert "success=challenge_sent" in result.headers["location"]

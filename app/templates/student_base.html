@@ -79,8 +79,16 @@
     {% block student_content %}{% endblock %}
 </main>
 
+<script src="/static/js/ws_client.js?v=2"></script>
+
+{# ── WS toast container ────────────────────────────────────────────────────── #}
+<div id="ws-toast-container" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;"></div>
+
 {# ── Unread-count badge polling (same as unified_header.html) ─────────────── #}
 <script>
+var _notifPollInterval = 60000;
+var _notifPollTimer = null;
+
 function updateUnreadBadges() {
     fetch('/unread-counts')
         .then(function(r) { return r.ok ? r.json() : null; })
@@ -99,8 +107,62 @@ function updateUnreadBadges() {
         })
         .catch(function() {});
 }
+
+function _startBadgePoll(intervalMs) {
+    if (_notifPollTimer) clearInterval(_notifPollTimer);
+    _notifPollInterval = intervalMs;
+    _notifPollTimer = setInterval(updateUnreadBadges, intervalMs);
+}
+
 updateUnreadBadges();
-setInterval(updateUnreadBadges, 60000);
+_startBadgePoll(60000);
+
+// On WS notification: bump badge immediately + trigger a quick refresh
+document.addEventListener('ws:notification_created', function(e) {
+    var nb = document.getElementById('hdr-notif-badge');
+    if (nb) {
+        var cur = parseInt(nb.textContent) || 0;
+        nb.textContent = cur + 1;
+        nb.style.display = 'inline-block';
+    }
+    _showWsToast(e.detail.title || 'New notification', e.detail.link || '/notifications');
+});
+
+// On WS fallback: drop polling to 15s (more frequent since WS is unavailable)
+document.addEventListener('ws:fallback', function() {
+    _startBadgePoll(15000);
+});
+
+function _showWsToast(message, link) {
+    var container = document.getElementById('ws-toast-container');
+    if (!container) return;
+    var toast = document.createElement('a');
+    toast.href = link || '#';
+    toast.style.cssText = [
+        'display:block',
+        'background:#1e2840',
+        'color:#e8eaf0',
+        'border:1px solid #2a3a60',
+        'border-radius:8px',
+        'padding:10px 16px',
+        'font-size:0.88rem',
+        'text-decoration:none',
+        'pointer-events:auto',
+        'max-width:280px',
+        'box-shadow:0 4px 16px rgba(0,0,0,0.4)',
+        'transition:opacity 0.3s',
+        'opacity:0',
+    ].join(';');
+    toast.textContent = message;
+    container.appendChild(toast);
+    // Fade in
+    requestAnimationFrame(function() { toast.style.opacity = '1'; });
+    // Fade out after 4s
+    setTimeout(function() {
+        toast.style.opacity = '0';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }, 4000);
+}
 
 function toggleStudentNav() {
     var nav = document.getElementById('student-nav');

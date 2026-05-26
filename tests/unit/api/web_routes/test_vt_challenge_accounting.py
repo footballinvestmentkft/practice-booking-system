@@ -523,9 +523,9 @@ class TestChallengeCategoryGuard:
         db.query.return_value.filter.return_value.first.side_effect = [target, game, None]
 
         _mock_snap = {"game_code": "memory_sequence", "grid_tiles": 12}
-        with patch(f"{_BASE}.is_friends",            return_value=True), \
-             patch(f"{_BASE}.get_active_challenge",   return_value=None), \
-             patch(f"{_BASE}.generate_snapshot",      return_value=_mock_snap), \
+        with patch(f"{_BASE}.is_friends",                              return_value=True), \
+             patch(f"{_BASE}.count_active_challenges_in_category",   return_value=0), \
+             patch(f"{_BASE}.generate_snapshot",                     return_value=_mock_snap), \
              patch(f"{_BASE}.notification_service.create_notification"), \
              patch(f"{_BASE}.VirtualTrainingChallenge") as MockCh:
             MockCh.return_value = MagicMock()

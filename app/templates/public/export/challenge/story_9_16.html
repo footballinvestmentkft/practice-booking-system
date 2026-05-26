@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1080">
+<title>LFA Challenge Card</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1080px;
+    height: 1920px;
+    overflow: hidden;
+    background: #0a0e1a;
+    color: #fff;
+    font-family: 'Rajdhani', 'Barlow Condensed', sans-serif;
+  }
+  .card-wrap {
+    width: 1080px;
+    height: 1920px;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #0a0e1a 0%, #141929 50%, #1a2340 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .card-wrap::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #f5c518 0%, #e8a000 100%);
+  }
+
+  /* ── Locked overlay ── */
+  .locked-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10,14,26,0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+  .locked-text {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #4a5570;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* ── Header ── */
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 60px 80px 40px;
+  }
+  .lfa-brand {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: #f5c518;
+    text-transform: uppercase;
+  }
+  .card-meta {
+    font-size: 1.1rem;
+    color: #7a8aaa;
+    text-align: right;
+  }
+  .phase-tag {
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #4a5570;
+    margin-top: 4px;
+  }
+
+  /* ── VS block (vertical) ── */
+  .vs-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    padding: 60px 80px;
+    flex: 1;
+  }
+  .player-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+  .player-name {
+    font-size: 3.2rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-align: center;
+    color: #e8eaf0;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+  .player-score {
+    font-size: 5.5rem;
+    font-weight: 800;
+    color: #f5c518;
+    line-height: 1;
+  }
+  .player-score.no-score {
+    font-size: 2.8rem;
+    color: #4a5570;
+  }
+  .vs-divider {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  .vs-label {
+    font-size: 4rem;
+    font-weight: 800;
+    color: #3a4460;
+    letter-spacing: 0.06em;
+  }
+  .outcome-badge {
+    padding: 10px 32px;
+    border-radius: 6px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: #1e2840;
+    color: #f5c518;
+    border: 2px solid #f5c518;
+    text-align: center;
+  }
+  .outcome-badge.win    { background: #1a3a20; color: #4caf50; border-color: #4caf50; }
+  .outcome-badge.draw   { background: #1a2840; color: #90caf9; border-color: #90caf9; }
+  .outcome-badge.loss   { background: #3a1a1a; color: #ef5350; border-color: #ef5350; }
+  .outcome-badge.muted  { background: #1a1e2a; color: #4a5570; border-color: #2a3050; }
+  .winner-label {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #4caf50;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* ── Skill section ── */
+  .skill-section {
+    padding: 20px 80px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 1px solid #1e2840;
+  }
+  .skill-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.1rem;
+    color: #7a8aaa;
+  }
+  .skill-name { text-transform: uppercase; letter-spacing: 0.06em; }
+  .skill-delta { font-weight: 700; }
+  .skill-delta.pos { color: #4caf50; }
+  .skill-delta.neg { color: #ef5350; }
+
+  /* ── Phase message (pending/active) ── */
+  .phase-message {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 0 80px;
+  }
+  .phase-headline {
+    font-size: 4rem;
+    font-weight: 800;
+    color: #e8eaf0;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: center;
+    line-height: 1.1;
+  }
+  .phase-sub {
+    font-size: 1.5rem;
+    color: #7a8aaa;
+    text-align: center;
+  }
+
+  /* ── Skill highlight (skill_delta_result phase) ── */
+  .skill-highlight-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 0 80px;
+  }
+  .skill-highlight-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #4a5570;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .skill-highlight-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.3rem;
+    color: #b0bac8;
+    width: 100%;
+    max-width: 600px;
+  }
+  .skill-highlight-delta { font-weight: 700; }
+  .skill-highlight-delta.pos { color: #4caf50; }
+  .skill-highlight-delta.neg { color: #ef5350; }
+
+  /* ── Footer ── */
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 80px 60px;
+    border-top: 1px solid #1e2840;
+  }
+  .game-info { font-size: 1.1rem; color: #7a8aaa; }
+  .cta-label {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #f5c518;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .ts { font-size: 0.9rem; color: #3a4460; }
+</style>
+</head>
+<body>
+<div class="card-wrap">
+
+  {% if is_locked %}
+  <div class="locked-overlay"><div class="locked-text">🔒 Preview Only</div></div>
+  {% endif %}
+
+  <!-- Header -->
+  <div class="card-header">
+    <div class="lfa-brand">⚽ LFA</div>
+    <div class="card-meta">
+      <div>{{ challenge_mode | upper }}</div>
+      <div class="phase-tag">{{ phase | replace("_", " ") | upper }}</div>
+    </div>
+  </div>
+
+  {# ── Phase: skill_delta_result ── #}
+  {% if phase == "skill_delta_result" %}
+  <div class="skill-highlight-section">
+    <div class="skill-highlight-title">Skill Progress</div>
+    {% if my_skill_scores %}
+      {% for skill, delta in my_skill_scores.items() %}
+      <div class="skill-highlight-row">
+        <span>{{ skill | replace("_", " ") | title }}</span>
+        <span class="skill-highlight-delta {% if delta > 0 %}pos{% elif delta < 0 %}neg{% endif %}">
+          {% if delta > 0 %}+{% endif %}{{ "%.2f"|format(delta) }}
+        </span>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div style="font-size:1.2rem;color:#4a5570;">No skill data recorded.</div>
+    {% endif %}
+  </div>
+
+  {# ── Completed result phases ── #}
+  {% elif phase in ("completed_score_win", "completed_draw", "completed_forfeit_win", "completed_forfeit_loss", "no_contest") %}
+  <div class="vs-block">
+    <div class="player-block">
+      <div class="player-name">{{ challenger_name }}</div>
+      {% if phase == "completed_score_win" or phase == "completed_draw" %}
+        {% if challenger_score is not none %}
+          <div class="player-score">{{ "%.1f"|format(challenger_score) }}</div>
+        {% else %}
+          <div class="player-score no-score">—</div>
+        {% endif %}
+      {% else %}
+        <div class="player-score no-score">—</div>
+      {% endif %}
+      {% if winner_name == challenger_name %}
+        <div class="winner-label">✓ WINNER</div>
+      {% endif %}
+    </div>
+
+    <div class="vs-divider">
+      <div class="vs-label">VS</div>
+      {% if phase == "completed_score_win" %}
+        <div class="outcome-badge win">SCORE WIN</div>
+      {% elif phase == "completed_draw" %}
+        <div class="outcome-badge draw">DRAW</div>
+      {% elif phase == "completed_forfeit_win" %}
+        <div class="outcome-badge win">FORFEIT WIN</div>
+      {% elif phase == "completed_forfeit_loss" %}
+        <div class="outcome-badge loss">FORFEIT LOSS</div>
+      {% elif phase == "no_contest" %}
+        <div class="outcome-badge muted">NO CONTEST</div>
+      {% endif %}
+    </div>
+
+    <div class="player-block">
+      <div class="player-name">{{ challenged_name }}</div>
+      {% if phase == "completed_score_win" or phase == "completed_draw" %}
+        {% if challenged_score is not none %}
+          <div class="player-score">{{ "%.1f"|format(challenged_score) }}</div>
+        {% else %}
+          <div class="player-score no-score">—</div>
+        {% endif %}
+      {% else %}
+        <div class="player-score no-score">—</div>
+      {% endif %}
+      {% if winner_name == challenged_name %}
+        <div class="winner-label">✓ WINNER</div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if phase == "completed_score_win" and my_skill_scores %}
+  <div class="skill-section">
+    {% for skill, delta in my_skill_scores.items() %}
+    <div class="skill-row">
+      <span class="skill-name">{{ skill | replace("_", " ") }}</span>
+      <span class="skill-delta {% if delta > 0 %}pos{% elif delta < 0 %}neg{% endif %}">
+        {% if delta > 0 %}+{% endif %}{{ "%.2f"|format(delta) }}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# ── Active / pending phases ── #}
+  {% elif phase == "challenge_sent" %}
+  <div class="phase-message">
+    <div class="phase-headline">Challenge Sent</div>
+    <div class="phase-sub">{{ challenger_name }} challenged {{ challenged_name }}</div>
+    <div class="phase-sub">{{ game_name }}</div>
+  </div>
+
+  {% elif phase == "challenge_received" %}
+  <div class="phase-message">
+    <div class="phase-headline">Challenged!</div>
+    <div class="phase-sub">{{ challenger_name }} challenged {{ challenged_name }}</div>
+    <div class="phase-sub">{{ game_name }}</div>
+  </div>
+
+  {% elif phase == "challenge_accepted" %}
+  <div class="phase-message">
+    <div class="phase-headline">Challenge Accepted</div>
+    <div class="phase-sub">{{ challenger_name }} vs {{ challenged_name }}</div>
+    <div class="phase-sub">{{ game_name }}</div>
+  </div>
+
+  {% elif phase == "waiting_for_opponent" %}
+  <div class="phase-message">
+    <div class="phase-headline">Waiting for Opponent</div>
+    <div class="phase-sub">{{ game_name }}</div>
+    {% if my_score is not none %}
+      <div style="font-size:2.8rem;font-weight:700;color:#f5c518;">{{ "%.1f"|format(my_score) }}</div>
+    {% endif %}
+  </div>
+
+  {% elif phase == "live_lobby_ready" %}
+  <div class="phase-message">
+    <div class="phase-headline">Live Lobby Ready</div>
+    <div class="phase-sub">{{ challenger_name }} vs {{ challenged_name }}</div>
+    <div class="phase-sub">{{ game_name }}</div>
+  </div>
+
+  {% elif phase == "live_in_progress" %}
+  <div class="phase-message">
+    <div class="phase-headline">Live — Playing Now</div>
+    <div class="phase-sub">{{ challenger_name }} vs {{ challenged_name }}</div>
+    <div class="phase-sub">{{ game_name }}</div>
+  </div>
+
+  {% else %}
+  <div class="phase-message">
+    <div class="phase-headline">{{ challenger_name }}</div>
+    <div class="phase-sub">vs {{ challenged_name }}</div>
+    <div class="phase-sub">{{ game_name }}</div>
+  </div>
+  {% endif %}
+
+  <!-- Footer -->
+  <div class="card-footer">
+    <div class="game-info">{% if completed_at %}{{ completed_at.strftime("%b %d, %Y") }}{% else %}{{ game_name }}{% endif %}</div>
+    <div class="cta-label">{{ cta_label }} →</div>
+    <div class="ts">lfa.gg</div>
+  </div>
+
+</div>
+</body>
+</html>

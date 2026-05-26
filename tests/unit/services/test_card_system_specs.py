@@ -177,6 +177,7 @@ class TestListCardTypeIds:
         assert set(ids) == {
             "player_card",
             "welcome_card",
+            "challenge_card",
             "match_card",
             "event_card",
             "birthday_card",
