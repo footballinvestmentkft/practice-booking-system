@@ -1084,42 +1084,115 @@
 
     // ── Geolocation flow ───────────────────────────────────────────────────────
     window.wpRequestGeolocation = function () {
+        // P0: Secure context guard — HTTP over WiFi IP returns code=1 immediately on iOS
+        if (!window.isSecureContext) {
+            console.warn("[geo] insecure context", {
+                protocol: location.protocol,
+                host:     location.host,
+                secure:   window.isSecureContext
+            });
+            document.getElementById("wp-geo-error-msg").textContent =
+                "Location requires HTTPS on mobile. Use https://… or localhost.";
+            wpGeoSetState("error");
+            return;
+        }
         if (!navigator.geolocation) {
             document.getElementById("wp-geo-error-msg").textContent =
                 "Geolocation is not supported by your browser.";
             wpGeoSetState("error");
             return;
         }
+
         wpGeoSetState("loading");
-        navigator.geolocation.getCurrentPosition(
-            function (pos) {
-                var acc = pos.coords.accuracy;
-                if (acc > 200) {
+
+        var _permState = "unknown";
+
+        function onSuccess(pos) {
+            var acc = pos.coords.accuracy;
+            if (acc > 200) {
+                document.getElementById("wp-geo-error-msg").textContent =
+                    "Location accuracy too low (" + Math.round(acc) + " m). " +
+                    "Please try again or move to an open area.";
+                wpGeoSetState("error");
+                return;
+            }
+            _wpGeoCoords = {
+                lat:        pos.coords.latitude,
+                lon:        pos.coords.longitude,
+                accuracy_m: acc,
+            };
+            document.getElementById("wp-geo-ready-msg").textContent =
+                "Location captured (±" + Math.round(acc) + " m). Ready to save.";
+            wpGeoSetState("ready");
+        }
+
+        function onError(err) {
+            console.error("[geo] error", {
+                code:    err.code,
+                message: err.message,
+                secure:  window.isSecureContext,
+                perm:    _permState,
+                ua:      navigator.userAgent.slice(0, 80)
+            });
+            var msg = "Location unavailable.";
+            if (err.code === 1) {
+                msg = "Location permission denied. Please allow location access in your browser settings.";
+            } else if (err.code === 3) {
+                msg = "Location request timed out. Please try again or move to an open area.";
+            } else if (err.code === 2) {
+                msg = "Location unavailable. Please check your GPS or network connection.";
+            }
+            document.getElementById("wp-geo-error-msg").textContent = msg;
+            wpGeoSetState("error");
+        }
+
+        function doRequest() {
+            // Attempt 1: high accuracy (GPS), 15 s — allows iOS time to get GPS lock
+            navigator.geolocation.getCurrentPosition(
+                onSuccess,
+                function (err) {
+                    // iOS can return code=1 on GPS timeout with enableHighAccuracy=true;
+                    // retry once with low accuracy before treating as real permission denial
+                    if (err.code === 1 || err.code === 3) {
+                        console.warn("[geo] attempt-1 failed (code " + err.code + "), retrying low-accuracy", {
+                            message: err.message,
+                            secure:  window.isSecureContext,
+                            perm:    _permState,
+                            ua:      navigator.userAgent.slice(0, 80)
+                        });
+                        navigator.geolocation.getCurrentPosition(
+                            onSuccess,
+                            onError,
+                            { enableHighAccuracy: false, timeout: 10000, maximumAge: 120000 }
+                        );
+                    } else {
+                        onError(err);
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+            );
+        }
+
+        // P1: Permission diagnostics — navigator.permissions not available in all Safari versions
+        try {
+            navigator.permissions.query({ name: "geolocation" }).then(function (result) {
+                _permState = result.state;
+                console.info("[geo] permission:", result.state);
+                if (result.state === "denied") {
                     document.getElementById("wp-geo-error-msg").textContent =
-                        "Location accuracy too low (" + Math.round(acc) + " m). " +
-                        "Please try again or move to an open area.";
+                        "Location access is blocked in your browser settings. " +
+                        "Please allow it for this site and try again.";
                     wpGeoSetState("error");
                     return;
                 }
-                _wpGeoCoords = {
-                    lat:        pos.coords.latitude,
-                    lon:        pos.coords.longitude,
-                    accuracy_m: acc,
-                };
-                document.getElementById("wp-geo-ready-msg").textContent =
-                    "Location captured (±" + Math.round(acc) + " m). Ready to save.";
-                wpGeoSetState("ready");
-            },
-            function (err) {
-                var msg = "Location unavailable.";
-                if      (err.code === 1) msg = "Location permission denied. Please allow location access in your browser settings.";
-                else if (err.code === 3) msg = "Location request timed out. Please try again.";
-                else if (err.code === 2) msg = "Location unavailable. Please check your GPS or network connection.";
-                document.getElementById("wp-geo-error-msg").textContent = msg;
-                wpGeoSetState("error");
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-        );
+                doRequest();
+            }).catch(function () {
+                doRequest();
+            });
+        } catch (e) {
+            // Safari < 16 throws synchronously on navigator.permissions.query
+            doRequest();
+        }
     };
     // Expose wpGeoReset for inline onclick handlers
     window.wpGeoReset = wpGeoReset;
