@@ -147,27 +147,26 @@ class TestDashboardModNavLabel:
 
 
 # ── PF-01..03: spec dashboard profile link regression fix ─────────────────────
+# After MVP refactor: footer-links + mod-nav Profile tile removed from dashboard.
+# Profile access via spec_subpage_hdr quicknav (include file).
 
 class TestSpecDashboardProfileLinks:
-    """Profile links on the LFA spec dashboard must point to the spec profile, not hub."""
+    """Profile link regression: dashboard must not route to bare /profile hub."""
 
     def _src(self):
         return _read("dashboard_student_new.html")
 
-    def test_pf01_footer_profile_link_is_spec(self):
-        """PF-01: footer Profile link is /profile/lfa-football-player."""
-        src = self._src()
-        assert 'href="/profile/lfa-football-player"' in src
+    def test_pf01_quicknav_include_has_spec_profile(self):
+        """PF-01: spec_subpage_hdr.html (quicknav include) contains /profile/lfa-football-player."""
+        quicknav = _read("includes/spec_subpage_hdr.html")
+        assert 'href="/profile/lfa-football-player"' in quicknav
 
-    def test_pf02_no_bare_profile_footer_link(self):
-        """PF-02: no bare href="/profile" link in footer-links section."""
+    def test_pf02_footer_links_strip_removed(self):
+        """PF-02: footer-links strip has been removed from the spec dashboard template."""
         src = self._src()
-        footer_start = src.index('class="footer-links"')
-        footer_block = src[footer_start:footer_start + 500]
-        assert 'href="/profile"' not in footer_block
+        assert 'class="footer-links"' not in src
 
-    def test_pf03_mod_nav_profile_tile_is_spec(self):
-        """PF-03: mod-nav Profile tile already points to /profile/lfa-football-player."""
+    def test_pf03_no_bare_profile_href_in_dashboard(self):
+        """PF-03: no bare href="/profile" (hub profile) hardcoded in the dashboard template."""
         src = self._src()
-        # Both mod-nav tile and footer link should use spec URL
-        assert src.count('href="/profile/lfa-football-player"') >= 2
+        assert 'href="/profile"' not in src

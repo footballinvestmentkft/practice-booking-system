@@ -75,6 +75,10 @@ _STUDENT_BASE_TPL_PATH = (
     pathlib.Path(__file__).resolve().parents[4]
     / "app" / "templates" / "student_base.html"
 )
+_QUICKNAV_TPL_PATH = (
+    pathlib.Path(__file__).resolve().parents[4]
+    / "app" / "templates" / "includes" / "spec_subpage_hdr.html"
+)
 
 
 # ── Shared helpers ─────────────────────────────────────────────────────────────
@@ -805,8 +809,10 @@ class TestLfaNavigationCTAs:
     # ── LFA dashboard header Profile button ──────────────────────────────────
 
     def test_dashboard_header_profile_btn_points_to_lfa_profile(self, dashboard_src):
-        """Header Profile button in LFA dashboard conditionally targets spec profile."""
-        assert "/profile/lfa-football-player" in dashboard_src
+        """Header Profile button: dashboard includes spec_subpage_hdr which has spec profile link."""
+        assert "includes/spec_subpage_hdr.html" in dashboard_src
+        quicknav_src = _QUICKNAV_TPL_PATH.read_text()
+        assert 'href="/profile/lfa-football-player"' in quicknav_src
 
     def test_dashboard_header_profile_btn_is_conditional_on_specialization(self, dashboard_src):
         """Conditional branch must check for LFA_FOOTBALL_PLAYER so other specs keep /profile."""
@@ -820,23 +826,22 @@ class TestLfaNavigationCTAs:
 
     # ── Dashboard footer links — must remain global ───────────────────────────
 
-    def test_dashboard_footer_profile_link_is_spec(self, dashboard_src):
-        """Spec dashboard footer Profile link points to LFA spec profile, not hub."""
-        assert 'href="/profile/lfa-football-player"' in dashboard_src
-        # bare /profile must not appear in the footer-links utility strip
-        footer_start = dashboard_src.index('class="footer-links"')
-        footer_block = dashboard_src[footer_start:footer_start + 500]
-        assert 'href="/profile"' not in footer_block
+    def test_dashboard_footer_links_removed_no_bare_profile(self, dashboard_src):
+        """Footer-links strip removed in MVP; no bare href='/profile' in dashboard template."""
+        assert 'class="footer-links"' not in dashboard_src
+        assert 'href="/profile"' not in dashboard_src
 
     # ── LFA dashboard Profile button icon ────────────────────────────────────
 
     def test_dashboard_lfa_profile_btn_uses_id_card_icon(self, dashboard_src):
-        """When specialization == LFA_FOOTBALL_PLAYER the Profile btn must show 🪪."""
-        assert '🪪' in dashboard_src
+        """LFA spec navigation (via quicknav include) uses 🪪 icon for the profile link."""
+        quicknav_src = _QUICKNAV_TPL_PATH.read_text()
+        assert '🪪' in quicknav_src
 
     def test_dashboard_non_lfa_profile_btn_uses_person_icon(self, dashboard_src):
-        """The else branch (non-LFA) must show 👤."""
-        assert '👤' in dashboard_src
+        """Non-LFA spec navigation (via quicknav include) falls back to 👤 icon."""
+        quicknav_src = _QUICKNAV_TPL_PATH.read_text()
+        assert '👤' in quicknav_src
 
     # ── Onboarding Step 7 "Go to Profile" button ─────────────────────────────
 
@@ -885,8 +890,9 @@ class TestLfaNavigationCTAs:
         assert '🃏' in dashboard_src
 
     def test_dashboard_my_cards_hero_title_updated(self, dashboard_src):
-        """My Cards hero section title must reflect Phase 4B rename."""
-        assert '🃏 My Cards' in dashboard_src
+        """Player Card dc-hero uses 🃏 icon; All Cards link goes to /my-cards."""
+        assert '🃏' in dashboard_src
+        assert 'href="/my-cards"' in dashboard_src
 
     def test_card_editor_page_title_uses_playing_card_icon(self, card_editor_src):
         """Card editor page title must contain My Player Card."""

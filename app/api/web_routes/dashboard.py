@@ -30,6 +30,7 @@ from ...models.audit_log import AuditLog
 from ...models.coupon import Coupon
 from ...utils.age_requirements import get_available_specializations
 from .helpers import get_lfa_age_category
+from ...services.skill_progression import get_all_skill_keys
 
 # Setup templates
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -694,6 +695,12 @@ async def spec_dashboard(
             if card_draft else False
         )
 
+    skill_count = len(get_all_skill_keys())
+    has_welcome_card = bool(
+        user_license.onboarding_completed
+        or user_license.football_skills is not None
+    )
+
     return templates.TemplateResponse(
         "dashboard_student_new.html",
         {
@@ -734,6 +741,9 @@ async def spec_dashboard(
             "spec_dashboard_icon": "⚽",
             "spec_profile_url": "/profile/lfa-football-player",
             "spec_profile_icon": "🪪",
+            # MVP dashboard context
+            "skill_count": skill_count,
+            "has_welcome_card": has_welcome_card,
         }
     )
 

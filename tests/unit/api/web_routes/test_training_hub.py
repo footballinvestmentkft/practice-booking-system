@@ -154,9 +154,9 @@ class TestDashboardModNav:
         return (_TEMPLATES_DIR / "dashboard_student_new.html").read_text(encoding="utf-8")
 
     def test_trn04_dashboard_contains_training_card(self):
-        """TRN-04: dashboard_student_new.html mod-nav contains /training link."""
-        html = self._read_dashboard()
-        assert 'href="/training"' in html
+        """TRN-04: /training link accessible from dashboard via spec quicknav include."""
+        quicknav = (_TEMPLATES_DIR / "includes" / "spec_subpage_hdr.html").read_text(encoding="utf-8")
+        assert 'href="/training"' in quicknav
 
     def test_trn05_dashboard_no_direct_adaptive_learning_card(self):
         """TRN-05: dashboard_student_new.html mod-nav does NOT contain direct /adaptive-learning card."""

@@ -290,24 +290,24 @@ def test_mp_r11_management_template_is_english():
     assert "Not uploaded" in content
 
 
-# ── MP-R12 ── dashboard has My Card Media section + correct links ─────────────
+# ── MP-R12 ── dashboard My Card Media section removed; access via quicknav ─────
 
 def test_mp_r12_dashboard_has_card_media_section():
     from pathlib import Path
 
-    content = (
-        Path(__file__).resolve()
-        .parent.parent.parent.parent.parent
-        / "app" / "templates" / "dashboard_student_new.html"
-    ).read_text(encoding="utf-8")
+    _tpl = Path(__file__).resolve().parent.parent.parent.parent.parent / "app" / "templates"
+    dashboard = (_tpl / "dashboard_student_new.html").read_text(encoding="utf-8")
+    quicknav  = (_tpl / "includes" / "spec_subpage_hdr.html").read_text(encoding="utf-8")
 
-    assert "My Card Media" in content, "dashboard missing 'My Card Media' section title"
-    assert "/profile/my-mood-photos" in content, "dashboard missing /profile/my-mood-photos link"
-    assert "/dashboard/lfa-football-player/card-editor#media" in content, (
-        "dashboard missing card editor #media deep link"
+    # My Card Media section removed in MVP refactor — now lives in quicknav
+    assert "My Card Media" not in dashboard, (
+        "My Card Media section should be removed from dashboard (MVP refactor)"
     )
-    assert "/dashboard/lfa-football-player/card-editor" in content, (
-        "dashboard missing card editor link"
+    assert "/profile/my-mood-photos" in quicknav, (
+        "quicknav should still link to /profile/my-mood-photos"
+    )
+    assert "/dashboard/lfa-football-player/card-editor" in quicknav, (
+        "quicknav should still link to card-editor"
     )
 
 
@@ -463,36 +463,29 @@ def test_mp_r17_spec_subpage_hdr_has_lfa_quicknav():
     assert "spec-qn-item" in content, "quicknav items must use spec-qn-item class"
 
 
-# ── MP-R18 ── dashboard mod-nav has 9 items including Profile/Editor/Mood ────
+# ── MP-R18 ── dashboard mod-nav has 4 Quick Access tiles; quicknav has Mood ───
+# After MVP refactor: 9-tile mod-nav replaced with 4-tile Quick Access.
+# Profile/Editor/Mood Photos moved to spec_subpage_hdr.html quicknav.
 
 def test_mp_r18_dashboard_modnav_has_profile_editor_moodphotos():
     from pathlib import Path
 
-    content = (
-        Path(__file__).resolve()
-        .parent.parent.parent.parent.parent
-        / "app" / "templates" / "dashboard_student_new.html"
-    ).read_text(encoding="utf-8")
+    _tpl = Path(__file__).resolve().parent.parent.parent.parent.parent / "app" / "templates"
+    content = (_tpl / "dashboard_student_new.html").read_text(encoding="utf-8")
+    quicknav = (_tpl / "includes" / "spec_subpage_hdr.html").read_text(encoding="utf-8")
 
-    # All 9 mod-nav destinations must be present
-    required = [
-        ("/events",                                    "Events"),
-        ("/my-cards",                                  "My Cards"),
-        ("/training",                                  "Training"),
-        ("/skills/history",                            "Skill History"),
-        ("/calendar",                                  "Calendar"),
-        ("/achievements",                              "Achievements"),
-        ("/profile/lfa-football-player",               "Profile"),
-        ("/dashboard/lfa-football-player/card-editor", "Card Editor"),
-        ("/profile/my-mood-photos",                    "Mood Photos"),
-    ]
+    # Dashboard mod-nav: 4 Quick Access tiles
     modnav_start = content.find('<section class="mod-nav-section">')
     modnav_end   = content.find("</section>", modnav_start)
     modnav_block = content[modnav_start:modnav_end] if modnav_start != -1 else content
 
-    for url, label in required:
-        assert url in modnav_block, f"dashboard mod-nav missing: {url!r} ({label})"
-        assert label in modnav_block, f"dashboard mod-nav missing label: {label!r}"
+    for url in ("/calendar", "/achievements", "/sessions", "/progress"):
+        assert url in modnav_block, f"dashboard mod-nav missing Quick Access tile: {url!r}"
+
+    # Mood Photos, Card Editor, Profile accessible via quicknav (not mod-nav)
+    assert "/profile/my-mood-photos"                    in quicknav
+    assert "/dashboard/lfa-football-player/card-editor" in quicknav
+    assert "/profile/lfa-football-player"               in quicknav
 
 
 # ── MP-R19 ── mood_photos_page route passes explicit LFA spec context ─────────

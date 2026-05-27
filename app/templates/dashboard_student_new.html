@@ -2,6 +2,9 @@
 
 {% block title %}{{ spec_config.name }} Dashboard - LFA{% endblock %}
 
+{# Platform for Player Card preview — root-level so accessible in both student_content and scripts blocks #}
+{% set _prev = active_card_platform if (active_card_platform and active_card_platform != 'default') else 'instagram_portrait' %}
+
 {% block student_header %}
 {% set _page_icon = '⚽' %}
 {% set _page_name = 'LFA Football Player' %}
@@ -10,29 +13,123 @@
 
 {% block extra_styles %}
 <style>
-    /* spec-pg-hdr + mod-nav-* → student.css v5 */
-
-    /* ── Spec dashboard: 3-column module nav grid (2×3 — 6 primary domains) */
-    .mod-nav-grid { grid-template-columns: repeat(3, 1fr); }
-    @media (max-width: 768px) { .mod-nav-grid { grid-template-columns: repeat(3, 1fr); } }
-    @media (max-width: 480px) { .mod-nav-grid { grid-template-columns: repeat(3, 1fr); } }
-
-    /* ── Width overrides: break out of global max-width chain ───────────────── */
+    /* ── Width overrides ─────────────────────────────────────────────────────── */
     .main-content  { max-width: none; padding: 0; }
     .student-main  { max-width: 1440px; padding: 0.75rem 1.5rem 1.5rem; }
-
-    /* ── Container ────────────────────────────────────────────────────────────── */
     .container {
         max-width: 1400px;
         margin: 0 auto;
         padding: 0 0 2rem;
     }
 
-    .page-title    { font-size: 1.4rem; color: var(--app-text); margin: 0; }
-    .page-subtitle { color: var(--app-text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; }
+    /* ── Top Card Preview Zone ──────────────────────────────────────────────── */
+    .dc-card-zone {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        align-items: start;
+    }
+    .dc-hero {
+        background: #0f172a;
+        border-radius: 16px;
+        padding: 1.25rem 1.5rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        min-height: 200px;
+    }
+    .dc-hero-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: rgba(255,255,255,0.45);
+        margin: 0;
+    }
 
-    .info-banner { background: #e6f7ff; border-left: 4px solid #1890ff; padding: 1rem 1.5rem; border-radius: 8px; margin-bottom: 2rem; }
-    .info-banner p { color: #0050b3; margin: 0; }
+    /* Player Card hero */
+    .dc-hero-player { border-top: 3px solid #FFD200; }
+    .dc-player-wrap {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.35);
+        flex: 1;
+    }
+    .dc-player-wrap iframe { display: block; border: none; }
+    .dc-cta-primary {
+        display: inline-block;
+        background: #FFD200;
+        color: #0B0B0B;
+        font-weight: 700;
+        font-size: 0.82rem;
+        padding: 0.45rem 1.1rem;
+        border-radius: 8px;
+        text-decoration: none;
+        text-align: center;
+        transition: opacity 0.18s;
+        align-self: flex-start;
+    }
+    .dc-cta-primary:hover { opacity: 0.85; }
+    .dc-cta-ghost {
+        display: inline-block;
+        background: rgba(255,255,255,0.08);
+        color: rgba(255,255,255,0.75);
+        font-weight: 600;
+        font-size: 0.82rem;
+        padding: 0.45rem 1.1rem;
+        border-radius: 8px;
+        text-decoration: none;
+        text-align: center;
+        border: 1px solid rgba(255,255,255,0.15);
+        transition: background 0.18s;
+        align-self: flex-start;
+    }
+    .dc-cta-ghost:hover { background: rgba(255,255,255,0.14); }
+    .dc-ctas { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+    /* Welcome Card hero */
+    .dc-hero-welcome { border-top: 3px solid #818cf8; }
+    .dc-welcome-status {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .dc-wc-title { font-size: 1rem; font-weight: 800; color: #fff; }
+    .dc-wc-sub { font-size: 0.82rem; color: rgba(255,255,255,0.5); }
+    .dc-wc-chip {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.2rem 0.65rem;
+        border-radius: 20px;
+        align-self: flex-start;
+    }
+    .dc-wc-chip-ready { background: rgba(129,140,248,0.2); color: #818cf8; border: 1px solid rgba(129,140,248,0.3); }
+    .dc-wc-chip-empty { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.12); }
+
+    /* Challenge Card hero */
+    .dc-hero-chall { border-top: 3px solid #f87171; }
+    .dc-chall-status {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .dc-chall-count { font-size: 2rem; font-weight: 800; color: #f87171; line-height: 1; }
+    .dc-chall-lbl { font-size: 0.82rem; color: rgba(255,255,255,0.5); }
+
+    /* ── Responsive: stack card zone on mobile ──────────────────────────────── */
+    @media (max-width: 768px) {
+        .dc-card-zone { grid-template-columns: 1fr; }
+        .dc-hero { min-height: unset; }
+        .s-kpi-row { grid-template-columns: repeat(2, 1fr); }
+        .container { padding: 1rem; }
+        .mod-nav-section { padding: 1rem 1rem 0.25rem; }
+    }
 
     /* ── KPI Row ─────────────────────────────────────────────────────────────── */
     .s-kpi-row {
@@ -41,7 +138,6 @@
         gap: 1rem;
         margin-bottom: 1.5rem;
     }
-
     .s-kpi-card {
         background: var(--app-card);
         border-radius: 8px;
@@ -51,12 +147,10 @@
         transition: box-shadow 0.2s, transform 0.2s;
     }
     .s-kpi-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.12); transform: translateY(-2px); }
-
     .s-kpi-row .s-kpi-card:nth-child(1) { border-top-color: #48bb78; }
     .s-kpi-row .s-kpi-card:nth-child(2) { border-top-color: #9b59b6; }
     .s-kpi-row .s-kpi-card:nth-child(3) { border-top-color: #f59e0b; }
     .s-kpi-row .s-kpi-card:nth-child(4) { border-top-color: #4299e1; }
-
     .s-kpi-val { font-size: 2rem; font-weight: 700; color: var(--app-text); line-height: 1.1; }
     .s-kpi-row .s-kpi-card:nth-child(1) .s-kpi-val { color: #276749; }
     .s-kpi-row .s-kpi-card:nth-child(2) .s-kpi-val { color: #553c9a; }
@@ -73,19 +167,6 @@
         margin-bottom: 1.5rem;
     }
     .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
-    .section-link { color: #667eea; font-size: 0.88rem; text-decoration: none; font-weight: 600; white-space: nowrap; }
-    .section-link:hover { text-decoration: underline; }
-
-    /* ── Skill Snapshot (fallback, no LFA license) ───────────────────────────── */
-    .s-snapshot-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.65rem; }
-    .s-snap-label   { width: 130px; font-size: 0.85rem; color: var(--app-text-muted); text-transform: capitalize; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .s-snap-bar-wrap { flex: 1; height: 10px; background: var(--app-border); border-radius: 5px; overflow: hidden; }
-    .s-snap-bar     { height: 100%; border-radius: 5px; transition: width 0.4s ease; }
-    .s-snap-val     { width: 38px; text-align: right; font-size: 0.82rem; font-weight: 600; color: var(--app-text); flex-shrink: 0; }
-
-    /* ── Stacked hero layout ─────────────────────────────────────────────────── */
-    .dash-hero-block { padding: 1.25rem 1.5rem 1.5rem; }
-    .dash-hero-block .section-header { margin-bottom: 1rem; }
 
     /* ── Standalone mod-nav section ──────────────────────────────────────────── */
     .mod-nav-section {
@@ -104,31 +185,6 @@
         margin: 0 0 0.6rem 0.25rem;
     }
 
-    /* ── Player Card live preview (compact thumbnail) ────────────────────────── */
-    .player-card-embed-wrap { border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.13); max-height: 240px; }
-    .player-card-embed-wrap iframe { display: block; border: none; }
-
-    /* ── Last Result ─────────────────────────────────────────────────────────── */
-    .s-last-result-card { background: var(--app-card); border-left: 4px solid #667eea; border-radius: 0 10px 10px 0; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-    .s-result-name     { font-weight: 700; color: var(--app-text); font-size: 1rem; flex: 1; min-width: 140px; }
-    .s-placement-badge { padding: 0.3rem 0.8rem; border-radius: 20px; font-weight: 700; font-size: 0.85rem; white-space: nowrap; }
-    .s-place-1     { background: #fff3cd; color: #856404; }
-    .s-place-2     { background: #e2e3e5; color: #383d41; }
-    .s-place-3     { background: #fde7c7; color: #7a4200; }
-    .s-place-other { background: var(--app-card-alt); color: var(--app-text-muted); }
-    .s-delta-pos   { color: var(--app-success); font-weight: 700; font-size: 0.95rem; }
-    .s-delta-neg   { color: var(--app-error); font-weight: 700; font-size: 0.95rem; }
-    .s-delta-zero  { color: var(--app-text-muted); font-size: 0.95rem; }
-    .s-result-meta { color: var(--app-text-muted); font-size: 0.82rem; }
-
-    /* ── Footer ──────────────────────────────────────────────────────────────── */
-    .footer-links { text-align: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; }
-    .footer-links a { color: #667eea; text-decoration: none; margin: 0 1rem; font-weight: 600; }
-    .footer-links a:hover { text-decoration: underline; }
-
-    /* ── Loading ─────────────────────────────────────────────────────────────── */
-    .s-loading { color: #a0aec0; font-size: 0.9rem; padding: 0.5rem 0; }
-
     /* ── Public Profile entry point ──────────────────────────────────────────── */
     .s-pp-section { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
     .s-pp-info { display: flex; flex-direction: column; gap: 0.3rem; }
@@ -145,21 +201,6 @@
     .s-pp-btn-view { background: #e8f0fe; color: #1a56db; }
     .s-pp-btn-edit { background: #0B0B0B; color: #FFD200; }
 
-    /* ── My Card Media section ───────────────────────────────────────────────── */
-    .s-cm-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
-    @media (max-width: 520px) { .s-cm-grid { grid-template-columns: 1fr; } }
-    .s-cm-tile {
-        display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem;
-        background: var(--app-card-alt); border: 1px solid var(--app-border);
-        border-radius: 12px; padding: 1rem 1.1rem;
-        text-decoration: none; color: var(--app-text);
-        transition: box-shadow 0.18s, transform 0.18s;
-    }
-    .s-cm-tile:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.18); transform: translateY(-2px); }
-    .s-cm-icon  { font-size: 1.5rem; }
-    .s-cm-title { font-size: 0.88rem; font-weight: 700; }
-    .s-cm-sub   { font-size: 0.75rem; color: var(--app-text-muted, #94a3b8); }
-
     /* ── Social section ──────────────────────────────────────────────────────── */
     .mod-social-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
     .mod-social-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem; background: var(--app-card-alt); border-radius: 12px; padding: 1.2rem 0.75rem; text-decoration: none; color: var(--app-text); position: relative; transition: box-shadow 0.2s, transform 0.2s; border: 1px solid var(--app-border); }
@@ -167,25 +208,16 @@
     .mod-social-icon  { font-size: 1.6rem; line-height: 1; }
     .mod-social-title { font-size: 0.82rem; font-weight: 700; color: var(--app-text-muted); }
     .mod-social-badge { position: absolute; top: 0.5rem; right: 0.5rem; background: #ef4444; color: white; border-radius: 999px; font-size: 0.7rem; font-weight: 700; padding: 0.1rem 0.45rem; line-height: 1.4; }
-    @media (max-width: 480px) { .mod-social-grid { grid-template-columns: 1fr; } }
-
-    /* ── Responsive ──────────────────────────────────────────────────────────── */
-    @media (max-width: 768px) {
-        .s-kpi-row      { grid-template-columns: repeat(2, 1fr); }
-        .container      { padding: 1rem; }
-        .mod-nav-section { padding: 1rem 1rem 0.25rem; }
-        .mod-nav-grid   { grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
-    }
-
     @media (max-width: 480px) {
-        .s-kpi-row      { grid-template-columns: 1fr 1fr; }
-        .s-snap-label   { width: 85px; }
-        .mod-nav-grid   { gap: 0.5rem; }
-        .mod-nav-card   { padding: 0.85rem 0.5rem; }
-        .mod-nav-icon   { font-size: 1.4rem; }
-        .mod-nav-title  { font-size: 0.76rem; }
+        .mod-social-grid { grid-template-columns: 1fr; }
+        .s-kpi-row { grid-template-columns: 1fr 1fr; }
+        .mod-nav-card { padding: 0.85rem 0.5rem; }
+        .mod-nav-icon { font-size: 1.4rem; }
+        .mod-nav-title { font-size: 0.76rem; }
     }
 
+    /* ── Loading ─────────────────────────────────────────────────────────────── */
+    .s-loading { color: #a0aec0; font-size: 0.9rem; padding: 0.5rem 0; }
 </style>
 {% endblock %}
 
@@ -200,161 +232,62 @@
 
 <div class="container">
 
-    {# ── Hero: My Player Card (LFA license, full-width) ───────────────────────── #}
+    {# ── 1. Top Card Preview Zone ──────────────────────────────────────────────── #}
     {% if user_license %}
-    <section class="section-block dash-hero-block">
-        <div class="section-header">
-            <h2 class="page-title">🃏 My Cards</h2>
-            <a href="/my-cards/player-card" class="section-link">✏️ Edit →</a>
-        </div>
-        <div class="player-card-embed-wrap" id="spec-card-wrap">
-            {# default platform previews instagram_portrait — same as card editor P-1 fix #}
-            {% set _preview_platform = active_card_platform if (active_card_platform and active_card_platform != 'default') else 'instagram_portrait' %}
-            <iframe id="spec-player-card-iframe"
-                    src="/players/{{ user.id }}/card?platform={{ _preview_platform }}&export=1"
-                    scrolling="no" title="My Player Card"></iframe>
-        </div>
-    </section>
-    <script>
-    (function() {
-        var _SPEC_CANVAS = {
-            instagram_square:   [1080, 1080],
-            instagram_portrait: [1080, 1350],
-            instagram_story:    [1080, 1920],
-            tiktok:             [1080, 1920],
-            facebook_square:    [1080, 1080],
-            facebook_landscape: [1200,  630],
-            og:                 [1200,  630],
-            banner_custom:      [1500,  500],
-        };
-        var _previewPlatform = '{{ _preview_platform }}';
-        document.addEventListener('DOMContentLoaded', function() {
-            var dims = _SPEC_CANVAS[_previewPlatform];
-            if (!dims) return;
-            var iframe = document.getElementById('spec-player-card-iframe');
-            var wrap   = document.getElementById('spec-card-wrap');
-            if (!iframe || !wrap) return;
-            var cw = dims[0], ch = dims[1];
-            var availW   = wrap.clientWidth || 840;
-            var maxH     = window.innerWidth < 700 ? 160 : 240;
-            var scaleByW = availW / cw;
-            var scaleByH = maxH / ch;
-            var scale    = Math.min(scaleByW, scaleByH);
-            iframe.style.width           = cw + 'px';
-            iframe.style.height          = ch + 'px';
-            iframe.style.transform       = 'scale(' + scale + ')';
-            iframe.style.transformOrigin = 'top left';
-            wrap.style.height            = Math.round(ch * scale) + 'px';
-        });
-    })();
-    </script>
-    {% endif %}
+    <div class="dc-card-zone">
 
-    {# ── Module Navigation (full-width, below card) ────────────────────────────── #}
-    {# 2×3 grid: 6 primary domains                                                  #}
-    {# Sessions / Progress / Skills accessible via footer + cross-links             #}
-    <section class="mod-nav-section">
-        <p class="mod-nav-section-label">Tools &amp; Quick Access</p>
-        <div class="mod-nav-grid">
-            {# Row 1 #}
-            <a href="/events" class="mod-nav-card">
-                <span class="mod-nav-icon">📅</span>
-                <span class="mod-nav-title">Events</span>
-            </a>
-            <a href="/my-cards" class="mod-nav-card">
-                <span class="mod-nav-icon">🃏</span>
-                <span class="mod-nav-title">My Cards</span>
-            </a>
-            <a href="/training" class="mod-nav-card">
-                <span class="mod-nav-icon">🎓</span>
-                <span class="mod-nav-title">Training</span>
-            </a>
-            {# Row 2 #}
-            <a href="/skills/history?skill=passing" class="mod-nav-card">
-                <span class="mod-nav-icon">📈</span>
-                <span class="mod-nav-title">Skill History</span>
-            </a>
-            <a href="/calendar" class="mod-nav-card">
-                <span class="mod-nav-icon">📆</span>
-                <span class="mod-nav-title">Calendar</span>
-            </a>
-            <a href="/achievements" class="mod-nav-card">
-                <span class="mod-nav-icon">🏅</span>
-                <span class="mod-nav-title">Achievements</span>
-            </a>
-            {# Row 3 — profile + card tools #}
-            <a href="/profile/lfa-football-player" class="mod-nav-card">
-                <span class="mod-nav-icon">🪪</span>
-                <span class="mod-nav-title">Profile</span>
-            </a>
-            <a href="/dashboard/lfa-football-player/card-editor" class="mod-nav-card">
-                <span class="mod-nav-icon">🎴</span>
-                <span class="mod-nav-title">Card Editor</span>
-            </a>
-            <a href="/profile/my-mood-photos" class="mod-nav-card">
-                <span class="mod-nav-icon">📸</span>
-                <span class="mod-nav-title">Mood Photos</span>
-            </a>
-        </div>
-    </section>
-
-    {# ── Public Profile entry point (LFA_FOOTBALL_PLAYER only) ───────────────── #}
-    {% if specialization == "LFA_FOOTBALL_PLAYER" %}
-    <section class="section-block">
-        <div class="section-header">
-            <span class="section-title" style="font-weight:800;font-size:1rem;">Public Profile</span>
-        </div>
-        <div class="s-pp-section">
-            <div class="s-pp-info">
-                <div class="s-pp-title">Your public player profile</div>
-                <div class="s-pp-meta">
-                    {% if is_profile_published %}
-                    <span class="s-pp-chip s-pp-chip-pub">✓ Published</span>
-                    {% else %}
-                    <span class="s-pp-chip s-pp-chip-unpub">Unpublished</span>
-                    {% endif %}
-                    <span class="s-pp-chip s-pp-chip-grid">Grid {{ profile_grid_filled_slots }}/{{ profile_grid_total_slots }}</span>
-                    {% if has_published_highlight_video %}
-                    <span class="s-pp-chip s-pp-chip-hv">▶ Highlight video</span>
-                    {% endif %}
-                </div>
+        {# Player Card #}
+        <div class="dc-hero dc-hero-player">
+            <p class="dc-hero-label">🃏 Player Card</p>
+            <div class="dc-player-wrap" id="dc-player-wrap">
+                <iframe id="dc-player-iframe"
+                        src="/players/{{ user.id }}/card?platform={{ _prev }}&export=1"
+                        scrolling="no" title="My Player Card"></iframe>
             </div>
-            <div class="s-pp-actions">
-                <a href="{{ public_profile_url }}" target="_blank" class="s-pp-btn s-pp-btn-view">View Profile ↗</a>
-                <a href="{{ grid_editor_url }}" class="s-pp-btn s-pp-btn-edit">Edit Grid</a>
+            <div class="dc-ctas">
+                <a href="/my-cards/player-card" class="dc-cta-primary">✏️ Edit Card</a>
+                <a href="/my-cards" class="dc-cta-ghost">All Cards →</a>
             </div>
         </div>
-    </section>
 
-    {# ── My Card Media (LFA_FOOTBALL_PLAYER only) ─────────────────────────────── #}
-    <section class="section-block">
-        <div class="section-header">
-            <span class="section-title" style="font-weight:800;font-size:1rem;">My Card Media</span>
+        {# Welcome Card #}
+        <div class="dc-hero dc-hero-welcome">
+            <p class="dc-hero-label">🎫 Welcome Card</p>
+            <div class="dc-welcome-status">
+                <div class="dc-wc-title">Welcome Card</div>
+                {% if has_welcome_card %}
+                <span class="dc-wc-chip dc-wc-chip-ready">✓ Ready</span>
+                <div class="dc-wc-sub">Your onboarding card is set up.</div>
+                {% else %}
+                <span class="dc-wc-chip dc-wc-chip-empty">Not created</span>
+                <div class="dc-wc-sub">Complete onboarding to unlock your Welcome Card.</div>
+                {% endif %}
+            </div>
+            <div class="dc-ctas">
+                <a href="/profile/onboarding-card" class="dc-cta-primary">View →</a>
+            </div>
         </div>
-        <p style="font-size:0.82rem;color:var(--app-text-muted,#94a3b8);margin-bottom:1rem;">
-            Photos used in your Player Cards, Welcome Cards, and Challenge Cards.
-        </p>
-        <div class="s-cm-grid">
-            <a href="/dashboard/lfa-football-player/card-editor#media" class="s-cm-tile">
-                <span class="s-cm-icon">📷</span>
-                <span class="s-cm-title">Card Photos</span>
-                <span class="s-cm-sub">Player &amp; Welcome Card photos (Media tab)</span>
-            </a>
-            <a href="/profile/my-mood-photos" class="s-cm-tile">
-                <span class="s-cm-icon">📸</span>
-                <span class="s-cm-title">Mood Photos</span>
-                <span class="s-cm-sub">4 expression slots for future card use</span>
-            </a>
-            <a href="/dashboard/lfa-football-player/card-editor" class="s-cm-tile">
-                <span class="s-cm-icon">🎴</span>
-                <span class="s-cm-title">Card Editor</span>
-                <span class="s-cm-sub">Full card design &amp; export tools</span>
-            </a>
+
+        {# Challenge Card #}
+        <div class="dc-hero dc-hero-chall">
+            <p class="dc-hero-label">⚔ Challenge Card</p>
+            {% set challenge_card_total = social_pending_challenges + social_active_challenges %}
+            <div class="dc-chall-status">
+                <div class="dc-chall-count">{{ challenge_card_total }}</div>
+                <div class="dc-chall-lbl">active &amp; pending challenges</div>
+            </div>
+            <div class="dc-ctas">
+                <a href="/challenges" class="dc-cta-primary">
+                    {%- if challenge_card_total > 0 %}View Challenges{% else %}New Challenge{% endif -%}
+                </a>
+                <a href="/challenges/send" class="dc-cta-ghost">Send →</a>
+            </div>
         </div>
-    </section>
+
+    </div>
     {% endif %}
 
-    {# ── Social ─────────────────────────────────────────────────────────────────── #}
+    {# ── 2. Social ─────────────────────────────────────────────────────────────── #}
     <section class="section-block">
         <div class="section-header">
             <span class="section-title" style="font-weight:800;font-size:1rem;">Social</span>
@@ -381,7 +314,36 @@
         </div>
     </section>
 
-    {# ── KPI Row ───────────────────────────────────────────────────────────────── #}
+    {# ── 3. Public Profile entry point (LFA_FOOTBALL_PLAYER only) ─────────────── #}
+    {% if specialization == "LFA_FOOTBALL_PLAYER" %}
+    <section class="section-block">
+        <div class="section-header">
+            <span class="section-title" style="font-weight:800;font-size:1rem;">Public Profile</span>
+        </div>
+        <div class="s-pp-section">
+            <div class="s-pp-info">
+                <div class="s-pp-title">Your public player profile</div>
+                <div class="s-pp-meta">
+                    {% if is_profile_published %}
+                    <span class="s-pp-chip s-pp-chip-pub">✓ Published</span>
+                    {% else %}
+                    <span class="s-pp-chip s-pp-chip-unpub">Unpublished</span>
+                    {% endif %}
+                    <span class="s-pp-chip s-pp-chip-grid">Grid {{ profile_grid_filled_slots }}/{{ profile_grid_total_slots }}</span>
+                    {% if has_published_highlight_video %}
+                    <span class="s-pp-chip s-pp-chip-hv">▶ Highlight video</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="s-pp-actions">
+                <a href="{{ public_profile_url }}" target="_blank" class="s-pp-btn s-pp-btn-view">View Profile ↗</a>
+                <a href="{{ grid_editor_url }}" class="s-pp-btn s-pp-btn-edit">Edit Grid</a>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    {# ── 4. KPI Row ────────────────────────────────────────────────────────────── #}
     <div class="s-kpi-row">
         <div class="s-kpi-card">
             <div class="s-kpi-val" id="kpi-avg">—</div>
@@ -401,36 +363,28 @@
         </div>
     </div>
 
-    {# ── Skill Snapshot ────────────────────────────────────────────────────────── #}
-    <section class="section-block">
-        <div class="section-header">
-            <h2 class="page-title">📊 Skill Snapshot</h2>
-            <a href="/skills" class="section-link">View all 29 skills →</a>
-        </div>
-        <div id="s-snapshot">
-            <div class="s-loading"><span class="s-spinner"></span> Loading…</div>
+    {# ── 5. Tools & Quick Access (4 tiles: Calendar, Achievements, Sessions, Progress) #}
+    <section class="mod-nav-section">
+        <p class="mod-nav-section-label">Tools &amp; Quick Access</p>
+        <div class="mod-nav-grid">
+            <a href="/calendar" class="mod-nav-card">
+                <span class="mod-nav-icon">📆</span>
+                <span class="mod-nav-title">Calendar</span>
+            </a>
+            <a href="/achievements" class="mod-nav-card">
+                <span class="mod-nav-icon">🏅</span>
+                <span class="mod-nav-title">Achievements</span>
+            </a>
+            <a href="/sessions" class="mod-nav-card">
+                <span class="mod-nav-icon">📋</span>
+                <span class="mod-nav-title">Sessions</span>
+            </a>
+            <a href="/progress" class="mod-nav-card">
+                <span class="mod-nav-icon">📊</span>
+                <span class="mod-nav-title">Progress</span>
+            </a>
         </div>
     </section>
-
-    {# ── Last Skill Event ──────────────────────────────────────────────────────── #}
-    <section class="section-block">
-        <div class="section-header">
-            <h2 class="page-title">📈 Last Skill Event</h2>
-            <a href="/skills/history?skill=passing" class="section-link">Full event history →</a>
-        </div>
-        <div id="s-last-result">
-            <div class="s-loading"><span class="s-spinner"></span> Loading…</div>
-        </div>
-    </section>
-
-    <div class="footer-links">
-        <a href="/dashboard">🏠 Hub</a>
-        <a href="/sessions">📋 Sessions</a>
-        <a href="/progress">📊 Progress</a>
-        <a href="/skills">⚡ Skills</a>
-        <a href="/credits">💳 Credits</a>
-        <a href="/profile/lfa-football-player">👤 Profile</a>
-    </div>
 
 </div>
 {% endblock %}
@@ -440,113 +394,58 @@
 (function () {
     'use strict';
 
-    const TIER_COLORS = {
-        BEGINNER:     '#6b7280',
-        DEVELOPING:   '#3b82f6',
-        INTERMEDIATE: '#f59e0b',
-        ADVANCED:     '#dc2626',
-        MASTER:       '#9333ea',
-    };
+    // ── Player Card iframe scale ──────────────────────────────────────────────
+    (function () {
+        var _CANVAS = {
+            instagram_square:   [1080, 1080],
+            instagram_portrait: [1080, 1350],
+            instagram_story:    [1080, 1920],
+            tiktok:             [1080, 1920],
+            facebook_square:    [1080, 1080],
+            facebook_landscape: [1200,  630],
+            og:                 [1200,  630],
+            banner_custom:      [1500,  500],
+        };
+        var _platform = '{{ _prev }}';
+        document.addEventListener('DOMContentLoaded', function () {
+            var dims = _CANVAS[_platform];
+            if (!dims) return;
+            var iframe = document.getElementById('dc-player-iframe');
+            var wrap   = document.getElementById('dc-player-wrap');
+            if (!iframe || !wrap) return;
+            var cw = dims[0], ch = dims[1];
+            var availW   = wrap.clientWidth || 640;
+            var maxH     = window.innerWidth < 700 ? 160 : 240;
+            var scaleByW = availW / cw;
+            var scaleByH = maxH / ch;
+            var scale    = Math.min(scaleByW, scaleByH);
+            iframe.style.width           = cw + 'px';
+            iframe.style.height          = ch + 'px';
+            iframe.style.transform       = 'scale(' + scale + ')';
+            iframe.style.transformOrigin = 'top left';
+            wrap.style.height            = Math.round(ch * scale) + 'px';
+        });
+    })();
 
-    function barWidth(level) {
-        return Math.max(0, Math.min(100, ((level - 40) / 59) * 100)).toFixed(1);
-    }
-
+    // ── KPI data ─────────────────────────────────────────────────────────────
     async function loadSkillsData() {
         try {
             const resp = await fetch('/skills/data');
             if (!resp.ok) throw new Error('HTTP ' + resp.status);
             const data = await resp.json();
-
             document.getElementById('kpi-avg').textContent =
                 data.average_level !== undefined ? data.average_level.toFixed(1) : '—';
             document.getElementById('kpi-tournaments').textContent =
                 data.total_tournaments !== undefined ? data.total_tournaments : '—';
-
-            // Fallback snapshot (only rendered when no LFA license)
-            const snapEl = document.getElementById('s-snapshot');
-            if (!snapEl) return;
-
-            const sorted = Object.entries(data.skills || {})
-                .sort((a, b) => b[1].current_level - a[1].current_level)
-                .slice(0, 5);
-
-            if (sorted.length === 0) {
-                snapEl.innerHTML = '<p style="color:#a0aec0;font-size:0.9rem;">No skill data available yet.</p>';
-                return;
-            }
-
-            snapEl.innerHTML = sorted.map(([key, s]) => {
-                const color = TIER_COLORS[s.tier] || '#667eea';
-                const width = barWidth(s.current_level);
-                return `<div class="s-snapshot-row">
-                    <span class="s-snap-label">${key.replace(/_/g, ' ')}</span>
-                    <div class="s-snap-bar-wrap">
-                        <div class="s-snap-bar" style="width:${width}%;background:${color};"></div>
-                    </div>
-                    <span class="s-snap-val">${s.current_level.toFixed(2)}</span>
-                </div>`;
-            }).join('');
-
         } catch (err) {
             document.getElementById('kpi-avg').textContent = '—';
             document.getElementById('kpi-tournaments').textContent = '—';
-            const snapEl = document.getElementById('s-snapshot');
-            if (snapEl) snapEl.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">Could not load skill data.</p>';
-        }
-    }
-
-    async function loadLastResult() {
-        const el = document.getElementById('s-last-result');
-        try {
-            const resp = await fetch('/skills/history/data?skill=passing');
-            if (!resp.ok) throw new Error('HTTP ' + resp.status);
-            const data = await resp.json();
-
-            const timeline = data.timeline || [];
-            if (timeline.length === 0) {
-                el.innerHTML = `<p style="color:#718096;font-size:0.9rem;">
-                    No skill events yet — enroll in an event to start your journey.</p>`;
-                return;
-            }
-
-            const last = timeline[timeline.length - 1];
-
-            let badgeHtml = '';
-            if      (last.placement === 1) badgeHtml = '<span class="s-placement-badge s-place-1">🥇 1st</span>';
-            else if (last.placement === 2) badgeHtml = '<span class="s-placement-badge s-place-2">🥈 2nd</span>';
-            else if (last.placement === 3) badgeHtml = '<span class="s-placement-badge s-place-3">🥉 3rd</span>';
-            else if (last.placement)       badgeHtml = `<span class="s-placement-badge s-place-other">${last.placement}th</span>`;
-            else                           badgeHtml = '<span class="s-placement-badge s-place-other">● Participant</span>';
-
-            const delta = last.delta_from_previous;
-            let deltaHtml = '';
-            if (delta !== null && delta !== undefined) {
-                if      (delta >  0.005) deltaHtml = `<span class="s-delta-pos">+${delta.toFixed(2)} ↑</span>`;
-                else if (delta < -0.005) deltaHtml = `<span class="s-delta-neg">${delta.toFixed(2)} ↓</span>`;
-                else                     deltaHtml = `<span class="s-delta-zero">±0.00</span>`;
-            }
-
-            const playersInfo = last.total_players
-                ? `<span class="s-result-meta">of ${last.total_players} players</span>` : '';
-
-            el.innerHTML = `<div class="s-last-result-card">
-                <span class="s-result-name">${last.event_name || last.tournament_name || 'Event'}</span>
-                ${badgeHtml}
-                ${playersInfo}
-                ${deltaHtml}
-            </div>`;
-
-        } catch (err) {
-            el.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">Could not load last result.</p>';
         }
     }
 
     document.addEventListener('DOMContentLoaded', function () {
         loadSkillsData();
-        loadLastResult();
     });
 })();
 </script>
-
 {% endblock %}

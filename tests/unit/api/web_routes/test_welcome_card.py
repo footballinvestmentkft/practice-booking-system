@@ -905,7 +905,7 @@ class TestWelcomeCardProfileSection:
 
     def test_dashboard_player_card_link_unchanged(self, dashboard_src):
         assert '/players/{{ user.id }}/card' in dashboard_src
-        assert 'spec-player-card-iframe' in dashboard_src
+        assert 'dc-player-iframe' in dashboard_src
 
 
 # ── 10. Preview / export rendering fixes (Fix A, B, C) ───────────────────────
