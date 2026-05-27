@@ -24,3 +24,6 @@ redis==5.0.1
 apscheduler==3.10.4
 # Image processing (LFA player card photo upload)
 Pillow>=10.0.0
+# Background removal (mood photos Phase 2)
+rembg==2.0.75
+onnxruntime>=1.19.0
