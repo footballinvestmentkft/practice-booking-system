@@ -3,7 +3,13 @@
 {% block title %}Get Card — LFA Education Center{% endblock %}
 {% block active_page %}lfa-player{% endblock %}
 
-{% block content %}
+{% block student_header %}
+{% set _page_icon = '🛍' %}
+{% set _page_name = 'Get Card' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
 <style>
   .shop-header {
     display: flex;
@@ -140,9 +146,26 @@
   }
   .dc-single-card h3 { color: #f1f5f9; font-size: 1.1rem; font-weight: 700; margin: 0; }
   .dc-single-card p  { color: #64748b; font-size: 0.85rem; margin: 0; }
-</style>
 
+  .shop-breadcrumb {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin-bottom: 1.25rem;
+  }
+  .shop-breadcrumb a { color: #94a3b8; text-decoration: none; }
+  .shop-breadcrumb a:hover { color: #f1f5f9; }
+  .shop-breadcrumb span { margin: 0 0.35rem; }
+</style>
+{% endblock %}
+
+{% block student_content %}
 <div class="container-fluid px-3 py-4" style="max-width: 900px;">
+
+  <nav class="shop-breadcrumb" aria-label="Breadcrumb">
+    <a href="/my-cards">My Cards</a>
+    <span>›</span>
+    <span>Get Card</span>
+  </nav>
 
   <div class="shop-header">
     <h1>Get Card</h1>
@@ -167,9 +190,9 @@
 
   {# ── Tabs ── #}
   <div class="shop-tabs">
-    <button class="shop-tab active" onclick="showTab('player')">Player Card</button>
-    <button class="shop-tab"        onclick="showTab('welcome')">Welcome Card</button>
-    <button class="shop-tab"        onclick="showTab('challenge')">Challenge Card</button>
+    <button class="shop-tab" data-tab="player"    onclick="showTab('player', this)">Player Card</button>
+    <button class="shop-tab" data-tab="welcome"   onclick="showTab('welcome', this)">Welcome Card</button>
+    <button class="shop-tab" data-tab="challenge" onclick="showTab('challenge', this)">Challenge Card</button>
   </div>
 
   {# ── Player Card tab ── #}
@@ -256,11 +279,19 @@
 </div>
 
 <script>
-function showTab(name) {
-  document.querySelectorAll('.shop-tab-panel').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.shop-tab').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  event.target.classList.add('active');
+function showTab(name, triggerEl) {
+  document.querySelectorAll('.shop-tab-panel').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelectorAll('.shop-tab').forEach(function(el) { el.classList.remove('active'); });
+  var panel = document.getElementById('tab-' + name);
+  if (panel) panel.classList.add('active');
+  if (triggerEl) triggerEl.classList.add('active');
 }
+
+// Auto-activate tab from URL ?tab= param on page load
+(function() {
+  var tab = new URLSearchParams(window.location.search).get('tab') || 'player';
+  var btn = document.querySelector('[data-tab="' + tab + '"]');
+  showTab(tab, btn);
+})();
 </script>
 {% endblock %}

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from ...database import get_db
 from ...dependencies import get_current_user_web
+from ...models.license import UserLicense
 from ...models.user import User
 from ...models.virtual_training import VirtualTrainingAttempt
 from ...models.vt_challenge import ChallengeStatus, VirtualTrainingChallenge
@@ -36,29 +37,84 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 router = APIRouter(tags=["my-cards"])
 
+_TYPE_TO_TAB: dict[str, str] = {
+    "player_card":    "player",
+    "welcome_card":   "welcome",
+    "challenge_card": "challenge",
+}
+
 
 @router.get("/my-cards", response_class=HTMLResponse)
 async def my_cards_hub(
     request: Request,
-    user: User = Depends(get_current_user_web),
+    db: Session = Depends(get_db),
+    user: User  = Depends(get_current_user_web),
 ):
-    """Hub page listing all card types — active (v≥1) and coming-soon (v0)."""
-    card_specs = [
-        card_registry.get_card_type_spec(tid)
-        for tid in card_registry.list_card_type_ids()
-    ]
+    """Hub — entitlement-aware central page for all card families."""
+    license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+        UserLicense.is_active == True,
+    ).first()
+
+    card_variant    = (license.card_variant if license else None) or "fifa"
+    designs_by_id   = {d.id: d for d in get_all_designs(db)}
+    design_obj      = designs_by_id.get(card_variant)
+    pc_price        = design_obj.credit_cost if design_obj else 0
+    pc_free         = not design_obj.is_premium if design_obj else True
+    pc_design_label = design_obj.label if design_obj else "FIFA Classic"
+    pc_owned        = is_design_accessible(db, user.id, "player_card", card_variant)
+
+    if pc_free:
+        pc_state = "free"
+    elif pc_owned:
+        pc_state = "owned"
+    elif user.credit_balance >= pc_price:
+        pc_state = "get_card"
+    else:
+        pc_state = "locked"
+
+    wc_price = _NON_PLAYER_CARD_PRICES[("welcome_card",   "default")]
+    wc_owned = is_design_accessible(db, user.id, "welcome_card", "default")
+    if wc_owned:
+        wc_state = "owned"
+    elif user.credit_balance >= wc_price:
+        wc_state = "get_card"
+    else:
+        wc_state = "locked"
+
+    cc_price = _NON_PLAYER_CARD_PRICES[("challenge_card", "challenge")]
+    cc_owned = is_design_accessible(db, user.id, "challenge_card", "challenge")
+    if cc_owned:
+        cc_state = "owned"
+    elif user.credit_balance >= cc_price:
+        cc_state = "get_card"
+    else:
+        cc_state = "locked"
+
     return templates.TemplateResponse(
         "my_cards_hub.html",
         {
-            "request": request,
-            "user": user,
-            "card_specs": card_specs,
-            # Explicit LFA spec context — do not rely on user.specialization fallback,
-            # which breaks on multi-spec accounts where the active spec != LFA_FOOTBALL_PLAYER.
-            "spec_dashboard_url": "/dashboard/lfa-football-player",
+            "request":         request,
+            "user":            user,
+            # Player Card
+            "pc_state":        pc_state,
+            "pc_price":        pc_price,
+            "pc_design":       card_variant,
+            "pc_design_label": pc_design_label,
+            # Welcome Card
+            "wc_state":        wc_state,
+            "wc_price":        wc_price,
+            # Challenge Card
+            "cc_state":        cc_state,
+            "cc_price":        cc_price,
+            # Flash
+            "flash_purchased": request.query_params.get("purchased"),
+            # Explicit LFA spec context — multi-spec safe
+            "spec_dashboard_url":  "/dashboard/lfa-football-player",
             "spec_dashboard_icon": "⚽",
-            "spec_profile_url": "/profile/lfa-football-player",
-            "spec_profile_icon": "🪪",
+            "spec_profile_url":    "/profile/lfa-football-player",
+            "spec_profile_icon":   "🪪",
         },
     )
 
@@ -122,20 +178,21 @@ async def get_card(
     user: User  = Depends(get_current_user_web),
 ):
     """Purchase a card design entitlement (credit deduction + ownership row)."""
+    tab = _TYPE_TO_TAB.get(card_type_id, "player")
     try:
         purchase_design(db, user, card_type_id, design_id)
         return RedirectResponse(
-            f"/my-cards/shop?purchased={card_type_id}:{design_id}",
+            f"/my-cards?purchased={card_type_id}:{design_id}",
             status_code=303,
         )
     except FreeDesignError:
-        return RedirectResponse("/my-cards/shop?error=free",    status_code=303)
+        return RedirectResponse(f"/my-cards/shop?error=free&tab={tab}",    status_code=303)
     except AlreadyOwnedError:
-        return RedirectResponse("/my-cards/shop?error=owned",   status_code=303)
+        return RedirectResponse(f"/my-cards/shop?error=owned&tab={tab}",   status_code=303)
     except InsufficientCreditsError:
-        return RedirectResponse("/my-cards/shop?error=credits", status_code=303)
+        return RedirectResponse(f"/my-cards/shop?error=credits&tab={tab}", status_code=303)
     except ValueError:
-        return RedirectResponse("/my-cards/shop?error=invalid", status_code=303)
+        return RedirectResponse(f"/my-cards/shop?error=invalid&tab={tab}", status_code=303)
 
 
 @router.get("/my-cards/player-card")

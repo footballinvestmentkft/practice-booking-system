@@ -62664,7 +62664,7 @@
     },
     "/my-cards": {
       "get": {
-        "description": "Hub page listing all card types \u2014 active (v\u22651) and coming-soon (v0).",
+        "description": "Hub \u2014 entitlement-aware central page for all card families.",
         "operationId": "my_cards_hub_my_cards_get",
         "responses": {
           "200": {

@@ -11,6 +11,9 @@ MCS-08  Welcome Card owned → wc_state="owned"
 MCS-09  Welcome/Challenge prices > 0 (never free)
 MCS-10  POST /my-cards/designs/{type}/{id}/get → 303 redirect on success;
          ?error=free / ?error=owned / ?error=credits / ?error=invalid on failure
+MCS-11  my_cards_shop.html uses student_content block + spec_subpage_hdr include
+MCS-12  my_cards_shop.html breadcrumb links back to /my-cards
+MCS-13  my_cards_shop.html URLSearchParams JS present for tab activation
 """
 import asyncio
 from unittest.mock import MagicMock, patch
@@ -177,44 +180,102 @@ class TestPurchaseRedirects:
             return _run(get_card(card_type_id=card_type_id, design_id=design_id, db=db, user=user))
 
     def test_mcs10a_success_redirect(self):
-        """MCS-10a: successful purchase → 303 to /my-cards/shop?purchased=..."""
+        """MCS-10a: successful purchase → 303 to /my-cards?purchased=... (hub, not shop)."""
         user = _make_user()
         db   = _make_db()
         resp = self._call_get_card("player_card", "compact", user, db)
+        loc  = resp.headers["location"]
         assert resp.status_code == 303
-        assert "purchased=player_card:compact" in resp.headers["location"]
+        assert loc.startswith("/my-cards?"), f"Expected hub redirect, got: {loc}"
+        assert "purchased=player_card:compact" in loc
+        assert "/my-cards/shop" not in loc
 
     def test_mcs10b_free_error_redirect(self):
-        """MCS-10b: FreeDesignError → ?error=free."""
+        """MCS-10b: FreeDesignError → /my-cards/shop?error=free&tab=player."""
         from app.services.card_design_service import FreeDesignError
         user = _make_user()
         db   = _make_db()
         resp = self._call_get_card("player_card", "fifa", user, db, side_effect=FreeDesignError())
+        loc  = resp.headers["location"]
         assert resp.status_code == 303
-        assert "error=free" in resp.headers["location"]
+        assert "error=free" in loc
+        assert "tab=player" in loc
 
     def test_mcs10c_already_owned_redirect(self):
-        """MCS-10c: AlreadyOwnedError → ?error=owned."""
+        """MCS-10c: AlreadyOwnedError → /my-cards/shop?error=owned&tab=player."""
         from app.services.card_design_service import AlreadyOwnedError
         user = _make_user()
         db   = _make_db()
         resp = self._call_get_card("player_card", "compact", user, db, side_effect=AlreadyOwnedError())
+        loc  = resp.headers["location"]
         assert resp.status_code == 303
-        assert "error=owned" in resp.headers["location"]
+        assert "error=owned" in loc
+        assert "tab=player" in loc
 
     def test_mcs10d_insufficient_credits_redirect(self):
-        """MCS-10d: InsufficientCreditsError → ?error=credits."""
+        """MCS-10d: InsufficientCreditsError → /my-cards/shop?error=credits&tab=player."""
         from app.services.credit_service import InsufficientCreditsError
         user = _make_user()
         db   = _make_db()
         resp = self._call_get_card("player_card", "compact", user, db, side_effect=InsufficientCreditsError(300, 0))
+        loc  = resp.headers["location"]
         assert resp.status_code == 303
-        assert "error=credits" in resp.headers["location"]
+        assert "error=credits" in loc
+        assert "tab=player" in loc
 
     def test_mcs10e_invalid_card_type_redirect(self):
         """MCS-10e: ValueError (unknown card_type_id) → ?error=invalid."""
         user = _make_user()
         db   = _make_db()
         resp = self._call_get_card("bogus_type", "bogus_design", user, db, side_effect=ValueError("unknown"))
+        loc  = resp.headers["location"]
         assert resp.status_code == 303
-        assert "error=invalid" in resp.headers["location"]
+        assert "error=invalid" in loc
+
+    def test_mcs10f_welcome_card_error_tab(self):
+        """MCS-10f: AlreadyOwnedError on welcome_card → tab=welcome in redirect."""
+        from app.services.card_design_service import AlreadyOwnedError
+        user = _make_user()
+        db   = _make_db()
+        resp = self._call_get_card("welcome_card", "default", user, db, side_effect=AlreadyOwnedError())
+        loc  = resp.headers["location"]
+        assert "tab=welcome" in loc
+
+    def test_mcs10g_challenge_card_error_tab(self):
+        """MCS-10g: InsufficientCreditsError on challenge_card → tab=challenge in redirect."""
+        from app.services.credit_service import InsufficientCreditsError
+        user = _make_user()
+        db   = _make_db()
+        resp = self._call_get_card("challenge_card", "challenge", user, db, side_effect=InsufficientCreditsError(150, 0))
+        loc  = resp.headers["location"]
+        assert "tab=challenge" in loc
+
+
+# ── MCS-11..13: Template structural tests ────────────────────────────────────
+
+class TestShopTemplate:
+
+    _TEMPLATE_PATH = (
+        "app/templates/my_cards_shop.html"
+    )
+
+    def _read_template(self):
+        from pathlib import Path
+        base = Path(__file__).resolve().parents[4]
+        return (base / self._TEMPLATE_PATH).read_text()
+
+    def test_mcs11_uses_student_content_block(self):
+        """MCS-11: shop template uses student_content block (not bare 'content')."""
+        src = self._read_template()
+        assert "block student_content" in src, "Must extend student_base via student_content block"
+        assert "spec_subpage_hdr.html" in src, "Must include spec_subpage_hdr for nav context"
+
+    def test_mcs12_breadcrumb_links_to_hub(self):
+        """MCS-12: breadcrumb contains link back to /my-cards hub."""
+        src = self._read_template()
+        assert 'href="/my-cards"' in src, "Breadcrumb must link back to /my-cards hub"
+
+    def test_mcs13_tab_url_param_js_present(self):
+        """MCS-13: URLSearchParams JS present for ?tab= auto-activation on page load."""
+        src = self._read_template()
+        assert "URLSearchParams" in src, "Must use URLSearchParams to auto-activate tab from URL"

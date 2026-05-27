@@ -72,10 +72,11 @@ class TestMyCardsSpecContext:
 
     def _call_my_cards(self):
         from app.api.web_routes.my_cards import my_cards_hub
-        from app.services.card_system import card_registry
 
         user = _make_lfa_student()
+        db   = _make_db()
         request = _make_request("/my-cards")
+        request.query_params.get = lambda k, default=None: default
         captured = {}
 
         def capture(*args, **kwargs):
@@ -84,12 +85,17 @@ class TestMyCardsSpecContext:
             resp.status_code = 200
             return resp
 
-        with patch("app.api.web_routes.my_cards.card_registry") as mock_reg, \
+        free_design = MagicMock()
+        free_design.id = "fifa"
+        free_design.label = "FIFA Classic"
+        free_design.credit_cost = 0
+        free_design.is_premium = False
+
+        with patch("app.api.web_routes.my_cards.get_all_designs", return_value=[free_design]), \
+             patch("app.api.web_routes.my_cards.is_design_accessible", return_value=False), \
              patch("app.api.web_routes.my_cards.templates") as mock_tmpl:
-            mock_reg.list_card_type_ids.return_value = []
-            mock_reg.get_card_type_spec.return_value = MagicMock()
             mock_tmpl.TemplateResponse.side_effect = capture
-            _run(my_cards_hub(request=request, user=user))
+            _run(my_cards_hub(request=request, db=db, user=user))
 
         return captured
 
