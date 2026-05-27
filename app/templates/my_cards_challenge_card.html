@@ -289,6 +289,50 @@
         <p>Browse your recent Virtual Challenges and share phase cards for each result. Preview before downloading.</p>
     </div>
 
+    {# ── Format Shop Header ── #}
+    <div style="margin-bottom:2rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.85rem;">
+        <h2 style="font-size:1rem;font-weight:700;color:var(--app-text);margin:0;">Formats</h2>
+        <span style="font-size:0.75rem;font-weight:600;color:#94a3b8;background:#1e293b;border:1px solid #334155;border-radius:12px;padding:0.18rem 0.6rem;">
+          {{ cc_owned_count }} / {{ cc_total }} owned
+        </span>
+      </div>
+      {% if flash_purchased %}
+      <div style="padding:0.7rem 1rem;border-radius:8px;margin-bottom:0.85rem;font-size:0.85rem;background:#14532d;color:#86efac;border:1px solid #166534;">
+        ✓ Format unlocked — you can now export Challenge Cards in this format.
+      </div>
+      {% endif %}
+      {% if flash_error == "credits" %}
+      <div style="padding:0.7rem 1rem;border-radius:8px;margin-bottom:0.85rem;font-size:0.85rem;background:#450a0a;color:#fca5a5;border:1px solid #7f1d1d;">Not enough credits.</div>
+      {% elif flash_error == "owned" %}
+      <div style="padding:0.7rem 1rem;border-radius:8px;margin-bottom:0.85rem;font-size:0.85rem;background:#450a0a;color:#fca5a5;border:1px solid #7f1d1d;">You already own this format.</div>
+      {% elif flash_error == "invalid" %}
+      <div style="padding:0.7rem 1rem;border-radius:8px;margin-bottom:0.85rem;font-size:0.85rem;background:#450a0a;color:#fca5a5;border:1px solid #7f1d1d;">Unknown format.</div>
+      {% endif %}
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;">
+        {% for r in cc_format_rows %}
+        <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:1rem;display:flex;flex-direction:column;gap:0.6rem;">
+          <div style="font-size:0.63rem;font-weight:700;letter-spacing:0.08em;color:#475569;text-transform:uppercase;">{{ r.style_tag }}</div>
+          <div style="font-weight:700;font-size:0.92rem;color:#f1f5f9;">{{ r.label }}</div>
+          <div style="font-size:0.72rem;color:#475569;">{{ r.dims }}</div>
+          {% if r.state == "owned" %}
+            <span style="display:inline-block;padding:0.18rem 0.5rem;border-radius:10px;font-size:0.69rem;font-weight:700;background:#1e3a5f;color:#93c5fd;align-self:flex-start;">Owned ✓</span>
+            <span style="display:block;width:100%;padding:0.45rem 0.75rem;border-radius:8px;font-size:0.82rem;font-weight:600;text-align:center;background:#1e3a5f;color:#93c5fd;cursor:default;text-decoration:none;">Owned ✓</span>
+          {% elif r.state == "purchasable" %}
+            <span style="display:inline-block;padding:0.18rem 0.5rem;border-radius:10px;font-size:0.69rem;font-weight:700;background:#78350f;color:#fde68a;align-self:flex-start;">{{ r.credit_cost }} CR</span>
+            <form method="POST" action="/my-cards/designs/challenge_card/{{ r.design_id }}/get">
+              <button type="submit" style="display:block;width:100%;padding:0.45rem 0.75rem;border-radius:8px;font-size:0.82rem;font-weight:600;text-align:center;cursor:pointer;border:none;background:#854d0e;color:#fde68a;">Get Card — {{ r.credit_cost }} CR</button>
+            </form>
+          {% else %}
+            <span style="display:inline-block;padding:0.18rem 0.5rem;border-radius:10px;font-size:0.69rem;font-weight:700;background:#1e293b;color:#475569;align-self:flex-start;">{{ r.credit_cost }} CR 🔒</span>
+            <button disabled style="display:block;width:100%;padding:0.45rem 0.75rem;border-radius:8px;font-size:0.82rem;font-weight:600;text-align:center;cursor:not-allowed;border:none;background:#1e293b;color:#334155;opacity:.7;">Not enough credits</button>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {# ── End Format Shop Header ── #}
+
     {% if not has_challenges %}
     {# ── Empty state ── #}
     <div class="cc-empty">

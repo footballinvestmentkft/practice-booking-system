@@ -1,0 +1,145 @@
+{% extends "student_base.html" %}
+
+{% block title %}Player Card — LFA Education Center{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '🎴' %}
+{% set _page_name = 'Player Card' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+{% include "includes/mc_format_grid.html" %}
+<style>
+  .mcp-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 4rem;
+  }
+  .mcp-breadcrumb {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 1.25rem;
+  }
+  .mcp-breadcrumb a { color: #94a3b8; text-decoration: none; }
+  .mcp-breadcrumb a:hover { color: #f1f5f9; }
+  .mcp-breadcrumb span { margin: 0 0.35rem; }
+  .mcp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .mcp-header h1 { font-size: 1.4rem; font-weight: 700; color: #f8fafc; margin: 0; }
+  .mcp-credits-badge {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 20px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.85rem;
+    color: #94a3b8;
+  }
+  .mcp-credits-badge strong { color: #FFD200; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="mcp-wrap">
+
+  <nav class="mcp-breadcrumb" aria-label="Breadcrumb">
+    <a href="/my-cards">My Cards</a>
+    <span>›</span>
+    <span>Player Card</span>
+  </nav>
+
+  <div class="mcp-header">
+    <h1>Player Card</h1>
+    <span class="mcp-credits-badge">Balance: <strong>{{ user.credit_balance }} CR</strong></span>
+  </div>
+
+  {# ── Flash messages ── #}
+  {% if flash_purchased %}
+  <div class="mfg-flash mfg-flash-success">
+    ✓ Design unlocked — {{ flash_purchased }} is now in your collection.
+  </div>
+  {% endif %}
+  {% if flash_error == "credits" %}
+  <div class="mfg-flash mfg-flash-error">Not enough credits to purchase this design.</div>
+  {% elif flash_error == "owned" %}
+  <div class="mfg-flash mfg-flash-error">You already own this design.</div>
+  {% elif flash_error == "free" %}
+  <div class="mfg-flash mfg-flash-error">This design is always free — no purchase needed.</div>
+  {% elif flash_error == "invalid" %}
+  <div class="mfg-flash mfg-flash-error">Unknown card type or design.</div>
+  {% endif %}
+
+  {# ── Section header ── #}
+  <div class="mfg-section-hdr">
+    <h2>Designs</h2>
+    <span class="mfg-count-badge">{{ owned_count }} / {{ total_count }} owned</span>
+  </div>
+
+  {# ── Design grid ── #}
+  <div class="mfg-grid">
+    {% for d in design_rows %}
+    <div class="mfg-card">
+
+      {# Preview #}
+      {% if d.state in ("free", "owned") %}
+      <div class="mfg-preview-wrap">
+        <iframe
+          class="mfg-preview-iframe"
+          src="/players/{{ user.id }}/card?platform=instagram_portrait&design={{ d.id }}"
+          loading="lazy"
+          scrolling="no"
+          title="{{ d.label }} preview"
+        ></iframe>
+      </div>
+      {% else %}
+      <div class="mfg-preview-wrap mfg-locked">
+        <div class="mfg-preview-placeholder">{{ d.label[:2] | upper }}</div>
+      </div>
+      {% endif %}
+
+      {# Metadata #}
+      <p class="mfg-label">{{ d.label }}</p>
+      {% if d.description %}
+      <p style="font-size:0.75rem;color:#64748b;margin:0;">{{ d.description }}</p>
+      {% endif %}
+
+      {# State badge + CTA #}
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+        {% if d.state == "free" %}
+          <span class="mfg-badge mfg-badge-free">Free</span>
+        {% elif d.state == "owned" %}
+          <span class="mfg-badge mfg-badge-owned">Owned ✓</span>
+        {% elif d.state == "purchasable" %}
+          <span class="mfg-badge mfg-badge-get">{{ d.credit_cost }} CR</span>
+        {% else %}
+          <span class="mfg-badge mfg-badge-locked">{{ d.credit_cost }} CR 🔒</span>
+        {% endif %}
+      </div>
+
+      <div class="mfg-cta">
+        {% if d.state == "free" %}
+          <a href="/dashboard/lfa-football-player/card-editor" class="mfg-btn mfg-btn-edit">Edit / Download</a>
+        {% elif d.state == "owned" %}
+          <a href="/dashboard/lfa-football-player/card-editor" class="mfg-btn mfg-btn-edit">Edit / Download</a>
+        {% elif d.state == "purchasable" %}
+          <form method="POST" action="/my-cards/designs/player_card/{{ d.id }}/get">
+            <button type="submit" class="mfg-btn mfg-btn-get">Get Card — {{ d.credit_cost }} CR</button>
+          </form>
+        {% else %}
+          <button class="mfg-btn mfg-btn-disabled" disabled>Not enough credits</button>
+        {% endif %}
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

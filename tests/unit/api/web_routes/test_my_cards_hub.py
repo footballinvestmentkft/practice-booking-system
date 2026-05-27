@@ -1,18 +1,18 @@
 """
 MCH_ — My Cards Hub tests.
 
-Updated for entitlement-aware hub (Phase 4B → unified hub):
-  - Hub now exposes pc_state/wc_state/cc_state instead of card_specs
-  - Hub route requires db session (UserLicense query + entitlement state)
+Updated for Phase 2 format-level Card Shop MVP:
+  - Hub exposes pc_owned_count/pc_total/wc_owned_count/wc_total/cc_owned_count/cc_total
+  - player-card and welcome-card routes now render TemplateResponse (format shops)
 
 Routes under test:
-  GET /my-cards               → hub page (200)
-  GET /my-cards/player-card   → 303 → /dashboard/lfa-football-player/card-editor
-  GET /my-cards/welcome-card  → 303 → /profile/onboarding-card
+  GET /my-cards               → hub page (200, tile layout)
+  GET /my-cards/player-card   → 200 → my_cards_player_card.html (design format shop)
+  GET /my-cards/welcome-card  → 200 → my_cards_welcome_card.html (format shop)
 
 Backward-compat assertions:
-  GET /dashboard/lfa-football-player/card-editor  — route still exists (MCH-10)
-  GET /profile/onboarding-card                    — route still exists (MCH-11)
+  MCH-10: /dashboard/lfa-football-player/card-editor route still exists
+  MCH-11: /profile/onboarding-card route still exists
 
 Dashboard template assertions:
   MCH-16: dashboard href="/my-cards" present in CTA context
@@ -23,8 +23,6 @@ import inspect
 import pathlib
 import pytest
 from unittest.mock import MagicMock, patch
-
-from fastapi.responses import RedirectResponse
 
 from app.api.web_routes.my_cards import (
     my_cards_hub,
@@ -84,14 +82,8 @@ def _design(design_id, credit_cost, is_premium, label=None):
     return d
 
 
-def _make_db(license_variant="fifa"):
-    """Return a MagicMock db with UserLicense query chain pre-configured."""
+def _make_db():
     db = MagicMock()
-    mock_license = MagicMock()
-    mock_license.card_variant = license_variant
-    db.query.return_value.filter.return_value.first.return_value = (
-        mock_license if license_variant is not None else None
-    )
     db.add    = MagicMock()
     db.commit = MagicMock()
     return db
@@ -100,16 +92,18 @@ def _make_db(license_variant="fifa"):
 def _call_hub(
     user=None,
     db=None,
-    license_variant="fifa",
-    accessible_ids=None,
+    owned_ids_by_type=None,
     query_params=None,
     designs=None,
 ):
-    """Call my_cards_hub directly with all dependencies mocked."""
-    user           = user or _user()
-    db             = db   or _make_db(license_variant)
-    accessible_ids = accessible_ids or set()
-    default_designs = [
+    """Call my_cards_hub directly with all dependencies mocked.
+
+    owned_ids_by_type: dict[str, list[str]] — maps card_type_id → owned design_ids
+    """
+    user             = user or _user()
+    db               = db   or _make_db()
+    owned_ids_by_type = owned_ids_by_type or {}
+    default_designs  = [
         _design("fifa",    credit_cost=0,   is_premium=False, label="FIFA Classic"),
         _design("compact", credit_cost=300, is_premium=True,  label="Compact"),
     ]
@@ -120,11 +114,11 @@ def _call_hub(
         captured["context"]  = context
         return MagicMock(status_code=200)
 
-    def fake_accessible(_db, uid, card_type_id, design_id):
-        return (card_type_id, design_id) in accessible_ids
+    def fake_owned_ids(_db, uid, card_type_id):
+        return list(owned_ids_by_type.get(card_type_id, []))
 
     with patch(f"{_BASE}.get_all_designs", return_value=designs or default_designs), \
-         patch(f"{_BASE}.is_design_accessible", side_effect=fake_accessible), \
+         patch(f"{_BASE}.get_owned_design_ids", side_effect=fake_owned_ids), \
          patch(f"{_BASE}.templates.TemplateResponse", side_effect=fake_template_response):
         _run(my_cards_hub(_req(query_params), db=db, user=user))
 
@@ -146,49 +140,68 @@ class TestMyCardsHubAuth:
         assert "user" in sig.parameters
 
 
-# ── MCH-03/04/05: Hub context keys ────────────────────────────────────────────
+# ── MCH-03/04/05: Hub context keys (Phase 2: count-based) ─────────────────────
 
 class TestMyCardsHubContext:
 
-    def test_mch03_player_card_state_in_hub_context(self):
-        """MCH-03: hub context contains Player Card state keys."""
+    def test_mch03_player_card_counts_in_hub_context(self):
+        """MCH-03: hub context contains Player Card count keys."""
         ctx = _call_hub()["context"]
-        for key in ("pc_state", "pc_price", "pc_design", "pc_design_label"):
+        for key in ("pc_owned_count", "pc_total"):
             assert key in ctx, f"Missing key: {key}"
 
-    def test_mch04_welcome_card_state_in_hub_context(self):
-        """MCH-04: hub context contains Welcome Card state keys."""
+    def test_mch04_welcome_card_counts_in_hub_context(self):
+        """MCH-04: hub context contains Welcome Card count keys."""
         ctx = _call_hub()["context"]
-        for key in ("wc_state", "wc_price"):
+        for key in ("wc_owned_count", "wc_total"):
             assert key in ctx, f"Missing key: {key}"
 
-    def test_mch05_challenge_card_state_in_hub_context(self):
-        """MCH-05: hub context contains Challenge Card state keys."""
+    def test_mch05_challenge_card_counts_in_hub_context(self):
+        """MCH-05: hub context contains Challenge Card count keys."""
         ctx = _call_hub()["context"]
-        for key in ("cc_state", "cc_price"):
+        for key in ("cc_owned_count", "cc_total"):
             assert key in ctx, f"Missing key: {key}"
 
 
-# ── MCH-06/07: Redirect routes ────────────────────────────────────────────────
+# ── MCH-06/07: Family shop routes render TemplateResponse ─────────────────────
 
-class TestMyCardsDetailRedirects:
+class TestMyCardsDetailRoutes:
 
-    def test_mch06_player_card_redirects_to_card_editor(self):
-        """MCH-06: GET /my-cards/player-card → 303 to /dashboard/lfa-football-player/card-editor."""
-        result = _run(my_cards_player_card(user=_user()))
-        assert isinstance(result, RedirectResponse)
-        assert result.status_code == 303
-        assert result.headers["location"] == "/dashboard/lfa-football-player/card-editor"
+    def test_mch06_player_card_route_renders_format_shop(self):
+        """MCH-06: GET /my-cards/player-card → 200 + my_cards_player_card.html."""
+        captured = {}
 
-    def test_mch07_welcome_card_redirects_to_onboarding_card(self):
-        """MCH-07: GET /my-cards/welcome-card → 303 to /profile/onboarding-card."""
-        result = _run(my_cards_welcome_card(user=_user()))
-        assert isinstance(result, RedirectResponse)
-        assert result.status_code == 303
-        assert result.headers["location"] == "/profile/onboarding-card"
+        def fake_tmpl(tmpl, ctx):
+            captured["template"] = tmpl
+            captured["context"]  = ctx
+            return MagicMock(status_code=200)
+
+        default_designs = [_design("fifa", credit_cost=0, is_premium=False, label="FIFA Classic")]
+
+        with patch(f"{_BASE}.get_all_designs", return_value=default_designs), \
+             patch(f"{_BASE}.is_design_accessible", return_value=False), \
+             patch(f"{_BASE}.templates.TemplateResponse", side_effect=fake_tmpl):
+            _run(my_cards_player_card(request=_req(), db=_make_db(), user=_user()))
+
+        assert captured.get("template") == "my_cards_player_card.html"
+
+    def test_mch07_welcome_card_route_renders_format_shop(self):
+        """MCH-07: GET /my-cards/welcome-card → 200 + my_cards_welcome_card.html."""
+        captured = {}
+
+        def fake_tmpl(tmpl, ctx):
+            captured["template"] = tmpl
+            captured["context"]  = ctx
+            return MagicMock(status_code=200)
+
+        with patch(f"{_BASE}.is_design_accessible", return_value=False), \
+             patch(f"{_BASE}.templates.TemplateResponse", side_effect=fake_tmpl):
+            _run(my_cards_welcome_card(request=_req(), db=_make_db(), user=_user()))
+
+        assert captured.get("template") == "my_cards_welcome_card.html"
 
 
-# ── MCH-08/09: Redirect route auth guards ─────────────────────────────────────
+# ── MCH-08/09: Route auth guards ──────────────────────────────────────────────
 
 class TestMyCardsDetailAuth:
 
@@ -236,55 +249,65 @@ class TestMyCardsHubTemplate:
         """MCH-12: Hub template heading reads 'My Cards'."""
         assert "My Cards" in hub_src
 
-    def test_mch13_hub_template_has_three_panels(self, hub_src):
+    def test_mch13_hub_template_has_three_family_links(self, hub_src):
         """MCH-13: Hub template has static links for all three card families."""
         assert "/my-cards/player-card" in hub_src
         assert "/my-cards/welcome-card" in hub_src
         assert "/my-cards/challenge-card" in hub_src
 
-    def test_mch14_hub_context_has_all_state_keys(self):
-        """MCH-14: All six state context keys present (pc/wc/cc state+price)."""
+    def test_mch14_hub_context_has_all_count_keys(self):
+        """MCH-14: All six count context keys present (pc/wc/cc owned_count+total)."""
         ctx = _call_hub()["context"]
-        for key in ("pc_state", "pc_price", "wc_state", "wc_price", "cc_state", "cc_price"):
+        for key in ("pc_owned_count", "pc_total", "wc_owned_count", "wc_total", "cc_owned_count", "cc_total"):
             assert key in ctx, f"Missing context key: {key}"
 
 
-# ── MCH-15: Entitlement state correctness ─────────────────────────────────────
+# ── MCH-15: Count correctness ─────────────────────────────────────────────────
 
-class TestEntitlementStates:
+class TestOwnershipCounts:
 
-    def test_mch15_pc_free_state_for_fifa(self):
-        """MCH-15: pc_state='free' when card_variant=fifa (is_premium=False)."""
-        ctx = _call_hub(license_variant="fifa", accessible_ids=set())["context"]
-        assert ctx["pc_state"] == "free"
-
-    def test_mch15b_pc_get_card_state_compact_not_owned_sufficient_credits(self):
-        """MCH-15b: pc_state='get_card' when compact not owned and balance ≥ 300."""
+    def test_mch15_pc_owned_count_includes_free_designs(self):
+        """MCH-15: pc_owned_count=1 when only free 'fifa' is owned."""
         ctx = _call_hub(
-            user=_user(balance=500),
-            license_variant="compact",
-            accessible_ids=set(),
+            designs=[_design("fifa", credit_cost=0, is_premium=False)],
+            owned_ids_by_type={"player_card": ["fifa"]},
         )["context"]
-        assert ctx["pc_state"] == "get_card"
+        assert ctx["pc_owned_count"] == 1
+        assert ctx["pc_total"] == 1
 
-    def test_mch15c_pc_locked_state_compact_not_owned_insufficient_credits(self):
-        """MCH-15c: pc_state='locked' when compact not owned and balance < 300."""
+    def test_mch15b_pc_total_reflects_all_designs(self):
+        """MCH-15b: pc_total = len(all designs)."""
         ctx = _call_hub(
-            user=_user(balance=50),
-            license_variant="compact",
-            accessible_ids=set(),
+            designs=[
+                _design("fifa",    credit_cost=0,   is_premium=False),
+                _design("compact", credit_cost=300, is_premium=True),
+            ],
+            owned_ids_by_type={"player_card": ["fifa"]},
         )["context"]
-        assert ctx["pc_state"] == "locked"
+        assert ctx["pc_total"] == 2
+        assert ctx["pc_owned_count"] == 1
 
-    def test_mch15d_wc_get_card_state(self):
-        """MCH-15d: wc_state='get_card' when not owned and balance ≥ 200."""
-        ctx = _call_hub(user=_user(balance=9999), accessible_ids=set())["context"]
-        assert ctx["wc_state"] == "get_card"
+    def test_mch15c_wc_owned_count_excludes_legacy_key(self):
+        """MCH-15c: wc_owned_count only counts valid WC format IDs (not legacy 'default')."""
+        from app.services.card_design_service import WELCOME_CARD_FORMATS
+        # Simulate a user who only has the legacy 'default' CDO (shim expands to all formats)
+        all_wc_ids = [f.design_id for f in WELCOME_CARD_FORMATS]
+        ctx = _call_hub(
+            owned_ids_by_type={"welcome_card": all_wc_ids},
+        )["context"]
+        assert ctx["wc_owned_count"] == len(WELCOME_CARD_FORMATS)
 
-    def test_mch15e_cc_get_card_state(self):
-        """MCH-15e: cc_state='get_card' when not owned and balance ≥ 150."""
-        ctx = _call_hub(user=_user(balance=9999), accessible_ids=set())["context"]
-        assert ctx["cc_state"] == "get_card"
+    def test_mch15d_wc_total_equals_welcome_card_formats_count(self):
+        """MCH-15d: wc_total == len(WELCOME_CARD_FORMATS)."""
+        from app.services.card_design_service import WELCOME_CARD_FORMATS
+        ctx = _call_hub()["context"]
+        assert ctx["wc_total"] == len(WELCOME_CARD_FORMATS)
+
+    def test_mch15e_cc_total_equals_challenge_card_formats_count(self):
+        """MCH-15e: cc_total == len(CHALLENGE_CARD_FORMATS)."""
+        from app.services.card_design_service import CHALLENGE_CARD_FORMATS
+        ctx = _call_hub()["context"]
+        assert ctx["cc_total"] == len(CHALLENGE_CARD_FORMATS)
 
 
 # ── MCH-16/17: Dashboard template navigation updated ──────────────────────────
@@ -301,11 +324,8 @@ class TestDashboardNavUpdated:
 
     def test_mch17_dashboard_card_ctas_funnel_to_my_cards(self, dashboard_src):
         """MCH-17: Player/Welcome/Challenge panel primary CTAs link to /my-cards."""
-        # All three dc-hero panels should funnel through /my-cards
         assert 'href="/my-cards" class="dc-cta-primary"' in dashboard_src
-        # The old direct link to /profile/onboarding-card must no longer be a primary CTA
         assert 'href="/profile/onboarding-card" class="dc-cta-primary"' not in dashboard_src
-        # /challenges/send is preserved (social action, not a card management action)
         assert 'href="/challenges/send"' in dashboard_src
 
 
@@ -359,6 +379,7 @@ class TestMyChallengeCardRoute:
 
         with patch(f"{_CC_BASE}.templates") as mock_tmpl, \
              patch(f"{_CC_BASE}.CardDraftService") as mock_ds, \
+             patch(f"{_CC_BASE}.is_design_accessible", return_value=False), \
              patch(f"{_CC_BASE}.get_all_themes", return_value=themes_mock):
             mock_tmpl.TemplateResponse.side_effect = _capture
             mock_ds.get_or_create_singleton.return_value = draft_mock
@@ -381,10 +402,11 @@ class TestMyChallengeCardRoute:
         sig = inspect.signature(my_cards_challenge_card)
         assert "user" in sig.parameters
 
-    def test_mch_ch03_hub_challenge_state_key_present(self):
-        """MCH-CH-03: hub context contains cc_state key."""
-        ctx = _call_hub(accessible_ids=set())["context"]
-        assert "cc_state" in ctx
+    def test_mch_ch03_hub_context_has_cc_count_keys(self):
+        """MCH-CH-03: hub context contains cc_owned_count and cc_total keys."""
+        ctx = _call_hub()["context"]
+        assert "cc_owned_count" in ctx
+        assert "cc_total" in ctx
 
     def test_mch_ch04_hub_template_has_challenge_card_static_link(self):
         """MCH-CH-04: hub template contains static /my-cards/challenge-card link."""
@@ -419,3 +441,15 @@ class TestMyChallengeCardRoute:
         fmt_ids = [f["id"] for f in cap["context"]["formats"]]
         assert "challenge_post_16_9"  in fmt_ids
         assert "challenge_story_9_16" in fmt_ids
+
+    def test_mch_ch10_context_contains_cc_format_rows(self):
+        """MCH-CH-10: route context contains cc_format_rows with state per format."""
+        cap = self._call()
+        rows = cap["context"].get("cc_format_rows", [])
+        assert len(rows) == 2
+        row_ids = {r["design_id"] for r in rows}
+        assert "challenge_post_16_9"  in row_ids
+        assert "challenge_story_9_16" in row_ids
+        for r in rows:
+            assert "state" in r
+            assert "credit_cost" in r

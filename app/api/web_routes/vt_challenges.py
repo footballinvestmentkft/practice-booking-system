@@ -1029,12 +1029,12 @@ async def challenge_card_export(
     from app.models.user import UserRole as _UserRole  # noqa: PLC0415
     if user.role != _UserRole.ADMIN:
         from app.services.card_design_service import is_design_accessible as _is_accessible  # noqa: PLC0415
-        _cc_owned = _is_accessible(db, user.id, "challenge_card", "challenge")
+        _cc_owned = _is_accessible(db, user.id, "challenge_card", platform)
         if not _cc_owned:
             if _settings.ENFORCE_CHALLENGE_CARD_OWNERSHIP:
                 raise HTTPException(
                     status_code=403,
-                    detail="Challenge Card not owned. Purchase it at /my-cards/shop",
+                    detail="Challenge Card not owned. Purchase it at /my-cards/challenge-card",
                 )
             else:
                 import logging as _logging  # noqa: PLC0415

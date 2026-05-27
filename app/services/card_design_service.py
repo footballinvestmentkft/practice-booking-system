@@ -31,6 +31,18 @@ from typing import Optional
 
 
 @dataclass(frozen=True)
+class NonPlayerCardFormatDefinition:
+    """Format/variant definition for Welcome Card and Challenge Card families."""
+    design_id:        str
+    label:            str
+    style_tag:        str
+    dims:             str
+    credit_cost:      int
+    preview_platform: str
+    sort_order:       int = 0
+
+
+@dataclass(frozen=True)
 class CardDesignDefinition:
     id:          str
     label:       str
@@ -186,6 +198,27 @@ DESIGN_ORDER: list[str] = [
 ]
 
 
+# ── Non-player-card format registries ────────────────────────────────────────
+# Format/variant definitions for Welcome Card and Challenge Card families.
+# design_id maps directly to CardDesignOwnership.design_id.
+# Prices are DEV DEFAULT — update via product decision before production.
+
+WELCOME_CARD_FORMATS: list[NonPlayerCardFormatDefinition] = [
+    NonPlayerCardFormatDefinition("instagram_portrait",  "Instagram Portrait",   "IDENTITY CARD", "1080 × 1350",  75,  "instagram_portrait",  0),
+    NonPlayerCardFormatDefinition("instagram_story",     "Instagram Story",      "IDENTITY CARD", "1080 × 1920",  75,  "instagram_story",     1),
+    NonPlayerCardFormatDefinition("instagram_square",    "Instagram Square",     "IDENTITY CARD", "1080 × 1080",  75,  "instagram_square",    2),
+    NonPlayerCardFormatDefinition("tiktok",              "TikTok",               "CINEMATIC",     "1080 × 1920", 100,  "tiktok",              3),
+    NonPlayerCardFormatDefinition("facebook_square",     "Facebook Square",      "EDITORIAL",     "1080 × 1080",  75,  "facebook_square",     4),
+    NonPlayerCardFormatDefinition("facebook_landscape",  "Facebook Landscape",   "LANDSCAPE",     "1200 × 630",   75,  "facebook_landscape",  5),
+    NonPlayerCardFormatDefinition("banner_custom",       "Wide Banner",          "WIDE BANNER",   "1500 × 500",  100,  "banner_custom",       6),
+]
+
+CHALLENGE_CARD_FORMATS: list[NonPlayerCardFormatDefinition] = [
+    NonPlayerCardFormatDefinition("challenge_post_16_9",   "Post (16:9)",  "POST",  "1280 × 720",  100,  "challenge_post_16_9",   0),
+    NonPlayerCardFormatDefinition("challenge_story_9_16",  "Story (9:16)", "STORY", "1080 × 1920", 100,  "challenge_story_9_16",  1),
+]
+
+
 # ── In-process cache ──────────────────────────────────────────────────────────
 _design_cache: dict[str, CardDesignDefinition] = {}
 _cache_loaded_at: float = 0.0
@@ -279,12 +312,24 @@ _VALID_CARD_TYPE_IDS: frozenset[str] = frozenset(
     {"player_card", "welcome_card", "challenge_card"}
 )
 
-# Service-level price map for card families without a CardDesign DB entry.
+# Service-level price map for WC/CC format designs.
 # player_card prices come from CardDesign.credit_cost (DB-backed).
 # Update these constants when pricing changes — do NOT hardcode in templates.
 _NON_PLAYER_CARD_PRICES: dict[tuple[str, str], int] = {
-    ("welcome_card",   "default"):   200,  # CR — product decision
-    ("challenge_card", "challenge"): 150,  # CR — product decision
+    # Welcome Card formats — 75 CR standard, 100 CR premium
+    ("welcome_card", "instagram_portrait"):  75,
+    ("welcome_card", "instagram_story"):     75,
+    ("welcome_card", "instagram_square"):    75,
+    ("welcome_card", "tiktok"):             100,
+    ("welcome_card", "facebook_square"):     75,
+    ("welcome_card", "facebook_landscape"):  75,
+    ("welcome_card", "banner_custom"):      100,
+    # Challenge Card formats
+    ("challenge_card", "challenge_post_16_9"):  100,
+    ("challenge_card", "challenge_story_9_16"): 100,
+    # Legacy sentinel keys — NOT purchasable (FreeDesignError), backward compat only
+    ("welcome_card",   "default"):    0,
+    ("challenge_card", "challenge"):  0,
 }
 
 
@@ -357,6 +402,22 @@ def is_design_accessible(db, user_id: int, card_type_id: str, design_id: str) ->
         if lic and design_id in (lic.unlocked_card_variants or []):
             return True
 
+    # Rule 4: legacy CDO shim — if user owns the old family-level key, grant access
+    # to all format-level designs in that family (backward compat, no migration needed).
+    _LEGACY_CDO_MAP: dict[str, str] = {
+        "welcome_card":   "default",
+        "challenge_card": "challenge",
+    }
+    legacy_key = _LEGACY_CDO_MAP.get(card_type_id)
+    if legacy_key:
+        legacy_row = (
+            db.query(CardDesignOwnership)
+            .filter_by(user_id=user_id, card_type_id=card_type_id, design_id=legacy_key)
+            .first()
+        )
+        if legacy_row:
+            return True
+
     return False
 
 
@@ -391,6 +452,14 @@ def get_owned_design_ids(db, user_id: int, card_type_id: str) -> list[str]:
         for d in cache.values():
             if not d.is_premium:
                 result.add(d.id)
+
+    # Rule 4 shim: if user owns legacy WC/CC family key, grant all format IDs
+    elif card_type_id == "welcome_card" and "default" in result:
+        for fmt in WELCOME_CARD_FORMATS:
+            result.add(fmt.design_id)
+    elif card_type_id == "challenge_card" and "challenge" in result:
+        for fmt in CHALLENGE_CARD_FORMATS:
+            result.add(fmt.design_id)
 
     return sorted(result)
 

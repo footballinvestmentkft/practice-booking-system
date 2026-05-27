@@ -1053,12 +1053,12 @@ async def export_onboarding_welcome_card(
     # Admin bypass: admins always allowed.
     if user.role != UserRole.ADMIN:
         from app.services.card_design_service import is_design_accessible as _is_accessible
-        _wc_owned = _is_accessible(db, user.id, "welcome_card", "default")
+        _wc_owned = _is_accessible(db, user.id, "welcome_card", platform)
         if not _wc_owned:
             if settings.ENFORCE_WELCOME_CARD_OWNERSHIP:
                 raise HTTPException(
                     status_code=403,
-                    detail="Welcome Card not owned. Purchase it at /my-cards/shop",
+                    detail="Welcome Card not owned. Purchase it at /my-cards/welcome-card",
                 )
             else:
                 logger.info(

@@ -1,0 +1,142 @@
+{# Shared CSS for format-grid cards — include inside extra_styles block #}
+<style>
+  .mfg-section-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .mfg-section-hdr h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin: 0;
+  }
+  .mfg-count-badge {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #94a3b8;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 0.2rem 0.65rem;
+  }
+  .mfg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 1rem;
+  }
+  .mfg-card {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .mfg-card:hover { border-color: #334155; }
+  /* Preview area */
+  .mfg-preview-wrap {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    position: relative;
+    border-radius: 8px;
+    background: #0b1120;
+  }
+  .mfg-preview-iframe {
+    width: 400%;
+    height: 400%;
+    transform: scale(.25);
+    transform-origin: 0 0;
+    border: none;
+    pointer-events: none;
+  }
+  .mfg-preview-placeholder {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: #1e293b;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #475569;
+    font-size: 0.75rem;
+  }
+  /* Watermark overlay for unowned state */
+  .mfg-preview-wrap.mfg-locked::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, .55) url('/static/images/logo-wc.png') center / 28% no-repeat;
+    pointer-events: none;
+  }
+  .mfg-preview-wrap.mfg-locked .mfg-preview-iframe {
+    filter: blur(1px) brightness(.65);
+  }
+  /* Metadata */
+  .mfg-style-tag {
+    font-size: 0.63rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #475569;
+    text-transform: uppercase;
+  }
+  .mfg-label {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: #f1f5f9;
+    margin: 0;
+  }
+  .mfg-dims {
+    font-size: 0.72rem;
+    color: #475569;
+  }
+  /* State badges */
+  .mfg-badge {
+    display: inline-block;
+    padding: 0.18rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.69rem;
+    font-weight: 700;
+    align-self: flex-start;
+  }
+  .mfg-badge-free    { background: #14532d; color: #86efac; }
+  .mfg-badge-owned   { background: #1e3a5f; color: #93c5fd; }
+  .mfg-badge-get     { background: #78350f; color: #fde68a; }
+  .mfg-badge-locked  { background: #1e293b; color: #475569; }
+  /* CTA area */
+  .mfg-cta { margin-top: auto; }
+  .mfg-btn {
+    display: block;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+  }
+  .mfg-btn-owned    { background: #1e3a5f; color: #93c5fd; cursor: default; }
+  .mfg-btn-get      { background: #854d0e; color: #fde68a; }
+  .mfg-btn-get:hover { background: #92400e; }
+  .mfg-btn-disabled { background: #1e293b; color: #334155; cursor: not-allowed; opacity: .7; }
+  .mfg-btn-download { background: #166534; color: #86efac; }
+  .mfg-btn-download:hover { background: #14532d; }
+  .mfg-btn-edit     { background: #1e3a5f; color: #93c5fd; }
+  .mfg-btn-edit:hover { background: #1d4ed8; color: #fff; text-decoration: none; }
+  /* Flash messages */
+  .mfg-flash {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+    font-size: 0.88rem;
+  }
+  .mfg-flash-success { background: #14532d; color: #86efac; border: 1px solid #166534; }
+  .mfg-flash-error   { background: #450a0a; color: #fca5a5; border: 1px solid #7f1d1d; }
+</style>

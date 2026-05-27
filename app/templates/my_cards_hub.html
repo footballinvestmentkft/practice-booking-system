@@ -11,259 +11,188 @@
 
 {% block extra_styles %}
 <style>
-    .mc-hub {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 1.5rem 1rem 3rem;
-    }
+  .mc-hub {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 3rem;
+  }
 
-    /* ── Header bar ─────────────────────────────────────────────────────── */
-    .mc-header-bar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-bottom: 1.25rem;
-    }
-    .mc-header-bar h1 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--app-text, #f1f5f9);
-        margin: 0;
-    }
-    .mc-credits-badge {
-        background: #1e293b;
-        border: 1px solid #334155;
-        border-radius: 20px;
-        padding: 0.4rem 1rem;
-        font-size: 0.9rem;
-        color: #94a3b8;
-    }
-    .mc-credits-badge strong { color: #FFD200; }
+  /* ── Header bar ── */
+  .mc-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .mc-header-bar h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--app-text, #f1f5f9);
+    margin: 0;
+  }
+  .mc-credits-badge {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 20px;
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
+    color: #94a3b8;
+  }
+  .mc-credits-badge strong { color: #FFD200; }
 
-    /* ── Flash ─────────────────────────────────────────────────────────── */
-    .mc-flash {
-        padding: 0.75rem 1rem;
-        border-radius: 8px;
-        margin-bottom: 1.25rem;
-        font-size: 0.9rem;
-    }
-    .mc-flash-success { background: #14532d; color: #86efac; border: 1px solid #166534; }
+  /* ── Flash ── */
+  .mc-flash {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+    font-size: 0.9rem;
+  }
+  .mc-flash-success { background: #14532d; color: #86efac; border: 1px solid #166534; }
 
-    /* ── Card family panel ──────────────────────────────────────────────── */
-    .mc-panel {
-        background: var(--app-card, #1a1f2e);
-        border: 1px solid var(--app-border, #252d42);
-        border-radius: 14px;
-        padding: 1.5rem;
-        margin-bottom: 1.25rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
+  /* ── Tile grid ── */
+  .mc-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+  }
 
-    .mc-panel-header {
-        display: flex;
-        align-items: flex-start;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
-    .mc-panel-icon { font-size: 2rem; line-height: 1; flex-shrink: 0; }
-    .mc-panel-meta { flex: 1; min-width: 0; }
-    .mc-panel-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--app-text, #f1f5f9);
-        margin: 0 0 0.2rem;
-    }
-    .mc-panel-sub {
-        font-size: 0.82rem;
-        color: var(--app-text-muted, #64748b);
-        margin: 0;
-    }
+  .mc-tile {
+    background: var(--app-card, #1a1f2e);
+    border: 1px solid var(--app-border, #252d42);
+    border-radius: 14px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: border-color 0.15s;
+  }
+  .mc-tile:hover { border-color: #334155; }
 
-    /* ── Badges ─────────────────────────────────────────────────────────── */
-    .mc-badge {
-        display: inline-flex;
-        align-items: center;
-        font-size: 0.72rem;
-        font-weight: 700;
-        padding: 0.25rem 0.65rem;
-        border-radius: 20px;
-        white-space: nowrap;
-        align-self: flex-start;
-        margin-top: 0.2rem;
-        letter-spacing: 0.02em;
-    }
-    .mc-badge-free     { background: #14532d; color: #86efac; }
-    .mc-badge-owned    { background: #1e3a5f; color: #93c5fd; }
-    .mc-badge-get_card { background: #78350f; color: #fde68a; }
-    .mc-badge-locked   { background: #1e293b; color: #475569; }
+  .mc-tile-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+  }
+  .mc-tile-icon { font-size: 2rem; line-height: 1; flex-shrink: 0; }
+  .mc-tile-meta { flex: 1; min-width: 0; }
+  .mc-tile-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--app-text, #f1f5f9);
+    margin: 0 0 0.25rem;
+  }
+  .mc-tile-desc {
+    font-size: 0.78rem;
+    color: var(--app-text-muted, #64748b);
+    margin: 0;
+  }
 
-    /* ── CTA row ────────────────────────────────────────────────────────── */
-    .mc-cta-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-    .mc-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0.55rem 1.1rem;
-        border-radius: 8px;
-        font-size: 0.875rem;
-        font-weight: 600;
-        text-decoration: none;
-        border: none;
-        cursor: pointer;
-        white-space: nowrap;
-        transition: opacity 0.15s, background 0.15s;
-    }
-    .mc-btn-primary    { background: #FFD200; color: #0f172a; }
-    .mc-btn-primary:hover { opacity: 0.88; color: #0f172a; text-decoration: none; }
-    .mc-btn-secondary  { background: #1e3a5f; color: #93c5fd; }
-    .mc-btn-secondary:hover { background: #1d4ed8; color: #fff; text-decoration: none; }
-    .mc-btn-ghost      { background: transparent; color: #64748b; border: 1px solid #334155; }
-    .mc-btn-ghost:hover { border-color: #64748b; color: #94a3b8; text-decoration: none; }
-    .mc-btn-disabled   { background: #1e293b; color: #334155; cursor: not-allowed; opacity: 0.7; }
-    .mc-btn-get        { background: #854d0e; color: #fde68a; }
-    .mc-btn-get:hover  { background: #92400e; color: #fef3c7; text-decoration: none; }
+  /* ── Count badge ── */
+  .mc-count-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #94a3b8;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 0.22rem 0.65rem;
+    align-self: flex-start;
+  }
+  .mc-count-badge.mc-count-complete {
+    color: #86efac;
+    background: rgba(20,83,45,.25);
+    border-color: #166534;
+  }
 
-    @media (max-width: 600px) {
-        .mc-cta-row { flex-direction: column; }
-        .mc-btn { width: 100%; }
-    }
+  /* ── CTA button ── */
+  .mc-browse-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.55rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    background: #FFD200;
+    color: #0f172a;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+    text-align: center;
+  }
+  .mc-browse-btn:hover { opacity: 0.88; color: #0f172a; text-decoration: none; }
 </style>
 {% endblock %}
 
 {% block student_content %}
 <div class="mc-hub">
 
-    <div class="mc-header-bar">
-        <h1>My Cards</h1>
-        <span class="mc-credits-badge">Balance: <strong>{{ user.credit_balance }} CR</strong></span>
+  <div class="mc-header-bar">
+    <h1>My Cards</h1>
+    <span class="mc-credits-badge">Balance: <strong>{{ user.credit_balance }} CR</strong></span>
+  </div>
+
+  {# ── Flash: purchase success ── #}
+  {% if flash_purchased %}
+  <div class="mc-flash mc-flash-success">
+    ✓ {{ flash_purchased }} unlocked and added to your collection.
+  </div>
+  {% endif %}
+
+  {# ── Tile grid ── #}
+  <div class="mc-tiles">
+
+    {# Player Card tile #}
+    <div class="mc-tile">
+      <div class="mc-tile-top">
+        <span class="mc-tile-icon">🎴</span>
+        <div class="mc-tile-meta">
+          <div class="mc-tile-title">Player Card</div>
+          <p class="mc-tile-desc">Your LFA player identity card. Choose from {{ pc_total }} designs.</p>
+        </div>
+      </div>
+      <span class="mc-count-badge{% if pc_owned_count == pc_total %} mc-count-complete{% endif %}">
+        {{ pc_owned_count }} / {{ pc_total }} owned
+      </span>
+      <a href="/my-cards/player-card" class="mc-browse-btn">Browse Designs</a>
     </div>
 
-    {# ── Flash: purchase success ──────────────────────────────────────────────── #}
-    {% if flash_purchased %}
-    <div class="mc-flash mc-flash-success">
-        ✓ Purchase successful — {{ flash_purchased }} is now in your collection.
-    </div>
-    {% endif %}
-
-    {# ── Player Card panel ───────────────────────────────────────────────────── #}
-    <div class="mc-panel">
-        <div class="mc-panel-header">
-            <span class="mc-panel-icon">🎴</span>
-            <div class="mc-panel-meta">
-                <div class="mc-panel-title">Player Card</div>
-                <div class="mc-panel-sub">
-                    {%- if pc_state == "free" -%}
-                        {{ pc_design_label }} — always free
-                    {%- elif pc_state == "owned" -%}
-                        {{ pc_design_label }} — owned
-                    {%- else -%}
-                        {{ pc_design_label }}{% if pc_price %} — {{ pc_price }} CR{% endif %}
-                    {%- endif -%}
-                </div>
-            </div>
-            <span class="mc-badge mc-badge-{{ pc_state }}">
-                {%- if pc_state == "free"     -%}Free
-                {%- elif pc_state == "owned"  -%}Owned ✓
-                {%- elif pc_state == "get_card" -%}{{ pc_price }} CR
-                {%- else -%}{{ pc_price }} CR 🔒
-                {%- endif -%}
-            </span>
+    {# Welcome Card tile #}
+    <div class="mc-tile">
+      <div class="mc-tile-top">
+        <span class="mc-tile-icon">👋</span>
+        <div class="mc-tile-meta">
+          <div class="mc-tile-title">Welcome Card</div>
+          <p class="mc-tile-desc">Your onboarding milestone card in {{ wc_total }} platform formats.</p>
         </div>
-        <div class="mc-cta-row">
-            {% if pc_state in ("free", "owned") %}
-                <a href="/my-cards/player-card" class="mc-btn mc-btn-primary">Edit Card</a>
-                <a href="/players/{{ user.id }}/card/export?platform=instagram_portrait"
-                   class="mc-btn mc-btn-secondary">Download</a>
-                {% if pc_state == "owned" %}
-                    <a href="/my-cards/shop?tab=player" class="mc-btn mc-btn-ghost">Manage Designs</a>
-                {% endif %}
-            {% elif pc_state == "get_card" %}
-                <a href="/my-cards/shop?tab=player" class="mc-btn mc-btn-get">
-                    Get Card — {{ pc_price }} CR
-                </a>
-            {% else %}
-                <button class="mc-btn mc-btn-disabled" disabled>{{ pc_price }} CR — Not enough credits</button>
-            {% endif %}
-        </div>
+      </div>
+      <span class="mc-count-badge{% if wc_owned_count == wc_total %} mc-count-complete{% endif %}">
+        {{ wc_owned_count }} / {{ wc_total }} owned
+      </span>
+      <a href="/my-cards/welcome-card" class="mc-browse-btn">Browse Formats</a>
     </div>
 
-    {# ── Welcome Card panel ──────────────────────────────────────────────────── #}
-    <div class="mc-panel">
-        <div class="mc-panel-header">
-            <span class="mc-panel-icon">👋</span>
-            <div class="mc-panel-meta">
-                <div class="mc-panel-title">Welcome Card</div>
-                <div class="mc-panel-sub">
-                    {%- if wc_state == "owned" -%}
-                        Default design — owned
-                    {%- else -%}
-                        Your onboarding milestone card — {{ wc_price }} CR
-                    {%- endif -%}
-                </div>
-            </div>
-            <span class="mc-badge mc-badge-{{ wc_state }}">
-                {%- if wc_state == "owned"    -%}Owned ✓
-                {%- elif wc_state == "get_card" -%}{{ wc_price }} CR
-                {%- else -%}{{ wc_price }} CR 🔒
-                {%- endif -%}
-            </span>
+    {# Challenge Card tile #}
+    <div class="mc-tile">
+      <div class="mc-tile-top">
+        <span class="mc-tile-icon">⚡</span>
+        <div class="mc-tile-meta">
+          <div class="mc-tile-title">Challenge Card</div>
+          <p class="mc-tile-desc">Social card for VT challenge results in {{ cc_total }} formats.</p>
         </div>
-        <div class="mc-cta-row">
-            {% if wc_state == "owned" %}
-                <a href="/my-cards/welcome-card" class="mc-btn mc-btn-primary">View / Edit</a>
-                <a href="/profile/onboarding-card/export?platform=instagram_portrait"
-                   class="mc-btn mc-btn-secondary">Download</a>
-            {% elif wc_state == "get_card" %}
-                <a href="/my-cards/shop?tab=welcome" class="mc-btn mc-btn-get">
-                    Get Card — {{ wc_price }} CR
-                </a>
-            {% else %}
-                <button class="mc-btn mc-btn-disabled" disabled>{{ wc_price }} CR — Not enough credits</button>
-            {% endif %}
-        </div>
+      </div>
+      <span class="mc-count-badge{% if cc_owned_count == cc_total %} mc-count-complete{% endif %}">
+        {{ cc_owned_count }} / {{ cc_total }} owned
+      </span>
+      <a href="/my-cards/challenge-card" class="mc-browse-btn">Browse Formats</a>
     </div>
 
-    {# ── Challenge Card panel ────────────────────────────────────────────────── #}
-    <div class="mc-panel">
-        <div class="mc-panel-header">
-            <span class="mc-panel-icon">⚡</span>
-            <div class="mc-panel-meta">
-                <div class="mc-panel-title">Challenge Card</div>
-                <div class="mc-panel-sub">
-                    {%- if cc_state == "owned" -%}
-                        Challenge design — owned
-                    {%- else -%}
-                        Social card for VT challenge results — {{ cc_price }} CR
-                    {%- endif -%}
-                </div>
-            </div>
-            <span class="mc-badge mc-badge-{{ cc_state }}">
-                {%- if cc_state == "owned"    -%}Owned ✓
-                {%- elif cc_state == "get_card" -%}{{ cc_price }} CR
-                {%- else -%}{{ cc_price }} CR 🔒
-                {%- endif -%}
-            </span>
-        </div>
-        <div class="mc-cta-row">
-            {% if cc_state == "owned" %}
-                <a href="/my-cards/challenge-card" class="mc-btn mc-btn-primary">View Collection</a>
-            {% elif cc_state == "get_card" %}
-                <a href="/my-cards/shop?tab=challenge" class="mc-btn mc-btn-get">
-                    Get Card — {{ cc_price }} CR
-                </a>
-            {% else %}
-                <button class="mc-btn mc-btn-disabled" disabled>{{ cc_price }} CR — Not enough credits</button>
-            {% endif %}
-        </div>
-    </div>
+  </div>
 
 </div>
 {% endblock %}

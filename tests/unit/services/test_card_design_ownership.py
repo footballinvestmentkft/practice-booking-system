@@ -358,16 +358,22 @@ class TestIsDesignAccessible:
 
 # ── CDO-16..17: price constants ───────────────────────────────────────────────
 
-def test_cdo16_welcome_card_price_nonzero():
-    """CDO-16: _NON_PLAYER_CARD_PRICES welcome_card/default > 0."""
-    from app.services.card_design_service import _NON_PLAYER_CARD_PRICES
-    assert _NON_PLAYER_CARD_PRICES[("welcome_card", "default")] > 0
+def test_cdo16_welcome_card_format_prices_nonzero():
+    """CDO-16: All WC format prices > 0 (legacy sentinel 'default' is correctly 0)."""
+    from app.services.card_design_service import WELCOME_CARD_FORMATS, _NON_PLAYER_CARD_PRICES
+    for fmt in WELCOME_CARD_FORMATS:
+        assert _NON_PLAYER_CARD_PRICES[("welcome_card", fmt.design_id)] > 0
+    # Sentinel key is intentionally 0 (non-purchasable, backward-compat only)
+    assert _NON_PLAYER_CARD_PRICES[("welcome_card", "default")] == 0
 
 
-def test_cdo17_challenge_card_price_nonzero():
-    """CDO-17: _NON_PLAYER_CARD_PRICES challenge_card/challenge > 0."""
-    from app.services.card_design_service import _NON_PLAYER_CARD_PRICES
-    assert _NON_PLAYER_CARD_PRICES[("challenge_card", "challenge")] > 0
+def test_cdo17_challenge_card_format_prices_nonzero():
+    """CDO-17: All CC format prices > 0 (legacy sentinel 'challenge' is correctly 0)."""
+    from app.services.card_design_service import CHALLENGE_CARD_FORMATS, _NON_PLAYER_CARD_PRICES
+    for fmt in CHALLENGE_CARD_FORMATS:
+        assert _NON_PLAYER_CARD_PRICES[("challenge_card", fmt.design_id)] > 0
+    # Sentinel key is intentionally 0 (non-purchasable, backward-compat only)
+    assert _NON_PLAYER_CARD_PRICES[("challenge_card", "challenge")] == 0
 
 
 # ── CDO-18: grant_design idempotency ─────────────────────────────────────────

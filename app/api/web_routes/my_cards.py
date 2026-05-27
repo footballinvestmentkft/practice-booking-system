@@ -1,7 +1,7 @@
-"""My Cards hub — cross-card-type navigation hub and detail redirects."""
+"""My Cards hub — cross-card-type navigation hub and family shop routes."""
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import or_
@@ -9,15 +9,16 @@ from sqlalchemy.orm import Session
 
 from ...database import get_db
 from ...dependencies import get_current_user_web
-from ...models.license import UserLicense
 from ...models.user import User
 from ...models.virtual_training import VirtualTrainingAttempt
 from ...models.vt_challenge import ChallengeStatus, VirtualTrainingChallenge
 from ...services.card_design_service import (
+    CHALLENGE_CARD_FORMATS,
+    WELCOME_CARD_FORMATS,
     AlreadyOwnedError,
     FreeDesignError,
-    _NON_PLAYER_CARD_PRICES,
     get_all_designs,
+    get_owned_design_ids,
     is_design_accessible,
     purchase_design,
 )
@@ -37,12 +38,15 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 router = APIRouter(tags=["my-cards"])
 
-_TYPE_TO_TAB: dict[str, str] = {
-    "player_card":    "player",
-    "welcome_card":   "welcome",
-    "challenge_card": "challenge",
+# Maps card_type_id → family page path (used for purchase redirect targets)
+_TYPE_TO_FAMILY_PATH: dict[str, str] = {
+    "player_card":    "/my-cards/player-card",
+    "welcome_card":   "/my-cards/welcome-card",
+    "challenge_card": "/my-cards/challenge-card",
 }
 
+
+# ── Hub ───────────────────────────────────────────────────────────────────────
 
 @router.get("/my-cards", response_class=HTMLResponse)
 async def my_cards_hub(
@@ -50,64 +54,36 @@ async def my_cards_hub(
     db: Session = Depends(get_db),
     user: User  = Depends(get_current_user_web),
 ):
-    """Hub — entitlement-aware central page for all card families."""
-    license = db.query(UserLicense).filter(
-        UserLicense.user_id == user.id,
-        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
-        UserLicense.is_active == True,
-    ).first()
+    """Hub — format-count tiles for all three card families."""
+    all_designs = get_all_designs(db)
+    pc_total    = len(all_designs)
+    pc_owned_ids = set(get_owned_design_ids(db, user.id, "player_card"))
+    pc_owned_count = len(pc_owned_ids)
 
-    card_variant    = (license.card_variant if license else None) or "fifa"
-    designs_by_id   = {d.id: d for d in get_all_designs(db)}
-    design_obj      = designs_by_id.get(card_variant)
-    pc_price        = design_obj.credit_cost if design_obj else 0
-    pc_free         = not design_obj.is_premium if design_obj else True
-    pc_design_label = design_obj.label if design_obj else "FIFA Classic"
-    pc_owned        = is_design_accessible(db, user.id, "player_card", card_variant)
+    wc_total      = len(WELCOME_CARD_FORMATS)
+    _wc_valid_ids = {f.design_id for f in WELCOME_CARD_FORMATS}
+    wc_owned_ids  = set(get_owned_design_ids(db, user.id, "welcome_card"))
+    wc_owned_count = len(wc_owned_ids & _wc_valid_ids)
 
-    if pc_free:
-        pc_state = "free"
-    elif pc_owned:
-        pc_state = "owned"
-    elif user.credit_balance >= pc_price:
-        pc_state = "get_card"
-    else:
-        pc_state = "locked"
-
-    wc_price = _NON_PLAYER_CARD_PRICES[("welcome_card",   "default")]
-    wc_owned = is_design_accessible(db, user.id, "welcome_card", "default")
-    if wc_owned:
-        wc_state = "owned"
-    elif user.credit_balance >= wc_price:
-        wc_state = "get_card"
-    else:
-        wc_state = "locked"
-
-    cc_price = _NON_PLAYER_CARD_PRICES[("challenge_card", "challenge")]
-    cc_owned = is_design_accessible(db, user.id, "challenge_card", "challenge")
-    if cc_owned:
-        cc_state = "owned"
-    elif user.credit_balance >= cc_price:
-        cc_state = "get_card"
-    else:
-        cc_state = "locked"
+    cc_total      = len(CHALLENGE_CARD_FORMATS)
+    _cc_valid_ids = {f.design_id for f in CHALLENGE_CARD_FORMATS}
+    cc_owned_ids  = set(get_owned_design_ids(db, user.id, "challenge_card"))
+    cc_owned_count = len(cc_owned_ids & _cc_valid_ids)
 
     return templates.TemplateResponse(
         "my_cards_hub.html",
         {
-            "request":         request,
-            "user":            user,
+            "request":    request,
+            "user":       user,
             # Player Card
-            "pc_state":        pc_state,
-            "pc_price":        pc_price,
-            "pc_design":       card_variant,
-            "pc_design_label": pc_design_label,
+            "pc_owned_count": pc_owned_count,
+            "pc_total":       pc_total,
             # Welcome Card
-            "wc_state":        wc_state,
-            "wc_price":        wc_price,
+            "wc_owned_count": wc_owned_count,
+            "wc_total":       wc_total,
             # Challenge Card
-            "cc_state":        cc_state,
-            "cc_price":        cc_price,
+            "cc_owned_count": cc_owned_count,
+            "cc_total":       cc_total,
             # Flash
             "flash_purchased": request.query_params.get("purchased"),
             # Explicit LFA spec context — multi-spec safe
@@ -119,56 +95,23 @@ async def my_cards_hub(
     )
 
 
-@router.get("/my-cards/shop", response_class=HTMLResponse)
-async def my_cards_shop(
-    request: Request,
-    db: Session = Depends(get_db),
-    user: User  = Depends(get_current_user_web),
-):
-    """Card Design Shop — browse and purchase card design entitlements."""
-    player_designs = get_all_designs(db)
-    wc_price = _NON_PLAYER_CARD_PRICES[("welcome_card",   "default")]
-    cc_price = _NON_PLAYER_CARD_PRICES[("challenge_card", "challenge")]
-    credits  = user.credit_balance
+# ── /my-cards/shop — retired, redirect by tab param ──────────────────────────
 
-    def _state(card_type_id: str, design_id: str, credit_cost: int, is_premium: bool) -> str:
-        if not is_premium and card_type_id == "player_card":
-            return "free"
-        if is_design_accessible(db, user.id, card_type_id, design_id):
-            return "owned"
-        return "purchasable" if credits >= credit_cost else "locked"
-
-    player_design_rows = [
-        {
-            "id":          d.id,
-            "label":       d.label,
-            "description": d.description,
-            "credit_cost": d.credit_cost,
-            "is_premium":  d.is_premium,
-            "state":       _state("player_card", d.id, d.credit_cost, d.is_premium),
-        }
-        for d in player_designs
-    ]
-
-    wc_state = _state("welcome_card", "default", wc_price, True)
-    cc_state = _state("challenge_card", "challenge", cc_price, True)
-
-    return templates.TemplateResponse(
-        "my_cards_shop.html",
-        {
-            "request":             request,
-            "user":                user,
-            "player_design_rows":  player_design_rows,
-            "wc_price":            wc_price,
-            "cc_price":            cc_price,
-            "wc_state":            wc_state,
-            "cc_state":            cc_state,
-            "flash_purchased":     request.query_params.get("purchased"),
-            "flash_error":         request.query_params.get("error"),
-            "spec_dashboard_url":  "/dashboard/lfa-football-player",
-        },
+@router.get("/my-cards/shop")
+async def my_cards_shop(tab: str | None = Query(default=None)):
+    """Retired shop page — redirects to the appropriate family shop."""
+    destinations = {
+        "player":    "/my-cards/player-card",
+        "welcome":   "/my-cards/welcome-card",
+        "challenge": "/my-cards/challenge-card",
+    }
+    return RedirectResponse(
+        url=destinations.get(tab or "", "/my-cards"),
+        status_code=302,
     )
 
+
+# ── Purchase POST ─────────────────────────────────────────────────────────────
 
 @router.post("/my-cards/designs/{card_type_id}/{design_id}/get")
 async def get_card(
@@ -178,49 +121,129 @@ async def get_card(
     user: User  = Depends(get_current_user_web),
 ):
     """Purchase a card design entitlement (credit deduction + ownership row)."""
-    tab = _TYPE_TO_TAB.get(card_type_id, "player")
+    family_path = _TYPE_TO_FAMILY_PATH.get(card_type_id, "/my-cards")
     try:
         purchase_design(db, user, card_type_id, design_id)
         return RedirectResponse(
-            f"/my-cards?purchased={card_type_id}:{design_id}",
+            f"{family_path}?purchased={design_id}",
             status_code=303,
         )
     except FreeDesignError:
-        return RedirectResponse(f"/my-cards/shop?error=free&tab={tab}",    status_code=303)
+        return RedirectResponse(f"{family_path}?error=free",    status_code=303)
     except AlreadyOwnedError:
-        return RedirectResponse(f"/my-cards/shop?error=owned&tab={tab}",   status_code=303)
+        return RedirectResponse(f"{family_path}?error=owned",   status_code=303)
     except InsufficientCreditsError:
-        return RedirectResponse(f"/my-cards/shop?error=credits&tab={tab}", status_code=303)
+        return RedirectResponse(f"{family_path}?error=credits", status_code=303)
     except ValueError:
-        return RedirectResponse(f"/my-cards/shop?error=invalid&tab={tab}", status_code=303)
+        return RedirectResponse(f"{family_path}?error=invalid", status_code=303)
 
 
-@router.get("/my-cards/player-card")
+# ── Player Card family shop ───────────────────────────────────────────────────
+
+@router.get("/my-cards/player-card", response_class=HTMLResponse)
 async def my_cards_player_card(
-    user: User = Depends(get_current_user_web),
+    request: Request,
+    db: Session     = Depends(get_db),
+    user: User      = Depends(get_current_user_web),
 ):
-    """Detail entry point for Player Card — redirects to the card editor."""
-    return RedirectResponse(
-        url="/dashboard/lfa-football-player/card-editor",
-        status_code=303,
+    """Player Card format shop — browse and purchase Player Card designs."""
+    all_designs = get_all_designs(db)
+    credits     = user.credit_balance
+
+    def _state(design) -> str:
+        if not design.is_premium:
+            return "free"
+        if is_design_accessible(db, user.id, "player_card", design.id):
+            return "owned"
+        return "purchasable" if credits >= design.credit_cost else "locked"
+
+    design_rows = [
+        {
+            "id":          d.id,
+            "label":       d.label,
+            "description": d.description,
+            "credit_cost": d.credit_cost,
+            "is_premium":  d.is_premium,
+            "state":       _state(d),
+        }
+        for d in all_designs
+    ]
+
+    owned_count = sum(1 for r in design_rows if r["state"] in ("free", "owned"))
+    total_count = len(design_rows)
+
+    return templates.TemplateResponse(
+        "my_cards_player_card.html",
+        {
+            "request":         request,
+            "user":            user,
+            "design_rows":     design_rows,
+            "owned_count":     owned_count,
+            "total_count":     total_count,
+            "flash_purchased": request.query_params.get("purchased"),
+            "flash_error":     request.query_params.get("error"),
+            "spec_dashboard_url": "/dashboard/lfa-football-player",
+        },
     )
 
 
-@router.get("/my-cards/welcome-card")
+# ── Welcome Card family shop ──────────────────────────────────────────────────
+
+@router.get("/my-cards/welcome-card", response_class=HTMLResponse)
 async def my_cards_welcome_card(
-    user: User = Depends(get_current_user_web),
+    request: Request,
+    db: Session     = Depends(get_db),
+    user: User      = Depends(get_current_user_web),
 ):
-    """Detail entry point for Welcome Card — redirects to the onboarding card."""
-    return RedirectResponse(
-        url="/profile/onboarding-card",
-        status_code=303,
+    """Welcome Card format shop — browse and purchase Welcome Card platform formats."""
+    credits = user.credit_balance
+
+    def _wc_state(fmt) -> str:
+        if is_design_accessible(db, user.id, "welcome_card", fmt.design_id):
+            return "owned"
+        return "purchasable" if credits >= fmt.credit_cost else "locked"
+
+    format_rows = [
+        {
+            "design_id":       fmt.design_id,
+            "label":           fmt.label,
+            "style_tag":       fmt.style_tag,
+            "dims":            fmt.dims,
+            "credit_cost":     fmt.credit_cost,
+            "preview_platform": fmt.preview_platform,
+            "state":           _wc_state(fmt),
+            "preview_url":     f"/profile/onboarding-card?platform={fmt.preview_platform}",
+            "export_url":      f"/profile/onboarding-card/export?platform={fmt.preview_platform}",
+        }
+        for fmt in WELCOME_CARD_FORMATS
+    ]
+
+    owned_count = sum(1 for r in format_rows if r["state"] == "owned")
+    total_count = len(format_rows)
+
+    return templates.TemplateResponse(
+        "my_cards_welcome_card.html",
+        {
+            "request":         request,
+            "user":            user,
+            "format_rows":     format_rows,
+            "owned_count":     owned_count,
+            "total_count":     total_count,
+            "flash_purchased": request.query_params.get("purchased"),
+            "flash_error":     request.query_params.get("error"),
+            "spec_dashboard_url": "/dashboard/lfa-football-player",
+        },
     )
 
 
-_CHALLENGE_CARD_FORMATS = [
+# ── Challenge Card collection + format shop ───────────────────────────────────
+
+_CHALLENGE_CARD_FORMATS_DICT = [
     {"id": "challenge_post_16_9",  "label": "Post (16:9)",  "dims": "1280×720",  "platform": "Facebook / Instagram"},
     {"id": "challenge_story_9_16", "label": "Story (9:16)", "dims": "1080×1920", "platform": "TikTok / Instagram Story"},
 ]
+# Backward-compat alias used by tests/unit/api/web_routes/test_vt_social_cards.py
+_CHALLENGE_CARD_FORMATS = _CHALLENGE_CARD_FORMATS_DICT
 
 _COLLECTION_LIMIT = 5
 
@@ -252,12 +275,12 @@ def _build_challenge_card_row(ch: VirtualTrainingChallenge, viewer_id: int, my_a
         for phase in phases:
             preview_urls = {
                 fmt["id"]: f"/challenges/{ch.id}/card/preview?phase={phase}&platform={fmt['id']}"
-                for fmt in _CHALLENGE_CARD_FORMATS
+                for fmt in _CHALLENGE_CARD_FORMATS_DICT
             }
             export_urls = (
                 {
                     fmt["id"]: f"/challenges/{ch.id}/card/export?phase={phase}&platform={fmt['id']}"
-                    for fmt in _CHALLENGE_CARD_FORMATS
+                    for fmt in _CHALLENGE_CARD_FORMATS_DICT
                 }
                 if not is_locked else {}
             )
@@ -267,7 +290,7 @@ def _build_challenge_card_row(ch: VirtualTrainingChallenge, viewer_id: int, my_a
                 "is_locked":    is_locked,
                 "preview_urls": preview_urls,
                 "export_urls":  export_urls,
-                "formats":      _CHALLENGE_CARD_FORMATS,
+                "formats":      _CHALLENGE_CARD_FORMATS_DICT,
             })
         return cards
 
@@ -292,9 +315,30 @@ async def my_cards_challenge_card(
     db: Session = Depends(get_db),
     user: User  = Depends(get_current_user_web),
 ):
-    """Challenge Card Collection — phase-based card manager with inline preview."""
+    """Challenge Card Collection — format shop header + phase-based card manager."""
     draft  = CardDraftService.get_or_create_singleton(db, user.id, "challenge_card")
     themes = get_all_themes(db=db)
+    credits = user.credit_balance
+
+    # Format header section — ownership state per CC format
+    def _cc_fmt_state(fmt) -> str:
+        if is_design_accessible(db, user.id, "challenge_card", fmt.design_id):
+            return "owned"
+        return "purchasable" if credits >= fmt.credit_cost else "locked"
+
+    cc_format_rows = [
+        {
+            "design_id":   fmt.design_id,
+            "label":       fmt.label,
+            "style_tag":   fmt.style_tag,
+            "dims":        fmt.dims,
+            "credit_cost": fmt.credit_cost,
+            "state":       _cc_fmt_state(fmt),
+        }
+        for fmt in CHALLENGE_CARD_FORMATS
+    ]
+    cc_owned_count = sum(1 for r in cc_format_rows if r["state"] == "owned")
+    cc_total       = len(cc_format_rows)
 
     # Fetch last N challenges where user is participant
     recent_challenges = (
@@ -339,8 +383,13 @@ async def my_cards_challenge_card(
             "user":             user,
             "draft":            draft,
             "themes":           themes,
-            "formats":          _CHALLENGE_CARD_FORMATS,
+            "formats":          _CHALLENGE_CARD_FORMATS_DICT,
+            "cc_format_rows":   cc_format_rows,
+            "cc_owned_count":   cc_owned_count,
+            "cc_total":         cc_total,
             "challenge_rows":   challenge_rows,
             "has_challenges":   bool(challenge_rows),
+            "flash_purchased":  request.query_params.get("purchased"),
+            "flash_error":      request.query_params.get("error"),
         },
     )
