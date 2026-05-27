@@ -22,22 +22,25 @@
         padding: 0 0 2rem;
     }
 
-    /* ── Top Card Preview Zone ──────────────────────────────────────────────── */
+    /* ── Top Card Preview Zone — 3 equal tiles, fixed row height ───────────── */
     .dc-card-zone {
         display: grid;
-        grid-template-columns: 1.6fr 1fr 1fr;
+        grid-template-columns: repeat(3, 1fr);
+        grid-auto-rows: 300px;
         gap: 1rem;
         margin-bottom: 1.5rem;
-        align-items: start;
+        align-items: stretch;
     }
     .dc-hero {
         background: #0f172a;
         border-radius: 16px;
-        padding: 1.25rem 1.5rem 1.5rem;
+        padding: 1.25rem 1.5rem 1.4rem;
         display: flex;
         flex-direction: column;
-        gap: 0.75rem;
-        min-height: 200px;
+        gap: 0.6rem;
+        height: 100%;
+        overflow: hidden;
+        box-sizing: border-box;
     }
     .dc-hero-label {
         font-size: 0.72rem;
@@ -46,15 +49,18 @@
         letter-spacing: 0.1em;
         color: rgba(255,255,255,0.45);
         margin: 0;
+        flex-shrink: 0;
     }
 
-    /* Player Card hero */
+    /* Player Card hero — thumbnail preview, not full-height iframe */
     .dc-hero-player { border-top: 3px solid #FFD200; }
     .dc-player-wrap {
-        border-radius: 10px;
+        height: 160px;          /* fixed thumbnail — CSS controls, not JS */
+        border-radius: 8px;
         overflow: hidden;
-        box-shadow: 0 4px 24px rgba(0,0,0,0.35);
-        flex: 1;
+        flex-shrink: 0;
+        box-shadow: 0 2px 16px rgba(0,0,0,0.4);
+        background: #1e293b;    /* placeholder colour while iframe loads */
     }
     .dc-player-wrap iframe { display: block; border: none; }
     .dc-cta-primary {
@@ -71,6 +77,7 @@
         align-self: flex-start;
     }
     .dc-cta-primary:hover { opacity: 0.85; }
+    .dc-ctas { display: flex; gap: 0.5rem; flex-wrap: wrap; flex-shrink: 0; margin-top: auto; }
     .dc-cta-ghost {
         display: inline-block;
         background: rgba(255,255,255,0.08);
@@ -86,16 +93,16 @@
         align-self: flex-start;
     }
     .dc-cta-ghost:hover { background: rgba(255,255,255,0.14); }
-    .dc-ctas { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
     /* Welcome Card hero */
     .dc-hero-welcome { border-top: 3px solid #818cf8; }
     .dc-welcome-status {
-        flex: 1;
+        flex: 1;                /* fills space between label and CTA */
         display: flex;
         flex-direction: column;
-        justify-content: center;
-        gap: 0.5rem;
+        justify-content: flex-end;
+        gap: 0.45rem;
+        padding-bottom: 0.25rem;
     }
     .dc-wc-title { font-size: 1rem; font-weight: 800; color: #fff; }
     .dc-wc-sub { font-size: 0.82rem; color: rgba(255,255,255,0.5); }
@@ -116,16 +123,20 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        justify-content: center;
-        gap: 0.5rem;
+        justify-content: flex-end;
+        gap: 0.3rem;
+        padding-bottom: 0.25rem;
     }
-    .dc-chall-count { font-size: 2rem; font-weight: 800; color: #f87171; line-height: 1; }
+    .dc-chall-count { font-size: 2.4rem; font-weight: 800; color: #f87171; line-height: 1; }
     .dc-chall-lbl { font-size: 0.82rem; color: rgba(255,255,255,0.5); }
 
     /* ── Responsive: stack card zone on mobile ──────────────────────────────── */
     @media (max-width: 768px) {
-        .dc-card-zone { grid-template-columns: 1fr; }
-        .dc-hero { min-height: unset; }
+        .dc-card-zone {
+            grid-template-columns: 1fr;
+            grid-auto-rows: unset;
+        }
+        .dc-hero { height: auto; overflow: visible; }
         .s-kpi-row { grid-template-columns: repeat(2, 1fr); }
         .container { padding: 1rem; }
         .mod-nav-section { padding: 1rem 1rem 0.25rem; }
@@ -158,31 +169,36 @@
     .s-kpi-row .s-kpi-card:nth-child(4) .s-kpi-val { color: #2b6cb0; }
     .s-kpi-lbl { font-size: 0.82rem; color: var(--app-text-muted); margin-top: 0.25rem; }
 
-    /* ── Section block ───────────────────────────────────────────────────────── */
+    /* ── Section block — premium card treatment ─────────────────────────────── */
     .section-block {
         background: var(--app-card);
         border-radius: 16px;
-        padding: 1.75rem 2rem;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        margin-bottom: 1.5rem;
+        padding: 1.5rem 1.75rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
+        margin-bottom: 1.25rem;
+        border-top: 2px solid var(--app-border);
     }
-    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+    .section-block.dc-social-block   { border-top-color: #22d3ee; }
+    .section-block.dc-pp-block       { border-top-color: #818cf8; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .section-title { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--app-text-muted); }
 
-    /* ── Standalone mod-nav section ──────────────────────────────────────────── */
+    /* ── Quick Access mod-nav section ───────────────────────────────────────── */
     .mod-nav-section {
         background: var(--app-card);
         border-radius: 16px;
-        padding: 1.1rem 1.1rem 0.6rem;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        margin-bottom: 1.5rem;
+        padding: 1rem 1rem 0.75rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
+        margin-bottom: 1.25rem;
+        border-top: 2px solid #FFD200;
     }
     .mod-nav-section-label {
         font-size: 0.72rem;
-        font-weight: 700;
+        font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 0.1em;
         color: var(--app-text-muted);
-        margin: 0 0 0.6rem 0.25rem;
+        margin: 0 0 0.75rem 0.25rem;
     }
 
     /* ── Public Profile entry point ──────────────────────────────────────────── */
@@ -202,12 +218,21 @@
     .s-pp-btn-edit { background: #0B0B0B; color: #FFD200; }
 
     /* ── Social section ──────────────────────────────────────────────────────── */
-    .mod-social-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
-    .mod-social-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem; background: var(--app-card-alt); border-radius: 12px; padding: 1.2rem 0.75rem; text-decoration: none; color: var(--app-text); position: relative; transition: box-shadow 0.2s, transform 0.2s; border: 1px solid var(--app-border); }
-    .mod-social-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); transform: translateY(-2px); }
-    .mod-social-icon  { font-size: 1.6rem; line-height: 1; }
-    .mod-social-title { font-size: 0.82rem; font-weight: 700; color: var(--app-text-muted); }
-    .mod-social-badge { position: absolute; top: 0.5rem; right: 0.5rem; background: #ef4444; color: white; border-radius: 999px; font-size: 0.7rem; font-weight: 700; padding: 0.1rem 0.45rem; line-height: 1.4; }
+    .mod-social-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+    .mod-social-card {
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.35rem;
+        background: #0f172a; border-radius: 12px; padding: 1.25rem 0.75rem;
+        text-decoration: none; color: #fff; position: relative;
+        transition: box-shadow 0.2s, transform 0.2s;
+        border-top: 2px solid rgba(255,255,255,0.1);
+    }
+    .mod-social-card:nth-child(1) { border-top-color: #22d3ee; }
+    .mod-social-card:nth-child(2) { border-top-color: #f87171; }
+    .mod-social-card:nth-child(3) { border-top-color: #fb923c; }
+    .mod-social-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.25); transform: translateY(-2px); }
+    .mod-social-icon  { font-size: 1.5rem; line-height: 1; }
+    .mod-social-title { font-size: 0.78rem; font-weight: 700; color: rgba(255,255,255,0.6); }
+    .mod-social-badge { position: absolute; top: 0.45rem; right: 0.45rem; background: #ef4444; color: white; border-radius: 999px; font-size: 0.68rem; font-weight: 700; padding: 0.1rem 0.4rem; line-height: 1.4; }
     @media (max-width: 480px) {
         .mod-social-grid { grid-template-columns: 1fr; }
         .s-kpi-row { grid-template-columns: 1fr 1fr; }
@@ -288,9 +313,9 @@
     {% endif %}
 
     {# ── 2. Social ─────────────────────────────────────────────────────────────── #}
-    <section class="section-block">
+    <section class="section-block dc-social-block">
         <div class="section-header">
-            <span class="section-title" style="font-weight:800;font-size:1rem;">Social</span>
+            <span class="section-title">Social</span>
         </div>
         <div class="mod-social-grid">
             <a href="/friends" class="mod-social-card">
@@ -316,9 +341,9 @@
 
     {# ── 3. Public Profile entry point (LFA_FOOTBALL_PLAYER only) ─────────────── #}
     {% if specialization == "LFA_FOOTBALL_PLAYER" %}
-    <section class="section-block">
+    <section class="section-block dc-pp-block">
         <div class="section-header">
-            <span class="section-title" style="font-weight:800;font-size:1rem;">Public Profile</span>
+            <span class="section-title">Public Profile</span>
         </div>
         <div class="s-pp-section">
             <div class="s-pp-info">
@@ -394,7 +419,8 @@
 (function () {
     'use strict';
 
-    // ── Player Card iframe scale ──────────────────────────────────────────────
+    // ── Player Card thumbnail scale — CSS controls wrapper height (160px) ────
+    // JS only sets iframe intrinsic size + scale-to-fit; never touches wrap height.
     (function () {
         var _CANVAS = {
             instagram_square:   [1080, 1080],
@@ -414,8 +440,8 @@
             var wrap   = document.getElementById('dc-player-wrap');
             if (!iframe || !wrap) return;
             var cw = dims[0], ch = dims[1];
-            var availW   = wrap.clientWidth || 640;
-            var maxH     = window.innerWidth < 700 ? 160 : 240;
+            var availW   = wrap.clientWidth || 300;
+            var maxH     = 160;           /* matches .dc-player-wrap CSS height */
             var scaleByW = availW / cw;
             var scaleByH = maxH / ch;
             var scale    = Math.min(scaleByW, scaleByH);
@@ -423,7 +449,7 @@
             iframe.style.height          = ch + 'px';
             iframe.style.transform       = 'scale(' + scale + ')';
             iframe.style.transformOrigin = 'top left';
-            wrap.style.height            = Math.round(ch * scale) + 'px';
+            /* wrap height is CSS-controlled — do NOT set wrap.style.height */
         });
     })();
 

@@ -181,3 +181,59 @@ class TestSpecDashboardTemplate:
         src = self._src()
         assert 'dc-cta-primary' in src
         assert 'dc-cta-ghost'   in src
+
+    # ── DS-17b..DS-17g: layout-oriented tile-card assertions ─────────────────
+
+    def test_ds17b_card_zone_equal_columns(self):
+        """DS-17b: .dc-card-zone uses repeat(3, 1fr) — no 1.6fr asymmetry."""
+        src = self._src()
+        assert 'repeat(3, 1fr)' in src
+        assert '1.6fr'          not in src
+
+    def test_ds17c_card_zone_align_stretch(self):
+        """DS-17c: .dc-card-zone uses align-items: stretch for equal tile heights."""
+        src = self._src()
+        assert 'align-items: stretch' in src
+
+    def test_ds17d_card_zone_explicit_row_height(self):
+        """DS-17d: .dc-card-zone has grid-auto-rows to control row height."""
+        src = self._src()
+        assert 'grid-auto-rows' in src
+
+    def test_ds17e_player_wrap_no_flex1(self):
+        """DS-17e: .dc-player-wrap does NOT use flex: 1 (would expand layout)."""
+        src = self._src()
+        # Find dc-player-wrap CSS block and check no flex: 1 inside it
+        start = src.index('.dc-player-wrap {')
+        end   = src.index('}', start)
+        wrap_block = src[start:end]
+        assert 'flex: 1' not in wrap_block
+
+    def test_ds17f_player_wrap_has_fixed_height(self):
+        """DS-17f: .dc-player-wrap has an explicit height (thumbnail constraint)."""
+        src = self._src()
+        start = src.index('.dc-player-wrap {')
+        end   = src.index('}', start)
+        wrap_block = src[start:end]
+        assert 'height:' in wrap_block
+
+    def test_ds17g_mobile_card_zone_single_column(self):
+        """DS-17g: @media (max-width: 768px) sets .dc-card-zone to 1fr (stack)."""
+        src = self._src()
+        media_start = src.index('@media (max-width: 768px)')
+        media_block = src[media_start:media_start + 500]
+        assert 'grid-template-columns: 1fr' in media_block
+        assert 'grid-auto-rows: unset'      in media_block
+
+    def test_ds17h_dc_hero_full_height(self):
+        """DS-17h: .dc-hero uses height: 100% to fill the fixed grid row."""
+        src = self._src()
+        start = src.index('.dc-hero {')
+        end   = src.index('}', start)
+        hero_block = src[start:end]
+        assert 'height: 100%' in hero_block
+
+    def test_ds17i_js_no_wrap_height_override(self):
+        """DS-17i: JS does NOT assign wrap.style.height (CSS controls wrapper height)."""
+        src = self._src()
+        assert 'wrap.style.height =' not in src
