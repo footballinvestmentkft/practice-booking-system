@@ -1047,6 +1047,25 @@ async def export_onboarding_welcome_card(
     if redirect:
         return redirect
 
+    # Welcome Card design ownership guard (feature-flag gated).
+    # ENFORCE_WELCOME_CARD_OWNERSHIP=False (default): export proceeds, warning logged.
+    # ENFORCE_WELCOME_CARD_OWNERSHIP=True: 403 if no ownership row.
+    # Admin bypass: admins always allowed.
+    if user.role != UserRole.ADMIN:
+        from app.services.card_design_service import is_design_accessible as _is_accessible
+        _wc_owned = _is_accessible(db, user.id, "welcome_card", "default")
+        if not _wc_owned:
+            if settings.ENFORCE_WELCOME_CARD_OWNERSHIP:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Welcome Card not owned. Purchase it at /my-cards/shop",
+                )
+            else:
+                logger.info(
+                    "welcome_card_export_no_ownership_flag_off",
+                    extra={"user_id": user.id},
+                )
+
     if platform not in _export_svc.CANVAS_SIZES:
         valid = list(_export_svc.CANVAS_SIZES)
         raise HTTPException(

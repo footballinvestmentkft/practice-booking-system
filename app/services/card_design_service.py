@@ -270,3 +270,228 @@ def get_supported_buckets(design_id: str, db=None) -> tuple[str, ...]:
 def is_animated_capable(design_id: str, platform_id: str, db=None) -> bool:
     """Return True if (design_id, platform_id) supports animated video export."""
     return platform_id in get_design(design_id, db).animated_platforms
+
+
+# ── Card Design Ownership / Entitlement ───────────────────────────────────────
+
+# Valid card type IDs — checked at service entry points.
+_VALID_CARD_TYPE_IDS: frozenset[str] = frozenset(
+    {"player_card", "welcome_card", "challenge_card"}
+)
+
+# Service-level price map for card families without a CardDesign DB entry.
+# player_card prices come from CardDesign.credit_cost (DB-backed).
+# Update these constants when pricing changes — do NOT hardcode in templates.
+_NON_PLAYER_CARD_PRICES: dict[tuple[str, str], int] = {
+    ("welcome_card",   "default"):   200,  # CR — product decision
+    ("challenge_card", "challenge"): 150,  # CR — product decision
+}
+
+
+class FreeDesignError(Exception):
+    """Raised when attempting to purchase a free (always-accessible) design."""
+
+
+class AlreadyOwnedError(Exception):
+    """Raised when the user already owns the requested design."""
+
+
+def _resolve_price(card_type_id: str, design_id: str, db=None) -> int:
+    """Return the credit cost for a card type + design combination.
+
+    player_card: reads from CardDesign.credit_cost (DB/cache).
+    welcome_card / challenge_card: reads from _NON_PLAYER_CARD_PRICES constant.
+
+    Raises ValueError for unknown card_type_id or design_id.
+    """
+    if card_type_id == "player_card":
+        cache = _maybe_reload(db)
+        design = cache.get(design_id)
+        if design is None:
+            raise ValueError(f"Unknown player card design: {design_id!r}")
+        return design.credit_cost
+    key = (card_type_id, design_id)
+    if key not in _NON_PLAYER_CARD_PRICES:
+        raise ValueError(
+            f"Unknown card type/design combination: {card_type_id!r}/{design_id!r}"
+        )
+    return _NON_PLAYER_CARD_PRICES[key]
+
+
+def is_design_accessible(db, user_id: int, card_type_id: str, design_id: str) -> bool:
+    """Return True if the user may export/download the given card design.
+
+    Access rules:
+      1. player_card + credit_cost == 0 → always True (no ownership row needed)
+      2. CardDesignOwnership row exists → True
+      3. player_card legacy JSON shim: unlocked_card_variants contains design_id → True
+      4. Everything else → False
+    """
+    from app.models.card_design_ownership import CardDesignOwnership
+    from app.models.license import UserLicense
+
+    # Rule 1: free player card design
+    if card_type_id == "player_card":
+        try:
+            if _resolve_price("player_card", design_id, db) == 0:
+                return True
+        except ValueError:
+            return False  # unknown design_id → not accessible
+
+    # Rule 2: ownership table — primary source
+    owned = (
+        db.query(CardDesignOwnership)
+        .filter_by(user_id=user_id, card_type_id=card_type_id, design_id=design_id)
+        .first()
+    )
+    if owned:
+        return True
+
+    # Rule 3: legacy JSON shim — player_card only, read-only
+    if card_type_id == "player_card":
+        lic = (
+            db.query(UserLicense)
+            .filter_by(user_id=user_id, specialization_type="LFA_FOOTBALL_PLAYER")
+            .first()
+        )
+        if lic and design_id in (lic.unlocked_card_variants or []):
+            return True
+
+    return False
+
+
+def get_owned_design_ids(db, user_id: int, card_type_id: str) -> list[str]:
+    """Return design_ids owned by the user for a specific card_type_id.
+
+    For player_card, always includes free designs (credit_cost == 0) even
+    without an ownership row.
+    """
+    from app.models.card_design_ownership import CardDesignOwnership
+
+    owned = (
+        db.query(CardDesignOwnership.design_id)
+        .filter_by(user_id=user_id, card_type_id=card_type_id)
+        .all()
+    )
+    result = {row.design_id for row in owned}
+
+    # Legacy JSON shim for player_card
+    if card_type_id == "player_card":
+        from app.models.license import UserLicense
+        lic = (
+            db.query(UserLicense)
+            .filter_by(user_id=user_id, specialization_type="LFA_FOOTBALL_PLAYER")
+            .first()
+        )
+        if lic:
+            for d in (lic.unlocked_card_variants or []):
+                result.add(d)
+        # Always include free designs
+        cache = _maybe_reload(db)
+        for d in cache.values():
+            if not d.is_premium:
+                result.add(d.id)
+
+    return sorted(result)
+
+
+def purchase_design(db, user, card_type_id: str, design_id: str) -> "CardDesignOwnership":
+    """Acquire a card design entitlement by deducting credits.
+
+    Atomic: CreditService.deduct() (SAVEPOINT) + CardDesignOwnership INSERT
+    committed together in a single outer db.commit().
+
+    Raises:
+        ValueError              — unknown card_type_id or design_id
+        FreeDesignError         — design is always free, no purchase needed
+        AlreadyOwnedError       — user already owns this design
+        InsufficientCreditsError — not enough credits (raised by CreditService)
+        sqlalchemy.exc.IntegrityError — caught internally, re-raised as AlreadyOwnedError
+    """
+    from sqlalchemy.exc import IntegrityError
+
+    from app.models.card_design_ownership import CardDesignOwnership
+    from app.services.credit_service import CreditService
+
+    if card_type_id not in _VALID_CARD_TYPE_IDS:
+        raise ValueError(f"Unknown card_type_id: {card_type_id!r}")
+
+    price = _resolve_price(card_type_id, design_id, db)  # ValueError if unknown
+
+    if price == 0:
+        raise FreeDesignError(
+            f"Design {card_type_id!r}/{design_id!r} is always accessible — no purchase needed"
+        )
+
+    already = (
+        db.query(CardDesignOwnership)
+        .filter_by(user_id=user.id, card_type_id=card_type_id, design_id=design_id)
+        .first()
+    )
+    if already:
+        raise AlreadyOwnedError(
+            f"Design {card_type_id!r}/{design_id!r} already owned by user {user.id}"
+        )
+
+    idempotency_key = f"card_design_unlock_{user.id}_{card_type_id}_{design_id}"
+
+    # SAVEPOINT: balance UPDATE + CreditTransaction flush (no outer commit inside deduct)
+    credit_tx = CreditService(db).deduct(
+        user=user,
+        amount=price,
+        transaction_type="CARD_DESIGN_UNLOCK",
+        description=f"Card design: {card_type_id}/{design_id}",
+        idempotency_key=idempotency_key,
+    )
+
+    try:
+        ownership = CardDesignOwnership(
+            user_id=user.id,
+            card_type_id=card_type_id,
+            design_id=design_id,
+            source="purchase",
+            credit_transaction_id=credit_tx.id,
+        )
+        db.add(ownership)
+        db.commit()  # OUTER COMMIT: balance + CreditTransaction + Ownership
+        return ownership
+    except IntegrityError:
+        db.rollback()  # rolls back balance update too (outer tx)
+        raise AlreadyOwnedError(
+            f"Design {card_type_id!r}/{design_id!r} already owned (concurrent request)"
+        )
+
+
+def grant_design(
+    db,
+    user_id: int,
+    card_type_id: str,
+    design_id: str,
+    source: str = "admin_grant",
+) -> "CardDesignOwnership | None":
+    """Grant a card design ownership without credit deduction.
+
+    Idempotent: if ownership already exists, returns None without error.
+    For use by: admin panel, backfill scripts, promo flows.
+    Must NOT be called from normal user flows (onboarding, challenge completion, etc.)
+    """
+    from app.models.card_design_ownership import CardDesignOwnership
+
+    existing = (
+        db.query(CardDesignOwnership)
+        .filter_by(user_id=user_id, card_type_id=card_type_id, design_id=design_id)
+        .first()
+    )
+    if existing:
+        return None  # idempotent — already granted
+
+    ownership = CardDesignOwnership(
+        user_id=user_id,
+        card_type_id=card_type_id,
+        design_id=design_id,
+        source=source,
+        credit_transaction_id=None,
+    )
+    db.add(ownership)
+    db.commit()
+    return ownership

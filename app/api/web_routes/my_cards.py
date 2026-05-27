@@ -12,9 +12,18 @@ from ...dependencies import get_current_user_web
 from ...models.user import User
 from ...models.virtual_training import VirtualTrainingAttempt
 from ...models.vt_challenge import ChallengeStatus, VirtualTrainingChallenge
+from ...services.card_design_service import (
+    AlreadyOwnedError,
+    FreeDesignError,
+    _NON_PLAYER_CARD_PRICES,
+    get_all_designs,
+    is_design_accessible,
+    purchase_design,
+)
 from ...services.card_draft_service import CardDraftService
 from ...services.card_system import card_registry
 from ...services.card_theme_service import get_all_themes
+from ...services.credit_service import InsufficientCreditsError
 from .vt_challenges import (
     CHALLENGE_CARD_PLATFORMS,
     get_locked_challenge_card_phases,
@@ -52,6 +61,81 @@ async def my_cards_hub(
             "spec_profile_icon": "🪪",
         },
     )
+
+
+@router.get("/my-cards/shop", response_class=HTMLResponse)
+async def my_cards_shop(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User  = Depends(get_current_user_web),
+):
+    """Card Design Shop — browse and purchase card design entitlements."""
+    player_designs = get_all_designs(db)
+    wc_price = _NON_PLAYER_CARD_PRICES[("welcome_card",   "default")]
+    cc_price = _NON_PLAYER_CARD_PRICES[("challenge_card", "challenge")]
+    credits  = user.credit_balance
+
+    def _state(card_type_id: str, design_id: str, credit_cost: int, is_premium: bool) -> str:
+        if not is_premium and card_type_id == "player_card":
+            return "free"
+        if is_design_accessible(db, user.id, card_type_id, design_id):
+            return "owned"
+        return "purchasable" if credits >= credit_cost else "locked"
+
+    player_design_rows = [
+        {
+            "id":          d.id,
+            "label":       d.label,
+            "description": d.description,
+            "credit_cost": d.credit_cost,
+            "is_premium":  d.is_premium,
+            "state":       _state("player_card", d.id, d.credit_cost, d.is_premium),
+        }
+        for d in player_designs
+    ]
+
+    wc_state = _state("welcome_card", "default", wc_price, True)
+    cc_state = _state("challenge_card", "challenge", cc_price, True)
+
+    return templates.TemplateResponse(
+        "my_cards_shop.html",
+        {
+            "request":             request,
+            "user":                user,
+            "player_design_rows":  player_design_rows,
+            "wc_price":            wc_price,
+            "cc_price":            cc_price,
+            "wc_state":            wc_state,
+            "cc_state":            cc_state,
+            "flash_purchased":     request.query_params.get("purchased"),
+            "flash_error":         request.query_params.get("error"),
+            "spec_dashboard_url":  "/dashboard/lfa-football-player",
+        },
+    )
+
+
+@router.post("/my-cards/designs/{card_type_id}/{design_id}/get")
+async def get_card(
+    card_type_id: str,
+    design_id: str,
+    db: Session = Depends(get_db),
+    user: User  = Depends(get_current_user_web),
+):
+    """Purchase a card design entitlement (credit deduction + ownership row)."""
+    try:
+        purchase_design(db, user, card_type_id, design_id)
+        return RedirectResponse(
+            f"/my-cards/shop?purchased={card_type_id}:{design_id}",
+            status_code=303,
+        )
+    except FreeDesignError:
+        return RedirectResponse("/my-cards/shop?error=free",    status_code=303)
+    except AlreadyOwnedError:
+        return RedirectResponse("/my-cards/shop?error=owned",   status_code=303)
+    except InsufficientCreditsError:
+        return RedirectResponse("/my-cards/shop?error=credits", status_code=303)
+    except ValueError:
+        return RedirectResponse("/my-cards/shop?error=invalid", status_code=303)
 
 
 @router.get("/my-cards/player-card")

@@ -1021,6 +1021,28 @@ async def challenge_card_export(
     if user.id not in (ch.challenger_id, ch.challenged_id):
         raise HTTPException(status_code=403, detail="Participants only")
 
+    # Challenge Card design ownership guard (feature-flag gated).
+    # ENFORCE_CHALLENGE_CARD_OWNERSHIP=False (default): export proceeds, warning logged.
+    # ENFORCE_CHALLENGE_CARD_OWNERSHIP=True: 403 if no ownership row.
+    # Admin bypass: admins always allowed.
+    from app.config import settings as _settings  # noqa: PLC0415
+    from app.models.user import UserRole as _UserRole  # noqa: PLC0415
+    if user.role != _UserRole.ADMIN:
+        from app.services.card_design_service import is_design_accessible as _is_accessible  # noqa: PLC0415
+        _cc_owned = _is_accessible(db, user.id, "challenge_card", "challenge")
+        if not _cc_owned:
+            if _settings.ENFORCE_CHALLENGE_CARD_OWNERSHIP:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Challenge Card not owned. Purchase it at /my-cards/shop",
+                )
+            else:
+                import logging as _logging  # noqa: PLC0415
+                _logging.getLogger(__name__).info(
+                    "challenge_card_export_no_ownership_flag_off",
+                    extra={"user_id": user.id, "challenge_id": challenge_id},
+                )
+
     is_challenger = user.id == ch.challenger_id
     my_attempt_id = ch.challenger_attempt_id if is_challenger else ch.challenged_attempt_id
     my_attempt = (

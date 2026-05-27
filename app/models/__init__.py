@@ -58,6 +58,7 @@ from .tournament_instructor_slot import TournamentInstructorSlot, SlotRole, Slot
 from .card_draft import CardDraft
 from .card_theme import CardTheme
 from .card_design import CardDesign
+from .card_design_ownership import CardDesignOwnership
 from .virtual_training import VirtualTrainingGame, VirtualTrainingAttempt
 from .friendship import Friendship, FriendshipStatus, is_friends, get_friendship
 from .vt_challenge import (
@@ -233,6 +234,7 @@ __all__ = [
     "CardDraft",
     "CardTheme",
     "CardDesign",
+    "CardDesignOwnership",
     # Virtual Training
     "VirtualTrainingGame",
     "VirtualTrainingAttempt",

@@ -1,0 +1,266 @@
+{% extends "student_base.html" %}
+
+{% block title %}Get Card — LFA Education Center{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block content %}
+<style>
+  .shop-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .shop-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #f8fafc;
+    margin: 0;
+  }
+  .shop-credits-badge {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 20px;
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
+    color: #94a3b8;
+  }
+  .shop-credits-badge strong {
+    color: #FFD200;
+  }
+
+  /* Flash messages */
+  .shop-flash {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+    font-size: 0.9rem;
+  }
+  .shop-flash-success { background: #14532d; color: #86efac; border: 1px solid #166534; }
+  .shop-flash-error   { background: #450a0a; color: #fca5a5; border: 1px solid #7f1d1d; }
+
+  /* Tabs */
+  .shop-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #1e293b;
+    padding-bottom: 0;
+  }
+  .shop-tab {
+    padding: 0.5rem 1.1rem 0.6rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+  .shop-tab.active { color: #FFD200; border-bottom-color: #FFD200; }
+  .shop-tab-panel  { display: none; }
+  .shop-tab-panel.active { display: block; }
+
+  /* Design grid */
+  .dc-design-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  .dc-design-card {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .dc-design-card:hover { border-color: #334155; }
+
+  .dc-design-thumb {
+    width: 100%;
+    height: 100px;
+    background: #1e293b;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #475569;
+    font-size: 0.75rem;
+  }
+  .dc-design-label {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #f1f5f9;
+  }
+  .dc-design-desc {
+    font-size: 0.78rem;
+    color: #64748b;
+    flex: 1;
+  }
+
+  /* CTA buttons */
+  .dc-design-cta { margin-top: auto; }
+  .dc-cta-btn {
+    display: block;
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+  }
+
+  .dc-design-state-free        { background: #14532d; color: #86efac; }
+  .dc-design-state-free:hover  { background: #166534; }
+  .dc-design-state-owned       { background: #1e3a5f; color: #93c5fd; cursor: default; }
+  .dc-design-state-purchasable { background: #854d0e; color: #fde68a; }
+  .dc-design-state-purchasable:hover { background: #92400e; }
+  .dc-design-state-locked      { background: #1e293b; color: #475569; cursor: not-allowed; }
+
+  /* Single-card family (welcome/challenge) */
+  .dc-single-card {
+    max-width: 380px;
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .dc-single-card h3 { color: #f1f5f9; font-size: 1.1rem; font-weight: 700; margin: 0; }
+  .dc-single-card p  { color: #64748b; font-size: 0.85rem; margin: 0; }
+</style>
+
+<div class="container-fluid px-3 py-4" style="max-width: 900px;">
+
+  <div class="shop-header">
+    <h1>Get Card</h1>
+    <span class="shop-credits-badge">Balance: <strong>{{ user.credit_balance }} CR</strong></span>
+  </div>
+
+  {# ── Flash messages ── #}
+  {% if flash_purchased %}
+  <div class="shop-flash shop-flash-success">
+    ✓ Purchase successful — {{ flash_purchased }} is now in your collection.
+  </div>
+  {% endif %}
+  {% if flash_error == "credits" %}
+  <div class="shop-flash shop-flash-error">Not enough credits to purchase this design.</div>
+  {% elif flash_error == "owned" %}
+  <div class="shop-flash shop-flash-error">You already own this design.</div>
+  {% elif flash_error == "free" %}
+  <div class="shop-flash shop-flash-error">This design is always free — no purchase needed.</div>
+  {% elif flash_error == "invalid" %}
+  <div class="shop-flash shop-flash-error">Unknown card type or design.</div>
+  {% endif %}
+
+  {# ── Tabs ── #}
+  <div class="shop-tabs">
+    <button class="shop-tab active" onclick="showTab('player')">Player Card</button>
+    <button class="shop-tab"        onclick="showTab('welcome')">Welcome Card</button>
+    <button class="shop-tab"        onclick="showTab('challenge')">Challenge Card</button>
+  </div>
+
+  {# ── Player Card tab ── #}
+  <div id="tab-player" class="shop-tab-panel active">
+    <div class="dc-design-grid">
+      {% for d in player_design_rows %}
+      <div class="dc-design-card">
+        <div class="dc-design-thumb">{{ d.label[:2] }}</div>
+        <div class="dc-design-label">{{ d.label }}</div>
+        <div class="dc-design-desc">{{ d.description }}</div>
+        <div class="dc-design-cta">
+          {% if d.state == "free" %}
+            <a href="/my-cards/player-card" class="dc-cta-btn dc-design-state-free">Use</a>
+          {% elif d.state == "owned" %}
+            <span class="dc-cta-btn dc-design-state-owned">Owned ✓</span>
+          {% elif d.state == "purchasable" %}
+            <form method="POST" action="/my-cards/designs/player_card/{{ d.id }}/get">
+              <button type="submit" class="dc-cta-btn dc-design-state-purchasable">
+                Get Card — {{ d.credit_cost }} CR
+              </button>
+            </form>
+          {% else %}
+            <button class="dc-cta-btn dc-design-state-locked" disabled>
+              Not enough credits ({{ d.credit_cost }} CR)
+            </button>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# ── Welcome Card tab ── #}
+  <div id="tab-welcome" class="shop-tab-panel">
+    <div class="dc-single-card">
+      <div class="dc-design-thumb" style="height: 80px;">WC</div>
+      <h3>Welcome Card</h3>
+      <p>Your personal onboarding card based on your self-assessment. Export as PNG for social sharing.</p>
+      <div class="dc-design-cta">
+        {% if wc_state == "owned" %}
+          <span class="dc-cta-btn dc-design-state-owned">Owned ✓</span>
+        {% elif wc_state == "purchasable" %}
+          <form method="POST" action="/my-cards/designs/welcome_card/default/get">
+            <button type="submit" class="dc-cta-btn dc-design-state-purchasable">
+              Get Card — {{ wc_price }} CR
+            </button>
+          </form>
+        {% else %}
+          <button class="dc-cta-btn dc-design-state-locked" disabled>
+            Not enough credits ({{ wc_price }} CR)
+          </button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {# ── Challenge Card tab ── #}
+  <div id="tab-challenge" class="shop-tab-panel">
+    <div class="dc-single-card">
+      <div class="dc-design-thumb" style="height: 80px;">CC</div>
+      <h3>Challenge Card</h3>
+      <p>Social card for your Virtual Training challenge results. Shareable as 16:9 post or 9:16 story.</p>
+      <div class="dc-design-cta">
+        {% if cc_state == "owned" %}
+          <span class="dc-cta-btn dc-design-state-owned">Owned ✓</span>
+        {% elif cc_state == "purchasable" %}
+          <form method="POST" action="/my-cards/designs/challenge_card/challenge/get">
+            <button type="submit" class="dc-cta-btn dc-design-state-purchasable">
+              Get Card — {{ cc_price }} CR
+            </button>
+          </form>
+        {% else %}
+          <button class="dc-cta-btn dc-design-state-locked" disabled>
+            Not enough credits ({{ cc_price }} CR)
+          </button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <p style="margin-top: 2rem;">
+    <a href="/my-cards" style="color: #64748b; font-size: 0.85rem;">← Back to My Cards</a>
+  </p>
+</div>
+
+<script>
+function showTab(name) {
+  document.querySelectorAll('.shop-tab-panel').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.shop-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+{% endblock %}

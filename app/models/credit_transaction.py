@@ -22,6 +22,7 @@ class TransactionType(enum.Enum):
     EXPIRATION = "EXPIRATION"      # Credits expired (2 year limit)
     INVITATION_BONUS = "INVITATION_BONUS"    # Bonus credits granted on registration via invitation code
     SPECIALIZATION_UNLOCK = "SPECIALIZATION_UNLOCK"  # Credits spent to unlock a specialization
+    CARD_DESIGN_UNLOCK = "CARD_DESIGN_UNLOCK"  # Credits spent to acquire a card design entitlement
 
 
 class CreditTransaction(Base):

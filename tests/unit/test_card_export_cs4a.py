@@ -73,7 +73,27 @@ def _mock_db(target_user=None, target_license=None) -> MagicMock:
     q_user.filter.return_value.first.return_value = target_user
     q_license = MagicMock()
     q_license.filter.return_value.first.return_value = target_license
-    db.query.side_effect = [q_user, q_license]
+    q_license.filter_by.return_value.first.return_value = target_license
+
+    # Return a fake ownership row so the export guard (is_design_accessible) passes.
+    # The existing 422/200 tests are about bucket validation, not ownership.
+    q_ownership = MagicMock()
+    q_ownership.filter_by.return_value.first.return_value = MagicMock()  # owned
+
+    def _side_effect(model):
+        from app.models.user import User
+        from app.models.license import UserLicense
+        from app.models.card_design_ownership import CardDesignOwnership
+        if model is User:
+            return q_user
+        if model is UserLicense:
+            return q_license
+        if model is CardDesignOwnership:
+            return q_ownership
+        # CardDesign or unknown: raise StopIteration, caught by _load_cache → DESIGNS fallback
+        raise StopIteration
+
+    db.query.side_effect = _side_effect
     return db
 
 

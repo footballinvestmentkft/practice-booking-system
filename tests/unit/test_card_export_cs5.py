@@ -391,8 +391,10 @@ class TestCS5UnsupportedBucket:
         from app.api.web_routes import public_player as _pp
         from app.services import card_export_service as _export_svc
 
+        from app.models.user import UserRole
         _mock_current_user = MagicMock()
-        _mock_current_user.id = 7   # matches user_id in URL → ownership check passes
+        _mock_current_user.id = 7
+        _mock_current_user.role = UserRole.ADMIN  # bypass ownership guard; test is about bucket validation
 
         db = _mock_db_for_export(user_id=7, card_variant="classic_lite")
         app.dependency_overrides[get_db] = lambda: db

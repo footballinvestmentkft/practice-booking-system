@@ -62708,6 +62708,57 @@
         ]
       }
     },
+    "/my-cards/designs/{card_type_id}/{design_id}/get": {
+      "post": {
+        "description": "Purchase a card design entitlement (credit deduction + ownership row).",
+        "operationId": "get_card_my_cards_designs__card_type_id___design_id__get_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "card_type_id",
+            "required": true,
+            "schema": {
+              "title": "Card Type Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "design_id",
+            "required": true,
+            "schema": {
+              "title": "Design Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Card",
+        "tags": [
+          "web",
+          "my-cards"
+        ]
+      }
+    },
     "/my-cards/player-card": {
       "get": {
         "description": "Detail entry point for Player Card \u2014 redirects to the card editor.",
@@ -62723,6 +62774,29 @@
           }
         },
         "summary": "My Cards Player Card",
+        "tags": [
+          "web",
+          "my-cards"
+        ]
+      }
+    },
+    "/my-cards/shop": {
+      "get": {
+        "description": "Card Design Shop \u2014 browse and purchase card design entitlements.",
+        "operationId": "my_cards_shop_my_cards_shop_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "My Cards Shop",
         "tags": [
           "web",
           "my-cards"
