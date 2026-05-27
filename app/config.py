@@ -262,6 +262,14 @@ class Settings(BaseSettings):
     # giving up.  0 = unlimited (not recommended for long broker outages).
     CELERY_BROKER_CONNECTION_MAX_RETRIES: int = 10
 
+    # ── Background removal ─────────────────────────────────────────────────────
+    # "null"  → NullProcessor (Phase 1 skeleton; no real removal; button hidden)
+    # "rembg" → RembgProcessor (Phase 2; requires rembg + onnxruntime-cpu)
+    BG_REMOVAL_PROCESSOR: str = "null"
+    # Seconds after which a stuck 'processing' record is flagged timed-out in
+    # the status endpoint so the user can reset it back to 'uploaded'.
+    PROCESSING_TIMEOUT_SECONDS: int = 300
+
     # ── Slow-query monitoring ──────────────────────────────────────────────────
     # Queries slower than SLOW_QUERY_THRESHOLD_MS are logged to app.slow_query
     # and counted in the slow_queries_total metric.  Raise this value if normal

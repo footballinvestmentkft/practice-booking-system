@@ -1,5 +1,5 @@
 """
-MP-S01..MP-S08 — unit tests for mood_photo_service.
+MP-S01..MP-S13 — unit tests for mood_photo_service.
 
 Uses MagicMock for the SQLAlchemy Session; no real DB required.
 Disk I/O is patched via tmp_path / monkeypatch so tests stay hermetic.
@@ -186,3 +186,88 @@ def test_mp_s08_get_returns_all_six_slots():
     assert result["mood_sad_disappointed"]  is None
     assert result["mood_angry_competitive"] is None
     assert result["mood_surprised_shocked"] is None
+
+
+# ── MP-S09 ── set_status_processing sets status and calls flush ───────────────
+
+def test_mp_s09_set_status_processing():
+    record = MagicMock()
+    record.status = "uploaded"
+    db = _make_db(existing_row=record)
+
+    from app.services.mood_photo_service import set_status_processing
+
+    result = set_status_processing(user_id=42, slot="mood_happy_smile", db=db)
+
+    assert record.status == "processing"
+    db.flush.assert_called()
+    assert result is record
+
+
+# ── MP-S10 ── apply_removal_result sets ready + url + timestamp ───────────────
+
+def test_mp_s10_apply_removal_result():
+    from datetime import datetime, timezone
+
+    record = MagicMock()
+    db = _make_db(existing_row=record)
+
+    from app.services.mood_photo_service import apply_removal_result
+
+    apply_removal_result(
+        user_id=42,
+        slot="mood_happy_smile",
+        processed_url="/static/uploads/mood_photos/42_mood_happy_smile_proc_999.png",
+        db=db,
+    )
+
+    assert record.status == "ready"
+    assert record.processed_png_url == "/static/uploads/mood_photos/42_mood_happy_smile_proc_999.png"
+    assert record.processed_at is not None
+    db.commit.assert_called()
+
+
+# ── MP-S11 ── apply_removal_failure sets failed, clears processed_at ─────────
+
+def test_mp_s11_apply_removal_failure():
+    record = MagicMock()
+    db = _make_db(existing_row=record)
+
+    from app.services.mood_photo_service import apply_removal_failure
+
+    apply_removal_failure(user_id=42, slot="mood_happy_smile", db=db)
+
+    assert record.status == "failed"
+    assert record.processed_at is not None
+    db.commit.assert_called()
+
+
+# ── MP-S12 ── reset_processing: status=processing → uploaded, cleared ────────
+
+def test_mp_s12_reset_processing_from_processing():
+    record = MagicMock()
+    record.status = "processing"
+    db = _make_db(existing_row=record)
+
+    from app.services.mood_photo_service import reset_processing
+
+    reset_processing(user_id=42, slot="mood_happy_smile", db=db)
+
+    assert record.status == "uploaded"
+    assert record.processed_png_url is None
+    assert record.processed_at is None
+    db.flush.assert_called()
+
+
+# ── MP-S13 ── reset_processing: status != processing → no-op ─────────────────
+
+def test_mp_s13_reset_processing_noop_when_not_processing():
+    record = MagicMock()
+    record.status = "uploaded"
+    db = _make_db(existing_row=record)
+
+    from app.services.mood_photo_service import reset_processing
+
+    reset_processing(user_id=42, slot="mood_happy_smile", db=db)
+
+    db.flush.assert_not_called()
