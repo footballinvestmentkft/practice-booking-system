@@ -186,7 +186,7 @@ def test_mp_t08_rembg_processor_calls_rembg_remove():
         result = RembgProcessor().remove(b"INPUT_PNG")
 
     assert result == b"TRANSPARENT_PNG"
-    mock_rembg.remove.assert_called_once_with(b"INPUT_PNG", model="u2netp")
+    mock_rembg.remove.assert_called_once_with(b"INPUT_PNG")
 
 
 # ── MP-T09 ── rembg.remove() exception → task calls apply_removal_failure ─────

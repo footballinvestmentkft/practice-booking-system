@@ -5,7 +5,7 @@ from .processor import BackgroundProcessor
 
 class RembgProcessor(BackgroundProcessor):
     """
-    Phase 2 processor.  Uses rembg + u2netp ONNX model to remove the
+    Phase 2 processor.  Uses rembg (default u2net ONNX model) to remove the
     background from a PNG image.  Returns RGBA PNG bytes with the
     background replaced by transparency.
 
@@ -20,4 +20,4 @@ class RembgProcessor(BackgroundProcessor):
 
     def remove(self, input_png_bytes: bytes) -> bytes:
         import rembg
-        return rembg.remove(input_png_bytes, model="u2netp")
+        return rembg.remove(input_png_bytes)
