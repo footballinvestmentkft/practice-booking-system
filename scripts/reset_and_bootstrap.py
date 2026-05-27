@@ -85,6 +85,27 @@ def main() -> None:
     from scripts.bootstrap_clean import run as bootstrap_run  # noqa: E402
     bootstrap_run()
 
+    print("\n--- Step 4: Post-reset VT reference data validation ---")
+    from app.database import SessionLocal as _SL       # noqa: E402
+    from app.models.virtual_training import VirtualTrainingGame as _VTG  # noqa: E402
+    _vdb = _SL()
+    try:
+        _vt_total  = _vdb.query(_VTG).count()
+        _vt_compat = _vdb.query(_VTG).filter(
+            _VTG.code.in_(["memory_sequence", "target_tracking"]),
+            _VTG.is_active == True,  # noqa: E712
+        ).count()
+    finally:
+        _vdb.close()
+
+    if _vt_total == 0:
+        print("❌ FATAL: virtual_training_games is EMPTY after bootstrap.")
+        print("   bootstrap_clean.py Step 8 did not complete correctly.")
+        print("   Fix: PYTHONPATH=. python scripts/seed_virtual_training_games.py")
+        sys.exit(1)
+
+    print(f"✅ VirtualTrainingGame: {_vt_total} rows ({_vt_compat}/2 challenge-compatible active)")
+
     print("\n" + "=" * 60)
     print("  ✅  Reset complete. DB is in a clean bootstrapped state.")
     print("=" * 60)

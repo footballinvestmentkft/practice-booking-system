@@ -10,9 +10,11 @@ on:
     paths:
       - 'scripts/bootstrap_clean.py'
       - 'scripts/validate_seed_state.py'
+      - 'scripts/seed_virtual_training_games.py'
       - 'scripts/e2e_matrix_test.py'
       - 'scripts/e2e_promo_flow_test.py'
       - 'app/api/web_routes/admin.py'
+      - 'app/models/virtual_training.py'
       - 'alembic/versions/**'
       - '.github/workflows/e2e-clean-db-bootstrap.yml'
   workflow_dispatch:

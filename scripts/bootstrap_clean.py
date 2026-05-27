@@ -17,6 +17,7 @@ What it creates (skips existing rows):
   6. Instructor user     instructor@lfa.com / instructor123
   7. Bootstrap Club      LFA_BOOTSTRAP_CLUB — 3 teams × 12 UK-named players, all LFA-licensed
                          LFA U15 (63.0), LFA U18 (68.0), LFA Adult (72.0)
+  8. VirtualTrainingGame (12 rows: 6 active incl. memory_sequence + target_tracking)
 """
 import json
 import os
@@ -638,6 +639,20 @@ def run():
                 db.commit()
                 print(f"       → patched {len(null_preset_cfgs)} GameConfiguration(s) with NULL game_preset_id")
 
+        # Step 8: Virtual Training game presets (reference data)
+        _step(8, "Virtual Training game presets (reference data)")
+        from scripts.seed_virtual_training_games import seed_virtual_training_games as _seed_vt  # noqa: E402
+        _seed_vt()
+        db.expire_all()  # refresh session after external commit from _seed_vt()
+        from app.models.virtual_training import VirtualTrainingGame  # noqa: E402
+        _vt_total  = db.query(VirtualTrainingGame).count()
+        _vt_active = db.query(VirtualTrainingGame).filter(
+            VirtualTrainingGame.is_active == True  # noqa: E712
+        ).count()
+        print(f"  → VirtualTrainingGame total: {_vt_total} ({_vt_active} active)")
+        if _vt_total == 0:
+            print("  ❌ WARNING: VT seed produced 0 rows — challenge flow will not work!")
+
         # Summary
         print("\n" + "="*70)
         print("  Bootstrap complete")
@@ -649,6 +664,10 @@ def run():
         instr_u = db.query(User).filter(User.email == "instructor@lfa.com").first()
         boot_club = db.query(Club).filter(Club.code == _CLUB_CODE).first()
         team_count = db.query(Team).filter(Team.club_id == boot_club.id).count() if boot_club else 0
+        vt_total_s  = db.query(VirtualTrainingGame).count()
+        vt_active_s = db.query(VirtualTrainingGame).filter(
+            VirtualTrainingGame.is_active == True  # noqa: E712
+        ).count()
         print(f"  TournamentType : {tt_count} rows")
         print(f"  GamePreset     : {gp_count} rows")
         print(f"  Campus         : {campus_count} (id={campus.id}, '{campus.name}')")
@@ -661,6 +680,7 @@ def run():
         ) if boot_club else 0
         print(f"  Teams          : {team_count} (LFA U15 / LFA U18 / LFA Adult, 12 players each)")
         print(f"  Players        : {player_count} total (UK English names)")
+        print(f"  VT Games       : {vt_total_s} rows ({vt_active_s} active)")
         print()
         print("  Run validate:  PYTHONPATH=. python scripts/validate_seed_state.py")
         print("="*70 + "\n")

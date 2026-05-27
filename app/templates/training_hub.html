@@ -140,6 +140,19 @@
         font-size: 0.9rem;
     }
 
+    .trn-submodule-unavailable {
+        padding: 0.55rem 0.85rem;
+        border: 1px dashed var(--app-border, #e5e7eb);
+        border-radius: 8px;
+        color: var(--app-text-muted);
+        font-size: 0.82rem;
+        line-height: 1.5;
+    }
+
+    .trn-submodule-unavailable p {
+        margin: 0;
+    }
+
     /* ── Footer ──────────────────────────────────────────────────────────────── */
     .trn-footer {
         text-align: center;
@@ -210,6 +223,11 @@
                     <span>Virtual Games</span>
                     <span class="trn-sub-arrow">→</span>
                 </a>
+                {% else %}
+                <div class="trn-submodule-unavailable">
+                    <p>🎮 Virtual Games — not available.</p>
+                    <p>Contact your administrator to enable virtual game modules.</p>
+                </div>
                 {% endif %}
             </div>
         </div>

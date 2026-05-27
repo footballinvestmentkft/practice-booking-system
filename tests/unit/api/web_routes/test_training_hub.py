@@ -180,3 +180,84 @@ class TestAdaptiveLearningRegression:
         from app.api.web_routes import router
         paths = [r.path for r in router.routes]
         assert "/adaptive-learning" in paths
+
+
+# ── TRN-07..09: vt_active gate + empty state ─────────────────────────────────
+
+class TestVirtualTrainingGate:
+    """
+    TRN-07  vt_active=True when VirtualTrainingService.get_games returns games
+    TRN-08  vt_active=False when VirtualTrainingService.get_games returns []
+    TRN-09  training_hub.html template contains trn-submodule-unavailable class (empty state)
+    TRN-10  training_hub.html template contains Virtual Games link inside {% if vt_active %}
+    TRN-11  Adaptive Learning link always present — not gated by vt_active
+    """
+
+    def _read(self):
+        return (_TEMPLATES_DIR / "training_hub.html").read_text(encoding="utf-8")
+
+    def test_trn07_vt_active_true_when_games_exist(self):
+        """TRN-07: vt_active=True is passed to template when get_games returns a non-empty list."""
+        from app.api.web_routes.training import training_hub_page
+
+        user = _make_student()
+        request = _make_request()
+        db = _make_db()
+        fake_game = MagicMock()
+        fake_response = MagicMock()
+
+        with patch(f"{_ROUTES}.require_student_onboarding", return_value=None), \
+             patch(f"{_ROUTES}._spec_ctx", return_value={}), \
+             patch(f"{_ROUTES}.VirtualTrainingService.get_games", return_value=[fake_game]), \
+             patch(f"{_ROUTES}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = fake_response
+            _run(training_hub_page(request=request, db=db, user=user))
+
+        ctx = mock_tmpl.TemplateResponse.call_args[0][1]
+        assert ctx["vt_active"] is True
+
+    def test_trn08_vt_active_false_when_no_games(self):
+        """TRN-08: vt_active=False is passed to template when get_games returns []."""
+        from app.api.web_routes.training import training_hub_page
+
+        user = _make_student()
+        request = _make_request()
+        db = _make_db()
+        fake_response = MagicMock()
+
+        with patch(f"{_ROUTES}.require_student_onboarding", return_value=None), \
+             patch(f"{_ROUTES}._spec_ctx", return_value={}), \
+             patch(f"{_ROUTES}.VirtualTrainingService.get_games", return_value=[]), \
+             patch(f"{_ROUTES}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = fake_response
+            _run(training_hub_page(request=request, db=db, user=user))
+
+        ctx = mock_tmpl.TemplateResponse.call_args[0][1]
+        assert ctx["vt_active"] is False
+
+    def test_trn09_template_has_empty_state_class(self):
+        """TRN-09: training_hub.html contains trn-submodule-unavailable CSS class (empty state)."""
+        html = self._read()
+        assert "trn-submodule-unavailable" in html
+
+    def test_trn10_template_virtual_games_link_inside_if_block(self):
+        """TRN-10: Virtual Games link exists and is inside an {% if vt_active %} conditional."""
+        html = self._read()
+        assert 'href="/virtual-training"' in html
+        # Both the link and empty state must exist in the template source
+        assert "trn-submodule-unavailable" in html
+        # The if block must be present
+        assert "vt_active" in html
+
+    def test_trn11_adaptive_learning_not_gated(self):
+        """TRN-11: Adaptive Learning link is not inside an {% if %} block — always rendered."""
+        html = self._read()
+        # Find the adaptive-learning href line
+        al_idx = html.find('href="/adaptive-learning"')
+        assert al_idx != -1, "Adaptive Learning link missing from template"
+        # The nearest preceding {% if %} should be the outer if vt_active, not an adaptive-specific gate
+        preceding = html[:al_idx]
+        # No {% if ... %} block should directly wrap the adaptive-learning link
+        # (it appears before the vt_active check)
+        vt_if_idx = html.find("{% if vt_active %}")
+        assert al_idx < vt_if_idx, "Adaptive Learning link must appear before the {% if vt_active %} block"

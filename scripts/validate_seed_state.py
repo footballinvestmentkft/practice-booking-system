@@ -23,6 +23,7 @@ from app.models.game_preset import GamePreset  # noqa: E402
 from app.models.team import Team, TeamMember  # noqa: E402
 from app.models.tournament_type import TournamentType  # noqa: E402
 from app.models.user import User, UserRole  # noqa: E402
+from app.models.virtual_training import VirtualTrainingGame  # noqa: E402
 
 
 def run():
@@ -131,6 +132,28 @@ def run():
             failures.append(
                 "No Club with active teams and players. The promotion wizard will create empty tournaments. "
                 "Run: python scripts/bootstrap_clean.py"
+            )
+
+        # 7. VirtualTrainingGame reference data
+        _CHALLENGE_COMPAT = {"memory_sequence", "target_tracking"}
+        vt_active_games = (
+            db.query(VirtualTrainingGame)
+            .filter(VirtualTrainingGame.is_active == True)  # noqa: E712
+            .all()
+        )
+        vt_compat_count = sum(1 for g in vt_active_games if g.code in _CHALLENGE_COMPAT)
+        if len(vt_active_games) >= 1 and vt_compat_count >= 2:
+            vt_codes = [g.code for g in vt_active_games]
+            print(f"  ✅ VirtualTrainingGame: {len(vt_active_games)} active ({', '.join(vt_codes)})")
+        else:
+            print(
+                f"  ❌ VirtualTrainingGame: {len(vt_active_games)} active, "
+                f"{vt_compat_count}/2 challenge-compatible (need memory_sequence + target_tracking)"
+            )
+            failures.append(
+                f"VirtualTrainingGame: {len(vt_active_games)} active games, "
+                f"{vt_compat_count}/2 challenge-compatible. "
+                "Run: PYTHONPATH=. python scripts/seed_virtual_training_games.py"
             )
 
         print("-" * 50)

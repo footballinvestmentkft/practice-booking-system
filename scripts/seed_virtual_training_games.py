@@ -1,8 +1,14 @@
 """Seed Virtual Training game presets.
 
 Safe to run multiple times: new games are inserted, existing games have their
-config/skill_targets/base_xp/description/name updated in-place (idempotent UPDATE).
-All non-color_reaction presets remain is_active=False until an admin toggle.
+config/skill_targets/base_xp/description/name/is_active updated in-place (idempotent UPDATE).
+
+Active after seed: color_reaction, go_no_go, direction_swipe, number_color_conflict,
+memory_sequence, target_tracking.
+Inactive after seed: stroop_challenge, peripheral_vision, dual_task, fake_target,
+audio_visual_reaction, pattern_break.
+
+memory_sequence and target_tracking are challenge-compatible (CHALLENGE_COMPATIBLE_GAMES).
 
 show_in_hub=False in config → game excluded from the Virtual Games hub display.
 """

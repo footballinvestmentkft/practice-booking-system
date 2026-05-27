@@ -47,6 +47,18 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 Application startup initiated")
     create_initial_admin()
 
+    # Reference-data integrity check (WARNING only, non-fatal)
+    try:
+        from .core.startup_checks import check_reference_data_integrity
+        from .database import SessionLocal
+        _startup_db = SessionLocal()
+        try:
+            check_reference_data_integrity(_startup_db)
+        finally:
+            _startup_db.close()
+    except Exception:
+        logger.warning("Startup reference-data check failed — continuing", exc_info=True)
+
     # Start background scheduler for periodic tasks
     scheduler = None
     try:
