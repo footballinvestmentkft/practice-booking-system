@@ -113,12 +113,20 @@
         ></iframe>
       </div>
       {% elif d.state == "not_available" %}
-      <div class="mfg-preview-wrap mfg-locked">
-        <div class="mfg-preview-placeholder">{{ d.label[:2] | upper }}</div>
+      <div class="mfg-preview-wrap mfg-unavailable">
+        <div class="mfg-unavailable-inner">
+          <span class="mfg-na-label">Not available</span>
+        </div>
       </div>
       {% else %}
       <div class="mfg-preview-wrap mfg-locked">
-        <div class="mfg-preview-placeholder">{{ d.label[:2] | upper }}</div>
+        <iframe
+          class="mfg-preview-iframe"
+          src="/players/{{ user.id }}/card?platform=instagram_portrait&design={{ d.id }}"
+          loading="lazy"
+          scrolling="no"
+          title="{{ d.label }} preview"
+        ></iframe>
       </div>
       {% endif %}
 
