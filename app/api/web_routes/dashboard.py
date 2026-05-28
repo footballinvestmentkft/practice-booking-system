@@ -405,11 +405,9 @@ async def lfa_player_card_editor(
     published_card_variant  = card_draft.published_variant  or "fifa"
     published_card_platform = card_draft.published_platform or "default"
 
-    # Card variant picker data — identical logic to spec_dashboard
-    from ...services.card_variant_service import (  # noqa: E402
-        get_all_variants as _get_all_variants,
-        is_variant_unlocked as _is_variant_unlocked,
-    )
+    # Card variant picker data — CDO-based ownership check
+    from ...services.card_variant_service import get_all_variants as _get_all_variants  # noqa: E402
+    from ...services.card_design_service import is_design_accessible as _is_design_accessible  # noqa: E402
     card_variants = [
         {
             "id": v.id,
@@ -418,7 +416,7 @@ async def lfa_player_card_editor(
             "is_premium": v.is_premium,
             "credit_cost": v.credit_cost,
             "available": v.available,
-            "unlocked": _is_variant_unlocked(user_license, v.id),
+            "unlocked": _is_design_accessible(db, user.id, "player_card", v.id),
         }
         for v in _get_all_variants()
     ]
@@ -1225,7 +1223,7 @@ async def student_set_card_photo_focus(
 # ══════════════════════════════════════════════════════════════════════════════
 
 from ...services.card_theme_service import apply_theme as _apply_theme, unlock_theme as _unlock_theme  # noqa: E402
-from ...services.card_variant_service import apply_variant as _apply_variant, unlock_variant as _unlock_variant  # noqa: E402
+from ...services.card_variant_service import unlock_variant as _unlock_variant  # noqa: E402
 from ...services.card_platform_service import PLATFORM_PRESETS as _PLATFORM_PRESETS  # noqa: E402
 from ...services.card_draft_service import CardDraftService as _CardDraftService  # noqa: E402
 from pydantic import BaseModel as _BaseModel  # noqa: E402
@@ -1299,15 +1297,21 @@ async def student_set_card_variant(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
-    """Apply a card layout variant (must already be unlocked for premium variants)."""
-    lfa_license = _get_lfa_license(db, user.id)
-    if not lfa_license:
-        return JSONResponse({"ok": False, "error": "No active LFA Football Player license"}, status_code=404)
-    try:
-        _apply_variant(db, lfa_license, payload.variant)
-        return JSONResponse({"ok": True, "variant": payload.variant})
-    except ValueError as e:
-        return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+    """Apply a card layout variant (requires CardDesignOwnership entitlement)."""
+    from ...services.card_design_service import is_design_accessible as _is_da  # noqa: E402
+    from ...services.card_draft_service import CardDraftService as _CDS  # noqa: E402
+    from ...services.card_variant_service import VARIANTS as _VARIANTS  # noqa: E402
+
+    if payload.variant not in _VARIANTS:
+        return JSONResponse({"ok": False, "error": f"Unknown variant: {payload.variant!r}"}, status_code=400)
+    if not _VARIANTS[payload.variant].available:
+        return JSONResponse({"ok": False, "error": f"Variant '{_VARIANTS[payload.variant].label}' is not yet available"}, status_code=400)
+    if not _is_da(db, user.id, "player_card", payload.variant):
+        return JSONResponse({"ok": False, "error": f"Design '{_VARIANTS[payload.variant].label}' not owned"}, status_code=403)
+
+    draft = _CDS.get_player_card_draft(db, user_id=user.id)
+    _CDS.update_draft_variant(db, draft, payload.variant)
+    return JSONResponse({"ok": True, "variant": payload.variant})
 
 
 @router.post("/dashboard/unlock-variant")

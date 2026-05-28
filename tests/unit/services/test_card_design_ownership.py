@@ -9,7 +9,7 @@ CDO-06  already owned → AlreadyOwnedError, no double deduction
 CDO-07  insufficient credits → InsufficientCreditsError, no ownership row
 CDO-08  race condition: IntegrityError → AlreadyOwnedError, rollback called
 CDO-09  CreditService.deduct does NOT call db.commit() (uses begin_nested/SAVEPOINT only)
-CDO-10  is_design_accessible player_card/fifa → True without ownership row
+CDO-10  is_design_accessible player_card/fifa → False without ownership row (no free bypass)
 CDO-11  is_design_accessible player_card/compact → False without ownership
 CDO-12  is_design_accessible player_card/compact → True after ownership
 CDO-13  is_design_accessible welcome_card/default → False without ownership
@@ -271,13 +271,12 @@ class TestIsDesignAccessible:
         from app.services.card_design_service import is_design_accessible
         return is_design_accessible(db, user_id, card_type_id, design_id)
 
-    def test_cdo10_free_player_design_always_accessible(self):
-        """CDO-10: player_card/fifa → True without any ownership row."""
+    def test_cdo10_fifa_requires_ownership_row(self):
+        """CDO-10: player_card/fifa → False without ownership row (no free bypass)."""
         db = _make_db()
         _make_query_none(db)
 
-        with patch(f"{_SVC}._resolve_price", return_value=0):
-            assert self._accessible(db, 1, "player_card", "fifa") is True
+        assert self._accessible(db, 1, "player_card", "fifa") is False
 
     def test_cdo11_premium_player_false_without_ownership(self):
         """CDO-11: player_card/compact → False without ownership."""

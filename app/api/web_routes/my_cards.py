@@ -151,11 +151,9 @@ async def my_cards_player_card(
     credits     = user.credit_balance
 
     def _state(design) -> str:
-        if not design.is_premium:
-            return "free"
         if is_design_accessible(db, user.id, "player_card", design.id):
             return "owned"
-        return "purchasable" if credits >= design.credit_cost else "locked"
+        return "get_card" if credits >= design.credit_cost else "locked"
 
     design_rows = [
         {
@@ -169,7 +167,7 @@ async def my_cards_player_card(
         for d in all_designs
     ]
 
-    owned_count = sum(1 for r in design_rows if r["state"] in ("free", "owned"))
+    owned_count = sum(1 for r in design_rows if r["state"] == "owned")
     total_count = len(design_rows)
 
     return templates.TemplateResponse(
@@ -201,7 +199,7 @@ async def my_cards_welcome_card(
     def _wc_state(fmt) -> str:
         if is_design_accessible(db, user.id, "welcome_card", fmt.design_id):
             return "owned"
-        return "purchasable" if credits >= fmt.credit_cost else "locked"
+        return "get_card" if credits >= fmt.credit_cost else "locked"
 
     format_rows = [
         {
@@ -324,7 +322,7 @@ async def my_cards_challenge_card(
     def _cc_fmt_state(fmt) -> str:
         if is_design_accessible(db, user.id, "challenge_card", fmt.design_id):
             return "owned"
-        return "purchasable" if credits >= fmt.credit_cost else "locked"
+        return "get_card" if credits >= fmt.credit_cost else "locked"
 
     cc_format_rows = [
         {

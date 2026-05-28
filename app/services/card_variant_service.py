@@ -46,15 +46,12 @@ def get_all_variants() -> list[VariantDefinition]:
 
 def is_variant_unlocked(user_license, variant_id: str) -> bool:
     """
-    Return True if the user may use this variant.
-    Free variants are always unlocked.
-    Premium variants require variant_id in user_license.unlocked_card_variants.
+    Return True if variant_id is in user_license.unlocked_card_variants.
+    All variants (including non-premium) require explicit entitlement.
     """
     variant = VARIANTS.get(variant_id)
     if variant is None:
         return False
-    if not variant.is_premium:
-        return True
     unlocked = user_license.unlocked_card_variants or []
     return variant_id in unlocked
 

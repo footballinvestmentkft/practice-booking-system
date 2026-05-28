@@ -1,11 +1,11 @@
 """My Cards Shop tests — Phase 2 format-level MVP.
 
 MCS-01  GET /my-cards/player-card renders without error (200 + template context)
-MCS-02  Player Card free design → state="free"
-MCS-03  Player Card premium, not owned, enough credits → state="purchasable"
+MCS-02  Player Card non-premium design, no CDO row → state="get_card" or "locked" (never "free")
+MCS-03  Player Card premium, not owned, enough credits → state="get_card"
 MCS-04  Player Card premium, not owned, insufficient credits → state="locked"
 MCS-05  Player Card premium, owned → state="owned"
-MCS-06  Welcome Card format not owned, enough credits → state="purchasable"
+MCS-06  Welcome Card format not owned, enough credits → state="get_card"
 MCS-07  Welcome Card format not owned, insufficient credits → state="locked"
 MCS-08  Welcome Card format owned → state="owned"
 MCS-09  All WC and CC format prices > 0 (never free)
@@ -103,23 +103,24 @@ class TestPlayerCardShop:
         for key in ("design_rows", "owned_count", "total_count"):
             assert key in ctx["context"], f"Missing context key: {key}"
 
-    def test_mcs02_free_design_state(self):
-        """MCS-02: Player Card non-premium design → state='free'."""
+    def test_mcs02_non_premium_design_no_cdo_not_free(self):
+        """MCS-02: non-premium design without CDO row → state='get_card' or 'locked', never 'free'."""
         user = _make_user(balance=0)
         db   = _make_db()
-        ctx  = self._call_player_shop(user, db)
+        ctx  = self._call_player_shop(user, db, accessible_ids=set())
         rows = ctx["context"]["design_rows"]
-        free_row = next(r for r in rows if r["id"] == "fifa")
-        assert free_row["state"] == "free"
+        fifa_row = next(r for r in rows if r["id"] == "fifa")
+        assert fifa_row["state"] != "free", "free state must not exist — all designs require ownership"
+        assert fifa_row["state"] in ("get_card", "locked")
 
-    def test_mcs03_premium_purchasable(self):
-        """MCS-03: premium design, not owned, credits ≥ cost → state='purchasable'."""
+    def test_mcs03_premium_get_card_state(self):
+        """MCS-03: premium design, not owned, credits ≥ cost → state='get_card'."""
         user = _make_user(balance=500)
         db   = _make_db()
         ctx  = self._call_player_shop(user, db, accessible_ids=set())
         rows = ctx["context"]["design_rows"]
         row  = next(r for r in rows if r["id"] == "compact")
-        assert row["state"] == "purchasable"
+        assert row["state"] == "get_card"
 
     def test_mcs04_premium_locked_insufficient_credits(self):
         """MCS-04: premium design, not owned, credits < cost → state='locked'."""
@@ -168,13 +169,13 @@ class TestWelcomeCardShop:
 
         return captured
 
-    def test_mcs06_welcome_card_format_purchasable(self):
-        """MCS-06: WC format not owned, credits ≥ price → state='purchasable'."""
+    def test_mcs06_welcome_card_format_get_card(self):
+        """MCS-06: WC format not owned, credits ≥ price → state='get_card'."""
         user = _make_user(balance=9999)
         db   = _make_db()
         ctx  = self._call_welcome_shop(user, db, accessible_ids=set())
         rows = ctx["context"]["format_rows"]
-        assert all(r["state"] == "purchasable" for r in rows)
+        assert all(r["state"] == "get_card" for r in rows)
 
     def test_mcs07_welcome_card_format_locked(self):
         """MCS-07: WC format not owned, credits < price → state='locked'."""

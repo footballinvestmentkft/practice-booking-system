@@ -60597,7 +60597,7 @@
     },
     "/dashboard/card-variant": {
       "post": {
-        "description": "Apply a card layout variant (must already be unlocked for premium variants).",
+        "description": "Apply a card layout variant (requires CardDesignOwnership entitlement).",
         "operationId": "student_set_card_variant_dashboard_card_variant_post",
         "requestBody": {
           "content": {

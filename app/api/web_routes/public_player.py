@@ -635,7 +635,7 @@ async def export_player_card(
     # "default" platform uses ?native_export=1 (browser template, no bucket) → skip.
     card_variant_id = target_license.card_variant or "fifa"
 
-    # Design ownership guard — premium designs require entitlement; free (fifa) always passes.
+    # Design ownership guard — all designs require entitlement, including fifa.
     # Admin bypass: admins may export any card regardless of ownership.
     if current_user.role != UserRole.ADMIN:
         from app.services.card_design_service import is_design_accessible as _is_accessible

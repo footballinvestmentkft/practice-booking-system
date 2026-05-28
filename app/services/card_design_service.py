@@ -334,7 +334,7 @@ _NON_PLAYER_CARD_PRICES: dict[tuple[str, str], int] = {
 
 
 class FreeDesignError(Exception):
-    """Raised when attempting to purchase a free (always-accessible) design."""
+    """Raised when attempting to purchase a sentinel/non-purchasable design (price == 0)."""
 
 
 class AlreadyOwnedError(Exception):
@@ -364,26 +364,20 @@ def _resolve_price(card_type_id: str, design_id: str, db=None) -> int:
 
 
 def is_design_accessible(db, user_id: int, card_type_id: str, design_id: str) -> bool:
-    """Return True if the user may export/download the given card design.
+    """Return True if the user has a CardDesignOwnership row for this design.
+
+    Every design (including player_card/fifa) requires an ownership row.
 
     Access rules:
-      1. player_card + credit_cost == 0 → always True (no ownership row needed)
-      2. CardDesignOwnership row exists → True
-      3. player_card legacy JSON shim: unlocked_card_variants contains design_id → True
+      1. CardDesignOwnership row exists → True
+      2. player_card legacy JSON shim: unlocked_card_variants contains design_id → True
+      3. WC/CC legacy CDO shim: user owns old family-level key → True
       4. Everything else → False
     """
     from app.models.card_design_ownership import CardDesignOwnership
     from app.models.license import UserLicense
 
-    # Rule 1: free player card design
-    if card_type_id == "player_card":
-        try:
-            if _resolve_price("player_card", design_id, db) == 0:
-                return True
-        except ValueError:
-            return False  # unknown design_id → not accessible
-
-    # Rule 2: ownership table — primary source
+    # Rule 1: ownership table — primary source
     owned = (
         db.query(CardDesignOwnership)
         .filter_by(user_id=user_id, card_type_id=card_type_id, design_id=design_id)
@@ -392,7 +386,7 @@ def is_design_accessible(db, user_id: int, card_type_id: str, design_id: str) ->
     if owned:
         return True
 
-    # Rule 3: legacy JSON shim — player_card only, read-only
+    # Rule 2: legacy JSON shim — player_card only, read-only
     if card_type_id == "player_card":
         lic = (
             db.query(UserLicense)
@@ -402,7 +396,7 @@ def is_design_accessible(db, user_id: int, card_type_id: str, design_id: str) ->
         if lic and design_id in (lic.unlocked_card_variants or []):
             return True
 
-    # Rule 4: legacy CDO shim — if user owns the old family-level key, grant access
+    # Rule 3: legacy CDO shim — if user owns the old family-level key, grant access
     # to all format-level designs in that family (backward compat, no migration needed).
     _LEGACY_CDO_MAP: dict[str, str] = {
         "welcome_card":   "default",
@@ -424,8 +418,7 @@ def is_design_accessible(db, user_id: int, card_type_id: str, design_id: str) ->
 def get_owned_design_ids(db, user_id: int, card_type_id: str) -> list[str]:
     """Return design_ids owned by the user for a specific card_type_id.
 
-    For player_card, always includes free designs (credit_cost == 0) even
-    without an ownership row.
+    Every design requires an ownership row — no free designs are auto-included.
     """
     from app.models.card_design_ownership import CardDesignOwnership
 
@@ -447,13 +440,8 @@ def get_owned_design_ids(db, user_id: int, card_type_id: str) -> list[str]:
         if lic:
             for d in (lic.unlocked_card_variants or []):
                 result.add(d)
-        # Always include free designs
-        cache = _maybe_reload(db)
-        for d in cache.values():
-            if not d.is_premium:
-                result.add(d.id)
 
-    # Rule 4 shim: if user owns legacy WC/CC family key, grant all format IDs
+    # Legacy CDO shim: if user owns legacy WC/CC family key, grant all format IDs
     elif card_type_id == "welcome_card" and "default" in result:
         for fmt in WELCOME_CARD_FORMATS:
             result.add(fmt.design_id)

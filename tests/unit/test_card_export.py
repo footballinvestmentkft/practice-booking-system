@@ -82,14 +82,20 @@ def _make_license() -> MagicMock:
     return lic
 
 
-def _mock_db(target_user=None, target_license=None):
-    """Return a MagicMock db whose sequential .query() calls yield the given objects."""
+def _mock_db(target_user=None, target_license=None, cdo_owned: bool = True):
+    """Return a MagicMock db whose sequential .query() calls yield the given objects.
+
+    cdo_owned=True (default) makes the CDO ownership check succeed (design is accessible).
+    """
     db = MagicMock()
     q_user = MagicMock()
     q_user.filter.return_value.first.return_value = target_user
     q_license = MagicMock()
     q_license.filter.return_value.first.return_value = target_license
-    db.query.side_effect = [q_user, q_license]
+    # CDO ownership check — every design (incl. fifa) now requires a CDO row
+    q_cdo = MagicMock()
+    q_cdo.filter_by.return_value.first.return_value = MagicMock() if cdo_owned else None
+    db.query.side_effect = [q_user, q_license, q_cdo]
     return db
 
 

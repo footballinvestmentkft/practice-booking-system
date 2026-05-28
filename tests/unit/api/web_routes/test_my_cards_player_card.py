@@ -2,8 +2,8 @@
 
 MCP-01  GET /my-cards/player-card renders my_cards_player_card.html
 MCP-02  Context contains design_rows with state for each design
-MCP-03  Free (non-premium) design → state='free'
-MCP-04  Premium not owned, credits ≥ cost → state='purchasable'
+MCP-03  Non-premium design, no CDO → state='get_card' or 'locked' (no free bypass)
+MCP-04  Premium not owned, credits ≥ cost → state='get_card'
 MCP-05  Premium not owned, credits < cost → state='locked'
 MCP-06  Premium owned → state='owned'
 MCP-07  Context contains owned_count and total_count
@@ -11,7 +11,7 @@ MCP-08  Route has auth dependency (get_current_user_web)
 MCP-09  Template file extends student_base and includes spec_subpage_hdr
 MCP-10  Template file breadcrumb links to /my-cards
 MCP-11  Template file contains purchase form POST action pattern
-MCP-12  owned_count = free designs + explicitly owned premium designs
+MCP-12  owned_count = explicitly owned designs only (no free auto-include)
 """
 import asyncio
 import inspect
@@ -105,19 +105,20 @@ class TestPlayerCardShopRoute:
             assert "state" in r
             assert "credit_cost" in r
 
-    def test_mcp03_free_design_state(self):
-        """MCP-03: non-premium design → state='free'."""
-        ctx = _call(user=_user(balance=0))["context"]
+    def test_mcp03_non_premium_no_cdo_not_free(self):
+        """MCP-03: non-premium design without CDO row → state not 'free' (no free bypass)."""
+        ctx = _call(user=_user(balance=0), accessible_ids=set())["context"]
         rows = ctx["design_rows"]
-        free = next(r for r in rows if r["id"] == "fifa")
-        assert free["state"] == "free"
+        fifa = next(r for r in rows if r["id"] == "fifa")
+        assert fifa["state"] != "free", "free state must be removed — all designs require ownership"
+        assert fifa["state"] in ("get_card", "locked")
 
-    def test_mcp04_premium_purchasable(self):
-        """MCP-04: premium not owned, credits ≥ cost → state='purchasable'."""
+    def test_mcp04_premium_get_card(self):
+        """MCP-04: premium not owned, credits ≥ cost → state='get_card'."""
         ctx = _call(user=_user(balance=500), accessible_ids=set())["context"]
         rows = ctx["design_rows"]
         row = next(r for r in rows if r["id"] == "compact")
-        assert row["state"] == "purchasable"
+        assert row["state"] == "get_card"
 
     def test_mcp05_premium_locked(self):
         """MCP-05: premium not owned, credits < cost → state='locked'."""
@@ -166,8 +167,8 @@ class TestPlayerCardShopRoute:
         assert "/my-cards/designs/player_card/" in src
         assert 'method="POST"' in src
 
-    def test_mcp12_owned_count_includes_free_plus_owned(self):
-        """MCP-12: owned_count = free designs + explicitly owned premium ones."""
+    def test_mcp12_owned_count_only_cdo_rows(self):
+        """MCP-12: owned_count = only CDO-backed owned designs (no free auto-include)."""
         ctx = _call(
             user=_user(balance=500),
             designs=[
@@ -176,5 +177,5 @@ class TestPlayerCardShopRoute:
             ],
             accessible_ids={("player_card", "compact")},
         )["context"]
-        assert ctx["owned_count"] == 2  # free fifa + owned compact
+        assert ctx["owned_count"] == 1  # only owned compact; fifa not auto-included
         assert ctx["total_count"] == 2

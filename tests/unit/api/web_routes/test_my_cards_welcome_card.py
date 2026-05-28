@@ -2,7 +2,7 @@
 
 MCW-01  GET /my-cards/welcome-card renders my_cards_welcome_card.html
 MCW-02  Context contains format_rows with 7 entries (WELCOME_CARD_FORMATS)
-MCW-03  Not owned, credits ≥ price → state='purchasable'
+MCW-03  Not owned, credits ≥ price → state='get_card'
 MCW-04  Not owned, credits < price → state='locked'
 MCW-05  Owned → state='owned'
 MCW-06  Context contains owned_count and total_count
@@ -87,12 +87,12 @@ class TestWelcomeCardShopRoute:
         rows = ctx["format_rows"]
         assert len(rows) == len(WELCOME_CARD_FORMATS)
 
-    def test_mcw03_not_owned_sufficient_credits_purchasable(self):
-        """MCW-03: format not owned, credits ≥ price → state='purchasable'."""
+    def test_mcw03_not_owned_sufficient_credits_get_card(self):
+        """MCW-03: format not owned, credits ≥ price → state='get_card'."""
         ctx = _call(user=_user(balance=9999), accessible_ids=set())["context"]
         rows = ctx["format_rows"]
         for r in rows:
-            assert r["state"] == "purchasable", f"{r['design_id']} should be purchasable"
+            assert r["state"] == "get_card", f"{r['design_id']} should be get_card"
 
     def test_mcw04_not_owned_insufficient_credits_locked(self):
         """MCW-04: format not owned, credits < price → state='locked'."""

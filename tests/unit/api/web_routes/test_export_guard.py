@@ -1,15 +1,15 @@
 """Export guard tests.
 
 EG-01  Player Card premium export → 403 without ownership
-EG-02  Player Card / fifa export → 200 (no guard for free design)
+EG-02  Player Card / fifa export → allowed with ownership row (CDO required)
 EG-03  Player Card premium export → allowed after ownership
-EG-04  Welcome Card export, ENFORCE_WELCOME_CARD_OWNERSHIP=False → allowed without ownership
-EG-05  Welcome Card export, ENFORCE_WELCOME_CARD_OWNERSHIP=True → 403 without ownership
-EG-06  Welcome Card export, ENFORCE_WELCOME_CARD_OWNERSHIP=True + owned → allowed
-EG-07  Challenge Card export, ENFORCE_CHALLENGE_CARD_OWNERSHIP=False → allowed without ownership
-EG-08  Challenge Card export, ENFORCE_CHALLENGE_CARD_OWNERSHIP=True → 403 without ownership
-EG-09  Challenge Card export, ENFORCE_CHALLENGE_CARD_OWNERSHIP=True + owned → allowed
-EG-10  Admin bypass — admin may export without ownership regardless of flag
+EG-04  Welcome Card export, no ownership → 403 (always enforced, no feature flag)
+EG-05  Welcome Card export, no ownership → 403
+EG-06  Welcome Card export, owned → allowed
+EG-07  Challenge Card export, no ownership → 403 (always enforced, no feature flag)
+EG-08  Challenge Card export, no ownership → 403
+EG-09  Challenge Card export, owned → allowed
+EG-10  Admin bypass — admin may export without ownership
 EG-11  Export route does NOT call CreditService.deduct
 """
 import asyncio
@@ -112,12 +112,11 @@ class TestPlayerCardExportGuard:
             self._call_export(db, user, license_variant="compact", is_accessible=False)
         assert exc_info.value.status_code == 403
 
-    def test_eg02_fifa_allowed_without_ownership(self):
-        """EG-02: player_card/fifa (free) → no 403."""
+    def test_eg02_fifa_allowed_with_ownership(self):
+        """EG-02: player_card/fifa with CDO ownership row → no 403."""
         db = _make_db()
         user = _make_user()
 
-        # fifa → is_accessible returns True (free design)
         result = self._call_export(db, user, license_variant="fifa", is_accessible=True)
         assert hasattr(result, "body") or result is not None  # got a response, not 403
 
@@ -134,7 +133,7 @@ class TestPlayerCardExportGuard:
 
 class TestWelcomeCardExportGuard:
 
-    def _call_export(self, db, user, is_accessible=False, enforce=False):
+    def _call_export(self, db, user, is_accessible=False):
         from app.api.web_routes.profile import export_onboarding_welcome_card
 
         request = _make_request("/profile/onboarding-card/export")
@@ -145,12 +144,10 @@ class TestWelcomeCardExportGuard:
         db.query.return_value.filter_by.return_value.first.return_value = fake_license
 
         with patch(f"{_SVC}.is_design_accessible", return_value=is_accessible), \
-             patch(f"{_CFG}.settings") as mock_settings, \
              patch(f"{_PROF}._export_svc") as mock_svc, \
              patch(f"{_PROF}._check_welcome_card_auth", return_value=None), \
              patch(f"{_PROF}._create_render_token", return_value="tok"):
-            mock_settings.ENFORCE_WELCOME_CARD_OWNERSHIP = enforce
-            mock_settings.APP_INTERNAL_PORT = 8000
+            mock_svc.APP_INTERNAL_PORT = 8000
             mock_svc.CANVAS_SIZES = {"instagram_square": (1080, 1080)}
             mock_svc.check_export_rate_limit.return_value = True
             mock_svc._sync_take_screenshot.return_value = b"PNG"
@@ -162,26 +159,27 @@ class TestWelcomeCardExportGuard:
                 user=user,
             ))
 
-    def test_eg04_flag_false_allowed_without_ownership(self):
-        """EG-04: ENFORCE_WELCOME_CARD_OWNERSHIP=False → 200 without ownership."""
-        db = _make_db()
-        user = _make_user()
-        result = self._call_export(db, user, is_accessible=False, enforce=False)
-        assert result is not None
-
-    def test_eg05_flag_true_403_without_ownership(self):
-        """EG-05: ENFORCE_WELCOME_CARD_OWNERSHIP=True → 403 without ownership."""
+    def test_eg04_no_ownership_403(self):
+        """EG-04: WC export, no ownership → 403 (always enforced, no feature flag)."""
         db = _make_db()
         user = _make_user()
         with pytest.raises(HTTPException) as exc_info:
-            self._call_export(db, user, is_accessible=False, enforce=True)
+            self._call_export(db, user, is_accessible=False)
         assert exc_info.value.status_code == 403
 
-    def test_eg06_flag_true_allowed_with_ownership(self):
-        """EG-06: ENFORCE_WELCOME_CARD_OWNERSHIP=True + owned → 200."""
+    def test_eg05_no_ownership_403(self):
+        """EG-05: WC export without ownership → 403."""
         db = _make_db()
         user = _make_user()
-        result = self._call_export(db, user, is_accessible=True, enforce=True)
+        with pytest.raises(HTTPException) as exc_info:
+            self._call_export(db, user, is_accessible=False)
+        assert exc_info.value.status_code == 403
+
+    def test_eg06_owned_allowed(self):
+        """EG-06: WC export, owned → allowed."""
+        db = _make_db()
+        user = _make_user()
+        result = self._call_export(db, user, is_accessible=True)
         assert result is not None
 
 
@@ -189,7 +187,7 @@ class TestWelcomeCardExportGuard:
 
 class TestChallengeCardExportGuard:
 
-    def _call_export(self, db, user, is_accessible=False, enforce=False):
+    def _call_export(self, db, user, is_accessible=False):
         from app.api.web_routes.vt_challenges import challenge_card_export
 
         request = _make_request("/challenges/1/card/export")
@@ -204,16 +202,12 @@ class TestChallengeCardExportGuard:
         db.query.return_value.filter.return_value.first.return_value = fake_ch
 
         with patch(f"{_SVC}.is_design_accessible", return_value=is_accessible), \
-             patch(f"{_CFG}.settings") as mock_settings, \
              patch(f"{_VTC}._export_svc") as mock_svc, \
              patch(f"{_VTC}.validate_challenge_card_phase", return_value=None), \
              patch(f"{_AUTH}.create_challenge_render_token", return_value="tok"):
-            mock_settings.ENFORCE_CHALLENGE_CARD_OWNERSHIP = enforce
-            mock_settings.APP_INTERNAL_PORT = 8000
             mock_svc.check_export_rate_limit.return_value = True
             mock_svc._sync_take_screenshot.return_value = b"PNG"
 
-            # Patch CHALLENGE_CARD_PLATFORMS and VALID_CHALLENGE_CARD_PHASES
             with patch(f"{_VTC}.CHALLENGE_CARD_PLATFORMS",
                        {"challenge_post_16_9", "challenge_story_9_16"}), \
                  patch(f"{_VTC}.VALID_CHALLENGE_CARD_PHASES",
@@ -227,33 +221,34 @@ class TestChallengeCardExportGuard:
                     user=user,
                 ))
 
-    def test_eg07_flag_false_allowed_without_ownership(self):
-        """EG-07: ENFORCE_CHALLENGE_CARD_OWNERSHIP=False → allowed without ownership."""
-        db = _make_db()
-        user = _make_user()
-        result = self._call_export(db, user, is_accessible=False, enforce=False)
-        assert result is not None
-
-    def test_eg08_flag_true_403_without_ownership(self):
-        """EG-08: ENFORCE_CHALLENGE_CARD_OWNERSHIP=True → 403 without ownership."""
+    def test_eg07_no_ownership_403(self):
+        """EG-07: CC export, no ownership → 403 (always enforced, no feature flag)."""
         db = _make_db()
         user = _make_user()
         with pytest.raises(HTTPException) as exc_info:
-            self._call_export(db, user, is_accessible=False, enforce=True)
+            self._call_export(db, user, is_accessible=False)
         assert exc_info.value.status_code == 403
 
-    def test_eg09_flag_true_allowed_with_ownership(self):
-        """EG-09: ENFORCE_CHALLENGE_CARD_OWNERSHIP=True + owned → allowed."""
+    def test_eg08_no_ownership_403(self):
+        """EG-08: CC export without ownership → 403."""
         db = _make_db()
         user = _make_user()
-        result = self._call_export(db, user, is_accessible=True, enforce=True)
+        with pytest.raises(HTTPException) as exc_info:
+            self._call_export(db, user, is_accessible=False)
+        assert exc_info.value.status_code == 403
+
+    def test_eg09_owned_allowed(self):
+        """EG-09: CC export, owned → allowed."""
+        db = _make_db()
+        user = _make_user()
+        result = self._call_export(db, user, is_accessible=True)
         assert result is not None
 
 
 # ── EG-10: Admin bypass ───────────────────────────────────────────────────────
 
 def test_eg10_admin_bypass_welcome_card():
-    """EG-10: admin user can export Welcome Card without ownership regardless of flag."""
+    """EG-10: admin user can export Welcome Card without ownership."""
     from app.api.web_routes.profile import export_onboarding_welcome_card
 
     user = _make_user(role="ADMIN")
@@ -263,18 +258,15 @@ def test_eg10_admin_bypass_welcome_card():
     fake_license = MagicMock()
     db.query.return_value.filter.return_value.first.return_value = fake_license
 
-    with patch(f"{_SVC}.is_design_accessible", return_value=False) as mock_acc, \
-         patch(f"{_CFG}.settings") as mock_settings, \
+    with patch(f"{_SVC}.is_design_accessible", return_value=False), \
          patch(f"{_PROF}._export_svc") as mock_svc, \
          patch(f"{_PROF}._check_welcome_card_auth", return_value=None), \
          patch(f"{_PROF}._create_render_token", return_value="tok"):
-        mock_settings.ENFORCE_WELCOME_CARD_OWNERSHIP = True
-        mock_settings.APP_INTERNAL_PORT = 8000
+        mock_svc.APP_INTERNAL_PORT = 8000
         mock_svc.CANVAS_SIZES = {"instagram_square": (1080, 1080)}
         mock_svc.check_export_rate_limit.return_value = True
         mock_svc._sync_take_screenshot.return_value = b"PNG"
 
-        # Should NOT raise 403 for admin
         result = _run(export_onboarding_welcome_card(
             request=request,
             platform="instagram_square",
