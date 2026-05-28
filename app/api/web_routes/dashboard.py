@@ -1372,6 +1372,13 @@ async def student_publish_card(
     if not lfa_license:
         return JSONResponse({"ok": False, "error": "No active LFA Football Player license"}, status_code=404)
     draft = _CardDraftService.get_player_card_draft(db, user.id)
+    # CDO guard — user must own the draft variant before it can be published.
+    from ...services.card_design_service import is_design_accessible as _is_da_pub  # noqa: E402
+    if not _is_da_pub(db, user.id, "player_card", draft.draft_variant):
+        return JSONResponse(
+            {"ok": False, "error": "Design not owned — purchase it first to publish"},
+            status_code=403,
+        )
     _CardDraftService.publish_draft(db, draft)
     return JSONResponse({
         "ok": True,

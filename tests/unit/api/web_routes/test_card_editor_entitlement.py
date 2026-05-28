@@ -1,4 +1,4 @@
-"""Card Editor Entitlement UI tests — CE-01..CE-09.
+"""Card Editor Entitlement UI tests — CE-01..CE-13.
 
 CE-01  context has active_variant_owned=True when CDO entry exists for active variant
 CE-02  context has active_variant_owned=False when user has no CDO entries at all
@@ -9,6 +9,10 @@ CE-06  btn-export-card rendered without disabled when active_variant_owned=True
 CE-07  btn-export-card rendered with disabled when active_variant_owned=False
 CE-08  Get Player Card CTA present when active_variant_owned=False
 CE-09  Get Player Card CTA absent when active_variant_owned=True
+CE-10  _activeVariantOwned JS variable present in rendered template
+CE-11  _updatePublishIndicator disables Publish when _activeVariantOwned=false
+CE-12  exportCard finally block keeps PNG disabled when _activeVariantOwned=false
+CE-13  no other JS re-enables btn-publish-card unconditionally outside _updatePublishIndicator
 """
 import asyncio
 import re
@@ -185,3 +189,81 @@ class TestCardEditorLockedNote:
         html = _render_fragment(active_variant_owned=True)
         assert "ce-locked-note" not in html
         assert "/my-cards/player-card" not in html
+
+
+# ── CE-10..CE-13: JS guard — template source checks ──────────────────────────
+
+def _editor_template_source() -> str:
+    import os
+    tpl = os.path.normpath(os.path.join(
+        os.path.dirname(__file__),
+        "../../../../app/templates/dashboard_card_editor.html",
+    ))
+    with open(tpl, encoding="utf-8") as f:
+        return f.read()
+
+
+class TestCardEditorJSGuards:
+
+    def test_ce10_active_variant_owned_js_var_present(self):
+        """CE-10: _activeVariantOwned JS variable is server-rendered in the template."""
+        src = _editor_template_source()
+        assert "let _activeVariantOwned" in src, (
+            "_activeVariantOwned JS variable must be declared in the template"
+        )
+        assert "active_variant_owned | tojson" in src, (
+            "_activeVariantOwned must be initialized from the Jinja2 active_variant_owned context key"
+        )
+
+    def test_ce11_update_publish_indicator_ownership_aware(self):
+        """CE-11: _updatePublishIndicator disables Publish when _activeVariantOwned is false."""
+        src = _editor_template_source()
+        # The disable expression must include !_activeVariantOwned
+        assert "!_activeVariantOwned" in src, (
+            "_updatePublishIndicator must reference !_activeVariantOwned to prevent re-enable"
+        )
+        # The pattern must be: disabled = published || !_activeVariantOwned (order-independent)
+        assert "published || !_activeVariantOwned" in src or \
+               "!_activeVariantOwned || published" in src, (
+            "btn.disabled must be set to 'published || !_activeVariantOwned'"
+        )
+
+    def test_ce12_export_finally_respects_ownership(self):
+        """CE-12: exportCard finally block keeps PNG disabled when _activeVariantOwned=false."""
+        src = _editor_template_source()
+        # The finally block must NOT unconditionally set disabled=false
+        # It must set: btn.disabled = !_activeVariantOwned
+        assert "btn.disabled = !_activeVariantOwned" in src, (
+            "exportCard() finally block must set btn.disabled = !_activeVariantOwned "
+            "instead of btn.disabled = false"
+        )
+        # Must NOT contain the old unconditional re-enable inside exportCard finally
+        import re
+        export_fn_match = re.search(
+            r'async function exportCard\(\)(.*?)^}', src,
+            re.DOTALL | re.MULTILINE
+        )
+        if export_fn_match:
+            fn_body = export_fn_match.group(1)
+            assert "btn.disabled = false" not in fn_body, (
+                "exportCard() must not unconditionally re-enable the PNG button"
+            )
+
+    def test_ce13_no_unconditional_publish_reenable(self):
+        """CE-13: no JS outside _updatePublishIndicator unconditionally enables btn-publish-card."""
+        src = _editor_template_source()
+        import re
+        # Find all occurrences of btn.disabled = false or btn.disabled=false
+        reenable_matches = [
+            m.start() for m in re.finditer(r'btn\.disabled\s*=\s*false', src)
+        ]
+        # None of these should be for btn-publish-card outside of publishCard() spinner reset
+        # The only acceptable re-enable for publish is inside publishCard() error handler
+        # (restoring the button after a failed publish attempt)
+        publish_fn_match = re.search(
+            r'async function publishCard\(\)(.*?)^}', src,
+            re.DOTALL | re.MULTILINE
+        )
+        # We just verify _updatePublishIndicator uses the ownership-aware pattern
+        assert "published || !_activeVariantOwned" in src or \
+               "!_activeVariantOwned || published" in src

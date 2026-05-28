@@ -1284,6 +1284,10 @@ const _cardUserId = {{ user.id }};
 let _currentPlatform = '{{ active_card_platform }}';
 let _currentVariant  = '{{ active_card_variant }}';
 let _currentTheme    = '{{ active_card_theme }}';
+// Server-rendered CDO ownership for the currently active draft variant.
+// Controls whether Publish and PNG export are enabled UI-side.
+// Reset to true after variant switch via location.reload() (server re-evaluates).
+let _activeVariantOwned = {{ active_variant_owned | tojson }};
 
 // Animated video export capability: set of platforms supported for the
 // current variant (server-rendered from ANIMATED_EXPORT_CAPABLE registry).
@@ -1390,7 +1394,8 @@ function _updatePublishIndicator() {
     dot.className   = 'publish-status-dot ' + (published ? 'published' : 'unpublished');
     text.textContent = published ? 'Public card is up to date' : 'Unpublished changes';
     const btn = document.getElementById('btn-publish-card');
-    if (btn) btn.disabled = published;
+    // Publish requires BOTH: draft in sync AND user owns the active design.
+    if (btn) btn.disabled = published || !_activeVariantOwned;
 }
 
 async function publishCard() {
@@ -1444,7 +1449,8 @@ async function exportCard() {
         alert('Export failed — please try again.');
     } finally {
         btn.textContent = origText;
-        btn.disabled = false;
+        // Do not re-enable if user does not own the active design.
+        btn.disabled = !_activeVariantOwned;
     }
 }
 

@@ -201,14 +201,24 @@ class TestUnlockVariantAutoApply:
         assert db.commit.call_count == 1
 
     def test_free_variant_not_charged(self):
+        """Non-premium (is_premium=False) variants skip the credit deduction path."""
+        from app.services.card_design_service import CardDesignDefinition
+        free_design = CardDesignDefinition(
+            id="free_test", label="Free Test", description="",
+            is_premium=False, credit_cost=0, available=True,
+            template="public/player_card_fifa.html",
+            supported_export_buckets=[], component_config={},
+        )
         db = _mock_db()
         user = _make_user()
         ul = _make_license()
 
         with patch("app.services.card_variant_service.CreditService") as MockCS, \
-             patch(_CDS_VARIANT) as MockCDS:
+             patch(_CDS_VARIANT) as MockCDS, \
+             patch("app.services.card_variant_service.VARIANTS",
+                   {**_cvsvc.VARIANTS, "free_test": free_design}):
             MockCDS.get_player_card_draft.return_value = MagicMock()
-            _cvsvc.unlock_variant(db, user, ul, "fifa")
+            _cvsvc.unlock_variant(db, user, ul, "free_test")
             MockCS.return_value.deduct.assert_not_called()
 
     def test_already_unlocked_is_idempotent(self):

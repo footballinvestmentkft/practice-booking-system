@@ -114,6 +114,8 @@
           <span class="mfg-badge mfg-badge-owned">Owned ✓</span>
         {% elif d.state == "get_card" %}
           <span class="mfg-badge mfg-badge-get">{{ d.credit_cost }} CR</span>
+        {% elif d.state == "not_available" %}
+          <span class="mfg-badge mfg-badge-locked">—</span>
         {% else %}
           <span class="mfg-badge mfg-badge-locked">{{ d.credit_cost }} CR 🔒</span>
         {% endif %}
@@ -126,6 +128,8 @@
           <form method="POST" action="/my-cards/designs/player_card/{{ d.id }}/get">
             <button type="submit" class="mfg-btn mfg-btn-get">Get Card — {{ d.credit_cost }} CR</button>
           </form>
+        {% elif d.state == "not_available" %}
+          <button class="mfg-btn mfg-btn-disabled" disabled>Contact admin</button>
         {% else %}
           <button class="mfg-btn mfg-btn-disabled" disabled>Not enough credits</button>
         {% endif %}

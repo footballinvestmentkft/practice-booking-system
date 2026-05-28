@@ -92,10 +92,15 @@ def _mock_db(target_user=None, target_license=None, cdo_owned: bool = True):
     q_user.filter.return_value.first.return_value = target_user
     q_license = MagicMock()
     q_license.filter.return_value.first.return_value = target_license
+    # CardDraft query — get_or_create_singleton; published_variant=None falls back to license
+    q_draft = MagicMock()
+    _draft = MagicMock()
+    _draft.published_variant = None
+    q_draft.filter.return_value.first.return_value = _draft
     # CDO ownership check — every design (incl. fifa) now requires a CDO row
     q_cdo = MagicMock()
     q_cdo.filter_by.return_value.first.return_value = MagicMock() if cdo_owned else None
-    db.query.side_effect = [q_user, q_license, q_cdo]
+    db.query.side_effect = [q_user, q_license, q_draft, q_cdo]
     return db
 
 

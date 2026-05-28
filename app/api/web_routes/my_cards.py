@@ -142,6 +142,9 @@ async def my_cards_player_card(
     def _state(design) -> str:
         if is_design_accessible(db, user.id, "player_card", design.id):
             return "owned"
+        # Guard: 0-CR designs are never purchasable — must be granted explicitly.
+        if design.credit_cost == 0:
+            return "not_available"
         return "get_card" if credits >= design.credit_cost else "locked"
 
     design_rows = [

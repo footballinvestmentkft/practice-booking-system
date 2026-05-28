@@ -96,8 +96,8 @@ def test_cd02_get_design_fifa_fields():
     d = get_design("fifa")
     assert d.id == "fifa"
     assert d.label == "FIFA Classic"
-    assert d.is_premium is False
-    assert d.credit_cost == 0
+    assert d.is_premium is True
+    assert d.credit_cost == 300
     assert d.template == "public/player_card_fifa.html"
     assert d.available is True
     assert d.archetype_id == "column"
@@ -167,9 +167,9 @@ def test_cd06_get_all_designs_sorted_by_sort_order():
 def test_cd07_get_all_designs_fallback_no_db():
     designs = get_all_designs(db=None)
     assert len(designs) == 7
-    # Free designs (sort_order 0) come before premium (sort_order > 0)
+    # FIFA Classic (sort_order=0) is the first design
     assert designs[0].id == "fifa"
-    assert designs[0].is_premium is False
+    assert designs[0].is_premium is True
 
 
 # ── CD-08  _invalidate_cache clears the cache ─────────────────────────────────
