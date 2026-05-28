@@ -123,9 +123,13 @@
     {% for r in format_rows %}
     <div class="mfg-card">
 
-      {# No iframe preview for challenge card — no generic preview URL #}
-      <div class="mfg-preview-wrap mfg-locked">
-        <div class="mfg-preview-placeholder">{{ r.label[:2] | upper }}</div>
+      {# CC aspect-ratio mock — no iframe (no generic preview URL) #}
+      <div class="mfg-preview-wrap
+        {% if '9_16' in r.design_id %}mfg-ratio-916{% else %}mfg-ratio-169{% endif %}
+        {% if r.state != 'owned' %} mfg-locked{% endif %}">
+        <div class="mfg-cc-mock">
+          <span class="mfg-cc-mock-dims">{{ r.dims }}</span>
+        </div>
       </div>
 
       {# Metadata #}
@@ -144,7 +148,7 @@
 
       <div class="mfg-cta">
         {% if r.state == "owned" %}
-          <a href="/challenges/results" class="mfg-btn mfg-btn-download">View Results →</a>
+          <a href="/challenges/results" class="mfg-btn mfg-btn-edit">View Challenges →</a>
         {% elif r.state == "get_card" %}
           <form method="POST" action="/shop/cards/challenge_card/buy/{{ r.design_id }}">
             <button type="submit" class="mfg-btn mfg-btn-get">Get Card — {{ r.credit_cost }} CR</button>
