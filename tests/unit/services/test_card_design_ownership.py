@@ -29,7 +29,7 @@ _SVC  = "app.services.card_design_service"
 _CSVC = "app.services.credit_service"  # CreditService is imported locally inside purchase_design()
 
 
-def _make_user(user_id=1, balance=1000):
+def _make_user(user_id=101, balance=1000):
     u = MagicMock()
     u.id = user_id
     u.credit_balance = balance
@@ -388,7 +388,7 @@ def test_cdo18_grant_design_idempotent():
     q.first.return_value = existing  # already exists
     db.query.return_value = q
 
-    result = grant_design(db, user_id=1, card_type_id="welcome_card", design_id="default")
+    result = grant_design(db, user_id=101, card_type_id="welcome_card", design_id="default")
 
     assert result is None  # idempotent return
     db.add.assert_not_called()
