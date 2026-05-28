@@ -4,14 +4,11 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from ...database import get_db
 from ...dependencies import get_current_user_web
 from ...models.user import User
-from ...models.virtual_training import VirtualTrainingAttempt
-from ...models.vt_challenge import ChallengeStatus, VirtualTrainingChallenge
 from ...services.card_design_service import (
     CHALLENGE_CARD_FORMATS,
     WELCOME_CARD_FORMATS,
@@ -22,16 +19,8 @@ from ...services.card_design_service import (
     is_design_accessible,
     purchase_design,
 )
-from ...services.card_draft_service import CardDraftService
 from ...services.card_system import card_registry
-from ...services.card_theme_service import get_all_themes
 from ...services.credit_service import InsufficientCreditsError
-from .vt_challenges import (
-    CHALLENGE_CARD_PLATFORMS,
-    get_locked_challenge_card_phases,
-    get_unlocked_challenge_card_phases,
-    _display_name,
-)
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -153,6 +142,9 @@ async def my_cards_player_card(
     def _state(design) -> str:
         if is_design_accessible(db, user.id, "player_card", design.id):
             return "owned"
+        # Guard: 0-CR designs are never purchasable — must be granted explicitly.
+        if design.credit_cost == 0:
+            return "not_available"
         return "get_card" if credits >= design.credit_cost else "locked"
 
     design_rows = [
@@ -234,78 +226,8 @@ async def my_cards_welcome_card(
     )
 
 
-# ── Challenge Card collection + format shop ───────────────────────────────────
 
-_CHALLENGE_CARD_FORMATS_DICT = [
-    {"id": "challenge_post_16_9",  "label": "Post (16:9)",  "dims": "1280×720",  "platform": "Facebook / Instagram"},
-    {"id": "challenge_story_9_16", "label": "Story (9:16)", "dims": "1080×1920", "platform": "TikTok / Instagram Story"},
-]
-# Backward-compat alias used by tests/unit/api/web_routes/test_vt_social_cards.py
-_CHALLENGE_CARD_FORMATS = _CHALLENGE_CARD_FORMATS_DICT
-
-_COLLECTION_LIMIT = 5
-
-_PHASE_LABELS = {
-    "challenge_sent":         "Challenge Sent",
-    "challenge_received":     "Challenge Received",
-    "challenge_accepted":     "Challenge Accepted",
-    "waiting_for_opponent":   "Waiting for Opponent",
-    "live_lobby_ready":       "Live Lobby",
-    "live_in_progress":       "Live — In Progress",
-    "completed_score_win":    "Result — Score",
-    "completed_draw":         "Result — Draw",
-    "completed_forfeit_win":  "Result — Forfeit Win",
-    "completed_forfeit_loss": "Result — Forfeit Loss",
-    "no_contest":             "No Contest",
-    "skill_delta_result":     "Skill Progress",
-}
-
-
-def _build_challenge_card_row(ch: VirtualTrainingChallenge, viewer_id: int, my_attempt) -> dict:
-    """Build a single challenge row for the collection page."""
-    is_challenger  = viewer_id == ch.challenger_id
-    opponent       = ch.challenged if is_challenger else ch.challenger
-    unlocked       = get_unlocked_challenge_card_phases(ch, viewer_id, my_attempt)
-    locked         = get_locked_challenge_card_phases(ch, viewer_id)
-
-    def _phase_cards(phases: list[str], is_locked: bool) -> list[dict]:
-        cards = []
-        for phase in phases:
-            preview_urls = {
-                fmt["id"]: f"/challenges/{ch.id}/card/preview?phase={phase}&platform={fmt['id']}"
-                for fmt in _CHALLENGE_CARD_FORMATS_DICT
-            }
-            export_urls = (
-                {
-                    fmt["id"]: f"/challenges/{ch.id}/card/export?phase={phase}&platform={fmt['id']}"
-                    for fmt in _CHALLENGE_CARD_FORMATS_DICT
-                }
-                if not is_locked else {}
-            )
-            cards.append({
-                "phase":        phase,
-                "label":        _PHASE_LABELS.get(phase, phase.replace("_", " ").title()),
-                "is_locked":    is_locked,
-                "preview_urls": preview_urls,
-                "export_urls":  export_urls,
-                "formats":      _CHALLENGE_CARD_FORMATS_DICT,
-            })
-        return cards
-
-    phase_cards = _phase_cards(unlocked, False) + _phase_cards(locked, True)
-
-    return {
-        "id":            ch.id,
-        "status":        ch.status.value,
-        "challenge_mode": ch.challenge_mode,
-        "opponent_name": _display_name(opponent) if opponent else "Unknown",
-        "game_name":     ch.game.name if ch.game else "—",
-        "created_at":    ch.created_at,
-        "completed_at":  ch.completed_at,
-        "phase_cards":   phase_cards,
-        "unlocked_count": len(unlocked),
-    }
-
+# ── Challenge Card format shop ─────────────────────────────────────────────────
 
 @router.get("/my-cards/challenge-card", response_class=HTMLResponse)
 async def my_cards_challenge_card(
@@ -313,12 +235,9 @@ async def my_cards_challenge_card(
     db: Session = Depends(get_db),
     user: User  = Depends(get_current_user_web),
 ):
-    """Challenge Card Collection — format shop header + phase-based card manager."""
-    draft  = CardDraftService.get_or_create_singleton(db, user.id, "challenge_card")
-    themes = get_all_themes(db=db)
+    """Challenge Card format shop — browse and purchase Challenge Card formats."""
     credits = user.credit_balance
 
-    # Format header section — ownership state per CC format
     def _cc_fmt_state(fmt) -> str:
         if is_design_accessible(db, user.id, "challenge_card", fmt.design_id):
             return "owned"
@@ -338,56 +257,16 @@ async def my_cards_challenge_card(
     cc_owned_count = sum(1 for r in cc_format_rows if r["state"] == "owned")
     cc_total       = len(cc_format_rows)
 
-    # Fetch last N challenges where user is participant
-    recent_challenges = (
-        db.query(VirtualTrainingChallenge)
-        .filter(
-            or_(
-                VirtualTrainingChallenge.challenger_id == user.id,
-                VirtualTrainingChallenge.challenged_id == user.id,
-            )
-        )
-        .order_by(VirtualTrainingChallenge.created_at.desc())
-        .limit(_COLLECTION_LIMIT)
-        .all()
-    )
-
-    # Batch-load attempts for skill_delta check
-    attempt_ids = set()
-    for ch in recent_challenges:
-        is_challenger = user.id == ch.challenger_id
-        my_id = ch.challenger_attempt_id if is_challenger else ch.challenged_attempt_id
-        if my_id:
-            attempt_ids.add(my_id)
-
-    attempts_map = {}
-    if attempt_ids:
-        for a in db.query(VirtualTrainingAttempt).filter(
-            VirtualTrainingAttempt.id.in_(attempt_ids)
-        ).all():
-            attempts_map[a.id] = a
-
-    challenge_rows = []
-    for ch in recent_challenges:
-        is_challenger = user.id == ch.challenger_id
-        my_attempt_id = ch.challenger_attempt_id if is_challenger else ch.challenged_attempt_id
-        my_attempt    = attempts_map.get(my_attempt_id) if my_attempt_id else None
-        challenge_rows.append(_build_challenge_card_row(ch, user.id, my_attempt))
-
     return templates.TemplateResponse(
         "my_cards_challenge_card.html",
         {
-            "request":          request,
-            "user":             user,
-            "draft":            draft,
-            "themes":           themes,
-            "formats":          _CHALLENGE_CARD_FORMATS_DICT,
-            "cc_format_rows":   cc_format_rows,
-            "cc_owned_count":   cc_owned_count,
-            "cc_total":         cc_total,
-            "challenge_rows":   challenge_rows,
-            "has_challenges":   bool(challenge_rows),
-            "flash_purchased":  request.query_params.get("purchased"),
-            "flash_error":      request.query_params.get("error"),
+            "request":         request,
+            "user":            user,
+            "cc_format_rows":  cc_format_rows,
+            "cc_owned_count":  cc_owned_count,
+            "cc_total":        cc_total,
+            "flash_purchased": request.query_params.get("purchased"),
+            "flash_error":     request.query_params.get("error"),
+            "spec_dashboard_url": "/dashboard/lfa-football-player",
         },
     )

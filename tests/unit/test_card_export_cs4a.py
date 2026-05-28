@@ -80,14 +80,22 @@ def _mock_db(target_user=None, target_license=None) -> MagicMock:
     q_ownership = MagicMock()
     q_ownership.filter_by.return_value.first.return_value = MagicMock()  # owned
 
+    q_draft = MagicMock()
+    _draft = MagicMock()
+    _draft.published_variant = None  # falls back to license.card_variant
+    q_draft.filter.return_value.first.return_value = _draft
+
     def _side_effect(model):
         from app.models.user import User
         from app.models.license import UserLicense
         from app.models.card_design_ownership import CardDesignOwnership
+        from app.models.card_draft import CardDraft
         if model is User:
             return q_user
         if model is UserLicense:
             return q_license
+        if model is CardDraft:
+            return q_draft
         if model is CardDesignOwnership:
             return q_ownership
         # CardDesign or unknown: raise StopIteration, caught by _load_cache → DESIGNS fallback

@@ -1,0 +1,280 @@
+{% extends "student_base.html" %}
+
+{% block title %}Challenge Results — LFA Education Center{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '⚔️' %}
+{% set _page_name = 'Challenge Results' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .cr-container {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 4rem;
+    }
+
+    .cr-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.8rem;
+        color: var(--app-text-muted);
+        text-decoration: none;
+        margin-bottom: 1.2rem;
+    }
+    .cr-back:hover { color: var(--app-text); }
+
+    .cr-header { margin-bottom: 1.5rem; }
+    .cr-header h1 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--app-text);
+        margin: 0 0 0.3rem;
+    }
+    .cr-header p {
+        font-size: 0.87rem;
+        color: var(--app-text-muted);
+        margin: 0;
+    }
+
+    /* ── Filter tabs ── */
+    .cr-filters {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.25rem;
+    }
+    .cr-filter-btn {
+        padding: 0.3rem 0.85rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        border-radius: 20px;
+        border: 1.5px solid var(--app-border, #2a3050);
+        background: var(--app-surface-2, #1e2335);
+        color: var(--app-text-muted);
+        text-decoration: none;
+        transition: border-color 0.12s, color 0.12s;
+    }
+    .cr-filter-btn:hover,
+    .cr-filter-btn.active {
+        border-color: var(--app-accent, #667eea);
+        color: var(--app-text);
+    }
+
+    /* ── Challenge row ── */
+    .cr-row {
+        background: var(--app-surface, #131726);
+        border: 1px solid var(--app-border, #2a3050);
+        border-radius: 12px;
+        padding: 0.9rem 1.1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .cr-row-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        min-width: 0;
+    }
+    .cr-row-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--app-text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .cr-row-sub {
+        font-size: 0.75rem;
+        color: var(--app-text-muted);
+    }
+
+    .cr-row-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        flex-shrink: 0;
+    }
+
+    .cr-status-badge {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        padding: 0.18rem 0.55rem;
+        border-radius: 4px;
+        border: 1px solid;
+        white-space: nowrap;
+    }
+    .cr-status-badge.completed  { color: #4caf50; border-color: #4caf50; background: rgba(76,175,80,0.08); }
+    .cr-status-badge.expired    { color: var(--app-text-muted); border-color: var(--app-border, #2a3050); }
+    .cr-status-badge.cancelled,
+    .cr-status-badge.declined   { color: var(--app-text-muted); border-color: var(--app-border, #2a3050); }
+
+    .cr-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.35rem 0.8rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        border-radius: 6px;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: opacity 0.12s;
+    }
+    .cr-btn:hover { opacity: 0.85; }
+    .cr-btn-primary {
+        background: var(--app-accent, #667eea);
+        color: #fff;
+    }
+    .cr-btn-secondary {
+        border: 1px solid var(--app-border, #2a3050);
+        color: var(--app-text-muted);
+        background: transparent;
+    }
+    .cr-btn-secondary:hover { color: var(--app-text); }
+
+    /* ── Pagination ── */
+    .cr-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+    .cr-pag-btn {
+        padding: 0.35rem 0.9rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border-radius: 7px;
+        border: 1px solid var(--app-border, #2a3050);
+        color: var(--app-text-muted);
+        text-decoration: none;
+        background: var(--app-surface-2, #1e2335);
+    }
+    .cr-pag-btn:hover { color: var(--app-text); }
+    .cr-pag-info {
+        font-size: 0.8rem;
+        color: var(--app-text-muted);
+    }
+
+    /* ── Empty state ── */
+    .cr-empty {
+        padding: 2.5rem 1.5rem;
+        background: var(--app-surface-2, #1e2335);
+        border: 1px solid var(--app-border, #2a3050);
+        border-radius: 10px;
+        text-align: center;
+        margin-top: 1rem;
+    }
+    .cr-empty p {
+        font-size: 0.92rem;
+        color: var(--app-text-muted);
+        margin: 0 0 1rem;
+    }
+    .cr-empty a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 1.2rem;
+        background: var(--app-accent, #667eea);
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.85rem;
+        border-radius: 7px;
+        text-decoration: none;
+    }
+    .cr-empty a:hover { opacity: 0.88; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="cr-container">
+
+    <a href="/challenges" class="cr-back">← Challenges</a>
+
+    <div class="cr-header">
+        <h1>Challenge Results</h1>
+        <p>Your completed Virtual Challenge history. Download social cards for your results.</p>
+    </div>
+
+    {# ── Status filter tabs ── #}
+    <div class="cr-filters">
+        {% set _filters = [
+            ("completed", "Completed"),
+            ("expired",   "Expired"),
+            ("cancelled", "Cancelled"),
+            ("all",       "All"),
+        ] %}
+        {% for val, label in _filters %}
+        <a href="?status={{ val }}&page=0&size={{ size }}"
+           class="cr-filter-btn {% if status_filter == val %}active{% endif %}">
+            {{ label }}
+        </a>
+        {% endfor %}
+    </div>
+
+    {# ── Result rows ── #}
+    {% if rows %}
+        {% for row in rows %}
+        <div class="cr-row">
+            <div class="cr-row-meta">
+                <div class="cr-row-title">⚔️ vs {{ row.opponent_name }} · {{ row.game_name }}</div>
+                <div class="cr-row-sub">
+                    {% if row.completed_at %}
+                        Completed {{ row.completed_at.strftime("%b %d, %Y") }}
+                    {% else %}
+                        Started {{ row.created_at.strftime("%b %d, %Y") }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="cr-row-actions">
+                <span class="cr-status-badge {{ row.status }}">{{ row.status | replace("_", " ") }}</span>
+                <a href="{{ row.card_url }}" class="cr-btn cr-btn-primary">View Card →</a>
+                <a href="{{ row.detail_url }}" class="cr-btn cr-btn-secondary">Detail</a>
+            </div>
+        </div>
+        {% endfor %}
+
+        {# ── Pagination ── #}
+        {% if has_prev or has_next %}
+        <div class="cr-pagination">
+            {% if has_prev %}
+            <a href="?status={{ status_filter }}&page={{ page - 1 }}&size={{ size }}"
+               class="cr-pag-btn">← Prev</a>
+            {% endif %}
+            <span class="cr-pag-info">Page {{ page + 1 }}</span>
+            {% if has_next %}
+            <a href="?status={{ status_filter }}&page={{ page + 1 }}&size={{ size }}"
+               class="cr-pag-btn">Next →</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+    {% else %}
+        <div class="cr-empty">
+            {% if status_filter == "completed" %}
+            <p>No completed challenges yet.</p>
+            {% elif status_filter == "expired" %}
+            <p>No expired challenges.</p>
+            {% elif status_filter == "cancelled" %}
+            <p>No cancelled or declined challenges.</p>
+            {% else %}
+            <p>No challenge history found.</p>
+            {% endif %}
+            <a href="/challenges">Go to Challenges →</a>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

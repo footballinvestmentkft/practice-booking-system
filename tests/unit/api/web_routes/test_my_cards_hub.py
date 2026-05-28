@@ -373,16 +373,9 @@ class TestMyChallengeCardRoute:
             captured["context"]  = ctx
             return MagicMock(status_code=200)
 
-        draft_mock = MagicMock()
-        draft_mock.draft_theme = "default"
-        themes_mock = [_theme("default", "Slate"), _theme("midnight", "Midnight")]
-
         with patch(f"{_CC_BASE}.templates") as mock_tmpl, \
-             patch(f"{_CC_BASE}.CardDraftService") as mock_ds, \
-             patch(f"{_CC_BASE}.is_design_accessible", return_value=False), \
-             patch(f"{_CC_BASE}.get_all_themes", return_value=themes_mock):
+             patch(f"{_CC_BASE}.is_design_accessible", return_value=False):
             mock_tmpl.TemplateResponse.side_effect = _capture
-            mock_ds.get_or_create_singleton.return_value = draft_mock
             _run(my_cards_challenge_card(
                 request=MagicMock(),
                 db=db,
@@ -413,20 +406,22 @@ class TestMyChallengeCardRoute:
         hub_html = _CC_TEMPLATE_PATH.parent.joinpath("my_cards_hub.html").read_text()
         assert "/my-cards/challenge-card" in hub_html
 
-    def test_mch_ch05_template_contains_post_16_9(self):
-        """MCH-CH-05: template references challenge_post_16_9 format."""
-        html = _CC_TEMPLATE_PATH.read_text()
-        assert "challenge_post_16_9" in html
+    def test_mch_ch05_context_contains_post_16_9(self):
+        """MCH-CH-05: route context cc_format_rows includes challenge_post_16_9."""
+        cap = self._call()
+        row_ids = {r["design_id"] for r in cap["context"].get("cc_format_rows", [])}
+        assert "challenge_post_16_9" in row_ids
 
-    def test_mch_ch06_template_contains_story_9_16(self):
-        """MCH-CH-06: template references challenge_story_9_16 format."""
-        html = _CC_TEMPLATE_PATH.read_text()
-        assert "challenge_story_9_16" in html
+    def test_mch_ch06_context_contains_story_9_16(self):
+        """MCH-CH-06: route context cc_format_rows includes challenge_story_9_16."""
+        cap = self._call()
+        row_ids = {r["design_id"] for r in cap["context"].get("cc_format_rows", [])}
+        assert "challenge_story_9_16" in row_ids
 
-    def test_mch_ch07_template_contains_challenges_link(self):
-        """MCH-CH-07: template contains /challenges CTA link."""
+    def test_mch_ch07_template_contains_results_link(self):
+        """MCH-CH-07: template contains /challenges/results CTA link."""
         html = _CC_TEMPLATE_PATH.read_text()
-        assert "/challenges" in html
+        assert "/challenges/results" in html
 
     def test_mch_ch08_spec_is_editable_and_theme_compatible(self):
         """MCH-CH-08: CHALLENGE_CARD_SPEC.is_editable=True, theme_compatible=True."""
@@ -435,12 +430,13 @@ class TestMyChallengeCardRoute:
         assert CHALLENGE_CARD_SPEC.theme_compatible is True
         assert CHALLENGE_CARD_SPEC.has_published_state is False
 
-    def test_mch_ch09_context_contains_formats_with_both_ids(self):
-        """MCH-CH-09: route context formats list contains both platform IDs."""
+    def test_mch_ch09_context_contains_cc_format_rows_with_both_ids(self):
+        """MCH-CH-09: route context cc_format_rows contains both platform IDs."""
         cap = self._call()
-        fmt_ids = [f["id"] for f in cap["context"]["formats"]]
-        assert "challenge_post_16_9"  in fmt_ids
-        assert "challenge_story_9_16" in fmt_ids
+        rows = cap["context"].get("cc_format_rows", [])
+        row_ids = {r["design_id"] for r in rows}
+        assert "challenge_post_16_9"  in row_ids
+        assert "challenge_story_9_16" in row_ids
 
     def test_mch_ch10_context_contains_cc_format_rows(self):
         """MCH-CH-10: route context contains cc_format_rows with state per format."""
@@ -453,3 +449,16 @@ class TestMyChallengeCardRoute:
         for r in rows:
             assert "state" in r
             assert "credit_cost" in r
+
+    def test_mch_ch11_context_has_no_challenge_list_keys(self):
+        """MCH-CH-11: shop route context must NOT contain challenge_rows, has_challenges,
+        draft, themes, or formats keys — the shop is format-only now."""
+        cap = self._call()
+        ctx = cap["context"]
+        for forbidden in ("challenge_rows", "has_challenges", "draft", "themes", "formats"):
+            assert forbidden not in ctx, f"Context must not contain '{forbidden}'"
+
+    def test_mch_ch12_template_has_no_challenge_iframe(self):
+        """MCH-CH-12: shop template must not contain cc-preview-iframe (challenge list removed)."""
+        html = _CC_TEMPLATE_PATH.read_text()
+        assert "cc-preview-iframe" not in html

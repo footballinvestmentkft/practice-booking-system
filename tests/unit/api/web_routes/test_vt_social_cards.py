@@ -22,11 +22,6 @@ SC-AUDIT-03  preview route signature contains a "phase" parameter
 SC-AUDIT-04  preview: phase="bogus_phase" → 422
 SC-AUDIT-05  export: locked phase (challenge_accepted) → 403
 SC-AUDIT-06  preview: completed_forfeit_win for winner → 200
-SC-AUDIT-07  _build_challenge_card_row returns required keys
-SC-AUDIT-08  phase_cards each have preview_urls for both platforms
-SC-AUDIT-09  my_cards_challenge_card.html has iframe with preview src
-SC-AUDIT-10  my_cards_challenge_card.html has export download button
-SC-AUDIT-11  my_cards_challenge_card.html has Post (16:9) and Story (9:16) buttons
 SC-AUDIT-12  render_token resolved to None → 401 (wrong challenge / expired)
 SC-AUDIT-13  SCORE WIN badge in post_16_9.html is behind phase == "completed_score_win" guard
 SC-AUDIT-14  empty skill_deltas → skill_delta_result not in unlocked phases
@@ -557,55 +552,6 @@ class TestSCPhaseAudit:
         cap = _call_preview(ch=ch, user_id=1, phase="completed_forfeit_win")
         assert "exc" not in cap, f"Unexpected: {cap.get('exc')}"
         assert "template" in cap
-
-    # ── Collection page data ──────────────────────────────────────────────────
-
-    def test_sc_audit_07_build_row_structure(self):
-        """_build_challenge_card_row returns required keys."""
-        from app.api.web_routes.my_cards import _build_challenge_card_row
-        ch = _challenge(challenger_id=1, challenged_id=2)
-        row = _build_challenge_card_row(ch, viewer_id=1, my_attempt=None)
-        for key in ("id", "status", "opponent_name", "game_name",
-                    "phase_cards", "unlocked_count"):
-            assert key in row, f"Missing key {key!r} in challenge row"
-
-    def test_sc_audit_08_phase_cards_have_both_platforms(self):
-        """Every phase card exposes preview_urls for both 16:9 and 9:16."""
-        from app.api.web_routes.my_cards import _build_challenge_card_row
-        ch = _challenge(challenger_id=1, challenged_id=2)
-        row = _build_challenge_card_row(ch, viewer_id=1, my_attempt=None)
-        assert len(row["phase_cards"]) > 0, "Expected at least one phase card"
-        for card in row["phase_cards"]:
-            assert "challenge_post_16_9"  in card["preview_urls"]
-            assert "challenge_story_9_16" in card["preview_urls"]
-
-    # ── Collection template ───────────────────────────────────────────────────
-
-    def test_sc_audit_09_collection_template_has_iframe_preview(self):
-        with open(_CC_COLLECTION_TEMPLATE, encoding="utf-8") as fh:
-            html = fh.read()
-        assert "cc-preview-iframe" in html
-        assert "preview_urls" in html
-
-    def test_sc_audit_10_collection_template_has_export_download(self):
-        with open(_CC_COLLECTION_TEMPLATE, encoding="utf-8") as fh:
-            html = fh.read()
-        assert "cc-export-btn" in html
-        assert "download" in html
-
-    def test_sc_audit_11_collection_template_iterates_formats(self):
-        """Template iterates card.formats and renders fmt.label per button."""
-        with open(_CC_COLLECTION_TEMPLATE, encoding="utf-8") as fh:
-            html = fh.read()
-        assert "card.formats" in html
-        assert "fmt.label"    in html
-
-    def test_sc_audit_11b_format_data_has_both_labels(self):
-        """_CHALLENGE_CARD_FORMATS defines Post (16:9) and Story (9:16) labels."""
-        from app.api.web_routes.my_cards import _CHALLENGE_CARD_FORMATS
-        labels = {f["label"] for f in _CHALLENGE_CARD_FORMATS}
-        assert "Post (16:9)"  in labels
-        assert "Story (9:16)" in labels
 
     # ── Render token security ─────────────────────────────────────────────────
 

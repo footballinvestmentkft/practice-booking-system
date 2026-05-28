@@ -595,6 +595,159 @@ def _compute_outcome_reason(ch: VirtualTrainingChallenge) -> str:
     return "score_win"
 
 
+# ── GET /challenges/results — Challenge result/history list ──────────────────
+
+_RESULT_STATUS_MAP: dict[str, list[ChallengeStatus]] = {
+    "completed": [ChallengeStatus.COMPLETED],
+    "expired":   [ChallengeStatus.EXPIRED],
+    "cancelled": [ChallengeStatus.CANCELLED, ChallengeStatus.DECLINED],
+    "all":       [ChallengeStatus.COMPLETED, ChallengeStatus.EXPIRED,
+                  ChallengeStatus.CANCELLED, ChallengeStatus.DECLINED],
+}
+_RESULTS_MAX_SIZE = 50
+
+
+@router.get("/challenges/results", response_class=HTMLResponse)
+async def challenge_results(
+    request: Request,
+    page:   int = Query(default=0, ge=0),
+    size:   int = Query(default=20, ge=1, le=_RESULTS_MAX_SIZE),
+    status: str = Query(default="all"),
+    db: Session = Depends(get_db),
+    user: User  = Depends(get_current_user_web),
+):
+    """Challenge result/history list — terminal challenges only, paginated."""
+    guard = require_student_onboarding(user)
+    if guard:
+        return guard
+
+    statuses = _RESULT_STATUS_MAP.get(status, _RESULT_STATUS_MAP["completed"])
+
+    # Fetch one extra to detect has_next without a COUNT query
+    raw = (
+        db.query(VirtualTrainingChallenge)
+        .filter(
+            or_(
+                VirtualTrainingChallenge.challenger_id == user.id,
+                VirtualTrainingChallenge.challenged_id == user.id,
+            ),
+            VirtualTrainingChallenge.status.in_(statuses),
+        )
+        .order_by(
+            VirtualTrainingChallenge.completed_at.desc().nullslast(),
+            VirtualTrainingChallenge.created_at.desc(),
+        )
+        .offset(page * size)
+        .limit(size + 1)
+        .all()
+    )
+
+    has_next = len(raw) > size
+    challenges = raw[:size]
+
+    def _result_row(ch: VirtualTrainingChallenge) -> dict:
+        is_challenger = user.id == ch.challenger_id
+        opponent = ch.challenged if is_challenger else ch.challenger
+        return {
+            "id":            ch.id,
+            "status":        ch.status.value,
+            "opponent_name": _display_name(opponent) if opponent else "Unknown",
+            "game_name":     ch.game.name if ch.game else "—",
+            "completed_at":  ch.completed_at,
+            "created_at":    ch.created_at,
+            "card_url":      f"/challenges/{ch.id}/card",
+            "detail_url":    f"/challenges/{ch.id}",
+        }
+
+    return templates.TemplateResponse(
+        "vt_challenge_results.html",
+        {
+            "request":       request,
+            "user":          user,
+            **_spec_ctx(user, db),
+            "rows":          [_result_row(ch) for ch in challenges],
+            "has_next":      has_next,
+            "has_prev":      page > 0,
+            "page":          page,
+            "size":          size,
+            "status_filter": status,
+        },
+    )
+
+
+# ── GET /challenges/{id}/card — Challenge result card preview + download ──────
+
+@router.get("/challenges/{challenge_id}/card", response_class=HTMLResponse)
+async def challenge_result_card(
+    challenge_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User  = Depends(get_current_user_web),
+):
+    """Challenge result card — style selector, phase selector, preview, download."""
+    guard = require_student_onboarding(user)
+    if guard:
+        return guard
+
+    ch = db.query(VirtualTrainingChallenge).filter(
+        VirtualTrainingChallenge.id == challenge_id
+    ).first()
+
+    if ch is None or user.id not in (ch.challenger_id, ch.challenged_id):
+        raise HTTPException(status_code=403, detail="Not a participant of this challenge.")
+
+    # Load viewer's attempt for skill_delta phase detection
+    is_challenger = user.id == ch.challenger_id
+    my_attempt_id = ch.challenger_attempt_id if is_challenger else ch.challenged_attempt_id
+    my_attempt = (
+        db.query(VirtualTrainingAttempt)
+        .filter(VirtualTrainingAttempt.id == my_attempt_id)
+        .first()
+    ) if my_attempt_id else None
+
+    unlocked_phases = get_unlocked_challenge_card_phases(ch, user.id, my_attempt)
+    locked_phases   = get_locked_challenge_card_phases(ch, user.id)
+
+    # Owned formats — single bulk CDO query
+    from ...services.card_design_service import (  # noqa: PLC0415
+        CHALLENGE_CARD_FORMATS,
+        get_owned_design_ids,
+    )
+    owned_format_ids = set(get_owned_design_ids(db, user.id, "challenge_card"))
+
+    format_rows = [
+        {
+            "design_id":   fmt.design_id,
+            "label":       fmt.label,
+            "dims":        fmt.dims,
+            "credit_cost": fmt.credit_cost,
+            "owned":       fmt.design_id in owned_format_ids,
+        }
+        for fmt in CHALLENGE_CARD_FORMATS
+    ]
+    has_any_owned = any(r["owned"] for r in format_rows)
+
+    opponent = ch.challenged if is_challenger else ch.challenger
+
+    return templates.TemplateResponse(
+        "vt_challenge_result_card.html",
+        {
+            "request":         request,
+            "user":            user,
+            **_spec_ctx(user, db),
+            "challenge":       ch,
+            "challenge_id":    ch.id,
+            "opponent_name":   _display_name(opponent) if opponent else "Unknown",
+            "game_name":       ch.game.name if ch.game else "—",
+            "unlocked_phases": unlocked_phases,
+            "locked_phases":   locked_phases,
+            "format_rows":     format_rows,
+            "has_any_owned":   has_any_owned,
+            "phase_labels":    _PHASE_LABELS,
+        },
+    )
+
+
 # ── GET /challenges/{id} — Virtual Challenge detail ───────────────────────────
 
 @router.get("/challenges/{challenge_id}", response_class=HTMLResponse)
@@ -715,6 +868,21 @@ _TERMINAL_STATUSES = frozenset({
     ChallengeStatus.COMPLETED, ChallengeStatus.EXPIRED,
     ChallengeStatus.DECLINED,  ChallengeStatus.CANCELLED,
 })
+
+_PHASE_LABELS = {
+    "challenge_sent":         "Challenge Sent",
+    "challenge_received":     "Challenge Received",
+    "challenge_accepted":     "Challenge Accepted",
+    "waiting_for_opponent":   "Waiting for Opponent",
+    "live_lobby_ready":       "Live Lobby",
+    "live_in_progress":       "Live — In Progress",
+    "completed_score_win":    "Result — Score",
+    "completed_draw":         "Result — Draw",
+    "completed_forfeit_win":  "Result — Forfeit Win",
+    "completed_forfeit_loss": "Result — Forfeit Loss",
+    "no_contest":             "No Contest",
+    "skill_delta_result":     "Skill Progress",
+}
 
 _PHASE_CTA = {
     "challenge_sent":          "View challenge",

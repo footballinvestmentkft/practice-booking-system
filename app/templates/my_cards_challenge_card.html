@@ -1,6 +1,6 @@
 {% extends "student_base.html" %}
 
-{% block title %}Challenge Card Collection — LFA Education Center{% endblock %}
+{% block title %}Challenge Card Shop — LFA Education Center{% endblock %}
 {% block active_page %}lfa-player{% endblock %}
 
 {% block student_header %}
@@ -11,13 +11,12 @@
 
 {% block extra_styles %}
 <style>
-    .cc-manager {
+    .cc-shop {
         max-width: 900px;
         margin: 0 auto;
         padding: 1.5rem 1rem 4rem;
     }
 
-    /* ── Back / header ── */
     .cc-back {
         display: inline-flex;
         align-items: center;
@@ -43,459 +42,191 @@
         max-width: 560px;
     }
 
-    /* ── Empty state ── */
-    .cc-empty {
-        padding: 2.5rem 1.5rem;
-        background: var(--app-surface-2, #1e2335);
-        border: 1px solid var(--app-border, #2a3050);
-        border-radius: 10px;
-        text-align: center;
-    }
-    .cc-empty p {
-        font-size: 0.92rem;
-        color: var(--app-text-muted);
-        margin: 0 0 1rem;
-    }
-    .cc-btn-primary {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.55rem 1.2rem;
-        background: var(--app-accent, #667eea);
-        color: #fff;
-        font-weight: 700;
-        font-size: 0.85rem;
-        border-radius: 7px;
-        text-decoration: none;
-        white-space: nowrap;
-    }
-    .cc-btn-primary:hover { opacity: 0.88; }
-
-    /* ── Challenge block ── */
-    .cc-challenge-block {
+    /* ── Format grid ── */
+    .cc-format-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1rem;
         margin-bottom: 2rem;
-        border: 1px solid var(--app-border, #2a3050);
+    }
+
+    .cc-format-card {
+        background: #0f172a;
+        border: 1px solid #1e293b;
         border-radius: 12px;
-        overflow: hidden;
-    }
-    .cc-challenge-hdr {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        padding: 0.9rem 1.2rem;
-        background: var(--app-surface-2, #1e2335);
-        border-bottom: 1px solid var(--app-border, #2a3050);
-    }
-    .cc-challenge-meta {
+        padding: 1rem;
         display: flex;
         flex-direction: column;
-        gap: 0.15rem;
+        gap: 0.6rem;
     }
-    .cc-challenge-title {
-        font-size: 0.95rem;
+
+    .cc-format-tag {
+        font-size: 0.63rem;
         font-weight: 700;
-        color: var(--app-text);
-    }
-    .cc-challenge-sub {
-        font-size: 0.76rem;
-        color: var(--app-text-muted);
-    }
-    .cc-status-badge {
-        font-size: 0.68rem;
-        font-weight: 700;
-        text-transform: uppercase;
         letter-spacing: 0.08em;
-        padding: 0.2rem 0.6rem;
-        border-radius: 4px;
-        border: 1px solid;
-    }
-    .cc-status-badge.completed  { color: #4caf50; border-color: #4caf50; background: rgba(76,175,80,0.08); }
-    .cc-status-badge.pending    { color: #f5c518; border-color: #f5c518; background: rgba(245,197,24,0.08); }
-    .cc-status-badge.accepted   { color: #90caf9; border-color: #90caf9; background: rgba(144,202,249,0.08); }
-    .cc-status-badge.live_lobby,
-    .cc-status-badge.live_in_progress { color: #ef5350; border-color: #ef5350; background: rgba(239,83,80,0.08); }
-    .cc-status-badge.expired,
-    .cc-status-badge.declined,
-    .cc-status-badge.cancelled  { color: var(--app-text-muted); border-color: var(--app-border, #2a3050); }
-
-    .cc-challenge-link {
-        font-size: 0.76rem;
-        color: var(--app-text-muted);
-        text-decoration: none;
-        white-space: nowrap;
-    }
-    .cc-challenge-link:hover { color: var(--app-text); }
-
-    /* ── Phase cards grid ── */
-    .cc-phase-grid {
-        padding: 1rem 1.2rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .cc-phase-card {
-        background: var(--app-surface, #131726);
-        border: 1px solid var(--app-border, #2a3050);
-        border-radius: 10px;
-        overflow: hidden;
-    }
-    .cc-phase-card.locked {
-        opacity: 0.65;
-    }
-
-    .cc-phase-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0.6rem 1rem;
-        border-bottom: 1px solid var(--app-border, #2a3050);
-        gap: 0.5rem;
-        flex-wrap: wrap;
-    }
-    .cc-phase-name {
-        font-size: 0.82rem;
-        font-weight: 700;
-        color: var(--app-text);
-    }
-    .cc-lock-badge {
-        font-size: 0.65rem;
-        font-weight: 700;
+        color: #475569;
         text-transform: uppercase;
-        letter-spacing: 0.06em;
-        padding: 0.18rem 0.5rem;
-        border-radius: 3px;
     }
-    .cc-lock-badge.unlocked { background: rgba(76,175,80,0.15); color: #4caf50; }
-    .cc-lock-badge.locked   { background: rgba(120,120,140,0.15); color: var(--app-text-muted); }
-
-    /* ── Preview + controls row ── */
-    .cc-phase-body {
-        display: flex;
-        gap: 1rem;
-        padding: 0.8rem 1rem;
-        align-items: flex-start;
-        flex-wrap: wrap;
-    }
-
-    /* Iframe preview thumbnail */
-    .cc-preview-wrap {
-        position: relative;
-        flex-shrink: 0;
-        width: 256px;
-        height: 144px;
-        background: #0a0e1a;
-        border-radius: 6px;
-        overflow: hidden;
-        border: 1px solid var(--app-border, #2a3050);
-    }
-    .cc-preview-wrap.story-size {
-        width: 81px;
-        height: 144px;
-    }
-    .cc-preview-iframe {
-        position: absolute;
-        top: 0; left: 0;
-        border: none;
-        transform-origin: top left;
-    }
-    /* 16:9: 1280×720 → 256×144 = scale(0.2) */
-    .cc-preview-wrap .cc-preview-iframe {
-        width: 1280px;
-        height: 720px;
-        transform: scale(0.2);
-    }
-    /* 9:16: 1080×1920 → 81×144 = scale(0.075) */
-    .cc-preview-wrap.story-size .cc-preview-iframe {
-        width: 1080px;
-        height: 1920px;
-        transform: scale(0.075);
-    }
-
-    /* ── Controls ── */
-    .cc-controls {
-        flex: 1;
-        min-width: 180px;
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-
-    .cc-platform-selector {
-        display: flex;
-        gap: 0.4rem;
-    }
-    .cc-plat-btn {
-        padding: 0.3rem 0.7rem;
-        font-size: 0.75rem;
-        font-weight: 600;
-        border-radius: 5px;
-        border: 1.5px solid var(--app-border, #2a3050);
-        background: var(--app-surface-2, #1e2335);
-        color: var(--app-text-muted);
-        cursor: pointer;
-        transition: border-color 0.12s, color 0.12s;
-    }
-    .cc-plat-btn.active, .cc-plat-btn:hover {
-        border-color: var(--app-accent, #667eea);
-        color: var(--app-text);
-    }
-
-    .cc-export-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.45rem 1rem;
-        background: var(--app-accent, #667eea);
-        color: #fff;
+    .cc-format-label {
         font-weight: 700;
-        font-size: 0.8rem;
-        border-radius: 6px;
-        text-decoration: none;
-        white-space: nowrap;
-        width: fit-content;
+        font-size: 0.92rem;
+        color: #f1f5f9;
     }
-    .cc-export-btn:hover { opacity: 0.88; }
+    .cc-format-dims {
+        font-size: 0.72rem;
+        color: #475569;
+    }
 
-    .cc-locked-note {
-        font-size: 0.74rem;
-        color: var(--app-text-muted);
-        font-style: italic;
+    /* State badges */
+    .cc-badge-owned {
+        display: inline-block;
+        padding: 0.18rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.69rem;
+        font-weight: 700;
+        background: #1e3a5f;
+        color: #93c5fd;
+        align-self: flex-start;
+    }
+    .cc-badge-get {
+        display: inline-block;
+        padding: 0.18rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.69rem;
+        font-weight: 700;
+        background: #78350f;
+        color: #fde68a;
+        align-self: flex-start;
+    }
+    .cc-badge-locked {
+        display: inline-block;
+        padding: 0.18rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.69rem;
+        font-weight: 700;
+        background: #1e293b;
+        color: #475569;
+        align-self: flex-start;
+    }
+
+    /* CTAs */
+    .cc-btn-owned {
+        display: block;
+        width: 100%;
+        padding: 0.45rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        text-align: center;
+        background: #1e3a5f;
+        color: #93c5fd;
+        cursor: default;
+        border: none;
+    }
+    .cc-btn-get {
+        display: block;
+        width: 100%;
+        padding: 0.45rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        text-align: center;
+        cursor: pointer;
+        border: none;
+        background: #854d0e;
+        color: #fde68a;
+    }
+    .cc-btn-get:hover { opacity: 0.9; }
+    .cc-btn-locked {
+        display: block;
+        width: 100%;
+        padding: 0.45rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        text-align: center;
+        cursor: not-allowed;
+        border: none;
+        background: #1e293b;
+        color: #334155;
+        opacity: 0.7;
     }
 
     /* ── Footer CTA ── */
-    .cc-footer-cta {
-        margin-top: 0.5rem;
+    .cc-results-cta {
+        margin-top: 2rem;
         text-align: center;
     }
-    .cc-footer-cta a {
-        font-size: 0.8rem;
-        color: var(--app-text-muted);
+    .cc-results-cta a {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--app-accent, #667eea);
         text-decoration: none;
     }
-    .cc-footer-cta a:hover { color: var(--app-text); }
+    .cc-results-cta a:hover { opacity: 0.85; }
 </style>
 {% endblock %}
 
 {% block student_content %}
-<div class="cc-manager">
+<div class="cc-shop">
 
     <a href="/my-cards" class="cc-back">← My Cards</a>
 
     <div class="cc-header">
-        <h1>⚡ Challenge Card Collection</h1>
-        <p>Browse your recent Virtual Challenges and share phase cards for each result. Preview before downloading.</p>
+        <h1>⚡ Challenge Card Formats</h1>
+        <p>Purchase a Challenge Card format to download social cards for your completed Virtual Challenges.</p>
     </div>
 
-    {# ── Format Shop Header ── #}
-    <div style="margin-bottom:2rem;">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.85rem;">
-        <h2 style="font-size:1rem;font-weight:700;color:var(--app-text);margin:0;">Formats</h2>
-        <span style="font-size:0.75rem;font-weight:600;color:#94a3b8;background:#1e293b;border:1px solid #334155;border-radius:12px;padding:0.18rem 0.6rem;">
-          {{ cc_owned_count }} / {{ cc_total }} owned
-        </span>
-      </div>
-      {% if flash_purchased %}
-      <div style="padding:0.7rem 1rem;border-radius:8px;margin-bottom:0.85rem;font-size:0.85rem;background:#14532d;color:#86efac;border:1px solid #166534;">
+    {# ── Flash messages ── #}
+    {% if flash_purchased %}
+    <div style="padding:0.7rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:0.85rem;background:#14532d;color:#86efac;border:1px solid #166534;">
         ✓ Format unlocked — you can now export Challenge Cards in this format.
-      </div>
-      {% endif %}
-      {% if flash_error == "credits" %}
-      <div style="padding:0.7rem 1rem;border-radius:8px;margin-bottom:0.85rem;font-size:0.85rem;background:#450a0a;color:#fca5a5;border:1px solid #7f1d1d;">Not enough credits.</div>
-      {% elif flash_error == "owned" %}
-      <div style="padding:0.7rem 1rem;border-radius:8px;margin-bottom:0.85rem;font-size:0.85rem;background:#450a0a;color:#fca5a5;border:1px solid #7f1d1d;">You already own this format.</div>
-      {% elif flash_error == "invalid" %}
-      <div style="padding:0.7rem 1rem;border-radius:8px;margin-bottom:0.85rem;font-size:0.85rem;background:#450a0a;color:#fca5a5;border:1px solid #7f1d1d;">Unknown format.</div>
-      {% endif %}
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;">
-        {% for r in cc_format_rows %}
-        <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:1rem;display:flex;flex-direction:column;gap:0.6rem;">
-          <div style="font-size:0.63rem;font-weight:700;letter-spacing:0.08em;color:#475569;text-transform:uppercase;">{{ r.style_tag }}</div>
-          <div style="font-weight:700;font-size:0.92rem;color:#f1f5f9;">{{ r.label }}</div>
-          <div style="font-size:0.72rem;color:#475569;">{{ r.dims }}</div>
-          {% if r.state == "owned" %}
-            <span style="display:inline-block;padding:0.18rem 0.5rem;border-radius:10px;font-size:0.69rem;font-weight:700;background:#1e3a5f;color:#93c5fd;align-self:flex-start;">Owned ✓</span>
-            <span style="display:block;width:100%;padding:0.45rem 0.75rem;border-radius:8px;font-size:0.82rem;font-weight:600;text-align:center;background:#1e3a5f;color:#93c5fd;cursor:default;text-decoration:none;">Owned ✓</span>
-          {% elif r.state == "purchasable" %}
-            <span style="display:inline-block;padding:0.18rem 0.5rem;border-radius:10px;font-size:0.69rem;font-weight:700;background:#78350f;color:#fde68a;align-self:flex-start;">{{ r.credit_cost }} CR</span>
-            <form method="POST" action="/my-cards/designs/challenge_card/{{ r.design_id }}/get">
-              <button type="submit" style="display:block;width:100%;padding:0.45rem 0.75rem;border-radius:8px;font-size:0.82rem;font-weight:600;text-align:center;cursor:pointer;border:none;background:#854d0e;color:#fde68a;">Get Card — {{ r.credit_cost }} CR</button>
-            </form>
-          {% else %}
-            <span style="display:inline-block;padding:0.18rem 0.5rem;border-radius:10px;font-size:0.69rem;font-weight:700;background:#1e293b;color:#475569;align-self:flex-start;">{{ r.credit_cost }} CR 🔒</span>
-            <button disabled style="display:block;width:100%;padding:0.45rem 0.75rem;border-radius:8px;font-size:0.82rem;font-weight:600;text-align:center;cursor:not-allowed;border:none;background:#1e293b;color:#334155;opacity:.7;">Not enough credits</button>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-    {# ── End Format Shop Header ── #}
-
-    {% if not has_challenges %}
-    {# ── Empty state ── #}
-    <div class="cc-empty">
-        <p>You haven't participated in any Virtual Challenges yet.</p>
-        <a href="/challenges" class="cc-btn-primary">Go to Challenges →</a>
-    </div>
-
-    {% else %}
-    {# ── Challenge list ── #}
-    {% for row in challenge_rows %}
-    <div class="cc-challenge-block" id="challenge-{{ row.id }}">
-
-        {# Challenge header #}
-        <div class="cc-challenge-hdr">
-            <div class="cc-challenge-meta">
-                <div class="cc-challenge-title">vs {{ row.opponent_name }} · {{ row.game_name }}</div>
-                <div class="cc-challenge-sub">
-                    {{ row.challenge_mode | upper }} ·
-                    {% if row.completed_at %}
-                        Completed {{ row.completed_at.strftime("%b %d, %Y") }}
-                    {% else %}
-                        Started {{ row.created_at.strftime("%b %d, %Y") }}
-                    {% endif %}
-                </div>
-            </div>
-            <div style="display:flex;align-items:center;gap:0.75rem;">
-                <span class="cc-status-badge {{ row.status }}">{{ row.status | replace("_", " ") }}</span>
-                <a href="/challenges/{{ row.id }}" class="cc-challenge-link">View detail →</a>
-            </div>
-        </div>
-
-        {# Phase cards #}
-        <div class="cc-phase-grid">
-            {% if not row.phase_cards %}
-            <div style="font-size:0.8rem;color:var(--app-text-muted);padding:0.5rem 0;">
-                No card phases available for this challenge yet.
-            </div>
-            {% endif %}
-
-            {% for card in row.phase_cards %}
-            <div class="cc-phase-card {% if card.is_locked %}locked{% endif %}"
-                 data-challenge="{{ row.id }}"
-                 data-phase="{{ card.phase }}">
-
-                {# Phase header row #}
-                <div class="cc-phase-top">
-                    <span class="cc-phase-name">{{ card.label }}</span>
-                    {% if card.is_locked %}
-                        <span class="cc-lock-badge locked">🔒 Preview only</span>
-                    {% else %}
-                        <span class="cc-lock-badge unlocked">✓ Unlocked</span>
-                    {% endif %}
-                </div>
-
-                {# Body: preview + controls #}
-                <div class="cc-phase-body">
-
-                    {# Preview thumbnail — default to 16:9 #}
-                    <div class="cc-preview-wrap" id="preview-wrap-{{ row.id }}-{{ card.phase }}">
-                        <iframe
-                            class="cc-preview-iframe"
-                            src="{{ card.preview_urls['challenge_post_16_9'] }}"
-                            scrolling="no"
-                            loading="lazy"
-                            title="{{ card.label }} preview"
-                            data-preview-16x9="{{ card.preview_urls['challenge_post_16_9'] }}"
-                            data-preview-9x16="{{ card.preview_urls['challenge_story_9_16'] }}"
-                        ></iframe>
-                    </div>
-
-                    {# Controls #}
-                    <div class="cc-controls">
-
-                        {# Platform selector #}
-                        <div>
-                            <div style="font-size:0.72rem;font-weight:600;color:var(--app-text-muted);
-                                        text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.4rem;">
-                                Format
-                            </div>
-                            <div class="cc-platform-selector" id="plat-sel-{{ row.id }}-{{ card.phase }}">
-                                {% for fmt in card.formats %}
-                                <button class="cc-plat-btn {% if loop.first %}active{% endif %}"
-                                        data-platform="{{ fmt.id }}"
-                                        data-preview="{{ card.preview_urls[fmt.id] }}"
-                                        {% if not card.is_locked %}data-export="{{ card.export_urls[fmt.id] }}"{% endif %}
-                                        data-wrap="preview-wrap-{{ row.id }}-{{ card.phase }}"
-                                        data-exportbtn="export-btn-{{ row.id }}-{{ card.phase }}"
-                                        data-is-story="{% if fmt.id == 'challenge_story_9_16' %}1{% else %}0{% endif %}"
-                                        onclick="ccSelectPlatform(this)">
-                                    {{ fmt.label }}
-                                </button>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        {# Export / locked note #}
-                        {% if card.is_locked %}
-                        <div class="cc-locked-note">
-                            This card is preview only. Complete the challenge to unlock export.
-                        </div>
-                        {% else %}
-                        <a class="cc-export-btn"
-                           id="export-btn-{{ row.id }}-{{ card.phase }}"
-                           href="{{ card.export_urls['challenge_post_16_9'] }}"
-                           download>
-                            ↓ Download PNG
-                        </a>
-                        {% endif %}
-
-                    </div>{# /controls #}
-                </div>{# /phase-body #}
-            </div>{# /phase-card #}
-            {% endfor %}
-        </div>{# /phase-grid #}
-
-    </div>{# /challenge-block #}
-    {% endfor %}
-
-    <div class="cc-footer-cta">
-        <a href="/challenges">Open All Challenges →</a>
     </div>
     {% endif %}
+    {% if flash_error == "credits" %}
+    <div style="padding:0.7rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:0.85rem;background:#450a0a;color:#fca5a5;border:1px solid #7f1d1d;">Not enough credits.</div>
+    {% elif flash_error == "owned" %}
+    <div style="padding:0.7rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:0.85rem;background:#450a0a;color:#fca5a5;border:1px solid #7f1d1d;">You already own this format.</div>
+    {% elif flash_error == "invalid" %}
+    <div style="padding:0.7rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:0.85rem;background:#450a0a;color:#fca5a5;border:1px solid #7f1d1d;">Unknown format.</div>
+    {% endif %}
+
+    {# ── Owned counter ── #}
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.85rem;">
+        <h2 style="font-size:1rem;font-weight:700;color:var(--app-text);margin:0;">Formats</h2>
+        <span style="font-size:0.75rem;font-weight:600;color:#94a3b8;background:#1e293b;border:1px solid #334155;border-radius:12px;padding:0.18rem 0.6rem;">
+            {{ cc_owned_count }} / {{ cc_total }} owned
+        </span>
+    </div>
+
+    {# ── Format cards ── #}
+    <div class="cc-format-grid">
+        {% for r in cc_format_rows %}
+        <div class="cc-format-card">
+            <div class="cc-format-tag">{{ r.style_tag }}</div>
+            <div class="cc-format-label">{{ r.label }}</div>
+            <div class="cc-format-dims">{{ r.dims }}</div>
+
+            {% if r.state == "owned" %}
+                <span class="cc-badge-owned">Owned ✓</span>
+                <button class="cc-btn-owned" disabled>Owned ✓</button>
+            {% elif r.state == "get_card" %}
+                <span class="cc-badge-get">{{ r.credit_cost }} CR</span>
+                <form method="POST" action="/my-cards/designs/challenge_card/{{ r.design_id }}/get">
+                    <button type="submit" class="cc-btn-get">Get Card — {{ r.credit_cost }} CR</button>
+                </form>
+            {% else %}
+                <span class="cc-badge-locked">{{ r.credit_cost }} CR 🔒</span>
+                <button class="cc-btn-locked" disabled>Not enough credits</button>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    {# ── View Challenge Results CTA ── #}
+    <div class="cc-results-cta">
+        <a href="/challenges/results">View Challenge Results →</a>
+    </div>
 
 </div>
-
-<script>
-function ccSelectPlatform(btn) {
-    const sel = btn.closest('.cc-platform-selector');
-    sel.querySelectorAll('.cc-plat-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    const wrapId   = btn.dataset.wrap;
-    const wrap     = document.getElementById(wrapId);
-    const iframe   = wrap ? wrap.querySelector('.cc-preview-iframe') : null;
-    const isStory  = btn.dataset.isStory === '1';
-    const exportId = btn.dataset.exportbtn;
-    const exportEl = exportId ? document.getElementById(exportId) : null;
-
-    if (iframe) {
-        iframe.src = btn.dataset.preview;
-    }
-    if (wrap) {
-        if (isStory) {
-            wrap.classList.add('story-size');
-        } else {
-            wrap.classList.remove('story-size');
-        }
-        // Re-apply correct iframe dimensions after class change
-        if (iframe) {
-            if (isStory) {
-                iframe.style.width  = '1080px';
-                iframe.style.height = '1920px';
-                iframe.style.transform = 'scale(0.075)';
-            } else {
-                iframe.style.width  = '1280px';
-                iframe.style.height = '720px';
-                iframe.style.transform = 'scale(0.2)';
-            }
-        }
-    }
-    if (exportEl && btn.dataset.export) {
-        exportEl.href = btn.dataset.export;
-    }
-}
-</script>
 {% endblock %}

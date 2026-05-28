@@ -104,14 +104,15 @@ class TestPlayerCardShop:
             assert key in ctx["context"], f"Missing context key: {key}"
 
     def test_mcs02_non_premium_design_no_cdo_not_free(self):
-        """MCS-02: non-premium design without CDO row → state='get_card' or 'locked', never 'free'."""
+        """MCS-02: 0-CR design without CDO row → state='not_available' (no free bypass)."""
         user = _make_user(balance=0)
         db   = _make_db()
         ctx  = self._call_player_shop(user, db, accessible_ids=set())
         rows = ctx["context"]["design_rows"]
         fifa_row = next(r for r in rows if r["id"] == "fifa")
         assert fifa_row["state"] != "free", "free state must not exist — all designs require ownership"
-        assert fifa_row["state"] in ("get_card", "locked")
+        # 0-CR mock design is not purchasable — must be 'not_available' (belt-and-suspenders guard)
+        assert fifa_row["state"] == "not_available"
 
     def test_mcs03_premium_get_card_state(self):
         """MCS-03: premium design, not owned, credits ≥ cost → state='get_card'."""

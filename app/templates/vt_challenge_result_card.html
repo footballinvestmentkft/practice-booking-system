@@ -1,0 +1,465 @@
+{% extends "student_base.html" %}
+
+{% block title %}Challenge Card — LFA Education Center{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '⚡' %}
+{% set _page_name = 'Challenge Card' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .rcd-container {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 4rem;
+    }
+
+    .rcd-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.8rem;
+        color: var(--app-text-muted);
+        text-decoration: none;
+        margin-bottom: 1.2rem;
+    }
+    .rcd-back:hover { color: var(--app-text); }
+
+    .rcd-summary {
+        margin-bottom: 1.5rem;
+    }
+    .rcd-summary h1 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--app-text);
+        margin: 0 0 0.3rem;
+    }
+    .rcd-summary p {
+        font-size: 0.85rem;
+        color: var(--app-text-muted);
+        margin: 0;
+    }
+
+    /* ── Selectors row ── */
+    .rcd-selectors {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.25rem;
+    }
+    .rcd-selector-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+    .rcd-selector-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--app-text-muted);
+    }
+    .rcd-selector-btns {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+    }
+
+    .rcd-style-btn {
+        padding: 0.35rem 0.9rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border-radius: 7px;
+        border: 1.5px solid var(--app-border, #2a3050);
+        background: var(--app-surface-2, #1e2335);
+        color: var(--app-text-muted);
+        cursor: pointer;
+        transition: border-color 0.12s, color 0.12s;
+    }
+    .rcd-style-btn:hover,
+    .rcd-style-btn.active {
+        border-color: var(--app-accent, #667eea);
+        color: var(--app-text);
+    }
+    .rcd-style-owned-badge {
+        font-size: 0.65rem;
+        color: #4caf50;
+        margin-left: 0.25rem;
+    }
+    .rcd-style-locked {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.35rem 0.9rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border-radius: 7px;
+        border: 1.5px solid var(--app-border, #2a3050);
+        background: var(--app-surface-2, #1e2335);
+        color: var(--app-text-muted);
+        opacity: 0.7;
+    }
+    .rcd-style-get-link {
+        font-size: 0.72rem;
+        color: var(--app-accent, #667eea);
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .rcd-style-get-link:hover { opacity: 0.8; }
+
+    .rcd-phase-btn {
+        padding: 0.35rem 0.9rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border-radius: 7px;
+        border: 1.5px solid var(--app-border, #2a3050);
+        background: var(--app-surface-2, #1e2335);
+        color: var(--app-text-muted);
+        cursor: pointer;
+        transition: border-color 0.12s, color 0.12s;
+    }
+    .rcd-phase-btn:hover,
+    .rcd-phase-btn.active {
+        border-color: var(--app-accent, #667eea);
+        color: var(--app-text);
+    }
+    .rcd-phase-btn.locked-phase {
+        opacity: 0.5;
+        cursor: default;
+        pointer-events: none;
+    }
+    .rcd-phase-lock-icon { font-size: 0.65rem; }
+
+    /* ── Preview ── */
+    .rcd-preview-area {
+        margin-bottom: 1.25rem;
+    }
+    .rcd-preview-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--app-text-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    /* 16:9 wrapper */
+    .rcd-preview-wrap {
+        position: relative;
+        width: 100%;
+        max-width: 640px;
+        background: #0a0e1a;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--app-border, #2a3050);
+    }
+    /* Aspect-ratio box trick for 16:9 */
+    .rcd-preview-wrap::before {
+        content: '';
+        display: block;
+        padding-top: 56.25%;  /* 9/16 */
+    }
+    .rcd-preview-wrap.story-size::before {
+        padding-top: 177.78%;  /* 16/9 */
+        max-width: 180px;
+    }
+    .rcd-preview-wrap.story-size {
+        max-width: 180px;
+    }
+
+    .rcd-preview-iframe {
+        position: absolute;
+        top: 0; left: 0;
+        border: none;
+        transform-origin: top left;
+    }
+    /* 16:9 : 1280×720 scaled to fill max-width:640 → scale 0.5 */
+    .rcd-preview-wrap .rcd-preview-iframe {
+        width: 1280px;
+        height: 720px;
+        transform: scale(0.5);
+    }
+    /* 9:16 : 1080×1920 scaled to fill max-width:180 → scale ~0.167 */
+    .rcd-preview-wrap.story-size .rcd-preview-iframe {
+        width: 1080px;
+        height: 1920px;
+        transform: scale(0.1667);
+    }
+
+    /* ── Action area ── */
+    .rcd-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+    }
+
+    .rcd-btn-download {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 1.2rem;
+        background: var(--app-accent, #667eea);
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.85rem;
+        border-radius: 7px;
+        text-decoration: none;
+    }
+    .rcd-btn-download:hover { opacity: 0.88; }
+    .rcd-btn-download.disabled {
+        opacity: 0.4;
+        pointer-events: none;
+        cursor: default;
+    }
+
+    .rcd-btn-get-card {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 1.2rem;
+        border: 1.5px solid var(--app-accent, #667eea);
+        color: var(--app-accent, #667eea);
+        font-weight: 700;
+        font-size: 0.85rem;
+        border-radius: 7px;
+        text-decoration: none;
+        background: transparent;
+    }
+    .rcd-btn-get-card:hover { opacity: 0.8; }
+
+    .rcd-locked-note {
+        font-size: 0.78rem;
+        color: var(--app-text-muted);
+        font-style: italic;
+    }
+
+    /* ── No formats state ── */
+    .rcd-no-formats {
+        padding: 2rem 1.5rem;
+        background: var(--app-surface-2, #1e2335);
+        border: 1px solid var(--app-border, #2a3050);
+        border-radius: 10px;
+        text-align: center;
+        margin-top: 1rem;
+    }
+    .rcd-no-formats p {
+        font-size: 0.9rem;
+        color: var(--app-text-muted);
+        margin: 0 0 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="rcd-container">
+
+    <a href="/challenges/results" class="rcd-back">← Challenge Results</a>
+
+    <div class="rcd-summary">
+        <h1>⚡ vs {{ opponent_name }} · {{ game_name }}</h1>
+        <p>
+            {% if challenge.completed_at %}
+                Completed {{ challenge.completed_at.strftime("%B %d, %Y") }}
+            {% else %}
+                {{ challenge.status.value | replace("_", " ") | title }}
+            {% endif %}
+        </p>
+    </div>
+
+    {% if not has_any_owned %}
+    {# ── No owned formats: prompt to shop ── #}
+    <div class="rcd-no-formats">
+        <p>You don't own a Challenge Card format yet. Get one to download result cards.</p>
+        <a href="/my-cards/challenge-card"
+           style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.5rem 1.2rem;
+                  background:var(--app-accent,#667eea);color:#fff;font-weight:700;
+                  font-size:0.85rem;border-radius:7px;text-decoration:none;">
+            Get a Challenge Card →
+        </a>
+    </div>
+    {% endif %}
+
+    {% if unlocked_phases or locked_phases %}
+    {# ── Selectors ── #}
+    <div class="rcd-selectors">
+
+        {# Style selector #}
+        <div class="rcd-selector-group">
+            <div class="rcd-selector-label">Format / Style</div>
+            <div class="rcd-selector-btns">
+                {% for fmt in format_rows %}
+                    {% if fmt.owned %}
+                    <button class="rcd-style-btn {% if loop.first %}active{% endif %}"
+                            data-platform="{{ fmt.design_id }}"
+                            data-owned="1"
+                            onclick="rcdSelectStyle(this)">
+                        {{ fmt.label }}<span class="rcd-style-owned-badge">✓</span>
+                    </button>
+                    {% else %}
+                    <div class="rcd-style-locked">
+                        <span>{{ fmt.label }} · {{ fmt.credit_cost }} CR 🔒</span>
+                        <a href="/my-cards/challenge-card" class="rcd-style-get-link">Get Card</a>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        {# Phase selector #}
+        <div class="rcd-selector-group">
+            <div class="rcd-selector-label">Phase</div>
+            <div class="rcd-selector-btns">
+                {% for phase in unlocked_phases %}
+                <button class="rcd-phase-btn {% if loop.first %}active{% endif %}"
+                        data-phase="{{ phase }}"
+                        data-locked="0"
+                        onclick="rcdSelectPhase(this)">
+                    {{ phase_labels.get(phase, phase.replace('_', ' ').title()) }} ✓
+                </button>
+                {% endfor %}
+                {% for phase in locked_phases %}
+                <button class="rcd-phase-btn locked-phase"
+                        data-phase="{{ phase }}"
+                        data-locked="1"
+                        disabled>
+                    {{ phase_labels.get(phase, phase.replace('_', ' ').title()) }}
+                    <span class="rcd-phase-lock-icon">🔒</span>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    {# ── Preview iframe ── #}
+    <div class="rcd-preview-area">
+        <div class="rcd-preview-label">Preview</div>
+        {% set _init_platform = format_rows | selectattr("owned") | map(attribute="design_id") | first | default("challenge_post_16_9") %}
+        {% set _init_phase    = unlocked_phases[0] if unlocked_phases else (locked_phases[0] if locked_phases else "") %}
+        <div class="rcd-preview-wrap {% if _init_platform == 'challenge_story_9_16' %}story-size{% endif %}"
+             id="rcd-preview-wrap">
+            <iframe
+                id="rcd-preview-iframe"
+                class="rcd-preview-iframe"
+                src="{% if _init_phase %}/challenges/{{ challenge_id }}/card/preview?phase={{ _init_phase }}&platform={{ _init_platform }}{% endif %}"
+                scrolling="no"
+                loading="lazy"
+                title="Challenge card preview">
+            </iframe>
+        </div>
+    </div>
+
+    {# ── Action buttons ── #}
+    <div class="rcd-actions">
+        <a id="rcd-download-btn"
+           class="rcd-btn-download {% if not unlocked_phases or not has_any_owned %}disabled{% endif %}"
+           {% if unlocked_phases and has_any_owned %}
+           href="/challenges/{{ challenge_id }}/card/export?phase={{ _init_phase }}&platform={{ _init_platform }}"
+           {% else %}
+           href="#"
+           {% endif %}
+           download>
+            ↓ Download PNG
+        </a>
+
+        {% if not has_any_owned %}
+        <a href="/my-cards/challenge-card" class="rcd-btn-get-card">
+            Get Card Format →
+        </a>
+        {% endif %}
+
+        {% if unlocked_phases and not has_any_owned %}
+        <span class="rcd-locked-note">Buy a format above to enable download.</span>
+        {% elif locked_phases and not unlocked_phases %}
+        <span class="rcd-locked-note">Complete the challenge to unlock export.</span>
+        {% endif %}
+    </div>
+
+    {% else %}
+    {# No phases at all — challenge not yet in a card-eligible state #}
+    <div style="margin-top:1.5rem;padding:1.5rem;background:var(--app-surface-2,#1e2335);
+                border:1px solid var(--app-border,#2a3050);border-radius:10px;">
+        <p style="font-size:0.88rem;color:var(--app-text-muted);margin:0;">
+            No card phases are available for this challenge yet.
+            Cards become available once the challenge has progressed.
+        </p>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+(function () {
+    var _challengeId = {{ challenge_id }};
+
+    function _activeStyleBtn() {
+        return document.querySelector('.rcd-style-btn.active');
+    }
+    function _activePhaseBtn() {
+        return document.querySelector('.rcd-phase-btn.active');
+    }
+    function _updatePreview() {
+        var styleBtn = _activeStyleBtn();
+        var phaseBtn = _activePhaseBtn();
+        if (!styleBtn || !phaseBtn) return;
+
+        var platform  = styleBtn.dataset.platform;
+        var phase     = phaseBtn.dataset.phase;
+        var isLocked  = phaseBtn.dataset.locked === '1';
+        var isOwned   = styleBtn.dataset.owned   === '1';
+        var isStory   = platform === 'challenge_story_9_16';
+
+        // Preview iframe
+        var wrap   = document.getElementById('rcd-preview-wrap');
+        var iframe = document.getElementById('rcd-preview-iframe');
+        if (wrap) {
+            if (isStory) wrap.classList.add('story-size');
+            else         wrap.classList.remove('story-size');
+        }
+        if (iframe) {
+            iframe.style.width     = isStory ? '1080px'  : '1280px';
+            iframe.style.height    = isStory ? '1920px'  : '720px';
+            iframe.style.transform = isStory ? 'scale(0.1667)' : 'scale(0.5)';
+            iframe.src = '/challenges/' + _challengeId +
+                         '/card/preview?phase=' + phase +
+                         '&platform=' + platform;
+        }
+
+        // Download button
+        var dlBtn = document.getElementById('rcd-download-btn');
+        if (dlBtn) {
+            if (isOwned && !isLocked) {
+                dlBtn.href = '/challenges/' + _challengeId +
+                             '/card/export?phase=' + phase +
+                             '&platform=' + platform;
+                dlBtn.classList.remove('disabled');
+            } else {
+                dlBtn.href = '#';
+                dlBtn.classList.add('disabled');
+            }
+        }
+    }
+
+    window.rcdSelectStyle = function (btn) {
+        document.querySelectorAll('.rcd-style-btn').forEach(function (b) {
+            b.classList.remove('active');
+        });
+        btn.classList.add('active');
+        _updatePreview();
+    };
+
+    window.rcdSelectPhase = function (btn) {
+        document.querySelectorAll('.rcd-phase-btn').forEach(function (b) {
+            b.classList.remove('active');
+        });
+        btn.classList.add('active');
+        _updatePreview();
+    };
+}());
+</script>
+{% endblock %}

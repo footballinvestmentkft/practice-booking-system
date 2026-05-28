@@ -613,6 +613,18 @@
     gap: 0.35rem;
     flex-shrink: 0;
 }
+.ce-locked-note {
+    margin-top: 0.6rem;
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.45);
+}
+.ce-locked-note a {
+    color: var(--app-accent, #667eea);
+    text-decoration: none;
+    font-weight: 600;
+    margin-left: 0.25rem;
+}
+.ce-locked-note a:hover { opacity: 0.8; }
 
 /* Publish status elements */
 .publish-status-dot {
@@ -1107,10 +1119,12 @@
                     <a href="/players/{{ user.id }}/card" target="_blank"
                        class="publish-view-link">View ↗</a>
                     <button class="btn-publish-card" id="btn-publish-card"
-                            onclick="publishCard()">Publish Card</button>
+                            onclick="publishCard()"
+                            {% if not active_variant_owned %}disabled{% endif %}>Publish Card</button>
                 </div>
                 <div class="ce-export-zone">
                     <button id="btn-export-card" class="btn-export-card" onclick="exportCard()"
+                            {% if not active_variant_owned %}disabled{% endif %}
                             title="Download PNG — Default exports at native card proportions">⬇ PNG</button>
                     <button id="btn-export-video" class="btn-export-card btn-export-video"
                             style="display:none;" onclick="exportCardVideo()"
@@ -1120,6 +1134,12 @@
                             title="[DEBUG] Raw WebM">⬇ WebM</button>
                 </div>
             </div>
+            {% if not active_variant_owned %}
+            <div class="ce-locked-note">
+                This design requires a Player Card.
+                <a href="/my-cards/player-card">Get Player Card →</a>
+            </div>
+            {% endif %}
 
         </div>{# /ce-preview-area #}
 
@@ -1264,6 +1284,10 @@ const _cardUserId = {{ user.id }};
 let _currentPlatform = '{{ active_card_platform }}';
 let _currentVariant  = '{{ active_card_variant }}';
 let _currentTheme    = '{{ active_card_theme }}';
+// Server-rendered CDO ownership for the currently active draft variant.
+// Controls whether Publish and PNG export are enabled UI-side.
+// Reset to true after variant switch via location.reload() (server re-evaluates).
+let _activeVariantOwned = {{ active_variant_owned | tojson }};
 
 // Animated video export capability: set of platforms supported for the
 // current variant (server-rendered from ANIMATED_EXPORT_CAPABLE registry).
@@ -1370,7 +1394,8 @@ function _updatePublishIndicator() {
     dot.className   = 'publish-status-dot ' + (published ? 'published' : 'unpublished');
     text.textContent = published ? 'Public card is up to date' : 'Unpublished changes';
     const btn = document.getElementById('btn-publish-card');
-    if (btn) btn.disabled = published;
+    // Publish requires BOTH: draft in sync AND user owns the active design.
+    if (btn) btn.disabled = published || !_activeVariantOwned;
 }
 
 async function publishCard() {
@@ -1424,7 +1449,8 @@ async function exportCard() {
         alert('Export failed — please try again.');
     } finally {
         btn.textContent = origText;
-        btn.disabled = false;
+        // Do not re-enable if user does not own the active design.
+        btn.disabled = !_activeVariantOwned;
     }
 }
 

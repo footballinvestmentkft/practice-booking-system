@@ -59854,6 +59854,73 @@
         ]
       }
     },
+    "/challenges/results": {
+      "get": {
+        "description": "Challenge result/history list \u2014 terminal challenges only, paginated.",
+        "operationId": "challenge_results_challenges_results_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "title": "Status",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Challenge Results",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/challenges/send": {
       "get": {
         "operationId": "challenge_send_form_challenges_send_get",
@@ -60074,6 +60141,49 @@
           }
         },
         "summary": "Cancel Challenge",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/challenges/{challenge_id}/card": {
+      "get": {
+        "description": "Challenge result card \u2014 style selector, phase selector, preview, download.",
+        "operationId": "challenge_result_card_challenges__challenge_id__card_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "challenge_id",
+            "required": true,
+            "schema": {
+              "title": "Challenge Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Challenge Result Card",
         "tags": [
           "web"
         ]
@@ -62687,7 +62797,7 @@
     },
     "/my-cards/challenge-card": {
       "get": {
-        "description": "Challenge Card Collection \u2014 format shop header + phase-based card manager.",
+        "description": "Challenge Card format shop \u2014 browse and purchase Challenge Card formats.",
         "operationId": "my_cards_challenge_card_my_cards_challenge_card_get",
         "responses": {
           "200": {

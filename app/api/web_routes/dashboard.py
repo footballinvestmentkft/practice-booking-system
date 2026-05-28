@@ -420,7 +420,8 @@ async def lfa_player_card_editor(
         }
         for v in _get_all_variants()
     ]
-    active_card_variant = card_draft.draft_variant
+    active_card_variant  = card_draft.draft_variant
+    active_variant_owned = _is_design_accessible(db, user.id, "player_card", active_card_variant)
 
     # Animated video export capability: list of platforms supported for the
     # current variant. Used by the card editor to show/hide the video button.
@@ -484,6 +485,7 @@ async def lfa_player_card_editor(
             "active_card_theme": active_card_theme,
             "card_variants": card_variants,
             "active_card_variant": active_card_variant,
+            "active_variant_owned": active_variant_owned,
             "active_card_platform": card_draft.draft_platform or "default",
             "show_variant_picker": True,  # page is LFA Football Player only
             "animated_capable_platforms": animated_capable_platforms,
@@ -1370,6 +1372,13 @@ async def student_publish_card(
     if not lfa_license:
         return JSONResponse({"ok": False, "error": "No active LFA Football Player license"}, status_code=404)
     draft = _CardDraftService.get_player_card_draft(db, user.id)
+    # CDO guard — user must own the draft variant before it can be published.
+    from ...services.card_design_service import is_design_accessible as _is_da_pub  # noqa: E402
+    if not _is_da_pub(db, user.id, "player_card", draft.draft_variant):
+        return JSONResponse(
+            {"ok": False, "error": "Design not owned — purchase it first to publish"},
+            status_code=403,
+        )
     _CardDraftService.publish_draft(db, draft)
     return JSONResponse({
         "ok": True,

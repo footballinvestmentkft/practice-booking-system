@@ -246,7 +246,10 @@
 
 {# ── Terminal challenges ── #}
 {% if terminal_rows %}
-<div class="ch-section-title">Recent (last {{ terminal_rows | length }})</div>
+<div class="ch-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+    <span>Recent (last {{ terminal_rows | length }})</span>
+    <a href="/challenges/results" style="font-size:0.75rem;font-weight:600;color:var(--app-accent,#667eea);text-decoration:none;">View All →</a>
+</div>
 {% for row in terminal_rows %}
 <div class="ch-card">
     <div class="ch-card-top">

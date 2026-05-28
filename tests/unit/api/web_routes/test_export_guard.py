@@ -80,9 +80,11 @@ class TestPlayerCardExportGuard:
         fake_license = _make_license(license_variant)
         fake_target  = MagicMock()
         fake_target.id = user.id
+        fake_draft = MagicMock()
+        fake_draft.published_variant = None  # falls back to license.card_variant
 
         db.query.return_value.filter.return_value.first.side_effect = [
-            fake_target, fake_license
+            fake_target, fake_license, fake_draft
         ]
 
         with patch(f"{_PUB}._export_svc") as mock_svc, \

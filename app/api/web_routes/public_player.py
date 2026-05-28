@@ -631,9 +631,16 @@ async def export_player_card(
     if not target_license:
         raise HTTPException(status_code=404, detail="No active LFA Player license")
 
-    # Semantic validation: reject unsupported design/platform pairs before Playwright.
-    # "default" platform uses ?native_export=1 (browser template, no bucket) → skip.
-    card_variant_id = target_license.card_variant or "fifa"
+    # Resolve the variant that will actually be rendered — must match what the
+    # render route uses (card_draft.published_variant, Phase 4D-2 primary source).
+    # Falls back to UserLicense.card_variant for users without a draft row.
+    from app.services.card_draft_service import CardDraftService as _CDS_export
+    _export_draft = _CDS_export.get_player_card_draft(db, user_id)
+    card_variant_id = (
+        _export_draft.published_variant
+        or target_license.card_variant
+        or "fifa"
+    )
 
     # Design ownership guard — all designs require entitlement, including fifa.
     # Admin bypass: admins may export any card regardless of ownership.

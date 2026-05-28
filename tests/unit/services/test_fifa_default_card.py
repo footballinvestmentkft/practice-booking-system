@@ -631,17 +631,18 @@ def _editor_html():
     return _read(_TPL_EDITOR)
 
 
-def test_ed01_download_button_not_disabled_for_default():
-    """Download PNG button must not have a Jinja disabled condition for default."""
+def test_ed01_download_button_not_unconditionally_disabled():
+    """Download PNG button must not be hardcoded-disabled; CDO conditional is allowed."""
+    import re as _re
     html = _editor_html()
-    # Find the btn-export-card button region
-    btn_match = re.search(
-        r'id="btn-export-card"[^>]*>', html, re.DOTALL
-    )
+    btn_match = _re.search(r'id="btn-export-card"[^>]*>', html, _re.DOTALL)
     assert btn_match, "btn-export-card button not found"
     btn_tag = btn_match.group(0)
-    assert "disabled" not in btn_tag, (
-        f"btn-export-card must not have 'disabled' in its opening tag; got: {btn_tag!r}"
+    # Remove entire Jinja2 if-blocks including their content: {%...%}...{%...%}
+    stripped = _re.sub(r'\{%[^%]*%\}.*?\{%[^%]*%\}', '', btn_tag, flags=_re.DOTALL)
+    assert "disabled" not in stripped, (
+        f"btn-export-card must not be hardcoded-disabled (CDO conditional is OK); "
+        f"got stripped tag: {stripped!r}"
     )
 
 
