@@ -11,155 +11,188 @@
 
 {% block extra_styles %}
 <style>
-    .my-cards-container {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 1.5rem 1rem 2.5rem;
-    }
+  .mc-hub {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 3rem;
+  }
 
-    .my-cards-header {
-        margin-bottom: 2rem;
-    }
+  /* ── Header bar ── */
+  .mc-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .mc-header-bar h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--app-text, #f1f5f9);
+    margin: 0;
+  }
+  .mc-credits-badge {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 20px;
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
+    color: #94a3b8;
+  }
+  .mc-credits-badge strong { color: #FFD200; }
 
-    .my-cards-header h1 {
-        font-size: 1.6rem;
-        font-weight: 700;
-        color: var(--app-text);
-        margin: 0 0 0.35rem;
-    }
+  /* ── Flash ── */
+  .mc-flash {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+    font-size: 0.9rem;
+  }
+  .mc-flash-success { background: #14532d; color: #86efac; border: 1px solid #166534; }
 
-    .my-cards-header p {
-        color: var(--app-text-muted);
-        font-size: 0.95rem;
-        margin: 0;
-    }
+  /* ── Tile grid ── */
+  .mc-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+  }
 
-    /* ── Card tile grid ─────────────────────────────────────────────────────── */
-    .card-tile-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1.25rem;
-    }
+  .mc-tile {
+    background: var(--app-card, #1a1f2e);
+    border: 1px solid var(--app-border, #252d42);
+    border-radius: 14px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: border-color 0.15s;
+  }
+  .mc-tile:hover { border-color: #334155; }
 
-    @media (max-width: 700px) {
-        .card-tile-grid { grid-template-columns: repeat(2, 1fr); }
-    }
+  .mc-tile-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+  }
+  .mc-tile-icon { font-size: 2rem; line-height: 1; flex-shrink: 0; }
+  .mc-tile-meta { flex: 1; min-width: 0; }
+  .mc-tile-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--app-text, #f1f5f9);
+    margin: 0 0 0.25rem;
+  }
+  .mc-tile-desc {
+    font-size: 0.78rem;
+    color: var(--app-text-muted, #64748b);
+    margin: 0;
+  }
 
-    @media (max-width: 420px) {
-        .card-tile-grid { grid-template-columns: 1fr; }
-    }
+  /* ── Count badge ── */
+  .mc-count-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #94a3b8;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 0.22rem 0.65rem;
+    align-self: flex-start;
+  }
+  .mc-count-badge.mc-count-complete {
+    color: #86efac;
+    background: rgba(20,83,45,.25);
+    border-color: #166534;
+  }
 
-    .card-tile {
-        display: flex;
-        flex-direction: column;
-        background: var(--app-card);
-        border-radius: 14px;
-        padding: 1.5rem 1.25rem 1.25rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-        text-decoration: none;
-        color: inherit;
-        border-top: 4px solid var(--tile-color, #667eea);
-        transition: box-shadow 0.2s, transform 0.15s;
-        min-height: 140px;
-    }
-
-    a.card-tile:hover {
-        box-shadow: 0 6px 20px rgba(0,0,0,0.13);
-        transform: translateY(-2px);
-    }
-
-    .card-tile.coming-soon {
-        opacity: 0.55;
-        cursor: default;
-        border-top-color: #cbd5e1;
-    }
-
-    .tile-icon {
-        font-size: 2rem;
-        line-height: 1;
-        margin-bottom: 0.65rem;
-    }
-
-    .tile-title {
-        font-size: 1.05rem;
-        font-weight: 700;
-        color: var(--app-text);
-        margin: 0 0 0.3rem;
-    }
-
-    .tile-desc {
-        font-size: 0.82rem;
-        color: var(--app-text-muted);
-        margin: 0 0 0.75rem;
-        line-height: 1.4;
-        flex: 1;
-    }
-
-    .tile-badge {
-        display: inline-block;
-        font-size: 0.72rem;
-        font-weight: 700;
-        padding: 0.2rem 0.55rem;
-        border-radius: 20px;
-        letter-spacing: 0.03em;
-        align-self: flex-start;
-    }
-
-    .tile-badge.active {
-        background: #d1fae5;
-        color: #065f46;
-    }
-
-    .tile-badge.soon {
-        background: #f1f5f9;
-        color: #64748b;
-    }
+  /* ── CTA button ── */
+  .mc-browse-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.55rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    background: #FFD200;
+    color: #0f172a;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+    text-align: center;
+  }
+  .mc-browse-btn:hover { opacity: 0.88; color: #0f172a; text-decoration: none; }
 </style>
 {% endblock %}
 
 {% block student_content %}
-<div class="my-cards-container">
+<div class="mc-hub">
 
-    <div class="my-cards-header">
-        <h1>My Cards</h1>
-        <p>All your digital cards in one place — player profiles, milestone cards, and more.</p>
-    </div>
+  <div class="mc-header-bar">
+    <h1>My Cards</h1>
+    <span class="mc-credits-badge">Balance: <strong>{{ user.credit_balance }} CR</strong></span>
+  </div>
 
-    <div class="card-tile-grid">
-        {% for spec in card_specs %}
-        {% if spec.content_contract.version >= 1 %}
-        {# ── Active tile ── #}
-        <a href="/my-cards/{{ spec.card_type_id | replace('_', '-') }}"
-           class="card-tile"
-           style="--tile-color: #667eea;">
-            <div class="tile-icon">
-                {%- if spec.card_type_id == 'player_card' %}🎴
-                {%- elif spec.card_type_id == 'welcome_card' %}👋
-                {%- else %}🃏
-                {%- endif %}
-            </div>
-            <div class="tile-title">{{ spec.label }}</div>
-            <div class="tile-desc">{{ spec.description }}</div>
-            <span class="tile-badge active">Active</span>
-        </a>
-        {% else %}
-        {# ── Coming Soon tile ── #}
-        <div class="card-tile coming-soon">
-            <div class="tile-icon">
-                {%- if spec.card_type_id == 'match_card' %}⚽
-                {%- elif spec.card_type_id == 'event_card' %}📅
-                {%- elif spec.card_type_id == 'birthday_card' %}🎂
-                {%- elif spec.card_type_id == 'badge_card' %}🏅
-                {%- else %}🃏
-                {%- endif %}
-            </div>
-            <div class="tile-title">{{ spec.label }}</div>
-            <div class="tile-desc">{{ spec.description }}</div>
-            <span class="tile-badge soon">Coming Soon</span>
+  {# ── Flash: purchase success ── #}
+  {% if flash_purchased %}
+  <div class="mc-flash mc-flash-success">
+    ✓ {{ flash_purchased }} unlocked and added to your collection.
+  </div>
+  {% endif %}
+
+  {# ── Tile grid ── #}
+  <div class="mc-tiles">
+
+    {# Player Card tile #}
+    <div class="mc-tile">
+      <div class="mc-tile-top">
+        <span class="mc-tile-icon">🎴</span>
+        <div class="mc-tile-meta">
+          <div class="mc-tile-title">Player Card</div>
+          <p class="mc-tile-desc">Your LFA player identity card. Choose from {{ pc_total }} designs.</p>
         </div>
-        {% endif %}
-        {% endfor %}
+      </div>
+      <span class="mc-count-badge{% if pc_owned_count == pc_total %} mc-count-complete{% endif %}">
+        {{ pc_owned_count }} / {{ pc_total }} owned
+      </span>
+      <a href="/my-cards/player-card" class="mc-browse-btn">Browse Designs</a>
     </div>
+
+    {# Welcome Card tile #}
+    <div class="mc-tile">
+      <div class="mc-tile-top">
+        <span class="mc-tile-icon">👋</span>
+        <div class="mc-tile-meta">
+          <div class="mc-tile-title">Welcome Card</div>
+          <p class="mc-tile-desc">Your onboarding milestone card in {{ wc_total }} platform formats.</p>
+        </div>
+      </div>
+      <span class="mc-count-badge{% if wc_owned_count == wc_total %} mc-count-complete{% endif %}">
+        {{ wc_owned_count }} / {{ wc_total }} owned
+      </span>
+      <a href="/my-cards/welcome-card" class="mc-browse-btn">Browse Formats</a>
+    </div>
+
+    {# Challenge Card tile #}
+    <div class="mc-tile">
+      <div class="mc-tile-top">
+        <span class="mc-tile-icon">⚡</span>
+        <div class="mc-tile-meta">
+          <div class="mc-tile-title">Challenge Card</div>
+          <p class="mc-tile-desc">Social card for VT challenge results in {{ cc_total }} formats.</p>
+        </div>
+      </div>
+      <span class="mc-count-badge{% if cc_owned_count == cc_total %} mc-count-complete{% endif %}">
+        {{ cc_owned_count }} / {{ cc_total }} owned
+      </span>
+      <a href="/my-cards/challenge-card" class="mc-browse-btn">Browse Formats</a>
+    </div>
+
+  </div>
 
 </div>
 {% endblock %}

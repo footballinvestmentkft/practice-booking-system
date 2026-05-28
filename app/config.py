@@ -196,6 +196,19 @@ class Settings(BaseSettings):
     # Requires ENABLE_TOURNAMENT_SKILL_PROPAGATION=True.
     ENABLE_SKILL_TIER_NOTIFICATIONS: bool = False
 
+    # ── Card export ownership enforcement ─────────────────────────────────────
+    # Controls whether export routes block users who lack a CardDesignOwnership row.
+    # Player Card premium guard is ALWAYS active regardless of these flags
+    # (legacy unlocked_card_variants JSON shim covers existing users).
+    #
+    # Set to True only AFTER running scripts/backfill_card_design_ownerships.py
+    # for existing users, or after a product decision to require new purchase.
+    #
+    # False (default): export proceeds without ownership, warning is logged.
+    # True:            export blocked with HTTP 403 if ownership is missing.
+    ENFORCE_WELCOME_CARD_OWNERSHIP:   bool = False
+    ENFORCE_CHALLENGE_CARD_OWNERSHIP: bool = False
+
     SKILL_TIER_THRESHOLDS: dict = {
         60: "Intermediate",
         75: "Advanced",

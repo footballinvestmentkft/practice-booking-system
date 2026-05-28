@@ -60597,7 +60597,7 @@
     },
     "/dashboard/card-variant": {
       "post": {
-        "description": "Apply a card layout variant (must already be unlocked for premium variants).",
+        "description": "Apply a card layout variant (requires CardDesignOwnership entitlement).",
         "operationId": "student_set_card_variant_dashboard_card_variant_post",
         "requestBody": {
           "content": {
@@ -62664,7 +62664,7 @@
     },
     "/my-cards": {
       "get": {
-        "description": "Hub page listing all card types \u2014 active (v\u22651) and coming-soon (v0).",
+        "description": "Hub \u2014 format-count tiles for all three card families.",
         "operationId": "my_cards_hub_my_cards_get",
         "responses": {
           "200": {
@@ -62687,7 +62687,7 @@
     },
     "/my-cards/challenge-card": {
       "get": {
-        "description": "Challenge Card Collection \u2014 phase-based card manager with inline preview.",
+        "description": "Challenge Card Collection \u2014 format shop header + phase-based card manager.",
         "operationId": "my_cards_challenge_card_my_cards_challenge_card_get",
         "responses": {
           "200": {
@@ -62708,15 +62708,68 @@
         ]
       }
     },
-    "/my-cards/player-card": {
-      "get": {
-        "description": "Detail entry point for Player Card \u2014 redirects to the card editor.",
-        "operationId": "my_cards_player_card_my_cards_player_card_get",
+    "/my-cards/designs/{card_type_id}/{design_id}/get": {
+      "post": {
+        "description": "Purchase a card design entitlement (credit deduction + ownership row).",
+        "operationId": "get_card_my_cards_designs__card_type_id___design_id__get_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "card_type_id",
+            "required": true,
+            "schema": {
+              "title": "Card Type Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "design_id",
+            "required": true,
+            "schema": {
+              "title": "Design Id",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Card",
+        "tags": [
+          "web",
+          "my-cards"
+        ]
+      }
+    },
+    "/my-cards/player-card": {
+      "get": {
+        "description": "Player Card format shop \u2014 browse and purchase Player Card designs.",
+        "operationId": "my_cards_player_card_my_cards_player_card_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
               }
             },
             "description": "Successful Response"
@@ -62729,15 +62782,66 @@
         ]
       }
     },
-    "/my-cards/welcome-card": {
+    "/my-cards/shop": {
       "get": {
-        "description": "Detail entry point for Welcome Card \u2014 redirects to the onboarding card.",
-        "operationId": "my_cards_welcome_card_my_cards_welcome_card_get",
+        "description": "Retired shop page \u2014 redirects to the appropriate family shop.",
+        "operationId": "my_cards_shop_my_cards_shop_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "tab",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tab"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "My Cards Shop",
+        "tags": [
+          "web",
+          "my-cards"
+        ]
+      }
+    },
+    "/my-cards/welcome-card": {
+      "get": {
+        "description": "Welcome Card format shop \u2014 browse and purchase Welcome Card platform formats.",
+        "operationId": "my_cards_welcome_card_my_cards_welcome_card_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
               }
             },
             "description": "Successful Response"

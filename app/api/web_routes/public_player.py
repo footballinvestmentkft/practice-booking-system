@@ -634,6 +634,17 @@ async def export_player_card(
     # Semantic validation: reject unsupported design/platform pairs before Playwright.
     # "default" platform uses ?native_export=1 (browser template, no bucket) → skip.
     card_variant_id = target_license.card_variant or "fifa"
+
+    # Design ownership guard — all designs require entitlement, including fifa.
+    # Admin bypass: admins may export any card regardless of ownership.
+    if current_user.role != UserRole.ADMIN:
+        from app.services.card_design_service import is_design_accessible as _is_accessible
+        if not _is_accessible(db, current_user.id, "player_card", card_variant_id):
+            raise HTTPException(
+                status_code=403,
+                detail=f"Design {card_variant_id!r} not owned. Get it at /my-cards/shop",
+            )
+
     if platform != "default":
         _bucket = _EXPORT_FORMAT_BUCKETS[platform]  # safe: CANVAS_SIZES invariant guarantees coverage
         _supported = _get_supported_buckets(card_variant_id, db)
@@ -765,6 +776,16 @@ async def export_player_card_video(
 
     # Animated capability check — variant comes from DB, never from URL
     card_variant_id = target_license.card_variant or "fifa"
+
+    # Design ownership guard — same rules as PNG export.
+    if current_user.role != UserRole.ADMIN:
+        from app.services.card_design_service import is_design_accessible as _is_accessible
+        if not _is_accessible(db, current_user.id, "player_card", card_variant_id):
+            raise HTTPException(
+                status_code=403,
+                detail=f"Design {card_variant_id!r} not owned. Get it at /my-cards/shop",
+            )
+
     if not _export_svc.is_animated_capable(card_variant_id, platform):
         raise HTTPException(
             status_code=422,

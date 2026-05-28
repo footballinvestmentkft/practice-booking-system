@@ -1021,6 +1021,17 @@ async def challenge_card_export(
     if user.id not in (ch.challenger_id, ch.challenged_id):
         raise HTTPException(status_code=403, detail="Participants only")
 
+    # Challenge Card ownership guard — every format requires a CDO row.
+    # Admin bypass: admins may export any format regardless of ownership.
+    from app.models.user import UserRole as _UserRole  # noqa: PLC0415
+    if user.role != _UserRole.ADMIN:
+        from app.services.card_design_service import is_design_accessible as _is_accessible  # noqa: PLC0415
+        if not _is_accessible(db, user.id, "challenge_card", platform):
+            raise HTTPException(
+                status_code=403,
+                detail="Challenge Card not owned. Purchase it at /my-cards/challenge-card",
+            )
+
     is_challenger = user.id == ch.challenger_id
     my_attempt_id = ch.challenger_attempt_id if is_challenger else ch.challenged_attempt_id
     my_attempt = (

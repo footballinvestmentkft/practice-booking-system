@@ -1047,6 +1047,16 @@ async def export_onboarding_welcome_card(
     if redirect:
         return redirect
 
+    # Welcome Card ownership guard — every format requires a CDO row.
+    # Admin bypass: admins may export any format regardless of ownership.
+    if user.role != UserRole.ADMIN:
+        from app.services.card_design_service import is_design_accessible as _is_accessible
+        if not _is_accessible(db, user.id, "welcome_card", platform):
+            raise HTTPException(
+                status_code=403,
+                detail="Welcome Card not owned. Purchase it at /my-cards/welcome-card",
+            )
+
     if platform not in _export_svc.CANVAS_SIZES:
         valid = list(_export_svc.CANVAS_SIZES)
         raise HTTPException(

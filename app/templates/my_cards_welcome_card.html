@@ -1,0 +1,142 @@
+{% extends "student_base.html" %}
+
+{% block title %}Welcome Card — LFA Education Center{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '👋' %}
+{% set _page_name = 'Welcome Card' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+{% include "includes/mc_format_grid.html" %}
+<style>
+  .mcw-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 4rem;
+  }
+  .mcw-breadcrumb {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 1.25rem;
+  }
+  .mcw-breadcrumb a { color: #94a3b8; text-decoration: none; }
+  .mcw-breadcrumb a:hover { color: #f1f5f9; }
+  .mcw-breadcrumb span { margin: 0 0.35rem; }
+  .mcw-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .mcw-header h1 { font-size: 1.4rem; font-weight: 700; color: #f8fafc; margin: 0; }
+  .mcw-credits-badge {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 20px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.85rem;
+    color: #94a3b8;
+  }
+  .mcw-credits-badge strong { color: #FFD200; }
+  .mcw-desc {
+    font-size: 0.88rem;
+    color: #64748b;
+    margin-bottom: 1.5rem;
+    max-width: 600px;
+  }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="mcw-wrap">
+
+  <nav class="mcw-breadcrumb" aria-label="Breadcrumb">
+    <a href="/my-cards">My Cards</a>
+    <span>›</span>
+    <span>Welcome Card</span>
+  </nav>
+
+  <div class="mcw-header">
+    <h1>Welcome Card</h1>
+    <span class="mcw-credits-badge">Balance: <strong>{{ user.credit_balance }} CR</strong></span>
+  </div>
+
+  <p class="mcw-desc">
+    Your onboarding milestone card in different platform formats.
+    Purchase a format to unlock its export. Each format is independently owned.
+  </p>
+
+  {# ── Flash messages ── #}
+  {% if flash_purchased %}
+  <div class="mfg-flash mfg-flash-success">
+    ✓ Format unlocked — you can now export your Welcome Card in this format.
+  </div>
+  {% endif %}
+  {% if flash_error == "credits" %}
+  <div class="mfg-flash mfg-flash-error">Not enough credits to purchase this format.</div>
+  {% elif flash_error == "owned" %}
+  <div class="mfg-flash mfg-flash-error">You already own this format.</div>
+  {% elif flash_error == "invalid" %}
+  <div class="mfg-flash mfg-flash-error">Unknown format.</div>
+  {% endif %}
+
+  {# ── Section header ── #}
+  <div class="mfg-section-hdr">
+    <h2>Formats</h2>
+    <span class="mfg-count-badge">{{ owned_count }} / {{ total_count }} owned</span>
+  </div>
+
+  {# ── Format grid ── #}
+  <div class="mfg-grid">
+    {% for r in format_rows %}
+    <div class="mfg-card">
+
+      {# Preview with watermark overlay for unowned #}
+      <div class="mfg-preview-wrap{% if r.state != 'owned' %} mfg-locked{% endif %}">
+        <iframe
+          class="mfg-preview-iframe"
+          src="{{ r.preview_url }}"
+          loading="lazy"
+          scrolling="no"
+          title="{{ r.label }} preview"
+        ></iframe>
+      </div>
+
+      {# Metadata #}
+      <p class="mfg-style-tag">{{ r.style_tag }}</p>
+      <p class="mfg-label">{{ r.label }}</p>
+      <p class="mfg-dims">{{ r.dims }}</p>
+
+      {# State badge #}
+      {% if r.state == "owned" %}
+        <span class="mfg-badge mfg-badge-owned">Owned ✓</span>
+      {% elif r.state == "purchasable" %}
+        <span class="mfg-badge mfg-badge-get">{{ r.credit_cost }} CR</span>
+      {% else %}
+        <span class="mfg-badge mfg-badge-locked">{{ r.credit_cost }} CR 🔒</span>
+      {% endif %}
+
+      {# CTA #}
+      <div class="mfg-cta">
+        {% if r.state == "owned" %}
+          <a href="{{ r.export_url }}" class="mfg-btn mfg-btn-download">Download PNG</a>
+        {% elif r.state == "purchasable" %}
+          <form method="POST" action="/my-cards/designs/welcome_card/{{ r.design_id }}/get">
+            <button type="submit" class="mfg-btn mfg-btn-get">Get Card — {{ r.credit_cost }} CR</button>
+          </form>
+        {% else %}
+          <button class="mfg-btn mfg-btn-disabled" disabled>Not enough credits</button>
+        {% endif %}
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}
