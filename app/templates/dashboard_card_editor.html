@@ -187,8 +187,6 @@
     border-color: var(--tile-accent, var(--ce-accent));
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--tile-accent, var(--ce-accent)) 22%, transparent);
 }
-.ce-design-tile.locked { opacity: 0.62; }
-.ce-design-tile.locked:hover { opacity: 0.85; }
 
 /* Mini card art — two pseudo-elements, no images, works everywhere */
 .ce-design-tile-art {
@@ -234,13 +232,6 @@
     text-overflow: ellipsis;
     line-height: 1;
 }
-.ce-design-tile-lock {
-    font-size: 0.58rem;
-    color: rgba(255,255,255,0.38);
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-
 /* ── Layout tiles (Card Layout section) ─────────────────────────────────────── */
 /* Unavailable / previewing states not in base ce-design-tile — added here */
 .ce-layout-tile.unavailable { opacity: 0.55; cursor: pointer; }
@@ -613,18 +604,17 @@
     gap: 0.35rem;
     flex-shrink: 0;
 }
-.ce-locked-note {
+.ce-empty-state {
     margin-top: 0.6rem;
     font-size: 0.78rem;
     color: rgba(255,255,255,0.45);
 }
-.ce-locked-note a {
+.ce-empty-state a {
     color: var(--app-accent, #667eea);
     text-decoration: none;
     font-weight: 600;
     margin-left: 0.25rem;
 }
-.ce-locked-note a:hover { opacity: 0.8; }
 
 /* Publish status elements */
 .publish-status-dot {
@@ -721,7 +711,6 @@
     .ce-design-tile        { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); }
     .ce-design-tile:hover  { background: rgba(0,0,0,0.07); border-color: rgba(0,0,0,0.18); }
     .ce-design-tile-name   { color: rgba(0,0,0,0.75); }
-    .ce-design-tile-lock   { color: rgba(0,0,0,0.38); }
     .ce-design-tile-art    { background: #dde2ec; }
     .ce-platform-tile      { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); }
     .ce-platform-tile:hover { background: rgba(0,0,0,0.07); }
@@ -834,26 +823,17 @@
                     {% if show_variant_picker and card_variants is defined %}
                     <div class="ce-section">
                         <div class="ce-section-title">Card Layout</div>
+                        {% if card_variants %}
                         <div class="ce-design-grid" id="variant-picker">
                             {% for v in card_variants %}
                             <button class="ce-design-tile ce-layout-tile
-                                           {% if v.id == active_card_variant %}active{% endif %}
-                                           {% if not v.unlocked %}locked{% endif %}
-                                           {% if not v.available %}unavailable{% endif %}"
+                                           {% if v.id == active_card_variant %}active{% endif %}"
                                     data-variant="{{ v.id }}"
-                                    title="{{ v.description }}{% if not v.available %} · Preview only{% elif v.is_premium and not v.unlocked %} · Unlock for {{ v.credit_cost }} CR{% endif %}"
-                                    onclick="{% if v.available %}setCardVariant('{{ v.id }}', {{ 'true' if v.unlocked else 'false' }}, '{{ v.label }}', {{ v.credit_cost }}){% else %}previewVariant('{{ v.id }}'){% endif %}">
+                                    title="{{ v.description }}"
+                                    onclick="setCardVariant('{{ v.id }}')">
                                 <div class="ce-design-tile-art"></div>
                                 <div class="ce-design-tile-footer">
-                                    <span class="ce-design-tile-name">
-                                        {%- if not v.available -%}⏳&thinsp;
-                                        {%- elif v.is_premium and not v.unlocked -%}🔒&thinsp;
-                                        {%- endif -%}
-                                        {{ v.label }}
-                                        {%- if v.is_premium and not v.unlocked and v.available -%}
-                                        <span class="var-cost">&thinsp;{{ v.credit_cost }}&thinsp;CR</span>
-                                        {%- endif -%}
-                                    </span>
+                                    <span class="ce-design-tile-name">{{ v.label }}</span>
                                     <a href="/players/{{ user.id }}/card?preview={{ v.id }}" target="_blank"
                                        onclick="event.stopPropagation();"
                                        title="Preview {{ v.label }} in new tab"
@@ -862,6 +842,12 @@
                             </button>
                             {% endfor %}
                         </div>
+                        {% else %}
+                        <div class="ce-empty-state">
+                            No Player Card designs yet.
+                            <a href="/shop/cards/player">Browse Player Card designs →</a>
+                        </div>
+                        {% endif %}
                     </div>
                     {% endif %}
 
@@ -871,17 +857,13 @@
                         <div class="ce-design-grid" id="theme-picker">
                             {% for t in card_themes %}
                             <button class="ce-design-tile
-                                           {% if t.id == active_card_theme %}active{% endif %}
-                                           {% if not t.unlocked %}locked{% endif %}"
+                                           {% if t.id == active_card_theme %}active{% endif %}"
                                     style="--tile-accent: {{ t.dot_color }};"
-                                    onclick="setCardTheme('{{ t.id }}', {{ 'true' if t.unlocked else 'false' }}, '{{ t.label }}', {{ t.credit_cost }})"
-                                    title="{{ t.label }}{% if t.is_premium and not t.unlocked %} · Unlock for {{ t.credit_cost }} CR{% endif %}">
+                                    onclick="setCardTheme('{{ t.id }}')"
+                                    title="{{ t.label }}">
                                 <div class="ce-design-tile-art"></div>
                                 <div class="ce-design-tile-footer">
                                     <span class="ce-design-tile-name">{{ t.label }}</span>
-                                    {% if t.is_premium and not t.unlocked %}
-                                    <span class="ce-design-tile-lock">🔒 {{ t.credit_cost }}&thinsp;CR</span>
-                                    {% endif %}
                                 </div>
                             </button>
                             {% endfor %}
@@ -1135,9 +1117,9 @@
                 </div>
             </div>
             {% if not active_variant_owned %}
-            <div class="ce-locked-note">
-                This design requires a Player Card.
-                <a href="/my-cards/player-card">Get Player Card →</a>
+            <div class="ce-empty-state">
+                No Player Card designs yet.
+                <a href="/shop/cards/player">Browse Player Card designs →</a>
             </div>
             {% endif %}
 
@@ -1228,23 +1210,7 @@ function _updateFullscreenLink() {
     link.href = `/players/${_cardUserId}/card`;
 }
 
-async function unlockTheme(themeId, label, cost) {
-    if (!confirm(`Unlock "${label}" for ${cost} CR from your credit balance?`)) return;
-    try {
-        const r = await fetch('/dashboard/unlock-theme', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf() },
-            body: JSON.stringify({ theme: themeId }),
-        });
-        if (r.status === 403) { alert('Session expired — reloading page.'); location.reload(); return; }
-        const data = await r.json();
-        if (data.ok) { location.reload(); }
-        else { alert('❌ ' + (data.error || 'Could not unlock theme.')); }
-    } catch(e) { alert('Network error. Please try again.'); }
-}
-
-async function setCardTheme(themeId, unlocked, label, cost) {
-    if (!unlocked) { await unlockTheme(themeId, label, cost); return; }
+async function setCardTheme(themeId) {
     try {
         const r = await fetch('/dashboard/card-theme', {
             method: 'POST',
@@ -1262,21 +1228,6 @@ async function setCardTheme(themeId, unlocked, label, cost) {
             if (iframe) { iframe.src = _cardIframeSrc(); }
             _updatePublishIndicator();
         } else { alert(data.error || 'Could not apply theme.'); }
-    } catch(e) { alert('Network error. Please try again.'); }
-}
-
-async function unlockVariant(variantId, label, cost) {
-    if (!confirm(`Unlock "${label}" layout for ${cost} CR from your credit balance?`)) return;
-    try {
-        const r = await fetch('/dashboard/unlock-variant', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf() },
-            body: JSON.stringify({ variant: variantId }),
-        });
-        if (r.status === 403) { alert('Session expired — reloading page.'); location.reload(); return; }
-        const data = await r.json();
-        if (data.ok) { location.reload(); }
-        else { alert('❌ ' + (data.error || 'Could not unlock variant.')); }
     } catch(e) { alert('Network error. Please try again.'); }
 }
 
@@ -1526,8 +1477,7 @@ function previewVariant(variantId) {
     if (btn) btn.classList.add('previewing');
 }
 
-async function setCardVariant(variantId, unlocked, label, cost) {
-    if (!unlocked) { await unlockVariant(variantId, label, cost); return; }
+async function setCardVariant(variantId) {
     try {
         const r = await fetch('/dashboard/card-variant', {
             method: 'POST',

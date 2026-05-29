@@ -398,7 +398,12 @@ async def lfa_player_card_editor(
         }
         for t in _get_all_themes(db=db)
     ]
+    # CE-2: owned-only — free themes always pass (is_premium=False → always unlocked)
+    card_themes = [t for t in card_themes if t["unlocked"]]
     active_card_theme = card_draft.draft_theme
+    # Render-time theme fallback — if draft theme was filtered out, fall back to "default"
+    if not any(t["id"] == active_card_theme for t in card_themes):
+        active_card_theme = "default"
 
     # Published public card state (read-only in the editor — shown as indicator)
     published_card_theme    = card_draft.published_theme    or "default"
@@ -420,8 +425,15 @@ async def lfa_player_card_editor(
         }
         for v in _get_all_variants()
     ]
+    # CE-2: owned-only — no purchase affordance in editor (CE-2 policy)
+    card_variants = [v for v in card_variants if v["unlocked"]]
     active_card_variant  = card_draft.draft_variant
     active_variant_owned = _is_design_accessible(db, user.id, "player_card", active_card_variant)
+    # CE-2: render-time fallback — if draft points to unowned design, use first owned
+    # Does NOT write to DB; user explicit tile-click will persist the change.
+    if not active_variant_owned and card_variants:
+        active_card_variant = card_variants[0]["id"]
+        active_variant_owned = True
 
     # Animated video export capability: list of platforms supported for the
     # current variant. Used by the card editor to show/hide the video button.

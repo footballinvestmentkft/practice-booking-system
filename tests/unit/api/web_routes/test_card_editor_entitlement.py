@@ -7,8 +7,8 @@ CE-04  btn-publish-card rendered without disabled when active_variant_owned=True
 CE-05  btn-publish-card rendered with disabled when active_variant_owned=False
 CE-06  btn-export-card rendered without disabled when active_variant_owned=True
 CE-07  btn-export-card rendered with disabled when active_variant_owned=False
-CE-08  Get Player Card CTA present when active_variant_owned=False
-CE-09  Get Player Card CTA absent when active_variant_owned=True
+CE-08  ce-empty-state block present in template source (locked note removed in CE-2)
+CE-09  ce-locked-note absent from template source (purchase CTA removed in CE-2)
 CE-10  _activeVariantOwned JS variable present in rendered template
 CE-11  _updatePublishIndicator disables Publish when _activeVariantOwned=false
 CE-12  exportCard finally block keeps PNG disabled when _activeVariantOwned=false
@@ -98,12 +98,6 @@ _ACTION_BAR_FRAGMENT = """\
                 title="Download PNG">⬇ PNG</button>
     </div>
 </div>
-{% if not active_variant_owned %}
-<div class="ce-locked-note">
-    This design requires a Player Card.
-    <a href="/my-cards/player-card">Get Player Card &rarr;</a>
-</div>
-{% endif %}
 """
 
 
@@ -174,21 +168,25 @@ class TestCardEditorButtonState:
         assert "disabled" in btn_match.group(0)
 
 
-# ── CE-08..CE-09: Template fragment — locked note CTA ────────────────────────
+# ── CE-08..CE-09: Template source — CE-2 purchase CTA removal ────────────────
 
 class TestCardEditorLockedNote:
 
-    def test_ce08_locked_note_present_when_not_owned(self):
-        """CE-08: ce-locked-note with Get Player Card CTA visible when active_variant_owned=False."""
-        html = _render_fragment(active_variant_owned=False)
-        assert "ce-locked-note" in html
-        assert "/my-cards/player-card" in html
+    def test_ce08_empty_state_present_in_template(self):
+        """CE-08: ce-empty-state block replaced ce-locked-note in CE-2 (no purchase CTA)."""
+        src = _editor_template_source()
+        assert "ce-empty-state" in src, \
+            "ce-empty-state block must be present in template"
+        assert 'href="/shop/cards/player"' in src, \
+            "empty state must link to the player card shop"
 
-    def test_ce09_locked_note_absent_when_owned(self):
-        """CE-09: ce-locked-note not rendered when active_variant_owned=True."""
-        html = _render_fragment(active_variant_owned=True)
-        assert "ce-locked-note" not in html
-        assert "/my-cards/player-card" not in html
+    def test_ce09_locked_note_absent_from_template(self):
+        """CE-09: ce-locked-note class completely removed from template in CE-2."""
+        src = _editor_template_source()
+        assert "ce-locked-note" not in src, \
+            "ce-locked-note must not appear in template after CE-2 removal"
+        assert "Get Player Card" not in src, \
+            "Get Player Card purchase CTA must not appear in template after CE-2"
 
 
 # ── CE-10..CE-13: JS guard — template source checks ──────────────────────────

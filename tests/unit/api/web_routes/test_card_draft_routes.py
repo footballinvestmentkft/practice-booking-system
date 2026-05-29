@@ -114,11 +114,15 @@ class TestCardEditorGetContext:
         return captured.get("context", {})
 
     def test_cd_rt_01_active_theme_from_draft(self):
-        """CD-RT-01: active_card_theme comes from card_draft.draft_theme."""
-        draft = _draft(draft_theme="gold")
+        """CD-RT-01: active_card_theme comes from card_draft.draft_theme.
+
+        Uses a free theme ('midnight') so the CE-2 owned-only filter never
+        discards it — the test goal is draft-persistence, not premium unlock.
+        """
+        draft = _draft(draft_theme="midnight")
         ctx = self._invoke_editor_get(draft)
-        assert ctx.get("active_card_theme") == "gold", (
-            f"active_card_theme must equal draft.draft_theme='gold', got {ctx.get('active_card_theme')!r}"
+        assert ctx.get("active_card_theme") == "midnight", (
+            f"active_card_theme must equal draft.draft_theme='midnight', got {ctx.get('active_card_theme')!r}"
         )
 
     def test_cd_rt_02_active_variant_from_draft(self):
