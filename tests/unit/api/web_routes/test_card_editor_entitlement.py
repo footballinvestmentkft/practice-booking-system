@@ -64,8 +64,8 @@ def _invoke_editor(draft: MagicMock, is_owned: bool) -> dict:
          patch(f"{_DASH_BASE}.SemesterEnrollment"), \
          patch(_IS_DA_PATH, return_value=is_owned), \
          patch("app.services.card_variant_service.get_all_variants", return_value=[]), \
-         patch("app.services.card_theme_service.get_all_themes",     return_value=[]), \
-         patch("app.services.card_theme_service.is_unlocked",        return_value=False), \
+         patch("app.services.card_color_service.get_colors_for_family", return_value=[]), \
+         patch("app.services.card_color_service.get_owned_color_ids",  return_value=set()), \
          patch("app.services.card_platform_service.build_platform_list", return_value=[]), \
          patch("app.services.card_constants.ANIMATED_EXPORT_CAPABLE", []), \
          patch("app.services.card_constants.CANVAS_SIZES", {}), \

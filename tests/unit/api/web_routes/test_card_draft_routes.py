@@ -93,8 +93,14 @@ class TestCardEditorGetContext:
 
         with patch(_CDS_PATH) as MockCDS, \
              patch("app.api.web_routes.dashboard.templates") as mock_tpl, \
-             patch("app.api.web_routes.dashboard.db") if False else \
-             patch("app.api.web_routes.dashboard.SemesterEnrollment"):
+             patch("app.api.web_routes.dashboard.SemesterEnrollment"), \
+             patch("app.services.card_variant_service.get_all_variants", return_value=[]), \
+             patch("app.services.card_color_service.get_owned_color_ids", return_value=set()), \
+             patch("app.services.card_platform_service.build_platform_list", return_value=[]), \
+             patch("app.services.card_constants.ANIMATED_EXPORT_CAPABLE", []), \
+             patch("app.services.card_constants.CANVAS_SIZES", {}), \
+             patch("app.services.card_constants.CARD_EDITOR_PLATFORM_IDS", []), \
+             patch("app.services.highlight_video_service.build_youtube_embed_url", return_value=None):
             MockCDS.get_player_card_draft.return_value = draft
             mock_tpl.TemplateResponse.side_effect = fake_template_response
 

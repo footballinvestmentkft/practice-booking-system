@@ -385,20 +385,25 @@ async def lfa_player_card_editor(
     # Load (or create) the singleton card draft — single source of truth after 4D-2
     card_draft = _CardDraftService.get_player_card_draft(db, user.id)
 
-    # Card theme picker data — identical logic to spec_dashboard
-    from ...services.card_theme_service import get_all_themes as _get_all_themes, is_unlocked as _is_theme_unlocked
+    # Card color picker data — family-aware ownership (TS-1, card_color_service)
+    from ...services.card_color_service import (  # noqa: E402
+        get_colors_for_family as _get_colors_for_family,
+        get_owned_color_ids as _get_owned_color_ids,
+    )
+    _raw_colors   = _get_colors_for_family("player_card")
+    _owned_colors = _get_owned_color_ids(db, user.id, "player_card")
     card_themes = [
         {
-            "id": t.id,
-            "label": t.label,
-            "dot_color": t.dot_color,
-            "is_premium": t.is_premium,
-            "credit_cost": t.credit_cost,
-            "unlocked": _is_theme_unlocked(user_license, t.id, db=db),
+            "id":          c.id,
+            "label":       c.label,
+            "dot_color":   c.dot_color,
+            "is_premium":  c.is_premium,
+            "credit_cost": c.credit_cost,
+            "unlocked":    (not c.is_premium) or (c.id in _owned_colors),
         }
-        for t in _get_all_themes(db=db)
+        for c in _raw_colors
     ]
-    # CE-2: owned-only — free themes always pass (is_premium=False → always unlocked)
+    # CE-2: owned-only — free colors always pass; premium only if ownership row exists
     card_themes = [t for t in card_themes if t["unlocked"]]
     active_card_theme = card_draft.draft_theme
     # Render-time theme fallback — if draft theme was filtered out, fall back to "default"
@@ -1240,6 +1245,10 @@ from ...services.card_theme_service import apply_theme as _apply_theme, unlock_t
 from ...services.card_variant_service import unlock_variant as _unlock_variant  # noqa: E402
 from ...services.card_platform_service import PLATFORM_PRESETS as _PLATFORM_PRESETS  # noqa: E402
 from ...services.card_draft_service import CardDraftService as _CardDraftService  # noqa: E402
+from ...services.card_color_service import (  # noqa: E402
+    unlock_color as _unlock_color,
+    InsufficientCreditsError as _InsufficientCreditsError,
+)
 from pydantic import BaseModel as _BaseModel  # noqa: E402
 
 _VALID_PLATFORM_IDS: frozenset = frozenset(_PLATFORM_PRESETS.keys())
@@ -1251,6 +1260,11 @@ class _CardThemeRequest(_BaseModel):
 
 class _CardVariantRequest(_BaseModel):
     variant: str
+
+
+class _CardColorUnlockRequest(_BaseModel):
+    card_type_id: str
+    color_id: str
 
 
 class _CardPlatformRequest(_BaseModel):
@@ -1293,7 +1307,11 @@ async def student_unlock_theme(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
-    """Unlock a premium card theme by spending credits."""
+    """Unlock a premium card theme by spending credits.
+
+    LEGACY endpoint — writes to user_licenses.unlocked_card_themes JSON.
+    Kept for backward compatibility. New purchases use /dashboard/unlock-color.
+    """
     lfa_license = _get_lfa_license(db, user.id)
     if not lfa_license:
         return JSONResponse({"ok": False, "error": "No active LFA Football Player license"}, status_code=404)
@@ -1303,6 +1321,50 @@ async def student_unlock_theme(
                              "new_balance": user.credit_balance})
     except ValueError as e:
         return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+
+
+@router.post("/dashboard/unlock-color")
+async def student_unlock_color(
+    payload: _CardColorUnlockRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Unlock a premium card color pack for a specific card family (TS-1).
+
+    Writes to card_color_ownership (family-aware, new ownership model).
+    Supports card_type_id='player_card' only in TS-1; other families return 422.
+    Idempotent: already-owned colors return ok=True with already_owned=True and
+    credits_charged=0 — no double deduction possible.
+    """
+    try:
+        result = _unlock_color(db, user, payload.card_type_id, payload.color_id)
+        return JSONResponse({
+            "ok":             True,
+            "already_owned":  result.already_owned,
+            "credits_charged": result.credits_charged,
+            "credit_balance": result.credit_balance,
+            "color_id":       result.color_id,
+            "card_type_id":   result.card_type_id,
+        })
+    except ValueError as e:
+        error_key = str(e)
+        if error_key == "unsupported_family":
+            return JSONResponse(
+                {"ok": False, "error": f"Unsupported card family: {payload.card_type_id!r}"},
+                status_code=422,
+            )
+        if error_key == "color_not_found":
+            return JSONResponse(
+                {"ok": False, "error": f"Unknown color: {payload.color_id!r}"},
+                status_code=422,
+            )
+        return JSONResponse({"ok": False, "error": error_key}, status_code=400)
+    except _InsufficientCreditsError as e:
+        return JSONResponse(
+            {"ok": False, "error": "insufficient_credits",
+             "required": e.required, "balance": e.available},
+            status_code=402,
+        )
 
 
 @router.post("/dashboard/card-variant")

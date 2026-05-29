@@ -1,0 +1,238 @@
+{% extends "student_base.html" %}
+
+{% block title %}Player Card Colors — LFA Card Shop{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '🎨' %}
+{% set _page_name = 'Player Card Colors' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+  .scc-wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 4rem;
+  }
+  .scc-breadcrumb {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 1.25rem;
+  }
+  .scc-breadcrumb a { color: #94a3b8; text-decoration: none; }
+  .scc-breadcrumb a:hover { color: #f1f5f9; }
+  .scc-breadcrumb span { margin: 0 0.35rem; }
+  .scc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.75rem;
+  }
+  .scc-header h1 { font-size: 1.4rem; font-weight: 700; color: #f8fafc; margin: 0; }
+  .scc-credits-badge {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 20px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.85rem;
+    color: #94a3b8;
+  }
+  .scc-credits-badge strong { color: #FFD200; }
+  .scc-credits-display { font-size: 0.85rem; color: #94a3b8; }
+  .scc-credits-display strong { color: #FFD200; }
+
+  /* Color grid */
+  .scc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .scc-tile {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 1.25rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    transition: border-color 0.15s;
+  }
+  .scc-tile:hover { border-color: #475569; }
+  .scc-tile.scc-owned { border-color: #22543d; background: #1a2e22; }
+  .scc-swatch {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.15);
+    flex-shrink: 0;
+  }
+  .scc-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    text-align: center;
+  }
+  .scc-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 0.2rem 0.65rem;
+  }
+  .scc-badge-free    { background: #1e3a5f; color: #7dd3fc; border: 1px solid #1d4ed8; }
+  .scc-badge-owned   { background: #14532d; color: #86efac; border: 1px solid #15803d; }
+  .scc-badge-price   { background: #292524; color: #fbbf24; border: 1px solid #78350f; }
+  .scc-cta { margin-top: 0.25rem; width: 100%; }
+  .scc-btn-unlock {
+    width: 100%;
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .scc-btn-unlock:hover:not(:disabled) { opacity: 0.88; }
+  .scc-btn-unlock:disabled { opacity: 0.4; cursor: default; }
+  .scc-error {
+    font-size: 0.75rem;
+    color: #f87171;
+    text-align: center;
+    min-height: 1.1em;
+    margin-top: 0.1rem;
+  }
+
+  /* Nav links */
+  .scc-nav-links {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+  }
+  .scc-nav-link {
+    font-size: 0.82rem;
+    color: #94a3b8;
+    text-decoration: none;
+  }
+  .scc-nav-link:hover { color: #f1f5f9; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="scc-wrap">
+
+  <nav class="scc-breadcrumb" aria-label="Breadcrumb">
+    <a href="/shop">Shop</a>
+    <span>›</span>
+    <a href="/shop/cards">Cards</a>
+    <span>›</span>
+    <a href="/shop/cards/player">Player Card</a>
+    <span>›</span>
+    <span>Colors</span>
+  </nav>
+
+  <div class="scc-header">
+    <h1>Player Card Colors</h1>
+    <span class="scc-credits-badge" id="scc-balance-badge">
+      Balance: <strong id="scc-balance-val">{{ credit_balance }} CR</strong>
+    </span>
+  </div>
+
+  <div class="scc-grid">
+    {% for c in player_colors %}
+    <div class="scc-tile{% if c.is_owned %} scc-owned{% endif %}" id="scc-tile-{{ c.id }}">
+      <div class="scc-swatch" style="background:{{ c.dot_color }};"></div>
+      <span class="scc-label">{{ c.label }}</span>
+
+      {% if not c.is_premium %}
+        <span class="scc-badge scc-badge-free">Free</span>
+      {% elif c.is_owned %}
+        <span class="scc-badge scc-badge-owned" id="scc-badge-{{ c.id }}">Owned ✓</span>
+      {% else %}
+        <span class="scc-badge scc-badge-price" id="scc-badge-{{ c.id }}">{{ c.credit_cost }} CR</span>
+      {% endif %}
+
+      <div class="scc-cta">
+        {% if c.is_premium and not c.is_owned %}
+        <button
+          class="scc-btn-unlock"
+          id="scc-btn-{{ c.id }}"
+          onclick="unlockColor('player_card', '{{ c.id }}', {{ c.credit_cost }}, this)">
+          Unlock for {{ c.credit_cost }} CR
+        </button>
+        {% endif %}
+        <div class="scc-error" id="scc-err-{{ c.id }}"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="scc-nav-links">
+    <a href="/shop/cards/player" class="scc-nav-link">← Player Card Designs</a>
+    <a href="/card-editor/player" class="scc-nav-link">Open Card Editor →</a>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function _csrf() {
+    return (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+}
+
+async function unlockColor(cardTypeId, colorId, creditCost, btn) {
+    btn.disabled = true;
+    btn.textContent = 'Unlocking…';
+    const errEl  = document.getElementById('scc-err-' + colorId);
+    const tile   = document.getElementById('scc-tile-' + colorId);
+    const badge  = document.getElementById('scc-badge-' + colorId);
+    if (errEl) errEl.textContent = '';
+
+    try {
+        const resp = await fetch('/dashboard/unlock-color', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf() },
+            body:    JSON.stringify({ card_type_id: cardTypeId, color_id: colorId }),
+        });
+        const data = await resp.json();
+
+        if (data.ok) {
+            // Update tile to owned state
+            tile.classList.add('scc-owned');
+            btn.closest('.scc-cta').innerHTML =
+                '<div class="scc-error"></div>';
+            if (badge) {
+                badge.className = 'scc-badge scc-badge-owned';
+                badge.textContent = 'Owned ✓';
+            }
+            // Update credit balance display
+            const balEl = document.getElementById('scc-balance-val');
+            if (balEl) balEl.textContent = data.credit_balance + ' CR';
+        } else {
+            btn.disabled  = false;
+            btn.textContent = 'Unlock for ' + creditCost + ' CR';
+            if (errEl) {
+                if (resp.status === 402) {
+                    errEl.textContent = 'Not enough credits';
+                } else {
+                    errEl.textContent = data.error || 'Something went wrong';
+                }
+            }
+        }
+    } catch (_) {
+        btn.disabled  = false;
+        btn.textContent = 'Unlock for ' + creditCost + ' CR';
+        if (errEl) errEl.textContent = 'Request failed — try again';
+    }
+}
+</script>
+{% endblock %}

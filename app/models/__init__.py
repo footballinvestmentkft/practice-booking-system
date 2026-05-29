@@ -59,6 +59,7 @@ from .card_draft import CardDraft
 from .card_theme import CardTheme
 from .card_design import CardDesign
 from .card_design_ownership import CardDesignOwnership
+from .card_color_ownership import CardColorOwnership
 from .virtual_training import VirtualTrainingGame, VirtualTrainingAttempt
 from .friendship import Friendship, FriendshipStatus, is_friends, get_friendship
 from .vt_challenge import (

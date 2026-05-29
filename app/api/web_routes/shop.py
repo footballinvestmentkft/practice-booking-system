@@ -20,6 +20,10 @@ from ...services.card_design_service import (
 )
 from ...services.card_constants import PC_FORMAT_META
 from ...services.credit_service import InsufficientCreditsError
+from ...services.card_color_service import (
+    get_colors_for_family as _get_colors_for_family,
+    get_owned_color_ids as _get_owned_color_ids,
+)
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -111,6 +115,41 @@ async def shop_player_card(
             "flash_purchased": request.query_params.get("purchased"),
             "flash_error":     request.query_params.get("error"),
             "spec_dashboard_url": "/dashboard/lfa-football-player",
+        },
+    )
+
+
+# ── Player Card Color Shop ─────────────────────────────────────────────────────
+
+@router.get("/shop/cards/player/colors", response_class=HTMLResponse)
+async def shop_player_card_colors(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User  = Depends(get_current_user_web),
+):
+    """Player Card Color Shop — browse and unlock premium color packs (TS-1)."""
+    raw_colors = _get_colors_for_family("player_card")
+    owned_ids  = _get_owned_color_ids(db, user.id, "player_card")
+
+    player_colors = [
+        {
+            "id":          c.id,
+            "label":       c.label,
+            "dot_color":   c.dot_color,
+            "is_premium":  c.is_premium,
+            "credit_cost": c.credit_cost,
+            "is_owned":    (not c.is_premium) or (c.id in owned_ids),
+        }
+        for c in raw_colors
+    ]
+
+    return templates.TemplateResponse(
+        "shop_card_player_colors.html",
+        {
+            "request":       request,
+            "user":          user,
+            "player_colors": player_colors,
+            "credit_balance": user.credit_balance,
         },
     )
 

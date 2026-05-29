@@ -98,13 +98,13 @@ def _theme_def(tid: str, is_premium: bool = False, credit_cost: int = 0, dot_col
 def _invoke_editor(
     draft: MagicMock,
     owned_variant_ids: list[str],
-    unlocked_theme_ids: list[str] | None = None,
+    owned_color_ids: set[str] | None = None,
     all_variants: list[MagicMock] | None = None,
     all_themes: list[MagicMock] | None = None,
 ) -> dict:
     """Invoke lfa_player_card_editor and return the captured template context."""
-    if unlocked_theme_ids is None:
-        unlocked_theme_ids = []
+    if owned_color_ids is None:
+        owned_color_ids = set()
 
     from app.api.web_routes.dashboard import lfa_player_card_editor
 
@@ -132,18 +132,13 @@ def _invoke_editor(
     def _is_da_side_effect(db_, user_id, card_type_id, design_id):
         return design_id in owned_variant_ids
 
-    def _is_theme_unlocked_side_effect(lic, theme_id, db=None):
-        if not _theme_by_id(theme_id, all_themes).is_premium:
-            return True
-        return theme_id in unlocked_theme_ids
-
     with patch(f"{_DASH_BASE}._CardDraftService") as MockCDS, \
          patch(f"{_DASH_BASE}.templates") as mock_tpl, \
          patch(f"{_DASH_BASE}.SemesterEnrollment"), \
          patch(_IS_DA_PATH, side_effect=_is_da_side_effect), \
          patch("app.services.card_variant_service.get_all_variants", return_value=all_variants), \
-         patch("app.services.card_theme_service.get_all_themes", return_value=all_themes), \
-         patch("app.services.card_theme_service.is_unlocked", side_effect=_is_theme_unlocked_side_effect), \
+         patch("app.services.card_color_service.get_colors_for_family", return_value=all_themes), \
+         patch("app.services.card_color_service.get_owned_color_ids", return_value=owned_color_ids), \
          patch("app.services.card_platform_service.build_platform_list", return_value=[]), \
          patch("app.services.card_constants.ANIMATED_EXPORT_CAPABLE", []), \
          patch("app.services.card_constants.CANVAS_SIZES", {}), \
@@ -158,14 +153,6 @@ def _invoke_editor(
 
     return captured.get("context", {})
 
-
-def _theme_by_id(tid: str, themes: list[MagicMock]) -> MagicMock:
-    for t in themes:
-        if t.id == tid:
-            return t
-    m = MagicMock()
-    m.is_premium = False
-    return m
 
 
 def _html_from_template() -> str:
@@ -223,7 +210,7 @@ class TestCE203OwnedThemes:
         ctx = _invoke_editor(
             draft=_draft("fifa"),
             owned_variant_ids=["fifa"],
-            unlocked_theme_ids=[],
+            owned_color_ids=set(),
         )
         theme_ids = [t["id"] for t in ctx.get("card_themes", [])]
         assert "default"  in theme_ids, "free theme 'default' must always appear"
@@ -233,7 +220,7 @@ class TestCE203OwnedThemes:
         ctx = _invoke_editor(
             draft=_draft("fifa"),
             owned_variant_ids=["fifa"],
-            unlocked_theme_ids=[],
+            owned_color_ids=set(),
         )
         theme_ids = [t["id"] for t in ctx.get("card_themes", [])]
         assert "gold" not in theme_ids, "locked premium theme 'gold' must not appear"
@@ -242,7 +229,7 @@ class TestCE203OwnedThemes:
         ctx = _invoke_editor(
             draft=_draft("fifa"),
             owned_variant_ids=["fifa"],
-            unlocked_theme_ids=["gold"],
+            owned_color_ids={"gold"},
         )
         theme_ids = [t["id"] for t in ctx.get("card_themes", [])]
         assert "gold" in theme_ids, "owned premium theme 'gold' must appear"
@@ -255,7 +242,7 @@ class TestCE204LockedThemeAbsent:
         ctx = _invoke_editor(
             draft=_draft("fifa"),
             owned_variant_ids=["fifa"],
-            unlocked_theme_ids=[],
+            owned_color_ids=set(),
         )
         assert all(t["unlocked"] for t in ctx.get("card_themes", [])), \
             "card_themes must contain only unlocked themes"
@@ -431,10 +418,10 @@ class TestCE216WelcomeEditorUnchanged:
 
 class TestCE217RouteCount:
     def test_openapi_snapshot_route_count_unchanged(self):
-        """CE-2 adds no new routes — snapshot path count must equal 834."""
+        """CE-2 adds no new routes — snapshot path count must equal 836 (834 CE-2 + 2 TS-1)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 834, (
-            f"Expected 834 routes (CE-1 baseline), got {len(paths)}. "
+        assert len(paths) == 836, (
+            f"Expected 836 routes (834 CE-2 baseline + 2 TS-1), got {len(paths)}. "
             "CE-2 must not add or remove routes."
         )
