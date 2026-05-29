@@ -77,29 +77,42 @@
 
   {# ── Flash messages ── #}
   {% if flash_purchased %}
+  {% set _pl = (design_rows | selectattr('id', 'equalto', flash_purchased) | map(attribute='label') | first) %}
   <div class="mfg-flash mfg-flash-success">
-    ✓ Design unlocked — {{ flash_purchased }} is now in your collection.
+    ✓ Design unlocked — {{ _pl or flash_purchased }} is now in your collection.
   </div>
   {% endif %}
   {% if flash_error == "credits" %}
-  <div class="mfg-flash mfg-flash-error">Not enough credits to purchase this design.</div>
+  <div class="mfg-flash mfg-flash-error">
+    Not enough credits.
+    <a class="mfg-flash-cta" href="/credits">Get more credits →</a>
+  </div>
   {% elif flash_error == "owned" %}
-  <div class="mfg-flash mfg-flash-error">You already own this design.</div>
+  <div class="mfg-flash mfg-flash-error">
+    You already own this.
+    <a class="mfg-flash-cta" href="/my-cards/player">View in My Cards →</a>
+  </div>
   {% elif flash_error == "free" %}
-  <div class="mfg-flash mfg-flash-error">This design is free — no purchase needed.</div>
+  <div class="mfg-flash mfg-flash-error">This design is always free — no purchase needed.</div>
   {% elif flash_error == "invalid" %}
-  <div class="mfg-flash mfg-flash-error">Unknown card type or design.</div>
+  <div class="mfg-flash mfg-flash-error">
+    This product is no longer available.
+    <a class="mfg-flash-cta" href="/shop/cards">Back to shop →</a>
+  </div>
   {% endif %}
 
   {# ── Section header ── #}
   <div class="mfg-section-hdr">
     <h2>Designs</h2>
+    {% if owned_count > 0 %}
+    <span class="mfg-count-badge">{{ owned_count }} / {{ total_count }} owned</span>
+    {% endif %}
   </div>
 
   {# ── Design grid ── #}
   <div class="mfg-grid">
     {% for d in design_rows %}
-    <div class="mfg-card">
+    <div class="mfg-card{% if flash_purchased and d.id == flash_purchased %} mfg-card-just-purchased{% endif %}">
 
       {# Preview #}
       {% if d.state == "owned" %}

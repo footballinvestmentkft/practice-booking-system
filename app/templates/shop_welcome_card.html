@@ -88,29 +88,42 @@
 
   {# ── Flash messages ── #}
   {% if flash_purchased %}
+  {% set _pl = (format_rows | selectattr('design_id', 'equalto', flash_purchased) | map(attribute='label') | first) %}
   <div class="mfg-flash mfg-flash-success">
-    ✓ Format unlocked — you can now export your Welcome Card in this format.
+    ✓ Format unlocked — {{ _pl or flash_purchased }} is ready for export.
   </div>
   {% endif %}
   {% if flash_error == "credits" %}
-  <div class="mfg-flash mfg-flash-error">Not enough credits to purchase this format.</div>
+  <div class="mfg-flash mfg-flash-error">
+    Not enough credits.
+    <a class="mfg-flash-cta" href="/credits">Get more credits →</a>
+  </div>
   {% elif flash_error == "owned" %}
-  <div class="mfg-flash mfg-flash-error">You already own this format.</div>
+  <div class="mfg-flash mfg-flash-error">
+    You already own this.
+    <a class="mfg-flash-cta" href="/my-cards/welcome">View in My Cards →</a>
+  </div>
   {% elif flash_error == "free" %}
-  <div class="mfg-flash mfg-flash-error">This format is free — no purchase needed.</div>
+  <div class="mfg-flash mfg-flash-error">This format is always free — no purchase needed.</div>
   {% elif flash_error == "invalid" %}
-  <div class="mfg-flash mfg-flash-error">Unknown format.</div>
+  <div class="mfg-flash mfg-flash-error">
+    This product is no longer available.
+    <a class="mfg-flash-cta" href="/shop/cards">Back to shop →</a>
+  </div>
   {% endif %}
 
   {# ── Section header ── #}
   <div class="mfg-section-hdr">
     <h2>Formats</h2>
+    {% if owned_count > 0 %}
+    <span class="mfg-count-badge">{{ owned_count }} / {{ total_count }} owned</span>
+    {% endif %}
   </div>
 
   {# ── Format grid ── #}
   <div class="mfg-grid">
     {% for r in format_rows %}
-    <div class="mfg-card">
+    <div class="mfg-card{% if flash_purchased and r.design_id == flash_purchased %} mfg-card-just-purchased{% endif %}">
 
       {# Preview with watermark overlay for unowned #}
       <div class="mfg-preview-wrap{% if r.state != 'owned' %} mfg-locked{% endif %}">
