@@ -1,6 +1,6 @@
 {% extends "student_base.html" %}
 
-{% block title %}My Player Card — LFA{% endblock %}
+{% block title %}Card Editor — Player Card — LFA{% endblock %}
 
 {# ── Studio header — minimal, spec-pg-hdr aligned, no quicknav ── #}
 {% block student_header %}
@@ -8,7 +8,7 @@
     <div class="student-header-inner">
         <a href="/dashboard" class="s-hdr-btn" title="Hub">🏠</a>
         <a href="/dashboard/lfa-football-player" class="s-hdr-btn" title="LFA Dashboard">⚽</a>
-        <div class="student-brand">🎴 My Player Card</div>
+        <div class="student-brand">🎴 Card Editor — Player Card</div>
         <div class="student-header-actions">
             <span class="credit-pill">💰 {{ user.credit_balance if user else 0 }}</span>
             <a href="/credits" class="s-hdr-btn" title="Credits">💳</a>
@@ -796,7 +796,7 @@
         <span class="s-breadcrumb-sep">›</span>
         <a href="/dashboard/lfa-football-player" class="s-breadcrumb-item">LFA Football Player</a>
         <span class="s-breadcrumb-sep">›</span>
-        <span class="s-breadcrumb-item active">My Player Card</span>
+        <span class="s-breadcrumb-item active">Card Editor — Player Card</span>
     </nav>
 
     <div class="ce-layout">
@@ -805,7 +805,7 @@
         <aside class="ce-sidebar">
 
             <div class="ce-sidebar-header">
-                <h2 class="ce-sidebar-page-title">My Player Card</h2>
+                <h2 class="ce-sidebar-page-title">Card Editor — Player Card</h2>
                 <a id="fullscreen-link" href="/players/{{ user.id }}/card" target="_blank"
                    class="ce-sidebar-fs-link">Open ↗</a>
             </div>
@@ -1107,7 +1107,7 @@
                     <iframe id="player-card-iframe"
                             width="1080" height="1350"
                             src="{% if active_card_platform and active_card_platform != 'default' %}/players/{{ user.id }}/card?preview={{ active_card_variant }}&theme={{ active_card_theme }}&platform={{ active_card_platform }}&export=1{% if active_card_platform in animated_capable_platforms %}&animated=1{% endif %}{% else %}/players/{{ user.id }}/card?preview={{ active_card_variant }}&theme={{ active_card_theme }}&native_export=1{% endif %}"
-                            scrolling="no" title="My Player Card"></iframe>
+                            scrolling="no" title="Card Editor — Player Card"></iframe>
                 </div>
             </div>
 

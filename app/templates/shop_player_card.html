@@ -173,7 +173,7 @@
 
       <div class="mfg-cta">
         {% if d.state == "owned" %}
-          <a href="/dashboard/lfa-football-player/card-editor" class="mfg-btn mfg-btn-edit mfg-btn-download">Edit / Download</a>
+          <a href="/card-editor/player" class="mfg-btn mfg-btn-edit mfg-btn-download">Edit / Download</a>
         {% elif d.state == "get_card" %}
           <form method="POST" action="/shop/cards/player_card/buy/{{ d.id }}">
             <button type="submit" class="mfg-btn mfg-btn-get">Get Card — {{ d.credit_cost }} CR</button>

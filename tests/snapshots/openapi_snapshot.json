@@ -59833,6 +59833,28 @@
         ]
       }
     },
+    "/card-editor/player": {
+      "get": {
+        "description": "Player Card editor \u2014 canonical route (CE-1).  Old URL redirects here.",
+        "operationId": "lfa_player_card_editor_card_editor_player_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Lfa Player Card Editor",
+        "tags": [
+          "web"
+        ]
+      }
+    },
     "/card-editor/welcome/{format_id}": {
       "get": {
         "description": "Welcome Card Customizer \u2014 preview + export wrapper for an owned format.\n\nGuards (in order):\n  1. Authenticated (get_current_user_web)\n  2. LFA_FOOTBALL_PLAYER license + onboarding complete\n  3. format_id in WELCOME_CARD_FORMATS \u2192 404 otherwise\n  4. CDO ownership (is_design_accessible) \u2192 redirect shop if not owned\n     Admin bypass: skipped for UserRole.ADMIN",
@@ -60830,8 +60852,7 @@
     },
     "/dashboard/lfa-football-player/card-editor": {
       "get": {
-        "description": "Dedicated sub-page for LFA Football Player card editing (Phase 1 extraction).",
-        "operationId": "lfa_player_card_editor_dashboard_lfa_football_player_card_editor_get",
+        "operationId": "lfa_player_card_editor_legacy_dashboard_lfa_football_player_card_editor_get",
         "responses": {
           "200": {
             "content": {
@@ -60844,7 +60865,7 @@
             "description": "Successful Response"
           }
         },
-        "summary": "Lfa Player Card Editor",
+        "summary": "Lfa Player Card Editor Legacy",
         "tags": [
           "web"
         ]

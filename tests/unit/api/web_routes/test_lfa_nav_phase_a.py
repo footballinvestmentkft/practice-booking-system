@@ -8,7 +8,7 @@ PA-05  lfa_player_profile.html — no .back-link CSS class defined
 PA-06  lfa_player_profile.html — no href="/profile" back link element
 PA-07  lfa_player_profile.html — dashboard CTA text is "⚽ LFA Dashboard"
 PA-08  dashboard_card_editor.html — ⚽ LFA Dashboard button present
-PA-09  dashboard_card_editor.html — brand is "🎴 My Player Card"
+PA-09  dashboard_card_editor.html — brand is "🎴 Card Editor — Player Card"
 PA-10  dashboard_card_editor.html — messages badge-wrap removed
 PA-11  spec_subpage_hdr.html — mask-image mobile scroll fade CSS present
 PA-12  dashboard_student_new.html — "Tools & Quick Access" label present
@@ -104,9 +104,9 @@ class TestCardEditorHeader:
         assert 'href="/dashboard/lfa-football-player"' in src
 
     def test_pa09_brand_is_my_player_card(self):
-        """PA-09: card editor header brand text is '🎴 My Player Card'."""
+        """PA-09: card editor header brand text is '🎴 Card Editor — Player Card'."""
         src = self._src()
-        assert '🎴 My Player Card' in src
+        assert '🎴 Card Editor — Player Card' in src
 
     def test_pa10_no_messages_badge_wrap(self):
         """PA-10: messages badge-wrap removed from card editor header."""

@@ -895,8 +895,8 @@ class TestLfaNavigationCTAs:
         assert 'href="/my-cards"' in dashboard_src
 
     def test_card_editor_page_title_uses_playing_card_icon(self, card_editor_src):
-        """Card editor page title must contain My Player Card."""
-        assert 'My Player Card' in card_editor_src
+        """Card editor page title must contain Player Card (CE-1 rename)."""
+        assert 'Player Card' in card_editor_src
 
     def test_card_editor_my_cards_cta_uses_joker_icon(self, card_editor_src):
         """My Cards CTA in card editor must use 🃏 (P2: replaced Profile 🪪 → My Cards 🃏)."""

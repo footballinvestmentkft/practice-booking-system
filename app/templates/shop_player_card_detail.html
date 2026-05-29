@@ -221,7 +221,7 @@
 
     <div>
       {% if state == "owned" %}
-        <a href="/dashboard/lfa-football-player/card-editor" class="mfg-btn mfg-btn-edit" style="width:auto;display:inline-block;padding:0.5rem 1.25rem;">Open Editor →</a>
+        <a href="/card-editor/player" class="mfg-btn mfg-btn-edit" style="width:auto;display:inline-block;padding:0.5rem 1.25rem;">Open Editor →</a>
       {% elif state == "get_card" %}
         <form method="POST" action="/shop/cards/player_card/buy/{{ collection_id }}">
           <button type="submit" class="mfg-btn mfg-btn-get" style="width:auto;padding:0.5rem 1.25rem;">

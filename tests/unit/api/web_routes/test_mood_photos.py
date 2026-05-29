@@ -309,7 +309,7 @@ def test_mp_r12_dashboard_has_card_media_section():
     assert "/profile/my-mood-photos" in quicknav, (
         "quicknav should still link to /profile/my-mood-photos"
     )
-    assert "/dashboard/lfa-football-player/card-editor" in quicknav, (
+    assert "/card-editor/player" in quicknav, (
         "quicknav should still link to card-editor"
     )
 
@@ -349,7 +349,7 @@ def test_mp_r14_profile_page_has_card_media_card():
 
     assert "My Card Media" in content, "profile page missing 'My Card Media' card"
     assert "/profile/my-mood-photos" in content, "profile page missing /profile/my-mood-photos link"
-    assert "/dashboard/lfa-football-player/card-editor#media" in content, (
+    assert "/card-editor/player#media" in content, (
         "profile page missing card editor #media deep link"
     )
 
@@ -453,7 +453,7 @@ def test_mp_r17_spec_subpage_hdr_has_lfa_quicknav():
     required_links = {
         "/profile/lfa-football-player": "Profile",
         "/my-cards":                    "My Cards",
-        "/dashboard/lfa-football-player/card-editor": "Card Editor",
+        "/card-editor/player": "Card Editor",
         "/profile/my-mood-photos":      "Mood Photos",
         "/events":                      "Events",
         "/training":                    "Training",
@@ -487,7 +487,7 @@ def test_mp_r18_dashboard_modnav_has_profile_editor_moodphotos():
 
     # Mood Photos, Card Editor, Profile accessible via quicknav (not mod-nav)
     assert "/profile/my-mood-photos"                    in quicknav
-    assert "/dashboard/lfa-football-player/card-editor" in quicknav
+    assert "/card-editor/player" in quicknav
     assert "/profile/lfa-football-player"               in quicknav
 
 

@@ -347,13 +347,13 @@ def get_lfa_age_category(date_of_birth):
         return None, None, None, f"Age {age} - Below minimum age requirement (5 years)"
 
 
-@router.get("/dashboard/lfa-football-player/card-editor", response_class=HTMLResponse)
+@router.get("/card-editor/player", response_class=HTMLResponse)
 async def lfa_player_card_editor(
     request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
-    """Dedicated sub-page for LFA Football Player card editing (Phase 1 extraction)."""
+    """Player Card editor — canonical route (CE-1).  Old URL redirects here."""
     spec_enum = "LFA_FOOTBALL_PLAYER"
 
     # Same license guard as spec_dashboard
@@ -1390,6 +1390,17 @@ async def student_publish_card(
     })
 
 
+# ── CE-1: legacy redirect ─────────────────────────────────────────────────────
+# The old URL stays alive as a 303 so bookmarks and cached links still work.
+# 303 (not 301) prevents browsers caching the redirect — allows future path
+# changes without stale-cache issues on authenticated pages.
+@router.get("/dashboard/lfa-football-player/card-editor", response_class=HTMLResponse)
+async def lfa_player_card_editor_legacy(
+    user: User = Depends(get_current_user_web),
+) -> RedirectResponse:
+    return RedirectResponse(url="/card-editor/player", status_code=303)
+
+
 @router.post("/dashboard/lfa-football-player/card-editor/media/highlight-video")
 async def student_save_highlight_video(
     payload: _HighlightVideoRequest,
@@ -1523,7 +1534,7 @@ async def lfa_public_profile_editor(
             "published_slots":  published_slots,
             "is_published":     is_pub,
             "profile_url":      f"/players/{user.id}",
-            "card_editor_url":  "/dashboard/lfa-football-player/card-editor",
+            "card_editor_url":  "/card-editor/player",
         },
     )
 
