@@ -96,12 +96,17 @@ async def shop_player_card(
         for d in all_designs
     ]
 
+    owned_count = sum(1 for r in design_rows if r["state"] == "owned")
+    total_count = len(design_rows)
+
     return templates.TemplateResponse(
         "shop_player_card.html",
         {
             "request":         request,
             "user":            user,
             "design_rows":     design_rows,
+            "owned_count":     owned_count,
+            "total_count":     total_count,
             "flash_purchased": request.query_params.get("purchased"),
             "flash_error":     request.query_params.get("error"),
             "spec_dashboard_url": "/dashboard/lfa-football-player",
@@ -139,12 +144,17 @@ async def shop_welcome_card(
         for fmt in WELCOME_CARD_FORMATS
     ]
 
+    owned_count = sum(1 for r in format_rows if r["state"] == "owned")
+    total_count = len(format_rows)
+
     return templates.TemplateResponse(
         "shop_welcome_card.html",
         {
             "request":         request,
             "user":            user,
             "format_rows":     format_rows,
+            "owned_count":     owned_count,
+            "total_count":     total_count,
             "flash_purchased": request.query_params.get("purchased"),
             "flash_error":     request.query_params.get("error"),
             "spec_dashboard_url": "/dashboard/lfa-football-player",
@@ -179,12 +189,17 @@ async def shop_challenge_card(
         for fmt in CHALLENGE_CARD_FORMATS
     ]
 
+    owned_count = sum(1 for r in format_rows if r["state"] == "owned")
+    total_count = len(format_rows)
+
     return templates.TemplateResponse(
         "shop_challenge_card.html",
         {
             "request":         request,
             "user":            user,
             "format_rows":     format_rows,
+            "owned_count":     owned_count,
+            "total_count":     total_count,
             "flash_purchased": request.query_params.get("purchased"),
             "flash_error":     request.query_params.get("error"),
             "spec_dashboard_url": "/dashboard/lfa-football-player",
