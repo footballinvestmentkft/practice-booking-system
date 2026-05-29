@@ -154,10 +154,11 @@ class TestWelcomeCardShopRoute:
             assert "preview_url" in r, f"{r['design_id']} missing preview_url"
             assert "export_url" in r, f"{r['design_id']} missing export_url"
 
-    def test_mcw11_template_has_download_cta_for_owned(self):
-        """MCW-11: template uses mfg-btn-download for owned formats."""
+    def test_mcw11_template_has_editor_cta_for_owned(self):
+        """MCW-11: template uses mfg-btn-edit (editor link) for owned formats, not direct download."""
         src = _TEMPLATE_PATH.read_text()
-        assert "mfg-btn-download" in src, "Must have download button class for owned state"
+        assert "mfg-btn-edit" in src, "Must have editor button class for owned state"
+        assert "mfg-btn-download" not in src, "Direct download button must be absent — editor link replaces it"
 
     def test_mcw12_template_has_browse_shop_cta(self):
         """MCW-12: template has Browse Shop CTA linking to /shop/cards/welcome."""

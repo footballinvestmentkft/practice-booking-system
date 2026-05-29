@@ -59833,6 +59833,50 @@
         ]
       }
     },
+    "/card-editor/welcome/{format_id}": {
+      "get": {
+        "description": "Welcome Card Customizer \u2014 preview + export wrapper for an owned format.\n\nGuards (in order):\n  1. Authenticated (get_current_user_web)\n  2. LFA_FOOTBALL_PLAYER license + onboarding complete\n  3. format_id in WELCOME_CARD_FORMATS \u2192 404 otherwise\n  4. CDO ownership (is_design_accessible) \u2192 redirect shop if not owned\n     Admin bypass: skipped for UserRole.ADMIN",
+        "operationId": "welcome_card_editor_card_editor_welcome__format_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "format_id",
+            "required": true,
+            "schema": {
+              "title": "Format Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Welcome Card Editor",
+        "tags": [
+          "web",
+          "card-editor"
+        ]
+      }
+    },
     "/challenges": {
       "get": {
         "operationId": "challenge_inbox_challenges_get",
