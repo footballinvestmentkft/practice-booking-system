@@ -1,5 +1,6 @@
 """
-MP-R01..MP-R09 — unit tests for mood_photos web routes.
+MP-R01..MP-R26 — unit tests for mood_photos web routes.
+MP-D01..MP-D06 — display fallback tests (processed_png_url rendering).
 
 Tests call route functions directly (asyncio.run) with patched
 dependencies — no TestClient, no real DB, no disk I/O.
@@ -7,6 +8,8 @@ dependencies — no TestClient, no real DB, no disk I/O.
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -674,3 +677,180 @@ def test_mp_r26_template_has_no_hardcoded_slot_if_elif():
     assert "meta.emoji" in content, (
         "Template must render {{ meta.emoji }}"
     )
+
+
+# ── MP-D: Display Fallback (processed_png_url) ────────────────────────────────
+#
+# These tests verify the template display logic introduced by the display-only
+# fix: when status='ready' and processed_png_url is set, the <img> src renders
+# the processed URL with an onerror fallback to original_url.
+#
+# Rendering strategy: Jinja2 Environment + FileSystemLoader renders the full
+# template tree (extends student_base.html) with a minimal mock context.  This
+# is the same approach used by other template-render tests in this suite.
+
+_TEMPLATES_DIR = (
+    Path(__file__).resolve().parents[4] / "app" / "templates"
+)
+
+_ORIG_URL = "/static/uploads/mood_photos/99_mood_mood_happy_smile_orig_111.png"
+_PROC_URL = "/static/uploads/mood_photos/99_mood_mood_happy_smile_proc_222.png"
+
+
+def _mood_record(
+    status: str = "uploaded",
+    original_url: str = _ORIG_URL,
+    processed_png_url: str | None = None,
+) -> MagicMock:
+    r = MagicMock()
+    r.status            = status
+    r.original_url      = original_url
+    r.processed_png_url = processed_png_url
+    r.created_at        = datetime(2026, 5, 29, 10, 0)
+    r.updated_at        = datetime(2026, 5, 29, 10, 0)
+    return r
+
+
+def _render_mood_page(record_for_slot: MagicMock | None, slot: str = "mood_happy_smile") -> str:
+    """Render lfa_player_mood_photos.html with one slot populated, rest empty."""
+    import jinja2
+    from app.api.web_routes.mood_photos import _SLOT_META
+
+    mood_photos = {s: None for s in _ALL_SLOTS}
+    mood_photos[slot] = record_for_slot
+
+    user = MagicMock()
+    user.credit_balance = 500
+    user.id = 99
+
+    env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(str(_TEMPLATES_DIR)),
+        autoescape=False,
+    )
+    return env.get_template("lfa_player_mood_photos.html").render(
+        request           = MagicMock(),
+        user              = user,
+        mood_photos       = mood_photos,
+        slots_meta        = _SLOT_META,
+        spec_dashboard_url  = "/dashboard/lfa-football-player",
+        spec_dashboard_icon = "⚽",
+        spec_profile_url    = "/profile/lfa-football-player",
+        spec_profile_icon   = "🪪",
+    )
+
+
+# ── MP-D01 ── ready + processed_png_url → processed src rendered ──────────────
+
+class TestMPD01ProcessedImageDisplayed:
+
+    def test_mp_d01_ready_with_proc_url_renders_proc_as_src(self):
+        """MP-D01a: status=ready + processed_png_url → img src = processed_png_url."""
+        record = _mood_record(status="ready", processed_png_url=_PROC_URL)
+        html = _render_mood_page(record)
+        assert f'src="{_PROC_URL}"' in html, \
+            "processed_png_url must be the img src when status=ready"
+
+    def test_mp_d01_ready_original_url_not_primary_src(self):
+        """MP-D01b: original_url must not appear as primary img src when processed available."""
+        record = _mood_record(status="ready", processed_png_url=_PROC_URL)
+        html = _render_mood_page(record)
+        assert f'src="{_ORIG_URL}"' not in html, \
+            "original_url must not be the primary img src when processed_png_url is set"
+
+
+# ── MP-D02 ── uploaded + no processed → original src rendered ─────────────────
+
+class TestMPD02UploadedShowsOriginal:
+
+    def test_mp_d02_uploaded_status_renders_original_url(self):
+        """MP-D02a: status=uploaded, processed_png_url=None → img src = original_url."""
+        record = _mood_record(status="uploaded", processed_png_url=None)
+        html = _render_mood_page(record)
+        assert f'src="{_ORIG_URL}"' in html
+
+    def test_mp_d02_no_proc_url_in_src_when_uploaded(self):
+        """MP-D02b: _proc_ pattern must not appear in any src when status=uploaded."""
+        record = _mood_record(status="uploaded", processed_png_url=None)
+        html = _render_mood_page(record)
+        assert "_proc_" not in html
+
+
+# ── MP-D03 ── ready + processed_png_url=None → fallback to original ───────────
+
+class TestMPD03ReadyNullProcessedFallback:
+
+    def test_mp_d03_ready_null_processed_renders_original(self):
+        """MP-D03: status=ready but processed_png_url=None → renders original_url."""
+        record = _mood_record(status="ready", processed_png_url=None)
+        html = _render_mood_page(record)
+        assert f'src="{_ORIG_URL}"' in html
+
+    def test_mp_d03_no_proc_url_in_html_when_null(self):
+        """MP-D03b: no _proc_ URL in rendered HTML when processed_png_url is None."""
+        record = _mood_record(status="ready", processed_png_url=None)
+        html = _render_mood_page(record)
+        assert "_proc_" not in html
+
+
+# ── MP-D04 ── onerror fallback attribute ──────────────────────────────────────
+
+class TestMPD04OnerrorFallback:
+
+    def test_mp_d04_onerror_present_on_processed_img(self):
+        """MP-D04a: img rendered with processed src has an onerror attribute."""
+        record = _mood_record(status="ready", processed_png_url=_PROC_URL)
+        html = _render_mood_page(record)
+        assert "onerror=" in html
+
+    def test_mp_d04_onerror_points_to_original_url(self):
+        """MP-D04b: onerror attribute contains original_url for graceful degradation."""
+        record = _mood_record(status="ready", processed_png_url=_PROC_URL)
+        html = _render_mood_page(record)
+        assert _ORIG_URL in html, "original_url must appear in onerror fallback"
+
+    def test_mp_d04_onerror_has_null_guard(self):
+        """MP-D04c: onerror sets this.onerror=null to prevent infinite loop."""
+        record = _mood_record(status="ready", processed_png_url=_PROC_URL)
+        html = _render_mood_page(record)
+        assert "this.onerror=null" in html
+
+
+# ── MP-D05 ── Remove Background button absent in display-only fix ─────────────
+
+class TestMPD05NoRemoveBackgroundButton:
+
+    def test_mp_d05_no_remove_bg_when_uploaded(self):
+        """MP-D05a: Remove Background button must not appear for uploaded status."""
+        record = _mood_record(status="uploaded", processed_png_url=None)
+        html = _render_mood_page(record)
+        assert "Remove Background" not in html
+        assert "_mpRemoveBg" not in html
+
+    def test_mp_d05_no_remove_bg_when_ready(self):
+        """MP-D05b: Remove Background button must not appear for ready status."""
+        record = _mood_record(status="ready", processed_png_url=_PROC_URL)
+        html = _render_mood_page(record)
+        assert "Remove Background" not in html
+
+    def test_mp_d05_no_retry_remove_bg_when_failed(self):
+        """MP-D05c: Retry Remove Background button must not appear for failed status."""
+        record = _mood_record(status="failed", processed_png_url=None)
+        html = _render_mood_page(record)
+        assert "Retry Remove Background" not in html
+        assert "Remove Background" not in html
+
+
+# ── MP-D06 ── Regression: no-record placeholder unchanged ─────────────────────
+
+class TestMPD06Regression:
+
+    def test_mp_d06_no_record_renders_placeholder(self):
+        """MP-D06a: slot with no record renders the placeholder div, not an img."""
+        html = _render_mood_page(record_for_slot=None)
+        assert "No photo uploaded yet" in html
+
+    def test_mp_d06_no_record_no_img_in_preview(self):
+        """MP-D06b: placeholder slot must not render an <img> tag in the preview."""
+        html = _render_mood_page(record_for_slot=None)
+        preview_section = html.split("mp-preview")[1].split("mp-actions")[0]
+        assert "<img" not in preview_section

@@ -262,7 +262,13 @@ function _mpDelete(url) {
             <!-- Photo preview -->
             <div class="mp-preview">
                 {% if record %}
+                {% if record.status == 'ready' and record.processed_png_url %}
+                <img src="{{ record.processed_png_url }}"
+                     alt="Mood photo — {{ meta.label }}"
+                     onerror="this.src='{{ record.original_url }}'; this.onerror=null;">
+                {% else %}
                 <img src="{{ record.original_url }}" alt="Mood photo — {{ meta.label }}">
+                {% endif %}
                 {% else %}
                 <div class="mp-preview-placeholder">
                     No photo uploaded yet<br>
