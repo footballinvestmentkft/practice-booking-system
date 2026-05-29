@@ -214,10 +214,13 @@ def test_cd12_animated_capable_wrong_platform():
 
 # ── CD-13  get_supported_buckets: fifa returns all 7 ─────────────────────────
 
-def test_cd13_supported_buckets_fifa_all_six():
+def test_cd13_supported_buckets_fifa_all_seven():
     buckets = get_supported_buckets("fifa")
     expected = {"square", "portrait", "story", "tiktok", "landscape", "og", "banner"}
-    assert set(buckets) == expected
+    assert set(buckets) == expected, (
+        f"FIFA fallback dict missing buckets: {expected - set(buckets)}. "
+        "If 'og' is missing, the DESIGNS dict and migration 2026_05_29_1100 are out of sync."
+    )
 
 
 # ── CD-14  get_supported_buckets: pulse returns square only ───────────────────
