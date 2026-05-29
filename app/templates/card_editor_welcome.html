@@ -1,0 +1,214 @@
+{% extends "student_base.html" %}
+
+{% block title %}Welcome Card Customizer — {{ fmt.label }} — LFA Education Center{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '👋' %}
+{% set _page_name = 'Welcome Card Customizer' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+{% include "includes/mc_format_grid.html" %}
+<style>
+  .wce-wrap {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 4rem;
+  }
+  .wce-breadcrumb {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 1.25rem;
+  }
+  .wce-breadcrumb a { color: #94a3b8; text-decoration: none; }
+  .wce-breadcrumb a:hover { color: #f1f5f9; }
+  .wce-breadcrumb span { margin: 0 0.35rem; }
+  .wce-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .wce-header h1 { font-size: 1.4rem; font-weight: 700; color: #f8fafc; margin: 0; }
+  .wce-credits-badge {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 20px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.85rem;
+    color: #94a3b8;
+  }
+  .wce-credits-badge strong { color: #FFD200; }
+  /* Meta row */
+  .wce-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+  .wce-style-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+  .wce-dims {
+    font-size: 0.8rem;
+    color: #475569;
+  }
+  .wce-owned-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #86efac;
+    background: rgba(134,239,172,.12);
+    border: 1px solid rgba(134,239,172,.25);
+    border-radius: 20px;
+    padding: 0.2rem 0.65rem;
+  }
+  /* Preview panel */
+  .wce-preview-panel {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 14px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  .wce-preview-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 0.75rem;
+  }
+  .wce-preview-container {
+    display: flex;
+    justify-content: center;
+  }
+  /* Constrain tall formats so the preview doesn't dominate the page */
+  .wce-preview-wrap {
+    width: 100%;
+    max-width: 320px;
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #0b1120;
+  }
+  /* Export panel */
+  .wce-export-panel {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .wce-export-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin: 0 0 0.35rem;
+  }
+  .wce-export-sub {
+    font-size: 0.8rem;
+    color: #475569;
+    margin: 0 0 1rem;
+  }
+  .wce-btn-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1.4rem;
+    background: #FFD200;
+    color: #0f172a;
+    font-size: 0.875rem;
+    font-weight: 700;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }
+  .wce-btn-download:hover { opacity: 0.88; color: #0f172a; text-decoration: none; }
+  /* Nav links */
+  .wce-nav {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+  }
+  .wce-nav-back {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #93c5fd;
+    text-decoration: none;
+  }
+  .wce-nav-back:hover { color: #bfdbfe; text-decoration: none; }
+  .wce-nav-shop {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #FFD200;
+    text-decoration: none;
+  }
+  .wce-nav-shop:hover { opacity: 0.85; text-decoration: none; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="wce-wrap">
+
+  <nav class="wce-breadcrumb" aria-label="Breadcrumb">
+    <a href="/my-cards">My Cards</a>
+    <span>›</span>
+    <a href="/my-cards/welcome">Welcome Card</a>
+    <span>›</span>
+    <span>{{ fmt.label }}</span>
+  </nav>
+
+  <div class="wce-header">
+    <h1>{{ fmt.label }}</h1>
+    <span class="wce-credits-badge">Balance: <strong>{{ user.credit_balance }} CR</strong></span>
+  </div>
+
+  <div class="wce-meta">
+    <span class="wce-style-tag">{{ fmt.style_tag }}</span>
+    <span class="wce-dims">{{ fmt.dims }}</span>
+    <span class="wce-owned-badge">Owned ✓</span>
+  </div>
+
+  {# ── Preview panel ── #}
+  <div class="wce-preview-panel">
+    <p class="wce-preview-label">Preview</p>
+    <div class="wce-preview-container">
+      <div class="wce-preview-wrap mfg-preview-wrap {{ ratio_class }}">
+        <iframe
+          class="mfg-preview-iframe"
+          src="{{ preview_url }}"
+          loading="lazy"
+          scrolling="no"
+          title="{{ fmt.label }} Welcome Card preview"
+        ></iframe>
+      </div>
+    </div>
+  </div>
+
+  {# ── Export panel ── #}
+  <div class="wce-export-panel">
+    <p class="wce-export-title">Download your Welcome Card</p>
+    <p class="wce-export-sub">Exports a full-resolution PNG at {{ fmt.dims }} using your current player data.</p>
+    <a href="{{ export_url }}" class="wce-btn-download" download>
+      ↓ Download PNG
+    </a>
+  </div>
+
+  {# ── Navigation ── #}
+  <div class="wce-nav">
+    <a href="/my-cards/welcome" class="wce-nav-back">← Back to My Welcome Cards</a>
+    <a href="/shop/cards/welcome" class="wce-nav-shop">Browse Welcome Cards →</a>
+  </div>
+
+</div>
+{% endblock %}
