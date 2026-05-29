@@ -54,6 +54,15 @@
     margin-bottom: 1.5rem;
   }
   .spc-my-collection:hover { color: #bfdbfe; text-decoration: none; }
+  .spc-browse-formats {
+    display: block;
+    text-align: center;
+    font-size: 0.78rem;
+    color: #64748b;
+    text-decoration: none;
+    margin-top: 0.25rem;
+  }
+  .spc-browse-formats:hover { color: #94a3b8; text-decoration: none; }
 </style>
 {% endblock %}
 
@@ -174,6 +183,7 @@
         {% else %}
           <button class="mfg-btn mfg-btn-disabled" disabled>Not enough credits</button>
         {% endif %}
+        <a href="/shop/cards/player/{{ d.id }}" class="spc-browse-formats">Browse formats →</a>
       </div>
 
     </div>

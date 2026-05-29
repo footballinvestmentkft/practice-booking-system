@@ -1,0 +1,219 @@
+{% extends "student_base.html" %}
+
+{% block title %}{{ design.label }} — LFA Card Shop{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '🎴' %}
+{% set _page_name = design.label %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+{% include "includes/mc_format_grid.html" %}
+<style>
+  .spd-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 4rem;
+  }
+  .spd-breadcrumb {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 1.25rem;
+  }
+  .spd-breadcrumb a { color: #94a3b8; text-decoration: none; }
+  .spd-breadcrumb a:hover { color: #f1f5f9; }
+  .spd-breadcrumb span { margin: 0 0.35rem; }
+  .spd-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .spd-header h1 { font-size: 1.4rem; font-weight: 700; color: #f8fafc; margin: 0; }
+  .spd-credits-badge {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 20px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.85rem;
+    color: #94a3b8;
+  }
+  .spd-credits-badge strong { color: #FFD200; }
+  .spd-desc {
+    font-size: 0.88rem;
+    color: #64748b;
+    margin-bottom: 0.75rem;
+    max-width: 600px;
+  }
+  .spd-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #93c5fd;
+    text-decoration: none;
+    margin-bottom: 1.5rem;
+  }
+  .spd-back:hover { color: #bfdbfe; text-decoration: none; }
+  /* Collection CTA block */
+  .spd-collection-cta {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+  .spd-collection-cta-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .spd-collection-cta-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #475569;
+  }
+  .spd-collection-cta-price {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #f1f5f9;
+  }
+  .spd-collection-cta-price.owned { color: #86efac; }
+  /* Format grid section */
+  .spd-section-hdr {
+    margin-bottom: 0.75rem;
+  }
+  .spd-section-hdr h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin: 0 0 0.2rem;
+  }
+  .spd-section-sub {
+    font-size: 0.78rem;
+    color: #475569;
+  }
+  /* "Included in this collection" badge override — reuse mfg-badge-free */
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="spd-wrap">
+
+  <nav class="spd-breadcrumb" aria-label="Breadcrumb">
+    <a href="/shop">Shop</a>
+    <span>›</span>
+    <a href="/shop/cards">Cards</a>
+    <span>›</span>
+    <a href="/shop/cards/player">Player Card</a>
+    <span>›</span>
+    <span>{{ design.label }}</span>
+  </nav>
+
+  <div class="spd-header">
+    <h1>{{ design.label }}</h1>
+    <span class="spd-credits-badge">Balance: <strong>{{ user.credit_balance }} CR</strong></span>
+  </div>
+
+  {% if design.description %}
+  <p class="spd-desc">{{ design.description }}</p>
+  {% endif %}
+
+  <a href="/shop/cards/player" class="spd-back">← Player Card Designs</a>
+
+  {# ── Flash messages ── #}
+  {% if flash_purchased %}
+  <div class="mfg-flash mfg-flash-success">
+    ✓ {{ design.label }} unlocked — all formats are now available for export.
+  </div>
+  {% endif %}
+  {% if flash_error == "credits" %}
+  <div class="mfg-flash mfg-flash-error">
+    Not enough credits.
+    <a class="mfg-flash-cta" href="/credits">Get more credits →</a>
+  </div>
+  {% elif flash_error == "owned" %}
+  <div class="mfg-flash mfg-flash-error">
+    You already own this collection.
+    <a class="mfg-flash-cta" href="/my-cards/player">View in My Cards →</a>
+  </div>
+  {% elif flash_error == "invalid" %}
+  <div class="mfg-flash mfg-flash-error">
+    This product is no longer available.
+    <a class="mfg-flash-cta" href="/shop/cards">Back to shop →</a>
+  </div>
+  {% endif %}
+
+  {# ── Collection-level CTA ── #}
+  <div class="spd-collection-cta">
+    <div class="spd-collection-cta-info">
+      <span class="spd-collection-cta-label">Collection</span>
+      {% if state == "owned" %}
+        <span class="spd-collection-cta-price owned">{{ design.label }} — Owned ✓</span>
+      {% elif state == "not_available" %}
+        <span class="spd-collection-cta-price">{{ design.label }} — Not available</span>
+      {% else %}
+        <span class="spd-collection-cta-price">{{ design.label }} — {{ design.credit_cost }} CR</span>
+      {% endif %}
+    </div>
+
+    <div>
+      {% if state == "owned" %}
+        <a href="/dashboard/lfa-football-player/card-editor" class="mfg-btn mfg-btn-edit" style="width:auto;display:inline-block;padding:0.5rem 1.25rem;">Open Editor →</a>
+      {% elif state == "get_card" %}
+        <form method="POST" action="/shop/cards/player_card/buy/{{ collection_id }}">
+          <button type="submit" class="mfg-btn mfg-btn-get" style="width:auto;padding:0.5rem 1.25rem;">
+            Buy {{ design.label }} — {{ design.credit_cost }} CR
+          </button>
+        </form>
+      {% elif state == "not_available" %}
+        <button class="mfg-btn mfg-btn-disabled" style="width:auto;padding:0.5rem 1.25rem;" disabled>Not available</button>
+      {% else %}
+        <button class="mfg-btn mfg-btn-disabled" style="width:auto;padding:0.5rem 1.25rem;" disabled>Not enough credits</button>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── Format grid ── #}
+  <div class="spd-section-hdr">
+    <h2>Formats included in this collection</h2>
+    <p class="spd-section-sub">All {{ format_rows | length }} formats are unlocked together with one purchase.</p>
+  </div>
+
+  <div class="mfg-grid">
+    {% for r in format_rows %}
+    <div class="mfg-card">
+
+      <div class="mfg-preview-wrap {{ r.ratio }}{% if state != 'owned' %} mfg-locked{% endif %}">
+        <iframe
+          class="mfg-preview-iframe"
+          src="/players/{{ user.id }}/card?platform={{ r.platform }}&design={{ collection_id }}"
+          loading="lazy"
+          scrolling="no"
+          title="{{ r.label }} preview"
+        ></iframe>
+      </div>
+
+      <p class="mfg-label">{{ r.label }}</p>
+      <p class="mfg-dims">{{ r.dims }}</p>
+
+      <span class="mfg-badge mfg-badge-free">Included in this collection</span>
+
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

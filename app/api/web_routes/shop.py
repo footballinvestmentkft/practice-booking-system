@@ -1,7 +1,7 @@
 """Card shop — browse and purchase card designs and platform formats."""
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -18,6 +18,7 @@ from ...services.card_design_service import (
     is_design_accessible,
     purchase_design,
 )
+from ...services.card_constants import PC_FORMAT_META
 from ...services.credit_service import InsufficientCreditsError
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -110,6 +111,54 @@ async def shop_player_card(
             "flash_purchased": request.query_params.get("purchased"),
             "flash_error":     request.query_params.get("error"),
             "spec_dashboard_url": "/dashboard/lfa-football-player",
+        },
+    )
+
+
+# ── Player Card collection detail ─────────────────────────────────────────────
+
+@router.get("/shop/cards/player/{collection_id}", response_class=HTMLResponse)
+async def shop_player_card_detail(
+    collection_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User  = Depends(get_current_user_web),
+):
+    all_designs = get_all_designs(db)
+    design = next((d for d in all_designs if d.id == collection_id), None)
+    if design is None:
+        raise HTTPException(status_code=404)
+
+    credits = user.credit_balance
+    owned = is_design_accessible(db, user.id, "player_card", collection_id)
+
+    if not design.available or design.credit_cost == 0:
+        state = "not_available"
+    elif owned:
+        state = "owned"
+    elif credits >= design.credit_cost:
+        state = "get_card"
+    else:
+        state = "locked"
+
+    meta_by_bucket = {m["bucket"]: m for m in PC_FORMAT_META}
+    format_rows = [
+        meta_by_bucket[b]
+        for b in design.supported_export_buckets
+        if b in meta_by_bucket
+    ]
+
+    return templates.TemplateResponse(
+        "shop_player_card_detail.html",
+        {
+            "request":         request,
+            "user":            user,
+            "design":          design,
+            "collection_id":   collection_id,
+            "state":           state,
+            "format_rows":     format_rows,
+            "flash_purchased": request.query_params.get("purchased"),
+            "flash_error":     request.query_params.get("error"),
         },
     )
 

@@ -158,3 +158,19 @@ CARD_GALLERY_PLATFORM_IDS: tuple[str, ...] = (
     "og",
     "banner_custom",
 )
+
+# Player Card format metadata — maps export bucket → display metadata.
+# Used by /shop/cards/player/{collection_id} detail page (C1 collection browsing).
+# Ordering: portrait-first, then vertical formats, then square, then wide/landscape.
+# C2 note: when format-level purchase is introduced, each entry gains a credit_cost
+# and design_id convention (e.g. "fifa_instagram_portrait"). For now, ownership is
+# collection-level (design_id="fifa") and all formats are unlocked together.
+PC_FORMAT_META: list[dict] = [
+    {"bucket": "portrait",  "platform": "instagram_portrait",  "label": "Instagram Portrait", "dims": "1080 × 1350", "ratio": "mfg-ratio-45",  "display_order": 0},
+    {"bucket": "story",     "platform": "instagram_story",     "label": "Instagram Story",    "dims": "1080 × 1920", "ratio": "mfg-ratio-916", "display_order": 1},
+    {"bucket": "tiktok",    "platform": "tiktok",              "label": "TikTok",             "dims": "1080 × 1920", "ratio": "mfg-ratio-916", "display_order": 2},
+    {"bucket": "square",    "platform": "instagram_square",    "label": "Square",             "dims": "1080 × 1080", "ratio": "mfg-ratio-11",  "display_order": 3},
+    {"bucket": "landscape", "platform": "facebook_landscape",  "label": "Landscape",          "dims": "1200 × 630",  "ratio": "mfg-ratio-169", "display_order": 4},
+    {"bucket": "og",        "platform": "og",                  "label": "Open Graph",         "dims": "1200 × 630",  "ratio": "mfg-ratio-169", "display_order": 5},
+    {"bucket": "banner",    "platform": "banner_custom",       "label": "Banner",             "dims": "1500 × 500",  "ratio": "mfg-ratio-169", "display_order": 6},
+]
