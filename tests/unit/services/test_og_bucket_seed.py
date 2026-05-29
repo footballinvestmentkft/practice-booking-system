@@ -185,8 +185,8 @@ class TestOG06DetailPageSevenFormats:
             flash_purchased=None,
             flash_error=None,
         )
-        assert html.count("mfg-card") >= 7, (
-            "Expected at least 7 .mfg-card elements when 7 format rows are passed."
+        assert html.count("spd-format-card") >= 7, (
+            "Expected at least 7 .spd-format-card elements when 7 format rows are passed."
         )
         assert "Open Graph" in html, "OG format label 'Open Graph' must appear in rendered HTML"
 

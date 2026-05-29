@@ -366,3 +366,78 @@ class TestPCIDBrowseFormats:
         """PCID-BF-2: number of 'Browse formats →' links equals number of designs."""
         html = _render_player_list()
         assert html.count("Browse formats →") == 2
+
+
+# ── SPD-L: Layout — fixed-height grid, aspect-ratio previews ─────────────────
+
+class TestSPDLayout:
+
+    def test_spdl01_format_grid_present(self):
+        """SPD-L01: spd-format-grid is the container class for the format section."""
+        html = _render_detail()
+        assert "spd-format-grid" in html
+
+    def test_spdl02_format_card_count(self):
+        """SPD-L02: spd-format-card appears exactly 7 times (one per FIFA bucket)."""
+        html = _render_detail()
+        assert html.count("spd-format-card") >= 7
+
+    def test_spdl03_preview_viewport_count(self):
+        """SPD-L03: spd-preview-viewport appears exactly 7 times."""
+        html = _render_detail()
+        assert html.count("spd-preview-viewport") >= 7
+
+    def test_spdl04_preview_aspect_present(self):
+        """SPD-L04: spd-preview-aspect wrapper is present in rendered HTML."""
+        html = _render_detail()
+        assert "spd-preview-aspect" in html
+
+    def test_spdl05_story_tiktok_aspect_ratio_916(self):
+        """SPD-L05: story and tiktok formats carry aspect-ratio: 9/16 inline style."""
+        html = _render_detail()
+        assert html.count("aspect-ratio: 9/16") >= 2
+
+    def test_spdl06_portrait_aspect_ratio_45(self):
+        """SPD-L06: portrait format carries aspect-ratio: 4/5 inline style."""
+        html = _render_detail()
+        assert "aspect-ratio: 4/5" in html
+
+    def test_spdl07_square_aspect_ratio_11(self):
+        """SPD-L07: square format carries aspect-ratio: 1/1 inline style."""
+        html = _render_detail()
+        assert "aspect-ratio: 1/1" in html
+
+    def test_spdl08_landscape_og_banner_aspect_ratio_169(self):
+        """SPD-L08: landscape, og, and banner formats carry aspect-ratio: 16/9."""
+        html = _render_detail()
+        assert html.count("aspect-ratio: 16/9") >= 3
+
+    def test_spdl09_wide_class_on_landscape_og_banner(self):
+        """SPD-L09: spd-vh-wide class applied to landscape/og/banner (16:9) cards."""
+        html = _render_detail()
+        assert html.count("spd-vh-wide") >= 3
+
+    def test_spdl10_format_badge_present(self):
+        """SPD-L10: spd-format-badge class present on all Included badges."""
+        html = _render_detail()
+        assert html.count("spd-format-badge") >= 7
+
+    def test_spdl11_owned_no_mfg_locked_in_viewport(self):
+        """SPD-L11: owned state → mfg-locked not applied to preview viewports."""
+        html = _render_detail(state="owned", owned=True)
+        assert " mfg-locked" not in html
+
+    def test_spdl12_unowned_mfg_locked_in_viewport(self):
+        """SPD-L12: unowned state → mfg-locked applied to preview viewports."""
+        html = _render_detail(state="get_card", owned=False)
+        assert " mfg-locked" in html
+
+    def test_spdl13_no_per_format_buy_form(self):
+        """SPD-L13: no per-format buy forms in format grid (collection buy only)."""
+        html = _render_detail(state="get_card")
+        assert html.count('action="/shop/cards/player_card/buy/fifa"') == 1
+
+    def test_spdl14_mfg_grid_not_used_for_format_section(self):
+        """SPD-L14: mfg-grid class is not used as the format section container (regression guard)."""
+        html = _render_detail()
+        assert 'class="mfg-grid"' not in html

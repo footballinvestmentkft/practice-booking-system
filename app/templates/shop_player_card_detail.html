@@ -105,7 +105,57 @@
     font-size: 0.78rem;
     color: #475569;
   }
-  /* "Included in this collection" badge override — reuse mfg-badge-free */
+  /* Format grid — fixed-height cards, aspect-ratio-aware previews */
+  .spd-format-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 1rem;
+  }
+  .spd-format-card {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    height: 380px;
+  }
+  .spd-format-card:hover { border-color: #334155; }
+  .spd-preview-viewport {
+    flex: 0 0 240px;
+    position: relative;
+    background: #0b1120;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .spd-preview-viewport.spd-vh-wide { flex: 0 0 160px; }
+  .spd-preview-aspect {
+    max-width: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+  .spd-format-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding-top: 0.75rem;
+    min-height: 0;
+  }
+  .spd-format-badge { margin-top: auto; }
+  /* Lock overlay — mirrors mc_format_grid.html rules for the renamed viewport class */
+  .spd-preview-viewport.mfg-locked::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(15,23,42,.55) url('/static/images/logo-wc.png') center / 28% no-repeat;
+  }
+  .spd-preview-viewport.mfg-locked .mfg-preview-iframe {
+    filter: blur(1px) brightness(.65);
+  }
 </style>
 {% endblock %}
 
@@ -192,24 +242,34 @@
     <p class="spd-section-sub">All {{ format_rows | length }} formats are unlocked together with one purchase.</p>
   </div>
 
-  <div class="mfg-grid">
+  {% set _ar = {
+    'mfg-ratio-45':  '4/5',
+    'mfg-ratio-916': '9/16',
+    'mfg-ratio-11':  '1/1',
+    'mfg-ratio-169': '16/9'
+  } %}
+  <div class="spd-format-grid">
     {% for r in format_rows %}
-    <div class="mfg-card">
+    {% set _wide = r.ratio == 'mfg-ratio-169' %}
+    <div class="spd-format-card">
 
-      <div class="mfg-preview-wrap {{ r.ratio }}{% if state != 'owned' %} mfg-locked{% endif %}">
-        <iframe
-          class="mfg-preview-iframe"
-          src="/players/{{ user.id }}/card?platform={{ r.platform }}&design={{ collection_id }}"
-          loading="lazy"
-          scrolling="no"
-          title="{{ r.label }} preview"
-        ></iframe>
+      <div class="spd-preview-viewport{% if _wide %} spd-vh-wide{% endif %}{% if state != 'owned' %} mfg-locked{% endif %}">
+        <div class="spd-preview-aspect" style="aspect-ratio: {{ _ar.get(r.ratio, '4/3') }}; height: 100%;">
+          <iframe
+            class="mfg-preview-iframe"
+            src="/players/{{ user.id }}/card?platform={{ r.platform }}&design={{ collection_id }}"
+            loading="lazy"
+            scrolling="no"
+            title="{{ r.label }} preview"
+          ></iframe>
+        </div>
       </div>
 
-      <p class="mfg-label">{{ r.label }}</p>
-      <p class="mfg-dims">{{ r.dims }}</p>
-
-      <span class="mfg-badge mfg-badge-free">Included in this collection</span>
+      <div class="spd-format-content">
+        <p class="mfg-label">{{ r.label }}</p>
+        <p class="mfg-dims">{{ r.dims }}</p>
+        <span class="mfg-badge mfg-badge-free spd-format-badge">Included in this collection</span>
+      </div>
 
     </div>
     {% endfor %}
