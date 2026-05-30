@@ -263,16 +263,16 @@ class TestCEL091011CTALinks:
         assert "Open Editor" in src
 
     def test_cel_10_template_has_welcome_cta(self):
-        """CEL-10: template contains /my-cards/welcome CTA for owned welcome card."""
+        """CEL-10: template contains /card-editor/welcome CTA for owned welcome card (CE-3.6-A)."""
         src = (TEMPLATES_DIR / "card_studio_landing.html").read_text(encoding="utf-8")
-        assert 'href="/my-cards/welcome"' in src
-        assert "My Welcome Cards" in src
+        assert 'href="/card-editor/welcome"' in src
+        assert "Open Welcome Studio" in src
 
     def test_cel_11_template_has_challenge_cta(self):
-        """CEL-11: template contains /my-cards/challenge CTA for owned challenge card."""
+        """CEL-11: template contains /card-editor/challenge CTA for owned challenge card (CE-3.6-A)."""
         src = (TEMPLATES_DIR / "card_studio_landing.html").read_text(encoding="utf-8")
-        assert 'href="/my-cards/challenge"' in src
-        assert "My Challenge Cards" in src
+        assert 'href="/card-editor/challenge"' in src
+        assert "Open Challenge Studio" in src
 
     def test_cel_09b_cs_player_editor_cta_class_present(self):
         """CEL-09b: cs-player-editor-cta CSS class marks the player CTA for JS/test targeting."""
