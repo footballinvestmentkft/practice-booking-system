@@ -298,8 +298,8 @@ class TestCEL12RouteCount:
         """CE-3.4 adds GET /card-editor/challenge — total route count is 839."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 839, (
-            f"Expected 839 routes (836 CE-3.0 + 1 CE-3.1 + 1 CE-3.3 + 1 CE-3.4), got {len(paths)}."
+        assert len(paths) == 842, (
+            f"Expected 842 routes (839 CE-3.7 baseline + 3 CE-3.8 from-mood endpoints), got {len(paths)}."
         )
 
     def test_cel_12b_card_editor_route_registered(self):

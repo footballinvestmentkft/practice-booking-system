@@ -291,11 +291,11 @@ class TestCCS10NoDraftService:
 class TestCCS11RouteCount:
 
     def test_ccs_11_route_count_839(self):
-        """CCS-11: adding GET /card-editor/challenge raises route count from 838 to 839."""
+        """CCS-11: route count updated to 842 after CE-3.8 (+3 from-mood endpoints)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 839, (
-            f"Expected 839 routes (838 CE-3.3 baseline + GET /card-editor/challenge), got {len(paths)}."
+        assert len(paths) == 842, (
+            f"Expected 842 routes (839 CE-3.7 baseline + 3 CE-3.8 from-mood endpoints), got {len(paths)}."
         )
 
     def test_ccs_11b_card_editor_challenge_route_registered(self):
