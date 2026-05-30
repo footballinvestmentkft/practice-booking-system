@@ -34,6 +34,11 @@ CEW-28  template contains /dashboard/wc-photo-landscape/delete route (CE-3.7)
 CEW-29  template contains preview iframe reload JS (CE-3.7)
 CEW-30  template does NOT contain BG removal reference (CE-3.7)
 CEW-31  template does NOT contain mood photo reference (CE-3.7)
+CEW-32  template contains X-CSRF-Token header reference (CE-3.7 CSRF fix)
+CEW-33  template reads csrf_token cookie to obtain CSRF token (CE-3.7 CSRF fix)
+CEW-34  upload fetch() block carries X-CSRF-Token header (CE-3.7 CSRF fix)
+CEW-35  delete fetch() block carries X-CSRF-Token header (CE-3.7 CSRF fix)
+CEW-36  upload FormData fetch has no explicit Content-Type header (CE-3.7 CSRF fix)
 """
 from __future__ import annotations
 
@@ -605,3 +610,62 @@ class TestCEW29to31TemplateGuards:
         src = self._src()
         assert "mood_photo" not in src.lower()
         assert "mood-photo" not in src.lower()
+
+
+# ── CEW-32–36: CSRF fix coverage (CE-3.7 CSRF fix) ──────────────────────────
+
+class TestCEW32to36CsrfFix:
+
+    @classmethod
+    def _src(cls) -> str:
+        return (TEMPLATES_DIR / "card_studio_welcome.html").read_text(encoding="utf-8")
+
+    @classmethod
+    def _upload_section(cls) -> str:
+        src = cls._src()
+        start = src.find("input.addEventListener('change'")
+        end   = src.find("deleteBtn.addEventListener('click'")
+        return src[start:end] if start != -1 and end != -1 else ""
+
+    @classmethod
+    def _delete_section(cls) -> str:
+        src = cls._src()
+        start = src.find("deleteBtn.addEventListener('click'")
+        return src[start:] if start != -1 else ""
+
+    def test_cew_32_template_has_x_csrf_token_header(self):
+        """CEW-32: template references X-CSRF-Token header."""
+        assert 'X-CSRF-Token' in self._src(), (
+            "Template must include 'X-CSRF-Token' header in fetch() calls"
+        )
+
+    def test_cew_33_template_reads_csrf_token_cookie(self):
+        """CEW-33: template reads the csrf_token cookie to obtain the CSRF value."""
+        assert 'csrf_token=' in self._src(), (
+            "Template must read csrf_token= from document.cookie"
+        )
+
+    def test_cew_34_upload_fetch_has_csrf_header(self):
+        """CEW-34: the upload fetch() block carries X-CSRF-Token header."""
+        section = self._upload_section()
+        assert section, "Could not extract upload handler section from template"
+        assert 'X-CSRF-Token' in section, (
+            "Upload fetch() must include 'X-CSRF-Token' header"
+        )
+
+    def test_cew_35_delete_fetch_has_csrf_header(self):
+        """CEW-35: the delete fetch() block carries X-CSRF-Token header."""
+        section = self._delete_section()
+        assert section, "Could not extract delete handler section from template"
+        assert 'X-CSRF-Token' in section, (
+            "Delete fetch() must include 'X-CSRF-Token' header"
+        )
+
+    def test_cew_36_upload_formdata_fetch_has_no_explicit_content_type(self):
+        """CEW-36: FormData upload fetch must NOT set explicit Content-Type header."""
+        section = self._upload_section()
+        assert section, "Could not extract upload handler section from template"
+        assert 'Content-Type' not in section, (
+            "Upload fetch() must not set explicit Content-Type — "
+            "browser sets multipart/form-data with boundary automatically"
+        )

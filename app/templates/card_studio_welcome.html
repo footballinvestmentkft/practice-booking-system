@@ -305,6 +305,9 @@
   var deleteBtn  = document.getElementById('wcs-photo-delete-btn');
   var errorEl    = document.getElementById('wcs-photo-error');
 
+  function _csrf() {
+    return (document.cookie.split('; ').find(function (r) { return r.startsWith('csrf_token='); }) || '').split('=')[1] || '';
+  }
   function _reloadPreview() {
     if (iframe) { iframe.src = iframe.src; }
   }
@@ -330,15 +333,23 @@
       var file = e.target.files[0];
       if (!file) return;
       _clearError();
+      var csrf = _csrf();
+      if (!csrf) { _showError('Session expired — please reload the page.'); input.value = ''; return; }
       var fd = new FormData();
       fd.append('file', file);
-      fetch(uploadUrl, { method: 'POST', body: fd })
-        .then(function (r) { return r.json(); })
+      fetch(uploadUrl, { method: 'POST', body: fd, headers: { 'X-CSRF-Token': csrf } })
+        .then(function (r) {
+          if (r.status === 403) { return Promise.reject(new Error('csrf')); }
+          return r.json();
+        })
         .then(function (data) {
           if (data.ok) { _showPhoto(data.photo_url); _reloadPreview(); }
           else { _showError(data.error || 'Upload failed. Please try again.'); }
         })
-        .catch(function () { _showError('Upload failed. Please check the file and try again.'); });
+        .catch(function (err) {
+          if (err && err.message === 'csrf') { _showError('Session expired — please reload the page.'); }
+          else { _showError('Upload failed. Please check the file and try again.'); }
+        });
       input.value = '';
     });
   }
@@ -346,13 +357,21 @@
   if (deleteBtn) {
     deleteBtn.addEventListener('click', function () {
       _clearError();
-      fetch(deleteUrl, { method: 'POST' })
-        .then(function (r) { return r.json(); })
+      var csrf = _csrf();
+      if (!csrf) { _showError('Session expired — please reload the page.'); return; }
+      fetch(deleteUrl, { method: 'POST', headers: { 'X-CSRF-Token': csrf } })
+        .then(function (r) {
+          if (r.status === 403) { return Promise.reject(new Error('csrf')); }
+          return r.json();
+        })
         .then(function (data) {
           if (data.ok) { _clearPhoto(); _reloadPreview(); }
           else { _showError(data.error || 'Delete failed. Please try again.'); }
         })
-        .catch(function () { _showError('Delete failed. Please try again.'); });
+        .catch(function (err) {
+          if (err && err.message === 'csrf') { _showError('Session expired — please reload the page.'); }
+          else { _showError('Delete failed. Please try again.'); }
+        });
     });
   }
 })();
