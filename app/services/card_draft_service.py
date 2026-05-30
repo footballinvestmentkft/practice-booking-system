@@ -2,9 +2,22 @@
 
 Phase 4D-1: service layer only.  Routes still use UserLicense legacy columns.
 Phase 4D-2 will wire routes to this service.
+CE-3.0: added get_draft() generic API with card_type_id validation.
 """
 from datetime import datetime, timezone
 from typing import Any
+
+# Card families registered in CardRegistry (card_system/registry.py).
+# Validated by get_draft(); get_or_create_singleton() is legacy and bypasses validation.
+KNOWN_CARD_TYPE_IDS: frozenset[str] = frozenset({
+    "player_card",
+    "welcome_card",
+    "challenge_card",
+    "match_card",
+    "event_card",
+    "birthday_card",
+    "badge_card",
+})
 
 from sqlalchemy.orm import Session
 
@@ -101,6 +114,88 @@ class CardDraftService:
     def get_player_card_draft(db: Session, user_id: int) -> CardDraft:
         """Convenience wrapper: singleton draft for player_card."""
         return CardDraftService.get_or_create_singleton(db, user_id, "player_card")
+
+    @staticmethod
+    def get_draft(
+        db: Session,
+        user_id: int,
+        card_type_id: str,
+        instance_name: str = "default",
+    ) -> CardDraft:
+        """Generic get-or-create for any registered card family draft.
+
+        CE-3.0 family-aware API.  Validates card_type_id against KNOWN_CARD_TYPE_IDS
+        and raises ValueError for unrecognised families so callers get an explicit
+        signal rather than silently creating orphaned rows.
+
+        For player_card / instance_name="default" the create-path seeds defaults
+        from the UserLicense row (same behaviour as get_or_create_singleton).
+        All other families receive generic defaults (theme="default", variant="fifa").
+
+        Raises:
+            ValueError: card_type_id is not in KNOWN_CARD_TYPE_IDS.
+        """
+        if card_type_id not in KNOWN_CARD_TYPE_IDS:
+            raise ValueError(
+                f"Unknown card_type_id: {card_type_id!r}. "
+                f"Known types: {sorted(KNOWN_CARD_TYPE_IDS)}"
+            )
+
+        draft = (
+            db.query(CardDraft)
+            .filter(
+                CardDraft.user_id       == user_id,
+                CardDraft.card_type_id  == card_type_id,
+                CardDraft.instance_name == instance_name,
+            )
+            .first()
+        )
+        if draft:
+            return draft
+
+        draft_theme    = "default"
+        draft_variant  = "fifa"
+        draft_platform = None
+        published_theme: str | None    = None
+        published_variant: str | None  = None
+        published_platform: str | None = None
+        published_at: datetime | None  = None
+
+        if card_type_id == "player_card" and instance_name == "default":
+            lic: UserLicense | None = (
+                db.query(UserLicense)
+                .filter(
+                    UserLicense.user_id == user_id,
+                    UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+                )
+                .first()
+            )
+            if lic:
+                draft_theme    = lic.card_theme    or "default"
+                draft_variant  = lic.card_variant  or "fifa"
+                draft_platform = lic.public_card_platform
+                if lic.published_card_theme:
+                    published_theme    = lic.published_card_theme
+                    published_variant  = lic.published_card_variant or "fifa"
+                    published_platform = lic.published_card_platform
+                    published_at       = datetime.now(timezone.utc)
+
+        new_draft = CardDraft(
+            user_id        = user_id,
+            card_type_id   = card_type_id,
+            instance_name  = instance_name,
+            draft_theme    = draft_theme,
+            draft_variant  = draft_variant,
+            draft_platform = draft_platform,
+            published_theme    = published_theme,
+            published_variant  = published_variant,
+            published_platform = published_platform,
+            published_at       = published_at,
+        )
+        db.add(new_draft)
+        db.commit()
+        db.refresh(new_draft)
+        return new_draft
 
     @staticmethod
     def update_draft_theme(
