@@ -10,24 +10,10 @@
 {% endblock %}
 
 {% block extra_styles %}
+{% include "includes/cs_studio_shared.html" %}
 {% include "includes/mc_format_grid.html" %}
 <style>
-  .wcs-wrap {
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 1.5rem 1rem 4rem;
-  }
-
   /* ── Header ── */
-  .wcs-breadcrumb {
-    font-size: 0.8rem;
-    color: #64748b;
-    margin-bottom: 1.25rem;
-  }
-  .wcs-breadcrumb a { color: #94a3b8; text-decoration: none; }
-  .wcs-breadcrumb a:hover { color: #f1f5f9; }
-  .wcs-breadcrumb span { margin: 0 0.35rem; }
-
   .wcs-header {
     display: flex;
     align-items: center;
@@ -146,27 +132,6 @@
   }
   .wcs-btn-download:hover { opacity: 0.88; color: #0f172a; text-decoration: none; }
 
-  /* ── Nav ── */
-  .wcs-nav {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-top: 2rem;
-  }
-  .wcs-nav-back {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #93c5fd;
-    text-decoration: none;
-  }
-  .wcs-nav-back:hover { color: #bfdbfe; text-decoration: none; }
-  .wcs-nav-shop {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #FFD200;
-    text-decoration: none;
-  }
-  .wcs-nav-shop:hover { opacity: 0.85; text-decoration: none; }
 </style>
 {% endblock %}
 

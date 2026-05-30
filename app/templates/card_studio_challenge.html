@@ -10,23 +10,8 @@
 {% endblock %}
 
 {% block extra_styles %}
+{% include "includes/cs_studio_shared.html" %}
 <style>
-  .ccs-wrap {
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 1.5rem 1rem 4rem;
-  }
-
-  /* ── Breadcrumb ── */
-  .ccs-breadcrumb {
-    font-size: 0.8rem;
-    color: #64748b;
-    margin-bottom: 1.25rem;
-  }
-  .ccs-breadcrumb a { color: #94a3b8; text-decoration: none; }
-  .ccs-breadcrumb a:hover { color: #f1f5f9; }
-  .ccs-breadcrumb span { margin: 0 0.35rem; }
-
   /* ── Header ── */
   .ccs-header {
     margin-bottom: 0.5rem;
@@ -147,29 +132,11 @@
   }
   .ccs-btn-secondary:hover { border-color: #FFD200; color: #FFD200; text-decoration: none; }
 
-  /* ── Nav ── */
+  /* ── Nav (CCS extension — base is shared) ── */
   .ccs-nav {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-top: 2rem;
     padding-top: 1.25rem;
     border-top: 1px solid #1e293b;
   }
-  .ccs-nav-back {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #93c5fd;
-    text-decoration: none;
-  }
-  .ccs-nav-back:hover { color: #bfdbfe; text-decoration: none; }
-  .ccs-nav-shop {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #FFD200;
-    text-decoration: none;
-  }
-  .ccs-nav-shop:hover { opacity: 0.85; text-decoration: none; }
 </style>
 {% endblock %}
 

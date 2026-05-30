@@ -1,0 +1,58 @@
+{# ─────────────────────────────────────────────────────────────────────────────
+   includes/cs_studio_shared.html
+   Shared CSS tokens for Card Studio family pages (CE-3.5).
+
+   Include at the top of {% block extra_styles %} in each Studio template:
+       {% include "includes/cs_studio_shared.html" %}
+
+   Covers: page wrap, breadcrumb, nav footer base, nav back/shop links.
+   These rules are identical across card_studio_welcome.html and
+   card_studio_challenge.html — centralised here to eliminate duplication.
+
+   File-specific CSS (format selector, preview/export panels, info box, CTA
+   buttons, owned badge) must remain in each template's own <style> block.
+   ───────────────────────────────────────────────────────────────────────────── #}
+<style>
+  /* ── Page wrap ── */
+  .wcs-wrap, .ccs-wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 4rem;
+  }
+
+  /* ── Breadcrumb ── */
+  .wcs-breadcrumb, .ccs-breadcrumb {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 1.25rem;
+  }
+  .wcs-breadcrumb a, .ccs-breadcrumb a { color: #94a3b8; text-decoration: none; }
+  .wcs-breadcrumb a:hover, .ccs-breadcrumb a:hover { color: #f1f5f9; }
+  .wcs-breadcrumb span, .ccs-breadcrumb span { margin: 0 0.35rem; }
+
+  /* ── Nav footer (base) — CCS extends with padding-top + border-top ── */
+  .wcs-nav, .ccs-nav {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+  }
+
+  /* ── Nav back link ── */
+  .wcs-nav-back, .ccs-nav-back {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #93c5fd;
+    text-decoration: none;
+  }
+  .wcs-nav-back:hover, .ccs-nav-back:hover { color: #bfdbfe; text-decoration: none; }
+
+  /* ── Nav shop link ── */
+  .wcs-nav-shop, .ccs-nav-shop {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #FFD200;
+    text-decoration: none;
+  }
+  .wcs-nav-shop:hover, .ccs-nav-shop:hover { opacity: 0.85; text-decoration: none; }
+</style>
