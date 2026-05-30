@@ -46,7 +46,13 @@ CEW-40  POST /dashboard/wc-photo/from-mood valid mood_slot → ok + photo_url (C
 CEW-41  POST /dashboard/wc-photo/from-mood invalid mood_slot → 422 (CE-3.8)
 CEW-42  POST /dashboard/wc-photo/from-mood mood photo not found → 404 (CE-3.8)
 CEW-43  portrait and landscape from-mood endpoints assign correct license fields (CE-3.8)
-CEW-44  template contains Mood Photo picker UI element (CE-3.8)
+CEW-44  template contains Mood Photo picker UI elements — wcs-mood-chip (CE-3.8 corrected)
+CEW-44b template contains wcs-mood-chip--empty class (CE-3.8 corrected)
+CEW-44c template contains wcs-mood-chip--selected class (CE-3.8 corrected)
+CEW-44d template contains disabled + aria-disabled logic for empty slots (CE-3.8 corrected)
+CEW-44e template contains emoji from mood_slot_meta (CE-3.8 corrected)
+CEW-38c card_studio_welcome context contains mood_slot_meta key (CE-3.8 corrected)
+CEW-38d mood_slot_meta has 6 entries with slot/emoji/label (CE-3.8 corrected)
 CEW-45  template references all three /from-mood routes (CE-3.8)
 CEW-46  template contains link to /profile/my-mood-photos (CE-3.8)
 CEW-47  route count = 842 (CE-3.8 +3 routes)
@@ -731,6 +737,25 @@ class TestCEW37to38MoodPhotosContext:
         _, ctx, _ = _invoke_welcome(_FIRST_ID, owned_ids=[_FIRST_ID], mood_photos=mood)
         assert ctx["mood_photos"]["mood_happy_smile"] is mock_mp
 
+    def test_cew_38c_context_has_mood_slot_meta_key(self):
+        """CEW-38c: card_studio_welcome context contains mood_slot_meta key."""
+        _, ctx, _ = _invoke_welcome(_FIRST_ID, owned_ids=[_FIRST_ID])
+        assert "mood_slot_meta" in ctx, "context must contain mood_slot_meta key"
+
+    def test_cew_38d_mood_slot_meta_has_6_entries_with_required_fields(self):
+        """CEW-38d: mood_slot_meta has 6 entries each with slot, emoji, label."""
+        _, ctx, _ = _invoke_welcome(_FIRST_ID, owned_ids=[_FIRST_ID])
+        meta = ctx.get("mood_slot_meta", [])
+        assert len(meta) == 6, f"mood_slot_meta must have 6 entries, got {len(meta)}"
+        for entry in meta:
+            assert "slot"  in entry, f"entry missing 'slot':  {entry}"
+            assert "emoji" in entry, f"entry missing 'emoji': {entry}"
+            assert "label" in entry, f"entry missing 'label': {entry}"
+        slots = {e["slot"] for e in meta}
+        assert slots == MOOD_PHOTO_SLOTS, (
+            f"mood_slot_meta slots must match MOOD_PHOTO_SLOTS. Got: {slots}"
+        )
+
 
 class TestCEW39to43FromMoodEndpoints:
 
@@ -859,10 +884,32 @@ class TestCEW44to51TemplateMoodPicker:
         return src[start:] if start != -1 else ""
 
     def test_cew_44_template_has_mood_picker_element(self):
-        """CEW-44: template contains Mood Photo picker UI element."""
+        """CEW-44: template contains Mood Photo picker with wcs-mood-chip (not wcs-mood-thumb)."""
         src = self._src()
         assert "wcs-mood-picker" in src, "template must contain wcs-mood-picker element"
-        assert "wcs-mood-thumb" in src, "template must contain wcs-mood-thumb buttons"
+        assert "wcs-mood-chip" in src, "template must use wcs-mood-chip (not thumbnail grid)"
+        assert "wcs-mood-thumb" not in src, "old wcs-mood-thumb must be replaced by wcs-mood-chip"
+
+    def test_cew_44b_template_has_mood_chip_empty_class(self):
+        """CEW-44b: template contains wcs-mood-chip--empty class for disabled empty slots."""
+        assert "wcs-mood-chip--empty" in self._src()
+
+    def test_cew_44c_template_has_mood_chip_selected_class(self):
+        """CEW-44c: template contains wcs-mood-chip--selected class for active slot."""
+        assert "wcs-mood-chip--selected" in self._src()
+
+    def test_cew_44d_template_has_disabled_aria_disabled(self):
+        """CEW-44d: template contains disabled + aria-disabled logic for empty slots."""
+        src = self._src()
+        assert "disabled" in src
+        assert 'aria-disabled="true"' in src
+
+    def test_cew_44e_template_renders_emoji_from_meta(self):
+        """CEW-44e: template renders emoji via meta.emoji from mood_slot_meta context."""
+        src = self._src()
+        assert "meta.emoji" in src, (
+            "template must render emoji via {{ meta.emoji }} from mood_slot_meta"
+        )
 
     def test_cew_45_template_references_all_three_from_mood_routes(self):
         """CEW-45: template references all three /from-mood routes."""

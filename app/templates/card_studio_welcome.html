@@ -171,52 +171,40 @@
   .wcs-btn-delete:hover { border-color: #ef4444; color: #ef4444; }
   .wcs-photo-error { font-size: 0.8rem; color: #f87171; margin-top: 0.5rem; display: none; }
 
-  /* ── Mood Photo Picker (CE-3.8) ── */
-  .wcs-mood-picker {
-    margin-top: 1rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid #1e293b;
-  }
+  /* ── Mood Photo Picker — emoji chips (CE-3.8 corrected) ── */
+  .wcs-mood-picker { margin-bottom: 1rem; }
   .wcs-mood-picker-label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: #475569;
-    margin: 0 0 0.6rem;
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em;
+    text-transform: uppercase; color: #475569; margin: 0 0 0.6rem;
   }
-  .wcs-mood-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+  .wcs-mood-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .wcs-mood-chip {
+    position: relative;
+    background: #0b1120; border: 1.5px solid #334155; border-radius: 8px;
+    cursor: pointer; padding: 0.4rem 0.3rem;
+    display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
+    transition: border-color 0.15s, background 0.15s;
+    width: 62px; min-height: 56px;
   }
-  .wcs-mood-thumb {
-    background: #0b1120;
-    border: 1px solid #334155;
-    border-radius: 7px;
-    cursor: pointer;
-    padding: 0.3rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.2rem;
-    transition: border-color 0.15s;
-    width: 68px;
+  .wcs-mood-chip:not([disabled]):hover { border-color: #FFD200; }
+  .wcs-mood-chip--empty { opacity: 0.4; cursor: not-allowed; }
+  .wcs-mood-chip--selected {
+    border-color: #FFD200;
+    background: rgba(255, 210, 0, 0.08);
   }
-  .wcs-mood-thumb:hover { border-color: #FFD200; }
-  .wcs-mood-img {
-    width: 56px; height: 56px;
-    object-fit: cover; border-radius: 5px; display: block;
+  .wcs-mood-chip-emoji { font-size: 1.4rem; line-height: 1; }
+  .wcs-mood-chip-label {
+    font-size: 0.58rem; color: #64748b; text-align: center; line-height: 1.2;
+    max-width: 56px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .wcs-mood-label {
-    font-size: 0.6rem; color: #64748b;
-    text-align: center; line-height: 1.2;
-    max-width: 60px; overflow: hidden;
-    text-overflow: ellipsis; white-space: nowrap;
+  .wcs-mood-chip--selected .wcs-mood-chip-label { color: #b89c00; }
+  .wcs-mood-chip-check {
+    position: absolute; top: 2px; right: 4px;
+    font-size: 0.6rem; color: #FFD200; font-weight: 700; line-height: 1;
   }
-  .wcs-mood-empty { font-size: 0.8rem; color: #475569; margin: 0; }
-  .wcs-mood-upload-link { color: #FFD200; text-decoration: none; font-weight: 600; }
-  .wcs-mood-upload-link:hover { text-decoration: underline; }
+  .wcs-mood-manage { margin: 0.4rem 0 0; }
+  .wcs-mood-manage-link { font-size: 0.75rem; color: #64748b; text-decoration: none; transition: color 0.15s; }
+  .wcs-mood-manage-link:hover { color: #FFD200; text-decoration: none; }
 
 </style>
 {% endblock %}
@@ -312,6 +300,33 @@
     <p class="wcs-photo-title">{{ _wcs_slot_label }}</p>
     <p class="wcs-photo-sub">{{ _wcs_slot_hint }}</p>
 
+    {# ── Mood Photo Library picker — PRIMARY selection (CE-3.8 corrected) ── #}
+    {# Guards against stale server state; mood_photos/mood_slot_meta may be absent on old handler #}
+    {% set mood_photos    = mood_photos    if mood_photos    is defined else {} %}
+    {% set mood_slot_meta = mood_slot_meta if mood_slot_meta is defined else [] %}
+    <div class="wcs-mood-picker">
+      <p class="wcs-mood-picker-label">Pick from Mood Library</p>
+      <div class="wcs-mood-grid" id="wcs-mood-grid">
+        {% for meta in mood_slot_meta %}
+          {% set _mp  = mood_photos.get(meta.slot) %}
+          {% set _has = _mp and _mp.original_url %}
+          {% set _sel = _has and _mp.original_url == _wcs_photo_current %}
+          <button class="wcs-mood-chip{% if _sel %} wcs-mood-chip--selected{% endif %}{% if not _has %} wcs-mood-chip--empty{% endif %}"
+                  type="button"
+                  data-mood-slot="{{ meta.slot }}"
+                  {% if not _has %}disabled aria-disabled="true"{% endif %}
+                  title="{{ meta.label }}">
+            <span class="wcs-mood-chip-emoji">{{ meta.emoji }}</span>
+            <span class="wcs-mood-chip-label">{{ meta.label }}</span>
+            {% if _sel %}<span class="wcs-mood-chip-check" aria-hidden="true">✓</span>{% endif %}
+          </button>
+        {% endfor %}
+      </div>
+      <p class="wcs-mood-manage">
+        <a href="/profile/my-mood-photos" class="wcs-mood-manage-link">Manage Mood Photos →</a>
+      </p>
+    </div>
+
     {% if _wcs_photo_current %}
     <img id="wcs-current-photo" class="wcs-photo-preview"
          src="{{ _wcs_photo_current }}" alt="{{ _wcs_slot_label }}">
@@ -333,35 +348,6 @@
       </button>
     </div>
     <p id="wcs-photo-error" class="wcs-photo-error"></p>
-
-    {# ── Mood Photo Library picker (CE-3.8) ── #}
-    {# mood_photos is passed by card_studio_welcome handler; guard against stale server state #}
-    {% set mood_photos = mood_photos if mood_photos is defined else {} %}
-    <div class="wcs-mood-picker">
-      <p class="wcs-mood-picker-label">Pick from Mood Library</p>
-      {% set _ns = namespace(has_any=false) %}
-      {% for _slot, _photo in mood_photos.items() %}
-        {% if _photo and _photo.original_url %}{% set _ns.has_any = true %}{% endif %}
-      {% endfor %}
-      {% if _ns.has_any %}
-      <div class="wcs-mood-grid" id="wcs-mood-grid">
-        {% for _slot, _photo in mood_photos.items() %}
-          {% if _photo and _photo.original_url %}
-          <button class="wcs-mood-thumb" type="button"
-                  data-mood-slot="{{ _slot }}"
-                  title="{{ _slot | replace('mood_', '') | replace('_', ' ') | title }}">
-            <img src="{{ _photo.original_url }}" alt="{{ _slot }}" class="wcs-mood-img">
-            <span class="wcs-mood-label">{{ _slot | replace('mood_', '') | replace('_', ' ') | title }}</span>
-          </button>
-          {% endif %}
-        {% endfor %}
-      </div>
-      {% else %}
-      <p class="wcs-mood-empty">No mood photos yet.
-        <a href="/profile/my-mood-photos" class="wcs-mood-upload-link">Upload →</a>
-      </p>
-      {% endif %}
-    </div>
   </div>
 
   {# ── Navigation ── #}
@@ -455,7 +441,7 @@
         });
     });
   }
-  document.querySelectorAll('.wcs-mood-thumb').forEach(function (btn) {
+  document.querySelectorAll('.wcs-mood-chip:not([disabled])').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var moodSlot = btn.dataset.moodSlot;
       var csrf = _csrf();
@@ -471,8 +457,23 @@
           return r.json();
         })
         .then(function (data) {
-          if (data.ok) { _showPhoto(data.photo_url); _reloadPreview(); }
-          else { _showError(data.error || 'Could not assign mood photo. Please try again.'); }
+          if (data.ok) {
+            _showPhoto(data.photo_url);
+            _reloadPreview();
+            document.querySelectorAll('.wcs-mood-chip').forEach(function (c) {
+              c.classList.remove('wcs-mood-chip--selected');
+              var chk = c.querySelector('.wcs-mood-chip-check');
+              if (chk) { chk.parentNode.removeChild(chk); }
+            });
+            btn.classList.add('wcs-mood-chip--selected');
+            var chkEl = document.createElement('span');
+            chkEl.className = 'wcs-mood-chip-check';
+            chkEl.setAttribute('aria-hidden', 'true');
+            chkEl.textContent = '✓';
+            btn.appendChild(chkEl);
+          } else {
+            _showError(data.error || 'Could not assign mood photo. Please try again.');
+          }
         })
         .catch(function (err) {
           if (err && err.message === 'csrf') { _showError('Session expired — please reload the page.'); }

@@ -33,6 +33,17 @@ router = APIRouter(tags=["card-editor"])
 # Lookup map: design_id → NonPlayerCardFormatDefinition
 _WC_FORMAT_BY_ID = {f.design_id: f for f in WELCOME_CARD_FORMATS}
 
+# Ordered mood slot metadata for the Welcome Studio picker (CE-3.8).
+# Mirrors _SLOT_META in mood_photos.py but kept local to avoid route→route coupling.
+_MOOD_SLOT_META: list[dict] = [
+    {"slot": "mood_intro_neutral",    "emoji": "😐", "label": "Neutral"},
+    {"slot": "mood_happy_smile",      "emoji": "😊", "label": "Happy"},
+    {"slot": "mood_celebration",      "emoji": "🎉", "label": "Celebration"},
+    {"slot": "mood_sad_disappointed", "emoji": "😔", "label": "Sad"},
+    {"slot": "mood_angry_competitive","emoji": "😤", "label": "Angry"},
+    {"slot": "mood_surprised_shocked","emoji": "😲", "label": "Surprised"},
+]
+
 # Aspect-ratio CSS class per preview_platform
 _WC_RATIO: dict[str, str] = {
     "instagram_portrait":  "mfg-ratio-45",
@@ -179,8 +190,9 @@ async def card_studio_welcome(
             "wc_photo_url":          license.wc_photo_url,
             "wc_photo_portrait_url": license.wc_photo_portrait_url,
             "wc_photo_landscape_url": license.wc_photo_landscape_url,
-            # Mood Photo Library — all 6 slots for the picker (CE-3.8).
+            # Mood Photo Library — slot data + ordered meta for the picker (CE-3.8).
             "mood_photos":           mood_photos,
+            "mood_slot_meta":        _MOOD_SLOT_META,
             "spec_dashboard_url":  "/dashboard/lfa-football-player",
             "spec_dashboard_icon": "⚽",
             "spec_profile_url":    "/profile/lfa-football-player",
