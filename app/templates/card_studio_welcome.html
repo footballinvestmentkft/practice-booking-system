@@ -1,0 +1,237 @@
+{% extends "student_base.html" %}
+
+{% block title %}Welcome Card Studio — LFA Education Center{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '👋' %}
+{% set _page_name = 'Welcome Card Studio' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+{% include "includes/mc_format_grid.html" %}
+<style>
+  .wcs-wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 4rem;
+  }
+
+  /* ── Header ── */
+  .wcs-breadcrumb {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 1.25rem;
+  }
+  .wcs-breadcrumb a { color: #94a3b8; text-decoration: none; }
+  .wcs-breadcrumb a:hover { color: #f1f5f9; }
+  .wcs-breadcrumb span { margin: 0 0.35rem; }
+
+  .wcs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .wcs-header h1 { font-size: 1.4rem; font-weight: 700; color: #f8fafc; margin: 0; }
+
+  /* ── Format selector ── */
+  .wcs-format-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .wcs-format-btn {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.5rem 0.85rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid #334155;
+    color: #94a3b8;
+    background: transparent;
+    transition: border-color 0.15s, color 0.15s;
+    line-height: 1.3;
+  }
+  .wcs-format-btn:hover { border-color: #64748b; color: #f1f5f9; text-decoration: none; }
+  .wcs-format-btn.wcs-active {
+    border-color: #FFD200;
+    color: #FFD200;
+    background: rgba(255, 210, 0, 0.06);
+  }
+  .wcs-format-dims { font-size: 0.68rem; font-weight: 400; color: #475569; margin-top: 0.1rem; }
+  .wcs-format-btn.wcs-active .wcs-format-dims { color: #b89c00; }
+
+  /* ── Active format meta ── */
+  .wcs-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+  }
+  .wcs-style-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+  .wcs-dims { font-size: 0.8rem; color: #475569; }
+  .wcs-owned-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #86efac;
+    background: rgba(134,239,172,.12);
+    border: 1px solid rgba(134,239,172,.25);
+    border-radius: 20px;
+    padding: 0.2rem 0.65rem;
+  }
+
+  /* ── Preview ── */
+  .wcs-preview-panel {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 14px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  .wcs-preview-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 0.75rem;
+  }
+  .wcs-preview-container { display: flex; justify-content: center; }
+  .wcs-preview-wrap {
+    width: 100%;
+    max-width: 320px;
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #0b1120;
+  }
+
+  /* ── Export ── */
+  .wcs-export-panel {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .wcs-export-title { font-size: 1rem; font-weight: 700; color: #f1f5f9; margin: 0 0 0.3rem; }
+  .wcs-export-sub   { font-size: 0.8rem; color: #475569; margin: 0 0 1rem; }
+  .wcs-btn-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1.4rem;
+    background: #FFD200;
+    color: #0f172a;
+    font-size: 0.875rem;
+    font-weight: 700;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }
+  .wcs-btn-download:hover { opacity: 0.88; color: #0f172a; text-decoration: none; }
+
+  /* ── Nav ── */
+  .wcs-nav {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+  }
+  .wcs-nav-back {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #93c5fd;
+    text-decoration: none;
+  }
+  .wcs-nav-back:hover { color: #bfdbfe; text-decoration: none; }
+  .wcs-nav-shop {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #FFD200;
+    text-decoration: none;
+  }
+  .wcs-nav-shop:hover { opacity: 0.85; text-decoration: none; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="wcs-wrap">
+
+  <nav class="wcs-breadcrumb" aria-label="Breadcrumb">
+    <a href="/card-editor">Card Studio</a>
+    <span>›</span>
+    <a href="/my-cards/welcome">Welcome Card</a>
+    <span>›</span>
+    <span>{{ fmt.label }}</span>
+  </nav>
+
+  <div class="wcs-header">
+    <h1>Welcome Card Studio</h1>
+  </div>
+
+  {# ── Format selector ── #}
+  <div class="wcs-format-selector">
+    {% for f in owned_format_rows %}
+      <a href="/card-editor/welcome?format={{ f.design_id }}"
+         class="wcs-format-btn{% if f.active %} wcs-active{% endif %}">
+        {{ f.label }}
+        <span class="wcs-format-dims">{{ f.dims }}</span>
+      </a>
+    {% endfor %}
+  </div>
+
+  <div class="wcs-meta">
+    <span class="wcs-style-tag">{{ fmt.style_tag }}</span>
+    <span class="wcs-dims">{{ fmt.dims }}</span>
+    <span class="wcs-owned-badge">Owned ✓</span>
+  </div>
+
+  {# ── Preview panel ── #}
+  <div class="wcs-preview-panel">
+    <p class="wcs-preview-label">Preview</p>
+    <div class="wcs-preview-container">
+      <div class="wcs-preview-wrap mfg-preview-wrap {{ ratio_class }}">
+        <iframe
+          class="mfg-preview-iframe"
+          src="{{ preview_url }}"
+          loading="lazy"
+          scrolling="no"
+          title="{{ fmt.label }} Welcome Card preview"
+        ></iframe>
+      </div>
+    </div>
+  </div>
+
+  {# ── Export panel ── #}
+  <div class="wcs-export-panel">
+    <p class="wcs-export-title">Download your Welcome Card</p>
+    <p class="wcs-export-sub">Exports a full-resolution PNG at {{ fmt.dims }} using your current player data.</p>
+    <a href="{{ export_url }}" class="wcs-btn-download" download>
+      ↓ Download PNG ({{ fmt.dims }})
+    </a>
+  </div>
+
+  {# ── Navigation ── #}
+  <div class="wcs-nav">
+    <a href="/my-cards/welcome" class="wcs-nav-back">← My Welcome Cards</a>
+    <a href="/shop/cards/welcome" class="wcs-nav-shop">Browse Welcome Formats →</a>
+  </div>
+
+</div>
+{% endblock %}

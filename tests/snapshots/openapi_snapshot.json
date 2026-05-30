@@ -59896,6 +59896,57 @@
         ]
       }
     },
+    "/card-editor/welcome": {
+      "get": {
+        "description": "Welcome Card Studio \u2014 draft-free entry point (CE-3.3).\n\nOwned-only format selector with preview and export.  Active format is\ndriven by the ?format= query param; absent or invalid values redirect to\nthe canonical URL for the first owned format.\n\nGuards (same pattern as welcome_card_editor / WCE-1):\n  1. Authenticated (get_current_user_web)\n  2. LFA_FOOTBALL_PLAYER license + onboarding complete\n  3. No owned formats \u2192 redirect shop\n  4. No/invalid ?format \u2192 303 canonical first owned format URL",
+        "operationId": "card_studio_welcome_card_editor_welcome_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Format"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Card Studio Welcome",
+        "tags": [
+          "web",
+          "card-editor"
+        ]
+      }
+    },
     "/card-editor/welcome/{format_id}": {
       "get": {
         "description": "Welcome Card Customizer \u2014 preview + export wrapper for an owned format.\n\nGuards (in order):\n  1. Authenticated (get_current_user_web)\n  2. LFA_FOOTBALL_PLAYER license + onboarding complete\n  3. format_id in WELCOME_CARD_FORMATS \u2192 404 otherwise\n  4. CDO ownership (is_design_accessible) \u2192 redirect shop if not owned\n     Admin bypass: skipped for UserRole.ADMIN",
