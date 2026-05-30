@@ -165,6 +165,26 @@ class TestWelcomeCardShopRoute:
         src = _TEMPLATE_PATH.read_text()
         assert "/shop/cards/welcome" in src
 
+    def test_mcw13_template_has_studio_cta(self):
+        """MCW-13: template contains Studio entry CTA linking to /card-editor/welcome (CE-3.6-C)."""
+        src = _TEMPLATE_PATH.read_text()
+        assert 'href="/card-editor/welcome"' in src
+
+    def test_mcw13b_template_has_studio_cta_text(self):
+        """MCW-13b: Studio CTA has correct label text."""
+        src = _TEMPLATE_PATH.read_text()
+        assert "Open Welcome Studio" in src
+
+    def test_mcw13c_per_format_wce1_link_still_present(self):
+        """MCW-13c: legacy per-format /card-editor/welcome/{id} WCE-1 link unchanged."""
+        src = _TEMPLATE_PATH.read_text()
+        assert "/card-editor/welcome/" in src, "WCE-1 per-format link must remain"
+
+    def test_mcw13d_shop_link_still_present(self):
+        """MCW-13d: /shop/cards/welcome link unchanged after Studio CTA addition."""
+        src = _TEMPLATE_PATH.read_text()
+        assert "/shop/cards/welcome" in src
+
     def test_mcw_owned_count_correct(self):
         """MCW-owned: owned_count increments per owned format."""
         from app.services.card_design_service import WELCOME_CARD_FORMATS

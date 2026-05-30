@@ -76,6 +76,17 @@
     transition: opacity 0.15s;
   }
   .mcw-empty-cta:hover { opacity: 0.88; color: #0f172a; text-decoration: none; }
+  .mcw-studio-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #FFD200;
+    text-decoration: none;
+    margin-bottom: 1.25rem;
+  }
+  .mcw-studio-link:hover { opacity: 0.88; text-decoration: none; }
 </style>
 {% endblock %}
 
@@ -125,6 +136,9 @@
     <h2>Owned Formats</h2>
     <span class="mfg-count-badge">{{ owned_count }} owned</span>
   </div>
+
+  {# ── Studio entry link (CE-3.6-C) ── #}
+  <a href="/card-editor/welcome" class="mcw-studio-link">Open Welcome Studio →</a>
 
   {# ── Format grid (owned only) ── #}
   <div class="mfg-grid">
