@@ -292,63 +292,74 @@ class TestCE108LegacyAuth:
 # ── CE1-09 — internal links point to new URL ─────────────────────────────────
 
 class TestCE109InternalLinks:
-    """CE1-09: all navigation links to the card editor use /card-editor/player."""
+    """CE1-09: navigation links use correct card editor URLs.
 
-    OLD_URL = "/dashboard/lfa-football-player/card-editor"
-    NEW_URL = "/card-editor/player"
+    CE-3.2 refinement:
+    - Global quicknav (spec_subpage_hdr.html) → /card-editor (Card Studio landing)
+    - card_editor_url context (profile editor) → /card-editor (general entry)
+    - Player-specific CTAs (my-cards, shop, profile #media) → /card-editor/player (direct)
+    """
 
-    _TEMPLATE_CHECKS = [
-        "includes/spec_subpage_hdr.html",
-        "lfa_player_profile.html",
-        "my_cards_player_card.html",
-        "shop_player_card.html",
-        "shop_player_card_detail.html",
-    ]
+    OLD_URL    = "/dashboard/lfa-football-player/card-editor"
+    PLAYER_URL = "/card-editor/player"
+    STUDIO_URL = "/card-editor"
 
     def _html(self, rel_path: str) -> str:
         return (TEMPLATES_DIR / rel_path).read_text(encoding="utf-8")
 
     def test_ce1_09_spec_subpage_hdr_link(self):
+        """CE-3.2: quicknav links to Card Studio landing, not directly to player editor."""
         html = self._html("includes/spec_subpage_hdr.html")
-        assert f'href="{self.NEW_URL}"' in html
-        # The href must use the new URL (active-state href)
+        assert f'href="{self.STUDIO_URL}"' in html, (
+            "spec_subpage_hdr.html quicknav must link to /card-editor (Card Studio landing)"
+        )
+        assert f'href="{self.PLAYER_URL}"' not in html, (
+            "spec_subpage_hdr.html quicknav must NOT have a direct /card-editor/player link "
+            "(CE-3.2: global nav points to family picker)"
+        )
         assert f'href="{self.OLD_URL}"' not in html
 
     def test_ce1_09_lfa_player_profile_link(self):
+        """#media deep-link stays /card-editor/player — player-specific action."""
         html = self._html("lfa_player_profile.html")
-        assert f'href="{self.NEW_URL}#media"' in html
+        assert f'href="{self.PLAYER_URL}#media"' in html
         assert f'href="{self.OLD_URL}#media"' not in html
 
     def test_ce1_09_my_cards_player_card_link(self):
+        """my_cards_player_card.html Open Editor CTA stays /card-editor/player."""
         html = self._html("my_cards_player_card.html")
-        assert f'href="{self.NEW_URL}"' in html
+        assert f'href="{self.PLAYER_URL}"' in html
         assert f'href="{self.OLD_URL}"' not in html
 
     def test_ce1_09_shop_player_card_link(self):
+        """shop_player_card.html Edit/Download CTA stays /card-editor/player."""
         html = self._html("shop_player_card.html")
-        assert f'href="{self.NEW_URL}"' in html
+        assert f'href="{self.PLAYER_URL}"' in html
         assert f'href="{self.OLD_URL}"' not in html
 
     def test_ce1_09_shop_player_card_detail_link(self):
+        """shop_player_card_detail.html Open Editor CTA stays /card-editor/player."""
         html = self._html("shop_player_card_detail.html")
-        assert f'href="{self.NEW_URL}"' in html
+        assert f'href="{self.PLAYER_URL}"' in html
         assert f'href="{self.OLD_URL}"' not in html
 
     def test_ce1_09_dashboard_card_editor_no_nav_old_url(self):
         """dashboard_card_editor.html must not contain the old URL as a nav href
         (the highlight-video API endpoint is a fetch call, not a nav link — allowed)."""
         html = self._html("dashboard_card_editor.html")
-        # Only API fetch calls are allowed to reference the old path
         nav_old = f'href="{self.OLD_URL}"'
         assert nav_old not in html, (
             f"Found navigation link to old URL in dashboard_card_editor.html: {nav_old}"
         )
 
     def test_ce1_09_api_context_var_updated(self):
-        """The card_editor_url context variable in dashboard.py uses new URL."""
+        """CE-3.2: card_editor_url context variable points to Card Studio landing."""
         src = (
             Path(__file__).resolve().parents[4]
             / "app" / "api" / "web_routes" / "dashboard.py"
         ).read_text()
-        assert f'"card_editor_url":  "{self.NEW_URL}"' in src
+        assert f'"card_editor_url":  "{self.STUDIO_URL}"' in src, (
+            "card_editor_url must be /card-editor (Card Studio landing)"
+        )
+        assert f'"card_editor_url":  "{self.PLAYER_URL}"' not in src
         assert f'"card_editor_url":  "{self.OLD_URL}"' not in src

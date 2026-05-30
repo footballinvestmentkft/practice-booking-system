@@ -309,8 +309,8 @@ def test_mp_r12_dashboard_has_card_media_section():
     assert "/profile/my-mood-photos" in quicknav, (
         "quicknav should still link to /profile/my-mood-photos"
     )
-    assert "/card-editor/player" in quicknav, (
-        "quicknav should still link to card-editor"
+    assert "/card-editor" in quicknav, (
+        "quicknav should still link to Card Studio (/card-editor)"
     )
 
 
@@ -453,7 +453,7 @@ def test_mp_r17_spec_subpage_hdr_has_lfa_quicknav():
     required_links = {
         "/profile/lfa-football-player": "Profile",
         "/my-cards":                    "My Cards",
-        "/card-editor/player": "Card Editor",
+        "/card-editor":       "Card Studio",   # CE-3.2: landing → /card-editor
         "/profile/my-mood-photos":      "Mood Photos",
         "/events":                      "Events",
         "/training":                    "Training",
@@ -485,10 +485,10 @@ def test_mp_r18_dashboard_modnav_has_profile_editor_moodphotos():
     for url in ("/calendar", "/achievements", "/sessions", "/progress"):
         assert url in modnav_block, f"dashboard mod-nav missing Quick Access tile: {url!r}"
 
-    # Mood Photos, Card Editor, Profile accessible via quicknav (not mod-nav)
-    assert "/profile/my-mood-photos"                    in quicknav
-    assert "/card-editor/player" in quicknav
-    assert "/profile/lfa-football-player"               in quicknav
+    # Mood Photos, Card Studio, Profile accessible via quicknav (not mod-nav)
+    assert "/profile/my-mood-photos"       in quicknav
+    assert "/card-editor" in quicknav      # CE-3.2: general Card Studio entry
+    assert "/profile/lfa-football-player"  in quicknav
 
 
 # ── MP-R19 ── mood_photos_page route passes explicit LFA spec context ─────────
