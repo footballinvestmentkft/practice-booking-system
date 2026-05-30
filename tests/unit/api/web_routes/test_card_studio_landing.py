@@ -295,11 +295,11 @@ class TestCEL091011CTALinks:
 class TestCEL12RouteCount:
 
     def test_cel_12_route_count_837(self):
-        """CE-3.3 adds GET /card-editor/welcome — total route count is 838."""
+        """CE-3.4 adds GET /card-editor/challenge — total route count is 839."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 838, (
-            f"Expected 838 routes (836 CE-3.0 + 1 CE-3.1 + 1 CE-3.3), got {len(paths)}."
+        assert len(paths) == 839, (
+            f"Expected 839 routes (836 CE-3.0 + 1 CE-3.1 + 1 CE-3.3 + 1 CE-3.4), got {len(paths)}."
         )
 
     def test_cel_12b_card_editor_route_registered(self):

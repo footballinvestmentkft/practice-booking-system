@@ -1,0 +1,234 @@
+{% extends "student_base.html" %}
+
+{% block title %}Challenge Card Studio — LFA Education Center{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '⚔️' %}
+{% set _page_name = 'Challenge Card Studio' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+  .ccs-wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 4rem;
+  }
+
+  /* ── Breadcrumb ── */
+  .ccs-breadcrumb {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 1.25rem;
+  }
+  .ccs-breadcrumb a { color: #94a3b8; text-decoration: none; }
+  .ccs-breadcrumb a:hover { color: #f1f5f9; }
+  .ccs-breadcrumb span { margin: 0 0.35rem; }
+
+  /* ── Header ── */
+  .ccs-header {
+    margin-bottom: 0.5rem;
+  }
+  .ccs-header h1 { font-size: 1.4rem; font-weight: 700; color: #f8fafc; margin: 0 0 0.4rem; }
+  .ccs-subtitle {
+    font-size: 0.88rem;
+    color: #64748b;
+    margin: 0 0 1.5rem;
+  }
+
+  /* ── Info box ── */
+  .ccs-info-box {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-left: 3px solid #FFD200;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.75rem;
+  }
+  .ccs-info-box p {
+    font-size: 0.84rem;
+    color: #94a3b8;
+    margin: 0 0 0.4rem;
+    line-height: 1.55;
+  }
+  .ccs-info-box p:last-child { margin: 0; }
+  .ccs-info-box a { color: #93c5fd; text-decoration: none; }
+  .ccs-info-box a:hover { color: #bfdbfe; }
+
+  /* ── Format grid ── */
+  .ccs-section-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 0.75rem;
+  }
+  .ccs-format-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+  }
+  .ccs-format-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    border: 1px solid #334155;
+    background: #0f172a;
+    min-width: 140px;
+  }
+  .ccs-format-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 0.15rem;
+  }
+  .ccs-format-tag {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 0.2rem;
+  }
+  .ccs-format-dims {
+    font-size: 0.72rem;
+    color: #334155;
+  }
+  .ccs-owned-badge {
+    display: inline-block;
+    margin-top: 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #86efac;
+    background: rgba(134,239,172,.1);
+    border: 1px solid rgba(134,239,172,.2);
+    border-radius: 20px;
+    padding: 0.15rem 0.55rem;
+  }
+
+  /* ── CTA group ── */
+  .ccs-cta-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 2rem;
+  }
+  .ccs-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.55rem 1.1rem;
+    background: #FFD200;
+    color: #0f172a;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }
+  .ccs-btn-primary:hover { opacity: 0.88; color: #0f172a; text-decoration: none; }
+  .ccs-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.55rem 1.1rem;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .ccs-btn-secondary:hover { border-color: #FFD200; color: #FFD200; text-decoration: none; }
+
+  /* ── Nav ── */
+  .ccs-nav {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #1e293b;
+  }
+  .ccs-nav-back {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #93c5fd;
+    text-decoration: none;
+  }
+  .ccs-nav-back:hover { color: #bfdbfe; text-decoration: none; }
+  .ccs-nav-shop {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #FFD200;
+    text-decoration: none;
+  }
+  .ccs-nav-shop:hover { opacity: 0.85; text-decoration: none; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="ccs-wrap">
+
+  <nav class="ccs-breadcrumb" aria-label="Breadcrumb">
+    <a href="/card-editor">Card Studio</a>
+    <span>›</span>
+    <a href="/my-cards/challenge">Challenge Card</a>
+    <span>›</span>
+    <span>Studio</span>
+  </nav>
+
+  <div class="ccs-header">
+    <h1>Challenge Card Studio</h1>
+    <p class="ccs-subtitle">Challenge cards are generated from completed challenge results.</p>
+  </div>
+
+  {# ── Info box ── #}
+  <div class="ccs-info-box">
+    <p>
+      To preview or download a Challenge Card, go to
+      <a href="/challenges/results">Challenge Results</a>
+      and open a completed challenge. Each challenge has its own card — the format
+      you own determines which export sizes are available.
+    </p>
+    <p>
+      You can also view all your challenges in the
+      <a href="/challenges">Challenges inbox</a>.
+    </p>
+  </div>
+
+  {# ── Owned format gallery ── #}
+  <p class="ccs-section-label">Your Owned Formats</p>
+  <div class="ccs-format-grid">
+    {% for f in cc_format_rows %}
+    <div class="ccs-format-card">
+      <span class="ccs-format-name">{{ f.label }}</span>
+      <span class="ccs-format-tag">{{ f.style_tag }}</span>
+      <span class="ccs-format-dims">{{ f.dims }}</span>
+      <span class="ccs-owned-badge">Owned ✓</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# ── CTAs ── #}
+  <div class="ccs-cta-group">
+    <a href="/my-cards/challenge" class="ccs-btn-primary">My Challenge Cards →</a>
+    <a href="/challenges/results" class="ccs-btn-secondary">View Challenge Results →</a>
+    <a href="/challenges" class="ccs-btn-secondary">My Challenges →</a>
+    <a href="/shop/cards/challenge" class="ccs-btn-secondary">Browse Designs →</a>
+  </div>
+
+  {# ── Nav ── #}
+  <div class="ccs-nav">
+    <a href="/my-cards/challenge" class="ccs-nav-back">← My Challenge Cards</a>
+    <a href="/shop/cards/challenge" class="ccs-nav-shop">Browse Challenge Formats →</a>
+  </div>
+
+</div>
+{% endblock %}

@@ -3,7 +3,8 @@
 Phase WCE-1:  Welcome Card Customizer (preview + export wrapper, no draft).
 Phase CE-3.1: Card Studio landing — /card-editor entry point.
 Phase CE-3.3: Welcome Card Studio — /card-editor/welcome (draft-free, query-param format).
-Future: /card-editor/player/{collection_id}, /card-editor/challenge/{id}
+Phase CE-3.4: Challenge Card Studio — /card-editor/challenge (draft-free, format gallery, no preview/export).
+Future: /card-editor/player/{collection_id}
 """
 from pathlib import Path
 
@@ -170,6 +171,71 @@ async def card_studio_welcome(
             "preview_url":        preview_url,
             "export_url":         export_url,
             "owned_format_rows":  owned_format_rows,
+            "spec_dashboard_url":  "/dashboard/lfa-football-player",
+            "spec_dashboard_icon": "⚽",
+            "spec_profile_url":    "/profile/lfa-football-player",
+            "spec_profile_icon":   "🪪",
+        },
+    )
+
+
+# ── Challenge Card Studio (CE-3.4 — format gallery, no preview/export) ───────
+
+@router.get("/card-editor/challenge", response_class=HTMLResponse)
+async def card_studio_challenge(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User  = Depends(get_current_user_web),
+):
+    """Challenge Card Studio — draft-free entry point (CE-3.4).
+
+    Displays owned Challenge Card formats with challenge-aware CTAs.
+    No preview, no export, no latest-challenge auto-select, no challenge_id required.
+
+    Guards (same pattern as card_studio_welcome / WCE-1):
+      1. Authenticated (get_current_user_web)
+      2. LFA_FOOTBALL_PLAYER license + onboarding complete
+      3. No owned formats → redirect /shop/cards/challenge
+    """
+    # ── Guard 2: license + onboarding (identical to WCE-1 / card_studio_welcome) ─
+    license = db.query(UserLicense).filter(
+        UserLicense.user_id == user.id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+    ).first()
+    if not license:
+        return RedirectResponse(
+            url="/dashboard?info=complete_lfa_onboarding_first", status_code=303
+        )
+    if not license.onboarding_completed:
+        return RedirectResponse(
+            url="/specialization/lfa-player/onboarding", status_code=303
+        )
+
+    # ── Guard 3: owned formats — CHALLENGE_CARD_FORMATS order preserved ───────
+    owned_set = set(get_owned_design_ids(db, user.id, "challenge_card")) & _CC_VALID_IDS
+    owned_formats_ordered = [
+        f for f in CHALLENGE_CARD_FORMATS if f.design_id in owned_set
+    ]
+    if not owned_formats_ordered:
+        return RedirectResponse(url="/shop/cards/challenge", status_code=303)
+
+    # ── 200 path — format gallery, no preview/export context ─────────────────
+    cc_format_rows = [
+        {
+            "design_id": f.design_id,
+            "label":     f.label,
+            "style_tag": f.style_tag,
+            "dims":      f.dims,
+        }
+        for f in owned_formats_ordered
+    ]
+
+    return templates.TemplateResponse(
+        "card_studio_challenge.html",
+        {
+            "request":         request,
+            "user":            user,
+            "cc_format_rows":  cc_format_rows,
             "spec_dashboard_url":  "/dashboard/lfa-football-player",
             "spec_dashboard_icon": "⚽",
             "spec_profile_url":    "/profile/lfa-football-player",

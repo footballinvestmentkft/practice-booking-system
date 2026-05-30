@@ -481,8 +481,8 @@ class TestCEW18RouteCount:
         """CEW-18: adding GET /card-editor/welcome raises route count from 837 to 838."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 838, (
-            f"Expected 838 routes (837 CE-3.2 baseline + GET /card-editor/welcome), got {len(paths)}."
+        assert len(paths) == 839, (
+            f"Expected 839 routes (837 CE-3.2 baseline + GET /card-editor/welcome + GET /card-editor/challenge), got {len(paths)}."
         )
 
     def test_cew_18b_card_editor_welcome_route_registered(self):
