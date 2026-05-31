@@ -253,14 +253,19 @@ def test_cd15_supported_buckets_compact_empty():
 def test_cd16_designs_animated_matches_animated_export_capable():
     from app.services.card_constants import ANIMATED_EXPORT_CAPABLE
 
-    # Build expected set from DESIGNS
-    expected = frozenset(
-        (design_id, platform_id)
-        for design_id, design in DESIGNS.items()
-        for platform_id in design.animated_platforms
-    )
-    assert ANIMATED_EXPORT_CAPABLE == expected, (
+    # PR-FC-1B: Build expected set using canonical design.id (deduplicated).
+    # DESIGNS["fifa"] is a deprecated alias for DESIGNS["fclassic"] — same object.
+    # _build_animated_capable() deduplicates by design.id, so we replicate that here.
+    seen_ids: set[str] = set()
+    expected: set = set()
+    for design in DESIGNS.values():
+        if design.id not in seen_ids:
+            seen_ids.add(design.id)
+            for platform_id in design.animated_platforms:
+                expected.add((design.id, platform_id))
+    expected_fs = frozenset(expected)
+    assert ANIMATED_EXPORT_CAPABLE == expected_fs, (
         "ANIMATED_EXPORT_CAPABLE must exactly match animated_platforms in DESIGNS.\n"
-        f"In ANIMATED_EXPORT_CAPABLE but not DESIGNS: {ANIMATED_EXPORT_CAPABLE - expected}\n"
-        f"In DESIGNS but not ANIMATED_EXPORT_CAPABLE: {expected - ANIMATED_EXPORT_CAPABLE}"
+        f"In ANIMATED_EXPORT_CAPABLE but not DESIGNS: {ANIMATED_EXPORT_CAPABLE - expected_fs}\n"
+        f"In DESIGNS but not ANIMATED_EXPORT_CAPABLE: {expected_fs - ANIMATED_EXPORT_CAPABLE}"
     )

@@ -362,10 +362,12 @@ class TestAnimatedCapabilityRegistry:
         assert is_animated_capable("", "") is False
 
     def test_vx18_registry_contains_exactly_fifa_and_pulse_square(self):
-        """Registry must contain exactly two entries: fifa+square and pulse+square."""
+        """Registry must contain exactly two entries: fclassic+square and pulse+square.
+        PR-FC-1B: canonical key is now 'fclassic'; 'fifa' is a deprecated alias.
+        """
         assert ANIMATED_EXPORT_CAPABLE == frozenset({
-            ("fifa",  "instagram_square"),
-            ("pulse", "instagram_square"),
+            ("fclassic", "instagram_square"),
+            ("pulse",    "instagram_square"),
         })
 
     def test_vx13_png_render_url_never_contains_animated_param(self):

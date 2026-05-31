@@ -120,14 +120,15 @@ class TestVariantResolution:
         assert v.credit_cost == 300
 
     def test_unknown_variant_falls_back_to_fifa(self):
+        # PR-FC-1B: fallback is now canonical "fclassic"; "fifa" is deprecated alias
         v = get_variant("nonexistent_variant_xyz")
-        assert v.id == "fifa"
+        assert v.id == "fclassic"
 
     def test_null_variant_handled_via_or_default(self):
         ul = _make_license(card_variant=None)
-        card_variant_id = ul.card_variant or "fifa"
+        card_variant_id = ul.card_variant or "fclassic"  # PR-FC-1B: default is fclassic
         v = get_variant(card_variant_id)
-        assert v.id == "fifa"
+        assert v.id == "fclassic"
 
     def test_preview_param_overrides_db_variant(self):
         ul = _make_license(card_variant="fifa")
