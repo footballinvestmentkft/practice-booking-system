@@ -1,0 +1,94 @@
+                    {# Player Photo #}
+                    <div class="ce-section">
+                        <div class="ce-section-title">Player Photo</div>
+                        <div class="player-photo-body">
+                            {% if user_license.player_card_photo_url %}
+                            <img src="{{ user_license.player_card_photo_url }}"
+                                 class="player-photo-preview" alt="Player card photo">
+                            {% else %}
+                            <div class="player-photo-placeholder">📷</div>
+                            <p class="player-photo-empty">Nincs kép — tölts fel!</p>
+                            {% endif %}
+                            <label class="btn-photo-upload-student">
+                                📷 Feltöltés
+                                <input type="file" accept="image/jpeg,image/png,image/webp"
+                                       onchange="uploadMyPhoto(this)" hidden>
+                            </label>
+                            {% if user_license.player_card_photo_url %}
+                            <button class="btn-photo-delete-student" onclick="deleteMyPhoto()">✕</button>
+                            {% endif %}
+                            <p class="player-photo-hint">Max 2 MB · JPEG/PNG/WEBP · 400×400 px vágás</p>
+                        </div>
+                    </div>
+
+                    {# Background photos (conditional on unlocked variants) #}
+                    {% set _unlocked = user_license.unlocked_card_variants or [] %}
+                    {% if 'compact_bg' in _unlocked %}
+                    <div class="ce-section">
+                        <div class="ce-section-title">Compact+BG Háttér</div>
+                        <div class="player-photo-body">
+                            {% if user_license.card_bg_compact_url %}
+                            <img src="{{ user_license.card_bg_compact_url }}"
+                                 class="player-photo-preview" alt="Compact BG photo">
+                            {% else %}
+                            <div class="player-photo-placeholder">🖼️</div>
+                            {% endif %}
+                            <label class="btn-photo-upload-student">
+                                🖼️ Háttér
+                                <input type="file" accept="image/jpeg,image/png,image/webp"
+                                       onchange="uploadCompactBg(this)" hidden>
+                            </label>
+                            {% if user_license.card_bg_compact_url %}
+                            <button class="btn-photo-delete-student" onclick="deleteCompactBg()">✕</button>
+                            {% endif %}
+                            <p class="player-photo-hint">Max 8 MB · JPEG/PNG/WEBP · 800×800 px max</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if 'showcase_bg' in _unlocked %}
+                    <div class="ce-section">
+                        <div class="ce-section-title">Showcase+BG Háttér</div>
+                        <div class="player-photo-body">
+                            {% if user_license.card_bg_showcase_url %}
+                            <img src="{{ user_license.card_bg_showcase_url }}"
+                                 class="player-photo-preview" alt="Showcase BG photo">
+                            {% else %}
+                            <div class="player-photo-placeholder">🖼️</div>
+                            {% endif %}
+                            <label class="btn-photo-upload-student">
+                                🖼️ Háttér
+                                <input type="file" accept="image/jpeg,image/png,image/webp"
+                                       onchange="uploadShowcaseBg(this)" hidden>
+                            </label>
+                            {% if user_license.card_bg_showcase_url %}
+                            <button class="btn-photo-delete-student" onclick="deleteShowcaseBg()">✕</button>
+                            {% endif %}
+                            <p class="player-photo-hint">Max 8 MB · JPEG/PNG/WEBP · 800×800 px max</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {# Sponsor Logo #}
+                    <div class="ce-section">
+                        <div class="ce-section-title">Sponsor Logo</div>
+                        <div class="player-photo-body">
+                            {% if user_license.sponsor_logo_url %}
+                            <img src="{{ user_license.sponsor_logo_url }}"
+                                 class="player-photo-preview" alt="Sponsor logo"
+                                 style="object-fit: contain; background: rgba(255,255,255,0.05);">
+                            {% else %}
+                            <div class="player-photo-placeholder">🏷️</div>
+                            {% endif %}
+                            <label class="btn-photo-upload-student">
+                                🏷️ Logó
+                                <input type="file" accept="image/jpeg,image/png,image/webp"
+                                       onchange="uploadSponsorLogo(this)" hidden>
+                            </label>
+                            {% if user_license.sponsor_logo_url %}
+                            <button class="btn-photo-delete-student" onclick="deleteSponsorLogo()">✕</button>
+                            {% endif %}
+                            <p class="player-photo-hint">Max 2 MB · JPEG/PNG/WEBP · PNG transparent ajánlott</p>
+                        </div>
+                    </div>
+
