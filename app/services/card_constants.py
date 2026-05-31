@@ -1,4 +1,4 @@
-"""Authoritative export constants for the FIFA Classic / Welcome Card card system.
+"""Authoritative export constants for the FClassic / Welcome Card card system.
 
 All platform dimensions, template-bucket routing, and animated-capability
 declarations live here.  Every other module imports from this file — never
@@ -29,7 +29,7 @@ from __future__ import annotations
 # to the card-wrap bounding rect — height is content-determined at render time,
 # so the export is never truncated regardless of what this constant says.
 CANVAS_SIZES: dict[str, tuple[int, int]] = {
-    "default":               ( 820,  800),   # native FIFA Classic; clip = card-wrap bbox (est. 2026-05-12)
+    "default":               ( 820,  800),   # native FClassic Player; clip = card-wrap bbox (est. 2026-05-12)
     "instagram_square":      (1080, 1080),
     "instagram_portrait":    (1080, 1350),
     "instagram_story":       (1080, 1920),
@@ -174,7 +174,7 @@ CARD_GALLERY_PLATFORM_IDS: tuple[str, ...] = (
 # Used by /shop/cards/player/{collection_id} detail page (C1 collection browsing).
 # Ordering: portrait-first, then vertical formats, then square, then wide/landscape.
 # C2 note: when format-level purchase is introduced, each entry gains a credit_cost
-# and design_id convention (e.g. "fifa_instagram_portrait"). For now, ownership is
+# and design_id convention (e.g. "fclassic_instagram_portrait"). For now, ownership is
 # collection-level (design_id="fifa") and all formats are unlocked together.
 PC_FORMAT_META: list[dict] = [
     {"bucket": "portrait",  "platform": "instagram_portrait",  "label": "Instagram Portrait", "dims": "1080 × 1350", "ratio": "mfg-ratio-45",  "display_order": 0},

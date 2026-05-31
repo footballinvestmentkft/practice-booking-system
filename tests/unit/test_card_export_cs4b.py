@@ -5,13 +5,13 @@ Unit tests — CS-4b: archetype-named base template migration
 Coverage:
   CS4B-01  column_archetype.html renders identically to fifa_base_column.html
   CS4B-02  export_base.html renders identically to fifa_base.html
-  CS4B-03  portrait/fifa.html (→ column_archetype) renders correctly post-migration
-  CS4B-04  story/fifa.html    (→ column_archetype) renders correctly post-migration
-  CS4B-05  tiktok/fifa.html   (→ export_base)      renders correctly post-migration
-  CS4B-06  landscape/fifa.html(→ export_base)      renders correctly post-migration
-  CS4B-07  banner/fifa.html   (→ export_base)      renders correctly post-migration
-  CS4B-08  square/fifa.html   (→ export_base)      renders correctly post-migration
-  CS4B-09  No template in public/export/ extends a legacy fifa_base* file
+  CS4B-03  portrait/fclassic.html (→ column_archetype) renders correctly post-migration
+  CS4B-04  story/fclassic.html    (→ column_archetype) renders correctly post-migration
+  CS4B-05  tiktok/fclassic.html   (→ export_base)      renders correctly post-migration
+  CS4B-06  landscape/fclassic.html(→ export_base)      renders correctly post-migration
+  CS4B-07  banner/fclassic.html   (→ export_base)      renders correctly post-migration
+  CS4B-08  square/fclassic.html   (→ export_base)      renders correctly post-migration
+  CS4B-09  No template in public/export/ extends a legacy export_base.html file
 
 Validation strategy (from CS-4b audit):
   CS4B-01/02: Direct Jinja2 render comparison of old vs new base — the only benign
@@ -184,7 +184,7 @@ class TestCS4bBaseEquality:
             "the Level B → Level A chain is broken."
         )
         assert "fifa_base" not in src.split("{#")[0], (
-            "column_archetype.html still references a legacy fifa_base file "
+            "column_archetype.html still references a legacy export_base.html file "
             "in its extends directive."
         )
 
@@ -205,7 +205,7 @@ class TestCS4bBaseEquality:
 
 @pytest.mark.unit
 class TestCS4bMigrationSmoke:
-    """Structural smoke tests for each migrated FIFA export template.
+    """Structural smoke tests for each migrated FClassic export template.
 
     Confirms that after the extends change:
       - The route returns HTTP 200
@@ -222,27 +222,27 @@ class TestCS4bMigrationSmoke:
         )
 
     def test_cs4b_03_portrait_renders(self, client):
-        """portrait/fifa.html (→ column_archetype.html) renders correctly."""
+        """portrait/fclassic.html (→ column_archetype.html) renders correctly."""
         self._assert_renders(client, "instagram_portrait", "portrait/fclassic.html")
 
     def test_cs4b_04_story_renders(self, client):
-        """story/fifa.html (→ column_archetype.html) renders correctly."""
+        """story/fclassic.html (→ column_archetype.html) renders correctly."""
         self._assert_renders(client, "instagram_story", "story/fclassic.html")
 
     def test_cs4b_05_tiktok_renders(self, client):
-        """tiktok/fifa.html (→ export_base.html) renders correctly."""
+        """tiktok/fclassic.html (→ export_base.html) renders correctly."""
         self._assert_renders(client, "tiktok", "tiktok/fclassic.html")
 
     def test_cs4b_06_landscape_renders(self, client):
-        """landscape/fifa.html (→ export_base.html) renders correctly."""
+        """landscape/fclassic.html (→ export_base.html) renders correctly."""
         self._assert_renders(client, "facebook_landscape", "landscape/fclassic.html")
 
     def test_cs4b_07_banner_renders(self, client):
-        """banner/fifa.html (→ export_base.html) renders correctly."""
+        """banner/fclassic.html (→ export_base.html) renders correctly."""
         self._assert_renders(client, "banner_custom", "banner/fclassic.html")
 
     def test_cs4b_08_square_renders(self, client):
-        """square/fifa.html (→ export_base.html) renders correctly."""
+        """square/fclassic.html (→ export_base.html) renders correctly."""
         self._assert_renders(client, "instagram_square", "square/fclassic.html")
 
 
@@ -250,7 +250,7 @@ class TestCS4bMigrationSmoke:
 
 @pytest.mark.unit
 class TestCS4bLegacyCleanup:
-    """Assert that no template in public/export/ still extends a legacy fifa_base* file.
+    """Assert that no template in public/export/ still extends a legacy export_base.html file.
 
     This is the grep-gate equivalent: after CS-4b deletion, any surviving reference
     would indicate an incomplete migration or an accidental re-introduction.
@@ -268,7 +268,7 @@ class TestCS4bLegacyCleanup:
                 violations.append(str(html_file.relative_to(_TEMPLATES_ROOT)))
 
         assert not violations, (
-            "The following templates still extend a legacy fifa_base* file:\n"
+            "The following templates still extend a legacy export_base.html file:\n"
             + "\n".join(f"  {v}" for v in violations)
             + "\nMigration is incomplete — update extends to archetype-named bases."
         )

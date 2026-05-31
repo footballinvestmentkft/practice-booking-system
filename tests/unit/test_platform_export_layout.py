@@ -409,7 +409,7 @@ class TestPlaywrightP0ComponentSizing:
         ".ex-ovr-badge > span:first-child, .ex-ovr-num, .cmp-overall, .atl-ovr-num, .sc-overall, .pls-ovr-text, .fclassic-overall"
     )
     # Photo column: only variants with a dedicated width column.
-    # Editor templates: .cmp-photo-col (compact) or .fclassic-left (FIFA).
+    # Editor templates: .cmp-photo-col (compact) or .fclassic-left (FClassic).
     # Export templates (.ex-*) use a circular avatar, not a column — PL-08 skips for those.
     # Atlas/showcase/pulse use full-bleed hero backgrounds — also skip.
     _PHOTO_COL_SELECTOR = ".cmp-photo-col, .fclassic-left"
@@ -561,7 +561,7 @@ class TestExportRenderLayerStatic:
             app.dependency_overrides.pop(get_db, None)
 
     def test_ex01_fifa_square_uses_export_template(self, client):
-        """FIFA × IG Square export must render the dedicated export template."""
+        """FClassic × IG Square export must render the dedicated export template."""
         html = self._get_fifa_export_html(client, "instagram_square")
         assert html, "Export returned empty response"
         assert "ex-card" in html, (
@@ -629,7 +629,7 @@ class TestExportRenderLayerStatic:
         )
 
     def test_ex06_fifa_portrait_uses_export_template(self, client):
-        """FIFA × IG Portrait export must render the dedicated export template."""
+        """FClassic × IG Portrait export must render the dedicated export template."""
         html = self._get_fifa_export_html(client, "instagram_portrait")
         assert html, "Export returned empty response for instagram_portrait"
         assert "ex-card" in html, (
@@ -677,7 +677,7 @@ class TestExportRenderLayerStatic:
 
 @pytest.mark.unit
 class TestFifaStoryExport:
-    """Static tests for FIFA Classic × Instagram Story dedicated export template.
+    """Static tests for FClassic × Instagram Story dedicated export template.
 
     Instagram Story uses export/story/fclassic.html (Option A: conservative layout).
     TikTok uses export/tiktok/fifa.html (Option B: native redesign) — see TestFifaTikTokExport.
@@ -703,7 +703,7 @@ class TestFifaStoryExport:
             app.dependency_overrides.pop(get_db, None)
 
     def test_ex11_fifa_story_uses_export_template(self, client):
-        """FIFA × IG Story export must render the dedicated export template."""
+        """FClassic × IG Story export must render the dedicated export template."""
         html = self._get_fifa_export_html(client, "instagram_story")
         assert html, "Export returned empty response for instagram_story"
         assert "ex-card" in html, (
@@ -897,7 +897,7 @@ class TestFifaTikTokExport:
             app.dependency_overrides.pop(get_db, None)
 
     def test_ex52_tiktok_uses_tiktok_template(self, client):
-        """EX-52: tiktok export must use tiktok/fifa.html, not story/fclassic.html."""
+        """EX-52: tiktok export must use tiktok/fclassic.html, not story/fclassic.html."""
         html = self._get_tiktok_html(client)
         assert html, "Export returned empty response for tiktok"
         assert "ex-card" in html, (
@@ -959,7 +959,7 @@ class TestFifaTikTokExport:
         )
 
     def test_ex57_tiktok_template_has_hero_photo_class(self):
-        """EX-57: tiktok/fifa.html source must define the full-bleed hero photo class."""
+        """EX-57: tiktok/fclassic.html source must define the full-bleed hero photo class."""
         import os, app as _app_pkg
         tpl_path = os.path.join(
             os.path.dirname(_app_pkg.__file__),
@@ -972,7 +972,7 @@ class TestFifaTikTokExport:
         )
 
     def test_ex58_tiktok_template_has_identity_strip(self):
-        """EX-58: tiktok/fifa.html source must define the identity strip."""
+        """EX-58: tiktok/fclassic.html source must define the identity strip."""
         import os, app as _app_pkg
         tpl_path = os.path.join(
             os.path.dirname(_app_pkg.__file__),
@@ -1006,7 +1006,7 @@ class TestFifaTikTokExport:
 
 @pytest.mark.unit
 class TestFifaLandscapeExport:
-    """Static tests for FIFA Classic × Landscape dedicated export template.
+    """Static tests for FClassic × Landscape dedicated export template.
 
     EX-17  FIFA × facebook_landscape uses dedicated export template (ex-card present)
     EX-18  FIFA × facebook_landscape export HTML has no tab-bar

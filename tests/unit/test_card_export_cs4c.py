@@ -4,8 +4,8 @@ Unit tests — CS-4c: component_config-based column archetype driver
 
 Coverage:
   CS4C-01  column_driver.html exists and extends column_archetype.html
-  CS4C-02  FIFA component_config.portrait has correct field values
-  CS4C-03  FIFA component_config.story has correct field values
+  CS4C-02  FClassic component_config.portrait has correct field values
+  CS4C-03  FClassic component_config.story has correct field values
   CS4C-04  instagram_portrait → driver route → HTTP 200 + ex-card
   CS4C-05  instagram_story → driver route → HTTP 200 + ex-card + ex-sponsor-slot
   CS4C-06  portrait driver output normalised == Level C portrait output normalised (zero-diff)
@@ -191,7 +191,7 @@ class TestCS4cStructural:
         )
 
     def test_cs4c_02_fifa_portrait_config_fields(self):
-        """FIFA component_config.portrait must have CS-5 parity field values.
+        """FClassic component_config.portrait must have CS-5 parity field values.
 
         CS-5 upgrade (2026-05-17): skill_slice=None (all 44), show_position_map=True,
         show_extended_profile=True, show_dominant_badge=True, show_height_weight=True.
@@ -209,7 +209,7 @@ class TestCS4cStructural:
         assert "--ex-posmap-h" in p["platform_vars"], "CS-5: portrait must declare --ex-posmap-h"
 
     def test_cs4c_03_fifa_story_config_fields(self):
-        """FIFA component_config.story must have CS-5 parity field values.
+        """FClassic component_config.story must have CS-5 parity field values.
 
         CS-5 upgrade (2026-05-17): skill_slice=None (all 44), show_position_map=True,
         show_extended_profile=True.
@@ -261,7 +261,7 @@ class TestCS4cDriverSmoke:
 # CS-4c zero-diff gate retired (2026-05-17, CS-5 parity work).
 # Rationale: the CS-4c invariant was "driver must equal Level C output." CS-5
 # intentionally adds PosMap, extended profile, and full 44-skill coverage to the
-# driver, so portrait/fifa.html and story/fifa.html (confirmed dead code) will
+# driver, so portrait/fclassic.html and story/fclassic.html (confirmed dead code) will
 # always diverge. The gate is replaced by positive content assertions.
 
 @pytest.mark.unit

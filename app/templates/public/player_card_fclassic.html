@@ -1,9 +1,9 @@
 {% extends "public/player_card_base.html" %}
 {#
- * FIFA Classic — Player Card (child of player_card_base.html)
+ * FClassic Player — Player Card (child of player_card_base.html)
  * Phase 2b migration: theme tokens + page-shell inherited from base.
- * FIFA-specific: lavender right panel, split header, position pitch, native-export-mode.
- * The 6 standalone export templates (export/*/fifa.html) are NOT affected.
+ * FClassic-specific: lavender right panel, split header, position pitch, native-export-mode.
+ * The 6 standalone export templates (export/*/fclassic.html) are NOT affected.
  #}
 
 {% block extra_styles %}
@@ -337,7 +337,7 @@ body.export-mode.platform-og .skills-panel { padding-left: 1rem; }
 
 /* ── Browser preview entrance animations ─────────────────────────────────────
    Always-on: this template is only used for the editor browser preview.
-   Playwright export always targets the dedicated export/*/fifa.html templates.
+   Playwright export always targets the dedicated export/*/fclassic.html templates.
    Uses pc- prefix to avoid collision with the export templates' ex- classes.
    ─────────────────────────────────────────────────────────────────────────── */
 @keyframes pc-ovr-in {

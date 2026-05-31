@@ -13,7 +13,7 @@ from app.services.card_system._skeletal_specs import (
 from app.services.card_system._types import CardTypeSpec, VariantCapabilitySpec
 from app.services.card_system._welcome_card import WELCOME_CARD_SPEC
 
-# FIFA Classic is the only variant with animated export capability.
+# FClassic Player is the only variant with animated export capability.
 # All other capability attributes are derived from the variant master data
 # in card_variant_service — this spec adds the card-system-level layer only.
 FCLASSIC_CAPABILITIES = VariantCapabilitySpec(

@@ -463,11 +463,11 @@ class TestExportRootVarsDarkLight:
 
 
 # ---------------------------------------------------------------------------
-# TestPlayerCardFifaPhase2b  (Phase 2b — player_card_fifa.html child migration)
+# TestPlayerCardFclassicPhase2b  (Phase 2b — player_card_fclassic.html child migration)
 # ---------------------------------------------------------------------------
 
-class TestPlayerCardFifaPhase2b:
-    """PB_ prefix — player_card_fifa.html extends player_card_base.html."""
+class TestPlayerCardFclassicPhase2b:
+    """PB_ prefix — player_card_fclassic.html extends player_card_base.html."""
 
     @classmethod
     def _fifa_env(cls):
@@ -606,7 +606,7 @@ class TestPlayerCardFifaPhase2b:
         assert "--card-pill-border: #c7d2fe" in src
 
     def test_PB_source_has_no_hardcoded_theme_class_selectors(self):
-        """F-THEME-1: .theme-* CSS selectors removed from player_card_fifa.html source."""
+        """F-THEME-1: .theme-* CSS selectors removed from player_card_fclassic.html source."""
         src = self._source()
         assert ".theme-midnight" not in src
         assert ".theme-gold" not in src
@@ -789,7 +789,7 @@ def _render_square(**ctx_overrides):
 # ---------------------------------------------------------------------------
 
 class TestExportBase:
-    """EB_ — public/export/shared/fifa_base.html (tested via portrait child)."""
+    """EB_ — public/export/shared/export_base.html (tested via portrait child)."""
 
     # --- HTML reset present and not duplicated ---
 
@@ -1030,7 +1030,7 @@ class TestExportBaseColumn:
 
 # ---------------------------------------------------------------------------
 # TestPortraitFifaPhase3  (PP3_ prefix)
-# Tests for the migrated portrait/fifa.html
+# Tests for the migrated portrait/fclassic.html
 # ---------------------------------------------------------------------------
 
 def _four_cats():
@@ -1051,7 +1051,7 @@ def _four_cats():
 
 
 class TestPortraitFifaPhase3:
-    """PP3_ — portrait/fifa.html PORT-v2 Level C (extends export_base.html directly)."""
+    """PP3_ — portrait/fclassic.html PORT-v2 Level C (extends export_base.html directly)."""
 
     def _source(self):
         import os
@@ -1165,11 +1165,11 @@ class TestPortraitFifaPhase3:
 
 # ---------------------------------------------------------------------------
 # TestStoryFifaPhase3b1  (SP3_ prefix)
-# Tests for story/fifa.html STORY-v2 Level C (extends export_base.html directly)
+# Tests for story/fclassic.html STORY-v2 Level C (extends export_base.html directly)
 # ---------------------------------------------------------------------------
 
 class TestStoryFifaPhase3b1:
-    """SP3_ — story/fifa.html STORY-v2 Level C (extends export_base.html directly)."""
+    """SP3_ — story/fclassic.html STORY-v2 Level C (extends export_base.html directly)."""
 
     def _source(self):
         import os
@@ -1333,11 +1333,11 @@ class TestStoryFifaPhase3b1:
 
 # ---------------------------------------------------------------------------
 # TestBannerFifaPhase3b2  (BB3_ prefix)
-# Tests for the migrated banner/fifa.html  (Phase 3b-2)
+# Tests for the migrated banner/fclassic.html  (Phase 3b-2)
 # ---------------------------------------------------------------------------
 
 class TestBannerFifaPhase3b2:
-    """BB3_ — banner/fifa.html Level C (extends export_base.html directly)."""
+    """BB3_ — banner/fclassic.html Level C (extends export_base.html directly)."""
 
     def _source(self):
         import os
@@ -1505,12 +1505,12 @@ class TestBannerFifaPhase3b2:
 
 # ---------------------------------------------------------------------------
 # TestTikTokFifaPhase3b3  (TK3_ prefix)
-# Tests for tiktok/fifa.html — Phase 3b-3 migration to extends fifa_base.html
+# Tests for tiktok/fclassic.html — Phase 3b-3 migration to extends fifa_base.html
 # ---------------------------------------------------------------------------
 
 @pytest.mark.unit
 class TestTikTokFifaPhase3b3:
-    """TK3_ — tiktok/fifa.html extends fifa_base.html (Phase 3b-3).
+    """TK3_ — tiktok/fclassic.html extends fifa_base.html (Phase 3b-3).
 
     Verifies:
     - base inheritance (no standalone HTML shell)
@@ -1536,7 +1536,7 @@ class TestTikTokFifaPhase3b3:
         )
         with open(src_path) as f:
             src = f.read()
-        assert "{% extends" in src, "TK3: tiktok/fifa.html must extend fifa_base.html"
+        assert "{% extends" in src, "TK3: tiktok/fclassic.html must extend fifa_base.html"
         assert "<!DOCTYPE" not in src, "TK3: standalone <!DOCTYPE found — should be removed"
 
     def test_TK3_no_duplicate_css_reset(self):
@@ -1740,12 +1740,12 @@ class TestTikTokFifaPhase3b3:
 
 # ---------------------------------------------------------------------------
 # TestLandscapeFifaPhase3b4  (LS4_ prefix)
-# Tests for landscape/fifa.html — Phase 3b-4 migration to extends fifa_base.html
+# Tests for landscape/fclassic.html — Phase 3b-4 migration to extends fifa_base.html
 # ---------------------------------------------------------------------------
 
 @pytest.mark.unit
 class TestLandscapeFifaPhase3b4:
-    """LS4_ — landscape/fifa.html extends fifa_base.html (Phase 3b-4).
+    """LS4_ — landscape/fclassic.html extends fifa_base.html (Phase 3b-4).
 
     Verifies:
     - base inheritance (no standalone HTML shell)
@@ -1773,7 +1773,7 @@ class TestLandscapeFifaPhase3b4:
         )
         with open(src_path) as f:
             src = f.read()
-        assert "{% extends" in src, "LS4: landscape/fifa.html must extend fifa_base.html"
+        assert "{% extends" in src, "LS4: landscape/fclassic.html must extend fifa_base.html"
         assert "<!DOCTYPE" not in src, "LS4: standalone <!DOCTYPE found — should be removed"
 
     def test_LS4_no_duplicate_css_reset(self):
@@ -1988,11 +1988,11 @@ class TestLandscapeFifaPhase3b4:
 
 # ---------------------------------------------------------------------------
 # TestSquareFifaPhase3b5  (SQ5_ prefix)
-# Tests for square/fifa.html — extends fifa_base.html (Phase 3b-5)
+# Tests for square/fclassic.html — extends fifa_base.html (Phase 3b-5)
 # ---------------------------------------------------------------------------
 
 class TestSquareFifaPhase3b5:
-    """SQ5_ — square/fifa.html extends fifa_base.html (Phase 3b-5).
+    """SQ5_ — square/fclassic.html extends fifa_base.html (Phase 3b-5).
 
     Verifies:
     - base inheritance (no standalone HTML shell)
@@ -2024,7 +2024,7 @@ class TestSquareFifaPhase3b5:
         )
         with open(src_path) as f:
             src = f.read()
-        assert "{% extends" in src, "SQ5: square/fifa.html must extend fifa_base.html"
+        assert "{% extends" in src, "SQ5: square/fclassic.html must extend fifa_base.html"
         assert "<!DOCTYPE" not in src, "SQ5: standalone <!DOCTYPE found — should be removed"
 
     # ── B: Render smoke ───────────────────────────────────────────────────

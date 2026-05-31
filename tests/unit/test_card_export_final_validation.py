@@ -324,10 +324,10 @@ class TestFVCategoryColorTokens:
 
 @pytest.mark.unit
 class TestFVOGRouting:
-    """OG bucket must use og/fifa.html, not landscape/fifa.html or column_driver."""
+    """OG bucket must use og/fclassic.html, not landscape/fclassic.html or column_driver."""
 
     def test_fv_og_level_c_template_exists(self):
-        """og/fifa.html must exist as a Level C standalone file."""
+        """og/fclassic.html must exist as a Level C standalone file."""
         tmpl = _TEMPLATES_ROOT / "public" / "export" / "og" / "fclassic.html"
         assert tmpl.exists(), "og/fclassic.html missing — Level C template not created"
         src = tmpl.read_text()

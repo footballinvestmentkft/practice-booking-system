@@ -1,5 +1,5 @@
 """
-FIFA Classic / Default card — targeted test suite.
+FClassic Player / Default card — targeted test suite.
 
 Test IDs and what they cover:
 

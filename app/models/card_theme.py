@@ -33,7 +33,7 @@ class CardTheme(Base):
 
     # ── CSS custom-property values ────────────────────────────────────────────
     panel_bg = Column(Text, nullable=False,
-                      comment="--card-panel-bg: left panel gradient (FIFA Classic)")
+                      comment="--card-panel-bg: left panel gradient (FClassic Player)")
     body_bg  = Column(String(100), nullable=False,
                       comment="--card-body-bg: skills/events background")
     tab_bg   = Column(String(100), nullable=False,

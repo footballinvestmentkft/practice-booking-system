@@ -172,7 +172,7 @@ class TestOGv1Static:
     """File-level invariants — no HTTP request."""
 
     def test_og_01_extends_export_base_directly(self):
-        """og/fifa.html must extend export_base.html (Level C standalone)."""
+        """og/fclassic.html must extend export_base.html (Level C standalone)."""
         assert _OG_TMPL.exists(), "og/fclassic.html missing"
         src = _OG_TMPL.read_text(encoding="utf-8")
         assert 'extends "public/export/shared/export_base.html"' in src, (
@@ -200,7 +200,7 @@ class TestOGv1Static:
         )
 
     def test_og_04_ovr_badge_macro_imported_and_called(self):
-        """og/fifa.html must import and call card_ovr_badge macro."""
+        """og/fclassic.html must import and call card_ovr_badge macro."""
         src = _OG_TMPL.read_text(encoding="utf-8")
         assert 'from "macros/card_ovr_badge.html"' in src, (
             "card_ovr_badge macro import missing"
@@ -217,7 +217,7 @@ class TestOGv1Rendering:
     """HTTP smoke tests — routing and content invariants."""
 
     def test_og_05_routes_to_og_template_not_landscape(self, client):
-        """OG bucket must route to og/fifa.html (Level C), not landscape or driver."""
+        """OG bucket must route to og/fclassic.html (Level C), not landscape or driver."""
         status, html = _render(client)
         assert status == 200, f"HTTP {status}"
         assert "ex-og-photo" in html or "ex-og-info" in html, (

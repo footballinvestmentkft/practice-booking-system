@@ -199,7 +199,7 @@ def _video_export(
 class TestVideoExportHappyPath:
 
     def test_vx01_fifa_square_returns_200_webm(self, client):
-        """fifa + instagram_square is the only supported animated combo — must return 200."""
+        """fclassic + instagram_square is the only supported animated combo — must return 200."""
         r = _video_export(client, platform="instagram_square", card_variant="fifa")
         assert r.status_code == 200
         assert r.headers["content-type"].startswith("video/webm")
@@ -236,7 +236,7 @@ class TestVideoExportHappyPath:
 class TestVideoExportCapabilityGating:
 
     def test_vx02_fifa_portrait_returns_422(self, client):
-        """fifa + instagram_portrait is not animated-capable → 422, no video."""
+        """fclassic + instagram_portrait is not animated-capable → 422, no video."""
         r = _video_export(client, platform="instagram_portrait", card_variant="fifa")
         assert r.status_code == 422
 

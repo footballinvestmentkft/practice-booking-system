@@ -394,7 +394,7 @@ async def admin_user_profile(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
 ):
-    """Admin: FIFA EA Sports-style user profile page (44-skill system)."""
+    """Admin: FClassic-style user profile page (44-skill system)."""
     _admin_guard(user)
 
     target = db.query(User).filter(User.id == user_id).first()

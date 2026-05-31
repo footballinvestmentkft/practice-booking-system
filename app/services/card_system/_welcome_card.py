@@ -32,7 +32,7 @@ WELCOME_CARD_CONTRACT = CardContentContract(
 WELCOME_CARD_SPEC = CardTypeSpec(
     card_type_id="welcome_card",
     label="Welcome Card",
-    description="Onboarding card generated from self-assessment data; single variant (FIFA Classic), not user-editable.",
+    description="Onboarding card generated from self-assessment data; single variant (FClassic Player), not user-editable.",
     content_contract=WELCOME_CARD_CONTRACT,
     # "fifa" here names the export template bucket (public/export/*/fifa.html),
     # not a Player Card editor variant — different semantic from PLAYER_CARD_SPEC.

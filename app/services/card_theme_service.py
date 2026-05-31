@@ -31,7 +31,7 @@ class ThemeDefinition:
     is_premium: bool
     credit_cost: int
     # Core CSS custom-property values — injected as inline :root vars in templates
-    panel_bg: str       # --card-panel-bg  (fifa-left gradient)
+    panel_bg: str       # --card-panel-bg  (fclassic-left gradient)
     body_bg: str        # --card-body-bg   (skills + events section)
     tab_bg: str         # --card-tab-bg    (tab bar)
     accent: str         # --card-accent    (active tab underline, badge tints)

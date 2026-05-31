@@ -2,18 +2,18 @@
 {#
  * column_archetype.html — Column layout archetype base  (CS-4a, 2026-05-17)
  *
- * This is the archetype-named version of fifa_base_column.html.  Content is
+ * This is the archetype-named version.  Content is
  * identical; the name change makes the structural role explicit so future designs
  * (e.g. Compact on portrait/story) can extend this file without inheriting a
- * "fifa" name in their template chain.
+ * "fclassic" name in their template chain.
  *
  * Relationship:
  *   export_base.html            (Level A: HTML shell + CSS framework)
  *     column_archetype.html     (Level B: column structural layout — this file)
  *       export/{bucket}/{design_id}.html  (Level C: per-bucket design template)
  *
- * CS-4b will migrate export/portrait/fifa.html and export/story/fifa.html to
- * extend this file.  Until then, fifa_base_column.html remains the active base.
+ * CS-4b will migrate export/portrait/fclassic.html and export/story/fclassic.html to
+ * extend this file.  Until then, export_base.html is the active base.
  *
  * Canvas fills 100vw × 100vh, flex-direction: column.
  * Layout: [.ex-hero  fixed height, var(--ex-hero-h)]

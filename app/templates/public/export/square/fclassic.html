@@ -2,11 +2,11 @@
 {%- from "macros/card_position_map.html" import position_map_landscape -%}
 {%- from "macros/card_ovr_badge.html"    import ovr_badge -%}
 {#
- * FIFA Classic × FB Square — export template
+ * FClassic × FB Square — export template
  * (Phase 3b-5: extends export_base.html)
  * Canvas  : 1080 × 1080 px  (Playwright viewport, 1:1 ratio)
  *
- * Extends fifa_base.html directly (not column intermediate — Square has its own
+ * Extends export_base.html directly (not column intermediate — Square has its own
  * hero zone with photo-col + profile-col, not the avatar/OVR/name column layout).
  *
  * Layout (v14 — Position Map full-width bottom bar, Col 2+Col 3 wrapper; outfield logo; info 220px):
@@ -66,7 +66,7 @@ body {
 }
 
 /* ── BASE CLASS OVERRIDES (9 of 10 — .ex-card handled above) ─────────────────
- * These replace/extend the corresponding definitions in fifa_base.html.
+ * These replace/extend the corresponding definitions in export_base.html.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /* .ex-skill-cats — flex row (base: display:grid 1fr 1fr / 1fr 1fr) */

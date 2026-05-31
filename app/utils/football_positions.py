@@ -194,7 +194,7 @@ def get_pitch_display_nodes(
     primary_position: str,
     all_positions: List[str],
 ) -> List[Dict]:
-    """Build annotated pitch node list for the FIFA card position panel.
+    """Build annotated pitch node list for the FClassic card position panel.
 
     Each entry mirrors a node from pitch-selector.js PITCH_NODES.
     is_primary  — True for the primary position (one node, or both ST nodes).

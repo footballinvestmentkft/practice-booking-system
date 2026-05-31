@@ -324,7 +324,7 @@ def public_player_card(
         elif position != "Unknown":
             player_positions = [position]
 
-    # Pitch display nodes for the position panel (FIFA card lower-right section).
+    # Pitch display nodes for the position panel (FClassic card lower-right section).
     from app.utils.football_positions import (
         get_pitch_display_nodes as _get_pitch_nodes,
         position_label as _position_label,
@@ -369,7 +369,7 @@ def public_player_card(
     _card_draft = _CardDraftService.get_player_card_draft(db, user_id=lfa_license.user_id)
 
     # Bare URL (/players/{id}/card with no params) falls through to the full
-    # interactive FIFA card render below.  The export portrait iframe wrapper
+    # interactive FClassic card render below.  The export portrait iframe wrapper
     # (player_card_public.html) has been retired from this route: the
     # interactive card already provides a complete, branded, responsive page.
 
@@ -432,7 +432,7 @@ def public_player_card(
 
     # Template selection: use variant.template if the file exists.
     # If the selected variant has no template yet (not yet implemented), fall back
-    # to the explicit fifa template, then to the legacy fallback.
+    # to the explicit fclassic template, then to the legacy fallback.
     # Log a warning so missing templates are never silently hidden.
     template_path = _FALLBACK_TEMPLATE
     candidate = os.path.join(_TEMPLATES_DIR, variant.template)
@@ -449,7 +449,7 @@ def public_player_card(
             template_path = "public/player_card_fclassic.html"
 
     # Photo URL resolution per variant family:
-    #   FIFA/compact → portrait crop (falls back to original uncropped)
+    #   FClassic/compact → portrait crop (falls back to original uncropped)
     #   showcase     → landscape crop (falls back to original uncropped)
     _orig_url      = lfa_license.player_card_photo_url
     _portrait_url  = lfa_license.card_photo_portrait_url or _orig_url
@@ -460,7 +460,7 @@ def public_player_card(
     # published_card_platform is only inherited when an explicit export/preview
     # is requested (?export=1 or ?preview=).  Bare URL and ?native_export=1
     # resolve to None → "default" preset → export layer stays inactive so the
-    # interactive FIFA card is served (not a Level-C export template).
+    # interactive FClassic card is served (not a Level-C export template).
     from app.services.card_platform_service import get_preset as _get_preset
     _published_platform = _card_draft.published_platform or lfa_license.published_card_platform
     effective_platform = platform or (
@@ -520,7 +520,7 @@ def public_player_card(
         "skill_categories": SKILL_CATEGORIES,
         "teams_info": teams_info,
         "animated_mode": animated_mode,
-        # photo_url kept for FIFA (original, uncropped)
+        # photo_url kept for FClassic (original, uncropped)
         "photo_url": _orig_url,
         "portrait_photo_url": _portrait_url,   # compact / compact_bg
         "landscape_photo_url": _landscape_url, # showcase / showcase_bg
@@ -538,7 +538,7 @@ def public_player_card(
         "compact_bg_url": lfa_license.card_bg_compact_url,
         "showcase_bg_url": lfa_license.card_bg_showcase_url,
         "sponsor_logo_url": lfa_license.sponsor_logo_url,
-        "app_logo_url":     None,  # Default FIFA card shows no LFA app logo; sponsor_logo_url is the card's logo source
+        "app_logo_url":     None,  # Default FClassic card shows no LFA app logo; sponsor_logo_url is the card's logo source
         "compact_photo_position": lfa_license.card_compact_photo_position or "left",
         # Focus points default to match original CSS (compact: center bottom = 50/100, showcase: center = 50/50)
         "compact_focus_x": lfa_license.card_compact_focus_x if lfa_license.card_compact_focus_x is not None else 50,
@@ -563,7 +563,7 @@ def public_player_card(
             lfa_license.right_foot_score,
             lfa_license.left_foot_score,
         ),
-        # Position panel (FIFA Default lower-right section)
+        # Position panel (FClassic Default lower-right section)
         "player_positions":     player_positions,
         "position_nodes":       position_nodes,
         "primary_pos_label":    primary_pos_label,
@@ -643,7 +643,7 @@ async def export_player_card(
         or "fclassic"
     )
 
-    # Design ownership guard — all designs require entitlement, including fifa.
+    # Design ownership guard — all designs require entitlement, including fclassic (deprecated legacy alias: "fifa").
     # Admin bypass: admins may export any card regardless of ownership.
     if current_user.role != UserRole.ADMIN:
         from app.services.card_design_service import is_design_accessible as _is_accessible

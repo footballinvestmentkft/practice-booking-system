@@ -3,13 +3,13 @@
 {%- from "macros/card_sponsor_block.html" import sponsor_slot -%}
 {%- from "macros/card_ovr_badge.html"    import ovr_badge -%}
 {#
- * FIFA Classic × FB Landscape / OG / Facebook Post — export template
+ * FClassic × FB Landscape / OG / Facebook Post — export template
  * (Phase 3b-4: extends export_base.html)
  * Canvas  : 1200 × 630 px  (Playwright viewport, 1.91:1 ratio)
  * Covers  : facebook_landscape, og, facebook_post (all map to 'landscape' bucket)
  *
- * Extends fifa_base.html directly (not column intermediate — 3-col row layout).
- * vs. banner/fifa.html (also row, but 2-col):
+ * Extends export_base.html directly (not column intermediate — 3-col row layout).
+ * vs. banner/fclassic.html (also row, but 2-col):
  *   columns   2 (left fixed 420px + skills) → 3 (left + center + skills, each flex:1)
  *   center    absent → white profile panel (.ex-center, background:#ffffff)
  *   ovr       panel element → photo-zone + ovr-zone column in .ex-left

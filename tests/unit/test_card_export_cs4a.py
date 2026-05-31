@@ -180,7 +180,7 @@ class TestCS4aPngBucketValidation:
         assert r.status_code == 422
 
     def test_cs4_03_fifa_square_200(self, client):
-        """fifa declares square bucket → instagram_square → 200."""
+        """fclassic declares square bucket → instagram_square → 200."""
         r = _export(client, "instagram_square", card_variant="fifa")
         assert r.status_code == 200
 
@@ -222,7 +222,7 @@ class TestCS4aVideoBucketValidation:
         assert r.status_code == 422
 
     def test_cs4_09_fifa_square_bucket_check_mocked_empty_422(self, client):
-        """When supported_export_buckets is mocked empty for fifa, video export → 422."""
+        """When supported_export_buckets is mocked empty for fclassic, video export → 422."""
         from app.main import app
         from app.dependencies import get_current_user_web, get_db
 

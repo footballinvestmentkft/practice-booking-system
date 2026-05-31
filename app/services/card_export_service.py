@@ -133,7 +133,7 @@ def _sync_take_screenshot(render_url: str, platform: str) -> bytes:  # pragma: n
     Called via asyncio.to_thread from the async export endpoint so it does
     not block the event loop.
 
-    For platform=="default" (FIFA Classic native export):
+    For platform=="default" (FClassic Player native export):
       - render_url uses ?native_export=1 so body gets native-export-mode CSS
         (card fills 820px width at auto height, logo hidden, tab bar hidden).
       - Viewport is set tall (2000px) to avoid content clipping during render.

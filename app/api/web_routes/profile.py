@@ -725,7 +725,7 @@ def _build_welcome_card_context(
     Build the FIFA template context for the Welcome Card.
 
     Self-assessment adapter:
-    FIFA Classic templates read `current_level` as the displayed skill number.
+    FClassic templates read `current_level` as the displayed skill number.
     For Welcome Card only, this field is populated from self_assessment.
     This must never be written back to football_skills JSONB and must never
     be used by calculation services.
@@ -763,7 +763,7 @@ def _build_welcome_card_context(
             raw = football_skills.get(key)
             sa_val = float(raw.get("self_assessment", 60.0)) if isinstance(raw, dict) else 60.0
             # Welcome Card template adapter:
-            # FIFA Classic templates read `current_level` as the displayed number.
+            # FClassic templates read `current_level` as the displayed number.
             # For Welcome Card only, this field is populated from self_assessment.
             # This must never be written back to football_skills JSONB and must
             # never be used by calculation services.
@@ -815,7 +815,7 @@ def _build_welcome_card_context(
         elif age < 15:
             age_group = "YOUTH"
 
-    # ── Player namespace: satisfies all `player.*` references in FIFA template ──
+    # ── Player namespace: satisfies all `player.*` references in fclassic template ──
     player = types.SimpleNamespace(
         skills               = skills_for_fclassic,
         name                 = display_name,
@@ -829,7 +829,7 @@ def _build_welcome_card_context(
     )
 
     platform_preset = _get_platform_preset(platform)
-    theme           = _get_theme("midnight")  # dark FIFA Classic default
+    theme           = _get_theme("midnight")  # dark FClassic Player default
 
     return {
         "request":               request,
@@ -870,7 +870,7 @@ def _build_welcome_card_context(
         "showcase_bg_url":       None,
         # sponsor_logo is always None on Welcome Card — enforced at context build time
         "sponsor_logo_url":      None,
-        # Fixed app logo shown on Welcome Card (logo-dark.png for dark FIFA background)
+        # Fixed app logo shown on Welcome Card (logo-dark.png for dark FClassic background)
         "app_logo_url":          _WC_APP_LOGO_URL,
         "compact_photo_position":"left",
         "player_height_cm":      player_height_cm,
@@ -892,9 +892,9 @@ def _select_welcome_card_template(platform: str | None, export: bool) -> str:
     Progressive fallback chain for each platform:
       1. Dir C layout  — export/welcome/{layout}.html   (e.g. panel, cinematic)
       2. Old archetype — export/welcome/{archetype}.html (e.g. square, vertical)
-      3. FIFA Classic  — player_card_fifa.html           (always exists)
+      3. FClassic Player  — player_card_fclassic.html           (always exists)
 
-    No platform given (gallery hub) falls straight through to FIFA Classic.
+    No platform given (gallery hub) falls straight through to FClassic Player.
     """
     if platform:
         # Tier 1: Dir C layout
@@ -909,7 +909,7 @@ def _select_welcome_card_template(platform: str | None, export: bool) -> str:
             arch_path = f"public/export/welcome/{archetype}.html"
             if os.path.isfile(os.path.join(_TEMPLATES_DIR, arch_path)):
                 return arch_path
-    # Tier 3: FIFA Classic fallback
+    # Tier 3: FClassic Player fallback
     return "public/player_card_fclassic.html"
 
 
@@ -968,7 +968,7 @@ async def onboarding_welcome_card(
     assessment_delta, or any EMA output.
 
     Without ?platform=: renders the gallery hub (iframe + download buttons).
-    With ?platform=X:   renders the FIFA Classic card for that platform size.
+    With ?platform=X:   renders the FClassic Player card for that platform size.
     With ?export=1:     switches the FIFA template to export-mode (Playwright use).
 
     Auth: cookie session (browser) OR short-lived render JWT (Playwright export).

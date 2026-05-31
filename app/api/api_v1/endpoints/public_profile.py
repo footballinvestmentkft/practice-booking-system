@@ -110,7 +110,7 @@ def get_lfa_player_profile(
             {"user_id": user_id}
         ).fetchall()
 
-        # 7. Build FIFA-style profile (44-skill system)
+        # 7. Build FClassic-style profile (44-skill system)
         profile = {
             # Basic Info
             "user_id": user_result[0],
