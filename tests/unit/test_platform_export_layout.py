@@ -406,13 +406,13 @@ class TestPlaywrightP0ComponentSizing:
     # Combined selectors — first match wins across all card variants and templates.
     # ex- prefixed classes are from dedicated export templates (export render layer).
     _OVR_SELECTOR = (
-        ".ex-ovr-badge > span:first-child, .ex-ovr-num, .cmp-overall, .atl-ovr-num, .sc-overall, .pls-ovr-text, .fifa-overall"
+        ".ex-ovr-badge > span:first-child, .ex-ovr-num, .cmp-overall, .atl-ovr-num, .sc-overall, .pls-ovr-text, .fclassic-overall"
     )
     # Photo column: only variants with a dedicated width column.
-    # Editor templates: .cmp-photo-col (compact) or .fifa-left (FIFA).
+    # Editor templates: .cmp-photo-col (compact) or .fclassic-left (FIFA).
     # Export templates (.ex-*) use a circular avatar, not a column — PL-08 skips for those.
     # Atlas/showcase/pulse use full-bleed hero backgrounds — also skip.
-    _PHOTO_COL_SELECTOR = ".cmp-photo-col, .fifa-left"
+    _PHOTO_COL_SELECTOR = ".cmp-photo-col, .fclassic-left"
 
     def _open_card(self, platform_id: str):
         """Return (page, browser, pw, w, h). Caller must call pw.stop()."""

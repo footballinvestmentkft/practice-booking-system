@@ -51,8 +51,8 @@ Template (TPL-*)
   TPL-20 skill_categories[2:] slice used for right column (Mental + Physical)
   TPL-21 app_logo_url is None in public_player.py Default card context (Phase 4 regression guard)
   TPL-22 sponsor_logo_url is the card-logo-bar-img source (not app_logo_url, not card-watermark)
-  TPL-23 fifa-right-body wrapper present; z-index:1 ensures content above watermark
-  TPL-24 img.fifa-avatar has no background inline style (avatar_bg must not leak behind photo)
+  TPL-23 fclassic-right-body wrapper present; z-index:1 ensures content above watermark
+  TPL-24 img.fclassic-avatar has no background inline style (avatar_bg must not leak behind photo)
   TPL-25 primary pos badge uses primary_pos_label (display label), not player.position (canonical)
   TPL-26 secondary pos badge CSS + markup present; secondary_pos_labels referenced
   TPL-27 no ST/GK orientation text labels in SVG; node.label render still present
@@ -537,44 +537,44 @@ def test_tpl22_sponsor_logo_url_in_logo_bar():
 
 
 def test_tpl23_fifa_right_body_wrapper_present():
-    """fifa-right-body wrapper must be present to stack content above watermark (z-index:1)."""
+    """fclassic-right-body wrapper must be present to stack content above watermark (z-index:1)."""
     html = _fifa_html()
-    assert "fifa-right-body" in html, (
-        ".fifa-right-body wrapper div must be present — it carries z-index:1 "
+    assert "fclassic-right-body" in html, (
+        ".fclassic-right-body wrapper div must be present — it carries z-index:1 "
         "so the name/identity-grid/clubs render above the z-index:0 .card-watermark"
     )
     # CSS must define the class with position:relative and z-index
-    assert ".fifa-right-body" in html, (
-        ".fifa-right-body CSS class must be defined in the template"
+    assert ".fclassic-right-body" in html, (
+        ".fclassic-right-body CSS class must be defined in the template"
     )
 
 
 def test_tpl24_photo_img_has_no_background_style():
-    """img.fifa-avatar must carry no background inline style — avatar_bg must not leak behind photo."""
+    """img.fclassic-avatar must carry no background inline style — avatar_bg must not leak behind photo."""
     html = _fifa_html()
-    img_match = re.search(r'<img class="fifa-avatar"[^>]*>', html)
-    assert img_match, "img.fifa-avatar element must be present in the template"
+    img_match = re.search(r'<img class="fclassic-avatar"[^>]*>', html)
+    assert img_match, "img.fclassic-avatar element must be present in the template"
     img_tag = img_match.group(0)
     assert "background" not in img_tag, (
-        "img.fifa-avatar must NOT have a 'background' inline style. "
+        "img.fclassic-avatar must NOT have a 'background' inline style. "
         "The avatar_bg colour was showing as a gradient/solid behind the player photo. "
-        "background belongs only on the div.fifa-avatar fallback (no-photo state)."
+        "background belongs only on the div.fclassic-avatar fallback (no-photo state)."
     )
 
 
 def test_tpl25_primary_pos_badge_uses_display_label():
     """Primary pos badge must render primary_pos_label (display label), not player.position (canonical)."""
     html = _fifa_html()
-    badge_pos = html.find('class="fifa-pos-badge"')
-    assert badge_pos != -1, "fifa-pos-badge class must be present"
+    badge_pos = html.find('class="fclassic-pos-badge"')
+    assert badge_pos != -1, "fclassic-pos-badge class must be present"
     context = html[badge_pos: badge_pos + 150]
     assert "primary_pos_label" in context, (
-        "fifa-pos-badge must render {{ primary_pos_label }} — the human-readable display label "
+        "fclassic-pos-badge must render {{ primary_pos_label }} — the human-readable display label "
         "from position_label(). Rendering player.position directly produces CENTRE_MIDFIELD "
         "(with underscore), which is not acceptable."
     )
     assert "player.position" not in context, (
-        "fifa-pos-badge must NOT render {{ player.position }} directly — "
+        "fclassic-pos-badge must NOT render {{ player.position }} directly — "
         "it is the raw canonical key and contains underscores."
     )
 
@@ -593,18 +593,18 @@ def test_tpl25b_position_label_has_no_underscore():
 def test_tpl26_secondary_pos_badge_markup_present():
     """Secondary pos badge CSS and Jinja markup must be present; secondary_pos_labels must be referenced."""
     html = _fifa_html()
-    assert ".fifa-pos-secondary-badge" in html, (
-        ".fifa-pos-secondary-badge CSS class must be defined"
+    assert ".fclassic-pos-secondary-badge" in html, (
+        ".fclassic-pos-secondary-badge CSS class must be defined"
     )
-    assert "fifa-pos-secondary-badges" in html, (
-        ".fifa-pos-secondary-badges wrapper CSS must be defined"
+    assert "fclassic-pos-secondary-badges" in html, (
+        ".fclassic-pos-secondary-badges wrapper CSS must be defined"
     )
     assert "secondary_pos_labels" in html, (
         "secondary_pos_labels variable must be referenced in the template "
         "to render secondary position badges"
     )
-    assert 'class="fifa-pos-secondary-badge"' in html, (
-        "<span class='fifa-pos-secondary-badge'> HTML markup must be present"
+    assert 'class="fclassic-pos-secondary-badge"' in html, (
+        "<span class='fclassic-pos-secondary-badge'> HTML markup must be present"
     )
 
 

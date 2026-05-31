@@ -581,7 +581,7 @@ class TestFifaHeaderBodyAlignment:
     """CE-14..CE-21 — Photo column right edge must align with Outfield left edge.
 
     Design intent: --photo-col-w CSS custom property is set on .card-wrap (default 170px).
-    Both .fifa-header and .card-body reference var(--photo-col-w) so they are always
+    Both .fclassic-header and .card-body reference var(--photo-col-w) so they are always
     in sync. In export-mode, body.export-mode .card-wrap overrides --photo-col-w to
     var(--ex-photo-w) so the alignment is preserved at any viewport / render context.
     Spacer is hidden only for landscape/banner (side-by-side layouts) and on mobile
@@ -635,9 +635,9 @@ class TestFifaHeaderBodyAlignment:
         )
 
     def test_ce20_header_uses_photo_col_w_token(self):
-        """fifa-header grid must reference var(--photo-col-w), not a hardcoded width."""
+        """fclassic-header grid must reference var(--photo-col-w), not a hardcoded width."""
         assert "var(--photo-col-w) 1fr" in self._html, (
-            ".fifa-header must use grid-template-columns: var(--photo-col-w) 1fr "
+            ".fclassic-header must use grid-template-columns: var(--photo-col-w) 1fr "
             "so header and body spacer are always in sync"
         )
 

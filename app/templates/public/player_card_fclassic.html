@@ -27,7 +27,7 @@
     box-shadow: 0 12px 48px rgba(0,0,0,0.55);
     border: 1px solid rgba(255,255,255,0.06);
     /* Single source of truth for the photo column width.
-       Both .fifa-header and .card-body reference this token so they
+       Both .fclassic-header and .card-body reference this token so they
        always stay in sync regardless of viewport or render mode. */
     --photo-col-w: 170px;
 }
@@ -52,49 +52,49 @@ body.native-export-mode .events-section { display: none !important; }
 body.export-mode .card-body { display: grid !important; }
 
 /* ── Split header ─────────────────────────────────────────── */
-.fifa-header {
+.fclassic-header {
     display: grid;
     grid-template-columns: var(--photo-col-w) 1fr;
 }
-.fifa-left {
+.fclassic-left {
     position: relative; overflow: hidden;
     min-height: 200px;
 }
-.fifa-avatar { border-radius: 0; flex-shrink: 0; font-size: 2rem; font-weight: 900; color: white; }
-img.fifa-avatar {
+.fclassic-avatar { border-radius: 0; flex-shrink: 0; font-size: 2rem; font-weight: 900; color: white; }
+img.fclassic-avatar {
     position: absolute; inset: 0;
     width: 100%; height: 100%;
     object-fit: cover; object-position: top center;
 }
-div.fifa-avatar {
+div.fclassic-avatar {
     position: absolute; inset: 0; width: 100%; height: 100%;
     display: flex; align-items: center; justify-content: center;
 }
-.fifa-overall { font-size: 2.5rem; font-weight: 900; color: var(--card-accent); line-height: 1; flex-shrink: 0; }
-.fifa-name-row { display: flex; align-items: flex-start; gap: 0.65rem; }
-.fifa-right {
+.fclassic-overall { font-size: 2.5rem; font-weight: 900; color: var(--card-accent); line-height: 1; flex-shrink: 0; }
+.fclassic-name-row { display: flex; align-items: flex-start; gap: 0.65rem; }
+.fclassic-right {
     background: var(--card-right-bg);
     padding: 1.25rem 1.25rem 1rem;
     display: flex; flex-direction: column; gap: 0;
     min-width: 0;
     position: relative; overflow: hidden;
 }
-.fifa-right-body {
+.fclassic-right-body {
     position: relative; z-index: 1;
     display: flex; flex-direction: column; gap: 0.7rem;
     flex: 1; min-width: 0;
 }
-.fifa-name {
+.fclassic-name {
     font-size: 1.45rem; font-weight: 800; color: var(--card-right-text); line-height: 1.1;
     overflow-wrap: break-word; word-break: break-word;
 }
-.fifa-pos-badge {
+.fclassic-pos-badge {
     display: inline-block; padding: 3px 11px; border-radius: 6px;
     font-size: 0.7rem; font-weight: 800; color: white;
     text-transform: uppercase; letter-spacing: 0.08em;
 }
-.fifa-pos-secondary-badges { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
-.fifa-pos-secondary-badge {
+.fclassic-pos-secondary-badges { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+.fclassic-pos-secondary-badge {
     display: inline-block; padding: 2px 8px; border-radius: 4px;
     font-size: 0.62rem; font-weight: 700; color: var(--card-right-subtext);
     background: var(--card-pill-bg); border: 1px solid var(--card-pill-border);
@@ -107,7 +107,7 @@ div.fifa-avatar {
 .id-field { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .id-label { font-size: 0.6rem; font-weight: 700; color: var(--card-right-subtext); text-transform: uppercase; letter-spacing: 0.07em; }
 .id-value { font-size: 0.84rem; font-weight: 700; color: var(--card-right-value); overflow-wrap: break-word; }
-.fifa-club-pills { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.fclassic-club-pills { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .club-pill {
     font-size: 0.7rem; font-weight: 600; color: var(--card-pill-text);
     background: var(--card-pill-bg); border: 1px solid var(--card-pill-border);
@@ -245,7 +245,7 @@ div.fifa-avatar {
 
 /* ── Export-mode: sync photo column width ────────────────────────────────
    In export-mode the base template sets --ex-photo-w (viewport-relative).
-   Overriding --photo-col-w here cascades to BOTH .fifa-header and .card-body
+   Overriding --photo-col-w here cascades to BOTH .fclassic-header and .card-body
    so the header photo column and the body spacer always stay in sync. */
 body.export-mode .card-wrap { --photo-col-w: var(--ex-photo-w); }
 
@@ -257,10 +257,10 @@ body.export-mode .card-wrap { --photo-col-w: var(--ex-photo-w); }
 ───────────────────────────────────────────────────────────── */
 @media (max-width: 560px) {
     body { padding: 1rem 0.5rem 3rem; }
-    .fifa-header { grid-template-columns: 130px 1fr; }
-    .fifa-overall { font-size: 2rem; }
-    .fifa-right { padding: 1rem; gap: 0.6rem; }
-    .fifa-name { font-size: 1.2rem; }
+    .fclassic-header { grid-template-columns: 130px 1fr; }
+    .fclassic-overall { font-size: 2rem; }
+    .fclassic-right { padding: 1rem; gap: 0.6rem; }
+    .fclassic-name { font-size: 1.2rem; }
     .identity-grid { grid-template-columns: 1fr 1fr; }
     .card-body { grid-template-columns: 1fr; }
     .card-body-photo-spacer { display: none; }
@@ -270,30 +270,30 @@ body.export-mode .card-wrap { --photo-col-w: var(--ex-photo-w); }
     .pitch-svg { max-height: 200px; width: auto; display: block; margin: 0 auto; }
 }
 @media (max-width: 440px) {
-    .fifa-header { grid-template-columns: 1fr; }
-    .fifa-left { min-height: 260px; }
-    .fifa-overall { font-size: 2.1rem; }
-    .fifa-right { padding: 1rem; }
+    .fclassic-header { grid-template-columns: 1fr; }
+    .fclassic-left { min-height: 260px; }
+    .fclassic-overall { font-size: 2.1rem; }
+    .fclassic-right { padding: 1rem; }
     .identity-grid { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 340px) {
     .identity-grid { grid-template-columns: 1fr 1fr; }
     .skill-cats { flex-direction: column; }
-    .fifa-name { font-size: 1.05rem; }
+    .fclassic-name { font-size: 1.05rem; }
 }
 
 /* ── Sprint C: Landscape layout ─────────────────────────────────────────── */
-body.export-mode.platform-facebook-landscape .fifa-header,
-body.export-mode.platform-og .fifa-header {
+body.export-mode.platform-facebook-landscape .fclassic-header,
+body.export-mode.platform-og .fclassic-header {
     flex: 0 0 320px;
     height: 100%;
     align-self: stretch;
     grid-template-columns: 160px 1fr;
 }
-body.export-mode.platform-facebook-landscape .fifa-left,
-body.export-mode.platform-og .fifa-left,
-body.export-mode.platform-facebook-landscape .fifa-right,
-body.export-mode.platform-og .fifa-right { min-height: 100%; }
+body.export-mode.platform-facebook-landscape .fclassic-left,
+body.export-mode.platform-og .fclassic-left,
+body.export-mode.platform-facebook-landscape .fclassic-right,
+body.export-mode.platform-og .fclassic-right { min-height: 100%; }
 body.export-mode.platform-facebook-landscape .card-body,
 body.export-mode.platform-og .card-body {
     flex: 1; height: 100%; overflow: hidden;
@@ -302,27 +302,27 @@ body.export-mode.platform-facebook-landscape .skill-cats,
 body.export-mode.platform-og .skill-cats { grid-template-columns: 1fr 1fr; }
 
 /* ── Sprint D: Banner layout ─────────────────────────────────────────────── */
-body.export-mode.platform-banner-custom .fifa-header {
+body.export-mode.platform-banner-custom .fclassic-header {
     flex: 1;
     height: 100%;
     align-self: stretch;
     grid-template-columns: var(--ex-photo-w) 1fr;
 }
-body.export-mode.platform-banner-custom .fifa-left  { min-height: 100%; justify-content: center; }
-body.export-mode.platform-banner-custom .fifa-right { min-height: 100%; justify-content: center; }
-body.export-mode.platform-banner-custom .fifa-overall { font-size: var(--ex-font-ovr); }
-body.export-mode.platform-banner-custom .fifa-name    { font-size: var(--ex-font-name); }
+body.export-mode.platform-banner-custom .fclassic-left  { min-height: 100%; justify-content: center; }
+body.export-mode.platform-banner-custom .fclassic-right { min-height: 100%; justify-content: center; }
+body.export-mode.platform-banner-custom .fclassic-overall { font-size: var(--ex-font-ovr); }
+body.export-mode.platform-banner-custom .fclassic-name    { font-size: var(--ex-font-name); }
 
 /* ── P0: FIFA-specific export scaling ────────────────────────────────────── */
 /* Banner --ex-photo-w differs from base (150/17vw/300 vs 120/15vw/280) */
 body.export-mode.platform-banner-custom {
     --ex-photo-w: clamp(150px, 17vw, 300px);
 }
-/* grid-template-columns for .fifa-header is now driven by --photo-col-w
+/* grid-template-columns for .fclassic-header is now driven by --photo-col-w
    (set from --ex-photo-w via body.export-mode .card-wrap above) — no
    separate header rule needed. */
-body.export-mode .fifa-overall  { font-size: var(--ex-font-ovr); }
-body.export-mode .fifa-name     { font-size: var(--ex-font-name); }
+body.export-mode .fclassic-overall  { font-size: var(--ex-font-ovr); }
+body.export-mode .fclassic-name     { font-size: var(--ex-font-name); }
 body.export-mode .skill-name,
 body.export-mode .skill-val     { font-size: var(--ex-font-skill); }
 body.export-mode .skill-bar-bg  { flex: 1 1 0 !important; max-width: none !important; }
@@ -344,7 +344,7 @@ body.export-mode.platform-og .skills-panel { padding-left: 1rem; }
     from { opacity: 0; transform: scale(0.7); }
     to   { opacity: 1; transform: scale(1); }
 }
-.fifa-overall { animation: pc-ovr-in 0.5s cubic-bezier(.34,1.56,.64,1) forwards; }
+.fclassic-overall { animation: pc-ovr-in 0.5s cubic-bezier(.34,1.56,.64,1) forwards; }
 
 @keyframes pc-cat-in {
     from { opacity: 0; transform: translateY(10px); }
@@ -358,7 +358,7 @@ body.export-mode.platform-og .skills-panel { padding-left: 1rem; }
     0%, 100% { box-shadow: inset 0 0 0 0 rgba(102,126,234,0); }
     50%       { box-shadow: inset 0 0 48px 6px rgba(102,126,234,0.08); }
 }
-.fifa-left { animation: pc-hero-glow 3s ease-in-out infinite; }
+.fclassic-left { animation: pc-hero-glow 3s ease-in-out infinite; }
 {% endblock %}
 
 {% block extra_body_classes %}{% if native_export_mode %} native-export-mode{% endif %}{% endblock %}
@@ -377,27 +377,27 @@ body.export-mode.platform-og .skills-panel { padding-left: 1rem; }
 <div class="card-wrap">
 
     <!-- Split header -->
-    <div class="fifa-header">
-        <div class="fifa-left">
+    <div class="fclassic-header">
+        <div class="fclassic-left">
             {% if photo_url %}
-            <img class="fifa-avatar" src="{{ photo_url }}" alt="{{ initials }}">
+            <img class="fclassic-avatar" src="{{ photo_url }}" alt="{{ initials }}">
             {% else %}
-            <div class="fifa-avatar" style="background: {{ avatar_bg }};">{{ initials }}</div>
+            <div class="fclassic-avatar" style="background: {{ avatar_bg }};">{{ initials }}</div>
             {% endif %}
         </div>
-        <div class="fifa-right">
-            <div class="fifa-right-body">
-            <div class="fifa-name-row">
-                <div class="fifa-overall">{{ overall | round(0) | int }}</div>
+        <div class="fclassic-right">
+            <div class="fclassic-right-body">
+            <div class="fclassic-name-row">
+                <div class="fclassic-overall">{{ overall | round(0) | int }}</div>
                 <div>
-                    <h2 class="fifa-name">{{ player.name }}</h2>
+                    <h2 class="fclassic-name">{{ player.name }}</h2>
                     {% if primary_pos_label %}
-                    <span class="fifa-pos-badge" style="background: {{ pos_color }};">{{ primary_pos_label }}</span>
+                    <span class="fclassic-pos-badge" style="background: {{ pos_color }};">{{ primary_pos_label }}</span>
                     {% endif %}
                     {% if secondary_pos_labels %}
-                    <div class="fifa-pos-secondary-badges">
+                    <div class="fclassic-pos-secondary-badges">
                         {% for lbl in secondary_pos_labels %}
-                        <span class="fifa-pos-secondary-badge">{{ lbl }}</span>
+                        <span class="fclassic-pos-secondary-badge">{{ lbl }}</span>
                         {% endfor %}
                     </div>
                     {% endif %}
@@ -432,13 +432,13 @@ body.export-mode.platform-og .skills-panel { padding-left: 1rem; }
             </div>
 
             {% if teams_info %}
-            <div class="fifa-club-pills">
+            <div class="fclassic-club-pills">
                 {% for t in teams_info %}
                 <span class="club-pill">🏟️ {{ t.team_name }}{% if t.club_name %} · {{ t.club_name }}{% endif %}{% if t.age_group_label %} · {{ t.age_group_label }}{% endif %}</span>
                 {% endfor %}
             </div>
             {% endif %}
-            </div>{# /fifa-right-body #}
+            </div>{# /fclassic-right-body #}
         </div>
     </div>
 
