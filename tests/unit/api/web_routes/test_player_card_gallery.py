@@ -397,7 +397,9 @@ class TestPlayerCardPublicTemplate:
 
 @pytest.fixture(scope="class")
 def editor_src():
-    return _EDITOR_TPL.read_text(encoding="utf-8")
+    """Effective editor source: main template + Jinja2 includes (REF-P1: CSS in styles.html)."""
+    _STYLES_INCLUDE = _REPO_ROOT / "app" / "templates" / "includes" / "player_editor" / "styles.html"
+    return _EDITOR_TPL.read_text(encoding="utf-8") + "\n" + _STYLES_INCLUDE.read_text(encoding="utf-8")
 
 
 class TestEditorDefaultPlatformFix:

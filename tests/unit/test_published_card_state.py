@@ -78,10 +78,17 @@ def _make_license(
 
 
 def _load_editor_template() -> str:
+    """Return effective editor template source: main file + Jinja2 includes expanded."""
     import app as _app_pkg
-    path = os.path.join(os.path.dirname(_app_pkg.__file__), "templates/dashboard_card_editor.html")
-    with open(path, encoding="utf-8") as f:
-        return f.read()
+    base = os.path.dirname(_app_pkg.__file__)
+    parts = []
+    for rel in (
+        "templates/dashboard_card_editor.html",
+        "templates/includes/player_editor/styles.html",   # REF-P1: CSS extracted here
+    ):
+        with open(os.path.join(base, rel), encoding="utf-8") as f:
+            parts.append(f.read())
+    return "\n".join(parts)
 
 
 def _load_migration() -> str:
