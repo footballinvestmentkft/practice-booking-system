@@ -197,10 +197,13 @@ def _editor_template_source() -> str:
     tmpl_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../../../app/templates"))
     includes = [
         "dashboard_card_editor.html",
-        "includes/player_editor/styles.html",          # REF-P1
-        "includes/player_editor/preview_panel.html",   # REF-P3
-        "includes/player_editor/design_panel.html",    # REF-P4
-        "includes/player_editor/platform_panel.html",  # REF-P4
+        "includes/player_editor/styles.html",                # REF-P1
+        "includes/player_editor/preview_panel.html",         # REF-P3
+        "includes/player_editor/design_panel.html",          # REF-P4
+        "includes/player_editor/platform_panel.html",        # REF-P4
+        "includes/player_editor/photo_panel.html",           # REF-P5a
+        "includes/player_editor/highlight_video_panel.html", # REF-P5b
+        "includes/player_editor/scripts.html",               # REF-P2
     ]
     parts = []
     for rel in includes:

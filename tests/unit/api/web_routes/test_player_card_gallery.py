@@ -399,14 +399,16 @@ class TestPlayerCardPublicTemplate:
 def editor_src():
     """Effective editor source: main template + all Jinja2 includes expanded."""
     _inc = _REPO_ROOT / "app" / "templates" / "includes" / "player_editor"
-    parts = [
+    return "\n".join([
         _EDITOR_TPL.read_text(encoding="utf-8"),
-        (_inc / "styles.html").read_text(encoding="utf-8"),          # REF-P1
-        (_inc / "preview_panel.html").read_text(encoding="utf-8"),   # REF-P3
-        (_inc / "design_panel.html").read_text(encoding="utf-8"),    # REF-P4
-        (_inc / "platform_panel.html").read_text(encoding="utf-8"),  # REF-P4
-    ]
-    return "\n".join(parts)
+        (_inc / "styles.html").read_text(encoding="utf-8"),                # REF-P1
+        (_inc / "preview_panel.html").read_text(encoding="utf-8"),         # REF-P3
+        (_inc / "design_panel.html").read_text(encoding="utf-8"),          # REF-P4
+        (_inc / "platform_panel.html").read_text(encoding="utf-8"),        # REF-P4
+        (_inc / "photo_panel.html").read_text(encoding="utf-8"),           # REF-P5a
+        (_inc / "highlight_video_panel.html").read_text(encoding="utf-8"), # REF-P5b
+        (_inc / "scripts.html").read_text(encoding="utf-8"),               # REF-P2
+    ])
 
 
 class TestEditorDefaultPlatformFix:

@@ -402,13 +402,25 @@ class TestCardEditorIframeFix:
     platform=instagram_portrait&export=1, so the editor preview shows 2-decimal values."""
 
     def _editor_tpl_src(self) -> str:
+        """Effective editor source: main template + all Jinja2 includes (REF-P2)."""
         import os
-        tpl = os.path.join(
-            os.path.dirname(__file__),
-            "../../../../app/templates/dashboard_card_editor.html",
-        )
-        with open(tpl) as f:
-            return f.read()
+        tmpl_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../../../app/templates"))
+        _inc = os.path.join(tmpl_dir, "includes", "player_editor")
+        rels = [
+            os.path.join(tmpl_dir, "dashboard_card_editor.html"),
+            os.path.join(_inc, "styles.html"),
+            os.path.join(_inc, "preview_panel.html"),
+            os.path.join(_inc, "design_panel.html"),
+            os.path.join(_inc, "platform_panel.html"),
+            os.path.join(_inc, "photo_panel.html"),
+            os.path.join(_inc, "highlight_video_panel.html"),
+            os.path.join(_inc, "scripts.html"),
+        ]
+        parts = []
+        for p in rels:
+            with open(p) as f:
+                parts.append(f.read())
+        return "\n".join(parts)
 
     def test_pcprec20_editor_jinja_default_uses_native_export(self):
         """PCPREC-20: Jinja2 else-branch for active_card_platform == 'default'

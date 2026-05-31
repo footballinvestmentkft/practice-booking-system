@@ -156,15 +156,18 @@ def _invoke_editor(
 
 
 def _html_from_template() -> str:
-    """Effective editor source: main template + Jinja2 includes expanded."""
-    parts = [
+    """Effective editor source: main template + all Jinja2 includes expanded."""
+    _inc = TEMPLATES_DIR / "includes" / "player_editor"
+    return "\n".join([
         (TEMPLATES_DIR / "dashboard_card_editor.html").read_text(encoding="utf-8"),
-        (TEMPLATES_DIR / "includes/player_editor/styles.html").read_text(encoding="utf-8"),          # REF-P1
-        (TEMPLATES_DIR / "includes/player_editor/preview_panel.html").read_text(encoding="utf-8"),   # REF-P3
-        (TEMPLATES_DIR / "includes/player_editor/design_panel.html").read_text(encoding="utf-8"),    # REF-P4
-        (TEMPLATES_DIR / "includes/player_editor/platform_panel.html").read_text(encoding="utf-8"), # REF-P4
-    ]
-    return "\n".join(parts)
+        (_inc / "styles.html").read_text(encoding="utf-8"),                # REF-P1
+        (_inc / "preview_panel.html").read_text(encoding="utf-8"),         # REF-P3
+        (_inc / "design_panel.html").read_text(encoding="utf-8"),          # REF-P4
+        (_inc / "platform_panel.html").read_text(encoding="utf-8"),        # REF-P4
+        (_inc / "photo_panel.html").read_text(encoding="utf-8"),           # REF-P5a
+        (_inc / "highlight_video_panel.html").read_text(encoding="utf-8"), # REF-P5b
+        (_inc / "scripts.html").read_text(encoding="utf-8"),               # REF-P2
+    ])
 
 
 # ── CE2-01 — card_variants context contains only owned variants ───────────────

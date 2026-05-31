@@ -78,14 +78,21 @@ def _make_license(
 
 
 def _load_editor_template() -> str:
-    """Return effective editor template source: main file + Jinja2 includes expanded."""
+    """Return effective editor template source: main file + all Jinja2 includes expanded."""
     import app as _app_pkg
     base = os.path.dirname(_app_pkg.__file__)
-    parts = []
-    for rel in (
+    rels = [
         "templates/dashboard_card_editor.html",
-        "templates/includes/player_editor/styles.html",   # REF-P1: CSS extracted here
-    ):
+        "templates/includes/player_editor/styles.html",                # REF-P1
+        "templates/includes/player_editor/preview_panel.html",         # REF-P3
+        "templates/includes/player_editor/design_panel.html",          # REF-P4
+        "templates/includes/player_editor/platform_panel.html",        # REF-P4
+        "templates/includes/player_editor/photo_panel.html",           # REF-P5a
+        "templates/includes/player_editor/highlight_video_panel.html", # REF-P5b
+        "templates/includes/player_editor/scripts.html",               # REF-P2
+    ]
+    parts = []
+    for rel in rels:
         with open(os.path.join(base, rel), encoding="utf-8") as f:
             parts.append(f.read())
     return "\n".join(parts)

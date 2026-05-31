@@ -193,9 +193,10 @@ class TestThemeSyncFix:
 
     # TS-04: JS template check — exportCard() fetch URL contains _currentTheme
     def test_ts04_js_template_exportcard_includes_current_theme(self):
+        # REF-P2: exportCard() is now in scripts.html include
         template_path = (
             Path(__file__).parents[2]
-            / "app/templates/dashboard_card_editor.html"
+            / "app/templates/includes/player_editor/scripts.html"
         )
         source = template_path.read_text(encoding="utf-8")
         # The fetch inside exportCard() must include the theme parameter

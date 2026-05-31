@@ -628,14 +628,17 @@ def test_tpl27_no_st_gk_orientation_labels_in_svg():
 # ── ED-*: Editor template ──────────────────────────────────────────────────────
 
 def _editor_html():
-    """Effective editor source: main template + Jinja2 includes expanded."""
-    _inc_dir = _ROOT / "app/templates/includes/player_editor"
+    """Effective editor source: main template + all Jinja2 includes expanded."""
+    _inc = _ROOT / "app/templates/includes/player_editor"
     return "\n".join([
         _read(_TPL_EDITOR),
-        _read(_inc_dir / "styles.html"),           # REF-P1
-        _read(_inc_dir / "preview_panel.html"),    # REF-P3
-        _read(_inc_dir / "design_panel.html"),     # REF-P4
-        _read(_inc_dir / "platform_panel.html"),   # REF-P4
+        _read(_inc / "styles.html"),                # REF-P1
+        _read(_inc / "preview_panel.html"),         # REF-P3
+        _read(_inc / "design_panel.html"),          # REF-P4
+        _read(_inc / "platform_panel.html"),        # REF-P4
+        _read(_inc / "photo_panel.html"),           # REF-P5a
+        _read(_inc / "highlight_video_panel.html"), # REF-P5b
+        _read(_inc / "scripts.html"),               # REF-P2
     ])
 
 

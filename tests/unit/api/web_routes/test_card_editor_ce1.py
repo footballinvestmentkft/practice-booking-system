@@ -213,7 +213,18 @@ class TestCE106NoRegressionPublishExport:
     """CE1-06: publish/export markup identifiers still present."""
 
     def _html(self) -> str:
-        return (TEMPLATES_DIR / "dashboard_card_editor.html").read_text()
+        """Effective editor source: main template + all Jinja2 includes (REF-P2)."""
+        _inc = TEMPLATES_DIR / "includes" / "player_editor"
+        return "\n".join([
+            (TEMPLATES_DIR / "dashboard_card_editor.html").read_text(),
+            (_inc / "styles.html").read_text(),
+            (_inc / "preview_panel.html").read_text(),
+            (_inc / "design_panel.html").read_text(),
+            (_inc / "platform_panel.html").read_text(),
+            (_inc / "photo_panel.html").read_text(),
+            (_inc / "highlight_video_panel.html").read_text(),
+            (_inc / "scripts.html").read_text(),
+        ])
 
     def test_publish_button_markup_present(self):
         html = self._html()

@@ -1,0 +1,517 @@
+<script>
+function switchTab(tabId) {
+    document.querySelectorAll('.ce-tab').forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+    });
+    document.querySelectorAll('.ce-tab-panel').forEach(p =>
+        p.classList.remove('active')
+    );
+    const tabEl   = document.getElementById('tab-' + tabId);
+    const panelEl = document.getElementById('panel-' + tabId);
+    if (tabEl)   { tabEl.classList.add('active'); tabEl.setAttribute('aria-selected', 'true'); }
+    if (panelEl) { panelEl.classList.add('active'); }
+}
+
+// Deep-link support: /card-editor#media activates the Media tab on load
+(function () {
+    var h = window.location.hash.slice(1);
+    if (h && document.getElementById('tab-' + h)) { switchTab(h); }
+}());
+
+function _csrf() {
+    return (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+}
+// ── Canvas size map — server-rendered from card_constants.CANVAS_SIZES ───────
+const _CANVAS_SIZES = (function () {
+    const raw = {{ canvas_sizes | tojson }};
+    const out = {};
+    for (const pid in raw) { out[pid] = [raw[pid].w, raw[pid].h]; }
+    return out;
+}());
+
+function _cardIframeSrc() {
+    // ?preview= reflects draft variant; ?theme= reflects draft theme — both needed so
+    // the editor iframe shows the in-progress draft, not the last-published state.
+    // animated=1 on export platforms shows entrance animations in the editor preview.
+    if (_currentPlatform === 'default') {
+        return `/players/${_cardUserId}/card?preview=${_currentVariant}&theme=${_currentTheme}&native_export=1&_t=${Date.now()}`;
+    }
+    return `/players/${_cardUserId}/card?preview=${_currentVariant}&theme=${_currentTheme}&platform=${_currentPlatform}&export=1&animated=1&_t=${Date.now()}`;
+}
+
+function _applyIframeSize() {
+    const iframe = document.getElementById('player-card-iframe');
+    const stage  = document.querySelector('.ce-preview-stage');
+    const wrap   = document.querySelector('.ce-preview-wrap');
+    if (!iframe || !stage || !wrap) return;
+
+    // 'default' maps to 820×800 (native FClassic card) — same key as CANVAS_SIZES["default"]
+    const platformKey = _currentPlatform || 'default';
+    const dims = _CANVAS_SIZES[platformKey];
+    if (!dims) return;
+    const [cw, ch] = dims;
+
+    const PAD    = 24;
+    const availW = stage.clientWidth  - PAD;
+    const availH = stage.clientHeight - PAD;
+
+    // On mobile (stacked layout, page scrolls) constrain by width only
+    const isMobile = window.innerWidth < 768;
+    const scale = isMobile
+        ? Math.min(availW / cw, 1.0)
+        : Math.min(availW / cw, availH / ch, 1.0);
+
+    iframe.style.width         = cw + 'px';
+    iframe.style.height        = ch + 'px';
+    iframe.style.transform     = `scale(${scale})`;
+    iframe.style.transformOrigin = 'top left';
+
+    wrap.style.width  = Math.round(cw * scale) + 'px';
+    wrap.style.height = Math.round(ch * scale) + 'px';
+}
+
+function _updateFullscreenLink() {
+    const link = document.getElementById('fullscreen-link');
+    if (!link) return;
+    // Always link to gallery hub — the public-facing page with platform picker.
+    link.href = `/players/${_cardUserId}/card`;
+}
+
+async function setCardTheme(themeId) {
+    try {
+        const r = await fetch('/dashboard/card-theme', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf() },
+            body: JSON.stringify({ theme: themeId }),
+        });
+        if (r.status === 403) { alert('Session expired — reloading page.'); location.reload(); return; }
+        const data = await r.json();
+        if (data.ok) {
+            _currentTheme = themeId;
+            document.querySelectorAll('.ce-design-tile').forEach(d => d.classList.remove('active'));
+            const active = document.querySelector(`.ce-design-tile[onclick*="'${themeId}'"]`);
+            if (active) active.classList.add('active');
+            const iframe = document.getElementById('player-card-iframe');
+            if (iframe) { iframe.src = _cardIframeSrc(); }
+            _updatePublishIndicator();
+        } else { alert(data.error || 'Could not apply theme.'); }
+    } catch(e) { alert('Network error. Please try again.'); }
+}
+
+const _cardUserId = {{ user.id }};
+let _currentPlatform = '{{ active_card_platform }}';
+let _currentVariant  = '{{ active_card_variant }}';
+let _currentTheme    = '{{ active_card_theme }}';
+// Server-rendered CDO ownership for the currently active draft variant.
+// Controls whether Publish and PNG export are enabled UI-side.
+// Reset to true after variant switch via location.reload() (server re-evaluates).
+let _activeVariantOwned = {{ active_variant_owned | tojson }};
+
+// Animated video export capability: set of platforms supported for the
+// current variant (server-rendered from ANIMATED_EXPORT_CAPABLE registry).
+// Re-evaluated after variant changes via page reload.
+const _ANIMATED_CAPABLE_PLATFORMS = new Set(
+    {{ animated_capable_platforms | tojson }}
+);
+
+// Published state (stable; only changes after explicit "Publish Card" action).
+let _publishedCardTheme    = '{{ published_card_theme }}';
+let _publishedCardVariant  = '{{ published_card_variant }}';
+let _publishedCardPlatform = '{{ published_card_platform }}';
+
+// Highlight video unpublished flag — true if draft_data.highlight_video.video_id
+// differs from published_data.highlight_video.video_id (server-rendered).
+// Updated on JS save/remove before the next page reload.
+let _hvUnpublished = {{ highlight_video_unpublished | tojson }};
+
+function _isVideoCapable() {
+    if (_currentPlatform === 'default') return false;
+    return _ANIMATED_CAPABLE_PLATFORMS.has(_currentPlatform);
+}
+
+function _updateVideoButtonVisibility() {
+    const btn = document.getElementById('btn-export-video');
+    if (btn) {
+        const capable = _isVideoCapable();
+        btn.style.display = capable ? '' : 'none';
+        btn.disabled = !capable;
+    }
+    const dbg = document.getElementById('btn-export-webm-debug');
+    if (dbg) {
+        const capable = _isVideoCapable();
+        dbg.style.display = capable ? '' : 'none';
+        dbg.disabled = !capable;
+    }
+}
+
+async function _savePlatform(platformId) {
+    try {
+        const r = await fetch('/dashboard/card-platform', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf() },
+            body: JSON.stringify({ platform: platformId }),
+        });
+        if (!r.ok) { console.warn('card-platform save failed', r.status); return; }
+        _showPlatformSaved(platformId);
+    } catch(e) { console.warn('card-platform save error', e); }
+}
+
+function _showPlatformSaved(platformId) {
+    const tile = document.querySelector(`.ce-platform-tile[data-platform="${platformId}"]`);
+    if (!tile) return;
+    const nameEl = tile.querySelector('.ce-platform-tile-name');
+    if (!nameEl) return;
+    const orig = nameEl.textContent;
+    nameEl.textContent = '✓ Saved';
+    setTimeout(() => { nameEl.textContent = orig; }, 1400);
+}
+
+function setPlatform(platformId) {
+    _currentPlatform = platformId;
+    document.querySelectorAll('.ce-platform-tile').forEach(b => b.classList.remove('active'));
+    const tile = document.querySelector(`.ce-platform-tile[data-platform="${platformId}"]`);
+    if (tile) tile.classList.add('active');
+    const iframe = document.getElementById('player-card-iframe');
+    if (iframe) { iframe.src = _cardIframeSrc(); }
+    _applyIframeSize();
+    _updateFullscreenLink();
+    // Download PNG is always enabled — default platform exports the native FClassic card.
+    _updateVideoButtonVisibility();
+    _updatePublishIndicator();
+    _savePlatform(platformId);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Always apply size — not just for non-default (covers default=instagram_portrait too)
+    _applyIframeSize();
+    _updateFullscreenLink();
+    _updateVideoButtonVisibility();
+    _updatePublishIndicator();
+
+    // Rescale on container resize (viewport resize, orientation change)
+    if (window.ResizeObserver) {
+        new ResizeObserver(_applyIframeSize)
+            .observe(document.querySelector('.ce-preview-stage'));
+    }
+});
+
+function _isDraftPublished() {
+    const draftPlatform = _currentPlatform || 'default';
+    const pubPlatform   = _publishedCardPlatform || 'default';
+    const cardInSync = draftPlatform === pubPlatform
+        && _currentTheme   === _publishedCardTheme
+        && _currentVariant === _publishedCardVariant;
+    return cardInSync && !_hvUnpublished;
+}
+
+function _updatePublishIndicator() {
+    const dot  = document.getElementById('publish-status-dot');
+    const text = document.getElementById('publish-status-text');
+    if (!dot || !text) return;
+    const published = _isDraftPublished();
+    dot.className   = 'publish-status-dot ' + (published ? 'published' : 'unpublished');
+    text.textContent = published ? 'Public card is up to date' : 'Unpublished changes';
+    const btn = document.getElementById('btn-publish-card');
+    // Publish requires BOTH: draft in sync AND user owns the active design.
+    if (btn) btn.disabled = published || !_activeVariantOwned;
+}
+
+async function publishCard() {
+    const btn = document.getElementById('btn-publish-card');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Publishing…'; }
+    try {
+        const r = await fetch('/dashboard/publish-card', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf() },
+        });
+        if (r.status === 403) { alert('Session expired — reloading page.'); location.reload(); return; }
+        const data = await r.json();
+        if (data.ok) {
+            _publishedCardTheme    = data.published.theme;
+            _publishedCardVariant  = data.published.variant;
+            _publishedCardPlatform = data.published.platform === 'default' ? '' : data.published.platform;
+            _hvUnpublished = false;  // publish_draft() merged draft_data.highlight_video → published_data
+            _updatePublishIndicator();
+        } else {
+            alert('❌ ' + (data.error || 'Could not publish card.'));
+            _updatePublishIndicator();
+        }
+    } catch(e) {
+        alert('Network error. Please try again.');
+        _updatePublishIndicator();
+    } finally {
+        const btn2 = document.getElementById('btn-publish-card');
+        if (btn2 && btn2.textContent === '⏳ Publishing…') btn2.textContent = 'Publish Card';
+    }
+}
+
+async function exportCard() {
+    // 'default' previews as instagram_portrait (P-1 fix) — export must match the preview.
+    // Map 'default' → 'instagram_portrait' so what you see is what you download.
+    const platform = _currentPlatform === 'default' ? 'instagram_portrait' : _currentPlatform;
+    const btn = document.getElementById('btn-export-card');
+    const origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Generating…';
+    try {
+        const r = await fetch(`/players/${_cardUserId}/card/export?platform=${platform}&theme=${_currentTheme}`);
+        if (r.status === 429) { alert('Too many exports — please wait a moment and try again.'); return; }
+        if (!r.ok) { alert('Export failed — please try again.'); return; }
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `lfa_card_${_cardUserId}_${platform}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch(e) {
+        alert('Export failed — please try again.');
+    } finally {
+        btn.textContent = origText;
+        // Do not re-enable if user does not own the active design.
+        btn.disabled = !_activeVariantOwned;
+    }
+}
+
+async function exportCardVideo() {
+    if (!_isVideoCapable()) return;
+    const btn = document.getElementById('btn-export-video');
+    const origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Generating… (5s)';
+    try {
+        const r = await fetch(
+            `/players/${_cardUserId}/card/export/video?platform=${_currentPlatform}&format=mp4&duration=5`
+        );
+        if (r.status === 429) { alert('Too many video exports — please wait a moment and try again.'); return; }
+        if (r.status === 422) { alert('Animated video export is not available for this card/platform combination.'); return; }
+        if (!r.ok) { alert('Video export failed — please try again.'); return; }
+        const fallback = r.headers.get('X-Export-Fallback');
+        const ext = fallback === 'ffmpeg-failed' ? 'webm' : 'mp4';
+        if (fallback === 'ffmpeg-failed') {
+            alert('MP4 conversion failed, downloaded WebM instead.');
+        }
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `lfa_card_${_cardUserId}_${_currentPlatform}_animated.${ext}`;
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch(e) {
+        alert('Video export failed — please try again.');
+    } finally {
+        btn.textContent = origText;
+        btn.disabled = false;
+    }
+}
+
+async function exportCardWebmDebug() {
+    if (!_isVideoCapable()) return;
+    const btn = document.getElementById('btn-export-webm-debug');
+    const origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Recording… (5s)';
+    try {
+        const r = await fetch(
+            `/players/${_cardUserId}/card/export/video?platform=${_currentPlatform}&format=webm&duration=5`
+        );
+        if (r.status === 429) { alert('Rate limit — wait a moment and retry.'); return; }
+        if (!r.ok) { alert(`WebM debug export failed — HTTP ${r.status}`); return; }
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `lfa_card_${_cardUserId}_${_currentPlatform}_raw.webm`;
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch(e) {
+        alert('WebM debug export failed — see console.');
+        console.error(e);
+    } finally {
+        btn.textContent = origText;
+        btn.disabled = false;
+    }
+}
+
+function previewVariant(variantId) {
+    const iframe = document.getElementById('player-card-iframe');
+    const p = _currentPlatform !== 'default'
+        ? `&platform=${_currentPlatform}&export=1`
+        : '';
+    if (iframe) { iframe.src = `/players/${_cardUserId}/card?preview=${variantId}${p}&_t=${Date.now()}`; }
+    document.querySelectorAll('#variant-picker [data-variant]').forEach(b => b.classList.remove('previewing'));
+    const btn = document.querySelector(`#variant-picker [data-variant="${variantId}"]`);
+    if (btn) btn.classList.add('previewing');
+}
+
+async function setCardVariant(variantId) {
+    try {
+        const r = await fetch('/dashboard/card-variant', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf() },
+            body: JSON.stringify({ variant: variantId }),
+        });
+        if (r.status === 403) { alert('Session expired — reloading page.'); location.reload(); return; }
+        const data = await r.json();
+        if (data.ok) {
+            _currentVariant = variantId;
+            document.querySelectorAll('#variant-picker [data-variant]').forEach(b => b.classList.remove('active', 'previewing'));
+            const active = document.querySelector(`#variant-picker [data-variant="${variantId}"]`);
+            if (active) active.classList.add('active');
+            const iframe = document.getElementById('player-card-iframe');
+            if (iframe) { iframe.src = _cardIframeSrc(); }
+            // Page reload ensures _ANIMATED_CAPABLE_PLATFORMS matches the new variant
+            location.reload();
+        } else { alert(data.error || 'Could not apply variant.'); }
+    } catch(e) { alert('Network error. Please try again.'); }
+}
+
+async function uploadMyPhoto(input) {
+    if (!input.files[0]) return;
+    const fd = new FormData(); fd.append('file', input.files[0]);
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-photo', {
+        method: 'POST', body: fd, headers: { 'X-CSRF-Token': csrf }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload(); else alert('Hiba a feltöltésnél: ' + data.error);
+}
+async function deleteMyPhoto() {
+    if (!confirm('Törli a profilképet?')) return;
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-photo/delete', {
+        method: 'POST', headers: { 'X-CSRF-Token': csrf, 'Content-Type': 'application/json' }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload();
+}
+
+async function uploadCompactBg(input) {
+    if (!input.files[0]) return;
+    const fd = new FormData(); fd.append('file', input.files[0]);
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-photo-compact-bg', {
+        method: 'POST', body: fd, headers: { 'X-CSRF-Token': csrf }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload(); else alert('Hiba a feltöltésnél: ' + data.error);
+}
+async function deleteCompactBg() {
+    if (!confirm('Törli a Compact+BG háttérképet?')) return;
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-photo-compact-bg/delete', {
+        method: 'POST', headers: { 'X-CSRF-Token': csrf, 'Content-Type': 'application/json' }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload();
+}
+
+async function uploadShowcaseBg(input) {
+    if (!input.files[0]) return;
+    const fd = new FormData(); fd.append('file', input.files[0]);
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-photo-showcase-bg', {
+        method: 'POST', body: fd, headers: { 'X-CSRF-Token': csrf }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload(); else alert('Hiba a feltöltésnél: ' + data.error);
+}
+async function deleteShowcaseBg() {
+    if (!confirm('Törli a Showcase+BG háttérképet?')) return;
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-photo-showcase-bg/delete', {
+        method: 'POST', headers: { 'X-CSRF-Token': csrf, 'Content-Type': 'application/json' }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload();
+}
+async function uploadSponsorLogo(input) {
+    if (!input.files[0]) return;
+    const fd = new FormData(); fd.append('file', input.files[0]);
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-sponsor-logo', {
+        method: 'POST', body: fd, headers: { 'X-CSRF-Token': csrf }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload(); else alert('Hiba a feltöltésnél: ' + data.error);
+}
+async function deleteSponsorLogo() {
+    if (!confirm('Törli a szponzor logót?')) return;
+    const csrf = (document.cookie.split('; ').find(r => r.startsWith('csrf_token=')) || '').split('=')[1];
+    const r = await fetch('/dashboard/lfa-player-sponsor-logo/delete', {
+        method: 'POST', headers: { 'X-CSRF-Token': csrf, 'Content-Type': 'application/json' }
+    });
+    const data = await r.json();
+    if (data.ok) location.reload();
+}
+
+// ── Highlight Video ───────────────────────────────────────────────────────────
+
+async function saveHighlightVideo() {
+    const input = document.getElementById('hv-url-input');
+    const errEl = document.getElementById('hv-error');
+    if (!input) return;
+    const video_url = input.value.trim();
+    if (!video_url) { if (errEl) errEl.textContent = 'Please enter a YouTube or TikTok video link.'; return; }
+    if (errEl) errEl.textContent = '';
+    try {
+        const r = await fetch('/dashboard/lfa-football-player/card-editor/media/highlight-video', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrf() },
+            body: JSON.stringify({ video_url }),
+        });
+        const data = await r.json();
+        if (r.status === 403) { alert('Session expired — reloading page.'); location.reload(); return; }
+        if (!data.ok) {
+            if (errEl) errEl.textContent = data.error || 'Invalid URL. Paste a YouTube or TikTok video link.';
+            return;
+        }
+        _updateHvAfterSave(data);
+    } catch(e) { if (errEl) errEl.textContent = 'Network error — please try again.'; }
+}
+
+function _updateHvAfterSave(data) {
+    // Replace the entire section with the "has video" state.
+    const noVideoDiv  = document.getElementById('hv-no-video');
+    const hasVideoDiv = document.getElementById('hv-has-video');
+    if (noVideoDiv) {
+        // Transition from "no video" → "has video": reload so Jinja2 state renders correctly.
+        location.reload();
+        return;
+    }
+    if (hasVideoDiv) {
+        if (!data.embed_url) {
+            // TikTok (link-only) — reload so Jinja2 renders the CTA box correctly.
+            location.reload();
+            return;
+        }
+        // YouTube — update iframe src in-place.
+        const iframe = document.getElementById('hv-iframe');
+        if (iframe) iframe.src = data.embed_url;
+        const badges = hasVideoDiv.querySelectorAll('.hv-badge');
+        badges.forEach(b => { b.className = 'hv-badge hv-badge-draft'; b.textContent = 'Draft saved — not yet published'; });
+        const willRemove = document.getElementById('hv-will-remove-notice');
+        if (willRemove) willRemove.style.display = 'none';
+        _hvUnpublished = true;
+        _updatePublishIndicator();
+    }
+}
+
+async function removeHighlightVideo() {
+    const errEl = document.getElementById('hv-error');
+    try {
+        const r = await fetch('/dashboard/lfa-football-player/card-editor/media/highlight-video', {
+            method: 'DELETE',
+            headers: { 'X-CSRF-Token': _csrf() },
+        });
+        const data = await r.json();
+        if (r.status === 403) { alert('Session expired — reloading page.'); location.reload(); return; }
+        if (!data.ok) {
+            if (errEl) errEl.textContent = data.error || 'Could not remove video.';
+            return;
+        }
+        location.reload();
+    } catch(e) { if (errEl) errEl.textContent = 'Network error — please try again.'; }
+}
+</script>
