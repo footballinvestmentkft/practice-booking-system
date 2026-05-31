@@ -414,7 +414,7 @@ async def lfa_player_card_editor(
 
     # Published public card state (read-only in the editor — shown as indicator)
     published_card_theme    = card_draft.published_theme    or "default"
-    published_card_variant  = card_draft.published_variant  or "fifa"
+    published_card_variant  = card_draft.published_variant  or "fclassic"
     published_card_platform = card_draft.published_platform or "default"
 
     # Card variant picker data — CDO-based ownership check

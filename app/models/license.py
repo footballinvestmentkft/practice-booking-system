@@ -215,8 +215,8 @@ class UserLicense(Base):
     # 🎨 CARD CUSTOMISATION: active theme/variant + unlocked lists
     card_theme = Column(String(50), nullable=True, default="default",
                         comment="Active card theme ID (default/midnight/arctic/gold/emerald/crimson)")
-    card_variant = Column(String(50), nullable=True, default="fifa",
-                          comment="Active card variant ID (fifa/compact/showcase)")
+    card_variant = Column(String(50), nullable=True, default="fclassic",
+                          comment="Active card variant ID (fclassic/compact/showcase)")
     unlocked_card_themes = Column(JSON, nullable=True, default=list,
                                   comment="List of unlocked card theme IDs")
     unlocked_card_variants = Column(JSON, nullable=True, default=list,
@@ -230,7 +230,7 @@ class UserLicense(Base):
     # copies draft → published so the public URL stays stable while the user edits.
     published_card_theme    = Column(String(50), nullable=True, default="default",
                                      comment="Published public card theme (stable; set by Publish action)")
-    published_card_variant  = Column(String(50), nullable=True, default="fifa",
+    published_card_variant  = Column(String(50), nullable=True, default="fclassic",
                                      comment="Published public card variant (stable; set by Publish action)")
     published_card_platform = Column(String(50), nullable=True, default=None,
                                      comment="Published public card platform (NULL=default; stable)")

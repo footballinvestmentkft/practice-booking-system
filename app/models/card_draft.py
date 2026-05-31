@@ -46,7 +46,7 @@ class CardDraft(Base):
 
     # ── Draft selection state (editor writes; public route never reads) ───────
     draft_theme    = Column(String(50), nullable=False, server_default="default")
-    draft_variant  = Column(String(50), nullable=False, server_default="fifa")
+    draft_variant  = Column(String(50), nullable=False, server_default="fclassic")
     draft_platform = Column(
         String(50), nullable=True,
         comment="NULL = platform default",

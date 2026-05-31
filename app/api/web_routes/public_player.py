@@ -160,7 +160,7 @@ async def public_player_profile(
     card_variant_id = (
         _profile_draft.published_variant
         or lfa_license.published_card_variant
-        or "fifa"
+        or "fclassic"
     )
     card_published_v = (
         int(_profile_draft.published_at.timestamp())
@@ -421,7 +421,7 @@ def public_player_card(
     card_variant_id = (
         _card_draft.published_variant
         or lfa_license.published_card_variant
-        or "fifa"
+        or "fclassic"
     )
     if preview:
         _preview_def = _get_design(preview, db)
@@ -438,9 +438,9 @@ def public_player_card(
     if os.path.isfile(candidate):
         template_path = variant.template
     else:
-        if card_variant_id != "fifa":
+        if card_variant_id not in ("fifa", "fclassic"):
             logger.warning(
-                "card variant template missing — rendering fifa fallback",
+                "card variant template missing — rendering fclassic fallback",
                 extra={"card_variant_id": card_variant_id, "expected_template": variant.template},
             )
         fifa_candidate = os.path.join(_TEMPLATES_DIR, "public/player_card_fifa.html")
@@ -639,7 +639,7 @@ async def export_player_card(
     card_variant_id = (
         _export_draft.published_variant
         or target_license.card_variant
-        or "fifa"
+        or "fclassic"
     )
 
     # Design ownership guard — all designs require entitlement, including fifa.
@@ -782,7 +782,7 @@ async def export_player_card_video(
         raise HTTPException(status_code=404, detail="No active LFA Player license")
 
     # Animated capability check — variant comes from DB, never from URL
-    card_variant_id = target_license.card_variant or "fifa"
+    card_variant_id = target_license.card_variant or "fclassic"
 
     # Design ownership guard — same rules as PNG export.
     if current_user.role != UserRole.ADMIN:

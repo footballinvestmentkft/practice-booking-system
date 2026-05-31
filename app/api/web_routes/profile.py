@@ -848,7 +848,7 @@ def _build_welcome_card_context(
         "theme":                 theme,
         "card_theme_id":         theme.id,
         "card_theme":            theme.id,
-        "card_variant_id":       "fifa",
+        "card_variant_id":       "fclassic",
         "platform_class":        platform_preset.css_class,
         "platform_id":           platform_preset.id,
         "export_mode":           export,

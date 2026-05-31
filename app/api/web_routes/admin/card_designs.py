@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-_PROTECTED_ID = "fifa"
+_PROTECTED_ID = "fclassic"
 
 
 # ── AD-01  Design list ────────────────────────────────────────────────────────

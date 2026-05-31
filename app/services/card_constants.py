@@ -70,19 +70,30 @@ EXPORT_FORMAT_BUCKETS: dict[str, str] = {
 # The frozenset name and structure are preserved for backward compatibility.
 def _build_animated_capable() -> frozenset[tuple[str, str]]:
     from .card_design_service import DESIGNS  # noqa: PLC0415
-    return frozenset(
-        (design_id, platform_id)
-        for design_id, design in DESIGNS.items()
-        for platform_id in design.animated_platforms
-    )
+    # Deduplicate by canonical design.id to avoid duplicate entries from
+    # deprecated alias keys (e.g. DESIGNS["fifa"] → same object as DESIGNS["fclassic"]).
+    seen_ids: set[str] = set()
+    result: set[tuple[str, str]] = set()
+    for design in DESIGNS.values():
+        if design.id not in seen_ids:
+            seen_ids.add(design.id)
+            for platform_id in design.animated_platforms:
+                result.add((design.id, platform_id))
+    return frozenset(result)
 
 
 ANIMATED_EXPORT_CAPABLE: frozenset[tuple[str, str]] = _build_animated_capable()
 
 
 def is_animated_capable(variant_id: str, platform_id: str) -> bool:
-    """Return True if (variant_id, platform_id) supports animated video export."""
-    return (variant_id, platform_id) in ANIMATED_EXPORT_CAPABLE
+    """Return True if (variant_id, platform_id) supports animated video export.
+
+    Resolves deprecated design ID aliases (e.g. 'fifa' → 'fclassic') before
+    the lookup so both the legacy and canonical IDs return the correct result.
+    """
+    from .card_design_service import resolve_design_id  # noqa: PLC0415
+    canonical = resolve_design_id(variant_id)
+    return (canonical, platform_id) in ANIMATED_EXPORT_CAPABLE
 
 
 # ── Gallery / editor platform ID lists ───────────────────────────────────────

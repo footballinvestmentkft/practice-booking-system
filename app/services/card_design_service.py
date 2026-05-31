@@ -112,8 +112,8 @@ _FIFA_COMPONENT_CONFIG: dict = {
 }
 
 DESIGNS: dict[str, CardDesignDefinition] = {
-    "fifa": CardDesignDefinition(
-        id="fifa",
+    "fclassic": CardDesignDefinition(
+        id="fclassic",
         label="FClassic Player",
         description="The original LFA player card with full skill breakdown and event history.",
         is_premium=True,
@@ -195,8 +195,12 @@ DESIGNS: dict[str, CardDesignDefinition] = {
 
 # Display order for the dashboard picker (free first, then premium)
 DESIGN_ORDER: list[str] = [
-    "fifa", "compact", "compact_bg", "showcase", "showcase_bg", "atlas", "pulse",
+    "fclassic", "compact", "compact_bg", "showcase", "showcase_bg", "atlas", "pulse",
 ]
+
+# Deprecated alias — both keys point to the same CardDesignDefinition(id="fclassic").
+# Kept until PR-FC-1F removes the alias entirely.
+DESIGNS["fifa"] = DESIGNS["fclassic"]
 
 # ── FClassic family — PR-FC-1A ────────────────────────────────────────────────
 # "fclassic" is the canonical family / design identifier going forward.
@@ -344,15 +348,21 @@ def get_design(design_id: str, db=None) -> CardDesignDefinition:
     return (
         cache.get(canonical)
         or cache.get(design_id)
-        or cache.get("fifa")
-        or DESIGNS["fifa"]
+        or cache.get("fclassic")
+        or DESIGNS["fclassic"]
     )
 
 
 def get_all_designs(db=None) -> list[CardDesignDefinition]:
-    """Return all designs sorted by (sort_order, id)."""
+    """Return all designs sorted by (sort_order, id), deduplicated by canonical id.
+
+    The DESIGNS fallback dict may contain deprecated alias keys pointing to the
+    same CardDesignDefinition object (e.g. "fifa" → same object as "fclassic").
+    Deduplication ensures each design appears exactly once in the returned list.
+    """
     cache = _maybe_reload(db)
-    return sorted(cache.values(), key=lambda d: (d.sort_order, d.id))
+    unique = {d.id: d for d in cache.values()}   # dedup by canonical id
+    return sorted(unique.values(), key=lambda d: (d.sort_order, d.id))
 
 
 def is_design_available(design_id: str, db=None) -> bool:
