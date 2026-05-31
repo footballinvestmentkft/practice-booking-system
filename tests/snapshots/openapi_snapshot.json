@@ -61813,7 +61813,7 @@
     },
     "/dashboard/wc-card-theme": {
       "post": {
-        "description": "CS-COLOR-1: Set the active colour theme for the Welcome Card Studio.\n\nWrites to CardDraft(card_type_id='welcome_card').draft_theme.\nOnly free themes are valid in CS-COLOR-1 (no premium unlock scope).\nRequires active LFA Football Player license + onboarding completed.",
+        "description": "CS-COLOR-1: Set the active colour theme for the Welcome Card Studio.\n\nWrites to CardDraft(card_type_id='welcome_card').draft_theme.\nOnly free themes are valid in CS-COLOR-1AA (no premium unlock scope).\nRequires active LFA Football Player license + onboarding completed.",
         "operationId": "student_set_wc_card_theme_dashboard_wc_card_theme_post",
         "requestBody": {
           "content": {

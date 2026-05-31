@@ -87,11 +87,11 @@ def _resolve_welcome_context(db: Session, user, format_id: str | None):
     fmt = _WC_FORMAT_BY_ID[format_id]
     ratio_class = _WC_RATIO.get(fmt.preview_platform, "mfg-ratio-11")
 
-    # CS-COLOR-1: read active theme from Welcome Card draft, default to "default"
+    # CS-COLOR-1A: read active theme from Welcome Card draft, default to "default"
     welcome_draft = _CardDraftService.get_draft(db, user.id, "welcome_card")
     active_theme  = welcome_draft.draft_theme or "default"
 
-    # CS-COLOR-1: free themes only (no shop/unlock scope in COLOR-1)
+    # CS-COLOR-1A: free themes only (no shop/unlock scope in COLOR-1)
     card_themes = [t for t in _get_all_themes(db) if not t.is_premium]
 
     preview_url = f"/profile/onboarding-card?platform={fmt.preview_platform}&theme={active_theme}"

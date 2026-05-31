@@ -1,18 +1,22 @@
 """
-CS-COLOR-1 — Welcome Studio Color/Theme selector tests.
+CS-COLOR-1A — Welcome Studio Free/Basic Theme Selector MVP tests.
+
+MVP scope: free/basic theme selection only (default/midnight/arctic).
+No premium purchase, no family/format ownership, no shop unlock.
+Full ownership system: COLOR-OWNERSHIP series (future).
 
 CSCOL-01  GET /profile/onboarding-card?platform=instagram_square&theme=midnight → 200
 CSCOL-02  context card_theme_id == active theme
 CSCOL-03  GET /profile/onboarding-card?platform=X no theme → fallback "default"
 CSCOL-04  GET /card-studio/welcome?format=X → context has card_themes + active_theme
-CSCOL-05  card_themes list non-empty, free themes only
+CSCOL-05  card_themes list non-empty, FREE themes only (no premium in CS-COLOR-1A)
 CSCOL-06  active_theme == CardDraft(welcome_card).draft_theme or "default"
 CSCOL-07  POST /dashboard/wc-card-theme {"theme":"midnight"} → 200 {"ok":true}
 CSCOL-08  POST /dashboard/wc-card-theme unknown theme → 400
 CSCOL-09  Welcome CardDraft.draft_theme updated after POST
 CSCOL-10  preview_url contains theme={active_theme}
 CSCOL-11  export_url contains theme={active_theme}
-CSCOL-12  card_studio_shell.html contains cs-color-chip UI
+CSCOL-12  card_studio_shell.html contains cs-color-chip swatch UI
 CSCOL-13  setWelcomeTheme JS present, POST /dashboard/wc-card-theme with X-CSRF-Token
 CSCOL-14  format change URL preserves theme via CardDraft (server-side persistence)
 CSCOL-15  route count == 845
@@ -308,10 +312,26 @@ class TestCSCOL07to09WcCardThemeEndpoint:
 class TestCSCOL12to13TemplateSource:
 
     def test_cscol_12_shell_has_cs_color_chip(self):
-        """CSCOL-12: card_studio_shell.html contains cs-color-chip class."""
+        """CSCOL-12: card_studio_shell.html contains cs-color-chip swatch UI."""
         src = (TEMPLATES_DIR / "card_studio_shell.html").read_text()
         assert "cs-color-chip" in src, "shell must contain cs-color-chip CSS class"
         assert "cs_color_panel.html" in src, "shell must include cs_color_panel.html"
+
+    def test_cscol_12d_color_panel_uses_swatch_circle(self):
+        """CSCOL-12d (CS-COLOR-1A): color chip uses swatch circle (.cs-color-swatch), not text list."""
+        src = (TEMPLATES_DIR / "includes/cs_color_panel.html").read_text()
+        assert "cs-color-swatch" in src, "panel must use .cs-color-swatch circle element"
+        # Label text should NOT be inside the chip button (it's secondary via active-name)
+        assert "cs-color-label" not in src, \
+            "CS-COLOR-1A: label must not be inside chip — circle is primary visual"
+
+    def test_cscol_12e_no_premium_themes_in_context(self):
+        """CSCOL-12e (CS-COLOR-1A): card_themes context never contains premium themes."""
+        ctx = _invoke_welcome_studio(_FIRST_ID, owned_ids=[_FIRST_ID])
+        themes = ctx.get("card_themes", [])
+        premium = [t for t in themes if t.is_premium]
+        assert len(premium) == 0, \
+            f"CS-COLOR-1A must show free themes only; found premium: {[t.id for t in premium]}"
 
     def test_cscol_12b_color_panel_include_exists(self):
         """CSCOL-12b: cs_color_panel.html include file exists."""

@@ -215,27 +215,32 @@
 .cs-dims-text { font-size: 0.78rem; color: #475569; }
 .cs-owned-badge { font-size: 0.73rem; font-weight: 700; color: #86efac; background: rgba(134,239,172,.12); border: 1px solid rgba(134,239,172,.25); border-radius: 20px; padding: 0.18rem 0.6rem; }
 
-/* ── CS-COLOR-1: Color/Theme picker ── */
+/* ── CS-COLOR-1A: Welcome Studio Free/Basic Theme Selector ── */
+/* Swatch circles are the primary visual — label is secondary (active-name) */
 .cs-color-panel { margin-bottom: 1.25rem; }
-.cs-color-chips  { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
+.cs-color-chips  { display: flex; gap: 0.55rem; flex-wrap: wrap; margin-bottom: 0.35rem; }
 .cs-color-chip {
-  display: flex; align-items: center; gap: 0.35rem;
-  padding: 0.28rem 0.7rem 0.28rem 0.4rem;
-  background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.1);
-  border-radius: 20px; cursor: pointer; font-size: 0.72rem; font-weight: 600;
-  color: rgba(255,255,255,0.65); transition: border-color 0.15s, background 0.15s;
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px;
+  background: transparent; border: 2px solid transparent;
+  border-radius: 50%; cursor: pointer;
+  transition: border-color 0.15s, transform 0.12s;
+  padding: 0;
 }
-.cs-color-chip:hover { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.09); }
+.cs-color-chip:hover { transform: scale(1.12); }
 .cs-color-chip--active {
   border-color: var(--chip-dot, #FFD200);
-  background: color-mix(in srgb, var(--chip-dot, #FFD200) 14%, transparent);
-  color: rgba(255,255,255,0.9);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip-dot, #FFD200) 28%, transparent);
 }
-.cs-color-dot {
-  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
-  border: 1px solid rgba(255,255,255,0.18);
+.cs-color-swatch {
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+  border: 1.5px solid rgba(255,255,255,0.22);
+  display: block;
 }
-.cs-color-label { line-height: 1; }
+.cs-color-active-name {
+  font-size: 0.7rem; font-weight: 600; color: rgba(255,255,255,0.55);
+  margin: 0.1rem 0 0; min-height: 1rem;
+}
 .cs-color-error { font-size: 0.72rem; color: #f87171; margin: 0.25rem 0 0; display: none; }
 
 </style>
@@ -552,7 +557,7 @@
 
 })();
 
-// ── CS-COLOR-1: Welcome Studio Theme Picker ───────────────────────────────
+// ── CS-COLOR-1A: Welcome Studio Free/Basic Theme Selector MVP ───────────────
 (function () {
   'use strict';
 
@@ -579,11 +584,23 @@
     link.setAttribute('href', href);
   }
 
+  // Theme labels map built from server-rendered chips
+  var _themeLabels = {};
+  document.querySelectorAll('.cs-color-chip[data-theme]').forEach(function (btn) {
+    _themeLabels[btn.getAttribute('data-theme')] = btn.getAttribute('aria-label') || btn.getAttribute('title') || '';
+  });
+
   function _wcsUpdateChips(themeId) {
     document.querySelectorAll('.cs-color-chip').forEach(function (btn) {
       var t = btn.getAttribute('data-theme');
       btn.classList.toggle('cs-color-chip--active', t === themeId);
     });
+    // Update active name label (CS-COLOR-1A: secondary text label)
+    var nameEl = document.getElementById('cs-color-active-name');
+    if (nameEl && _themeLabels[themeId]) {
+      var label = _themeLabels[themeId].replace(' (active)', '');
+      nameEl.textContent = label;
+    }
   }
 
   window.setWelcomeTheme = function (themeId) {

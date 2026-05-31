@@ -1378,7 +1378,7 @@ async def student_set_wc_card_theme(
     """CS-COLOR-1: Set the active colour theme for the Welcome Card Studio.
 
     Writes to CardDraft(card_type_id='welcome_card').draft_theme.
-    Only free themes are valid in CS-COLOR-1 (no premium unlock scope).
+    Only free themes are valid in CS-COLOR-1AA (no premium unlock scope).
     Requires active LFA Football Player license + onboarding completed.
     """
     from ...services.card_theme_service import get_all_themes as _get_wc_themes
