@@ -91,78 +91,7 @@
                      role="tabpanel" aria-labelledby="tab-media">
 
                     {% include "includes/player_editor/photo_panel.html" %}
-                    {# Highlight Video #}
-                    <div class="ce-section">
-                        <div class="ce-section-title">Highlight Video</div>
-
-                        {# State 1 — no draft video #}
-                        {% if not draft_highlight_video %}
-                        <div id="hv-no-video">
-                            <div class="hv-url-row">
-                                <input id="hv-url-input" class="hv-url-input" type="url"
-                                       placeholder="Paste YouTube or TikTok video link"
-                                       oninput="document.getElementById('hv-error').textContent=''">
-                                <button class="btn-hv-save" onclick="saveHighlightVideo()">Save Draft</button>
-                            </div>
-                            <p id="hv-error" class="hv-error"></p>
-                        </div>
-
-                        {# State 2 / 3 / 4 / 5 — draft video exists #}
-                        {% else %}
-                        <div id="hv-has-video">
-                            {% if draft_highlight_video.provider == "youtube" %}
-                            <div class="hv-preview-wrap">
-                                <iframe id="hv-iframe"
-                                        src="{{ draft_highlight_video.embed_url }}"
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                        allowfullscreen
-                                        loading="lazy"></iframe>
-                            </div>
-                            {% else %}
-                            {# TikTok — link-only preview (no iframe, no script) #}
-                            <div class="hv-tiktok-cta">
-                                <span class="hv-tiktok-badge">TikTok</span>
-                                <a href="{{ draft_highlight_video.source_url }}"
-                                   target="_blank" rel="noopener noreferrer"
-                                   class="hv-tiktok-link">Watch on TikTok ↗</a>
-                                <div class="hv-tiktok-id">ID: {{ draft_highlight_video.video_id }}</div>
-                            </div>
-                            {% endif %}
-
-                            {% if not published_highlight_video %}
-                                {# State 2: draft saved, never published #}
-                                <span class="hv-badge hv-badge-draft">Draft saved — not yet published</span>
-                            {% elif highlight_video_unpublished %}
-                                {# State 4: draft differs from published #}
-                                <span class="hv-badge hv-badge-pending">Unpublished change</span>
-                            {% else %}
-                                {# State 3: published and in sync #}
-                                <span class="hv-badge hv-badge-published">Published</span>
-                            {% endif %}
-
-                            <div class="hv-url-row" style="margin-top:10px;">
-                                <input id="hv-url-input" class="hv-url-input" type="url"
-                                       value="{{ draft_highlight_video.source_url }}"
-                                       placeholder="Paste YouTube or TikTok video link"
-                                       oninput="document.getElementById('hv-error').textContent=''">
-                                <button class="btn-hv-save" onclick="saveHighlightVideo()">Update</button>
-                            </div>
-                            <p id="hv-error" class="hv-error"></p>
-                            <button class="btn-hv-remove" onclick="removeHighlightVideo()">Remove</button>
-                        </div>
-                        {% endif %}
-
-                        {# State 5: removed from draft, but published video still live #}
-                        {% if not draft_highlight_video and published_highlight_video %}
-                        <div id="hv-will-remove-notice" style="margin-top:8px;">
-                            <span class="hv-badge hv-badge-will-remove">Will be removed on next publish</span>
-                        </div>
-                        {% endif %}
-
-                        {# JS state holders for dynamic UI updates #}
-                        <div id="hv-dynamic-section" style="display:none;"></div>
-                    </div>
-
+                    {% include "includes/player_editor/highlight_video_panel.html" %}
                 </div>{# /panel-media #}
 
             </div>{# /ce-tab-panels #}

@@ -87,7 +87,15 @@ _TEST_UID = 42
 _TMPL_DIR = Path(__file__).parent.parent.parent / "app" / "templates"
 _PLAYER_HTML = (_TMPL_DIR / "public" / "player_profile.html").read_text(encoding="utf-8")
 _EDITOR_HTML = (_TMPL_DIR / "dashboard" / "lfa_public_profile_editor.html").read_text(encoding="utf-8")
-_CARD_EDITOR_HTML = (_TMPL_DIR / "dashboard_card_editor.html").read_text(encoding="utf-8")
+_CARD_EDITOR_HTML = "\n".join([
+    (_TMPL_DIR / "dashboard_card_editor.html").read_text(encoding="utf-8"),
+    (_TMPL_DIR / "includes/player_editor/styles.html").read_text(encoding="utf-8"),           # REF-P1
+    (_TMPL_DIR / "includes/player_editor/preview_panel.html").read_text(encoding="utf-8"),    # REF-P3
+    (_TMPL_DIR / "includes/player_editor/design_panel.html").read_text(encoding="utf-8"),     # REF-P4
+    (_TMPL_DIR / "includes/player_editor/platform_panel.html").read_text(encoding="utf-8"),   # REF-P4
+    (_TMPL_DIR / "includes/player_editor/photo_panel.html").read_text(encoding="utf-8"),      # REF-P5a
+    (_TMPL_DIR / "includes/player_editor/highlight_video_panel.html").read_text(encoding="utf-8"),  # REF-P5b
+])
 
 
 # ── Draft builder helper ───────────────────────────────────────────────────────
