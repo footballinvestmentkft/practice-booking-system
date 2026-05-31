@@ -31,7 +31,7 @@ _TEMPLATES_ROOT = (
     Path(__file__).resolve().parent.parent.parent
     / "app" / "templates"
 )
-_OG_TMPL = _TEMPLATES_ROOT / "public" / "export" / "og" / "fifa.html"
+_OG_TMPL = _TEMPLATES_ROOT / "public" / "export" / "og" / "fclassic.html"
 
 
 # ── Mock helpers ──────────────────────────────────────────────────────────────
@@ -173,7 +173,7 @@ class TestOGv1Static:
 
     def test_og_01_extends_export_base_directly(self):
         """og/fifa.html must extend export_base.html (Level C standalone)."""
-        assert _OG_TMPL.exists(), "og/fifa.html missing"
+        assert _OG_TMPL.exists(), "og/fclassic.html missing"
         src = _OG_TMPL.read_text(encoding="utf-8")
         assert 'extends "public/export/shared/export_base.html"' in src, (
             "OG-v1 must extend export_base.html directly"

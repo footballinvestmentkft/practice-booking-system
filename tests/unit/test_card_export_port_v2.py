@@ -39,7 +39,7 @@ _TEMPLATES_ROOT = (
     Path(__file__).resolve().parent.parent.parent
     / "app" / "templates"
 )
-_PORTRAIT_TMPL = _TEMPLATES_ROOT / "public" / "export" / "portrait" / "fifa.html"
+_PORTRAIT_TMPL = _TEMPLATES_ROOT / "public" / "export" / "portrait" / "fclassic.html"
 
 
 # ── Mock helpers ──────────────────────────────────────────────────────────────
@@ -182,7 +182,7 @@ class TestPortV2Static:
 
     def test_pv_01_extends_export_base_directly(self):
         """portrait/fifa.html must extend export_base.html (Level C standalone, not column_archetype)."""
-        assert _PORTRAIT_TMPL.exists(), "portrait/fifa.html missing"
+        assert _PORTRAIT_TMPL.exists(), "portrait/fclassic.html missing"
         src = _PORTRAIT_TMPL.read_text(encoding="utf-8")
         assert 'extends "public/export/shared/export_base.html"' in src, (
             "PORT-v2 must extend export_base.html directly, not column_archetype"

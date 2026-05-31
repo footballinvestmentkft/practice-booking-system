@@ -223,27 +223,27 @@ class TestCS4bMigrationSmoke:
 
     def test_cs4b_03_portrait_renders(self, client):
         """portrait/fifa.html (→ column_archetype.html) renders correctly."""
-        self._assert_renders(client, "instagram_portrait", "portrait/fifa.html")
+        self._assert_renders(client, "instagram_portrait", "portrait/fclassic.html")
 
     def test_cs4b_04_story_renders(self, client):
         """story/fifa.html (→ column_archetype.html) renders correctly."""
-        self._assert_renders(client, "instagram_story", "story/fifa.html")
+        self._assert_renders(client, "instagram_story", "story/fclassic.html")
 
     def test_cs4b_05_tiktok_renders(self, client):
         """tiktok/fifa.html (→ export_base.html) renders correctly."""
-        self._assert_renders(client, "tiktok", "tiktok/fifa.html")
+        self._assert_renders(client, "tiktok", "tiktok/fclassic.html")
 
     def test_cs4b_06_landscape_renders(self, client):
         """landscape/fifa.html (→ export_base.html) renders correctly."""
-        self._assert_renders(client, "facebook_landscape", "landscape/fifa.html")
+        self._assert_renders(client, "facebook_landscape", "landscape/fclassic.html")
 
     def test_cs4b_07_banner_renders(self, client):
         """banner/fifa.html (→ export_base.html) renders correctly."""
-        self._assert_renders(client, "banner_custom", "banner/fifa.html")
+        self._assert_renders(client, "banner_custom", "banner/fclassic.html")
 
     def test_cs4b_08_square_renders(self, client):
         """square/fifa.html (→ export_base.html) renders correctly."""
-        self._assert_renders(client, "instagram_square", "square/fifa.html")
+        self._assert_renders(client, "instagram_square", "square/fclassic.html")
 
 
 # ── CS4B-09: Legacy base reference check ──────────────────────────────────────

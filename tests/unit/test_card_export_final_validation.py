@@ -328,8 +328,8 @@ class TestFVOGRouting:
 
     def test_fv_og_level_c_template_exists(self):
         """og/fifa.html must exist as a Level C standalone file."""
-        tmpl = _TEMPLATES_ROOT / "public" / "export" / "og" / "fifa.html"
-        assert tmpl.exists(), "og/fifa.html missing — Level C template not created"
+        tmpl = _TEMPLATES_ROOT / "public" / "export" / "og" / "fclassic.html"
+        assert tmpl.exists(), "og/fclassic.html missing — Level C template not created"
         src = tmpl.read_text()
         assert 'extends "public/export/shared/export_base.html"' in src
         assert "ex-og-photo" in src
@@ -343,7 +343,7 @@ class TestFVOGRouting:
         assert "ex-og-photo" in html, "OG: ex-og-photo missing — routed to wrong template"
         assert "ex-og-info"  in html, "OG: ex-og-info missing — routed to wrong template"
         assert "ex-cols-row" not in html, (
-            "OG: ex-cols-row present — rendering landscape/fifa.html instead of og/fifa.html"
+            "OG: ex-cols-row present — rendering landscape/fclassic.html instead of og/fclassic.html"
         )
 
 
