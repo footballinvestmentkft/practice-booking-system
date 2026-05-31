@@ -159,8 +159,10 @@ def _html_from_template() -> str:
     """Effective editor source: main template + Jinja2 includes expanded."""
     parts = [
         (TEMPLATES_DIR / "dashboard_card_editor.html").read_text(encoding="utf-8"),
-        (TEMPLATES_DIR / "includes/player_editor/styles.html").read_text(encoding="utf-8"),   # REF-P1
-        (TEMPLATES_DIR / "includes/player_editor/preview_panel.html").read_text(encoding="utf-8"),  # REF-P3
+        (TEMPLATES_DIR / "includes/player_editor/styles.html").read_text(encoding="utf-8"),          # REF-P1
+        (TEMPLATES_DIR / "includes/player_editor/preview_panel.html").read_text(encoding="utf-8"),   # REF-P3
+        (TEMPLATES_DIR / "includes/player_editor/design_panel.html").read_text(encoding="utf-8"),    # REF-P4
+        (TEMPLATES_DIR / "includes/player_editor/platform_panel.html").read_text(encoding="utf-8"), # REF-P4
     ]
     return "\n".join(parts)
 

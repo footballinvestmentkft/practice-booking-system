@@ -1,0 +1,29 @@
+
+                    <div class="ce-section">
+                        <div class="ce-section-title">Export Format</div>
+                        <div class="ce-platform-grid" id="platform-picker">
+                            {# Default tile — always first #}
+                            <button class="ce-platform-tile {% if not active_card_platform or active_card_platform == 'default' %}active{% endif %}"
+                                    data-platform="default"
+                                    onclick="setPlatform('default')"
+                                    title="Native card proportions">
+                                <div class="ce-platform-icon ce-platform-icon--portrait"></div>
+                                <div class="ce-platform-tile-name">Default</div>
+                                <div class="ce-platform-tile-dims">1080 × 1350</div>
+                            </button>
+                            {# Per-platform tiles #}
+                            {% for p in platforms %}
+                            <button class="ce-platform-tile {% if active_card_platform == p.id %}active{% endif %}"
+                                    data-platform="{{ p.id }}"
+                                    onclick="setPlatform('{{ p.id }}')"
+                                    title="{{ p.title }}">
+                                <div class="ce-platform-icon ce-platform-icon--{{ _orient_map.get(p.id, 'portrait') }}"></div>
+                                <div class="ce-platform-tile-name">{{ p.label }}</div>
+                                <div class="ce-platform-tile-dims">
+                                    {% if p.id in canvas_sizes %}{{ canvas_sizes[p.id].w }} × {{ canvas_sizes[p.id].h }}{% endif %}
+                                </div>
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+
