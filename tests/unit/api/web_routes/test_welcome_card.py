@@ -2,16 +2,16 @@
 Unit tests for Welcome Card redesign (Phase C+D).
 
 Routes:
-  GET /profile/onboarding-card          → gallery hub or FIFA card
+  GET /profile/onboarding-card          → gallery hub or FClassic card
   GET /profile/onboarding-card/export   → PNG export
 
 Test groups:
   TestWelcomeCardGuards          — no-license + incomplete-onboarding redirects (both routes)
   TestWelcomeCardGalleryRoute    — gallery hub (no ?platform): context + rendered HTML
-  TestWelcomeCardFifaRoute       — FIFA card render (?platform=X): adapter, logo, sponsor
+  TestWelcomeCardFifaRoute       — FClassic card render (?platform=X): adapter, logo, sponsor
   TestWelcomeCardExport          — PNG export route: auth, platform validation, rate limit, bytes
   TestWelcomeCardGalleryTemplate — static source assertions on welcome_card.html (gallery hub)
-  TestWelcomeCardFifaLogoAudit   — FIFA template logo changes (player_card_fifa + export/square)
+  TestWelcomeCardFclassicLogoAudit   — FClassic template logo changes (player_card_fclassic + export/square)
   TestWelcomeCardStep7           — Step 7 onboarding template: language, photo upload, links
 """
 import asyncio
@@ -191,7 +191,7 @@ class TestWelcomeCardGalleryRoute:
         assert ctx.get("display_name") == "Test Player"
 
     def test_gallery_context_no_player_object(self):
-        """Gallery hub does not build the FIFA player namespace — only FIFA route does."""
+        """Gallery hub does not build the FClassic player namespace — only FClassic route does."""
         lic = _license()
         db  = _mock_db(license_return=lic)
         with patch(f"{_BASE}.templates") as mock_tmpl:
@@ -257,10 +257,10 @@ class TestWelcomeCardGalleryRoute:
         assert ctx.get("spec_dashboard_url") == "/dashboard/lfa-football-player"
 
 
-# ── 3. FIFA card route (?platform=X) ──────────────────────────────────────────
+# ── 3. FClassic card route (?platform=X) ──────────────────────────────────────────
 
 class TestWelcomeCardFifaRoute:
-    """GET /profile/onboarding-card?platform=X renders the FIFA Classic template."""
+    """GET /profile/onboarding-card?platform=X renders the FClassic Player template."""
 
     def _call_with_platform(self, platform="instagram_square", export=False, lic=None):
         if lic is None:
@@ -274,7 +274,7 @@ class TestWelcomeCardFifaRoute:
         return mock_tmpl.TemplateResponse.call_args.args  # (tmpl, ctx)
 
     def test_with_platform_uses_welcome_export_template(self):
-        """Phase 4E: WC platform renders now route to welcome/ templates, not fifa/."""
+        """Phase 4E: WC platform renders now route to welcome/ templates, not fclassic/."""
         tmpl, _ = self._call_with_platform("instagram_square")
         assert "welcome" in tmpl
 
@@ -284,7 +284,7 @@ class TestWelcomeCardFifaRoute:
 
     def test_player_skills_dict_current_level_equals_self_assessment(self):
         """
-        Self-assessment adapter: FIFA template reads current_level.
+        Self-assessment adapter: FClassic template reads current_level.
         For Welcome Card, current_level must equal the self_assessment value.
         This is a template adapter — it must never be written to football_skills JSONB.
         """
@@ -700,19 +700,19 @@ class TestWelcomeCardGalleryTemplate:
         assert "instagram_square" in html
 
 
-# ── 7. FIFA template logo audit ────────────────────────────────────────────────
+# ── 7. FClassic template logo audit ────────────────────────────────────────────────
 
-class TestWelcomeCardFifaLogoAudit:
+class TestWelcomeCardFclassicLogoAudit:
     """Static source checks that Phase 5 logo changes are in place."""
 
-    def test_player_card_fifa_has_page_logo_css(self, fifa_src):
+    def test_player_card_fclassic_has_page_logo_css(self, fifa_src):
         assert ".page-logo" in fifa_src
 
-    def test_player_card_fifa_has_app_logo_url_conditional(self, fifa_src):
+    def test_player_card_fclassic_has_app_logo_url_conditional(self, fifa_src):
         assert "app_logo_url" in fifa_src
         assert "{% if app_logo_url %}" in fifa_src
 
-    def test_player_card_fifa_text_brand_is_else_branch(self, fifa_src):
+    def test_player_card_fclassic_text_brand_is_else_branch(self, fifa_src):
         """Text brand must only render when app_logo_url is falsy (inside {% else %} block)."""
         # The brand div must be preceded by {% else %} before {% endif %}
         # Locate the page-brand div in the HTML body (not the CSS class definition)
@@ -1456,7 +1456,7 @@ class TestWelcomeCardNativeExportMode:
     Phase 4C: _build_welcome_card_context() must explicitly set native_export_mode=False.
 
     Welcome Card never uses the native screenshot capture path — the key must be
-    present and False so FIFA base templates that reference it get a defined value.
+    present and False so FClassic base templates that reference it get a defined value.
     """
 
     def _ctx(self, export: bool) -> dict:
@@ -1615,7 +1615,7 @@ class TestWelcomeCardPhase4E:
                "public/export/welcome/banner.html"
 
     def test_rt08_no_platform_returns_preview_fallback(self):
-        """WC-4E-RT-08: None platform → FIFA preview fallback (gallery hub)."""
+        """WC-4E-RT-08: None platform → FClassic preview fallback (gallery hub)."""
         from app.api.web_routes.profile import _select_welcome_card_template
         assert _select_welcome_card_template(None, False) == \
                "public/player_card_fclassic.html"

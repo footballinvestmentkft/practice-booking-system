@@ -1,7 +1,7 @@
 """Export guard tests.
 
 EG-01  Player Card premium export → 403 without ownership
-EG-02  Player Card / fifa export → allowed with ownership row (CDO required)
+EG-02  Player Card / fclassic export → allowed with ownership row (CDO required)
 EG-03  Player Card premium export → allowed after ownership
 EG-04  Welcome Card export, no ownership → 403 (always enforced, no feature flag)
 EG-05  Welcome Card export, no ownership → 403
@@ -115,11 +115,11 @@ class TestPlayerCardExportGuard:
         assert exc_info.value.status_code == 403
 
     def test_eg02_fifa_allowed_with_ownership(self):
-        """EG-02: player_card/fifa with CDO ownership row → no 403."""
+        """EG-02: player_card/fclassic with CDO ownership row → no 403."""
         db = _make_db()
         user = _make_user()
 
-        result = self._call_export(db, user, license_variant="fifa", is_accessible=True)
+        result = self._call_export(db, user, license_variant="fclassic", is_accessible=True)
         assert hasattr(result, "body") or result is not None  # got a response, not 403
 
     def test_eg03_premium_allowed_with_ownership(self):

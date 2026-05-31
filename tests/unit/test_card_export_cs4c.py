@@ -13,10 +13,10 @@ Coverage:
   CS4C-08  Design without component_config falls back to file-based Level C routing
 
 Mock strategy (smoke + zero-diff tests):
-  Identical to test_card_export_cs4b.py — MagicMock user + license, card_variant="fifa".
+  Identical to test_card_export_cs4b.py — MagicMock user + license, card_variant="fclassic".
   get_db overridden; no live DB required.
   CS4C-06/07 compare normalised rendered HTML from two TestClient requests:
-    (a) driver path  (fifa, component_config populated — current default)
+    (a) driver path  (fclassic, component_config populated — current default)
     (b) Level C path (same design but component_config forcibly cleared to {} so the
         router falls back to portrait/fclassic.html / story/fclassic.html)
   The normalisation strips whitespace-only differences so the comparison is stable.
@@ -68,7 +68,7 @@ def _make_user(user_id: int = 7) -> MagicMock:
     return u
 
 
-def _make_license(card_variant: str = "fifa") -> MagicMock:
+def _make_license(card_variant: str = "fclassic") -> MagicMock:
     lic = MagicMock()
     lic.card_variant = card_variant
     lic.card_theme = "default"
@@ -109,7 +109,7 @@ def _mock_db(user=None, license_=None):
         if args and args[0] is _CardDraft:
             _draft = MagicMock()
             _draft.published_theme    = (license_.published_card_theme    if license_ else None) or "default"
-            _draft.published_variant  = (license_.published_card_variant  if license_ else None) or "fifa"
+            _draft.published_variant  = (license_.published_card_variant  if license_ else None) or "fclassic"
             _draft.published_platform = (license_.published_card_platform if license_ else None)
             _draft.draft_theme    = _draft.published_theme
             _draft.draft_variant  = _draft.published_variant
@@ -135,7 +135,7 @@ def _render(client, platform: str, user_id: int = 7) -> str:
     from app.main import app
     from app.dependencies import get_db
 
-    db = _mock_db(user=_make_user(user_id), license_=_make_license("fifa"))
+    db = _mock_db(user=_make_user(user_id), license_=_make_license("fclassic"))
     app.dependency_overrides[get_db] = lambda: db
     try:
         r = client.get(f"/players/{user_id}/card?platform={platform}&export=1")
@@ -158,7 +158,7 @@ def _render_with_empty_component_config(client, platform: str, user_id: int = 7)
         from dataclasses import replace
         return replace(defn, component_config={})
 
-    db = _mock_db(user=_make_user(user_id), license_=_make_license("fifa"))
+    db = _mock_db(user=_make_user(user_id), license_=_make_license("fclassic"))
     app.dependency_overrides[get_db] = lambda: db
     with patch.object(_cds, "get_design", side_effect=_patched_get_design):
         try:
@@ -197,8 +197,8 @@ class TestCS4cStructural:
         show_extended_profile=True, show_dominant_badge=True, show_height_weight=True.
         """
         from app.services.card_design_service import DESIGNS
-        cfg = DESIGNS["fifa"].component_config
-        assert "portrait" in cfg, "FIFA component_config missing 'portrait' key"
+        cfg = DESIGNS["fclassic"].component_config
+        assert "portrait" in cfg, "FClassic component_config missing 'portrait' key"
         p = cfg["portrait"]
         assert p["skill_slice"] is None, "CS-5: portrait skill_slice must be None (all 44 skills)"
         assert p["show_dominant_badge"] is True
@@ -215,8 +215,8 @@ class TestCS4cStructural:
         show_extended_profile=True.
         """
         from app.services.card_design_service import DESIGNS
-        cfg = DESIGNS["fifa"].component_config
-        assert "story" in cfg, "FIFA component_config missing 'story' key"
+        cfg = DESIGNS["fclassic"].component_config
+        assert "story" in cfg, "FClassic component_config missing 'story' key"
         s = cfg["story"]
         assert s["skill_slice"] is None, "CS-5: story skill_slice must be None (all 44 skills)"
         assert s["show_dominant_badge"] is True

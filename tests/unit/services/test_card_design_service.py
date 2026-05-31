@@ -4,17 +4,17 @@ Unit tests for card_design_service (CS-1).
 Coverage:
   CD-01  DESIGNS fallback dict contains exactly the 7 expected design IDs
   CD-02  get_design("fifa") returns FIFA Classic with all expected fields
-  CD-03  get_design("unknown_id") falls back to FIFA Classic
+  CD-03  get_design("unknown_id") falls back to FClassic Player
   CD-04  _load_cache returns CardDesignDefinition from DB row
   CD-05  _maybe_reload: DB row with is_active=False yields available=False
   CD-06  get_all_designs with mock DB returns designs sorted by sort_order
   CD-07  get_all_designs with no DB (fallback) returns DESIGNS in sort_order
   CD-08  _invalidate_cache clears the cache
-  CD-09  is_animated_capable: True for registered (fifa, instagram_square)
+  CD-09  is_animated_capable: True for registered (fclassic, instagram_square)
   CD-10  is_animated_capable: True for registered (pulse, instagram_square)
   CD-11  is_animated_capable: False for non-animated design (compact)
   CD-12  is_animated_capable: False for animated design on wrong platform
-  CD-13  get_supported_buckets: fifa returns all 6 buckets
+  CD-13  get_supported_buckets: fclassic returns all 6 buckets
   CD-14  get_supported_buckets: pulse returns square only
   CD-15  get_supported_buckets: compact returns empty tuple (browser-only)
   CD-16  DESIGNS fallback dict animated_platforms matches ANIMATED_EXPORT_CAPABLE frozenset
@@ -49,7 +49,7 @@ def reset_cache():
 
 
 def _make_row(
-    id="fifa",
+    id="fclassic",
     label="FClassic Player",
     description="Test description",
     is_premium=False,
@@ -86,15 +86,16 @@ def _make_db(*rows):
 # ── CD-01  DESIGNS fallback contains exactly the 7 expected IDs ───────────────
 
 def test_cd01_designs_has_7_expected_ids():
-    # PR-FC-1B: canonical key is "fclassic"; "fifa" is a deprecated alias.
-    # DESIGNS has 8 keys: 7 designs + 1 deprecated alias.
-    expected_canonical = {"fclassic", "compact", "compact_bg", "showcase", "showcase_bg", "atlas", "pulse"}
-    expected_all = expected_canonical | {"fifa"}  # "fifa" alias also present
-    assert set(DESIGNS.keys()) == expected_all, (
-        f"DESIGNS must contain 7 canonical designs + 'fifa' deprecated alias. "
-        f"Got: {set(DESIGNS.keys())}"
+    # PR-FC-1F: "fclassic" dict key removed; DESIGNS has exactly 7 canonical keys.
+    expected = {"fclassic", "compact", "compact_bg", "showcase", "showcase_bg", "atlas", "pulse"}
+    assert set(DESIGNS.keys()) == expected, (
+        f"DESIGNS must contain exactly 7 canonical designs. Got: {set(DESIGNS.keys())}"
     )
     assert "fclassic" in DESIGNS, "Canonical 'fclassic' key must be present"
+    assert "fifa" not in DESIGNS, (
+        "'fclassic' dict key must be removed in PR-FC-1F; "
+        "legacy input is handled by resolve_design_id() sanitizer"
+    )
 
 
 # ── CD-02  get_design("fifa") returns FIFA Classic with correct fields ─────────
@@ -113,10 +114,10 @@ def test_cd02_get_design_fifa_fields():
     assert "instagram_square" in d.animated_platforms
 
 
-# ── CD-03  get_design("unknown") falls back to fifa ───────────────────────────
+# ── CD-03  get_design("unknown") falls back to fclassic ───────────────────────────
 
 def test_cd03_get_design_unknown_falls_back_to_fclassic():
-    # PR-FC-1B: fallback is now "fclassic" (not "fifa")
+    # PR-FC-1B: fallback is now "fclassic" (not "fclassic")
     d = get_design("nonexistent_design_id")
     assert d.id == "fclassic"
 
@@ -174,9 +175,8 @@ def test_cd06_get_all_designs_sorted_by_sort_order():
 
 def test_cd07_get_all_designs_fallback_no_db():
     designs = get_all_designs(db=None)
-    # PR-FC-1B: DESIGNS has 8 keys (7 canonical + "fifa" alias); get_all_designs
-    # returns unique CardDesignDefinition objects (both "fclassic" and "fifa" alias
-    # point to the same object, so it appears once in the sorted list).
+    # PR-FC-1F: DESIGNS has exactly 7 canonical keys (no "fclassic" alias); get_all_designs
+    # returns all 7 designs.
     assert len(designs) == 7
     # FClassic Player (sort_order=0) is the first design; id is now "fclassic"
     assert designs[0].id == "fclassic"
@@ -197,7 +197,7 @@ def test_cd08_invalidate_cache_clears_state():
     assert svc._cache_loaded_at == 0.0
 
 
-# ── CD-09  is_animated_capable: True for (fifa, instagram_square) ─────────────
+# ── CD-09  is_animated_capable: True for (fclassic, instagram_square) ─────────────
 
 def test_cd09_animated_capable_fifa_square():
     assert is_animated_capable("fifa", "instagram_square") is True
@@ -223,13 +223,13 @@ def test_cd12_animated_capable_wrong_platform():
     assert is_animated_capable("fifa", "instagram_portrait") is False
 
 
-# ── CD-13  get_supported_buckets: fifa returns all 7 ─────────────────────────
+# ── CD-13  get_supported_buckets: fclassic returns all 7 ─────────────────────────
 
 def test_cd13_supported_buckets_fifa_all_seven():
-    buckets = get_supported_buckets("fifa")
+    buckets = get_supported_buckets("fclassic")
     expected = {"square", "portrait", "story", "tiktok", "landscape", "og", "banner"}
     assert set(buckets) == expected, (
-        f"FIFA fallback dict missing buckets: {expected - set(buckets)}. "
+        f"FClassic fallback dict missing buckets: {expected - set(buckets)}. "
         "If 'og' is missing, the DESIGNS dict and migration 2026_05_29_1100 are out of sync."
     )
 
@@ -253,9 +253,8 @@ def test_cd15_supported_buckets_compact_empty():
 def test_cd16_designs_animated_matches_animated_export_capable():
     from app.services.card_constants import ANIMATED_EXPORT_CAPABLE
 
-    # PR-FC-1B: Build expected set using canonical design.id (deduplicated).
-    # DESIGNS["fifa"] is a deprecated alias for DESIGNS["fclassic"] — same object.
-    # _build_animated_capable() deduplicates by design.id, so we replicate that here.
+    # PR-FC-1F: DESIGNS has 7 canonical keys, no "fclassic" alias.
+    # Build expected set directly from DESIGNS values.
     seen_ids: set[str] = set()
     expected: set = set()
     for design in DESIGNS.values():

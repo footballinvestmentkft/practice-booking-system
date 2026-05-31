@@ -4,7 +4,7 @@ Card Render Integration Gate
 Validates that public_player_card route:
   1. Reads card_theme from UserLicense and passes correct CSS vars to template
   2. Reads card_variant from UserLicense
-  3. Falls back to "default"/"fifa" for unknown/null values
+  3. Falls back to "default"/"fclassic" for unknown/null values
   4. ?preview= param overrides card_variant without persisting
   5. Template selection falls back to player_card.html if variant template missing
 
@@ -56,7 +56,7 @@ _RENDER_CONTEXT = {
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _make_license(card_theme="default", card_variant="fifa"):
+def _make_license(card_theme="default", card_variant="fclassic"):
     ul = MagicMock()
     ul.card_theme = card_theme
     ul.card_variant = card_variant
@@ -120,7 +120,7 @@ class TestVariantResolution:
         assert v.credit_cost == 300
 
     def test_unknown_variant_falls_back_to_fifa(self):
-        # PR-FC-1B: fallback is now canonical "fclassic"; "fifa" is deprecated alias
+        # PR-FC-1B: fallback is now canonical "fclassic"; "fclassic" is deprecated alias
         v = get_variant("nonexistent_variant_xyz")
         assert v.id == "fclassic"
 
@@ -131,8 +131,8 @@ class TestVariantResolution:
         assert v.id == "fclassic"
 
     def test_preview_param_overrides_db_variant(self):
-        ul = _make_license(card_variant="fifa")
-        card_variant_id = ul.card_variant or "fifa"
+        ul = _make_license(card_variant="fclassic")
+        card_variant_id = ul.card_variant or "fclassic"
         preview = "compact"
         if preview and preview in VARIANTS:
             card_variant_id = preview
@@ -140,7 +140,7 @@ class TestVariantResolution:
 
     def test_invalid_preview_param_does_not_override(self):
         ul = _make_license(card_variant="showcase")
-        card_variant_id = ul.card_variant or "fifa"
+        card_variant_id = ul.card_variant or "fclassic"
         preview = "nonexistent_xyz"
         if preview and preview in VARIANTS:
             card_variant_id = preview
@@ -148,7 +148,7 @@ class TestVariantResolution:
 
     def test_none_preview_param_does_not_override(self):
         ul = _make_license(card_variant="compact")
-        card_variant_id = ul.card_variant or "fifa"
+        card_variant_id = ul.card_variant or "fclassic"
         preview = None
         if preview and preview in VARIANTS:
             card_variant_id = preview
@@ -190,7 +190,7 @@ class TestTemplateSelection:
         templates_dir = os.path.join(
             os.path.dirname(__file__), "..", "..", "app", "templates"
         )
-        for variant_id in ["fifa", "compact", "showcase", "compact_bg", "showcase_bg"]:
+        for variant_id in ["fclassic", "compact", "showcase", "compact_bg", "showcase_bg"]:
             v = get_variant(variant_id)
             candidate = os.path.join(templates_dir, v.template)
             assert os.path.isfile(candidate), (
@@ -198,7 +198,7 @@ class TestTemplateSelection:
             )
 
     def test_all_variants_are_available(self):
-        for variant_id in ["fifa", "compact", "showcase", "compact_bg", "showcase_bg"]:
+        for variant_id in ["fclassic", "compact", "showcase", "compact_bg", "showcase_bg"]:
             v = get_variant(variant_id)
             assert v.available, (
                 f"Variant '{variant_id}' is marked available=False but has a template — "
@@ -251,7 +251,7 @@ class TestVariantRenderSmoke:
         register_filters(env)
         return env
 
-    @pytest.mark.parametrize("variant_id", ["fifa", "compact", "showcase", "compact_bg", "showcase_bg"])
+    @pytest.mark.parametrize("variant_id", ["fclassic", "compact", "showcase", "compact_bg", "showcase_bg"])
     def test_variant_renders_without_error(self, jinja_env, variant_id):
         v = get_variant(variant_id)
         try:
@@ -370,7 +370,7 @@ class TestImagePipelineDOMAssertions:
     Validates the image pipeline wiring:
       - compact/compact_bg use portrait_photo_url (not photo_url)
       - showcase/showcase_bg use landscape_photo_url (not photo_url)
-      - FIFA uses photo_url (original)
+      - FClassic uses photo_url (original)
       - focus points applied as inline style object-position on <img>
       - BG URL correctly passed as background-image inline style
       - z-index declarations present in BG variant CSS

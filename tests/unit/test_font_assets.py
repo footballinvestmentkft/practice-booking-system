@@ -1,5 +1,5 @@
 """
-Unit tests — Font Assets: self-hosted woff2 files for FIFA Classic export templates
+Unit tests — Font Assets: self-hosted woff2 files for FClassic Player export templates
 ====================================================================================
 
 Coverage:

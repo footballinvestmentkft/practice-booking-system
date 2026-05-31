@@ -20,7 +20,7 @@ Coverage:
 Semantic invariant (CS-6 A-model):
   archetype_id identifies the driver family for component_config-backed exports ONLY.
   File-based exports (no component_config for that bucket) are unaffected by archetype_id.
-  FIFA archetype_id="column" is semantically correct for its driver-eligible exports;
+  FClassic archetype_id="column" is semantically correct for its driver-eligible exports;
   its square/tiktok/landscape/banner exports remain file-based and are orthogonal.
 
 Mock strategy:
@@ -180,7 +180,7 @@ def _mock_db(user=None, license_=None):
         if args and args[0] is _CardDraft:
             _draft = MagicMock()
             _draft.published_theme    = (license_.published_card_theme    if license_ else None) or "default"
-            _draft.published_variant  = (license_.published_card_variant  if license_ else None) or "fifa"
+            _draft.published_variant  = (license_.published_card_variant  if license_ else None) or "fclassic"
             _draft.published_platform = (license_.published_card_platform if license_ else None)
             _draft.draft_theme    = _draft.published_theme
             _draft.draft_variant  = _draft.published_variant

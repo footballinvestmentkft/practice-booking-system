@@ -8,7 +8,7 @@ Two-phase flow (no DB writes during preview):
   2. apply_manifest(db, preview_rows)  → list of applied design IDs
 
 Security rules enforced here (not in routes):
-  - id "fifa" is permanently protected — cannot be created/updated/deactivated via manifest
+  - id "fclassic" is permanently protected (legacy inputs sanitized via resolve_design_id) — cannot be created/updated/deactivated via manifest
   - id must match slug regex ^[a-z][a-z0-9_-]*$
   - Duplicate ids within a single manifest rejected wholesale
   - is_premium=True requires credit_cost > 0; False requires credit_cost == 0
@@ -41,7 +41,7 @@ from .card_design_service import _invalidate_cache
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 MAX_MANIFEST_BYTES  = 32 * 1024   # 32 KB
-_PROTECTED_IDS      = frozenset({"fifa"})
+_PROTECTED_IDS      = frozenset({"fclassic"})
 _SLUG_RE            = re.compile(r'^[a-z][a-z0-9_-]*$')
 _VALID_BUCKETS      = frozenset({"square", "portrait", "story", "tiktok", "landscape", "banner"})
 # CS-6 A-model: archetype_id → set of driver-eligible buckets.

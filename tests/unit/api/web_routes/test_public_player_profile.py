@@ -14,7 +14,7 @@ PSP-11  POST /friends/cancel/{id} — non-PENDING row → error redirect
 PSP-12  next= param — /players/ prefix accepted in cancel
 PSP-13  next= param — /friends prefix accepted in accept
 PSP-14  next= param — external URL falls back to default /friends
-PSP-15  Portrait variant (fifa) → orientation=portrait, card_native_w=820, card_native_h=1080
+PSP-15  Portrait variant (fclassic) → orientation=portrait, card_native_w=820, card_native_h=1080
 PSP-16  Landscape variant (showcase) → orientation=landscape, card_native_w=720, card_native_h=700
 PSP-17  Unknown variant → fallback portrait defaults (orientation=portrait, native_w=820)
 PSP-18  Narrow variant (compact) → card_native_w=520
@@ -135,7 +135,7 @@ _PANEL_RECEIVED   = {"state": "pending_received",  "friendship_id": 10,   "can_a
 class TestPublicPlayerProfile:
 
     def _call(self, user=None, license=None, current_user=None, panel=None,
-              draft_variant="fifa"):
+              draft_variant="fclassic"):
         from app.api.web_routes.public_player import public_player_profile
         profile_user = user or _user(uid=2)
         lic          = license or _license(user_id=2)
@@ -413,10 +413,10 @@ class TestProfileVariantContext:
             ctx = mock_tmpl.TemplateResponse.call_args
         return ctx[0][2] if ctx else ctx.args[2]
 
-    # PSP-15 — portrait (fifa): orientation=portrait, native_w=820, native_h=1080
+    # PSP-15 — portrait (fclassic): orientation=portrait, native_w=820, native_h=1080
     def test_psp15_portrait_fifa_context(self):
-        ctx = self._call_variant("fifa")
-        assert ctx["card_variant_id"] == "fifa"
+        ctx = self._call_variant("fclassic")
+        assert ctx["card_variant_id"] == "fclassic"
         assert ctx["card_orientation"] == "portrait"
         assert ctx["card_native_w"] == 820
         assert ctx["card_native_h"] == 1080
@@ -520,7 +520,7 @@ class TestCardPublishedVersion:
         lic.published_card_variant = None
         db  = _profile_db(user=profile_user, license=lic)
         _draft = MagicMock()
-        _draft.published_variant = "fifa"
+        _draft.published_variant = "fclassic"
         _draft.published_at      = published_at
         with patch(f"{_BASE_PP}.templates") as mock_tmpl, \
              patch(f"{_SKILL_SVC}.get_skill_profile", return_value={"average_level": 65.0, "skills": {}, "total_tournaments": 3}), \
@@ -600,7 +600,7 @@ class TestCardPublishedVersion:
 class TestPlatformFirstCardSizing:
     """Published platform drives canvas size, orientation, and iframe URL."""
 
-    def _call_with_platform(self, platform, variant="fifa", published_at=None):
+    def _call_with_platform(self, platform, variant="fclassic", published_at=None):
         from app.api.web_routes.public_player import public_player_profile
         profile_user = _user(uid=2)
         lic = _license(user_id=2)
@@ -667,7 +667,7 @@ class TestPlatformFirstCardSizing:
         lic.published_card_variant = None
         db  = _profile_db(user=profile_user, license=lic)
         _draft = MagicMock()
-        _draft.published_variant  = "fifa"
+        _draft.published_variant  = "fclassic"
         _draft.published_platform = None   # explicit None
         _draft.published_at       = None
         with patch(f"{_BASE_PP}.templates") as mock_tmpl, \

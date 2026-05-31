@@ -9,7 +9,7 @@ Coverage:
   CS5-04  classic_lite story → HTTP 200 + ex-card, NO ex-sponsor-slot (show_sponsor=False)
   CS5-05  CSS platform_vars from component_config appear in rendered HTML
           (portrait: --ex-hero-h 380px; story: --ex-hero-h 440px)
-  CS5-06  classic_lite portrait (skill_slice=4) renders fewer skill rows than FIFA (slice=6)
+  CS5-06  classic_lite portrait (skill_slice=4) renders fewer skill rows than FClassic (slice=6)
   CS5-07  'square' bucket not in classic_lite supported_export_buckets → logical 422 proof
 
 Terminology (locked in CS-5 closing report):
@@ -19,7 +19,7 @@ Terminology (locked in CS-5 closing report):
 Mock strategy:
   _get_design is patched at the public_player module level so export routing uses the
   classic_lite CardDesignDefinition (with component_config).  _get_variant falls back to
-  the FIFA browser template (correct — classic_lite is absent from DESIGNS fallback dict).
+  the FClassic browser template (correct — classic_lite is absent from DESIGNS fallback dict).
   MagicMock DB — no live DB required.
 
   CS5-07 is a logical unit test (no HTTP request) that verifies the 422-triggering condition:
@@ -144,7 +144,7 @@ def _mock_db(user=None, license_=None):
         if args and args[0] is _CardDraft:
             _draft = MagicMock()
             _draft.published_theme    = (license_.published_card_theme    if license_ else None) or "default"
-            _draft.published_variant  = (license_.published_card_variant  if license_ else None) or "fifa"
+            _draft.published_variant  = (license_.published_card_variant  if license_ else None) or "fclassic"
             _draft.published_platform = (license_.published_card_platform if license_ else None)
             _draft.draft_theme    = _draft.published_theme
             _draft.draft_variant  = _draft.published_variant
@@ -167,7 +167,7 @@ def _mock_db(user=None, license_=None):
 
 
 def _render_as_classic_lite(client, platform: str, user_id: int = 7) -> str:
-    """Render with classic_lite design (patches _get_design; _get_variant falls back to FIFA)."""
+    """Render with classic_lite design (patches _get_design; _get_variant falls back to FClassic)."""
     from app.main import app
     from app.dependencies import get_db
     from app.api.web_routes import public_player as _pp
@@ -184,11 +184,11 @@ def _render_as_classic_lite(client, platform: str, user_id: int = 7) -> str:
 
 
 def _render_as_fifa(client, platform: str, user_id: int = 7) -> str:
-    """Render with FIFA design (no patching — DESIGNS fallback active for 'fifa')."""
+    """Render with FClassic design (no patching — DESIGNS fallback active for 'fclassic')."""
     from app.main import app
     from app.dependencies import get_db
 
-    db = _mock_db(user=_make_user(user_id), license_=_make_license("fifa"))
+    db = _mock_db(user=_make_user(user_id), license_=_make_license("fclassic"))
     app.dependency_overrides[get_db] = lambda: db
     try:
         r = client.get(f"/players/{user_id}/card?platform={platform}&export=1")
@@ -298,15 +298,15 @@ class TestCS5ConfigOutput:
 
 @pytest.mark.unit
 class TestCS5SkillSlice:
-    """classic_lite portrait (skill_slice=4) renders fewer skill rows than FIFA (skill_slice=6)."""
+    """classic_lite portrait (skill_slice=4) renders fewer skill rows than FClassic (skill_slice=6)."""
 
     def test_cs5_06_fewer_skill_rows_than_fifa(self, client):
-        """Row count: classic_lite portrait < FIFA portrait (4 per cat vs 6 per cat)."""
+        """Row count: classic_lite portrait < FClassic portrait (4 per cat vs 6 per cat)."""
         classic_html = _render_as_classic_lite(client, "instagram_portrait")
         fifa_html    = _render_as_fifa(client, "instagram_portrait")
 
         assert classic_html, "classic_lite portrait: empty response"
-        assert fifa_html,    "FIFA portrait: empty response"
+        assert fifa_html,    "FClassic portrait: empty response"
 
         classic_rows = classic_html.count('class="ex-row"')
         fifa_rows    = fifa_html.count('class="ex-row"')
@@ -317,8 +317,8 @@ class TestCS5SkillSlice:
         assert classic_rows < fifa_rows, (
             f"Skill slice difference not reflected in rendered output. "
             f"classic_lite portrait (slice=4): {classic_rows} rows; "
-            f"FIFA portrait (slice=6): {fifa_rows} rows. "
-            f"Expected classic_lite < FIFA."
+            f"FClassic portrait (slice=6): {fifa_rows} rows. "
+            f"Expected classic_lite < FClassic."
         )
 
 

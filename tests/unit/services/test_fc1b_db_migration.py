@@ -44,15 +44,12 @@ class TestMig0102DesignsFallbackDict:
         )
         assert DESIGNS["fclassic"].id == "fclassic"
 
-    def test_mig_02_fifa_is_only_alias_not_standalone(self):
-        """MIG-02: DESIGNS['fifa'] is the same object as DESIGNS['fclassic'] — alias only."""
+    def test_mig_02_fifa_removed_from_designs_dict(self):
+        """MIG-02: DESIGNS['fifa'] dict key removed after PR-FC-1F — 'fifa' is input-only."""
         from app.services.card_design_service import DESIGNS
-        assert "fifa" in DESIGNS, "DESIGNS['fifa'] deprecated alias must exist until PR-FC-1F"
-        assert DESIGNS["fifa"] is DESIGNS["fclassic"], (
-            "DESIGNS['fifa'] must point to the same object as DESIGNS['fclassic'] (alias)"
-        )
-        assert DESIGNS["fifa"].id == "fclassic", (
-            "Deprecated alias DESIGNS['fifa'].id must be 'fclassic', not 'fifa'"
+        assert "fifa" not in DESIGNS, (
+            "DESIGNS['fifa'] dict key must be removed in PR-FC-1F; "
+            "legacy 'fifa' input is handled by resolve_design_id() sanitizer only"
         )
 
     def test_mig_02b_fclassic_design_label_is_correct(self):

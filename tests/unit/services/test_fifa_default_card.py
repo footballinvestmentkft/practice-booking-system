@@ -500,7 +500,7 @@ def test_tpl21_app_logo_url_is_none_in_default_context():
     """public_player.py Default card context must have app_logo_url = None.
 
     Phase 4 mistakenly hardcoded '/static/images/logo-dark.png' here.
-    The Default FIFA card's logo source is sponsor_logo_url (user-uploaded),
+    The Default FClassic card's logo source is sponsor_logo_url (user-uploaded),
     not the LFA app logo.
     """
     src = _read(_ROOT / "app/api/web_routes/public_player.py")
@@ -516,7 +516,7 @@ def test_tpl21_app_logo_url_is_none_in_default_context():
         l.strip().startswith("#") for l in lines if "/static/images/logo-dark.png" in l
     ), (
         "'/static/images/logo-dark.png' must not appear as a non-comment value in public_player.py "
-        "Default card context. The LFA app logo must not be injected into the FIFA card."
+        "Default card context. The LFA app logo must not be injected into the FClassic card."
     )
 
 
@@ -702,12 +702,12 @@ def test_reg_export_template_not_modified(tpl_rel):
         pytest.skip(f"Template not present (not yet implemented): {tpl_rel}")
 
     # Verify the file content does NOT contain any of the new classes introduced
-    # by the FIFA default card refactor.
+    # by the FClassic default card refactor.
     content = path.read_text(encoding="utf-8")
     new_classes = ["card-body", "skills-panel", "position-panel", "pitch-svg", "native-export-mode"]
     for cls in new_classes:
         assert cls not in content, (
             f"Export template {tpl_rel} must not contain '{cls}' — "
-            f"this class belongs only to player_card_fclassic.html (FIFA Classic default card). "
+            f"this class belongs only to player_card_fclassic.html (FClassic Player default card). "
             f"Check that the export template was not accidentally modified."
         )

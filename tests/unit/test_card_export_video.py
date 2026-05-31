@@ -3,8 +3,8 @@ Unit tests — GET /players/{user_id}/card/export/video
 ======================================================
 
 Coverage:
-  VX-01  fifa + instagram_square → 200 video/webm + WebM magic bytes
-  VX-02  fifa + instagram_portrait → 422 (not animated capable)
+  VX-01  fclassic + instagram_square → 200 video/webm + WebM magic bytes
+  VX-02  fclassic + instagram_portrait → 422 (not animated capable)
   VX-03  compact + instagram_square → 422 (variant not animated capable)
   VX-04  invalid platform → 422
   VX-05  platform="default" → 422 (no canvas size, not an export target)
@@ -19,8 +19,8 @@ Coverage:
   VX-14  unsupported format → 422
   VX-15  unsupported duration → 422
   VX-16  Content-Disposition filename + Cache-Control headers correct
-  VX-17  is_animated_capable() returns True for all registered pairs (fifa + pulse)
-  VX-18  ANIMATED_EXPORT_CAPABLE registry contains exactly fifa+square AND pulse+square
+  VX-17  is_animated_capable() returns True for all registered pairs (fclassic + pulse)
+  VX-18  ANIMATED_EXPORT_CAPABLE registry contains exactly fclassic+square AND pulse+square
   VX-19  pulse + instagram_square → 200 video/webm (new animated-capable pair)
   VX-20  pulse + instagram_portrait → 422 (pulse not capable on portrait)
   VX-21  pulse + instagram_story → 422 (pulse not capable on story)
@@ -77,7 +77,7 @@ def _make_user(user_id: int = 7, role: UserRole = UserRole.STUDENT) -> MagicMock
     return u
 
 
-def _make_license(card_variant: str = "fifa") -> MagicMock:
+def _make_license(card_variant: str = "fclassic") -> MagicMock:
     lic = MagicMock()
     lic.card_variant = card_variant
     lic.specialization_type = "LFA_FOOTBALL_PLAYER"
@@ -150,7 +150,7 @@ def _video_export(
     user_id: int = 7,
     current_user=None,
     db=None,
-    card_variant: str = "fifa",
+    card_variant: str = "fclassic",
     webm_bytes: bytes = _WEBM_FIXTURE,
     format: str = "webm",
     duration: int = 5,
@@ -200,7 +200,7 @@ class TestVideoExportHappyPath:
 
     def test_vx01_fifa_square_returns_200_webm(self, client):
         """fclassic + instagram_square is the only supported animated combo — must return 200."""
-        r = _video_export(client, platform="instagram_square", card_variant="fifa")
+        r = _video_export(client, platform="instagram_square", card_variant="fclassic")
         assert r.status_code == 200
         assert r.headers["content-type"].startswith("video/webm")
 
@@ -208,19 +208,19 @@ class TestVideoExportHappyPath:
         """Admin may export any user's card regardless of ownership."""
         admin = _make_user(user_id=1, role=UserRole.ADMIN)
         r = _video_export(client, user_id=7, current_user=admin,
-                          platform="instagram_square", card_variant="fifa")
+                          platform="instagram_square", card_variant="fclassic")
         assert r.status_code == 200
 
     def test_vx12_webm_magic_bytes_in_response(self, client):
         """Response body must start with WebM EBML magic bytes \\x1aE\\xdf\\xa3."""
-        r = _video_export(client, platform="instagram_square", card_variant="fifa")
+        r = _video_export(client, platform="instagram_square", card_variant="fclassic")
         assert r.status_code == 200
         assert r.content[:4] == _WEBM_MAGIC
 
     def test_vx16_response_headers_correct(self, client):
         """Content-Disposition filename and Cache-Control must be set correctly."""
         r = _video_export(client, user_id=7, platform="instagram_square",
-                          card_variant="fifa")
+                          card_variant="fclassic")
         assert r.status_code == 200
         cd = r.headers.get("content-disposition", "")
         assert "lfa_card_7_instagram_square_animated.webm" in cd
@@ -237,7 +237,7 @@ class TestVideoExportCapabilityGating:
 
     def test_vx02_fifa_portrait_returns_422(self, client):
         """fclassic + instagram_portrait is not animated-capable → 422, no video."""
-        r = _video_export(client, platform="instagram_portrait", card_variant="fifa")
+        r = _video_export(client, platform="instagram_portrait", card_variant="fclassic")
         assert r.status_code == 422
 
     def test_vx03_compact_square_returns_422(self, client):
@@ -247,23 +247,23 @@ class TestVideoExportCapabilityGating:
 
     def test_vx04_invalid_platform_returns_422(self, client):
         """Unknown platform string → 422 before capability check."""
-        r = _video_export(client, platform="foobar", card_variant="fifa")
+        r = _video_export(client, platform="foobar", card_variant="fclassic")
         assert r.status_code == 422
 
     def test_vx05_default_platform_returns_422(self, client):
         """'default' is not an export target (no canvas size) → 422."""
-        r = _video_export(client, platform="default", card_variant="fifa")
+        r = _video_export(client, platform="default", card_variant="fclassic")
         assert r.status_code == 422
 
     def test_vx14_unsupported_format_returns_422(self, client):
         """format=avi is not supported → 422 (webm and mp4 are the only valid formats)."""
-        r = _video_export(client, platform="instagram_square", card_variant="fifa",
+        r = _video_export(client, platform="instagram_square", card_variant="fclassic",
                           format="avi")
         assert r.status_code == 422
 
     def test_vx15_unsupported_duration_returns_422(self, client):
         """duration=10 is not supported in MVP → 422."""
-        r = _video_export(client, platform="instagram_square", card_variant="fifa",
+        r = _video_export(client, platform="instagram_square", card_variant="fclassic",
                           duration=10)
         assert r.status_code == 422
 
@@ -278,10 +278,10 @@ class TestVideoExportAuth:
         attacker = _make_user(user_id=99, role=UserRole.STUDENT)
         db = _mock_db(
             target_user=_make_user(user_id=7),
-            target_license=_make_license(card_variant="fifa"),
+            target_license=_make_license(card_variant="fclassic"),
         )
         r = _video_export(client, user_id=7, current_user=attacker, db=db,
-                          platform="instagram_square", card_variant="fifa")
+                          platform="instagram_square", card_variant="fclassic")
         assert r.status_code == 403
 
 
@@ -294,7 +294,7 @@ class TestVideoExportNotFound:
         """User not in DB → 404."""
         db = _mock_db(target_user=None, target_license=None)
         r = _video_export(client, user_id=7, db=db,
-                          platform="instagram_square", card_variant="fifa")
+                          platform="instagram_square", card_variant="fclassic")
         assert r.status_code == 404
 
     def test_vx11_no_active_license_returns_404(self, client):
@@ -304,7 +304,7 @@ class TestVideoExportNotFound:
             target_license=None,
         )
         r = _video_export(client, user_id=7, db=db,
-                          platform="instagram_square", card_variant="fifa")
+                          platform="instagram_square", card_variant="fclassic")
         assert r.status_code == 404
 
 
@@ -316,9 +316,9 @@ class TestVideoExportRateAndErrors:
     def test_vx08_rate_limit_third_request_returns_429(self, client):
         """Video rate limit is 2/60s; 3rd request must return 429."""
         for _ in range(2):
-            r = _video_export(client, platform="instagram_square", card_variant="fifa")
+            r = _video_export(client, platform="instagram_square", card_variant="fclassic")
             assert r.status_code == 200
-        r = _video_export(client, platform="instagram_square", card_variant="fifa")
+        r = _video_export(client, platform="instagram_square", card_variant="fclassic")
         assert r.status_code == 429
 
     def test_vx09_recording_timeout_returns_504(self, client):
@@ -327,7 +327,7 @@ class TestVideoExportRateAndErrors:
         current_user = _make_user(user_id=7)
         db = _mock_db(
             target_user=_make_user(user_id=7),
-            target_license=_make_license(card_variant="fifa"),
+            target_license=_make_license(card_variant="fclassic"),
         )
         _setup_overrides(app, current_user, db)
         try:
@@ -349,11 +349,11 @@ class TestAnimatedCapabilityRegistry:
 
     def test_vx17_is_animated_capable_true_only_for_registered_pairs(self):
         """is_animated_capable must return True for all registered pairs and False for others."""
-        assert is_animated_capable("fifa",  "instagram_square") is True
+        assert is_animated_capable("fclassic", "instagram_square") is True
         assert is_animated_capable("pulse", "instagram_square") is True
-        assert is_animated_capable("fifa",  "instagram_portrait") is False
-        assert is_animated_capable("fifa",  "instagram_story") is False
-        assert is_animated_capable("fifa",  "tiktok") is False
+        assert is_animated_capable("fclassic", "instagram_portrait") is False
+        assert is_animated_capable("fclassic", "instagram_story") is False
+        assert is_animated_capable("fclassic", "tiktok") is False
         assert is_animated_capable("pulse", "instagram_portrait") is False
         assert is_animated_capable("pulse", "instagram_story") is False
         assert is_animated_capable("compact",  "instagram_square") is False
@@ -363,7 +363,7 @@ class TestAnimatedCapabilityRegistry:
 
     def test_vx18_registry_contains_exactly_fifa_and_pulse_square(self):
         """Registry must contain exactly two entries: fclassic+square and pulse+square.
-        PR-FC-1B: canonical key is now 'fclassic'; 'fifa' is a deprecated alias.
+        PR-FC-1B: canonical key is now 'fclassic'; 'fclassic' is a deprecated alias.
         """
         assert ANIMATED_EXPORT_CAPABLE == frozenset({
             ("fclassic", "instagram_square"),
@@ -434,7 +434,7 @@ class TestMp4Export:
     def test_vx22_mp4_format_returns_200_video_mp4(self, client):
         """format=mp4 with FFmpeg mocked must return 200 video/mp4."""
         r = _video_export(
-            client, platform="instagram_square", card_variant="fifa",
+            client, platform="instagram_square", card_variant="fclassic",
             format="mp4", mp4_bytes=_MP4_FIXTURE,
         )
         assert r.status_code == 200
@@ -443,7 +443,7 @@ class TestMp4Export:
     def test_vx23_mp4_magic_bytes_ftyp_at_offset_4(self, client):
         """MP4 response bytes[4:8] must equal b'ftyp' (ISO Base Media File Format marker)."""
         r = _video_export(
-            client, platform="instagram_square", card_variant="fifa",
+            client, platform="instagram_square", card_variant="fclassic",
             format="mp4", mp4_bytes=_MP4_FIXTURE,
         )
         assert r.status_code == 200
@@ -461,7 +461,7 @@ class TestMp4Export:
         current_user = _make_user(user_id=7)
         db = _mock_db(
             target_user=_make_user(user_id=7),
-            target_license=_make_license(card_variant="fifa"),
+            target_license=_make_license(card_variant="fclassic"),
         )
         _setup_overrides(app, current_user, db)
         try:
@@ -490,7 +490,7 @@ class TestMp4Export:
     def test_vx25_unsupported_format_avi_returns_422(self, client):
         """format=avi is not in _SUPPORTED_VIDEO_FORMATS → 422."""
         r = _video_export(
-            client, platform="instagram_square", card_variant="fifa",
+            client, platform="instagram_square", card_variant="fclassic",
             format="avi",
         )
         assert r.status_code == 422

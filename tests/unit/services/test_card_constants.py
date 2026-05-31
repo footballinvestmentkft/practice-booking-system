@@ -34,7 +34,7 @@ import app.services.card_export_service as _export_svc
 # ── CC-01 / CC-02: CANVAS_SIZES structure ────────────────────────────────────
 
 def test_cc01_canvas_sizes_has_9_platforms():
-    assert len(CANVAS_SIZES) == 12  # 9 social + "default" native FIFA Classic export + 2 challenge
+    assert len(CANVAS_SIZES) == 12  # 9 social + "default" native FClassic Player export + 2 challenge
 
 
 def test_cc02_canvas_sizes_values_are_int_tuples():
@@ -51,7 +51,7 @@ def test_cc02_canvas_sizes_values_are_int_tuples():
 # ── CC-03 / CC-04: EXPORT_FORMAT_BUCKETS ─────────────────────────────────────
 
 def test_cc03_export_format_buckets_keys_match_canvas_sizes():
-    # "default" is the native FIFA Classic export path — it uses a dynamic clip
+    # "default" is the native FClassic Player export path — it uses a dynamic clip
     # against card-wrap BoundingClientRect, not a template bucket directory.
     social_canvas_keys = CANVAS_SIZES.keys() - {"default"}
     assert EXPORT_FORMAT_BUCKETS.keys() == social_canvas_keys, (
@@ -91,7 +91,7 @@ def test_cc06_animated_capable_platforms_exist_in_canvas_sizes():
 # ── CC-07 / CC-08 / CC-09: is_animated_capable() ────────────────────────────
 
 @pytest.mark.parametrize("variant, platform", [
-    ("fifa",  "instagram_square"),
+    ("fclassic",  "instagram_square"),
     ("pulse", "instagram_square"),
 ])
 def test_cc07_is_animated_capable_known_pairs_return_true(variant, platform):
@@ -99,8 +99,8 @@ def test_cc07_is_animated_capable_known_pairs_return_true(variant, platform):
 
 
 @pytest.mark.parametrize("variant, platform", [
-    ("fifa",  "instagram_story"),
-    ("fifa",  "banner_custom"),
+    ("fclassic",  "instagram_story"),
+    ("fclassic",  "banner_custom"),
     ("pulse", "instagram_portrait"),
     ("pulse", "tiktok"),
 ])

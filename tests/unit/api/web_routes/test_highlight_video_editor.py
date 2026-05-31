@@ -40,11 +40,11 @@ _TEST_USER_ID = 42
 
 def _draft(
     draft_theme: str = "default",
-    draft_variant: str = "fifa",
+    draft_variant: str = "fclassic",
     draft_platform: str | None = None,
     draft_data: dict | None = None,
     published_theme: str | None = "default",
-    published_variant: str | None = "fifa",
+    published_variant: str | None = "fclassic",
     published_platform: str | None = None,
     published_data: dict | None = None,
 ) -> CardDraft:
@@ -328,7 +328,7 @@ class TestIsPublishedWithVideo:
         """HVE-17: is_published returns True when theme/variant/platform + video_id all match."""
         draft = _draft(
             draft_theme="default", published_theme="default",
-            draft_variant="fifa",  published_variant="fifa",
+            draft_variant="fclassic",  published_variant="fclassic",
             draft_platform=None,   published_platform=None,
             draft_data={"highlight_video":    {"video_id": "dQw4w9WgXcQ"}},
             published_data={"highlight_video": {"video_id": "dQw4w9WgXcQ"}},

@@ -140,11 +140,11 @@ class TestCardRegistry:
             card_registry.get_card_type_spec("unknown_type")
 
 
-# ── CS25–CS28: VariantCapabilitySpec (FIFA Classic) ─────────────────────────
+# ── CS25–CS28: VariantCapabilitySpec (FClassic Player) ─────────────────────────
 
 class TestVariantCapabilitySpec:
     def test_cs25_fifa_classic_capabilities_variant_id(self):
-        assert FCLASSIC_CAPABILITIES.variant_id == "fifa"
+        assert FCLASSIC_CAPABILITIES.variant_id == "fclassic"
 
     def test_cs26_fifa_supports_player_and_welcome_card(self):
         assert "player_card" in FCLASSIC_CAPABILITIES.supported_card_types

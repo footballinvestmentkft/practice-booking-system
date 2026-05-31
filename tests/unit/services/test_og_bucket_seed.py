@@ -1,14 +1,14 @@
 """OG bucket seed tests — Phase OG.
 
-Verifies that the 'og' bucket is correctly present in the FIFA Classic design
+Verifies that the 'og' bucket is correctly present in the FClassic Player design
 both in the DESIGNS fallback dict and (mocked) DB-backed path, that the
 collection detail page renders 7 formats when og is seeded, and that the
 export guard accepts og as a supported bucket.
 
-OG-01  DESIGNS fallback fifa.supported_export_buckets contains 'og'
+OG-01  DESIGNS fallback fclassic.supported_export_buckets contains 'og'
 OG-02  DESIGNS fallback and expected 7-bucket canonical set are in parity
-OG-03  DB-backed path: og present in FIFA row → get_all_designs returns og
-OG-04  DB-backed path: og absent from FIFA row → og absent from get_all_designs
+OG-03  DB-backed path: og present in FClassic row → get_all_designs returns og
+OG-04  DB-backed path: og absent from FClassic row → og absent from get_all_designs
 OG-05  PC_FORMAT_META og entry uses mfg-ratio-169
 OG-06  Detail page renders 7 format cards when og is in supported_export_buckets
 OG-07  export get_supported_buckets: returns og when DB row contains it
@@ -52,7 +52,7 @@ def reset_cache():
 def _make_db_row(buckets: list[str]):
     """Minimal mock CardDesign ORM row."""
     row = MagicMock()
-    row.id = "fifa"
+    row.id = "fclassic"
     row.label = "FClassic Player"
     row.description = "Test"
     row.is_premium = True
@@ -77,9 +77,9 @@ def _make_db(rows):
 
 class TestOG01FallbackContainsOg:
     def test_og01_designs_fallback_fifa_has_og(self):
-        buckets = set(DESIGNS["fifa"].supported_export_buckets)
+        buckets = set(DESIGNS["fclassic"].supported_export_buckets)
         assert "og" in buckets, (
-            "DESIGNS fallback dict for 'fifa' is missing 'og'. "
+            "DESIGNS fallback dict for 'fclassic' is missing 'og'. "
             "The fallback dict must match migration 2026_05_29_1100."
         )
 
@@ -88,9 +88,9 @@ class TestOG01FallbackContainsOg:
 
 class TestOG02FallbackParity:
     def test_og02_fallback_matches_canonical_7(self):
-        buckets = set(DESIGNS["fifa"].supported_export_buckets)
+        buckets = set(DESIGNS["fclassic"].supported_export_buckets)
         assert buckets == _CANONICAL_7, (
-            f"FIFA fallback buckets diverge from canonical set.\n"
+            f"FClassic fallback buckets diverge from canonical set.\n"
             f"  Extra in fallback:   {buckets - _CANONICAL_7}\n"
             f"  Missing in fallback: {_CANONICAL_7 - buckets}"
         )
@@ -102,17 +102,17 @@ class TestOG03DbPathOgPresent:
     def test_og03_db_row_with_og_returned_in_get_all_designs(self):
         db = _make_db([_make_db_row(list(_CANONICAL_7))])
         designs = get_all_designs(db)
-        fifa = next((d for d in designs if d.id == "fifa"), None)
-        assert fifa is not None
-        assert "og" in fifa.supported_export_buckets, (
-            "After migration 2026_05_29_1100 the DB row for 'fifa' must contain 'og'."
+        fclassic = next((d for d in designs if d.id == "fclassic"), None)
+        assert fclassic is not None
+        assert "og" in fclassic.supported_export_buckets, (
+            "After migration 2026_05_29_1100 the DB row for 'fclassic' must contain 'og'."
         )
 
     def test_og03_db_row_with_og_get_supported_buckets(self):
         db = _make_db([_make_db_row(list(_CANONICAL_7))])
         _invalidate_cache()
         get_all_designs(db)  # prime cache from mock DB
-        buckets = set(get_supported_buckets("fifa", db))
+        buckets = set(get_supported_buckets("fclassic", db))
         assert "og" in buckets
 
 
@@ -123,9 +123,9 @@ class TestOG04DbPathOgAbsent:
         """Pre-migration DB row (6 buckets) must NOT expose og via DB cache."""
         db = _make_db([_make_db_row(list(_CANONICAL_6))])
         designs = get_all_designs(db)
-        fifa = next((d for d in designs if d.id == "fifa"), None)
-        assert fifa is not None
-        assert "og" not in fifa.supported_export_buckets, (
+        fclassic = next((d for d in designs if d.id == "fclassic"), None)
+        assert fclassic is not None
+        assert "og" not in fclassic.supported_export_buckets, (
             "Pre-migration DB row must not expose og through the DB-backed cache."
         )
 
@@ -179,7 +179,7 @@ class TestOG06DetailPageSevenFormats:
             request=MagicMock(),
             user=user,
             design=design,
-            collection_id="fifa",
+            collection_id="fclassic",
             state="get_card",
             format_rows=format_rows,
             flash_purchased=None,
@@ -214,7 +214,7 @@ class TestOG06DetailPageSevenFormats:
             request=MagicMock(),
             user=user,
             design=design,
-            collection_id="fifa",
+            collection_id="fclassic",
             state="get_card",
             format_rows=format_rows,
             flash_purchased=None,
@@ -229,20 +229,20 @@ class TestOG06DetailPageSevenFormats:
 
 class TestOG07OgBucketExportGate:
     def test_og07_supported_buckets_with_og_does_not_exclude_og(self):
-        """After migration: get_supported_buckets('fifa', db) must include 'og'."""
+        """After migration: get_supported_buckets('fclassic', db) must include 'og'."""
         db = _make_db([_make_db_row(list(_CANONICAL_7))])
         get_all_designs(db)  # prime cache
-        result = set(get_supported_buckets("fifa", db))
+        result = set(get_supported_buckets("fclassic", db))
         assert "og" in result, (
             "With og in DB row, get_supported_buckets must return og. "
             "If missing, export?platform=og would return 422."
         )
 
     def test_og08_supported_buckets_without_og_excludes_og(self):
-        """Pre-migration: get_supported_buckets('fifa', db) must NOT include 'og'."""
+        """Pre-migration: get_supported_buckets('fclassic', db) must NOT include 'og'."""
         db = _make_db([_make_db_row(list(_CANONICAL_6))])
         get_all_designs(db)
-        result = set(get_supported_buckets("fifa", db))
+        result = set(get_supported_buckets("fclassic", db))
         assert "og" not in result, (
             "Pre-migration DB row must not return og from get_supported_buckets."
         )

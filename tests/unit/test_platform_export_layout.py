@@ -20,34 +20,34 @@ Tests:
   PL-04  all CANVAS_SIZES platforms render 200 on card route
   PL-05  card-wrap fills viewport width/height (Playwright, skipped if absent)
   PL-06  no body background strip outside card-wrap (Playwright)
-  EX-06  FIFA × instagram_portrait uses dedicated export template (ex-card present)
-  EX-07  FIFA × instagram_portrait export HTML has no tab-bar
-  EX-08  FIFA × instagram_portrait export HTML has no card-wrap
-  EX-09  FIFA × instagram_portrait export HTML has .ex-skill-cats
-  EX-10  FIFA × instagram_portrait export uses portrait_photo_url variable
-  EX-11  FIFA × instagram_story uses dedicated export template (ex-card present)
-  EX-12  FIFA × instagram_story export HTML has no tab-bar
-  EX-13  FIFA × instagram_story export HTML has no card-wrap
-  EX-14  FIFA × instagram_story export HTML has .ex-skill-cats
-  EX-15  FIFA × instagram_story export uses portrait_photo_url variable
-  EX-16  FIFA × tiktok uses its own dedicated tiktok export template (NOT the story template)
-  EX-17  FIFA × facebook_landscape uses dedicated export template (ex-card present)
-  EX-18  FIFA × facebook_landscape export HTML has no tab-bar
-  EX-19  FIFA × facebook_landscape export HTML has no card-wrap
-  EX-20  FIFA × facebook_landscape export HTML has .ex-skill-cats
-  EX-21  FIFA × facebook_landscape export uses landscape_photo_url variable
-  EX-22  FIFA × og uses the same landscape export template (ex-card present)
-  EX-23  FIFA × banner_custom uses dedicated export template (ex-card present)
-  EX-24  FIFA × banner_custom export HTML has no tab-bar
-  EX-25  FIFA × banner_custom export HTML has no card-wrap
-  EX-26  FIFA × banner_custom export HTML has .ex-skill-cats
-  EX-27  FIFA × banner_custom export uses landscape_photo_url variable
-  EX-28  FIFA × banner_custom uses banner template, not landscape template (420px left panel)
-  EX-29  FIFA × instagram_square export HTML contains all 11 Outfield skill names
+  EX-06  FClassic × instagram_portrait uses dedicated export template (ex-card present)
+  EX-07  FClassic × instagram_portrait export HTML has no tab-bar
+  EX-08  FClassic × instagram_portrait export HTML has no card-wrap
+  EX-09  FClassic × instagram_portrait export HTML has .ex-skill-cats
+  EX-10  FClassic × instagram_portrait export uses portrait_photo_url variable
+  EX-11  FClassic × instagram_story uses dedicated export template (ex-card present)
+  EX-12  FClassic × instagram_story export HTML has no tab-bar
+  EX-13  FClassic × instagram_story export HTML has no card-wrap
+  EX-14  FClassic × instagram_story export HTML has .ex-skill-cats
+  EX-15  FClassic × instagram_story export uses portrait_photo_url variable
+  EX-16  FClassic × tiktok uses its own dedicated tiktok export template (NOT the story template)
+  EX-17  FClassic × facebook_landscape uses dedicated export template (ex-card present)
+  EX-18  FClassic × facebook_landscape export HTML has no tab-bar
+  EX-19  FClassic × facebook_landscape export HTML has no card-wrap
+  EX-20  FClassic × facebook_landscape export HTML has .ex-skill-cats
+  EX-21  FClassic × facebook_landscape export uses landscape_photo_url variable
+  EX-22  FClassic × og uses the same landscape export template (ex-card present)
+  EX-23  FClassic × banner_custom uses dedicated export template (ex-card present)
+  EX-24  FClassic × banner_custom export HTML has no tab-bar
+  EX-25  FClassic × banner_custom export HTML has no card-wrap
+  EX-26  FClassic × banner_custom export HTML has .ex-skill-cats
+  EX-27  FClassic × banner_custom export uses landscape_photo_url variable
+  EX-28  FClassic × banner_custom uses banner template, not landscape template (420px left panel)
+  EX-29  FClassic × instagram_square export HTML contains all 11 Outfield skill names
   EX-30  square/fclassic.html template source has no skill slicing (no cat.skills[:)
-  EX-31  FIFA × instagram_square export uses 2-column flex layout (v4 proportional columns)
-  EX-31b FIFA × instagram_square export uses col-filler to bottom-align Set Pieces with Physical
-  EX-31g FIFA × instagram_square skill columns have no vertical overlap (Playwright)
+  EX-31  FClassic × instagram_square export uses 2-column flex layout (v4 proportional columns)
+  EX-31b FClassic × instagram_square export uses col-filler to bottom-align Set Pieces with Physical
+  EX-31g FClassic × instagram_square skill columns have no vertical overlap (Playwright)
   EX-32  square/fclassic.html template source contains {% if animated_mode %} branch
   EX-33  square/fclassic.html rendered with animated_mode=True contains @keyframes
   EX-34  square/fclassic.html rendered with animated_mode=False (default) contains NO @keyframes
@@ -57,15 +57,15 @@ Tests:
   EX-38  square/pulse.html rendered with animated_mode=False (default) contains NO @keyframes
   EX-39  animated_mode=False does not break Pulse static layout (pex-bar-fill CSS present)
   EX-40  pulse × instagram_square export uses dedicated pex-card template (not editor chrome)
-  EX-47  FIFA × instagram_story preview (no export flag) uses story template (SoT — no drift)
+  EX-47  FClassic × instagram_story preview (no export flag) uses story template (SoT — no drift)
   EX-48  story/fclassic.html contains class="ex-sponsor-slot" HTML element
   EX-49  story sponsor logo renders when sponsor_logo_url provided; absent when None
   EX-50  story template renders height/weight meta items when provided
   EX-51  story template renders dominant foot badge when provided
-  EX-52  FIFA × tiktok export uses dedicated tiktok template (ex-card present, NOT story)
-  EX-53  FIFA × tiktok export HTML has no tab-bar
-  EX-54  FIFA × tiktok export HTML has no card-wrap
-  EX-55  FIFA × tiktok preview (no export flag) uses tiktok template (SoT — no drift)
+  EX-52  FClassic × tiktok export uses dedicated tiktok template (ex-card present, NOT story)
+  EX-53  FClassic × tiktok export HTML has no tab-bar
+  EX-54  FClassic × tiktok export HTML has no card-wrap
+  EX-55  FClassic × tiktok preview (no export flag) uses tiktok template (SoT — no drift)
   EX-56  tiktok and instagram_story export HTML are structurally different (separation)
   EX-57  tiktok/fclassic.html template source contains ex-hero-photo (full-bleed hero)
   EX-58  tiktok/fclassic.html template source contains ex-identity-strip
@@ -149,7 +149,7 @@ def _mock_db(user=None, license_=None):
         if args and args[0] is _CardDraft:
             _draft = MagicMock()
             _draft.published_theme    = (license_.published_card_theme    if license_ else None) or "default"
-            _draft.published_variant  = (license_.published_card_variant  if license_ else None) or "fifa"
+            _draft.published_variant  = (license_.published_card_variant  if license_ else None) or "fclassic"
             _draft.published_platform = (license_.published_card_platform if license_ else None)
             _draft.draft_theme    = _draft.published_theme
             _draft.draft_variant  = _draft.published_variant
@@ -392,7 +392,7 @@ class TestPlaywrightP0ComponentSizing:
     Verify that clamp()-based sizing rules scale OVR, photo, and skill bar
     elements relative to the viewport — replacing preview-size fixed px values.
 
-    Selectors cover all card variants (compact, atlas, showcase, pulse, fifa).
+    Selectors cover all card variants (compact, atlas, showcase, pulse, fclassic).
 
     PL-07  OVR font-size >= 5% of viewport width (portrait/square)
     PL-08  Photo column/avatar width >= 25% of viewport width (portrait/square)
@@ -536,23 +536,23 @@ class TestPlaywrightP0ComponentSizing:
 class TestExportRenderLayerStatic:
     """Static (non-Playwright) tests for the export render layer.
 
-    EX-01  FIFA × instagram_square uses the dedicated export template (ex-card present)
-    EX-02  FIFA × instagram_square export HTML has no tab-bar
-    EX-03  FIFA × instagram_square export HTML has no events-section
-    EX-04  FIFA × instagram_square export HTML has .ex-skill-cats (2×2 grid container)
-    EX-05  Non-FIFA variant (compact) still uses editor template for instagram_square
-    EX-06  FIFA × instagram_portrait uses dedicated export template (ex-card present)
-    EX-07  FIFA × instagram_portrait export HTML has no tab-bar
-    EX-08  FIFA × instagram_portrait export HTML has no card-wrap
-    EX-09  FIFA × instagram_portrait export HTML has .ex-skill-cats
-    EX-10  FIFA × instagram_portrait export uses portrait_photo_url variable
+    EX-01  FClassic × instagram_square uses the dedicated export template (ex-card present)
+    EX-02  FClassic × instagram_square export HTML has no tab-bar
+    EX-03  FClassic × instagram_square export HTML has no events-section
+    EX-04  FClassic × instagram_square export HTML has .ex-skill-cats (2×2 grid container)
+    EX-05  Non-FClassic variant (compact) still uses editor template for instagram_square
+    EX-06  FClassic × instagram_portrait uses dedicated export template (ex-card present)
+    EX-07  FClassic × instagram_portrait export HTML has no tab-bar
+    EX-08  FClassic × instagram_portrait export HTML has no card-wrap
+    EX-09  FClassic × instagram_portrait export HTML has .ex-skill-cats
+    EX-10  FClassic × instagram_portrait export uses portrait_photo_url variable
     """
 
     def _get_fifa_export_html(self, client, platform: str = "instagram_square") -> str:
         from app.main import app
         from app.dependencies import get_db
 
-        db = _mock_db(user=_make_user(), license_=_make_license(card_variant="fifa"))
+        db = _mock_db(user=_make_user(), license_=_make_license(card_variant="fclassic"))
         app.dependency_overrides[get_db] = lambda: db
         try:
             r = client.get(f"/players/7/card?platform={platform}&export=1")
@@ -659,7 +659,7 @@ class TestExportRenderLayerStatic:
         from app.main import app
         from app.dependencies import get_db
 
-        lic = _make_license(card_variant="fifa")
+        lic = _make_license(card_variant="fclassic")
         lic.card_photo_portrait_url = "/static/test-portrait.jpg"
         db = _mock_db(user=_make_user(), license_=lic)
         app.dependency_overrides[get_db] = lambda: db
@@ -682,19 +682,19 @@ class TestFifaStoryExport:
     Instagram Story uses export/story/fclassic.html (Option A: conservative layout).
     TikTok uses export/tiktok/fclassic.html (Option B: native redesign) — see TestFifaTikTokExport.
 
-    EX-11  FIFA × instagram_story uses dedicated export template (ex-card present)
-    EX-12  FIFA × instagram_story export HTML has no tab-bar
-    EX-13  FIFA × instagram_story export HTML has no card-wrap (editor chrome)
-    EX-14  FIFA × instagram_story export HTML has .ex-skill-cats (2×2 grid)
-    EX-15  FIFA × instagram_story export uses portrait_photo_url variable
-    EX-16  FIFA × tiktok uses its own dedicated tiktok export template (NOT the story template)
+    EX-11  FClassic × instagram_story uses dedicated export template (ex-card present)
+    EX-12  FClassic × instagram_story export HTML has no tab-bar
+    EX-13  FClassic × instagram_story export HTML has no card-wrap (editor chrome)
+    EX-14  FClassic × instagram_story export HTML has .ex-skill-cats (2×2 grid)
+    EX-15  FClassic × instagram_story export uses portrait_photo_url variable
+    EX-16  FClassic × tiktok uses its own dedicated tiktok export template (NOT the story template)
     """
 
     def _get_fifa_export_html(self, client, platform: str) -> str:
         from app.main import app
         from app.dependencies import get_db
 
-        db = _mock_db(user=_make_user(), license_=_make_license(card_variant="fifa"))
+        db = _mock_db(user=_make_user(), license_=_make_license(card_variant="fclassic"))
         app.dependency_overrides[get_db] = lambda: db
         try:
             r = client.get(f"/players/7/card?platform={platform}&export=1")
@@ -733,7 +733,7 @@ class TestFifaStoryExport:
         from app.main import app
         from app.dependencies import get_db
 
-        lic = _make_license(card_variant="fifa")
+        lic = _make_license(card_variant="fclassic")
         lic.card_photo_portrait_url = "/static/test-portrait.jpg"
         db = _mock_db(user=_make_user(), license_=lic)
         app.dependency_overrides[get_db] = lambda: db
@@ -777,7 +777,7 @@ class TestFifaStoryExport:
 class TestFifaStoryOptionA:
     """Instagram Story Option A additions — sponsor slot, foot badge, height/weight, SoT.
 
-    EX-47  FIFA × instagram_story preview (no export flag) uses story template (SoT)
+    EX-47  FClassic × instagram_story preview (no export flag) uses story template (SoT)
     EX-48  story/fclassic.html contains class="ex-sponsor-slot" HTML element
     EX-49  story sponsor logo renders when sponsor_logo_url provided; absent when None
     EX-50  story template renders height/weight meta items when provided
@@ -790,7 +790,7 @@ class TestFifaStoryOptionA:
         from app.main import app
         from app.dependencies import get_db
 
-        lic = _make_license(card_variant="fifa")
+        lic = _make_license(card_variant="fclassic")
         lic.sponsor_logo_url = sponsor
         lic.right_foot_score = right_foot
         lic.left_foot_score  = left_foot
@@ -865,10 +865,10 @@ class TestFifaStoryOptionA:
 class TestFifaTikTokExport:
     """TikTok Option B — dedicated tiktok export template, full-bleed hero, identity strip.
 
-    EX-52  FIFA × tiktok export uses dedicated tiktok template (ex-card present, NOT story)
-    EX-53  FIFA × tiktok export HTML has no tab-bar
-    EX-54  FIFA × tiktok export HTML has no card-wrap
-    EX-55  FIFA × tiktok preview (no export flag) uses tiktok template (SoT)
+    EX-52  FClassic × tiktok export uses dedicated tiktok template (ex-card present, NOT story)
+    EX-53  FClassic × tiktok export HTML has no tab-bar
+    EX-54  FClassic × tiktok export HTML has no card-wrap
+    EX-55  FClassic × tiktok preview (no export flag) uses tiktok template (SoT)
     EX-56  tiktok and instagram_story export HTML are structurally different (separation)
     EX-57  tiktok/fclassic.html template source contains ex-hero-photo (full-bleed hero)
     EX-58  tiktok/fclassic.html template source contains ex-identity-strip
@@ -881,7 +881,7 @@ class TestFifaTikTokExport:
         from app.main import app
         from app.dependencies import get_db
 
-        lic = _make_license(card_variant="fifa")
+        lic = _make_license(card_variant="fclassic")
         lic.sponsor_logo_url = sponsor
         lic.right_foot_score = right_foot
         lic.left_foot_score  = left_foot
@@ -939,7 +939,7 @@ class TestFifaTikTokExport:
         # Each request needs its own fresh mock — a shared mock exhausts its call counter
         # after the first request and returns MagicMocks instead of user/license on the second.
         def _make_db():
-            return _mock_db(user=_make_user(), license_=_make_license(card_variant="fifa"))
+            return _mock_db(user=_make_user(), license_=_make_license(card_variant="fclassic"))
 
         app.dependency_overrides[get_db] = lambda: _make_db()
         try:
@@ -1008,12 +1008,12 @@ class TestFifaTikTokExport:
 class TestFifaLandscapeExport:
     """Static tests for FClassic × Landscape dedicated export template.
 
-    EX-17  FIFA × facebook_landscape uses dedicated export template (ex-card present)
-    EX-18  FIFA × facebook_landscape export HTML has no tab-bar
-    EX-19  FIFA × facebook_landscape export HTML has no card-wrap (editor chrome)
-    EX-20  FIFA × facebook_landscape export HTML has .ex-skill-cats (2×2 grid)
-    EX-21  FIFA × facebook_landscape export uses landscape_photo_url variable
-    EX-22  FIFA × og uses the same landscape export template (ex-card present)
+    EX-17  FClassic × facebook_landscape uses dedicated export template (ex-card present)
+    EX-18  FClassic × facebook_landscape export HTML has no tab-bar
+    EX-19  FClassic × facebook_landscape export HTML has no card-wrap (editor chrome)
+    EX-20  FClassic × facebook_landscape export HTML has .ex-skill-cats (2×2 grid)
+    EX-21  FClassic × facebook_landscape export uses landscape_photo_url variable
+    EX-22  FClassic × og uses the same landscape export template (ex-card present)
     EX-41  landscape/fclassic.html source references dominant_badge + ex-dom-badge CSS
     EX-42  dominant badge rendered in HTML when foot scores provided
     EX-43  3-col layout: .ex-center panel present in rendered HTML
@@ -1026,7 +1026,7 @@ class TestFifaLandscapeExport:
         from app.main import app
         from app.dependencies import get_db
 
-        db = _mock_db(user=_make_user(), license_=_make_license(card_variant="fifa"))
+        db = _mock_db(user=_make_user(), license_=_make_license(card_variant="fclassic"))
         app.dependency_overrides[get_db] = lambda: db
         try:
             r = client.get(f"/players/7/card?platform={platform}&export=1")
@@ -1035,7 +1035,7 @@ class TestFifaLandscapeExport:
             app.dependency_overrides.pop(get_db, None)
 
     def test_ex17_fifa_landscape_uses_export_template(self, client):
-        """FIFA × FB Landscape export must render the dedicated export template."""
+        """FClassic × FB Landscape export must render the dedicated export template."""
         html = self._get_fifa_export_html(client, "facebook_landscape")
         assert html, "Export returned empty response for facebook_landscape"
         assert "ex-card" in html, (
@@ -1106,7 +1106,7 @@ class TestFifaLandscapeExport:
         from app.dependencies import get_db
         from unittest.mock import patch
 
-        lic = _make_license(card_variant="fifa")
+        lic = _make_license(card_variant="fclassic")
         lic.right_foot_score = 75.0
         lic.left_foot_score  = 25.0  # → "Rl"
         db = _mock_db(user=_make_user(), license_=lic)
@@ -1167,21 +1167,21 @@ class TestFifaLandscapeExport:
 
 @pytest.mark.unit
 class TestFifaBannerExport:
-    """Static tests for FIFA Classic × Banner Custom dedicated export template.
+    """Static tests for FClassic Player × Banner Custom dedicated export template.
 
-    EX-23  FIFA × banner_custom uses dedicated export template (ex-card present)
-    EX-24  FIFA × banner_custom export HTML has no tab-bar
-    EX-25  FIFA × banner_custom export HTML has no card-wrap (editor chrome)
-    EX-26  FIFA × banner_custom export HTML has .ex-skill-cats (2×2 grid)
-    EX-27  FIFA × banner_custom export uses landscape_photo_url variable (landscape-first fallback)
-    EX-28  FIFA × banner_custom uses banner template, not landscape template (420px left panel)
+    EX-23  FClassic × banner_custom uses dedicated export template (ex-card present)
+    EX-24  FClassic × banner_custom export HTML has no tab-bar
+    EX-25  FClassic × banner_custom export HTML has no card-wrap (editor chrome)
+    EX-26  FClassic × banner_custom export HTML has .ex-skill-cats (2×2 grid)
+    EX-27  FClassic × banner_custom export uses landscape_photo_url variable (landscape-first fallback)
+    EX-28  FClassic × banner_custom uses banner template, not landscape template (420px left panel)
     """
 
     def _get_fifa_export_html(self, client, platform: str) -> str:
         from app.main import app
         from app.dependencies import get_db
 
-        db = _mock_db(user=_make_user(), license_=_make_license(card_variant="fifa"))
+        db = _mock_db(user=_make_user(), license_=_make_license(card_variant="fclassic"))
         app.dependency_overrides[get_db] = lambda: db
         try:
             r = client.get(f"/players/7/card?platform={platform}&export=1")
@@ -1190,7 +1190,7 @@ class TestFifaBannerExport:
             app.dependency_overrides.pop(get_db, None)
 
     def test_ex23_fifa_banner_uses_export_template(self, client):
-        """FIFA × Banner Custom export must render the dedicated export template."""
+        """FClassic × Banner Custom export must render the dedicated export template."""
         html = self._get_fifa_export_html(client, "banner_custom")
         assert html, "Export returned empty response for banner_custom"
         assert "ex-card" in html, (
@@ -1220,7 +1220,7 @@ class TestFifaBannerExport:
         from app.main import app
         from app.dependencies import get_db
 
-        lic = _make_license(card_variant="fifa")
+        lic = _make_license(card_variant="fclassic")
         lic.card_photo_landscape_url = "/static/test-landscape.jpg"
         db = _mock_db(user=_make_user(), license_=lic)
         app.dependency_overrides[get_db] = lambda: db
@@ -1246,7 +1246,7 @@ class TestFifaBannerExport:
 
 @pytest.mark.unit
 class TestFifaSquareAllSkills:
-    """All-skills regression tests for FIFA Classic × Square export template.
+    """All-skills regression tests for FClassic Player × Square export template.
 
     EX-29  All 11 Outfield skill names present in rendered Square export HTML
     EX-30  square/fclassic.html template source contains no skill slicing (cat.skills[:)
@@ -1258,7 +1258,7 @@ class TestFifaSquareAllSkills:
         from app.main import app
         from app.dependencies import get_db
 
-        db = _mock_db(user=_make_user(), license_=_make_license(card_variant="fifa"))
+        db = _mock_db(user=_make_user(), license_=_make_license(card_variant="fclassic"))
         app.dependency_overrides[get_db] = lambda: db
         try:
             r = client.get(f"/players/7/card?platform={platform}&export=1")
@@ -1365,7 +1365,7 @@ class TestFifaSquareAllSkills:
         from app.main import app
         from app.dependencies import get_db
 
-        lic = _make_license(card_variant="fifa")
+        lic = _make_license(card_variant="fclassic")
         lic.sponsor_logo_url = "/static/uploads/lfa_player_photos/7_sponsor_logo_1234567890.png"
         db = _mock_db(user=_make_user(), license_=lic)
         app.dependency_overrides[get_db] = lambda: db
@@ -1402,7 +1402,7 @@ class TestFifaSquareAllSkills:
         from app.main import app
         from app.dependencies import get_db
 
-        lic = _make_license(card_variant="fifa")
+        lic = _make_license(card_variant="fclassic")
         lic.sponsor_logo_url = "/static/uploads/broken.png"
         db = _mock_db(user=_make_user(), license_=lic)
         app.dependency_overrides[get_db] = lambda: db
@@ -1430,7 +1430,7 @@ class TestFifaSquareAllSkills:
         """
         from app.main import app
         from app.dependencies import get_db
-        lic = _make_license(card_variant="fifa")
+        lic = _make_license(card_variant="fclassic")
         lic.motivation_scores = {"position": "midfielder"}  # valid pos → position map renders
         db = _mock_db(user=_make_user(), license_=lic)
         app.dependency_overrides[get_db] = lambda: db
@@ -1502,7 +1502,7 @@ class TestFifaSquareAllSkills:
 
 @pytest.mark.unit
 class TestFifaSquareAnimatedMode:
-    """Animated video export template tests for FIFA Classic × Square.
+    """Animated video export template tests for FClassic Player × Square.
 
     EX-32  square/fclassic.html source contains {%- if animated_mode %} branch
     EX-33  rendered HTML with animated_mode=True contains @keyframes
@@ -1515,7 +1515,7 @@ class TestFifaSquareAnimatedMode:
         from app.main import app
         from app.dependencies import get_db
 
-        db = _mock_db(user=_make_user(), license_=_make_license(card_variant="fifa"))
+        db = _mock_db(user=_make_user(), license_=_make_license(card_variant="fclassic"))
         app.dependency_overrides[get_db] = lambda: db
         try:
             params = "platform=instagram_square&export=1"
@@ -1712,7 +1712,7 @@ class TestFullscreenLinkConsistency:
         from app.main import app
         from app.dependencies import get_db
 
-        db = _mock_db(user=_make_user(), license_=_make_license(card_variant="fifa"))
+        db = _mock_db(user=_make_user(), license_=_make_license(card_variant="fclassic"))
         app.dependency_overrides[get_db] = lambda: db
         try:
             r = client.get(f"/players/7/card?platform={platform}")

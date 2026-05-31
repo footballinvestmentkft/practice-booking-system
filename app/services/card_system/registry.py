@@ -17,7 +17,7 @@ from app.services.card_system._welcome_card import WELCOME_CARD_SPEC
 # All other capability attributes are derived from the variant master data
 # in card_variant_service — this spec adds the card-system-level layer only.
 FCLASSIC_CAPABILITIES = VariantCapabilitySpec(
-    variant_id="fifa",
+    variant_id="fclassic",
     supported_card_types=("player_card", "welcome_card"),
     content_blocks=("hero", "skill_rows", "sponsor"),
     animated_mode=True,

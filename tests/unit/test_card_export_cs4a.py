@@ -5,13 +5,13 @@ Unit tests — CS-4a export routing: supported_export_buckets validation
 Coverage:
   CS4-01  compact + instagram_square → 422 (bucket "square" not in compact's supported buckets)
   CS4-02  atlas   + instagram_story  → 422 (atlas has no supported export buckets)
-  CS4-03  fifa    + instagram_square → 200 (square bucket declared for fifa)
+  CS4-03  fclassic    + instagram_square → 200 (square bucket declared for fclassic)
   CS4-04  pulse   + instagram_square → 200 (square bucket declared for pulse)
   CS4-05  pulse   + instagram_portrait → 422 (portrait not in pulse's supported buckets)
-  CS4-06  fifa    + "default"        → 200 (native export bypasses bucket check)
+  CS4-06  fclassic    + "default"        → 200 (native export bypasses bucket check)
   CS4-07  422 detail contains design id, platform, and bucket name
   CS4-08  video: compact + instagram_square → 422 at is_animated_capable (pre-bucket)
-  CS4-09  video: fifa + instagram_square mock_empty_buckets → 422 (new video bucket check)
+  CS4-09  video: fclassic + instagram_square mock_empty_buckets → 422 (new video bucket check)
 
 Mock strategy:
   - get_current_user_web → MagicMock user (no DB, no cookie)
@@ -59,7 +59,7 @@ def _make_user(user_id: int = 4, role: UserRole = UserRole.STUDENT) -> MagicMock
     return u
 
 
-def _make_license(card_variant: str = "fifa") -> MagicMock:
+def _make_license(card_variant: str = "fclassic") -> MagicMock:
     lic = MagicMock()
     lic.card_variant = card_variant
     lic.specialization_type = "LFA_FOOTBALL_PLAYER"
@@ -121,7 +121,7 @@ def client():
         yield c
 
 
-def _export(client, platform: str, card_variant: str = "fifa",
+def _export(client, platform: str, card_variant: str = "fclassic",
             user_id: int = 4, png: bytes = _PNG_SQ):
     from app.main import app
     from app.dependencies import get_current_user_web, get_db
@@ -141,7 +141,7 @@ def _export(client, platform: str, card_variant: str = "fifa",
         app.dependency_overrides.clear()
 
 
-def _video_export(client, platform: str, card_variant: str = "fifa", user_id: int = 7):
+def _video_export(client, platform: str, card_variant: str = "fclassic", user_id: int = 7):
     from app.main import app
     from app.dependencies import get_current_user_web, get_db
 
@@ -181,7 +181,7 @@ class TestCS4aPngBucketValidation:
 
     def test_cs4_03_fifa_square_200(self, client):
         """fclassic declares square bucket → instagram_square → 200."""
-        r = _export(client, "instagram_square", card_variant="fifa")
+        r = _export(client, "instagram_square", card_variant="fclassic")
         assert r.status_code == 200
 
     def test_cs4_04_pulse_square_200(self, client):
@@ -227,7 +227,7 @@ class TestCS4aVideoBucketValidation:
         from app.dependencies import get_current_user_web, get_db
 
         user = _make_user(user_id=7)
-        db   = _mock_db(_make_user(user_id=7), _make_license("fifa"))
+        db   = _mock_db(_make_user(user_id=7), _make_license("fclassic"))
 
         async def _auth():
             return user

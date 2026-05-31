@@ -263,12 +263,12 @@
     opacity: 1;
 }
 
-/* fifa — classic portrait: tall hero, rectangular OVR badge top-left */
-.ce-layout-tile[data-variant="fifa"] .ce-design-tile-art::before {
+/* fclassic — FClassic portrait: tall hero, rectangular OVR badge top-left */
+.ce-layout-tile[data-variant="fclassic"] .ce-design-tile-art::before {
     inset: 0 0 52% 0;
     background: linear-gradient(180deg, rgba(102,126,234,0.32) 0%, rgba(102,126,234,0.10) 100%);
 }
-.ce-layout-tile[data-variant="fifa"] .ce-design-tile-art::after {
+.ce-layout-tile[data-variant="fclassic"] .ce-design-tile-art::after {
     width: 12px; height: 12px; border-radius: 3px;
     top: 5px; left: 5px;
     background: rgba(102,126,234,0.90);
@@ -1178,7 +1178,7 @@ function _applyIframeSize() {
     const wrap   = document.querySelector('.ce-preview-wrap');
     if (!iframe || !stage || !wrap) return;
 
-    // 'default' maps to 820×800 (native FIFA card) — same key as CANVAS_SIZES["default"]
+    // 'default' maps to 820×800 (native FClassic card) — same key as CANVAS_SIZES["default"]
     const platformKey = _currentPlatform || 'default';
     const dims = _CANVAS_SIZES[platformKey];
     if (!dims) return;
@@ -1308,7 +1308,7 @@ function setPlatform(platformId) {
     if (iframe) { iframe.src = _cardIframeSrc(); }
     _applyIframeSize();
     _updateFullscreenLink();
-    // Download PNG is always enabled — default platform exports the native FIFA card.
+    // Download PNG is always enabled — default platform exports the native FClassic card.
     _updateVideoButtonVisibility();
     _updatePublishIndicator();
     _savePlatform(platformId);

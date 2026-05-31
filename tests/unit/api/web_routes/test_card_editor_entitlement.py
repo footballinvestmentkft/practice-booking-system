@@ -30,14 +30,14 @@ _IS_DA_PATH  = "app.services.card_design_service.is_design_accessible"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _draft(variant: str = "fifa") -> MagicMock:
+def _draft(variant: str = "fclassic") -> MagicMock:
     d = MagicMock()
     d.draft_theme    = "default"
     d.draft_variant  = variant
     d.draft_platform = None
     d.draft_data     = None
     d.published_theme    = "default"
-    d.published_variant  = "fifa"
+    d.published_variant  = "fclassic"
     d.published_platform = None
     d.published_data     = None
     return d
@@ -113,12 +113,12 @@ class TestCardEditorOwnershipContext:
 
     def test_ce01_owned_when_cdo_exists(self):
         """CE-01: active_variant_owned=True when is_design_accessible returns True."""
-        ctx = _invoke_editor(_draft("fifa"), is_owned=True)
+        ctx = _invoke_editor(_draft("fclassic"), is_owned=True)
         assert ctx.get("active_variant_owned") is True
 
     def test_ce02_not_owned_when_no_cdo(self):
         """CE-02: active_variant_owned=False when is_design_accessible returns False."""
-        ctx = _invoke_editor(_draft("fifa"), is_owned=False)
+        ctx = _invoke_editor(_draft("fclassic"), is_owned=False)
         assert ctx.get("active_variant_owned") is False
 
     def test_ce03_not_owned_different_variant(self):

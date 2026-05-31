@@ -23,7 +23,7 @@ Mock strategy:
   - get_db               → MagicMock session (yields User + UserLicense mocks)
   - _sync_take_screenshot → MagicMock captures call args; returns stub PNG
   - card_theme_service.get_all_themes → returns [default, gold] stubs
-  - card_design_service.get_supported_buckets → returns ("portrait",) for the fifa variant
+  - card_design_service.get_supported_buckets → returns ("portrait",) for the fclassic variant
   - rate counter reset between tests
 """
 from __future__ import annotations
@@ -72,7 +72,7 @@ def _make_user(user_id: int = 9, role: UserRole = UserRole.STUDENT) -> MagicMock
 
 
 def _make_license(
-    card_variant: str = "fifa",
+    card_variant: str = "fclassic",
     draft_theme: str = "gold",
     published_theme: str = "default",
 ) -> MagicMock:
@@ -96,7 +96,7 @@ def _mock_db(target_user: MagicMock | None = None, target_license: MagicMock | N
     _draft = MagicMock()
     _draft.published_variant = None
     q_draft.filter.return_value.first.return_value = _draft
-    # CDO ownership check — all designs (incl. fifa) require an ownership row
+    # CDO ownership check — all designs (incl. fclassic) require an ownership row
     q_cdo = MagicMock()
     q_cdo.filter_by.return_value.first.return_value = MagicMock()  # owned
     db.query.side_effect = [q_user, q_lic, q_draft, q_cdo]

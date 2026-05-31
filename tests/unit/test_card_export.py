@@ -10,7 +10,7 @@ Coverage:
   EX-05  valid platform (og)               → 200
   EX-06  missing platform param → defaults to "instagram_square", 200
   EX-07  invalid platform       → 422
-  EX-08  "default" platform → 200 (native FIFA Classic export via ?native_export=1)
+  EX-08  "default" platform → 200 (native FClassic Player export via ?native_export=1)
   EX-09  player not found       → 404
   EX-10  no active LFA license  → 404
   EX-11  student exports other player → 403
@@ -76,7 +76,7 @@ def _make_user(user_id: int = 4, role: UserRole = UserRole.STUDENT) -> MagicMock
 
 def _make_license() -> MagicMock:
     lic = MagicMock()
-    lic.card_variant = "fifa"  # fifa supports all export buckets (CS-4a: supported_export_buckets validated)
+    lic.card_variant = "fclassic"  # fclassic supports all export buckets (CS-4a: supported_export_buckets validated)
     lic.specialization_type = "LFA_FOOTBALL_PLAYER"
     lic.is_active = True
     return lic
@@ -97,7 +97,7 @@ def _mock_db(target_user=None, target_license=None, cdo_owned: bool = True):
     _draft = MagicMock()
     _draft.published_variant = None
     q_draft.filter.return_value.first.return_value = _draft
-    # CDO ownership check — every design (incl. fifa) now requires a CDO row
+    # CDO ownership check — every design (incl. fclassic) now requires a CDO row
     q_cdo = MagicMock()
     q_cdo.filter_by.return_value.first.return_value = MagicMock() if cdo_owned else None
     db.query.side_effect = [q_user, q_license, q_draft, q_cdo]
@@ -209,7 +209,7 @@ class TestExportValidation:
         assert r.status_code == 422
 
     def test_ex08_default_platform_returns_200(self, client):
-        """'default' is the native FIFA Classic export; uses ?native_export=1 render path."""
+        """'default' is the native FClassic Player export; uses ?native_export=1 render path."""
         r = _export(client, "default")
         assert r.status_code == 200
 

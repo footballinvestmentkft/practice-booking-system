@@ -79,9 +79,9 @@ def _make_license(public_card_platform: str | None = None):
     # onboarding_completed=False → get_skill_profile (lazy local import) is skipped;
     # overall defaults to 50.0, sufficient for public profile context tests.
     lic.onboarding_completed         = False
-    lic.card_variant                 = "fifa"
+    lic.card_variant                 = "fclassic"
     lic.published_card_platform      = public_card_platform
-    lic.published_card_variant       = "fifa"
+    lic.published_card_variant       = "fclassic"
     lic.published_card_theme         = "default"
     lic.motivation_scores            = {"position": "striker", "positions": ["striker"]}
     lic.player_card_photo_url        = None
@@ -130,7 +130,7 @@ def _make_db(user, license_, draft_published_platform=_UNSET):
         if first_arg is _CardDraft:
             draft = MagicMock()
             draft.published_theme    = "default"
-            draft.published_variant  = "fifa"
+            draft.published_variant  = "fclassic"
             draft.published_platform = _draft_platform
             q.filter.return_value.first.return_value = draft
         elif _calls[0] == 1:
@@ -192,11 +192,11 @@ def _call_route(platform=None, export=False, native_export=False, user=None,
 class TestPlayerCardPublicRoute:
 
     def test_pcp01_no_platform_returns_interactive_fifa_card(self):
-        """No platform + no export → bare URL serves the interactive FIFA card directly.
+        """No platform + no export → bare URL serves the interactive FClassic card directly.
         Phase 2.4F: player_card_public.html iframe wrapper retired from this path."""
         ctx = _call_route(platform=None, export=False)
         assert ctx.get("template") == "public/player_card_fclassic.html", (
-            "Bare URL must render the interactive FIFA card, not the old iframe wrapper"
+            "Bare URL must render the interactive FClassic card, not the old iframe wrapper"
         )
 
     def test_pcp02_interactive_card_context_required_keys(self):
@@ -218,7 +218,7 @@ class TestPlayerCardPublicRoute:
 
     def test_pcp03_bare_url_uses_default_platform_preset(self):
         """Bare URL with no published platform → effective_platform is None → 'default' preset.
-        The export layer must NOT activate, so the interactive FIFA card is always served."""
+        The export layer must NOT activate, so the interactive FClassic card is always served."""
         lic = _make_license(public_card_platform=None)
         ctx = _call_route(platform=None, export=False, license_=lic, draft_published_platform=None)
         assert ctx.get("template") == "public/player_card_fclassic.html"
@@ -232,7 +232,7 @@ class TestPlayerCardPublicRoute:
 
     def test_pcp04b_bare_url_ignores_published_platform(self):
         """Bare URL must NOT activate the export layer even when published_platform is set.
-        The interactive FIFA card must be served regardless of the user's published platform."""
+        The interactive FClassic card must be served regardless of the user's published platform."""
         lic = _make_license(public_card_platform="instagram_portrait")
         ctx = _call_route(platform=None, export=False, license_=lic)
         assert ctx.get("template") == "public/player_card_fclassic.html"
@@ -289,27 +289,27 @@ class TestPlayerCardPublicRoute:
         )
 
     def test_pcp06_bare_url_context_has_skill_categories(self):
-        """Bare URL context must include skill_categories (FIFA card skill panel)."""
+        """Bare URL context must include skill_categories (FClassic card skill panel)."""
         ctx = _call_route()
         assert "skill_categories" in ctx, (
-            "skill_categories must be present in bare URL context for the FIFA skill panel"
+            "skill_categories must be present in bare URL context for the FClassic skill panel"
         )
 
     def test_pcp07_export_true_serves_export_template(self):
-        """export=True must serve an export template (not the interactive FIFA card for bare URL)."""
+        """export=True must serve an export template (not the interactive FClassic card for bare URL)."""
         ctx = _call_route(platform=None, export=True)
         assert ctx.get("template") != "public/player_card_public.html"
 
     def test_pcp07b_native_export_serves_interactive_card(self):
-        """?native_export=1 must serve the interactive FIFA card without export layer activation.
+        """?native_export=1 must serve the interactive FClassic card without export layer activation.
 
         The Playwright PNG service uses ?native_export=1 for the 'default' platform path.
-        effective_platform must remain None (no published_platform inherited) so the FIFA card
+        effective_platform must remain None (no published_platform inherited) so the FClassic card
         is rendered in native-export-mode — Playwright then screenshots .card-wrap.
         """
         ctx = _call_route(platform=None, export=False, native_export=True)
         assert ctx.get("template") == "public/player_card_fclassic.html", (
-            "?native_export=1 must serve the interactive FIFA card so Playwright can "
+            "?native_export=1 must serve the interactive FClassic card so Playwright can "
             "screenshot the .card-wrap element"
         )
         assert ctx.get("native_export_mode") is True
@@ -321,7 +321,7 @@ class TestPlayerCardPublicRoute:
         assert ctx.get("platform_id") == "instagram_portrait"
 
     def test_pcp08b_preview_param_serves_variant_card(self):
-        """?preview=fifa (draft-variant param) must serve a card template (not the old wrapper)."""
+        """?preview=fclassic (draft-variant param) must serve a card template (not the old wrapper)."""
         from app.api.web_routes.public_player import public_player_card
         from fastapi import Request as _Request
 
@@ -341,7 +341,7 @@ class TestPlayerCardPublicRoute:
             public_player_card(
                 request=request,
                 user_id=user_.id,
-                preview="fifa",
+                preview="fclassic",
                 platform=None,
                 theme=None,
                 export=False,
@@ -408,7 +408,7 @@ class TestEditorDefaultPlatformFix:
 
     def test_pcp13_initial_iframe_src_uses_native_export_for_default(self):
         """When platform is default/unset, initial iframe src must use native_export=1
-        so the editor preview shows the interactive FIFA card with 2-decimal values."""
+        so the editor preview shows the interactive FClassic card with 2-decimal values."""
         assert "native_export=1" in self._html
         assert "platform=instagram_portrait&export=1" not in self._html, (
             "Editor must not use portrait export for the default platform preview — "
@@ -429,7 +429,7 @@ class TestEditorDefaultPlatformFix:
 
     def test_pcp15_apply_iframe_size_js_uses_default_dims(self):
         """_applyIframeSize() for default must look up 'default' canvas (820×800),
-        not instagram_portrait, since the preview now shows the native FIFA card."""
+        not instagram_portrait, since the preview now shows the native FClassic card."""
         start = self._html.find("function _applyIframeSize(")
         assert start != -1, "_applyIframeSize function must exist"
         body = self._html[start: start + 600]
@@ -442,7 +442,7 @@ class TestEditorDefaultPlatformFix:
         """exportCard() must map _currentPlatform==='default' to instagram_portrait.
 
         The preview shows instagram_portrait for the default platform slot (P-1 fix).
-        The export must match — otherwise the user sees Portrait but downloads FIFA Classic.
+        The export must match — otherwise the user sees Portrait but downloads FClassic Player.
         """
         start = self._html.find("async function exportCard(")
         assert start != -1, "exportCard function must exist"
@@ -569,13 +569,13 @@ class TestLayoutTileAndPlatformGridFix:
 
     def test_ce13_per_variant_art_defined_for_key_designs(self):
         """CSS must define art rules for the main card design families."""
-        for variant in ("fifa", "compact", "pulse", "showcase"):
+        for variant in ("fclassic", "compact", "pulse", "showcase"):
             assert f'[data-variant="{variant}"]' in self._html, (
                 f"Per-variant art CSS rule must exist for '{variant}'"
             )
 
 
-# ── 6. FIFA Classic header/body alignment (CE-14..CE-18) ────────────────────
+# ── 6. FClassic Player header/body alignment (CE-14..CE-18) ────────────────────
 
 class TestFifaHeaderBodyAlignment:
     """CE-14..CE-21 — Photo column right edge must align with Outfield left edge.

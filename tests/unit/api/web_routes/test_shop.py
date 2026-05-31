@@ -130,7 +130,7 @@ class TestShopPlayerCard:
         user           = user or _user()
         accessible_ids = accessible_ids or set()
         default_designs = [
-            _design("fifa",    credit_cost=0,   is_premium=False),
+            _design("fclassic",    credit_cost=0,   is_premium=False),
             _design("compact", credit_cost=300, is_premium=True),
         ]
         captured = {}
@@ -185,7 +185,7 @@ class TestShopPlayerCard:
     def test_sh06b_zero_cr_design_not_accessible_not_available(self):
         """SH-06b: 0-CR design without CDO → state='not_available' (no free bypass)."""
         ctx = self._call(user=_user(balance=9999), accessible_ids=set())["context"]
-        row = next(r for r in ctx["design_rows"] if r["id"] == "fifa")
+        row = next(r for r in ctx["design_rows"] if r["id"] == "fclassic")
         assert row["state"] == "not_available"
 
     def test_sh06c_flash_query_params_passed(self):
@@ -350,7 +350,7 @@ class TestShopBuy:
     def test_sh10a_free_error_redirect(self):
         """SH-10a: FreeDesignError → /shop/cards/player?error=free."""
         from app.services.card_design_service import FreeDesignError
-        resp = self._call_buy("player_card", "fifa", side_effect=FreeDesignError())
+        resp = self._call_buy("player_card", "fclassic", side_effect=FreeDesignError())
         loc  = resp.headers["location"]
         assert resp.status_code == 303
         assert "error=free" in loc

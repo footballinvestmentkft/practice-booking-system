@@ -89,7 +89,7 @@ PLATFORM_PRESETS: dict[str, PlatformPresetDefinition] = {
     "facebook_post": PlatformPresetDefinition(
         "facebook_post", "Facebook Post",
         "platform-facebook-post",
-        "Facebook Post · 1200×630 — 3-column FIFA layout with all skills",
+        "Facebook Post · 1200×630 — 3-column FClassic layout with all skills",
         LayoutStrategy.LANDSCAPE,
     ),
 }

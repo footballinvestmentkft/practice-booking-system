@@ -71,7 +71,7 @@ EXPORT_FORMAT_BUCKETS: dict[str, str] = {
 def _build_animated_capable() -> frozenset[tuple[str, str]]:
     from .card_design_service import DESIGNS  # noqa: PLC0415
     # Deduplicate by canonical design.id to avoid duplicate entries from
-    # deprecated alias keys (e.g. DESIGNS["fifa"] → same object as DESIGNS["fclassic"]).
+    # deprecated alias keys (deduplication by canonical design.id is a safety net).
     seen_ids: set[str] = set()
     result: set[tuple[str, str]] = set()
     for design in DESIGNS.values():
@@ -88,7 +88,7 @@ ANIMATED_EXPORT_CAPABLE: frozenset[tuple[str, str]] = _build_animated_capable()
 def is_animated_capable(variant_id: str, platform_id: str) -> bool:
     """Return True if (variant_id, platform_id) supports animated video export.
 
-    Resolves deprecated design ID aliases (e.g. 'fifa' → 'fclassic') before
+    Resolves deprecated design ID aliases (e.g. legacy inputs → canonical id) before
     the lookup so both the legacy and canonical IDs return the correct result.
     """
     from .card_design_service import resolve_design_id  # noqa: PLC0415
@@ -175,7 +175,7 @@ CARD_GALLERY_PLATFORM_IDS: tuple[str, ...] = (
 # Ordering: portrait-first, then vertical formats, then square, then wide/landscape.
 # C2 note: when format-level purchase is introduced, each entry gains a credit_cost
 # and design_id convention (e.g. "fclassic_instagram_portrait"). For now, ownership is
-# collection-level (design_id="fifa") and all formats are unlocked together.
+# collection-level (design_id="fclassic") and all formats are unlocked together.
 PC_FORMAT_META: list[dict] = [
     {"bucket": "portrait",  "platform": "instagram_portrait",  "label": "Instagram Portrait", "dims": "1080 × 1350", "ratio": "mfg-ratio-45",  "display_order": 0},
     {"bucket": "story",     "platform": "instagram_story",     "label": "Instagram Story",    "dims": "1080 × 1920", "ratio": "mfg-ratio-916", "display_order": 1},

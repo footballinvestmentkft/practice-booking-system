@@ -2,7 +2,7 @@
 
 One row per (user_id, card_type_id, design_id) triplet.
 
-Every design (including player_card / "fifa") requires an ownership row
+Every design (including player_card / "fclassic" (legacy input sanitized via resolve_design_id)) requires an ownership row
 before it can be exported. Use grant_design() to issue entitlements
 without credit deduction (admin grants, backfill scripts, seed data).
 
@@ -45,7 +45,7 @@ class CardDesignOwnership(Base):
         String(50),
         nullable=False,
         comment=(
-            "player_card: 'fifa'|'compact'|… (maps to card_designs.id); "
+            "player_card: 'fclassic'|'compact'|… (maps to card_designs.id); "
             "welcome_card: platform format id e.g. 'instagram_portrait'; "
             "challenge_card: format id e.g. 'challenge_post_16_9'"
         ),

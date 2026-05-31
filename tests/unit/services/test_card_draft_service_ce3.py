@@ -33,7 +33,7 @@ def _draft(
     card_type_id: str = "player_card",
     instance_name: str = "default",
     draft_theme: str = "default",
-    draft_variant: str = "fifa",
+    draft_variant: str = "fclassic",
 ) -> CardDraft:
     d = CardDraft()
     d.id            = 10
@@ -247,7 +247,7 @@ class TestInvalidCardTypeId:
 class TestGenericDefaultsForNonPlayerFamilies:
 
     def test_cds_06_welcome_card_created_with_generic_defaults(self):
-        """CDS-06: welcome_card draft is created with theme='default', variant='fifa'."""
+        """CDS-06: welcome_card draft is created with theme='default', variant='fclassic'."""
         db = _db_chain([None])  # no existing draft; no UserLicense lookup for WC
 
         CardDraftService.get_draft(db, user_id=_UID, card_type_id="welcome_card")
@@ -255,7 +255,7 @@ class TestGenericDefaultsForNonPlayerFamilies:
         added: CardDraft = db.add.call_args[0][0]
         assert added.card_type_id  == "welcome_card"
         assert added.draft_theme   == "default"
-        assert added.draft_variant == "fifa"
+        assert added.draft_variant == "fclassic"
         assert added.instance_name == "default"
 
     def test_cds_06b_challenge_card_created_with_generic_defaults(self):

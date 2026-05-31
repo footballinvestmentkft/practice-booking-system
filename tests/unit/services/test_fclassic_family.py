@@ -46,13 +46,14 @@ class TestFC0102Constants:
         """FC-01: FCLASSIC_FAMILY_ID is the canonical family identifier."""
         assert FCLASSIC_FAMILY_ID == "fclassic"
 
-    def test_fc_02_player_design_ids_contains_legacy_and_canonical(self):
-        """FC-02: FCLASSIC_PLAYER_DESIGN_IDS contains both 'fifa' and 'fclassic'."""
-        assert "fifa" in FCLASSIC_PLAYER_DESIGN_IDS, (
-            "'fifa' must remain in FCLASSIC_PLAYER_DESIGN_IDS as legacy alias"
-        )
+    def test_fc_02_player_design_ids_canonical_only(self):
+        """FC-02: FCLASSIC_PLAYER_DESIGN_IDS contains only canonical 'fclassic' (PR-FC-1F)."""
         assert "fclassic" in FCLASSIC_PLAYER_DESIGN_IDS, (
             "'fclassic' must be in FCLASSIC_PLAYER_DESIGN_IDS as canonical ID"
+        )
+        assert "fifa" not in FCLASSIC_PLAYER_DESIGN_IDS, (
+            "'fifa' must be removed from FCLASSIC_PLAYER_DESIGN_IDS after PR-FC-1F; "
+            "legacy input is handled by resolve_design_id() sanitizer"
         )
 
 
@@ -173,8 +174,8 @@ class TestFC1819WriteGuard:
 
 class TestFC20Label:
 
-    def test_fc_20_fifa_design_label_is_fclassic_player(self):
-        """FC-20: DESIGNS['fifa'] fallback dict label == 'FClassic Player'."""
-        assert DESIGNS["fifa"].label == "FClassic Player", (
-            f"Expected 'FClassic Player', got {DESIGNS['fifa'].label!r}"
+    def test_fc_20_fclassic_design_label_is_fclassic_player(self):
+        """FC-20: DESIGNS['fclassic'].label == 'FClassic Player' (PR-FC-1F: 'fifa' key removed)."""
+        assert DESIGNS["fclassic"].label == "FClassic Player", (
+            f"Expected 'FClassic Player', got {DESIGNS['fclassic'].label!r}"
         )

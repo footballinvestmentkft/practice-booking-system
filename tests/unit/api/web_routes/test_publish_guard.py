@@ -4,7 +4,7 @@ PG-01  publish-card 403 when draft.draft_variant not owned
 PG-02  publish-card 200 when draft.draft_variant is owned
 PG-03  publish_draft() NOT called when variant unowned
 PG-04  publish-card 404 when no LFA license
-PG-05  FIFA Classic credit_cost > 0 in DESIGNS fallback dict
+PG-05  FClassic Player credit_cost > 0 in DESIGNS fallback dict
 PG-06  shop _state() returns 'not_available' for credit_cost=0 designs
 """
 import asyncio
@@ -23,7 +23,7 @@ def _user(uid: int = 42) -> MagicMock:
     return u
 
 
-def _draft(variant: str = "fifa") -> MagicMock:
+def _draft(variant: str = "fclassic") -> MagicMock:
     d = MagicMock()
     d.draft_variant      = variant
     d.published_theme    = "default"
@@ -66,7 +66,7 @@ class TestPublishGuard:
 
     def test_pg02_publish_200_owned_variant(self):
         """PG-02: publish-card returns 200 when draft variant is owned."""
-        resp, _ = _invoke_publish(_user(), _draft("fifa"), is_owned=True)
+        resp, _ = _invoke_publish(_user(), _draft("fclassic"), is_owned=True)
         assert resp.status_code == 200
 
     def test_pg03_publish_draft_not_called_when_unowned(self):
@@ -93,20 +93,20 @@ class TestPricingGuard:
     def test_pg05_fifa_classic_not_free(self):
         """PG-05: FClassic Player credit_cost > 0 in DESIGNS fallback dict."""
         from app.services.card_design_service import DESIGNS
-        fifa = DESIGNS.get("fifa")
-        assert fifa is not None, "DESIGNS must contain 'fifa' (legacy alias key)"
-        assert fifa.credit_cost > 0, (
-            f"FClassic Player must not be free (credit_cost={fifa.credit_cost}); "
+        fclassic = DESIGNS.get("fclassic")
+        assert fclassic is not None, "DESIGNS must contain 'fclassic' (legacy alias key)"
+        assert fclassic.credit_cost > 0, (
+            f"FClassic Player must not be free (credit_cost={fclassic.credit_cost}); "
             "no 0-CR purchasable designs allowed"
         )
-        assert fifa.is_premium is True, "FClassic Player must be is_premium=True"
+        assert fclassic.is_premium is True, "FClassic Player must be is_premium=True"
 
     def test_pg06_zero_credit_cost_yields_not_available(self):
         """PG-06: shop route assigns 'not_available' to credit_cost=0 unowned designs."""
         import asyncio
         from unittest.mock import MagicMock, patch
 
-        # Build a fake design with credit_cost=0 (simulates old DB row for FIFA Classic)
+        # Build a fake design with credit_cost=0 (simulates old DB row for FClassic Player)
         zero_design = MagicMock()
         zero_design.id          = "hypothetical_zero"
         zero_design.label       = "Zero"

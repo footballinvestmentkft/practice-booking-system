@@ -14,7 +14,7 @@ PUB-05  POST /dashboard/publish-card copies draft → published and commits
 PUB-06  POST /dashboard/publish-card response body contains correct published values
 PUB-07  POST /dashboard/publish-card with no license returns 404
 PUB-08  Migration backfill SQL uses COALESCE(card_theme, 'default') and
-        COALESCE(card_variant, 'fifa') (not bare column reads)
+        COALESCE(card_variant, 'fclassic') (not bare column reads)
 PUB-09  Editor template contains "Publish Card" button HTML
 PUB-10  Editor template contains _isDraftPublished JS function
 PUB-11  Editor template contains publish-status-dot CSS for unpublished/published states
@@ -44,10 +44,10 @@ def _make_user(uid: int = 7) -> MagicMock:
 
 def _make_license(
     card_theme: str = "default",
-    card_variant: str = "fifa",
+    card_variant: str = "fclassic",
     public_card_platform: str | None = None,
     published_card_theme: str = "default",
-    published_card_variant: str = "fifa",
+    published_card_variant: str = "fclassic",
     published_card_platform: str | None = None,
 ) -> MagicMock:
     lic = MagicMock()
@@ -162,10 +162,10 @@ class TestMigrationBackfill:
         )
 
     def test_pub08_backfill_uses_coalesce_for_variant(self):
-        """PUB-08b: backfill SQL uses COALESCE(card_variant, 'fifa') not bare card_variant."""
+        """PUB-08b: backfill SQL uses COALESCE(card_variant, 'fclassic') not bare card_variant."""
         sql = _load_migration()
         assert "COALESCE(card_variant" in sql, (
-            "PUB-08b: Migration backfill SQL must use COALESCE(card_variant, 'fifa') "
+            "PUB-08b: Migration backfill SQL must use COALESCE(card_variant, 'fclassic') "
             "to handle NULL draft variants; bare 'card_variant' assignment would store NULLs"
         )
 
@@ -223,7 +223,7 @@ class TestPublishCardEndpoint:
     _CDS_PATH = "app.api.web_routes.dashboard._CardDraftService"
 
     def _call(self, lic=None, no_license: bool = False,
-              draft_theme: str = "dark", draft_variant: str = "fifa",
+              draft_theme: str = "dark", draft_variant: str = "fclassic",
               draft_platform: str | None = None):
         from app.api.web_routes.dashboard import student_publish_card
         db   = MagicMock()
@@ -247,7 +247,7 @@ class TestPublishCardEndpoint:
     def test_pub05_publish_copies_draft_to_published(self):
         """PUB-05: publish-card must call CardDraftService.publish_draft (Phase 4D-2)."""
         result, _, MockCDS, _ = self._call(
-            draft_theme="dark", draft_variant="fifa", draft_platform="instagram_square"
+            draft_theme="dark", draft_variant="fclassic", draft_platform="instagram_square"
         )
         body = json.loads(result.body)
         assert body["ok"] is True
@@ -256,14 +256,14 @@ class TestPublishCardEndpoint:
     def test_pub06_response_body_contains_published_values(self):
         """PUB-06: publish-card response body reflects card_draft.published_* fields."""
         result, _, _, _ = self._call(
-            draft_theme="dark", draft_variant="fifa", draft_platform="instagram_square"
+            draft_theme="dark", draft_variant="fclassic", draft_platform="instagram_square"
         )
         body = json.loads(result.body)
         assert body["ok"] is True
         assert "published" in body
         pub = body["published"]
         assert pub["theme"]    == "dark"
-        assert pub["variant"]  == "fifa"
+        assert pub["variant"]  == "fclassic"
         assert pub["platform"] == "instagram_square"
 
     def test_pub06b_null_platform_returned_as_default(self):

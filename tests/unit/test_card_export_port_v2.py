@@ -64,7 +64,7 @@ def _make_user(name: str = "Bence Kovács", nationality: str = "Hungarian") -> M
 
 
 def _make_license(
-    variant: str = "fifa",
+    variant: str = "fclassic",
     position: str = "CM",
     positions: list[str] | None = None,
     portrait_url: str | None = None,
@@ -122,7 +122,7 @@ def _make_db(user: MagicMock, lic: MagicMock) -> MagicMock:
         if args and args[0] is _CD:
             d = MagicMock()
             d.published_theme = "default"
-            d.published_variant = lic.published_card_variant or "fifa"
+            d.published_variant = lic.published_card_variant or "fclassic"
             d.published_platform = None
             d.draft_theme = "default"
             d.draft_variant = d.published_variant
@@ -157,7 +157,7 @@ def _render(
     from app.dependencies import get_db
 
     user = _make_user(name, nationality)
-    lic  = _make_license("fifa", position, positions, portrait_url)
+    lic  = _make_license("fclassic", position, positions, portrait_url)
     db   = _make_db(user, lic)
     app.dependency_overrides[get_db] = lambda: db
     try:

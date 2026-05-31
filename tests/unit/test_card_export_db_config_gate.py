@@ -38,10 +38,10 @@ from fastapi.testclient import TestClient
 # ── Design definitions ────────────────────────────────────────────────────────
 
 def _make_cs5_portrait_def():
-    """FIFA CardDesignDefinition with CS-5 portrait+story config (post-migration state)."""
+    """FClassic CardDesignDefinition with CS-5 portrait+story config (post-migration state)."""
     from app.services.card_design_service import CardDesignDefinition
     return CardDesignDefinition(
-        id="fifa",
+        id="fclassic",
         label="FClassic Player",
         description="",
         is_premium=False,
@@ -78,10 +78,10 @@ def _make_cs5_portrait_def():
 
 
 def _make_old_portrait_def():
-    """FIFA CardDesignDefinition with pre-CS-5 config (pre-migration state)."""
+    """FClassic CardDesignDefinition with pre-CS-5 config (pre-migration state)."""
     from app.services.card_design_service import CardDesignDefinition
     return CardDesignDefinition(
-        id="fifa",
+        id="fclassic",
         label="FClassic Player",
         description="",
         is_premium=False,
@@ -135,7 +135,7 @@ def _make_user(user_id: int = 7) -> MagicMock:
     return u
 
 
-def _make_license(card_variant: str = "fifa") -> MagicMock:
+def _make_license(card_variant: str = "fclassic") -> MagicMock:
     lic = MagicMock()
     lic.card_variant = card_variant
     lic.card_theme = "default"
@@ -187,7 +187,7 @@ def _mock_db(user=None, license_=None):
         if args and args[0] is _CardDraft:
             _draft = MagicMock()
             _draft.published_theme    = "default"
-            _draft.published_variant  = (license_.published_card_variant if license_ else None) or "fifa"
+            _draft.published_variant  = (license_.published_card_variant if license_ else None) or "fclassic"
             _draft.published_platform = None
             _draft.draft_theme    = "default"
             _draft.draft_variant  = _draft.published_variant
@@ -214,7 +214,7 @@ def _render_with_design(client, platform: str, design_def, user_id: int = 7) -> 
     from app.main import app
     from app.dependencies import get_db
 
-    db = _mock_db(user=_make_user(user_id), license_=_make_license("fifa"))
+    db = _mock_db(user=_make_user(user_id), license_=_make_license("fclassic"))
     app.dependency_overrides[get_db] = lambda: db
     with patch("app.api.web_routes.public_player._get_design", return_value=design_def):
         try:

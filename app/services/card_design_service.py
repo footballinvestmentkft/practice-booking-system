@@ -198,26 +198,21 @@ DESIGN_ORDER: list[str] = [
     "fclassic", "compact", "compact_bg", "showcase", "showcase_bg", "atlas", "pulse",
 ]
 
-# Deprecated alias — both keys point to the same CardDesignDefinition(id="fclassic").
-# Kept until PR-FC-1F removes the alias entirely.
-DESIGNS["fifa"] = DESIGNS["fclassic"]
-
-# ── FClassic family — PR-FC-1A ────────────────────────────────────────────────
-# "fclassic" is the canonical family / design identifier going forward.
-# "fifa" is a deprecated alias kept alive for backward compatibility until
-# PR-FC-1B completes the DB PK migration.
+# ── FClassic family — PR-FC-1A / PR-FC-1F ────────────────────────────────────
+# "fclassic" is the canonical family / design identifier.
 
 FCLASSIC_FAMILY_ID: str = "fclassic"
 
 # Player Card design IDs that belong to the FClassic family.
-# Includes both the legacy "fifa" key (current DB PK) and the canonical "fclassic"
-# key (post-PR-FC-1B DB state).
-FCLASSIC_PLAYER_DESIGN_IDS: frozenset[str] = frozenset({"fifa", "fclassic"})
+# PR-FC-1F: only canonical "fclassic"; "fifa" is no longer a dict key.
+FCLASSIC_PLAYER_DESIGN_IDS: frozenset[str] = frozenset({"fclassic"})
 
-# Deprecated design ID → canonical design ID.
-# Read path: resolve before lookup. Write path: new data must use canonical ID.
+# Input-only sanitizer — maps legacy "fifa" input to canonical "fclassic".
+# PR-FC-1F: DESIGNS["fifa"] dict key removed; this mapping handles old API
+# inputs that may still supply "fifa" as a design id.
+# Never use this to generate output — only for resolving incoming legacy values.
 _DESIGN_ID_ALIAS: dict[str, str] = {
-    "fifa": "fclassic",
+    "fifa": "fclassic",   # deprecated legacy input alias
 }
 
 # Design IDs that are deprecated and must not be used for new canonical writes.
@@ -357,7 +352,7 @@ def get_all_designs(db=None) -> list[CardDesignDefinition]:
     """Return all designs sorted by (sort_order, id), deduplicated by canonical id.
 
     The DESIGNS fallback dict may contain deprecated alias keys pointing to the
-    same CardDesignDefinition object (e.g. "fifa" → same object as "fclassic").
+    same canonical id (deduplication by design.id is a safety net).
     Deduplication ensures each design appears exactly once in the returned list.
     """
     cache = _maybe_reload(db)

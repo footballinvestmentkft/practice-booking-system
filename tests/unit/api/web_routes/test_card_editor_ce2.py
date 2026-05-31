@@ -61,7 +61,7 @@ def _license(uid: int = 42):
     return lic
 
 
-def _draft(variant: str = "fifa", theme: str = "default") -> MagicMock:
+def _draft(variant: str = "fclassic", theme: str = "default") -> MagicMock:
     d = MagicMock()
     d.draft_theme    = theme
     d.draft_variant  = variant
@@ -114,7 +114,7 @@ def _invoke_editor(
     db.query.return_value.filter.return_value.first.side_effect = [license, None]
 
     if all_variants is None:
-        all_variants = [_variant("fifa"), _variant("compact"), _variant("showcase")]
+        all_variants = [_variant("fclassic"), _variant("compact"), _variant("showcase")]
     if all_themes is None:
         all_themes = [
             _theme_def("default", is_premium=False),
@@ -164,8 +164,8 @@ def _html_from_template() -> str:
 class TestCE201OwnedOnlyVariants:
     def test_owned_variants_in_context(self):
         ctx = _invoke_editor(
-            draft=_draft("fifa"),
-            owned_variant_ids=["fifa"],
+            draft=_draft("fclassic"),
+            owned_variant_ids=["fclassic"],
         )
         assert ctx, "context not captured"
         variants = ctx.get("card_variants", [])
@@ -174,11 +174,11 @@ class TestCE201OwnedOnlyVariants:
 
     def test_all_returned_variants_are_owned(self):
         ctx = _invoke_editor(
-            draft=_draft("fifa"),
-            owned_variant_ids=["fifa"],
+            draft=_draft("fclassic"),
+            owned_variant_ids=["fclassic"],
         )
         ids = [v["id"] for v in ctx.get("card_variants", [])]
-        assert "fifa" in ids
+        assert "fclassic" in ids
         assert "compact" not in ids
         assert "showcase" not in ids
 
@@ -188,8 +188,8 @@ class TestCE201OwnedOnlyVariants:
 class TestCE202LockedVariantAbsent:
     def test_unowned_variant_not_in_context(self):
         ctx = _invoke_editor(
-            draft=_draft("fifa"),
-            owned_variant_ids=["fifa"],
+            draft=_draft("fclassic"),
+            owned_variant_ids=["fclassic"],
         )
         unowned_ids = [v["id"] for v in ctx.get("card_variants", []) if not v["unlocked"]]
         assert unowned_ids == [], \
@@ -197,7 +197,7 @@ class TestCE202LockedVariantAbsent:
 
     def test_zero_owned_gives_empty_list(self):
         ctx = _invoke_editor(
-            draft=_draft("fifa"),
+            draft=_draft("fclassic"),
             owned_variant_ids=[],
         )
         assert ctx.get("card_variants") == []
@@ -208,8 +208,8 @@ class TestCE202LockedVariantAbsent:
 class TestCE203OwnedThemes:
     def test_free_themes_always_in_context(self):
         ctx = _invoke_editor(
-            draft=_draft("fifa"),
-            owned_variant_ids=["fifa"],
+            draft=_draft("fclassic"),
+            owned_variant_ids=["fclassic"],
             owned_color_ids=set(),
         )
         theme_ids = [t["id"] for t in ctx.get("card_themes", [])]
@@ -218,8 +218,8 @@ class TestCE203OwnedThemes:
 
     def test_unowned_premium_theme_absent(self):
         ctx = _invoke_editor(
-            draft=_draft("fifa"),
-            owned_variant_ids=["fifa"],
+            draft=_draft("fclassic"),
+            owned_variant_ids=["fclassic"],
             owned_color_ids=set(),
         )
         theme_ids = [t["id"] for t in ctx.get("card_themes", [])]
@@ -227,8 +227,8 @@ class TestCE203OwnedThemes:
 
     def test_owned_premium_theme_present(self):
         ctx = _invoke_editor(
-            draft=_draft("fifa"),
-            owned_variant_ids=["fifa"],
+            draft=_draft("fclassic"),
+            owned_variant_ids=["fclassic"],
             owned_color_ids={"gold"},
         )
         theme_ids = [t["id"] for t in ctx.get("card_themes", [])]
@@ -240,8 +240,8 @@ class TestCE203OwnedThemes:
 class TestCE204LockedThemeAbsent:
     def test_unlocked_only_in_themes(self):
         ctx = _invoke_editor(
-            draft=_draft("fifa"),
-            owned_variant_ids=["fifa"],
+            draft=_draft("fclassic"),
+            owned_variant_ids=["fclassic"],
             owned_color_ids=set(),
         )
         assert all(t["unlocked"] for t in ctx.get("card_themes", [])), \
@@ -279,27 +279,27 @@ class TestCE205to209NoPurchaseInTemplate:
 
 class TestCE210DraftFallback:
     def test_stale_draft_variant_replaced_by_first_owned(self):
-        """draft_variant='showcase' but only 'fifa' owned → active_card_variant='fifa'."""
+        """draft_variant='showcase' but only 'fclassic' owned → active_card_variant='fclassic'."""
         ctx = _invoke_editor(
             draft=_draft("showcase"),   # stale — not owned
-            owned_variant_ids=["fifa"],
+            owned_variant_ids=["fclassic"],
         )
-        assert ctx.get("active_card_variant") == "fifa", \
+        assert ctx.get("active_card_variant") == "fclassic", \
             "render-time fallback must set active_card_variant to first owned design"
 
     def test_stale_draft_fallback_sets_owned_true(self):
         ctx = _invoke_editor(
             draft=_draft("showcase"),
-            owned_variant_ids=["fifa"],
+            owned_variant_ids=["fclassic"],
         )
         assert ctx.get("active_variant_owned") is True
 
     def test_owned_draft_variant_unchanged(self):
         ctx = _invoke_editor(
-            draft=_draft("fifa"),
-            owned_variant_ids=["fifa"],
+            draft=_draft("fclassic"),
+            owned_variant_ids=["fclassic"],
         )
-        assert ctx.get("active_card_variant") == "fifa"
+        assert ctx.get("active_card_variant") == "fclassic"
 
 
 # ── CE2-11 — zero owned → empty list ─────────────────────────────────────────
@@ -307,14 +307,14 @@ class TestCE210DraftFallback:
 class TestCE211ZeroOwned:
     def test_zero_owned_card_variants_empty(self):
         ctx = _invoke_editor(
-            draft=_draft("fifa"),
+            draft=_draft("fclassic"),
             owned_variant_ids=[],
         )
         assert ctx.get("card_variants") == []
 
     def test_zero_owned_active_variant_owned_false(self):
         ctx = _invoke_editor(
-            draft=_draft("fifa"),
+            draft=_draft("fclassic"),
             owned_variant_ids=[],
         )
         assert ctx.get("active_variant_owned") is False

@@ -68,7 +68,7 @@ def _call_pc(query_params=None, accessible_ids=None, designs=None, balance=500):
     accessible_ids = accessible_ids or set()
     default_designs = [
         _design("compact",    300, "Compact"),
-        _design("fifa",       0,   "FClassic Player"),
+        _design("fclassic",       0,   "FClassic Player"),
     ]
     captured = {}
 
@@ -145,7 +145,7 @@ def _pc_ctx(purchased=None, error=None, owned_ids=None, balance=500):
     owned_ids = owned_ids or []
     rows = [
         {"id": "compact",    "label": "Compact",      "credit_cost": 300, "state": "owned" if "compact" in owned_ids else "get_card", "description": None},
-        {"id": "fifa",       "label": "FClassic Player",  "credit_cost": 0,   "state": "owned" if "fifa" in owned_ids else "not_available", "description": None},
+        {"id": "fclassic",       "label": "FClassic Player",  "credit_cost": 0,   "state": "owned" if "fclassic" in owned_ids else "not_available", "description": None},
     ]
     return {
         "request": MagicMock(query_params={}),

@@ -428,7 +428,7 @@ def public_player_card(
         _preview_def = _get_design(preview, db)
         if _preview_def.id == preview:
             card_variant_id = preview
-    variant = _get_variant(card_variant_id)  # falls back to "fifa" for unknown IDs
+    variant = _get_variant(card_variant_id)  # falls back to "fclassic" for unknown IDs
 
     # Template selection: use variant.template if the file exists.
     # If the selected variant has no template yet (not yet implemented), fall back
@@ -439,7 +439,7 @@ def public_player_card(
     if os.path.isfile(candidate):
         template_path = variant.template
     else:
-        if card_variant_id not in ("fifa", "fclassic"):
+        if card_variant_id != "fclassic":
             logger.warning(
                 "card variant template missing — rendering fclassic fallback",
                 extra={"card_variant_id": card_variant_id, "expected_template": variant.template},
@@ -643,7 +643,7 @@ async def export_player_card(
         or "fclassic"
     )
 
-    # Design ownership guard — all designs require entitlement, including fclassic (deprecated legacy alias: "fifa").
+    # Design ownership guard — all designs require entitlement, including fclassic (legacy inputs sanitized via resolve_design_id).
     # Admin bypass: admins may export any card regardless of ownership.
     if current_user.role != UserRole.ADMIN:
         from app.services.card_design_service import is_design_accessible as _is_accessible

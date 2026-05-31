@@ -94,9 +94,9 @@ _CARD_EDITOR_HTML = (_TMPL_DIR / "dashboard_card_editor.html").read_text(encodin
 
 def _draft(
     draft_theme: str = "default",
-    draft_variant: str = "fifa",
+    draft_variant: str = "fclassic",
     published_theme: str | None = "default",
-    published_variant: str | None = "fifa",
+    published_variant: str | None = "fclassic",
     draft_data: dict | None = None,
     published_data: dict | None = None,
 ) -> CardDraft:

@@ -50,11 +50,11 @@ def _draft(**kwargs) -> CardDraft:
     d.card_type_id = "player_card"
     d.instance_name = "default"
     d.draft_theme = "default"
-    d.draft_variant = "fifa"
+    d.draft_variant = "fclassic"
     d.draft_platform = None
     d.draft_data = kwargs.get("draft_data", None)
     d.published_theme = kwargs.get("published_theme", "default")
-    d.published_variant = kwargs.get("published_variant", "fifa")
+    d.published_variant = kwargs.get("published_variant", "fclassic")
     d.published_platform = None
     d.published_data = kwargs.get("published_data", None)
     d.published_at = datetime.now(timezone.utc)

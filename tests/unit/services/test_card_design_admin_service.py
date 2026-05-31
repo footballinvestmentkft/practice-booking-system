@@ -6,7 +6,7 @@ Coverage:
   AD-01  validate_manifest: valid CREATE manifest → preview row
   AD-02  validate_manifest: invalid JSON → error
   AD-03  validate_manifest: schema_version ≠ 1 → error
-  AD-04  validate_manifest: protected ID 'fifa' → error
+  AD-04  validate_manifest: protected ID 'fclassic' → error
   AD-05  validate_manifest: invalid slug → error
   AD-06  validate_manifest: is_premium=True, credit_cost=0 → error
   AD-07  validate_manifest: component_config key not in column-driver buckets → error
@@ -161,10 +161,10 @@ def test_ad03_wrong_schema_version():
 
 @pytest.mark.unit
 def test_ad04_protected_id_fifa_rejected():
-    """id='fifa' → validation error — protected design cannot be modified via manifest."""
+    """id='fclassic' → validation error — protected design cannot be modified via manifest."""
     from app.services.card_design_admin_service import validate_manifest
 
-    raw = _make_manifest(id="fifa")
+    raw = _make_manifest(id="fclassic")
     result = validate_manifest(raw, _mock_db_empty())
     assert not result.ok
     assert any("protected" in e.lower() for e in result.errors)

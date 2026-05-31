@@ -1,5 +1,5 @@
 """
-Final merge-readiness validation — all 7 FIFA Classic export formats
+Final merge-readiness validation — all 7 FClassic Player export formats
 =====================================================================
 FV-01..35  (2026-05-18)
 
@@ -67,10 +67,10 @@ def _make_user(name: str = "Rafael Cardoso", nationality: str = "Brazilian") -> 
 
 def _make_license(position: str = "ST", portrait_url: str | None = "https://example.com/photo.jpg") -> MagicMock:
     lic = MagicMock()
-    lic.card_variant = "fifa"
+    lic.card_variant = "fclassic"
     lic.card_theme = "default"
     lic.public_card_platform = None
-    lic.published_card_variant = "fifa"
+    lic.published_card_variant = "fclassic"
     lic.published_card_theme = "default"
     lic.published_card_platform = None
     lic.specialization_type = "LFA_FOOTBALL_PLAYER"
@@ -119,10 +119,10 @@ def _make_db(user: MagicMock, lic: MagicMock) -> MagicMock:
         if args and args[0] is _CD:
             d = MagicMock()
             d.published_theme = "default"
-            d.published_variant = "fifa"
+            d.published_variant = "fclassic"
             d.published_platform = None
             d.draft_theme = "default"
-            d.draft_variant = "fifa"
+            d.draft_variant = "fclassic"
             d.draft_platform = None
             q.filter.return_value.first.return_value = d
         elif calls[0] == 1:

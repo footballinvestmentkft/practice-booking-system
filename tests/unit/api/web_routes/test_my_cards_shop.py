@@ -72,7 +72,7 @@ class TestPlayerCardShop:
         accessible_ids = accessible_ids or set()
         request = _make_request(query_params=query_params or {})
 
-        free_design    = _make_design("fifa",    credit_cost=0,   is_premium=False)
+        free_design    = _make_design("fclassic",    credit_cost=0,   is_premium=False)
         premium_design = _make_design("compact", credit_cost=300, is_premium=True)
 
         captured = {}
@@ -234,7 +234,7 @@ class TestPurchaseRedirects:
         from app.services.card_design_service import FreeDesignError
         user = _make_user()
         db   = _make_db()
-        resp = self._call_get_card("player_card", "fifa", user, db, side_effect=FreeDesignError())
+        resp = self._call_get_card("player_card", "fclassic", user, db, side_effect=FreeDesignError())
         loc  = resp.headers["location"]
         assert resp.status_code == 303
         assert "error=free" in loc

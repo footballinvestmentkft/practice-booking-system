@@ -1,7 +1,7 @@
 """
 Public Profile API Endpoints
 =============================
-FIFA/Football Manager style player profiles for LFA students.
+FClassic-style LFA Football Player profiles for LFA students.
 Instructor profiles showing licenses and qualifications.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -21,7 +21,7 @@ def get_lfa_player_profile(
     db: Session = Depends(get_db)
 ):
     """
-    Get FIFA-style LFA Football Player profile
+    Get FClassic-style LFA Football Player profile
 
     **Returns:**
     - User basic info (name, email)

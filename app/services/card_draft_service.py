@@ -67,7 +67,7 @@ class CardDraftService:
 
         # Seed sensible defaults, seeding from UserLicense when possible.
         draft_theme = "default"
-        draft_variant = "fifa"
+        draft_variant = "fclassic"
         draft_platform = None
         published_theme = None
         published_variant = None
@@ -85,11 +85,11 @@ class CardDraftService:
             )
             if lic:
                 draft_theme    = lic.card_theme    or "default"
-                draft_variant  = lic.card_variant  or "fifa"
+                draft_variant  = lic.card_variant  or "fclassic"
                 draft_platform = lic.public_card_platform
                 if lic.published_card_theme:
                     published_theme    = lic.published_card_theme
-                    published_variant  = lic.published_card_variant or "fifa"
+                    published_variant  = lic.published_card_variant or "fclassic"
                     published_platform = lic.published_card_platform
                     published_at       = datetime.now(timezone.utc)
 
@@ -130,7 +130,7 @@ class CardDraftService:
 
         For player_card / instance_name="default" the create-path seeds defaults
         from the UserLicense row (same behaviour as get_or_create_singleton).
-        All other families receive generic defaults (theme="default", variant="fifa").
+        All other families receive generic defaults (theme="default", variant="fclassic").
 
         Raises:
             ValueError: card_type_id is not in KNOWN_CARD_TYPE_IDS.
@@ -154,7 +154,7 @@ class CardDraftService:
             return draft
 
         draft_theme    = "default"
-        draft_variant  = "fifa"
+        draft_variant  = "fclassic"
         draft_platform = None
         published_theme: str | None    = None
         published_variant: str | None  = None
@@ -172,11 +172,11 @@ class CardDraftService:
             )
             if lic:
                 draft_theme    = lic.card_theme    or "default"
-                draft_variant  = lic.card_variant  or "fifa"
+                draft_variant  = lic.card_variant  or "fclassic"
                 draft_platform = lic.public_card_platform
                 if lic.published_card_theme:
                     published_theme    = lic.published_card_theme
-                    published_variant  = lic.published_card_variant or "fifa"
+                    published_variant  = lic.published_card_variant or "fclassic"
                     published_platform = lic.published_card_platform
                     published_at       = datetime.now(timezone.utc)
 

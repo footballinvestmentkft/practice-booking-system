@@ -82,7 +82,7 @@ def _make_user(user_id: int = 7) -> MagicMock:
     return u
 
 
-def _make_license(card_variant: str = "fifa") -> MagicMock:
+def _make_license(card_variant: str = "fclassic") -> MagicMock:
     lic = MagicMock()
     lic.card_variant = card_variant
     lic.card_theme = "default"

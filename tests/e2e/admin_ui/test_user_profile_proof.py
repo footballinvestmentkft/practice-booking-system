@@ -96,8 +96,8 @@ class TestUserProfileProof:
         skill_row_count = skill_rows.count()
         assert skill_row_count == 44, f"Expected 44 skill rows, got {skill_row_count}"
 
-        # Overall rating visible (FIFA redesign uses fifa-overall-num)
-        assert "fifa-overall-num" in content or "overall-val" in content or "overall-bar-wrap" in content, \
+        # Overall rating visible (FClassic redesign uses fclassic-overall-num)
+        assert "fclassic-overall-num" in content or "overall-val" in content or "overall-bar-wrap" in content, \
             "Overall rating section missing"
 
         # Back link works

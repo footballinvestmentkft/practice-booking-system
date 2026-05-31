@@ -67,7 +67,7 @@ def _call(user=None, db=None, accessible_ids=None, designs=None, query_params=No
     db             = db   or _db()
     accessible_ids = accessible_ids or set()
     default_designs = [
-        _design("fifa",    credit_cost=0,   is_premium=False),
+        _design("fclassic",    credit_cost=0,   is_premium=False),
         _design("compact", credit_cost=300, is_premium=True),
     ]
     captured = {}
@@ -122,10 +122,10 @@ class TestPlayerCardShopRoute:
     def test_mcp05_multiple_accessible_designs_all_in_rows(self):
         """MCP-05: multiple accessible designs → all appear in design_rows."""
         ctx = _call(
-            accessible_ids={("player_card", "fifa"), ("player_card", "compact")},
+            accessible_ids={("player_card", "fclassic"), ("player_card", "compact")},
         )["context"]
         ids = {r["id"] for r in ctx["design_rows"]}
-        assert "fifa" in ids
+        assert "fclassic" in ids
         assert "compact" in ids
 
     def test_mcp06_premium_owned_in_rows(self):
@@ -173,10 +173,10 @@ class TestPlayerCardShopRoute:
         ctx = _call(
             user=_user(balance=500),
             designs=[
-                _design("fifa",    credit_cost=0,   is_premium=False),
+                _design("fclassic",    credit_cost=0,   is_premium=False),
                 _design("compact", credit_cost=300, is_premium=True),
             ],
             accessible_ids={("player_card", "compact")},
         )["context"]
-        assert ctx["owned_count"] == 1  # only owned compact; fifa not auto-included
+        assert ctx["owned_count"] == 1  # only owned compact; fclassic not auto-included
         assert ctx["total_count"] == 1  # total_count = owned_count in owned-only view

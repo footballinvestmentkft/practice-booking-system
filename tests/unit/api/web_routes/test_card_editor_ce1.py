@@ -57,7 +57,7 @@ def _license(uid: int = 42):
     lic.onboarding_completed = True
     lic.football_skills = {"passing": 60}
     lic.card_theme = "default"
-    lic.card_variant = "fifa"
+    lic.card_variant = "fclassic"
     lic.public_card_platform = None
     lic.player_card_photo_url = None
     lic.card_bg_compact_url = None
@@ -89,10 +89,10 @@ def _call_canonical_handler(user=None, lic=None):
 
     draft = MagicMock()
     draft.draft_theme = "default"
-    draft.draft_variant = "fifa"
+    draft.draft_variant = "fclassic"
     draft.draft_platform = None
     draft.published_theme = "default"
-    draft.published_variant = "fifa"
+    draft.published_variant = "fclassic"
     draft.published_platform = None
     draft.draft_data = {}
     draft.published_data = {}

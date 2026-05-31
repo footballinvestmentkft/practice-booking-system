@@ -1,16 +1,16 @@
 """Player Card collection detail page tests — PCID-01..12.
 
-PCID-01  GET /shop/cards/player/fifa → 200, shop_player_card_detail.html
+PCID-01  GET /shop/cards/player/fclassic → 200, shop_player_card_detail.html
 PCID-02  GET /shop/cards/player/unknown_xyz → 404
 PCID-03  Detail page context contains collection title (design.label)
-PCID-04  format_rows contains exactly the 7 FIFA buckets
+PCID-04  format_rows contains exactly the 7 FClassic buckets
 PCID-05  portrait bucket → mfg-ratio-45 ratio class
 PCID-06  story and tiktok buckets → mfg-ratio-916 ratio class
 PCID-07  square bucket → mfg-ratio-11 ratio class
 PCID-08  landscape / og / banner buckets → mfg-ratio-169 ratio class
 PCID-09  Unowned state → preview wrappers carry mfg-locked class
 PCID-10  Owned state → preview wrappers do NOT carry mfg-locked class
-PCID-11  Unowned state → collection buy form targets /shop/cards/player_card/buy/fifa
+PCID-11  Unowned state → collection buy form targets /shop/cards/player_card/buy/fclassic
 PCID-12  No per-format buy form present in rendered HTML
 PCID-BF  Browse formats → link present on /shop/cards/player list page
 """
@@ -44,7 +44,7 @@ def _user(balance=500):
     return u
 
 
-def _req(path="/shop/cards/player/fifa", query_params=None):
+def _req(path="/shop/cards/player/fclassic", query_params=None):
     r = MagicMock()
     r.url.path = path
     params = query_params or {}
@@ -58,7 +58,7 @@ def _db():
 
 def _fifa_design(available=True, credit_cost=300):
     d = MagicMock()
-    d.id = "fifa"
+    d.id = "fclassic"
     d.label = "FClassic Player"
     d.description = "The original LFA player card."
     d.credit_cost = credit_cost
@@ -69,7 +69,7 @@ def _fifa_design(available=True, credit_cost=300):
 
 
 def _call_detail(
-    collection_id="fifa",
+    collection_id="fclassic",
     user=None,
     owned=False,
     designs=None,
@@ -127,7 +127,7 @@ def _render_detail(state="get_card", owned=False):
         "request": MagicMock(),
         "user": user,
         "design": design,
-        "collection_id": "fifa",
+        "collection_id": "fclassic",
         "state": state,
         "format_rows": format_rows,
         "flash_purchased": None,
@@ -148,7 +148,7 @@ def _render_player_list():
     user.credit_balance = 500
 
     design_rows = [
-        {"id": "fifa", "label": "FClassic Player", "description": "", "credit_cost": 300, "is_premium": True, "state": "get_card"},
+        {"id": "fclassic", "label": "FClassic Player", "description": "", "credit_cost": 300, "is_premium": True, "state": "get_card"},
         {"id": "compact", "label": "Compact", "description": "", "credit_cost": 300, "is_premium": True, "state": "locked"},
     ]
 
@@ -171,8 +171,8 @@ def _render_player_list():
 class TestPCID01RouteSuccess:
 
     def test_pcid01_fifa_returns_200_with_correct_template(self):
-        """PCID-01: GET /shop/cards/player/fifa → 200, shop_player_card_detail.html."""
-        cap = _call_detail(collection_id="fifa")
+        """PCID-01: GET /shop/cards/player/fclassic → 200, shop_player_card_detail.html."""
+        cap = _call_detail(collection_id="fclassic")
         assert cap["template"] == "shop_player_card_detail.html"
 
 
@@ -201,12 +201,12 @@ class TestPCID02UnknownCollection:
 class TestPCID03CollectionTitle:
 
     def test_pcid03_context_contains_design_with_correct_label(self):
-        """PCID-03: context design.label == 'FIFA Classic'."""
-        cap = _call_detail(collection_id="fifa")
+        """PCID-03: context design.label == 'FClassic Player'."""
+        cap = _call_detail(collection_id="fclassic")
         assert cap["context"]["design"].label == "FClassic Player"
 
     def test_pcid03_rendered_html_contains_collection_title(self):
-        """PCID-03b: rendered HTML contains 'FIFA Classic'."""
+        """PCID-03b: rendered HTML contains 'FClassic Player'."""
         html = _render_detail()
         assert "FClassic Player" in html
 
@@ -216,8 +216,8 @@ class TestPCID03CollectionTitle:
 class TestPCID04FormatCount:
 
     def test_pcid04_context_has_7_format_rows(self):
-        """PCID-04: format_rows contains exactly 7 entries for FIFA Classic."""
-        cap = _call_detail(collection_id="fifa")
+        """PCID-04: format_rows contains exactly 7 entries for FClassic Player."""
+        cap = _call_detail(collection_id="fclassic")
         assert len(cap["context"]["format_rows"]) == 7
 
     def test_pcid04_rendered_html_contains_all_7_format_labels(self):
@@ -312,14 +312,14 @@ class TestPCID10OwnedClean:
 class TestPCID11CollectionBuyForm:
 
     def test_pcid11_unowned_buy_form_targets_correct_endpoint(self):
-        """PCID-11: unowned → buy form action = /shop/cards/player_card/buy/fifa."""
+        """PCID-11: unowned → buy form action = /shop/cards/player_card/buy/fclassic."""
         html = _render_detail(state="get_card")
-        assert 'action="/shop/cards/player_card/buy/fifa"' in html
+        assert 'action="/shop/cards/player_card/buy/fclassic"' in html
 
     def test_pcid11_buy_form_not_present_when_owned(self):
         """PCID-11b: owned state → no buy form rendered."""
         html = _render_detail(state="owned")
-        assert 'action="/shop/cards/player_card/buy/fifa"' not in html
+        assert 'action="/shop/cards/player_card/buy/fclassic"' not in html
 
 
 # ── PCID-12: no per-format buy forms ─────────────────────────────────────────
@@ -333,7 +333,7 @@ class TestPCID12NoPerFormatBuy:
         If per-format buy forms were present we would see it 7 times (once per bucket).
         """
         html = _render_detail(state="get_card")
-        buy_action_count = html.count('action="/shop/cards/player_card/buy/fifa"')
+        buy_action_count = html.count('action="/shop/cards/player_card/buy/fclassic"')
         assert buy_action_count == 1, (
             f"Expected exactly 1 collection buy form action, found {buy_action_count}"
         )
@@ -359,7 +359,7 @@ class TestPCIDBrowseFormats:
         """PCID-BF: /shop/cards/player list — each card has 'Browse formats →' link."""
         html = _render_player_list()
         assert "Browse formats →" in html
-        assert "/shop/cards/player/fifa" in html
+        assert "/shop/cards/player/fclassic" in html
         assert "/shop/cards/player/compact" in html
 
     def test_pcid_bf_browse_formats_link_count_matches_design_count(self):
@@ -378,7 +378,7 @@ class TestSPDLayout:
         assert "spd-format-grid" in html
 
     def test_spdl02_format_card_count(self):
-        """SPD-L02: spd-format-card appears exactly 7 times (one per FIFA bucket)."""
+        """SPD-L02: spd-format-card appears exactly 7 times (one per FClassic bucket)."""
         html = _render_detail()
         assert html.count("spd-format-card") >= 7
 
@@ -435,7 +435,7 @@ class TestSPDLayout:
     def test_spdl13_no_per_format_buy_form(self):
         """SPD-L13: no per-format buy forms in format grid (collection buy only)."""
         html = _render_detail(state="get_card")
-        assert html.count('action="/shop/cards/player_card/buy/fifa"') == 1
+        assert html.count('action="/shop/cards/player_card/buy/fclassic"') == 1
 
     def test_spdl14_mfg_grid_not_used_for_format_section(self):
         """SPD-L14: mfg-grid class is not used as the format section container (regression guard)."""

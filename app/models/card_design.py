@@ -24,7 +24,7 @@ class CardDesign(Base):
 
     # ── Identity ──────────────────────────────────────────────────────────────
     id    = Column(String(50), primary_key=True,
-                   comment="Stable slug, e.g. 'fifa', 'pulse', 'compact'")
+                   comment="Stable slug, e.g. 'fclassic', 'pulse', 'compact'")
     label = Column(String(80), nullable=False,
                    comment="Human-readable name shown in the picker UI")
     description = Column(Text, nullable=False, default="",

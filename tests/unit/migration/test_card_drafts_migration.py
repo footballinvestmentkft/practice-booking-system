@@ -159,7 +159,7 @@ class TestBackfillSql:
         assert "COALESCE(ul.card_theme" in migration_src
         assert "COALESCE(ul.card_variant" in migration_src
         assert "'default'" in migration_src
-        assert "'fifa'" in migration_src
+        assert "'fclassic'" in migration_src
 
     def test_cd_mig_08d_published_at_conditional(self, migration_src):
         """CD-MIG-08d: published_at set to NOW() only when published_card_theme IS NOT NULL."""

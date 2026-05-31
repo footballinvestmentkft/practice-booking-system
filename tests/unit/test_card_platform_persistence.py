@@ -50,7 +50,7 @@ def _make_user(uid: int = 7) -> MagicMock:
 
 
 def _make_license(public_card_platform: str | None = None,
-                  card_variant: str = "fifa") -> MagicMock:
+                  card_variant: str = "fclassic") -> MagicMock:
     lic = MagicMock()
     lic.public_card_platform = public_card_platform
     lic.card_variant = card_variant
@@ -97,7 +97,7 @@ def _mock_db_for_public_card(user, license_):
         if args and args[0] is _CardDraft:
             _draft = MagicMock()
             _draft.published_theme    = (license_.published_card_theme    if license_ else None) or "default"
-            _draft.published_variant  = (license_.published_card_variant  if license_ else None) or "fifa"
+            _draft.published_variant  = (license_.published_card_variant  if license_ else None) or "fclassic"
             _draft.published_platform = (license_.published_card_platform if license_ else None)
             _draft.draft_theme    = _draft.published_theme
             _draft.draft_variant  = _draft.published_variant
@@ -242,7 +242,7 @@ class TestPublicCardPlatformResolution:
     _BASE_PATCH = "app.api.web_routes.public_player"
 
     def _render(self, url_platform: str | None, saved_platform: str | None,
-                card_variant: str = "fifa"):
+                card_variant: str = "fclassic"):
         """Call the public card route handler directly and return the template context."""
         import asyncio
         from fastapi import Request as _Request
@@ -316,7 +316,7 @@ class TestPublicCardPlatformResolution:
         from app.api.web_routes.public_player import _EXPORT_FORMAT_BUCKETS, _TEMPLATES_DIR
 
         platform_id = "instagram_square"
-        card_variant = "fclassic"  # PR-FC-1B: canonical id is "fclassic", not "fifa"
+        card_variant = "fclassic"  # PR-FC-1B: canonical id is "fclassic", not "fclassic"
 
         assert platform_id in _EXPORT_FORMAT_BUCKETS, "instagram_square must be in format buckets"
         fmt = _EXPORT_FORMAT_BUCKETS[platform_id]
@@ -414,7 +414,7 @@ class TestPlatformPersistencePlaywright:
 
     def test_pp07_no_param_renders_interactive_card(self):
         """
-        /players/{uid}/card with no params must render the interactive FIFA card directly
+        /players/{uid}/card with no params must render the interactive FClassic card directly
         (Phase 2.4F: bare URL no longer serves the export-portrait iframe wrapper).
         The interactive card has .card-wrap / .tab-bar; no iframe wrapper (.pcp-card-wrap)
         and no download or platform-picker UI.
@@ -429,7 +429,7 @@ class TestPlatformPersistencePlaywright:
         has_dl_btn          = page.query_selector(".pcg-dl-btn") is not None
         has_platform_picker = page.query_selector(".pcg-platform-card") is not None
         assert has_interactive_card, (
-            "Bare URL must render the interactive FIFA card (.card-wrap or .tab-bar)"
+            "Bare URL must render the interactive FClassic card (.card-wrap or .tab-bar)"
         )
         assert not has_iframe_wrapper, (
             "Bare URL must NOT render the old iframe wrapper (.pcp-card-wrap)"

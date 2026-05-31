@@ -104,7 +104,7 @@ def _call_hub(
     db               = db   or _make_db()
     owned_ids_by_type = owned_ids_by_type or {}
     default_designs  = [
-        _design("fifa",    credit_cost=0,   is_premium=False, label="FClassic Player"),
+        _design("fclassic",    credit_cost=0,   is_premium=False, label="FClassic Player"),
         _design("compact", credit_cost=300, is_premium=True,  label="Compact"),
     ]
     captured = {}
@@ -176,7 +176,7 @@ class TestMyCardsDetailRoutes:
             captured["context"]  = ctx
             return MagicMock(status_code=200)
 
-        default_designs = [_design("fifa", credit_cost=0, is_premium=False, label="FClassic Player")]
+        default_designs = [_design("fclassic", credit_cost=0, is_premium=False, label="FClassic Player")]
 
         with patch(f"{_BASE}.get_all_designs", return_value=default_designs), \
              patch(f"{_BASE}.is_design_accessible", return_value=False), \
@@ -267,10 +267,10 @@ class TestMyCardsHubTemplate:
 class TestOwnershipCounts:
 
     def test_mch15_pc_owned_count_includes_free_designs(self):
-        """MCH-15: pc_owned_count=1 when only free 'fifa' is owned."""
+        """MCH-15: pc_owned_count=1 when only free 'fclassic' is owned."""
         ctx = _call_hub(
-            designs=[_design("fifa", credit_cost=0, is_premium=False)],
-            owned_ids_by_type={"player_card": ["fifa"]},
+            designs=[_design("fclassic", credit_cost=0, is_premium=False)],
+            owned_ids_by_type={"player_card": ["fclassic"]},
         )["context"]
         assert ctx["pc_owned_count"] == 1
         assert ctx["pc_total"] == 1
@@ -279,10 +279,10 @@ class TestOwnershipCounts:
         """MCH-15b: pc_total = len(all designs)."""
         ctx = _call_hub(
             designs=[
-                _design("fifa",    credit_cost=0,   is_premium=False),
+                _design("fclassic",    credit_cost=0,   is_premium=False),
                 _design("compact", credit_cost=300, is_premium=True),
             ],
-            owned_ids_by_type={"player_card": ["fifa"]},
+            owned_ids_by_type={"player_card": ["fclassic"]},
         )["context"]
         assert ctx["pc_total"] == 2
         assert ctx["pc_owned_count"] == 1

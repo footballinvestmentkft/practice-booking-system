@@ -212,7 +212,7 @@ class TestCardMacroRenderedHtml:
 # ── PCPREC-11..14: player_card_fclassic.html CSS fix verification ─────────────────
 
 class TestFifaTemplateCssFix:
-    """Verify the FIFA template CSS and macro-render path after Phase 2.4F fix."""
+    """Verify the FClassic template CSS and macro-render path after Phase 2.4F fix."""
 
     _FIFA_TPL = "app/templates/public/player_card_fclassic.html"
 
@@ -230,7 +230,7 @@ class TestFifaTemplateCssFix:
         """PCPREC-11: player_card_fclassic.html .skill-val CSS width is 36px (not 26px)."""
         src = self._tpl_src()
         assert "width: 36px" in src, (
-            "Expected '.skill-val { ... width: 36px ... }' in FIFA template"
+            "Expected '.skill-val { ... width: 36px ... }' in FClassic template"
         )
         assert "width: 26px" not in src, (
             "Old 26px width still present — CSS fix not applied"
@@ -240,14 +240,14 @@ class TestFifaTemplateCssFix:
         """PCPREC-12: player_card_fclassic.html imports and calls card_skill_rows macro."""
         src = self._tpl_src()
         assert 'import card_skill_rows' in src, (
-            "FIFA template must import card_skill_rows macro"
+            "FClassic template must import card_skill_rows macro"
         )
         assert 'card_skill_rows(' in src, (
-            "FIFA template must call card_skill_rows macro"
+            "FClassic template must call card_skill_rows macro"
         )
 
     def test_pcprec13_fifa_path_renders_two_decimal_value(self):
-        """PCPREC-13: card_skill_rows macro (used by FIFA template) renders '60.03'."""
+        """PCPREC-13: card_skill_rows macro (used by FClassic template) renders '60.03'."""
         from jinja2 import Environment, FileSystemLoader
         import os
         tpl_root = os.path.join(
@@ -265,12 +265,12 @@ class TestFifaTemplateCssFix:
         cat.skills = [skill]
         html = fn(cat, {"decisions": {"current_level": 60.03}}, {})
         assert "60.03" in html, (
-            f"FIFA render path (card_skill_rows) must output '60.03', got: {html!r}"
+            f"FClassic render path (card_skill_rows) must output '60.03', got: {html!r}"
         )
         assert "60.0</span>" not in html, "Must not clip to one decimal"
 
     def test_pcprec14_fifa_path_renders_trend_arrow_with_vt_delta(self):
-        """PCPREC-14: card_skill_rows renders ↑ arrow when VT delta > 0 (FIFA path)."""
+        """PCPREC-14: card_skill_rows renders ↑ arrow when VT delta > 0 (FClassic path)."""
         from jinja2 import Environment, FileSystemLoader
         import os
         tpl_root = os.path.join(
@@ -296,7 +296,7 @@ class TestFifaTemplateCssFix:
 # ── PCPREC-15..19: bare URL routing — interactive card, not export portrait ───
 
 class TestBareUrlRouting:
-    """Verify that /players/{id}/card (bare URL) serves the interactive FIFA card."""
+    """Verify that /players/{id}/card (bare URL) serves the interactive FClassic card."""
 
     _ROUTE_PATH = "app/api/web_routes/public_player.py"
 
@@ -320,8 +320,8 @@ class TestBareUrlRouting:
 
     def test_pcprec16_effective_platform_gated_on_explicit_export(self):
         """PCPREC-16: effective_platform only uses _published_platform when export=True.
-        ?preview= without export=1 (e.g. ?preview=fifa&native_export=1) resolves to None
-        so the interactive FIFA card is served, not an export template."""
+        ?preview= without export=1 (e.g. ?preview=fclassic&native_export=1) resolves to None
+        so the interactive FClassic card is served, not an export template."""
         src = self._route_src()
         # Gate must be: bool(export) — NOT bool(preview) or bool(native_export)
         eff_section = src[src.find("effective_platform = platform"):
@@ -331,7 +331,7 @@ class TestBareUrlRouting:
         )
         assert "bool(preview)" not in eff_section, (
             "bool(preview) must NOT gate effective_platform — ?preview= without export=1 "
-            "should serve the interactive FIFA card, not an export template"
+            "should serve the interactive FClassic card, not an export template"
         )
 
     def test_pcprec17_export_skill_rows_macro_still_integer(self):
@@ -360,7 +360,7 @@ class TestBareUrlRouting:
 
     def test_pcprec18_native_export_not_in_effective_platform_gate(self):
         """PCPREC-18: ?native_export=1 does NOT activate published_platform fallback
-        → effective_platform stays None → export layer inactive → FIFA card served."""
+        → effective_platform stays None → export layer inactive → FClassic card served."""
         src = self._route_src()
         eff_section = src[src.find("effective_platform = platform"):
                           src.find("platform_preset = _get_preset(effective_platform)")]

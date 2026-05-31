@@ -33,7 +33,7 @@ from .card_draft_service import CardDraftService
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def get_variant(variant_id: str) -> VariantDefinition:
-    """Return variant by ID, falling back to 'fifa' for unknown IDs.
+    """Return variant by ID, falling back to 'fclassic' for unknown IDs.
     The available flag is NOT used here — render path must never be feature-gated.
     """
     return _get_design(variant_id)

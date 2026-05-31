@@ -100,7 +100,7 @@
         {% for d in designs %}
         <tr>
             <td>
-                {% if d.id == 'fifa' %}
+                {% if d.id == 'fclassic' %}
                 <input class="sort-input" type="number" value="{{ d.sort_order }}" disabled title="Protected design">
                 {% else %}
                 <input class="sort-input" type="number" name="sort_{{ d.id }}" value="{{ d.sort_order }}" min="0" max="999">
@@ -136,7 +136,7 @@
             </td>
             <td><span class="tpl-code" title="{{ d.browser_template }}">{{ d.browser_template }}</span></td>
             <td>
-                {% if d.id == 'fifa' %}
+                {% if d.id == 'fclassic' %}
                 <span class="badge badge-protected">🔒 Protected</span>
                 {% elif d.is_active %}
                 <span class="badge badge-active">Active</span>
@@ -145,7 +145,7 @@
                 {% endif %}
             </td>
             <td>
-                {% if d.id == 'fifa' %}
+                {% if d.id == 'fclassic' %}
                 <button type="button" class="btn-sm btn-disabled" disabled title="Protected — cannot be deactivated">Deactivate</button>
                 {% elif d.is_active %}
                 <form method="post" action="/admin/card-designs/{{ d.id }}/toggle" style="display:inline;">

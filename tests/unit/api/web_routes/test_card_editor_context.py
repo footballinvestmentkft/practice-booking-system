@@ -45,7 +45,7 @@ def _license(uid=7):
     lic.onboarding_completed = True
     lic.football_skills = {"passing": 60}
     lic.card_theme = "default"
-    lic.card_variant = "fifa"
+    lic.card_variant = "fclassic"
     lic.public_card_platform = None
     lic.player_card_photo_url = None
     return lic
@@ -96,10 +96,10 @@ class TestCardEditorContext:
 
         card_draft = MagicMock()
         card_draft.draft_theme    = "default"
-        card_draft.draft_variant  = "fifa"
+        card_draft.draft_variant  = "fclassic"
         card_draft.draft_platform = None
         card_draft.published_theme    = "default"
-        card_draft.published_variant  = "fifa"
+        card_draft.published_variant  = "fclassic"
         card_draft.published_platform = None
 
         with patch(f"{_BASE}.templates") as mock_tmpl:

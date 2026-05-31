@@ -165,7 +165,7 @@ class TestCEL03PlayerCardOwnership:
 
     def test_cel_03_pc_owned_count_reflects_cdo_rows(self):
         """CEL-03: pc_owned_count equals the number of owned player_card design IDs."""
-        ctx = _invoke_landing(pc_design_ids=["fifa", "compact", "showcase"])
+        ctx = _invoke_landing(pc_design_ids=["fclassic", "compact", "showcase"])
         assert ctx.get("pc_owned_count") == 3
 
     def test_cel_03b_pc_owned_count_zero_when_no_designs(self):
@@ -226,7 +226,7 @@ class TestCEL0708AnyOwned:
 
     def test_cel_07_any_owned_true_when_pc_owned(self):
         """CEL-07: any_owned=True when player_card has owned designs."""
-        ctx = _invoke_landing(pc_design_ids=["fifa"])
+        ctx = _invoke_landing(pc_design_ids=["fclassic"])
         assert ctx.get("any_owned") is True
 
     def test_cel_07b_any_owned_true_when_wc_owned(self):
@@ -369,11 +369,11 @@ class TestCEL14PlayerCardRegression:
              patch("app.services.highlight_video_service.build_youtube_embed_url", return_value=None):
             draft = MagicMock()
             draft.draft_theme    = "default"
-            draft.draft_variant  = "fifa"
+            draft.draft_variant  = "fclassic"
             draft.draft_platform = None
             draft.draft_data     = None
             draft.published_theme    = "default"
-            draft.published_variant  = "fifa"
+            draft.published_variant  = "fclassic"
             draft.published_platform = None
             draft.published_data     = None
             MockCDS.get_draft.return_value = draft

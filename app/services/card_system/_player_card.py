@@ -21,7 +21,7 @@ PLAYER_CARD_CONTRACT = CardContentContract(
         ContentField("position", _R, "str", "Primary position abbreviation"),
         ContentField("skill_values", _R, "dict[str, float]", "Skill key → EMA value mapping"),
         ContentField("card_theme", _R, "str", "Theme ID (e.g. 'default', 'midnight')"),
-        ContentField("card_variant", _R, "str", "Variant ID (e.g. 'fifa', 'compact')"),
+        ContentField("card_variant", _R, "str", "Variant ID (e.g. 'fclassic', 'compact')"),
         ContentField("nationality", _O, "str | None", "Two-letter nationality code"),
         ContentField("photo_url", _O, "str | None", "Player headshot URL"),
         ContentField("club_name", _O, "str | None", "Club display name"),
@@ -40,7 +40,7 @@ PLAYER_CARD_CONTRACT = CardContentContract(
 PLAYER_CARD_SPEC = CardTypeSpec(
     card_type_id="player_card",
     label="Player Card",
-    description="FIFA-style skill card for football players with overall rating and skill breakdown.",
+    description="FClassic-style skill card for football players with overall rating and skill breakdown.",
     content_contract=PLAYER_CARD_CONTRACT,
     supported_variant_ids=tuple(VARIANT_ORDER),
     supported_platform_ids=CARD_EDITOR_PLATFORM_IDS,

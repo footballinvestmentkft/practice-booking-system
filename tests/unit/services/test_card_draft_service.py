@@ -30,7 +30,7 @@ def _draft(
     card_type_id: str = "player_card",
     instance_name: str = "default",
     draft_theme: str = "default",
-    draft_variant: str = "fifa",
+    draft_variant: str = "fclassic",
     draft_platform: str | None = None,
     published_theme: str | None = None,
     published_variant: str | None = None,
@@ -98,7 +98,7 @@ class TestGetOrCreateSingleton:
         assert added.card_type_id == "player_card"
         assert added.instance_name == "default"
         assert added.draft_theme   == "default"
-        assert added.draft_variant == "fifa"
+        assert added.draft_variant == "fclassic"
         assert added.draft_platform is None
 
     def test_cd_svc_03_seeds_from_user_license_when_draft_absent(self):
@@ -168,7 +168,7 @@ class TestUpdateDraftVariant:
 
     def test_cd_svc_04_sets_draft_variant_and_commits(self):
         """CD-SVC-04: update_draft_variant writes variant_id, bumps updated_at, commits."""
-        draft = _draft(draft_variant="fifa")
+        draft = _draft(draft_variant="fclassic")
         db = MagicMock()
 
         CardDraftService.update_draft_variant(db, draft, "compact")
@@ -179,7 +179,7 @@ class TestUpdateDraftVariant:
 
     def test_cd_svc_04b_does_not_touch_published_variant(self):
         """CD-SVC-04b: update_draft_variant leaves published_variant unchanged."""
-        draft = _draft(draft_variant="fifa", published_variant="showcase")
+        draft = _draft(draft_variant="fclassic", published_variant="showcase")
         db = MagicMock()
 
         CardDraftService.update_draft_variant(db, draft, "compact")
@@ -235,7 +235,7 @@ class TestPublishDraft:
 
     def test_cd_svc_07_publish_draft_is_idempotent(self):
         """CD-SVC-07: Calling publish_draft twice yields same published state."""
-        draft = _draft(draft_theme="midnight", draft_variant="fifa", draft_platform=None)
+        draft = _draft(draft_theme="midnight", draft_variant="fclassic", draft_platform=None)
         db = MagicMock()
 
         CardDraftService.publish_draft(db, draft)
@@ -245,7 +245,7 @@ class TestPublishDraft:
         second_published_at = draft.published_at
 
         assert draft.published_theme    == "midnight"
-        assert draft.published_variant  == "fifa"
+        assert draft.published_variant  == "fclassic"
         assert draft.published_platform is None
         assert db.commit.call_count == 2
         # published_at is refreshed on every call (tracks most-recent publish)
@@ -287,7 +287,7 @@ class TestIsPublished:
         """CD-SVC-09b: is_published returns False when draft_variant != published_variant."""
         draft = _draft(
             draft_theme="default",   published_theme="default",
-            draft_variant="compact", published_variant="fifa",
+            draft_variant="compact", published_variant="fclassic",
             draft_platform=None,     published_platform=None,
         )
         assert CardDraftService.is_published(draft) is False
@@ -296,7 +296,7 @@ class TestIsPublished:
         """CD-SVC-09c: is_published returns False when draft_platform != published_platform."""
         draft = _draft(
             draft_theme="default",        published_theme="default",
-            draft_variant="fifa",         published_variant="fifa",
+            draft_variant="fclassic",         published_variant="fclassic",
             draft_platform="instagram_square", published_platform=None,
         )
         assert CardDraftService.is_published(draft) is False
@@ -305,7 +305,7 @@ class TestIsPublished:
         """CD-SVC-10: NULL draft_platform == NULL published_platform → True."""
         draft = _draft(
             draft_theme="default",  published_theme="default",
-            draft_variant="fifa",   published_variant="fifa",
+            draft_variant="fclassic",   published_variant="fclassic",
             draft_platform=None,    published_platform=None,
         )
         assert CardDraftService.is_published(draft) is True
@@ -346,7 +346,7 @@ class TestCommitFalseParameter:
 
     def test_cd_svc_13_update_draft_variant_commit_false_no_commit(self):
         """CD-SVC-13: update_draft_variant(commit=False) does not call db.commit/refresh."""
-        draft = _draft(draft_variant="fifa")
+        draft = _draft(draft_variant="fclassic")
         db = MagicMock()
 
         CardDraftService.update_draft_variant(db, draft, "compact", commit=False)
