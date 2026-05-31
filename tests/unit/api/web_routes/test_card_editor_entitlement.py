@@ -192,13 +192,21 @@ class TestCardEditorLockedNote:
 # ── CE-10..CE-13: JS guard — template source checks ──────────────────────────
 
 def _editor_template_source() -> str:
+    """Effective editor source: main template + all Jinja2 includes expanded."""
     import os
-    tpl = os.path.normpath(os.path.join(
-        os.path.dirname(__file__),
-        "../../../../app/templates/dashboard_card_editor.html",
-    ))
-    with open(tpl, encoding="utf-8") as f:
-        return f.read()
+    tmpl_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../../../app/templates"))
+    includes = [
+        "dashboard_card_editor.html",
+        "includes/player_editor/styles.html",          # REF-P1
+        "includes/player_editor/preview_panel.html",   # REF-P3
+        "includes/player_editor/design_panel.html",    # REF-P4
+        "includes/player_editor/platform_panel.html",  # REF-P4
+    ]
+    parts = []
+    for rel in includes:
+        with open(os.path.join(tmpl_dir, rel), encoding="utf-8") as f:
+            parts.append(f.read())
+    return "\n".join(parts)
 
 
 class TestCardEditorJSGuards:

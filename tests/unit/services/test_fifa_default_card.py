@@ -629,9 +629,14 @@ def test_tpl27_no_st_gk_orientation_labels_in_svg():
 
 def _editor_html():
     """Effective editor source: main template + Jinja2 includes expanded."""
-    _styles  = _ROOT / "app/templates/includes/player_editor/styles.html"        # REF-P1
-    _preview = _ROOT / "app/templates/includes/player_editor/preview_panel.html"  # REF-P3
-    return "\n".join([_read(_TPL_EDITOR), _read(_styles), _read(_preview)])
+    _inc_dir = _ROOT / "app/templates/includes/player_editor"
+    return "\n".join([
+        _read(_TPL_EDITOR),
+        _read(_inc_dir / "styles.html"),           # REF-P1
+        _read(_inc_dir / "preview_panel.html"),    # REF-P3
+        _read(_inc_dir / "design_panel.html"),     # REF-P4
+        _read(_inc_dir / "platform_panel.html"),   # REF-P4
+    ])
 
 
 def test_ed01_download_button_not_unconditionally_disabled():

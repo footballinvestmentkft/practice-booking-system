@@ -1,0 +1,52 @@
+
+                    {# Section 1: Card Layout — structural template family (card_variants) #}
+                    {% if show_variant_picker and card_variants is defined %}
+                    <div class="ce-section">
+                        <div class="ce-section-title">Card Layout</div>
+                        {% if card_variants %}
+                        <div class="ce-design-grid" id="variant-picker">
+                            {% for v in card_variants %}
+                            <button class="ce-design-tile ce-layout-tile
+                                           {% if v.id == active_card_variant %}active{% endif %}"
+                                    data-variant="{{ v.id }}"
+                                    title="{{ v.description }}"
+                                    onclick="setCardVariant('{{ v.id }}')">
+                                <div class="ce-design-tile-art"></div>
+                                <div class="ce-design-tile-footer">
+                                    <span class="ce-design-tile-name">{{ v.label }}</span>
+                                    <a href="/players/{{ user.id }}/card?preview={{ v.id }}" target="_blank"
+                                       onclick="event.stopPropagation();"
+                                       title="Preview {{ v.label }} in new tab"
+                                       style="font-size:0.58rem;opacity:0.55;text-decoration:none;color:inherit;flex-shrink:0;">↗</a>
+                                </div>
+                            </button>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="ce-empty-state">
+                            No Player Card designs yet.
+                            <a href="/shop/cards/player">Browse Player Card designs →</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {# Section 2: Color Theme — palette applied to the selected layout (card_themes) #}
+                    <div class="ce-section">
+                        <div class="ce-section-title">Color Theme</div>
+                        <div class="ce-design-grid" id="theme-picker">
+                            {% for t in card_themes %}
+                            <button class="ce-design-tile
+                                           {% if t.id == active_card_theme %}active{% endif %}"
+                                    style="--tile-accent: {{ t.dot_color }};"
+                                    onclick="setCardTheme('{{ t.id }}')"
+                                    title="{{ t.label }}">
+                                <div class="ce-design-tile-art"></div>
+                                <div class="ce-design-tile-footer">
+                                    <span class="ce-design-tile-name">{{ t.label }}</span>
+                                </div>
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+
