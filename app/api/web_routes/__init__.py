@@ -29,6 +29,7 @@ from . import (
     sport_director,
     my_cards,
     card_editor,
+    card_studio,
     shop,
     friends,
     vt_challenges,
@@ -68,6 +69,7 @@ router.include_router(public_tournament.router)  # 🌐 Public event detail page
 router.include_router(sport_director.router)     # 🏅 Sport Director team enrollment
 router.include_router(my_cards.router)           # 🃏 My Cards hub (/my-cards)
 router.include_router(card_editor.router)        # ✏️  Card Editor (/card-editor)
+router.include_router(card_studio.router)        # 🎴  Card Studio shell (/card-studio)
 router.include_router(shop.router)               # 🛒 Card Shop (/shop)
 router.include_router(friends.router)            # 👥 Friendship system (/friends)
 router.include_router(vt_challenges.router)      # 🎮 VT Challenges (/challenges)

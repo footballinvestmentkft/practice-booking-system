@@ -1,0 +1,20 @@
+{# CS-S0: Preview iframe panel
+   preview_url:  the iframe src URL
+   ratio_class:  mfg-ratio-* CSS class for aspect ratio
+   fmt:          NonPlayerCardFormatDefinition (has .label)
+   active_type:  "welcome" | "player" | "challenge" #}
+<div class="cs-preview-panel">
+  <p class="cs-preview-label">Preview</p>
+  <div class="cs-preview-container">
+    <div class="cs-preview-wrap mfg-preview-wrap {{ ratio_class }}">
+      <iframe
+        id="cs-preview-iframe"
+        class="mfg-preview-iframe"
+        src="{{ preview_url }}"
+        loading="lazy"
+        scrolling="no"
+        title="{{ fmt.label if fmt else 'Card Preview' }} Preview"
+      ></iframe>
+    </div>
+  </div>
+</div>

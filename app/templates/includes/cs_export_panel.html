@@ -1,0 +1,12 @@
+{# CS-S0: Export / Publish panel
+   export_url: PNG export URL
+   fmt:        NonPlayerCardFormatDefinition #}
+<div class="cs-export-panel">
+  <p class="cs-export-title">Export</p>
+  {% if fmt %}
+  <p class="cs-export-dims">{{ fmt.dims }}</p>
+  <a href="{{ export_url }}" class="cs-btn-download" download>
+    ↓ Download PNG
+  </a>
+  {% endif %}
+</div>

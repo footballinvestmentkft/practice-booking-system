@@ -1,0 +1,531 @@
+{% extends "student_base.html" %}
+
+{% block title %}Card Studio — LFA Education Center{% endblock %}
+{% block active_page %}card-studio{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '🎴' %}
+{% set _page_name = 'Card Studio' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+{% include "includes/cs_studio_shared.html" %}
+{% include "includes/mc_format_grid.html" %}
+<style>
+
+/* ── Shell Layout ── */
+.cs-shell-wrap { max-width: 1200px; margin: 0 auto; padding: 0 0 2rem; }
+
+/* ── Type Switcher ── */
+.cs-type-switcher {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.cs-type-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px; border: 1.5px solid #334155;
+  background: transparent; color: #94a3b8;
+  font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: border-color 0.15s, color 0.15s;
+}
+.cs-type-btn:hover:not(:disabled) { border-color: #64748b; color: #f1f5f9; }
+.cs-type-btn.cs-type-active {
+  border-color: #FFD200; color: #FFD200;
+  background: rgba(255,210,0,0.06);
+}
+.cs-type-btn.cs-type-soon {
+  opacity: 0.45; cursor: not-allowed;
+}
+.cs-type-icon { font-size: 1rem; }
+.cs-type-badge {
+  font-size: 0.62rem; font-weight: 700;
+  background: #1e293b; color: #64748b;
+  border-radius: 4px; padding: 0.1rem 0.35rem;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+
+/* ── Format Bar ── */
+.cs-format-bar {
+  display: flex; flex-wrap: wrap; gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+.cs-format-pill {
+  display: inline-flex; flex-direction: column; align-items: flex-start;
+  padding: 0.4rem 0.75rem; border-radius: 7px;
+  border: 1px solid #334155; color: #94a3b8;
+  background: transparent; text-decoration: none;
+  font-size: 0.78rem; font-weight: 600;
+  transition: border-color 0.15s, color 0.15s; line-height: 1.3;
+}
+.cs-format-pill:hover { border-color: #64748b; color: #f1f5f9; text-decoration: none; }
+.cs-format-pill.cs-format-active {
+  border-color: #FFD200; color: #FFD200;
+  background: rgba(255,210,0,0.06);
+}
+.cs-format-dims { font-size: 0.64rem; font-weight: 400; color: #475569; }
+.cs-format-pill.cs-format-active .cs-format-dims { color: #b89c00; }
+
+/* ── Body Layout: desktop two-col, mobile single-col ── */
+.cs-shell-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+@media (min-width: 900px) {
+  .cs-shell-body {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+  .cs-control-panel {
+    flex: 0 0 320px;
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100vh - 5rem);
+    overflow-y: auto;
+  }
+  .cs-preview-col {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* ── Control Panel ── */
+.cs-control-panel {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 14px;
+  padding: 1.25rem 1.25rem;
+}
+.cs-section-label {
+  font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: #475569; margin: 0 0 0.6rem;
+}
+.cs-section-divider { border: none; border-top: 1px solid #1e293b; margin: 1rem 0; }
+
+/* ── Mood Photos Quick Row ── */
+.cs-mood-section { margin-bottom: 0; }
+.cs-mood-title {
+  font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: #475569; margin: 0 0 0.5rem;
+}
+.cs-mood-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.4rem; }
+.cs-mood-chip {
+  position: relative;
+  background: #0b1120; border: 1.5px solid #334155; border-radius: 8px;
+  cursor: pointer; padding: 0.35rem 0.25rem;
+  display: flex; flex-direction: column; align-items: center; gap: 0.12rem;
+  transition: border-color 0.15s, background 0.15s;
+  width: 58px; min-height: 52px;
+}
+.cs-mood-chip:not([disabled]):hover { border-color: #FFD200; }
+.cs-mood-chip--empty { opacity: 0.35; cursor: not-allowed; }
+.cs-mood-chip--selected {
+  border-color: #FFD200;
+  background: rgba(255,210,0,0.08);
+}
+.cs-mood-emoji { font-size: 1.3rem; line-height: 1; }
+.cs-mood-label {
+  font-size: 0.56rem; color: #64748b; text-align: center;
+  line-height: 1.2; max-width: 54px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cs-mood-chip--selected .cs-mood-label { color: #b89c00; }
+.cs-mood-check {
+  position: absolute; top: 2px; right: 3px;
+  font-size: 0.58rem; color: #FFD200; font-weight: 700;
+}
+.cs-mood-manage { margin: 0.35rem 0 0; }
+.cs-mood-manage-link { font-size: 0.73rem; color: #64748b; text-decoration: none; transition: color 0.15s; }
+.cs-mood-manage-link:hover { color: #FFD200; text-decoration: none; }
+
+/* ── Upload / Photo actions ── */
+.cs-photo-panel { }
+.cs-photo-preview {
+  width: 64px; height: 64px; object-fit: cover;
+  border-radius: 7px; border: 1px solid #334155; display: block; margin-bottom: 0.5rem;
+}
+.cs-photo-empty {
+  width: 64px; height: 64px; border-radius: 7px;
+  border: 1px dashed #334155; background: #0b1120;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; color: #334155; margin-bottom: 0.5rem;
+}
+.cs-photo-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+.cs-btn-upload {
+  display: inline-flex; align-items: center; gap: 0.25rem;
+  padding: 0.4rem 0.85rem; background: #FFD200; color: #0f172a;
+  font-size: 0.78rem; font-weight: 700; border-radius: 6px;
+  cursor: pointer; border: none; transition: opacity 0.15s;
+}
+.cs-btn-upload:hover { opacity: 0.88; }
+.cs-btn-delete {
+  display: inline-flex; align-items: center; gap: 0.25rem;
+  padding: 0.4rem 0.75rem; background: transparent; color: #94a3b8;
+  font-size: 0.78rem; font-weight: 600;
+  border: 1px solid #334155; border-radius: 6px; cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.cs-btn-delete:hover { border-color: #ef4444; color: #ef4444; }
+.cs-photo-error { font-size: 0.78rem; color: #f87171; margin-top: 0.4rem; display: none; }
+.cs-slot-hint { font-size: 0.72rem; color: #475569; margin: 0 0 0.6rem; }
+
+/* ── Preview column ── */
+.cs-preview-col { }
+.cs-preview-panel {
+  background: #0f172a; border: 1px solid #1e293b;
+  border-radius: 14px; padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+.cs-preview-label {
+  font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.07em; text-transform: uppercase;
+  color: #475569; margin: 0 0 0.75rem;
+}
+.cs-preview-container { display: flex; justify-content: center; }
+.cs-preview-wrap {
+  width: 100%; max-width: 320px; position: relative;
+  border-radius: 8px; overflow: hidden; background: #0b1120;
+}
+
+/* ── Export panel ── */
+.cs-export-panel {
+  background: #0f172a; border: 1px solid #1e293b;
+  border-radius: 14px; padding: 1.25rem 1.5rem;
+}
+.cs-export-title { font-size: 1rem; font-weight: 700; color: #f1f5f9; margin: 0 0 0.25rem; }
+.cs-export-dims { font-size: 0.8rem; color: #475569; margin: 0 0 0.75rem; }
+.cs-btn-download {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.55rem 1.25rem; background: #FFD200; color: #0f172a;
+  font-size: 0.875rem; font-weight: 700; border-radius: 8px;
+  text-decoration: none; transition: opacity 0.15s;
+}
+.cs-btn-download:hover { opacity: 0.88; color: #0f172a; text-decoration: none; }
+
+/* ── Format meta strip ── */
+.cs-format-meta { display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.cs-style-tag { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #64748b; }
+.cs-dims-text { font-size: 0.78rem; color: #475569; }
+.cs-owned-badge { font-size: 0.73rem; font-weight: 700; color: #86efac; background: rgba(134,239,172,.12); border: 1px solid rgba(134,239,172,.25); border-radius: 20px; padding: 0.18rem 0.6rem; }
+
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="cs-shell-wrap">
+
+  <nav class="wcs-breadcrumb" aria-label="Breadcrumb">
+    <a href="/card-studio">Card Studio</a>
+    {% if active_type == "welcome" and fmt %}
+    <span>›</span>
+    <span>Welcome Card</span>
+    <span>›</span>
+    <span>{{ fmt.label }}</span>
+    {% endif %}
+  </nav>
+
+  {# ── Type Switcher ── #}
+  {% include "includes/cs_type_switcher.html" %}
+
+  {# ── Format Bar ── #}
+  {% include "includes/cs_format_bar.html" %}
+
+  {# ── Format meta strip (Welcome mode) ── #}
+  {% if active_type == "welcome" and fmt %}
+  <div class="cs-format-meta">
+    <span class="cs-style-tag">{{ fmt.style_tag }}</span>
+    <span class="cs-dims-text">{{ fmt.dims }}</span>
+    <span class="cs-owned-badge">Owned ✓</span>
+  </div>
+  {% endif %}
+
+  {# ── Main body: control panel + preview ── #}
+  <div class="cs-shell-body">
+
+    {# ── LEFT: Control Panel ── #}
+    <div class="cs-control-panel">
+
+      {# Determine format-aware photo slot and endpoints #}
+      {% if active_type == "welcome" and active_format %}
+        {% if active_format in ('instagram_portrait', 'instagram_story', 'tiktok') %}
+          {% set _cs_photo_current = wc_photo_portrait_url %}
+          {% set _cs_upload_url    = '/dashboard/wc-photo-portrait' %}
+          {% set _cs_delete_url    = '/dashboard/wc-photo-portrait/delete' %}
+          {% set _cs_assign_url    = '/dashboard/wc-photo-portrait/from-mood' %}
+          {% set _cs_slot_label    = 'Portrait Photo' %}
+          {% set _cs_slot_hint     = 'Used for portrait and Story formats (1080 × 1920, 1080 × 1350).' %}
+        {% elif active_format in ('facebook_landscape', 'banner_custom') %}
+          {% set _cs_photo_current = wc_photo_landscape_url %}
+          {% set _cs_upload_url    = '/dashboard/wc-photo-landscape' %}
+          {% set _cs_delete_url    = '/dashboard/wc-photo-landscape/delete' %}
+          {% set _cs_assign_url    = '/dashboard/wc-photo-landscape/from-mood' %}
+          {% set _cs_slot_label    = 'Landscape Photo' %}
+          {% set _cs_slot_hint     = 'Used for landscape and banner formats (1200 × 630, 1500 × 500).' %}
+        {% else %}
+          {% set _cs_photo_current = wc_photo_url %}
+          {% set _cs_upload_url    = '/dashboard/wc-photo' %}
+          {% set _cs_delete_url    = '/dashboard/wc-photo/delete' %}
+          {% set _cs_assign_url    = '/dashboard/wc-photo/from-mood' %}
+          {% set _cs_slot_label    = 'Welcome Photo' %}
+          {% set _cs_slot_hint     = 'Used for square and default formats (1080 × 1080).' %}
+        {% endif %}
+      {% else %}
+        {% set _cs_photo_current = none %}
+        {% set _cs_assign_url = '/dashboard/wc-photo/from-mood' %}
+        {% set _cs_slot_hint = '' %}
+        {% set _cs_slot_label = 'Photo' %}
+        {% set _cs_upload_url = '/dashboard/wc-photo' %}
+        {% set _cs_delete_url = '/dashboard/wc-photo/delete' %}
+      {% endif %}
+
+      {# ── SECTION 1: Mood Photos Quick Row (ALWAYS VISIBLE) ── #}
+      <p class="cs-section-label">Mood Photos</p>
+      {# Render mood quick row with assign URL and selected detection #}
+      {% set mood_photos    = mood_photos    if mood_photos    is defined else {} %}
+      {% set mood_slot_meta = mood_slot_meta if mood_slot_meta is defined else [] %}
+      <div class="cs-mood-section"
+           data-assign-url="{{ _cs_assign_url }}">
+        <div class="cs-mood-grid" id="cs-mood-grid">
+          {% for meta in mood_slot_meta %}
+            {% set _mp  = mood_photos.get(meta.slot) %}
+            {% set _has = _mp and _mp.original_url %}
+            {% set _sel = _has and _mp.original_url == _cs_photo_current %}
+            <button class="cs-mood-chip{% if _sel %} cs-mood-chip--selected{% endif %}{% if not _has %} cs-mood-chip--empty{% endif %}"
+                    type="button"
+                    data-mood-slot="{{ meta.slot }}"
+                    {% if not _has %}disabled aria-disabled="true"{% endif %}
+                    title="{{ meta.label }}">
+              <span class="cs-mood-emoji">{{ meta.emoji }}</span>
+              <span class="cs-mood-label">{{ meta.label }}</span>
+              {% if _sel %}<span class="cs-mood-check" aria-hidden="true">✓</span>{% endif %}
+            </button>
+          {% endfor %}
+        </div>
+        <p class="cs-mood-manage">
+          <a href="/profile/my-mood-photos" class="cs-mood-manage-link">Manage Mood Photos →</a>
+        </p>
+      </div>
+
+      <hr class="cs-section-divider">
+
+      {# ── SECTION 2: Upload Fallback ── #}
+      <p class="cs-section-label">{{ _cs_slot_label }}</p>
+      {% if _cs_slot_hint %}
+      <p class="cs-slot-hint">{{ _cs_slot_hint }}</p>
+      {% endif %}
+
+      <div class="cs-photo-panel"
+           data-upload-url="{{ _cs_upload_url }}"
+           data-delete-url="{{ _cs_delete_url }}">
+        {% if _cs_photo_current %}
+        <img id="cs-current-photo" class="cs-photo-preview"
+             src="{{ _cs_photo_current }}" alt="{{ _cs_slot_label }}">
+        <div id="cs-photo-empty" class="cs-photo-empty" style="display:none;">📷</div>
+        {% else %}
+        <img id="cs-current-photo" class="cs-photo-preview"
+             src="" alt="{{ _cs_slot_label }}" style="display:none;">
+        <div id="cs-photo-empty" class="cs-photo-empty">📷</div>
+        {% endif %}
+
+        <div class="cs-photo-actions">
+          <label class="cs-btn-upload">
+            ↑ Upload Photo
+            <input id="cs-photo-input" type="file" accept="image/*" style="display:none;">
+          </label>
+          <button id="cs-photo-delete-btn" class="cs-btn-delete"
+                  {% if not _cs_photo_current %}style="display:none;"{% endif %}>
+            ✕ Remove
+          </button>
+        </div>
+        <p id="cs-photo-error" class="cs-photo-error"></p>
+      </div>
+
+      <hr class="cs-section-divider">
+
+      {# ── SECTION 3: Color / Theme placeholder (CS-S3) ── #}
+      <p class="cs-section-label">Color / Theme</p>
+      <p style="font-size:0.75rem;color:#475569;margin:0;">Color picker coming in next update.</p>
+
+    </div>{# END .cs-control-panel #}
+
+    {# ── RIGHT: Preview + Export ── #}
+    <div class="cs-preview-col">
+
+      {# Preview panel #}
+      <div class="cs-preview-panel">
+        <p class="cs-preview-label">Preview</p>
+        <div class="cs-preview-container">
+          <div class="cs-preview-wrap mfg-preview-wrap {{ ratio_class }}">
+            <iframe
+              id="cs-preview-iframe"
+              class="mfg-preview-iframe"
+              src="{{ preview_url }}"
+              loading="lazy"
+              scrolling="no"
+              title="{{ fmt.label if fmt else 'Card' }} Preview"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+
+      {# Export panel #}
+      <div class="cs-export-panel">
+        <p class="cs-export-title">Download your card</p>
+        {% if fmt %}
+        <p class="cs-export-dims">{{ fmt.dims }} — {{ fmt.label }}</p>
+        {% endif %}
+        <a href="{{ export_url }}" class="cs-btn-download" download>
+          ↓ Download PNG{% if fmt %} ({{ fmt.dims }}){% endif %}
+        </a>
+      </div>
+
+    </div>{# END .cs-preview-col #}
+
+  </div>{# END .cs-shell-body #}
+
+  {# ── Bottom nav ── #}
+  <div class="wcs-nav">
+    <a href="/my-cards/welcome" class="wcs-nav-back">← My Welcome Cards</a>
+    <a href="/shop/cards/welcome" class="wcs-nav-shop">Browse Formats →</a>
+  </div>
+
+</div>{# END .cs-shell-wrap #}
+
+<script>
+(function () {
+  'use strict';
+
+  // ── Common helpers ────────────────────────────────────────────────────────
+  var iframe     = document.getElementById('cs-preview-iframe');
+  var currentImg = document.getElementById('cs-current-photo');
+  var emptyBox   = document.getElementById('cs-photo-empty');
+  var deleteBtn  = document.getElementById('cs-photo-delete-btn');
+  var photoInput = document.getElementById('cs-photo-input');
+  var errorEl    = document.getElementById('cs-photo-error');
+
+  var uploadPanel = document.querySelector('.cs-photo-panel');
+  var moodSection = document.querySelector('.cs-mood-section');
+
+  var uploadUrl = uploadPanel ? uploadPanel.dataset.uploadUrl : '';
+  var deleteUrl = uploadPanel ? uploadPanel.dataset.deleteUrl : '';
+  var assignUrl = moodSection ? moodSection.dataset.assignUrl : '';
+
+  function _csrf() {
+    return (document.cookie.split('; ').find(function (r) { return r.startsWith('csrf_token='); }) || '').split('=')[1] || '';
+  }
+  function _reloadPreview() { if (iframe) { iframe.src = iframe.src; } }
+  function _showError(msg) { if (errorEl) { errorEl.textContent = msg; errorEl.style.display = 'block'; } }
+  function _clearError()   { if (errorEl) { errorEl.style.display = 'none'; errorEl.textContent = ''; } }
+
+  function _showPhoto(url) {
+    if (currentImg) { currentImg.src = url; currentImg.style.display = 'block'; }
+    if (emptyBox)   { emptyBox.style.display = 'none'; }
+    if (deleteBtn)  { deleteBtn.style.display = 'inline-flex'; }
+  }
+  function _clearPhoto() {
+    if (currentImg) { currentImg.src = ''; currentImg.style.display = 'none'; }
+    if (emptyBox)   { emptyBox.style.display = 'flex'; }
+    if (deleteBtn)  { deleteBtn.style.display = 'none'; }
+  }
+
+  // ── Upload fallback ───────────────────────────────────────────────────────
+  if (photoInput) {
+    photoInput.addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      _clearError();
+      var csrf = _csrf();
+      if (!csrf) { _showError('Session expired — please reload the page.'); photoInput.value = ''; return; }
+      var fd = new FormData();
+      fd.append('file', file);
+      fetch(uploadUrl, { method: 'POST', body: fd, headers: { 'X-CSRF-Token': csrf } })
+        .then(function (r) {
+          if (r.status === 403) { return Promise.reject(new Error('csrf')); }
+          return r.json();
+        })
+        .then(function (data) {
+          if (data.ok) { _showPhoto(data.photo_url); _reloadPreview(); }
+          else { _showError(data.error || 'Upload failed. Please try again.'); }
+        })
+        .catch(function (err) {
+          if (err && err.message === 'csrf') { _showError('Session expired — please reload the page.'); }
+          else { _showError('Upload failed. Please check the file and try again.'); }
+        });
+      photoInput.value = '';
+    });
+  }
+
+  // ── Delete fallback ───────────────────────────────────────────────────────
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', function () {
+      _clearError();
+      var csrf = _csrf();
+      if (!csrf) { _showError('Session expired — please reload the page.'); return; }
+      fetch(deleteUrl, { method: 'POST', headers: { 'X-CSRF-Token': csrf } })
+        .then(function (r) {
+          if (r.status === 403) { return Promise.reject(new Error('csrf')); }
+          return r.json();
+        })
+        .then(function (data) {
+          if (data.ok) { _clearPhoto(); _reloadPreview(); }
+          else { _showError(data.error || 'Delete failed. Please try again.'); }
+        })
+        .catch(function (err) {
+          if (err && err.message === 'csrf') { _showError('Session expired — please reload the page.'); }
+          else { _showError('Delete failed. Please try again.'); }
+        });
+    });
+  }
+
+  // ── Mood Photos assign ────────────────────────────────────────────────────
+  document.querySelectorAll('.cs-mood-chip:not([disabled])').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var moodSlot = btn.dataset.moodSlot;
+      var csrf = _csrf();
+      if (!csrf) { _showError('Session expired — please reload the page.'); return; }
+      _clearError();
+      fetch(assignUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+        body: JSON.stringify({ mood_slot: moodSlot }),
+      })
+        .then(function (r) {
+          if (r.status === 403) { return Promise.reject(new Error('csrf')); }
+          return r.json();
+        })
+        .then(function (data) {
+          if (data.ok) {
+            _showPhoto(data.photo_url);
+            _reloadPreview();
+            document.querySelectorAll('.cs-mood-chip').forEach(function (c) {
+              c.classList.remove('cs-mood-chip--selected');
+              var chk = c.querySelector('.cs-mood-check');
+              if (chk) { chk.parentNode.removeChild(chk); }
+            });
+            btn.classList.add('cs-mood-chip--selected');
+            var chkEl = document.createElement('span');
+            chkEl.className = 'cs-mood-check';
+            chkEl.setAttribute('aria-hidden', 'true');
+            chkEl.textContent = '✓';
+            btn.appendChild(chkEl);
+          } else {
+            _showError(data.error || 'Could not assign mood photo. Please try again.');
+          }
+        })
+        .catch(function (err) {
+          if (err && err.message === 'csrf') { _showError('Session expired — please reload the page.'); }
+          else { _showError('Could not assign mood photo. Please try again.'); }
+        });
+    });
+  });
+
+})();
+</script>
+{% endblock %}

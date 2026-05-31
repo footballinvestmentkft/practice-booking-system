@@ -1,0 +1,32 @@
+{# CS-S0: Mood Photos Quick Row — always visible, never collapsed.
+   Receives context vars from parent template:
+     mood_photos:    dict[str, UserMoodPhoto|None]
+     mood_slot_meta: list[{slot, emoji, label}]
+     _cs_assign_url: the format-aware assign endpoint URL
+     _cs_photo_current: current WC slot photo URL (for selected detection)
+   Guards: mood_photos/mood_slot_meta are defined else {} / [] #}
+{% set mood_photos    = mood_photos    if mood_photos    is defined else {} %}
+{% set mood_slot_meta = mood_slot_meta if mood_slot_meta is defined else [] %}
+
+<div class="cs-mood-section" id="cs-mood-section">
+  <p class="cs-mood-title">Mood Photos</p>
+  <div class="cs-mood-grid" id="cs-mood-grid">
+    {% for meta in mood_slot_meta %}
+      {% set _mp  = mood_photos.get(meta.slot) %}
+      {% set _has = _mp and _mp.original_url %}
+      {% set _sel = _has and _mp.original_url == _cs_photo_current %}
+      <button class="cs-mood-chip{% if _sel %} cs-mood-chip--selected{% endif %}{% if not _has %} cs-mood-chip--empty{% endif %}"
+              type="button"
+              data-mood-slot="{{ meta.slot }}"
+              {% if not _has %}disabled aria-disabled="true"{% endif %}
+              title="{{ meta.label }}">
+        <span class="cs-mood-emoji">{{ meta.emoji }}</span>
+        <span class="cs-mood-label">{{ meta.label }}</span>
+        {% if _sel %}<span class="cs-mood-check" aria-hidden="true">✓</span>{% endif %}
+      </button>
+    {% endfor %}
+  </div>
+  <p class="cs-mood-manage">
+    <a href="/profile/my-mood-photos" class="cs-mood-manage-link">Manage Mood Photos →</a>
+  </p>
+</div>

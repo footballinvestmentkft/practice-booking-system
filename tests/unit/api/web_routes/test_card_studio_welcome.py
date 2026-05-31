@@ -527,7 +527,7 @@ class TestCEW18RouteCount:
         """CEW-18: route count baseline check (updated by CE-3.8 to 842)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 842, (
+        assert len(paths) == 844, (
             f"Expected 842 routes (839 CE-3.7 baseline + 3 from-mood endpoints), got {len(paths)}."
         )
 
@@ -926,8 +926,8 @@ class TestCEW44to51TemplateMoodPicker:
         """CEW-47: CE-3.8 adds 3 from-mood routes → total 842."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 842, (
-            f"Expected 842 routes (839 + 3 from-mood), got {len(paths)}"
+        assert len(paths) == 844, (
+            f"Expected 844 routes (842 baseline + 2 CS-S0 routes), got {len(paths)}"
         )
 
     def test_cew_48_assign_js_has_csrf_header(self):

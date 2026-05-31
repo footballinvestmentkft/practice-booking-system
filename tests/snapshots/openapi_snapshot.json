@@ -60027,6 +60027,80 @@
         ]
       }
     },
+    "/card-studio": {
+      "get": {
+        "description": "Card Studio landing \u2014 defaults to Welcome mode for CS-S0.\n\nRenders the unified shell with Welcome Card active.\nPlayer and Challenge shown as Coming Soon.",
+        "operationId": "card_studio_default_card_studio_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Card Studio Default",
+        "tags": [
+          "web",
+          "card-studio"
+        ]
+      }
+    },
+    "/card-studio/welcome": {
+      "get": {
+        "description": "Unified Studio shell \u2014 Welcome Card mode (CS-S0 fully functional).",
+        "operationId": "card_studio_welcome_card_studio_welcome_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Format"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Card Studio Welcome",
+        "tags": [
+          "web",
+          "card-studio"
+        ]
+      }
+    },
     "/challenges": {
       "get": {
         "operationId": "challenge_inbox_challenges_get",

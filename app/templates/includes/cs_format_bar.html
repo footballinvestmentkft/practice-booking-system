@@ -1,0 +1,15 @@
+{# CS-S0: Format/Design bar — Welcome Card mode
+   owned_format_rows: list of {design_id, label, style_tag, dims, active}
+   active_type: "welcome" | "player" | "challenge" #}
+{% if active_type == "welcome" %}
+<div class="cs-format-bar" aria-label="Format selector">
+  {% for f in owned_format_rows %}
+  <a href="/card-studio/welcome?format={{ f.design_id }}"
+     class="cs-format-pill{% if f.active %} cs-format-active{% endif %}"
+     aria-current="{{ 'true' if f.active else 'false' }}">
+    <span class="cs-format-label">{{ f.label }}</span>
+    <span class="cs-format-dims">{{ f.dims }}</span>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
