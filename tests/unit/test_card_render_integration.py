@@ -428,8 +428,9 @@ class TestImagePipelineDOMAssertions:
         assert self._PORTRAIT_URL not in html, "showcase_bg must NOT use portrait_photo_url"
 
     def test_fifa_uses_orig_photo_url(self, jinja_env):
-        html = jinja_env.get_template("public/player_card_fifa.html").render(**self._ctx())
-        assert self._ORIG_URL in html, "FIFA must use original photo_url"
+        # PR-FC-1C: template renamed to player_card_fclassic.html
+        html = jinja_env.get_template("public/player_card_fclassic.html").render(**self._ctx())
+        assert self._ORIG_URL in html, "FClassic Player must use original photo_url"
 
     def test_compact_falls_back_to_orig_when_portrait_missing(self, jinja_env):
         """When portrait_photo_url is None, compact falls back to player_card_photo_url."""
