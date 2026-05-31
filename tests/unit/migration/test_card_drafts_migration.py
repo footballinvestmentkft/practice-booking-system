@@ -155,11 +155,14 @@ class TestBackfillSql:
             "published_platform must copy ul.published_card_platform directly"
 
     def test_cd_mig_08c_theme_variant_coalesce(self, migration_src):
-        """CD-MIG-08c: draft_theme/variant use COALESCE with correct defaults."""
+        """CD-MIG-08c: draft_theme/variant use COALESCE with correct defaults.
+        Historical migration uses 'fifa' as default (immutable alembic history);
+        PR-FC-1B+1F later migrated all DB values to 'fclassic'.
+        """
         assert "COALESCE(ul.card_theme" in migration_src
         assert "COALESCE(ul.card_variant" in migration_src
         assert "'default'" in migration_src
-        assert "'fclassic'" in migration_src
+        assert "'fifa'" in migration_src  # historical migration default (immutable)
 
     def test_cd_mig_08d_published_at_conditional(self, migration_src):
         """CD-MIG-08d: published_at set to NOW() only when published_card_theme IS NOT NULL."""
