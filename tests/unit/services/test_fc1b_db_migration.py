@@ -119,7 +119,7 @@ class TestCdo01to04OwnershipBackwardCompat:
         """CDO-01: get_owned_design_ids for player_card returns 'fclassic' (not 'fifa')."""
         from app.services.card_design_service import get_owned_design_ids
         db = self._make_db_with_cdo("fclassic")
-        owned = get_owned_design_ids(db, user_id=1, card_type_id="player_card")
+        owned = get_owned_design_ids(db, user_id=42, card_type_id="player_card")
         assert "fclassic" in owned, (
             f"get_owned_design_ids must return 'fclassic'; got {owned}"
         )
@@ -129,7 +129,7 @@ class TestCdo01to04OwnershipBackwardCompat:
         from app.services.card_design_service import is_design_accessible
         db = MagicMock()
         db.query.return_value.filter_by.return_value.first.return_value = MagicMock()
-        result = is_design_accessible(db, user_id=1, card_type_id="player_card",
+        result = is_design_accessible(db, user_id=42, card_type_id="player_card",
                                       design_id="fclassic")
         assert result is True
 
@@ -139,7 +139,7 @@ class TestCdo01to04OwnershipBackwardCompat:
         db = MagicMock()
         # Mock: query for "fclassic" returns a row (post-migration state)
         db.query.return_value.filter_by.return_value.first.return_value = MagicMock()
-        result = is_design_accessible(db, user_id=1, card_type_id="player_card",
+        result = is_design_accessible(db, user_id=42, card_type_id="player_card",
                                       design_id="fifa")
         assert result is True, (
             "is_design_accessible('fifa') must resolve via alias and return True "

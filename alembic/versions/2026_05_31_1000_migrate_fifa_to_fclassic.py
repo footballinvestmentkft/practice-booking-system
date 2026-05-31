@@ -77,22 +77,23 @@ def upgrade() -> None:
         WHERE published_card_variant = 'fifa'
     """))
 
-    # ── Step 5: user_licenses.unlocked_card_variants JSONB ───────────────────
+    # ── Step 5: user_licenses.unlocked_card_variants JSON ────────────────────
+    # unlocked_card_variants is a JSON (not JSONB) column; use json_* functions.
     # Currently 0 rows in dev DB; production-safe guard included.
     conn.execute(sa.text("""
         UPDATE user_licenses
         SET unlocked_card_variants = (
-            SELECT jsonb_agg(
+            SELECT json_agg(
                 CASE WHEN elem::text = '"fifa"'
-                     THEN '"fclassic"'::jsonb
+                     THEN '"fclassic"'::json
                      ELSE elem
                 END
             )
-            FROM jsonb_array_elements(unlocked_card_variants) AS elem
+            FROM json_array_elements(unlocked_card_variants) AS elem
         )
         WHERE unlocked_card_variants IS NOT NULL
-          AND jsonb_typeof(unlocked_card_variants) = 'array'
-          AND unlocked_card_variants @> '["fifa"]'::jsonb
+          AND json_typeof(unlocked_card_variants) = 'array'
+          AND unlocked_card_variants::text LIKE '%"fifa"%'
     """))
 
     # ── Step 6: card_drafts.draft_variant ─────────────────────────────────────
@@ -173,17 +174,17 @@ def downgrade() -> None:
     conn.execute(sa.text("""
         UPDATE user_licenses
         SET unlocked_card_variants = (
-            SELECT jsonb_agg(
+            SELECT json_agg(
                 CASE WHEN elem::text = '"fclassic"'
-                     THEN '"fifa"'::jsonb
+                     THEN '"fifa"'::json
                      ELSE elem
                 END
             )
-            FROM jsonb_array_elements(unlocked_card_variants) AS elem
+            FROM json_array_elements(unlocked_card_variants) AS elem
         )
         WHERE unlocked_card_variants IS NOT NULL
-          AND jsonb_typeof(unlocked_card_variants) = 'array'
-          AND unlocked_card_variants @> '["fclassic"]'::jsonb
+          AND json_typeof(unlocked_card_variants) = 'array'
+          AND unlocked_card_variants::text LIKE '%"fclassic"%'
     """))
     conn.execute(sa.text("""
         UPDATE card_drafts SET draft_variant = 'fifa'
