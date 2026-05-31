@@ -24,6 +24,10 @@ from ...services.card_color_service import (
     get_colors_for_family as _get_colors_for_family,
     get_owned_color_ids as _get_owned_color_ids,
 )
+from ...services.shop_catalog_service import (
+    build_shop_catalog as _build_catalog,
+    resolve_type_filter as _resolve_type,
+)
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -42,13 +46,29 @@ _TYPE_TO_SHOP_PATH: dict[str, str] = {
 @router.get("/shop", response_class=HTMLResponse)
 async def shop_landing(
     request: Request,
-    user: User = Depends(get_current_user_web),
+    db: Session  = Depends(get_db),
+    user: User   = Depends(get_current_user_web),
+    type: str | None = None,
 ):
+    """SHOP-1: Unified shop listing — all card products in one page with filter."""
+    type_filter  = _resolve_type(type)
+    shop_items   = _build_catalog(db, user.id, user.credit_balance, type_filter)
+    active_label = {
+        "player_card":    "Player Cards",
+        "welcome_card":   "Welcome Cards",
+        "challenge_card": "Challenge Cards",
+    }.get(type_filter or "", "All Cards")
+
     return templates.TemplateResponse(
-        "shop_landing.html",
+        "shop_unified.html",
         {
-            "request": request,
-            "user":    user,
+            "request":             request,
+            "user":                user,
+            "shop_items":          shop_items,
+            "type_filter":         type_filter or "",
+            "active_filter_label": active_label,
+            "total_count":         len(shop_items),
+            "owned_count":         sum(1 for i in shop_items if i.is_owned),
             "spec_dashboard_url":  "/dashboard/lfa-football-player",
             "spec_dashboard_icon": "⚽",
         },

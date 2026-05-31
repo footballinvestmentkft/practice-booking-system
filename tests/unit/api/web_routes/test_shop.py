@@ -67,21 +67,23 @@ def _design(design_id, credit_cost, is_premium=True, label=None):
 
 class TestShopLanding:
 
-    def test_sh01_landing_renders_shop_landing_html(self):
-        """SH-01: GET /shop → shop_landing.html."""
+    def test_sh01_landing_renders_shop_unified_html(self):
+        """SH-01 (SHOP-1): GET /shop → shop_unified.html (unified listing)."""
         from app.api.web_routes.shop import shop_landing
 
         captured = {}
 
-        def fake_tmpl(tmpl, ctx):
+        def fake_tmpl(tmpl, ctx, **kw):
             captured["template"] = tmpl
             captured["context"]  = ctx
             return MagicMock(status_code=200)
 
-        with patch(f"{_BASE}.templates.TemplateResponse", side_effect=fake_tmpl):
-            _run(shop_landing(request=_req("/shop"), user=_user()))
+        with patch(f"{_BASE}._build_catalog", return_value=[]), \
+             patch(f"{_BASE}.templates.TemplateResponse", side_effect=fake_tmpl):
+            _run(shop_landing(request=_req("/shop"), db=MagicMock(), user=_user()))
 
-        assert captured["template"] == "shop_landing.html"
+        assert captured["template"] == "shop_unified.html", \
+            "SHOP-1: /shop must render shop_unified.html (not shop_landing.html)"
 
     def test_sh01b_landing_context_has_user(self):
         """SH-01b: /shop context includes user."""
@@ -89,13 +91,14 @@ class TestShopLanding:
 
         captured = {}
 
-        def fake_tmpl(tmpl, ctx):
+        def fake_tmpl(tmpl, ctx, **kw):
             captured["context"] = ctx
             return MagicMock(status_code=200)
 
         u = _user(balance=999)
-        with patch(f"{_BASE}.templates.TemplateResponse", side_effect=fake_tmpl):
-            _run(shop_landing(request=_req(), user=u))
+        with patch(f"{_BASE}._build_catalog", return_value=[]), \
+             patch(f"{_BASE}.templates.TemplateResponse", side_effect=fake_tmpl):
+            _run(shop_landing(request=_req(), db=MagicMock(), user=u))
 
         assert captured["context"]["user"] is u
 

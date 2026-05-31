@@ -1,0 +1,211 @@
+{% extends "student_base.html" %}
+
+{% block title %}Card Shop — LFA Education Center{% endblock %}
+{% block active_page %}shop{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '🛒' %}
+{% set _page_name = 'Card Shop' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+/* ── SHOP-1: Unified shop listing ── */
+.su-wrap {
+  max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem 3rem;
+}
+
+/* Header */
+.su-header { margin-bottom: 1.5rem; }
+.su-header h1 { font-size: 1.5rem; font-weight: 800; color: #f1f5f9; margin: 0 0 0.25rem; }
+.su-header-meta { font-size: 0.8rem; color: #64748b; }
+.su-balance { display: inline-flex; align-items: center; gap: 0.35rem;
+  font-size: 0.78rem; font-weight: 600; color: #f1f5f9;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px; padding: 0.2rem 0.6rem; margin-left: 0.5rem;
+}
+.su-balance strong { color: #FFD200; }
+
+/* Filter bar */
+.su-filter-bar {
+  display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;
+}
+.su-filter-btn {
+  padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+  border: 1.5px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.6); cursor: pointer; text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.su-filter-btn:hover { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.09); color: rgba(255,255,255,0.85); text-decoration: none; }
+.su-filter-btn--active { border-color: #FFD200; background: rgba(255,210,0,0.12); color: #FFD200; }
+
+/* Grid */
+.su-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+/* Item card */
+.su-item {
+  background: #0f172a; border: 1.5px solid #1e293b; border-radius: 14px;
+  padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem;
+  transition: border-color 0.15s;
+}
+.su-item:hover { border-color: #334155; }
+.su-item--owned { border-color: rgba(134,239,172,0.25); }
+
+.su-item-type-badge {
+  font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;
+  padding: 0.15rem 0.45rem; border-radius: 4px; align-self: flex-start;
+}
+.su-item-type-badge--player   { background: rgba(102,126,234,0.2); color: #a3b3f7; }
+.su-item-type-badge--welcome  { background: rgba(250,204,21,0.15); color: #fde047; }
+.su-item-type-badge--challenge{ background: rgba(251,146,60,0.15); color: #fb923c; }
+
+.su-item-label { font-size: 0.9rem; font-weight: 700; color: #f1f5f9; line-height: 1.2; }
+.su-item-dims  { font-size: 0.7rem; color: #475569; }
+.su-item-desc  { font-size: 0.75rem; color: #64748b; line-height: 1.4; flex: 1; }
+
+.su-item-footer { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.25rem; }
+.su-item-price  { font-size: 0.78rem; font-weight: 700; color: #FFD200; }
+.su-item-price--free { color: #86efac; }
+
+.su-item-owned-badge {
+  font-size: 0.65rem; font-weight: 700; color: #86efac;
+  background: rgba(134,239,172,0.12); border: 1px solid rgba(134,239,172,0.25);
+  border-radius: 12px; padding: 0.15rem 0.5rem;
+}
+
+/* CTAs */
+.su-item-cta { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.su-btn-buy {
+  font-size: 0.72rem; font-weight: 700; padding: 0.35rem 0.85rem;
+  background: #FFD200; color: #0f172a; border-radius: 8px; border: none;
+  cursor: pointer; text-decoration: none; display: inline-block;
+  transition: opacity 0.15s;
+}
+.su-btn-buy:hover { opacity: 0.88; color: #0f172a; text-decoration: none; }
+.su-btn-buy--locked { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); cursor: not-allowed; }
+.su-btn-studio {
+  font-size: 0.72rem; font-weight: 600; padding: 0.35rem 0.85rem;
+  background: rgba(102,126,234,0.2); color: #a3b3f7; border-radius: 8px;
+  text-decoration: none; display: inline-block; transition: background 0.15s;
+}
+.su-btn-studio:hover { background: rgba(102,126,234,0.32); color: #c3ceff; text-decoration: none; }
+.su-btn-detail {
+  font-size: 0.68rem; color: #64748b; text-decoration: none;
+}
+.su-btn-detail:hover { color: #94a3b8; }
+
+/* Empty state */
+.su-empty { text-align: center; padding: 3rem 1rem; color: #475569; }
+.su-empty p { margin: 0.5rem 0; }
+
+/* Flash messages */
+.su-flash { padding: 0.75rem 1rem; border-radius: 10px; font-size: 0.82rem; margin-bottom: 1rem; font-weight: 600; }
+.su-flash--ok    { background: rgba(134,239,172,0.12); color: #86efac; border: 1px solid rgba(134,239,172,0.2); }
+.su-flash--error { background: rgba(248,113,113,0.12); color: #f87171; border: 1px solid rgba(248,113,113,0.2); }
+
+@media (max-width: 640px) {
+  .su-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 400px) {
+  .su-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="su-wrap">
+
+  {# ── Header ── #}
+  <div class="su-header">
+    <h1>Card Shop</h1>
+    <p class="su-header-meta">
+      {{ total_count }} product{{ 's' if total_count != 1 }} · {{ owned_count }} owned
+      <span class="su-balance">💰 <strong>{{ user.credit_balance }}</strong> CR</span>
+    </p>
+  </div>
+
+  {# ── Flash messages ── #}
+  {% set _purchased = request.query_params.get('purchased') %}
+  {% set _error     = request.query_params.get('error') %}
+  {% if _purchased %}
+  <div class="su-flash su-flash--ok">✓ Card unlocked! Your library has been updated.</div>
+  {% elif _error == 'credits' %}
+  <div class="su-flash su-flash--error">Not enough credits to purchase this card.</div>
+  {% elif _error == 'owned' %}
+  <div class="su-flash su-flash--error">You already own this card.</div>
+  {% elif _error %}
+  <div class="su-flash su-flash--error">Purchase failed — please try again.</div>
+  {% endif %}
+
+  {# ── Filter bar ── #}
+  <div class="su-filter-bar">
+    <a href="/shop" class="su-filter-btn{% if not type_filter %} su-filter-btn--active{% endif %}">All Cards</a>
+    <a href="/shop?type=player_card"    class="su-filter-btn{% if type_filter == 'player_card' %} su-filter-btn--active{% endif %}">Player Cards</a>
+    <a href="/shop?type=welcome_card"   class="su-filter-btn{% if type_filter == 'welcome_card' %} su-filter-btn--active{% endif %}">Welcome Cards</a>
+    <a href="/shop?type=challenge_card" class="su-filter-btn{% if type_filter == 'challenge_card' %} su-filter-btn--active{% endif %}">Challenge Cards</a>
+  </div>
+
+  {# ── Product grid ── #}
+  {% if shop_items %}
+  <div class="su-grid">
+    {% for item in shop_items %}
+    {% set _badge_cls = 'player' if item.card_type_id == 'player_card' else ('welcome' if item.card_type_id == 'welcome_card' else 'challenge') %}
+    <div class="su-item{% if item.is_owned %} su-item--owned{% endif %}">
+
+      <span class="su-item-type-badge su-item-type-badge--{{ _badge_cls }}">
+        {{ item.card_type_label }}
+      </span>
+
+      <div class="su-item-label">{{ item.label }}</div>
+
+      {% if item.dims %}
+      <div class="su-item-dims">{{ item.dims }}</div>
+      {% endif %}
+
+      <div class="su-item-desc">{{ item.description }}</div>
+
+      <div class="su-item-footer">
+        {% if item.is_owned %}
+          <span class="su-item-owned-badge">Owned ✓</span>
+        {% elif item.price_credits == 0 %}
+          <span class="su-item-price su-item-price--free">Free</span>
+        {% else %}
+          <span class="su-item-price">{{ item.price_credits }} CR</span>
+        {% endif %}
+      </div>
+
+      <div class="su-item-cta">
+        {% if item.is_owned %}
+          {% if item.studio_url %}
+          <a href="{{ item.studio_url }}" class="su-btn-studio">Open Studio →</a>
+          {% endif %}
+        {% elif item.state == 'get_card' %}
+          <form method="POST" action="{{ item.buy_url }}" style="display:inline;">
+            <button type="submit" class="su-btn-buy">Buy {{ item.price_credits }} CR</button>
+          </form>
+        {% elif item.state == 'locked' %}
+          <span class="su-btn-buy su-btn-buy--locked" title="Not enough credits">🔒 {{ item.price_credits }} CR</span>
+        {% endif %}
+
+        {% if item.detail_url %}
+        <a href="{{ item.detail_url }}" class="su-btn-detail">Details →</a>
+        {% endif %}
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="su-empty">
+    <p>No cards found for this filter.</p>
+    <p><a href="/shop" style="color:#FFD200;">View all cards →</a></p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

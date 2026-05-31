@@ -65229,7 +65229,26 @@
     },
     "/shop": {
       "get": {
+        "description": "SHOP-1: Unified shop listing \u2014 all card products in one page with filter.",
         "operationId": "shop_landing_shop_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -65240,6 +65259,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "Shop Landing",
