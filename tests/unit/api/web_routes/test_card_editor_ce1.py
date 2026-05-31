@@ -302,20 +302,20 @@ class TestCE109InternalLinks:
 
     OLD_URL    = "/dashboard/lfa-football-player/card-editor"
     PLAYER_URL = "/card-editor/player"
-    STUDIO_URL = "/card-editor"
+    STUDIO_URL = "/card-studio"  # CS-S1b: canonical moved from /card-editor to /card-studio
 
     def _html(self, rel_path: str) -> str:
         return (TEMPLATES_DIR / rel_path).read_text(encoding="utf-8")
 
     def test_ce1_09_spec_subpage_hdr_link(self):
-        """CE-3.2: quicknav links to Card Studio landing, not directly to player editor."""
+        """CE-3.2 / CS-S1b: quicknav links to canonical /card-studio, not old /card-editor."""
         html = self._html("includes/spec_subpage_hdr.html")
         assert f'href="{self.STUDIO_URL}"' in html, (
-            "spec_subpage_hdr.html quicknav must link to /card-editor (Card Studio landing)"
+            "spec_subpage_hdr.html quicknav must link to /card-studio (canonical Card Studio)"
         )
         assert f'href="{self.PLAYER_URL}"' not in html, (
             "spec_subpage_hdr.html quicknav must NOT have a direct /card-editor/player link "
-            "(CE-3.2: global nav points to family picker)"
+            "(global nav points to shell, not player editor)"
         )
         assert f'href="{self.OLD_URL}"' not in html
 
@@ -353,13 +353,13 @@ class TestCE109InternalLinks:
         )
 
     def test_ce1_09_api_context_var_updated(self):
-        """CE-3.2: card_editor_url context variable points to Card Studio landing."""
+        """CE-3.2 / CS-S1b: card_editor_url context variable points to canonical /card-studio."""
         src = (
             Path(__file__).resolve().parents[4]
             / "app" / "api" / "web_routes" / "dashboard.py"
         ).read_text()
         assert f'"card_editor_url":  "{self.STUDIO_URL}"' in src, (
-            "card_editor_url must be /card-editor (Card Studio landing)"
+            "card_editor_url must be /card-studio (canonical Card Studio)"
         )
         assert f'"card_editor_url":  "{self.PLAYER_URL}"' not in src
         assert f'"card_editor_url":  "{self.OLD_URL}"' not in src

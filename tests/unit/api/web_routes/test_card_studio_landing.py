@@ -1,21 +1,18 @@
 """
-CEL — Card Studio Landing tests (CE-3.1).
+CEL — Card Studio Landing tests (CS-S1 updated).
 
-GET /card-editor — authenticated entry point showing owned counts per card family.
+GET /card-editor — CS-S1: 301 permanent redirect → /card-studio.
+Template source checks are kept (template still exists, CTAs updated for CS-S1b).
 
-CEL-01  authenticated user → handler callable, 200
-CEL-02  unauthenticated → 401/redirect (get_current_user_web guard)
-CEL-03  player_card owned_count reflects CDO rows
-CEL-04  player_card owned=0 → CTA links to /shop/cards/player
-CEL-05  welcome_card owned_count is filtered to valid format IDs only
-CEL-06  challenge_card owned_count is filtered to valid format IDs only
-CEL-07  any_owned=True when at least one family has owned designs
-CEL-08  any_owned=False when all owned counts are zero
-CEL-09  Player Card owned → CTA links to /card-editor/player
-CEL-10  Welcome Card owned → CTA links to /my-cards/welcome
-CEL-11  Challenge Card owned → CTA links to /my-cards/challenge
-CEL-12  route count = 837 (836 baseline + GET /card-editor)
-CEL-13  OpenAPI snapshot is up to date (837 routes)
+CEL-01  GET /card-editor → 301 permanent redirect to /card-studio
+CEL-02  unauthenticated → auth guard (get_current_user_web)
+CEL-04  player_card shop CTA in template
+CEL-08b empty state block in template
+CEL-09  Player CTA links to /card-editor/player, text "Open Studio"
+CEL-10  Welcome CTA links to /card-studio/welcome (CS-S1b)
+CEL-11  Challenge CTA links to /card-editor/challenge
+CEL-12  route count = 844
+CEL-13  OpenAPI snapshot is up to date
 CEL-14  /card-editor/player regression — lfa_player_card_editor still callable
 """
 from __future__ import annotations
@@ -25,20 +22,9 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import jinja2
-import pytest
-
 from app.services.card_design_service import CHALLENGE_CARD_FORMATS, WELCOME_CARD_FORMATS
 
 _CE_BASE = "app.api.web_routes.card_editor"
-
-# Valid format-ID sets (same logic as the handler uses at module level)
-_VALID_WC_IDS: frozenset[str] = frozenset(f.design_id for f in WELCOME_CARD_FORMATS)
-_VALID_CC_IDS: frozenset[str] = frozenset(f.design_id for f in CHALLENGE_CARD_FORMATS)
-
-# One known-valid ID from each family for owned tests
-_WC_VALID_ID: str = sorted(_VALID_WC_IDS)[0]
-_CC_VALID_ID: str = sorted(_VALID_CC_IDS)[0]
 
 SNAPSHOTS_DIR = Path(__file__).resolve().parents[4] / "tests" / "snapshots"
 TEMPLATES_DIR = Path(__file__).resolve().parents[4] / "app" / "templates"
@@ -56,86 +42,27 @@ def _user(uid: int = 42) -> MagicMock:
     return u
 
 
-def _invoke_landing(
-    pc_design_ids: list[str] | None = None,
-    wc_design_ids: list[str] | None = None,
-    cc_design_ids: list[str] | None = None,
-) -> dict:
-    """Call card_studio_landing with mocked deps; return captured template context."""
-    pc_design_ids = pc_design_ids or []
-    wc_design_ids = wc_design_ids or []
-    cc_design_ids = cc_design_ids or []
+# ── CEL-01: GET /card-editor → 301 /card-studio ──────────────────────────────
 
-    from app.api.web_routes.card_editor import card_studio_landing
+class TestCEL01Redirect:
 
-    user = _user()
-    db   = MagicMock()
-    captured: dict = {}
-
-    def _fake_tmpl(tmpl, ctx, **kw):
-        captured["template"] = tmpl
-        captured["context"]  = ctx
-        return MagicMock(status_code=200)
-
-    def _mock_get_owned(db_, uid, card_type_id):
-        if card_type_id == "player_card":   return pc_design_ids
-        if card_type_id == "welcome_card":  return wc_design_ids
-        if card_type_id == "challenge_card": return cc_design_ids
-        return []
-
-    with patch(f"{_CE_BASE}.get_owned_design_ids", side_effect=_mock_get_owned), \
-         patch(f"{_CE_BASE}.templates") as mock_tpl:
-        mock_tpl.TemplateResponse.side_effect = _fake_tmpl
-        try:
-            _run(card_studio_landing(request=MagicMock(), db=db, user=user))
-        except Exception:
-            pass
-
-    return captured.get("context", {})
-
-
-def _render_landing(ctx: dict) -> str:
-    """Render card_studio_landing.html with Jinja2 for CTA link assertions."""
-    src = (TEMPLATES_DIR / "card_studio_landing.html").read_text(encoding="utf-8")
-    # Strip extends / include directives so standalone render works
-    src = "\n".join(
-        line for line in src.splitlines()
-        if not line.strip().startswith("{%") or
-        any(k in line for k in ("if ", "else", "endif", "for ", "endfor", "set "))
-    )
-    env = jinja2.Environment()
-    return env.from_string(src).render(**ctx)
-
-
-# ── CEL-01: authenticated call succeeds ───────────────────────────────────────
-
-class TestCEL01Authenticated:
-
-    def test_cel_01_handler_callable_returns_context(self):
-        """CEL-01: card_studio_landing is callable and populates template context."""
-        ctx = _invoke_landing()
-        assert ctx, "context must be captured — handler likely raised"
-
-    def test_cel_01_template_is_landing(self):
-        """CEL-01: handler renders card_studio_landing.html."""
+    def test_cel_01_card_editor_redirects_301_to_card_studio(self):
+        """CEL-01 (CS-S1): GET /card-editor returns 301 permanent redirect to /card-studio."""
+        from fastapi.responses import RedirectResponse
         from app.api.web_routes.card_editor import card_studio_landing
 
-        user = _user()
-        captured = {}
+        resp = _run(card_studio_landing(user=_user()))
 
-        def _fake(tmpl, ctx, **kw):
-            captured["template"] = tmpl
-            return MagicMock(status_code=200)
+        assert isinstance(resp, RedirectResponse)
+        assert resp.status_code == 301
+        assert resp.headers["location"] == "/card-studio"
 
-        with patch(f"{_CE_BASE}.get_owned_design_ids", return_value=[]), \
-             patch(f"{_CE_BASE}.templates") as mock_tpl:
-            mock_tpl.TemplateResponse.side_effect = _fake
-            try:
-                _run(card_studio_landing(request=MagicMock(), db=MagicMock(), user=user))
-            except Exception:
-                pass
+    def test_cel_01b_redirect_target_is_card_studio_not_welcome(self):
+        """CEL-01b: /card-editor redirects to /card-studio (shell), not /card-studio/welcome."""
+        from app.api.web_routes.card_editor import card_studio_landing
 
-        assert captured.get("template") == "card_studio_landing.html"
+        resp = _run(card_studio_landing(user=_user()))
+        assert resp.headers["location"] == "/card-studio"
 
 
 # ── CEL-02: unauthenticated guard ─────────────────────────────────────────────
@@ -150,7 +77,6 @@ class TestCEL02Unauthenticated:
             None,
         )
         assert route is not None, "/card-editor route must be registered"
-        # FastAPI stores parameter-level Depends in route.dependant.dependencies
         dep_names = [
             getattr(d.call, "__name__", "") for d in getattr(route.dependant, "dependencies", [])
         ]
@@ -159,90 +85,20 @@ class TestCEL02Unauthenticated:
         )
 
 
-# ── CEL-03/04: player_card owned count ────────────────────────────────────────
+# ── CEL-04: template shop CTA ────────────────────────────────────────────────
 
-class TestCEL03PlayerCardOwnership:
-
-    def test_cel_03_pc_owned_count_reflects_cdo_rows(self):
-        """CEL-03: pc_owned_count equals the number of owned player_card design IDs."""
-        ctx = _invoke_landing(pc_design_ids=["fclassic", "compact", "showcase"])
-        assert ctx.get("pc_owned_count") == 3
-
-    def test_cel_03b_pc_owned_count_zero_when_no_designs(self):
-        """CEL-03b: pc_owned_count=0 when get_owned_design_ids returns empty list."""
-        ctx = _invoke_landing(pc_design_ids=[])
-        assert ctx.get("pc_owned_count") == 0
+class TestCEL04ShopCTA:
 
     def test_cel_04_pc_no_owned_cta_points_to_shop(self):
         """CEL-04: template source has Browse Player Designs CTA for no-owned state."""
         src = (TEMPLATES_DIR / "card_studio_landing.html").read_text(encoding="utf-8")
-        assert 'href="/shop/cards/player"' in src, (
-            "Template must contain shop CTA for no-owned player_card state"
-        )
+        assert 'href="/shop/cards/player"' in src
         assert "Browse Player Designs" in src
 
 
-# ── CEL-05: welcome_card count filtered to valid IDs ─────────────────────────
+# ── CEL-08b: empty state block in template ───────────────────────────────────
 
-class TestCEL05WelcomeCardCount:
-
-    def test_cel_05_only_valid_wc_formats_counted(self):
-        """CEL-05: wc_owned_count ignores non-existent format IDs."""
-        # Pass one valid + one invented ID → count must be 1
-        ctx = _invoke_landing(wc_design_ids=[_WC_VALID_ID, "invented_format_xyz"])
-        assert ctx.get("wc_owned_count") == 1, (
-            f"Only the valid format '{_WC_VALID_ID}' should count, not 'invented_format_xyz'"
-        )
-
-    def test_cel_05b_all_valid_wc_formats_counted(self):
-        """CEL-05b: all valid WC format IDs are counted correctly."""
-        ctx = _invoke_landing(wc_design_ids=list(_VALID_WC_IDS))
-        assert ctx.get("wc_owned_count") == len(_VALID_WC_IDS)
-
-    def test_cel_05c_empty_wc_list_gives_zero(self):
-        """CEL-05c: wc_owned_count=0 when no WC designs owned."""
-        ctx = _invoke_landing(wc_design_ids=[])
-        assert ctx.get("wc_owned_count") == 0
-
-
-# ── CEL-06: challenge_card count filtered to valid IDs ───────────────────────
-
-class TestCEL06ChallengeCardCount:
-
-    def test_cel_06_only_valid_cc_formats_counted(self):
-        """CEL-06: cc_owned_count ignores non-existent format IDs."""
-        ctx = _invoke_landing(cc_design_ids=[_CC_VALID_ID, "fake_challenge_format"])
-        assert ctx.get("cc_owned_count") == 1
-
-    def test_cel_06b_empty_cc_list_gives_zero(self):
-        """CEL-06b: cc_owned_count=0 when no CC designs owned."""
-        ctx = _invoke_landing(cc_design_ids=[])
-        assert ctx.get("cc_owned_count") == 0
-
-
-# ── CEL-07/08: any_owned boolean ─────────────────────────────────────────────
-
-class TestCEL0708AnyOwned:
-
-    def test_cel_07_any_owned_true_when_pc_owned(self):
-        """CEL-07: any_owned=True when player_card has owned designs."""
-        ctx = _invoke_landing(pc_design_ids=["fclassic"])
-        assert ctx.get("any_owned") is True
-
-    def test_cel_07b_any_owned_true_when_wc_owned(self):
-        """CEL-07b: any_owned=True when welcome_card has owned designs."""
-        ctx = _invoke_landing(wc_design_ids=[_WC_VALID_ID])
-        assert ctx.get("any_owned") is True
-
-    def test_cel_07c_any_owned_true_when_cc_owned(self):
-        """CEL-07c: any_owned=True when challenge_card has owned designs."""
-        ctx = _invoke_landing(cc_design_ids=[_CC_VALID_ID])
-        assert ctx.get("any_owned") is True
-
-    def test_cel_08_any_owned_false_when_all_zero(self):
-        """CEL-08: any_owned=False when no family has owned designs."""
-        ctx = _invoke_landing(pc_design_ids=[], wc_design_ids=[], cc_design_ids=[])
-        assert ctx.get("any_owned") is False
+class TestCEL08bEmptyState:
 
     def test_cel_08b_template_has_empty_state_block(self):
         """CEL-08b: template source contains cs-empty-state block."""
@@ -257,25 +113,25 @@ class TestCEL0708AnyOwned:
 class TestCEL091011CTALinks:
 
     def test_cel_09_template_has_player_editor_cta(self):
-        """CEL-09: template contains /card-editor/player CTA for owned player card."""
+        """CEL-09 (CS-S1b): Player CTA URL stays /card-editor/player; text updated to Studio."""
         src = (TEMPLATES_DIR / "card_studio_landing.html").read_text(encoding="utf-8")
         assert 'href="/card-editor/player"' in src
-        assert "Open Editor" in src
+        assert "Open Studio" in src
 
     def test_cel_10_template_has_welcome_cta(self):
-        """CEL-10: template contains /card-editor/welcome CTA for owned welcome card (CE-3.6-A)."""
+        """CEL-10 (CS-S1b): Welcome CTA now links to /card-studio/welcome."""
         src = (TEMPLATES_DIR / "card_studio_landing.html").read_text(encoding="utf-8")
-        assert 'href="/card-editor/welcome"' in src
+        assert 'href="/card-studio/welcome"' in src
         assert "Open Welcome Studio" in src
 
     def test_cel_11_template_has_challenge_cta(self):
-        """CEL-11: template contains /card-editor/challenge CTA for owned challenge card (CE-3.6-A)."""
+        """CEL-11: Challenge CTA still links to /card-editor/challenge (CS-S4 deferred)."""
         src = (TEMPLATES_DIR / "card_studio_landing.html").read_text(encoding="utf-8")
         assert 'href="/card-editor/challenge"' in src
         assert "Open Challenge Studio" in src
 
     def test_cel_09b_cs_player_editor_cta_class_present(self):
-        """CEL-09b: cs-player-editor-cta CSS class marks the player CTA for JS/test targeting."""
+        """CEL-09b: cs-player-editor-cta CSS class marks the player CTA."""
         src = (TEMPLATES_DIR / "card_studio_landing.html").read_text(encoding="utf-8")
         assert "cs-player-editor-cta" in src
 
@@ -289,21 +145,26 @@ class TestCEL091011CTALinks:
         src = (TEMPLATES_DIR / "card_studio_landing.html").read_text(encoding="utf-8")
         assert "cs-challenge-cta" in src
 
+    def test_cel_09c_no_card_studio_player_link(self):
+        """CEL-09c (CS-S1 scope guard): template must NOT link to /card-studio/player."""
+        src = (TEMPLATES_DIR / "card_studio_landing.html").read_text(encoding="utf-8")
+        assert 'href="/card-studio/player"' not in src
 
-# ── CEL-12: route count = 837 ────────────────────────────────────────────────
+
+# ── CEL-12: route count = 844 ────────────────────────────────────────────────
 
 class TestCEL12RouteCount:
 
-    def test_cel_12_route_count_837(self):
-        """CE-3.4 adds GET /card-editor/challenge — total route count is 839."""
+    def test_cel_12_route_count_844(self):
+        """CEL-12: route count 844 (unchanged — redirect is handler change, not new route)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
         assert len(paths) == 844, (
-            f"Expected 844 routes (842 CE-3.7+CE-3.8 baseline + 2 CS-S0 card-studio routes), got {len(paths)}."
+            f"Expected 844 routes (redirect handler change does not add routes), got {len(paths)}."
         )
 
     def test_cel_12b_card_editor_route_registered(self):
-        """CEL-12b: GET /card-editor is in the registered routes."""
+        """CEL-12b: GET /card-editor is still registered (as redirect)."""
         from app.main import app
         route_paths = [r.path for r in app.routes]
         assert "/card-editor" in route_paths, "/card-editor must be a registered route"
@@ -314,7 +175,7 @@ class TestCEL12RouteCount:
 class TestCEL13OpenAPISnapshot:
 
     def test_cel_13_snapshot_matches_live_openapi(self):
-        """CEL-13: committed openapi_snapshot.json reflects the live 837-route API."""
+        """CEL-13: committed openapi_snapshot.json reflects the live API paths."""
         snapshot_path = SNAPSHOTS_DIR / "openapi_snapshot.json"
         assert snapshot_path.exists(), f"Snapshot not found: {snapshot_path}"
 
@@ -339,7 +200,7 @@ class TestCEL13OpenAPISnapshot:
 class TestCEL14PlayerCardRegression:
 
     def test_cel_14_player_card_editor_still_callable(self):
-        """CEL-14: lfa_player_card_editor handler still works after _FAMILY refactor."""
+        """CEL-14: lfa_player_card_editor handler still works after CS-S1 redirect change."""
         from app.api.web_routes.dashboard import lfa_player_card_editor
         from app.models.card_draft import CardDraft
 

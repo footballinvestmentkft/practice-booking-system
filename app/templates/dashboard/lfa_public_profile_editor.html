@@ -516,7 +516,7 @@
                 <span id="ppe-status-text">{% if is_published %}Up to date{% else %}Unpublished changes{% endif %}</span>
             </span>
             <a href="{{ profile_url }}" target="_blank" class="ppe-btn ppe-btn-view">View public profile ↗</a>
-            <a href="{{ card_editor_url }}" class="ppe-btn ppe-btn-ghost">Card Editor</a>
+            <a href="{{ card_editor_url }}" class="ppe-btn ppe-btn-ghost">Card Studio</a>
             <button class="ppe-btn ppe-btn-publish" id="ppe-publish-btn"
                     {% if is_published %}disabled{% endif %}
                     onclick="publishProfile()">Publish Profile</button>
@@ -555,7 +555,7 @@
             <div class="ppe-card-preview">
                 <div class="ppe-card-preview-head">Player Card</div>
                 <div class="ppe-card-preview-body">
-                    <a href="{{ card_editor_url }}">Open Card Editor to change your card →</a>
+                    <a href="{{ card_editor_url }}">Open Card Studio to change your card →</a>
                 </div>
             </div>
         </div>

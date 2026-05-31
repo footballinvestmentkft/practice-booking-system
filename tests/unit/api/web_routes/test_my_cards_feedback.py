@@ -211,9 +211,9 @@ class TestCCMock:
 
 class TestPCCTAAndFlash:
 
-    def test_mcf05_pc_cta_text_is_open_editor(self):
-        """MCF-05: my_cards_player_card.html CTA text is 'Open Editor →'."""
-        assert "Open Editor →" in _MCP
+    def test_mcf05_pc_cta_text_is_open_studio(self):
+        """MCF-05 (CS-S1b): my_cards_player_card.html CTA text updated to 'Open Studio →'."""
+        assert "Open Studio →" in _MCP
 
     def test_mcf06_pc_cta_has_no_mfg_btn_download(self):
         """MCF-06: The Open Editor link does not carry mfg-btn-download class."""

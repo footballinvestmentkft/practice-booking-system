@@ -151,36 +151,25 @@ def _invoke_welcome(
     return resp, captured.get("context", {}), None
 
 
-# ── CEW-01: authenticated valid owned format → 200 ───────────────────────────
+# ── CEW-01: GET /card-editor/welcome → 301 redirect ──────────────────────────
 
-class TestCEW01Authenticated:
+class TestCEW01Redirect:
 
-    def test_cew_01_valid_owned_format_returns_200(self):
-        """CEW-01: valid owned ?format → handler callable, context captured."""
-        _, ctx, _ = _invoke_welcome(_FIRST_ID, owned_ids=[_FIRST_ID])
-        assert ctx, "context must be captured (200 path)"
-
-    def test_cew_01_template_is_welcome_studio(self):
-        """CEW-01: handler renders card_studio_welcome.html."""
+    def test_cew_01_card_editor_welcome_redirects_301(self):
+        """CEW-01 (CS-S1): GET /card-editor/welcome → 301 permanent redirect."""
+        from fastapi.responses import RedirectResponse
         from app.api.web_routes.card_editor import card_studio_welcome
 
-        user = _user()
-        lic  = _license(onboarding_completed=True)
-        db   = _db_with_license(lic)
-        captured: dict = {}
+        resp = _run(card_studio_welcome(format_id=_FIRST_ID, user=_user()))
+        assert isinstance(resp, RedirectResponse)
+        assert resp.status_code == 301
 
-        def _fake(tmpl, ctx, **kw):
-            captured["template"] = tmpl
-            return MagicMock(status_code=200)
+    def test_cew_01b_redirect_target_contains_card_studio_welcome(self):
+        """CEW-01b: redirect destination is /card-studio/welcome."""
+        from app.api.web_routes.card_editor import card_studio_welcome
 
-        with patch(f"{_CE_BASE}.get_owned_design_ids", return_value=[_FIRST_ID]), \
-             patch(f"{_CE_BASE}.templates") as mock_tpl:
-            mock_tpl.TemplateResponse.side_effect = _fake
-            _run(card_studio_welcome(
-                request=MagicMock(), format_id=_FIRST_ID, db=db, user=user,
-            ))
-
-        assert captured.get("template") == "card_studio_welcome.html"
+        resp = _run(card_studio_welcome(format_id=_FIRST_ID, user=_user()))
+        assert "/card-studio/welcome" in resp.headers["location"]
 
 
 # ── CEW-02: auth dependency on route ─────────────────────────────────────────
@@ -188,7 +177,7 @@ class TestCEW01Authenticated:
 class TestCEW02AuthGuard:
 
     def test_cew_02_route_has_get_current_user_web_dependency(self):
-        """CEW-02: /card-editor/welcome has get_current_user_web in dependant tree."""
+        """CEW-02: /card-editor/welcome redirect still has get_current_user_web guard."""
         from app.main import app
         route = next(
             (r for r in app.routes if getattr(r, "path", None) == "/card-editor/welcome"),
@@ -204,232 +193,61 @@ class TestCEW02AuthGuard:
         )
 
 
-# ── CEW-03: no LFA license → 303 /dashboard ──────────────────────────────────
+# ── CEW-03: any request to /card-editor/welcome → 301 /card-studio/welcome ───
 
-class TestCEW03NoLicense:
+class TestCEW03to08RedirectBehavior:
+    """CS-S1: All /card-editor/welcome requests 301-redirect to /card-studio/welcome.
+    License/ownership guards are now enforced at /card-studio/welcome (CSS tests).
+    """
 
-    def test_cew_03_no_license_redirects_to_dashboard(self):
-        """CEW-03: missing LFA license → 303 to /dashboard."""
+    def test_cew_03_with_format_id_redirects_to_studio(self):
+        """CEW-03 (CS-S1): /card-editor/welcome?format=X → 301 /card-studio/welcome?format=X."""
         from fastapi.responses import RedirectResponse
         from app.api.web_routes.card_editor import card_studio_welcome
 
-        user = _user()
-        db   = _db_with_license(None)   # no license row
-
-        with patch(f"{_CE_BASE}.get_owned_design_ids", return_value=[_FIRST_ID]):
-            resp = _run(card_studio_welcome(
-                request=MagicMock(), format_id=_FIRST_ID, db=db, user=user,
-            ))
-
+        resp = _run(card_studio_welcome(format_id=_FIRST_ID, user=_user()))
         assert isinstance(resp, RedirectResponse)
-        assert resp.status_code == 303
-        assert "/dashboard" in resp.headers["location"]
+        assert resp.status_code == 301
+        assert f"/card-studio/welcome?format={_FIRST_ID}" == resp.headers["location"]
 
-
-# ── CEW-04: onboarding incomplete → 303 /specialization ──────────────────────
-
-class TestCEW04OnboardingIncomplete:
-
-    def test_cew_04_onboarding_incomplete_redirects_to_onboarding(self):
-        """CEW-04: onboarding not complete → 303 to /specialization."""
+    def test_cew_04_no_format_id_redirects_to_studio(self):
+        """CEW-04 (CS-S1): /card-editor/welcome (no format) → 301 /card-studio/welcome."""
         from fastapi.responses import RedirectResponse
         from app.api.web_routes.card_editor import card_studio_welcome
 
-        user = _user()
-        db   = _db_with_license(_license(onboarding_completed=False))
-
-        with patch(f"{_CE_BASE}.get_owned_design_ids", return_value=[_FIRST_ID]):
-            resp = _run(card_studio_welcome(
-                request=MagicMock(), format_id=_FIRST_ID, db=db, user=user,
-            ))
-
+        resp = _run(card_studio_welcome(format_id=None, user=_user()))
         assert isinstance(resp, RedirectResponse)
-        assert resp.status_code == 303
-        assert "onboarding" in resp.headers["location"]
+        assert resp.status_code == 301
+        assert resp.headers["location"] == "/card-studio/welcome"
 
-
-# ── CEW-05: no owned formats → 303 /shop/cards/welcome ───────────────────────
-
-class TestCEW05NoOwnedFormats:
-
-    def test_cew_05_no_owned_redirects_to_shop(self):
-        """CEW-05: no owned WC formats → 303 /shop/cards/welcome."""
-        from fastapi.responses import RedirectResponse
+    def test_cew_05_second_format_id_preserves_format_in_redirect(self):
+        """CEW-05 (CS-S1): format param is passed through to redirect URL."""
         from app.api.web_routes.card_editor import card_studio_welcome
 
-        user = _user()
-        db   = _db_with_license(_license())
+        resp = _run(card_studio_welcome(format_id=_SECOND_ID, user=_user()))
+        assert resp.headers["location"] == f"/card-studio/welcome?format={_SECOND_ID}"
 
-        with patch(f"{_CE_BASE}.get_owned_design_ids", return_value=[]):
-            resp = _run(card_studio_welcome(
-                request=MagicMock(), format_id=None, db=db, user=user,
-            ))
-
-        assert isinstance(resp, RedirectResponse)
-        assert resp.status_code == 303
-        assert resp.headers["location"] == "/shop/cards/welcome"
-
-
-# ── CEW-06: no ?format → 303 canonical first owned ───────────────────────────
-
-class TestCEW06NoFormatParam:
-
-    def test_cew_06_no_format_param_redirects_canonical(self):
-        """CEW-06: absent ?format → 303 /card-editor/welcome?format={first_owned}."""
-        from fastapi.responses import RedirectResponse
+    def test_cew_06_redirect_is_permanent_not_temporary(self):
+        """CEW-06 (CS-S1): /card-editor/welcome redirect is 301, not 303."""
         from app.api.web_routes.card_editor import card_studio_welcome
 
-        user = _user()
-        db   = _db_with_license(_license())
-
-        with patch(f"{_CE_BASE}.get_owned_design_ids", return_value=[_FIRST_ID, _SECOND_ID]):
-            resp = _run(card_studio_welcome(
-                request=MagicMock(), format_id=None, db=db, user=user,
-            ))
-
-        assert isinstance(resp, RedirectResponse)
-        assert resp.status_code == 303
-        assert resp.headers["location"] == f"/card-editor/welcome?format={_FIRST_ID}"
-
-    def test_cew_06b_canonical_uses_first_in_welcome_card_formats_order(self):
-        """CEW-06b: first_owned = first in WELCOME_CARD_FORMATS order, not alphabetical."""
-        from fastapi.responses import RedirectResponse
-        from app.api.web_routes.card_editor import card_studio_welcome
-
-        # Own only the second and third format — first_owned should be second by WCF order
-        owned = [_ALL_WC_IDS[1], _ALL_WC_IDS[2]]
-
-        user = _user()
-        db   = _db_with_license(_license())
-
-        with patch(f"{_CE_BASE}.get_owned_design_ids", return_value=owned):
-            resp = _run(card_studio_welcome(
-                request=MagicMock(), format_id=None, db=db, user=user,
-            ))
-
-        assert isinstance(resp, RedirectResponse)
-        assert f"format={_ALL_WC_IDS[1]}" in resp.headers["location"]
-
-
-# ── CEW-07: invalid ?format → 303 canonical ──────────────────────────────────
-
-class TestCEW07InvalidFormat:
-
-    def test_cew_07_unknown_format_id_redirects_canonical(self):
-        """CEW-07: unknown ?format value → 303 canonical first owned."""
-        from fastapi.responses import RedirectResponse
-        from app.api.web_routes.card_editor import card_studio_welcome
-
-        user = _user()
-        db   = _db_with_license(_license())
-
-        with patch(f"{_CE_BASE}.get_owned_design_ids", return_value=[_FIRST_ID]):
-            resp = _run(card_studio_welcome(
-                request=MagicMock(), format_id="totally_fake_format", db=db, user=user,
-            ))
-
-        assert isinstance(resp, RedirectResponse)
-        assert f"format={_FIRST_ID}" in resp.headers["location"]
-
-
-# ── CEW-08: unowned ?format → 303 canonical ──────────────────────────────────
-
-class TestCEW08UnownedFormat:
-
-    def test_cew_08_unowned_valid_format_id_redirects_canonical(self):
-        """CEW-08: valid format_id but not owned → 303 canonical first owned."""
-        from fastapi.responses import RedirectResponse
-        from app.api.web_routes.card_editor import card_studio_welcome
-
-        user = _user()
-        db   = _db_with_license(_license())
-
-        # User only owns _FIRST_ID, requests _SECOND_ID
-        with patch(f"{_CE_BASE}.get_owned_design_ids", return_value=[_FIRST_ID]):
-            resp = _run(card_studio_welcome(
-                request=MagicMock(), format_id=_SECOND_ID, db=db, user=user,
-            ))
-
-        assert isinstance(resp, RedirectResponse)
-        assert f"format={_FIRST_ID}" in resp.headers["location"]
-
-
-# ── CEW-09: active_format context ────────────────────────────────────────────
-
-class TestCEW09ActiveFormatContext:
-
-    def test_cew_09_active_format_matches_param(self):
-        """CEW-09: context active_format equals the ?format param."""
-        _, ctx, _ = _invoke_welcome(_FIRST_ID, owned_ids=[_FIRST_ID, _SECOND_ID])
-        assert ctx.get("active_format") == _FIRST_ID
-
-    def test_cew_09b_fmt_object_matches_active_format(self):
-        """CEW-09b: context fmt.design_id matches active_format."""
-        _, ctx, _ = _invoke_welcome(_SECOND_ID, owned_ids=[_FIRST_ID, _SECOND_ID])
-        assert ctx.get("active_format") == _SECOND_ID
-        fmt = ctx.get("fmt")
-        assert fmt is not None
-        assert fmt.design_id == _SECOND_ID
-
-
-# ── CEW-10/11: owned_format_rows correctness and order ───────────────────────
-
-class TestCEW1011OwnedFormatRows:
-
-    def test_cew_10_owned_format_rows_contains_only_owned(self):
-        """CEW-10: owned_format_rows contains only IDs from the owned set."""
-        # User owns first and third, not second
-        owned = [_ALL_WC_IDS[0], _ALL_WC_IDS[2]]
-        _, ctx, _ = _invoke_welcome(_ALL_WC_IDS[0], owned_ids=owned)
-
-        rows = ctx.get("owned_format_rows", [])
-        row_ids = [r["design_id"] for r in rows]
-        assert _ALL_WC_IDS[0] in row_ids
-        assert _ALL_WC_IDS[2] in row_ids
-        assert _ALL_WC_IDS[1] not in row_ids, "Unowned format must not appear in rows"
-
-    def test_cew_11_owned_format_rows_follow_welcome_card_formats_order(self):
-        """CEW-11: owned_format_rows are ordered by WELCOME_CARD_FORMATS, not by input list."""
-        # Pass owned in reversed order — output must still be WCF order
-        owned_reversed = list(reversed(_ALL_WC_IDS[:3]))
-        _, ctx, _ = _invoke_welcome(_ALL_WC_IDS[0], owned_ids=owned_reversed)
-
-        rows = ctx.get("owned_format_rows", [])
-        row_ids = [r["design_id"] for r in rows]
-        # Expected: [_ALL_WC_IDS[0], _ALL_WC_IDS[1], _ALL_WC_IDS[2]] in WCF order
-        assert row_ids == _ALL_WC_IDS[:3], (
-            f"Rows must follow WELCOME_CARD_FORMATS order. Got: {row_ids}"
+        resp = _run(card_studio_welcome(format_id=_FIRST_ID, user=_user()))
+        assert resp.status_code == 301, (
+            f"Expected 301 permanent redirect, got {resp.status_code}"
         )
 
-    def test_cew_11b_active_row_is_marked(self):
-        """CEW-11b: owned_format_rows marks exactly the active format as active=True."""
-        _, ctx, _ = _invoke_welcome(_SECOND_ID, owned_ids=[_FIRST_ID, _SECOND_ID])
-        rows = ctx.get("owned_format_rows", [])
-        active_ids = [r["design_id"] for r in rows if r.get("active")]
-        assert active_ids == [_SECOND_ID], (
-            f"Exactly one row must be active={_SECOND_ID!r}; active rows: {active_ids}"
-        )
+    def test_cew_07_no_card_editor_welcome_in_redirect_destination(self):
+        """CEW-07 (CS-S1 scope): redirect goes to /card-studio/welcome, not /card-editor/welcome."""
+        from app.api.web_routes.card_editor import card_studio_welcome
+
+        resp = _run(card_studio_welcome(format_id=_FIRST_ID, user=_user()))
+        assert "/card-editor/welcome" not in resp.headers["location"]
+        assert "/card-studio/welcome" in resp.headers["location"]
 
 
-# ── CEW-12/13: preview_url and export_url ────────────────────────────────────
-
-class TestCEW1213URLs:
-
-    def test_cew_12_preview_url_uses_active_format(self):
-        """CEW-12: preview_url = /profile/onboarding-card?platform={active_format}."""
-        _, ctx, _ = _invoke_welcome(_FIRST_ID, owned_ids=[_FIRST_ID])
-        assert ctx.get("preview_url") == f"/profile/onboarding-card?platform={_FIRST_ID}"
-
-    def test_cew_13_export_url_uses_active_format(self):
-        """CEW-13: export_url = /profile/onboarding-card/export?platform={active_format}."""
-        _, ctx, _ = _invoke_welcome(_FIRST_ID, owned_ids=[_FIRST_ID])
-        assert ctx.get("export_url") == f"/profile/onboarding-card/export?platform={_FIRST_ID}"
-
-    def test_cew_12b_preview_and_export_change_with_format(self):
-        """CEW-12b: preview_url and export_url reflect the selected format."""
-        _, ctx, _ = _invoke_welcome(_SECOND_ID, owned_ids=[_FIRST_ID, _SECOND_ID])
-        assert ctx.get("preview_url") == f"/profile/onboarding-card?platform={_SECOND_ID}"
-        assert ctx.get("export_url") == f"/profile/onboarding-card/export?platform={_SECOND_ID}"
+# ── CEW-09/10/11/12/13: context tests moved to CSS (card_studio.py handler) ───
+# These handler-level context tests now live in test_card_studio_shell.py (CSS-09..12).
+# /card-editor/welcome is a 301 redirect; all business logic is at /card-studio/welcome.
 
 
 # ── CEW-14: template has format selector ─────────────────────────────────────
@@ -457,38 +275,18 @@ class TestCEW14Template:
         assert 'href="/shop/cards/welcome"' in src
 
 
-# ── CEW-15: legacy "default" CDO bulk-grant ──────────────────────────────────
-
-class TestCEW15LegacyDefaultGrant:
-
-    def test_cew_15_default_cdo_grants_all_7_formats(self):
-        """CEW-15: if 'default' is owned, all 7 WC formats appear in owned_format_rows."""
-        # get_owned_design_ids already handles the shim; simulate by returning all IDs
-        _, ctx, _ = _invoke_welcome(_FIRST_ID, owned_ids=list(_ALL_WC_IDS))
-        rows = ctx.get("owned_format_rows", [])
-        assert len(rows) == 7, (
-            f"Legacy 'default' grant must expose all 7 formats; got {len(rows)}"
-        )
-
-
-# ── CEW-16: CardDraftService never called ────────────────────────────────────
+# ── CEW-15/16: legacy grant + draft service ──────────────────────────────────
+# CEW-15: legacy "default" CDO bulk-grant → now tested at /card-studio/welcome (CSS-15).
+# CEW-16: CardDraftService never called by redirect handler (trivially true).
 
 class TestCEW16NoDraftService:
 
-    def test_cew_16_card_draft_service_not_called(self):
-        """CEW-16: handler never calls CardDraftService — fully draft-free."""
+    def test_cew_16_card_draft_service_not_called_by_redirect(self):
+        """CEW-16 (CS-S1): redirect handler never calls CardDraftService."""
         from app.api.web_routes.card_editor import card_studio_welcome
 
-        user = _user()
-        db   = _db_with_license(_license())
-
-        with patch(f"{_CE_BASE}.get_owned_design_ids", return_value=[_FIRST_ID]), \
-             patch(f"{_CE_BASE}.templates") as mock_tpl, \
-             patch("app.services.card_draft_service.CardDraftService") as MockCDS:
-            mock_tpl.TemplateResponse.side_effect = lambda t, c, **kw: MagicMock(status_code=200)
-            _run(card_studio_welcome(
-                request=MagicMock(), format_id=_FIRST_ID, db=db, user=user,
-            ))
+        with patch("app.services.card_draft_service.CardDraftService") as MockCDS:
+            _run(card_studio_welcome(format_id=_FIRST_ID, user=_user()))
 
         MockCDS.get_draft.assert_not_called()
         MockCDS.get_player_card_draft.assert_not_called()
@@ -540,37 +338,10 @@ class TestCEW18RouteCount:
         )
 
 
-# ── CEW-19/20/21/22: WC photo context keys (CE-3.7) ─────────────────────────
-
-class TestCEW19to22PhotoContext:
-
-    def test_cew_19_context_has_wc_photo_url(self):
-        """CEW-19: handler context contains wc_photo_url key."""
-        _, ctx, _ = _invoke_welcome(_FIRST_ID, owned_ids=[_FIRST_ID])
-        assert "wc_photo_url" in ctx, "context must contain wc_photo_url"
-
-    def test_cew_20_context_has_wc_photo_portrait_url(self):
-        """CEW-20: handler context contains wc_photo_portrait_url key."""
-        _, ctx, _ = _invoke_welcome(_FIRST_ID, owned_ids=[_FIRST_ID])
-        assert "wc_photo_portrait_url" in ctx, "context must contain wc_photo_portrait_url"
-
-    def test_cew_21_context_has_wc_photo_landscape_url(self):
-        """CEW-21: handler context contains wc_photo_landscape_url key."""
-        _, ctx, _ = _invoke_welcome(_FIRST_ID, owned_ids=[_FIRST_ID])
-        assert "wc_photo_landscape_url" in ctx, "context must contain wc_photo_landscape_url"
-
-    def test_cew_22_photo_urls_reflect_license_values(self):
-        """CEW-22: context photo URL values are read from the license object."""
-        lic = _license()
-        lic.wc_photo_url          = "https://example.com/wc.jpg"
-        lic.wc_photo_portrait_url = "https://example.com/portrait.jpg"
-        lic.wc_photo_landscape_url = "https://example.com/landscape.jpg"
-
-        _, ctx, _ = _invoke_welcome(_FIRST_ID, owned_ids=[_FIRST_ID], license_obj=lic)
-
-        assert ctx.get("wc_photo_url")           == "https://example.com/wc.jpg"
-        assert ctx.get("wc_photo_portrait_url")  == "https://example.com/portrait.jpg"
-        assert ctx.get("wc_photo_landscape_url") == "https://example.com/landscape.jpg"
+# ── CEW-19..22: photo context keys ───────────────────────────────────────────
+# These context tests now live at /card-studio/welcome (card_studio.py).
+# The CSS-* tests cover active_format, mood_photos, photo URL keys for the
+# canonical /card-studio/welcome handler. /card-editor/welcome is a 301 redirect.
 
 
 # ── CEW-23–28: template upload / delete route references (CE-3.7) ────────────
@@ -715,46 +486,26 @@ def _make_mood_photo(slot: str, url: str = _MOCK_MOOD_PHOTO_URL):
 
 
 class TestCEW37to38MoodPhotosContext:
+    """CS-S1: mood_photos and mood_slot_meta context tests moved to CSS-11/CSS-12.
+    /card-editor/welcome is a 301 redirect; context is populated by /card-studio/welcome."""
 
-    def test_cew_37_context_has_mood_photos_key(self):
-        """CEW-37: card_studio_welcome context contains mood_photos key."""
-        _, ctx, _ = _invoke_welcome(_FIRST_ID, owned_ids=[_FIRST_ID])
-        assert "mood_photos" in ctx, "context must contain mood_photos key"
+    def test_cew_37_redirect_handler_does_not_call_mood_photo_service(self):
+        """CEW-37 (CS-S1): redirect handler never calls get_mood_photos_for_user."""
+        from app.api.web_routes.card_editor import card_studio_welcome
 
-    def test_cew_38_mood_photos_has_all_6_slots(self):
-        """CEW-38: mood_photos dict contains all 6 MOOD_PHOTO_SLOTS keys."""
-        _, ctx, _ = _invoke_welcome(_FIRST_ID, owned_ids=[_FIRST_ID])
-        mp = ctx.get("mood_photos", {})
-        assert set(mp.keys()) == MOOD_PHOTO_SLOTS, (
-            f"mood_photos must contain all 6 MOOD_PHOTO_SLOTS. Got: {set(mp.keys())}"
-        )
+        with patch(f"{_CE_BASE}.get_mood_photos_for_user") as mock_mood:
+            _run(card_studio_welcome(format_id=_FIRST_ID, user=_user()))
 
-    def test_cew_38b_mood_photos_values_reflect_passed_data(self):
-        """CEW-38b: mood_photos values come from get_mood_photos_for_user."""
-        mock_mp = _make_mood_photo("mood_happy_smile")
-        mood = {slot: None for slot in MOOD_PHOTO_SLOTS}
-        mood["mood_happy_smile"] = mock_mp
-        _, ctx, _ = _invoke_welcome(_FIRST_ID, owned_ids=[_FIRST_ID], mood_photos=mood)
-        assert ctx["mood_photos"]["mood_happy_smile"] is mock_mp
+        mock_mood.assert_not_called()
 
-    def test_cew_38c_context_has_mood_slot_meta_key(self):
-        """CEW-38c: card_studio_welcome context contains mood_slot_meta key."""
-        _, ctx, _ = _invoke_welcome(_FIRST_ID, owned_ids=[_FIRST_ID])
-        assert "mood_slot_meta" in ctx, "context must contain mood_slot_meta key"
+    def test_cew_38_redirect_handler_does_not_call_owned_design_ids(self):
+        """CEW-38 (CS-S1): redirect handler never calls get_owned_design_ids."""
+        from app.api.web_routes.card_editor import card_studio_welcome
 
-    def test_cew_38d_mood_slot_meta_has_6_entries_with_required_fields(self):
-        """CEW-38d: mood_slot_meta has 6 entries each with slot, emoji, label."""
-        _, ctx, _ = _invoke_welcome(_FIRST_ID, owned_ids=[_FIRST_ID])
-        meta = ctx.get("mood_slot_meta", [])
-        assert len(meta) == 6, f"mood_slot_meta must have 6 entries, got {len(meta)}"
-        for entry in meta:
-            assert "slot"  in entry, f"entry missing 'slot':  {entry}"
-            assert "emoji" in entry, f"entry missing 'emoji': {entry}"
-            assert "label" in entry, f"entry missing 'label': {entry}"
-        slots = {e["slot"] for e in meta}
-        assert slots == MOOD_PHOTO_SLOTS, (
-            f"mood_slot_meta slots must match MOOD_PHOTO_SLOTS. Got: {slots}"
-        )
+        with patch(f"{_CE_BASE}.get_owned_design_ids") as mock_owned:
+            _run(card_studio_welcome(format_id=_FIRST_ID, user=_user()))
+
+        mock_owned.assert_not_called()
 
 
 class TestCEW39to43FromMoodEndpoints:

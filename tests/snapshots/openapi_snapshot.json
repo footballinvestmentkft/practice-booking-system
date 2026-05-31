@@ -59866,7 +59866,7 @@
     },
     "/card-editor": {
       "get": {
-        "description": "Card Studio landing \u2014 family picker entry point (CE-3.1).\n\nShows owned-design counts for all three card families and routes the user\nto the appropriate editor or shop.  No family-specific license guard here;\neach family editor enforces its own guard.",
+        "description": "CS-S1: backward-compatible permanent redirect \u2192 canonical /card-studio.",
         "operationId": "card_studio_landing_card_editor_get",
         "responses": {
           "200": {
@@ -59934,7 +59934,7 @@
     },
     "/card-editor/welcome": {
       "get": {
-        "description": "Welcome Card Studio \u2014 draft-free entry point (CE-3.3).\n\nOwned-only format selector with preview and export.  Active format is\ndriven by the ?format= query param; absent or invalid values redirect to\nthe canonical URL for the first owned format.\n\nGuards (same pattern as welcome_card_editor / WCE-1):\n  1. Authenticated (get_current_user_web)\n  2. LFA_FOOTBALL_PLAYER license + onboarding complete\n  3. No owned formats \u2192 redirect shop\n  4. No/invalid ?format \u2192 303 canonical first owned format URL",
+        "description": "CS-S1: backward-compatible permanent redirect \u2192 canonical /card-studio/welcome.",
         "operationId": "card_studio_welcome_card_editor_welcome_get",
         "parameters": [
           {

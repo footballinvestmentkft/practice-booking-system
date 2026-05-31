@@ -1676,7 +1676,7 @@ async def lfa_public_profile_editor(
             "published_slots":  published_slots,
             "is_published":     is_pub,
             "profile_url":      f"/players/{user.id}",
-            "card_editor_url":  "/card-editor",
+            "card_editor_url":  "/card-studio",
         },
     )
 

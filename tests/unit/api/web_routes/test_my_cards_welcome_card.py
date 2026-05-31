@@ -166,9 +166,9 @@ class TestWelcomeCardShopRoute:
         assert "/shop/cards/welcome" in src
 
     def test_mcw13_template_has_studio_cta(self):
-        """MCW-13: template contains Studio entry CTA linking to /card-editor/welcome (CE-3.6-C)."""
+        """MCW-13 (CS-S1b): Studio entry CTA now links to canonical /card-studio/welcome."""
         src = _TEMPLATE_PATH.read_text()
-        assert 'href="/card-editor/welcome"' in src
+        assert 'href="/card-studio/welcome"' in src
 
     def test_mcw13b_template_has_studio_cta_text(self):
         """MCW-13b: Studio CTA has correct label text."""

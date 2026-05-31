@@ -213,7 +213,7 @@
 <div class="wcs-wrap">
 
   <nav class="wcs-breadcrumb" aria-label="Breadcrumb">
-    <a href="/card-editor">Card Studio</a>
+    <a href="/card-studio">Card Studio</a>
     <span>›</span>
     <a href="/my-cards/welcome">Welcome Card</a>
     <span>›</span>
@@ -227,7 +227,7 @@
   {# ── Format selector ── #}
   <div class="wcs-format-selector">
     {% for f in owned_format_rows %}
-      <a href="/card-editor/welcome?format={{ f.design_id }}"
+      <a href="/card-studio/welcome?format={{ f.design_id }}"
          class="wcs-format-btn{% if f.active %} wcs-active{% endif %}">
         {{ f.label }}
         <span class="wcs-format-dims">{{ f.dims }}</span>
