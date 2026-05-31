@@ -31,7 +31,7 @@ P2-23  #btn-export-video present in expanded source
 P2-24  all 11 Jinja2-rendered values present in scripts.html
 P2-25  no unexpected Jinja2 {{ }} patterns in scripts.html
 P2-26  scripts.html starts with <script>, ends with </script>
-P2-27  route count = 844 (no new routes)
+P2-27  route count = 845 (no new routes)
 P2-28  OpenAPI snapshot match
 P2-29  /card-editor/player route still registered
 """
@@ -287,7 +287,7 @@ class TestP227to29RouteAndOpenAPI:
         """P2-27: Route count = 844 — REF-P2 adds no new routes."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 844, f"Expected 844 routes, got {len(paths)}"
+        assert len(paths) == 845, f"Expected 844 routes, got {len(paths)}"
 
     def test_p2_28_openapi_snapshot_match(self):
         """P2-28: OpenAPI snapshot matches live API paths."""

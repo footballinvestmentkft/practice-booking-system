@@ -432,6 +432,6 @@ class TestCE217RouteCount:
         """CE-3.8 adds 3 from-mood endpoints — snapshot path count must equal 842."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 844, (
-            f"Expected 844 routes (842 CE-3.7+CE-3.8 baseline + 2 CS-S0 card-studio routes), got {len(paths)}."
+        assert len(paths) == 845, (
+            f"Expected 845 routes (842 CE-3.7+CE-3.8 baseline + 2 CS-S0 card-studio routes), got {len(paths)}."
         )

@@ -1369,6 +1369,40 @@ async def student_set_card_theme(
         return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
 
 
+@router.post("/dashboard/wc-card-theme")
+async def student_set_wc_card_theme(
+    payload: _CardThemeRequest,
+    db: Session = Depends(get_db),
+    user: User  = Depends(get_current_user_web),
+):
+    """CS-COLOR-1: Set the active colour theme for the Welcome Card Studio.
+
+    Writes to CardDraft(card_type_id='welcome_card').draft_theme.
+    Only free themes are valid in CS-COLOR-1AA (no premium unlock scope).
+    Requires active LFA Football Player license + onboarding completed.
+    """
+    from ...services.card_theme_service import get_all_themes as _get_wc_themes
+    from ...services.card_draft_service import CardDraftService as _WCDraftService
+
+    lfa_license = _get_lfa_license(db, user.id)
+    if not lfa_license:
+        return JSONResponse({"ok": False, "error": "No active LFA Football Player license"}, status_code=404)
+    if not lfa_license.onboarding_completed:
+        return JSONResponse({"ok": False, "error": "Onboarding not completed"}, status_code=403)
+
+    # Validate: theme must exist and be free (CS-COLOR-1: no premium unlock)
+    free_theme_ids = {t.id for t in _get_wc_themes(db) if not t.is_premium}
+    if payload.theme not in free_theme_ids:
+        return JSONResponse(
+            {"ok": False, "error": f"Unknown or locked theme: {payload.theme!r}"},
+            status_code=400,
+        )
+
+    draft = _WCDraftService.get_draft(db, user.id, "welcome_card")
+    _WCDraftService.update_draft_theme(db, draft, payload.theme)
+    return JSONResponse({"ok": True, "theme": payload.theme})
+
+
 @router.post("/dashboard/unlock-theme")
 async def student_unlock_theme(
     payload: _CardThemeRequest,

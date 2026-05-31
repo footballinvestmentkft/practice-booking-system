@@ -292,8 +292,8 @@ class TestS109S110RouteAndSnapshot:
         """S1-09: route count is still 844 — redirect is handler change, not new route."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 844, (
-            f"Expected 844 routes (CS-S1 does not add routes), got {len(paths)}"
+        assert len(paths) == 845, (
+            f"Expected 845 routes (CS-S1 does not add routes), got {len(paths)}"
         )
 
     def test_s1_10_openapi_snapshot_still_matches(self):

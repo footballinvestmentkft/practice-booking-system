@@ -720,6 +720,7 @@ def _build_welcome_card_context(
     platform: str | None,
     export: bool,
     use_nickname: bool = False,
+    theme_id: str = "default",
 ) -> dict:
     """
     Build the FClassic template context for the Welcome Card.
@@ -829,7 +830,8 @@ def _build_welcome_card_context(
     )
 
     platform_preset = _get_platform_preset(platform)
-    theme           = _get_theme("midnight")  # dark FClassic Player default
+    # CS-COLOR-1: use caller-supplied theme_id; falls back to "default" for unknown ids
+    theme           = _get_theme(theme_id or "default")
 
     return {
         "request":               request,
@@ -956,6 +958,7 @@ async def onboarding_welcome_card(
     platform: str | None     = Query(default=None),
     export: bool             = Query(default=False),
     use_nickname: bool       = Query(default=False),
+    theme: str               = Query(default="default"),  # CS-COLOR-1
     render_token: str | None = None,
     db: Session              = Depends(get_db),
     user: "User | None"      = Depends(get_current_user_optional),
@@ -1017,7 +1020,7 @@ async def onboarding_welcome_card(
         )
 
     logger.info("welcome_card_rendered", extra={"user": user.email, "platform": platform, "export": export})
-    ctx  = _build_welcome_card_context(request, user, license, platform, export, use_nickname)
+    ctx  = _build_welcome_card_context(request, user, license, platform, export, use_nickname, theme_id=theme)
     tmpl = _select_welcome_card_template(platform, export)
     return templates.TemplateResponse(tmpl, ctx)
 
@@ -1025,10 +1028,11 @@ async def onboarding_welcome_card(
 @router.get("/profile/onboarding-card/export")
 async def export_onboarding_welcome_card(
     request: Request,
-    platform: str    = Query(default="instagram_square"),
+    platform: str      = Query(default="instagram_square"),
     use_nickname: bool = Query(default=False),
-    db: Session      = Depends(get_db),
-    user: User       = Depends(get_current_user_web),
+    theme: str         = Query(default="default"),  # CS-COLOR-1
+    db: Session        = Depends(get_db),
+    user: User         = Depends(get_current_user_web),
 ):
     """
     Export the Welcome Card as a PNG at a social-media canvas size.
@@ -1072,11 +1076,12 @@ async def export_onboarding_welcome_card(
             detail="Export rate limit exceeded (5 per minute). Please wait before exporting again.",
         )
 
-    _nick_param = "&use_nickname=1" if use_nickname else ""
+    _nick_param   = "&use_nickname=1" if use_nickname else ""
+    _theme_param  = f"&theme={theme}" if theme and theme != "default" else ""
     render_url = (
         f"http://127.0.0.1:{settings.APP_INTERNAL_PORT}"
         f"/profile/onboarding-card?platform={platform}&export=1"
-        f"{_nick_param}&render_token={_create_render_token(user.id)}"
+        f"{_theme_param}{_nick_param}&render_token={_create_render_token(user.id)}"
     )
 
     logger.info("welcome_card_export", extra={"user": user.email, "platform": platform})

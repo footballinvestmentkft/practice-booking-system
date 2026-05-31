@@ -28,6 +28,8 @@ from ...services.card_design_service import (
     get_card_family,
 )
 from ...services.mood_photo_service import get_mood_photos_for_user
+from ...services.card_theme_service import get_all_themes as _get_all_themes
+from ...services.card_draft_service import CardDraftService as _CardDraftService
 from .card_editor import (
     _WC_FORMAT_BY_ID,
     _WC_RATIO,
@@ -84,8 +86,16 @@ def _resolve_welcome_context(db: Session, user, format_id: str | None):
 
     fmt = _WC_FORMAT_BY_ID[format_id]
     ratio_class = _WC_RATIO.get(fmt.preview_platform, "mfg-ratio-11")
-    preview_url = f"/profile/onboarding-card?platform={fmt.preview_platform}"
-    export_url  = f"/profile/onboarding-card/export?platform={fmt.preview_platform}"
+
+    # CS-COLOR-1A: read active theme from Welcome Card draft, default to "default"
+    welcome_draft = _CardDraftService.get_draft(db, user.id, "welcome_card")
+    active_theme  = welcome_draft.draft_theme or "default"
+
+    # CS-COLOR-1A: free themes only (no shop/unlock scope in COLOR-1)
+    card_themes = [t for t in _get_all_themes(db) if not t.is_premium]
+
+    preview_url = f"/profile/onboarding-card?platform={fmt.preview_platform}&theme={active_theme}"
+    export_url  = f"/profile/onboarding-card/export?platform={fmt.preview_platform}&theme={active_theme}"
 
     owned_format_rows = [
         {
@@ -93,7 +103,7 @@ def _resolve_welcome_context(db: Session, user, format_id: str | None):
             "label":       f.label,
             "style_tag":   f.style_tag,
             "dims":        f.dims,
-            "preview_url": f"/profile/onboarding-card?platform={f.preview_platform}",
+            "preview_url": f"/profile/onboarding-card?platform={f.preview_platform}&theme={active_theme}",
             "active":      f.design_id == format_id,
         }
         for f in owned_formats_ordered
@@ -104,6 +114,8 @@ def _resolve_welcome_context(db: Session, user, format_id: str | None):
     ctx = {
         "active_type":        "welcome",
         "active_format":      format_id,
+        "active_theme":       active_theme,
+        "card_themes":        card_themes,
         "fmt":                fmt,
         "ratio_class":        ratio_class,
         "preview_url":        preview_url,

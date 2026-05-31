@@ -1,0 +1,26 @@
+{# CS-COLOR-1A: Welcome Studio Free/Basic Theme Selector MVP.
+   Free/basic themes only (default/midnight/arctic).
+   No premium purchase, no shop unlock, no family/format ownership (COLOR-OWNERSHIP series).
+   Context vars required:
+     card_themes  — list of ThemeDefinition (free themes only)
+     active_theme — currently active theme id (str)
+#}
+<div class="cs-color-panel">
+  <p class="cs-section-label">Color Theme</p>
+  <div class="cs-color-chips" id="cs-color-chips">
+    {% for t in card_themes %}
+    <button class="cs-color-chip{% if t.id == active_theme %} cs-color-chip--active{% endif %}"
+            data-theme="{{ t.id }}"
+            title="{{ t.label }}"
+            aria-label="{{ t.label }}{% if t.id == active_theme %} (active){% endif %}"
+            onclick="setWelcomeTheme('{{ t.id }}')"
+            style="--chip-dot: {{ t.dot_color }};">
+      <span class="cs-color-swatch" style="background:{{ t.dot_color }};"></span>
+    </button>
+    {% endfor %}
+  </div>
+  <p class="cs-color-active-name" id="cs-color-active-name">
+    {% for t in card_themes %}{% if t.id == active_theme %}{{ t.label }}{% endif %}{% endfor %}
+  </p>
+  <p class="cs-color-error" id="cs-color-error" style="display:none;"></p>
+</div>

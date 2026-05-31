@@ -159,8 +159,8 @@ class TestCEL12RouteCount:
         """CEL-12: route count 844 (unchanged — redirect is handler change, not new route)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 844, (
-            f"Expected 844 routes (redirect handler change does not add routes), got {len(paths)}."
+        assert len(paths) == 845, (
+            f"Expected 845 routes (redirect handler change does not add routes), got {len(paths)}."
         )
 
     def test_cel_12b_card_editor_route_registered(self):
