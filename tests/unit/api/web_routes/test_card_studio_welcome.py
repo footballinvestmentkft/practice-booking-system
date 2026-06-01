@@ -325,7 +325,7 @@ class TestCEW18RouteCount:
         """CEW-18: route count baseline check (updated by CE-3.8 to 842)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 845, (
+        assert len(paths) == 846, (
             f"Expected 842 routes (839 CE-3.7 baseline + 3 from-mood endpoints), got {len(paths)}."
         )
 
@@ -479,9 +479,10 @@ _MOCK_MOOD_PHOTO_URL = "/static/uploads/mood_photos/42_mood_happy_smile_orig_123
 
 def _make_mood_photo(slot: str, url: str = _MOCK_MOOD_PHOTO_URL):
     mp = MagicMock()
-    mp.slot         = slot
-    mp.original_url = url
-    mp.status       = "uploaded"
+    mp.slot              = slot
+    mp.original_url      = url
+    mp.processed_png_url = None  # IMG-FIX-1: None so _mood_photo_asset_url falls back to original_url
+    mp.status            = "uploaded"
     return mp
 
 
@@ -677,7 +678,7 @@ class TestCEW44to51TemplateMoodPicker:
         """CEW-47: CE-3.8 adds 3 from-mood routes → total 842."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 845, (
+        assert len(paths) == 846, (
             f"Expected 845 routes (842 baseline + 2 CS-S0 routes), got {len(paths)}"
         )
 

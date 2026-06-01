@@ -430,9 +430,9 @@ class TestCE216WelcomeEditorUnchanged:
 
 class TestCE217RouteCount:
     def test_openapi_snapshot_route_count_unchanged(self):
-        """CE-3.8 adds 3 from-mood endpoints — snapshot path count must equal 842."""
+        """CS-S2A adds /card-studio/player — snapshot path count must equal 846."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 845, (
-            f"Expected 845 routes (842 CE-3.7+CE-3.8 baseline + 2 CS-S0 card-studio routes), got {len(paths)}."
+        assert len(paths) == 846, (
+            f"Expected 846 routes (845 CS-S0 baseline + 1 CS-S2A /card-studio/player), got {len(paths)}."
         )

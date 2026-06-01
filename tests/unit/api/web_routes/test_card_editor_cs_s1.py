@@ -129,12 +129,12 @@ class TestS104PlayerNotRedirected:
             "CS-S1 FORBIDDEN to redirect Player route before CS-S2"
         )
 
-    def test_s1_04b_no_card_studio_player_route_exists(self):
-        """S1-04b (scope guard): /card-studio/player must NOT be a registered route."""
+    def test_s1_04b_card_studio_player_route_exists(self):
+        """S1-04b (updated CS-S2A): /card-studio/player is registered (CS-S2A preview MVP)."""
         from app.main import app
         paths = [getattr(r, "path", "") for r in app.routes]
-        assert "/card-studio/player" not in paths, (
-            "/card-studio/player must not exist in CS-S1 — Player not integrated into shell yet"
+        assert "/card-studio/player" in paths, (
+            "/card-studio/player must be registered (added in CS-S2A)"
         )
 
 
@@ -275,25 +275,27 @@ class TestS1bCTAAndNaming:
         src_colors = (TEMPLATES_DIR / "shop_card_player_colors.html").read_text()
         assert "Open Card Studio" in src_colors
 
-    def test_s1b_05_no_card_studio_player_link_anywhere(self):
-        """S1b-05 (scope guard): no template may link to /card-studio/player."""
+    def test_s1b_05_card_studio_player_link_exists(self):
+        """S1b-05 (updated CS-S2A): /card-studio/player link is present in shell/switcher."""
+        found = False
         for tmpl_path in TEMPLATES_DIR.rglob("*.html"):
             src = tmpl_path.read_text(encoding="utf-8")
-            assert '/card-studio/player' not in src, (
-                f"{tmpl_path.name} must not contain /card-studio/player link in CS-S1"
-            )
+            if "/card-studio/player" in src:
+                found = True
+                break
+        assert found, "/card-studio/player must be present in templates (added in CS-S2A)"
 
 
 # ── S1-09/10: route count and OpenAPI snapshot ───────────────────────────────
 
 class TestS109S110RouteAndSnapshot:
 
-    def test_s1_09_route_count_still_844(self):
-        """S1-09: route count is still 844 — redirect is handler change, not new route."""
+    def test_s1_09_route_count_846(self):
+        """S1-09 (updated CS-S2A): route count is 846 (+/card-studio/player from CS-S2A)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 845, (
-            f"Expected 845 routes (CS-S1 does not add routes), got {len(paths)}"
+        assert len(paths) == 846, (
+            f"Expected 846 routes (845 CS-S1 baseline + 1 CS-S2A), got {len(paths)}"
         )
 
     def test_s1_10_openapi_snapshot_still_matches(self):

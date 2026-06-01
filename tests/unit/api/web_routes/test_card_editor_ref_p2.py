@@ -284,10 +284,10 @@ class TestP226ScriptsBoundaries:
 class TestP227to29RouteAndOpenAPI:
 
     def test_p2_27_route_count_844(self):
-        """P2-27: Route count = 844 — REF-P2 adds no new routes."""
+        """P2-27: Route count = 846 (CS-S2A +1 /card-studio/player)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 845, f"Expected 844 routes, got {len(paths)}"
+        assert len(paths) == 846, f"Expected 846 routes, got {len(paths)}"
 
     def test_p2_28_openapi_snapshot_match(self):
         """P2-28: OpenAPI snapshot matches live API paths."""

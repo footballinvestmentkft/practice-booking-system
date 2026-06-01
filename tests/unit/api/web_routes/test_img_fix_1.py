@@ -58,7 +58,7 @@ class TestIMG01to03MoodPhotoAssetUrl:
 class TestIMG04to06EndpointPriority:
 
     def _run(self, coro):
-        return asyncio.get_event_loop().run_until_complete(coro)
+        return asyncio.run(coro)
 
     def _make_mood_photo(self, processed_url, original_url):
         mp = MagicMock()
