@@ -1100,11 +1100,21 @@ def _build_challenge_card_context(
     unlocked = get_unlocked_challenge_card_phases(ch, viewer.id, my_attempt)
     is_locked = phase not in unlocked
 
+    # CC-DESIGN-1: viewer_action_text — two-participant invitation narrative line
+    _challenged_dn = _display_name(ch.challenged)
+    _challenger_dn = _display_name(ch.challenger)
+    if phase == "challenge_sent":
+        viewer_action_text = f"You challenged {_challenged_dn}"
+    elif phase == "challenge_received":
+        viewer_action_text = f"{_challenger_dn} challenged you"
+    else:
+        viewer_action_text = ""
+
     return {
         "challenge_id":          ch.id,
         "phase":                 phase,
-        "challenger_name":       _display_name(ch.challenger),
-        "challenged_name":       _display_name(ch.challenged),
+        "challenger_name":       _challenger_dn,
+        "challenged_name":       _challenged_dn,
         "game_name":             ch.game.name if ch.game else "Unknown Game",
         "challenge_mode":        ch.challenge_mode or "async",
         "outcome_reason":        outcome_reason,
@@ -1128,6 +1138,8 @@ def _build_challenge_card_context(
         "selected_photo_url":    selected_photo_url,
         "viewer_is_challenger":  is_challenger,
         "forfeit_reason":        ch.forfeit_reason,
+        # CC-DESIGN-1: two-participant invitation narrative
+        "viewer_action_text":    viewer_action_text,
     }
 
 
