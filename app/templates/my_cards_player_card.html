@@ -93,7 +93,7 @@
     <span class="mcp-credits-badge">Balance: <strong>{{ user.credit_balance }} CR</strong></span>
   </div>
 
-  <a href="/shop/cards/player" class="mcp-shop-link">Shop Designs →</a>
+  <a href="/shop?type=player_card" class="mcp-shop-link">Shop Designs →</a>
 
   {# ── Flash messages ── #}
   {% if flash_purchased %}
@@ -110,12 +110,12 @@
   {% elif flash_error == "owned" %}
   <div class="mfg-flash mfg-flash-error">
     You already own this.
-    <a class="mfg-flash-cta" href="/shop/cards/player">Browse Player Cards →</a>
+    <a class="mfg-flash-cta" href="/shop?type=player_card">Browse Player Cards →</a>
   </div>
   {% elif flash_error == "invalid" %}
   <div class="mfg-flash mfg-flash-error">
     This product is no longer available.
-    <a class="mfg-flash-cta" href="/shop/cards">Back to shop →</a>
+    <a class="mfg-flash-cta" href="/shop">Back to shop →</a>
   </div>
   {% endif %}
 
@@ -163,7 +163,7 @@
     <div class="mcp-empty-icon">🎴</div>
     <h3>No designs yet</h3>
     <p>You don't own any Player Card designs. Visit the shop to get your first design.</p>
-    <a href="/shop/cards/player" class="mcp-empty-cta">Browse Designs →</a>
+    <a href="/shop?type=player_card" class="mcp-empty-cta">Browse Designs →</a>
   </div>
 
   {% endif %}

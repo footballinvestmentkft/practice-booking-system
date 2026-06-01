@@ -160,7 +160,7 @@ class TestWCE02UnownedRedirect:
         assert isinstance(result, RedirectResponse)
         assert result.status_code == 303
         assert "error=not_owned" in result.headers["location"]
-        assert "/shop/cards/welcome" in result.headers["location"]
+        assert "/shop?type=welcome_card" in result.headers["location"]
 
 
 # ── WCE-03  Unknown format_id → 404 ──────────────────────────────────────────
@@ -303,7 +303,7 @@ class TestWCE06BackLink:
     def test_wce06_shop_link_present(self):
         """WCE-06c: template contains Browse Welcome Cards link."""
         html = self._render()
-        assert "/shop/cards/welcome" in html
+        assert "/shop?type=welcome_card" in html
         assert "Browse Welcome Cards" in html
 
 

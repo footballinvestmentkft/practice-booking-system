@@ -167,7 +167,7 @@
       {% if pc_owned_count > 0 %}
         <a href="/card-editor/player" class="cs-btn-primary cs-player-editor-cta">Open Studio →</a>
       {% else %}
-        <a href="/shop/cards/player" class="cs-btn-secondary">Browse Player Designs →</a>
+        <a href="/shop?type=player_card" class="cs-btn-secondary">Browse Player Designs →</a>
       {% endif %}
     </div>
 
@@ -186,7 +186,7 @@
       {% if wc_owned_count > 0 %}
         <a href="/card-studio/welcome" class="cs-btn-primary cs-welcome-cta">Open Welcome Studio →</a>
       {% else %}
-        <a href="/shop/cards/welcome" class="cs-btn-secondary">Browse Welcome Designs →</a>
+        <a href="/shop?type=welcome_card" class="cs-btn-secondary">Browse Welcome Designs →</a>
       {% endif %}
     </div>
 
@@ -205,7 +205,7 @@
       {% if cc_owned_count > 0 %}
         <a href="/card-editor/challenge" class="cs-btn-primary cs-challenge-cta">Open Challenge Studio →</a>
       {% else %}
-        <a href="/shop/cards/challenge" class="cs-btn-secondary">Browse Challenge Designs →</a>
+        <a href="/shop?type=challenge_card" class="cs-btn-secondary">Browse Challenge Designs →</a>
       {% endif %}
     </div>
 
@@ -217,7 +217,7 @@
     <div class="cs-empty-icon">🃏</div>
     <h2>You don't own any card designs yet.</h2>
     <p>Browse the card shop to get your first design.</p>
-    <a href="/shop/cards" class="cs-btn-primary">Browse Card Shop →</a>
+    <a href="/shop" class="cs-btn-primary">Browse Card Shop →</a>
   </div>
   {% endif %}
 

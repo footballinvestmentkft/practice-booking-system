@@ -101,7 +101,7 @@ async def card_studio_challenge(
     Guards (same pattern as card_studio_welcome / WCE-1):
       1. Authenticated (get_current_user_web)
       2. LFA_FOOTBALL_PLAYER license + onboarding complete
-      3. No owned formats → redirect /shop/cards/challenge
+      3. No owned formats → redirect /shop?type=challenge_card
     """
     # ── Guard 2: license + onboarding (identical to WCE-1 / card_studio_welcome) ─
     license = db.query(UserLicense).filter(
@@ -123,7 +123,7 @@ async def card_studio_challenge(
         f for f in CHALLENGE_CARD_FORMATS if f.design_id in owned_set
     ]
     if not owned_formats_ordered:
-        return RedirectResponse(url="/shop/cards/challenge", status_code=303)
+        return RedirectResponse(url="/shop?type=challenge_card", status_code=303)
 
     # ── 200 path — format gallery, no preview/export context ─────────────────
     cc_format_rows = [
@@ -191,7 +191,7 @@ async def welcome_card_editor(
     if user.role != UserRole.ADMIN:
         if not is_design_accessible(db, user.id, "welcome_card", format_id):
             return RedirectResponse(
-                url="/shop/cards/welcome?error=not_owned", status_code=303
+                url="/shop?type=welcome_card&error=not_owned", status_code=303
             )
 
     ratio_class = _WC_RATIO.get(fmt.preview_platform, "mfg-ratio-11")

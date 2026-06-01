@@ -75,20 +75,23 @@ async def shop_landing(
     )
 
 
+def _flash_params(request: Request) -> str:
+    """Extract allowed flash params (error, purchased) for redirect passthrough."""
+    parts = []
+    for key in ("error", "purchased"):
+        val = request.query_params.get(key)
+        if val:
+            parts.append(f"{key}={val}")
+    return ("&" + "&".join(parts)) if parts else ""
+
+
 @router.get("/shop/cards", response_class=HTMLResponse)
 async def shop_cards(
     request: Request,
     user: User = Depends(get_current_user_web),
 ):
-    return templates.TemplateResponse(
-        "shop_cards.html",
-        {
-            "request": request,
-            "user":    user,
-            "spec_dashboard_url":  "/dashboard/lfa-football-player",
-            "spec_dashboard_icon": "⚽",
-        },
-    )
+    """SHOP-2: 302 redirect → /shop (unified listing)."""
+    return RedirectResponse(url=f"/shop{_flash_params(request)}", status_code=302)
 
 
 # ── Player Card shop ───────────────────────────────────────────────────────────
@@ -96,46 +99,11 @@ async def shop_cards(
 @router.get("/shop/cards/player", response_class=HTMLResponse)
 async def shop_player_card(
     request: Request,
-    db: Session = Depends(get_db),
-    user: User  = Depends(get_current_user_web),
+    user: User = Depends(get_current_user_web),
 ):
-    all_designs = get_all_designs(db)
-    credits = user.credit_balance
-
-    def _state(design) -> str:
-        if is_design_accessible(db, user.id, "player_card", design.id):
-            return "owned"
-        if design.credit_cost == 0:
-            return "not_available"
-        return "get_card" if credits >= design.credit_cost else "locked"
-
-    design_rows = [
-        {
-            "id":          d.id,
-            "label":       d.label,
-            "description": d.description,
-            "credit_cost": d.credit_cost,
-            "is_premium":  d.is_premium,
-            "state":       _state(d),
-        }
-        for d in all_designs
-    ]
-
-    owned_count = sum(1 for r in design_rows if r["state"] == "owned")
-    total_count = len(design_rows)
-
-    return templates.TemplateResponse(
-        "shop_player_card.html",
-        {
-            "request":         request,
-            "user":            user,
-            "design_rows":     design_rows,
-            "owned_count":     owned_count,
-            "total_count":     total_count,
-            "flash_purchased": request.query_params.get("purchased"),
-            "flash_error":     request.query_params.get("error"),
-            "spec_dashboard_url": "/dashboard/lfa-football-player",
-        },
+    """SHOP-2: 302 redirect → /shop?type=player_card."""
+    return RedirectResponse(
+        url=f"/shop?type=player_card{_flash_params(request)}", status_code=302
     )
 
 
@@ -227,46 +195,11 @@ async def shop_player_card_detail(
 @router.get("/shop/cards/welcome", response_class=HTMLResponse)
 async def shop_welcome_card(
     request: Request,
-    db: Session = Depends(get_db),
-    user: User  = Depends(get_current_user_web),
+    user: User = Depends(get_current_user_web),
 ):
-    credits = user.credit_balance
-
-    def _wc_state(fmt) -> str:
-        if is_design_accessible(db, user.id, "welcome_card", fmt.design_id):
-            return "owned"
-        return "get_card" if credits >= fmt.credit_cost else "locked"
-
-    format_rows = [
-        {
-            "design_id":        fmt.design_id,
-            "label":            fmt.label,
-            "style_tag":        fmt.style_tag,
-            "dims":             fmt.dims,
-            "credit_cost":      fmt.credit_cost,
-            "preview_platform": fmt.preview_platform,
-            "state":            _wc_state(fmt),
-            "preview_url":      f"/profile/onboarding-card?platform={fmt.preview_platform}",
-            "export_url":       f"/profile/onboarding-card/export?platform={fmt.preview_platform}",
-        }
-        for fmt in WELCOME_CARD_FORMATS
-    ]
-
-    owned_count = sum(1 for r in format_rows if r["state"] == "owned")
-    total_count = len(format_rows)
-
-    return templates.TemplateResponse(
-        "shop_welcome_card.html",
-        {
-            "request":         request,
-            "user":            user,
-            "format_rows":     format_rows,
-            "owned_count":     owned_count,
-            "total_count":     total_count,
-            "flash_purchased": request.query_params.get("purchased"),
-            "flash_error":     request.query_params.get("error"),
-            "spec_dashboard_url": "/dashboard/lfa-football-player",
-        },
+    """SHOP-2: 302 redirect → /shop?type=welcome_card."""
+    return RedirectResponse(
+        url=f"/shop?type=welcome_card{_flash_params(request)}", status_code=302
     )
 
 
@@ -275,43 +208,11 @@ async def shop_welcome_card(
 @router.get("/shop/cards/challenge", response_class=HTMLResponse)
 async def shop_challenge_card(
     request: Request,
-    db: Session = Depends(get_db),
-    user: User  = Depends(get_current_user_web),
+    user: User = Depends(get_current_user_web),
 ):
-    credits = user.credit_balance
-
-    def _cc_state(fmt) -> str:
-        if is_design_accessible(db, user.id, "challenge_card", fmt.design_id):
-            return "owned"
-        return "get_card" if credits >= fmt.credit_cost else "locked"
-
-    format_rows = [
-        {
-            "design_id":   fmt.design_id,
-            "label":       fmt.label,
-            "style_tag":   fmt.style_tag,
-            "dims":        fmt.dims,
-            "credit_cost": fmt.credit_cost,
-            "state":       _cc_state(fmt),
-        }
-        for fmt in CHALLENGE_CARD_FORMATS
-    ]
-
-    owned_count = sum(1 for r in format_rows if r["state"] == "owned")
-    total_count = len(format_rows)
-
-    return templates.TemplateResponse(
-        "shop_challenge_card.html",
-        {
-            "request":         request,
-            "user":            user,
-            "format_rows":     format_rows,
-            "owned_count":     owned_count,
-            "total_count":     total_count,
-            "flash_purchased": request.query_params.get("purchased"),
-            "flash_error":     request.query_params.get("error"),
-            "spec_dashboard_url": "/dashboard/lfa-football-player",
-        },
+    """SHOP-2: 302 redirect → /shop?type=challenge_card."""
+    return RedirectResponse(
+        url=f"/shop?type=challenge_card{_flash_params(request)}", status_code=302
     )
 
 

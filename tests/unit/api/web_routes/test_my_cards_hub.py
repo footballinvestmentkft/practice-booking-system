@@ -496,7 +496,7 @@ class TestMyCardsLegacyRedirects:
         from app.api.web_routes.my_cards import my_cards_shop
         resp = asyncio.run(my_cards_shop(tab=None))
         assert resp.status_code == 301
-        assert resp.headers["location"] == "/shop/cards"
+        assert resp.headers["location"] == "/shop"
 
     def test_mch_r05_canonical_player_has_auth_dependency(self):
         """MCH-R05: canonical /my-cards/player route has user auth dependency."""

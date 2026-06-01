@@ -228,9 +228,9 @@ class TestSHOP09to10DashboardCTA:
         """SHOP-10: dashboard has no direct /shop/cards/player|welcome|challenge CTAs."""
         src = self._dashboard()
         for forbidden in [
-            'href="/shop/cards/player"',
-            'href="/shop/cards/welcome"',
-            'href="/shop/cards/challenge"',
+            'href="/shop?type=player_card"',
+            'href="/shop?type=welcome_card"',
+            'href="/shop?type=challenge_card"',
         ]:
             assert forbidden not in src, \
                 f"Dashboard must not have direct type CTA: {forbidden!r} (SHOP-1 cleanup)"

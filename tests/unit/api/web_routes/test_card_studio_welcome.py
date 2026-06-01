@@ -272,7 +272,7 @@ class TestCEW14Template:
         """CEW-14c: template links back to /my-cards/welcome and /shop/cards/welcome."""
         src = (TEMPLATES_DIR / "card_studio_welcome.html").read_text(encoding="utf-8")
         assert 'href="/my-cards/welcome"' in src
-        assert 'href="/shop/cards/welcome"' in src
+        assert 'href="/shop?type=welcome_card"' in src
 
 
 # ── CEW-15/16: legacy grant + draft service ──────────────────────────────────

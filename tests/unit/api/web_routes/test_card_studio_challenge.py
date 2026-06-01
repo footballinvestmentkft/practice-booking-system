@@ -206,7 +206,7 @@ class TestCCS05NoOwnedFormats:
 
         assert isinstance(resp, RedirectResponse)
         assert resp.status_code == 303
-        assert resp.headers["location"] == "/shop/cards/challenge"
+        assert resp.headers["location"] == "/shop?type=challenge_card"
 
 
 # ── CCS-06/07/08: owned format rows correctness, order, fields ───────────────
@@ -329,7 +329,7 @@ class TestCCS1215TemplateLinks:
 
     def test_ccs_15_template_has_shop_challenge_link(self):
         """CCS-15: template contains /shop/cards/challenge link."""
-        assert 'href="/shop/cards/challenge"' in self._src()
+        assert 'href="/shop?type=challenge_card"' in self._src()
 
 
 # ── CCS-16/17/18: template must NOT have preview iframe / export / challenge_id ─

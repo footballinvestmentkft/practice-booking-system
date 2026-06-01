@@ -116,7 +116,7 @@
     <span class="mcc-credits-badge">Balance: <strong>{{ user.credit_balance }} CR</strong></span>
   </div>
 
-  <a href="/shop/cards/challenge" class="mcc-shop-link">Shop Formats →</a>
+  <a href="/shop?type=challenge_card" class="mcc-shop-link">Shop Formats →</a>
 
   {# ── Flash messages ── #}
   {% if flash_purchased %}
@@ -132,12 +132,12 @@
   {% elif flash_error == "owned" %}
   <div class="mfg-flash mfg-flash-error">
     You already own this.
-    <a class="mfg-flash-cta" href="/shop/cards/challenge">Browse Challenge Cards →</a>
+    <a class="mfg-flash-cta" href="/shop?type=challenge_card">Browse Challenge Cards →</a>
   </div>
   {% elif flash_error == "invalid" %}
   <div class="mfg-flash mfg-flash-error">
     This product is no longer available.
-    <a class="mfg-flash-cta" href="/shop/cards">Back to shop →</a>
+    <a class="mfg-flash-cta" href="/shop">Back to shop →</a>
   </div>
   {% endif %}
 
@@ -184,7 +184,7 @@
     <div class="mcc-empty-icon">⚡</div>
     <h3>No formats yet</h3>
     <p>You don't own any Challenge Card formats. Visit the shop to unlock social card exports.</p>
-    <a href="/shop/cards/challenge" class="mcc-empty-cta">Browse Formats →</a>
+    <a href="/shop?type=challenge_card" class="mcc-empty-cta">Browse Formats →</a>
   </div>
 
   {% endif %}
