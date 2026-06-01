@@ -224,6 +224,33 @@
     font-size: 0.88rem; color: var(--cc-sub); margin-top: 4px;
   }
 
+  /* ── Two-participant target card ── */
+  .ai-context-text {
+    font-size: 0.88rem; color: var(--cc-sub); font-weight: 600;
+    letter-spacing: 0.04em; margin-bottom: 18px; text-transform: uppercase;
+  }
+  .ai-target-card {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+    margin-bottom: 20px;
+  }
+  .ai-target-photo {
+    width: 200px; height: 240px; object-fit: contain; object-position: center bottom;
+    background: rgba(255,255,255,0.04); border-radius: 8px;
+    border: 1px solid var(--cc-border);
+  }
+  .ai-target-initial {
+    width: 200px; height: 240px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.04); border-radius: 8px;
+    border: 1px solid var(--cc-border);
+    font-size: 7rem; font-weight: 800; color: var(--cc-sub);
+    text-transform: uppercase;
+  }
+  .ai-target-name {
+    font-size: 1.2rem; font-weight: 700; color: var(--cc-text);
+    letter-spacing: 0.03em;
+  }
+
   /* ── Archetype B: Battle / Accepted ── */
   .arch-battle {
     display: flex; align-items: center; justify-content: center; gap: 48px; width: 100%;
@@ -298,6 +325,16 @@
         {% if phase == "challenge_sent" %}sent by you{% else %}sent to you{% endif %}
       </div>
       <div class="ai-divider"></div>
+      <div class="ai-context-text">{{ viewer_action_text }}</div>
+      {# TWO-PARTICIPANT TARGET CARD: challenged player is always visible #}
+      <div class="ai-target-card">
+        {% if challenged_photo_url %}
+          <img src="{{ challenged_photo_url }}" class="ai-target-photo" alt="{{ challenged_name }}">
+        {% else %}
+          <div class="ai-target-initial">{{ (challenged_name[0] if challenged_name else '?') | upper }}</div>
+        {% endif %}
+        <div class="ai-target-name">{{ challenged_name }}</div>
+      </div>
       <div class="ai-participants">
         {{ challenger_name }}<span class="arrow">→</span><span class="challenged-name">{{ challenged_name }}</span>
       </div>
