@@ -995,6 +995,14 @@ def get_locked_challenge_card_phases(
     # For completed challenges, the accepted phase is also historical
     if s == ChallengeStatus.COMPLETED:
         locked.append("challenge_accepted")
+        # waiting_for_opponent is historical if the viewer had submitted an attempt
+        # before the other side did — check directly on the FK so this works without
+        # loading the attempt object (used by both challenge_card and preview routes).
+        has_my_attempt = (
+            ch.challenger_attempt_id if is_challenger else ch.challenged_attempt_id
+        ) is not None
+        if has_my_attempt:
+            locked.append("waiting_for_opponent")
 
     return locked
 

@@ -61,6 +61,7 @@ from .card_editor import (
 from .vt_challenges import (
     get_unlocked_challenge_card_phases as _get_unlocked_phases,
     get_locked_challenge_card_phases   as _get_locked_phases,
+    _EXPORTABLE_PHASES                 as _CC_EXPORTABLE_PHASES,
 )
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -548,18 +549,9 @@ def _resolve_challenge_context(
         if initial not in unlocked and initial not in locked:
             locked = locked + [initial]
 
-    # CS-S4B-FIX-2: waiting_for_opponent historical phase.
-    # If the viewer had an attempt AND the challenge is COMPLETED, the
-    # "waiting_for_opponent" phase was a real event that happened before the
-    # result.  get_locked_challenge_card_phases() does not return it, so we
-    # add it here locally so the Studio timeline is complete.
-    if (
-        ch.status == ChallengeStatus.COMPLETED
-        and my_attempt_id is not None
-        and "waiting_for_opponent" not in unlocked
-        and "waiting_for_opponent" not in locked
-    ):
-        locked = locked + ["waiting_for_opponent"]
+    # NOTE: waiting_for_opponent for COMPLETED+attempt is now returned directly
+    # by get_locked_challenge_card_phases() (updated in vt_challenges.py) so no
+    # local augmentation is needed here.
 
     # CS-S4B-FIX-1: Build chronological phase list.
     # Merge unlocked + locked, deduplicate, sort by _CC_PHASE_TIMELINE_ORDER.
@@ -593,15 +585,26 @@ def _resolve_challenge_context(
     )
 
     # CS-S4B-FIX-1: Phase chips in chronological order (not unlocked-first)
+    # exportable = phase in _CC_EXPORTABLE_PHASES (usable with /challenges/{id}/card/export)
+    _locked_set   = set(locked)
+    _unlocked_set = set(unlocked)
     phase_chips = [
         {
-            "id":     p,
-            "label":  _CC_PHASE_LABELS.get(p, p),
-            "active": p == phase,
-            "locked": p in set(locked) and p not in set(unlocked),
+            "id":         p,
+            "label":      _CC_PHASE_LABELS.get(p, p),
+            "active":     p == phase,
+            "locked":     p in _locked_set and p not in _unlocked_set,
+            "exportable": p in _CC_EXPORTABLE_PHASES,
         }
         for p in all_phase_ids
     ]
+
+    is_exportable_phase = phase in _CC_EXPORTABLE_PHASES
+    # Export URL for exportable phases (ownership guard is on the export route itself)
+    export_url = (
+        f"/challenges/{challenge_id}/card/export"
+        f"?platform={platform}&phase={phase}"
+    ) if is_exportable_phase else None
 
     # Platform chips for UI
     platform_chips = [
@@ -633,6 +636,8 @@ def _resolve_challenge_context(
         "active_phase":         phase,
         "active_platform":      platform,
         "is_locked_phase":      is_locked_phase,
+        "is_exportable_phase":  is_exportable_phase,
+        "challenge_export_url": export_url,
         "ratio_class":          ratio_class,
         "preview_url":          preview_url,
         "legacy_editor_url":    "/card-editor/challenge",

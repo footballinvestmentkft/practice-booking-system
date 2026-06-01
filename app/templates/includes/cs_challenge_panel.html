@@ -128,22 +128,18 @@
     <p class="cs-section-label">Card Phase</p>
     <div class="cs-pc-pills" id="cs-ch-phase-pills">
       {% for chip in phase_chips %}
-      {% if not chip.locked %}
+      {# All phases in the list are navigable — locked means "preview only, not exportable"
+         not "disabled". The backend /challenges/{id}/card/preview accepts locked phases. #}
       <a href="/card-studio/challenge?challenge_id={{ selected_challenge_id }}&phase={{ chip.id }}&platform={{ active_platform }}"
-         class="cs-pc-pill{% if chip.active %} cs-pc-pill--active{% endif %}">
+         class="cs-pc-pill{% if chip.active %} cs-pc-pill--active{% elif chip.locked %} cs-pc-pill--historical{% endif %}"
+         title="{% if chip.locked %}{{ chip.label }} — historical preview (export not available){% else %}{{ chip.label }}{% endif %}">
         {{ chip.label }}
+        {% if chip.locked %}<span class="cs-pc-lock-icon" aria-hidden="true">🔒</span>{% endif %}
       </a>
-      {% else %}
-      <span class="cs-pc-pill cs-pc-pill--locked"
-            title="{{ chip.label }} — historical (preview only, export not available)">
-        {{ chip.label }}
-        <span style="font-size:0.62rem;opacity:0.55;margin-left:0.15rem;">🔒</span>
-      </span>
-      {% endif %}
       {% endfor %}
     </div>
     {% if is_locked_phase %}
-    <p class="cs-ch-locked-note">Historical phase — preview only, export not available.</p>
+    <p class="cs-ch-locked-note">Historical phase — preview only, export not available for this phase.</p>
     {% endif %}
   </div>
 

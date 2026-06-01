@@ -267,8 +267,14 @@
   cursor: pointer; transition: border-color 0.13s, color 0.13s;
 }
 .cs-pc-pill:hover:not(:disabled) { border-color: #64748b; color: #f1f5f9; }
-.cs-pc-pill.cs-pc-pill--active { border-color: #FFD200; color: #FFD200; background: rgba(255,210,0,0.06); }
-.cs-pc-pill.cs-pc-pill--locked { opacity: 0.38; cursor: not-allowed; }
+.cs-pc-pill.cs-pc-pill--active   { border-color: #FFD200; color: #FFD200; background: rgba(255,210,0,0.06); }
+.cs-pc-pill.cs-pc-pill--locked   { opacity: 0.38; cursor: not-allowed; }
+.cs-pc-pill.cs-pc-pill--historical {
+  border-color: #1e293b; color: #475569;
+  background: transparent; cursor: pointer;
+}
+.cs-pc-pill.cs-pc-pill--historical:hover { border-color: #334155; color: #64748b; text-decoration: none; }
+.cs-pc-lock-icon { font-size: 0.6rem; opacity: 0.55; margin-left: 0.2rem; }
 .cs-pc-select {
   width: 100%; padding: 0.35rem 0.6rem;
   background: #0b1120; color: #94a3b8;
@@ -557,7 +563,18 @@
         <p class="cs-export-dims">Use the Player Card editor for full export options.</p>
         {% elif active_type == "challenge" %}
         <p class="cs-export-title">Export</p>
-        <p class="cs-export-dims">Use the Challenge Card editor for format export.</p>
+        {% if challenge_mode == "preview" %}
+          {% if is_exportable_phase %}
+          <p class="cs-export-dims">This result phase is exportable. Requires owning this format.</p>
+          <a href="{{ legacy_editor_url }}" class="cs-btn-legacy-editor" style="display:inline-flex;">
+            Export via Challenge Editor →
+          </a>
+          {% else %}
+          <p class="cs-export-dims">Historical phase — preview only. Export available for result phases.</p>
+          {% endif %}
+        {% else %}
+        <p class="cs-export-dims">Select a challenge phase to see export options.</p>
+        {% endif %}
         {% else %}
         <p class="cs-export-title">Download your card</p>
         {% if fmt %}

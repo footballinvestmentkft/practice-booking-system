@@ -407,8 +407,8 @@ class TestS4BFixPhaseOrdering:
         assert "waiting_for_opponent" in ids, \
             f"waiting_for_opponent must appear in COMPLETED+attempt chips, got: {ids}"
 
-    def test_fix_04_waiting_for_opponent_is_locked_when_completed(self):
-        """FIX-04: waiting_for_opponent chip is locked=True in COMPLETED challenge."""
+    def test_fix_04_waiting_for_opponent_is_locked_and_navigable_when_completed(self):
+        """FIX-04: waiting_for_opponent chip is locked=True but navigable (has active link)."""
         ctx = self._ctx_completed()
         if ctx.get("challenge_mode") != "preview":
             return
@@ -417,6 +417,13 @@ class TestS4BFixPhaseOrdering:
         assert wfo is not None, "waiting_for_opponent chip not found"
         assert wfo["locked"] is True, \
             f"waiting_for_opponent must be locked=True in COMPLETED, got locked={wfo['locked']}"
+        # Template must render all chips (including locked) as navigable <a> links
+        src = (INCLUDES_DIR / "cs_challenge_panel.html").read_text()
+        # No non-navigable <span> for locked chips — all chips use <a> tags now
+        assert "cs-pc-pill--historical" in src, \
+            "Template must use cs-pc-pill--historical class for locked navigable chips"
+        assert 'cs-pc-pill cs-pc-pill--locked"\n' not in src.replace(" ", ""), \
+            "Template must NOT render locked chips as non-navigable spans"
 
     def test_fix_05_result_chip_is_unlocked_in_completed(self):
         """FIX-05: completed_score_win chip is locked=False (active, exportable)."""
@@ -520,6 +527,127 @@ class TestS4BFixPhaseOrdering:
             ids = [c["id"] for c in ctx.get("phase_chips", [])]
             assert "challenge_received" in ids, \
                 f"challenge_received must appear for DECLINED challenged view, got: {ids}"
+
+
+# ── S4B-FIX2: Template navigability + export + get_locked fix ─────────────────
+
+class TestS4BFix2TemplateAndExport:
+
+    def test_fix2_01_all_chips_navigable_in_template(self):
+        """FIX2-01: cs_challenge_panel.html renders ALL phase chips as <a> links.
+        Locked chips must be navigable (historical), not <span> (non-navigable)."""
+        src = (INCLUDES_DIR / "cs_challenge_panel.html").read_text()
+        # Template must NOT have an else branch that renders locked chips as span
+        # Check: all chips use <a> tag (cs-pc-pill--historical for locked)
+        assert "cs-pc-pill--historical" in src, \
+            "Template must use cs-pc-pill--historical for locked navigable chips"
+        # The old non-navigable pattern should be gone
+        assert "cs-pc-pill cs-pc-pill--locked" not in src or \
+               "cs-pc-pill--historical" in src, \
+            "Locked chips must be navigable <a> links, not non-navigable spans"
+
+    def test_fix2_02_completed_challenge_full_timeline_in_locked(self):
+        """FIX2-02: get_locked_challenge_card_phases now returns waiting_for_opponent
+        for COMPLETED challenges where viewer had an attempt."""
+        from app.api.web_routes.vt_challenges import get_locked_challenge_card_phases
+        ch = _make_challenge(1, 10, 20, "completed")
+        ch.challenger_attempt_id = 1  # challenger had attempt
+        ch.challenged_attempt_id = 2
+        locked = get_locked_challenge_card_phases(ch, 10)  # challenger perspective
+        assert "waiting_for_opponent" in locked, \
+            f"waiting_for_opponent must be in locked for COMPLETED+attempt, got: {locked}"
+
+    def test_fix2_03_waiting_for_opponent_not_in_locked_without_attempt(self):
+        """FIX2-03: No waiting_for_opponent in locked if viewer had no attempt."""
+        from app.api.web_routes.vt_challenges import get_locked_challenge_card_phases
+        ch = _make_challenge(1, 10, 20, "completed")
+        ch.challenger_attempt_id = None  # no attempt
+        ch.challenged_attempt_id = 2
+        locked = get_locked_challenge_card_phases(ch, 10)
+        assert "waiting_for_opponent" not in locked, \
+            f"waiting_for_opponent must NOT be locked when viewer had no attempt, got: {locked}"
+
+    def test_fix2_04_phase_chips_have_exportable_field(self):
+        """FIX2-04: phase_chips context entries have 'exportable' boolean field."""
+        fn   = _ctx_fn()
+        user = _make_user(10)
+        ch   = _make_challenge(1, 10, 20, "pending")
+
+        with patch("app.api.web_routes.card_studio._license_guard", return_value=_make_license(True)):
+            db = MagicMock()
+            db.query.return_value.filter.return_value.first.return_value = ch
+            ctx, _ = fn(db, user, challenge_id=1, phase="challenge_sent")
+
+        if ctx.get("challenge_mode") == "preview":
+            chips = ctx.get("phase_chips", [])
+            assert chips, "phase_chips must not be empty"
+            assert "exportable" in chips[0], \
+                "Each phase chip must have 'exportable' field"
+
+    def test_fix2_05_completed_result_phase_is_exportable(self):
+        """FIX2-05: completed_score_win chip has exportable=True."""
+        fn   = _ctx_fn()
+        user = _make_user(10)
+        ch   = _make_challenge(1, 10, 20, "completed")
+        ch.winner_id = 10; ch.challenger_attempt_id = 1; ch.challenged_attempt_id = 2
+
+        with patch("app.api.web_routes.card_studio._license_guard", return_value=_make_license(True)):
+            db = MagicMock()
+            db.query.return_value.filter.return_value.first.return_value = ch
+            ctx, _ = fn(db, user, challenge_id=1, phase="completed_score_win")
+
+        if ctx.get("challenge_mode") == "preview":
+            chips = ctx.get("phase_chips", [])
+            result = next((c for c in chips if c["id"] == "completed_score_win"), None)
+            if result:
+                assert result["exportable"] is True, \
+                    "completed_score_win must be exportable=True"
+
+    def test_fix2_06_historical_phase_is_not_exportable(self):
+        """FIX2-06: challenge_sent chip has exportable=False."""
+        fn   = _ctx_fn()
+        user = _make_user(10)
+        ch   = _make_challenge(1, 10, 20, "completed")
+        ch.winner_id = 10; ch.challenger_attempt_id = 1; ch.challenged_attempt_id = 2
+
+        with patch("app.api.web_routes.card_studio._license_guard", return_value=_make_license(True)):
+            db = MagicMock()
+            db.query.return_value.filter.return_value.first.return_value = ch
+            ctx, _ = fn(db, user, challenge_id=1)
+
+        if ctx.get("challenge_mode") == "preview":
+            chips = ctx.get("phase_chips", [])
+            sent = next((c for c in chips if c["id"] == "challenge_sent"), None)
+            if sent:
+                assert sent["exportable"] is False, \
+                    "challenge_sent must be exportable=False"
+
+    def test_fix2_07_is_exportable_phase_context_var_present(self):
+        """FIX2-07: is_exportable_phase context var present in challenge preview."""
+        fn   = _ctx_fn()
+        user = _make_user(10)
+        ch   = _make_challenge(1, 10, 20, "pending")
+
+        with patch("app.api.web_routes.card_studio._license_guard", return_value=_make_license(True)):
+            db = MagicMock()
+            db.query.return_value.filter.return_value.first.return_value = ch
+            ctx, _ = fn(db, user, challenge_id=1, phase="challenge_sent")
+
+        if ctx.get("challenge_mode") == "preview":
+            assert "is_exportable_phase" in ctx, \
+                "is_exportable_phase must be in challenge preview context"
+            assert ctx["is_exportable_phase"] is False, \
+                "challenge_sent is not exportable"
+
+    def test_fix2_08_export_panel_text_not_misleading(self):
+        """FIX2-08: Export panel shows phase-aware text, not generic fallback."""
+        src = (TEMPLATES_DIR / "card_studio_shell.html").read_text()
+        # Must reference is_exportable_phase for challenge mode
+        assert "is_exportable_phase" in src, \
+            "Export panel must reference is_exportable_phase for challenge mode"
+        # Old generic text must be gone
+        assert "Use the Challenge Card editor for format export." not in src, \
+            "Old generic export fallback text must be replaced with phase-aware text"
 
 
 # ── S4B3: Preview iframe ──────────────────────────────────────────────────────
