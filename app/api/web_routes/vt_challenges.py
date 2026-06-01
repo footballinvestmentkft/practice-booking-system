@@ -1037,7 +1037,10 @@ def validate_challenge_card_phase(
             status_code=403,
             detail=f"Phase {phase!r} is not applicable to this challenge.",
         )
-    if for_export and phase not in unlocked:
+    # CC-DESIGN-1: export allowed if phase is in _EXPORTABLE_PHASES.
+    # Social moment phases (challenge_sent/received) are in locked (historical)
+    # but must be exportable — use _EXPORTABLE_PHASES as the authoritative list.
+    if for_export and phase not in _EXPORTABLE_PHASES:
         raise HTTPException(
             status_code=403,
             detail=f"Phase {phase!r} is locked — export not available.",
