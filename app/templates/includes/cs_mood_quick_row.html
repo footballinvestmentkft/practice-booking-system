@@ -14,7 +14,8 @@
     {% for meta in mood_slot_meta %}
       {% set _mp  = mood_photos.get(meta.slot) %}
       {% set _has = _mp and _mp.original_url %}
-      {% set _sel = _has and _mp.original_url == _cs_photo_current %}
+      {% set _asset_url = (_mp.processed_png_url or _mp.original_url) if _has else none %}
+      {% set _sel = _has and _asset_url == _cs_photo_current %}
       <button class="cs-mood-chip{% if _sel %} cs-mood-chip--selected{% endif %}{% if not _has %} cs-mood-chip--empty{% endif %}"
               type="button"
               data-mood-slot="{{ meta.slot }}"

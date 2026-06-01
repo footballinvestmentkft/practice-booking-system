@@ -1,6 +1,7 @@
 """
-MP-R01..MP-R26 — unit tests for mood_photos web routes.
+MP-R01..MP-R52 — unit tests for mood_photos web routes.
 MP-D01..MP-D06 — display fallback tests (processed_png_url rendering).
+BG-01..BG-09   — BG-REMOVAL-1 specific tests (auto-trigger, selected-state, etc.)
 
 Tests call route functions directly (asyncio.run) with patched
 dependencies — no TestClient, no real DB, no disk I/O.
@@ -711,7 +712,11 @@ def _mood_record(
     return r
 
 
-def _render_mood_page(record_for_slot: MagicMock | None, slot: str = "mood_happy_smile") -> str:
+def _render_mood_page(
+    record_for_slot: MagicMock | None,
+    slot: str = "mood_happy_smile",
+    bg_processor_mode: str = "null",
+) -> str:
     """Render lfa_player_mood_photos.html with one slot populated, rest empty."""
     import jinja2
     from app.api.web_routes.mood_photos import _SLOT_META
@@ -728,10 +733,11 @@ def _render_mood_page(record_for_slot: MagicMock | None, slot: str = "mood_happy
         autoescape=False,
     )
     return env.get_template("lfa_player_mood_photos.html").render(
-        request           = MagicMock(),
-        user              = user,
-        mood_photos       = mood_photos,
-        slots_meta        = _SLOT_META,
+        request             = MagicMock(),
+        user                = user,
+        mood_photos         = mood_photos,
+        slots_meta          = _SLOT_META,
+        bg_processor_mode   = bg_processor_mode,
         spec_dashboard_url  = "/dashboard/lfa-football-player",
         spec_dashboard_icon = "⚽",
         spec_profile_url    = "/profile/lfa-football-player",
@@ -815,29 +821,32 @@ class TestMPD04OnerrorFallback:
         assert "this.onerror=null" in html
 
 
-# ── MP-D05 ── Remove Background button absent in display-only fix ─────────────
+# ── MP-D05 ── Remove Background button absent when bg_processor_mode="null" ───
 
 class TestMPD05NoRemoveBackgroundButton:
 
     def test_mp_d05_no_remove_bg_when_uploaded(self):
-        """MP-D05a: Remove Background button must not appear for uploaded status."""
+        """MP-D05a: Remove Background button (✂ label) must not appear when bg_processor_mode='null'."""
         record = _mood_record(status="uploaded", processed_png_url=None)
-        html = _render_mood_page(record)
-        assert "Remove Background" not in html
-        assert "_mpRemoveBg" not in html
+        html = _render_mood_page(record, bg_processor_mode="null")
+        # Check for the rendered button label (✂ prefix) not the generic string
+        # (the JS block contains "Remove Background" in comments/function defs)
+        assert "✂ Remove Background" not in html
+        # The slot-specific onclick should not appear when null mode
+        assert "_mpRemoveBg('mood_happy_smile')" not in html
 
     def test_mp_d05_no_remove_bg_when_ready(self):
-        """MP-D05b: Remove Background button must not appear for ready status."""
+        """MP-D05b: Remove Background button must not appear when bg_processor_mode='null'."""
         record = _mood_record(status="ready", processed_png_url=_PROC_URL)
-        html = _render_mood_page(record)
-        assert "Remove Background" not in html
+        html = _render_mood_page(record, bg_processor_mode="null")
+        assert "✂ Remove Background" not in html
 
     def test_mp_d05_no_retry_remove_bg_when_failed(self):
-        """MP-D05c: Retry Remove Background button must not appear for failed status."""
+        """MP-D05c: Retry Remove Background button must not appear when bg_processor_mode='null'."""
         record = _mood_record(status="failed", processed_png_url=None)
-        html = _render_mood_page(record)
-        assert "Retry Remove Background" not in html
-        assert "Remove Background" not in html
+        html = _render_mood_page(record, bg_processor_mode="null")
+        assert "↺ Retry Remove Background" not in html
+        assert "✂ Remove Background" not in html
 
 
 # ── MP-D06 ── Regression: no-record placeholder unchanged ─────────────────────
@@ -854,3 +863,725 @@ class TestMPD06Regression:
         html = _render_mood_page(record_for_slot=None)
         preview_section = html.split("mp-preview")[1].split("mp-actions")[0]
         assert "<img" not in preview_section
+
+
+# ── MP-R27..R52 — background removal pipeline routes ─────────────────────────
+
+_TASK = "app.tasks.mood_photo_tasks.remove_background_task"
+
+
+def _record(status: str = "uploaded", original_url: str = "/static/uploads/mood_photos/42_mood_happy_smile_orig_1.png"):
+    r = MagicMock()
+    r.status       = status
+    r.original_url = original_url
+    r.processed_png_url = None
+    r.updated_at   = None
+    return r
+
+
+def _db_with(record):
+    db = MagicMock()
+    db.query.return_value.filter_by.return_value.first.return_value = record
+    return db
+
+
+# ── MP-R27 ── POST /remove-bg uploaded + file exists → 303, task enqueued ────
+
+def test_mp_r27_remove_bg_uploaded_enqueues_task(tmp_path, monkeypatch):
+    from app.api.web_routes.mood_photos import mood_photo_remove_bg
+
+    orig_file = tmp_path / "42_mood_happy_smile_orig_1.png"
+    orig_file.write_bytes(b"PNG")
+    monkeypatch.setattr("app.api.web_routes.mood_photos.MOOD_PHOTO_DIR", tmp_path)
+
+    rec = _record(status="uploaded", original_url=f"/static/uploads/mood_photos/{orig_file.name}")
+    db  = _db_with(rec)
+
+    with patch(f"{_BASE}.set_status_processing") as mock_set, \
+         patch(f"{_BASE}.apply_removal_failure") as mock_fail, \
+         patch(f"{_TASK}.delay") as mock_delay:
+        resp = _run(mood_photo_remove_bg(slot="mood_happy_smile", user=_user(42), db=db))
+
+    assert resp.status_code == 303
+    mock_set.assert_called_once()
+    mock_delay.assert_called_once()
+    mock_fail.assert_not_called()
+
+
+# ── MP-R28 ── POST /remove-bg failed (Retry) + file exists → 303, task ───────
+
+def test_mp_r28_remove_bg_failed_retry_enqueues_task(tmp_path, monkeypatch):
+    from app.api.web_routes.mood_photos import mood_photo_remove_bg
+
+    orig_file = tmp_path / "42_mood_happy_smile_orig_1.png"
+    orig_file.write_bytes(b"PNG")
+    monkeypatch.setattr("app.api.web_routes.mood_photos.MOOD_PHOTO_DIR", tmp_path)
+
+    rec = _record(status="failed", original_url=f"/static/uploads/mood_photos/{orig_file.name}")
+    db  = _db_with(rec)
+
+    with patch(f"{_BASE}.set_status_processing"), \
+         patch(f"{_TASK}.delay") as mock_delay:
+        resp = _run(mood_photo_remove_bg(slot="mood_happy_smile", user=_user(42), db=db))
+
+    assert resp.status_code == 303
+    mock_delay.assert_called_once()
+
+
+# ── MP-R29 ── POST /remove-bg status=processing → 303 no-op, no enqueue ──────
+
+def test_mp_r29_remove_bg_processing_no_double_enqueue(tmp_path, monkeypatch):
+    from app.api.web_routes.mood_photos import mood_photo_remove_bg
+
+    monkeypatch.setattr("app.api.web_routes.mood_photos.MOOD_PHOTO_DIR", tmp_path)
+    rec = _record(status="processing")
+    db  = _db_with(rec)
+
+    with patch(f"{_TASK}.delay") as mock_delay:
+        resp = _run(mood_photo_remove_bg(slot="mood_happy_smile", user=_user(42), db=db))
+
+    assert resp.status_code == 303
+    mock_delay.assert_not_called()
+
+
+# ── MP-R30 ── POST /remove-bg status=ready → 303 no-op, no re-trigger ────────
+
+def test_mp_r30_remove_bg_ready_no_retrigger(tmp_path, monkeypatch):
+    from app.api.web_routes.mood_photos import mood_photo_remove_bg
+
+    monkeypatch.setattr("app.api.web_routes.mood_photos.MOOD_PHOTO_DIR", tmp_path)
+    rec = _record(status="ready")
+    db  = _db_with(rec)
+
+    with patch(f"{_TASK}.delay") as mock_delay:
+        resp = _run(mood_photo_remove_bg(slot="mood_happy_smile", user=_user(42), db=db))
+
+    assert resp.status_code == 303
+    mock_delay.assert_not_called()
+
+
+# ── MP-R31 ── POST /remove-bg invalid slot → 422 ─────────────────────────────
+
+def test_mp_r31_remove_bg_invalid_slot_raises_422():
+    from app.api.web_routes.mood_photos import mood_photo_remove_bg
+
+    with pytest.raises(HTTPException) as exc:
+        _run(mood_photo_remove_bg(slot="not_a_slot", user=_user(42), db=_db()))
+
+    assert exc.value.status_code == 422
+
+
+# ── MP-R32 ── POST /remove-bg no record → 404 ────────────────────────────────
+
+def test_mp_r32_remove_bg_no_record_raises_404():
+    from app.api.web_routes.mood_photos import mood_photo_remove_bg
+
+    db = _db_with(None)
+    with pytest.raises(HTTPException) as exc:
+        _run(mood_photo_remove_bg(slot="mood_happy_smile", user=_user(42), db=db))
+
+    assert exc.value.status_code == 404
+
+
+# ── MP-R33 ── POST /remove-bg missing file → 303, status=failed, no enqueue ──
+
+def test_mp_r33_remove_bg_missing_file_fast_fail(tmp_path, monkeypatch):
+    from app.api.web_routes.mood_photos import mood_photo_remove_bg
+
+    monkeypatch.setattr("app.api.web_routes.mood_photos.MOOD_PHOTO_DIR", tmp_path)
+    # original_url points to a file that does NOT exist
+    rec = _record(status="uploaded", original_url="/static/uploads/mood_photos/missing.png")
+    db  = _db_with(rec)
+
+    with patch(f"{_BASE}.apply_removal_failure") as mock_fail, \
+         patch(f"{_TASK}.delay") as mock_delay:
+        resp = _run(mood_photo_remove_bg(slot="mood_happy_smile", user=_user(42), db=db))
+
+    assert resp.status_code == 303
+    mock_fail.assert_called_once()
+    mock_delay.assert_not_called()
+
+
+# ── MP-R34 ── GET /status uploaded → JSON, processing_timed_out=False ─────────
+
+def test_mp_r34_status_uploaded():
+    import json
+    from app.api.web_routes.mood_photos import mood_photo_status
+
+    rec = _record(status="uploaded")
+    rec.updated_at        = None
+    rec.processed_png_url = None
+    db  = _db_with(rec)
+
+    resp = _run(mood_photo_status(slot="mood_happy_smile", user=_user(42), db=db))
+    data = json.loads(resp.body)
+    assert data["status"] == "uploaded"
+    assert data["processing_timed_out"] is False
+
+
+# ── MP-R35 ── GET /status processing, fresh → processing_timed_out=False ──────
+
+def test_mp_r35_status_processing_fresh():
+    import json
+    from datetime import datetime, timezone
+    from app.api.web_routes.mood_photos import mood_photo_status
+
+    rec = _record(status="processing")
+    rec.updated_at        = datetime.now(timezone.utc)
+    rec.processed_png_url = None
+    db  = _db_with(rec)
+
+    resp = _run(mood_photo_status(slot="mood_happy_smile", user=_user(42), db=db))
+    data = json.loads(resp.body)
+    assert data["status"] == "processing"
+    assert data["processing_timed_out"] is False
+
+
+# ── MP-R36 ── GET /status processing, stale → processing_timed_out=True ───────
+
+def test_mp_r36_status_processing_timed_out():
+    import json
+    from datetime import datetime, timedelta, timezone
+    from app.api.web_routes.mood_photos import mood_photo_status
+
+    rec = _record(status="processing")
+    rec.updated_at        = datetime.now(timezone.utc) - timedelta(seconds=400)
+    rec.processed_png_url = None
+    db  = _db_with(rec)
+
+    with patch("app.api.web_routes.mood_photos.settings") as mock_settings:
+        mock_settings.PROCESSING_TIMEOUT_SECONDS = 300
+        resp = _run(mood_photo_status(slot="mood_happy_smile", user=_user(42), db=db))
+
+    data = json.loads(resp.body)
+    assert data["status"] == "processing"
+    assert data["processing_timed_out"] is True
+
+
+# ── MP-R37 ── GET /status ready → processed_png_url in response ───────────────
+
+def test_mp_r37_status_ready():
+    import json
+    from datetime import datetime, timezone
+    from app.api.web_routes.mood_photos import mood_photo_status
+
+    rec = _record(status="ready")
+    rec.updated_at        = datetime.now(timezone.utc)
+    rec.processed_png_url = "/static/uploads/mood_photos/42_mood_happy_smile_proc_1.png"
+    db  = _db_with(rec)
+
+    resp = _run(mood_photo_status(slot="mood_happy_smile", user=_user(42), db=db))
+    data = json.loads(resp.body)
+    assert data["status"] == "ready"
+    assert data["processed_png_url"] is not None
+
+
+# ── MP-R38 ── GET /status no record → not_uploaded ────────────────────────────
+
+def test_mp_r38_status_no_record():
+    import json
+    from app.api.web_routes.mood_photos import mood_photo_status
+
+    db = _db_with(None)
+    resp = _run(mood_photo_status(slot="mood_happy_smile", user=_user(42), db=db))
+    data = json.loads(resp.body)
+    assert data["status"] == "not_uploaded"
+    assert data["processing_timed_out"] is False
+
+
+# ── MP-R39 ── POST /reset-processing: processing → uploaded ───────────────────
+
+def test_mp_r39_reset_processing_resets_to_uploaded():
+    from app.api.web_routes.mood_photos import mood_photo_reset_processing
+
+    rec = _record(status="processing")
+    db  = _db_with(rec)
+
+    with patch(f"{_BASE}.reset_processing") as mock_reset:
+        resp = _run(mood_photo_reset_processing(
+            slot="mood_happy_smile", user=_user(42), db=db
+        ))
+
+    assert resp.status_code == 303
+    mock_reset.assert_called_once_with(42, "mood_happy_smile", db)
+
+
+# ── MP-R40 ── POST /reset-processing: status=uploaded → no-op (idempotent) ────
+
+def test_mp_r40_reset_processing_noop_when_not_processing():
+    from app.api.web_routes.mood_photos import mood_photo_reset_processing
+
+    rec = _record(status="uploaded")
+    db  = _db_with(rec)
+
+    with patch(f"{_BASE}.reset_processing") as mock_reset:
+        resp = _run(mood_photo_reset_processing(
+            slot="mood_happy_smile", user=_user(42), db=db
+        ))
+
+    assert resp.status_code == 303
+    mock_reset.assert_called_once()   # called; service handles no-op internally
+
+
+# ── MP-R41 ── POST /reset-processing: invalid slot → 422 ─────────────────────
+
+def test_mp_r41_reset_processing_invalid_slot():
+    from app.api.web_routes.mood_photos import mood_photo_reset_processing
+
+    with pytest.raises(HTTPException) as exc:
+        _run(mood_photo_reset_processing(slot="bad_slot", user=_user(42), db=_db()))
+
+    assert exc.value.status_code == 422
+
+
+# ── MP-R42 ── POST /reset-processing: no record → 404 ────────────────────────
+
+def test_mp_r42_reset_processing_no_record_raises_404():
+    from app.api.web_routes.mood_photos import mood_photo_reset_processing
+
+    db = _db_with(None)
+    with pytest.raises(HTTPException) as exc:
+        _run(mood_photo_reset_processing(
+            slot="mood_happy_smile", user=_user(42), db=db
+        ))
+
+    assert exc.value.status_code == 404
+
+
+# ── MP-R43..R46 ── Template processor-aware assertions ───────────────────────
+
+def _tpl():
+    from pathlib import Path
+    return (
+        Path(__file__).resolve()
+        .parent.parent.parent.parent.parent
+        / "app" / "templates" / "lfa_player_mood_photos.html"
+    ).read_text(encoding="utf-8")
+
+
+# ── MP-R43 ── null mode: "Remove Background" not in template source ───────────
+
+def test_mp_r43_null_mode_remove_bg_button_gated():
+    """
+    The Remove Background button must be inside a
+    {% if bg_processor_mode == 'rembg' ... %} guard so it is
+    never rendered when BG_REMOVAL_PROCESSOR="null".
+    """
+    content = _tpl()
+    assert "bg_processor_mode == 'rembg'" in content, (
+        "Template must gate Remove Background on bg_processor_mode == 'rembg'"
+    )
+    # Verify the button text exists but is inside the guard
+    assert "Remove Background" in content
+    # "Background Removed" label must also be inside the rembg guard
+    assert "Background Removed" in content
+
+
+# ── MP-R44 ── null mode ready badge says "Processed", not "Background Removed" ─
+
+def test_mp_r44_null_mode_ready_badge_no_removal_claim():
+    """
+    When bg_processor_mode != 'rembg' and status == 'ready', the template
+    must show "Processed" not "Background Removed".
+    """
+    content = _tpl()
+    assert "✓ Processed" in content, (
+        "Template must show '✓ Processed' badge when bg_processor_mode != 'rembg'"
+    )
+    # "Background Removed" must be inside rembg guard
+    rembg_block_start = content.find("bg_processor_mode == 'rembg'")
+    bg_removed_pos    = content.find("Background Removed")
+    assert rembg_block_start < bg_removed_pos, (
+        "'Background Removed' text must appear after the rembg processor mode guard"
+    )
+
+
+# ── MP-R45 ── processing badge has data-poll-slot for JS polling ──────────────
+
+def test_mp_r45_processing_badge_has_poll_slot():
+    content = _tpl()
+    assert "data-poll-slot" in content, (
+        "Template must attach data-poll-slot to the processing badge "
+        "so the JS polling loop can target the correct slot"
+    )
+
+
+# ── MP-R46 ── reset button initially hidden, timeout message present ──────────
+
+def test_mp_r46_reset_button_and_timeout_message_present():
+    content = _tpl()
+    assert "btn-reset-" in content, (
+        "Template must render a reset button (id=btn-reset-{slot}) for stuck processing"
+    )
+    assert "Processing is taking longer than expected" in content, (
+        "Template must contain the timeout warning message"
+    )
+    assert "style=\"display:none;\"" in content or "style='display:none;'" in content, (
+        "Reset button and timeout message must be initially hidden (display:none)"
+    )
+
+
+# ── MP-R47 ── rembg mode + uploaded → Remove Background button rendered ───────
+
+def test_mp_r47_rembg_mode_uploaded_shows_remove_bg_button():
+    """
+    When bg_processor_mode == 'rembg' and a slot has status='uploaded',
+    the rendered HTML must contain the Remove Background button text.
+    """
+    from datetime import datetime, timezone
+    from pathlib import Path
+    from jinja2 import Environment, FileSystemLoader
+
+    tpl_dir = (
+        Path(__file__).resolve().parent.parent.parent.parent.parent / "app" / "templates"
+    )
+    env = Environment(loader=FileSystemLoader(str(tpl_dir)), autoescape=True)
+    tpl = env.get_template("lfa_player_mood_photos.html")
+
+    record = MagicMock()
+    record.status            = "uploaded"
+    record.original_url      = "/static/uploads/mood_photos/1_mood_happy_smile_orig_1.png"
+    record.processed_png_url = None
+    record.created_at        = datetime.now(timezone.utc)
+    record.updated_at        = None
+
+    from app.api.web_routes.mood_photos import _SLOT_META
+    slots_meta  = _SLOT_META
+    mood_photos = {m["slot"]: (record if m["slot"] == "mood_happy_smile" else None)
+                   for m in slots_meta}
+
+    html = tpl.render(
+        slots_meta        = slots_meta,
+        mood_photos       = mood_photos,
+        bg_processor_mode = "rembg",
+        request           = MagicMock(),
+    )
+
+    assert "Remove Background" in html, (
+        "Remove Background button must appear in rendered HTML when bg_processor_mode='rembg' "
+        "and slot status='uploaded'"
+    )
+
+
+# ── MP-R48 ── rembg mode + ready → Background Removed badge rendered ──────────
+
+def test_mp_r48_rembg_mode_ready_shows_background_removed_badge():
+    """
+    When bg_processor_mode == 'rembg' and a slot has status='ready',
+    the rendered HTML must contain the Background Removed badge text.
+    """
+    from datetime import datetime, timezone
+    from pathlib import Path
+    from jinja2 import Environment, FileSystemLoader
+
+    tpl_dir = (
+        Path(__file__).resolve().parent.parent.parent.parent.parent / "app" / "templates"
+    )
+    env = Environment(loader=FileSystemLoader(str(tpl_dir)), autoescape=True)
+    tpl = env.get_template("lfa_player_mood_photos.html")
+
+    record = MagicMock()
+    record.status            = "ready"
+    record.original_url      = "/static/uploads/mood_photos/1_mood_happy_smile_orig_1.png"
+    record.processed_png_url = "/static/uploads/mood_photos/1_mood_mood_happy_smile_proc_1.png"
+    record.created_at        = datetime.now(timezone.utc)
+    record.updated_at        = datetime.now(timezone.utc)
+
+    from app.api.web_routes.mood_photos import _SLOT_META
+    slots_meta  = _SLOT_META
+    mood_photos = {m["slot"]: (record if m["slot"] == "mood_happy_smile" else None)
+                   for m in slots_meta}
+
+    html = tpl.render(
+        slots_meta        = slots_meta,
+        mood_photos       = mood_photos,
+        bg_processor_mode = "rembg",
+        request           = MagicMock(),
+    )
+
+    assert "Background Removed" in html, (
+        "Background Removed badge must appear in rendered HTML when bg_processor_mode='rembg' "
+        "and slot status='ready'"
+    )
+    assert "✓ Processed" not in html, (
+        "'✓ Processed' must NOT appear when bg_processor_mode='rembg'"
+    )
+
+
+# ── MP-R49 ── route passes bg_processor_mode="rembg" from settings to context ─
+
+def test_mp_r49_route_passes_rembg_mode_to_template_context():
+    from app.api.web_routes.mood_photos import mood_photos_page
+
+    six_slots = {s: None for s in _ALL_SLOTS}
+
+    with patch(f"{_BASE}.get_mood_photos_for_user", return_value=six_slots), \
+         patch(f"{_BASE}.settings") as mock_settings, \
+         patch(f"{_BASE}.templates") as mock_tpl:
+        mock_settings.BG_REMOVAL_PROCESSOR = "rembg"
+        mock_tpl.TemplateResponse.return_value = MagicMock()
+
+        _run(mood_photos_page(request=_request(), user=_user(), db=_db()))
+
+        ctx = mock_tpl.TemplateResponse.call_args[0][1]
+        assert ctx.get("bg_processor_mode") == "rembg", (
+            "Route must pass bg_processor_mode='rembg' when BG_REMOVAL_PROCESSOR='rembg'"
+        )
+
+
+# ── MP-R50 ── route passes bg_processor_mode="null" from settings to context ──
+
+def test_mp_r50_route_passes_null_mode_to_template_context():
+    from app.api.web_routes.mood_photos import mood_photos_page
+
+    six_slots = {s: None for s in _ALL_SLOTS}
+
+    with patch(f"{_BASE}.get_mood_photos_for_user", return_value=six_slots), \
+         patch(f"{_BASE}.settings") as mock_settings, \
+         patch(f"{_BASE}.templates") as mock_tpl:
+        mock_settings.BG_REMOVAL_PROCESSOR = "null"
+        mock_tpl.TemplateResponse.return_value = MagicMock()
+
+        _run(mood_photos_page(request=_request(), user=_user(), db=_db()))
+
+        ctx = mock_tpl.TemplateResponse.call_args[0][1]
+        assert ctx.get("bg_processor_mode") == "null", (
+            "Route must pass bg_processor_mode='null' when BG_REMOVAL_PROCESSOR='null'"
+        )
+
+
+# ── MP-R51 ── rendered HTML: rembg+uploaded → button+onclick; null → no button ─
+
+def test_mp_r51_rembg_uploaded_button_onclick_null_hidden():
+    """
+    Full Jinja2 render:
+      - rembg mode + status='uploaded' → Remove Background button present
+      - null mode + status='uploaded'  → button absent
+    """
+    from datetime import datetime, timezone
+    from pathlib import Path
+    from jinja2 import Environment, FileSystemLoader
+    from app.api.web_routes.mood_photos import _SLOT_META
+
+    tpl_dir = (
+        Path(__file__).resolve().parent.parent.parent.parent.parent / "app" / "templates"
+    )
+    env = Environment(loader=FileSystemLoader(str(tpl_dir)), autoescape=True)
+    tpl = env.get_template("lfa_player_mood_photos.html")
+
+    record = MagicMock()
+    record.status            = "uploaded"
+    record.original_url      = "/static/uploads/mood_photos/1_mood_happy_smile_orig_1.png"
+    record.processed_png_url = None
+    record.created_at        = datetime.now(timezone.utc)
+    record.updated_at        = None
+
+    mood_photos = {m["slot"]: (record if m["slot"] == "mood_happy_smile" else None)
+                   for m in _SLOT_META}
+
+    base_ctx = dict(slots_meta=_SLOT_META, mood_photos=mood_photos, request=MagicMock())
+
+    # rembg mode: button must appear
+    html_rembg = tpl.render(**base_ctx, bg_processor_mode="rembg")
+    assert "✂ Remove Background" in html_rembg, (
+        "Remove Background button (✂ label) must appear when bg_processor_mode='rembg' and status='uploaded'"
+    )
+    assert "_mpRemoveBg('mood_happy_smile')" in html_rembg, (
+        "Button onclick must call _mpRemoveBg('mood_happy_smile')"
+    )
+
+    # null mode: button must be absent
+    html_null = tpl.render(**base_ctx, bg_processor_mode="null")
+    assert "✂ Remove Background" not in html_null, (
+        "Remove Background button (✂ label) must NOT appear when bg_processor_mode='null'"
+    )
+    assert "_mpRemoveBg('mood_happy_smile')" not in html_null, (
+        "Slot-specific onclick must NOT appear when bg_processor_mode='null'"
+    )
+
+
+# ── MP-R52 ── /remove-bg rate limit: 4th call in 60 s → 429 ──────────────────
+
+def test_mp_r52_remove_bg_rate_limit_exceeded(tmp_path, monkeypatch):
+    """MP-R52: 4th remove-bg call within the 60 s window raises HTTP 429."""
+    from app.api.web_routes.mood_photos import mood_photo_remove_bg
+    from app.services.mood_photo_service import reset_bg_removal_rate_counters
+
+    reset_bg_removal_rate_counters()
+
+    orig_file = tmp_path / "42_mood_happy_smile_orig_1.png"
+    orig_file.write_bytes(b"PNG")
+    monkeypatch.setattr("app.api.web_routes.mood_photos.MOOD_PHOTO_DIR", tmp_path)
+
+    # First 3 calls: allowed
+    for _ in range(3):
+        db = _db_with(_record(status="uploaded", original_url=f"/static/uploads/mood_photos/{orig_file.name}"))
+        with patch(f"{_BASE}.set_status_processing"), \
+             patch(f"{_TASK}.delay"):
+            resp = _run(mood_photo_remove_bg(slot="mood_happy_smile", user=_user(42), db=db))
+        assert resp.status_code == 303
+
+    # 4th call: must be rate-limited
+    db = _db_with(_record(status="uploaded", original_url=f"/static/uploads/mood_photos/{orig_file.name}"))
+    with patch(f"{_BASE}.set_status_processing"), \
+         patch(f"{_TASK}.delay") as mock_delay, \
+         pytest.raises(HTTPException) as exc:
+        _run(mood_photo_remove_bg(slot="mood_happy_smile", user=_user(42), db=db))
+
+    assert exc.value.status_code == 429
+    mock_delay.assert_not_called()
+
+    reset_bg_removal_rate_counters()
+
+
+# ── BG-01 ── Upload auto-triggers BG removal when BG_REMOVAL_PROCESSOR != null ─
+
+def test_bg_01_upload_auto_triggers_bg_removal(tmp_path, monkeypatch):
+    """BG-01: When BG_REMOVAL_PROCESSOR != 'null', upload auto-enqueues remove_background_task."""
+    from app.api.web_routes.mood_photos import mood_photo_upload
+
+    row = MagicMock()
+    row.original_url     = "/static/uploads/mood_photos/1_mood_happy_smile_orig_1.png"
+    row.status           = "uploaded"
+    row.processed_png_url = None
+
+    with patch(f"{_BASE}.save_mood_photo"), \
+         patch(f"{_BASE}.get_mood_photos_for_user", return_value={"mood_happy_smile": row}), \
+         patch(f"{_BASE}.settings") as mock_settings, \
+         patch(f"{_BASE}.set_status_processing") as mock_set, \
+         patch(f"{_BASE}.check_bg_removal_rate_limit", return_value=True), \
+         patch(f"{_TASK}.delay") as mock_delay:
+
+        mock_settings.BG_REMOVAL_PROCESSOR = "rembg"
+
+        _run(
+            mood_photo_upload(
+                slot    = "mood_happy_smile",
+                request = _request(),
+                photo   = _mock_photo(),
+                user    = _user(1),
+                db      = _db(),
+            )
+        )
+
+    mock_set.assert_called_once()
+    mock_delay.assert_called_once()
+
+
+# ── BG-04 ── Template renders processed_png_url when status='ready' ───────────
+
+def test_bg_04_template_renders_processed_url_when_ready():
+    """BG-04: status=ready + processed_png_url → img src = processed_png_url."""
+    from datetime import datetime
+
+    proc_url = "/static/uploads/mood_photos/99_mood_mood_happy_smile_proc_222.png"
+    record = _mood_record(status="ready", processed_png_url=proc_url)
+    html = _render_mood_page(record)
+    assert f'src="{proc_url}"' in html
+
+
+# ── BG-05 ── Template renders original_url when processed_png_url is None ─────
+
+def test_bg_05_template_renders_original_url_fallback():
+    """BG-05: status=ready but processed_png_url=None → renders original_url."""
+    record = _mood_record(status="ready", processed_png_url=None)
+    html = _render_mood_page(record)
+    assert f'src="{_ORIG_URL}"' in html
+
+
+# ── BG-06 ── cs_mood_quick_row uses processed_png_url for selected-state ──────
+
+def test_bg_06_cs_mood_quick_row_selected_state_uses_processed_url():
+    """BG-06: cs_mood_quick_row.html uses processed_png_url (not original_url) for selected detection."""
+    from pathlib import Path
+
+    content = (
+        Path(__file__).resolve().parent.parent.parent.parent.parent
+        / "app" / "templates" / "includes" / "cs_mood_quick_row.html"
+    ).read_text(encoding="utf-8")
+
+    # The fix: _asset_url = (processed_png_url or original_url) for selection comparison
+    assert "_asset_url" in content, (
+        "cs_mood_quick_row.html must use _asset_url (processed_png_url or original_url) "
+        "for selected-state detection — plain original_url breaks when BG removal is done"
+    )
+    assert "processed_png_url" in content, (
+        "cs_mood_quick_row.html must reference processed_png_url in asset URL resolution"
+    )
+    assert "_asset_url == _cs_photo_current" in content, (
+        "Selected detection must compare _asset_url to _cs_photo_current"
+    )
+
+
+# ── BG-07 ── card_studio_shell.html uses processed_png_url for selected-state ─
+
+def test_bg_07_card_studio_shell_selected_state_uses_processed_url():
+    """BG-07: card_studio_shell.html uses processed_png_url for selected-state detection."""
+    from pathlib import Path
+
+    content = (
+        Path(__file__).resolve().parent.parent.parent.parent.parent
+        / "app" / "templates" / "card_studio_shell.html"
+    ).read_text(encoding="utf-8")
+
+    assert "_asset_url" in content, (
+        "card_studio_shell.html must use _asset_url (processed_png_url or original_url) "
+        "for selected-state detection"
+    )
+    assert "_asset_url == _cs_photo_current" in content, (
+        "Selected detection in card_studio_shell.html must compare _asset_url to _cs_photo_current"
+    )
+
+
+# ── BG-08 ── BG_REMOVAL_PROCESSOR=null → no task enqueued, button hidden ──────
+
+def test_bg_08_null_processor_no_task_enqueued():
+    """BG-08: When BG_REMOVAL_PROCESSOR='null', upload does NOT enqueue background task."""
+    from app.api.web_routes.mood_photos import mood_photo_upload
+
+    row = MagicMock()
+    row.original_url     = "/static/uploads/mood_photos/1_mood_happy_smile_orig_1.png"
+    row.status           = "uploaded"
+    row.processed_png_url = None
+
+    with patch(f"{_BASE}.save_mood_photo"), \
+         patch(f"{_BASE}.get_mood_photos_for_user", return_value={"mood_happy_smile": row}), \
+         patch(f"{_BASE}.settings") as mock_settings, \
+         patch(f"{_TASK}.delay") as mock_delay:
+
+        mock_settings.BG_REMOVAL_PROCESSOR = "null"
+
+        _run(
+            mood_photo_upload(
+                slot    = "mood_happy_smile",
+                request = _request(),
+                photo   = _mock_photo(),
+                user    = _user(1),
+                db      = _db(),
+            )
+        )
+
+    mock_delay.assert_not_called()
+
+
+# ── BG-09 ── processing_timed_out=True after PROCESSING_TIMEOUT_SECONDS ───────
+
+def test_bg_09_processing_timed_out_after_timeout():
+    """BG-09: GET /status returns processing_timed_out=True when elapsed > PROCESSING_TIMEOUT_SECONDS."""
+    import json
+    from datetime import datetime, timedelta, timezone
+    from app.api.web_routes.mood_photos import mood_photo_status
+
+    rec = _record(status="processing")
+    rec.updated_at        = datetime.now(timezone.utc) - timedelta(seconds=350)
+    rec.processed_png_url = None
+    db  = _db_with(rec)
+
+    with patch("app.api.web_routes.mood_photos.settings") as mock_settings:
+        mock_settings.PROCESSING_TIMEOUT_SECONDS = 300
+        resp = _run(mood_photo_status(slot="mood_happy_smile", user=_user(42), db=db))
+
+    data = json.loads(resp.body)
+    assert data["processing_timed_out"] is True, (
+        "processing_timed_out must be True when elapsed > PROCESSING_TIMEOUT_SECONDS"
+    )

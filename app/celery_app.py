@@ -29,6 +29,7 @@ def create_celery() -> Celery:
         backend=settings.CELERY_RESULT_BACKEND,
         include=[
             "app.tasks.tournament_tasks",
+            "app.tasks.mood_photo_tasks",
         ],
     )
 
@@ -59,15 +60,17 @@ def create_celery() -> Celery:
             "socket_connect_timeout": 10,   # seconds to establish Redis connection
             "retry_on_timeout": True,       # re-issue timed-out Redis commands
         },
-        # Routing: large tournament generation goes to dedicated queue
+        # Routing
         task_routes={
             "app.tasks.tournament_tasks.generate_sessions_task": {"queue": "tournaments"},
+            "app.tasks.mood_photo_tasks.remove_background_task": {"queue": "mood_photos"},
         },
         # Queues
         task_default_queue="default",
         task_queues={
-            "default": {},
+            "default":     {},
             "tournaments": {},
+            "mood_photos": {},
         },
         # Rate limiting (protect DB under heavy load)
         task_annotations={

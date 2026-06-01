@@ -12,7 +12,7 @@ S4A-08  Shell has challenge preview placeholder (not live iframe)
 S4A-09  legacy editor CTA /card-editor/challenge present in panel
 S4A-10  cs_challenge_panel.html has no Challenge write form
 S4A-11  cs_challenge_panel.html has no Challenge export link
-S4A-12  route count == 847
+S4A-12  route count == 850
 S4A-13  OpenAPI snapshot match true
 """
 from __future__ import annotations
@@ -146,10 +146,10 @@ class TestS4A10to11NoWriteNoExport:
 class TestS4A12to13RouteAndSnapshot:
 
     def test_s4a_12_route_count_847(self):
-        """S4A-12: Route count == 847 after CS-S4A (+1 /card-studio/challenge)."""
+        """S4A-12: Route count == 850 after CS-S4A (+1 /card-studio/challenge)."""
         from app.main import app
         count = len(app.openapi().get("paths", {}))
-        assert count == 847, f"Expected 847 routes, got {count}"
+        assert count == 850, f"Expected 847 routes, got {count}"
 
     def test_s4a_13_openapi_snapshot_match(self):
         """S4A-13: OpenAPI snapshot matches live API."""

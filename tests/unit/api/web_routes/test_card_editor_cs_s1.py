@@ -291,11 +291,11 @@ class TestS1bCTAAndNaming:
 class TestS109S110RouteAndSnapshot:
 
     def test_s1_09_route_count_846(self):
-        """S1-09 (updated CS-S2A): route count is 846 (+/card-studio/player from CS-S2A)."""
+        """S1-09 (updated BG-REMOVAL-1): route count is 850 (+3 BG-REMOVAL-1 mood photo routes)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 847, (
-            f"Expected 846 routes (845 CS-S1 baseline + 1 CS-S2A), got {len(paths)}"
+        assert len(paths) == 850, (
+            f"Expected 850 routes (847 CS-S2A baseline + 3 BG-REMOVAL-1), got {len(paths)}"
         )
 
     def test_s1_10_openapi_snapshot_still_matches(self):

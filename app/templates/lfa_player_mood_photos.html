@@ -39,7 +39,7 @@
         margin: 0;
     }
 
-    /* ── Back link as secondary button ── */
+    /* ── Buttons ── */
     .btn {
         padding: 0.75rem 1.4rem;
         border: none;
@@ -65,6 +65,11 @@
         color: var(--hub-btn-text, #fff);
         border: none;
     }
+    .btn-accent {
+        background: var(--hub-accent-bg, #d97706);
+        color: #fff;
+        border: none;
+    }
     .btn-danger {
         background: transparent;
         color: #f87171;
@@ -73,7 +78,7 @@
     .btn-danger:hover { background: rgba(248,113,113,0.1); }
     .btn-sm { padding: 0.45rem 0.9rem; font-size: 0.85rem; }
 
-    /* ── 2×2 mood grid ── */
+    /* ── 2-column mood grid ── */
     .mp-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -108,7 +113,7 @@
         flex: 1;
     }
 
-    /* ── Status badge ── */
+    /* ── Status badges ── */
     .mp-badge {
         display: inline-block;
         font-size: 0.72rem;
@@ -123,6 +128,23 @@
     .mp-badge-uploaded {
         background: rgba(134,239,172,0.15);
         color: #86efac;
+    }
+    .mp-badge-processing {
+        background: rgba(251,191,36,0.15);
+        color: #fbbf24;
+        animation: mp-pulse 1.5s ease-in-out infinite;
+    }
+    .mp-badge-ready {
+        background: rgba(96,165,250,0.15);
+        color: #60a5fa;
+    }
+    .mp-badge-failed {
+        background: rgba(248,113,113,0.15);
+        color: #f87171;
+    }
+    @keyframes mp-pulse {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0.55; }
     }
 
     /* ── Instruction text ── */
@@ -151,6 +173,7 @@
         object-fit: contain;
         border-radius: 8px;
     }
+    .mp-preview img.mp-img-dimmed { opacity: 0.5; }
     .mp-preview-placeholder {
         text-align: center;
         color: var(--hub-text-muted, #94a3b8);
@@ -166,31 +189,68 @@
         align-items: center;
     }
 
-    /* ── Timestamp hint ── */
+    /* ── Timestamp / hint text ── */
     .mp-hint {
         font-size: 0.75rem;
         color: var(--hub-text-muted, #94a3b8);
         margin: 0;
+    }
+    .mp-hint-warn {
+        color: #fbbf24;
+    }
+
+    /* ── Per-slot error message ── */
+    .mp-error {
+        font-size: 0.78rem;
+        color: #f87171;
+        margin: 0;
+        min-height: 1em;
     }
 </style>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-/* Mood photo upload: must use fetch() + X-CSRF-Token header.
-   form.submit() skips the submit event so base.html CSRF interceptor never fires.
-   Using FormData (not URLSearchParams) preserves the file as multipart/form-data. */
+/* ── CSRF helper ── */
 function _mpCsrfToken() {
     var m = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
     return m ? decodeURIComponent(m[1]) : null;
 }
 
-/* Upload: form.submit() bypasses submit event so base.html CSRF interceptor
-   never fires. Sending FormData directly preserves the file as multipart. */
+/* ── Per-slot error helpers ── */
+var _MP_MAX_BYTES = 5 * 1024 * 1024;  // 5 MB — must match MAX_BYTES in service
+
+function _mpShowError(slot, msg) {
+    var el = document.getElementById('mp-err-' + slot);
+    if (el) el.textContent = msg;
+}
+function _mpClearError(slot) {
+    var el = document.getElementById('mp-err-' + slot);
+    if (el) el.textContent = '';
+}
+
+/* ── Upload / Replace ──
+   Must use fetch() + X-CSRF-Token; form.submit() skips the submit event so
+   the base.html CSRF interceptor never fires.  FormData preserves the file
+   as multipart/form-data. */
 function _mpUpload(input) {
     var form = input.closest('form');
     var tok  = _mpCsrfToken();
-    if (!tok || !input.files || !input.files[0]) return;
+    var slot = form.action.split('/').filter(Boolean).slice(-2, -1)[0];
+
+    _mpClearError(slot);
+
+    if (!tok) {
+        _mpShowError(slot, 'Session expired — please refresh the page.');
+        return;
+    }
+    if (!input.files || !input.files[0]) return;
+
+    if (input.files[0].size > _MP_MAX_BYTES) {
+        _mpShowError(slot, 'File too large (max 5 MB). Please choose a smaller image.');
+        input.value = '';
+        return;
+    }
 
     fetch(form.action, {
         method:      'POST',
@@ -198,30 +258,92 @@ function _mpUpload(input) {
         body:        new FormData(form),
         credentials: 'include',
         redirect:    'follow',
-    }).then(function (r) {
+    }).then(function(r) {
+        if (!r.ok && !r.redirected) {
+            return r.text().then(function(t) {
+                _mpShowError(slot, 'Upload failed — please try again.');
+            });
+        }
         window.location.href = r.redirected ? r.url : '/profile/my-mood-photos';
-    }).catch(function () {
-        window.location.reload();
+    }).catch(function() {
+        _mpShowError(slot, 'Upload failed — please check your connection.');
     });
 }
 
-/* Delete: type="button" avoids submit event entirely; confirm() runs first so
-   the user can cancel before the request is sent. */
+/* ── Delete ── */
 function _mpDelete(url) {
     if (!confirm('Delete this mood photo?')) return;
     var tok = _mpCsrfToken();
     if (!tok) { window.location.reload(); return; }
-
     fetch(url, {
         method:      'POST',
         headers:     { 'X-CSRF-Token': tok, 'Content-Type': 'application/x-www-form-urlencoded' },
         credentials: 'include',
         redirect:    'follow',
-    }).then(function (r) {
+    }).then(function(r) {
         window.location.href = r.redirected ? r.url : '/profile/my-mood-photos';
-    }).catch(function () {
-        window.location.reload();
+    }).catch(function() { window.location.reload(); });
+}
+
+/* ── Remove Background / Retry ──
+   Only wired when bg_processor_mode == "rembg" (Phase 2).
+   In Phase 1 (null processor) the button is not rendered. */
+function _mpRemoveBg(slot) {
+    var tok = _mpCsrfToken();
+    if (!tok) { window.location.reload(); return; }
+    fetch('/profile/my-mood-photos/' + slot + '/remove-bg', {
+        method:      'POST',
+        headers:     { 'X-CSRF-Token': tok },
+        credentials: 'include',
+        redirect:    'follow',
+    }).then(function(r) {
+        window.location.href = r.redirected ? r.url : '/profile/my-mood-photos';
+    }).catch(function() { window.location.reload(); });
+}
+
+/* ── Reset stuck processing ── */
+function _mpResetProcessing(slot) {
+    var tok = _mpCsrfToken();
+    if (!tok) { window.location.reload(); return; }
+    fetch('/profile/my-mood-photos/' + slot + '/reset-processing', {
+        method:      'POST',
+        headers:     { 'X-CSRF-Token': tok },
+        credentials: 'include',
+        redirect:    'follow',
+    }).then(function(r) {
+        window.location.href = r.redirected ? r.url : '/profile/my-mood-photos';
+    }).catch(function() { window.location.reload(); });
+}
+
+/* ── Status polling ──
+   Started for every slot whose badge carries data-poll-slot.
+   Polls GET /{slot}/status every 3 s.
+   Stops when status != 'processing', then reloads the page.
+   On processing_timed_out=true: reveals the Reset button and warning text. */
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-poll-slot]').forEach(function(el) {
+        _mpStartPolling(el.dataset.pollSlot);
     });
+});
+
+function _mpStartPolling(slot) {
+    var interval = setInterval(function() {
+        fetch('/profile/my-mood-photos/' + slot + '/status', { credentials: 'include' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.processing_timed_out) {
+                    clearInterval(interval);
+                    var btn = document.getElementById('btn-reset-' + slot);
+                    var msg = document.getElementById('timeout-msg-' + slot);
+                    if (btn) btn.style.display = '';
+                    if (msg) msg.style.display = '';
+                } else if (data.status !== 'processing') {
+                    clearInterval(interval);
+                    window.location.reload();
+                }
+            })
+            .catch(function() { clearInterval(interval); });
+    }, 3000);
 }
 </script>
 {% endblock %}
@@ -249,10 +371,23 @@ function _mpDelete(url) {
             <div class="mp-card-header">
                 <span class="mp-card-emoji">{{ meta.emoji }}</span>
                 <span class="mp-card-title">{{ meta.label }}</span>
-                {% if record %}
-                <span class="mp-badge mp-badge-uploaded">✓ Uploaded</span>
-                {% else %}
-                <span class="mp-badge">Not uploaded</span>
+
+                {% if not record %}
+                    <span class="mp-badge">Not uploaded</span>
+                {% elif record.status == 'uploaded' %}
+                    <span class="mp-badge mp-badge-uploaded">✓ Uploaded</span>
+                {% elif record.status == 'processing' %}
+                    {# data-poll-slot triggers JS polling loop #}
+                    <span class="mp-badge mp-badge-processing"
+                          data-poll-slot="{{ meta.slot }}">⏳ Processing...</span>
+                {% elif record.status == 'ready' %}
+                    {% if bg_processor_mode == 'rembg' %}
+                        <span class="mp-badge mp-badge-ready">✨ Background Removed</span>
+                    {% else %}
+                        <span class="mp-badge mp-badge-ready">✓ Processed</span>
+                    {% endif %}
+                {% elif record.status == 'failed' %}
+                    <span class="mp-badge mp-badge-failed">⚠ Processing Failed</span>
                 {% endif %}
             </div>
 
@@ -262,28 +397,35 @@ function _mpDelete(url) {
             <!-- Photo preview -->
             <div class="mp-preview">
                 {% if record %}
-                {% if record.status == 'ready' and record.processed_png_url %}
-                <img src="{{ record.processed_png_url }}"
-                     alt="Mood photo — {{ meta.label }}"
-                     onerror="this.src='{{ record.original_url }}'; this.onerror=null;">
+                    {# Show processed PNG if ready; fall back to original on img error #}
+                    {% if record.status == 'ready' and record.processed_png_url %}
+                        <img src="{{ record.processed_png_url }}"
+                             alt="Processed mood photo — {{ meta.label }}"
+                             onerror="this.src='{{ record.original_url }}'; this.onerror=null;">
+                    {% else %}
+                        <img src="{{ record.original_url }}"
+                             alt="Mood photo — {{ meta.label }}"
+                             {% if record.status == 'processing' %}class="mp-img-dimmed"{% endif %}>
+                    {% endif %}
                 {% else %}
-                <img src="{{ record.original_url }}" alt="Mood photo — {{ meta.label }}">
-                {% endif %}
-                {% else %}
-                <div class="mp-preview-placeholder">
-                    No photo uploaded yet<br>
-                    <small>JPEG · PNG · WebP · max 5 MB</small>
-                </div>
+                    <div class="mp-preview-placeholder">
+                        No photo uploaded yet<br>
+                        <small>JPEG · PNG · WebP · max 5 MB</small>
+                    </div>
                 {% endif %}
             </div>
 
-            <!-- Actions: Upload/Replace + Delete -->
+            <!-- Actions -->
             <div class="mp-actions">
+
+                <!-- Upload / Replace: always available -->
                 <form method="post"
                       action="/profile/my-mood-photos/{{ meta.slot }}/upload"
                       enctype="multipart/form-data"
                       style="display:contents;">
-                    <label class="btn btn-primary btn-sm" for="file-{{ meta.slot }}" style="cursor:pointer;">
+                    <label class="btn btn-primary btn-sm"
+                           for="file-{{ meta.slot }}"
+                           style="cursor:pointer;">
                         {% if record %}🔄 Replace{% else %}📷 Upload{% endif %}
                     </label>
                     <input id="file-{{ meta.slot }}"
@@ -294,6 +436,7 @@ function _mpDelete(url) {
                            onchange="_mpUpload(this)">
                 </form>
 
+                <!-- Delete: if record exists -->
                 {% if record %}
                 <button type="button"
                         class="btn btn-danger btn-sm"
@@ -301,9 +444,54 @@ function _mpDelete(url) {
                     🗑 Delete
                 </button>
                 {% endif %}
+
+                <!-- Remove Background: ONLY when rembg processor is active AND status=uploaded.
+                     Phase 1 (null processor): this button is never rendered.
+                     No background removal claim is shown to users with NullProcessor. -->
+                {% if bg_processor_mode == 'rembg' and record and record.status == 'uploaded' %}
+                <button type="button"
+                        class="btn btn-accent btn-sm"
+                        onclick="_mpRemoveBg('{{ meta.slot }}')">
+                    ✂ Remove Background
+                </button>
+                {% endif %}
+
+                <!-- Retry Remove Background: ONLY rembg + status=failed -->
+                {% if bg_processor_mode == 'rembg' and record and record.status == 'failed' %}
+                <button type="button"
+                        class="btn btn-accent btn-sm"
+                        onclick="_mpRemoveBg('{{ meta.slot }}')">
+                    ↺ Retry Remove Background
+                </button>
+                {% endif %}
+
+                <!-- Reset processing: shown when status=processing; initially hidden.
+                     JS polling reveals it when processing_timed_out=True. -->
+                {% if record and record.status == 'processing' %}
+                <button type="button"
+                        id="btn-reset-{{ meta.slot }}"
+                        class="btn btn-secondary btn-sm"
+                        style="display:none;"
+                        onclick="_mpResetProcessing('{{ meta.slot }}')">
+                    ↺ Reset
+                </button>
+                {% endif %}
+
             </div>
 
-            <!-- Timestamp hint if photo exists -->
+            <!-- Per-slot upload error message (initially empty) -->
+            <p class="mp-error" id="mp-err-{{ meta.slot }}"></p>
+
+            <!-- Timeout warning: hidden until JS polling detects processing_timed_out -->
+            {% if record and record.status == 'processing' %}
+            <p id="timeout-msg-{{ meta.slot }}"
+               class="mp-hint mp-hint-warn"
+               style="display:none;">
+                Processing is taking longer than expected. You can reset and re-upload.
+            </p>
+            {% endif %}
+
+            <!-- Timestamp hint -->
             {% if record %}
             <p class="mp-hint">
                 Uploaded {{ record.created_at.strftime('%Y-%m-%d %H:%M') if record.created_at else '—' }}

@@ -24,3 +24,8 @@ redis==5.0.1
 apscheduler==3.10.4
 # Image processing (LFA player card photo upload)
 Pillow>=10.0.0
+# rembg/onnxruntime only needed in Celery worker; web process uses deferred import.
+# onnxruntime 1.19.x does not exist (versions jump 1.18.x → 1.20.0); pinned to
+# 1.26.0 — the tested+installed version compatible with rembg==2.0.75.
+rembg==2.0.75
+onnxruntime==1.26.0
