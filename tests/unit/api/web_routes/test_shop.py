@@ -280,54 +280,35 @@ class TestShopAuthDependencies:
 # ── SH-12: Template structure ─────────────────────────────────────────────────
 
 class TestShopTemplates:
+    """SH-12: Template structure tests.
 
-    @pytest.fixture(scope="class")
-    def player_src(self):
-        return (_TEMPLATE_BASE / "shop_player_card.html").read_text()
-
-    @pytest.fixture(scope="class")
-    def welcome_src(self):
-        return (_TEMPLATE_BASE / "shop_welcome_card.html").read_text()
-
-    @pytest.fixture(scope="class")
-    def challenge_src(self):
-        return (_TEMPLATE_BASE / "shop_challenge_card.html").read_text()
-
-    def test_sh12a_player_template_extends_student_base(self, player_src):
-        """SH-12a: shop_player_card.html extends student_base."""
-        assert "student_base.html" in player_src
-
-    def test_sh12b_player_template_includes_spec_hdr(self, player_src):
-        """SH-12b: shop_player_card.html includes spec_subpage_hdr."""
-        assert "spec_subpage_hdr.html" in player_src
-
-    def test_sh12c_player_template_has_breadcrumb_to_shop(self, player_src):
-        """SH-12c: shop_player_card.html breadcrumb links to /shop."""
-        assert 'href="/shop"' in player_src
-
-    def test_sh12d_player_template_has_purchase_form(self, player_src):
-        """SH-12d: shop_player_card.html has POST form to /shop/cards/player_card/buy/."""
-        assert "/shop/cards/player_card/buy/" in player_src
-        assert 'method="POST"' in player_src
-
-    def test_sh12e_welcome_template_has_my_collection_link(self, welcome_src):
-        """SH-12e: shop_welcome_card.html has back link to /my-cards/welcome-card."""
-        assert "/my-cards/welcome" in welcome_src
-
-    def test_sh12f_challenge_template_has_results_cta(self, challenge_src):
-        """SH-12f: shop_challenge_card.html has link to /challenges/results."""
-        assert "/challenges/results" in challenge_src
+    SHOP-3B1: player_src, welcome_src, challenge_src fixtures removed.
+    SH-12a..12f (legacy listing template tests) removed — templates now unused.
+    SH-12g ported to shop_unified.html (SHOP-3A).
+    SH-12e/SH-12h ported to shop_unified.html buy form + studio CTA.
+    """
 
     def test_sh12g_unified_has_filter_links(self):
-        """SH-12g (SHOP-3A): shop_unified.html has filter links for all three card types.
-        Replaces: shop_landing.html links check (shop_landing.html deleted in SHOP-3A).
-        """
+        """SH-12g (SHOP-3A): shop_unified.html has filter links for all three card types."""
         src = (_TEMPLATE_BASE / "shop_unified.html").read_text()
         assert 'href="/shop?type=player_card"'    in src
         assert 'href="/shop?type=welcome_card"'   in src
         assert 'href="/shop?type=challenge_card"' in src
 
-    def test_sh12h_welcome_template_purchase_form(self, welcome_src):
-        """SH-12h: shop_welcome_card.html has POST form to /shop/cards/welcome_card/buy/."""
-        assert "/shop/cards/welcome_card/buy/" in welcome_src
-        assert 'method="POST"' in welcome_src
+    def test_sh12e_unified_has_buy_forms(self):
+        """SH-12e (SHOP-3B1): shop_unified.html has POST buy forms via item.buy_url."""
+        src = (_TEMPLATE_BASE / "shop_unified.html").read_text()
+        assert 'method="POST"' in src, "shop_unified.html must have POST buy forms"
+        assert 'action="{{ item.buy_url }}"' in src, "shop_unified.html must use item.buy_url"
+
+    def test_sh12f_unified_has_studio_cta(self):
+        """SH-12f (SHOP-3B1): shop_unified.html has studio CTA for owned items."""
+        src = (_TEMPLATE_BASE / "shop_unified.html").read_text()
+        assert "su-btn-studio" in src, "shop_unified.html must have su-btn-studio for owned items"
+
+    def test_sh12h_unified_has_welcome_buy_url(self):
+        """SH-12h (SHOP-3B1): shop_unified.html buy URL covers welcome_card type."""
+        src = (_TEMPLATE_BASE / "shop_unified.html").read_text()
+        # shop_catalog_service builds buy_url as /shop/cards/{card_type_id}/buy/{id}
+        # The template renders: action="{{ item.buy_url }}"
+        assert "item.buy_url" in src, "shop_unified.html must use item.buy_url for buy form"

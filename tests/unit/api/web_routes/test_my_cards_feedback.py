@@ -11,7 +11,7 @@ Rendering tests (Jinja2 direct render):
   MCF-03..04   CC formats render correct aspect-ratio class per design_id
   MCF-08       PC purchased flash renders human-readable label, not raw design_id
   MCF-12..17   WC My Cards formats render correct ratio class per preview_platform
-  MCF-18..19   Shop WC formats also render correct ratio classes
+  # MCF-18..19 removed (SHOP-3B1): shop_welcome_card.html legacy listing template tests
 """
 import pathlib
 from unittest.mock import MagicMock
@@ -24,7 +24,6 @@ _TMPL = pathlib.Path(_TMPL_DIR)
 _MCC  = (_TMPL / "my_cards_challenge_card.html").read_text()
 _MCP  = (_TMPL / "my_cards_player_card.html").read_text()
 _MCW  = (_TMPL / "my_cards_welcome_card.html").read_text()
-_SWC  = (_TMPL / "shop_welcome_card.html").read_text()
 _GRID = (_TMPL / "includes" / "mc_format_grid.html").read_text()
 
 
@@ -319,23 +318,6 @@ class TestMCWIframeRatio:
 
 
 # ── MCF-18..19: Shop WC also uses ratio classes (E bonus fix) ─────────────────
-
-class TestShopWCRatio:
-
-    def test_mcf18_shop_wc_story_renders_ratio_916(self):
-        """MCF-18: shop_welcome_card.html instagram_story renders mfg-ratio-916."""
-        html = _render("shop_welcome_card.html",
-                       _swc_ctx(rows=[_wc_row("instagram_story", state="get_card")]))
-        assert "mfg-ratio-916" in html
-
-    def test_mcf19_shop_wc_portrait_renders_ratio_45(self):
-        """MCF-19: shop_welcome_card.html instagram_portrait renders mfg-ratio-45."""
-        html = _render("shop_welcome_card.html",
-                       _swc_ctx(rows=[_wc_row("instagram_portrait", state="get_card")]))
-        assert "mfg-ratio-45" in html
-
-
-# ── MCF-20..21: new CSS ratio classes defined in mc_format_grid.html ─────────
 
 class TestGridCSSNewRatioClasses:
 

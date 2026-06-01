@@ -12,7 +12,7 @@ PCID-09  Unowned state → preview wrappers carry mfg-locked class
 PCID-10  Owned state → preview wrappers do NOT carry mfg-locked class
 PCID-11  Unowned state → collection buy form targets /shop/cards/player_card/buy/fclassic
 PCID-12  No per-format buy form present in rendered HTML
-PCID-BF  Browse formats → link present on /shop/cards/player list page
+# PCID-BF removed (SHOP-3B1): tested shop_player_card.html listing (now redirect)
 """
 import asyncio
 import pathlib
@@ -137,33 +137,6 @@ def _render_detail(state="get_card", owned=False):
     return tmpl.render(**ctx)
 
 
-def _render_player_list():
-    """Render shop_player_card.html and return HTML."""
-    from jinja2 import Environment, FileSystemLoader
-
-    env = Environment(loader=FileSystemLoader(str(_TEMPLATE_BASE)), autoescape=True)
-
-    user = MagicMock()
-    user.id = 42
-    user.credit_balance = 500
-
-    design_rows = [
-        {"id": "fclassic", "label": "FClassic Player", "description": "", "credit_cost": 300, "is_premium": True, "state": "get_card"},
-        {"id": "compact", "label": "Compact", "description": "", "credit_cost": 300, "is_premium": True, "state": "locked"},
-    ]
-
-    ctx = {
-        "request": MagicMock(),
-        "user": user,
-        "design_rows": design_rows,
-        "owned_count": 0,
-        "total_count": 2,
-        "flash_purchased": None,
-        "flash_error": None,
-        "spec_dashboard_url": "/dashboard/lfa-football-player",
-    }
-    tmpl = env.get_template("shop_player_card.html")
-    return tmpl.render(**ctx)
 
 
 # ── PCID-01: route → 200 ─────────────────────────────────────────────────────
@@ -352,23 +325,6 @@ class TestPCID12NoPerFormatBuy:
 
 
 # ── PCID-BF: Browse formats → on list page ───────────────────────────────────
-
-class TestPCIDBrowseFormats:
-
-    def test_pcid_bf_browse_formats_link_present_in_list(self):
-        """PCID-BF: /shop/cards/player list — each card has 'Browse formats →' link."""
-        html = _render_player_list()
-        assert "Browse formats →" in html
-        assert "/shop/cards/player/fclassic" in html
-        assert "/shop/cards/player/compact" in html
-
-    def test_pcid_bf_browse_formats_link_count_matches_design_count(self):
-        """PCID-BF-2: number of 'Browse formats →' links equals number of designs."""
-        html = _render_player_list()
-        assert html.count("Browse formats →") == 2
-
-
-# ── SPD-L: Layout — fixed-height grid, aspect-ratio previews ─────────────────
 
 class TestSPDLayout:
 
