@@ -465,6 +465,62 @@ class TestS4BFixPhaseOrdering:
             assert "waiting_for_opponent" not in ids, \
                 "waiting_for_opponent must NOT appear when viewer had no attempt"
 
+    def test_fix_08_declined_has_preview_true(self):
+        """FIX-08: DECLINED challenge has has_preview=True (challenge_sent always previewable)."""
+        from app.api.web_routes.card_studio import _cc_build_challenge_row
+        ch = _make_challenge(10, 10, 20, "declined")
+        row = _cc_build_challenge_row(ch, user_id=10, my_attempt=None)
+        assert row["has_preview"] is True, \
+            "DECLINED challenger must have has_preview=True"
+
+    def test_fix_09_cancelled_has_preview_true(self):
+        """FIX-09: CANCELLED challenge has has_preview=True."""
+        from app.api.web_routes.card_studio import _cc_build_challenge_row
+        ch = _make_challenge(11, 10, 20, "cancelled")
+        row = _cc_build_challenge_row(ch, user_id=10, my_attempt=None)
+        assert row["has_preview"] is True
+
+    def test_fix_10_expired_plain_has_preview_true(self):
+        """FIX-10: EXPIRED (no forfeit) challenge has has_preview=True."""
+        from app.api.web_routes.card_studio import _cc_build_challenge_row
+        ch = _make_challenge(12, 10, 20, "expired")
+        row = _cc_build_challenge_row(ch, user_id=10, my_attempt=None)
+        assert row["has_preview"] is True
+
+    def test_fix_11_declined_preview_shows_challenge_sent(self):
+        """FIX-11: DECLINED preview mode includes challenge_sent as locked chip."""
+        fn   = _ctx_fn()
+        user = _make_user(10)
+        ch   = _make_challenge(77, 10, 20, "declined")
+
+        with patch("app.api.web_routes.card_studio._license_guard", return_value=_make_license(True)):
+            db = MagicMock()
+            db.query.return_value.filter.return_value.first.return_value = ch
+            ctx, _ = fn(db, user, challenge_id=77)
+
+        if ctx.get("challenge_mode") == "preview":
+            ids = [c["id"] for c in ctx.get("phase_chips", [])]
+            assert "challenge_sent" in ids, \
+                f"challenge_sent must appear in DECLINED preview chips, got: {ids}"
+            wfo = next((c for c in ctx["phase_chips"] if c["id"] == "challenge_sent"), None)
+            assert wfo and wfo["locked"] is True, "challenge_sent must be locked in DECLINED"
+
+    def test_fix_12_declined_challenged_shows_challenge_received(self):
+        """FIX-12: DECLINED challenged view shows challenge_received as locked chip."""
+        fn   = _ctx_fn()
+        user = _make_user(20)  # challenged
+        ch   = _make_challenge(78, 10, 20, "declined")
+
+        with patch("app.api.web_routes.card_studio._license_guard", return_value=_make_license(True)):
+            db = MagicMock()
+            db.query.return_value.filter.return_value.first.return_value = ch
+            ctx, _ = fn(db, user, challenge_id=78)
+
+        if ctx.get("challenge_mode") == "preview":
+            ids = [c["id"] for c in ctx.get("phase_chips", [])]
+            assert "challenge_received" in ids, \
+                f"challenge_received must appear for DECLINED challenged view, got: {ids}"
+
 
 # ── S4B3: Preview iframe ──────────────────────────────────────────────────────
 

@@ -375,6 +375,15 @@ _CC_FILTER_STATUSES = {
 
 _CC_MAX_LIST = 60  # max challenges shown in selector
 
+# Statuses where get_locked_challenge_card_phases() returns [] but the initial
+# challenge_sent/received event still happened and is previewable.
+# FIX: manually add initial phase to locked for these statuses.
+_CC_STATUSES_WITH_IMPLICIT_INITIAL: frozenset = frozenset({
+    ChallengeStatus.DECLINED,
+    ChallengeStatus.CANCELLED,
+    ChallengeStatus.EXPIRED,
+})
+
 
 def _cc_display_name(user_obj) -> str:
     if user_obj is None:
@@ -394,6 +403,10 @@ def _cc_build_challenge_row(ch, user_id: int, my_attempt) -> dict:
 
     unlocked = _get_unlocked_phases(ch, user_id, my_attempt)
 
+    # FIX: DECLINED/CANCELLED/EXPIRED always had a send/receive event — has_preview must
+    # reflect that, even though get_unlocked_phases() returns [] for these statuses.
+    has_preview = len(unlocked) > 0 or ch.status in _CC_STATUSES_WITH_IMPLICIT_INITIAL
+
     return {
         "id":                    ch.id,
         "opponent_name":         _cc_display_name(opponent),
@@ -407,7 +420,7 @@ def _cc_build_challenge_row(ch, user_id: int, my_attempt) -> dict:
         "available_phases_count": len(unlocked),
         "available_phases":      unlocked,
         "studio_url":            f"/card-studio/challenge?challenge_id={ch.id}",
-        "has_preview":           len(unlocked) > 0,
+        "has_preview":           has_preview,
     }
 
 
@@ -526,6 +539,14 @@ def _resolve_challenge_context(
 
     unlocked = _get_unlocked_phases(ch, user.id, my_attempt)
     locked   = _get_locked_phases(ch, user.id)
+
+    # FIX: DECLINED/CANCELLED/EXPIRED — initial send/receive phase existed but
+    # get_locked_challenge_card_phases() returns [] for these statuses.
+    # Add challenge_sent/received as locked so the timeline is complete.
+    if ch.status in _CC_STATUSES_WITH_IMPLICIT_INITIAL:
+        initial = "challenge_sent" if is_challenger else "challenge_received"
+        if initial not in unlocked and initial not in locked:
+            locked = locked + [initial]
 
     # CS-S4B-FIX-2: waiting_for_opponent historical phase.
     # If the viewer had an attempt AND the challenge is COMPLETED, the
