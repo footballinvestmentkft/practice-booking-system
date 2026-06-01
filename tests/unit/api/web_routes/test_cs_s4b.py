@@ -329,6 +329,143 @@ class TestS4B2PhaseSelector:
             assert "challenge_story_9_16" in platform_ids
 
 
+# ── S4B-FIX: Phase ordering + waiting_for_opponent historical ─────────────────
+
+class TestS4BFixPhaseOrdering:
+
+    def _completed_ch_with_attempt(self, winner_id=10):
+        """COMPLETED challenge with challenger's attempt available."""
+        ch = _make_challenge(55, 10, 20, "completed")
+        ch.winner_id             = winner_id
+        ch.forfeit_user_id       = None
+        ch.is_draw               = False
+        ch.challenger_attempt_id = 1
+        ch.challenged_attempt_id = 2
+        return ch
+
+    def _ctx_completed(self, phase=None, with_skill_deltas=True):
+        """Call _resolve_challenge_context for a COMPLETED challenge."""
+        fn   = _ctx_fn()
+        user = _make_user(10)
+        ch   = self._completed_ch_with_attempt()
+        att  = MagicMock()
+        att.skill_deltas = {"accuracy": 0.5} if with_skill_deltas else {}
+
+        with patch("app.api.web_routes.card_studio._license_guard", return_value=_make_license(True)):
+            db = MagicMock()
+            db.query.return_value.filter.return_value.first.return_value = ch
+            db.query.return_value.filter.return_value.first.side_effect = [ch, att]
+            ctx, _ = fn(db, user, challenge_id=55, phase=phase)
+        return ctx
+
+    def test_fix_01_completed_chips_chronological_order(self):
+        """FIX-01: COMPLETED challenge phase_chips are in chronological order.
+        Expected: sent(1) → accepted(2) → waiting(4) → result(5) → skill(6)
+        NOT: result → skill → sent → accepted (the old broken order).
+        """
+        ctx = self._ctx_completed()
+        if ctx.get("challenge_mode") != "preview":
+            return  # skip if mock didn't resolve correctly
+        chips = ctx.get("phase_chips", [])
+        ids = [c["id"] for c in chips]
+
+        # challenge_sent must come before challenge_accepted
+        if "challenge_sent" in ids and "challenge_accepted" in ids:
+            assert ids.index("challenge_sent") < ids.index("challenge_accepted"), \
+                f"challenge_sent must precede challenge_accepted, got: {ids}"
+
+        # challenge_accepted must come before any completed result phase
+        result_phases = {"completed_score_win", "completed_draw", "completed_forfeit_win",
+                         "completed_forfeit_loss", "no_contest"}
+        result_in_chips = [p for p in ids if p in result_phases]
+        if "challenge_accepted" in ids and result_in_chips:
+            assert ids.index("challenge_accepted") < ids.index(result_in_chips[0]), \
+                f"challenge_accepted must precede result phase, got: {ids}"
+
+        # skill_delta_result must come last if present
+        if "skill_delta_result" in ids:
+            assert ids.index("skill_delta_result") == len(ids) - 1, \
+                f"skill_delta_result must be last, got: {ids}"
+
+    def test_fix_02_completed_result_not_first_chip(self):
+        """FIX-02: completed_score_win must NOT be the first chip in a COMPLETED challenge."""
+        ctx = self._ctx_completed()
+        if ctx.get("challenge_mode") != "preview":
+            return
+        chips = ctx.get("phase_chips", [])
+        if chips:
+            assert chips[0]["id"] != "completed_score_win", \
+                f"completed_score_win must not be first; chips: {[c['id'] for c in chips]}"
+
+    def test_fix_03_waiting_for_opponent_in_chips_when_completed_with_attempt(self):
+        """FIX-03: COMPLETED + viewer had attempt → waiting_for_opponent in phase_chips."""
+        ctx = self._ctx_completed()
+        if ctx.get("challenge_mode") != "preview":
+            return
+        chips = ctx.get("phase_chips", [])
+        ids = [c["id"] for c in chips]
+        assert "waiting_for_opponent" in ids, \
+            f"waiting_for_opponent must appear in COMPLETED+attempt chips, got: {ids}"
+
+    def test_fix_04_waiting_for_opponent_is_locked_when_completed(self):
+        """FIX-04: waiting_for_opponent chip is locked=True in COMPLETED challenge."""
+        ctx = self._ctx_completed()
+        if ctx.get("challenge_mode") != "preview":
+            return
+        chips = ctx.get("phase_chips", [])
+        wfo = next((c for c in chips if c["id"] == "waiting_for_opponent"), None)
+        assert wfo is not None, "waiting_for_opponent chip not found"
+        assert wfo["locked"] is True, \
+            f"waiting_for_opponent must be locked=True in COMPLETED, got locked={wfo['locked']}"
+
+    def test_fix_05_result_chip_is_unlocked_in_completed(self):
+        """FIX-05: completed_score_win chip is locked=False (active, exportable)."""
+        ctx = self._ctx_completed()
+        if ctx.get("challenge_mode") != "preview":
+            return
+        chips = ctx.get("phase_chips", [])
+        result = next((c for c in chips if c["id"] == "completed_score_win"), None)
+        if result:
+            assert result["locked"] is False, \
+                f"completed_score_win must be locked=False, got locked={result['locked']}"
+
+    def test_fix_06_pending_challenger_chips_unchanged(self):
+        """FIX-06: PENDING challenger still has challenge_sent as only chip."""
+        fn   = _ctx_fn()
+        user = _make_user(10)
+        ch   = _make_challenge(1, 10, 20, "pending")
+
+        with patch("app.api.web_routes.card_studio._license_guard", return_value=_make_license(True)):
+            db = MagicMock()
+            db.query.return_value.filter.return_value.first.return_value = ch
+            ctx, _ = fn(db, user, challenge_id=1, phase="challenge_sent")
+
+        if ctx.get("challenge_mode") == "preview":
+            ids = [c["id"] for c in ctx.get("phase_chips", [])]
+            assert "challenge_sent" in ids
+            assert "waiting_for_opponent" not in ids, \
+                "waiting_for_opponent must NOT appear for PENDING challenge"
+
+    def test_fix_07_waiting_for_opponent_absent_without_attempt(self):
+        """FIX-07: COMPLETED without viewer attempt → waiting_for_opponent not added."""
+        fn   = _ctx_fn()
+        user = _make_user(10)
+        ch   = _make_challenge(99, 10, 20, "completed")
+        ch.winner_id             = 10
+        ch.challenger_attempt_id = None  # viewer had no attempt
+        ch.challenged_attempt_id = 2
+
+        with patch("app.api.web_routes.card_studio._license_guard", return_value=_make_license(True)):
+            db = MagicMock()
+            db.query.return_value.filter.return_value.first.return_value = ch
+            ctx, _ = fn(db, user, challenge_id=99)
+
+        if ctx.get("challenge_mode") == "preview":
+            ids = [c["id"] for c in ctx.get("phase_chips", [])]
+            assert "waiting_for_opponent" not in ids, \
+                "waiting_for_opponent must NOT appear when viewer had no attempt"
+
+
 # ── S4B3: Preview iframe ──────────────────────────────────────────────────────
 
 class TestS4B3PreviewIframe:

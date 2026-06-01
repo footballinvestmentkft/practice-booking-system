@@ -341,6 +341,24 @@ _CC_PHASE_LABELS = {
     "skill_delta_result":     "Skill Progress",
 }
 
+# CS-S4B-FIX: Chronological timeline order for phase chips.
+# Phases with the same order value are peers (e.g. sent/received are the same event
+# from two viewer perspectives; score_win/draw/forfeit are mutually exclusive outcomes).
+_CC_PHASE_TIMELINE_ORDER: dict[str, int] = {
+    "challenge_sent":         1,
+    "challenge_received":     1,
+    "challenge_accepted":     2,
+    "live_lobby_ready":       3,
+    "live_in_progress":       4,
+    "waiting_for_opponent":   4,
+    "completed_score_win":    5,
+    "completed_draw":         5,
+    "completed_forfeit_win":  5,
+    "completed_forfeit_loss": 5,
+    "no_contest":             5,
+    "skill_delta_result":     6,
+}
+
 _CC_ACTIVE_STATUSES = frozenset({
     ChallengeStatus.PENDING,
     ChallengeStatus.ACCEPTED,
@@ -508,16 +526,36 @@ def _resolve_challenge_context(
 
     unlocked = _get_unlocked_phases(ch, user.id, my_attempt)
     locked   = _get_locked_phases(ch, user.id)
-    all_phases = unlocked + [p for p in locked if p not in unlocked]
 
-    # Auto-select phase: prefer first unlocked, then first locked
-    if phase is None or phase not in set(all_phases):
-        if unlocked:
-            phase = unlocked[0]
-        elif locked:
-            phase = locked[0]
+    # CS-S4B-FIX-2: waiting_for_opponent historical phase.
+    # If the viewer had an attempt AND the challenge is COMPLETED, the
+    # "waiting_for_opponent" phase was a real event that happened before the
+    # result.  get_locked_challenge_card_phases() does not return it, so we
+    # add it here locally so the Studio timeline is complete.
+    if (
+        ch.status == ChallengeStatus.COMPLETED
+        and my_attempt_id is not None
+        and "waiting_for_opponent" not in unlocked
+        and "waiting_for_opponent" not in locked
+    ):
+        locked = locked + ["waiting_for_opponent"]
+
+    # CS-S4B-FIX-1: Build chronological phase list.
+    # Merge unlocked + locked, deduplicate, sort by _CC_PHASE_TIMELINE_ORDER.
+    all_phase_ids = sorted(
+        set(unlocked) | set(locked),
+        key=lambda p: (_CC_PHASE_TIMELINE_ORDER.get(p, 99), p),
+    )
+
+    # Auto-select phase: first by timeline order (prefer unlocked, else locked)
+    if phase is None or phase not in set(all_phase_ids):
+        unlocked_ordered = [p for p in all_phase_ids if p in set(unlocked)]
+        locked_ordered   = [p for p in all_phase_ids if p not in set(unlocked)]
+        if unlocked_ordered:
+            phase = unlocked_ordered[0]
+        elif locked_ordered:
+            phase = locked_ordered[0]
         else:
-            # No phases available — redirect to selector
             return None, "/card-studio/challenge"
 
     # Default/validate platform
@@ -525,7 +563,7 @@ def _resolve_challenge_context(
         platform = _CC_VALID_PLATFORMS[0]
 
     ratio_class = _CC_RATIO[platform]
-    is_locked_phase = phase in locked and phase not in unlocked
+    is_locked_phase = phase in set(locked) and phase not in set(unlocked)
 
     # Preview URL — uses existing /challenges/{id}/card/preview route
     preview_url = (
@@ -533,23 +571,16 @@ def _resolve_challenge_context(
         f"?platform={platform}&phase={phase}"
     )
 
-    # Phase chips for UI
-    phase_chips = []
-    for p in unlocked:
-        phase_chips.append({
+    # CS-S4B-FIX-1: Phase chips in chronological order (not unlocked-first)
+    phase_chips = [
+        {
             "id":     p,
             "label":  _CC_PHASE_LABELS.get(p, p),
             "active": p == phase,
-            "locked": False,
-        })
-    for p in locked:
-        if p not in unlocked:
-            phase_chips.append({
-                "id":     p,
-                "label":  _CC_PHASE_LABELS.get(p, p),
-                "active": p == phase,
-                "locked": True,
-            })
+            "locked": p in set(locked) and p not in set(unlocked),
+        }
+        for p in all_phase_ids
+    ]
 
     # Platform chips for UI
     platform_chips = [
