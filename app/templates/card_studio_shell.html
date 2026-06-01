@@ -766,5 +766,145 @@
   };
 
 }());
+
+// ── CS-S2B: Player Studio variant / platform / theme selectors ──────────────
+{% if active_type == "player" %}
+(function () {
+  'use strict';
+
+  var _pcIframe    = document.getElementById('cs-preview-iframe');
+  var _pcUserId    = {{ player_user_id | int }};
+  var _pcVariant   = '{{ active_variant }}';
+  var _pcTheme     = '{{ active_theme }}';
+
+  function _csrf() {
+    return (document.cookie.split('; ').find(function (r) { return r.startsWith('csrf_token='); }) || '').split('=')[1] || '';
+  }
+
+  function _reloadPlayerPreview() {
+    if (!_pcIframe) return;
+    var url = '/players/' + _pcUserId + '/card'
+      + '?preview=' + encodeURIComponent(_pcVariant)
+      + '&theme='   + encodeURIComponent(_pcTheme)
+      + '&native_export=1';
+    _pcIframe.src = url;
+  }
+
+  function _showPcError(el, msg) {
+    if (el) { el.textContent = msg; el.style.display = 'block'; }
+  }
+  function _clearPcError(el) {
+    if (el) { el.style.display = 'none'; el.textContent = ''; }
+  }
+
+  function setPlayerVariant(variantId) {
+    var errEl = document.getElementById('cs-pc-variant-error');
+    var csrf  = _csrf();
+    if (!csrf) { _showPcError(errEl, 'Session expired — reload page.'); return; }
+    _clearPcError(errEl);
+    fetch('/dashboard/card-variant', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+      body:    JSON.stringify({ variant: variantId }),
+    })
+      .then(function (r) {
+        if (r.status === 403) { return Promise.reject(new Error('csrf')); }
+        return r.json();
+      })
+      .then(function (data) {
+        if (data.ok) {
+          _pcVariant = variantId;
+          document.querySelectorAll('[data-pc-variant]').forEach(function (b) {
+            b.classList.toggle('cs-pc-pill--active', b.dataset.pcVariant === variantId);
+          });
+          _reloadPlayerPreview();
+        } else {
+          _showPcError(errEl, data.error || 'Could not apply design.');
+        }
+      })
+      .catch(function (err) {
+        _showPcError(errEl, (err && err.message === 'csrf') ? 'Session expired — reload page.' : 'Network error.');
+      });
+  }
+
+  function setPlayerPlatform(platformId) {
+    var errEl = document.getElementById('cs-pc-platform-error');
+    var csrf  = _csrf();
+    if (!csrf) { _showPcError(errEl, 'Session expired — reload page.'); return; }
+    _clearPcError(errEl);
+    fetch('/dashboard/card-platform', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+      body:    JSON.stringify({ platform: platformId }),
+    })
+      .then(function (r) {
+        if (r.status === 403) { return Promise.reject(new Error('csrf')); }
+        return r.json();
+      })
+      .then(function (data) {
+        if (data.ok) {
+          _reloadPlayerPreview();
+        } else {
+          _showPcError(errEl, data.error || 'Could not save platform.');
+        }
+      })
+      .catch(function (err) {
+        _showPcError(errEl, (err && err.message === 'csrf') ? 'Session expired — reload page.' : 'Network error.');
+      });
+  }
+
+  function setPlayerTheme(themeId) {
+    var errEl    = document.getElementById('cs-pc-theme-error');
+    var nameEl   = document.getElementById('cs-pc-theme-name');
+    var csrf     = _csrf();
+    if (!csrf) { _showPcError(errEl, 'Session expired — reload page.'); return; }
+    _clearPcError(errEl);
+    fetch('/dashboard/card-theme', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+      body:    JSON.stringify({ theme: themeId }),
+    })
+      .then(function (r) {
+        if (r.status === 403) { return Promise.reject(new Error('csrf')); }
+        return r.json();
+      })
+      .then(function (data) {
+        if (data.ok) {
+          _pcTheme = themeId;
+          document.querySelectorAll('[data-pc-theme]').forEach(function (b) {
+            b.classList.toggle('cs-color-chip--active', b.dataset.pcTheme === themeId);
+          });
+          if (nameEl) {
+            var activeBtn = document.querySelector('[data-pc-theme="' + themeId + '"]');
+            nameEl.textContent = activeBtn ? (activeBtn.getAttribute('title') || themeId) : themeId;
+          }
+          _reloadPlayerPreview();
+        } else {
+          _showPcError(errEl, data.error || 'Could not apply theme.');
+        }
+      })
+      .catch(function (err) {
+        _showPcError(errEl, (err && err.message === 'csrf') ? 'Session expired — reload page.' : 'Network error.');
+      });
+  }
+
+  // ── Wire up variant pills ──
+  document.querySelectorAll('[data-pc-variant]:not([disabled])').forEach(function (btn) {
+    btn.addEventListener('click', function () { setPlayerVariant(btn.dataset.pcVariant); });
+  });
+
+  // ── Wire up platform select ──
+  var platformSelect = document.getElementById('cs-pc-platform-select');
+  if (platformSelect) {
+    platformSelect.addEventListener('change', function () { setPlayerPlatform(platformSelect.value); });
+  }
+
+  // ── Wire up theme chips ──
+  document.querySelectorAll('[data-pc-theme]:not([disabled])').forEach(function (btn) {
+    btn.addEventListener('click', function () { setPlayerTheme(btn.dataset.pcTheme); });
+  });
+
+}());
+{% endif %}
 </script>
 {% endblock %}

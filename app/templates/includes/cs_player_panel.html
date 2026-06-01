@@ -1,37 +1,75 @@
-{# CS-S2A: Player Card Studio control panel — preview-only MVP.
-   Write functions (photo, variant, platform, color, publish, export)
-   are deferred to CS-S2B..D.
-   Context vars: active_variant, active_theme, legacy_editor_url
+{# CS-S2A+S2B: Player Card Studio control panel.
+   CS-S2A: preview-only.
+   CS-S2B: variant / platform / theme selectors via existing dashboard endpoints.
+   Photo upload (CS-S2C) and publish (CS-S2D) deferred.
+   Context vars: active_variant, active_theme, active_platform,
+                 player_variants, player_platforms, player_themes,
+                 player_user_id, legacy_editor_url
 #}
 
 <div class="cs-player-panel">
 
-  {# ── Preview info ── #}
-  <div class="cs-player-info">
-    <p class="cs-section-label">Player Card Preview</p>
-    <p class="cs-player-hint">
-      Viewing your current Player Card design.
-      Use the advanced editor below to customize photo, theme, and export format.
-    </p>
+  {# ── SECTION: Variant selector ── #}
+  <div class="cs-pc-selector">
+    <p class="cs-section-label">Card Design</p>
+    <div class="cs-pc-pills" id="cs-pc-variant-pills">
+      {% for v in player_variants %}
+      <button
+        class="cs-pc-pill{% if v.active %} cs-pc-pill--active{% endif %}{% if not v.owned %} cs-pc-pill--locked{% endif %}"
+        type="button"
+        data-pc-variant="{{ v.id }}"
+        {% if not v.owned %}disabled aria-disabled="true" title="{{ v.label }} — not owned"{% endif %}>
+        {{ v.label }}
+      </button>
+      {% endfor %}
+    </div>
+    <p id="cs-pc-variant-error" class="cs-pc-error"></p>
   </div>
 
   <hr class="cs-section-divider">
 
-  {# ── Write functions coming soon ── #}
-  <div class="cs-player-coming">
-    <p class="cs-section-label">Customize</p>
-    <p class="cs-coming-note">
-      Color theme, photo, and export controls are coming in the next update.
-    </p>
+  {# ── SECTION: Platform selector ── #}
+  <div class="cs-pc-selector">
+    <p class="cs-section-label">Export Platform</p>
+    <select id="cs-pc-platform-select" class="cs-pc-select">
+      {% for p in player_platforms %}
+      <option value="{{ p.id }}"{% if p.active %} selected{% endif %}>{{ p.label }}</option>
+      {% endfor %}
+    </select>
+    <p id="cs-pc-platform-error" class="cs-pc-error"></p>
   </div>
 
   <hr class="cs-section-divider">
 
-  {# ── Legacy editor CTA ── #}
+  {# ── SECTION: Theme selector (swatch circles) ── #}
+  <div class="cs-pc-selector">
+    <p class="cs-section-label">Color Theme</p>
+    <div class="cs-color-chips" id="cs-pc-theme-chips">
+      {% for t in player_themes %}
+      <button
+        class="cs-color-chip{% if t.active %} cs-color-chip--active{% endif %}{% if not t.unlocked %} cs-pc-pill--locked{% endif %}"
+        type="button"
+        data-pc-theme="{{ t.id }}"
+        style="--chip-dot: {{ t.dot_color }};"
+        {% if not t.unlocked %}disabled aria-disabled="true" title="{{ t.label }} — locked (premium)"{% endif %}
+        title="{{ t.label }}{% if not t.unlocked %} (locked){% endif %}">
+        <span class="cs-color-swatch" style="background: {{ t.dot_color }};"></span>
+      </button>
+      {% endfor %}
+    </div>
+    <p class="cs-color-active-name" id="cs-pc-theme-name">
+      {% for t in player_themes %}{% if t.active %}{{ t.label }}{% endif %}{% endfor %}
+    </p>
+    <p id="cs-pc-theme-error" class="cs-pc-error"></p>
+  </div>
+
+  <hr class="cs-section-divider">
+
+  {# ── Advanced Editor CTA ── #}
   <div class="cs-player-legacy-cta">
     <p class="cs-section-label">Advanced Editor</p>
     <p class="cs-player-hint">
-      Full customization is available in the Player Card editor.
+      Photo upload, publishing, and full export options are available in the Player Card editor.
     </p>
     <a href="{{ legacy_editor_url }}" class="cs-btn-legacy-editor">
       Open Player Card Editor →
