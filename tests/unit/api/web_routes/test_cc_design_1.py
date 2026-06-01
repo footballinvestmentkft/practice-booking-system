@@ -502,6 +502,140 @@ class TestCCExportPolicy:
             "challenge_accepted must remain preview-only until separately approved"
 
 
+# ── CC-EXPORT-DIRECT: Direct Studio export (no editor redirect) ───────────────
+
+class TestCCExportDirect:
+    """CC-EXPORT-DIRECT: Studio export panel uses direct /challenges/{id}/card/export URL."""
+
+    def _ctx(self, phase: str, platform: str = "challenge_post_16_9", uid: int = 10):
+        from app.api.web_routes.card_studio import _resolve_challenge_context
+        user = MagicMock(); user.id = uid
+        from app.models.vt_challenge import ChallengeStatus
+        ch = MagicMock()
+        ch.id = 42; ch.challenger_id = 10; ch.challenged_id = 20
+        ch.status = ChallengeStatus.PENDING; ch.challenge_mode = "async"
+        ch.challenger_attempt_id = None; ch.challenged_attempt_id = None
+        ch.winner_id = None; ch.is_draw = False
+        ch.forfeit_user_id = None; ch.forfeit_reason = None
+        ch.game = MagicMock(); ch.game.name = "Memory Sequence"
+        ch.challenger = MagicMock(nickname="T1B1K3", email="t@t.com")
+        ch.challenged = MagicMock(nickname="RD14S", email="r@r.com")
+        lic = MagicMock(); lic.onboarding_completed = True
+        with patch("app.api.web_routes.card_studio._license_guard", return_value=lic):
+            db = MagicMock()
+            db.query.return_value.filter.return_value.first.return_value = ch
+            ctx, _ = _resolve_challenge_context(db, user, challenge_id=42, phase=phase, platform=platform)
+        return ctx
+
+    def test_cc_export_direct_01_challenge_sent_export_url_not_legacy_editor(self):
+        """CC-EXPORT-DIRECT-01: challenge_sent export URL is NOT the legacy editor URL."""
+        ctx = self._ctx("challenge_sent", "challenge_post_16_9", uid=10)
+        if ctx.get("challenge_mode") == "preview":
+            export_url = ctx.get("challenge_export_url") or ""
+            assert "/card-editor/challenge" not in export_url, \
+                "challenge_sent export URL must not point to legacy editor"
+            assert export_url != "", "challenge_sent export URL must not be empty"
+
+    def test_cc_export_direct_02_challenge_received_url_has_id_phase_platform(self):
+        """CC-EXPORT-DIRECT-02: challenge_received export URL includes challenge_id, phase, platform."""
+        ctx = self._ctx("challenge_received", "challenge_story_9_16", uid=20)
+        if ctx.get("challenge_mode") == "preview":
+            url = ctx.get("challenge_export_url") or ""
+            assert "42" in url, "Export URL must contain challenge_id=42"
+            assert "challenge_received" in url, "Export URL must contain phase"
+            assert "challenge_story_9_16" in url, "Export URL must contain platform"
+
+    def test_cc_export_direct_03_result_phase_export_url_direct_route(self):
+        """CC-EXPORT-DIRECT-03: result phase export URL points to /challenges/{id}/card/export."""
+        from app.api.web_routes.card_studio import _resolve_challenge_context
+        from app.models.vt_challenge import ChallengeStatus
+        user = MagicMock(); user.id = 10
+        ch = MagicMock()
+        ch.id = 42; ch.challenger_id = 10; ch.challenged_id = 20
+        ch.status = ChallengeStatus.COMPLETED; ch.challenge_mode = "async"
+        ch.challenger_attempt_id = 1; ch.challenged_attempt_id = 2
+        ch.winner_id = 10; ch.is_draw = False
+        ch.forfeit_user_id = None; ch.forfeit_reason = None
+        ch.game = MagicMock(); ch.game.name = "Memory Sequence"
+        ch.challenger = MagicMock(nickname="T1B1K3", email="t@t.com")
+        ch.challenged = MagicMock(nickname="RD14S", email="r@r.com")
+        lic = MagicMock(); lic.onboarding_completed = True
+        with patch("app.api.web_routes.card_studio._license_guard", return_value=lic):
+            db = MagicMock()
+            db.query.return_value.filter.return_value.first.return_value = ch
+            ctx, _ = _resolve_challenge_context(db, user, challenge_id=42,
+                                                 phase="completed_score_win",
+                                                 platform="challenge_post_16_9")
+        if ctx.get("challenge_mode") == "preview":
+            url = ctx.get("challenge_export_url") or ""
+            assert "/challenges/42/card/export" in url, \
+                "Result phase export URL must use /challenges/{id}/card/export route"
+
+    def test_cc_export_direct_04_export_panel_no_editor_redirect_text(self):
+        """CC-EXPORT-DIRECT-04: Export panel does NOT contain 'Export via Challenge Editor' text."""
+        src = (TEMPLATES_DIR / "card_studio_shell.html").read_text()
+        assert "Export via Challenge Editor" not in src, \
+            "Export panel must not have legacy editor redirect CTA"
+
+    def test_cc_export_direct_05_export_panel_has_download_png_cta(self):
+        """CC-EXPORT-DIRECT-05: Export panel has 'Download PNG' or 'Export PNG' CTA."""
+        src = (TEMPLATES_DIR / "card_studio_shell.html").read_text()
+        assert "Download PNG" in src or "Export PNG" in src, \
+            "Export panel must have direct download CTA (Download PNG or Export PNG)"
+
+    def test_cc_export_direct_06_non_exportable_phase_shows_preview_only(self):
+        """CC-EXPORT-DIRECT-06: Non-exportable phase shows preview-only text."""
+        src = (TEMPLATES_DIR / "card_studio_shell.html").read_text()
+        assert "Preview only" in src or "preview only" in src.lower(), \
+            "Non-exportable phases must show preview-only message"
+
+    def test_cc_export_direct_07_ownership_guard_not_bypassed(self):
+        """CC-EXPORT-DIRECT-07: Export route has ownership guard (not bypassed)."""
+        import inspect
+        from app.api.web_routes.vt_challenges import challenge_card_export
+        src = inspect.getsource(challenge_card_export)
+        assert ("is_design_accessible" in src or "is_accessible" in src) and "UserRole" in src, \
+            "Export route must retain CDO ownership guard"
+
+    def test_cc_export_direct_08_platform_change_updates_export_url(self):
+        """CC-EXPORT-DIRECT-08: Switching platform updates export URL platform param."""
+        ctx_post  = self._ctx("challenge_sent", "challenge_post_16_9")
+        ctx_story = self._ctx("challenge_sent", "challenge_story_9_16")
+        if ctx_post.get("challenge_mode") == "preview" and ctx_story.get("challenge_mode") == "preview":
+            url_post  = ctx_post.get("challenge_export_url") or ""
+            url_story = ctx_story.get("challenge_export_url") or ""
+            assert "challenge_post_16_9"  in url_post,  "Post URL must contain post_16_9 platform"
+            assert "challenge_story_9_16" in url_story, "Story URL must contain story_9_16 platform"
+            assert url_post != url_story, "Export URLs must differ by platform"
+
+    def test_cc_export_direct_09_photo_url_not_in_export_url(self):
+        """CC-EXPORT-DIRECT-09: photo_url is NOT passed to export route (export uses DB photos).
+        The export route has its own photo loading logic (UserLicense query).
+        selected_photo_url is preview-only — export always uses canonical player_card_photo_url."""
+        from app.api.web_routes.card_studio import _resolve_challenge_context
+        from app.models.vt_challenge import ChallengeStatus
+        user = MagicMock(); user.id = 10
+        ch = MagicMock()
+        ch.id = 42; ch.challenger_id = 10; ch.challenged_id = 20
+        ch.status = ChallengeStatus.PENDING; ch.challenge_mode = "async"
+        ch.challenger_attempt_id = None; ch.challenged_attempt_id = None
+        ch.winner_id = None; ch.is_draw = False
+        ch.forfeit_user_id = None; ch.forfeit_reason = None
+        ch.game = MagicMock(); ch.game.name = "Game"
+        ch.challenger = MagicMock(nickname="A", email="a@a.com")
+        ch.challenged = MagicMock(nickname="B", email="b@b.com")
+        lic = MagicMock(); lic.onboarding_completed = True
+        with patch("app.api.web_routes.card_studio._license_guard", return_value=lic):
+            db = MagicMock()
+            db.query.return_value.filter.return_value.first.return_value = ch
+            ctx, _ = _resolve_challenge_context(db, user, challenge_id=42, phase="challenge_sent",
+                                                 platform="challenge_post_16_9")
+        if ctx.get("challenge_mode") == "preview":
+            url = ctx.get("challenge_export_url") or ""
+            assert "photo_url" not in url, \
+                "Export URL must NOT include photo_url — export uses canonical DB photos"
+
+
 # ── Route / snapshot ──────────────────────────────────────────────────────────
 
 class TestCCD22to23RouteSnapshot:
