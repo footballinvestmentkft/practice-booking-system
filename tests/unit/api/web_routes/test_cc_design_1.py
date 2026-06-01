@@ -394,6 +394,114 @@ class TestCCDSentReceivedLayout:
                 assert len(html) > 100, f"{tmpl_name} phase {phase!r} rendered empty"
 
 
+# ── CC-EXPORT: Social Moment Export Policy ────────────────────────────────────
+
+class TestCCExportPolicy:
+    """CC-EXPORT-01..10: challenge_sent/received are exportable social moment phases."""
+
+    def test_cc_export_01_challenge_sent_in_exportable_phases(self):
+        """CC-EXPORT-01: challenge_sent is in _EXPORTABLE_PHASES."""
+        from app.api.web_routes.vt_challenges import _EXPORTABLE_PHASES
+        assert "challenge_sent" in _EXPORTABLE_PHASES, \
+            "challenge_sent must be exportable (social moment phase)"
+
+    def test_cc_export_02_challenge_received_in_exportable_phases(self):
+        """CC-EXPORT-02: challenge_received is in _EXPORTABLE_PHASES."""
+        from app.api.web_routes.vt_challenges import _EXPORTABLE_PHASES
+        assert "challenge_received" in _EXPORTABLE_PHASES, \
+            "challenge_received must be exportable (social moment phase)"
+
+    def _pending_ch(self, ch_id=1, challenger_id=10, challenged_id=20):
+        """Create a minimal PENDING challenge mock for export validation tests."""
+        from app.models.vt_challenge import ChallengeStatus
+        ch = MagicMock()
+        ch.id = ch_id; ch.challenger_id = challenger_id; ch.challenged_id = challenged_id
+        ch.status = ChallengeStatus.PENDING; ch.challenge_mode = "async"
+        ch.challenger_attempt_id = None; ch.challenged_attempt_id = None
+        ch.winner_id = None; ch.is_draw = False
+        ch.forfeit_user_id = None; ch.forfeit_reason = None
+        return ch
+
+    def test_cc_export_03_validate_accepts_challenge_sent_for_export(self):
+        """CC-EXPORT-03: validate_challenge_card_phase accepts challenge_sent for export."""
+        from app.api.web_routes.vt_challenges import validate_challenge_card_phase
+        ch = self._pending_ch()
+        try:
+            validate_challenge_card_phase(ch, viewer_id=10, phase="challenge_sent", for_export=True)
+        except Exception as e:
+            assert False, f"validate_challenge_card_phase raised for challenge_sent export: {e}"
+
+    def test_cc_export_04_validate_accepts_challenge_received_for_export(self):
+        """CC-EXPORT-04: validate_challenge_card_phase accepts challenge_received for export."""
+        from app.api.web_routes.vt_challenges import validate_challenge_card_phase
+        ch = self._pending_ch()
+        try:
+            validate_challenge_card_phase(ch, viewer_id=20, phase="challenge_received", for_export=True)
+        except Exception as e:
+            assert False, f"validate_challenge_card_phase raised for challenge_received export: {e}"
+
+    def test_cc_export_05_studio_ctx_challenge_sent_is_exportable(self):
+        """CC-EXPORT-05: In challenge preview context, challenge_sent → is_exportable_phase=True."""
+        from app.api.web_routes.card_studio import _resolve_challenge_context
+        user = MagicMock(); user.id = 10
+        ch   = self._pending_ch()
+        lic  = MagicMock(); lic.onboarding_completed = True
+
+        with patch("app.api.web_routes.card_studio._license_guard", return_value=lic):
+            db = MagicMock()
+            db.query.return_value.filter.return_value.first.return_value = ch
+            ctx, _ = _resolve_challenge_context(db, user, challenge_id=1, phase="challenge_sent")
+
+        if ctx.get("challenge_mode") == "preview":
+            assert ctx.get("is_exportable_phase") is True, \
+                "challenge_sent must yield is_exportable_phase=True in Studio context"
+
+    def test_cc_export_06_studio_ctx_challenge_received_is_exportable(self):
+        """CC-EXPORT-06: In challenge preview context, challenge_received → is_exportable_phase=True."""
+        from app.api.web_routes.card_studio import _resolve_challenge_context
+        user = MagicMock(); user.id = 20
+        ch   = self._pending_ch()
+        lic  = MagicMock(); lic.onboarding_completed = True
+
+        with patch("app.api.web_routes.card_studio._license_guard", return_value=lic):
+            db = MagicMock()
+            db.query.return_value.filter.return_value.first.return_value = ch
+            ctx, _ = _resolve_challenge_context(db, user, challenge_id=1, phase="challenge_received")
+
+        if ctx.get("challenge_mode") == "preview":
+            assert ctx.get("is_exportable_phase") is True, \
+                "challenge_received must yield is_exportable_phase=True in Studio context"
+
+    def test_cc_export_07_export_panel_shows_social_moment_text(self):
+        """CC-EXPORT-07: Export panel for challenge_sent shows social moment text, not preview-only."""
+        src = (TEMPLATES_DIR / "card_studio_shell.html").read_text()
+        assert "social moment" in src.lower(), \
+            "Export panel must reference 'social moment' for challenge_sent/received phases"
+        assert "Historical phase — preview only. Export available for result phases." not in src, \
+            "Old preview-only text must be replaced"
+
+    def test_cc_export_08_ownership_guard_in_export_route(self):
+        """CC-EXPORT-08: Export route still has CDO ownership guard (not bypassed)."""
+        import inspect
+        from app.api.web_routes.vt_challenges import challenge_card_export
+        src = inspect.getsource(challenge_card_export)
+        assert "is_accessible" in src or "is_design_accessible" in src or \
+               "CDO ownership" in src or "UserRole.ADMIN" in src, \
+            "Export route must retain ownership guard"
+
+    def test_cc_export_09_waiting_for_opponent_not_exportable(self):
+        """CC-EXPORT-09: waiting_for_opponent is NOT in _EXPORTABLE_PHASES."""
+        from app.api.web_routes.vt_challenges import _EXPORTABLE_PHASES
+        assert "waiting_for_opponent" not in _EXPORTABLE_PHASES, \
+            "waiting_for_opponent must remain preview-only (deferred)"
+
+    def test_cc_export_10_challenge_accepted_not_exportable(self):
+        """CC-EXPORT-10: challenge_accepted is NOT in _EXPORTABLE_PHASES."""
+        from app.api.web_routes.vt_challenges import _EXPORTABLE_PHASES
+        assert "challenge_accepted" not in _EXPORTABLE_PHASES, \
+            "challenge_accepted must remain preview-only until separately approved"
+
+
 # ── Route / snapshot ──────────────────────────────────────────────────────────
 
 class TestCCD22to23RouteSnapshot:

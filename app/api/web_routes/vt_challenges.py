@@ -855,8 +855,15 @@ VALID_CHALLENGE_CARD_PHASES = frozenset({
     "skill_delta_result",
 })
 
-# Phases that are exportable (unlocked) — remaining phases are preview-only when relevant
+# Phases that are exportable — all require format ownership (CDO row).
+# CC-DESIGN-1 social moment export: challenge_sent / challenge_received are
+# the first shareable social moments of a challenge lifecycle and must be
+# downloadable. Historical does NOT mean preview-only.
 _EXPORTABLE_PHASES = frozenset({
+    # Social moment phases (CC-DESIGN-1 addition)
+    "challenge_sent",
+    "challenge_received",
+    # Result phases (unchanged)
     "completed_score_win",
     "completed_draw",
     "completed_forfeit_win",

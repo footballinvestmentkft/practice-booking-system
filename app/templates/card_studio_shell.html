@@ -573,12 +573,20 @@
         <p class="cs-export-title">Export</p>
         {% if challenge_mode == "preview" %}
           {% if is_exportable_phase %}
-          <p class="cs-export-dims">This result phase is exportable. Requires owning this format.</p>
+          {# CC-DESIGN-1: social moment phases (sent/received) + result phases are exportable #}
+          {% set _is_social_moment = active_phase in ("challenge_sent", "challenge_received") %}
+          <p class="cs-export-dims">
+            {% if _is_social_moment %}
+            This social moment card is exportable. Requires owning this format.
+            {% else %}
+            This result phase is exportable. Requires owning this format.
+            {% endif %}
+          </p>
           <a href="{{ legacy_editor_url }}" class="cs-btn-legacy-editor" style="display:inline-flex;">
             Export via Challenge Editor →
           </a>
           {% else %}
-          <p class="cs-export-dims">Historical phase — preview only. Export available for result phases.</p>
+          <p class="cs-export-dims">Preview only. Export available for result and social moment phases.</p>
           {% endif %}
         {% else %}
         <p class="cs-export-dims">Select a challenge phase to see export options.</p>

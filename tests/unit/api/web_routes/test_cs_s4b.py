@@ -603,8 +603,9 @@ class TestS4BFix2TemplateAndExport:
                 assert result["is_exportable"] is True, \
                     "completed_score_win must be exportable=True"
 
-    def test_fix2_06_historical_phase_is_not_exportable(self):
-        """FIX2-06: challenge_sent chip has exportable=False."""
+    def test_fix2_06_challenge_sent_now_exportable_social_moment(self):
+        """FIX2-06 (updated CC-DESIGN-1 social moment export):
+        challenge_sent chip has is_exportable=True — it is a social moment phase."""
         fn   = _ctx_fn()
         user = _make_user(10)
         ch   = _make_challenge(1, 10, 20, "completed")
@@ -619,11 +620,11 @@ class TestS4BFix2TemplateAndExport:
             chips = ctx.get("phase_chips", [])
             sent = next((c for c in chips if c["id"] == "challenge_sent"), None)
             if sent:
-                assert sent["is_exportable"] is False, \
-                    "challenge_sent must be exportable=False"
+                assert sent["is_exportable"] is True, \
+                    "challenge_sent is a social moment — must be is_exportable=True (CC-DESIGN-1)"
 
     def test_fix2_07_is_exportable_phase_context_var_present(self):
-        """FIX2-07: is_exportable_phase context var present in challenge preview."""
+        """FIX2-07 (updated CC-DESIGN-1): is_exportable_phase in context; challenge_sent=True (social moment)."""
         fn   = _ctx_fn()
         user = _make_user(10)
         ch   = _make_challenge(1, 10, 20, "pending")
@@ -636,8 +637,8 @@ class TestS4BFix2TemplateAndExport:
         if ctx.get("challenge_mode") == "preview":
             assert "is_exportable_phase" in ctx, \
                 "is_exportable_phase must be in challenge preview context"
-            assert ctx["is_exportable_phase"] is False, \
-                "challenge_sent is not exportable"
+            assert ctx["is_exportable_phase"] is True, \
+                "challenge_sent is a social moment phase — must be exportable (CC-DESIGN-1)"
 
     def test_fix2_08_export_panel_text_not_misleading(self):
         """FIX2-08: Export panel shows phase-aware text, not generic fallback."""
