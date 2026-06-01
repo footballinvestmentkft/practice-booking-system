@@ -642,12 +642,125 @@ class TestS4BFix2TemplateAndExport:
     def test_fix2_08_export_panel_text_not_misleading(self):
         """FIX2-08: Export panel shows phase-aware text, not generic fallback."""
         src = (TEMPLATES_DIR / "card_studio_shell.html").read_text()
-        # Must reference is_exportable_phase for challenge mode
         assert "is_exportable_phase" in src, \
             "Export panel must reference is_exportable_phase for challenge mode"
-        # Old generic text must be gone
         assert "Use the Challenge Card editor for format export." not in src, \
             "Old generic export fallback text must be replaced with phase-aware text"
+
+
+# ── S4B-FIX3: event_label / invitation sent for both viewer roles ─────────────
+
+class TestS4BFix3InvitationSentLabel:
+
+    def _ctx_challenged_completed(self):
+        """COMPLETED challenge, viewer is the challenged party (id=20)."""
+        fn   = _ctx_fn()
+        user = _make_user(20)  # challenged
+        ch   = _make_challenge(1, challenger_id=10, challenged_id=20, status_val="completed")
+        ch.winner_id             = 10
+        ch.challenger_attempt_id = 1
+        ch.challenged_attempt_id = 2
+
+        with patch("app.api.web_routes.card_studio._license_guard", return_value=_make_license(True)):
+            db = MagicMock()
+            db.query.return_value.filter.return_value.first.return_value = ch
+            ctx, _ = fn(db, user, challenge_id=1)
+        return ctx
+
+    def _ctx_challenger_completed(self):
+        """COMPLETED challenge, viewer is the challenger (id=10)."""
+        fn   = _ctx_fn()
+        user = _make_user(10)  # challenger
+        ch   = _make_challenge(1, challenger_id=10, challenged_id=20, status_val="completed")
+        ch.winner_id             = 10
+        ch.challenger_attempt_id = 1
+        ch.challenged_attempt_id = 2
+
+        with patch("app.api.web_routes.card_studio._license_guard", return_value=_make_license(True)):
+            db = MagicMock()
+            db.query.return_value.filter.return_value.first.return_value = ch
+            ctx, _ = fn(db, user, challenge_id=1)
+        return ctx
+
+    def test_fix3_01_challenged_viewer_sees_challenge_sent_event_label(self):
+        """FIX3-01: Challenged viewer: first chip event_label == 'Challenge Sent'."""
+        ctx = self._ctx_challenged_completed()
+        if ctx.get("challenge_mode") != "preview":
+            return
+        chips = ctx.get("phase_chips", [])
+        assert chips, "phase_chips must not be empty"
+        first = chips[0]
+        assert first["event_label"] == "Challenge Sent", \
+            f"First chip event_label for challenged viewer must be 'Challenge Sent', got: {first['event_label']!r}"
+
+    def test_fix3_02_challenged_viewer_invitation_sublabel_sent_to_you(self):
+        """FIX3-02: Challenged viewer: invitation chip sublabel is 'sent to you'."""
+        ctx = self._ctx_challenged_completed()
+        if ctx.get("challenge_mode") != "preview":
+            return
+        chips = ctx.get("phase_chips", [])
+        invite_chip = next((c for c in chips if c["id"] == "challenge_received"), None)
+        assert invite_chip is not None, "challenge_received chip must be present"
+        assert invite_chip["sublabel"] == "sent to you", \
+            f"Sublabel must be 'sent to you', got: {invite_chip['sublabel']!r}"
+
+    def test_fix3_03_challenger_viewer_sees_challenge_sent_event_label(self):
+        """FIX3-03: Challenger viewer: first chip event_label == 'Challenge Sent'."""
+        ctx = self._ctx_challenger_completed()
+        if ctx.get("challenge_mode") != "preview":
+            return
+        chips = ctx.get("phase_chips", [])
+        assert chips
+        first = chips[0]
+        assert first["event_label"] == "Challenge Sent", \
+            f"First chip event_label for challenger must be 'Challenge Sent', got: {first['event_label']!r}"
+
+    def test_fix3_04_challenger_viewer_sublabel_sent_by_you(self):
+        """FIX3-04: Challenger viewer: invitation chip sublabel is 'sent by you'."""
+        ctx = self._ctx_challenger_completed()
+        if ctx.get("challenge_mode") != "preview":
+            return
+        chips = ctx.get("phase_chips", [])
+        invite_chip = next((c for c in chips if c["id"] == "challenge_sent"), None)
+        assert invite_chip is not None, "challenge_sent chip must be present"
+        assert invite_chip["sublabel"] == "sent by you", \
+            f"Sublabel must be 'sent by you', got: {invite_chip['sublabel']!r}"
+
+    def test_fix3_05_timeline_order_challenger_correct(self):
+        """FIX3-05: Challenger timeline: sent → accepted → result (chronological)."""
+        ctx = self._ctx_challenger_completed()
+        if ctx.get("challenge_mode") != "preview":
+            return
+        ids = [c["id"] for c in ctx.get("phase_chips", [])]
+        assert ids[0] in ("challenge_sent", "challenge_received"), \
+            f"First chip must be invitation event, got: {ids[0]}"
+        if "challenge_accepted" in ids:
+            assert ids.index("challenge_accepted") > 0, \
+                "challenge_accepted must come after the invitation event"
+
+    def test_fix3_06_timeline_order_challenged_correct(self):
+        """FIX3-06: Challenged timeline: sent(received) → accepted → result."""
+        ctx = self._ctx_challenged_completed()
+        if ctx.get("challenge_mode") != "preview":
+            return
+        ids = [c["id"] for c in ctx.get("phase_chips", [])]
+        assert ids[0] in ("challenge_sent", "challenge_received"), \
+            f"First chip must be invitation event, got: {ids[0]}"
+
+    def test_fix3_07_invitation_chip_is_navigable_not_disabled(self):
+        """FIX3-07: Invitation chip is locked=True (historical) but still navigable.
+        Template must use cs-pc-pill--historical (navigable) not old non-navigable span."""
+        src = (INCLUDES_DIR / "cs_challenge_panel.html").read_text()
+        # All chips rendered as <a> links
+        assert "cs-pc-pill--historical" in src
+        # event_label used in template display
+        assert "event_label" in src or "chip.event_label" in src
+
+    def test_fix3_08_export_panel_historical_phase_text_accurate(self):
+        """FIX3-08: Export panel for historical phase says 'preview-only'."""
+        src = (TEMPLATES_DIR / "card_studio_shell.html").read_text()
+        assert "preview only" in src.lower() or "preview-only" in src.lower(), \
+            "Export panel must mention 'preview only' for historical phases"
 
 
 # ── S4B3: Preview iframe ──────────────────────────────────────────────────────

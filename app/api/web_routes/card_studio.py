@@ -342,6 +342,31 @@ _CC_PHASE_LABELS = {
     "skill_delta_result":     "Skill Progress",
 }
 
+# CS-S4B-FIX3: Studio event labels decouple display name from phase_id.
+# challenge_received represents the same event as challenge_sent — the invitation
+# was sent by the challenger and received by the challenged. Both viewers should
+# see "Challenge Sent" as the first timeline event; the sublabel clarifies direction.
+_CC_PHASE_EVENT_LABELS: dict[str, str] = {
+    "challenge_sent":         "Challenge Sent",
+    "challenge_received":     "Challenge Sent",   # same event, challenged perspective
+    "challenge_accepted":     "Challenge Accepted",
+    "waiting_for_opponent":   "Waiting for Opponent",
+    "live_lobby_ready":       "Live Lobby",
+    "live_in_progress":       "Live — In Progress",
+    "completed_score_win":    "Result — Score",
+    "completed_draw":         "Result — Draw",
+    "completed_forfeit_win":  "Result — Forfeit Win",
+    "completed_forfeit_loss": "Result — Forfeit Loss",
+    "no_contest":             "No Contest",
+    "skill_delta_result":     "Skill Progress",
+}
+
+# Viewer-role sublabels shown under the event label
+_CC_PHASE_SUBLABELS: dict[str, str] = {
+    "challenge_sent":     "sent by you",
+    "challenge_received": "sent to you",
+}
+
 # CS-S4B-FIX: Chronological timeline order for phase chips.
 # Phases with the same order value are peers (e.g. sent/received are the same event
 # from two viewer perspectives; score_win/draw/forfeit are mutually exclusive outcomes).
@@ -584,17 +609,21 @@ def _resolve_challenge_context(
         f"?platform={platform}&phase={phase}"
     )
 
-    # CS-S4B-FIX-1: Phase chips in chronological order (not unlocked-first)
-    # exportable = phase in _CC_EXPORTABLE_PHASES (usable with /challenges/{id}/card/export)
+    # CS-S4B-FIX-1+FIX3: Phase chips — chronological order + event_label decoupling.
+    # event_label: Studio display name (challenge_received → "Challenge Sent")
+    # sublabel: viewer-role hint ("sent by you" / "sent to you")
+    # label: internal/legacy name (unchanged, used by preview card template)
     _locked_set   = set(locked)
     _unlocked_set = set(unlocked)
     phase_chips = [
         {
-            "id":         p,
-            "label":      _CC_PHASE_LABELS.get(p, p),
-            "active":     p == phase,
-            "locked":     p in _locked_set and p not in _unlocked_set,
-            "exportable": p in _CC_EXPORTABLE_PHASES,
+            "id":          p,
+            "label":       _CC_PHASE_LABELS.get(p, p),
+            "event_label": _CC_PHASE_EVENT_LABELS.get(p, _CC_PHASE_LABELS.get(p, p)),
+            "sublabel":    _CC_PHASE_SUBLABELS.get(p, ""),
+            "active":      p == phase,
+            "locked":      p in _locked_set and p not in _unlocked_set,
+            "exportable":  p in _CC_EXPORTABLE_PHASES,
         }
         for p in all_phase_ids
     ]

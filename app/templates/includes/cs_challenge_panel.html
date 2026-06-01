@@ -132,8 +132,8 @@
          not "disabled". The backend /challenges/{id}/card/preview accepts locked phases. #}
       <a href="/card-studio/challenge?challenge_id={{ selected_challenge_id }}&phase={{ chip.id }}&platform={{ active_platform }}"
          class="cs-pc-pill{% if chip.active %} cs-pc-pill--active{% elif chip.locked %} cs-pc-pill--historical{% endif %}"
-         title="{% if chip.locked %}{{ chip.label }} — historical preview (export not available){% else %}{{ chip.label }}{% endif %}">
-        {{ chip.label }}
+         title="{% if chip.locked %}{{ chip.event_label }}{% if chip.sublabel %} ({{ chip.sublabel }}){% endif %} — historical, preview only{% else %}{{ chip.event_label }}{% endif %}">
+        <span class="cs-pc-pill-main">{{ chip.event_label }}{% if chip.sublabel %}<span class="cs-pc-pill-sub"> · {{ chip.sublabel }}</span>{% endif %}</span>
         {% if chip.locked %}<span class="cs-pc-lock-icon" aria-hidden="true">🔒</span>{% endif %}
       </a>
       {% endfor %}
