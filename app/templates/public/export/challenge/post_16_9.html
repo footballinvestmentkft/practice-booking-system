@@ -38,17 +38,12 @@
   }
 
   /* ── Historical overlay ── */
-  .history-overlay {
-    position: absolute; inset: 0;
-    background: rgba(8,16,30,0.55); z-index: 10;
-    display: flex; align-items: flex-end; justify-content: flex-start;
-    padding: 16px 48px;
-  }
-  .history-badge {
-    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em;
+  .history-badge-corner {
+    position: absolute; bottom: 16px; left: 20px; z-index: 10;
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.1em;
     text-transform: uppercase; color: #4a5570;
-    background: rgba(8,16,30,0.8); border: 1px solid #1e2e44;
-    border-radius: 4px; padding: 4px 10px;
+    background: rgba(8,16,30,0.7); border: 1px solid #1e2e44;
+    border-radius: 4px; padding: 3px 8px; pointer-events: none;
   }
 
   /* ── Header ── */
@@ -247,9 +242,7 @@
 
   {# Historical overlay (soft, not lock) #}
   {% if is_locked %}
-  <div class="history-overlay">
-    <div class="history-badge">History · Preview only</div>
-  </div>
+  <div class="history-badge-corner">History</div>
   {% endif %}
 
   {# Header #}
