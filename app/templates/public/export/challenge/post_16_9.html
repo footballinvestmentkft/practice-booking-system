@@ -257,7 +257,7 @@
       </span>
       <span class="phase-badge">
         {% if phase == "challenge_sent" %}Challenge Sent
-        {% elif phase == "challenge_received" %}Challenge Received
+        {% elif phase == "challenge_received" %}You've Been Challenged
         {% elif phase == "challenge_accepted" %}Accepted
         {% elif phase == "waiting_for_opponent" %}Waiting
         {% elif phase == "live_lobby_ready" %}Lobby
@@ -277,7 +277,7 @@
   {# ── Archetype A: Invitation — CCD-FIX photo-dominant split (challenge_sent / challenge_received) ── #}
   {% if phase in ("challenge_sent", "challenge_received") %}
   {# card-content must fill the area between header and footer — override for this archetype #}
-  {% set _hero_photo = selected_photo_url or challenger_photo_url %}
+  {% set _hero_photo = (selected_photo_url if phase == "challenge_sent" else none) or challenger_photo_url %}
   <div class="arch-invitation-split">
 
     {# LEFT: Hero photo zone — full height, no circular crop #}

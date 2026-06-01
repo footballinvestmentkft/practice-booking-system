@@ -329,7 +329,7 @@ _CC_PLATFORM_LABELS = {
 # Phase labels (mirrors _PHASE_LABELS in vt_challenges.py — kept local for module independence)
 _CC_PHASE_LABELS = {
     "challenge_sent":         "Challenge Sent",
-    "challenge_received":     "Challenge Received",
+    "challenge_received":     "Challenge Invitation",
     "challenge_accepted":     "Challenge Accepted",
     "waiting_for_opponent":   "Waiting for Opponent",
     "live_lobby_ready":       "Live Lobby",

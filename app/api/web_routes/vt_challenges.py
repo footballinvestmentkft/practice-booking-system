@@ -879,7 +879,7 @@ _TERMINAL_STATUSES = frozenset({
 
 _PHASE_LABELS = {
     "challenge_sent":         "Challenge Sent",
-    "challenge_received":     "Challenge Received",
+    "challenge_received":     "You've Been Challenged",
     "challenge_accepted":     "Challenge Accepted",
     "waiting_for_opponent":   "Waiting for Opponent",
     "live_lobby_ready":       "Live Lobby",

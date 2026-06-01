@@ -29,8 +29,20 @@ CCD-20  challenge media panel (cs-cc-mood-section) in cs_challenge_panel.html pr
 CCD-21  _setChallengePhoto JS function present in shell (challenge preview mode)
 
 Route/snapshot:
-CCD-22  route count still 847 (no new routes)
+CCD-22  route count still 850 (BG-REMOVAL-1 added 3 routes; no new routes in CC-DESIGN-1)
 CCD-23  OpenAPI snapshot match true
+
+Naming:
+CCD-NAMING-01  story challenge_received badge does not contain bare "Received"
+CCD-NAMING-02  post challenge_received badge does not contain "Challenge Received"
+CCD-NAMING-03  challenge_received card headline is "You've Been Challenged"
+CCD-NAMING-04  challenge_received CTA is "Accept Challenge" (case-insensitive)
+CCD-NAMING-05  internal challenge_received phase_id unchanged in route logic
+CCD-NAMING-06  Card Studio chip event_label for challenge_received = "Challenge Sent"; sublabel = "sent to you"
+
+Hero rule:
+CCD-HERO-01  challenge_sent: hero uses selected_photo_url when present
+CCD-HERO-02  challenge_received: hero always uses challenger_photo_url (selected does not override)
 """
 from __future__ import annotations
 
@@ -640,11 +652,11 @@ class TestCCExportDirect:
 
 class TestCCD22to23RouteSnapshot:
 
-    def test_ccd_22_route_count_847(self):
-        """CCD-22: Route count still 847 (no new routes in CC-DESIGN-1)."""
+    def test_ccd_22_route_count_850(self):
+        """CCD-22: Route count is 850 (BG-REMOVAL-1 added 3 routes; CC-DESIGN-1 adds none)."""
         from app.main import app
         count = len(app.openapi().get("paths", {}))
-        assert count == 847, f"Expected 847, got {count}"
+        assert count == 850, f"Expected 850, got {count}"
 
     def test_ccd_23_openapi_snapshot_match(self):
         """CCD-23: OpenAPI snapshot matches live API."""
@@ -652,3 +664,120 @@ class TestCCD22to23RouteSnapshot:
         from app.main import app
         live_paths = set(app.openapi().get("paths", {}).keys())
         assert snap_paths == live_paths
+
+
+# ── CCD-NAMING: challenge_received display naming ────────────────────────────
+
+class TestCCDNaming:
+    """CCD-NAMING-01..06: challenge_received renamed to "You've Been Challenged" in UI."""
+
+    def _render(self, tmpl_name: str, phase: str, **kwargs) -> str:
+        from jinja2 import Environment, FileSystemLoader
+        from unittest.mock import MagicMock
+        env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        tmpl = env.get_template(tmpl_name)
+        ctx = _make_mock_ctx(phase=phase, **kwargs)
+        ctx["request"] = MagicMock()
+        return tmpl.render(**ctx)
+
+    def test_ccd_naming_01_story_badge_not_bare_received(self):
+        """CCD-NAMING-01: story_9_16 challenge_received phase badge does not contain bare 'Received'."""
+        html = self._render("public/export/challenge/story_9_16.html", "challenge_received")
+        # The old badge text was just "Received" — it must now say "You've Been Challenged"
+        import re
+        badge_match = re.search(r'class="phase-badge"[^<]*>(.*?)</span>', html, re.DOTALL)
+        if badge_match:
+            badge_text = badge_match.group(1).strip()
+            assert badge_text != "Received", \
+                f"Story badge must not be bare 'Received', got: {badge_text!r}"
+        assert "You've Been Challenged" in html, \
+            "story_9_16 challenge_received must display 'You've Been Challenged'"
+
+    def test_ccd_naming_02_post_badge_not_challenge_received(self):
+        """CCD-NAMING-02: post_16_9 challenge_received badge is not 'Challenge Received'."""
+        html = self._render("public/export/challenge/post_16_9.html", "challenge_received")
+        # Old text was exactly "Challenge Received" — must now be "You've Been Challenged"
+        assert "You've Been Challenged" in html, \
+            "post_16_9 challenge_received must display 'You've Been Challenged' in phase badge"
+
+    def test_ccd_naming_03_headline_youve_been_challenged(self):
+        """CCD-NAMING-03: challenge_received headline is 'You've Been Challenged'."""
+        for tmpl in ["public/export/challenge/post_16_9.html",
+                     "public/export/challenge/story_9_16.html"]:
+            html = self._render(tmpl, "challenge_received")
+            assert "You've Been Challenged" in html or "You've Been\nChallenged" in html, \
+                f"{tmpl}: challenge_received headline must contain 'You've Been Challenged'"
+
+    def test_ccd_naming_04_challenge_received_cta_accept(self):
+        """CCD-NAMING-04: challenge_received CTA from _PHASE_CTA is 'Accept challenge'."""
+        from app.api.web_routes.vt_challenges import _PHASE_CTA
+        cta = _PHASE_CTA.get("challenge_received", "")
+        assert "accept" in cta.lower(), \
+            f"_PHASE_CTA['challenge_received'] must contain 'accept', got: {cta!r}"
+
+    def test_ccd_naming_05_phase_id_unchanged_in_route_logic(self):
+        """CCD-NAMING-05: Internal phase_id 'challenge_received' is still used in route logic."""
+        from app.api.web_routes import vt_challenges
+        import inspect
+        src = inspect.getsource(vt_challenges)
+        assert '"challenge_received"' in src or "'challenge_received'" in src, \
+            "Internal phase_id 'challenge_received' must remain unchanged in route logic"
+
+    def test_ccd_naming_06_studio_chip_event_label_and_sublabel(self):
+        """CCD-NAMING-06: Card Studio challenge_received chip: event_label='Challenge Sent', sublabel='sent to you'."""
+        from app.api.web_routes.card_studio import _CC_PHASE_EVENT_LABELS, _CC_PHASE_SUBLABELS
+        assert _CC_PHASE_EVENT_LABELS.get("challenge_received") == "Challenge Sent", \
+            "challenge_received event_label (timeline event) must be 'Challenge Sent' — same event as challenge_sent"
+        assert _CC_PHASE_SUBLABELS.get("challenge_received") == "sent to you", \
+            "challenge_received sublabel must be 'sent to you'"
+
+
+# ── CCD-HERO: Hero rule for challenge_sent vs challenge_received ──────────────
+
+class TestCCDHeroRule:
+    """CCD-HERO-01..02: Hero photo selection rule for invitation archetypes."""
+
+    def _render(self, tmpl_name: str, phase: str, selected_photo: str | None,
+                challenger_photo: str | None) -> str:
+        from jinja2 import Environment, FileSystemLoader
+        from unittest.mock import MagicMock
+        env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        tmpl = env.get_template(tmpl_name)
+        ctx = _make_mock_ctx(
+            phase=phase,
+            selected_photo=selected_photo,
+            challenger_photo=challenger_photo,
+            challenged_photo="/ch2.png",
+        )
+        ctx["request"] = MagicMock()
+        return tmpl.render(**ctx)
+
+    def test_ccd_hero_01_challenge_sent_uses_selected_photo(self):
+        """CCD-HERO-01: challenge_sent hero uses selected_photo_url when present."""
+        for tmpl in ["public/export/challenge/post_16_9.html",
+                     "public/export/challenge/story_9_16.html"]:
+            html = self._render(tmpl, "challenge_sent",
+                                selected_photo="/mood_selected.png",
+                                challenger_photo="/ch1.png")
+            assert "/mood_selected.png" in html, \
+                f"{tmpl}: challenge_sent hero must use selected_photo_url when provided"
+
+    def test_ccd_hero_02_challenge_received_ignores_selected_photo(self):
+        """CCD-HERO-02: challenge_received hero uses challenger_photo_url, not selected_photo_url."""
+        for tmpl in ["public/export/challenge/post_16_9.html",
+                     "public/export/challenge/story_9_16.html"]:
+            html = self._render(tmpl, "challenge_received",
+                                selected_photo="/mood_selected.png",
+                                challenger_photo="/ch1.png")
+            # The selected photo must NOT be the hero image for challenge_received
+            # challenger_photo must appear as hero
+            assert "/ch1.png" in html, \
+                f"{tmpl}: challenge_received hero must use challenger_photo_url"
+            # The selected photo may appear elsewhere (e.g. viewer slot) but not as the main hero
+            # We check the hero-specific markup doesn't use selected_photo_url
+            # The template sets _hero_photo = (selected if sent else none) or challenger
+            # So for received, _hero_photo = none or challenger = challenger
+            # This means if selected_photo appears, it must be in a non-hero slot
+            # A direct check: the src= of .cc-photo-hero-cutout must be challenger, not selected
+            assert 'src="/ch1.png"' in html, \
+                f"{tmpl}: challenge_received hero img src must be challenger_photo_url (/ch1.png)"

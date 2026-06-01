@@ -167,8 +167,8 @@
     pointer-events: none; z-index: 2;
   }
   .ai-story-text-zone {
-    flex: 1; display: flex; flex-direction: column; justify-content: center;
-    padding: 36px 64px; gap: 0; min-height: 0;
+    flex: 1; display: flex; flex-direction: column; justify-content: flex-start;
+    padding: 48px 64px 36px; gap: 0; min-height: 0;
   }
   .ai-headline {
     font-size: 3.8rem; font-weight: 800; text-transform: uppercase;
@@ -204,7 +204,7 @@
       </span>
       <span class="phase-badge">
         {% if phase == "challenge_sent" %}Challenge Sent
-        {% elif phase == "challenge_received" %}Received
+        {% elif phase == "challenge_received" %}You've Been Challenged
         {% elif phase == "challenge_accepted" %}Accepted
         {% elif phase == "waiting_for_opponent" %}Waiting
         {% elif phase == "live_lobby_ready" %}Lobby
@@ -224,7 +224,7 @@
   {% if phase in ("challenge_sent", "challenge_received") %}
     {# Hero photo zone: 850px, no circular crop #}
     <div class="ai-story-hero-zone">
-      {% set _hero_photo = selected_photo_url or challenger_photo_url %}
+      {% set _hero_photo = (selected_photo_url if phase == "challenge_sent" else none) or challenger_photo_url %}
       {% if _hero_photo %}
         <img src="{{ _hero_photo }}" class="cc-photo-hero-cutout" alt="{{ challenger_name }}">
       {% else %}
