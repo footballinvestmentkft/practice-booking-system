@@ -1,11 +1,11 @@
-{# CS-S0/CS-S2A: Card Studio Type Switcher (Player/Welcome/Challenge)
+{# CS-S0/CS-S2A/CS-S2B/CS-S4A: Card Studio Type Switcher (Player/Welcome/Challenge)
    active_type: "welcome" | "player" | "challenge"
    CS-S0: Welcome fully functional.
-   CS-S2A: Player preview MVP added (no longer Coming Soon).
-   Challenge still Coming Soon. #}
+   CS-S2A+S2B: Player preview + variant/platform/theme selectors.
+   CS-S4A: Challenge preview placeholder (no longer Coming Soon). #}
 <div class="cs-type-switcher" role="tablist" aria-label="Card type">
 
-  {# ── Player Card — CS-S2A: preview MVP (no longer Coming Soon) ── #}
+  {# ── Player Card — CS-S2A+S2B ── #}
   <button class="cs-type-btn{% if active_type == 'player' %} cs-type-active{% endif %}"
           role="tab"
           aria-selected="{{ 'true' if active_type == 'player' else 'false' }}"
@@ -16,7 +16,7 @@
     <span class="cs-type-label">Player Card</span>
   </button>
 
-  {# ── Welcome Card — active in CS-S0 ── #}
+  {# ── Welcome Card — CS-S0 ── #}
   <button class="cs-type-btn{% if active_type == 'welcome' %} cs-type-active{% endif %}"
           role="tab"
           aria-selected="{{ 'true' if active_type == 'welcome' else 'false' }}"
@@ -26,16 +26,15 @@
     <span class="cs-type-label">Welcome Card</span>
   </button>
 
-  {# ── Challenge Card — Coming Soon ── #}
-  <button class="cs-type-btn cs-type-soon"
+  {# ── Challenge Card — CS-S4A: preview placeholder (no longer Coming Soon) ── #}
+  <button class="cs-type-btn{% if active_type == 'challenge' %} cs-type-active{% endif %}"
           role="tab"
-          aria-selected="false"
-          disabled
-          aria-disabled="true"
-          title="Challenge Card Studio — coming soon">
+          aria-selected="{{ 'true' if active_type == 'challenge' else 'false' }}"
+          onclick="{% if active_type != 'challenge' %}window.location='/card-studio/challenge'{% endif %}"
+          {% if active_type == 'challenge' %}aria-current="page"{% endif %}
+          title="Challenge Card Studio">
     <span class="cs-type-icon">⚔️</span>
     <span class="cs-type-label">Challenge Card</span>
-    <span class="cs-type-badge">Soon</span>
   </button>
 
 </div>

@@ -1,0 +1,52 @@
+{# CS-S4A: Challenge Card Studio control panel — preview placeholder.
+   No live preview iframe: /challenges/{id}/card/preview requires a specific
+   challenge_id + platform + phase — no generic user-level endpoint exists.
+   Write functions (format select, export, challenge render) deferred to CS-S4B+.
+   Context vars: owned_cc_formats, legacy_editor_url
+#}
+
+<div class="cs-challenge-panel">
+
+  {# ── Owned formats info ── #}
+  <div class="cs-challenge-info">
+    <p class="cs-section-label">Your Challenge Card Formats</p>
+    {% if owned_cc_formats %}
+    <ul class="cs-cc-format-list">
+      {% for f in owned_cc_formats %}
+      <li class="cs-cc-format-item">
+        <span class="cs-cc-format-label">{{ f.label }}</span>
+        <span class="cs-cc-format-dims">{{ f.dims }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="cs-challenge-hint">No Challenge Card formats owned yet.</p>
+    {% endif %}
+  </div>
+
+  <hr class="cs-section-divider">
+
+  {# ── Preview placeholder ── #}
+  <div class="cs-challenge-preview-note">
+    <p class="cs-section-label">Preview</p>
+    <p class="cs-challenge-hint">
+      Challenge card preview is generated from an active challenge result.
+      Play a challenge to generate and preview your card.
+    </p>
+    <a href="/challenges" class="cs-btn-challenge-link">View My Challenges →</a>
+  </div>
+
+  <hr class="cs-section-divider">
+
+  {# ── Legacy editor CTA ── #}
+  <div class="cs-challenge-legacy-cta">
+    <p class="cs-section-label">Challenge Card Editor</p>
+    <p class="cs-challenge-hint">
+      Full format selection and export available in the Challenge Card editor.
+    </p>
+    <a href="{{ legacy_editor_url }}" class="cs-btn-legacy-editor">
+      Open Challenge Editor →
+    </a>
+  </div>
+
+</div>

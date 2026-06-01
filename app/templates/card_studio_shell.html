@@ -243,12 +243,10 @@
 }
 .cs-color-error { font-size: 0.72rem; color: #f87171; margin: 0.25rem 0 0; display: none; }
 
-/* ── CS-S2A: Player Card panel ── */
+/* ── CS-S2A+S2B: Player Card panel ── */
 .cs-player-panel { }
 .cs-player-info  { margin-bottom: 0; }
 .cs-player-hint  { font-size: 0.78rem; color: #64748b; margin: 0; line-height: 1.5; }
-.cs-player-coming{ }
-.cs-coming-note  { font-size: 0.78rem; color: #475569; margin: 0; }
 .cs-player-legacy-cta { }
 .cs-btn-legacy-editor {
   display: inline-flex; align-items: center; gap: 0.35rem;
@@ -258,6 +256,66 @@
   margin-top: 0.5rem;
 }
 .cs-btn-legacy-editor:hover { opacity: 0.88; color: #0f172a; text-decoration: none; }
+
+/* ── CS-S2B: Variant / Platform / Theme selectors ── */
+.cs-pc-selector { margin-bottom: 0; }
+.cs-pc-pills { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.3rem; }
+.cs-pc-pill {
+  padding: 0.3rem 0.7rem; border-radius: 6px;
+  border: 1.5px solid #334155; background: transparent;
+  color: #64748b; font-size: 0.75rem; font-weight: 600;
+  cursor: pointer; transition: border-color 0.13s, color 0.13s;
+}
+.cs-pc-pill:hover:not(:disabled) { border-color: #64748b; color: #f1f5f9; }
+.cs-pc-pill.cs-pc-pill--active { border-color: #FFD200; color: #FFD200; background: rgba(255,210,0,0.06); }
+.cs-pc-pill.cs-pc-pill--locked { opacity: 0.38; cursor: not-allowed; }
+.cs-pc-select {
+  width: 100%; padding: 0.35rem 0.6rem;
+  background: #0b1120; color: #94a3b8;
+  border: 1.5px solid #334155; border-radius: 6px;
+  font-size: 0.77rem; cursor: pointer;
+}
+.cs-pc-select:focus { outline: none; border-color: #475569; }
+.cs-pc-error { font-size: 0.72rem; color: #f87171; margin: 0.25rem 0 0; display: none; }
+
+/* ── CS-S4A: Challenge Card panel ── */
+.cs-challenge-panel { }
+.cs-challenge-info  { margin-bottom: 0; }
+.cs-challenge-hint  { font-size: 0.78rem; color: #64748b; margin: 0; line-height: 1.5; }
+.cs-cc-format-list  { list-style: none; padding: 0; margin: 0.4rem 0 0; }
+.cs-cc-format-item  {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.25rem 0; border-bottom: 1px solid #1e293b;
+  font-size: 0.78rem;
+}
+.cs-cc-format-item:last-child { border-bottom: none; }
+.cs-cc-format-label { color: #94a3b8; font-weight: 600; }
+.cs-cc-format-dims  { color: #475569; font-size: 0.72rem; }
+.cs-challenge-preview-note { }
+.cs-challenge-legacy-cta { }
+.cs-btn-challenge-link {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.4rem 0.9rem; margin-top: 0.5rem;
+  border: 1.5px solid #334155; border-radius: 6px;
+  color: #94a3b8; font-size: 0.78rem; font-weight: 600;
+  text-decoration: none; transition: border-color 0.13s, color 0.13s;
+}
+.cs-btn-challenge-link:hover { border-color: #64748b; color: #f1f5f9; text-decoration: none; }
+
+/* ── CS-S4A: Challenge preview placeholder ── */
+.cs-preview-placeholder {
+  background: #0b1120; border: 1px dashed #334155; border-radius: 8px;
+  padding: 2.5rem 1.5rem; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+}
+.cs-preview-placeholder-icon { font-size: 2.5rem; opacity: 0.4; }
+.cs-preview-placeholder-msg  { font-size: 0.82rem; color: #475569; max-width: 260px; line-height: 1.5; }
+.cs-preview-placeholder-link {
+  font-size: 0.8rem; color: #64748b; text-decoration: none;
+  border: 1px solid #334155; border-radius: 6px; padding: 0.3rem 0.75rem;
+  transition: border-color 0.13s, color 0.13s;
+}
+.cs-preview-placeholder-link:hover { border-color: #64748b; color: #f1f5f9; text-decoration: none; }
 
 </style>
 {% endblock %}
@@ -275,6 +333,9 @@
     {% elif active_type == "player" %}
     <span>›</span>
     <span>Player Card</span>
+    {% elif active_type == "challenge" %}
+    <span>›</span>
+    <span>Challenge Card</span>
     {% endif %}
   </nav>
 
@@ -299,7 +360,12 @@
     {# ── LEFT: Control Panel ── #}
     <div class="cs-control-panel">
 
-      {# ── CS-S2A: Player Card mode — show player panel, skip Welcome-specific sections #}
+      {# ── CS-S4A: Challenge Card mode ── #}
+      {% if active_type == "challenge" %}
+        {% include "includes/cs_challenge_panel.html" %}
+      {% endif %}
+
+      {# ── CS-S2A+S2B: Player Card mode ── #}
       {% if active_type == "player" %}
         {% include "includes/cs_player_panel.html" %}
       {% endif %}
@@ -338,7 +404,7 @@
       {% endif %}
 
       {# ── SECTION 1: Mood Photos Quick Row (Welcome mode only) ── #}
-      {% if active_type != "player" %}
+      {% if active_type == "welcome" %}
       <p class="cs-section-label">Mood Photos</p>
       {# Render mood quick row with assign URL and selected detection #}
       {% set mood_photos    = mood_photos    if mood_photos    is defined else {} %}
@@ -407,7 +473,7 @@
         {% include "includes/cs_color_panel.html" %}
       {% endif %}
 
-      {% endif %}{# END active_type != "player" guard #}
+      {% endif %}{# END active_type == "welcome" guard #}
 
     </div>{# END .cs-control-panel #}
 
@@ -418,7 +484,18 @@
       <div class="cs-preview-panel">
         <p class="cs-preview-label">Preview</p>
         <div class="cs-preview-container">
-          {# CS-S2A: Player uses mfg-ratio-45 (4:5 native FClassic); Welcome uses format ratio #}
+          {% if active_type == "challenge" %}
+          {# CS-S4A: No generic challenge preview endpoint — placeholder #}
+          <div class="cs-preview-placeholder">
+            <div class="cs-preview-placeholder-icon">⚔️</div>
+            <p class="cs-preview-placeholder-msg">
+              Challenge card preview is generated after a challenge result.
+              Play a challenge to unlock your card preview.
+            </p>
+            <a href="/challenges" class="cs-preview-placeholder-link">View Challenges →</a>
+          </div>
+          {% else %}
+          {# CS-S2A+S2B: Player uses mfg-ratio-45; Welcome uses format ratio #}
           <div class="cs-preview-wrap mfg-preview-wrap {% if active_type == 'player' %}mfg-ratio-45{% else %}{{ ratio_class }}{% endif %}">
             <iframe
               id="cs-preview-iframe"
@@ -429,21 +506,25 @@
               title="{% if active_type == 'player' %}Player Card Preview{% elif fmt %}{{ fmt.label }} Preview{% else %}Card Preview{% endif %}"
             ></iframe>
           </div>
+          {% endif %}
         </div>
       </div>
 
-      {# Export panel — Welcome only in CS-S2A (Player export via legacy editor) #}
+      {# Export panel — Welcome only (Player and Challenge: use legacy editor) #}
       <div class="cs-export-panel">
         {% if active_type == "player" %}
         <p class="cs-export-title">Export</p>
         <p class="cs-export-dims">Use the Player Card editor for full export options.</p>
+        {% elif active_type == "challenge" %}
+        <p class="cs-export-title">Export</p>
+        <p class="cs-export-dims">Use the Challenge Card editor for format export.</p>
         {% else %}
         <p class="cs-export-title">Download your card</p>
         {% if fmt %}
         <p class="cs-export-dims">{{ fmt.dims }} — {{ fmt.label }}</p>
         {% endif %}
         {% endif %}
-        {% if active_type != "player" %}
+        {% if active_type == "welcome" %}
         <a href="{{ export_url }}" class="cs-btn-download" download>
           ↓ Download PNG{% if fmt %} ({{ fmt.dims }}){% endif %}
         </a>
@@ -464,6 +545,11 @@
   <div class="wcs-nav">
     <a href="/my-cards" class="wcs-nav-back">← My Cards</a>
     <a href="/card-editor/player" class="wcs-nav-shop">Player Card Editor →</a>
+  </div>
+  {% elif active_type == "challenge" %}
+  <div class="wcs-nav">
+    <a href="/my-cards/challenge" class="wcs-nav-back">← My Challenge Cards</a>
+    <a href="/card-editor/challenge" class="wcs-nav-shop">Challenge Card Editor →</a>
   </div>
   {% endif %}
 
