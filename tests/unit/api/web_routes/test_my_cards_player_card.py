@@ -166,7 +166,7 @@ class TestPlayerCardShopRoute:
     def test_mcp11_template_has_browse_shop_cta(self):
         """MCP-11: template has Browse Shop CTA linking to /shop/cards/player."""
         src = _TEMPLATE_PATH.read_text()
-        assert "/shop/cards/player" in src
+        assert "/shop?type=player_card" in src
 
     def test_mcp12_owned_count_only_cdo_rows(self):
         """MCP-12: owned_count = only CDO-backed owned designs (no free auto-include)."""

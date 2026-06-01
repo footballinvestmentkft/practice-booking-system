@@ -133,7 +133,7 @@ class TestCSS01DefaultRedirect:
             resp = _run(card_studio_default(request=MagicMock(), db=db, user=user))
 
         assert isinstance(resp, RedirectResponse)
-        assert "/shop/cards/welcome" in resp.headers["location"]
+        assert "/shop?type=welcome_card" in resp.headers["location"]
 
 
 # ── CSS-02..CSS-09: /card-studio/welcome handler ──────────────────────────────
@@ -186,7 +186,7 @@ class TestCSS02to09WelcomeHandler:
                 request=MagicMock(), format_id=None, db=db, user=user
             ))
         assert isinstance(resp, RedirectResponse)
-        assert resp.headers["location"] == "/shop/cards/welcome"
+        assert resp.headers["location"] == "/shop?type=welcome_card"
 
     def test_css_07_no_format_redirects_canonical(self):
         """CSS-07: absent ?format → 303 canonical first owned."""

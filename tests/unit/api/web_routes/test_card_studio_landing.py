@@ -92,7 +92,7 @@ class TestCEL04ShopCTA:
     def test_cel_04_pc_no_owned_cta_points_to_shop(self):
         """CEL-04: template source has Browse Player Designs CTA for no-owned state."""
         src = (TEMPLATES_DIR / "card_studio_landing.html").read_text(encoding="utf-8")
-        assert 'href="/shop/cards/player"' in src
+        assert 'href="/shop?type=player_card"' in src
         assert "Browse Player Designs" in src
 
 
@@ -105,7 +105,7 @@ class TestCEL08bEmptyState:
         src = (TEMPLATES_DIR / "card_studio_landing.html").read_text(encoding="utf-8")
         assert "cs-empty-state" in src
         assert "You don't own any card designs yet." in src
-        assert 'href="/shop/cards"' in src
+        assert 'href="/shop"' in src
 
 
 # ── CEL-09/10/11: CTA links ───────────────────────────────────────────────────

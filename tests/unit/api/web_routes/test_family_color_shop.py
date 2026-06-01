@@ -255,7 +255,7 @@ class TestColorShopTemplate:
         assert "scc-balance" in self._src() or "credit_balance" in self._src()
 
     def test_ts_18_back_link_to_player_shop(self):
-        assert 'href="/shop/cards/player"' in self._src()
+        assert 'href="/shop?type=player_card"' in self._src()
 
     def test_ts_19_link_to_card_editor(self):
         assert 'href="/card-editor/player"' in self._src()

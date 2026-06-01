@@ -77,7 +77,7 @@ def _resolve_welcome_context(db: Session, user, format_id: str | None):
     owned_set = set(get_owned_design_ids(db, user.id, "welcome_card")) & _WC_VALID_IDS
     owned_formats_ordered = [f for f in _WELCOME_FORMATS_ORDERED if f.design_id in owned_set]
     if not owned_formats_ordered:
-        return None, "/shop/cards/welcome"
+        return None, "/shop?type=welcome_card"
 
     first_owned_id = owned_formats_ordered[0].design_id
 
@@ -156,7 +156,7 @@ async def card_studio_default(
         if first:
             return RedirectResponse(url=f"/card-studio/welcome?format={first}", status_code=303)
 
-    return RedirectResponse(url="/shop/cards/welcome", status_code=303)
+    return RedirectResponse(url="/shop?type=welcome_card", status_code=303)
 
 
 @router.get("/card-studio/welcome", response_class=HTMLResponse)

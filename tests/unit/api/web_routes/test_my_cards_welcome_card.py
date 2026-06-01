@@ -163,7 +163,7 @@ class TestWelcomeCardShopRoute:
     def test_mcw12_template_has_browse_shop_cta(self):
         """MCW-12: template has Browse Shop CTA linking to /shop/cards/welcome."""
         src = _TEMPLATE_PATH.read_text()
-        assert "/shop/cards/welcome" in src
+        assert "/shop?type=welcome_card" in src
 
     def test_mcw13_template_has_studio_cta(self):
         """MCW-13 (CS-S1b): Studio entry CTA now links to canonical /card-studio/welcome."""
@@ -183,7 +183,7 @@ class TestWelcomeCardShopRoute:
     def test_mcw13d_shop_link_still_present(self):
         """MCW-13d: /shop/cards/welcome link unchanged after Studio CTA addition."""
         src = _TEMPLATE_PATH.read_text()
-        assert "/shop/cards/welcome" in src
+        assert "/shop?type=welcome_card" in src
 
     def test_mcw_owned_count_correct(self):
         """MCW-owned: owned_count increments per owned format."""

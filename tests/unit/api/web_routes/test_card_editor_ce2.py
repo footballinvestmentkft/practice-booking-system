@@ -341,7 +341,8 @@ class TestCE212EmptyState:
         assert "ce-empty-state" in self._src()
 
     def test_empty_state_links_to_shop(self):
-        assert 'href="/shop/cards/player"' in self._src()
+        """SHOP-2: empty state links to unified shop (player type filter)."""
+        assert 'href="/shop?type=player_card"' in self._src()
 
     def test_empty_state_uses_neutral_language(self):
         src = self._src()

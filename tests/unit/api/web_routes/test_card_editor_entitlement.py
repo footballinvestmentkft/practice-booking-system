@@ -177,7 +177,7 @@ class TestCardEditorLockedNote:
         src = _editor_template_source()
         assert "ce-empty-state" in src, \
             "ce-empty-state block must be present in template"
-        assert 'href="/shop/cards/player"' in src, \
+        assert 'href="/shop?type=player_card"' in src, \
             "empty state must link to the player card shop"
 
     def test_ce09_locked_note_absent_from_template(self):

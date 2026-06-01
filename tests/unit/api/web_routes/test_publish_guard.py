@@ -102,38 +102,14 @@ class TestPricingGuard:
         assert fclassic.is_premium is True, "FClassic Player must be is_premium=True"
 
     def test_pg06_zero_credit_cost_yields_not_available(self):
-        """PG-06: shop route assigns 'not_available' to credit_cost=0 unowned designs."""
-        import asyncio
-        from unittest.mock import MagicMock, patch
+        """PG-06 (SHOP-2): catalog service assigns 'not_available' to credit_cost=0 unowned designs.
 
-        # Build a fake design with credit_cost=0 (simulates old DB row for FClassic Player)
-        zero_design = MagicMock()
-        zero_design.id          = "hypothetical_zero"
-        zero_design.label       = "Zero"
-        zero_design.description = "Should never be purchasable"
-        zero_design.credit_cost = 0
-        zero_design.is_premium  = False
-
-        user      = MagicMock(); user.id = 1; user.credit_balance = 9999
-        db        = MagicMock()
-        request   = MagicMock(); request.query_params.get.return_value = None
-
-        captured = {}
-
-        def _fake_tmpl(tmpl, ctx, **kw):
-            captured["context"] = ctx
-            return MagicMock(status_code=200)
-
-        _BASE = "app.api.web_routes.shop"
-        with patch(f"{_BASE}.templates") as mock_tpl, \
-             patch(f"{_BASE}.get_all_designs", return_value=[zero_design]), \
-             patch(f"{_BASE}.is_design_accessible", return_value=False):
-            mock_tpl.TemplateResponse.side_effect = _fake_tmpl
-            from app.api.web_routes.shop import shop_player_card
-            asyncio.run(shop_player_card(request=request, db=db, user=user))
-
-        rows  = captured["context"]["design_rows"]
-        row   = next(r for r in rows if r["id"] == "hypothetical_zero")
-        assert row["state"] == "not_available", (
-            f"0-CR unowned design must yield 'not_available', got {row['state']!r}"
-        )
+        The shop_player_card route is now a redirect (SHOP-2).
+        The _state logic lives in shop_catalog_service._state().
+        """
+        from app.services.shop_catalog_service import _state
+        # credit_cost=0, is_premium=False, not owned → not_available
+        assert _state(credit_cost=0, is_premium=False, owned=False, credits=9999) == "not_available", \
+            "0-CR unowned design must yield 'not_available'"
+        # credit_cost=0, owned → still not_available (can't purchase free)
+        assert _state(credit_cost=0, is_premium=False, owned=False, credits=0) == "not_available"

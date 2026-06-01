@@ -90,12 +90,12 @@ async def my_cards_hub(
 async def my_cards_shop(tab: str | None = Query(default=None)):
     """Retired shop page — redirects to the card shop."""
     destinations = {
-        "player":    "/shop/cards/player",
-        "welcome":   "/shop/cards/welcome",
-        "challenge": "/shop/cards/challenge",
+        "player":    "/shop?type=player_card",
+        "welcome":   "/shop?type=welcome_card",
+        "challenge": "/shop?type=challenge_card",
     }
     return RedirectResponse(
-        url=destinations.get(tab or "", "/shop/cards"),
+        url=destinations.get(tab or "", "/shop"),
         status_code=301,
     )
 

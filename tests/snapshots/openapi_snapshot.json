@@ -59889,7 +59889,7 @@
     },
     "/card-editor/challenge": {
       "get": {
-        "description": "Challenge Card Studio \u2014 draft-free entry point (CE-3.4).\n\nDisplays owned Challenge Card formats with challenge-aware CTAs.\nNo preview, no export, no latest-challenge auto-select, no challenge_id required.\n\nGuards (same pattern as card_studio_welcome / WCE-1):\n  1. Authenticated (get_current_user_web)\n  2. LFA_FOOTBALL_PLAYER license + onboarding complete\n  3. No owned formats \u2192 redirect /shop/cards/challenge",
+        "description": "Challenge Card Studio \u2014 draft-free entry point (CE-3.4).\n\nDisplays owned Challenge Card formats with challenge-aware CTAs.\nNo preview, no export, no latest-challenge auto-select, no challenge_id required.\n\nGuards (same pattern as card_studio_welcome / WCE-1):\n  1. Authenticated (get_current_user_web)\n  2. LFA_FOOTBALL_PLAYER license + onboarding complete\n  3. No owned formats \u2192 redirect /shop?type=challenge_card",
         "operationId": "card_studio_challenge_card_editor_challenge_get",
         "responses": {
           "200": {
@@ -65280,6 +65280,7 @@
     },
     "/shop/cards": {
       "get": {
+        "description": "SHOP-2: 302 redirect \u2192 /shop (unified listing).",
         "operationId": "shop_cards_shop_cards_get",
         "responses": {
           "200": {
@@ -65302,6 +65303,7 @@
     },
     "/shop/cards/challenge": {
       "get": {
+        "description": "SHOP-2: 302 redirect \u2192 /shop?type=challenge_card.",
         "operationId": "shop_challenge_card_shop_cards_challenge_get",
         "responses": {
           "200": {
@@ -65324,6 +65326,7 @@
     },
     "/shop/cards/player": {
       "get": {
+        "description": "SHOP-2: 302 redirect \u2192 /shop?type=player_card.",
         "operationId": "shop_player_card_shop_cards_player_get",
         "responses": {
           "200": {
@@ -65412,6 +65415,7 @@
     },
     "/shop/cards/welcome": {
       "get": {
+        "description": "SHOP-2: 302 redirect \u2192 /shop?type=welcome_card.",
         "operationId": "shop_welcome_card_shop_cards_welcome_get",
         "responses": {
           "200": {

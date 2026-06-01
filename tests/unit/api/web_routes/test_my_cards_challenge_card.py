@@ -51,7 +51,7 @@ class TestMCC04ShopLink:
 
     def test_mcc_04_shop_link_present(self):
         """MCC-04: /shop/cards/challenge appears in template (shop link + empty state)."""
-        assert "/shop/cards/challenge" in _src()
+        assert "/shop?type=challenge_card" in _src()
 
 
 # ── MCC-05: Studio CTA is inside owned block ─────────────────────────────────

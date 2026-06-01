@@ -104,7 +104,7 @@
     <span class="mcw-credits-badge">Balance: <strong>{{ user.credit_balance }} CR</strong></span>
   </div>
 
-  <a href="/shop/cards/welcome" class="mcw-shop-link">Shop Formats →</a>
+  <a href="/shop?type=welcome_card" class="mcw-shop-link">Shop Formats →</a>
 
   {# ── Flash messages ── #}
   {% if flash_purchased %}
@@ -120,12 +120,12 @@
   {% elif flash_error == "owned" %}
   <div class="mfg-flash mfg-flash-error">
     You already own this.
-    <a class="mfg-flash-cta" href="/shop/cards/welcome">Browse Welcome Cards →</a>
+    <a class="mfg-flash-cta" href="/shop?type=welcome_card">Browse Welcome Cards →</a>
   </div>
   {% elif flash_error == "invalid" %}
   <div class="mfg-flash mfg-flash-error">
     This product is no longer available.
-    <a class="mfg-flash-cta" href="/shop/cards">Back to shop →</a>
+    <a class="mfg-flash-cta" href="/shop">Back to shop →</a>
   </div>
   {% endif %}
 
@@ -180,7 +180,7 @@
     <div class="mcw-empty-icon">👋</div>
     <h3>No formats yet</h3>
     <p>You don't own any Welcome Card formats. Visit the shop to unlock platform exports.</p>
-    <a href="/shop/cards/welcome" class="mcw-empty-cta">Browse Formats →</a>
+    <a href="/shop?type=welcome_card" class="mcw-empty-cta">Browse Formats →</a>
   </div>
 
   {% endif %}

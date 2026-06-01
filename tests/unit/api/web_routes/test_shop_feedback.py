@@ -82,7 +82,7 @@ def _call_pc(query_params=None, accessible_ids=None, designs=None, balance=500):
                side_effect=lambda db, uid, ct, did: did in accessible_ids), \
          patch(f"{_BASE}.templates.TemplateResponse", side_effect=fake_tmpl):
         _run(shop_player_card(
-            request=_req("/shop/cards/player", query_params),
+            request=_req("/shop?type=player_card", query_params),
             db=_db(),
             user=_user(balance),
         ))
@@ -103,7 +103,7 @@ def _call_wc(query_params=None, accessible_ids=None, balance=500):
                side_effect=lambda db, uid, ct, did: did in accessible_ids), \
          patch(f"{_BASE}.templates.TemplateResponse", side_effect=fake_tmpl):
         _run(shop_welcome_card(
-            request=_req("/shop/cards/welcome", query_params),
+            request=_req("/shop?type=welcome_card", query_params),
             db=_db(),
             user=_user(balance),
         ))
@@ -124,7 +124,7 @@ def _call_cc(query_params=None, accessible_ids=None, balance=500):
                side_effect=lambda db, uid, ct, did: did in accessible_ids), \
          patch(f"{_BASE}.templates.TemplateResponse", side_effect=fake_tmpl):
         _run(shop_challenge_card(
-            request=_req("/shop/cards/challenge", query_params),
+            request=_req("/shop?type=challenge_card", query_params),
             db=_db(),
             user=_user(balance),
         ))
@@ -280,38 +280,57 @@ class TestErrorFeedbackCTA:
         assert "/my-cards/challenge" in html
 
 
-# ── SCF-12..14: route context exposes owned_count / total_count ───────────────
+# ── SCF-12..14: owned/total counts via shop_catalog_service (SHOP-2) ──────────
+# The listing route handlers are now 302 redirects. Owned/total logic lives in
+# shop_catalog_service.build_shop_catalog().
 
 class TestRouteContextCounts:
 
-    def test_scf12_pc_context_has_owned_count_and_total(self):
-        """SCF-12: PC route context includes owned_count and total_count."""
-        ctx = _call_pc(accessible_ids={"compact"})["context"]
-        assert "owned_count" in ctx
-        assert "total_count" in ctx
-        assert ctx["owned_count"] == 1
-        assert ctx["total_count"] == 2
+    def test_scf12_pc_owned_count_in_catalog(self):
+        """SCF-12 (SHOP-2): PC owned_count correct via catalog service."""
+        from unittest.mock import MagicMock, patch
+        from app.services.shop_catalog_service import build_shop_catalog
+        db = MagicMock()
+        with patch("app.services.shop_catalog_service.get_owned_design_ids",
+                   side_effect=lambda db, uid, ct: {"compact"} if ct == "player_card" else set()):
+            items = build_shop_catalog(db, 1, 500, "player_card")
+        owned = sum(1 for i in items if i.is_owned)
+        total = len(items)
+        assert owned == 1, f"Expected 1 owned, got {owned}"
+        assert total == 7
 
-    def test_scf12b_pc_context_zero_when_none_owned(self):
+    def test_scf12b_pc_owned_zero_when_none_owned(self):
         """SCF-12b: PC owned_count=0 when nothing owned."""
-        ctx = _call_pc()["context"]
-        assert ctx["owned_count"] == 0
+        from unittest.mock import MagicMock, patch
+        from app.services.shop_catalog_service import build_shop_catalog
+        db = MagicMock()
+        with patch("app.services.shop_catalog_service.get_owned_design_ids", return_value=set()):
+            items = build_shop_catalog(db, 1, 500, "player_card")
+        assert sum(1 for i in items if i.is_owned) == 0
 
-    def test_scf13_wc_context_has_owned_count_and_total(self):
-        """SCF-13: WC route context includes owned_count and total_count."""
-        ctx = _call_wc(accessible_ids={"instagram_portrait"})["context"]
-        assert "owned_count" in ctx
-        assert "total_count" in ctx
-        assert ctx["owned_count"] == 1
-        assert ctx["total_count"] == 7
+    def test_scf13_wc_owned_count_in_catalog(self):
+        """SCF-13 (SHOP-2): WC owned_count correct via catalog service."""
+        from unittest.mock import MagicMock, patch
+        from app.services.shop_catalog_service import build_shop_catalog
+        db = MagicMock()
+        with patch("app.services.shop_catalog_service.get_owned_design_ids",
+                   side_effect=lambda db, uid, ct: {"instagram_portrait"} if ct == "welcome_card" else set()):
+            items = build_shop_catalog(db, 1, 500, "welcome_card")
+        owned = sum(1 for i in items if i.is_owned)
+        total = len(items)
+        assert owned == 1 and total == 7
 
-    def test_scf14_cc_context_has_owned_count_and_total(self):
-        """SCF-14: CC route context includes owned_count and total_count."""
-        ctx = _call_cc(accessible_ids={"challenge_post_16_9"})["context"]
-        assert "owned_count" in ctx
-        assert "total_count" in ctx
-        assert ctx["owned_count"] == 1
-        assert ctx["total_count"] == 2
+    def test_scf14_cc_owned_count_in_catalog(self):
+        """SCF-14 (SHOP-2): CC owned_count correct via catalog service."""
+        from unittest.mock import MagicMock, patch
+        from app.services.shop_catalog_service import build_shop_catalog
+        db = MagicMock()
+        with patch("app.services.shop_catalog_service.get_owned_design_ids",
+                   side_effect=lambda db, uid, ct: {"challenge_post_16_9"} if ct == "challenge_card" else set()):
+            items = build_shop_catalog(db, 1, 500, "challenge_card")
+        owned = sum(1 for i in items if i.is_owned)
+        total = len(items)
+        assert owned == 1 and total == 2
 
 
 # ── SCF-15..17: count badge in section header ─────────────────────────────────

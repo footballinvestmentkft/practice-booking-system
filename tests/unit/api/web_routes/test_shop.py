@@ -107,217 +107,89 @@ class TestShopLanding:
 
 class TestShopCards:
 
-    def test_sh02_cards_renders_shop_cards_html(self):
-        """SH-02: GET /shop/cards → shop_cards.html."""
+    def test_sh02_cards_redirects_to_unified(self):
+        """SH-02 (SHOP-2): GET /shop/cards -> 302 /shop."""
+        from fastapi.responses import RedirectResponse
         from app.api.web_routes.shop import shop_cards
+        resp = _run(shop_cards(request=_req("/shop/cards"), user=_user()))
+        assert isinstance(resp, RedirectResponse)
+        assert resp.status_code == 302
+        assert resp.headers["location"] == "/shop"
 
-        captured = {}
-
-        def fake_tmpl(tmpl, ctx):
-            captured["template"] = tmpl
-            return MagicMock(status_code=200)
-
-        with patch(f"{_BASE}.templates.TemplateResponse", side_effect=fake_tmpl):
-            _run(shop_cards(request=_req("/shop/cards"), user=_user()))
-
-        assert captured["template"] == "shop_cards.html"
 
 
 # ── SH-03..06: /shop/cards/player ─────────────────────────────────────────────
+# SHOP-2: handler is now a 302 redirect
 
 class TestShopPlayerCard:
 
-    def _call(self, user=None, accessible_ids=None, designs=None, query_params=None):
+    def test_sh03_player_redirects_302(self):
+        """SH-03 (SHOP-2): GET /shop/cards/player → 302 /shop?type=player_card."""
+        from fastapi.responses import RedirectResponse
         from app.api.web_routes.shop import shop_player_card
+        resp = _run(shop_player_card(request=_req("/shop/cards/player"), user=_user()))
+        assert isinstance(resp, RedirectResponse) and resp.status_code == 302
+        assert "/shop?type=player_card" in resp.headers["location"]
 
-        user           = user or _user()
-        accessible_ids = accessible_ids or set()
-        default_designs = [
-            _design("fclassic",    credit_cost=0,   is_premium=False),
-            _design("compact", credit_cost=300, is_premium=True),
-        ]
-        captured = {}
+    def test_sh04_purchased_param_passthrough(self):
+        """SH-04 (SHOP-2): purchased param passes through redirect URL."""
+        from app.api.web_routes.shop import shop_player_card
+        resp = _run(shop_player_card(
+            request=_req("/shop/cards/player", {"purchased": "compact"}), user=_user()
+        ))
+        assert "purchased=compact" in resp.headers["location"]
 
-        def fake_tmpl(tmpl, ctx):
-            captured["template"] = tmpl
-            captured["context"]  = ctx
-            return MagicMock(status_code=200)
+    def test_sh05_error_param_passthrough(self):
+        """SH-05 (SHOP-2): error param passes through redirect URL."""
+        from app.api.web_routes.shop import shop_player_card
+        resp = _run(shop_player_card(
+            request=_req("/shop/cards/player", {"error": "credits"}), user=_user()
+        ))
+        assert "error=credits" in resp.headers["location"]
 
-        def fake_accessible(db, uid, card_type_id, design_id):
-            return (card_type_id, design_id) in accessible_ids
-
-        with patch(f"{_BASE}.get_all_designs", return_value=designs or default_designs), \
-             patch(f"{_BASE}.is_design_accessible", side_effect=fake_accessible), \
-             patch(f"{_BASE}.templates.TemplateResponse", side_effect=fake_tmpl):
-            _run(shop_player_card(
-                request=_req("/shop/cards/player", query_params),
-                db=_db(),
-                user=user,
-            ))
-
-        return captured
-
-    def test_sh03_renders_shop_player_card_html(self):
-        """SH-03: GET /shop/cards/player → shop_player_card.html with design_rows."""
-        cap = self._call()
-        assert cap["template"] == "shop_player_card.html"
-        assert "design_rows" in cap["context"]
-        assert len(cap["context"]["design_rows"]) == 2
-
-    def test_sh04_not_owned_enough_credits_get_card(self):
-        """SH-04: not owned, credits ≥ cost → state='get_card'."""
-        ctx = self._call(user=_user(balance=500), accessible_ids=set())["context"]
-        row = next(r for r in ctx["design_rows"] if r["id"] == "compact")
-        assert row["state"] == "get_card"
-
-    def test_sh05_not_owned_insufficient_credits_locked(self):
-        """SH-05: not owned, credits < cost → state='locked'."""
-        ctx = self._call(user=_user(balance=50), accessible_ids=set())["context"]
-        row = next(r for r in ctx["design_rows"] if r["id"] == "compact")
-        assert row["state"] == "locked"
-
-    def test_sh06_owned_design_state_owned(self):
-        """SH-06: owned design → state='owned'."""
-        ctx = self._call(
-            user=_user(balance=500),
-            accessible_ids={("player_card", "compact")},
-        )["context"]
-        row = next(r for r in ctx["design_rows"] if r["id"] == "compact")
-        assert row["state"] == "owned"
-
-    def test_sh06b_zero_cr_design_not_accessible_not_available(self):
-        """SH-06b: 0-CR design without CDO → state='not_available' (no free bypass)."""
-        ctx = self._call(user=_user(balance=9999), accessible_ids=set())["context"]
-        row = next(r for r in ctx["design_rows"] if r["id"] == "fclassic")
-        assert row["state"] == "not_available"
-
-    def test_sh06c_flash_query_params_passed(self):
-        """SH-06c: flash_purchased and flash_error query params forwarded to context."""
-        cap = self._call(query_params={"purchased": "compact", "error": None})
-        assert cap["context"]["flash_purchased"] == "compact"
+    def test_sh06_state_logic_in_catalog_service(self):
+        """SH-06 (SHOP-2): owned/locked/get_card state logic in shop_catalog_service._state()."""
+        from app.services.shop_catalog_service import _state
+        assert _state(300, True, owned=True,  credits=0)   == "owned"
+        assert _state(300, True, owned=False, credits=500) == "get_card"
+        assert _state(300, True, owned=False, credits=50)  == "locked"
+        assert _state(0,   False, owned=False, credits=999) == "not_available"
 
 
 # ── SH-07: /shop/cards/welcome ────────────────────────────────────────────────
+# SHOP-2: handler is now a 302 redirect
 
 class TestShopWelcomeCard:
 
-    def _call(self, user=None, accessible_ids=None):
+    def test_sh07_welcome_redirects_302(self):
+        """SH-07 (SHOP-2): GET /shop/cards/welcome → 302 /shop?type=welcome_card."""
+        from fastapi.responses import RedirectResponse
         from app.api.web_routes.shop import shop_welcome_card
+        resp = _run(shop_welcome_card(request=_req("/shop/cards/welcome"), user=_user()))
+        assert isinstance(resp, RedirectResponse) and resp.status_code == 302
+        assert "/shop?type=welcome_card" in resp.headers["location"]
 
-        user           = user or _user()
-        accessible_ids = accessible_ids or set()
-        captured = {}
-
-        def fake_tmpl(tmpl, ctx):
-            captured["template"] = tmpl
-            captured["context"]  = ctx
-            return MagicMock(status_code=200)
-
-        def fake_accessible(db, uid, card_type_id, design_id):
-            return (card_type_id, design_id) in accessible_ids
-
-        with patch(f"{_BASE}.is_design_accessible", side_effect=fake_accessible), \
-             patch(f"{_BASE}.templates.TemplateResponse", side_effect=fake_tmpl):
-            _run(shop_welcome_card(
-                request=_req("/shop/cards/welcome"),
-                db=_db(),
-                user=user,
-            ))
-
-        return captured
-
-    def test_sh07_renders_shop_welcome_card_html(self):
-        """SH-07: GET /shop/cards/welcome → shop_welcome_card.html with format_rows."""
-        from app.services.card_design_service import WELCOME_CARD_FORMATS
-
-        cap = self._call()
-        assert cap["template"] == "shop_welcome_card.html"
-        rows = cap["context"]["format_rows"]
-        assert len(rows) == len(WELCOME_CARD_FORMATS)
-
-    def test_sh07b_not_owned_enough_credits_get_card(self):
-        """SH-07b: WC format not owned, credits ≥ price → state='get_card'."""
-        ctx = self._call(user=_user(balance=9999), accessible_ids=set())["context"]
-        assert all(r["state"] == "get_card" for r in ctx["format_rows"])
-
-    def test_sh07c_not_owned_insufficient_credits_locked(self):
-        """SH-07c: WC format not owned, credits < price → state='locked'."""
-        ctx = self._call(user=_user(balance=0), accessible_ids=set())["context"]
-        assert all(r["state"] == "locked" for r in ctx["format_rows"])
-
-    def test_sh07d_owned_format_state_owned(self):
-        """SH-07d: owned WC format → state='owned'."""
-        from app.services.card_design_service import WELCOME_CARD_FORMATS
-        first_fmt = WELCOME_CARD_FORMATS[0]
-        ctx = self._call(
-            user=_user(balance=9999),
-            accessible_ids={("welcome_card", first_fmt.design_id)},
-        )["context"]
-        row = next(r for r in ctx["format_rows"] if r["design_id"] == first_fmt.design_id)
-        assert row["state"] == "owned"
-
-    def test_sh07e_format_rows_have_preview_and_export_url(self):
-        """SH-07e: each format_row has preview_url and export_url."""
-        ctx = self._call(user=_user(balance=9999))["context"]
-        for r in ctx["format_rows"]:
-            assert "preview_url" in r
-            assert "export_url" in r
+    def test_sh07b_error_passthrough(self):
+        """SH-07b (SHOP-2): error=not_owned passes through redirect URL."""
+        from app.api.web_routes.shop import shop_welcome_card
+        resp = _run(shop_welcome_card(
+            request=_req("/shop/cards/welcome", {"error": "not_owned"}), user=_user()
+        ))
+        assert "error=not_owned" in resp.headers["location"]
 
 
 # ── SH-08: /shop/cards/challenge ──────────────────────────────────────────────
+# SHOP-2: handler is now a 302 redirect
 
 class TestShopChallengeCard:
 
-    def _call(self, user=None, accessible_ids=None):
+    def test_sh08_challenge_redirects_302(self):
+        """SH-08 (SHOP-2): GET /shop/cards/challenge → 302 /shop?type=challenge_card."""
+        from fastapi.responses import RedirectResponse
         from app.api.web_routes.shop import shop_challenge_card
-
-        user           = user or _user()
-        accessible_ids = accessible_ids or set()
-        captured = {}
-
-        def fake_tmpl(tmpl, ctx):
-            captured["template"] = tmpl
-            captured["context"]  = ctx
-            return MagicMock(status_code=200)
-
-        def fake_accessible(db, uid, card_type_id, design_id):
-            return (card_type_id, design_id) in accessible_ids
-
-        with patch(f"{_BASE}.is_design_accessible", side_effect=fake_accessible), \
-             patch(f"{_BASE}.templates.TemplateResponse", side_effect=fake_tmpl):
-            _run(shop_challenge_card(
-                request=_req("/shop/cards/challenge"),
-                db=_db(),
-                user=user,
-            ))
-
-        return captured
-
-    def test_sh08_renders_shop_challenge_card_html(self):
-        """SH-08: GET /shop/cards/challenge → shop_challenge_card.html with format_rows."""
-        from app.services.card_design_service import CHALLENGE_CARD_FORMATS
-
-        cap = self._call()
-        assert cap["template"] == "shop_challenge_card.html"
-        rows = cap["context"]["format_rows"]
-        assert len(rows) == len(CHALLENGE_CARD_FORMATS)
-        row_ids = {r["design_id"] for r in rows}
-        assert "challenge_post_16_9"  in row_ids
-        assert "challenge_story_9_16" in row_ids
-
-    def test_sh08b_not_owned_enough_credits_get_card(self):
-        """SH-08b: CC format not owned, credits ≥ price → state='get_card'."""
-        ctx = self._call(user=_user(balance=9999), accessible_ids=set())["context"]
-        assert all(r["state"] == "get_card" for r in ctx["format_rows"])
-
-    def test_sh08c_owned_format_state_owned(self):
-        """SH-08c: owned CC format → state='owned'."""
-        ctx = self._call(
-            user=_user(balance=9999),
-            accessible_ids={("challenge_card", "challenge_post_16_9")},
-        )["context"]
-        row = next(r for r in ctx["format_rows"] if r["design_id"] == "challenge_post_16_9")
-        assert row["state"] == "owned"
+        resp = _run(shop_challenge_card(request=_req("/shop/cards/challenge"), user=_user()))
+        assert isinstance(resp, RedirectResponse) and resp.status_code == 302
+        assert "/shop?type=challenge_card" in resp.headers["location"]
 
 
 # ── SH-09..10: Purchase POST ──────────────────────────────────────────────────
