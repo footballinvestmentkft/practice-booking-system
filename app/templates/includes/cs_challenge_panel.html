@@ -1,52 +1,178 @@
-{# CS-S4A: Challenge Card Studio control panel — preview placeholder.
-   No live preview iframe: /challenges/{id}/card/preview requires a specific
-   challenge_id + platform + phase — no generic user-level endpoint exists.
-   Write functions (format select, export, challenge render) deferred to CS-S4B+.
-   Context vars: owned_cc_formats, legacy_editor_url
+{# CS-S4B: Challenge Card Studio control panel.
+   Handles two modes:
+     challenge_mode == "selector" → challenge list + filter
+     challenge_mode == "preview"  → phase/platform selector + challenge info + legacy CTA
+     challenge_mode == "error"    → safe error state
+
+   Context vars (selector): challenge_rows, active_filter
+   Context vars (preview): selected_challenge, phase_chips, platform_chips,
+     active_phase, active_platform, is_locked_phase, selected_challenge_id
+   Both: legacy_editor_url
 #}
+
+{# ── SELECTOR MODE ── #}
+{% if challenge_mode == "selector" or challenge_mode == "error" %}
 
 <div class="cs-challenge-panel">
 
-  {# ── Owned formats info ── #}
-  <div class="cs-challenge-info">
-    <p class="cs-section-label">Your Challenge Card Formats</p>
-    {% if owned_cc_formats %}
-    <ul class="cs-cc-format-list">
-      {% for f in owned_cc_formats %}
-      <li class="cs-cc-format-item">
-        <span class="cs-cc-format-label">{{ f.label }}</span>
-        <span class="cs-cc-format-dims">{{ f.dims }}</span>
-      </li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <p class="cs-challenge-hint">No Challenge Card formats owned yet.</p>
-    {% endif %}
-  </div>
-
-  <hr class="cs-section-divider">
-
-  {# ── Preview placeholder ── #}
-  <div class="cs-challenge-preview-note">
-    <p class="cs-section-label">Preview</p>
+  {# Error state #}
+  {% if challenge_mode == "error" %}
+  <div class="cs-challenge-error">
+    <p class="cs-section-label">Challenge Not Available</p>
     <p class="cs-challenge-hint">
-      Challenge card preview is generated from an active challenge result.
-      Play a challenge to generate and preview your card.
+      {% if challenge_error == "not_found" %}
+        Challenge not found. It may have been deleted.
+      {% elif challenge_error == "not_participant" %}
+        You are not a participant of this challenge.
+      {% else %}
+        This challenge is not available.
+      {% endif %}
     </p>
-    <a href="/challenges" class="cs-btn-challenge-link">View My Challenges →</a>
+    <a href="/card-studio/challenge" class="cs-btn-challenge-link" style="margin-top:0.75rem;">
+      ← Back to Challenges
+    </a>
+  </div>
+
+  {% else %}
+
+  {# Filter bar #}
+  <div class="cs-ch-filter-bar">
+    <p class="cs-section-label">My Challenges</p>
+    <div class="cs-pc-pills">
+      {% for fid, flabel in [("all","All"), ("active","Active"), ("completed","Completed")] %}
+      <a href="/card-studio/challenge?filter={{ fid }}"
+         class="cs-pc-pill{% if active_filter == fid %} cs-pc-pill--active{% endif %}">
+        {{ flabel }}
+      </a>
+      {% endfor %}
+    </div>
   </div>
 
   <hr class="cs-section-divider">
 
-  {# ── Legacy editor CTA ── #}
+  {# Challenge list #}
+  {% if challenge_rows %}
+  <div class="cs-ch-list">
+    {% for row in challenge_rows %}
+    <div class="cs-ch-card{% if not row.has_preview %} cs-ch-card--no-preview{% endif %}">
+      <div class="cs-ch-header">
+        <span class="cs-ch-opponent">vs {{ row.opponent_name }}</span>
+        <span class="cs-ch-status cs-ch-status--{{ row.status }}">{{ row.status | replace("_"," ") | title }}</span>
+      </div>
+      <div class="cs-ch-meta">
+        <span class="cs-ch-game">{{ row.game_name }}</span>
+        {% if row.challenge_mode == "live" %}<span class="cs-ch-badge">Live</span>{% endif %}
+        {% if row.my_score is not none %}
+        <span class="cs-ch-score">{{ row.my_score | round(1) }} pts</span>
+        {% endif %}
+      </div>
+      <div class="cs-ch-phases-info">
+        {% if row.available_phases_count > 0 %}
+        <span class="cs-ch-phases-count">{{ row.available_phases_count }} card phase{{ "s" if row.available_phases_count != 1 }}</span>
+        {% else %}
+        <span class="cs-ch-phases-count cs-ch-phases-count--none">No card phases</span>
+        {% endif %}
+      </div>
+      {% if row.has_preview %}
+      <a href="{{ row.studio_url }}" class="cs-btn-challenge-select">Preview Card →</a>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  {# Empty state #}
+  <div class="cs-ch-empty">
+    <p class="cs-ch-empty-msg">No challenges yet.</p>
+    <a href="/challenges/send" class="cs-btn-challenge-link">Send a Challenge →</a>
+  </div>
+  {% endif %}
+
+  {% endif %}{# end error/selector #}
+
+  <hr class="cs-section-divider">
+
   <div class="cs-challenge-legacy-cta">
     <p class="cs-section-label">Challenge Card Editor</p>
-    <p class="cs-challenge-hint">
-      Full format selection and export available in the Challenge Card editor.
-    </p>
+    <p class="cs-challenge-hint">Full format selection and export in the editor.</p>
     <a href="{{ legacy_editor_url }}" class="cs-btn-legacy-editor">
       Open Challenge Editor →
     </a>
   </div>
 
 </div>
+
+{# ── PREVIEW MODE ── #}
+{% elif challenge_mode == "preview" %}
+
+<div class="cs-challenge-panel">
+
+  {# Back to selector #}
+  <a href="/card-studio/challenge" class="cs-ch-back">← All Challenges</a>
+
+  {# Selected challenge info #}
+  {% if selected_challenge %}
+  <div class="cs-ch-selected-info" style="margin: 0.6rem 0;">
+    <p class="cs-section-label">Challenge</p>
+    <p class="cs-ch-selected-opponent">vs {{ selected_challenge.opponent_name }}</p>
+    <p class="cs-ch-selected-meta">
+      {{ selected_challenge.game_name }}
+      · {{ selected_challenge.status | replace("_"," ") | title }}
+    </p>
+  </div>
+  <hr class="cs-section-divider">
+  {% endif %}
+
+  {# Phase selector #}
+  <div class="cs-pc-selector">
+    <p class="cs-section-label">Card Phase</p>
+    <div class="cs-pc-pills" id="cs-ch-phase-pills">
+      {% for chip in phase_chips %}
+      {% if not chip.locked %}
+      <a href="/card-studio/challenge?challenge_id={{ selected_challenge_id }}&phase={{ chip.id }}&platform={{ active_platform }}"
+         class="cs-pc-pill{% if chip.active %} cs-pc-pill--active{% endif %}">
+        {{ chip.label }}
+      </a>
+      {% else %}
+      <span class="cs-pc-pill cs-pc-pill--locked"
+            title="{{ chip.label }} — historical (preview only, export not available)">
+        {{ chip.label }}
+        <span style="font-size:0.62rem;opacity:0.55;margin-left:0.15rem;">🔒</span>
+      </span>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% if is_locked_phase %}
+    <p class="cs-ch-locked-note">Historical phase — preview only, export not available.</p>
+    {% endif %}
+  </div>
+
+  <hr class="cs-section-divider">
+
+  {# Platform selector #}
+  <div class="cs-pc-selector">
+    <p class="cs-section-label">Format</p>
+    <div class="cs-pc-pills">
+      {% for chip in platform_chips %}
+      <a href="/card-studio/challenge?challenge_id={{ selected_challenge_id }}&phase={{ active_phase }}&platform={{ chip.id }}"
+         class="cs-pc-pill{% if chip.active %} cs-pc-pill--active{% endif %}">
+        {{ chip.label }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <hr class="cs-section-divider">
+
+  {# Legacy editor CTA #}
+  <div class="cs-challenge-legacy-cta">
+    <p class="cs-section-label">Challenge Card Editor</p>
+    <p class="cs-challenge-hint">Full export available in the editor.</p>
+    <a href="{{ legacy_editor_url }}" class="cs-btn-legacy-editor">
+      Open Challenge Editor →
+    </a>
+  </div>
+
+</div>
+
+{% endif %}{# end mode #}
