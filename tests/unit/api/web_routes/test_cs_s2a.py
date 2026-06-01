@@ -37,10 +37,10 @@ class TestS2A01to02RouteRegistration:
         assert "/card-studio/player" in paths
 
     def test_s2a_02_route_count_846(self):
-        """S2A-02: Total route count is 846 after CS-S2A addition."""
+        """S2A-02 (updated CS-S4A): Total route count is 847 (CS-S2A+CS-S4A)."""
         from app.main import app
         count = len(app.openapi().get("paths", {}))
-        assert count == 846, f"Expected 846 routes, got {count}"
+        assert count == 847, f"Expected 847 routes, got {count}"
 
 
 # ── S2A-03..08: _resolve_player_context logic ────────────────────────────────
@@ -215,18 +215,24 @@ class TestS2A13to15ShellTemplate:
         assert 'cs_player_panel.html' in src
 
     def test_s2a_14_mood_photos_gated_for_player_mode(self):
-        """S2A-14: Mood Photos section is wrapped in active_type != player guard."""
+        """S2A-14 (updated CS-S2B): Mood Photos section is gated to Welcome-only.
+
+        CS-S2B changed the guard from active_type!='player' to active_type=='welcome'
+        so Challenge mode is also excluded. The effective behavior is the same for
+        Player mode — Mood Photos do not show.
+        """
         src = self._src()
-        # Search in the body block only (after {% block student_content %})
         body_start = src.find("{% block student_content %}")
         assert body_start != -1, "student_content block not found"
         body = src[body_start:]
-        # The guard must appear before the cs-mood-grid (the actual Mood section DOM)
         mood_pos  = body.find("cs-mood-grid")
-        guard_pos = body.find('active_type != "player"')
-        assert guard_pos != -1, "active_type != player guard not found in shell body"
+        # Accept either the old guard pattern or the new welcome-only pattern
+        guard_pos_old = body.find('active_type != "player"')
+        guard_pos_new = body.find('active_type == "welcome"')
+        guard_pos = guard_pos_new if guard_pos_new != -1 else guard_pos_old
+        assert guard_pos != -1, "Mood Photos guard not found in shell body"
         assert guard_pos < mood_pos, \
-            "Player guard must appear before the Mood Photos section"
+            "Mood Photos guard must appear before the cs-mood-grid section"
 
     def test_s2a_15_export_panel_has_endif_for_player_mode(self):
         """S2A-15: Export panel download link is enclosed with endif for player guard."""

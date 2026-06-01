@@ -294,7 +294,7 @@ class TestS109S110RouteAndSnapshot:
         """S1-09 (updated CS-S2A): route count is 846 (+/card-studio/player from CS-S2A)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 846, (
+        assert len(paths) == 847, (
             f"Expected 846 routes (845 CS-S1 baseline + 1 CS-S2A), got {len(paths)}"
         )
 

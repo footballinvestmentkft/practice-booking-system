@@ -41851,8 +41851,31 @@
           "card-studio"
         ],
         "summary": "Card Studio Player",
-        "description": "CS-S2A: Player Card Studio \u2014 preview-only MVP.\n\nRead-only: shows current player card preview iframe.\nWrite functions (photo upload, variant/platform/theme change, publish, export)\nare deferred to CS-S2B..D.\nLegacy editor CTA links to /card-editor/player for full write access.",
+        "description": "CS-S2A+S2B: Player Card Studio \u2014 preview + variant/platform/theme selectors.\n\nWrite: variant/platform/theme via existing dashboard endpoints (no new routes).\nPhoto upload (CS-S2C) and publish (CS-S2D) remain deferred.\nLegacy editor CTA links to /card-editor/player for full write access.",
         "operationId": "card_studio_player_card_studio_player_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/card-studio/challenge": {
+      "get": {
+        "tags": [
+          "web",
+          "card-studio"
+        ],
+        "summary": "Card Studio Challenge Studio",
+        "description": "CS-S4A: Challenge Card Studio \u2014 preview placeholder shell.\n\nNo live preview iframe \u2014 no generic challenge card render endpoint exists.\nThe legacy editor CTA links to /card-editor/challenge for format gallery access.\nWrite functions (format select, export, challenge-specific render) are deferred.",
+        "operationId": "card_studio_challenge_studio_card_studio_challenge_get",
         "responses": {
           "200": {
             "description": "Successful Response",
