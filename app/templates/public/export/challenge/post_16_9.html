@@ -301,10 +301,20 @@
   {# ── Content ── #}
   <div class="card-content{% if phase in ('challenge_sent','challenge_received') %} card-content--invitation{% endif %}">
 
+  {#
+    CC-DESIGN-1: Archetype A — Two-Participant Invitation
+    ──────────────────────────────────────────────────────
+    HERO (left zone):
+      challenge_sent:    selected_photo_url (viewer=challenger) OR challenger_photo_url
+      challenge_received: challenger_photo_url ONLY (inviter's photo is invariant)
+    TARGET CARD (right zone):
+      ALWAYS challenged_photo_url or initials. selected_photo_url NEVER overrides target card.
+    Rule: selected_photo_url can only override the viewer's own slot (challenger in sent view).
+  #}
   {# ── Archetype A: Invitation — CCD-FIX photo-dominant split (challenge_sent / challenge_received) ── #}
   {% if phase in ("challenge_sent", "challenge_received") %}
   {# card-content must fill the area between header and footer — override for this archetype #}
-  {% set _hero_photo = (selected_photo_url if phase == "challenge_sent" else none) or challenger_photo_url %}
+  {% set _hero_photo = (selected_photo_url if phase == "challenge_sent" else none) or challenger_photo_url %}{# challenge_received hero: challenger_photo always — no selected_photo_url override #}
   <div class="arch-invitation-split">
 
     {# LEFT: Hero photo zone — full height, no circular crop #}
