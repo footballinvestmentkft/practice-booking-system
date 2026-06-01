@@ -1291,9 +1291,16 @@ def _get_lfa_license(db, user_id: int):
 
 
 # ── WC PHOTO — ASSIGN FROM MOOD LIBRARY (CE-3.8) ────────────────────────────
-# URL-copy: the selected mood photo's original_url is written directly to the
-# corresponding wc_photo_* field on UserLicense.  No FK reference stored; no
-# new file created; processed_png_url is never used here.
+# IMG-FIX-1: Priority: processed_png_url (background-removed, when available) →
+# fallback: original_url (raw upload). No FK reference stored; no new file
+# created. When background removal activates (future), processed asset is used
+# automatically without further changes.
+
+def _mood_photo_asset_url(mood_photo) -> str:
+    """Return the best available asset URL for a mood photo.
+    Priority: processed_png_url (bg-removed) > original_url (raw).
+    """
+    return mood_photo.processed_png_url or mood_photo.original_url
 
 @router.post("/dashboard/wc-photo/from-mood")
 async def student_assign_wc_photo_from_mood(
@@ -1309,9 +1316,10 @@ async def student_assign_wc_photo_from_mood(
     mood_photo = db.query(UserMoodPhoto).filter_by(user_id=user.id, slot=payload.mood_slot).first()
     if not mood_photo:
         return JSONResponse({"ok": False, "error": "Mood photo not found"}, status_code=404)
-    lfa_license.wc_photo_url = mood_photo.original_url
+    photo_url = _mood_photo_asset_url(mood_photo)
+    lfa_license.wc_photo_url = photo_url
     db.commit()
-    return JSONResponse({"ok": True, "photo_url": mood_photo.original_url})
+    return JSONResponse({"ok": True, "photo_url": photo_url})
 
 
 @router.post("/dashboard/wc-photo-portrait/from-mood")
@@ -1328,9 +1336,10 @@ async def student_assign_wc_portrait_photo_from_mood(
     mood_photo = db.query(UserMoodPhoto).filter_by(user_id=user.id, slot=payload.mood_slot).first()
     if not mood_photo:
         return JSONResponse({"ok": False, "error": "Mood photo not found"}, status_code=404)
-    lfa_license.wc_photo_portrait_url = mood_photo.original_url
+    photo_url = _mood_photo_asset_url(mood_photo)
+    lfa_license.wc_photo_portrait_url = photo_url
     db.commit()
-    return JSONResponse({"ok": True, "photo_url": mood_photo.original_url})
+    return JSONResponse({"ok": True, "photo_url": photo_url})
 
 
 @router.post("/dashboard/wc-photo-landscape/from-mood")
@@ -1347,9 +1356,10 @@ async def student_assign_wc_landscape_photo_from_mood(
     mood_photo = db.query(UserMoodPhoto).filter_by(user_id=user.id, slot=payload.mood_slot).first()
     if not mood_photo:
         return JSONResponse({"ok": False, "error": "Mood photo not found"}, status_code=404)
-    lfa_license.wc_photo_landscape_url = mood_photo.original_url
+    photo_url = _mood_photo_asset_url(mood_photo)
+    lfa_license.wc_photo_landscape_url = photo_url
     db.commit()
-    return JSONResponse({"ok": True, "photo_url": mood_photo.original_url})
+    return JSONResponse({"ok": True, "photo_url": photo_url})
 
 
 @router.post("/dashboard/card-theme")
