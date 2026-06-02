@@ -526,8 +526,9 @@ class TestSCPhaseAudit:
 
     # ── Phase lock gate ───────────────────────────────────────────────────────
 
-    def test_sc_audit_05_locked_phase_export_raises_403(self):
-        """challenge_accepted is locked (preview-only) after challenge completes."""
+    def test_sc_audit_05_locked_phase_export_allowed(self):
+        """challenge_accepted is exportable even as a historical locked phase after COMPLETED.
+        Historical does NOT mean preview-only — same design as challenge_sent/received."""
         ch = _challenge(
             challenger_id=1, challenged_id=2,
             status=ChallengeStatus.COMPLETED,
@@ -535,10 +536,8 @@ class TestSCPhaseAudit:
         )
         cap = _call_export(ch=ch, user_id=1, phase="challenge_accepted")
         exc = cap.get("exc")
-        assert exc is not None
-        from fastapi import HTTPException
-        assert isinstance(exc, HTTPException)
-        assert exc.status_code == 403
+        assert exc is None, \
+            f"challenge_accepted must be exportable for historical COMPLETED challenges, got exc: {exc}"
 
     def test_sc_audit_06_forfeit_win_preview_succeeds(self):
         """completed_forfeit_win phase is unlocked for the winner → preview 200."""

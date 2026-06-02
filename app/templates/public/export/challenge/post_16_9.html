@@ -331,7 +331,7 @@
   </div>
 
   {# ── Content ── #}
-  <div class="card-content{% if phase in ('challenge_sent','challenge_received','challenge_cancelled','challenge_declined') %} card-content--invitation{% endif %}">
+  <div class="card-content{% if phase in ('challenge_sent','challenge_received','challenge_accepted','challenge_cancelled','challenge_declined') %} card-content--invitation{% endif %}">
 
   {#
     CC-DESIGN-1: Archetype A — Two-Participant Invitation
@@ -407,8 +407,67 @@
 
   </div>
 
-  {# ── Archetype B: Battle (challenge_accepted / live_lobby_ready / live_in_progress) ── #}
-  {% elif phase in ("challenge_accepted", "live_lobby_ready", "live_in_progress") %}
+  {# ── Archetype B2: Challenge Accepted — two-player full-zone layout ── #}
+  {# challenge_accepted is a social moment (acceptance), not a live-match state. #}
+  {% elif phase == "challenge_accepted" %}
+  {% set _left_photo  = (selected_photo_url if viewer_is_challenger else None) or challenger_photo_url %}
+  {% set _right_photo = (selected_photo_url if not viewer_is_challenger else None) or challenged_photo_url %}
+  <div class="arch-invitation-balanced">
+
+    {# LEFT: Challenger photo zone #}
+    <div class="aib-player-zone">
+      {% if _left_photo %}
+        <img src="{{ _left_photo }}" class="aib-player-photo" alt="{{ challenger_name }}">
+      {% else %}
+        <div class="aib-player-initial">{{ (challenger_name[0] if challenger_name else '?') | upper }}</div>
+      {% endif %}
+      {% if challenger_primary_pos %}
+      <div class="aib-pos-block">
+        <span class="aib-pos-primary">{{ challenger_primary_pos }}</span>
+        {% if challenger_secondary_pos %}<span class="aib-pos-secondary">{{ challenger_secondary_pos }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if challenger_overall is not none %}
+      <div class="aib-overall">OVR {{ challenger_overall }}</div>
+      {% endif %}
+      <div class="aib-player-name">{{ challenger_name }}</div>
+    </div>
+
+    {# CENTER: Accepted message #}
+    <div class="aib-center-msg">
+      <div class="aib-status-meta">Challenge Accepted</div>
+      <div class="aib-headline">Challenge<br>Accepted</div>
+      <div class="aib-sublabel">{{ viewer_action_text }}</div>
+      <div class="aib-divider"></div>
+      <div class="aib-participants">
+        {{ challenger_name }}<span class="arrow">→</span>{{ challenged_name }}
+      </div>
+      <div class="aib-game">{{ game_name }}</div>
+    </div>
+
+    {# RIGHT: Challenged photo zone #}
+    <div class="aib-player-zone aib-player-zone--right">
+      {% if _right_photo %}
+        <img src="{{ _right_photo }}" class="aib-player-photo" alt="{{ challenged_name }}">
+      {% else %}
+        <div class="aib-player-initial">{{ (challenged_name[0] if challenged_name else '?') | upper }}</div>
+      {% endif %}
+      {% if challenged_primary_pos %}
+      <div class="aib-pos-block">
+        <span class="aib-pos-primary">{{ challenged_primary_pos }}</span>
+        {% if challenged_secondary_pos %}<span class="aib-pos-secondary">{{ challenged_secondary_pos }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if challenged_overall is not none %}
+      <div class="aib-overall">OVR {{ challenged_overall }}</div>
+      {% endif %}
+      <div class="aib-player-name">{{ challenged_name }}</div>
+    </div>
+
+  </div>
+
+  {# ── Archetype B: Battle (live_lobby_ready / live_in_progress) ── #}
+  {% elif phase in ("live_lobby_ready", "live_in_progress") %}
   <div class="arch-battle">
     {# Challenger #}
     <div class="cc-col">
@@ -423,9 +482,7 @@
     {# VS center #}
     <div class="cc-vs-col">
       <div class="cc-vs-text">VS</div>
-      {% if phase == "challenge_accepted" %}
-        <div class="cc-outcome-badge draw">Let's Play</div>
-      {% elif phase == "live_lobby_ready" %}
+      {% if phase == "live_lobby_ready" %}
         <div class="cc-outcome-badge win" style="color:#fbbf24;border-color:#fbbf24;background:rgba(251,191,36,0.1);">⚡ LOBBY OPEN</div>
       {% elif phase == "live_in_progress" %}
         <div class="cc-outcome-badge win" style="color:#fbbf24;border-color:#fbbf24;">⚡ LIVE NOW</div>

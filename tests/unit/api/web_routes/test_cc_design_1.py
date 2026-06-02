@@ -107,6 +107,8 @@ def _make_mock_ctx(
         _vat = "You challenged RD14S"
     elif phase == "challenge_received":
         _vat = "T1B1K3 challenged you"
+    elif phase == "challenge_accepted":
+        _vat = "RD14S accepted" if viewer_is_challenger else "accepted by you"
     elif phase == "challenge_cancelled":
         _vat = "cancelled by you" if viewer_is_challenger else "T1B1K3 cancelled"
     elif phase == "challenge_declined":
@@ -234,10 +236,10 @@ class TestCCD08to17TemplateRender:
         assert "Challenged" in html
 
     def test_ccd_10_post_accepted_renders(self):
-        """CCD-10: post_16_9 renders challenge_accepted (Archetype B) without error."""
+        """CCD-10: post_16_9 renders challenge_accepted (Archetype B2 full-zone) without error."""
         html = self._render("public/export/challenge/post_16_9.html", "challenge_accepted")
-        assert "VS" in html
-        assert "Let's Play" in html
+        assert "Challenge Accepted" in html
+        assert '<div class="arch-invitation-balanced">' in html
 
     def test_ccd_11_post_waiting_renders(self):
         """CCD-11: post_16_9 renders waiting_for_opponent (Archetype C) with score."""
@@ -561,11 +563,12 @@ class TestCCExportPolicy:
         assert "waiting_for_opponent" not in _EXPORTABLE_PHASES, \
             "waiting_for_opponent must remain preview-only (deferred)"
 
-    def test_cc_export_10_challenge_accepted_not_exportable(self):
-        """CC-EXPORT-10: challenge_accepted is NOT in _EXPORTABLE_PHASES."""
+    def test_cc_export_10_challenge_accepted_is_exportable(self):
+        """CC-EXPORT-10 (updated): challenge_accepted IS in _EXPORTABLE_PHASES.
+        Social moment: the acceptance is a shareable milestone like challenge_sent."""
         from app.api.web_routes.vt_challenges import _EXPORTABLE_PHASES
-        assert "challenge_accepted" not in _EXPORTABLE_PHASES, \
-            "challenge_accepted must remain preview-only until separately approved"
+        assert "challenge_accepted" in _EXPORTABLE_PHASES, \
+            "challenge_accepted must be exportable — it is a social moment phase"
 
 
 # ── CC-EXPORT-DIRECT: Direct Studio export (no editor redirect) ───────────────
@@ -879,12 +882,13 @@ class TestCCDViewerActionText:
         assert ctx["viewer_action_text"] == "T1B1K3 challenged you", \
             f"Expected 'T1B1K3 challenged you', got: {ctx['viewer_action_text']!r}"
 
-    def test_ccd_vaction_03_other_phases_empty(self):
-        """CCD-VACTION-03: non-invitation phases produce empty viewer_action_text."""
+    def test_ccd_vaction_03_accepted_challenger_has_narrative(self):
+        """CCD-VACTION-03 (updated): challenge_accepted challenger view has narrative text."""
         fn = self._ctx_fn()
         ctx = fn(self._make_ch(), MagicMock(id=10), None, None, "challenge_accepted")
-        assert ctx["viewer_action_text"] == "", \
-            f"Non-invitation phase must produce empty viewer_action_text, got: {ctx['viewer_action_text']!r}"
+        assert ctx["viewer_action_text"] != "", \
+            "challenge_accepted must produce viewer_action_text for the challenger"
+        assert "accepted" in ctx["viewer_action_text"].lower()
 
 
 # ── CCD-INVITE-2P: Two-participant invitation layout ─────────────────────────
@@ -2131,3 +2135,136 @@ class TestCCDStats:
         assert '<div class="aib-pos-block">' not in html
         assert 'class="aib-overall"' not in html
         assert len(html) > 500
+
+
+# ── Challenge Accepted phase ──────────────────────────────────────────────────
+
+class TestCCDAccepted:
+    """CCD-ACC: challenge_accepted — exportable, full-zone layout, stats, narrative.
+
+    CCD-ACC-01  challenge_accepted in _EXPORTABLE_PHASES
+    CCD-ACC-02  viewer_action_text: challenger view → "[name] accepted"
+    CCD-ACC-03  viewer_action_text: challenged view → "accepted by you"
+    CCD-ACC-04  post_16_9: arch-invitation-balanced rendered (NOT arch-battle)
+    CCD-ACC-05  post_16_9: challenger photo present
+    CCD-ACC-06  post_16_9: OVR overlay rendered when overall present
+    CCD-ACC-07  post_16_9: pos block rendered when primary_pos present
+    CCD-ACC-08  post_16_9: "Challenge Accepted" text present
+    CCD-ACC-09  story_9_16: arch-story-balanced rendered (NOT cc-col structure)
+    CCD-ACC-10  story_9_16: stats overlay rendered
+    CCD-ACC-11  post_16_9 live_lobby_ready: still uses arch-battle (no regression)
+    CCD-ACC-12  story_9_16 live_lobby_ready: does NOT use arch-story-balanced
+    """
+
+    def _render(self, template_path: str, phase: str, **kwargs) -> str:
+        from jinja2 import Environment, FileSystemLoader
+        env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        tmpl = env.get_template(template_path)
+        ctx = _make_mock_ctx(phase=phase, **kwargs)
+        ctx["request"] = MagicMock()
+        return tmpl.render(**ctx)
+
+    def test_ccd_acc_01_in_exportable_phases(self):
+        """CCD-ACC-01: challenge_accepted is in _EXPORTABLE_PHASES."""
+        from app.api.web_routes.vt_challenges import _EXPORTABLE_PHASES
+        assert "challenge_accepted" in _EXPORTABLE_PHASES
+
+    def test_ccd_acc_02_viewer_action_text_challenger(self):
+        """CCD-ACC-02: challenger view → viewer_action_text = '[name] accepted'."""
+        from app.api.web_routes.vt_challenges import _build_challenge_card_context
+        ch = MagicMock()
+        ch.challenger_id = 10; ch.challenged_id = 20
+        ch.challenger = MagicMock(nickname="T1B1K3", email="t@x.com")
+        ch.challenged = MagicMock(nickname="RD14S", email="r@x.com")
+        ch.game = MagicMock(name="Memory Sequence")
+        ch.challenge_mode = "async"; ch.status = MagicMock()
+        ch.winner_id = None; ch.winner = None; ch.is_draw = False
+        ch.completed_at = None; ch.forfeit_reason = None; ch.forfeit_user_id = None
+        ch.challenger_attempt_id = None; ch.challenged_attempt_id = None
+        viewer = MagicMock(id=10)
+        ctx = _build_challenge_card_context(ch, viewer, None, None, "challenge_accepted")
+        assert ctx["viewer_action_text"] == "RD14S accepted"
+
+    def test_ccd_acc_03_viewer_action_text_challenged(self):
+        """CCD-ACC-03: challenged view → viewer_action_text = 'accepted by you'."""
+        from app.api.web_routes.vt_challenges import _build_challenge_card_context
+        ch = MagicMock()
+        ch.challenger_id = 10; ch.challenged_id = 20
+        ch.challenger = MagicMock(nickname="T1B1K3", email="t@x.com")
+        ch.challenged = MagicMock(nickname="RD14S", email="r@x.com")
+        ch.game = MagicMock(name="Memory Sequence")
+        ch.challenge_mode = "async"; ch.status = MagicMock()
+        ch.winner_id = None; ch.winner = None; ch.is_draw = False
+        ch.completed_at = None; ch.forfeit_reason = None; ch.forfeit_user_id = None
+        ch.challenger_attempt_id = None; ch.challenged_attempt_id = None
+        viewer = MagicMock(id=20)
+        ctx = _build_challenge_card_context(ch, viewer, None, None, "challenge_accepted")
+        assert ctx["viewer_action_text"] == "accepted by you"
+
+    def test_ccd_acc_04_post_uses_full_zone_layout(self):
+        """CCD-ACC-04: post_16_9 challenge_accepted uses arch-invitation-balanced, not arch-battle."""
+        html = self._render("public/export/challenge/post_16_9.html", "challenge_accepted")
+        assert '<div class="arch-invitation-balanced">' in html, \
+            "challenge_accepted must use full-zone layout"
+        assert '<div class="arch-battle">' not in html, \
+            "challenge_accepted must NOT use arch-battle (live lobby layout)"
+
+    def test_ccd_acc_05_post_challenger_photo(self):
+        """CCD-ACC-05: post_16_9: challenger photo rendered."""
+        html = self._render(
+            "public/export/challenge/post_16_9.html", "challenge_accepted",
+            challenger_photo="/ch_photo.png",
+        )
+        assert "/ch_photo.png" in html
+
+    def test_ccd_acc_06_post_ovr_overlay(self):
+        """CCD-ACC-06: post_16_9: OVR overlay rendered when overall present."""
+        html = self._render(
+            "public/export/challenge/post_16_9.html", "challenge_accepted",
+            challenger_overall=78.5, challenged_overall=65.0,
+        )
+        assert 'class="aib-overall"' in html
+        assert "OVR 78.5" in html
+        assert "OVR 65.0" in html
+
+    def test_ccd_acc_07_post_pos_block(self):
+        """CCD-ACC-07: post_16_9: aib-pos-block rendered when primary_pos present."""
+        html = self._render(
+            "public/export/challenge/post_16_9.html", "challenge_accepted",
+            challenger_primary_pos="CM", challenged_primary_pos="ST",
+        )
+        assert '<div class="aib-pos-block">' in html
+        assert "CM" in html
+        assert "ST" in html
+
+    def test_ccd_acc_08_post_accepted_text(self):
+        """CCD-ACC-08: post_16_9: 'Challenge Accepted' text present."""
+        html = self._render("public/export/challenge/post_16_9.html", "challenge_accepted")
+        assert "Challenge Accepted" in html or "CHALLENGE ACCEPTED" in html.upper()
+
+    def test_ccd_acc_09_story_uses_full_zone_layout(self):
+        """CCD-ACC-09: story_9_16 challenge_accepted uses arch-story-balanced."""
+        html = self._render("public/export/challenge/story_9_16.html", "challenge_accepted")
+        assert '<div class="arch-story-balanced">' in html
+        assert "cc-vs-text" not in html or "arch-battle" not in html
+
+    def test_ccd_acc_10_story_stats_overlay(self):
+        """CCD-ACC-10: story_9_16: stats overlay rendered for challenge_accepted."""
+        html = self._render(
+            "public/export/challenge/story_9_16.html", "challenge_accepted",
+            challenger_primary_pos="LW", challenger_overall=70.0,
+            challenged_primary_pos="GK",
+        )
+        assert '<div class="asb-pos-block">' in html
+        assert "OVR 70.0" in html
+
+    def test_ccd_acc_11_post_live_lobby_still_arch_battle(self):
+        """CCD-ACC-11: post_16_9 live_lobby_ready: still renders arch-battle (no regression)."""
+        html = self._render("public/export/challenge/post_16_9.html", "live_lobby_ready")
+        assert '<div class="arch-battle">' in html
+        assert '<div class="arch-invitation-balanced">' not in html
+
+    def test_ccd_acc_12_story_live_lobby_not_full_zone(self):
+        """CCD-ACC-12: story_9_16 live_lobby_ready: does NOT use arch-story-balanced."""
+        html = self._render("public/export/challenge/story_9_16.html", "live_lobby_ready")
+        assert '<div class="arch-story-balanced">' not in html

@@ -289,7 +289,7 @@
     </div>
   </div>
 
-  <div class="card-content{% if phase in ('challenge_sent','challenge_received','challenge_cancelled','challenge_declined') %} card-content--invitation{% endif %}">
+  <div class="card-content{% if phase in ('challenge_sent','challenge_received','challenge_accepted','challenge_cancelled','challenge_declined') %} card-content--invitation{% endif %}">
 
   {#
     CC-DESIGN-1: Archetype A — Two-Participant Invitation
@@ -365,8 +365,66 @@
 
   </div>
 
-  {# ── Archetype B: Battle (vertical, equal photos) ── #}
-  {% elif phase in ("challenge_accepted", "live_lobby_ready", "live_in_progress") %}
+  {# ── Archetype B2: Challenge Accepted — two-player full-zone layout ── #}
+  {% elif phase == "challenge_accepted" %}
+  {% set _top_photo    = (selected_photo_url if viewer_is_challenger else None) or challenger_photo_url %}
+  {% set _bottom_photo = (selected_photo_url if not viewer_is_challenger else None) or challenged_photo_url %}
+  <div class="arch-story-balanced">
+
+    {# TOP: Challenger #}
+    <div class="asb-player-zone asb-player-zone--top">
+      {% if _top_photo %}
+        <img src="{{ _top_photo }}" class="asb-player-photo" alt="{{ challenger_name }}">
+      {% else %}
+        <div class="asb-player-initial">{{ (challenger_name[0] if challenger_name else '?') | upper }}</div>
+      {% endif %}
+      {% if challenger_primary_pos %}
+      <div class="asb-pos-block">
+        <span class="asb-pos-primary">{{ challenger_primary_pos }}</span>
+        {% if challenger_secondary_pos %}<span class="asb-pos-secondary">{{ challenger_secondary_pos }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if challenger_overall is not none %}
+      <div class="asb-overall">OVR {{ challenger_overall }}</div>
+      {% endif %}
+      <div class="asb-player-name">{{ challenger_name }}</div>
+    </div>
+
+    {# CENTER: Accepted message #}
+    <div class="asb-center-msg">
+      <div class="asb-status-meta">Challenge Accepted</div>
+      <div class="asb-headline">Challenge Accepted</div>
+      <div class="asb-sublabel">{{ viewer_action_text }}</div>
+      <div class="asb-divider"></div>
+      <div class="asb-participants">
+        {{ challenger_name }}<span class="arrow">→</span>{{ challenged_name }}
+      </div>
+      <div class="asb-game">{{ game_name }}</div>
+    </div>
+
+    {# BOTTOM: Challenged #}
+    <div class="asb-player-zone asb-player-zone--bottom">
+      {% if _bottom_photo %}
+        <img src="{{ _bottom_photo }}" class="asb-player-photo" alt="{{ challenged_name }}">
+      {% else %}
+        <div class="asb-player-initial">{{ (challenged_name[0] if challenged_name else '?') | upper }}</div>
+      {% endif %}
+      {% if challenged_primary_pos %}
+      <div class="asb-pos-block">
+        <span class="asb-pos-primary">{{ challenged_primary_pos }}</span>
+        {% if challenged_secondary_pos %}<span class="asb-pos-secondary">{{ challenged_secondary_pos }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if challenged_overall is not none %}
+      <div class="asb-overall">OVR {{ challenged_overall }}</div>
+      {% endif %}
+      <div class="asb-player-name">{{ challenged_name }}</div>
+    </div>
+
+  </div>
+
+  {# ── Archetype B: Battle (live_lobby_ready / live_in_progress) ── #}
+  {% elif phase in ("live_lobby_ready", "live_in_progress") %}
     <div class="cc-col">
       {% set _a_photo = (selected_photo_url if viewer_is_challenger else None) or challenger_photo_url %}
       {% if _a_photo %}<img src="{{ _a_photo }}" class="cc-photo large" alt="{{ challenger_name }}">
@@ -375,9 +433,7 @@
     </div>
     <div class="cc-col" style="gap:10px;">
       <div class="cc-vs-text">VS</div>
-      {% if phase == "challenge_accepted" %}
-        <div class="cc-outcome-badge draw">Let's Play</div>
-      {% elif phase == "live_lobby_ready" %}
+      {% if phase == "live_lobby_ready" %}
         <div class="cc-outcome-badge win" style="color:#fbbf24;border-color:#fbbf24;">⚡ LOBBY OPEN</div>
       {% elif phase == "live_in_progress" %}
         <div class="cc-outcome-badge win" style="color:#fbbf24;border-color:#fbbf24;">⚡ LIVE NOW</div>
