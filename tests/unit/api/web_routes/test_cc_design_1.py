@@ -108,6 +108,8 @@ def _make_mock_ctx(
     opponent_result_summary: dict | None = None,
     forfeiter_name: str | None = None,
     forfeit_sublabel: str | None = None,
+    viewer_skill_levels: dict | None = None,
+    my_skill_progress: list | None = None,
 ) -> dict:
     # Derive viewer_action_text matching _build_challenge_card_context logic
     if phase == "challenge_sent":
@@ -158,6 +160,8 @@ def _make_mock_ctx(
         "challenged_secondary_pos": challenged_secondary_pos,
         "forfeiter_name":           forfeiter_name,
         "forfeit_sublabel":         forfeit_sublabel,
+        "viewer_skill_levels":      viewer_skill_levels or {},
+        "my_skill_progress":        my_skill_progress if my_skill_progress is not None else [],
         "my_result_summary":        my_result_summary if my_result_summary is not None else {
             "game_code": None, "primary_label": "Score",
             "primary_value": my_score, "secondary_items": [],
@@ -297,13 +301,15 @@ class TestCCD08to17TemplateRender:
         assert "71.0" in html
 
     def test_ccd_13_post_skill_delta_renders(self):
-        """CCD-13: post_16_9 renders skill_delta_result (Archetype E) with deltas."""
+        """CCD-13 (updated): post_16_9 renders skill_delta_result (Archetype E2) with rows."""
+        rows = _skill_rows([("accuracy", 0.5, 67.0), ("composure", -0.1, 55.0)])
         html = self._render(
             "public/export/challenge/post_16_9.html", "skill_delta_result",
-            my_skill_scores={"accuracy": 0.5, "composure": -0.1}
+            my_skill_progress=rows,
         )
         assert "Skill Progress" in html
-        assert "+0.50" in html
+        assert "arch-skill-e2" in html
+        assert "+0.5" in html
 
     def test_ccd_14_story_all_12_phases_render(self):
         """CCD-14: story_9_16 renders all valid phases (14) without Jinja2 error."""
@@ -516,6 +522,8 @@ class TestCCDSentReceivedLayout:
                         "game_code": None, "primary_label": "Score",
                         "primary_value": 70.0, "secondary_items": [],
                     },
+                    "viewer_skill_levels": {},
+                    "my_skill_progress":   [],
                 }
                 html = tmpl.render(**ctx)
                 assert len(html) > 100, f"{tmpl_name} phase {phase!r} rendered empty"
@@ -3437,3 +3445,183 @@ class TestCCDForfeit:
         assert "NO CONTEST" in html
         assert 'class="ard2-winner-bar"' not in html
         assert 'class="ard2-winner-bar--bottom"' not in html
+
+
+def _skill_rows(rows: list[tuple]) -> list[dict]:
+    """Build my_skill_progress list for tests: [(key, delta, level), ...]"""
+    from app.skills_config import ALL_SKILLS
+    _cat_map = {}
+    try:
+        from app.api.web_routes.vt_challenges import _SKILL_CATEGORY_LABEL
+        _cat_map = _SKILL_CATEGORY_LABEL
+    except ImportError:
+        pass
+    result = []
+    for key, delta, level in rows:
+        skill_def = ALL_SKILLS.get(key)
+        result.append({
+            "key": key,
+            "name": skill_def["name_en"] if skill_def else key.replace("_", " ").title(),
+            "category": _cat_map.get(key, ""),
+            "current_level": level,
+            "delta": delta,
+            "fill_pct": min(round(level), 100) if level is not None else None,
+            "is_positive": delta > 0,
+            "is_negative": delta < 0,
+        })
+    return result
+
+
+class TestCCDSkill:
+    """CCD-SKILL: skill_delta_result — Player Card-style Skill Progress card.
+
+    Backend helper:
+    CCD-SKILL-01  _build_skill_progress_rows: sorted by abs(delta) desc
+    CCD-SKILL-02  _build_skill_progress_rows: max 8 rows enforced
+    CCD-SKILL-03  _build_skill_progress_rows: name + category correct (Outfield/Mental etc)
+    CCD-SKILL-04  _build_skill_progress_rows: unknown skill key fallback name
+    CCD-SKILL-05  _build_skill_progress_rows: fill_pct = None when level=None
+
+    Post 16:9 template:
+    CCD-SKILL-06  arch-skill-e2 div present
+    CCD-SKILL-07  no cc-photo hero circle; full-zone photo present
+    CCD-SKILL-08  pos + OVR overlay present
+    CCD-SKILL-09  skill name + category + current_level + delta rendered
+    CCD-SKILL-10  positive delta → pos class; negative → neg class
+    CCD-SKILL-11  No skill data recorded when my_skill_progress=[]
+
+    Story 9:16 template:
+    CCD-SKILL-12  arch-skill-e2-story div present + skill rows rendered
+
+    Regression:
+    CCD-SKILL-REG-01  completed_score_win post: no arch-skill-e2
+    CCD-SKILL-REG-02  waiting_for_opponent post: no arch-skill-e2
+    """
+
+    def _render(self, template_path: str, phase: str, **kwargs) -> str:
+        from jinja2 import Environment, FileSystemLoader
+        env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        tmpl = env.get_template(template_path)
+        ctx = _make_mock_ctx(phase=phase, **kwargs)
+        ctx["request"] = MagicMock()
+        return tmpl.render(**ctx)
+
+    # ── Helper tests ─────────────────────────────────────────────────────────
+
+    def test_ccd_skill_01_sorted_by_abs_delta(self):
+        """CCD-SKILL-01: rows sorted by abs(delta) descending."""
+        from app.api.web_routes.vt_challenges import _build_skill_progress_rows
+        deltas = {"composure": 0.1, "accuracy": 0.5, "vision": -0.3}
+        rows = _build_skill_progress_rows(deltas, {})
+        assert rows[0]["key"] == "accuracy"   # abs 0.5 largest
+        assert rows[1]["key"] == "vision"     # abs 0.3 second
+
+    def test_ccd_skill_02_max_8_rows(self):
+        """CCD-SKILL-02: max 8 rows returned even if more deltas present."""
+        from app.api.web_routes.vt_challenges import _build_skill_progress_rows
+        deltas = {f"skill_{i}": float(i) * 0.1 for i in range(1, 15)}
+        rows = _build_skill_progress_rows(deltas, {})
+        assert len(rows) <= 8
+
+    def test_ccd_skill_03_name_and_category(self):
+        """CCD-SKILL-03: known skill key gets correct name_en and category label."""
+        from app.api.web_routes.vt_challenges import _build_skill_progress_rows
+        rows = _build_skill_progress_rows({"composure": 0.2}, {})
+        assert rows[0]["name"] == "Composure"
+        assert rows[0]["category"] == "Mental"
+
+    def test_ccd_skill_04_unknown_key_fallback(self):
+        """CCD-SKILL-04: unknown skill key falls back to title-cased name, empty category."""
+        from app.api.web_routes.vt_challenges import _build_skill_progress_rows
+        rows = _build_skill_progress_rows({"unknown_skill_xyz": 0.3}, {})
+        assert rows[0]["name"] == "Unknown Skill Xyz"
+        assert rows[0]["category"] == ""
+
+    def test_ccd_skill_05_fill_pct_none_when_no_level(self):
+        """CCD-SKILL-05: fill_pct=None when skill_levels does not contain the key."""
+        from app.api.web_routes.vt_challenges import _build_skill_progress_rows
+        rows = _build_skill_progress_rows({"accuracy": 0.5}, {})
+        assert rows[0]["fill_pct"] is None
+        rows_with_level = _build_skill_progress_rows({"accuracy": 0.5}, {"accuracy": 67.5})
+        assert rows_with_level[0]["fill_pct"] == 68
+
+    # ── Post 16:9 template tests ─────────────────────────────────────────────
+
+    def test_ccd_skill_06_post_arch_skill_e2(self):
+        """CCD-SKILL-06: skill_delta_result post: arch-skill-e2 div present."""
+        rows = _skill_rows([("accuracy", 0.5, 67.5), ("composure", -0.1, 55.0)])
+        html = self._render("public/export/challenge/post_16_9.html",
+                            "skill_delta_result", my_skill_progress=rows)
+        assert 'class="arch-skill-e2"' in html
+
+    def test_ccd_skill_07_post_full_zone_photo(self):
+        """CCD-SKILL-07: post: aib-player-photo present, no cc-photo hero circle."""
+        rows = _skill_rows([("accuracy", 0.5, 67.5)])
+        html = self._render("public/export/challenge/post_16_9.html",
+                            "skill_delta_result", my_skill_progress=rows)
+        assert "aib-player-photo" in html
+        assert "cc-photo hero" not in html
+        assert "cc-avatar hero" not in html
+
+    def test_ccd_skill_08_post_ovr_and_pos(self):
+        """CCD-SKILL-08: post: OVR + pos overlay rendered."""
+        rows = _skill_rows([("accuracy", 0.5, 67.5)])
+        html = self._render("public/export/challenge/post_16_9.html",
+                            "skill_delta_result", my_skill_progress=rows,
+                            challenger_overall=71.0, challenger_primary_pos="CM")
+        assert "OVR 71.0" in html
+        assert "CM" in html
+
+    def test_ccd_skill_09_post_skill_row_content(self):
+        """CCD-SKILL-09: post: skill name + category + value + delta in HTML."""
+        rows = _skill_rows([("composure", 0.3, 60.0), ("vision", -0.2, 72.0)])
+        html = self._render("public/export/challenge/post_16_9.html",
+                            "skill_delta_result", my_skill_progress=rows)
+        assert "Composure" in html
+        assert "MENT" in html or "Ment" in html    # category abbrev (Mental[:4])
+        assert "60" in html                         # current_level rounded
+        assert "+0.3" in html                       # positive delta
+        assert "-0.2" in html                       # negative delta
+
+    def test_ccd_skill_10_post_pos_neg_classes(self):
+        """CCD-SKILL-10: post: is_positive → pos class; is_negative → neg class."""
+        rows = _skill_rows([("accuracy", 0.5, 67.5), ("composure", -0.1, 55.0)])
+        html = self._render("public/export/challenge/post_16_9.html",
+                            "skill_delta_result", my_skill_progress=rows)
+        assert 'class="aske-bar-pos"' in html
+        assert 'class="aske-bar-neg"' in html
+
+    def test_ccd_skill_11_post_no_data_fallback(self):
+        """CCD-SKILL-11: post: my_skill_progress=[] → No skill data recorded."""
+        html = self._render("public/export/challenge/post_16_9.html",
+                            "skill_delta_result", my_skill_progress=[])
+        assert "No skill data recorded" in html
+
+    # ── Story 9:16 template tests ─────────────────────────────────────────────
+
+    def test_ccd_skill_12_story_arch_and_rows(self):
+        """CCD-SKILL-12: story: arch-skill-e2-story + skill rows rendered."""
+        rows = _skill_rows([("accuracy", 0.5, 67.5), ("vision", -0.2, 72.0)])
+        html = self._render("public/export/challenge/story_9_16.html",
+                            "skill_delta_result", my_skill_progress=rows)
+        assert 'class="arch-skill-e2-story"' in html
+        assert "Accuracy" in html
+        assert "Vision" in html
+        assert "asb-player-photo" in html
+
+    # ── Regression ───────────────────────────────────────────────────────────
+
+    def test_ccd_skill_reg_01_score_win_no_skill_arch(self):
+        """CCD-SKILL-REG-01: completed_score_win post: no arch-skill-e2 element."""
+        html = self._render("public/export/challenge/post_16_9.html",
+                            "completed_score_win",
+                            challenger_score=80.0, challenged_score=70.0, winner_name="T1B1K3")
+        assert 'class="arch-skill-e2"' not in html
+        assert 'class="arch-result-d2"' in html
+
+    def test_ccd_skill_reg_02_waiting_no_skill_arch(self):
+        """CCD-SKILL-REG-02: waiting_for_opponent post: no arch-skill-e2 element."""
+        html = self._render("public/export/challenge/post_16_9.html",
+                            "waiting_for_opponent", my_score=75.0)
+        assert 'class="arch-skill-e2"' not in html
+        assert 'class="arch-waiting"' in html

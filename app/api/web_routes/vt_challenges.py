@@ -60,6 +60,7 @@ from ...models.vt_challenge import (
 from ...core.redis_pubsub import publish_challenge_event
 from ...services import card_export_service as _export_svc
 from ...utils.football_positions import position_short
+from ...skills_config import ALL_SKILLS, SKILL_CATEGORIES
 from ...services.mood_photo_service import get_mood_photos_for_user as _mood_photos_for_user
 from .card_editor import _MOOD_SLOT_META as _SEND_MOOD_SLOT_META
 from ...services import notification_service
@@ -81,6 +82,13 @@ from .student_features import _spec_ctx
 
 router    = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
+
+# CC-DESIGN-1: skill_key → category display name (name_en from SKILL_CATEGORIES)
+_SKILL_CATEGORY_LABEL: dict[str, str] = {
+    skill["key"]: cat["name_en"]
+    for cat in SKILL_CATEGORIES
+    for skill in cat["skills"]
+}
 
 _MAX_MSG         = 500
 _COMPLETED_LIMIT = 20
@@ -1164,19 +1172,55 @@ def _get_participant_stats(db: Session, user_id: int) -> dict:
     if lic is None:
         return {"overall": None, "primary_pos": None, "secondary_pos": None}
 
+    football_skills = lic.football_skills or {}
     levels = [
         v["current_level"]
-        for v in (lic.football_skills or {}).values()
+        for v in football_skills.values()
         if isinstance(v, dict) and v.get("current_level") is not None
     ]
     overall = round(sum(levels) / len(levels), 1) if levels else None
+    skill_levels = {
+        k: float(v["current_level"])
+        for k, v in football_skills.items()
+        if isinstance(v, dict) and v.get("current_level") is not None
+    }
 
     positions = (lic.motivation_scores or {}).get("positions", [])
     return {
         "overall":       overall,
         "primary_pos":   position_short(positions[0]) if positions else None,
         "secondary_pos": position_short(positions[1]) if len(positions) > 1 else None,
+        "skill_levels":  skill_levels,
     }
+
+
+def _build_skill_progress_rows(
+    skill_deltas: dict[str, float],
+    skill_levels: dict[str, float],
+    max_rows: int = 8,
+) -> list[dict]:
+    """Build Player Card-style skill progress rows for skill_delta_result card.
+
+    Returns rows sorted by abs(delta) desc, capped at max_rows.
+    category uses SKILL_CATEGORIES name_en (Outfield/Set Pieces/Mental/Physical).
+    fill_pct is None when current_level is unavailable — bar renders as empty.
+    """
+    rows = []
+    for key, delta in skill_deltas.items():
+        skill_def = ALL_SKILLS.get(key)
+        level = skill_levels.get(key)
+        rows.append({
+            "key":           key,
+            "name":          skill_def["name_en"] if skill_def else key.replace("_", " ").title(),
+            "category":      _SKILL_CATEGORY_LABEL.get(key, ""),
+            "current_level": level,
+            "delta":         delta,
+            "fill_pct":      min(round(level), 100) if level is not None else None,
+            "is_positive":   delta > 0,
+            "is_negative":   delta < 0,
+        })
+    rows.sort(key=lambda r: abs(r["delta"]), reverse=True)
+    return rows[:max_rows]
 
 
 def _build_result_summary(attempt: Any, game_code: str | None) -> dict:
@@ -1252,6 +1296,7 @@ def _build_challenge_card_context(
     if my_attempt is None:
         my_attempt  = challenger_attempt if is_challenger else challenged_attempt
     opp_attempt = challenged_attempt if is_challenger else challenger_attempt
+    viewer_stats = challenger_stats if is_challenger else challenged_stats
 
     my_score  = float(my_attempt.score_normalized)  if my_attempt  else None
     opp_score = float(opp_attempt.score_normalized) if opp_attempt else None
@@ -1366,6 +1411,13 @@ def _build_challenge_card_context(
         "challenged_overall":       (challenged_stats or {}).get("overall"),
         "challenged_primary_pos":   (challenged_stats or {}).get("primary_pos"),
         "challenged_secondary_pos": (challenged_stats or {}).get("secondary_pos"),
+        # CC-DESIGN-1: skill_delta_result — viewer skill levels + progress rows
+        "viewer_skill_levels":      (viewer_stats or {}).get("skill_levels", {}),
+        "my_skill_progress":        _build_skill_progress_rows(
+            {k: float(v) for k, v in (my_attempt.skill_deltas or {}).items()}
+            if my_attempt and my_attempt.skill_deltas else {},
+            (viewer_stats or {}).get("skill_levels", {}),
+        ),
     }
 
 

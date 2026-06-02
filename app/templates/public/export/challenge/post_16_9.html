@@ -359,6 +359,45 @@
     color: var(--cc-dim);
   }
 
+  /* ── Archetype E2: Skill Progress — personal viewer card (CC-DESIGN-1) ── */
+  .arch-skill-e2 {
+    display: grid; grid-template-columns: 1fr 1.15fr; width: 100%; height: 100%;
+  }
+  .aske-panel {
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 28px 36px; gap: 0; border-left: 1px solid var(--cc-border);
+  }
+  .aske-phase-label {
+    font-size: 0.56rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--cc-dim); border: 1px solid var(--cc-border); border-radius: 3px;
+    padding: 3px 8px; margin-bottom: 10px; display: inline-block; align-self: flex-start;
+  }
+  .aske-title {
+    font-size: 1.6rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--cc-text); line-height: 1.0; margin-bottom: 4px;
+  }
+  .aske-game { font-size: 0.66rem; color: var(--cc-sub); margin-bottom: 14px; }
+  .aske-rows { display: flex; flex-direction: column; gap: 6px; }
+  .aske-row  { display: flex; align-items: center; gap: 6px; }
+  .aske-cat  {
+    font-size: 0.44rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--cc-dim); width: 42px; flex-shrink: 0; text-align: right;
+  }
+  .aske-name {
+    font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--cc-text); width: 82px; flex-shrink: 0; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .aske-bar-bg  { flex: 1; height: 4px; background: var(--cc-border); border-radius: 2px; overflow: hidden; }
+  .aske-bar-pos { height: 100%; border-radius: 2px; background: var(--cc-green); }
+  .aske-bar-neg { height: 100%; border-radius: 2px; background: var(--cc-red); }
+  .aske-bar-neu { height: 100%; border-radius: 2px; background: var(--cc-dim); }
+  .aske-val   { font-size: 0.62rem; font-weight: 700; color: var(--cc-sub); width: 22px; text-align: right; flex-shrink: 0; }
+  .aske-delta { font-size: 0.60rem; font-weight: 800; width: 34px; text-align: right; flex-shrink: 0; }
+  .aske-delta.pos { color: var(--cc-green); }
+  .aske-delta.neg { color: var(--cc-red); }
+  .aske-nodelta { font-size: 0.76rem; color: var(--cc-dim); margin-top: 8px; }
+
 </style>
 </head>
 <body>
@@ -398,7 +437,7 @@
   </div>
 
   {# ── Content ── #}
-  <div class="card-content{% if phase in ('challenge_sent','challenge_received','challenge_accepted','challenge_cancelled','challenge_declined','completed_score_win','completed_draw','completed_forfeit_win','completed_forfeit_loss','no_contest') %} card-content--invitation{% endif %}">
+  <div class="card-content{% if phase in ('challenge_sent','challenge_received','challenge_accepted','challenge_cancelled','challenge_declined','completed_score_win','completed_draw','completed_forfeit_win','completed_forfeit_loss','no_contest','skill_delta_result') %} card-content--invitation{% endif %}">
 
   {#
     CC-DESIGN-1: Archetype A — Two-Participant Invitation
@@ -791,37 +830,62 @@
 
   </div>
 
-  {# ── Archetype E: Skill Progress ── #}
+  {# ── Archetype E2: Skill Progress — full-zone photo + Player Card-style rows (CC-DESIGN-1) ── #}
   {% elif phase == "skill_delta_result" %}
-  <div class="cc-flex-center" style="gap:52px; width:100%;">
-    {# Viewer photo #}
-    <div class="cc-col">
-      {% set _v_photo = selected_photo_url or viewer_photo_url %}
+  {% set _v_name  = challenger_name if viewer_is_challenger else challenged_name %}
+  {% set _v_photo = selected_photo_url or viewer_photo_url %}
+  {% set _v_overall      = challenger_overall      if viewer_is_challenger else challenged_overall %}
+  {% set _v_primary_pos  = challenger_primary_pos  if viewer_is_challenger else challenged_primary_pos %}
+  {% set _v_secondary_pos = challenger_secondary_pos if viewer_is_challenger else challenged_secondary_pos %}
+  <div class="arch-skill-e2">
+
+    {# LEFT: Viewer full-zone photo — reuses aib-* overlay CSS #}
+    <div class="aib-player-zone">
       {% if _v_photo %}
-        <img src="{{ _v_photo }}" class="cc-photo hero" alt="">
+        <img src="{{ _v_photo }}" class="aib-player-photo" alt="{{ _v_name }}">
       {% else %}
-        <div class="cc-avatar hero">{{ (challenger_name if viewer_is_challenger else challenged_name)[0] | upper }}</div>
+        <div class="aib-player-initial">{{ (_v_name[0] if _v_name else '?') | upper }}</div>
       {% endif %}
-      <div class="cc-name">{{ challenger_name if viewer_is_challenger else challenged_name }}</div>
+      {% if _v_primary_pos %}
+      <div class="aib-pos-block">
+        <span class="aib-pos-primary">{{ _v_primary_pos }}</span>
+        {% if _v_secondary_pos %}<span class="aib-pos-secondary">{{ _v_secondary_pos }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if _v_overall is not none %}
+      <div class="aib-overall">OVR {{ _v_overall }}</div>
+      {% endif %}
+      <div class="aib-player-name">{{ _v_name }}</div>
     </div>
-    {# Skill table #}
-    <div>
-      <div class="cc-skill-title">📈 Skill Progress · {{ game_name }}</div>
-      {% if my_skill_scores %}
-      <div class="cc-skill-table">
-        {% for skill, delta in my_skill_scores.items() %}
-        <div class="cc-skill-row">
-          <span class="cc-skill-name">{{ skill | replace("_"," ") | title }}</span>
-          <span class="cc-skill-delta {{ 'pos' if delta > 0 else ('neg' if delta < 0 else '') }}">
-            {% if delta > 0 %}+{% endif %}{{ "%.2f"|format(delta) }}
+
+    {# RIGHT: Skill progress panel #}
+    <div class="aske-panel">
+      <div class="aske-phase-label">Skill Progress</div>
+      <div class="aske-title">📈 {{ game_name }}</div>
+      {% if my_skill_progress %}
+      <div class="aske-rows">
+        {% for row in my_skill_progress %}
+        <div class="aske-row">
+          <span class="aske-cat">{{ row.category[:4] | upper if row.category else '' }}</span>
+          <span class="aske-name">{{ row.name }}</span>
+          <div class="aske-bar-bg">
+            {% if row.fill_pct is not none %}
+              <div class="aske-bar-{{ 'pos' if row.is_positive else ('neg' if row.is_negative else 'neu') }}"
+                   style="width:{{ row.fill_pct }}%;"></div>
+            {% endif %}
+          </div>
+          <span class="aske-val">{{ row.current_level | round(0) | int if row.current_level is not none else '' }}</span>
+          <span class="aske-delta {{ 'pos' if row.is_positive else ('neg' if row.is_negative else '') }}">
+            {{ '+' if row.is_positive else '' }}{{ "%.1f"|format(row.delta) }}
           </span>
         </div>
         {% endfor %}
       </div>
       {% else %}
-      <div style="font-size:0.82rem;color:var(--cc-dim);">No skill data recorded.</div>
+      <div class="aske-nodelta">No skill data recorded.</div>
       {% endif %}
     </div>
+
   </div>
 
   {# ── Fallback ── #}
