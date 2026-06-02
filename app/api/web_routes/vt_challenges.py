@@ -41,6 +41,7 @@ from ...dependencies import get_current_user_optional, get_current_user_web
 from ...models.friendship import Friendship, FriendshipStatus, is_friends
 from ...models.license import UserLicense
 from ...models.notification import NotificationType
+from ...models.user_mood_photos import UserMoodPhoto
 from ...models.user import User
 from ...models.virtual_training import VirtualTrainingAttempt, VirtualTrainingGame
 from ...models.vt_challenge import (
@@ -1050,9 +1051,20 @@ def validate_challenge_card_phase(
 def _get_participant_photo(db: Session, user_id: int) -> str | None:
     """Return the best available photo URL for a challenge participant.
 
-    CC-DESIGN-1: Priority: player_card_photo_url > wc_photo_url > None.
-    Called once per participant in the preview/export routes.
+    CC-DESIGN-1 priority: mood_intro_neutral processed_png_url (bg-free)
+    → mood_intro_neutral original_url → player_card_photo_url → wc_photo_url → None.
+    The neutral mood photo is always background-removed, making it ideal for
+    the hero cutout and target card layouts.
     """
+    mood = db.query(UserMoodPhoto).filter_by(
+        user_id=user_id, slot="mood_intro_neutral"
+    ).first()
+    if mood is not None:
+        if mood.processed_png_url:
+            return mood.processed_png_url
+        if mood.original_url:
+            return mood.original_url
+
     lic = db.query(UserLicense).filter(
         UserLicense.user_id == user_id,
         UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",

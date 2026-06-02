@@ -958,3 +958,57 @@ class TestCCDInviteTwoParticipant:
         # The target card initial container class must be present (not a real img src)
         assert "ai-target-initial" in html or "ai-story-target-initial" in html, \
             "When no challenged_photo_url, initials container class must be rendered"
+
+
+# ── CCD-NEUTRAL-PHOTO: mood_intro_neutral as participant photo source ─────────
+
+class TestCCDNeutralPhoto:
+    """CCD-NEUTRAL-01..04: _get_participant_photo uses mood_intro_neutral (bg-free) first."""
+
+    def _run(self, mood_record, lic_record):
+        from app.api.web_routes.vt_challenges import _get_participant_photo
+        db = MagicMock()
+
+        def _query_side_effect(model):
+            q = MagicMock()
+            if "UserMoodPhoto" in str(model) or hasattr(model, "__tablename__") and \
+                    getattr(model, "__tablename__", "") == "user_mood_photos":
+                q.filter_by.return_value.first.return_value = mood_record
+            else:
+                q.filter.return_value.first.return_value = lic_record
+            return q
+
+        db.query.side_effect = _query_side_effect
+        return _get_participant_photo(db, user_id=10)
+
+    def test_ccd_neutral_01_processed_png_used_when_present(self):
+        """CCD-NEUTRAL-01: processed_png_url from mood_intro_neutral takes top priority."""
+        mood = MagicMock()
+        mood.processed_png_url = "/processed/neutral.png"
+        mood.original_url = "/orig/neutral.jpg"
+        result = self._run(mood, MagicMock(player_card_photo_url="/player.jpg", wc_photo_url=None))
+        assert result == "/processed/neutral.png", \
+            "processed_png_url must be used when available"
+
+    def test_ccd_neutral_02_original_url_fallback_when_not_processed(self):
+        """CCD-NEUTRAL-02: original_url used when processed_png_url is None."""
+        mood = MagicMock()
+        mood.processed_png_url = None
+        mood.original_url = "/orig/neutral.jpg"
+        result = self._run(mood, MagicMock(player_card_photo_url="/player.jpg", wc_photo_url=None))
+        assert result == "/orig/neutral.jpg", \
+            "original_url must be used when processed_png_url is None"
+
+    def test_ccd_neutral_03_player_card_photo_fallback_when_no_mood(self):
+        """CCD-NEUTRAL-03: player_card_photo_url used when no mood_intro_neutral record."""
+        lic = MagicMock()
+        lic.player_card_photo_url = "/player.jpg"
+        lic.wc_photo_url = None
+        result = self._run(None, lic)
+        assert result == "/player.jpg", \
+            "player_card_photo_url must be used when no mood_intro_neutral record"
+
+    def test_ccd_neutral_04_none_when_no_mood_and_no_license(self):
+        """CCD-NEUTRAL-04: None returned when no mood record and no license."""
+        result = self._run(None, None)
+        assert result is None, "None expected when no mood photo and no license"
