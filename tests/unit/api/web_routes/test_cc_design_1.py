@@ -133,6 +133,14 @@ def _make_mock_ctx(
         "viewer_is_challenger": viewer_is_challenger,
         "forfeit_reason": None,
         "viewer_action_text": _vat,
+        "phase_emoji":              {"challenge_sent": "⚔️", "challenge_received": "🛡️",
+                                     "challenge_accepted": "✅", "challenge_cancelled": "🚫",
+                                     "challenge_declined": "👎", "waiting_for_opponent": "⏳",
+                                     "live_lobby_ready": "⚡", "live_in_progress": "🔥",
+                                     "completed_score_win": "🏆", "completed_draw": "⚖️",
+                                     "completed_forfeit_win": "🏆", "completed_forfeit_loss": "💔",
+                                     "no_contest": "🔄", "skill_delta_result": "📈",
+                                     }.get(phase, ""),
         "challenger_overall":       challenger_overall,
         "challenger_primary_pos":   challenger_primary_pos,
         "challenger_secondary_pos": challenger_secondary_pos,
@@ -2268,3 +2276,163 @@ class TestCCDAccepted:
         """CCD-ACC-12: story_9_16 live_lobby_ready: does NOT use arch-story-balanced."""
         html = self._render("public/export/challenge/story_9_16.html", "live_lobby_ready")
         assert '<div class="arch-story-balanced">' not in html
+
+
+# ── Phase emoji mapping ───────────────────────────────────────────────────────
+
+class TestCCDEmoji:
+    """CCD-EMOJI: Central _PHASE_EMOJI mapping + template rendering.
+
+    CCD-EMOJI-01  _PHASE_EMOJI exists in vt_challenges and has all 14 phases
+    CCD-EMOJI-02  challenge_sent → "⚔️"
+    CCD-EMOJI-03  challenge_received → "🛡️" (different from challenge_sent)
+    CCD-EMOJI-04  challenge_accepted → "✅"
+    CCD-EMOJI-05  challenge_cancelled → "🚫"
+    CCD-EMOJI-06  challenge_declined → "👎"
+    CCD-EMOJI-07  completed_score_win → "🏆"
+    CCD-EMOJI-08  _build_challenge_card_context includes phase_emoji key
+    CCD-EMOJI-09  post_16_9 challenge_sent: ⚔️ rendered, NOT 🛡️
+    CCD-EMOJI-10  post_16_9 challenge_received: 🛡️ rendered, NOT ⚔️
+    CCD-EMOJI-11  post_16_9 challenge_accepted: ✅ rendered
+    CCD-EMOJI-12  post_16_9 challenge_cancelled: 🚫 rendered
+    CCD-EMOJI-13  post_16_9 challenge_declined: 👎 rendered
+    CCD-EMOJI-14  story_9_16 challenge_accepted: ✅ rendered
+    CCD-EMOJI-15  story_9_16 challenge_received: 🛡️ rendered
+    CCD-EMOJI-16  post_16_9 phase_emoji="" → no aib-phase-emoji div rendered
+    CCD-EMOJI-17  post_16_9 live_lobby_ready: no regression (⚡ still in badge)
+    CCD-EMOJI-18  post_16_9 completed_score_win: 🏆 in outcome badge
+    CCD-EMOJI-19  challenge_sent and challenge_received emojis are different
+    """
+
+    def _render(self, template_path: str, phase: str, **kwargs) -> str:
+        from jinja2 import Environment, FileSystemLoader
+        env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        tmpl = env.get_template(template_path)
+        ctx = _make_mock_ctx(phase=phase, **kwargs)
+        ctx["request"] = MagicMock()
+        return tmpl.render(**ctx)
+
+    def test_ccd_emoji_01_phase_emoji_dict_complete(self):
+        """CCD-EMOJI-01: _PHASE_EMOJI has entries for all 14 phases."""
+        from app.api.web_routes.vt_challenges import _PHASE_EMOJI, VALID_CHALLENGE_CARD_PHASES
+        for phase in VALID_CHALLENGE_CARD_PHASES:
+            assert phase in _PHASE_EMOJI, f"_PHASE_EMOJI missing entry for phase: {phase!r}"
+            assert _PHASE_EMOJI[phase], f"_PHASE_EMOJI[{phase!r}] must not be empty"
+
+    def test_ccd_emoji_02_sent_is_sword(self):
+        """CCD-EMOJI-02: challenge_sent → ⚔️"""
+        from app.api.web_routes.vt_challenges import _PHASE_EMOJI
+        assert _PHASE_EMOJI["challenge_sent"] == "⚔️"
+
+    def test_ccd_emoji_03_received_is_shield(self):
+        """CCD-EMOJI-03: challenge_received → 🛡️ (different from challenge_sent)"""
+        from app.api.web_routes.vt_challenges import _PHASE_EMOJI
+        assert _PHASE_EMOJI["challenge_received"] == "🛡️"
+
+    def test_ccd_emoji_04_accepted_is_checkmark(self):
+        """CCD-EMOJI-04: challenge_accepted → ✅"""
+        from app.api.web_routes.vt_challenges import _PHASE_EMOJI
+        assert _PHASE_EMOJI["challenge_accepted"] == "✅"
+
+    def test_ccd_emoji_05_cancelled_is_no_entry(self):
+        """CCD-EMOJI-05: challenge_cancelled → 🚫"""
+        from app.api.web_routes.vt_challenges import _PHASE_EMOJI
+        assert _PHASE_EMOJI["challenge_cancelled"] == "🚫"
+
+    def test_ccd_emoji_06_declined_is_thumbsdown(self):
+        """CCD-EMOJI-06: challenge_declined → 👎"""
+        from app.api.web_routes.vt_challenges import _PHASE_EMOJI
+        assert _PHASE_EMOJI["challenge_declined"] == "👎"
+
+    def test_ccd_emoji_07_score_win_is_trophy(self):
+        """CCD-EMOJI-07: completed_score_win → 🏆"""
+        from app.api.web_routes.vt_challenges import _PHASE_EMOJI
+        assert _PHASE_EMOJI["completed_score_win"] == "🏆"
+
+    def test_ccd_emoji_08_context_includes_phase_emoji(self):
+        """CCD-EMOJI-08: _build_challenge_card_context returns phase_emoji key."""
+        from app.api.web_routes.vt_challenges import _build_challenge_card_context
+        ch = MagicMock()
+        ch.challenger_id = 10; ch.challenged_id = 20
+        ch.challenger = MagicMock(nickname="T1B1K3", email="t@x.com")
+        ch.challenged = MagicMock(nickname="RD14S", email="r@x.com")
+        ch.game = MagicMock(name="Memory Sequence")
+        ch.challenge_mode = "async"; ch.status = MagicMock()
+        ch.winner_id = None; ch.winner = None; ch.is_draw = False
+        ch.completed_at = None; ch.forfeit_reason = None; ch.forfeit_user_id = None
+        ch.challenger_attempt_id = None; ch.challenged_attempt_id = None
+        viewer = MagicMock(id=10)
+        ctx = _build_challenge_card_context(ch, viewer, None, None, "challenge_sent")
+        assert "phase_emoji" in ctx
+        assert ctx["phase_emoji"] == "⚔️"
+
+    def test_ccd_emoji_09_post_sent_shows_sword(self):
+        """CCD-EMOJI-09: post_16_9 challenge_sent: ⚔️ rendered."""
+        html = self._render("public/export/challenge/post_16_9.html", "challenge_sent")
+        assert "⚔️" in html
+        assert "🛡️" not in html
+
+    def test_ccd_emoji_10_post_received_shows_shield(self):
+        """CCD-EMOJI-10: post_16_9 challenge_received: 🛡️ rendered, NOT ⚔️ in emoji div."""
+        html = self._render("public/export/challenge/post_16_9.html", "challenge_received",
+                            viewer_is_challenger=False)
+        assert "🛡️" in html
+        assert "aib-phase-emoji" in html
+
+    def test_ccd_emoji_11_post_accepted_shows_checkmark(self):
+        """CCD-EMOJI-11: post_16_9 challenge_accepted: ✅ in aib-phase-emoji."""
+        html = self._render("public/export/challenge/post_16_9.html", "challenge_accepted")
+        assert "✅" in html
+        assert "aib-phase-emoji" in html
+
+    def test_ccd_emoji_12_post_cancelled_shows_no_entry(self):
+        """CCD-EMOJI-12: post_16_9 challenge_cancelled: 🚫 rendered."""
+        html = self._render("public/export/challenge/post_16_9.html", "challenge_cancelled")
+        assert "🚫" in html
+
+    def test_ccd_emoji_13_post_declined_shows_thumbsdown(self):
+        """CCD-EMOJI-13: post_16_9 challenge_declined: 👎 rendered."""
+        html = self._render("public/export/challenge/post_16_9.html", "challenge_declined")
+        assert "👎" in html
+
+    def test_ccd_emoji_14_story_accepted_shows_checkmark(self):
+        """CCD-EMOJI-14: story_9_16 challenge_accepted: ✅ in asb-phase-emoji."""
+        html = self._render("public/export/challenge/story_9_16.html", "challenge_accepted")
+        assert "✅" in html
+        assert "asb-phase-emoji" in html
+
+    def test_ccd_emoji_15_story_received_shows_shield(self):
+        """CCD-EMOJI-15: story_9_16 challenge_received: 🛡️ rendered."""
+        html = self._render("public/export/challenge/story_9_16.html", "challenge_received",
+                            viewer_is_challenger=False)
+        assert "🛡️" in html
+
+    def test_ccd_emoji_16_empty_emoji_no_div(self):
+        """CCD-EMOJI-16: phase_emoji='' → aib-phase-emoji div NOT rendered."""
+        from jinja2 import Environment, FileSystemLoader
+        env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        tmpl = env.get_template("public/export/challenge/post_16_9.html")
+        ctx = _make_mock_ctx(phase="challenge_sent")
+        ctx["phase_emoji"] = ""  # override to empty
+        ctx["request"] = MagicMock()
+        html = tmpl.render(**ctx)
+        assert '<div class="aib-phase-emoji">' not in html
+
+    def test_ccd_emoji_17_live_lobby_no_regression(self):
+        """CCD-EMOJI-17: post_16_9 live_lobby_ready: ⚡ still in badge, no crash."""
+        html = self._render("public/export/challenge/post_16_9.html", "live_lobby_ready")
+        assert "⚡" in html
+        assert "LOBBY OPEN" in html
+
+    def test_ccd_emoji_18_result_badge_has_trophy(self):
+        """CCD-EMOJI-18: post_16_9 completed_score_win: 🏆 in outcome badge."""
+        html = self._render("public/export/challenge/post_16_9.html", "completed_score_win",
+                            challenger_score=85.0, challenged_score=70.0, winner_name="T1B1K3")
+        assert "🏆" in html
+        assert "SCORE WIN" in html
+
+    def test_ccd_emoji_19_sent_and_received_differ(self):
+        """CCD-EMOJI-19: challenge_sent and challenge_received have different emojis."""
+        from app.api.web_routes.vt_challenges import _PHASE_EMOJI
+        assert _PHASE_EMOJI["challenge_sent"] != _PHASE_EMOJI["challenge_received"], \
+            "sent and received must have distinct emojis"

@@ -911,6 +911,27 @@ _TERMINAL_STATUSES = frozenset({
     ChallengeStatus.DECLINED,  ChallengeStatus.CANCELLED,
 })
 
+# CC-DESIGN-1: central phase → emoji mapping used by both export templates.
+# challenge_sent (⚔️) and challenge_received (🛡️) are intentionally different:
+#   ⚔️ = challenger/attacker perspective
+#   🛡️ = challenged/defender perspective
+_PHASE_EMOJI: dict[str, str] = {
+    "challenge_sent":         "⚔️",
+    "challenge_received":     "🛡️",
+    "challenge_accepted":     "✅",
+    "challenge_cancelled":    "🚫",
+    "challenge_declined":     "👎",
+    "waiting_for_opponent":   "⏳",
+    "live_lobby_ready":       "⚡",
+    "live_in_progress":       "🔥",
+    "completed_score_win":    "🏆",
+    "completed_draw":         "⚖️",
+    "completed_forfeit_win":  "🏆",
+    "completed_forfeit_loss": "💔",
+    "no_contest":             "🔄",
+    "skill_delta_result":     "📈",
+}
+
 _PHASE_LABELS = {
     "challenge_sent":         "Challenge Sent",
     "challenge_received":     "You've Been Challenged",
@@ -1244,6 +1265,8 @@ def _build_challenge_card_context(
         "forfeit_reason":        ch.forfeit_reason,
         # CC-DESIGN-1: two-participant invitation narrative
         "viewer_action_text":    viewer_action_text,
+        # CC-DESIGN-1: central emoji for this phase (both templates use this)
+        "phase_emoji":           _PHASE_EMOJI.get(phase, ""),
         # CC-DESIGN-1: participant stats (overall skill + position)
         "challenger_overall":       (challenger_stats or {}).get("overall"),
         "challenger_primary_pos":   (challenger_stats or {}).get("primary_pos"),

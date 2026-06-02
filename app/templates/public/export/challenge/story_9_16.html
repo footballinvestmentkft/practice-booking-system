@@ -206,6 +206,9 @@
     text-align: center; padding: 24px 60px; gap: 0;
     border-top: 1px solid var(--cc-border); border-bottom: 1px solid var(--cc-border);
   }
+  .asb-phase-emoji {
+    font-size: 3rem; line-height: 1; margin-bottom: 10px; display: block;
+  }
   .asb-status-meta {
     font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
     color: var(--cc-dim); border: 1px solid var(--cc-border); border-radius: 3px;
@@ -330,8 +333,9 @@
     {# CENTER: Message — no CTA, no buttons, no links #}
     <div class="asb-center-msg">
       <div class="asb-status-meta">Challenge Invitation</div>
+      {% if phase_emoji %}<div class="asb-phase-emoji">{{ phase_emoji }}</div>{% endif %}
       <div class="asb-headline">
-        {% if phase == "challenge_sent" %}⚔️ Challenge Sent{% else %}⚔️ You've Been Challenged!{% endif %}
+        {% if phase == "challenge_sent" %}Challenge Sent{% else %}You've Been Challenged!{% endif %}
       </div>
       <div class="asb-sublabel">
         {% if phase == "challenge_sent" %}sent by you{% else %}sent to you{% endif %}
@@ -393,6 +397,7 @@
     {# CENTER: Accepted message #}
     <div class="asb-center-msg">
       <div class="asb-status-meta">Challenge Accepted</div>
+      {% if phase_emoji %}<div class="asb-phase-emoji">{{ phase_emoji }}</div>{% endif %}
       <div class="asb-headline">Challenge Accepted</div>
       <div class="asb-sublabel">{{ viewer_action_text }}</div>
       <div class="asb-divider"></div>
@@ -483,15 +488,15 @@
     {# Outcome badge center #}
     <div class="cc-col" style="gap:8px;">
       {% if phase == "completed_score_win" %}
-        <div class="cc-outcome-badge win">SCORE WIN</div>
+        <div class="cc-outcome-badge win">🏆 SCORE WIN</div>
       {% elif phase == "completed_draw" %}
-        <div class="cc-outcome-badge draw">DRAW</div>
+        <div class="cc-outcome-badge draw">⚖️ DRAW</div>
       {% elif phase == "completed_forfeit_win" %}
-        <div class="cc-outcome-badge win">FORFEIT WIN</div>
+        <div class="cc-outcome-badge win">🏆 FORFEIT WIN</div>
       {% elif phase == "completed_forfeit_loss" %}
-        <div class="cc-outcome-badge loss">FORFEIT LOSS</div>
+        <div class="cc-outcome-badge loss">💔 FORFEIT LOSS</div>
       {% elif phase == "no_contest" %}
-        <div class="cc-outcome-badge muted">NO CONTEST</div>
+        <div class="cc-outcome-badge muted">🔄 NO CONTEST</div>
       {% endif %}
     </div>
     {# Challenged row #}
@@ -541,6 +546,7 @@
     {# CENTER: Terminal message (dimmed) #}
     <div class="asb-center-msg">
       <div class="asb-status-meta">Challenge Closed</div>
+      {% if phase_emoji %}<div class="asb-phase-emoji" style="opacity:0.6;">{{ phase_emoji }}</div>{% endif %}
       <div class="asb-headline" style="color:var(--cc-dim);">
         {% if phase == "challenge_cancelled" %}Challenge Cancelled{% else %}Challenge Declined{% endif %}
       </div>

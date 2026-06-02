@@ -230,6 +230,9 @@
     display: flex; flex-direction: column; justify-content: center; align-items: center;
     text-align: center; padding: 24px 32px; gap: 0;
   }
+  .aib-phase-emoji {
+    font-size: 2.4rem; line-height: 1; margin-bottom: 10px; display: block;
+  }
   .aib-status-meta {
     font-size: 0.58rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
     color: var(--cc-dim); border: 1px solid var(--cc-border); border-radius: 3px;
@@ -372,8 +375,9 @@
     {# CENTER: Message — no CTA, no buttons, no links #}
     <div class="aib-center-msg">
       <div class="aib-status-meta">Challenge Invitation</div>
+      {% if phase_emoji %}<div class="aib-phase-emoji">{{ phase_emoji }}</div>{% endif %}
       <div class="aib-headline">
-        {% if phase == "challenge_sent" %}⚔️ Challenge<br>Sent{% else %}⚔️ You've Been<br>Challenged!{% endif %}
+        {% if phase == "challenge_sent" %}Challenge<br>Sent{% else %}You've Been<br>Challenged!{% endif %}
       </div>
       <div class="aib-sublabel">
         {% if phase == "challenge_sent" %}sent by you{% else %}sent to you{% endif %}
@@ -436,6 +440,7 @@
     {# CENTER: Accepted message #}
     <div class="aib-center-msg">
       <div class="aib-status-meta">Challenge Accepted</div>
+      {% if phase_emoji %}<div class="aib-phase-emoji">{{ phase_emoji }}</div>{% endif %}
       <div class="aib-headline">Challenge<br>Accepted</div>
       <div class="aib-sublabel">{{ viewer_action_text }}</div>
       <div class="aib-divider"></div>
@@ -550,15 +555,15 @@
     <div class="cc-vs-col">
       <div class="cc-vs-text">VS</div>
       {% if phase == "completed_score_win" %}
-        <div class="cc-outcome-badge win">SCORE WIN</div>
+        <div class="cc-outcome-badge win">🏆 SCORE WIN</div>
       {% elif phase == "completed_draw" %}
-        <div class="cc-outcome-badge draw">DRAW</div>
+        <div class="cc-outcome-badge draw">⚖️ DRAW</div>
       {% elif phase == "completed_forfeit_win" %}
-        <div class="cc-outcome-badge win">FORFEIT WIN</div>
+        <div class="cc-outcome-badge win">🏆 FORFEIT WIN</div>
       {% elif phase == "completed_forfeit_loss" %}
-        <div class="cc-outcome-badge loss">FORFEIT LOSS</div>
+        <div class="cc-outcome-badge loss">💔 FORFEIT LOSS</div>
       {% elif phase == "no_contest" %}
-        <div class="cc-outcome-badge muted">NO CONTEST</div>
+        <div class="cc-outcome-badge muted">🔄 NO CONTEST</div>
       {% endif %}
     </div>
     {# Challenged #}
@@ -609,6 +614,7 @@
     {# CENTER: Terminal message (dimmed, no active CTA) #}
     <div class="aib-center-msg">
       <div class="aib-status-meta">Challenge Closed</div>
+      {% if phase_emoji %}<div class="aib-phase-emoji" style="opacity:0.6;">{{ phase_emoji }}</div>{% endif %}
       <div class="aib-headline" style="color:var(--cc-dim);">
         {% if phase == "challenge_cancelled" %}Challenge<br>Cancelled{% else %}Challenge<br>Declined{% endif %}
       </div>
