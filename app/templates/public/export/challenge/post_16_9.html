@@ -352,6 +352,12 @@
   .ard2-secondary-item { font-weight: 600; }
   .ard2-secondary-sep  { opacity: 0.4; }
   .ard2-game { font-size: 0.62rem; color: var(--cc-dim); margin-top: 2px; }
+  .ard2-sublabel { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cc-dim); }
+  .ard2-dnp-overlay {
+    position: absolute; bottom: 46px; left: 0; right: 0; text-align: center; z-index: 3;
+    font-size: 0.52rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--cc-dim);
+  }
 
 </style>
 </head>
@@ -625,6 +631,10 @@
   {% set _cd_photo = selected_photo_url if not viewer_is_challenger else challenged_photo_url %}
   <div class="arch-result-d2">
 
+    {# ── Set forfeiter flags for DNP overlay ── #}
+    {% set _ch_is_dnp = (phase in ("completed_forfeit_win","completed_forfeit_loss") and forfeiter_name == challenger_name) or (phase == "no_contest" and challenger_result_summary.primary_value is none) %}
+    {% set _cd_is_dnp = (phase in ("completed_forfeit_win","completed_forfeit_loss") and forfeiter_name == challenged_name) or (phase == "no_contest" and challenged_result_summary.primary_value is none) %}
+
     {# ── LEFT: Challenger full-zone ── #}
     <div class="aib-player-zone">
       {% if _ch_photo %}
@@ -642,6 +652,7 @@
       {% if challenger_overall is not none %}
       <div class="aib-overall">OVR {{ challenger_overall }}</div>
       {% endif %}
+      {% if _ch_is_dnp %}<div class="ard2-dnp-overlay">Did not play</div>{% endif %}
       <div class="aib-player-name">{{ challenger_name }}</div>
     </div>
 
@@ -658,21 +669,24 @@
       {% elif phase == "no_contest" %}
         <div class="cc-outcome-badge muted">🔄 NO CONTEST</div>
       {% endif %}
-      {% if phase in ("completed_score_win","completed_draw") %}
+      {% if forfeit_sublabel %}<div class="ard2-sublabel">{{ forfeit_sublabel }}</div>{% endif %}
+      {% if viewer_action_text %}<div class="ard2-sublabel" style="color:var(--cc-sub);">{{ viewer_action_text }}</div>{% endif %}
+      {# Score block: score_win / draw show both; forfeit_win/loss show winner's score #}
       {% set _ch_pv = challenger_result_summary.primary_value %}
       {% set _cd_pv = challenged_result_summary.primary_value %}
+      {% if phase in ("completed_score_win","completed_draw","completed_forfeit_win","completed_forfeit_loss") %}
       {% if _ch_pv is not none or _cd_pv is not none %}
       <div class="ard2-score-row">
-        <span class="ard2-score-val{{ ' dim' if (phase == 'completed_score_win' and _is_cd_winner) else '' }}">
+        <span class="ard2-score-val{{ ' dim' if (phase == 'completed_score_win' and _is_cd_winner) or _ch_pv is none else '' }}">
           {{ "%.1f"|format(_ch_pv) if _ch_pv is not none else "—" }}
         </span>
         <span class="ard2-score-sep">—</span>
-        <span class="ard2-score-val{{ ' dim' if (phase == 'completed_score_win' and _is_ch_winner) else '' }}">
+        <span class="ard2-score-val{{ ' dim' if (phase == 'completed_score_win' and _is_ch_winner) or _cd_pv is none else '' }}">
           {{ "%.1f"|format(_cd_pv) if _cd_pv is not none else "—" }}
         </span>
       </div>
       {% endif %}
-      {% if challenger_result_summary.secondary_items %}
+      {% if challenger_result_summary.secondary_items and _ch_pv is not none %}
       <div class="ard2-secondary-row">
         <span class="ard2-secondary-label">{{ challenger_name[:6] }}:</span>
         {% for item in challenger_result_summary.secondary_items %}
@@ -680,7 +694,7 @@
         {% endfor %}
       </div>
       {% endif %}
-      {% if challenged_result_summary.secondary_items %}
+      {% if challenged_result_summary.secondary_items and _cd_pv is not none %}
       <div class="ard2-secondary-row">
         <span class="ard2-secondary-label">{{ challenged_name[:6] }}:</span>
         {% for item in challenged_result_summary.secondary_items %}
@@ -709,6 +723,7 @@
       {% if challenged_overall is not none %}
       <div class="aib-overall">OVR {{ challenged_overall }}</div>
       {% endif %}
+      {% if _cd_is_dnp %}<div class="ard2-dnp-overlay">Did not play</div>{% endif %}
       <div class="aib-player-name">{{ challenged_name }}</div>
     </div>
 

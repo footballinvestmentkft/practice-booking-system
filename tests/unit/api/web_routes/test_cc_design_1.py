@@ -106,6 +106,8 @@ def _make_mock_ctx(
     challenged_result_summary: dict | None = None,
     viewer_result_summary: dict | None = None,
     opponent_result_summary: dict | None = None,
+    forfeiter_name: str | None = None,
+    forfeit_sublabel: str | None = None,
 ) -> dict:
     # Derive viewer_action_text matching _build_challenge_card_context logic
     if phase == "challenge_sent":
@@ -154,6 +156,8 @@ def _make_mock_ctx(
         "challenged_overall":       challenged_overall,
         "challenged_primary_pos":   challenged_primary_pos,
         "challenged_secondary_pos": challenged_secondary_pos,
+        "forfeiter_name":           forfeiter_name,
+        "forfeit_sublabel":         forfeit_sublabel,
         "my_result_summary":        my_result_summary if my_result_summary is not None else {
             "game_code": None, "primary_label": "Score",
             "primary_value": my_score, "secondary_items": [],
@@ -3231,3 +3235,205 @@ class TestCCDResult:
         )
         assert 'class="arch-result-d2-story"' in html
         assert "FORFEIT WIN" in html
+
+
+def _forfeit_win_rs(score: float) -> dict:
+    return {"game_code": "memory_sequence", "primary_label": "Score",
+            "primary_value": score, "secondary_items": [{"label": "Seq", "value": "7"}, {"label": "Acc", "value": "80%"}]}
+
+
+class TestCCDForfeit:
+    """CCD-FORFEIT: completed_forfeit_win / completed_forfeit_loss / no_contest.
+
+    Backend context:
+    CCD-FORFEIT-01  viewer_action_text forfeit_win: "[forfeiter] forfeited"
+    CCD-FORFEIT-02  viewer_action_text forfeit_loss: "you forfeited" (viewer is forfeiter)
+    CCD-FORFEIT-03  viewer_action_text no_contest: "neither player completed"
+    CCD-FORFEIT-04  forfeiter_name in context
+    CCD-FORFEIT-05  forfeit_sublabel: deadline_expired → "Deadline expired"
+    CCD-FORFEIT-06  forfeit_sublabel: no_show → "No show"
+    CCD-FORFEIT-07  forfeit_sublabel: no_contest → "Challenge expired"
+
+    Post 16:9 template:
+    CCD-FORFEIT-08  forfeit_win post: arch-result-d2 + FORFEIT WIN badge + winner score + DNP on forfeiter zone
+    CCD-FORFEIT-09  forfeit_loss post: FORFEIT LOSS badge + no winner bar on loser zone
+    CCD-FORFEIT-10  no_contest post: no score row, no winner bar, DNP both zones
+
+    Story 9:16 template:
+    CCD-FORFEIT-11  forfeit_win story: arch-result-d2-story + winner score + DNP
+    CCD-FORFEIT-12  no_contest story: no winner bar, arch-result-d2-story renders
+    """
+
+    def _render(self, template_path: str, phase: str, **kwargs) -> str:
+        from jinja2 import Environment, FileSystemLoader
+        env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        tmpl = env.get_template(template_path)
+        ctx = _make_mock_ctx(phase=phase, **kwargs)
+        ctx["request"] = MagicMock()
+        return tmpl.render(**ctx)
+
+    def _ch_mock(self, challenger_id=10, challenged_id=20,
+                 winner_id=None, forfeit_user_id=None, forfeit_reason=None, is_draw=False):
+        from app.models.vt_challenge import ChallengeStatus
+        ch = MagicMock()
+        ch.challenger_id = challenger_id; ch.challenged_id = challenged_id
+        ch.challenger = MagicMock(nickname="T1B1K3", email="t@x.com")
+        ch.challenged = MagicMock(nickname="RD14S",  email="r@x.com")
+        ch.game = MagicMock(name="Memory Sequence", code="memory_sequence")
+        ch.challenge_mode = "async"; ch.status = ChallengeStatus.COMPLETED
+        ch.winner_id = winner_id
+        ch.winner = ch.challenger if winner_id == challenger_id else (ch.challenged if winner_id == challenged_id else None)
+        ch.is_draw = is_draw; ch.completed_at = None
+        ch.forfeit_user_id = forfeit_user_id
+        ch.forfeit_reason = forfeit_reason
+        ch.forfeit_user = ch.challenger if forfeit_user_id == challenger_id else (ch.challenged if forfeit_user_id == challenged_id else None)
+        ch.challenger_attempt_id = 1; ch.challenged_attempt_id = None
+        return ch
+
+    # ── Backend context tests ────────────────────────────────────────────────
+
+    def test_ccd_forfeit_01_action_text_forfeit_win(self):
+        """CCD-FORFEIT-01: forfeit_win viewer_action_text: '[forfeiter] forfeited'."""
+        from app.api.web_routes.vt_challenges import _build_challenge_card_context
+        ch = self._ch_mock(winner_id=10, forfeit_user_id=20, forfeit_reason="deadline_expired")
+        viewer = MagicMock(id=10)
+        attempt = MagicMock(score_normalized=78.0, stimuli_count=10, correct_count=8, raw_metrics={}, skill_deltas=None)
+        ctx = _build_challenge_card_context(ch, viewer, attempt, None, "completed_forfeit_win")
+        assert "forfeited" in ctx["viewer_action_text"].lower()
+        assert "RD14S" in ctx["viewer_action_text"]
+
+    def test_ccd_forfeit_02_action_text_forfeit_loss_viewer_forfeited(self):
+        """CCD-FORFEIT-02: forfeit_loss — viewer is forfeiter → 'you forfeited'."""
+        from app.api.web_routes.vt_challenges import _build_challenge_card_context
+        # challenger (viewer_id=10) forfeited (no attempt), challenged (id=20) won
+        ch = self._ch_mock(winner_id=20, forfeit_user_id=10, forfeit_reason="deadline_expired")
+        viewer = MagicMock(id=10)
+        winner_attempt = MagicMock(score_normalized=72.0, stimuli_count=None, correct_count=None, raw_metrics={}, skill_deltas=None)
+        ctx = _build_challenge_card_context(ch, viewer, None, winner_attempt, "completed_forfeit_loss")
+        assert ctx["viewer_action_text"] == "you forfeited"
+
+    def test_ccd_forfeit_03_action_text_no_contest(self):
+        """CCD-FORFEIT-03: no_contest viewer_action_text: 'neither player completed'."""
+        from app.api.web_routes.vt_challenges import _build_challenge_card_context
+        ch = self._ch_mock(winner_id=None, forfeit_user_id=10, forfeit_reason="no_contest")
+        viewer = MagicMock(id=10)
+        ctx = _build_challenge_card_context(ch, viewer, None, None, "no_contest")
+        assert ctx["viewer_action_text"] == "neither player completed"
+
+    def test_ccd_forfeit_04_forfeiter_name_in_context(self):
+        """CCD-FORFEIT-04: forfeiter_name in context."""
+        from app.api.web_routes.vt_challenges import _build_challenge_card_context
+        ch = self._ch_mock(winner_id=10, forfeit_user_id=20, forfeit_reason="no_show")
+        viewer = MagicMock(id=10)
+        attempt = MagicMock(score_normalized=78.0, stimuli_count=None, correct_count=None, raw_metrics={}, skill_deltas=None)
+        ctx = _build_challenge_card_context(ch, viewer, attempt, None, "completed_forfeit_win")
+        assert ctx["forfeiter_name"] == "RD14S"
+
+    def test_ccd_forfeit_05_sublabel_deadline(self):
+        """CCD-FORFEIT-05: forfeit_reason=deadline_expired → forfeit_sublabel='Deadline expired'."""
+        from app.api.web_routes.vt_challenges import _build_challenge_card_context
+        ch = self._ch_mock(winner_id=10, forfeit_user_id=20, forfeit_reason="deadline_expired")
+        viewer = MagicMock(id=10)
+        attempt = MagicMock(score_normalized=78.0, stimuli_count=None, correct_count=None, raw_metrics={}, skill_deltas=None)
+        ctx = _build_challenge_card_context(ch, viewer, attempt, None, "completed_forfeit_win")
+        assert ctx["forfeit_sublabel"] == "Deadline expired"
+
+    def test_ccd_forfeit_06_sublabel_no_show(self):
+        """CCD-FORFEIT-06: forfeit_reason=no_show → forfeit_sublabel='No show'."""
+        from app.api.web_routes.vt_challenges import _build_challenge_card_context
+        ch = self._ch_mock(winner_id=10, forfeit_user_id=20, forfeit_reason="no_show")
+        viewer = MagicMock(id=10)
+        attempt = MagicMock(score_normalized=78.0, stimuli_count=None, correct_count=None, raw_metrics={}, skill_deltas=None)
+        ctx = _build_challenge_card_context(ch, viewer, attempt, None, "completed_forfeit_win")
+        assert ctx["forfeit_sublabel"] == "No show"
+
+    def test_ccd_forfeit_07_sublabel_no_contest(self):
+        """CCD-FORFEIT-07: no_contest → forfeit_sublabel='Challenge expired'."""
+        from app.api.web_routes.vt_challenges import _build_challenge_card_context
+        ch = self._ch_mock(winner_id=None, forfeit_user_id=10, forfeit_reason="no_contest")
+        viewer = MagicMock(id=10)
+        ctx = _build_challenge_card_context(ch, viewer, None, None, "no_contest")
+        assert ctx["forfeit_sublabel"] == "Challenge expired"
+
+    # ── Post 16:9 template tests ─────────────────────────────────────────────
+
+    def test_ccd_forfeit_08_post_forfeit_win_full(self):
+        """CCD-FORFEIT-08: forfeit_win post: arch-result-d2 + badge + winner score + DNP."""
+        rs_winner = _forfeit_win_rs(78.0)
+        html = self._render(
+            "public/export/challenge/post_16_9.html", "completed_forfeit_win",
+            winner_name="T1B1K3",
+            challenger_result_summary=rs_winner,
+            challenged_result_summary=_null_rs(),
+            forfeiter_name="RD14S",
+            forfeit_sublabel="Deadline expired",
+        )
+        assert 'class="arch-result-d2"' in html
+        assert "FORFEIT WIN" in html
+        assert "78.0" in html                        # winner score
+        assert "Deadline expired" in html            # sublabel
+        assert "Did not play" in html                # DNP overlay on forfeiter zone
+        assert "ard2-winner-bar" in html             # winner bar present
+
+    def test_ccd_forfeit_09_post_forfeit_loss(self):
+        """CCD-FORFEIT-09: forfeit_loss post: FORFEIT LOSS badge, no winner bar on loser zone."""
+        html = self._render(
+            "public/export/challenge/post_16_9.html", "completed_forfeit_loss",
+            winner_name="RD14S",
+            challenger_result_summary=_null_rs(),
+            challenged_result_summary=_forfeit_win_rs(72.0),
+            forfeiter_name="T1B1K3",
+            forfeit_sublabel="No show",
+        )
+        assert "FORFEIT LOSS" in html
+        assert "Did not play" in html
+
+    def test_ccd_forfeit_10_post_no_contest(self):
+        """CCD-FORFEIT-10: no_contest post: no score row, no winner bar, DNP both zones."""
+        html = self._render(
+            "public/export/challenge/post_16_9.html", "no_contest",
+            winner_name=None,
+            challenger_result_summary=_null_rs(),
+            challenged_result_summary=_null_rs(),
+            forfeiter_name=None,
+            forfeit_sublabel="Challenge expired",
+        )
+        assert "NO CONTEST" in html
+        assert "Challenge expired" in html
+        assert 'class="ard2-winner-bar"' not in html
+        assert 'class="ard2-score-row"' not in html
+        assert "Did not play" in html                # both zones — null primary_value triggers DNP
+
+    # ── Story 9:16 template tests ─────────────────────────────────────────────
+
+    def test_ccd_forfeit_11_story_forfeit_win_full(self):
+        """CCD-FORFEIT-11: forfeit_win story: arch-result-d2-story + winner score + DNP."""
+        rs_winner = _forfeit_win_rs(78.0)
+        html = self._render(
+            "public/export/challenge/story_9_16.html", "completed_forfeit_win",
+            winner_name="T1B1K3",
+            challenger_result_summary=rs_winner,
+            challenged_result_summary=_null_rs(),
+            forfeiter_name="RD14S",
+            forfeit_sublabel="Deadline expired",
+        )
+        assert 'class="arch-result-d2-story"' in html
+        assert "FORFEIT WIN" in html
+        assert "78.0" in html
+        assert "Deadline expired" in html
+        assert "Did not play" in html
+        assert "ard2-winner-bar" in html
+
+    def test_ccd_forfeit_12_story_no_contest(self):
+        """CCD-FORFEIT-12: no_contest story: arch-result-d2-story, no winner bar."""
+        html = self._render(
+            "public/export/challenge/story_9_16.html", "no_contest",
+            winner_name=None,
+            challenger_result_summary=_null_rs(),
+            challenged_result_summary=_null_rs(),
+            forfeit_sublabel="Challenge expired",
+        )
+        assert 'class="arch-result-d2-story"' in html
+        assert "NO CONTEST" in html
+        assert 'class="ard2-winner-bar"' not in html
+        assert 'class="ard2-winner-bar--bottom"' not in html

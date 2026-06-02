@@ -1280,6 +1280,19 @@ def _build_challenge_card_context(
         viewer_action_text = "cancelled by you" if is_challenger else f"{_challenger_dn} cancelled"
     elif phase == "challenge_declined":
         viewer_action_text = f"{_challenged_dn} declined" if is_challenger else "declined by you"
+    elif phase in ("completed_forfeit_win", "completed_forfeit_loss"):
+        _forfeiter_dn = _display_name(ch.forfeit_user) if ch.forfeit_user else None
+        if phase == "completed_forfeit_loss" and ch.forfeit_user_id and (
+            (is_challenger and ch.forfeit_user_id == ch.challenger_id) or
+            (not is_challenger and ch.forfeit_user_id == ch.challenged_id)
+        ):
+            viewer_action_text = "you forfeited"
+        elif _forfeiter_dn:
+            viewer_action_text = f"{_forfeiter_dn} forfeited"
+        else:
+            viewer_action_text = "opponent forfeited"
+    elif phase == "no_contest":
+        viewer_action_text = "neither player completed"
     else:
         viewer_action_text = ""
 
@@ -1334,6 +1347,18 @@ def _build_challenge_card_context(
         "challenged_result_summary":   _build_result_summary(
                                            challenged_attempt, ch.game.code if ch.game else None
                                        ),
+        # CC-DESIGN-1: forfeit/no-contest display helpers
+        "forfeiter_name":          _display_name(ch.forfeit_user) if ch.forfeit_user else None,
+        "forfeit_sublabel":        {
+            "forfeit_post_start_timeout": "Post-start timeout",
+            "forfeit_deadline":           "Deadline expired",
+            "forfeit_no_show":            "No show",
+            "forfeit":                    "Forfeited",
+            "no_contest":                 "Challenge expired",
+        }.get(outcome_reason, "Forfeited") if outcome_reason in (
+            "forfeit_post_start_timeout", "forfeit_deadline",
+            "forfeit_no_show", "forfeit", "no_contest"
+        ) else None,
         # CC-DESIGN-1: participant stats (overall skill + position)
         "challenger_overall":       (challenger_stats or {}).get("overall"),
         "challenger_primary_pos":   (challenger_stats or {}).get("primary_pos"),
