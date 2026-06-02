@@ -361,42 +361,42 @@
 
   /* ── Archetype E2: Skill Progress — personal viewer card (CC-DESIGN-1) ── */
   .arch-skill-e2 {
-    display: grid; grid-template-columns: 1fr 1.15fr; width: 100%; height: 100%;
+    display: grid; grid-template-columns: 1fr 1.2fr; width: 100%; height: 100%;
   }
   .aske-panel {
     display: flex; flex-direction: column; justify-content: center;
-    padding: 28px 36px; gap: 0; border-left: 1px solid var(--cc-border);
+    padding: 24px 32px; gap: 0; border-left: 1px solid var(--cc-border);
   }
   .aske-phase-label {
-    font-size: 0.56rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
     color: var(--cc-dim); border: 1px solid var(--cc-border); border-radius: 3px;
-    padding: 3px 8px; margin-bottom: 10px; display: inline-block; align-self: flex-start;
+    padding: 3px 8px; margin-bottom: 8px; display: inline-block; align-self: flex-start;
   }
   .aske-title {
-    font-size: 1.6rem; font-weight: 800; text-transform: uppercase;
-    letter-spacing: 0.04em; color: var(--cc-text); line-height: 1.0; margin-bottom: 4px;
+    font-size: 1.5rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--cc-text); line-height: 1.0; margin-bottom: 3px;
   }
-  .aske-game { font-size: 0.66rem; color: var(--cc-sub); margin-bottom: 14px; }
-  .aske-rows { display: flex; flex-direction: column; gap: 6px; }
-  .aske-row  { display: flex; align-items: center; gap: 6px; }
+  .aske-game { font-size: 0.68rem; color: var(--cc-sub); margin-bottom: 12px; }
+  .aske-rows { display: flex; flex-direction: column; gap: 8px; }
+  .aske-row  { display: flex; align-items: center; gap: 7px; }
   .aske-cat  {
-    font-size: 0.44rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--cc-dim); width: 42px; flex-shrink: 0; text-align: right;
+    font-size: 0.50rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--cc-dim); width: 38px; flex-shrink: 0; text-align: right;
   }
   .aske-name {
-    font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
-    color: var(--cc-text); width: 82px; flex-shrink: 0; white-space: nowrap; overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+    color: var(--cc-text); width: 110px; flex-shrink: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: clip;
   }
-  .aske-bar-bg  { flex: 1; height: 4px; background: var(--cc-border); border-radius: 2px; overflow: hidden; }
-  .aske-bar-pos { height: 100%; border-radius: 2px; background: var(--cc-green); }
-  .aske-bar-neg { height: 100%; border-radius: 2px; background: var(--cc-red); }
-  .aske-bar-neu { height: 100%; border-radius: 2px; background: var(--cc-dim); }
-  .aske-val   { font-size: 0.62rem; font-weight: 700; color: var(--cc-sub); width: 22px; text-align: right; flex-shrink: 0; }
-  .aske-delta { font-size: 0.60rem; font-weight: 800; width: 34px; text-align: right; flex-shrink: 0; }
+  .aske-bar-bg  { flex: 1; height: 6px; background: var(--cc-border); border-radius: 3px; overflow: hidden; }
+  .aske-bar-pos { height: 100%; border-radius: 3px; background: var(--cc-green); }
+  .aske-bar-neg { height: 100%; border-radius: 3px; background: var(--cc-red); }
+  .aske-bar-neu { height: 100%; border-radius: 3px; background: var(--cc-dim); }
+  .aske-val   { font-size: 0.74rem; font-weight: 700; color: var(--cc-sub); width: 30px; text-align: right; flex-shrink: 0; }
+  .aske-delta { font-size: 0.72rem; font-weight: 800; width: 42px; text-align: right; flex-shrink: 0; }
   .aske-delta.pos { color: var(--cc-green); }
   .aske-delta.neg { color: var(--cc-red); }
-  .aske-nodelta { font-size: 0.76rem; color: var(--cc-dim); margin-top: 8px; }
+  .aske-nodelta { font-size: 0.82rem; color: var(--cc-dim); margin-top: 8px; }
 
 </style>
 </head>
@@ -864,7 +864,7 @@
       <div class="aske-title">📈 {{ game_name }}</div>
       {% if my_skill_progress %}
       <div class="aske-rows">
-        {% for row in my_skill_progress %}
+        {% for row in my_skill_progress[:6] %}
         <div class="aske-row">
           <span class="aske-cat">{{ row.category[:4] | upper if row.category else '' }}</span>
           <span class="aske-name">{{ row.name }}</span>
@@ -874,9 +874,9 @@
                    style="width:{{ row.fill_pct }}%;"></div>
             {% endif %}
           </div>
-          <span class="aske-val">{{ row.current_level | round(0) | int if row.current_level is not none else '' }}</span>
+          <span class="aske-val">{{ "%.1f"|format(row.current_level) if row.current_level is not none else '' }}</span>
           <span class="aske-delta {{ 'pos' if row.is_positive else ('neg' if row.is_negative else '') }}">
-            {{ '+' if row.is_positive else '' }}{{ "%.1f"|format(row.delta) }}
+            {{ '+' if row.is_positive else '' }}{{ "%.2f"|format(row.delta) }}
           </span>
         </div>
         {% endfor %}

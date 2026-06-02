@@ -309,7 +309,7 @@ class TestCCD08to17TemplateRender:
         )
         assert "Skill Progress" in html
         assert "arch-skill-e2" in html
-        assert "+0.5" in html
+        assert "+0.50" in html
 
     def test_ccd_14_story_all_12_phases_render(self):
         """CCD-14: story_9_16 renders all valid phases (14) without Jinja2 error."""
@@ -3580,8 +3580,8 @@ class TestCCDSkill:
         assert "Composure" in html
         assert "MENT" in html or "Ment" in html    # category abbrev (Mental[:4])
         assert "60" in html                         # current_level rounded
-        assert "+0.3" in html                       # positive delta
-        assert "-0.2" in html                       # negative delta
+        assert "+0.30" in html                      # positive delta (2dp)
+        assert "-0.20" in html                      # negative delta (2dp)
 
     def test_ccd_skill_10_post_pos_neg_classes(self):
         """CCD-SKILL-10: post: is_positive → pos class; is_negative → neg class."""

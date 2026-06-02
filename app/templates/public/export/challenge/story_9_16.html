@@ -290,32 +290,32 @@
 
   /* ── Archetype E2: Skill Progress story (CC-DESIGN-1) ── */
   .arch-skill-e2-story { display: flex; flex-direction: column; width: 100%; height: 100%; }
-  .aske-photo-zone-story { flex: 0 0 480px; }  /* asb-player-zone sizing */
+  .aske-photo-zone-story { flex: 0 0 480px; }
   .aske-panel-story {
     flex: 1; display: flex; flex-direction: column; justify-content: center;
-    padding: 20px 56px; gap: 0; border-top: 1px solid var(--cc-border);
+    padding: 18px 56px; gap: 0; border-top: 1px solid var(--cc-border);
   }
-  .aske-phase-label { font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  .aske-phase-label { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
     color: var(--cc-dim); border: 1px solid var(--cc-border); border-radius: 3px;
-    padding: 4px 10px; margin-bottom: 10px; display: inline-block; align-self: flex-start; }
-  .aske-title { font-size: 1.8rem; font-weight: 800; text-transform: uppercase;
+    padding: 4px 10px; margin-bottom: 8px; display: inline-block; align-self: flex-start; }
+  .aske-title { font-size: 1.7rem; font-weight: 800; text-transform: uppercase;
     letter-spacing: 0.04em; color: var(--cc-text); line-height: 1.0; margin-bottom: 4px; }
-  .aske-game-s { font-size: 0.78rem; color: var(--cc-sub); margin-bottom: 14px; }
-  .aske-rows-s { display: flex; flex-direction: column; gap: 8px; }
+  .aske-game-s { font-size: 0.80rem; color: var(--cc-sub); margin-bottom: 12px; }
+  .aske-rows-s { display: flex; flex-direction: column; gap: 9px; }
   .aske-row-s  { display: flex; align-items: center; gap: 8px; }
-  .aske-cat-s  { font-size: 0.50rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--cc-dim); width: 48px; flex-shrink: 0; text-align: right; }
-  .aske-name-s { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
-    color: var(--cc-text); width: 100px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .aske-bar-bg-s  { flex: 1; height: 5px; background: var(--cc-border); border-radius: 3px; overflow: hidden; }
-  .aske-bar-pos-s { height: 100%; border-radius: 3px; background: var(--cc-green); }
-  .aske-bar-neg-s { height: 100%; border-radius: 3px; background: var(--cc-red); }
-  .aske-bar-neu-s { height: 100%; border-radius: 3px; background: var(--cc-dim); }
-  .aske-val-s   { font-size: 0.72rem; font-weight: 700; color: var(--cc-sub); width: 26px; text-align: right; flex-shrink: 0; }
-  .aske-delta-s { font-size: 0.70rem; font-weight: 800; width: 38px; text-align: right; flex-shrink: 0; }
+  .aske-cat-s  { font-size: 0.56rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--cc-dim); width: 44px; flex-shrink: 0; text-align: right; }
+  .aske-name-s { font-size: 0.90rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+    color: var(--cc-text); width: 130px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: clip; }
+  .aske-bar-bg-s  { flex: 1; height: 7px; background: var(--cc-border); border-radius: 4px; overflow: hidden; }
+  .aske-bar-pos-s { height: 100%; border-radius: 4px; background: var(--cc-green); }
+  .aske-bar-neg-s { height: 100%; border-radius: 4px; background: var(--cc-red); }
+  .aske-bar-neu-s { height: 100%; border-radius: 4px; background: var(--cc-dim); }
+  .aske-val-s   { font-size: 0.84rem; font-weight: 700; color: var(--cc-sub); width: 36px; text-align: right; flex-shrink: 0; }
+  .aske-delta-s { font-size: 0.82rem; font-weight: 800; width: 48px; text-align: right; flex-shrink: 0; }
   .aske-delta-s.pos { color: var(--cc-green); }
   .aske-delta-s.neg { color: var(--cc-red); }
-  .aske-nodelta-s { font-size: 0.88rem; color: var(--cc-dim); margin-top: 8px; }
+  .aske-nodelta-s { font-size: 0.92rem; color: var(--cc-dim); margin-top: 8px; }
 
   .arch-terminal-story {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -796,9 +796,9 @@
                    style="width:{{ row.fill_pct }}%;"></div>
             {% endif %}
           </div>
-          <span class="aske-val-s">{{ row.current_level | round(0) | int if row.current_level is not none else '' }}</span>
+          <span class="aske-val-s">{{ "%.1f"|format(row.current_level) if row.current_level is not none else '' }}</span>
           <span class="aske-delta-s {{ 'pos' if row.is_positive else ('neg' if row.is_negative else '') }}">
-            {{ '+' if row.is_positive else '' }}{{ "%.1f"|format(row.delta) }}
+            {{ '+' if row.is_positive else '' }}{{ "%.2f"|format(row.delta) }}
           </span>
         </div>
         {% endfor %}
