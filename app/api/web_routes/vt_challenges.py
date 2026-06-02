@@ -1049,28 +1049,27 @@ def validate_challenge_card_phase(
 
 
 def _get_participant_photo(db: Session, user_id: int) -> str | None:
-    """Return the best available photo URL for a challenge participant.
+    """Return the neutral mood default photo for a challenge card participant.
 
-    CC-DESIGN-1 BALANCED photo priority:
-    1. First mood photo with status=ready + processed_png_url (bg-removed transparent PNG)
-    2. First mood photo with any original_url (not yet processed)
-    3. player_card_photo_url  (profile photo fallback)
-    4. wc_photo_url           (welcome card photo fallback)
-    No specific slot required — first available processed mood photo wins.
+    CC-DESIGN-1 NEUTRAL fallback priority (mood_intro_neutral required):
+    1. mood_intro_neutral.processed_png_url (bg-removed transparent PNG, if ready)
+    2. mood_intro_neutral.original_url
+    3. player_card_photo_url
+    4. wc_photo_url
+    5. None (template renders initials)
+
+    Only mood_intro_neutral is used — never happy/angry/celebration/sad.
+    This ensures consistent, non-random default photo selection.
     """
-    moods = db.query(UserMoodPhoto).filter_by(user_id=user_id).all()
+    neutral = db.query(UserMoodPhoto).filter_by(
+        user_id=user_id, slot="mood_intro_neutral"
+    ).first()
+    if neutral is not None:
+        if neutral.processed_png_url:
+            return neutral.processed_png_url
+        if neutral.original_url:
+            return neutral.original_url
 
-    # Priority 1: ready + bg-removed
-    for m in moods:
-        if m.status == MoodPhotoStatus.ready.value and m.processed_png_url:
-            return m.processed_png_url
-
-    # Priority 2: any mood photo original
-    for m in moods:
-        if m.original_url:
-            return m.original_url
-
-    # Priority 3+4: license photos
     lic = db.query(UserLicense).filter(
         UserLicense.user_id == user_id,
         UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
@@ -1229,15 +1228,23 @@ async def challenge_card_preview(
             detail=f"Phase {phase!r} is not applicable to this challenge.",
         )
 
-    # CC-DESIGN-1 BALANCED: mood-first participant photos
-    def _photo(uid: int) -> str | None:
-        return _get_participant_photo(db, uid)
+    # CC-DESIGN-1 SNAPSHOT: per-challenge photo with neutral mood fallback.
+    # If the challenge has a saved snapshot, use it; otherwise render neutral mood.
+    # photo_url query param overrides the VIEWER's own slot only (not the opponent's).
+    def _photo(uid: int, snapshot_url: str | None) -> str | None:
+        return snapshot_url or _get_participant_photo(db, uid)
+
+    challenger_photo = _photo(ch.challenger_id, ch.challenger_card_photo_url)
+    challenged_photo = _photo(ch.challenged_id, ch.challenged_card_photo_url)
+
+    # photo_url query param is the viewer's in-session override for their own slot
+    selected = photo_url  # applied per viewer_is_challenger in the template
 
     ctx = _build_challenge_card_context(
         ch, user, challenger_attempt, challenged_attempt, phase, my_attempt,
-        challenger_photo_url=_photo(ch.challenger_id),
-        challenged_photo_url=_photo(ch.challenged_id),
-        selected_photo_url=photo_url,
+        challenger_photo_url=challenger_photo,
+        challenged_photo_url=challenged_photo,
+        selected_photo_url=selected,
     )
     template_name = (
         "public/export/challenge/post_16_9.html"
@@ -1337,6 +1344,58 @@ async def challenge_card_export(
             "X-Export-Phase":      phase,
         },
     )
+
+
+# ── POST /challenges/{id}/card/photo — save per-challenge card photo snapshot ──
+
+@router.post("/challenges/{challenge_id}/card/photo")
+async def challenge_card_photo_save(
+    challenge_id: int,
+    photo_url: str = Form(...),
+    db: Session    = Depends(get_db),
+    user: User     = Depends(get_current_user_web),
+):
+    """Save the viewer's chosen mood photo as the per-challenge card snapshot.
+
+    Only participants may call this endpoint.
+    Each user can only write their OWN slot:
+      - challenger → challenger_card_photo_url
+      - challenged → challenged_card_photo_url
+    The opponent's slot is never modified.
+
+    The photo_url must belong to the requesting user's mood photos or be empty
+    (empty string clears the snapshot, reverting to neutral mood default).
+    """
+    ch = db.query(VirtualTrainingChallenge).filter(
+        VirtualTrainingChallenge.id == challenge_id
+    ).first()
+    if ch is None:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+    if user.id not in (ch.challenger_id, ch.challenged_id):
+        raise HTTPException(status_code=403, detail="Participants only")
+
+    # Validate photo_url ownership: must be empty (clear) or belong to this user
+    if photo_url:
+        owns = db.query(UserMoodPhoto).filter(
+            UserMoodPhoto.user_id == user.id,
+            (UserMoodPhoto.processed_png_url == photo_url) |
+            (UserMoodPhoto.original_url == photo_url),
+        ).first()
+        if owns is None:
+            raise HTTPException(
+                status_code=403,
+                detail="photo_url must belong to your own mood photos",
+            )
+
+    effective_url = photo_url or None  # empty string → clear snapshot
+
+    if user.id == ch.challenger_id:
+        ch.challenger_card_photo_url = effective_url
+    else:
+        ch.challenged_card_photo_url = effective_url
+
+    db.commit()
+    return {"ok": True, "role": "challenger" if user.id == ch.challenger_id else "challenged"}
 
 
 # ── POST /challenges/{id}/decline ─────────────────────────────────────────────

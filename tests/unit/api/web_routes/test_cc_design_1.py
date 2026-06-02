@@ -664,11 +664,11 @@ class TestCCExportDirect:
 
 class TestCCD22to23RouteSnapshot:
 
-    def test_ccd_22_route_count_850(self):
-        """CCD-22: Route count is 850 (BG-REMOVAL-1 added 3 routes; CC-DESIGN-1 adds none)."""
+    def test_ccd_22_route_count_851(self):
+        """CCD-22: Route count is 851 (CC-DESIGN-1 SNAPSHOT adds POST /challenges/{id}/card/photo)."""
         from app.main import app
         count = len(app.openapi().get("paths", {}))
-        assert count == 850, f"Expected 850, got {count}"
+        assert count == 851, f"Expected 851, got {count}"
 
     def test_ccd_23_openapi_snapshot_match(self):
         """CCD-23: OpenAPI snapshot matches live API."""
@@ -965,12 +965,13 @@ class TestCCDInviteTwoParticipant:
             "When no challenged_photo_url, initials container class must be rendered"
 
 
-# ── CCD-NEUTRAL-PHOTO: first available mood photo source ──────────────────────
+# ── CCD-NEUTRAL-PHOTO/DEFAULT: mood_intro_neutral only ────────────────────────
 
 class TestCCDNeutralPhoto:
-    """CCD-NEUTRAL-01..04: _get_participant_photo uses first available processed mood photo."""
+    """CCD-NEUTRAL-DEFAULT-01..04: _get_participant_photo uses only mood_intro_neutral slot."""
 
-    def _run(self, mood_list, lic_record):
+    def _run(self, neutral_record, lic_record):
+        """neutral_record: single UserMoodPhoto mock with slot=mood_intro_neutral, or None."""
         from app.api.web_routes.vt_challenges import _get_participant_photo
         db = MagicMock()
 
@@ -980,7 +981,7 @@ class TestCCDNeutralPhoto:
                 hasattr(model, "__tablename__") and
                 getattr(model, "__tablename__", "") == "user_mood_photos"
             ):
-                q.filter_by.return_value.all.return_value = mood_list or []
+                q.filter_by.return_value.first.return_value = neutral_record
             else:
                 q.filter.return_value.first.return_value = lic_record
             return q
@@ -989,36 +990,35 @@ class TestCCDNeutralPhoto:
         return _get_participant_photo(db, user_id=10)
 
     def test_ccd_neutral_01_processed_png_used_when_present(self):
-        """CCD-NEUTRAL-01: First ready processed_png_url takes top priority."""
-        from app.models.user_mood_photos import MoodPhotoStatus
+        """CCD-NEUTRAL-DEFAULT-01: mood_intro_neutral processed_png_url takes top priority."""
         mood = MagicMock()
-        mood.status = MoodPhotoStatus.ready.value
-        mood.processed_png_url = "/processed/any.png"
-        mood.original_url = "/orig/any.jpg"
-        result = self._run([mood], MagicMock(player_card_photo_url="/player.jpg", wc_photo_url=None))
-        assert result == "/processed/any.png", "processed_png_url must be used when ready"
+        mood.processed_png_url = "/processed/neutral.png"
+        mood.original_url = "/orig/neutral.jpg"
+        result = self._run(mood, MagicMock(player_card_photo_url="/player.jpg", wc_photo_url=None))
+        assert result == "/processed/neutral.png", \
+            "mood_intro_neutral processed_png_url must be first priority"
 
     def test_ccd_neutral_02_original_url_fallback_when_not_processed(self):
-        """CCD-NEUTRAL-02: original_url used when no ready processed photo."""
+        """CCD-NEUTRAL-DEFAULT-02: neutral original_url when processed_png_url is None."""
         mood = MagicMock()
-        mood.status = "uploaded"
         mood.processed_png_url = None
-        mood.original_url = "/orig/any.jpg"
-        result = self._run([mood], MagicMock(player_card_photo_url="/player.jpg", wc_photo_url=None))
-        assert result == "/orig/any.jpg", "original_url fallback when not processed"
+        mood.original_url = "/orig/neutral.jpg"
+        result = self._run(mood, MagicMock(player_card_photo_url="/player.jpg", wc_photo_url=None))
+        assert result == "/orig/neutral.jpg", \
+            "mood_intro_neutral original_url fallback when no processed"
 
     def test_ccd_neutral_03_player_card_photo_fallback_when_no_mood(self):
-        """CCD-NEUTRAL-03: player_card_photo_url used when no mood photos."""
+        """CCD-NEUTRAL-DEFAULT-03: player_card_photo_url when no neutral mood record."""
         lic = MagicMock()
         lic.player_card_photo_url = "/player.jpg"
         lic.wc_photo_url = None
-        result = self._run([], lic)
-        assert result == "/player.jpg", "player_card_photo_url fallback when no mood photos"
+        result = self._run(None, lic)
+        assert result == "/player.jpg", "player_card_photo_url fallback when no neutral mood"
 
     def test_ccd_neutral_04_none_when_no_mood_and_no_license(self):
-        """CCD-NEUTRAL-04: None returned when no mood and no license."""
-        result = self._run([], None)
-        assert result is None, "None expected when no mood and no license"
+        """CCD-NEUTRAL-DEFAULT-04: None when no neutral mood and no license."""
+        result = self._run(None, None)
+        assert result is None
 
 
 # ── CCD-BALANCED: Balanced invitation layout ──────────────────────────────────
@@ -1106,13 +1106,11 @@ class TestCCDBalanced:
         assert "/ch.png" in html2    # challenger still in left slot
 
     def test_ccd_balanced_06_participant_photo_source_processed_first(self):
-        """CCD-BALANCED-06: _get_participant_photo returns ready processed_png_url first."""
+        """CCD-BALANCED-06: _get_participant_photo uses mood_intro_neutral processed_png_url first."""
         from app.api.web_routes.vt_challenges import _get_participant_photo
-        from app.models.user_mood_photos import MoodPhotoStatus
         db = MagicMock()
-        m = MagicMock(status=MoodPhotoStatus.ready.value,
-                      processed_png_url="/p/processed.png", original_url="/o/orig.jpg")
-        db.query.return_value.filter_by.return_value.all.return_value = [m]
+        m = MagicMock(processed_png_url="/p/processed.png", original_url="/o/orig.jpg")
+        db.query.return_value.filter_by.return_value.first.return_value = m
         result = _get_participant_photo(db, 1)
         assert result == "/p/processed.png"
 
@@ -1162,14 +1160,13 @@ class TestCCDBalanced:
                     f"{tmpl} {phase}: cc-cta class must not appear in invitation card"
 
     def test_ccd_balanced_12_fallback_without_processed_photo(self):
-        """CCD-BALANCED-12: Without processed mood photo, original or profile photo used."""
+        """CCD-BALANCED-12: mood_intro_neutral original_url used when no processed_png_url."""
         from app.api.web_routes.vt_challenges import _get_participant_photo
         db = MagicMock()
-        # Mood has original_url but no processed_png_url
-        m = MagicMock(status="uploaded", processed_png_url=None, original_url="/orig/photo.jpg")
-        db.query.return_value.filter_by.return_value.all.return_value = [m]
+        m = MagicMock(processed_png_url=None, original_url="/orig/neutral.jpg")
+        db.query.return_value.filter_by.return_value.first.return_value = m
         result = _get_participant_photo(db, 1)
-        assert result == "/orig/photo.jpg", "original_url fallback when no processed"
+        assert result == "/orig/neutral.jpg", "original_url fallback when no processed"
 
 
 # ── CCD-MOOD-SELECT: Mood photo selector position + behavior ──────────────────

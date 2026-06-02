@@ -43080,6 +43080,57 @@
         }
       }
     },
+    "/challenges/{challenge_id}/card/photo": {
+      "post": {
+        "tags": [
+          "web"
+        ],
+        "summary": "Challenge Card Photo Save",
+        "description": "Save the viewer's chosen mood photo as the per-challenge card snapshot.\n\nOnly participants may call this endpoint.\nEach user can only write their OWN slot:\n  - challenger \u2192 challenger_card_photo_url\n  - challenged \u2192 challenged_card_photo_url\nThe opponent's slot is never modified.\n\nThe photo_url must belong to the requesting user's mood photos or be empty\n(empty string clears the snapshot, reverting to neutral mood default).",
+        "operationId": "challenge_card_photo_save_challenges__challenge_id__card_photo_post",
+        "parameters": [
+          {
+            "name": "challenge_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Challenge Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_challenge_card_photo_save_challenges__challenge_id__card_photo_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/challenges/{challenge_id}/decline": {
       "post": {
         "tags": [
@@ -47364,6 +47415,19 @@
         },
         "type": "object",
         "title": "Body_cancel_friend_request_friends_cancel__friendship_id__post"
+      },
+      "Body_challenge_card_photo_save_challenges__challenge_id__card_photo_post": {
+        "properties": {
+          "photo_url": {
+            "type": "string",
+            "title": "Photo Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "photo_url"
+        ],
+        "title": "Body_challenge_card_photo_save_challenges__challenge_id__card_photo_post"
       },
       "Body_confirm_attendance_sessions__session_id__attendance_confirm_post": {
         "properties": {
