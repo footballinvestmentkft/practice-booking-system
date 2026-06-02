@@ -254,6 +254,9 @@
     font-size: 4rem; font-weight: 800; color: var(--cc-gold); line-height: 1; margin-bottom: 14px;
   }
   .aws-submitted { font-size: 1rem; font-weight: 700; color: var(--cc-sub); margin-bottom: 14px; }
+  .aws-secondary { font-size: 0.82rem; color: var(--cc-sub); margin-bottom: 12px; display: flex; gap: 10px; justify-content: center; }
+  .aws-secondary-item { font-weight: 600; }
+  .aws-secondary-sep { opacity: 0.5; }
 
   .arch-terminal-story {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -506,9 +509,16 @@
       <div class="asb-headline">Waiting for Opponent</div>
       <div class="asb-sublabel">{{ viewer_action_text }}</div>
       <div class="asb-divider"></div>
-      {% if my_score is not none %}
-      <div class="aws-score-label">Your Score</div>
-      <div class="aws-score">{{ "%.1f"|format(my_score) }}</div>
+      {% if my_result_summary.primary_value is not none %}
+      <div class="aws-score-label">{{ my_result_summary.primary_label }}</div>
+      <div class="aws-score">{{ "%.1f"|format(my_result_summary.primary_value) }}</div>
+      {% if my_result_summary.secondary_items %}
+      <div class="aws-secondary">
+        {% for item in my_result_summary.secondary_items %}
+        <span class="aws-secondary-item">{{ item.label }}: {{ item.value }}</span>{% if not loop.last %}<span class="aws-secondary-sep"> · </span>{% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
       {% else %}
       <div class="aws-submitted">Result Submitted</div>
       {% endif %}

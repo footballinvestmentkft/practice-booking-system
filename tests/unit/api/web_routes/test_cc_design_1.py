@@ -101,6 +101,7 @@ def _make_mock_ctx(
     challenged_overall: float | None = None,
     challenged_primary_pos: str | None = None,
     challenged_secondary_pos: str | None = None,
+    my_result_summary: dict | None = None,
 ) -> dict:
     # Derive viewer_action_text matching _build_challenge_card_context logic
     if phase == "challenge_sent":
@@ -149,6 +150,10 @@ def _make_mock_ctx(
         "challenged_overall":       challenged_overall,
         "challenged_primary_pos":   challenged_primary_pos,
         "challenged_secondary_pos": challenged_secondary_pos,
+        "my_result_summary":        my_result_summary if my_result_summary is not None else {
+            "game_code": None, "primary_label": "Score",
+            "primary_value": my_score, "secondary_items": [],
+        },
     }
 
 
@@ -467,6 +472,10 @@ class TestCCDSentReceivedLayout:
                     "challenger_photo_url": None, "challenged_photo_url": None,
                     "viewer_photo_url": None, "opponent_photo_url": None,
                     "selected_photo_url": None, "request": MagicMock(),
+                    "my_result_summary": {
+                        "game_code": None, "primary_label": "Score",
+                        "primary_value": 80.0, "secondary_items": [],
+                    },
                 }
                 html = tmpl.render(**ctx)
                 assert len(html) > 100, f"{tmpl_name} phase {phase!r} rendered empty"
@@ -2662,18 +2671,18 @@ class TestCCDWaiting:
         assert "OVR 78.5" in html
 
     def test_ccd_wait_09_post_score_shown(self):
-        """CCD-WAIT-09: post_16_9: score rendered when my_score is not None."""
+        """CCD-WAIT-09: post_16_9: score rendered when my_result_summary.primary_value present."""
         html = self._render("public/export/challenge/post_16_9.html", "waiting_for_opponent",
                             my_score=85.3)
         assert "85.3" in html
-        assert "Your Score" in html
+        assert "Score" in html
 
     def test_ccd_wait_10_post_result_submitted_when_no_score(self):
-        """CCD-WAIT-10: post_16_9: 'Result Submitted' shown when my_score is None."""
+        """CCD-WAIT-10: post_16_9: 'Result Submitted' shown when primary_value is None."""
         html = self._render("public/export/challenge/post_16_9.html", "waiting_for_opponent",
                             my_score=None)
         assert "Result Submitted" in html
-        assert "Your Score" not in html
+        assert 'class="awh-score-label"' not in html
 
     def test_ccd_wait_11_story_uses_arch_waiting_story(self):
         """CCD-WAIT-11: story_9_16: arch-waiting-story rendered."""
@@ -2692,3 +2701,196 @@ class TestCCDWaiting:
         html = self._render("public/export/challenge/post_16_9.html", "live_lobby_ready")
         assert '<div class="arch-battle">' in html
         assert '<div class="arch-waiting">' not in html
+
+
+class TestCCDResultSummary:
+    """CCD-RSUMMARY: _build_result_summary helper + template rendering.
+
+    CCD-RSUMMARY-01  fallback: attempt=None → primary_value=None, secondary_items=[]
+    CCD-RSUMMARY-02  fallback: game_code=None + attempt with score → Score shown, no secondary
+    CCD-RSUMMARY-03  fallback: game_code unknown → Score shown, no secondary
+    CCD-RSUMMARY-04  MS: primary_value kerekítve 1 tizedesjegyre
+    CCD-RSUMMARY-05  MS: Sequence + Accuracy secondary itemek
+    CCD-RSUMMARY-06  MS: best_seq=0 → Sequence item nem kerül secondary-ba
+    CCD-RSUMMARY-07  TT: Difficulty + Hit Rate secondary itemek
+    CCD-RSUMMARY-08  TT: difficulty_level=None → Difficulty item nem kerül be
+    CCD-RSUMMARY-09  post_16_9: MS secondary_items megjelenik a kártyán
+    CCD-RSUMMARY-10  story_9_16: TT secondary_items megjelenik a kártyán
+    CCD-RSUMMARY-11  post_16_9 no secondary: üres sor nem rendereléodik
+    CCD-RSUMMARY-12  story_9_16: Result Submitted ha primary_value=None
+    """
+
+    def _fn(self):
+        from app.api.web_routes.vt_challenges import _build_result_summary
+        return _build_result_summary
+
+    def _mock_attempt(
+        self,
+        score_normalized=78.456,
+        stimuli_count=10,
+        correct_count=8,
+        raw_metrics=None,
+    ):
+        a = MagicMock()
+        a.score_normalized = score_normalized
+        a.stimuli_count = stimuli_count
+        a.correct_count = correct_count
+        a.raw_metrics = raw_metrics or {}
+        return a
+
+    def _render(self, template_path: str, phase: str, **kwargs) -> str:
+        from jinja2 import Environment, FileSystemLoader
+        env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        tmpl = env.get_template(template_path)
+        ctx = _make_mock_ctx(phase=phase, **kwargs)
+        ctx["request"] = MagicMock()
+        return tmpl.render(**ctx)
+
+    def test_ccd_rsummary_01_fallback_no_attempt(self):
+        """CCD-RSUMMARY-01: attempt=None → primary_value=None, secondary_items=[]."""
+        fn = self._fn()
+        result = fn(None, "memory_sequence")
+        assert result["primary_value"] is None
+        assert result["secondary_items"] == []
+        assert result["primary_label"] == "Score"
+
+    def test_ccd_rsummary_02_fallback_game_code_none_score_shown(self):
+        """CCD-RSUMMARY-02: game_code=None + valid attempt → Score present, no secondary."""
+        fn = self._fn()
+        attempt = self._mock_attempt(score_normalized=71.2)
+        result = fn(attempt, None)
+        assert result["primary_value"] == 71.2
+        assert result["secondary_items"] == []
+
+    def test_ccd_rsummary_03_fallback_unknown_game_code(self):
+        """CCD-RSUMMARY-03: unknown game_code → Score present, no secondary."""
+        fn = self._fn()
+        attempt = self._mock_attempt(score_normalized=65.0)
+        result = fn(attempt, "unknown_game")
+        assert result["primary_value"] == 65.0
+        assert result["secondary_items"] == []
+
+    def test_ccd_rsummary_04_ms_primary_value_rounded(self):
+        """CCD-RSUMMARY-04: MS score_normalized=78.456 → primary_value=78.5."""
+        fn = self._fn()
+        attempt = self._mock_attempt(score_normalized=78.456)
+        result = fn(attempt, "memory_sequence")
+        assert result["primary_value"] == 78.5
+
+    def test_ccd_rsummary_05_ms_sequence_and_accuracy(self):
+        """CCD-RSUMMARY-05: MS per_round with correct rounds → Sequence + Accuracy."""
+        fn = self._fn()
+        attempt = self._mock_attempt(
+            score_normalized=78.5,
+            stimuli_count=10,
+            correct_count=8,
+            raw_metrics={"per_round": [
+                {"sequence_length": 5, "outcome": "correct"},
+                {"sequence_length": 7, "outcome": "correct"},
+                {"sequence_length": 8, "outcome": "wrong"},
+            ]},
+        )
+        result = fn(attempt, "memory_sequence")
+        labels = [i["label"] for i in result["secondary_items"]]
+        values = {i["label"]: i["value"] for i in result["secondary_items"]}
+        assert "Sequence" in labels
+        assert values["Sequence"] == "7"
+        assert "Accuracy" in labels
+        assert values["Accuracy"] == "80%"
+
+    def test_ccd_rsummary_06_ms_best_seq_zero_excluded(self):
+        """CCD-RSUMMARY-06: MS no completed rounds → Sequence item absent."""
+        fn = self._fn()
+        attempt = self._mock_attempt(
+            score_normalized=50.0,
+            stimuli_count=5,
+            correct_count=0,
+            raw_metrics={"per_round": [
+                {"sequence_length": 4, "outcome": "wrong"},
+            ]},
+        )
+        result = fn(attempt, "memory_sequence")
+        labels = [i["label"] for i in result["secondary_items"]]
+        assert "Sequence" not in labels
+
+    def test_ccd_rsummary_07_tt_difficulty_and_hit_rate(self):
+        """CCD-RSUMMARY-07: TT difficulty_level + stimuli_count → Difficulty + Hit Rate."""
+        fn = self._fn()
+        attempt = self._mock_attempt(
+            score_normalized=71.2,
+            stimuli_count=25,
+            correct_count=18,
+            raw_metrics={"difficulty_level": "hard"},
+        )
+        result = fn(attempt, "target_tracking")
+        values = {i["label"]: i["value"] for i in result["secondary_items"]}
+        assert values.get("Difficulty") == "Hard"
+        assert values.get("Hit Rate") == "72%"
+
+    def test_ccd_rsummary_08_tt_difficulty_none_excluded(self):
+        """CCD-RSUMMARY-08: TT raw_metrics without difficulty_level → Difficulty absent."""
+        fn = self._fn()
+        attempt = self._mock_attempt(
+            score_normalized=60.0,
+            stimuli_count=20,
+            correct_count=14,
+            raw_metrics={},
+        )
+        result = fn(attempt, "target_tracking")
+        labels = [i["label"] for i in result["secondary_items"]]
+        assert "Difficulty" not in labels
+        assert "Hit Rate" in labels
+
+    def test_ccd_rsummary_09_post_ms_secondary_rendered(self):
+        """CCD-RSUMMARY-09: post_16_9 renders MS secondary items in awh-secondary."""
+        rs = {
+            "game_code": "memory_sequence", "primary_label": "Score",
+            "primary_value": 78.5,
+            "secondary_items": [
+                {"label": "Sequence", "value": "7"},
+                {"label": "Accuracy", "value": "85%"},
+            ],
+        }
+        html = self._render("public/export/challenge/post_16_9.html",
+                            "waiting_for_opponent", my_result_summary=rs)
+        assert "Sequence: 7" in html
+        assert "Accuracy: 85%" in html
+        assert "awh-secondary" in html
+
+    def test_ccd_rsummary_10_story_tt_secondary_rendered(self):
+        """CCD-RSUMMARY-10: story_9_16 renders TT secondary items in aws-secondary."""
+        rs = {
+            "game_code": "target_tracking", "primary_label": "Score",
+            "primary_value": 71.2,
+            "secondary_items": [
+                {"label": "Difficulty", "value": "Hard"},
+                {"label": "Hit Rate", "value": "72%"},
+            ],
+        }
+        html = self._render("public/export/challenge/story_9_16.html",
+                            "waiting_for_opponent", my_result_summary=rs)
+        assert "Difficulty: Hard" in html
+        assert "Hit Rate: 72%" in html
+        assert "aws-secondary" in html
+
+    def test_ccd_rsummary_11_post_no_secondary_no_empty_row(self):
+        """CCD-RSUMMARY-11: post_16_9 no secondary_items → awh-secondary div absent."""
+        rs = {
+            "game_code": None, "primary_label": "Score",
+            "primary_value": 65.0, "secondary_items": [],
+        }
+        html = self._render("public/export/challenge/post_16_9.html",
+                            "waiting_for_opponent", my_result_summary=rs)
+        assert 'class="awh-secondary"' not in html
+        assert "65.0" in html
+
+    def test_ccd_rsummary_12_story_result_submitted_when_no_score(self):
+        """CCD-RSUMMARY-12: story_9_16 primary_value=None → Result Submitted shown."""
+        rs = {
+            "game_code": None, "primary_label": "Score",
+            "primary_value": None, "secondary_items": [],
+        }
+        html = self._render("public/export/challenge/story_9_16.html",
+                            "waiting_for_opponent", my_result_summary=rs)
+        assert "Result Submitted" in html
+        assert 'class="aws-score-label"' not in html

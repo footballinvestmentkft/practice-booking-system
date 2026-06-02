@@ -297,6 +297,9 @@
     font-size: 3.2rem; font-weight: 800; color: var(--cc-gold); line-height: 1; margin-bottom: 12px;
   }
   .awh-submitted { font-size: 0.92rem; font-weight: 700; color: var(--cc-sub); margin-bottom: 12px; }
+  .awh-secondary { font-size: 0.72rem; color: var(--cc-sub); margin-bottom: 8px; display: flex; gap: 8px; }
+  .awh-secondary-item { font-weight: 600; }
+  .awh-secondary-sep { opacity: 0.5; }
   .awh-game { font-size: 0.72rem; color: var(--cc-sub); }
 
   /* ── Archetype F: Terminal Rejection (cancelled / declined) ── */
@@ -577,9 +580,16 @@
       <div class="awh-headline">Waiting for<br>Opponent</div>
       <div class="awh-sublabel">{{ viewer_action_text }}</div>
       <div class="awh-divider"></div>
-      {% if my_score is not none %}
-      <div class="awh-score-label">Your Score</div>
-      <div class="awh-score">{{ "%.1f"|format(my_score) }}</div>
+      {% if my_result_summary.primary_value is not none %}
+      <div class="awh-score-label">{{ my_result_summary.primary_label }}</div>
+      <div class="awh-score">{{ "%.1f"|format(my_result_summary.primary_value) }}</div>
+      {% if my_result_summary.secondary_items %}
+      <div class="awh-secondary">
+        {% for item in my_result_summary.secondary_items %}
+        <span class="awh-secondary-item">{{ item.label }}: {{ item.value }}</span>{% if not loop.last %}<span class="awh-secondary-sep"> · </span>{% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
       {% else %}
       <div class="awh-submitted">Result Submitted</div>
       {% endif %}

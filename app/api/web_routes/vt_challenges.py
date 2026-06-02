@@ -1179,6 +1179,49 @@ def _get_participant_stats(db: Session, user_id: int) -> dict:
     }
 
 
+def _build_result_summary(attempt: Any, game_code: str | None) -> dict:
+    """Build game-aware result summary for challenge card rendering (CC-DESIGN-1).
+
+    Returns a dict with primary_value (score_normalized) and up to 2 game-specific
+    secondary items.  primary_value is None only when attempt or score_normalized is
+    missing — if game_code is None/unknown the primary score is still surfaced.
+    """
+    primary_value: float | None = None
+    if attempt is not None and attempt.score_normalized is not None:
+        primary_value = round(float(attempt.score_normalized), 1)
+
+    secondary: list[dict] = []
+
+    if attempt is not None and game_code == "memory_sequence":
+        raw = attempt.raw_metrics or {}
+        per_round = raw.get("per_round") or []
+        completed = [r for r in per_round if r.get("outcome") == "correct"]
+        best_seq = max((r.get("sequence_length", 0) for r in completed), default=0)
+        if best_seq > 0:
+            secondary.append({"label": "Sequence", "value": str(best_seq)})
+        stim = attempt.stimuli_count
+        corr = attempt.correct_count
+        if stim and stim > 0 and corr is not None:
+            secondary.append({"label": "Accuracy", "value": f"{round(corr / stim * 100)}%"})
+
+    elif attempt is not None and game_code == "target_tracking":
+        raw = attempt.raw_metrics or {}
+        diff = raw.get("difficulty_level")
+        if diff:
+            secondary.append({"label": "Difficulty", "value": diff.title()})
+        stim = attempt.stimuli_count
+        corr = attempt.correct_count
+        if stim and stim > 0 and corr is not None:
+            secondary.append({"label": "Hit Rate", "value": f"{round(corr / stim * 100)}%"})
+
+    return {
+        "game_code":       game_code,
+        "primary_label":   "Score",
+        "primary_value":   primary_value,
+        "secondary_items": secondary[:2],
+    }
+
+
 def _build_challenge_card_context(
     ch: VirtualTrainingChallenge,
     viewer: User,
@@ -1272,6 +1315,10 @@ def _build_challenge_card_context(
         "viewer_action_text":    viewer_action_text,
         # CC-DESIGN-1: central emoji for this phase (both templates use this)
         "phase_emoji":           _PHASE_EMOJI.get(phase, ""),
+        # CC-DESIGN-1: game-aware result summary for waiting_for_opponent card
+        "my_result_summary":        _build_result_summary(
+                                        my_attempt, ch.game.code if ch.game else None
+                                    ),
         # CC-DESIGN-1: participant stats (overall skill + position)
         "challenger_overall":       (challenger_stats or {}).get("overall"),
         "challenger_primary_pos":   (challenger_stats or {}).get("primary_pos"),
