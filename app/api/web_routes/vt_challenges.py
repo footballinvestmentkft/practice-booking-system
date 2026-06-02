@@ -41,7 +41,7 @@ from ...dependencies import get_current_user_optional, get_current_user_web
 from ...models.friendship import Friendship, FriendshipStatus, is_friends
 from ...models.license import UserLicense
 from ...models.notification import NotificationType
-from ...models.user_mood_photos import UserMoodPhoto
+from ...models.user_mood_photos import MoodPhotoStatus, UserMoodPhoto
 from ...models.user import User
 from ...models.virtual_training import VirtualTrainingAttempt, VirtualTrainingGame
 from ...models.vt_challenge import (
@@ -1051,20 +1051,26 @@ def validate_challenge_card_phase(
 def _get_participant_photo(db: Session, user_id: int) -> str | None:
     """Return the best available photo URL for a challenge participant.
 
-    CC-DESIGN-1 priority: mood_intro_neutral processed_png_url (bg-free)
-    → mood_intro_neutral original_url → player_card_photo_url → wc_photo_url → None.
-    The neutral mood photo is always background-removed, making it ideal for
-    the hero cutout and target card layouts.
+    CC-DESIGN-1 BALANCED photo priority:
+    1. First mood photo with status=ready + processed_png_url (bg-removed transparent PNG)
+    2. First mood photo with any original_url (not yet processed)
+    3. player_card_photo_url  (profile photo fallback)
+    4. wc_photo_url           (welcome card photo fallback)
+    No specific slot required — first available processed mood photo wins.
     """
-    mood = db.query(UserMoodPhoto).filter_by(
-        user_id=user_id, slot="mood_intro_neutral"
-    ).first()
-    if mood is not None:
-        if mood.processed_png_url:
-            return mood.processed_png_url
-        if mood.original_url:
-            return mood.original_url
+    moods = db.query(UserMoodPhoto).filter_by(user_id=user_id).all()
 
+    # Priority 1: ready + bg-removed
+    for m in moods:
+        if m.status == MoodPhotoStatus.ready.value and m.processed_png_url:
+            return m.processed_png_url
+
+    # Priority 2: any mood photo original
+    for m in moods:
+        if m.original_url:
+            return m.original_url
+
+    # Priority 3+4: license photos
     lic = db.query(UserLicense).filter(
         UserLicense.user_id == user_id,
         UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
@@ -1223,18 +1229,9 @@ async def challenge_card_preview(
             detail=f"Phase {phase!r} is not applicable to this challenge.",
         )
 
-    # CC-DESIGN-1: batch-load participant photos (1 extra query covering both users)
-    participant_ids = {ch.challenger_id, ch.challenged_id}
-    lics = {
-        lic.user_id: lic
-        for lic in db.query(UserLicense).filter(
-            UserLicense.user_id.in_(participant_ids),
-            UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
-        ).all()
-    }
+    # CC-DESIGN-1 BALANCED: mood-first participant photos
     def _photo(uid: int) -> str | None:
-        lic = lics.get(uid)
-        return (lic.player_card_photo_url or lic.wc_photo_url or None) if lic else None
+        return _get_participant_photo(db, uid)
 
     ctx = _build_challenge_card_context(
         ch, user, challenger_attempt, challenged_attempt, phase, my_attempt,
