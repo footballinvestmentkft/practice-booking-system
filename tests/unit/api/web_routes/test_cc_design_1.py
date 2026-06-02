@@ -109,6 +109,8 @@ def _make_mock_ctx(
         _vat = "T1B1K3 challenged you"
     elif phase == "challenge_accepted":
         _vat = "RD14S accepted" if viewer_is_challenger else "accepted by you"
+    elif phase == "waiting_for_opponent":
+        _vat = "Waiting for RD14S" if viewer_is_challenger else "Waiting for T1B1K3"
     elif phase == "challenge_cancelled":
         _vat = "cancelled by you" if viewer_is_challenger else "T1B1K3 cancelled"
     elif phase == "challenge_declined":
@@ -565,11 +567,11 @@ class TestCCExportPolicy:
                "CDO ownership" in src or "UserRole.ADMIN" in src, \
             "Export route must retain ownership guard"
 
-    def test_cc_export_09_waiting_for_opponent_not_exportable(self):
-        """CC-EXPORT-09: waiting_for_opponent is NOT in _EXPORTABLE_PHASES."""
+    def test_cc_export_09_waiting_for_opponent_is_exportable(self):
+        """CC-EXPORT-09 (updated): waiting_for_opponent IS in _EXPORTABLE_PHASES.
+        Social moment: viewer submitted their result and is waiting for opponent."""
         from app.api.web_routes.vt_challenges import _EXPORTABLE_PHASES
-        assert "waiting_for_opponent" not in _EXPORTABLE_PHASES, \
-            "waiting_for_opponent must remain preview-only (deferred)"
+        assert "waiting_for_opponent" in _EXPORTABLE_PHASES
 
     def test_cc_export_10_challenge_accepted_is_exportable(self):
         """CC-EXPORT-10 (updated): challenge_accepted IS in _EXPORTABLE_PHASES.
@@ -2542,3 +2544,151 @@ class TestCCDNoCTA:
         assert "Memory Sequence" in html
         assert 'class="cc-cta"' not in html
         assert "Invitation Pending" not in html
+
+
+# ── Waiting for opponent phase ────────────────────────────────────────────────
+
+class TestCCDWaiting:
+    """CCD-WAIT: waiting_for_opponent — exportable, viewer-specific hero card.
+
+    CCD-WAIT-01  waiting_for_opponent in _EXPORTABLE_PHASES
+    CCD-WAIT-02  viewer_action_text challenger: "Waiting for RD14S"
+    CCD-WAIT-03  viewer_action_text challenged: "Waiting for T1B1K3"
+    CCD-WAIT-04  get_unlocked: ACCEPTED + has_my_attempt=True → includes waiting_for_opponent
+    CCD-WAIT-05  get_unlocked: ACCEPTED + has_my_attempt=False → NOT in unlocked
+    CCD-WAIT-06  post_16_9: arch-waiting div rendered (not arch-battle, not arch-result)
+    CCD-WAIT-07  post_16_9: viewer photo present
+    CCD-WAIT-08  post_16_9: OVR overlay rendered when overall present
+    CCD-WAIT-09  post_16_9: score rendered when my_score present
+    CCD-WAIT-10  post_16_9: 'Result Submitted' when my_score is None
+    CCD-WAIT-11  story_9_16: arch-waiting-story div rendered
+    CCD-WAIT-12  challenge_accepted post: arch-invitation-balanced still used (no regression)
+    CCD-WAIT-13  live_lobby_ready post: arch-battle still used (no regression)
+    """
+
+    def _render(self, template_path: str, phase: str, **kwargs) -> str:
+        from jinja2 import Environment, FileSystemLoader
+        env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        tmpl = env.get_template(template_path)
+        ctx = _make_mock_ctx(phase=phase, **kwargs)
+        ctx["request"] = MagicMock()
+        return tmpl.render(**ctx)
+
+    def test_ccd_wait_01_in_exportable_phases(self):
+        """CCD-WAIT-01: waiting_for_opponent in _EXPORTABLE_PHASES."""
+        from app.api.web_routes.vt_challenges import _EXPORTABLE_PHASES
+        assert "waiting_for_opponent" in _EXPORTABLE_PHASES
+
+    def test_ccd_wait_02_viewer_action_text_challenger(self):
+        """CCD-WAIT-02: challenger view → 'Waiting for [challenged_name]'."""
+        from app.api.web_routes.vt_challenges import _build_challenge_card_context
+        ch = MagicMock()
+        ch.challenger_id = 10; ch.challenged_id = 20
+        ch.challenger = MagicMock(nickname="T1B1K3", email="t@x.com")
+        ch.challenged = MagicMock(nickname="RD14S", email="r@x.com")
+        ch.game = MagicMock(name="Memory Sequence")
+        ch.challenge_mode = "async"; ch.status = MagicMock()
+        ch.winner_id = None; ch.winner = None; ch.is_draw = False
+        ch.completed_at = None; ch.forfeit_reason = None; ch.forfeit_user_id = None
+        ch.challenger_attempt_id = 99; ch.challenged_attempt_id = None
+        viewer = MagicMock(id=10)
+        ctx = _build_challenge_card_context(ch, viewer, None, None, "waiting_for_opponent")
+        assert ctx["viewer_action_text"] == "Waiting for RD14S"
+
+    def test_ccd_wait_03_viewer_action_text_challenged(self):
+        """CCD-WAIT-03: challenged view → 'Waiting for [challenger_name]'."""
+        from app.api.web_routes.vt_challenges import _build_challenge_card_context
+        ch = MagicMock()
+        ch.challenger_id = 10; ch.challenged_id = 20
+        ch.challenger = MagicMock(nickname="T1B1K3", email="t@x.com")
+        ch.challenged = MagicMock(nickname="RD14S", email="r@x.com")
+        ch.game = MagicMock(name="Memory Sequence")
+        ch.challenge_mode = "async"; ch.status = MagicMock()
+        ch.winner_id = None; ch.winner = None; ch.is_draw = False
+        ch.completed_at = None; ch.forfeit_reason = None; ch.forfeit_user_id = None
+        ch.challenger_attempt_id = None; ch.challenged_attempt_id = 99
+        viewer = MagicMock(id=20)
+        ctx = _build_challenge_card_context(ch, viewer, None, None, "waiting_for_opponent")
+        assert ctx["viewer_action_text"] == "Waiting for T1B1K3"
+
+    def test_ccd_wait_04_unlocked_when_has_attempt(self):
+        """CCD-WAIT-04: ACCEPTED + challenger_attempt_id set → waiting_for_opponent unlocked."""
+        from app.api.web_routes.vt_challenges import (
+            get_unlocked_challenge_card_phases, ChallengeStatus,
+        )
+        ch = MagicMock()
+        ch.status = ChallengeStatus.ACCEPTED
+        ch.challenger_id = 1; ch.challenged_id = 2
+        ch.challenger_attempt_id = 99   # viewer has submitted
+        ch.challenged_attempt_id = None
+        ch.winner_id = None; ch.is_draw = False; ch.forfeit_user_id = None
+        result = get_unlocked_challenge_card_phases(ch, viewer_id=1)
+        assert "waiting_for_opponent" in result
+
+    def test_ccd_wait_05_not_unlocked_without_attempt(self):
+        """CCD-WAIT-05: ACCEPTED + no attempt → waiting_for_opponent NOT in unlocked."""
+        from app.api.web_routes.vt_challenges import (
+            get_unlocked_challenge_card_phases, ChallengeStatus,
+        )
+        ch = MagicMock()
+        ch.status = ChallengeStatus.ACCEPTED
+        ch.challenger_id = 1; ch.challenged_id = 2
+        ch.challenger_attempt_id = None  # viewer has NOT submitted
+        ch.challenged_attempt_id = None
+        ch.winner_id = None; ch.is_draw = False; ch.forfeit_user_id = None
+        result = get_unlocked_challenge_card_phases(ch, viewer_id=1)
+        assert "waiting_for_opponent" not in result
+        assert "challenge_accepted" in result   # still sees challenge_accepted
+
+    def test_ccd_wait_06_post_uses_arch_waiting(self):
+        """CCD-WAIT-06: post_16_9 waiting_for_opponent: arch-waiting rendered."""
+        html = self._render("public/export/challenge/post_16_9.html", "waiting_for_opponent",
+                            my_score=85.3)
+        assert '<div class="arch-waiting">' in html
+        assert '<div class="arch-battle">' not in html
+        assert '<div class="arch-result">' not in html
+
+    def test_ccd_wait_07_post_viewer_photo(self):
+        """CCD-WAIT-07: post_16_9: viewer photo rendered in awh-player-zone."""
+        html = self._render("public/export/challenge/post_16_9.html", "waiting_for_opponent",
+                            challenger_photo="/viewer_photo.png")
+        assert "/viewer_photo.png" in html
+
+    def test_ccd_wait_08_post_ovr_overlay(self):
+        """CCD-WAIT-08: post_16_9: OVR overlay rendered when challenger_overall present."""
+        html = self._render("public/export/challenge/post_16_9.html", "waiting_for_opponent",
+                            challenger_overall=78.5)
+        assert 'class="aib-overall"' in html
+        assert "OVR 78.5" in html
+
+    def test_ccd_wait_09_post_score_shown(self):
+        """CCD-WAIT-09: post_16_9: score rendered when my_score is not None."""
+        html = self._render("public/export/challenge/post_16_9.html", "waiting_for_opponent",
+                            my_score=85.3)
+        assert "85.3" in html
+        assert "Your Score" in html
+
+    def test_ccd_wait_10_post_result_submitted_when_no_score(self):
+        """CCD-WAIT-10: post_16_9: 'Result Submitted' shown when my_score is None."""
+        html = self._render("public/export/challenge/post_16_9.html", "waiting_for_opponent",
+                            my_score=None)
+        assert "Result Submitted" in html
+        assert "Your Score" not in html
+
+    def test_ccd_wait_11_story_uses_arch_waiting_story(self):
+        """CCD-WAIT-11: story_9_16: arch-waiting-story rendered."""
+        html = self._render("public/export/challenge/story_9_16.html", "waiting_for_opponent",
+                            my_score=85.3)
+        assert '<div class="arch-waiting-story">' in html
+
+    def test_ccd_wait_12_accepted_no_regression(self):
+        """CCD-WAIT-12: challenge_accepted post: arch-invitation-balanced unchanged."""
+        html = self._render("public/export/challenge/post_16_9.html", "challenge_accepted")
+        assert '<div class="arch-invitation-balanced">' in html
+        assert '<div class="arch-waiting">' not in html
+
+    def test_ccd_wait_13_live_lobby_no_regression(self):
+        """CCD-WAIT-13: live_lobby_ready post: arch-battle unchanged."""
+        html = self._render("public/export/challenge/post_16_9.html", "live_lobby_ready")
+        assert '<div class="arch-battle">' in html
+        assert '<div class="arch-waiting">' not in html

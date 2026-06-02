@@ -263,6 +263,42 @@
     display: flex; align-items: center; justify-content: center; gap: 48px; width: 100%;
   }
 
+  /* ── Archetype C2: Waiting Hero (waiting_for_opponent) ── */
+  .arch-waiting {
+    display: grid; grid-template-columns: 1fr 1.1fr; width: 100%; height: 100%;
+  }
+  .awh-player-zone {
+    position: relative; overflow: hidden;
+    background: linear-gradient(160deg, #0c1624 0%, #111e30 100%);
+  }
+  .awh-player-zone::after {
+    content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
+    background: linear-gradient(180deg, transparent, var(--cc-border), transparent);
+  }
+  .awh-content {
+    display: flex; flex-direction: column; justify-content: center;
+    align-items: flex-start; padding: 28px 40px; gap: 0;
+  }
+  .awh-phase-emoji { font-size: 2.4rem; line-height: 1; margin-bottom: 10px; }
+  .awh-headline {
+    font-size: 2.2rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--cc-text); line-height: 1.05; margin-bottom: 6px;
+  }
+  .awh-sublabel {
+    font-size: 0.74rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--cc-gold); margin-bottom: 16px;
+  }
+  .awh-divider { width: 36px; height: 2px; background: var(--cc-border); margin-bottom: 14px; }
+  .awh-score-label {
+    font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--cc-dim); margin-bottom: 4px;
+  }
+  .awh-score {
+    font-size: 3.2rem; font-weight: 800; color: var(--cc-gold); line-height: 1; margin-bottom: 12px;
+  }
+  .awh-submitted { font-size: 0.92rem; font-weight: 700; color: var(--cc-sub); margin-bottom: 12px; }
+  .awh-game { font-size: 0.72rem; color: var(--cc-sub); }
+
   /* ── Archetype F: Terminal Rejection (cancelled / declined) ── */
   .arch-terminal {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -506,29 +542,50 @@
     </div>
   </div>
 
-  {# ── Archetype C: Waiting / Score Spotlight ── #}
+  {# ── Archetype C2: Waiting Hero (waiting_for_opponent) — viewer-specific phase ── #}
+  {# Viewer has submitted; opponent has not yet. Single-player hero layout. #}
   {% elif phase == "waiting_for_opponent" %}
-  <div class="cc-flex-center" style="gap:52px; width:100%;">
-    {# Viewer hero photo #}
-    <div class="cc-col">
-      {% set _v_photo = selected_photo_url or viewer_photo_url %}
+  {% set _v_photo = (selected_photo_url if viewer_is_challenger else None) or viewer_photo_url %}
+  {% set _v_name  = challenger_name if viewer_is_challenger else challenged_name %}
+  {% set _v_overall      = challenger_overall      if viewer_is_challenger else challenged_overall %}
+  {% set _v_primary_pos  = challenger_primary_pos  if viewer_is_challenger else challenged_primary_pos %}
+  {% set _v_secondary_pos = challenger_secondary_pos if viewer_is_challenger else challenged_secondary_pos %}
+  <div class="arch-waiting">
+
+    {# LEFT: Viewer hero photo zone — reuses aib-* overlay CSS #}
+    <div class="awh-player-zone">
       {% if _v_photo %}
-        <img src="{{ _v_photo }}" class="cc-photo hero" alt="{{ challenger_name if viewer_is_challenger else challenged_name }}">
+        <img src="{{ _v_photo }}" class="aib-player-photo" alt="{{ _v_name }}">
       {% else %}
-        <div class="cc-avatar hero">{{ (challenger_name if viewer_is_challenger else challenged_name)[0] | upper }}</div>
+        <div class="aib-player-initial">{{ (_v_name[0] if _v_name else '?') | upper }}</div>
       {% endif %}
+      {% if _v_primary_pos %}
+      <div class="aib-pos-block">
+        <span class="aib-pos-primary">{{ _v_primary_pos }}</span>
+        {% if _v_secondary_pos %}<span class="aib-pos-secondary">{{ _v_secondary_pos }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if _v_overall is not none %}
+      <div class="aib-overall">OVR {{ _v_overall }}</div>
+      {% endif %}
+      <div class="aib-player-name">{{ _v_name }}</div>
     </div>
-    {# Score + waiting #}
-    <div class="cc-col" style="gap:16px;">
+
+    {# RIGHT: Waiting content #}
+    <div class="awh-content">
+      {% if phase_emoji %}<div class="awh-phase-emoji">{{ phase_emoji }}</div>{% endif %}
+      <div class="awh-headline">Waiting for<br>Opponent</div>
+      <div class="awh-sublabel">{{ viewer_action_text }}</div>
+      <div class="awh-divider"></div>
       {% if my_score is not none %}
-        <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--cc-dim);">Your Score</div>
-        <div class="cc-score-spotlight">{{ "%.1f"|format(my_score) }}</div>
+      <div class="awh-score-label">Your Score</div>
+      <div class="awh-score">{{ "%.1f"|format(my_score) }}</div>
       {% else %}
-        <div class="cc-headline" style="font-size:2rem;">Result Submitted</div>
+      <div class="awh-submitted">Result Submitted</div>
       {% endif %}
-      <div class="cc-waiting-label">⏳ Waiting for {{ challenged_name if viewer_is_challenger else challenger_name }}…</div>
-      <div class="cc-subline" style="font-size:0.72rem;">{{ game_name }}</div>
+      <div class="awh-game">{{ game_name }}</div>
     </div>
+
   </div>
 
   {# ── Archetype D: Result VS ── #}

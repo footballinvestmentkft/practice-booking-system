@@ -894,6 +894,8 @@ _EXPORTABLE_PHASES = frozenset({
     "challenge_received",
     # Acceptance moment
     "challenge_accepted",
+    # Viewer submitted, waiting for opponent
+    "waiting_for_opponent",
     # Terminal rejection phases
     "challenge_cancelled",
     "challenge_declined",
@@ -1228,6 +1230,9 @@ def _build_challenge_card_context(
         viewer_action_text = f"{_challenger_dn} challenged you"
     elif phase == "challenge_accepted":
         viewer_action_text = f"{_challenged_dn} accepted" if is_challenger else "accepted by you"
+    elif phase == "waiting_for_opponent":
+        opp = _challenged_dn if is_challenger else _challenger_dn
+        viewer_action_text = f"Waiting for {opp}"
     elif phase == "challenge_cancelled":
         viewer_action_text = "cancelled by you" if is_challenger else f"{_challenger_dn} cancelled"
     elif phase == "challenge_declined":
