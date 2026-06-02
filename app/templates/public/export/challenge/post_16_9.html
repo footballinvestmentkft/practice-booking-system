@@ -167,91 +167,71 @@
   .cc-cta { font-size: 0.8rem; font-weight: 700; color: var(--cc-gold); letter-spacing: 0.08em; text-transform: uppercase; }
   .cc-domain { font-size: 0.62rem; color: #2a3a55; }
 
-  /* ── CC-DESIGN-1 FIX: Hero cutout class (no circular crop) ── */
-  .cc-photo-hero-cutout {
-    width: 100%; height: 100%;
-    object-fit: contain; object-position: center bottom;
-    display: block;
-    mix-blend-mode: multiply;
-  }
-  .cc-initial-hero {
-    width: 100%; height: 100%;
-    display: flex; align-items: flex-end; justify-content: center;
-    padding-bottom: 24px;
-    font-size: 14rem; font-weight: 900; color: var(--cc-gold);
-    opacity: 0.12; text-transform: uppercase; line-height: 1;
-    user-select: none;
-  }
-
-  /* ── Archetype A: Invitation (CCD-FIX: photo-dominant split) ── */
-  /* Post 16:9: left photo zone (500px) + right text zone */
-  .arch-invitation-split {
+  /* ── Archetype A BALANCED: Post 16:9 — LEFT PLAYER | CENTER MSG | RIGHT PLAYER ── */
+  .arch-invitation-balanced {
     display: grid;
-    grid-template-columns: 500px 1fr;
+    grid-template-columns: 1fr 460px 1fr;
     width: 100%; height: 100%;
   }
-  .ai-photo-zone {
+  .aib-player-zone {
     position: relative; overflow: hidden;
-    background: linear-gradient(135deg, #0c1624 0%, #111e30 100%);
+    background: linear-gradient(160deg, #0c1624 0%, #111e30 100%);
   }
-  /* Subtle left edge separator */
-  .ai-photo-zone::after {
+  .aib-player-zone--right {
+    background: linear-gradient(200deg, #111e30 0%, #0c1624 100%);
+  }
+  .aib-player-zone::after {
     content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
     background: linear-gradient(180deg, transparent, var(--cc-border), transparent);
   }
-  .ai-text-zone {
-    display: flex; flex-direction: column; justify-content: center;
-    padding: 40px 52px; gap: 0;
+  .aib-player-zone--right::after { right: auto; left: 0; }
+  .aib-player-photo {
+    width: 100%; height: 100%;
+    object-fit: contain; object-position: center bottom;
+    display: block; mix-blend-mode: multiply;
   }
-  .ai-headline {
-    font-size: 3.4rem; font-weight: 800; text-transform: uppercase;
-    letter-spacing: 0.05em; color: var(--cc-text); line-height: 1.05;
-    margin-bottom: 6px;
+  .aib-player-initial {
+    width: 100%; height: 100%;
+    display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: 24px;
+    font-size: 10rem; font-weight: 900; color: var(--cc-gold);
+    opacity: 0.1; text-transform: uppercase; line-height: 1; user-select: none;
   }
-  .ai-sublabel {
-    font-size: 0.82rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--cc-gold); margin-bottom: 28px;
+  .aib-player-name {
+    position: absolute; bottom: 0; left: 0; right: 0; text-align: center;
+    padding: 28px 8px 10px;
+    background: linear-gradient(0deg, rgba(8,16,30,0.88) 0%, transparent 100%);
+    font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--cc-text);
   }
-  .ai-divider {
-    width: 48px; height: 2px; background: var(--cc-border); margin-bottom: 22px;
+  .aib-center-msg {
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    text-align: center; padding: 24px 32px; gap: 0;
   }
-  .ai-participants {
-    font-size: 1.7rem; font-weight: 700; color: var(--cc-text);
-    letter-spacing: 0.02em; margin-bottom: 10px; line-height: 1.2;
+  .aib-status-meta {
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--cc-dim); border: 1px solid var(--cc-border); border-radius: 3px;
+    padding: 3px 8px; margin-bottom: 14px; align-self: center;
   }
-  .ai-participants .arrow { color: var(--cc-gold); margin: 0 10px; }
-  .ai-participants .challenged-name { color: var(--cc-sub); }
-  .ai-game {
-    font-size: 0.88rem; color: var(--cc-sub); margin-top: 4px;
+  .aib-headline {
+    font-size: 2.5rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--cc-text); line-height: 1.05; margin-bottom: 6px;
   }
-
-  /* ── Two-participant target card ── */
-  .ai-context-text {
-    font-size: 0.88rem; color: var(--cc-sub); font-weight: 600;
-    letter-spacing: 0.04em; margin-bottom: 18px; text-transform: uppercase;
+  .aib-sublabel {
+    font-size: 0.74rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--cc-gold); margin-bottom: 18px;
   }
-  .ai-target-card {
-    display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
-    margin-bottom: 20px;
+  .aib-divider { width: 36px; height: 2px; background: var(--cc-border); margin-bottom: 14px; }
+  .aib-context {
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--cc-sub); margin-bottom: 12px;
   }
-  .ai-target-photo {
-    width: 200px; height: 240px; object-fit: contain; object-position: center bottom;
-    background: rgba(255,255,255,0.04); border-radius: 8px;
-    border: 1px solid var(--cc-border);
-    mix-blend-mode: multiply;
+  .aib-participants {
+    font-size: 1.1rem; font-weight: 700; color: var(--cc-text);
+    letter-spacing: 0.02em; margin-bottom: 6px; line-height: 1.2;
   }
-  .ai-target-initial {
-    width: 200px; height: 240px;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(255,255,255,0.04); border-radius: 8px;
-    border: 1px solid var(--cc-border);
-    font-size: 7rem; font-weight: 800; color: var(--cc-sub);
-    text-transform: uppercase;
-  }
-  .ai-target-name {
-    font-size: 1.2rem; font-weight: 700; color: var(--cc-text);
-    letter-spacing: 0.03em;
-  }
+  .aib-participants .arrow { color: var(--cc-gold); margin: 0 6px; }
+  .aib-game { font-size: 0.76rem; color: var(--cc-sub); }
 
   /* ── Archetype B: Battle / Accepted ── */
   .arch-battle {
@@ -313,44 +293,48 @@
       ALWAYS challenged_photo_url or initials. selected_photo_url NEVER overrides target card.
     Rule: selected_photo_url can only override the viewer's own slot (challenger in sent view).
   #}
-  {# ── Archetype A: Invitation — CCD-FIX photo-dominant split (challenge_sent / challenge_received) ── #}
+  {# ── Archetype A BALANCED: LEFT PLAYER | CENTER MESSAGE | RIGHT PLAYER ── #}
+  {# selected_photo_url rule: viewer slot only — sent=left(challenger), received=right(challenged) #}
   {% if phase in ("challenge_sent", "challenge_received") %}
-  {# card-content must fill the area between header and footer — override for this archetype #}
-  {% set _hero_photo = (selected_photo_url if phase == "challenge_sent" else none) or challenger_photo_url %}{# challenge_received hero: challenger_photo always — no selected_photo_url override #}
-  <div class="arch-invitation-split">
+  {% set _left_photo  = (selected_photo_url if viewer_is_challenger else None) or challenger_photo_url %}
+  {% set _right_photo = (selected_photo_url if not viewer_is_challenger else None) or challenged_photo_url %}
+  <div class="arch-invitation-balanced">
 
-    {# LEFT: Hero photo zone — full height, no circular crop #}
-    <div class="ai-photo-zone">
-      {% if _hero_photo %}
-        <img src="{{ _hero_photo }}" class="cc-photo-hero-cutout" alt="{{ challenger_name }}">
+    {# LEFT: Challenger photo zone #}
+    <div class="aib-player-zone">
+      {% if _left_photo %}
+        <img src="{{ _left_photo }}" class="aib-player-photo" alt="{{ challenger_name }}">
       {% else %}
-        <div class="cc-initial-hero">{{ (challenger_name[0] if challenger_name else '?') | upper }}</div>
+        <div class="aib-player-initial">{{ (challenger_name[0] if challenger_name else '?') | upper }}</div>
       {% endif %}
+      <div class="aib-player-name">{{ challenger_name }}</div>
     </div>
 
-    {# RIGHT: Text zone #}
-    <div class="ai-text-zone">
-      <div class="ai-headline">
+    {# CENTER: Message — no CTA, no buttons, no links #}
+    <div class="aib-center-msg">
+      <div class="aib-status-meta">Challenge Invitation</div>
+      <div class="aib-headline">
         {% if phase == "challenge_sent" %}⚔️ Challenge<br>Sent{% else %}⚔️ You've Been<br>Challenged!{% endif %}
       </div>
-      <div class="ai-sublabel">
+      <div class="aib-sublabel">
         {% if phase == "challenge_sent" %}sent by you{% else %}sent to you{% endif %}
       </div>
-      <div class="ai-divider"></div>
-      <div class="ai-context-text">{{ viewer_action_text }}</div>
-      {# TWO-PARTICIPANT TARGET CARD: challenged player is always visible #}
-      <div class="ai-target-card">
-        {% if challenged_photo_url %}
-          <img src="{{ challenged_photo_url }}" class="ai-target-photo" alt="{{ challenged_name }}">
-        {% else %}
-          <div class="ai-target-initial">{{ (challenged_name[0] if challenged_name else '?') | upper }}</div>
-        {% endif %}
-        <div class="ai-target-name">{{ challenged_name }}</div>
+      <div class="aib-divider"></div>
+      {% if viewer_action_text %}<div class="aib-context">{{ viewer_action_text }}</div>{% endif %}
+      <div class="aib-participants">
+        {{ challenger_name }}<span class="arrow">→</span>{{ challenged_name }}
       </div>
-      <div class="ai-participants">
-        {{ challenger_name }}<span class="arrow">→</span><span class="challenged-name">{{ challenged_name }}</span>
-      </div>
-      <div class="ai-game">{{ game_name }}</div>
+      <div class="aib-game">{{ game_name }}</div>
+    </div>
+
+    {# RIGHT: Challenged photo zone #}
+    <div class="aib-player-zone aib-player-zone--right">
+      {% if _right_photo %}
+        <img src="{{ _right_photo }}" class="aib-player-photo" alt="{{ challenged_name }}">
+      {% else %}
+        <div class="aib-player-initial">{{ (challenged_name[0] if challenged_name else '?') | upper }}</div>
+      {% endif %}
+      <div class="aib-player-name">{{ challenged_name }}</div>
     </div>
 
   </div>
@@ -514,10 +498,14 @@
 
   </div>{# end card-content #}
 
-  {# Footer #}
+  {# Footer — invitation phases: status text only, no CTA #}
   <div class="card-footer">
     <div class="cc-game-info">{{ game_name }}{% if completed_at %} · {{ completed_at.strftime("%b %d, %Y") }}{% endif %}</div>
+    {% if phase in ("challenge_sent", "challenge_received") %}
+    <div class="cc-game-info">Invitation Pending</div>
+    {% else %}
     <div class="cc-cta">{{ cta_label }} →</div>
+    {% endif %}
     <div class="cc-domain">lfa.gg</div>
   </div>
 

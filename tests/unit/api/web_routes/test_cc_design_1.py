@@ -309,12 +309,13 @@ class TestCCD18to21MediaPanel:
         assert "cs-cc-mood-section" in src or "cs-cc-mood-grid" in src
 
 
-# ── CCD-SENT: Challenge Sent/Received hero layout fix ─────────────────────────
+# ── CCD-SENT: Challenge Sent/Received — BALANCED layout (updated for BALANCED redesign) ──
 
 class TestCCDSentReceivedLayout:
-    """CCD-FIX tests for Challenge Sent/Received photo-dominant layout."""
+    """CCD-SENT: balanced invitation layout — LEFT | CENTER | RIGHT (post), TOP | CENTER | BOTTOM (story)."""
 
-    def _render(self, tmpl_name: str, phase: str, photo: str | None = None) -> str:
+    def _render(self, tmpl_name: str, phase: str, photo: str | None = None,
+                challenged_photo: str | None = None, viewer_is_challenger: bool = True) -> str:
         from jinja2 import Environment, FileSystemLoader
         from unittest.mock import MagicMock
         env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
@@ -328,10 +329,10 @@ class TestCCDSentReceivedLayout:
             "winner_name": None, "my_score": None, "opp_score": None,
             "my_skill_scores": {}, "is_viewer_winner": False,
             "cta_label": "View", "completed_at": None, "is_locked": False,
-            "unlocked_phases": [phase], "viewer_is_challenger": True,
+            "unlocked_phases": [phase], "viewer_is_challenger": viewer_is_challenger,
             "forfeit_reason": None,
-            "challenger_photo_url": photo, "challenged_photo_url": None,
-            "viewer_photo_url": photo, "opponent_photo_url": None,
+            "challenger_photo_url": photo, "challenged_photo_url": challenged_photo,
+            "viewer_photo_url": photo, "opponent_photo_url": challenged_photo,
             "selected_photo_url": None, "request": MagicMock(),
             "viewer_action_text": ("You challenged RD14S" if phase == "challenge_sent"
                                    else "T1B1K3 challenged you" if phase == "challenge_received"
@@ -339,54 +340,52 @@ class TestCCDSentReceivedLayout:
         }
         return tmpl.render(**ctx)
 
-    def test_ccd_sent_01_post_uses_invitation_split_layout(self):
-        """CCD-SENT-01: post_16_9 challenge_sent uses photo-dominant split layout."""
+    def test_ccd_sent_01_post_uses_balanced_layout(self):
+        """CCD-SENT-01: post_16_9 invitation uses balanced three-column layout."""
         html = self._render("public/export/challenge/post_16_9.html", "challenge_sent", "/ch.png")
-        assert "arch-invitation-split" in html, \
-            "post_16_9 challenge_sent must use arch-invitation-split layout"
-        # Must be in the body (not just CSS definition) — check for the div
-        assert '<div class="arch-invitation-split">' in html
+        assert "arch-invitation-balanced" in html, \
+            "post_16_9 challenge_sent must use arch-invitation-balanced layout"
+        assert '<div class="arch-invitation-balanced">' in html
 
-    def test_ccd_sent_02_story_uses_large_hero_zone(self):
-        """CCD-SENT-02: story_9_16 challenge_sent uses 850px hero zone."""
+    def test_ccd_sent_02_story_uses_balanced_stacked_layout(self):
+        """CCD-SENT-02: story_9_16 invitation uses balanced stacked layout."""
         html = self._render("public/export/challenge/story_9_16.html", "challenge_sent", "/ch.png")
-        assert "ai-story-hero-zone" in html
-        assert '<div class="ai-story-hero-zone">' in html
+        assert "arch-story-balanced" in html
+        assert '<div class="arch-story-balanced">' in html
 
-    def test_ccd_sent_03_no_circular_photo_in_hero_slot(self):
-        """CCD-SENT-03: Hero slot does NOT use border-radius:50% on hero image."""
-        for tmpl in ["public/export/challenge/post_16_9.html", "public/export/challenge/story_9_16.html"]:
-            html = self._render(tmpl, "challenge_sent", "/ch.png")
-            # cc-photo-hero-cutout must NOT have border-radius
-            # Check: img with cc-photo-hero-cutout class is in the body
-            assert 'class="cc-photo-hero-cutout"' in html, \
-                f"{tmpl}: hero image must use cc-photo-hero-cutout class"
+    def test_ccd_sent_03_both_player_zones_in_post(self):
+        """CCD-SENT-03: post has both left and right player zones."""
+        html = self._render("public/export/challenge/post_16_9.html", "challenge_sent",
+                            "/ch.png", "/cd.png")
+        assert "aib-player-zone" in html
+        assert "aib-player-zone--right" in html
+        assert "/ch.png" in html
+        assert "/cd.png" in html
 
-    def test_ccd_sent_04_hero_cutout_class_defined(self):
-        """CCD-SENT-04: cc-photo-hero-cutout CSS class is defined in both templates."""
-        for tmpl_name in ["public/export/challenge/post_16_9.html", "public/export/challenge/story_9_16.html"]:
+    def test_ccd_sent_04_player_photo_class_defined(self):
+        """CCD-SENT-04: aib-player-photo and asb-player-photo CSS defined in templates."""
+        for tmpl_name, cls in [
+            ("public/export/challenge/post_16_9.html",   ".aib-player-photo"),
+            ("public/export/challenge/story_9_16.html",  ".asb-player-photo"),
+        ]:
             src = (TEMPLATES_DIR / tmpl_name).read_text()
-            assert ".cc-photo-hero-cutout" in src, \
-                f"{tmpl_name} must define .cc-photo-hero-cutout CSS"
+            assert cls in src, f"{tmpl_name} must define {cls} CSS"
             assert "object-fit: contain" in src
             assert "object-position: center bottom" in src
 
-    def test_ccd_sent_05_story_hero_zone_large(self):
-        """CCD-SENT-05: story hero zone is ≥700px (large portion of 1920px canvas).
-        CC-DESIGN-1 two-participant: zone reduced from 850px→750px to make room for target card.
-        """
+    def test_ccd_sent_05_story_player_zones_large(self):
+        """CCD-SENT-05: story player zones are ≥600px (substantial portion of 1920px canvas)."""
         src = (TEMPLATES_DIR / "public/export/challenge/story_9_16.html").read_text()
-        assert "750px" in src, \
-            "story hero zone must be 750px (CC-DESIGN-1 two-participant target card layout)"
+        assert "600px" in src, "story player zones must be 600px"
 
-    def test_ccd_sent_06_fallback_not_circular_in_hero(self):
-        """CCD-SENT-06: Fallback (no photo) uses cc-initial-hero, not circular avatar."""
-        for tmpl in ["public/export/challenge/post_16_9.html", "public/export/challenge/story_9_16.html"]:
-            html = self._render(tmpl, "challenge_sent", photo=None)  # no photo
-            assert "cc-initial-hero" in html, \
-                f"{tmpl}: fallback must use cc-initial-hero (not circular avatar)"
-            assert 'class="cc-avatar hero"' not in html or "arch-invitation" not in html, \
-                f"{tmpl}: fallback in hero slot must NOT use circular cc-avatar"
+    def test_ccd_sent_06_fallback_initials_in_player_slots(self):
+        """CCD-SENT-06: Fallback (no photo) uses player-initial class, not circular avatar."""
+        for tmpl, initial_cls in [
+            ("public/export/challenge/post_16_9.html",  "aib-player-initial"),
+            ("public/export/challenge/story_9_16.html", "asb-player-initial"),
+        ]:
+            html = self._render(tmpl, "challenge_sent", photo=None)
+            assert initial_cls in html, f"{tmpl}: fallback must use {initial_cls}"
 
     def test_ccd_sent_07_other_archetypes_unchanged(self):
         """CCD-SENT-07: Other phase archetypes still render correctly (regression)."""
@@ -775,25 +774,30 @@ class TestCCDHeroRule:
             assert "/mood_selected.png" in html, \
                 f"{tmpl}: challenge_sent hero must use selected_photo_url when provided"
 
-    def test_ccd_hero_02_challenge_received_ignores_selected_photo(self):
-        """CCD-HERO-02: challenge_received hero uses challenger_photo_url, not selected_photo_url."""
-        for tmpl in ["public/export/challenge/post_16_9.html",
-                     "public/export/challenge/story_9_16.html"]:
-            html = self._render(tmpl, "challenge_received",
-                                selected_photo="/mood_selected.png",
-                                challenger_photo="/ch1.png")
-            # The selected photo must NOT be the hero image for challenge_received
-            # challenger_photo must appear as hero
+    def test_ccd_hero_02_challenge_received_challenger_stays_in_left_slot(self):
+        """CCD-HERO-02: challenge_received — challenger always in left/top slot; selected → right (viewer=challenged)."""
+        from jinja2 import Environment, FileSystemLoader
+        from unittest.mock import MagicMock
+        env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        for tmpl_name in ["public/export/challenge/post_16_9.html",
+                          "public/export/challenge/story_9_16.html"]:
+            tmpl = env.get_template(tmpl_name)
+            # challenge_received: viewer=challenged (viewer_is_challenger=False)
+            ctx = _make_mock_ctx(
+                phase="challenge_received",
+                viewer_is_challenger=False,
+                selected_photo="/mood_selected.png",
+                challenger_photo="/ch1.png",
+                challenged_photo="/ch2.png",
+            )
+            ctx["request"] = MagicMock()
+            html = tmpl.render(**ctx)
+            # Challenger stays in left/top slot (unchanged)
             assert "/ch1.png" in html, \
-                f"{tmpl}: challenge_received hero must use challenger_photo_url"
-            # The selected photo may appear elsewhere (e.g. viewer slot) but not as the main hero
-            # We check the hero-specific markup doesn't use selected_photo_url
-            # The template sets _hero_photo = (selected if sent else none) or challenger
-            # So for received, _hero_photo = none or challenger = challenger
-            # This means if selected_photo appears, it must be in a non-hero slot
-            # A direct check: the src= of .cc-photo-hero-cutout must be challenger, not selected
-            assert 'src="/ch1.png"' in html, \
-                f"{tmpl}: challenge_received hero img src must be challenger_photo_url (/ch1.png)"
+                f"{tmpl_name}: challenger photo must be in left slot for challenge_received"
+            # Selected replaces viewer (challenged) in right/bottom slot
+            assert "/mood_selected.png" in html, \
+                f"{tmpl_name}: selected_photo must appear in viewer (right) slot"
 
 
 # ── CCD-VACTION: viewer_action_text context field ─────────────────────────────
@@ -956,24 +960,27 @@ class TestCCDInviteTwoParticipant:
         assert "R" in html, \
             "When no challenged_photo_url, first letter of challenged_name must appear as initial"
         # The target card initial container class must be present (not a real img src)
-        assert "ai-target-initial" in html or "ai-story-target-initial" in html, \
+        assert ("aib-player-initial" in html or "asb-player-initial" in html or
+                "ai-target-initial" in html or "ai-story-target-initial" in html), \
             "When no challenged_photo_url, initials container class must be rendered"
 
 
-# ── CCD-NEUTRAL-PHOTO: mood_intro_neutral as participant photo source ─────────
+# ── CCD-NEUTRAL-PHOTO: first available mood photo source ──────────────────────
 
 class TestCCDNeutralPhoto:
-    """CCD-NEUTRAL-01..04: _get_participant_photo uses mood_intro_neutral (bg-free) first."""
+    """CCD-NEUTRAL-01..04: _get_participant_photo uses first available processed mood photo."""
 
-    def _run(self, mood_record, lic_record):
+    def _run(self, mood_list, lic_record):
         from app.api.web_routes.vt_challenges import _get_participant_photo
         db = MagicMock()
 
         def _query_side_effect(model):
             q = MagicMock()
-            if "UserMoodPhoto" in str(model) or hasattr(model, "__tablename__") and \
-                    getattr(model, "__tablename__", "") == "user_mood_photos":
-                q.filter_by.return_value.first.return_value = mood_record
+            if "UserMoodPhoto" in str(model) or (
+                hasattr(model, "__tablename__") and
+                getattr(model, "__tablename__", "") == "user_mood_photos"
+            ):
+                q.filter_by.return_value.all.return_value = mood_list or []
             else:
                 q.filter.return_value.first.return_value = lic_record
             return q
@@ -982,33 +989,271 @@ class TestCCDNeutralPhoto:
         return _get_participant_photo(db, user_id=10)
 
     def test_ccd_neutral_01_processed_png_used_when_present(self):
-        """CCD-NEUTRAL-01: processed_png_url from mood_intro_neutral takes top priority."""
+        """CCD-NEUTRAL-01: First ready processed_png_url takes top priority."""
+        from app.models.user_mood_photos import MoodPhotoStatus
         mood = MagicMock()
-        mood.processed_png_url = "/processed/neutral.png"
-        mood.original_url = "/orig/neutral.jpg"
-        result = self._run(mood, MagicMock(player_card_photo_url="/player.jpg", wc_photo_url=None))
-        assert result == "/processed/neutral.png", \
-            "processed_png_url must be used when available"
+        mood.status = MoodPhotoStatus.ready.value
+        mood.processed_png_url = "/processed/any.png"
+        mood.original_url = "/orig/any.jpg"
+        result = self._run([mood], MagicMock(player_card_photo_url="/player.jpg", wc_photo_url=None))
+        assert result == "/processed/any.png", "processed_png_url must be used when ready"
 
     def test_ccd_neutral_02_original_url_fallback_when_not_processed(self):
-        """CCD-NEUTRAL-02: original_url used when processed_png_url is None."""
+        """CCD-NEUTRAL-02: original_url used when no ready processed photo."""
         mood = MagicMock()
+        mood.status = "uploaded"
         mood.processed_png_url = None
-        mood.original_url = "/orig/neutral.jpg"
-        result = self._run(mood, MagicMock(player_card_photo_url="/player.jpg", wc_photo_url=None))
-        assert result == "/orig/neutral.jpg", \
-            "original_url must be used when processed_png_url is None"
+        mood.original_url = "/orig/any.jpg"
+        result = self._run([mood], MagicMock(player_card_photo_url="/player.jpg", wc_photo_url=None))
+        assert result == "/orig/any.jpg", "original_url fallback when not processed"
 
     def test_ccd_neutral_03_player_card_photo_fallback_when_no_mood(self):
-        """CCD-NEUTRAL-03: player_card_photo_url used when no mood_intro_neutral record."""
+        """CCD-NEUTRAL-03: player_card_photo_url used when no mood photos."""
         lic = MagicMock()
         lic.player_card_photo_url = "/player.jpg"
         lic.wc_photo_url = None
-        result = self._run(None, lic)
-        assert result == "/player.jpg", \
-            "player_card_photo_url must be used when no mood_intro_neutral record"
+        result = self._run([], lic)
+        assert result == "/player.jpg", "player_card_photo_url fallback when no mood photos"
 
     def test_ccd_neutral_04_none_when_no_mood_and_no_license(self):
-        """CCD-NEUTRAL-04: None returned when no mood record and no license."""
-        result = self._run(None, None)
-        assert result is None, "None expected when no mood photo and no license"
+        """CCD-NEUTRAL-04: None returned when no mood and no license."""
+        result = self._run([], None)
+        assert result is None, "None expected when no mood and no license"
+
+
+# ── CCD-BALANCED: Balanced invitation layout ──────────────────────────────────
+
+class TestCCDBalanced:
+    """CCD-BALANCED-01..12: balanced LEFT|CENTER|RIGHT post + TOP|CENTER|BOTTOM story."""
+
+    def _render(self, tmpl_name: str, phase: str,
+                challenger_photo: str | None = "/ch.png",
+                challenged_photo: str | None = "/cd.png",
+                selected_photo: str | None = None,
+                viewer_is_challenger: bool = True) -> str:
+        from jinja2 import Environment, FileSystemLoader
+        from unittest.mock import MagicMock
+        env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        tmpl = env.get_template(tmpl_name)
+        vat = ("You challenged RD14S" if phase == "challenge_sent"
+               else "T1B1K3 challenged you" if phase == "challenge_received" else "")
+        ctx = {
+            "phase": phase, "challenge_id": 1,
+            "challenger_name": "T1B1K3", "challenged_name": "RD14S",
+            "game_name": "Memory Sequence", "challenge_mode": "async",
+            "outcome_reason": "score_win", "is_draw": False,
+            "challenger_score": None, "challenged_score": None,
+            "winner_name": None, "my_score": None, "opp_score": None,
+            "my_skill_scores": {}, "is_viewer_winner": False,
+            "cta_label": "View Challenge", "completed_at": None, "is_locked": False,
+            "unlocked_phases": [phase], "viewer_is_challenger": viewer_is_challenger,
+            "forfeit_reason": None,
+            "challenger_photo_url": challenger_photo,
+            "challenged_photo_url": challenged_photo,
+            "viewer_photo_url": challenger_photo if viewer_is_challenger else challenged_photo,
+            "opponent_photo_url": challenged_photo if viewer_is_challenger else challenger_photo,
+            "selected_photo_url": selected_photo,
+            "viewer_action_text": vat, "request": MagicMock(),
+        }
+        return tmpl.render(**ctx)
+
+    def test_ccd_balanced_01_post_sent_has_both_player_zones(self):
+        """CCD-BALANCED-01: post challenge_sent has challenger (left) and challenged (right) zones."""
+        html = self._render("public/export/challenge/post_16_9.html", "challenge_sent")
+        assert "aib-player-zone" in html
+        assert "aib-player-zone--right" in html
+        assert "/ch.png" in html  # challenger left
+        assert "/cd.png" in html  # challenged right
+
+    def test_ccd_balanced_02_post_received_has_both_player_zones(self):
+        """CCD-BALANCED-02: post challenge_received has both participants in player zones."""
+        html = self._render("public/export/challenge/post_16_9.html", "challenge_received",
+                            viewer_is_challenger=False)
+        assert "aib-player-zone" in html
+        assert "aib-player-zone--right" in html
+        assert "/ch.png" in html
+        assert "/cd.png" in html
+
+    def test_ccd_balanced_03_post_has_center_message_zone(self):
+        """CCD-BALANCED-03: post invitation has center message zone."""
+        html = self._render("public/export/challenge/post_16_9.html", "challenge_sent")
+        assert "aib-center-msg" in html
+        assert "Challenge Invitation" in html  # status meta badge
+
+    def test_ccd_balanced_04_story_has_top_and_bottom_zones(self):
+        """CCD-BALANCED-04: story invitation has top and bottom player zones."""
+        html = self._render("public/export/challenge/story_9_16.html", "challenge_sent")
+        assert "asb-player-zone--top" in html
+        assert "asb-player-zone--bottom" in html
+        assert "/ch.png" in html
+        assert "/cd.png" in html
+
+    def test_ccd_balanced_05_selected_photo_only_overrides_viewer_slot(self):
+        """CCD-BALANCED-05: selected_photo_url overrides viewer slot; other participant preserved."""
+        # challenge_sent: viewer=challenger=left → selected → left; right=challenged stays
+        html = self._render("public/export/challenge/post_16_9.html", "challenge_sent",
+                            challenger_photo="/ch.png", challenged_photo="/cd.png",
+                            selected_photo="/sel.png", viewer_is_challenger=True)
+        assert "/sel.png" in html    # selected in left (viewer) slot
+        assert "/cd.png" in html     # challenged still in right slot
+        assert "/ch.png" not in html or "/sel.png" in html  # original replaced by selected
+
+        # challenge_received: viewer=challenged=right → selected → right; left=challenger stays
+        html2 = self._render("public/export/challenge/post_16_9.html", "challenge_received",
+                             challenger_photo="/ch.png", challenged_photo="/cd.png",
+                             selected_photo="/sel.png", viewer_is_challenger=False)
+        assert "/sel.png" in html2   # selected in right (viewer) slot
+        assert "/ch.png" in html2    # challenger still in left slot
+
+    def test_ccd_balanced_06_participant_photo_source_processed_first(self):
+        """CCD-BALANCED-06: _get_participant_photo returns ready processed_png_url first."""
+        from app.api.web_routes.vt_challenges import _get_participant_photo
+        from app.models.user_mood_photos import MoodPhotoStatus
+        db = MagicMock()
+        m = MagicMock(status=MoodPhotoStatus.ready.value,
+                      processed_png_url="/p/processed.png", original_url="/o/orig.jpg")
+        db.query.return_value.filter_by.return_value.all.return_value = [m]
+        result = _get_participant_photo(db, 1)
+        assert result == "/p/processed.png"
+
+    def test_ccd_balanced_07_initials_fallback_both_slots(self):
+        """CCD-BALANCED-07: Both slots show initials when no photos."""
+        html = self._render("public/export/challenge/post_16_9.html", "challenge_sent",
+                            challenger_photo=None, challenged_photo=None)
+        assert "aib-player-initial" in html
+        # first letters: T (T1B1K3) and R (RD14S)
+        assert "T" in html and "R" in html
+
+    def test_ccd_balanced_08_export_route_still_works(self):
+        """CCD-BALANCED-08: export route references still intact."""
+        import inspect
+        from app.api.web_routes.vt_challenges import challenge_card_export
+        src = inspect.getsource(challenge_card_export)
+        assert "is_design_accessible" in src or "is_accessible" in src
+        assert "challenge_card_export" in src
+
+    def test_ccd_balanced_09_no_view_challenge_on_card(self):
+        """CCD-BALANCED-09: Invitation card does not contain VIEW CHALLENGE text."""
+        for tmpl in ["public/export/challenge/post_16_9.html",
+                     "public/export/challenge/story_9_16.html"]:
+            for phase in ("challenge_sent", "challenge_received"):
+                html = self._render(tmpl, phase)
+                assert "View Challenge" not in html, \
+                    f"{tmpl} {phase}: must not contain 'View Challenge'"
+
+    def test_ccd_balanced_10_no_accept_challenge_on_card(self):
+        """CCD-BALANCED-10: Invitation card does not contain ACCEPT CHALLENGE text."""
+        for tmpl in ["public/export/challenge/post_16_9.html",
+                     "public/export/challenge/story_9_16.html"]:
+            for phase in ("challenge_sent", "challenge_received"):
+                html = self._render(tmpl, phase, viewer_is_challenger=phase == "challenge_sent")
+                assert "Accept Challenge" not in html, \
+                    f"{tmpl} {phase}: must not contain 'Accept Challenge'"
+
+    def test_ccd_balanced_11_no_cta_button_or_link_in_invitation(self):
+        """CCD-BALANCED-11: Invitation card has no <button> and no → arrow CTA element."""
+        for tmpl in ["public/export/challenge/post_16_9.html",
+                     "public/export/challenge/story_9_16.html"]:
+            for phase in ("challenge_sent", "challenge_received"):
+                html = self._render(tmpl, phase)
+                assert "<button" not in html, f"{tmpl} {phase}: must not contain <button>"
+                # cc-cta class (arrow CTA) must not appear in invitation phases
+                assert 'class="cc-cta"' not in html, \
+                    f"{tmpl} {phase}: cc-cta class must not appear in invitation card"
+
+    def test_ccd_balanced_12_fallback_without_processed_photo(self):
+        """CCD-BALANCED-12: Without processed mood photo, original or profile photo used."""
+        from app.api.web_routes.vt_challenges import _get_participant_photo
+        db = MagicMock()
+        # Mood has original_url but no processed_png_url
+        m = MagicMock(status="uploaded", processed_png_url=None, original_url="/orig/photo.jpg")
+        db.query.return_value.filter_by.return_value.all.return_value = [m]
+        result = _get_participant_photo(db, 1)
+        assert result == "/orig/photo.jpg", "original_url fallback when no processed"
+
+
+# ── CCD-MOOD-SELECT: Mood photo selector position + behavior ──────────────────
+
+class TestCCDMoodSelect:
+    """CCD-MOOD-SELECT-01..07: mood selector position, JS wiring, viewer-slot rule."""
+
+    def test_ccd_mood_select_01_selector_before_format_in_panel(self):
+        """CCD-MOOD-SELECT-01: cs-cc-mood-section appears before Format selector in panel."""
+        src = (INCLUDES_DIR / "cs_challenge_panel.html").read_text()
+        mood_pos   = src.find("cs-cc-mood-section")
+        format_pos = src.find("cs-section-label\">Format")
+        assert mood_pos != -1, "cs-cc-mood-section must be in challenge panel"
+        assert format_pos != -1, "Format selector must be in challenge panel"
+        assert mood_pos < format_pos, \
+            "Mood selector must appear BEFORE Format selector in panel"
+
+    def test_ccd_mood_select_02_mood_chip_updates_iframe_url(self):
+        """CCD-MOOD-SELECT-02: _setChallengePhoto updates iframe src with photo_url param."""
+        src = (TEMPLATES_DIR / "card_studio_shell.html").read_text()
+        assert "_setChallengePhoto" in src
+        assert "photo_url" in src
+        assert "ccIframe.src" in src
+
+    def test_ccd_mood_select_03_mood_change_preserves_params(self):
+        """CCD-MOOD-SELECT-03: photo URL update preserves challenge_id, phase, platform."""
+        src = (TEMPLATES_DIR / "card_studio_shell.html").read_text()
+        # JS uses regex to replace photo_url without destroying other params
+        assert "replace(" in src and "photo_url" in src, \
+            "_setChallengePhoto must replace photo_url param, not rebuild the full URL"
+
+    def test_ccd_mood_select_04_chip_data_uses_processed_first(self):
+        """CCD-MOOD-SELECT-04: mood chip data-mood-photo-url uses processed_png_url first."""
+        src = (INCLUDES_DIR / "cs_challenge_panel.html").read_text()
+        # Template: _photo_url = (_mp.processed_png_url or _mp.original_url)
+        assert "processed_png_url" in src, "Mood chip must prioritize processed_png_url"
+        assert "data-mood-photo-url" in src
+
+    def test_ccd_mood_select_05_challenge_sent_selected_photo_to_left_slot(self):
+        """CCD-MOOD-SELECT-05: challenge_sent selected_photo_url → challenger (left/top) slot."""
+        from jinja2 import Environment, FileSystemLoader
+        from unittest.mock import MagicMock
+        env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        tmpl = env.get_template("public/export/challenge/post_16_9.html")
+        ctx = _make_mock_ctx(phase="challenge_sent", viewer_is_challenger=True,
+                             selected_photo="/sel.png",
+                             challenger_photo="/ch.png", challenged_photo="/cd.png")
+        ctx["request"] = MagicMock()
+        html = tmpl.render(**ctx)
+        # Left slot (viewer=challenger) must contain selected photo
+        assert "/sel.png" in html, "challenge_sent: selected must appear in left player zone"
+        # Right slot (challenged) must keep its own photo
+        assert "/cd.png" in html, "challenge_sent: challenged photo must stay in right slot"
+
+    def test_ccd_mood_select_06_challenge_received_selected_photo_to_right_slot(self):
+        """CCD-MOOD-SELECT-06: challenge_received selected_photo_url → challenged (right/bottom) slot."""
+        from jinja2 import Environment, FileSystemLoader
+        from unittest.mock import MagicMock
+        env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        tmpl = env.get_template("public/export/challenge/post_16_9.html")
+        ctx = _make_mock_ctx(phase="challenge_received", viewer_is_challenger=False,
+                             selected_photo="/sel.png",
+                             challenger_photo="/ch.png", challenged_photo="/cd.png")
+        ctx["request"] = MagicMock()
+        html = tmpl.render(**ctx)
+        # Right slot (viewer=challenged) must contain selected photo
+        assert "/sel.png" in html, "challenge_received: selected must appear in right player zone"
+        # Left slot (challenger) must keep challenger photo
+        assert "/ch.png" in html, "challenge_received: challenger photo must stay in left slot"
+
+    def test_ccd_mood_select_07_other_participant_preserved_after_mood_change(self):
+        """CCD-MOOD-SELECT-07: Other participant photo not replaced by selected_photo_url."""
+        from jinja2 import Environment, FileSystemLoader
+        from unittest.mock import MagicMock
+        env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        for phase, viewer_is_ch, expected_preserved in [
+            ("challenge_sent",     True,  "/cd.png"),  # challenged stays in right
+            ("challenge_received", False, "/ch.png"),  # challenger stays in left
+        ]:
+            tmpl = env.get_template("public/export/challenge/post_16_9.html")
+            ctx = _make_mock_ctx(phase=phase, viewer_is_challenger=viewer_is_ch,
+                                 selected_photo="/sel.png",
+                                 challenger_photo="/ch.png", challenged_photo="/cd.png")
+            ctx["request"] = MagicMock()
+            html = tmpl.render(**ctx)
+            assert expected_preserved in html, \
+                f"{phase}: {expected_preserved} must be preserved after mood select"

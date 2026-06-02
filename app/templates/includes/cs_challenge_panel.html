@@ -135,22 +135,7 @@
 
   <hr class="cs-section-divider">
 
-  {# Platform selector #}
-  <div class="cs-pc-selector">
-    <p class="cs-section-label">Format</p>
-    <div class="cs-pc-pills">
-      {% for chip in platform_chips %}
-      <a href="/card-studio/challenge?challenge_id={{ selected_challenge_id }}&phase={{ active_phase }}&platform={{ chip.id }}"
-         class="cs-pc-pill{% if chip.active %} cs-pc-pill--active{% endif %}">
-        {{ chip.label }}
-      </a>
-      {% endfor %}
-    </div>
-  </div>
-
-  <hr class="cs-section-divider">
-
-  {# ── CC-DESIGN-1: Mood Photo quick selector (preview-only, no DB write) ── #}
+  {# ── CC-DESIGN-1: Mood Photo quick selector — PRIMARY control, above Format selector ── #}
   <div class="cs-pc-selector">
     <p class="cs-section-label">Preview Photo</p>
     {% set mood_photos    = mood_photos    if mood_photos    is defined else {} %}
@@ -182,6 +167,21 @@
         &nbsp;·&nbsp;
         <a href="/profile/my-mood-photos" class="cs-mood-manage-link">Manage →</a>
       </p>
+    </div>
+  </div>
+
+  <hr class="cs-section-divider">
+
+  {# Platform selector — after mood selector #}
+  <div class="cs-pc-selector">
+    <p class="cs-section-label">Format</p>
+    <div class="cs-pc-pills">
+      {% for chip in platform_chips %}
+      <a href="/card-studio/challenge?challenge_id={{ selected_challenge_id }}&phase={{ active_phase }}&platform={{ chip.id }}"
+         class="cs-pc-pill{% if chip.active %} cs-pc-pill--active{% endif %}">
+        {{ chip.label }}
+      </a>
+      {% endfor %}
     </div>
   </div>
 
