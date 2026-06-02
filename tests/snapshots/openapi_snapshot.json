@@ -48092,6 +48092,17 @@
               }
             ],
             "title": "Challenge Category"
+          },
+          "card_photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Card Photo Url"
           }
         },
         "type": "object",

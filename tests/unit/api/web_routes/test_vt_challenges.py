@@ -266,13 +266,19 @@ class TestSendChallenge:
         game = _game(code="memory_sequence")
         db = _db()
 
-        call_results = [target, game]
-        db.query.return_value.filter.return_value.first.side_effect = call_results
+        # Use a function-based side_effect to avoid StopIteration in async context
+        _order = {"n": 0}
+        _seq = [target, game]
+        def _first():
+            i = _order["n"]; _order["n"] += 1
+            return _seq[i] if i < len(_seq) else None
+        db.query.return_value.filter.return_value.first.side_effect = _first
 
         _mock_snap = {"game_code": "memory_sequence", "grid_tiles": 12, "phases": []}
         with patch(f"{_BASE}.is_friends", return_value=True), \
              patch(f"{_BASE}.count_active_challenges_in_category", return_value=0), \
              patch(f"{_BASE}.generate_snapshot", return_value=_mock_snap), \
+             patch(f"{_BASE}._get_participant_photo", return_value=None), \
              patch(f"{_BASE}.notification_service") as mock_svc:
             result = _run(send_challenge(
                 challenged_user_id=2, game_id=1, message="Good luck",
@@ -290,22 +296,43 @@ class TestSendChallenge:
 
     # ── CH-AUTO-SNAPSHOT: challenger_card_photo_url set at send time ──────────
 
-    def _send_success(self, db, user, target=None, neutral_mood=None):
-        """Helper: run send_challenge with a neutral mood mock wired for _get_participant_photo."""
+    _OWNED = object()  # sentinel: "ownership check returns a real record (truthy)"
+
+    def _send_success(self, db, user, target=None, neutral_mood=None,
+                      card_photo_url=None, owns_mood=_OWNED):
+        """Helper: run send_challenge with mocked DB.
+
+        neutral_mood   — UserMoodPhoto returned by filter_by(slot=neutral).first()
+        card_photo_url — explicit photo URL passed in the form (optional)
+        owns_mood      — ownership check result:
+                         _OWNED (default sentinel) → MagicMock (truthy, "user owns this photo")
+                         None                       → None (falsy, "photo not owned")
+        """
         from app.api.web_routes.vt_challenges import send_challenge
         target = target or _user(uid=2)
         game   = _game(code="memory_sequence")
         _mock_snap = {"game_code": "memory_sequence"}
 
-        # Wire DB so the first two queries (User, VirtualTrainingGame) return target/game,
-        # and the UserMoodPhoto filter_by().first() returns neutral_mood.
-        db.query.return_value.filter.return_value.first.side_effect = [target, game]
+        # Resolve sentinel to an actual truthy MagicMock
+        if owns_mood is self._OWNED and card_photo_url:
+            owns_mood = MagicMock()  # truthy = "user owns this photo"
+        elif owns_mood is self._OWNED:
+            owns_mood = None  # no card_photo_url → ownership check not run
+
+        # Build ordered filter().first() sequence with a function to avoid StopIteration
+        filter_results = [target, game]
+        if card_photo_url:
+            filter_results.append(owns_mood)  # ownership check
+        _idx = {"n": 0}
+        def _first():
+            i = _idx["n"]; _idx["n"] += 1
+            return filter_results[i] if i < len(filter_results) else None
+
+        db.query.return_value.filter.return_value.first.side_effect = _first
         db.query.return_value.filter_by.return_value.first.return_value = neutral_mood
 
         created_challenges = []
-        def _capture_add(obj):
-            created_challenges.append(obj)
-        db.add.side_effect = _capture_add
+        db.add.side_effect = lambda obj: created_challenges.append(obj)
 
         with patch(f"{_BASE}.is_friends", return_value=True), \
              patch(f"{_BASE}.count_active_challenges_in_category", return_value=0), \
@@ -314,6 +341,7 @@ class TestSendChallenge:
             result = _run(send_challenge(
                 challenged_user_id=2, game_id=1, message=None,
                 challenge_mode=None, db=db, user=user,
+                card_photo_url=card_photo_url,
             ))
         return result, created_challenges
 
@@ -350,19 +378,18 @@ class TestSendChallenge:
         assert challenges[0].challenger_card_photo_url == "/neutral/orig.jpg"
 
     def test_ch14c_auto_snapshot_null_when_no_mood_and_no_license(self):
-        """CCD-AUTOSNAPSHOT-03: challenger_card_photo_url is None when no mood and no license.
-
-        The fallback chain returns None; the template will show initials.
-        """
+        """CCD-AUTOSNAPSHOT-03: challenger_card_photo_url is None when no mood and no license."""
         from app.api.web_routes.vt_challenges import send_challenge
         user = _user(uid=1)
         db   = _db()
-        # No neutral mood (filter_by returns None); no license (filter().first() returns None too)
-        db.query.return_value.filter.return_value.first.side_effect = [
-            _user(uid=2),       # target
-            _game(),            # game
-            None,               # UserLicense query
-        ]
+
+        _seq = [_user(uid=2), _game(), None]  # target, game, UserLicense=None
+        _i = {"n": 0}
+        def _first():
+            i = _i["n"]; _i["n"] += 1
+            return _seq[i] if i < len(_seq) else None
+
+        db.query.return_value.filter.return_value.first.side_effect = _first
         db.query.return_value.filter_by.return_value.first.return_value = None  # no neutral mood
 
         _mock_snap = {"game_code": "memory_sequence"}
@@ -414,6 +441,107 @@ class TestSendChallenge:
 
         # Verify _get_participant_photo is not consulted when snapshot exists
         db.query.assert_not_called()
+
+    # ── CH-SEND-PHOTO: explicit card_photo_url in send form ───────────────────
+
+    def test_ch15a_explicit_valid_photo_url_used_as_snapshot(self):
+        """CH-SEND-PHOTO-01: explicit card_photo_url (owned) → challenger_card_photo_url = that URL."""
+        user = _user(uid=1)
+        db   = _db()
+        neutral = MagicMock(processed_png_url="/neutral.png", original_url="/neutral_orig.jpg")
+
+        _, challenges = self._send_success(
+            db, user,
+            neutral_mood=neutral,
+            card_photo_url="/my-selected.png",
+        )
+        assert len(challenges) == 1
+        assert challenges[0].challenger_card_photo_url == "/my-selected.png", (
+            "Explicit owned card_photo_url must be used as the snapshot"
+        )
+
+    def test_ch15b_empty_card_photo_url_falls_back_to_auto_snapshot(self):
+        """CH-SEND-PHOTO-02: empty card_photo_url → auto-snapshot (neutral mood)."""
+        user = _user(uid=1)
+        db   = _db()
+        neutral = MagicMock(processed_png_url="/neutral.png", original_url="/neutral_orig.jpg")
+
+        _, challenges = self._send_success(
+            db, user,
+            neutral_mood=neutral,
+            card_photo_url=None,  # no explicit selection
+        )
+        assert challenges[0].challenger_card_photo_url == "/neutral.png", (
+            "No card_photo_url → auto-snapshot (neutral processed_png_url)"
+        )
+
+    def test_ch15c_foreign_photo_url_rejected_falls_back_to_auto_snapshot(self):
+        """CH-SEND-PHOTO-03: card_photo_url not owned by challenger → auto-snapshot fallback.
+
+        The ownership guard rejects the foreign URL; auto-snapshot is used instead.
+        The challenge is still created (no error redirect).
+        """
+        user = _user(uid=1)
+        db   = _db()
+        neutral = MagicMock(processed_png_url="/neutral.png", original_url="/neutral_orig.jpg")
+
+        _, challenges = self._send_success(
+            db, user,
+            neutral_mood=neutral,
+            card_photo_url="/other-user-photo.png",
+            owns_mood=None,  # ownership check fails → fallback to neutral
+        )
+        assert len(challenges) == 1
+        # Foreign URL must NOT be stored; falls back to neutral
+        assert challenges[0].challenger_card_photo_url != "/other-user-photo.png", (
+            "Foreign URL must be rejected by ownership guard"
+        )
+        assert challenges[0].challenger_card_photo_url == "/neutral.png", (
+            "After ownership failure, auto-snapshot (neutral) must be used"
+        )
+
+    def test_ch15d_send_form_context_includes_mood_data(self):
+        """CH-SEND-PHOTO-04: GET /challenges/send context includes mood_photos + mood_slot_meta."""
+        from app.api.web_routes.vt_challenges import challenge_send_form
+        user = _user(uid=1)
+        db   = _db()
+        db.query.return_value.filter.return_value.all.return_value = []  # no friends
+        db.query.return_value.filter.return_value.first.return_value = None
+
+        request = MagicMock()
+        request.query_params.get.return_value = None
+
+        mock_mood = {"mood_intro_neutral": MagicMock(), "mood_happy_smile": None}
+
+        with patch(f"{_BASE}._mood_photos_for_user", return_value=mock_mood) as mock_fn, \
+             patch(f"{_BASE}._SEND_MOOD_SLOT_META", [{"slot": "mood_intro_neutral",
+                                                       "emoji": "😐", "label": "Neutral"}]), \
+             patch(f"{_BASE}.require_student_onboarding", return_value=None), \
+             patch(f"{_BASE}._spec_ctx", return_value={}), \
+             patch(f"{_BASE}.VirtualTrainingService.is_expert_unlocked", return_value=False), \
+             patch(f"{_BASE}.templates") as mock_tmpl:
+            mock_tmpl.TemplateResponse.return_value = MagicMock()
+            _run(challenge_send_form(request=request, db=db, user=user))
+
+        mock_fn.assert_called_once_with(user.id, db)
+        call_kwargs = mock_tmpl.TemplateResponse.call_args
+        ctx = call_kwargs[0][1] if call_kwargs[0] else call_kwargs[1]
+        assert "mood_photos" in ctx, "GET /challenges/send context must include mood_photos"
+        assert "mood_slot_meta" in ctx, "GET /challenges/send context must include mood_slot_meta"
+
+    def test_ch15e_send_template_has_photo_selector_and_hidden_input(self):
+        """CH-SEND-PHOTO-05: vt_challenge_send.html has mood chips + hidden card_photo_url input."""
+        from pathlib import Path
+        src = (Path(__file__).resolve().parents[4] / "app" / "templates" /
+               "vt_challenge_send.html").read_text()
+        assert 'name="card_photo_url"' in src, \
+            "Send form must have hidden card_photo_url input"
+        assert "cs-photo-chip" in src, \
+            "Send form must have mood chip selector"
+        assert "cs-photo-grid" in src, \
+            "Send form must have mood chip grid"
+        assert "Your photo on the challenge card" in src, \
+            "Send form must label the photo section"
 
 
 # ── Route: accept_challenge ───────────────────────────────────────────────────
@@ -660,6 +788,7 @@ class TestSendChallengeSnapshot:
         with patch(f"{_BASE}.is_friends", return_value=True), \
              patch(f"{_BASE}.count_active_challenges_in_category", return_value=0), \
              patch(f"{_BASE}.generate_snapshot", return_value=snap), \
+             patch(f"{_BASE}._get_participant_photo", return_value=None), \
              patch(f"{_BASE}.notification_service"):
             result = _run(send_challenge(
                 challenged_user_id=2,

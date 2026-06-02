@@ -59,6 +59,8 @@ from ...models.vt_challenge import (
 )
 from ...core.redis_pubsub import publish_challenge_event
 from ...services import card_export_service as _export_svc
+from ...services.mood_photo_service import get_mood_photos_for_user as _mood_photos_for_user
+from .card_editor import _MOOD_SLOT_META as _SEND_MOOD_SLOT_META
 from ...services import notification_service
 from ...services.challenge_completion_service import sweep_accepted_deadlines
 from ...services.live_lobby_service import (
@@ -327,6 +329,9 @@ async def challenge_send_form(
     preselected_friend_id = friend_id
     preselected_game_code = game_code
 
+    # CC-DESIGN-1: pass mood photos so the send form can show a card photo selector
+    mood_photos = _mood_photos_for_user(user.id, db)
+
     return templates.TemplateResponse("vt_challenge_send.html", {
         "request":               request,
         "user":                  user,
@@ -338,6 +343,8 @@ async def challenge_send_form(
         "preselected_game_code": preselected_game_code,
         "error":                 request.query_params.get("error"),
         "max_per_cat":           MAX_ACTIVE_PER_CATEGORY,
+        "mood_photos":           mood_photos,
+        "mood_slot_meta":        _SEND_MOOD_SLOT_META,
     })
 
 
@@ -352,6 +359,7 @@ async def send_challenge(
     challenge_mode:            str | None = Form(default=None),
     completion_window_seconds: int | None = Form(default=None),
     challenge_category:        str | None = Form(default=None),
+    card_photo_url:            str | None = Form(default=None),
     db: Session = Depends(get_db),
     user: User  = Depends(get_current_user_web),
 ):
@@ -449,11 +457,21 @@ async def send_challenge(
         )
 
     now = datetime.now(timezone.utc)
-    # CC-DESIGN-1 AUTO-SNAPSHOT: capture the challenger's current best photo at
-    # send time so the challenged user always sees the same image regardless of
-    # later profile changes.  Manual override via POST /challenges/{id}/card/photo
-    # can still replace this after creation.
-    challenger_snapshot = _get_participant_photo(db, user.id)
+    # CC-DESIGN-1 PHOTO SNAPSHOT: freeze the challenger's card photo at send time.
+    # Priority: explicit form selection (card_photo_url) > auto-snapshot (neutral mood).
+    # Ownership guard: card_photo_url must belong to this user's own mood photos.
+    # isinstance guard: Form FieldInfo when called directly in tests
+    resolved_photo: str | None = card_photo_url if isinstance(card_photo_url, str) and card_photo_url else None
+    challenger_snapshot: str | None
+    if resolved_photo:
+        owns = db.query(UserMoodPhoto).filter(
+            UserMoodPhoto.user_id == user.id,
+            (UserMoodPhoto.processed_png_url == resolved_photo) |
+            (UserMoodPhoto.original_url == resolved_photo),
+        ).first()
+        challenger_snapshot = resolved_photo if owns else _get_participant_photo(db, user.id)
+    else:
+        challenger_snapshot = _get_participant_photo(db, user.id)
     challenge = VirtualTrainingChallenge(
         challenger_id              = user.id,
         challenged_id              = challenged_user_id,
