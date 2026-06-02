@@ -1653,3 +1653,205 @@ class TestCCDTerminalStudio:
         from app.models.vt_challenge import ChallengeStatus
         assert ChallengeStatus.DECLINED not in _CC_STATUSES_WITH_IMPLICIT_INITIAL, \
             "DECLINED now has a real unlocked phase; workaround no longer needed"
+
+
+# ── Terminal timeline completeness ────────────────────────────────────────────
+
+class TestCCDTerminalTimeline:
+    """CCD-TIMELINE: locked initial phase + full timeline + preview validation.
+
+    CCD-CAN-LOCKED-01  get_locked(CANCELLED, challenger) → ["challenge_sent"]
+    CCD-CAN-LOCKED-02  get_locked(CANCELLED, challenged) → ["challenge_received"]
+    CCD-DEC-LOCKED-01  get_locked(DECLINED, challenger)  → ["challenge_sent"]
+    CCD-DEC-LOCKED-02  get_locked(DECLINED, challenged)  → ["challenge_received"]
+    CCD-CAN-TIMELINE-01  Card Studio CANCELLED: chips contain challenge_sent (hist) + challenge_cancelled (active)
+    CCD-CAN-TIMELINE-02  Card Studio CANCELLED: default phase = challenge_cancelled
+    CCD-DEC-TIMELINE-01  Card Studio DECLINED: chips contain challenge_sent (hist) + challenge_declined (active)
+    CCD-PREVIEW-CAN-01  preview validation CANCELLED + challenge_sent → allowed (in locked)
+    CCD-PREVIEW-CAN-02  preview validation CANCELLED + challenge_declined → blocked (wrong terminal)
+    CCD-LABEL-01       _CC_PHASE_LABELS["challenge_cancelled"] != raw phase id
+    CCD-LABEL-02       _CC_PHASE_LABELS["challenge_declined"]  != raw phase id
+    """
+
+    @staticmethod
+    def _make_ch(ch_id: int, challenger_id: int, challenged_id: int, status_val: str):
+        from app.models.vt_challenge import ChallengeStatus
+        ch = MagicMock()
+        ch.id = ch_id
+        ch.challenger_id = challenger_id; ch.challenged_id = challenged_id
+        ch.challenger_attempt_id = None;  ch.challenged_attempt_id = None
+        ch.winner_id = None; ch.is_draw = False
+        ch.forfeit_user_id = None; ch.forfeit_reason = None
+        ch.challenge_mode = "async"; ch.created_at = None; ch.completed_at = None
+        status_map = {
+            "cancelled": ChallengeStatus.CANCELLED,
+            "declined":  ChallengeStatus.DECLINED,
+        }
+        ch.status = status_map[status_val]
+        ch.game = MagicMock(); ch.game.name = "Memory Sequence"
+        ch.challenger = MagicMock(id=challenger_id, nickname=f"U{challenger_id}", email=f"u{challenger_id}@x.com")
+        ch.challenged = MagicMock(id=challenged_id, nickname=f"U{challenged_id}", email=f"u{challenged_id}@x.com")
+        return ch
+
+    # ── Locked phase tests ────────────────────────────────────────────────────
+
+    def test_ccd_can_locked_01_challenger_gets_challenge_sent(self):
+        """CCD-CAN-LOCKED-01: CANCELLED, challenger view → locked = ['challenge_sent']."""
+        from app.api.web_routes.vt_challenges import get_locked_challenge_card_phases
+        ch = self._make_ch(1, challenger_id=10, challenged_id=20, status_val="cancelled")
+        result = get_locked_challenge_card_phases(ch, viewer_id=10)
+        assert result == ["challenge_sent"], f"got: {result}"
+
+    def test_ccd_can_locked_02_challenged_gets_challenge_received(self):
+        """CCD-CAN-LOCKED-02: CANCELLED, challenged view → locked = ['challenge_received']."""
+        from app.api.web_routes.vt_challenges import get_locked_challenge_card_phases
+        ch = self._make_ch(2, challenger_id=10, challenged_id=20, status_val="cancelled")
+        result = get_locked_challenge_card_phases(ch, viewer_id=20)
+        assert result == ["challenge_received"], f"got: {result}"
+
+    def test_ccd_dec_locked_01_challenger_gets_challenge_sent(self):
+        """CCD-DEC-LOCKED-01: DECLINED, challenger view → locked = ['challenge_sent']."""
+        from app.api.web_routes.vt_challenges import get_locked_challenge_card_phases
+        ch = self._make_ch(3, challenger_id=10, challenged_id=20, status_val="declined")
+        result = get_locked_challenge_card_phases(ch, viewer_id=10)
+        assert result == ["challenge_sent"], f"got: {result}"
+
+    def test_ccd_dec_locked_02_challenged_gets_challenge_received(self):
+        """CCD-DEC-LOCKED-02: DECLINED, challenged view → locked = ['challenge_received']."""
+        from app.api.web_routes.vt_challenges import get_locked_challenge_card_phases
+        ch = self._make_ch(4, challenger_id=10, challenged_id=20, status_val="declined")
+        result = get_locked_challenge_card_phases(ch, viewer_id=20)
+        assert result == ["challenge_received"], f"got: {result}"
+
+    # ── Card Studio timeline tests ────────────────────────────────────────────
+
+    def _studio_chips(self, status_val: str, viewer_id: int) -> tuple[list[dict], str | None]:
+        """Run _resolve_challenge_context and return (phase_chips, active_phase)."""
+        from app.api.web_routes.card_studio import _resolve_challenge_context
+        ch   = self._make_ch(99, challenger_id=10, challenged_id=20, status_val=status_val)
+        user = MagicMock(id=viewer_id)
+        with patch("app.api.web_routes.card_studio._license_guard",
+                   return_value=MagicMock(onboarding_completed=True)):
+            db = MagicMock()
+            db.query.return_value.filter.return_value.first.return_value = ch
+            ctx, _ = _resolve_challenge_context(db, user, challenge_id=99)
+        if ctx.get("challenge_mode") != "preview":
+            return [], None
+        chips = ctx.get("phase_chips", [])
+        active = next((c["id"] for c in chips if c.get("active")), None)
+        return chips, active
+
+    def test_ccd_can_timeline_01_both_chips_present(self):
+        """CCD-CAN-TIMELINE-01: CANCELLED challenger → chips have challenge_sent (hist) + challenge_cancelled (active)."""
+        chips, _ = self._studio_chips("cancelled", viewer_id=10)
+        ids = [c["id"] for c in chips]
+        assert "challenge_sent" in ids, f"challenge_sent missing from chips: {ids}"
+        assert "challenge_cancelled" in ids, f"challenge_cancelled missing from chips: {ids}"
+
+    def test_ccd_can_timeline_02_default_is_terminal(self):
+        """CCD-CAN-TIMELINE-02: CANCELLED → default selected phase = challenge_cancelled."""
+        _, active = self._studio_chips("cancelled", viewer_id=10)
+        assert active == "challenge_cancelled", f"expected challenge_cancelled as default, got: {active}"
+
+    def test_ccd_can_timeline_03_sent_chip_is_historical(self):
+        """CCD-CAN-TIMELINE-03: challenge_sent chip is historical (not current) in CANCELLED."""
+        chips, _ = self._studio_chips("cancelled", viewer_id=10)
+        sent_chip = next((c for c in chips if c["id"] == "challenge_sent"), None)
+        assert sent_chip is not None
+        assert sent_chip["is_historical"] is True, "challenge_sent must be historical for CANCELLED"
+
+    def test_ccd_can_timeline_04_terminal_chip_not_historical(self):
+        """CCD-CAN-TIMELINE-04: challenge_cancelled chip is NOT historical (it is current)."""
+        chips, _ = self._studio_chips("cancelled", viewer_id=10)
+        term_chip = next((c for c in chips if c["id"] == "challenge_cancelled"), None)
+        assert term_chip is not None
+        assert term_chip["is_historical"] is False, "challenge_cancelled must be non-historical (current)"
+
+    def test_ccd_dec_timeline_01_both_chips_present(self):
+        """CCD-DEC-TIMELINE-01: DECLINED challenger → chips have challenge_sent (hist) + challenge_declined (active)."""
+        chips, _ = self._studio_chips("declined", viewer_id=10)
+        ids = [c["id"] for c in chips]
+        assert "challenge_sent" in ids, f"challenge_sent missing from chips: {ids}"
+        assert "challenge_declined" in ids, f"challenge_declined missing from chips: {ids}"
+
+    # ── Preview route validation tests ───────────────────────────────────────
+
+    def test_ccd_preview_can_01_historical_sent_allowed(self):
+        """CCD-PREVIEW-CAN-01: CANCELLED, phase=challenge_sent → in valid set (preview allowed)."""
+        from app.api.web_routes.vt_challenges import (
+            get_unlocked_challenge_card_phases,
+            get_locked_challenge_card_phases,
+        )
+        ch = self._make_ch(5, challenger_id=10, challenged_id=20, status_val="cancelled")
+        unlocked = get_unlocked_challenge_card_phases(ch, viewer_id=10)
+        locked   = get_locked_challenge_card_phases(ch, viewer_id=10)
+        valid = set(unlocked) | set(locked)
+        assert "challenge_sent" in valid, \
+            f"challenge_sent must be in valid set for CANCELLED preview; got: {valid}"
+
+    def test_ccd_preview_can_02_wrong_terminal_blocked(self):
+        """CCD-PREVIEW-CAN-02: CANCELLED, phase=challenge_declined → NOT in valid set (403)."""
+        from app.api.web_routes.vt_challenges import (
+            get_unlocked_challenge_card_phases,
+            get_locked_challenge_card_phases,
+        )
+        ch = self._make_ch(6, challenger_id=10, challenged_id=20, status_val="cancelled")
+        unlocked = get_unlocked_challenge_card_phases(ch, viewer_id=10)
+        locked   = get_locked_challenge_card_phases(ch, viewer_id=10)
+        valid = set(unlocked) | set(locked)
+        assert "challenge_declined" not in valid, \
+            "challenge_declined must NOT be valid for a CANCELLED challenge"
+
+    def test_ccd_preview_dec_01_historical_sent_allowed(self):
+        """CCD-PREVIEW-DEC-01: DECLINED, phase=challenge_sent → in valid set (preview allowed)."""
+        from app.api.web_routes.vt_challenges import (
+            get_unlocked_challenge_card_phases,
+            get_locked_challenge_card_phases,
+        )
+        ch = self._make_ch(7, challenger_id=10, challenged_id=20, status_val="declined")
+        unlocked = get_unlocked_challenge_card_phases(ch, viewer_id=10)
+        locked   = get_locked_challenge_card_phases(ch, viewer_id=10)
+        valid = set(unlocked) | set(locked)
+        assert "challenge_sent" in valid, \
+            f"challenge_sent must be in valid set for DECLINED preview; got: {valid}"
+
+    def test_ccd_preview_dec_02_wrong_terminal_blocked(self):
+        """CCD-PREVIEW-DEC-02: DECLINED, phase=challenge_cancelled → NOT in valid set (403)."""
+        from app.api.web_routes.vt_challenges import (
+            get_unlocked_challenge_card_phases,
+            get_locked_challenge_card_phases,
+        )
+        ch = self._make_ch(8, challenger_id=10, challenged_id=20, status_val="declined")
+        unlocked = get_unlocked_challenge_card_phases(ch, viewer_id=10)
+        locked   = get_locked_challenge_card_phases(ch, viewer_id=10)
+        valid = set(unlocked) | set(locked)
+        assert "challenge_cancelled" not in valid, \
+            "challenge_cancelled must NOT be valid for a DECLINED challenge"
+
+    # ── Chip label tests ─────────────────────────────────────────────────────
+
+    def test_ccd_label_01_cancelled_chip_not_raw_id(self):
+        """CCD-LABEL-01: _CC_PHASE_LABELS['challenge_cancelled'] is human-readable."""
+        from app.api.web_routes.card_studio import _CC_PHASE_LABELS
+        label = _CC_PHASE_LABELS.get("challenge_cancelled", "challenge_cancelled")
+        assert label != "challenge_cancelled", \
+            f"chip label must not be raw phase id; got: {label!r}"
+        assert len(label) > 4, f"label too short: {label!r}"
+
+    def test_ccd_label_02_declined_chip_not_raw_id(self):
+        """CCD-LABEL-02: _CC_PHASE_LABELS['challenge_declined'] is human-readable."""
+        from app.api.web_routes.card_studio import _CC_PHASE_LABELS
+        label = _CC_PHASE_LABELS.get("challenge_declined", "challenge_declined")
+        assert label != "challenge_declined", \
+            f"chip label must not be raw phase id; got: {label!r}"
+        assert len(label) > 4, f"label too short: {label!r}"
+
+    def test_ccd_event_label_01_cancelled_event_label_set(self):
+        """CCD-LABEL-03: _CC_PHASE_EVENT_LABELS['challenge_cancelled'] is set."""
+        from app.api.web_routes.card_studio import _CC_PHASE_EVENT_LABELS
+        assert "challenge_cancelled" in _CC_PHASE_EVENT_LABELS
+
+    def test_ccd_event_label_02_declined_event_label_set(self):
+        """CCD-LABEL-04: _CC_PHASE_EVENT_LABELS['challenge_declined'] is set."""
+        from app.api.web_routes.card_studio import _CC_PHASE_EVENT_LABELS
+        assert "challenge_declined" in _CC_PHASE_EVENT_LABELS

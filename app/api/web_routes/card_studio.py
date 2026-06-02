@@ -344,6 +344,8 @@ _CC_PHASE_LABELS = {
     "completed_forfeit_loss": "Result — Forfeit Loss",
     "no_contest":             "No Contest",
     "skill_delta_result":     "Skill Progress",
+    "challenge_cancelled":    "Challenge Cancelled",
+    "challenge_declined":     "Challenge Declined",
 }
 
 # CS-S4B-FIX3: Studio event labels decouple display name from phase_id.
@@ -363,6 +365,8 @@ _CC_PHASE_EVENT_LABELS: dict[str, str] = {
     "completed_forfeit_loss": "Result — Forfeit Loss",
     "no_contest":             "No Contest",
     "skill_delta_result":     "Skill Progress",
+    "challenge_cancelled":    "Challenge Cancelled",
+    "challenge_declined":     "Challenge Declined",
 }
 
 # Viewer-role sublabels shown under the event label
@@ -581,9 +585,9 @@ def _resolve_challenge_context(
     unlocked = _get_unlocked_phases(ch, user.id, my_attempt)
     locked   = _get_locked_phases(ch, user.id)
 
-    # FIX: DECLINED/CANCELLED/EXPIRED — initial send/receive phase existed but
-    # get_locked_challenge_card_phases() returns [] for these statuses.
-    # Add challenge_sent/received as locked so the timeline is complete.
+    # EXPIRED: get_locked_challenge_card_phases() still excludes EXPIRED from the
+    # initial-phase logic (tech debt). Augment locked here so the timeline is complete.
+    # CANCELLED/DECLINED are now handled correctly in get_locked_challenge_card_phases().
     if ch.status in _CC_STATUSES_WITH_IMPLICIT_INITIAL:
         initial = "challenge_sent" if is_challenger else "challenge_received"
         if initial not in unlocked and initial not in locked:

@@ -1036,9 +1036,13 @@ def get_locked_challenge_card_phases(
 
     locked: list[str] = []
 
-    # For non-pending challenges, the initial send/receive phase is historical
-    if s not in (ChallengeStatus.PENDING, ChallengeStatus.DECLINED,
-                 ChallengeStatus.CANCELLED, ChallengeStatus.EXPIRED):
+    # For non-pending challenges, the initial send/receive phase is historical.
+    # CANCELLED and DECLINED: the challenge_sent/received event DID happen (the
+    # challenge reached PENDING before being cancelled or declined), so the initial
+    # phase must appear as a historical locked chip alongside the terminal phase.
+    # EXPIRED: excluded here — handled via _CC_STATUSES_WITH_IMPLICIT_INITIAL in the
+    # Card Studio layer (tech debt: should be unified in a future pass).
+    if s not in (ChallengeStatus.PENDING, ChallengeStatus.EXPIRED):
         locked.append(initial)
 
     # For completed challenges, the accepted phase is also historical
