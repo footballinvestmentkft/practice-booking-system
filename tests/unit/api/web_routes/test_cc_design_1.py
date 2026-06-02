@@ -102,6 +102,10 @@ def _make_mock_ctx(
     challenged_primary_pos: str | None = None,
     challenged_secondary_pos: str | None = None,
     my_result_summary: dict | None = None,
+    challenger_result_summary: dict | None = None,
+    challenged_result_summary: dict | None = None,
+    viewer_result_summary: dict | None = None,
+    opponent_result_summary: dict | None = None,
 ) -> dict:
     # Derive viewer_action_text matching _build_challenge_card_context logic
     if phase == "challenge_sent":
@@ -153,6 +157,22 @@ def _make_mock_ctx(
         "my_result_summary":        my_result_summary if my_result_summary is not None else {
             "game_code": None, "primary_label": "Score",
             "primary_value": my_score, "secondary_items": [],
+        },
+        "challenger_result_summary": challenger_result_summary if challenger_result_summary is not None else {
+            "game_code": None, "primary_label": "Score",
+            "primary_value": challenger_score, "secondary_items": [],
+        },
+        "challenged_result_summary": challenged_result_summary if challenged_result_summary is not None else {
+            "game_code": None, "primary_label": "Score",
+            "primary_value": challenged_score, "secondary_items": [],
+        },
+        "viewer_result_summary":     viewer_result_summary if viewer_result_summary is not None else {
+            "game_code": None, "primary_label": "Score",
+            "primary_value": my_score, "secondary_items": [],
+        },
+        "opponent_result_summary":   opponent_result_summary if opponent_result_summary is not None else {
+            "game_code": None, "primary_label": "Score",
+            "primary_value": None, "secondary_items": [],
         },
     }
 
@@ -475,6 +495,22 @@ class TestCCDSentReceivedLayout:
                     "my_result_summary": {
                         "game_code": None, "primary_label": "Score",
                         "primary_value": 80.0, "secondary_items": [],
+                    },
+                    "challenger_result_summary": {
+                        "game_code": None, "primary_label": "Score",
+                        "primary_value": 80.0, "secondary_items": [],
+                    },
+                    "challenged_result_summary": {
+                        "game_code": None, "primary_label": "Score",
+                        "primary_value": 70.0, "secondary_items": [],
+                    },
+                    "viewer_result_summary": {
+                        "game_code": None, "primary_label": "Score",
+                        "primary_value": 80.0, "secondary_items": [],
+                    },
+                    "opponent_result_summary": {
+                        "game_code": None, "primary_label": "Score",
+                        "primary_value": 70.0, "secondary_items": [],
                     },
                 }
                 html = tmpl.render(**ctx)
@@ -2894,3 +2930,304 @@ class TestCCDResultSummary:
                             "waiting_for_opponent", my_result_summary=rs)
         assert "Result Submitted" in html
         assert 'class="aws-score-label"' not in html
+
+
+# ── Helper factories for result summary dicts ────────────────────────────────
+
+def _ms_rs(score: float, seq: int = 7, acc: int = 85) -> dict:
+    """Build a Memory Sequence result_summary for tests."""
+    return {
+        "game_code": "memory_sequence", "primary_label": "Score",
+        "primary_value": score,
+        "secondary_items": [
+            {"label": "Seq", "value": str(seq)},
+            {"label": "Acc", "value": f"{acc}%"},
+        ],
+    }
+
+
+def _tt_rs(score: float, diff: str = "Hard", hit: int = 72) -> dict:
+    """Build a Target Tracking result_summary for tests."""
+    return {
+        "game_code": "target_tracking", "primary_label": "Score",
+        "primary_value": score,
+        "secondary_items": [
+            {"label": "Diff", "value": diff},
+            {"label": "Hit", "value": f"{hit}%"},
+        ],
+    }
+
+
+def _null_rs() -> dict:
+    return {"game_code": None, "primary_label": "Score",
+            "primary_value": None, "secondary_items": []}
+
+
+class TestCCDResult:
+    """CCD-RESULT: completed_score_win + completed_draw — Result VS card.
+
+    Backend context:
+    CCD-RESULT-01  challenger_result_summary in context; MS → Seq + Acc
+    CCD-RESULT-02  challenged_result_summary in context; TT → Diff + Hit
+    CCD-RESULT-03  viewer_result_summary == challenger_result_summary when is_challenger
+    CCD-RESULT-04  opponent_result_summary == challenged_result_summary when is_challenger
+
+    Post 16:9 template:
+    CCD-RESULT-05  completed_score_win: challenger OVR rendered
+    CCD-RESULT-06  completed_score_win: challenged OVR rendered
+    CCD-RESULT-07  completed_score_win: MS secondary items both columns
+    CCD-RESULT-08  completed_draw: TT secondary items, no winner-ring, no WINNER label
+    CCD-RESULT-09  completed_score_win: no secondary → ard-secondary class absent
+    CCD-RESULT-10  completed_draw: DRAW badge present, WINNER absent
+
+    Story 9:16 template:
+    CCD-RESULT-11  completed_score_win: arch-result-story + OVR + secondary
+    CCD-RESULT-12  completed_score_win: winner-ring in story
+
+    Regression (forfeit / no_contest — deferred scope, must not break):
+    CCD-RESULT-REG-01  completed_forfeit_win post: arch-result div present
+    CCD-RESULT-REG-02  completed_forfeit_loss post: arch-result div present
+    CCD-RESULT-REG-03  no_contest post: arch-result div present
+    CCD-RESULT-REG-04  completed_forfeit_win story: arch-result-story div present
+    """
+
+    def _render(self, template_path: str, phase: str, **kwargs) -> str:
+        from jinja2 import Environment, FileSystemLoader
+        env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        tmpl = env.get_template(template_path)
+        ctx = _make_mock_ctx(phase=phase, **kwargs)
+        ctx["request"] = MagicMock()
+        return tmpl.render(**ctx)
+
+    # ── Backend context tests ────────────────────────────────────────────────
+
+    def test_ccd_result_01_challenger_result_summary_in_context(self):
+        """CCD-RESULT-01: challenger_result_summary in context; MS attempt → Seq + Acc."""
+        from app.api.web_routes.vt_challenges import _build_challenge_card_context
+        ch = MagicMock()
+        ch.challenger_id = 10; ch.challenged_id = 20
+        ch.challenger = MagicMock(nickname="T1B1K3", email="t@x.com")
+        ch.challenged = MagicMock(nickname="RD14S",  email="r@x.com")
+        ch.game = MagicMock(name="Memory Sequence", code="memory_sequence")
+        ch.challenge_mode = "async"; ch.status = MagicMock()
+        ch.winner_id = 10; ch.winner = ch.challenger
+        ch.is_draw = False; ch.completed_at = None
+        ch.forfeit_reason = None; ch.forfeit_user_id = None
+        ch.challenger_attempt_id = 1; ch.challenged_attempt_id = 2
+        viewer = MagicMock(id=10)
+        ch_attempt = MagicMock(
+            score_normalized=85.0, stimuli_count=10, correct_count=8,
+            raw_metrics={"per_round": [
+                {"sequence_length": 7, "outcome": "correct"},
+                {"sequence_length": 8, "outcome": "wrong"},
+            ]},
+        )
+        cd_attempt = MagicMock(
+            score_normalized=71.0, stimuli_count=10, correct_count=7,
+            raw_metrics={"per_round": [
+                {"sequence_length": 5, "outcome": "correct"},
+            ]},
+        )
+        ctx = _build_challenge_card_context(
+            ch, viewer, ch_attempt, cd_attempt, "completed_score_win"
+        )
+        crs = ctx["challenger_result_summary"]
+        assert crs["primary_value"] == 85.0
+        labels = [i["label"] for i in crs["secondary_items"]]
+        assert "Sequence" in labels
+        assert "Accuracy" in labels
+
+    def test_ccd_result_02_challenged_result_summary_in_context(self):
+        """CCD-RESULT-02: challenged_result_summary in context; TT attempt → Diff + Hit."""
+        from app.api.web_routes.vt_challenges import _build_challenge_card_context
+        ch = MagicMock()
+        ch.challenger_id = 10; ch.challenged_id = 20
+        ch.challenger = MagicMock(nickname="T1B1K3", email="t@x.com")
+        ch.challenged = MagicMock(nickname="RD14S",  email="r@x.com")
+        ch.game = MagicMock(name="Target Tracking", code="target_tracking")
+        ch.challenge_mode = "async"; ch.status = MagicMock()
+        ch.winner_id = 10; ch.winner = ch.challenger
+        ch.is_draw = False; ch.completed_at = None
+        ch.forfeit_reason = None; ch.forfeit_user_id = None
+        ch.challenger_attempt_id = 1; ch.challenged_attempt_id = 2
+        viewer = MagicMock(id=10)
+        ch_attempt = MagicMock(
+            score_normalized=78.0, stimuli_count=20, correct_count=16,
+            raw_metrics={"difficulty_level": "hard"},
+        )
+        cd_attempt = MagicMock(
+            score_normalized=65.0, stimuli_count=20, correct_count=13,
+            raw_metrics={"difficulty_level": "medium"},
+        )
+        ctx = _build_challenge_card_context(
+            ch, viewer, ch_attempt, cd_attempt, "completed_score_win"
+        )
+        cdrs = ctx["challenged_result_summary"]
+        assert cdrs["primary_value"] == 65.0
+        values = {i["label"]: i["value"] for i in cdrs["secondary_items"]}
+        assert values.get("Difficulty") == "Medium"
+        assert "Hit Rate" in values
+
+    def test_ccd_result_03_viewer_result_summary_equals_challenger_when_is_challenger(self):
+        """CCD-RESULT-03: viewer_result_summary == challenger_result_summary when viewer is challenger."""
+        from app.api.web_routes.vt_challenges import _build_challenge_card_context
+        ch = MagicMock()
+        ch.challenger_id = 10; ch.challenged_id = 20
+        ch.challenger = MagicMock(nickname="T1B1K3", email="t@x.com")
+        ch.challenged = MagicMock(nickname="RD14S",  email="r@x.com")
+        ch.game = MagicMock(code="memory_sequence")
+        ch.challenge_mode = "async"; ch.status = MagicMock()
+        ch.winner_id = None; ch.winner = None; ch.is_draw = False
+        ch.completed_at = None; ch.forfeit_reason = None; ch.forfeit_user_id = None
+        ch.challenger_attempt_id = 1; ch.challenged_attempt_id = None
+        viewer = MagicMock(id=10)
+        attempt = MagicMock(score_normalized=77.0, stimuli_count=None, correct_count=None, raw_metrics={})
+        ctx = _build_challenge_card_context(ch, viewer, attempt, None, "completed_draw")
+        assert ctx["viewer_result_summary"]["primary_value"] == ctx["challenger_result_summary"]["primary_value"]
+
+    def test_ccd_result_04_opponent_result_summary_equals_challenged_when_is_challenger(self):
+        """CCD-RESULT-04: opponent_result_summary == challenged_result_summary when viewer is challenger."""
+        from app.api.web_routes.vt_challenges import _build_challenge_card_context
+        ch = MagicMock()
+        ch.challenger_id = 10; ch.challenged_id = 20
+        ch.challenger = MagicMock(nickname="T1B1K3", email="t@x.com")
+        ch.challenged = MagicMock(nickname="RD14S",  email="r@x.com")
+        ch.game = MagicMock(code="target_tracking")
+        ch.challenge_mode = "async"; ch.status = MagicMock()
+        ch.winner_id = None; ch.winner = None; ch.is_draw = True
+        ch.completed_at = None; ch.forfeit_reason = None; ch.forfeit_user_id = None
+        ch.challenger_attempt_id = 1; ch.challenged_attempt_id = 2
+        viewer = MagicMock(id=10)
+        ch_att = MagicMock(score_normalized=70.0, stimuli_count=None, correct_count=None, raw_metrics={})
+        cd_att = MagicMock(score_normalized=70.0, stimuli_count=None, correct_count=None, raw_metrics={})
+        ctx = _build_challenge_card_context(ch, viewer, ch_att, cd_att, "completed_draw")
+        assert ctx["opponent_result_summary"]["primary_value"] == ctx["challenged_result_summary"]["primary_value"]
+
+    # ── Post 16:9 template tests ─────────────────────────────────────────────
+
+    def test_ccd_result_05_post_challenger_ovr_rendered(self):
+        """CCD-RESULT-05: completed_score_win post: challenger OVR rendered."""
+        html = self._render(
+            "public/export/challenge/post_16_9.html", "completed_score_win",
+            challenger_score=85.0, challenged_score=71.0, winner_name="T1B1K3",
+            challenger_overall=78.5,
+        )
+        assert "OVR 78.5" in html
+
+    def test_ccd_result_06_post_challenged_ovr_rendered(self):
+        """CCD-RESULT-06: completed_score_win post: challenged OVR rendered."""
+        html = self._render(
+            "public/export/challenge/post_16_9.html", "completed_score_win",
+            challenger_score=85.0, challenged_score=71.0, winner_name="T1B1K3",
+            challenged_overall=81.0,
+        )
+        assert "OVR 81.0" in html
+
+    def test_ccd_result_07_post_ms_secondary_both_columns(self):
+        """CCD-RESULT-07: completed_score_win post: MS Seq + Acc in both columns."""
+        rs_ch = _ms_rs(85.0, seq=7, acc=80)
+        rs_cd = _ms_rs(71.0, seq=5, acc=70)
+        html = self._render(
+            "public/export/challenge/post_16_9.html", "completed_score_win",
+            challenger_score=85.0, challenged_score=71.0, winner_name="T1B1K3",
+            challenger_result_summary=rs_ch, challenged_result_summary=rs_cd,
+        )
+        assert "Seq: 7" in html
+        assert "Acc: 80%" in html
+        assert "Seq: 5" in html
+        assert "Acc: 70%" in html
+
+    def test_ccd_result_08_post_tt_draw_secondary_no_winner(self):
+        """CCD-RESULT-08: completed_draw post: TT Diff + Hit rendered, no WINNER label."""
+        rs_ch = _tt_rs(70.0, diff="Hard", hit=72)
+        rs_cd = _tt_rs(70.0, diff="Medium", hit=65)
+        html = self._render(
+            "public/export/challenge/post_16_9.html", "completed_draw",
+            challenger_score=70.0, challenged_score=70.0, winner_name=None,
+            challenger_result_summary=rs_ch, challenged_result_summary=rs_cd,
+        )
+        assert "Diff: Hard" in html
+        assert "Hit: 72%" in html
+        assert "Diff: Medium" in html
+        assert "✓ WINNER" not in html
+        assert "winner-ring\"" not in html  # class applied to element (not CSS definition)
+
+    def test_ccd_result_09_post_no_secondary_div_absent(self):
+        """CCD-RESULT-09: completed_score_win: no secondary_items → ard-secondary class absent."""
+        html = self._render(
+            "public/export/challenge/post_16_9.html", "completed_score_win",
+            challenger_score=85.0, challenged_score=71.0, winner_name="T1B1K3",
+        )
+        assert 'class="ard-secondary"' not in html
+
+    def test_ccd_result_10_post_draw_badge_and_no_winner_label(self):
+        """CCD-RESULT-10: completed_draw: DRAW badge present, no ✓ WINNER."""
+        html = self._render(
+            "public/export/challenge/post_16_9.html", "completed_draw",
+            challenger_score=70.0, challenged_score=70.0, winner_name=None,
+        )
+        assert "DRAW" in html
+        assert "✓ WINNER" not in html
+
+    # ── Story 9:16 template tests ─────────────────────────────────────────────
+
+    def test_ccd_result_11_story_arch_result_story_with_ovr_and_secondary(self):
+        """CCD-RESULT-11: story completed_score_win: arch-result-story + OVR + secondary."""
+        rs_ch = _ms_rs(85.0, seq=7, acc=80)
+        rs_cd = _ms_rs(71.0, seq=5, acc=70)
+        html = self._render(
+            "public/export/challenge/story_9_16.html", "completed_score_win",
+            challenger_score=85.0, challenged_score=71.0, winner_name="T1B1K3",
+            challenger_overall=78.5, challenged_overall=81.0,
+            challenger_result_summary=rs_ch, challenged_result_summary=rs_cd,
+        )
+        assert 'class="arch-result-story"' in html
+        assert "OVR 78.5" in html
+        assert "OVR 81.0" in html
+        assert "Seq: 7" in html
+        assert "Seq: 5" in html
+
+    def test_ccd_result_12_story_winner_ring(self):
+        """CCD-RESULT-12: story completed_score_win: winner-ring on winning photo."""
+        html = self._render(
+            "public/export/challenge/story_9_16.html", "completed_score_win",
+            challenger_score=85.0, challenged_score=71.0, winner_name="T1B1K3",
+            challenger_photo="/ch1.png", challenged_photo="/ch2.png",
+        )
+        assert "winner-ring" in html
+
+    # ── Regression — forfeit / no_contest must still render ──────────────────
+
+    def test_ccd_result_reg_01_forfeit_win_post_renders(self):
+        """CCD-RESULT-REG-01: completed_forfeit_win post: arch-result div present."""
+        html = self._render(
+            "public/export/challenge/post_16_9.html", "completed_forfeit_win",
+            winner_name="T1B1K3",
+        )
+        assert '<div class="arch-result">' in html
+        assert "FORFEIT WIN" in html
+
+    def test_ccd_result_reg_02_forfeit_loss_post_renders(self):
+        """CCD-RESULT-REG-02: completed_forfeit_loss post: arch-result div present."""
+        html = self._render(
+            "public/export/challenge/post_16_9.html", "completed_forfeit_loss",
+        )
+        assert '<div class="arch-result">' in html
+        assert "FORFEIT LOSS" in html
+
+    def test_ccd_result_reg_03_no_contest_post_renders(self):
+        """CCD-RESULT-REG-03: no_contest post: arch-result div present."""
+        html = self._render(
+            "public/export/challenge/post_16_9.html", "no_contest",
+        )
+        assert '<div class="arch-result">' in html
+        assert "NO CONTEST" in html
+
+    def test_ccd_result_reg_04_forfeit_win_story_renders(self):
+        """CCD-RESULT-REG-04: completed_forfeit_win story: arch-result-story div present."""
+        html = self._render(
+            "public/export/challenge/story_9_16.html", "completed_forfeit_win",
+            winner_name="T1B1K3",
+        )
+        assert 'class="arch-result-story"' in html
+        assert "FORFEIT WIN" in html

@@ -332,7 +332,15 @@
   .arch-result {
     display: flex; align-items: center; justify-content: center; gap: 40px; width: 100%;
   }
-  .arch-result .player-col { flex: 0 0 220px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .arch-result .player-col { flex: 0 0 260px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  /* CC-DESIGN-1: pos + OVR + secondary result stats */
+  .ard-pos-row { display: flex; align-items: baseline; gap: 5px; }
+  .ard-pos-primary  { font-size: 1.1rem; font-weight: 900; color: var(--cc-gold); letter-spacing: 0.06em; }
+  .ard-pos-secondary { font-size: 0.74rem; font-weight: 700; color: rgba(232,234,240,0.45); letter-spacing: 0.05em; }
+  .ard-ovr { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cc-dim); }
+  .ard-secondary { font-size: 0.64rem; color: var(--cc-sub); display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; }
+  .ard-secondary-item { font-weight: 600; }
+  .ard-secondary-sep  { opacity: 0.4; }
 
 </style>
 </head>
@@ -601,7 +609,8 @@
   {# ── Archetype D: Result VS ── #}
   {% elif phase in ("completed_score_win","completed_draw","completed_forfeit_win","completed_forfeit_loss","no_contest") %}
   <div class="arch-result">
-    {# Challenger #}
+
+    {# ── Challenger column ── #}
     <div class="player-col">
       {% set _is_ch_winner = winner_name == challenger_name %}
       {% if challenger_photo_url %}
@@ -610,15 +619,30 @@
       {% else %}
         <div class="cc-avatar large {{ 'winner-ring' if _is_ch_winner }}">{{ challenger_name[0] if challenger_name else '?' }}</div>
       {% endif %}
+      {% if challenger_primary_pos %}
+      <div class="ard-pos-row">
+        <span class="ard-pos-primary">{{ challenger_primary_pos }}</span>
+        {% if challenger_secondary_pos %}<span class="ard-pos-secondary">{{ challenger_secondary_pos }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if challenger_overall is not none %}<div class="ard-ovr">OVR {{ challenger_overall }}</div>{% endif %}
       <div class="cc-name">{{ challenger_name }}</div>
-      {% if phase in ("completed_score_win","completed_draw") and challenger_score is not none %}
-        <div class="cc-score-lg" style="font-size:2.8rem;">{{ "%.1f"|format(challenger_score) }}</div>
-      {% elif phase in ("completed_forfeit_win","completed_forfeit_loss","no_contest") %}
+      {% if phase in ("completed_score_win","completed_draw") and challenger_result_summary.primary_value is not none %}
+        <div class="cc-score-lg" style="font-size:2.8rem;">{{ "%.1f"|format(challenger_result_summary.primary_value) }}</div>
+        {% if challenger_result_summary.secondary_items %}
+        <div class="ard-secondary">
+          {% for item in challenger_result_summary.secondary_items %}
+          <span class="ard-secondary-item">{{ item.label }}: {{ item.value }}</span>{% if not loop.last %}<span class="ard-secondary-sep"> · </span>{% endif %}
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% else %}
         <div class="cc-score-placeholder">—</div>
       {% endif %}
       {% if _is_ch_winner %}<div class="cc-winner-label">✓ WINNER</div>{% endif %}
     </div>
-    {# VS divider #}
+
+    {# ── VS divider ── #}
     <div class="cc-vs-col">
       <div class="cc-vs-text">VS</div>
       {% if phase == "completed_score_win" %}
@@ -633,7 +657,8 @@
         <div class="cc-outcome-badge muted">🔄 NO CONTEST</div>
       {% endif %}
     </div>
-    {# Challenged #}
+
+    {# ── Challenged column ── #}
     <div class="player-col">
       {% set _is_cd_winner = winner_name == challenged_name %}
       {% if challenged_photo_url %}
@@ -642,14 +667,29 @@
       {% else %}
         <div class="cc-avatar large {{ 'winner-ring' if _is_cd_winner }}">{{ challenged_name[0] if challenged_name else '?' }}</div>
       {% endif %}
+      {% if challenged_primary_pos %}
+      <div class="ard-pos-row">
+        <span class="ard-pos-primary">{{ challenged_primary_pos }}</span>
+        {% if challenged_secondary_pos %}<span class="ard-pos-secondary">{{ challenged_secondary_pos }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if challenged_overall is not none %}<div class="ard-ovr">OVR {{ challenged_overall }}</div>{% endif %}
       <div class="cc-name">{{ challenged_name }}</div>
-      {% if phase in ("completed_score_win","completed_draw") and challenged_score is not none %}
-        <div class="cc-score-lg" style="font-size:2.8rem;">{{ "%.1f"|format(challenged_score) }}</div>
-      {% elif phase in ("completed_forfeit_win","completed_forfeit_loss","no_contest") %}
+      {% if phase in ("completed_score_win","completed_draw") and challenged_result_summary.primary_value is not none %}
+        <div class="cc-score-lg" style="font-size:2.8rem;">{{ "%.1f"|format(challenged_result_summary.primary_value) }}</div>
+        {% if challenged_result_summary.secondary_items %}
+        <div class="ard-secondary">
+          {% for item in challenged_result_summary.secondary_items %}
+          <span class="ard-secondary-item">{{ item.label }}: {{ item.value }}</span>{% if not loop.last %}<span class="ard-secondary-sep"> · </span>{% endif %}
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% else %}
         <div class="cc-score-placeholder">—</div>
       {% endif %}
       {% if _is_cd_winner %}<div class="cc-winner-label">✓ WINNER</div>{% endif %}
     </div>
+
   </div>
 
   {# ── Archetype F: Terminal Rejection — two-player layout (challenge_cancelled / challenge_declined) ── #}

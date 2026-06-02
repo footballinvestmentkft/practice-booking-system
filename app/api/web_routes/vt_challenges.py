@@ -1315,10 +1315,25 @@ def _build_challenge_card_context(
         "viewer_action_text":    viewer_action_text,
         # CC-DESIGN-1: central emoji for this phase (both templates use this)
         "phase_emoji":           _PHASE_EMOJI.get(phase, ""),
-        # CC-DESIGN-1: game-aware result summary for waiting_for_opponent card
-        "my_result_summary":        _build_result_summary(
-                                        my_attempt, ch.game.code if ch.game else None
-                                    ),
+        # CC-DESIGN-1: game-aware result summaries
+        # my_result_summary / viewer_result_summary — viewer's own attempt (waiting + result)
+        # opponent_result_summary — for result layout (viewer-relative)
+        # challenger/challenged — absolute role keys for Archetype D (both columns always shown)
+        "my_result_summary":           _build_result_summary(
+                                           my_attempt, ch.game.code if ch.game else None
+                                       ),
+        "viewer_result_summary":       _build_result_summary(
+                                           my_attempt, ch.game.code if ch.game else None
+                                       ),
+        "opponent_result_summary":     _build_result_summary(
+                                           opp_attempt, ch.game.code if ch.game else None
+                                       ),
+        "challenger_result_summary":   _build_result_summary(
+                                           challenger_attempt, ch.game.code if ch.game else None
+                                       ),
+        "challenged_result_summary":   _build_result_summary(
+                                           challenged_attempt, ch.game.code if ch.game else None
+                                       ),
         # CC-DESIGN-1: participant stats (overall skill + position)
         "challenger_overall":       (challenger_stats or {}).get("overall"),
         "challenger_primary_pos":   (challenger_stats or {}).get("primary_pos"),
