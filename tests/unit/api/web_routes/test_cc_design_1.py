@@ -1203,15 +1203,14 @@ class TestCCDBalanced:
                     f"{tmpl} {phase}: must not contain 'Accept Challenge'"
 
     def test_ccd_balanced_11_no_cta_button_or_link_in_invitation(self):
-        """CCD-BALANCED-11: Invitation card has no <button> and no → arrow CTA element."""
+        """CCD-BALANCED-11: No <button> and no cc-cta div in any export template."""
         for tmpl in ["public/export/challenge/post_16_9.html",
                      "public/export/challenge/story_9_16.html"]:
-            for phase in ("challenge_sent", "challenge_received"):
+            for phase in ("challenge_sent", "challenge_received", "challenge_accepted"):
                 html = self._render(tmpl, phase)
                 assert "<button" not in html, f"{tmpl} {phase}: must not contain <button>"
-                # cc-cta class (arrow CTA) must not appear in invitation phases
                 assert 'class="cc-cta"' not in html, \
-                    f"{tmpl} {phase}: cc-cta class must not appear in invitation card"
+                    f"{tmpl} {phase}: cc-cta must not appear in export cards"
 
     def test_ccd_balanced_12_fallback_without_processed_photo(self):
         """CCD-BALANCED-12: mood_intro_neutral original_url used when no processed_png_url."""
@@ -2436,3 +2435,110 @@ class TestCCDEmoji:
         from app.api.web_routes.vt_challenges import _PHASE_EMOJI
         assert _PHASE_EMOJI["challenge_sent"] != _PHASE_EMOJI["challenge_received"], \
             "sent and received must have distinct emojis"
+
+
+# ── No CTA on export cards ────────────────────────────────────────────────────
+
+class TestCCDNoCTA:
+    """CCD-NOCTA: Export cards must not contain action CTA text or cc-cta elements.
+
+    CCD-NOCTA-01  challenge_accepted post: 'Play now' absent
+    CCD-NOCTA-02  live_lobby_ready post: 'Join lobby' absent from footer
+    CCD-NOCTA-03  live_in_progress post: 'Playing now' absent from footer
+    CCD-NOCTA-04  completed_score_win post: 'Play again' absent
+    CCD-NOCTA-05  no_contest post: 'Challenge again' absent
+    CCD-NOCTA-06  skill_delta_result post: 'View profile' absent
+    CCD-NOCTA-07  challenge_accepted story: 'Play now' absent
+    CCD-NOCTA-08  no cc-cta div in any post phase
+    CCD-NOCTA-09  no cc-cta div in any story phase
+    CCD-NOCTA-10  post footer: only game info + lfa.gg (no third element)
+    CCD-NOCTA-11  story footer: only game info + lfa.gg
+    """
+
+    _ACTION_STRINGS = [
+        "Play now", "Join lobby", "Playing now", "Play again",
+        "Challenge again", "View profile", "Accept challenge",
+        "Waiting…", "View challenge",
+    ]
+
+    def _render(self, template_path: str, phase: str, **kwargs) -> str:
+        from jinja2 import Environment, FileSystemLoader
+        env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        tmpl = env.get_template(template_path)
+        ctx = _make_mock_ctx(phase=phase, **kwargs)
+        ctx["request"] = MagicMock()
+        return tmpl.render(**ctx)
+
+    def test_ccd_nocta_01_accepted_no_play_now(self):
+        """CCD-NOCTA-01: challenge_accepted post: 'Play now' not rendered."""
+        html = self._render("public/export/challenge/post_16_9.html", "challenge_accepted")
+        assert "Play now" not in html
+
+    def test_ccd_nocta_02_live_lobby_no_join_lobby(self):
+        """CCD-NOCTA-02: live_lobby_ready post: 'Join lobby' not in footer."""
+        html = self._render("public/export/challenge/post_16_9.html", "live_lobby_ready")
+        assert "Join lobby" not in html
+
+    def test_ccd_nocta_03_live_progress_no_playing_now(self):
+        """CCD-NOCTA-03: live_in_progress post: 'Playing now' not in footer."""
+        html = self._render("public/export/challenge/post_16_9.html", "live_in_progress")
+        assert "Playing now" not in html
+
+    def test_ccd_nocta_04_result_no_play_again(self):
+        """CCD-NOCTA-04: completed_score_win post: 'Play again' absent."""
+        html = self._render("public/export/challenge/post_16_9.html", "completed_score_win",
+                            challenger_score=80.0, challenged_score=70.0, winner_name="T1B1K3")
+        assert "Play again" not in html
+
+    def test_ccd_nocta_05_no_contest_no_challenge_again(self):
+        """CCD-NOCTA-05: no_contest post: 'Challenge again' absent."""
+        html = self._render("public/export/challenge/post_16_9.html", "no_contest")
+        assert "Challenge again" not in html
+
+    def test_ccd_nocta_06_skill_no_view_profile(self):
+        """CCD-NOCTA-06: skill_delta_result post: 'View profile' absent."""
+        html = self._render("public/export/challenge/post_16_9.html", "skill_delta_result",
+                            my_skill_scores={"passing": 0.5})
+        assert "View profile" not in html
+
+    def test_ccd_nocta_07_accepted_story_no_play_now(self):
+        """CCD-NOCTA-07: challenge_accepted story: 'Play now' not rendered."""
+        html = self._render("public/export/challenge/story_9_16.html", "challenge_accepted")
+        assert "Play now" not in html
+
+    def test_ccd_nocta_08_no_cc_cta_div_in_post(self):
+        """CCD-NOCTA-08: no cc-cta div in any post phase."""
+        from app.api.web_routes.vt_challenges import VALID_CHALLENGE_CARD_PHASES
+        for phase in VALID_CHALLENGE_CARD_PHASES:
+            html = self._render("public/export/challenge/post_16_9.html", phase,
+                                challenger_score=80.0, challenged_score=70.0, winner_name="T1B1K3",
+                                my_skill_scores={"passing": 0.5})
+            assert 'class="cc-cta"' not in html, \
+                f"cc-cta div must not appear in post for phase: {phase!r}"
+
+    def test_ccd_nocta_09_no_cc_cta_div_in_story(self):
+        """CCD-NOCTA-09: no cc-cta div in any story phase."""
+        from app.api.web_routes.vt_challenges import VALID_CHALLENGE_CARD_PHASES
+        for phase in VALID_CHALLENGE_CARD_PHASES:
+            html = self._render("public/export/challenge/story_9_16.html", phase,
+                                challenger_score=80.0, challenged_score=70.0, winner_name="T1B1K3",
+                                my_skill_scores={"passing": 0.5})
+            assert 'class="cc-cta"' not in html, \
+                f"cc-cta div must not appear in story for phase: {phase!r}"
+
+    def test_ccd_nocta_10_post_footer_two_elements_only(self):
+        """CCD-NOCTA-10: post footer has only game info + lfa.gg (no third element)."""
+        html = self._render("public/export/challenge/post_16_9.html", "challenge_accepted")
+        assert "lfa.gg" in html
+        assert "Memory Sequence" in html
+        assert 'class="cc-cta"' not in html
+        assert "Invitation Pending" not in html
+        assert "Closed" not in html
+
+    def test_ccd_nocta_11_story_footer_two_elements_only(self):
+        """CCD-NOCTA-11: story footer has only game info + lfa.gg."""
+        html = self._render("public/export/challenge/story_9_16.html", "challenge_accepted")
+        assert "lfa.gg" in html
+        assert "Memory Sequence" in html
+        assert 'class="cc-cta"' not in html
+        assert "Invitation Pending" not in html

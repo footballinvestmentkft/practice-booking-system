@@ -690,16 +690,9 @@
 
   </div>{# end card-content #}
 
-  {# Footer — invitation phases: status text only, no CTA #}
+  {# Footer: game info only — no CTA, no action text. This is an image, not a UI. #}
   <div class="card-footer">
     <div class="cc-game-info">{{ game_name }}{% if completed_at %} · {{ completed_at.strftime("%b %d, %Y") }}{% endif %}</div>
-    {% if phase in ("challenge_sent", "challenge_received") %}
-    <div class="cc-game-info">Invitation Pending</div>
-    {% elif phase in ("challenge_cancelled", "challenge_declined") %}
-    <div class="cc-game-info" style="color:var(--cc-dim);">Closed</div>
-    {% else %}
-    <div class="cc-cta">{{ cta_label }} →</div>
-    {% endif %}
     <div class="cc-domain">lfa.gg</div>
   </div>
 
