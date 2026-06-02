@@ -1254,3 +1254,142 @@ class TestCCDMoodSelect:
             html = tmpl.render(**ctx)
             assert expected_preserved in html, \
                 f"{phase}: {expected_preserved} must be preserved after mood select"
+
+
+# ── CCD-SNAPSHOT: per-challenge photo snapshot ────────────────────────────────
+
+class TestCCDSnapshot:
+    """CCD-SNAPSHOT-01..06: per-challenge photo snapshot endpoint + context logic."""
+
+    def _make_ch(self, challenger_id=10, challenged_id=20):
+        from app.models.vt_challenge import ChallengeStatus
+        ch = MagicMock()
+        ch.challenger_id = challenger_id; ch.challenged_id = challenged_id
+        ch.status = ChallengeStatus.PENDING
+        ch.challenger_card_photo_url = None
+        ch.challenged_card_photo_url = None
+        return ch
+
+    def _save(self, user_id: int, ch, photo_url: str, mood_record=None):
+        """Run the save endpoint logic against a mock DB."""
+        from app.api.web_routes.vt_challenges import challenge_card_photo_save
+        import asyncio
+        db = MagicMock()
+        db.query.return_value.filter.return_value.first.return_value = ch
+
+        # mood ownership validation
+        mood_q = MagicMock()
+        mood_q.first.return_value = mood_record  # None → ownership check fails
+        db.query.return_value.filter.return_value = mood_q
+        # challenge query
+        ch_q = MagicMock(); ch_q.first.return_value = ch
+        def _side(model):
+            from app.models.vt_challenge import VirtualTrainingChallenge
+            from app.models.user_mood_photos import UserMoodPhoto
+            q = MagicMock()
+            if model is VirtualTrainingChallenge:
+                q.filter.return_value.first.return_value = ch
+            elif model is UserMoodPhoto:
+                q.filter.return_value.first.return_value = mood_record
+            return q
+        db.query.side_effect = _side
+
+        user = MagicMock(id=user_id)
+        return asyncio.run(
+            challenge_card_photo_save(1, photo_url=photo_url, db=db, user=user)
+        )
+
+    def test_ccd_snapshot_01_challenger_saves_own_slot(self):
+        """CCD-SNAPSHOT-01: challenger saves photo to challenger_card_photo_url."""
+        ch = self._make_ch(challenger_id=10, challenged_id=20)
+        mood = MagicMock()
+        result = self._save(user_id=10, ch=ch, photo_url="/mood.png", mood_record=mood)
+        assert result["role"] == "challenger"
+        assert ch.challenger_card_photo_url == "/mood.png"
+        assert ch.challenged_card_photo_url is None  # opponent slot untouched
+
+    def test_ccd_snapshot_02_challenged_saves_own_slot(self):
+        """CCD-SNAPSHOT-02: challenged saves photo to challenged_card_photo_url."""
+        ch = self._make_ch(challenger_id=10, challenged_id=20)
+        mood = MagicMock()
+        result = self._save(user_id=20, ch=ch, photo_url="/mood2.png", mood_record=mood)
+        assert result["role"] == "challenged"
+        assert ch.challenged_card_photo_url == "/mood2.png"
+        assert ch.challenger_card_photo_url is None  # opponent slot untouched
+
+    def test_ccd_snapshot_03_challenger_cannot_write_challenged_slot(self):
+        """CCD-SNAPSHOT-03: challenger's save never touches challenged_card_photo_url."""
+        ch = self._make_ch(challenger_id=10, challenged_id=20)
+        ch.challenged_card_photo_url = "/cd_original.png"
+        mood = MagicMock()
+        self._save(user_id=10, ch=ch, photo_url="/my_mood.png", mood_record=mood)
+        assert ch.challenged_card_photo_url == "/cd_original.png", \
+            "challenger must never overwrite challenged slot"
+
+    def test_ccd_snapshot_04_challenged_cannot_write_challenger_slot(self):
+        """CCD-SNAPSHOT-04: challenged's save never touches challenger_card_photo_url."""
+        ch = self._make_ch(challenger_id=10, challenged_id=20)
+        ch.challenger_card_photo_url = "/ch_original.png"
+        mood = MagicMock()
+        self._save(user_id=20, ch=ch, photo_url="/my_mood.png", mood_record=mood)
+        assert ch.challenger_card_photo_url == "/ch_original.png", \
+            "challenged must never overwrite challenger slot"
+
+    def test_ccd_snapshot_05_challenged_view_uses_challenger_snapshot(self):
+        """CCD-SNAPSHOT-05: challenged view uses challenger_card_photo_url from challenge."""
+        from jinja2 import Environment, FileSystemLoader
+        env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        tmpl = env.get_template("public/export/challenge/post_16_9.html")
+        # challenged view: viewer_is_challenger=False
+        ctx = _make_mock_ctx(
+            phase="challenge_received", viewer_is_challenger=False,
+            challenger_photo="/ch_snapshot.png",  # this is ch.challenger_card_photo_url
+            challenged_photo="/cd_neutral.png",
+        )
+        ctx["request"] = MagicMock()
+        html = tmpl.render(**ctx)
+        assert "/ch_snapshot.png" in html, \
+            "challenged view must show challenger snapshot in left slot"
+
+    def test_ccd_snapshot_06_null_snapshot_uses_neutral_mood_fallback(self):
+        """CCD-SNAPSHOT-06: null challenger_card_photo_url → _get_participant_photo fallback."""
+        from app.api.web_routes.vt_challenges import _get_participant_photo
+        db = MagicMock()
+        neutral = MagicMock(processed_png_url="/neutral.png", original_url="/neutral_orig.jpg")
+        db.query.return_value.filter_by.return_value.first.return_value = neutral
+        # Simulate: ch.challenger_card_photo_url is None → fallback
+        snapshot_url = None
+        result = snapshot_url or _get_participant_photo(db, user_id=10)
+        assert result == "/neutral.png", "null snapshot must fall back to neutral mood"
+
+
+# ── CCD-MOOD-SELECTOR-LABEL: UI label + hint ─────────────────────────────────
+
+class TestCCDMoodSelectorLabel:
+    """CCD-MOOD-SELECT label and hint text verification."""
+
+    def test_ccd_mood_select_label_your_photo(self):
+        """CCD-MOOD-SELECT-01: Mood selector label is 'Your photo for this card'."""
+        src = (INCLUDES_DIR / "cs_challenge_panel.html").read_text()
+        assert "Your photo for this card" in src, \
+            "Mood selector label must say 'Your photo for this card'"
+
+    def test_ccd_mood_select_hint_own_side(self):
+        """CCD-MOOD-SELECT-02: Mood selector hint says 'Changes only your side'."""
+        src = (INCLUDES_DIR / "cs_challenge_panel.html").read_text()
+        assert "Changes only your side" in src, \
+            "Mood selector hint must say 'Changes only your side of the card.'"
+
+    def test_ccd_mood_select_03_selector_before_format(self):
+        """CCD-MOOD-SELECT-03: Mood selector before Format selector in panel."""
+        src = (INCLUDES_DIR / "cs_challenge_panel.html").read_text()
+        mood_pos   = src.find("Your photo for this card")
+        format_pos = src.find('"Format"') if '"Format"' in src else src.find("Format")
+        assert mood_pos < format_pos, "Mood selector must be before Format selector"
+
+    def test_ccd_mood_select_04_chip_save_and_refresh_js(self):
+        """CCD-MOOD-SELECT-04: JS _setChallengePhoto calls POST save + refreshes iframe."""
+        src = (TEMPLATES_DIR / "card_studio_shell.html").read_text()
+        assert "_saveSnapshot" in src, "JS must call _saveSnapshot (POST endpoint)"
+        assert "_refreshPreview" in src, "JS must refresh preview iframe"
+        assert "card/photo" in src, "JS must POST to /challenges/{id}/card/photo"

@@ -135,9 +135,12 @@
 
   <hr class="cs-section-divider">
 
-  {# ── CC-DESIGN-1: Mood Photo quick selector — PRIMARY control, above Format selector ── #}
+  {# ── CC-DESIGN-1 SNAPSHOT: Mood Photo selector — viewer's own slot only ── #}
   <div class="cs-pc-selector">
-    <p class="cs-section-label">Preview Photo</p>
+    <p class="cs-section-label">Your photo for this card</p>
+    <p class="cs-slot-hint" style="font-size:0.68rem;color:#475569;margin:-0.3rem 0 0.5rem;">
+      Changes only your side of the card.
+    </p>
     {% set mood_photos    = mood_photos    if mood_photos    is defined else {} %}
     {% set mood_slot_meta = mood_slot_meta if mood_slot_meta is defined else [] %}
     <div class="cs-cc-mood-section"

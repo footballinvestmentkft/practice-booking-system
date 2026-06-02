@@ -148,11 +148,11 @@ class TestS4A10to11NoWriteNoExport:
 
 class TestS4A12to13RouteAndSnapshot:
 
-    def test_s4a_12_route_count_847(self):
-        """S4A-12: Route count == 850 after CS-S4A (+1 /card-studio/challenge)."""
+    def test_s4a_12_route_count_851(self):
+        """S4A-12: Route count == 851 (CC-DESIGN-1 SNAPSHOT adds +1 POST /challenges/{id}/card/photo)."""
         from app.main import app
         count = len(app.openapi().get("paths", {}))
-        assert count == 850, f"Expected 847 routes, got {count}"
+        assert count == 851, f"Expected 851 routes, got {count}"
 
     def test_s4a_13_openapi_snapshot_match(self):
         """S4A-13: OpenAPI snapshot matches live API."""

@@ -433,6 +433,6 @@ class TestCE217RouteCount:
         """BG-REMOVAL-1 adds 3 mood photo routes — snapshot path count must equal 850."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 850, (
+        assert len(paths) == 851, (
             f"Expected 850 routes (847 CS-S2A baseline + 3 BG-REMOVAL-1 mood photo routes), got {len(paths)}."
         )
