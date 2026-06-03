@@ -1,0 +1,151 @@
+# =============================================================================
+# docker-compose.yml — LFA Practice Booking System (dev / local)
+#
+# Starts the full local dev stack:
+#   db           → PostgreSQL 14
+#   redis        → Redis (Celery broker + result backend)
+#   web          → FastAPI (uvicorn, port 8000)
+#   worker-mood  → Celery worker for mood photo background removal
+#
+# Usage:
+#   docker compose up --build        # start all services
+#   docker compose up web            # start only the web server
+#   docker compose logs -f worker-mood  # tail worker logs
+#   docker compose down -v           # stop + remove volumes
+#
+# Environment:
+#   Copy .env.example to .env and set BG_REMOVAL_PROCESSOR=rembg to enable
+#   real background removal. Without it the worker runs but does nothing
+#   (NullProcessor).
+#
+# PRODUCTION NOTE:
+#   This file is for local development only. Production/staging deployments
+#   must define the worker-mood service in their own deploy config
+#   (Render, Railway, Fly.io, Heroku, k8s, etc.) with appropriate secrets.
+# =============================================================================
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  db:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB:       lfa_intern_system
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # ── Redis (Celery broker + result backend) ──────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Alembic migrations (runs once, then exits) ──────────────────────────────
+  migrate:
+    build:
+      context: .
+      target: dev
+    command: alembic upgrade head
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/lfa_intern_system
+    env_file: [".env"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  # ── FastAPI web server ──────────────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      target: dev
+    command: >
+      uvicorn app.main:app
+        --host 0.0.0.0
+        --port 8000
+        --reload
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL:          postgresql://postgres:postgres@db:5432/lfa_intern_system
+      CELERY_BROKER_URL:     redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    env_file: [".env"]
+    volumes:
+      - .:/app
+      - ./app/static/uploads:/app/app/static/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/docs"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Mood photo background removal worker ────────────────────────────────────
+  #
+  # Processes the mood_photos Celery queue.
+  # Required when BG_REMOVAL_PROCESSOR=rembg (real background removal).
+  # Safe to run with BG_REMOVAL_PROCESSOR=null too — tasks complete instantly
+  # via NullProcessor, no errors.
+  #
+  # Health check: worker responds to Celery inspect ping.
+  # If the worker stops, restart: unless-stopped restarts it automatically.
+  worker-mood:
+    build:
+      context: .
+      target: dev
+    command: >
+      celery -A app.celery_app worker
+        -Q mood_photos
+        --pool=solo
+        --concurrency=1
+        --loglevel=info
+    environment:
+      DATABASE_URL:          postgresql://postgres:postgres@db:5432/lfa_intern_system
+      CELERY_BROKER_URL:     redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    env_file: [".env"]
+    volumes:
+      - ./app/static/uploads:/app/app/static/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # Worker healthcheck: Celery inspect ping responds within 10s
+    healthcheck:
+      test: >
+        celery -A app.celery_app inspect ping
+          -d celery@$$HOSTNAME
+          --timeout 5
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

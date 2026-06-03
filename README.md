@@ -6,7 +6,81 @@ LFA Education Center - Session menedzsment, foglalás, jelenlét és gamificatio
 
 ## 🚀 Gyors Indítás
 
-### Backend Indítása
+### Option A — Docker Compose (ajánlott)
+
+Az összes service (web + mood worker + Redis + PostgreSQL) egy paranccsal indul:
+
+```bash
+docker compose up --build
+```
+
+| Service | URL |
+|---|---|
+| Web / API | http://localhost:8000 |
+| API Docs  | http://localhost:8000/docs |
+
+### Option B — Manuális indítás (két terminál)
+
+**Terminal 1 — Web server:**
+```bash
+make web
+# vagy:
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Terminal 2 — Mood photo background removal worker:**
+```bash
+make worker-mood
+# vagy:
+celery -A app.celery_app worker -Q mood_photos --pool=solo --loglevel=info
+```
+
+> ⚠️ **Fontos:** A `worker-mood` process **kötelező** ha `BG_REMOVAL_PROCESSOR=rembg` van
+> beállítva a `.env`-ben. Nélküle a feltöltött mood fotók `Processing...` állapotban
+> maradnak, és soha nem kerülnek feldolgozásra.
+
+### Mood Worker Environment (.env)
+
+```env
+BG_REMOVAL_PROCESSOR=rembg   # "null" = no real removal, "rembg" = real processing
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/1
+```
+
+### Processing stuck fotók helyreállítása
+
+Ha a worker leállt és képek `Processing...` állapotban ragadtak:
+
+```bash
+make recover-mood          # dry-run: megmutatja mi lenne érintett
+make recover-mood-execute  # tényleges visszaállítás 'uploaded' állapotba
+```
+
+### Minden make parancs
+
+```bash
+make help            # összes parancs listázása
+make web             # web server
+make worker-mood     # mood photo worker
+make worker-all      # minden queue worker
+make recover-mood    # stuck fotók dry-run ellenőrzése
+make migrate         # Alembic migrációk
+make test-unit       # unit tesztek
+make docker-up       # docker compose up
+```
+
+### Hálózaton való elérés (WiFi)
+
+A szerver `0.0.0.0`-n hallgat, ezért ugyanazon a WiFi hálózaton:
+```bash
+# Mac IP lekérdezése:
+ifconfig | grep "inet " | grep -v 127.0.0.1
+# Másik eszközről: http://<MAC_IP>:8000
+```
+
+---
+
+### Korábbi indítási mód (legacy)
 
 ```bash
 ./start_backend.sh
@@ -14,16 +88,6 @@ LFA Education Center - Session menedzsment, foglalás, jelenlét és gamificatio
 
 **URL**: http://localhost:8000
 **API Docs**: http://localhost:8000/docs
-
-### Frontend (HTML/FastAPI)
-
-The frontend is served by FastAPI (Jinja2 templates) on the same port as the backend.
-
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
-
-**URL**: http://localhost:8000
 **Admin Panel**: http://localhost:8000/admin/users
 
 ---
