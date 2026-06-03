@@ -346,10 +346,11 @@ class TestSendChallenge:
         return result, created_challenges
 
     def test_ch14a_auto_snapshot_sets_challenger_photo_when_neutral_mood_exists(self):
-        """CCD-AUTOSNAPSHOT-01: challenger_card_photo_url is set at challenge creation.
+        """CCD-AUTOSNAPSHOT-01 (updated): no explicit photo → challenger_card_photo_url is NULL.
 
-        When the challenger has a neutral mood photo, challenger_card_photo_url is
-        non-NULL immediately after challenge creation — no manual Studio step needed.
+        The new policy: only explicit user-chosen photos are frozen as snapshots.
+        Auto-selection happens at render time via _get_participant_photo_for_phase(),
+        allowing phase/outcome-based mood changes (celebration, sad, etc.).
         """
         user = _user(uid=1)
         db   = _db()
@@ -362,12 +363,12 @@ class TestSendChallenge:
         assert "success=challenge_sent" in result.headers["location"]
         assert len(challenges) == 1
         ch = challenges[0]
-        assert ch.challenger_card_photo_url == "/neutral/processed.png", (
-            "challenger_card_photo_url must be set to the neutral processed PNG at send time"
+        assert ch.challenger_card_photo_url is None, (
+            "No explicit photo → challenger_card_photo_url must be NULL (render-time auto-lookup)"
         )
 
     def test_ch14b_auto_snapshot_uses_original_when_not_processed(self):
-        """CCD-AUTOSNAPSHOT-02: uses mood original_url when processed_png_url is None."""
+        """CCD-AUTOSNAPSHOT-02 (updated): no explicit photo → NULL regardless of mood upload state."""
         user = _user(uid=1)
         db   = _db()
         neutral = MagicMock()
@@ -375,7 +376,9 @@ class TestSendChallenge:
         neutral.original_url      = "/neutral/orig.jpg"
 
         _, challenges = self._send_success(db, user, neutral_mood=neutral)
-        assert challenges[0].challenger_card_photo_url == "/neutral/orig.jpg"
+        assert challenges[0].challenger_card_photo_url is None, (
+            "No explicit photo → NULL snapshot (render-time auto-lookup)"
+        )
 
     def test_ch14c_auto_snapshot_null_when_no_mood_and_no_license(self):
         """CCD-AUTOSNAPSHOT-03: challenger_card_photo_url is None when no mood and no license."""
@@ -460,8 +463,8 @@ class TestSendChallenge:
             "Explicit owned card_photo_url must be used as the snapshot"
         )
 
-    def test_ch15b_empty_card_photo_url_falls_back_to_auto_snapshot(self):
-        """CH-SEND-PHOTO-02: empty card_photo_url → auto-snapshot (neutral mood)."""
+    def test_ch15b_empty_card_photo_url_gives_null_snapshot(self):
+        """CH-SEND-PHOTO-02 (updated): empty card_photo_url → NULL snapshot (render-time auto-lookup)."""
         user = _user(uid=1)
         db   = _db()
         neutral = MagicMock(processed_png_url="/neutral.png", original_url="/neutral_orig.jpg")
@@ -471,14 +474,14 @@ class TestSendChallenge:
             neutral_mood=neutral,
             card_photo_url=None,  # no explicit selection
         )
-        assert challenges[0].challenger_card_photo_url == "/neutral.png", (
-            "No card_photo_url → auto-snapshot (neutral processed_png_url)"
+        assert challenges[0].challenger_card_photo_url is None, (
+            "No card_photo_url → NULL snapshot, render-time auto-lookup will select phase mood"
         )
 
-    def test_ch15c_foreign_photo_url_rejected_falls_back_to_auto_snapshot(self):
-        """CH-SEND-PHOTO-03: card_photo_url not owned by challenger → auto-snapshot fallback.
+    def test_ch15c_foreign_photo_url_rejected_gives_null_snapshot(self):
+        """CH-SEND-PHOTO-03 (updated): card_photo_url not owned by challenger → NULL snapshot.
 
-        The ownership guard rejects the foreign URL; auto-snapshot is used instead.
+        The ownership guard rejects the foreign URL; snapshot is NULL (not auto-filled).
         The challenge is still created (no error redirect).
         """
         user = _user(uid=1)
@@ -489,15 +492,15 @@ class TestSendChallenge:
             db, user,
             neutral_mood=neutral,
             card_photo_url="/other-user-photo.png",
-            owns_mood=None,  # ownership check fails → fallback to neutral
+            owns_mood=None,  # ownership check fails → NULL
         )
         assert len(challenges) == 1
-        # Foreign URL must NOT be stored; falls back to neutral
+        # Foreign URL must NOT be stored; snapshot is NULL (render-time auto-lookup)
         assert challenges[0].challenger_card_photo_url != "/other-user-photo.png", (
             "Foreign URL must be rejected by ownership guard"
         )
-        assert challenges[0].challenger_card_photo_url == "/neutral.png", (
-            "After ownership failure, auto-snapshot (neutral) must be used"
+        assert challenges[0].challenger_card_photo_url is None, (
+            "After ownership failure → NULL snapshot (render-time auto-lookup)"
         )
 
     def test_ch15d_send_form_context_includes_mood_data(self):

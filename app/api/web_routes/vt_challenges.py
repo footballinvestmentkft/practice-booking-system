@@ -508,10 +508,12 @@ async def send_challenge(
             (UserMoodPhoto.processed_png_url == resolved_photo) |
             (UserMoodPhoto.original_url == resolved_photo),
         ).first()
-        challenger_snapshot = resolved_photo if owns else _get_participant_photo_for_phase(db, user.id, "challenge_sent", None)
+        challenger_snapshot = resolved_photo if owns else None
     else:
-        # No explicit selection: prefer mood_angry_competitive for challenge_sent context
-        challenger_snapshot = _get_participant_photo_for_phase(db, user.id, "challenge_sent", None)
+        # No explicit selection → NULL snapshot so render-time phase/outcome
+        # mood lookup (_get_participant_photo_for_phase) runs on every card view.
+        # This allows challenge_sent → focused, completed_score_win → celebration/sad, etc.
+        challenger_snapshot = None
     challenge = VirtualTrainingChallenge(
         challenger_id              = user.id,
         challenged_id              = challenged_user_id,
