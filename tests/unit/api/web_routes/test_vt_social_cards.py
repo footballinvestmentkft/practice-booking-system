@@ -418,7 +418,8 @@ class TestChallengeCardTemplates:
         assert "phase" in self._story()
 
     def test_sc15_story_template_has_my_skill_scores(self):
-        assert "my_skill_scores" in self._story()
+        # E2 redesign: skill progress rendered via my_skill_progress (CC-DESIGN-1)
+        assert "my_skill_progress" in self._story()
 
     def test_sc15_story_no_skill_data_message(self):
         assert "No skill data recorded" in self._story()
