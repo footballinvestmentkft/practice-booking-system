@@ -198,9 +198,11 @@ async def card_studio_welcome(
     if redirect:
         return RedirectResponse(url=redirect, status_code=303)
 
+    _cc_owned = any(is_design_accessible(db, user.id, "challenge_card", pid)
+                    for pid in _CC_VALID_PLATFORMS)
     return templates.TemplateResponse(
         "card_studio_shell.html",
-        {"request": request, "user": user, **ctx},
+        {"request": request, "user": user, "cc_owned": _cc_owned, **ctx},
     )
 
 
@@ -304,9 +306,11 @@ async def card_studio_player(
     if redirect:
         return RedirectResponse(url=redirect, status_code=303)
 
+    _cc_owned = any(is_design_accessible(db, user.id, "challenge_card", pid)
+                    for pid in _CC_VALID_PLATFORMS)
     return templates.TemplateResponse(
         "card_studio_shell.html",
-        {"request": request, "user": user, **ctx},
+        {"request": request, "user": user, "cc_owned": _cc_owned, **ctx},
     )
 
 
@@ -329,7 +333,7 @@ _CC_PLATFORM_LABELS = {
 # Phase labels (mirrors _PHASE_LABELS in vt_challenges.py — kept local for module independence)
 _CC_PHASE_LABELS = {
     "challenge_sent":         "Challenge Sent",
-    "challenge_received":     "Challenge Received",
+    "challenge_received":     "Challenge Invitation",
     "challenge_accepted":     "Challenge Accepted",
     "waiting_for_opponent":   "Waiting for Opponent",
     "live_lobby_ready":       "Live Lobby",
@@ -340,6 +344,8 @@ _CC_PHASE_LABELS = {
     "completed_forfeit_loss": "Result — Forfeit Loss",
     "no_contest":             "No Contest",
     "skill_delta_result":     "Skill Progress",
+    "challenge_cancelled":    "Challenge Cancelled",
+    "challenge_declined":     "Challenge Declined",
 }
 
 # CS-S4B-FIX3: Studio event labels decouple display name from phase_id.
@@ -359,6 +365,8 @@ _CC_PHASE_EVENT_LABELS: dict[str, str] = {
     "completed_forfeit_loss": "Result — Forfeit Loss",
     "no_contest":             "No Contest",
     "skill_delta_result":     "Skill Progress",
+    "challenge_cancelled":    "Challenge Cancelled",
+    "challenge_declined":     "Challenge Declined",
 }
 
 # Viewer-role sublabels shown under the event label
@@ -383,6 +391,9 @@ _CC_PHASE_TIMELINE_ORDER: dict[str, int] = {
     "completed_forfeit_loss": 5,
     "no_contest":             5,
     "skill_delta_result":     6,
+    # Terminal rejection phases — timeline position 2 (after sent, before any result)
+    "challenge_cancelled":    2,
+    "challenge_declined":     2,
 }
 
 _CC_ACTIVE_STATUSES = frozenset({
@@ -402,11 +413,10 @@ _CC_FILTER_STATUSES = {
 _CC_MAX_LIST = 60  # max challenges shown in selector
 
 # Statuses where get_locked_challenge_card_phases() returns [] but the initial
-# challenge_sent/received event still happened and is previewable.
-# FIX: manually add initial phase to locked for these statuses.
+# challenge_sent/received event still happened and is previewable as a locked phase.
+# CANCELLED and DECLINED now have their own unlocked phases (challenge_cancelled /
+# challenge_declined) so they no longer need the implicit-initial workaround.
 _CC_STATUSES_WITH_IMPLICIT_INITIAL: frozenset = frozenset({
-    ChallengeStatus.DECLINED,
-    ChallengeStatus.CANCELLED,
     ChallengeStatus.EXPIRED,
 })
 
@@ -477,6 +487,9 @@ def _resolve_challenge_context(
         return None, "/specialization/lfa-player/onboarding"
 
     # ── Mode A: Challenge selector list ──────────────────────────────────────
+    # CC-DESIGN-1: pass mood photo data for media panel in all modes
+    mood_photos    = get_mood_photos_for_user(user.id, db)
+
     if challenge_id is None:
         filter_statuses = _CC_FILTER_STATUSES.get(filter_val)
 
@@ -520,6 +533,8 @@ def _resolve_challenge_context(
             "active_filter":     filter_val if filter_val in _CC_FILTER_STATUSES else "all",
             "preview_url":       None,
             "legacy_editor_url": "/card-editor/challenge",
+            "mood_photos":       mood_photos,
+            "mood_slot_meta":    _MOOD_SLOT_META,
             **_STUDIO_NAV_CTX,
         }
         return ctx, None
@@ -539,6 +554,8 @@ def _resolve_challenge_context(
             "active_filter":     "all",
             "preview_url":       None,
             "legacy_editor_url": "/card-editor/challenge",
+            "mood_photos":       mood_photos,
+            "mood_slot_meta":    _MOOD_SLOT_META,
             **_STUDIO_NAV_CTX,
         }, None
 
@@ -551,6 +568,8 @@ def _resolve_challenge_context(
             "active_filter":     "all",
             "preview_url":       None,
             "legacy_editor_url": "/card-editor/challenge",
+            "mood_photos":       mood_photos,
+            "mood_slot_meta":    _MOOD_SLOT_META,
             **_STUDIO_NAV_CTX,
         }, None
 
@@ -566,9 +585,9 @@ def _resolve_challenge_context(
     unlocked = _get_unlocked_phases(ch, user.id, my_attempt)
     locked   = _get_locked_phases(ch, user.id)
 
-    # FIX: DECLINED/CANCELLED/EXPIRED — initial send/receive phase existed but
-    # get_locked_challenge_card_phases() returns [] for these statuses.
-    # Add challenge_sent/received as locked so the timeline is complete.
+    # EXPIRED: get_locked_challenge_card_phases() still excludes EXPIRED from the
+    # initial-phase logic (tech debt). Augment locked here so the timeline is complete.
+    # CANCELLED/DECLINED are now handled correctly in get_locked_challenge_card_phases().
     if ch.status in _CC_STATUSES_WITH_IMPLICIT_INITIAL:
         initial = "challenge_sent" if is_challenger else "challenge_received"
         if initial not in unlocked and initial not in locked:
@@ -635,11 +654,13 @@ def _resolve_challenge_context(
     ]
 
     is_exportable_phase = phase in _CC_EXPORTABLE_PHASES
-    # Export URL for exportable phases (ownership guard is on the export route itself)
+    # CDO ownership check for the active platform
+    active_platform_owned = is_design_accessible(db, user.id, "challenge_card", platform)
+    # Export URL only when phase is exportable AND format is owned
     export_url = (
         f"/challenges/{challenge_id}/card/export"
         f"?platform={platform}&phase={phase}"
-    ) if is_exportable_phase else None
+    ) if (is_exportable_phase and active_platform_owned) else None
 
     # Platform chips for UI
     platform_chips = [
@@ -670,12 +691,16 @@ def _resolve_challenge_context(
         "platform_chips":       platform_chips,
         "active_phase":         phase,
         "active_platform":      platform,
-        "is_historical_phase":  is_historical_phase,
-        "is_exportable_phase":  is_exportable_phase,
-        "challenge_export_url": export_url,
-        "ratio_class":          ratio_class,
-        "preview_url":          preview_url,
-        "legacy_editor_url":    "/card-editor/challenge",
+        "is_historical_phase":      is_historical_phase,
+        "is_exportable_phase":      is_exportable_phase,
+        "active_platform_owned":    active_platform_owned,
+        "challenge_export_url":     export_url,
+        "ratio_class":              ratio_class,
+        "preview_url":              preview_url,
+        "legacy_editor_url":        "/card-editor/challenge",
+        # CC-DESIGN-1: mood photo media panel for challenge Studio
+        "mood_photos":          mood_photos,
+        "mood_slot_meta":       _MOOD_SLOT_META,
         **_STUDIO_NAV_CTX,
     }
     return ctx, None
@@ -701,6 +726,18 @@ async def card_studio_challenge_studio(
     (existing route, session cookie auth, participant guard).
     No new routes, no DB migrations.
     """
+    # CDO guard: user must own at least one challenge card format to access the Studio.
+    # No ownership → redirect to shop with a clear message.
+    _any_cc_owned = any(
+        is_design_accessible(db, user.id, "challenge_card", pid)
+        for pid in _CC_VALID_PLATFORMS
+    )
+    if not _any_cc_owned:
+        return RedirectResponse(
+            url="/shop?type=challenge_card&info=purchase_required_for_studio",
+            status_code=303,
+        )
+
     ctx, redirect = _resolve_challenge_context(
         db, user, challenge_id=challenge_id, phase=phase,
         platform=platform, filter_val=filter_val,
@@ -710,5 +747,5 @@ async def card_studio_challenge_studio(
 
     return templates.TemplateResponse(
         "card_studio_shell.html",
-        {"request": request, "user": user, **ctx},
+        {"request": request, "user": user, "cc_owned": True, **ctx},
     )

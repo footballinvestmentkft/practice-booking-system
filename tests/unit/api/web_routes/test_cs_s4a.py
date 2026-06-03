@@ -113,11 +113,14 @@ class TestS4A02to09ChallengeContext:
         assert "cs-preview-placeholder" in src
         assert 'active_type == "challenge"' in src or "active_type == 'challenge'" in src
 
-    def test_s4a_09_challenge_panel_has_legacy_editor_cta(self):
-        """S4A-09: cs_challenge_panel.html references /card-editor/challenge via legacy_editor_url."""
+    def test_s4a_09_challenge_panel_has_mood_photo_selector(self):
+        """S4A-09: CC-DESIGN-1 replaced legacy editor CTA with mood photo quick selector.
+        cs_challenge_panel.html has cs-cc-mood-section; legacy CTA removed."""
         src = (INCLUDES_DIR / "cs_challenge_panel.html").read_text()
-        assert "legacy_editor_url" in src
-        assert "card-editor/challenge" in src or "legacy_editor_url" in src
+        assert "cs-cc-mood-section" in src, \
+            "CC-DESIGN-1: challenge panel must have mood photo quick selector"
+        assert "Open Challenge Editor" not in src, \
+            "CC-DESIGN-1: legacy editor CTA must be removed from challenge panel"
 
 
 # ── S4A-10..11: No write, no export ──────────────────────────────────────────
@@ -145,11 +148,11 @@ class TestS4A10to11NoWriteNoExport:
 
 class TestS4A12to13RouteAndSnapshot:
 
-    def test_s4a_12_route_count_847(self):
-        """S4A-12: Route count == 850 after CS-S4A (+1 /card-studio/challenge)."""
+    def test_s4a_12_route_count_851(self):
+        """S4A-12: Route count == 851 (CC-DESIGN-1 SNAPSHOT adds +1 POST /challenges/{id}/card/photo)."""
         from app.main import app
         count = len(app.openapi().get("paths", {}))
-        assert count == 850, f"Expected 847 routes, got {count}"
+        assert count == 851, f"Expected 851 routes, got {count}"
 
     def test_s4a_13_openapi_snapshot_match(self):
         """S4A-13: OpenAPI snapshot matches live API."""

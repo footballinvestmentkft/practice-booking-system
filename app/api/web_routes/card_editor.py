@@ -42,6 +42,10 @@ _MOOD_SLOT_META: list[dict] = [
     {"slot": "mood_sad_disappointed", "emoji": "😔", "label": "Sad"},
     {"slot": "mood_angry_competitive","emoji": "😤", "label": "Angry"},
     {"slot": "mood_surprised_shocked","emoji": "😲", "label": "Surprised"},
+    # Phase-B slots
+    {"slot": "mood_focused_ready",    "emoji": "🎯", "label": "Focused"},
+    {"slot": "mood_confident",        "emoji": "😎", "label": "Confident"},
+    {"slot": "mood_proud",            "emoji": "🦁", "label": "Proud"},
 ]
 
 # Aspect-ratio CSS class per preview_platform

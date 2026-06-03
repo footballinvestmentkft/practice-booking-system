@@ -73,6 +73,47 @@
 .cs-footer { margin-top: 1rem; text-align: center; }
 .cs-footer a { color: #667eea; font-size: 0.88rem; font-weight: 600; text-decoration: none; }
 
+/* ── Card photo selector ── */
+.cs-photo-section { margin-bottom: 1.1rem; }
+.cs-photo-hint {
+    font-size: 0.72rem; color: var(--app-text-muted); margin-bottom: 0.5rem;
+}
+.cs-photo-grid {
+    display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.4rem;
+}
+.cs-photo-chip {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    border: 2px solid #e5e7eb; border-radius: 8px; padding: 0.45rem 0.6rem;
+    background: #fff; cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    font-size: 0; /* emoji only layout */
+}
+.cs-photo-chip:disabled { opacity: 0.35; cursor: not-allowed; }
+.cs-photo-chip:not(:disabled):hover { border-color: #4f46e5; }
+.cs-photo-chip.selected { border-color: #4f46e5; background: #eef2ff; }
+.cs-photo-chip-emoji { font-size: 1.3rem; line-height: 1; }
+.cs-photo-chip-label {
+    font-size: 0.62rem; font-weight: 600; color: var(--app-text-muted);
+    text-transform: uppercase; letter-spacing: 0.03em;
+}
+.cs-photo-chip.selected .cs-photo-chip-label { color: #4f46e5; }
+.cs-photo-preview-wrap {
+    margin-top: 0.5rem; display: flex; align-items: center; gap: 0.75rem;
+}
+.cs-photo-preview-img {
+    width: 56px; height: 68px; object-fit: cover; object-position: center top;
+    border-radius: 6px; border: 1px solid #e5e7eb; background: #f9fafb;
+}
+.cs-photo-preview-label {
+    font-size: 0.75rem; color: var(--app-text-muted); font-weight: 500;
+}
+.cs-photo-manage { font-size: 0.72rem; color: #6b7280; margin-top: 0.3rem; }
+.cs-photo-manage a { color: #4f46e5; text-decoration: none; }
+.cs-photo-clear {
+    background: none; border: none; cursor: pointer; padding: 0;
+    font-size: 0.72rem; color: #9ca3af; text-decoration: underline;
+}
+.cs-photo-clear:hover { color: #6b7280; }
+
 /* ── Challenge category selector ── */
 .cs-cat-grid {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem;
@@ -261,6 +302,64 @@
                       maxlength="500" placeholder="Trash-talk or encouragement…"></textarea>
         </div>
 
+        {# ── CC-DESIGN-1: Card photo selector — frozen snapshot at send time ── #}
+        <div class="cs-field cs-photo-section" id="cs-photo-field">
+          <label class="cs-label">Your photo on the challenge card</label>
+          <p class="cs-photo-hint">
+            This is how you'll appear on the "You've Been Challenged" card.
+            Leaving it empty uses your Neutral mood photo automatically.
+          </p>
+
+          {# Hidden field — JS fills this when a chip is selected #}
+          <input type="hidden" name="card_photo_url" id="cs-card-photo-url" value="">
+
+          {% set _mood_photos    = mood_photos    if mood_photos    is defined else {} %}
+          {% set _mood_slot_meta = mood_slot_meta if mood_slot_meta is defined else [] %}
+          {% set _any_has = namespace(val=false) %}
+          {% for meta in _mood_slot_meta %}
+            {% set _mp = _mood_photos.get(meta.slot) %}
+            {% if _mp and _mp.original_url %}{% set _any_has.val = true %}{% endif %}
+          {% endfor %}
+
+          {% if _any_has.val %}
+          <div class="cs-photo-grid" id="cs-photo-grid">
+            {% for meta in _mood_slot_meta %}
+              {% set _mp  = _mood_photos.get(meta.slot) %}
+              {% set _has = _mp and _mp.original_url %}
+              {% set _url = (_mp.processed_png_url or _mp.original_url) if _has else none %}
+              <button class="cs-photo-chip"
+                      type="button"
+                      id="cs-chip-{{ meta.slot }}"
+                      data-photo-url="{{ _url or '' }}"
+                      {% if not _has %}disabled aria-disabled="true"{% endif %}
+                      title="{{ meta.label }}">
+                <span class="cs-photo-chip-emoji">{{ meta.emoji }}</span>
+                <span class="cs-photo-chip-label">{{ meta.label }}</span>
+              </button>
+            {% endfor %}
+          </div>
+
+          {# Live preview of selected photo #}
+          <div class="cs-photo-preview-wrap" id="cs-photo-preview" style="display:none;">
+            <img src="" alt="Your card photo" class="cs-photo-preview-img" id="cs-photo-preview-img">
+            <div>
+              <div class="cs-photo-preview-label" id="cs-photo-preview-label">Selected</div>
+              <button type="button" class="cs-photo-clear" id="cs-photo-clear">Clear selection</button>
+            </div>
+          </div>
+
+          <p class="cs-photo-manage">
+            <a href="/profile/my-mood-photos">Manage mood photos →</a>
+          </p>
+          {% else %}
+          <p class="cs-photo-hint" style="color:#9ca3af;">
+            No mood photos uploaded yet.
+            <a href="/profile/my-mood-photos" style="color:#4f46e5;">Add one →</a>
+            and it will appear here automatically.
+          </p>
+          {% endif %}
+        </div>
+
         <button type="submit" class="cs-btn-submit" id="cs-submit">⚔ Send Challenge</button>
     </form>
 </div>
@@ -360,6 +459,53 @@ if (preCode && gameSelect) {
         }
     }
 }
+
+// ── Card photo selector ────────────────────────────────────────────────────
+(function () {
+  var hiddenInput  = document.getElementById('cs-card-photo-url');
+  var previewWrap  = document.getElementById('cs-photo-preview');
+  var previewImg   = document.getElementById('cs-photo-preview-img');
+  var previewLabel = document.getElementById('cs-photo-preview-label');
+  var clearBtn     = document.getElementById('cs-photo-clear');
+
+  function selectPhoto(url, label) {
+    if (!hiddenInput) return;
+    hiddenInput.value = url || '';
+    // Update chip states
+    document.querySelectorAll('.cs-photo-chip').forEach(function (c) {
+      c.classList.toggle('selected', !!url && c.dataset.photoUrl === url);
+    });
+    // Show/hide preview
+    if (previewWrap) {
+      if (url) {
+        if (previewImg)   { previewImg.src = url; }
+        if (previewLabel) { previewLabel.textContent = label || 'Selected'; }
+        previewWrap.style.display = 'flex';
+      } else {
+        previewWrap.style.display = 'none';
+      }
+    }
+  }
+
+  document.querySelectorAll('.cs-photo-chip:not(:disabled)').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var url   = btn.dataset.photoUrl || '';
+      var label = btn.querySelector('.cs-photo-chip-label')
+                    ? btn.querySelector('.cs-photo-chip-label').textContent
+                    : '';
+      // Toggle: clicking selected chip deselects it
+      if (hiddenInput && hiddenInput.value === url) {
+        selectPhoto('', '');
+      } else {
+        selectPhoto(url, label);
+      }
+    });
+  });
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function () { selectPhoto('', ''); });
+  }
+}());
 
 })();
 </script>

@@ -39,7 +39,9 @@ from sqlalchemy.orm import Session
 from ...database import get_db
 from ...dependencies import get_current_user_optional, get_current_user_web
 from ...models.friendship import Friendship, FriendshipStatus, is_friends
+from ...models.license import UserLicense
 from ...models.notification import NotificationType
+from ...models.user_mood_photos import MoodPhotoStatus, UserMoodPhoto
 from ...models.user import User
 from ...models.virtual_training import VirtualTrainingAttempt, VirtualTrainingGame
 from ...models.vt_challenge import (
@@ -57,6 +59,10 @@ from ...models.vt_challenge import (
 )
 from ...core.redis_pubsub import publish_challenge_event
 from ...services import card_export_service as _export_svc
+from ...utils.football_positions import position_short
+from ...skills_config import ALL_SKILLS, SKILL_CATEGORIES
+from ...services.mood_photo_service import get_mood_photos_for_user as _mood_photos_for_user
+from .card_editor import _MOOD_SLOT_META as _SEND_MOOD_SLOT_META
 from ...services import notification_service
 from ...services.challenge_completion_service import sweep_accepted_deadlines
 from ...services.live_lobby_service import (
@@ -76,6 +82,43 @@ from .student_features import _spec_ctx
 
 router    = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
+
+# CC-DESIGN-1: skill_key → category display name (name_en from SKILL_CATEGORIES)
+_SKILL_CATEGORY_LABEL: dict[str, str] = {
+    skill["key"]: cat["name_en"]
+    for cat in SKILL_CATEGORIES
+    for skill in cat["skills"]
+}
+
+# CC-DESIGN-1 Phase-A: phase + outcome → preferred and alternative mood photo slot.
+# Only the 6 existing slots are used; no DB migration required.
+# is_winner=True  → player won / not forfeiter  → celebration/happy preferred
+# is_winner=False → player lost / forfeited      → sad preferred
+# is_winner=None  → pre-game or no winner context → phase-default
+_PHASE_MOOD_MAP: dict[tuple[str, bool | None], tuple[str | None, str | None]] = {
+    # Pre-game phases — Phase-B: focused_ready / confident where available
+    ("challenge_sent",         None):  ("mood_focused_ready",      "mood_angry_competitive"),
+    # challenge_received: surprise is authentic first reaction; focused as fallback
+    ("challenge_received",     None):  ("mood_surprised_shocked",  "mood_focused_ready"),
+    ("challenge_accepted",     None):  ("mood_confident",          "mood_happy_smile"),
+    ("waiting_for_opponent",   None):  ("mood_focused_ready",      "mood_angry_competitive"),
+    ("live_lobby_ready",       None):  ("mood_focused_ready",      "mood_angry_competitive"),
+    ("live_in_progress",       None):  ("mood_focused_ready",      "mood_angry_competitive"),
+    # Result phases — winner/loser aware (Phase-A logic unchanged)
+    ("completed_score_win",    True):  ("mood_celebration",        "mood_happy_smile"),
+    ("completed_score_win",    False): ("mood_sad_disappointed",   "mood_intro_neutral"),
+    ("completed_draw",         None):  ("mood_surprised_shocked",  "mood_intro_neutral"),
+    ("completed_forfeit_win",  True):  ("mood_celebration",        "mood_happy_smile"),
+    ("completed_forfeit_win",  False): ("mood_sad_disappointed",   "mood_intro_neutral"),
+    ("completed_forfeit_loss", True):  ("mood_celebration",        "mood_happy_smile"),
+    ("completed_forfeit_loss", False): ("mood_sad_disappointed",   "mood_intro_neutral"),
+    ("no_contest",             None):  ("mood_intro_neutral",      None),
+    # Phase-B: proud preferred for skill progress
+    ("skill_delta_result",     None):  ("mood_proud",              "mood_happy_smile"),
+    # Terminal rejection phases
+    ("challenge_cancelled",    None):  ("mood_intro_neutral",      None),
+    ("challenge_declined",     None):  ("mood_sad_disappointed",   "mood_intro_neutral"),
+}
 
 _MAX_MSG         = 500
 _COMPLETED_LIMIT = 20
@@ -325,6 +368,9 @@ async def challenge_send_form(
     preselected_friend_id = friend_id
     preselected_game_code = game_code
 
+    # CC-DESIGN-1: pass mood photos so the send form can show a card photo selector
+    mood_photos = _mood_photos_for_user(user.id, db)
+
     return templates.TemplateResponse("vt_challenge_send.html", {
         "request":               request,
         "user":                  user,
@@ -336,6 +382,8 @@ async def challenge_send_form(
         "preselected_game_code": preselected_game_code,
         "error":                 request.query_params.get("error"),
         "max_per_cat":           MAX_ACTIVE_PER_CATEGORY,
+        "mood_photos":           mood_photos,
+        "mood_slot_meta":        _SEND_MOOD_SLOT_META,
     })
 
 
@@ -350,6 +398,7 @@ async def send_challenge(
     challenge_mode:            str | None = Form(default=None),
     completion_window_seconds: int | None = Form(default=None),
     challenge_category:        str | None = Form(default=None),
+    card_photo_url:            str | None = Form(default=None),
     db: Session = Depends(get_db),
     user: User  = Depends(get_current_user_web),
 ):
@@ -447,6 +496,22 @@ async def send_challenge(
         )
 
     now = datetime.now(timezone.utc)
+    # CC-DESIGN-1 PHOTO SNAPSHOT: freeze the challenger's card photo at send time.
+    # Priority: explicit form selection (card_photo_url) > auto-snapshot (neutral mood).
+    # Ownership guard: card_photo_url must belong to this user's own mood photos.
+    # isinstance guard: Form FieldInfo when called directly in tests
+    resolved_photo: str | None = card_photo_url if isinstance(card_photo_url, str) and card_photo_url else None
+    challenger_snapshot: str | None
+    if resolved_photo:
+        owns = db.query(UserMoodPhoto).filter(
+            UserMoodPhoto.user_id == user.id,
+            (UserMoodPhoto.processed_png_url == resolved_photo) |
+            (UserMoodPhoto.original_url == resolved_photo),
+        ).first()
+        challenger_snapshot = resolved_photo if owns else _get_participant_photo_for_phase(db, user.id, "challenge_sent", None)
+    else:
+        # No explicit selection: prefer mood_angry_competitive for challenge_sent context
+        challenger_snapshot = _get_participant_photo_for_phase(db, user.id, "challenge_sent", None)
     challenge = VirtualTrainingChallenge(
         challenger_id              = user.id,
         challenged_id              = challenged_user_id,
@@ -459,6 +524,7 @@ async def send_challenge(
         completion_window_seconds  = resolved_window,
         expires_at                 = make_expires_at(now),
         created_at                 = now,
+        challenger_card_photo_url  = challenger_snapshot,
     )
     db.add(challenge)
     db.flush()
@@ -852,10 +918,27 @@ VALID_CHALLENGE_CARD_PHASES = frozenset({
     "completed_forfeit_loss",
     "no_contest",
     "skill_delta_result",
+    # Terminal rejection phases (CC-DESIGN-1 extension)
+    "challenge_cancelled",  # challenger withdrew
+    "challenge_declined",   # challenged refused
 })
 
-# Phases that are exportable (unlocked) — remaining phases are preview-only when relevant
+# Phases that are exportable — all require format ownership (CDO row).
+# CC-DESIGN-1 social moment export: challenge_sent / challenge_received are
+# the first shareable social moments of a challenge lifecycle and must be
+# downloadable. Historical does NOT mean preview-only.
 _EXPORTABLE_PHASES = frozenset({
+    # Social moment phases (CC-DESIGN-1 addition)
+    "challenge_sent",
+    "challenge_received",
+    # Acceptance moment
+    "challenge_accepted",
+    # Viewer submitted, waiting for opponent
+    "waiting_for_opponent",
+    # Terminal rejection phases
+    "challenge_cancelled",
+    "challenge_declined",
+    # Result phases (unchanged)
     "completed_score_win",
     "completed_draw",
     "completed_forfeit_win",
@@ -869,9 +952,30 @@ _TERMINAL_STATUSES = frozenset({
     ChallengeStatus.DECLINED,  ChallengeStatus.CANCELLED,
 })
 
+# CC-DESIGN-1: central phase → emoji mapping used by both export templates.
+# challenge_sent (⚔️) and challenge_received (🛡️) are intentionally different:
+#   ⚔️ = challenger/attacker perspective
+#   🛡️ = challenged/defender perspective
+_PHASE_EMOJI: dict[str, str] = {
+    "challenge_sent":         "⚔️",
+    "challenge_received":     "🛡️",
+    "challenge_accepted":     "✅",
+    "challenge_cancelled":    "🚫",
+    "challenge_declined":     "👎",
+    "waiting_for_opponent":   "⏳",
+    "live_lobby_ready":       "⚡",
+    "live_in_progress":       "🔥",
+    "completed_score_win":    "🏆",
+    "completed_draw":         "⚖️",
+    "completed_forfeit_win":  "🏆",
+    "completed_forfeit_loss": "💔",
+    "no_contest":             "🔄",
+    "skill_delta_result":     "📈",
+}
+
 _PHASE_LABELS = {
     "challenge_sent":         "Challenge Sent",
-    "challenge_received":     "Challenge Received",
+    "challenge_received":     "You've Been Challenged",
     "challenge_accepted":     "Challenge Accepted",
     "waiting_for_opponent":   "Waiting for Opponent",
     "live_lobby_ready":       "Live Lobby",
@@ -882,6 +986,8 @@ _PHASE_LABELS = {
     "completed_forfeit_loss": "Result — Forfeit Loss",
     "no_contest":             "No Contest",
     "skill_delta_result":     "Skill Progress",
+    "challenge_cancelled":    "Cancelled",
+    "challenge_declined":     "Declined",
 }
 
 _PHASE_CTA = {
@@ -897,6 +1003,8 @@ _PHASE_CTA = {
     "completed_forfeit_loss":  "Play again",
     "no_contest":              "Challenge again",
     "skill_delta_result":      "View profile",
+    "challenge_cancelled":     "Challenge again",
+    "challenge_declined":      "Challenge again",
 }
 
 
@@ -973,6 +1081,12 @@ def get_unlocked_challenge_card_phases(
         if outcome == "no_contest":
             phases.append("no_contest")
 
+    elif s == ChallengeStatus.CANCELLED:
+        phases.append("challenge_cancelled")
+
+    elif s == ChallengeStatus.DECLINED:
+        phases.append("challenge_declined")
+
     return phases
 
 
@@ -987,9 +1101,13 @@ def get_locked_challenge_card_phases(
 
     locked: list[str] = []
 
-    # For non-pending challenges, the initial send/receive phase is historical
-    if s not in (ChallengeStatus.PENDING, ChallengeStatus.DECLINED,
-                 ChallengeStatus.CANCELLED, ChallengeStatus.EXPIRED):
+    # For non-pending challenges, the initial send/receive phase is historical.
+    # CANCELLED and DECLINED: the challenge_sent/received event DID happen (the
+    # challenge reached PENDING before being cancelled or declined), so the initial
+    # phase must appear as a historical locked chip alongside the terminal phase.
+    # EXPIRED: excluded here — handled via _CC_STATUSES_WITH_IMPLICIT_INITIAL in the
+    # Card Studio layer (tech debt: should be unified in a future pass).
+    if s not in (ChallengeStatus.PENDING, ChallengeStatus.EXPIRED):
         locked.append(initial)
 
     # For completed challenges, the accepted phase is also historical
@@ -1029,11 +1147,205 @@ def validate_challenge_card_phase(
             status_code=403,
             detail=f"Phase {phase!r} is not applicable to this challenge.",
         )
-    if for_export and phase not in unlocked:
+    # CC-DESIGN-1: export allowed if phase is in _EXPORTABLE_PHASES.
+    # Social moment phases (challenge_sent/received) are in locked (historical)
+    # but must be exportable — use _EXPORTABLE_PHASES as the authoritative list.
+    if for_export and phase not in _EXPORTABLE_PHASES:
         raise HTTPException(
             status_code=403,
             detail=f"Phase {phase!r} is locked — export not available.",
         )
+
+
+def _get_participant_photo(db: Session, user_id: int) -> str | None:
+    """Return the neutral mood default photo for a challenge card participant.
+
+    CC-DESIGN-1 NEUTRAL fallback priority (mood_intro_neutral required):
+    1. mood_intro_neutral.processed_png_url (bg-removed transparent PNG, if ready)
+    2. mood_intro_neutral.original_url
+    3. player_card_photo_url
+    4. wc_photo_url
+    5. None (template renders initials)
+
+    Only mood_intro_neutral is used — never happy/angry/celebration/sad.
+    This ensures consistent, non-random default photo selection.
+    """
+    neutral = db.query(UserMoodPhoto).filter_by(
+        user_id=user_id, slot="mood_intro_neutral"
+    ).first()
+    if neutral is not None:
+        if neutral.processed_png_url:
+            return neutral.processed_png_url
+        if neutral.original_url:
+            return neutral.original_url
+
+    lic = db.query(UserLicense).filter(
+        UserLicense.user_id == user_id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+    ).first()
+    if lic is None:
+        return None
+    return lic.player_card_photo_url or lic.wc_photo_url or None
+
+
+def _winner_ctx(ch: Any, user_id: int) -> bool | None:
+    """Return winner context for a participant in a challenge.
+
+    True  → this user won  (or is the non-forfeiter in forfeit)
+    False → this user lost (or is the forfeiter)
+    None  → no winner set (draw, no_contest, or pre-game phase)
+    """
+    if ch.winner_id is None:
+        return None
+    return ch.winner_id == user_id
+
+
+def _get_participant_photo_for_phase(
+    db: Session,
+    user_id: int,
+    phase: str,
+    is_winner: bool | None,
+) -> str | None:
+    """Phase- and outcome-aware mood photo selection (Phase-A, 6 existing slots only).
+
+    Lookup order per player:
+      1. preferred mood slot for (phase, is_winner) from _PHASE_MOOD_MAP
+      2. alternative mood slot
+      3. mood_intro_neutral (final mood fallback)
+      4. UserLicense.player_card_photo_url
+      5. UserLicense.wc_photo_url
+      6. None (template renders initials)
+
+    Called only when the per-challenge frozen snapshot is NULL.
+    Never performs DB writes.
+    """
+    preferred, alt = _PHASE_MOOD_MAP.get(
+        (phase, is_winner),
+        _PHASE_MOOD_MAP.get((phase, None), (None, "mood_intro_neutral")),
+    )
+    seen: set[str] = set()
+    for slot in filter(None, [preferred, alt, "mood_intro_neutral"]):
+        if slot in seen:
+            continue
+        seen.add(slot)
+        photo = db.query(UserMoodPhoto).filter_by(user_id=user_id, slot=slot).first()
+        if photo:
+            return photo.processed_png_url or photo.original_url
+
+    lic = db.query(UserLicense).filter(
+        UserLicense.user_id == user_id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+    ).first()
+    return (lic.player_card_photo_url or lic.wc_photo_url) if lic else None
+
+
+def _get_participant_stats(db: Session, user_id: int) -> dict:
+    """Return overall skill + primary/secondary position for a challenge card participant.
+
+    overall:       float | None  — average of football_skills current_level values (1dp)
+    primary_pos:   str   | None  — position_short of motivation_scores["positions"][0]
+    secondary_pos: str   | None  — position_short of motivation_scores["positions"][1]
+    Returns all-None dict when no LFA_FOOTBALL_PLAYER license exists.
+    """
+    lic = db.query(UserLicense).filter(
+        UserLicense.user_id == user_id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+    ).first()
+    if lic is None:
+        return {"overall": None, "primary_pos": None, "secondary_pos": None}
+
+    football_skills = lic.football_skills or {}
+    levels = [
+        v["current_level"]
+        for v in football_skills.values()
+        if isinstance(v, dict) and v.get("current_level") is not None
+    ]
+    overall = round(sum(levels) / len(levels), 1) if levels else None
+    skill_levels = {
+        k: float(v["current_level"])
+        for k, v in football_skills.items()
+        if isinstance(v, dict) and v.get("current_level") is not None
+    }
+
+    positions = (lic.motivation_scores or {}).get("positions", [])
+    return {
+        "overall":       overall,
+        "primary_pos":   position_short(positions[0]) if positions else None,
+        "secondary_pos": position_short(positions[1]) if len(positions) > 1 else None,
+        "skill_levels":  skill_levels,
+    }
+
+
+def _build_skill_progress_rows(
+    skill_deltas: dict[str, float],
+    skill_levels: dict[str, float],
+    max_rows: int = 8,
+) -> list[dict]:
+    """Build Player Card-style skill progress rows for skill_delta_result card.
+
+    Returns rows sorted by abs(delta) desc, capped at max_rows.
+    category uses SKILL_CATEGORIES name_en (Outfield/Set Pieces/Mental/Physical).
+    fill_pct is None when current_level is unavailable — bar renders as empty.
+    """
+    rows = []
+    for key, delta in skill_deltas.items():
+        skill_def = ALL_SKILLS.get(key)
+        level = skill_levels.get(key)
+        rows.append({
+            "key":           key,
+            "name":          skill_def["name_en"] if skill_def else key.replace("_", " ").title(),
+            "category":      _SKILL_CATEGORY_LABEL.get(key, ""),
+            "current_level": level,
+            "delta":         delta,
+            "fill_pct":      min(round(level), 100) if level is not None else None,
+            "is_positive":   delta > 0,
+            "is_negative":   delta < 0,
+        })
+    rows.sort(key=lambda r: abs(r["delta"]), reverse=True)
+    return rows[:max_rows]
+
+
+def _build_result_summary(attempt: Any, game_code: str | None) -> dict:
+    """Build game-aware result summary for challenge card rendering (CC-DESIGN-1).
+
+    Returns a dict with primary_value (score_normalized) and up to 2 game-specific
+    secondary items.  primary_value is None only when attempt or score_normalized is
+    missing — if game_code is None/unknown the primary score is still surfaced.
+    """
+    primary_value: float | None = None
+    if attempt is not None and attempt.score_normalized is not None:
+        primary_value = round(float(attempt.score_normalized), 1)
+
+    secondary: list[dict] = []
+
+    if attempt is not None and game_code == "memory_sequence":
+        raw = attempt.raw_metrics or {}
+        per_round = raw.get("per_round") or []
+        completed = [r for r in per_round if r.get("outcome") == "correct"]
+        best_seq = max((r.get("sequence_length", 0) for r in completed), default=0)
+        if best_seq > 0:
+            secondary.append({"label": "Sequence", "value": str(best_seq)})
+        stim = attempt.stimuli_count
+        corr = attempt.correct_count
+        if isinstance(stim, (int, float)) and stim > 0 and isinstance(corr, (int, float)):
+            secondary.append({"label": "Accuracy", "value": f"{round(corr / stim * 100)}%"})
+
+    elif attempt is not None and game_code == "target_tracking":
+        raw = attempt.raw_metrics or {}
+        diff = raw.get("difficulty_level")
+        if diff:
+            secondary.append({"label": "Difficulty", "value": diff.title()})
+        stim = attempt.stimuli_count
+        corr = attempt.correct_count
+        if isinstance(stim, (int, float)) and stim > 0 and isinstance(corr, (int, float)):
+            secondary.append({"label": "Hit Rate", "value": f"{round(corr / stim * 100)}%"})
+
+    return {
+        "game_code":       game_code,
+        "primary_label":   "Score",
+        "primary_value":   primary_value,
+        "secondary_items": secondary[:2],
+    }
 
 
 def _build_challenge_card_context(
@@ -1043,7 +1355,20 @@ def _build_challenge_card_context(
     challenged_attempt: Any,
     phase: str,
     my_attempt: Any = None,
+    challenger_photo_url: str | None = None,
+    challenged_photo_url: str | None = None,
+    selected_photo_url: str | None = None,
+    challenger_stats: dict | None = None,
+    challenged_stats: dict | None = None,
 ) -> dict:
+    """Build rendering context for challenge card templates.
+
+    CC-DESIGN-1 additions:
+      challenger_photo_url / challenged_photo_url — player photos for VS layouts.
+      selected_photo_url — viewer-chosen mood/hero photo (query-param MVP, no DB write).
+      challenger_stats / challenged_stats — {overall, primary_pos, secondary_pos} dicts
+        from _get_participant_stats(); all values may be None.
+    """
     def _skill_scores_map(attempt: Any) -> dict[str, float]:
         if attempt is None or not attempt.skill_deltas:
             return {}
@@ -1053,34 +1378,128 @@ def _build_challenge_card_context(
     if my_attempt is None:
         my_attempt  = challenger_attempt if is_challenger else challenged_attempt
     opp_attempt = challenged_attempt if is_challenger else challenger_attempt
+    viewer_stats = challenger_stats if is_challenger else challenged_stats
 
     my_score  = float(my_attempt.score_normalized)  if my_attempt  else None
     opp_score = float(opp_attempt.score_normalized) if opp_attempt else None
+
+    # CC-DESIGN-1: viewer_photo / opponent_photo derived from participant roles
+    viewer_photo   = challenger_photo_url if is_challenger else challenged_photo_url
+    opponent_photo = challenged_photo_url if is_challenger else challenger_photo_url
 
     outcome_reason = _compute_outcome_reason(ch)
     unlocked = get_unlocked_challenge_card_phases(ch, viewer.id, my_attempt)
     is_locked = phase not in unlocked
 
+    # CC-DESIGN-1: viewer_action_text — two-participant invitation narrative line
+    _challenged_dn = _display_name(ch.challenged)
+    _challenger_dn = _display_name(ch.challenger)
+    if phase == "challenge_sent":
+        viewer_action_text = f"You challenged {_challenged_dn}"
+    elif phase == "challenge_received":
+        viewer_action_text = f"{_challenger_dn} challenged you"
+    elif phase == "challenge_accepted":
+        viewer_action_text = f"{_challenged_dn} accepted" if is_challenger else "accepted by you"
+    elif phase == "waiting_for_opponent":
+        opp = _challenged_dn if is_challenger else _challenger_dn
+        viewer_action_text = f"Waiting for {opp}"
+    elif phase == "challenge_cancelled":
+        viewer_action_text = "cancelled by you" if is_challenger else f"{_challenger_dn} cancelled"
+    elif phase == "challenge_declined":
+        viewer_action_text = f"{_challenged_dn} declined" if is_challenger else "declined by you"
+    elif phase in ("completed_forfeit_win", "completed_forfeit_loss"):
+        _forfeiter_dn = _display_name(ch.forfeit_user) if ch.forfeit_user else None
+        if phase == "completed_forfeit_loss" and ch.forfeit_user_id and (
+            (is_challenger and ch.forfeit_user_id == ch.challenger_id) or
+            (not is_challenger and ch.forfeit_user_id == ch.challenged_id)
+        ):
+            viewer_action_text = "you forfeited"
+        elif _forfeiter_dn:
+            viewer_action_text = f"{_forfeiter_dn} forfeited"
+        else:
+            viewer_action_text = "opponent forfeited"
+    elif phase == "no_contest":
+        viewer_action_text = "neither player completed"
+    else:
+        viewer_action_text = ""
+
     return {
-        "challenge_id":     ch.id,
-        "phase":            phase,
-        "challenger_name":  _display_name(ch.challenger),
-        "challenged_name":  _display_name(ch.challenged),
-        "game_name":        ch.game.name if ch.game else "Unknown Game",
-        "challenge_mode":   ch.challenge_mode or "async",
-        "outcome_reason":   outcome_reason,
-        "challenger_score": float(challenger_attempt.score_normalized) if challenger_attempt else None,
-        "challenged_score": float(challenged_attempt.score_normalized) if challenged_attempt else None,
-        "winner_name":      _display_name(ch.winner) if ch.winner else None,
-        "is_draw":          bool(ch.is_draw),
-        "my_score":         my_score,
-        "opp_score":        opp_score,
-        "my_skill_scores":  _skill_scores_map(my_attempt),
-        "is_viewer_winner": ch.winner_id is not None and ch.winner_id == viewer.id,
-        "cta_label":        _PHASE_CTA.get(phase, "View challenge"),
-        "completed_at":     ch.completed_at if ch.status == ChallengeStatus.COMPLETED else None,
-        "is_locked":        is_locked,
-        "unlocked_phases":  unlocked,
+        "challenge_id":          ch.id,
+        "phase":                 phase,
+        "challenger_name":       _challenger_dn,
+        "challenged_name":       _challenged_dn,
+        "game_name":             ch.game.name if ch.game else "Unknown Game",
+        "challenge_mode":        ch.challenge_mode or "async",
+        "outcome_reason":        outcome_reason,
+        "challenger_score":      float(challenger_attempt.score_normalized) if challenger_attempt else None,
+        "challenged_score":      float(challenged_attempt.score_normalized) if challenged_attempt else None,
+        "winner_name":           _display_name(ch.winner) if ch.winner else None,
+        "is_draw":               bool(ch.is_draw),
+        "my_score":              my_score,
+        "opp_score":             opp_score,
+        "my_skill_scores":       _skill_scores_map(my_attempt),
+        "is_viewer_winner":      ch.winner_id is not None and ch.winner_id == viewer.id,
+        "cta_label":             _PHASE_CTA.get(phase, "View challenge"),
+        "completed_at":          ch.completed_at if ch.status == ChallengeStatus.COMPLETED else None,
+        "is_locked":             is_locked,
+        "unlocked_phases":       unlocked,
+        # CC-DESIGN-1: photo fields
+        "challenger_photo_url":  challenger_photo_url,
+        "challenged_photo_url":  challenged_photo_url,
+        "viewer_photo_url":      viewer_photo,
+        "opponent_photo_url":    opponent_photo,
+        "selected_photo_url":    selected_photo_url,
+        "viewer_is_challenger":  is_challenger,
+        "forfeit_reason":        ch.forfeit_reason,
+        # CC-DESIGN-1: two-participant invitation narrative
+        "viewer_action_text":    viewer_action_text,
+        # CC-DESIGN-1: central emoji for this phase (both templates use this)
+        "phase_emoji":           _PHASE_EMOJI.get(phase, ""),
+        # CC-DESIGN-1: game-aware result summaries
+        # my_result_summary / viewer_result_summary — viewer's own attempt (waiting + result)
+        # opponent_result_summary — for result layout (viewer-relative)
+        # challenger/challenged — absolute role keys for Archetype D (both columns always shown)
+        "my_result_summary":           _build_result_summary(
+                                           my_attempt, ch.game.code if ch.game else None
+                                       ),
+        "viewer_result_summary":       _build_result_summary(
+                                           my_attempt, ch.game.code if ch.game else None
+                                       ),
+        "opponent_result_summary":     _build_result_summary(
+                                           opp_attempt, ch.game.code if ch.game else None
+                                       ),
+        "challenger_result_summary":   _build_result_summary(
+                                           challenger_attempt, ch.game.code if ch.game else None
+                                       ),
+        "challenged_result_summary":   _build_result_summary(
+                                           challenged_attempt, ch.game.code if ch.game else None
+                                       ),
+        # CC-DESIGN-1: forfeit/no-contest display helpers
+        "forfeiter_name":          _display_name(ch.forfeit_user) if ch.forfeit_user else None,
+        "forfeit_sublabel":        {
+            "forfeit_post_start_timeout": "Post-start timeout",
+            "forfeit_deadline":           "Deadline expired",
+            "forfeit_no_show":            "No show",
+            "forfeit":                    "Forfeited",
+            "no_contest":                 "Challenge expired",
+        }.get(outcome_reason, "Forfeited") if outcome_reason in (
+            "forfeit_post_start_timeout", "forfeit_deadline",
+            "forfeit_no_show", "forfeit", "no_contest"
+        ) else None,
+        # CC-DESIGN-1: participant stats (overall skill + position)
+        "challenger_overall":       (challenger_stats or {}).get("overall"),
+        "challenger_primary_pos":   (challenger_stats or {}).get("primary_pos"),
+        "challenger_secondary_pos": (challenger_stats or {}).get("secondary_pos"),
+        "challenged_overall":       (challenged_stats or {}).get("overall"),
+        "challenged_primary_pos":   (challenged_stats or {}).get("primary_pos"),
+        "challenged_secondary_pos": (challenged_stats or {}).get("secondary_pos"),
+        # CC-DESIGN-1: skill_delta_result — viewer skill levels + progress rows
+        "viewer_skill_levels":      (viewer_stats or {}).get("skill_levels", {}),
+        "my_skill_progress":        _build_skill_progress_rows(
+            {k: float(v) for k, v in (my_attempt.skill_deltas or {}).items()}
+            if my_attempt and my_attempt.skill_deltas else {},
+            (viewer_stats or {}).get("skill_levels", {}),
+        ),
     }
 
 
@@ -1088,12 +1507,13 @@ def _build_challenge_card_context(
 async def challenge_card_preview(
     challenge_id: int,
     request: Request,
-    platform: str           = Query(...),
-    phase: str              = Query(...),
+    platform: str            = Query(...),
+    phase: str               = Query(...),
     render_token: str | None = Query(default=None),
-    export: bool            = Query(default=False),
-    db: Session             = Depends(get_db),
-    user: "User | None"     = Depends(get_current_user_optional),
+    export: bool             = Query(default=False),
+    photo_url: str | None    = Query(default=None),
+    db: Session              = Depends(get_db),
+    user: "User | None"      = Depends(get_current_user_optional),
 ):
     """Render a challenge social card as HTML.
 
@@ -1151,8 +1571,32 @@ async def challenge_card_preview(
             detail=f"Phase {phase!r} is not applicable to this challenge.",
         )
 
+    # CC-DESIGN-1 Phase-A SNAPSHOT: frozen snapshot has absolute priority.
+    # If NULL, phase/outcome-aware mood lookup runs (_PHASE_MOOD_MAP).
+    # photo_url query param overrides the VIEWER's own slot only (not the opponent's).
+    ch_is_winner = _winner_ctx(ch, ch.challenger_id)
+    cd_is_winner = _winner_ctx(ch, ch.challenged_id)
+
+    def _photo(uid: int, snapshot_url: str | None, is_winner: bool | None) -> str | None:
+        return snapshot_url or _get_participant_photo_for_phase(db, uid, phase, is_winner)
+
+    challenger_photo = _photo(ch.challenger_id, ch.challenger_card_photo_url, ch_is_winner)
+    challenged_photo = _photo(ch.challenged_id, ch.challenged_card_photo_url, cd_is_winner)
+
+    # CC-DESIGN-1: participant stats (overall skill + position overlay)
+    ch_stats = _get_participant_stats(db, ch.challenger_id)
+    cd_stats = _get_participant_stats(db, ch.challenged_id)
+
+    # photo_url query param is the viewer's in-session override for their own slot
+    selected = photo_url  # applied per viewer_is_challenger in the template
+
     ctx = _build_challenge_card_context(
-        ch, user, challenger_attempt, challenged_attempt, phase, my_attempt
+        ch, user, challenger_attempt, challenged_attempt, phase, my_attempt,
+        challenger_photo_url=challenger_photo,
+        challenged_photo_url=challenged_photo,
+        selected_photo_url=selected,
+        challenger_stats=ch_stats,
+        challenged_stats=cd_stats,
     )
     template_name = (
         "public/export/challenge/post_16_9.html"
@@ -1252,6 +1696,58 @@ async def challenge_card_export(
             "X-Export-Phase":      phase,
         },
     )
+
+
+# ── POST /challenges/{id}/card/photo — save per-challenge card photo snapshot ──
+
+@router.post("/challenges/{challenge_id}/card/photo")
+async def challenge_card_photo_save(
+    challenge_id: int,
+    photo_url: str = Form(...),
+    db: Session    = Depends(get_db),
+    user: User     = Depends(get_current_user_web),
+):
+    """Save the viewer's chosen mood photo as the per-challenge card snapshot.
+
+    Only participants may call this endpoint.
+    Each user can only write their OWN slot:
+      - challenger → challenger_card_photo_url
+      - challenged → challenged_card_photo_url
+    The opponent's slot is never modified.
+
+    The photo_url must belong to the requesting user's mood photos or be empty
+    (empty string clears the snapshot, reverting to neutral mood default).
+    """
+    ch = db.query(VirtualTrainingChallenge).filter(
+        VirtualTrainingChallenge.id == challenge_id
+    ).first()
+    if ch is None:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+    if user.id not in (ch.challenger_id, ch.challenged_id):
+        raise HTTPException(status_code=403, detail="Participants only")
+
+    # Validate photo_url ownership: must be empty (clear) or belong to this user
+    if photo_url:
+        owns = db.query(UserMoodPhoto).filter(
+            UserMoodPhoto.user_id == user.id,
+            (UserMoodPhoto.processed_png_url == photo_url) |
+            (UserMoodPhoto.original_url == photo_url),
+        ).first()
+        if owns is None:
+            raise HTTPException(
+                status_code=403,
+                detail="photo_url must belong to your own mood photos",
+            )
+
+    effective_url = photo_url or None  # empty string → clear snapshot
+
+    if user.id == ch.challenger_id:
+        ch.challenger_card_photo_url = effective_url
+    else:
+        ch.challenged_card_photo_url = effective_url
+
+    db.commit()
+    return {"ok": True, "role": "challenger" if user.id == ch.challenger_id else "challenged"}
 
 
 # ── POST /challenges/{id}/decline ─────────────────────────────────────────────

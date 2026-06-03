@@ -24,12 +24,17 @@ from app.database import Base
 
 MOOD_PHOTO_SLOTS: frozenset[str] = frozenset(
     {
+        # Phase-A slots (original 6)
         "mood_intro_neutral",
         "mood_happy_smile",
         "mood_celebration",
         "mood_sad_disappointed",
         "mood_angry_competitive",
         "mood_surprised_shocked",
+        # Phase-B slots (new 3)
+        "mood_focused_ready",
+        "mood_confident",
+        "mood_proud",
     }
 )
 
@@ -83,7 +88,8 @@ class UserMoodPhoto(Base):
         CheckConstraint(
             "slot IN ('mood_intro_neutral','mood_happy_smile',"
             "'mood_celebration','mood_sad_disappointed',"
-            "'mood_angry_competitive','mood_surprised_shocked')",
+            "'mood_angry_competitive','mood_surprised_shocked',"
+            "'mood_focused_ready','mood_confident','mood_proud')",
             name="ck_mood_photo_slot_valid",
         ),
     )

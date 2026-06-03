@@ -218,12 +218,17 @@ class TestCSS02to09WelcomeHandler:
         assert "mood_photos" in ctx
 
     def test_css_12_mood_slot_meta_6_entries(self):
-        """CSS-12: mood_slot_meta has 6 entries with slot/emoji/label."""
+        """CSS-12 (Phase-B updated): mood_slot_meta has 9 entries (6 Phase-A + 3 Phase-B)."""
         _, ctx, _ = _invoke_welcome(_FIRST_ID, owned_ids=[_FIRST_ID])
         meta = ctx.get("mood_slot_meta", [])
-        assert len(meta) == 6
+        assert len(meta) == 9
         for entry in meta:
             assert "slot" in entry and "emoji" in entry and "label" in entry
+        # Phase-B slots present
+        slots = [e["slot"] for e in meta]
+        assert "mood_focused_ready" in slots
+        assert "mood_confident"     in slots
+        assert "mood_proud"         in slots
 
 
 # ── CSS-13..CSS-20: Template confirmations ────────────────────────────────────
@@ -321,7 +326,7 @@ class TestCSS21to23RouteConfirmations:
         """CSS-21: adding 2 card-studio routes raises count from 842 to 844."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 850, (
+        assert len(paths) == 851, (
             f"Expected 845 routes (842 baseline + 2 new /card-studio routes), got {len(paths)}"
         )
 

@@ -7,403 +7,901 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    width: 1280px;
-    height: 720px;
-    overflow: hidden;
-    background: #0a0e1a;
-    color: #fff;
-    font-family: 'Rajdhani', 'Barlow Condensed', sans-serif;
+    width: 1280px; height: 720px; overflow: hidden;
+    background: #08101e; color: #fff;
+    font-family: 'Rajdhani', 'Barlow Condensed', 'Segoe UI', sans-serif;
   }
   .card-wrap {
-    width: 1280px;
-    height: 720px;
-    display: flex;
-    flex-direction: column;
-    background: linear-gradient(135deg, #0a0e1a 0%, #141929 60%, #1a2340 100%);
-    position: relative;
-    overflow: hidden;
+    width: 1280px; height: 720px;
+    display: flex; flex-direction: column;
+    background: linear-gradient(135deg, #08101e 0%, #0f1928 55%, #152236 100%);
+    position: relative; overflow: hidden;
   }
+  /* Top accent bar */
   .card-wrap::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #f5c518 0%, #e8a000 100%);
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, #f5c518 0%, #e8a000 60%, #ff6b35 100%);
+    z-index: 5;
   }
 
-  /* ── Locked overlay ── */
-  .locked-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(10,14,26,0.72);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
+  /* ── Design tokens ── */
+  :root {
+    --cc-gold:    #f5c518;
+    --cc-green:   #4ade80;
+    --cc-red:     #f87171;
+    --cc-blue:    #60a5fa;
+    --cc-dim:     #4a5570;
+    --cc-text:    #e8eaf0;
+    --cc-sub:     #7a8aaa;
+    --cc-surface: #111a2a;
+    --cc-border:  #1e2e44;
   }
-  .locked-text {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #4a5570;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+
+  /* ── Historical overlay ── */
+  .history-badge-corner {
+    position: absolute; bottom: 16px; left: 20px; z-index: 10;
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #4a5570;
+    background: rgba(8,16,30,0.7); border: 1px solid #1e2e44;
+    border-radius: 4px; padding: 3px 8px; pointer-events: none;
   }
 
   /* ── Header ── */
   .card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 28px 52px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 48px 10px; flex-shrink: 0;
   }
   .lfa-brand {
-    font-size: 1.1rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    color: #f5c518;
-    text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.95rem; font-weight: 700; letter-spacing: 0.2em;
+    color: var(--cc-gold); text-transform: uppercase;
   }
-  .card-meta {
-    font-size: 0.78rem;
-    color: #7a8aaa;
-    text-align: right;
+  .lfa-logo { width: 22px; height: 22px; opacity: 0.9; }
+  .card-badges { display: flex; gap: 8px; align-items: center; }
+  .mode-badge {
+    font-size: 0.6rem; font-weight: 800; letter-spacing: 0.14em;
+    text-transform: uppercase; padding: 3px 9px; border-radius: 4px;
+    border: 1px solid;
   }
-  .phase-tag {
-    font-size: 0.66rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: #4a5570;
-    margin-top: 2px;
-  }
-
-  /* ── VS block ── */
-  .vs-block {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 48px;
-    padding: 12px 52px 10px;
-    flex: 1;
-  }
-  .player-block {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    min-width: 220px;
-  }
-  .player-name {
-    font-size: 2rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-align: center;
-    color: #e8eaf0;
-    text-transform: uppercase;
-    line-height: 1.1;
-  }
-  .player-score {
-    font-size: 3.4rem;
-    font-weight: 800;
-    color: #f5c518;
-    line-height: 1;
-  }
-  .player-score.no-score {
-    font-size: 1.6rem;
-    color: #4a5570;
-  }
-  .vs-divider {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    min-width: 120px;
-  }
-  .vs-label {
-    font-size: 2.6rem;
-    font-weight: 800;
-    color: #3a4460;
-    letter-spacing: 0.06em;
-  }
-  .outcome-badge {
-    padding: 6px 18px;
-    border-radius: 4px;
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    background: #1e2840;
-    color: #f5c518;
-    border: 1px solid #f5c518;
-    text-align: center;
-    max-width: 220px;
-  }
-  .outcome-badge.win    { background: #1a3a20; color: #4caf50; border-color: #4caf50; }
-  .outcome-badge.draw   { background: #1a2840; color: #90caf9; border-color: #90caf9; }
-  .outcome-badge.loss   { background: #3a1a1a; color: #ef5350; border-color: #ef5350; }
-  .outcome-badge.muted  { background: #1a1e2a; color: #4a5570; border-color: #2a3050; }
-  .winner-label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: #4caf50;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+  .mode-badge.async { color: #60a5fa; border-color: #60a5fa; background: rgba(96,165,250,0.1); }
+  .mode-badge.live  { color: #fbbf24; border-color: #fbbf24; background: rgba(251,191,36,0.12); }
+  .phase-badge {
+    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 3px 9px; border-radius: 4px;
+    color: var(--cc-dim); border: 1px solid var(--cc-border);
+    background: rgba(30,46,68,0.6);
   }
 
-  /* ── Skill row ── */
-  .skill-section {
-    padding: 8px 52px 14px;
-    display: flex;
-    gap: 32px;
-    justify-content: center;
+  /* ── Avatar / Photo block ── */
+  .cc-photo {
+    width: 120px; height: 120px; border-radius: 50%; object-fit: cover;
+    border: 3px solid var(--cc-border); background: var(--cc-surface);
+    display: block; flex-shrink: 0;
   }
-  .skill-col {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 220px;
+  .cc-photo.winner-ring { border-color: var(--cc-gold); box-shadow: 0 0 0 3px rgba(245,197,24,0.3); }
+  .cc-photo.hero { width: 200px; height: 200px; }
+  .cc-photo.large { width: 160px; height: 160px; }
+  .cc-avatar {
+    width: 120px; height: 120px; border-radius: 50%;
+    background: var(--cc-surface); border: 3px solid var(--cc-border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.2rem; font-weight: 800; color: var(--cc-gold);
+    letter-spacing: 0.02em; text-transform: uppercase; flex-shrink: 0;
   }
-  .skill-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.72rem;
-    color: #7a8aaa;
-  }
-  .skill-name { text-transform: uppercase; letter-spacing: 0.06em; }
-  .skill-delta { font-weight: 700; }
-  .skill-delta.pos { color: #4caf50; }
-  .skill-delta.neg { color: #ef5350; }
+  .cc-avatar.winner-ring { border-color: var(--cc-gold); box-shadow: 0 0 0 3px rgba(245,197,24,0.3); }
+  .cc-avatar.hero  { width: 200px; height: 200px; font-size: 3.6rem; }
+  .cc-avatar.large { width: 160px; height: 160px; font-size: 2.8rem; }
 
-  /* ── Pending/Active phases: large text ── */
-  .phase-message {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 0 52px;
+  /* ── Shared layout helpers ── */
+  .cc-flex-center { display: flex; align-items: center; justify-content: center; }
+  .cc-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .cc-name {
+    font-size: 1.6rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--cc-text); text-align: center; line-height: 1.1;
   }
-  .phase-headline {
-    font-size: 2.8rem;
-    font-weight: 800;
-    color: #e8eaf0;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    text-align: center;
-    line-height: 1.1;
+  .cc-name.large { font-size: 2rem; }
+  .cc-score-lg {
+    font-size: 3.8rem; font-weight: 800; color: var(--cc-gold); line-height: 1;
   }
-  .phase-sub {
-    font-size: 1rem;
-    color: #7a8aaa;
+  .cc-score-placeholder { font-size: 1.4rem; color: var(--cc-dim); }
+  .cc-winner-label {
+    font-size: 0.68rem; font-weight: 800; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--cc-green);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .cc-vs-col {
+    display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 110px;
+  }
+  .cc-vs-text {
+    font-size: 2.4rem; font-weight: 800; color: #2a3a55; letter-spacing: 0.06em;
+  }
+  .cc-outcome-badge {
+    padding: 5px 14px; border-radius: 4px; font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; text-align: center; max-width: 200px;
+    border: 1px solid;
+  }
+  .cc-outcome-badge.win    { color: var(--cc-green); border-color: var(--cc-green); background: rgba(74,222,128,0.1); }
+  .cc-outcome-badge.draw   { color: var(--cc-blue);  border-color: var(--cc-blue);  background: rgba(96,165,250,0.1); }
+  .cc-outcome-badge.loss   { color: var(--cc-red);   border-color: var(--cc-red);   background: rgba(248,113,113,0.1); }
+  .cc-outcome-badge.muted  { color: var(--cc-dim);   border-color: var(--cc-border); background: rgba(30,46,68,0.5); }
+
+  /* ── Phase headline (text-only phases) ── */
+  .cc-headline {
+    font-size: 3rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--cc-text); text-align: center; line-height: 1.1;
+  }
+  .cc-subline { font-size: 1rem; color: var(--cc-sub); text-align: center; }
+  .cc-score-spotlight {
+    font-size: 4.5rem; font-weight: 800; color: var(--cc-gold); line-height: 1;
     text-align: center;
+  }
+  .cc-waiting-label { font-size: 0.88rem; color: var(--cc-sub); text-align: center; }
+
+  /* ── Skill rows ── */
+  .cc-skill-table { display: flex; flex-direction: column; gap: 5px; min-width: 260px; }
+  .cc-skill-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.8rem; color: var(--cc-sub); padding: 2px 0;
+    border-bottom: 1px solid rgba(30,46,68,0.5);
+  }
+  .cc-skill-name { text-transform: uppercase; letter-spacing: 0.05em; }
+  .cc-skill-delta { font-weight: 700; }
+  .cc-skill-delta.pos { color: var(--cc-green); }
+  .cc-skill-delta.neg { color: var(--cc-red); }
+  .cc-skill-title {
+    font-size: 0.64rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--cc-dim); margin-bottom: 6px;
   }
 
-  /* ── Skill delta highlight (skill_delta_result phase) ── */
-  .skill-highlight-section {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 48px;
-    padding: 0 52px;
-  }
-  .skill-highlight-col { display: flex; flex-direction: column; gap: 6px; min-width: 200px; }
-  .skill-highlight-title {
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: #4a5570;
-    margin-bottom: 4px;
-  }
-  .skill-highlight-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.88rem;
-    color: #b0bac8;
-  }
-  .skill-highlight-delta { font-weight: 700; }
-  .skill-highlight-delta.pos { color: #4caf50; }
-  .skill-highlight-delta.neg { color: #ef5350; }
+  /* ── Content area ── */
+  .card-content { flex: 1; display: flex; align-items: center; justify-content: center; padding: 8px 40px; }
+  /* Invitation split: remove padding so photo zone fills edge-to-edge */
+  .card-content.card-content--invitation { padding: 0; align-items: stretch; }
 
   /* ── Footer ── */
   .card-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 52px 22px;
-    border-top: 1px solid #1e2840;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 48px 18px; border-top: 1px solid var(--cc-border); flex-shrink: 0;
   }
-  .game-info { font-size: 0.78rem; color: #7a8aaa; }
-  .cta-label {
-    font-size: 0.84rem;
-    font-weight: 700;
-    color: #f5c518;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+  .cc-game-info { font-size: 0.72rem; color: var(--cc-sub); }
+  .cc-cta { font-size: 0.8rem; font-weight: 700; color: var(--cc-gold); letter-spacing: 0.08em; text-transform: uppercase; }
+  .cc-domain { font-size: 0.62rem; color: #2a3a55; }
+
+  /* ── Archetype A BALANCED: Post 16:9 — LEFT PLAYER | CENTER MSG | RIGHT PLAYER ── */
+  .arch-invitation-balanced {
+    display: grid;
+    grid-template-columns: 1fr 460px 1fr;
+    width: 100%; height: 100%;
   }
-  .ts { font-size: 0.66rem; color: #3a4460; }
+  .aib-player-zone {
+    position: relative; overflow: hidden;
+    background: linear-gradient(160deg, #0c1624 0%, #111e30 100%);
+  }
+  .aib-player-zone--right {
+    background: linear-gradient(200deg, #111e30 0%, #0c1624 100%);
+  }
+  .aib-player-zone::after {
+    content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
+    background: linear-gradient(180deg, transparent, var(--cc-border), transparent);
+  }
+  .aib-player-zone--right::after { right: auto; left: 0; }
+  .aib-player-photo {
+    width: 100%; height: 100%;
+    object-fit: contain; object-position: center bottom;
+    display: block;
+  }
+  .aib-player-initial {
+    width: 100%; height: 100%;
+    display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: 24px;
+    font-size: 10rem; font-weight: 900; color: var(--cc-gold);
+    opacity: 0.1; text-transform: uppercase; line-height: 1; user-select: none;
+  }
+  .aib-player-name {
+    position: absolute; bottom: 0; left: 0; right: 0; text-align: center;
+    padding: 28px 8px 10px;
+    background: linear-gradient(0deg, rgba(8,16,30,0.88) 0%, transparent 100%);
+    font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--cc-text);
+  }
+  /* CC-DESIGN-1: stats overlay — position + OVR on player zones */
+  .aib-pos-block {
+    position: absolute; top: 14px; left: 14px;
+    display: flex; flex-direction: column; gap: 3px; z-index: 3;
+  }
+  .aib-player-zone--right .aib-pos-block {
+    left: auto; right: 14px; align-items: flex-end;
+  }
+  .aib-pos-primary {
+    font-size: 1.5rem; font-weight: 900;
+    color: #f5c518; letter-spacing: 0.06em; line-height: 1;
+  }
+  .aib-pos-secondary {
+    font-size: 0.82rem; font-weight: 700;
+    color: rgba(232,234,240,0.5); letter-spacing: 0.06em;
+  }
+  .aib-overall {
+    position: absolute; bottom: 52px; left: 0; right: 0;
+    text-align: center; z-index: 3;
+    font-size: 0.78rem; font-weight: 700;
+    color: rgba(232,234,240,0.55); letter-spacing: 0.06em;
+  }
+  .aib-center-msg {
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    text-align: center; padding: 24px 32px; gap: 0;
+  }
+  .aib-phase-emoji {
+    font-size: 2.4rem; line-height: 1; margin-bottom: 10px; display: block;
+  }
+  .aib-status-meta {
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--cc-dim); border: 1px solid var(--cc-border); border-radius: 3px;
+    padding: 3px 8px; margin-bottom: 14px; align-self: center;
+  }
+  .aib-headline {
+    font-size: 2.5rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--cc-text); line-height: 1.05; margin-bottom: 6px;
+  }
+  .aib-sublabel {
+    font-size: 0.74rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--cc-gold); margin-bottom: 18px;
+  }
+  .aib-divider { width: 36px; height: 2px; background: var(--cc-border); margin-bottom: 14px; }
+  .aib-context {
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--cc-sub); margin-bottom: 12px;
+  }
+  .aib-participants {
+    font-size: 1.1rem; font-weight: 700; color: var(--cc-text);
+    letter-spacing: 0.02em; margin-bottom: 6px; line-height: 1.2;
+  }
+  .aib-participants .arrow { color: var(--cc-gold); margin: 0 6px; }
+  .aib-game { font-size: 0.76rem; color: var(--cc-sub); }
+
+  /* ── Archetype B: Battle / Accepted ── */
+  .arch-battle {
+    display: flex; align-items: center; justify-content: center; gap: 48px; width: 100%;
+  }
+
+  /* ── Archetype C2: Waiting Hero (waiting_for_opponent) ── */
+  .arch-waiting {
+    display: grid; grid-template-columns: 1fr 1.1fr; width: 100%; height: 100%;
+  }
+  .awh-player-zone {
+    position: relative; overflow: hidden;
+    background: linear-gradient(160deg, #0c1624 0%, #111e30 100%);
+  }
+  .awh-player-zone::after {
+    content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
+    background: linear-gradient(180deg, transparent, var(--cc-border), transparent);
+  }
+  .awh-content {
+    display: flex; flex-direction: column; justify-content: center;
+    align-items: flex-start; padding: 28px 40px; gap: 0;
+  }
+  .awh-phase-emoji { font-size: 2.4rem; line-height: 1; margin-bottom: 10px; }
+  .awh-headline {
+    font-size: 2.2rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--cc-text); line-height: 1.05; margin-bottom: 6px;
+  }
+  .awh-sublabel {
+    font-size: 0.74rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--cc-gold); margin-bottom: 16px;
+  }
+  .awh-divider { width: 36px; height: 2px; background: var(--cc-border); margin-bottom: 14px; }
+  .awh-score-label {
+    font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--cc-dim); margin-bottom: 4px;
+  }
+  .awh-score {
+    font-size: 3.2rem; font-weight: 800; color: var(--cc-gold); line-height: 1; margin-bottom: 12px;
+  }
+  .awh-submitted { font-size: 0.92rem; font-weight: 700; color: var(--cc-sub); margin-bottom: 12px; }
+  .awh-secondary { font-size: 0.72rem; color: var(--cc-sub); margin-bottom: 8px; display: flex; gap: 8px; }
+  .awh-secondary-item { font-weight: 600; }
+  .awh-secondary-sep { opacity: 0.5; }
+  .awh-game { font-size: 0.72rem; color: var(--cc-sub); }
+
+  /* ── Archetype F: Terminal Rejection (cancelled / declined) ── */
+  .arch-terminal {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; gap: 0; width: 100%; padding: 0 48px;
+  }
+  .atr-status-meta {
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--cc-dim); border: 1px solid var(--cc-border); border-radius: 3px;
+    padding: 3px 8px; margin-bottom: 14px;
+  }
+  .atr-headline {
+    font-size: 2.5rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--cc-dim); line-height: 1.05; margin-bottom: 6px;
+  }
+  .atr-sublabel {
+    font-size: 0.74rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--cc-sub); margin-bottom: 18px;
+  }
+  .atr-divider { width: 36px; height: 2px; background: var(--cc-border); margin-bottom: 14px; }
+  .atr-participants {
+    font-size: 1.1rem; font-weight: 700; color: var(--cc-sub);
+    letter-spacing: 0.02em; margin-bottom: 6px; line-height: 1.2;
+  }
+  .atr-participants .arrow { color: var(--cc-dim); margin: 0 6px; }
+  .atr-game { font-size: 0.76rem; color: var(--cc-dim); }
+
+  /* ── Archetype D2: Result VS — full-zone photo layout (CC-DESIGN-1) ── */
+  .arch-result-d2 {
+    display: grid; grid-template-columns: 1fr 300px 1fr; width: 100%; height: 100%;
+  }
+  /* Winner bar — thin green accent on winning player zone top edge */
+  .ard2-winner-bar {
+    position: absolute; top: 0; left: 0; right: 0; height: 4px; z-index: 4;
+    background: linear-gradient(90deg, #22c55e 0%, #4ade80 100%);
+  }
+  /* Center result column */
+  .ard2-center {
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    text-align: center; padding: 20px 16px; gap: 8px;
+    border-left: 1px solid var(--cc-border); border-right: 1px solid var(--cc-border);
+  }
+  .ard2-score-row { display: flex; align-items: baseline; gap: 10px; justify-content: center; }
+  .ard2-score-val { font-size: 2.6rem; font-weight: 800; color: var(--cc-gold); line-height: 1; }
+  .ard2-score-val.dim { color: var(--cc-dim); }
+  .ard2-score-sep { font-size: 1.2rem; font-weight: 400; color: var(--cc-dim); }
+  .ard2-secondary-row { font-size: 0.60rem; color: var(--cc-sub); display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
+  .ard2-secondary-label { color: var(--cc-dim); font-size: 0.54rem; text-transform: uppercase; letter-spacing: 0.08em; }
+  .ard2-secondary-item { font-weight: 600; }
+  .ard2-secondary-sep  { opacity: 0.4; }
+  .ard2-game { font-size: 0.62rem; color: var(--cc-dim); margin-top: 2px; }
+  .ard2-sublabel { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cc-dim); }
+  .ard2-dnp-overlay {
+    position: absolute; bottom: 46px; left: 0; right: 0; text-align: center; z-index: 3;
+    font-size: 0.52rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--cc-dim);
+  }
+
+  /* ── Archetype E2: Skill Progress — personal viewer card (CC-DESIGN-1) ── */
+  .arch-skill-e2 {
+    display: grid; grid-template-columns: 1fr 1.2fr; width: 100%; height: 100%;
+  }
+  .aske-panel {
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 24px 32px; gap: 0; border-left: 1px solid var(--cc-border);
+  }
+  .aske-phase-label {
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--cc-dim); border: 1px solid var(--cc-border); border-radius: 3px;
+    padding: 3px 8px; margin-bottom: 8px; display: inline-block; align-self: flex-start;
+  }
+  .aske-title {
+    font-size: 1.5rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--cc-text); line-height: 1.0; margin-bottom: 3px;
+  }
+  .aske-game { font-size: 0.68rem; color: var(--cc-sub); margin-bottom: 12px; }
+  .aske-rows { display: flex; flex-direction: column; gap: 8px; }
+  .aske-row  { display: flex; align-items: center; gap: 7px; }
+  .aske-cat  {
+    font-size: 0.50rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--cc-dim); width: 38px; flex-shrink: 0; text-align: right;
+  }
+  .aske-name {
+    font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+    color: var(--cc-text); width: 110px; flex-shrink: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: clip;
+  }
+  .aske-bar-bg  { flex: 1; height: 6px; background: var(--cc-border); border-radius: 3px; overflow: hidden; }
+  .aske-bar-pos { height: 100%; border-radius: 3px; background: var(--cc-green); }
+  .aske-bar-neg { height: 100%; border-radius: 3px; background: var(--cc-red); }
+  .aske-bar-neu { height: 100%; border-radius: 3px; background: var(--cc-dim); }
+  .aske-val   { font-size: 0.74rem; font-weight: 700; color: var(--cc-sub); width: 30px; text-align: right; flex-shrink: 0; }
+  .aske-delta { font-size: 0.72rem; font-weight: 800; width: 42px; text-align: right; flex-shrink: 0; }
+  .aske-delta.pos { color: var(--cc-green); }
+  .aske-delta.neg { color: var(--cc-red); }
+  .aske-nodelta { font-size: 0.82rem; color: var(--cc-dim); margin-top: 8px; }
+
 </style>
 </head>
 <body>
 <div class="card-wrap">
 
+  {# Historical overlay (soft, not lock) #}
   {% if is_locked %}
-  <div class="locked-overlay"><div class="locked-text">🔒 Preview Only</div></div>
+  <div class="history-badge-corner">History</div>
   {% endif %}
 
-  <!-- Header -->
+  {# Header #}
   <div class="card-header">
-    <div class="lfa-brand">⚽ LFA · Virtual Challenge</div>
-    <div class="card-meta">
-      <div>{{ challenge_mode | upper }} MODE</div>
-      <div class="phase-tag">{{ phase | replace("_", " ") | upper }}</div>
+    <div class="lfa-brand">
+      {% if False %}<img src="/static/img/logo-dark.png" class="lfa-logo" alt="LFA">{% endif %}
+      ⚽ LFA · Virtual Challenge
+    </div>
+    <div class="card-badges">
+      <span class="mode-badge {{ 'live' if challenge_mode == 'live' else 'async' }}">
+        {{ '⚡ LIVE' if challenge_mode == 'live' else 'ASYNC' }}
+      </span>
+      <span class="phase-badge">
+        {% if phase == "challenge_sent" %}Challenge Sent
+        {% elif phase == "challenge_received" %}You've Been Challenged
+        {% elif phase == "challenge_accepted" %}Accepted
+        {% elif phase == "waiting_for_opponent" %}Waiting
+        {% elif phase == "live_lobby_ready" %}Lobby
+        {% elif phase == "live_in_progress" %}Live
+        {% elif phase in ("completed_score_win","completed_draw") %}Result
+        {% elif phase in ("completed_forfeit_win","completed_forfeit_loss") %}Forfeit
+        {% elif phase == "no_contest" %}No Contest
+        {% elif phase == "skill_delta_result" %}Skill Progress
+        {% elif phase == "challenge_cancelled" %}Cancelled
+        {% elif phase == "challenge_declined" %}Declined
+        {% else %}{{ phase | replace("_"," ") | title }}{% endif %}
+      </span>
     </div>
   </div>
 
-  {# ── Phase: skill_delta_result — full skill delta highlight ── #}
-  {% if phase == "skill_delta_result" %}
-  <div class="skill-highlight-section">
-    <div>
-      <div class="skill-highlight-title">Skill Progress — {{ challenger_name if is_viewer_winner else challenged_name }}</div>
-      {% if my_skill_scores %}
-        <div class="skill-highlight-col">
-          {% for skill, delta in my_skill_scores.items() %}
-          <div class="skill-highlight-row">
-            <span>{{ skill | replace("_", " ") | title }}</span>
-            <span class="skill-highlight-delta {% if delta > 0 %}pos{% elif delta < 0 %}neg{% endif %}">
-              {% if delta > 0 %}+{% endif %}{{ "%.2f"|format(delta) }}
-            </span>
-          </div>
-          {% endfor %}
-        </div>
+  {# ── Content ── #}
+  <div class="card-content{% if phase in ('challenge_sent','challenge_received','challenge_accepted','challenge_cancelled','challenge_declined','completed_score_win','completed_draw','completed_forfeit_win','completed_forfeit_loss','no_contest','skill_delta_result') %} card-content--invitation{% endif %}">
+
+  {#
+    CC-DESIGN-1: Archetype A — Two-Participant Invitation
+    ──────────────────────────────────────────────────────
+    HERO (left zone):
+      challenge_sent:    selected_photo_url (viewer=challenger) OR challenger_photo_url
+      challenge_received: challenger_photo_url ONLY (inviter's photo is invariant)
+    TARGET CARD (right zone):
+      ALWAYS challenged_photo_url or initials. selected_photo_url NEVER overrides target card.
+    Rule: selected_photo_url can only override the viewer's own slot (challenger in sent view).
+  #}
+  {# ── Archetype A BALANCED: LEFT PLAYER | CENTER MESSAGE | RIGHT PLAYER ── #}
+  {# selected_photo_url rule: viewer slot only — sent=left(challenger), received=right(challenged) #}
+  {% if phase in ("challenge_sent", "challenge_received") %}
+  {% set _left_photo  = (selected_photo_url if viewer_is_challenger else None) or challenger_photo_url %}
+  {% set _right_photo = (selected_photo_url if not viewer_is_challenger else None) or challenged_photo_url %}
+  <div class="arch-invitation-balanced">
+
+    {# LEFT: Challenger photo zone #}
+    <div class="aib-player-zone">
+      {% if _left_photo %}
+        <img src="{{ _left_photo }}" class="aib-player-photo" alt="{{ challenger_name }}">
       {% else %}
-        <div style="font-size:0.88rem;color:#4a5570;">No skill data recorded.</div>
+        <div class="aib-player-initial">{{ (challenger_name[0] if challenger_name else '?') | upper }}</div>
       {% endif %}
+      {% if challenger_primary_pos %}
+      <div class="aib-pos-block">
+        <span class="aib-pos-primary">{{ challenger_primary_pos }}</span>
+        {% if challenger_secondary_pos %}<span class="aib-pos-secondary">{{ challenger_secondary_pos }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if challenger_overall is not none %}
+      <div class="aib-overall">OVR {{ challenger_overall }}</div>
+      {% endif %}
+      <div class="aib-player-name">{{ challenger_name }}</div>
+    </div>
+
+    {# CENTER: Message — no CTA, no buttons, no links #}
+    <div class="aib-center-msg">
+      <div class="aib-status-meta">Challenge Invitation</div>
+      {% if phase_emoji %}<div class="aib-phase-emoji">{{ phase_emoji }}</div>{% endif %}
+      <div class="aib-headline">
+        {% if phase == "challenge_sent" %}Challenge<br>Sent{% else %}You've Been<br>Challenged!{% endif %}
+      </div>
+      <div class="aib-sublabel">
+        {% if phase == "challenge_sent" %}sent by you{% else %}sent to you{% endif %}
+      </div>
+      <div class="aib-divider"></div>
+      {% if viewer_action_text %}<div class="aib-context">{{ viewer_action_text }}</div>{% endif %}
+      <div class="aib-participants">
+        {{ challenger_name }}<span class="arrow">→</span>{{ challenged_name }}
+      </div>
+      <div class="aib-game">{{ game_name }}</div>
+    </div>
+
+    {# RIGHT: Challenged photo zone #}
+    <div class="aib-player-zone aib-player-zone--right">
+      {% if _right_photo %}
+        <img src="{{ _right_photo }}" class="aib-player-photo" alt="{{ challenged_name }}">
+      {% else %}
+        <div class="aib-player-initial">{{ (challenged_name[0] if challenged_name else '?') | upper }}</div>
+      {% endif %}
+      {% if challenged_primary_pos %}
+      <div class="aib-pos-block">
+        <span class="aib-pos-primary">{{ challenged_primary_pos }}</span>
+        {% if challenged_secondary_pos %}<span class="aib-pos-secondary">{{ challenged_secondary_pos }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if challenged_overall is not none %}
+      <div class="aib-overall">OVR {{ challenged_overall }}</div>
+      {% endif %}
+      <div class="aib-player-name">{{ challenged_name }}</div>
+    </div>
+
+  </div>
+
+  {# ── Archetype B2: Challenge Accepted — two-player full-zone layout ── #}
+  {# challenge_accepted is a social moment (acceptance), not a live-match state. #}
+  {% elif phase == "challenge_accepted" %}
+  {% set _left_photo  = (selected_photo_url if viewer_is_challenger else None) or challenger_photo_url %}
+  {% set _right_photo = (selected_photo_url if not viewer_is_challenger else None) or challenged_photo_url %}
+  <div class="arch-invitation-balanced">
+
+    {# LEFT: Challenger photo zone #}
+    <div class="aib-player-zone">
+      {% if _left_photo %}
+        <img src="{{ _left_photo }}" class="aib-player-photo" alt="{{ challenger_name }}">
+      {% else %}
+        <div class="aib-player-initial">{{ (challenger_name[0] if challenger_name else '?') | upper }}</div>
+      {% endif %}
+      {% if challenger_primary_pos %}
+      <div class="aib-pos-block">
+        <span class="aib-pos-primary">{{ challenger_primary_pos }}</span>
+        {% if challenger_secondary_pos %}<span class="aib-pos-secondary">{{ challenger_secondary_pos }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if challenger_overall is not none %}
+      <div class="aib-overall">OVR {{ challenger_overall }}</div>
+      {% endif %}
+      <div class="aib-player-name">{{ challenger_name }}</div>
+    </div>
+
+    {# CENTER: Accepted message #}
+    <div class="aib-center-msg">
+      <div class="aib-status-meta">Challenge Accepted</div>
+      {% if phase_emoji %}<div class="aib-phase-emoji">{{ phase_emoji }}</div>{% endif %}
+      <div class="aib-headline">Challenge<br>Accepted</div>
+      <div class="aib-sublabel">{{ viewer_action_text }}</div>
+      <div class="aib-divider"></div>
+      <div class="aib-participants">
+        {{ challenger_name }}<span class="arrow">→</span>{{ challenged_name }}
+      </div>
+      <div class="aib-game">{{ game_name }}</div>
+    </div>
+
+    {# RIGHT: Challenged photo zone #}
+    <div class="aib-player-zone aib-player-zone--right">
+      {% if _right_photo %}
+        <img src="{{ _right_photo }}" class="aib-player-photo" alt="{{ challenged_name }}">
+      {% else %}
+        <div class="aib-player-initial">{{ (challenged_name[0] if challenged_name else '?') | upper }}</div>
+      {% endif %}
+      {% if challenged_primary_pos %}
+      <div class="aib-pos-block">
+        <span class="aib-pos-primary">{{ challenged_primary_pos }}</span>
+        {% if challenged_secondary_pos %}<span class="aib-pos-secondary">{{ challenged_secondary_pos }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if challenged_overall is not none %}
+      <div class="aib-overall">OVR {{ challenged_overall }}</div>
+      {% endif %}
+      <div class="aib-player-name">{{ challenged_name }}</div>
+    </div>
+
+  </div>
+
+  {# ── Archetype B: Battle (live_lobby_ready / live_in_progress) ── #}
+  {% elif phase in ("live_lobby_ready", "live_in_progress") %}
+  <div class="arch-battle">
+    {# Challenger #}
+    <div class="cc-col">
+      {% set _a_photo = (selected_photo_url if viewer_is_challenger else None) or challenger_photo_url %}
+      {% if _a_photo %}
+        <img src="{{ _a_photo }}" class="cc-photo large" alt="{{ challenger_name }}">
+      {% else %}
+        <div class="cc-avatar large">{{ challenger_name[0] if challenger_name else '?' }}</div>
+      {% endif %}
+      <div class="cc-name">{{ challenger_name }}</div>
+    </div>
+    {# VS center #}
+    <div class="cc-vs-col">
+      <div class="cc-vs-text">VS</div>
+      {% if phase == "live_lobby_ready" %}
+        <div class="cc-outcome-badge win" style="color:#fbbf24;border-color:#fbbf24;background:rgba(251,191,36,0.1);">⚡ LOBBY OPEN</div>
+      {% elif phase == "live_in_progress" %}
+        <div class="cc-outcome-badge win" style="color:#fbbf24;border-color:#fbbf24;">⚡ LIVE NOW</div>
+      {% endif %}
+      <div class="cc-subline" style="font-size:0.72rem;">{{ game_name }}</div>
+    </div>
+    {# Challenged #}
+    <div class="cc-col">
+      {% set _b_photo = (selected_photo_url if not viewer_is_challenger else None) or challenged_photo_url %}
+      {% if _b_photo %}
+        <img src="{{ _b_photo }}" class="cc-photo large" alt="{{ challenged_name }}">
+      {% else %}
+        <div class="cc-avatar large">{{ challenged_name[0] if challenged_name else '?' }}</div>
+      {% endif %}
+      <div class="cc-name">{{ challenged_name }}</div>
     </div>
   </div>
 
-  {# ── Phase: completed result phases (score_win / draw / forfeit / no_contest) ── #}
-  {% elif phase in ("completed_score_win", "completed_draw", "completed_forfeit_win", "completed_forfeit_loss", "no_contest") %}
-  <div class="vs-block">
-    <div class="player-block">
-      <div class="player-name">{{ challenger_name }}</div>
-      {% if phase == "completed_score_win" or phase == "completed_draw" %}
-        {% if challenger_score is not none %}
-          <div class="player-score">{{ "%.1f"|format(challenger_score) }}</div>
-        {% else %}
-          <div class="player-score no-score">—</div>
-        {% endif %}
+  {# ── Archetype C2: Waiting Hero (waiting_for_opponent) — viewer-specific phase ── #}
+  {# Viewer has submitted; opponent has not yet. Single-player hero layout. #}
+  {% elif phase == "waiting_for_opponent" %}
+  {% set _v_photo = (selected_photo_url if viewer_is_challenger else None) or viewer_photo_url %}
+  {% set _v_name  = challenger_name if viewer_is_challenger else challenged_name %}
+  {% set _v_overall      = challenger_overall      if viewer_is_challenger else challenged_overall %}
+  {% set _v_primary_pos  = challenger_primary_pos  if viewer_is_challenger else challenged_primary_pos %}
+  {% set _v_secondary_pos = challenger_secondary_pos if viewer_is_challenger else challenged_secondary_pos %}
+  <div class="arch-waiting">
+
+    {# LEFT: Viewer hero photo zone — reuses aib-* overlay CSS #}
+    <div class="awh-player-zone">
+      {% if _v_photo %}
+        <img src="{{ _v_photo }}" class="aib-player-photo" alt="{{ _v_name }}">
       {% else %}
-        <div class="player-score no-score">—</div>
+        <div class="aib-player-initial">{{ (_v_name[0] if _v_name else '?') | upper }}</div>
       {% endif %}
-      {% if winner_name == challenger_name %}
-        <div class="winner-label">✓ WINNER</div>
+      {% if _v_primary_pos %}
+      <div class="aib-pos-block">
+        <span class="aib-pos-primary">{{ _v_primary_pos }}</span>
+        {% if _v_secondary_pos %}<span class="aib-pos-secondary">{{ _v_secondary_pos }}</span>{% endif %}
+      </div>
       {% endif %}
+      {% if _v_overall is not none %}
+      <div class="aib-overall">OVR {{ _v_overall }}</div>
+      {% endif %}
+      <div class="aib-player-name">{{ _v_name }}</div>
     </div>
 
-    <div class="vs-divider">
-      <div class="vs-label">VS</div>
+    {# RIGHT: Waiting content #}
+    <div class="awh-content">
+      {% if phase_emoji %}<div class="awh-phase-emoji">{{ phase_emoji }}</div>{% endif %}
+      <div class="awh-headline">Waiting for<br>Opponent</div>
+      <div class="awh-sublabel">{{ viewer_action_text }}</div>
+      <div class="awh-divider"></div>
+      {% if my_result_summary.primary_value is not none %}
+      <div class="awh-score-label">{{ my_result_summary.primary_label }}</div>
+      <div class="awh-score">{{ "%.1f"|format(my_result_summary.primary_value) }}</div>
+      {% if my_result_summary.secondary_items %}
+      <div class="awh-secondary">
+        {% for item in my_result_summary.secondary_items %}
+        <span class="awh-secondary-item">{{ item.label }}: {{ item.value }}</span>{% if not loop.last %}<span class="awh-secondary-sep"> · </span>{% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% else %}
+      <div class="awh-submitted">Result Submitted</div>
+      {% endif %}
+      <div class="awh-game">{{ game_name }}</div>
+    </div>
+
+  </div>
+
+  {# ── Archetype D2: Result VS — full-zone photo layout (CC-DESIGN-1) ── #}
+  {% elif phase in ("completed_score_win","completed_draw","completed_forfeit_win","completed_forfeit_loss","no_contest") %}
+  {% set _is_ch_winner = winner_name == challenger_name %}
+  {% set _is_cd_winner = winner_name == challenged_name %}
+  {% set _ch_photo = selected_photo_url if viewer_is_challenger else challenger_photo_url %}
+  {% set _cd_photo = selected_photo_url if not viewer_is_challenger else challenged_photo_url %}
+  <div class="arch-result-d2">
+
+    {# ── Set forfeiter flags for DNP overlay ── #}
+    {% set _ch_is_dnp = (phase in ("completed_forfeit_win","completed_forfeit_loss") and forfeiter_name == challenger_name) or (phase == "no_contest" and challenger_result_summary.primary_value is none) %}
+    {% set _cd_is_dnp = (phase in ("completed_forfeit_win","completed_forfeit_loss") and forfeiter_name == challenged_name) or (phase == "no_contest" and challenged_result_summary.primary_value is none) %}
+
+    {# ── LEFT: Challenger full-zone ── #}
+    <div class="aib-player-zone">
+      {% if _ch_photo %}
+        <img src="{{ _ch_photo }}" class="aib-player-photo" alt="{{ challenger_name }}">
+      {% else %}
+        <div class="aib-player-initial">{{ (challenger_name[0] if challenger_name else '?') | upper }}</div>
+      {% endif %}
+      {% if _is_ch_winner %}<div class="ard2-winner-bar"></div>{% endif %}
+      {% if challenger_primary_pos %}
+      <div class="aib-pos-block">
+        <span class="aib-pos-primary">{{ challenger_primary_pos }}</span>
+        {% if challenger_secondary_pos %}<span class="aib-pos-secondary">{{ challenger_secondary_pos }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if challenger_overall is not none %}
+      <div class="aib-overall">OVR {{ challenger_overall }}</div>
+      {% endif %}
+      {% if _ch_is_dnp %}<div class="ard2-dnp-overlay">Did not play</div>{% endif %}
+      <div class="aib-player-name">{{ challenger_name }}</div>
+    </div>
+
+    {# ── CENTER: Result data ── #}
+    <div class="ard2-center">
       {% if phase == "completed_score_win" %}
-        <div class="outcome-badge win">SCORE WIN</div>
+        <div class="cc-outcome-badge win">🏆 SCORE WIN</div>
       {% elif phase == "completed_draw" %}
-        <div class="outcome-badge draw">DRAW</div>
+        <div class="cc-outcome-badge draw">⚖️ DRAW</div>
       {% elif phase == "completed_forfeit_win" %}
-        <div class="outcome-badge win">FORFEIT WIN</div>
+        <div class="cc-outcome-badge win">🏆 FORFEIT WIN</div>
       {% elif phase == "completed_forfeit_loss" %}
-        <div class="outcome-badge loss">FORFEIT LOSS</div>
+        <div class="cc-outcome-badge loss">💔 FORFEIT LOSS</div>
       {% elif phase == "no_contest" %}
-        <div class="outcome-badge muted">NO CONTEST</div>
+        <div class="cc-outcome-badge muted">🔄 NO CONTEST</div>
       {% endif %}
-    </div>
-
-    <div class="player-block">
-      <div class="player-name">{{ challenged_name }}</div>
-      {% if phase == "completed_score_win" or phase == "completed_draw" %}
-        {% if challenged_score is not none %}
-          <div class="player-score">{{ "%.1f"|format(challenged_score) }}</div>
-        {% else %}
-          <div class="player-score no-score">—</div>
-        {% endif %}
-      {% else %}
-        <div class="player-score no-score">—</div>
-      {% endif %}
-      {% if winner_name == challenged_name %}
-        <div class="winner-label">✓ WINNER</div>
-      {% endif %}
-    </div>
-  </div>
-
-  {% if phase == "completed_score_win" and my_skill_scores %}
-  <div class="skill-section">
-    <div class="skill-col">
-      {% for skill, delta in my_skill_scores.items() %}
-      <div class="skill-row">
-        <span class="skill-name">{{ skill | replace("_", " ") }}</span>
-        <span class="skill-delta {% if delta > 0 %}pos{% elif delta < 0 %}neg{% endif %}">
-          {% if delta > 0 %}+{% endif %}{{ "%.2f"|format(delta) }}
+      {% if forfeit_sublabel %}<div class="ard2-sublabel">{{ forfeit_sublabel }}</div>{% endif %}
+      {% if viewer_action_text %}<div class="ard2-sublabel" style="color:var(--cc-sub);">{{ viewer_action_text }}</div>{% endif %}
+      {# Score block: score_win / draw show both; forfeit_win/loss show winner's score #}
+      {% set _ch_pv = challenger_result_summary.primary_value %}
+      {% set _cd_pv = challenged_result_summary.primary_value %}
+      {% if phase in ("completed_score_win","completed_draw","completed_forfeit_win","completed_forfeit_loss") %}
+      {% if _ch_pv is not none or _cd_pv is not none %}
+      <div class="ard2-score-row">
+        <span class="ard2-score-val{{ ' dim' if (phase == 'completed_score_win' and _is_cd_winner) or _ch_pv is none else '' }}">
+          {{ "%.1f"|format(_ch_pv) if _ch_pv is not none else "—" }}
+        </span>
+        <span class="ard2-score-sep">—</span>
+        <span class="ard2-score-val{{ ' dim' if (phase == 'completed_score_win' and _is_ch_winner) or _cd_pv is none else '' }}">
+          {{ "%.1f"|format(_cd_pv) if _cd_pv is not none else "—" }}
         </span>
       </div>
-      {% endfor %}
+      {% endif %}
+      {% if challenger_result_summary.secondary_items and _ch_pv is not none %}
+      <div class="ard2-secondary-row">
+        <span class="ard2-secondary-label">{{ challenger_name[:6] }}:</span>
+        {% for item in challenger_result_summary.secondary_items %}
+        <span class="ard2-secondary-item">{{ item.label }}: {{ item.value }}</span>{% if not loop.last %}<span class="ard2-secondary-sep"> · </span>{% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if challenged_result_summary.secondary_items and _cd_pv is not none %}
+      <div class="ard2-secondary-row">
+        <span class="ard2-secondary-label">{{ challenged_name[:6] }}:</span>
+        {% for item in challenged_result_summary.secondary_items %}
+        <span class="ard2-secondary-item">{{ item.label }}: {{ item.value }}</span>{% if not loop.last %}<span class="ard2-secondary-sep"> · </span>{% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% endif %}
+      <div class="ard2-game">{{ game_name }}</div>
     </div>
-  </div>
-  {% endif %}
 
-  {# ── Active / pending phases ── #}
-  {% elif phase == "challenge_sent" %}
-  <div class="phase-message">
-    <div class="phase-headline">Challenge Sent</div>
-    <div class="phase-sub">{{ challenger_name }} challenged {{ challenged_name }} · {{ game_name }}</div>
-  </div>
+    {# ── RIGHT: Challenged full-zone ── #}
+    <div class="aib-player-zone aib-player-zone--right">
+      {% if _cd_photo %}
+        <img src="{{ _cd_photo }}" class="aib-player-photo" alt="{{ challenged_name }}">
+      {% else %}
+        <div class="aib-player-initial">{{ (challenged_name[0] if challenged_name else '?') | upper }}</div>
+      {% endif %}
+      {% if _is_cd_winner %}<div class="ard2-winner-bar"></div>{% endif %}
+      {% if challenged_primary_pos %}
+      <div class="aib-pos-block">
+        <span class="aib-pos-primary">{{ challenged_primary_pos }}</span>
+        {% if challenged_secondary_pos %}<span class="aib-pos-secondary">{{ challenged_secondary_pos }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if challenged_overall is not none %}
+      <div class="aib-overall">OVR {{ challenged_overall }}</div>
+      {% endif %}
+      {% if _cd_is_dnp %}<div class="ard2-dnp-overlay">Did not play</div>{% endif %}
+      <div class="aib-player-name">{{ challenged_name }}</div>
+    </div>
 
-  {% elif phase == "challenge_received" %}
-  <div class="phase-message">
-    <div class="phase-headline">Challenged!</div>
-    <div class="phase-sub">{{ challenger_name }} challenged {{ challenged_name }} · {{ game_name }}</div>
-  </div>
-
-  {% elif phase == "challenge_accepted" %}
-  <div class="phase-message">
-    <div class="phase-headline">Challenge Accepted</div>
-    <div class="phase-sub">{{ challenger_name }} vs {{ challenged_name }} · {{ game_name }}</div>
-  </div>
-
-  {% elif phase == "waiting_for_opponent" %}
-  <div class="phase-message">
-    <div class="phase-headline">Waiting for Opponent</div>
-    <div class="phase-sub">{{ game_name }} · {{ challenge_mode | upper }} MODE</div>
-    {% if my_score is not none %}
-      <div style="font-size:1.6rem;font-weight:700;color:#f5c518;">Your score: {{ "%.1f"|format(my_score) }}</div>
-    {% endif %}
   </div>
 
-  {% elif phase == "live_lobby_ready" %}
-  <div class="phase-message">
-    <div class="phase-headline">Live Lobby Ready</div>
-    <div class="phase-sub">{{ challenger_name }} vs {{ challenged_name }} · {{ game_name }}</div>
+  {# ── Archetype F: Terminal Rejection — two-player layout (challenge_cancelled / challenge_declined) ── #}
+  {# Reuses Archetype A player zones + stats overlays; center message is dimmed/terminal. #}
+  {% elif phase in ("challenge_cancelled", "challenge_declined") %}
+  {% set _left_photo  = challenger_photo_url %}
+  {% set _right_photo = challenged_photo_url %}
+  <div class="arch-invitation-balanced">
+
+    {# LEFT: Challenger photo zone #}
+    <div class="aib-player-zone">
+      {% if _left_photo %}
+        <img src="{{ _left_photo }}" class="aib-player-photo" alt="{{ challenger_name }}">
+      {% else %}
+        <div class="aib-player-initial">{{ (challenger_name[0] if challenger_name else '?') | upper }}</div>
+      {% endif %}
+      {% if challenger_primary_pos %}
+      <div class="aib-pos-block">
+        <span class="aib-pos-primary">{{ challenger_primary_pos }}</span>
+        {% if challenger_secondary_pos %}<span class="aib-pos-secondary">{{ challenger_secondary_pos }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if challenger_overall is not none %}
+      <div class="aib-overall">OVR {{ challenger_overall }}</div>
+      {% endif %}
+      <div class="aib-player-name">{{ challenger_name }}</div>
+    </div>
+
+    {# CENTER: Terminal message (dimmed, no active CTA) #}
+    <div class="aib-center-msg">
+      <div class="aib-status-meta">Challenge Closed</div>
+      {% if phase_emoji %}<div class="aib-phase-emoji" style="opacity:0.6;">{{ phase_emoji }}</div>{% endif %}
+      <div class="aib-headline" style="color:var(--cc-dim);">
+        {% if phase == "challenge_cancelled" %}Challenge<br>Cancelled{% else %}Challenge<br>Declined{% endif %}
+      </div>
+      <div class="aib-sublabel" style="color:var(--cc-sub);">{{ viewer_action_text }}</div>
+      <div class="aib-divider"></div>
+      <div class="aib-participants" style="color:var(--cc-sub);">
+        {{ challenger_name }}<span class="arrow" style="color:var(--cc-dim);">→</span>{{ challenged_name }}
+      </div>
+      <div class="aib-game">{{ game_name }}</div>
+    </div>
+
+    {# RIGHT: Challenged photo zone #}
+    <div class="aib-player-zone aib-player-zone--right">
+      {% if _right_photo %}
+        <img src="{{ _right_photo }}" class="aib-player-photo" alt="{{ challenged_name }}">
+      {% else %}
+        <div class="aib-player-initial">{{ (challenged_name[0] if challenged_name else '?') | upper }}</div>
+      {% endif %}
+      {% if challenged_primary_pos %}
+      <div class="aib-pos-block">
+        <span class="aib-pos-primary">{{ challenged_primary_pos }}</span>
+        {% if challenged_secondary_pos %}<span class="aib-pos-secondary">{{ challenged_secondary_pos }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if challenged_overall is not none %}
+      <div class="aib-overall">OVR {{ challenged_overall }}</div>
+      {% endif %}
+      <div class="aib-player-name">{{ challenged_name }}</div>
+    </div>
+
   </div>
 
-  {% elif phase == "live_in_progress" %}
-  <div class="phase-message">
-    <div class="phase-headline">Live — Playing Now</div>
-    <div class="phase-sub">{{ challenger_name }} vs {{ challenged_name }} · {{ game_name }}</div>
+  {# ── Archetype E2: Skill Progress — full-zone photo + Player Card-style rows (CC-DESIGN-1) ── #}
+  {% elif phase == "skill_delta_result" %}
+  {% set _v_name  = challenger_name if viewer_is_challenger else challenged_name %}
+  {% set _v_photo = selected_photo_url or viewer_photo_url %}
+  {% set _v_overall      = challenger_overall      if viewer_is_challenger else challenged_overall %}
+  {% set _v_primary_pos  = challenger_primary_pos  if viewer_is_challenger else challenged_primary_pos %}
+  {% set _v_secondary_pos = challenger_secondary_pos if viewer_is_challenger else challenged_secondary_pos %}
+  <div class="arch-skill-e2">
+
+    {# LEFT: Viewer full-zone photo — reuses aib-* overlay CSS #}
+    <div class="aib-player-zone">
+      {% if _v_photo %}
+        <img src="{{ _v_photo }}" class="aib-player-photo" alt="{{ _v_name }}">
+      {% else %}
+        <div class="aib-player-initial">{{ (_v_name[0] if _v_name else '?') | upper }}</div>
+      {% endif %}
+      {% if _v_primary_pos %}
+      <div class="aib-pos-block">
+        <span class="aib-pos-primary">{{ _v_primary_pos }}</span>
+        {% if _v_secondary_pos %}<span class="aib-pos-secondary">{{ _v_secondary_pos }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if _v_overall is not none %}
+      <div class="aib-overall">OVR {{ _v_overall }}</div>
+      {% endif %}
+      <div class="aib-player-name">{{ _v_name }}</div>
+    </div>
+
+    {# RIGHT: Skill progress panel #}
+    <div class="aske-panel">
+      <div class="aske-phase-label">Skill Progress</div>
+      <div class="aske-title">📈 {{ game_name }}</div>
+      {% if my_skill_progress %}
+      <div class="aske-rows">
+        {% for row in my_skill_progress[:6] %}
+        <div class="aske-row">
+          <span class="aske-cat">{{ row.category[:4] | upper if row.category else '' }}</span>
+          <span class="aske-name">{{ row.name }}</span>
+          <div class="aske-bar-bg">
+            {% if row.fill_pct is not none %}
+              <div class="aske-bar-{{ 'pos' if row.is_positive else ('neg' if row.is_negative else 'neu') }}"
+                   style="width:{{ row.fill_pct }}%;"></div>
+            {% endif %}
+          </div>
+          <span class="aske-val">{{ "%.1f"|format(row.current_level) if row.current_level is not none else '' }}</span>
+          <span class="aske-delta {{ 'pos' if row.is_positive else ('neg' if row.is_negative else '') }}">
+            {{ '+' if row.is_positive else '' }}{{ "%.2f"|format(row.delta) }}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="aske-nodelta">No skill data recorded.</div>
+      {% endif %}
+    </div>
+
   </div>
 
+  {# ── Fallback ── #}
   {% else %}
-  {# Fallback for any unknown phase #}
-  <div class="phase-message">
-    <div class="phase-headline">{{ challenger_name }} vs {{ challenged_name }}</div>
-    <div class="phase-sub">{{ game_name }}</div>
+  <div class="cc-col" style="gap:12px;">
+    <div class="cc-headline">{{ challenger_name }} vs {{ challenged_name }}</div>
+    <div class="cc-subline">{{ game_name }}</div>
   </div>
   {% endif %}
 
-  <!-- Footer -->
+  </div>{# end card-content #}
+
+  {# Footer: game info only — no CTA, no action text. This is an image, not a UI. #}
   <div class="card-footer">
-    <div class="game-info">{{ game_name }}{% if completed_at %} · {{ completed_at.strftime("%b %d, %Y") }}{% endif %}</div>
-    <div class="cta-label">{{ cta_label }} →</div>
-    <div class="ts">lfa.gg</div>
+    <div class="cc-game-info">{{ game_name }}{% if completed_at %} · {{ completed_at.strftime("%b %d, %Y") }}{% endif %}</div>
+    <div class="cc-domain">lfa.gg</div>
   </div>
 
 </div>

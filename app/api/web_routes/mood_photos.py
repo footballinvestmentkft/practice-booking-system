@@ -86,6 +86,25 @@ _SLOT_META: list[dict] = [
         "emoji":       "😲",
         "description": "A shocked or surprised reaction — an unexpected result.",
     },
+    # Phase-B slots
+    {
+        "slot":        "mood_focused_ready",
+        "label":       "Focused",
+        "emoji":       "🎯",
+        "description": "A focused, ready-to-compete look — before a challenge or match.",
+    },
+    {
+        "slot":        "mood_confident",
+        "label":       "Confident",
+        "emoji":       "😎",
+        "description": "A confident, assured expression — when you know you've got this.",
+    },
+    {
+        "slot":        "mood_proud",
+        "label":       "Proud",
+        "emoji":       "🦁",
+        "description": "A proud, satisfied look — after levelling up your skills.",
+    },
 ]
 
 

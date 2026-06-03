@@ -40,6 +40,11 @@
 .cs-type-btn.cs-type-soon {
   opacity: 0.45; cursor: not-allowed;
 }
+.cs-type-btn.cs-type-locked {
+  opacity: 0.6; border-style: dashed;
+  color: #64748b;
+}
+.cs-type-btn.cs-type-locked:hover { border-color: #f87171; color: #fca5a5; }
 .cs-type-icon { font-size: 1rem; }
 .cs-type-badge {
   font-size: 0.62rem; font-weight: 700;
@@ -572,13 +577,32 @@
         {% elif active_type == "challenge" %}
         <p class="cs-export-title">Export</p>
         {% if challenge_mode == "preview" %}
-          {% if is_exportable_phase %}
-          <p class="cs-export-dims">This result phase is exportable. Requires owning this format.</p>
-          <a href="{{ legacy_editor_url }}" class="cs-btn-legacy-editor" style="display:inline-flex;">
-            Export via Challenge Editor →
+          {% set _owned = active_platform_owned if active_platform_owned is defined else false %}
+          {% if not _owned %}
+          {# Format not owned — clear purchase prompt, no download button #}
+          <p class="cs-export-dims" style="color:#f87171;">
+            🔒 You don't own this card format.
+          </p>
+          <a href="/shop?type=challenge_card" class="cs-btn-download"
+             style="display:inline-flex;background:#4f46e5;">
+            Purchase at Shop →
           </a>
+          {% elif is_exportable_phase and challenge_export_url %}
+          {# Owned + exportable phase → Download PNG #}
+          <p class="cs-export-dims">
+            {% if active_phase in ("challenge_sent", "challenge_received") %}
+            Social moment card — ready to download.
+            {% else %}
+            Result card — ready to download.
+            {% endif %}
+          </p>
+          <a href="{{ challenge_export_url }}" class="cs-btn-download" style="display:inline-flex;">
+            ↓ Download PNG
+          </a>
+          {% elif is_exportable_phase %}
+          <p class="cs-export-dims">Select a format to download.</p>
           {% else %}
-          <p class="cs-export-dims">Historical phase — preview only. Export available for result phases.</p>
+          <p class="cs-export-dims">Preview only — this phase is not exportable.</p>
           {% endif %}
         {% else %}
         <p class="cs-export-dims">Select a challenge phase to see export options.</p>
@@ -968,6 +992,75 @@
   document.querySelectorAll('[data-pc-theme]:not([disabled])').forEach(function (btn) {
     btn.addEventListener('click', function () { setPlayerTheme(btn.dataset.pcTheme); });
   });
+
+}());
+{% endif %}
+
+// ── CC-DESIGN-1: Challenge Studio mood photo quick selector ─────────────────
+{% if active_type == "challenge" and challenge_mode == "preview" %}
+(function () {
+  'use strict';
+
+  var ccIframe      = document.getElementById('cs-preview-iframe');
+  var ccChallengeId = {{ selected_challenge_id | tojson }};
+
+  // 1. Update selected chip state (visual only)
+  function _updateChipState(photoUrl) {
+    document.querySelectorAll('#cs-cc-mood-grid .cs-mood-chip').forEach(function (c) {
+      c.classList.toggle('cs-mood-chip--selected', c.dataset.moodPhotoUrl === photoUrl && !!photoUrl);
+      var chk = c.querySelector('.cs-mood-check');
+      if (chk) { chk.parentNode.removeChild(chk); }
+    });
+    if (photoUrl) {
+      var active = document.querySelector('#cs-cc-mood-grid [data-mood-photo-url="' + photoUrl + '"]');
+      if (active) {
+        var chkEl = document.createElement('span');
+        chkEl.className = 'cs-mood-check'; chkEl.setAttribute('aria-hidden', 'true');
+        chkEl.textContent = '✓'; active.appendChild(chkEl);
+      }
+    }
+  }
+
+  // 2. Refresh preview iframe with photo_url query param (viewer's own slot)
+  function _refreshPreview(photoUrl) {
+    if (!ccIframe) return;
+    var src = ccIframe.src;
+    src = src.replace(/[?&]photo_url=[^&]*/g, '');
+    if (photoUrl) {
+      src += (src.indexOf('?') === -1 ? '?' : '&') + 'photo_url=' + encodeURIComponent(photoUrl);
+    }
+    ccIframe.src = src;
+  }
+
+  // 3. Persist snapshot via POST /challenges/{id}/card/photo (own slot only)
+  function _saveSnapshot(photoUrl) {
+    var fd = new FormData();
+    fd.append('photo_url', photoUrl || '');
+    // CSRF token (standard pattern in this app)
+    var csrfEl = document.querySelector('meta[name="csrf-token"]');
+    var headers = csrfEl ? {'X-CSRF-Token': csrfEl.getAttribute('content')} : {};
+    fetch('/challenges/' + ccChallengeId + '/card/photo', {
+      method: 'POST', body: fd, headers: headers, credentials: 'same-origin'
+    }).catch(function () { /* silently ignore — preview still works */ });
+  }
+
+  // Main: select a photo (save + refresh + update UI)
+  function _setChallengePhoto(photoUrl) {
+    _updateChipState(photoUrl);
+    _saveSnapshot(photoUrl);
+    _refreshPreview(photoUrl);
+  }
+
+  // Wire mood photo chips
+  document.querySelectorAll('#cs-cc-mood-grid .cs-mood-chip:not([disabled])').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      _setChallengePhoto(btn.dataset.moodPhotoUrl || '');
+    });
+  });
+
+  // Clear photo button
+  var clearBtn = document.getElementById('cs-cc-clear-photo');
+  if (clearBtn) { clearBtn.addEventListener('click', function () { _setChallengePhoto(''); }); }
 
 }());
 {% endif %}

@@ -26,14 +26,15 @@
     <span class="cs-type-label">Welcome Card</span>
   </button>
 
-  {# ── Challenge Card — CS-S4A: preview placeholder (no longer Coming Soon) ── #}
-  <button class="cs-type-btn{% if active_type == 'challenge' %} cs-type-active{% endif %}"
+  {# ── Challenge Card — locked if not owned ── #}
+  {% set _cc_accessible = cc_owned if cc_owned is defined else false %}
+  <button class="cs-type-btn{% if active_type == 'challenge' %} cs-type-active{% endif %}{% if not _cc_accessible %} cs-type-locked{% endif %}"
           role="tab"
           aria-selected="{{ 'true' if active_type == 'challenge' else 'false' }}"
-          onclick="{% if active_type != 'challenge' %}window.location='/card-studio/challenge'{% endif %}"
+          onclick="{% if active_type != 'challenge' %}window.location='{% if _cc_accessible %}/card-studio/challenge{% else %}/shop?type=challenge_card{% endif %}'{% endif %}"
           {% if active_type == 'challenge' %}aria-current="page"{% endif %}
-          title="Challenge Card Studio">
-    <span class="cs-type-icon">⚔️</span>
+          title="{% if _cc_accessible %}Challenge Card Studio{% else %}Purchase Challenge Card to access{% endif %}">
+    <span class="cs-type-icon">⚔️{% if not _cc_accessible %}🔒{% endif %}</span>
     <span class="cs-type-label">Challenge Card</span>
   </button>
 

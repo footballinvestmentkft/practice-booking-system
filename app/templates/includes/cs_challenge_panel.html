@@ -90,16 +90,6 @@
 
   {% endif %}{# end error/selector #}
 
-  <hr class="cs-section-divider">
-
-  <div class="cs-challenge-legacy-cta">
-    <p class="cs-section-label">Challenge Card Editor</p>
-    <p class="cs-challenge-hint">Full format selection and export in the editor.</p>
-    <a href="{{ legacy_editor_url }}" class="cs-btn-legacy-editor">
-      Open Challenge Editor →
-    </a>
-  </div>
-
 </div>
 
 {# ── PREVIEW MODE ── #}
@@ -145,7 +135,47 @@
 
   <hr class="cs-section-divider">
 
-  {# Platform selector #}
+  {# ── CC-DESIGN-1 SNAPSHOT: Mood Photo selector — viewer's own slot only ── #}
+  <div class="cs-pc-selector">
+    <p class="cs-section-label">Your photo for this card</p>
+    <p class="cs-slot-hint" style="font-size:0.68rem;color:#475569;margin:-0.3rem 0 0.5rem;">
+      Changes only your side of the card.
+    </p>
+    {% set mood_photos    = mood_photos    if mood_photos    is defined else {} %}
+    {% set mood_slot_meta = mood_slot_meta if mood_slot_meta is defined else [] %}
+    <div class="cs-cc-mood-section"
+         data-challenge-id="{{ selected_challenge_id }}"
+         data-active-phase="{{ active_phase }}"
+         data-active-platform="{{ active_platform }}">
+      <div class="cs-mood-grid" id="cs-cc-mood-grid">
+        {% for meta in mood_slot_meta %}
+          {% set _mp  = mood_photos.get(meta.slot) %}
+          {% set _has = _mp and _mp.original_url %}
+          {% set _photo_url = (_mp.processed_png_url or _mp.original_url) if _has else none %}
+          <button class="cs-mood-chip{% if not _has %} cs-mood-chip--empty{% endif %}"
+                  type="button"
+                  data-mood-photo-url="{{ _photo_url or '' }}"
+                  {% if not _has %}disabled aria-disabled="true"{% endif %}
+                  title="{{ meta.label }}">
+            <span class="cs-mood-emoji">{{ meta.emoji }}</span>
+            <span class="cs-mood-label">{{ meta.label }}</span>
+          </button>
+        {% endfor %}
+      </div>
+      <p class="cs-mood-manage">
+        <button type="button" id="cs-cc-clear-photo"
+                style="background:none;border:none;cursor:pointer;padding:0;font-size:0.73rem;color:#64748b;">
+          Clear photo
+        </button>
+        &nbsp;·&nbsp;
+        <a href="/profile/my-mood-photos" class="cs-mood-manage-link">Manage →</a>
+      </p>
+    </div>
+  </div>
+
+  <hr class="cs-section-divider">
+
+  {# Platform selector — after mood selector #}
   <div class="cs-pc-selector">
     <p class="cs-section-label">Format</p>
     <div class="cs-pc-pills">
@@ -156,17 +186,6 @@
       </a>
       {% endfor %}
     </div>
-  </div>
-
-  <hr class="cs-section-divider">
-
-  {# Legacy editor CTA #}
-  <div class="cs-challenge-legacy-cta">
-    <p class="cs-section-label">Challenge Card Editor</p>
-    <p class="cs-challenge-hint">Full export available in the editor.</p>
-    <a href="{{ legacy_editor_url }}" class="cs-btn-legacy-editor">
-      Open Challenge Editor →
-    </a>
   </div>
 
 </div>

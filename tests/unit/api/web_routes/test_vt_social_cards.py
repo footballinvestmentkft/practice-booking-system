@@ -407,16 +407,19 @@ class TestChallengeCardTemplates:
         assert "phase" in self._post()
 
     def test_sc14_post_template_has_challenger_score(self):
-        assert "challenger_score" in self._post()
+        # D2 redesign: scores rendered via challenger_result_summary.primary_value (CC-DESIGN-1)
+        assert "challenger_result_summary" in self._post()
 
     def test_sc14_post_template_has_challenged_score(self):
-        assert "challenged_score" in self._post()
+        # D2 redesign: scores rendered via challenged_result_summary.primary_value (CC-DESIGN-1)
+        assert "challenged_result_summary" in self._post()
 
     def test_sc15_story_template_has_phase_variable(self):
         assert "phase" in self._story()
 
     def test_sc15_story_template_has_my_skill_scores(self):
-        assert "my_skill_scores" in self._story()
+        # E2 redesign: skill progress rendered via my_skill_progress (CC-DESIGN-1)
+        assert "my_skill_progress" in self._story()
 
     def test_sc15_story_no_skill_data_message(self):
         assert "No skill data recorded" in self._story()
@@ -526,8 +529,9 @@ class TestSCPhaseAudit:
 
     # ── Phase lock gate ───────────────────────────────────────────────────────
 
-    def test_sc_audit_05_locked_phase_export_raises_403(self):
-        """challenge_accepted is locked (preview-only) after challenge completes."""
+    def test_sc_audit_05_locked_phase_export_allowed(self):
+        """challenge_accepted is exportable even as a historical locked phase after COMPLETED.
+        Historical does NOT mean preview-only — same design as challenge_sent/received."""
         ch = _challenge(
             challenger_id=1, challenged_id=2,
             status=ChallengeStatus.COMPLETED,
@@ -535,10 +539,8 @@ class TestSCPhaseAudit:
         )
         cap = _call_export(ch=ch, user_id=1, phase="challenge_accepted")
         exc = cap.get("exc")
-        assert exc is not None
-        from fastapi import HTTPException
-        assert isinstance(exc, HTTPException)
-        assert exc.status_code == 403
+        assert exc is None, \
+            f"challenge_accepted must be exportable for historical COMPLETED challenges, got exc: {exc}"
 
     def test_sc_audit_06_forfeit_win_preview_succeeds(self):
         """completed_forfeit_win phase is unlocked for the winner → preview 200."""

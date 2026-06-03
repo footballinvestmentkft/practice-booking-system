@@ -169,6 +169,10 @@ class VirtualTrainingChallenge(Base):
     live_start_at        = Column(DateTime(timezone=True), nullable=True)
     lobby_expires_at     = Column(DateTime(timezone=True), nullable=True)
 
+    # CC-DESIGN-1: per-challenge card photo snapshot (NULL = fallback to neutral mood)
+    challenger_card_photo_url = Column(String(512), nullable=True)
+    challenged_card_photo_url = Column(String(512), nullable=True)
+
     challenger   = relationship("User", foreign_keys=[challenger_id])
     challenged   = relationship("User", foreign_keys=[challenged_id])
     winner       = relationship("User", foreign_keys=[winner_id])

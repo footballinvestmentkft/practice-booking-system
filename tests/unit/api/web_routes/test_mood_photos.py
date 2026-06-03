@@ -128,6 +128,10 @@ _ALL_SLOTS = [
     "mood_sad_disappointed",
     "mood_angry_competitive",
     "mood_surprised_shocked",
+    # Phase-B slots
+    "mood_focused_ready",
+    "mood_confident",
+    "mood_proud",
 ]
 
 
@@ -147,7 +151,7 @@ def test_mp_r04_get_page_returns_all_slots():
         assert "mood_photos" in ctx
         assert set(ctx["mood_photos"].keys()) == set(six_slots.keys())
         assert "slots_meta" in ctx
-        assert len(ctx["slots_meta"]) == 6
+        assert len(ctx["slots_meta"]) == 9
 
 
 # ── MP-R05 ── GET only queries own user_id ───────────────────────────────────
@@ -264,7 +268,7 @@ def test_mp_r10_management_page_zero_state_renders():
         assert all(v is None for v in ctx["mood_photos"].values()), (
             "zero-state: all slots must be None when nothing uploaded"
         )
-        assert len(ctx["slots_meta"]) == 6
+        assert len(ctx["slots_meta"]) == 9
 
 
 # ── MP-R11 ── mood photo template uses English labels only ───────────────────
@@ -527,26 +531,27 @@ def test_mp_r19_route_passes_lfa_spec_context():
 # ── MP-R20 ── MOOD_PHOTO_SLOTS contains all 6 valid slot keys ────────────────
 
 def test_mp_r20_mood_photo_slots_has_6_entries():
+    """MP-R20 (Phase-B updated): MOOD_PHOTO_SLOTS contains all 9 valid slot keys."""
     from app.models.user_mood_photos import MOOD_PHOTO_SLOTS
 
-    assert "mood_angry_competitive" in MOOD_PHOTO_SLOTS, (
-        "MOOD_PHOTO_SLOTS missing mood_angry_competitive"
-    )
-    assert "mood_surprised_shocked" in MOOD_PHOTO_SLOTS, (
-        "MOOD_PHOTO_SLOTS missing mood_surprised_shocked"
-    )
-    assert len(MOOD_PHOTO_SLOTS) == 6, (
-        f"MOOD_PHOTO_SLOTS must have 6 entries, got {len(MOOD_PHOTO_SLOTS)}"
+    assert "mood_angry_competitive" in MOOD_PHOTO_SLOTS
+    assert "mood_surprised_shocked" in MOOD_PHOTO_SLOTS
+    assert "mood_focused_ready"     in MOOD_PHOTO_SLOTS
+    assert "mood_confident"         in MOOD_PHOTO_SLOTS
+    assert "mood_proud"             in MOOD_PHOTO_SLOTS
+    assert len(MOOD_PHOTO_SLOTS) == 9, (
+        f"MOOD_PHOTO_SLOTS must have 9 entries, got {len(MOOD_PHOTO_SLOTS)}"
     )
 
 
 # ── MP-R21 ── _SLOT_META has 6 entries each with required keys ───────────────
 
 def test_mp_r21_slot_meta_has_6_entries_with_description():
+    """MP-R21 (Phase-B updated): _SLOT_META has 9 entries each with required keys."""
     from app.api.web_routes.mood_photos import _SLOT_META
 
-    assert len(_SLOT_META) == 6, (
-        f"_SLOT_META must have 6 entries, got {len(_SLOT_META)}"
+    assert len(_SLOT_META) == 9, (
+        f"_SLOT_META must have 9 entries, got {len(_SLOT_META)}"
     )
     slots_in_meta = {m["slot"] for m in _SLOT_META}
     assert "mood_angry_competitive" in slots_in_meta, (
