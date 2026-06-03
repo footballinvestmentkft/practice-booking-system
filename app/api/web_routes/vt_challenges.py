@@ -90,6 +90,34 @@ _SKILL_CATEGORY_LABEL: dict[str, str] = {
     for skill in cat["skills"]
 }
 
+# CC-DESIGN-1 Phase-A: phase + outcome → preferred and alternative mood photo slot.
+# Only the 6 existing slots are used; no DB migration required.
+# is_winner=True  → player won / not forfeiter  → celebration/happy preferred
+# is_winner=False → player lost / forfeited      → sad preferred
+# is_winner=None  → pre-game or no winner context → phase-default
+_PHASE_MOOD_MAP: dict[tuple[str, bool | None], tuple[str | None, str | None]] = {
+    # Pre-game phases
+    ("challenge_sent",         None):  ("mood_angry_competitive", "mood_intro_neutral"),
+    ("challenge_received",     None):  ("mood_surprised_shocked",  "mood_intro_neutral"),
+    ("challenge_accepted",     None):  ("mood_happy_smile",        "mood_intro_neutral"),
+    ("waiting_for_opponent",   None):  ("mood_angry_competitive",  "mood_intro_neutral"),
+    ("live_lobby_ready",       None):  ("mood_angry_competitive",  "mood_intro_neutral"),
+    ("live_in_progress",       None):  ("mood_angry_competitive",  "mood_intro_neutral"),
+    # Result phases — winner/loser aware
+    ("completed_score_win",    True):  ("mood_celebration",        "mood_happy_smile"),
+    ("completed_score_win",    False): ("mood_sad_disappointed",   "mood_intro_neutral"),
+    ("completed_draw",         None):  ("mood_surprised_shocked",  "mood_intro_neutral"),
+    ("completed_forfeit_win",  True):  ("mood_celebration",        "mood_happy_smile"),
+    ("completed_forfeit_win",  False): ("mood_sad_disappointed",   "mood_intro_neutral"),
+    ("completed_forfeit_loss", True):  ("mood_celebration",        "mood_happy_smile"),
+    ("completed_forfeit_loss", False): ("mood_sad_disappointed",   "mood_intro_neutral"),
+    ("no_contest",             None):  ("mood_intro_neutral",      None),
+    ("skill_delta_result",     None):  ("mood_happy_smile",        "mood_celebration"),
+    # Terminal rejection phases
+    ("challenge_cancelled",    None):  ("mood_intro_neutral",      None),
+    ("challenge_declined",     None):  ("mood_sad_disappointed",   "mood_intro_neutral"),
+}
+
 _MAX_MSG         = 500
 _COMPLETED_LIMIT = 20
 _VALID_DIFFICULTIES = {"easy", "medium", "hard", "expert"}
@@ -478,9 +506,10 @@ async def send_challenge(
             (UserMoodPhoto.processed_png_url == resolved_photo) |
             (UserMoodPhoto.original_url == resolved_photo),
         ).first()
-        challenger_snapshot = resolved_photo if owns else _get_participant_photo(db, user.id)
+        challenger_snapshot = resolved_photo if owns else _get_participant_photo_for_phase(db, user.id, "challenge_sent", None)
     else:
-        challenger_snapshot = _get_participant_photo(db, user.id)
+        # No explicit selection: prefer mood_angry_competitive for challenge_sent context
+        challenger_snapshot = _get_participant_photo_for_phase(db, user.id, "challenge_sent", None)
     challenge = VirtualTrainingChallenge(
         challenger_id              = user.id,
         challenged_id              = challenged_user_id,
@@ -1157,6 +1186,57 @@ def _get_participant_photo(db: Session, user_id: int) -> str | None:
     return lic.player_card_photo_url or lic.wc_photo_url or None
 
 
+def _winner_ctx(ch: Any, user_id: int) -> bool | None:
+    """Return winner context for a participant in a challenge.
+
+    True  → this user won  (or is the non-forfeiter in forfeit)
+    False → this user lost (or is the forfeiter)
+    None  → no winner set (draw, no_contest, or pre-game phase)
+    """
+    if ch.winner_id is None:
+        return None
+    return ch.winner_id == user_id
+
+
+def _get_participant_photo_for_phase(
+    db: Session,
+    user_id: int,
+    phase: str,
+    is_winner: bool | None,
+) -> str | None:
+    """Phase- and outcome-aware mood photo selection (Phase-A, 6 existing slots only).
+
+    Lookup order per player:
+      1. preferred mood slot for (phase, is_winner) from _PHASE_MOOD_MAP
+      2. alternative mood slot
+      3. mood_intro_neutral (final mood fallback)
+      4. UserLicense.player_card_photo_url
+      5. UserLicense.wc_photo_url
+      6. None (template renders initials)
+
+    Called only when the per-challenge frozen snapshot is NULL.
+    Never performs DB writes.
+    """
+    preferred, alt = _PHASE_MOOD_MAP.get(
+        (phase, is_winner),
+        _PHASE_MOOD_MAP.get((phase, None), (None, "mood_intro_neutral")),
+    )
+    seen: set[str] = set()
+    for slot in filter(None, [preferred, alt, "mood_intro_neutral"]):
+        if slot in seen:
+            continue
+        seen.add(slot)
+        photo = db.query(UserMoodPhoto).filter_by(user_id=user_id, slot=slot).first()
+        if photo:
+            return photo.processed_png_url or photo.original_url
+
+    lic = db.query(UserLicense).filter(
+        UserLicense.user_id == user_id,
+        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
+    ).first()
+    return (lic.player_card_photo_url or lic.wc_photo_url) if lic else None
+
+
 def _get_participant_stats(db: Session, user_id: int) -> dict:
     """Return overall skill + primary/secondary position for a challenge card participant.
 
@@ -1489,14 +1569,17 @@ async def challenge_card_preview(
             detail=f"Phase {phase!r} is not applicable to this challenge.",
         )
 
-    # CC-DESIGN-1 SNAPSHOT: per-challenge photo with neutral mood fallback.
-    # If the challenge has a saved snapshot, use it; otherwise render neutral mood.
+    # CC-DESIGN-1 Phase-A SNAPSHOT: frozen snapshot has absolute priority.
+    # If NULL, phase/outcome-aware mood lookup runs (_PHASE_MOOD_MAP).
     # photo_url query param overrides the VIEWER's own slot only (not the opponent's).
-    def _photo(uid: int, snapshot_url: str | None) -> str | None:
-        return snapshot_url or _get_participant_photo(db, uid)
+    ch_is_winner = _winner_ctx(ch, ch.challenger_id)
+    cd_is_winner = _winner_ctx(ch, ch.challenged_id)
 
-    challenger_photo = _photo(ch.challenger_id, ch.challenger_card_photo_url)
-    challenged_photo = _photo(ch.challenged_id, ch.challenged_card_photo_url)
+    def _photo(uid: int, snapshot_url: str | None, is_winner: bool | None) -> str | None:
+        return snapshot_url or _get_participant_photo_for_phase(db, uid, phase, is_winner)
+
+    challenger_photo = _photo(ch.challenger_id, ch.challenger_card_photo_url, ch_is_winner)
+    challenged_photo = _photo(ch.challenged_id, ch.challenged_card_photo_url, cd_is_winner)
 
     # CC-DESIGN-1: participant stats (overall skill + position overlay)
     ch_stats = _get_participant_stats(db, ch.challenger_id)

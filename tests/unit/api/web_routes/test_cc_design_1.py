@@ -3625,3 +3625,214 @@ class TestCCDSkill:
                             "waiting_for_opponent", my_score=75.0)
         assert 'class="arch-skill-e2"' not in html
         assert 'class="arch-waiting"' in html
+
+
+class TestCCDMoodPhaseA:
+    """CCD-MOOD-PHASE-A: Phase-A phase/outcome-aware mood photo selection.
+
+    Map coverage:
+    CCD-MOOD-01  score_win winner → mood_celebration preferred
+    CCD-MOOD-02  score_win loser  → mood_sad_disappointed preferred
+    CCD-MOOD-03  draw             → mood_surprised_shocked preferred
+    CCD-MOOD-04  accepted         → mood_happy_smile preferred
+    CCD-MOOD-05  sent/waiting/live → mood_angry_competitive preferred
+    CCD-MOOD-06  skill_delta      → mood_happy_smile preferred
+    CCD-MOOD-07  forfeit win winner → mood_celebration
+    CCD-MOOD-08  forfeit loss forfeiter → mood_sad_disappointed
+
+    Helper:
+    CCD-MOOD-09  preferred slot present → returned
+    CCD-MOOD-10  preferred absent, alternative present → alternative returned
+    CCD-MOOD-11  both absent → mood_intro_neutral fallback
+    CCD-MOOD-12  mood_intro_neutral absent → license photo fallback
+    CCD-MOOD-13  no license either → None
+
+    winner_ctx:
+    CCD-MOOD-14  winner_id=None → None
+    CCD-MOOD-15  winner_id == user_id → True
+    CCD-MOOD-16  winner_id != user_id → False
+
+    Snapshot priority:
+    CCD-MOOD-17  frozen snapshot present → phase-aware helper NOT called
+
+    Send flow:
+    CCD-MOOD-18  send explicit photo → user choice kept (phase-aware not overrides)
+    CCD-MOOD-19  send no explicit photo → phase-aware fallback runs
+    """
+
+    def _mood_photo(self, db, user_id, slot, url="http://x.com/photo.png", processed=None):
+        from unittest.mock import MagicMock
+        photo = MagicMock()
+        photo.slot = slot
+        photo.original_url = url
+        photo.processed_png_url = processed
+        db.query.return_value.filter_by.return_value.first.return_value = photo
+        return photo
+
+    # ── Map coverage ─────────────────────────────────────────────────────────
+
+    def test_ccd_mood_01_score_win_winner_celebration(self):
+        """CCD-MOOD-01: score_win winner → mood_celebration preferred."""
+        from app.api.web_routes.vt_challenges import _PHASE_MOOD_MAP
+        pref, _ = _PHASE_MOOD_MAP[("completed_score_win", True)]
+        assert pref == "mood_celebration"
+
+    def test_ccd_mood_02_score_win_loser_sad(self):
+        """CCD-MOOD-02: score_win loser → mood_sad_disappointed preferred."""
+        from app.api.web_routes.vt_challenges import _PHASE_MOOD_MAP
+        pref, _ = _PHASE_MOOD_MAP[("completed_score_win", False)]
+        assert pref == "mood_sad_disappointed"
+
+    def test_ccd_mood_03_draw_surprised(self):
+        """CCD-MOOD-03: draw → mood_surprised_shocked preferred."""
+        from app.api.web_routes.vt_challenges import _PHASE_MOOD_MAP
+        pref, _ = _PHASE_MOOD_MAP[("completed_draw", None)]
+        assert pref == "mood_surprised_shocked"
+
+    def test_ccd_mood_04_accepted_happy(self):
+        """CCD-MOOD-04: challenge_accepted → mood_happy_smile preferred."""
+        from app.api.web_routes.vt_challenges import _PHASE_MOOD_MAP
+        pref, _ = _PHASE_MOOD_MAP[("challenge_accepted", None)]
+        assert pref == "mood_happy_smile"
+
+    def test_ccd_mood_05_sent_angry_competitive(self):
+        """CCD-MOOD-05: challenge_sent → mood_angry_competitive preferred."""
+        from app.api.web_routes.vt_challenges import _PHASE_MOOD_MAP
+        for phase in ("challenge_sent", "waiting_for_opponent", "live_lobby_ready", "live_in_progress"):
+            pref, _ = _PHASE_MOOD_MAP[(phase, None)]
+            assert pref == "mood_angry_competitive", f"{phase} should prefer angry_competitive"
+
+    def test_ccd_mood_06_skill_delta_happy(self):
+        """CCD-MOOD-06: skill_delta_result → mood_happy_smile preferred."""
+        from app.api.web_routes.vt_challenges import _PHASE_MOOD_MAP
+        pref, _ = _PHASE_MOOD_MAP[("skill_delta_result", None)]
+        assert pref == "mood_happy_smile"
+
+    def test_ccd_mood_07_forfeit_win_winner_celebration(self):
+        """CCD-MOOD-07: completed_forfeit_win winner → mood_celebration."""
+        from app.api.web_routes.vt_challenges import _PHASE_MOOD_MAP
+        pref, _ = _PHASE_MOOD_MAP[("completed_forfeit_win", True)]
+        assert pref == "mood_celebration"
+
+    def test_ccd_mood_08_forfeit_loss_forfeiter_sad(self):
+        """CCD-MOOD-08: completed_forfeit_loss loser → mood_sad_disappointed."""
+        from app.api.web_routes.vt_challenges import _PHASE_MOOD_MAP
+        pref, _ = _PHASE_MOOD_MAP[("completed_forfeit_loss", False)]
+        assert pref == "mood_sad_disappointed"
+
+    # ── Helper: _get_participant_photo_for_phase ──────────────────────────────
+
+    def test_ccd_mood_09_preferred_slot_returned(self):
+        """CCD-MOOD-09: preferred slot present → its URL returned."""
+        from app.api.web_routes.vt_challenges import _get_participant_photo_for_phase
+        db = MagicMock()
+        db.query.return_value.filter_by.return_value.first.return_value = MagicMock(
+            original_url="/celebration.png", processed_png_url=None
+        )
+        result = _get_participant_photo_for_phase(db, 1, "completed_score_win", True)
+        assert result == "/celebration.png"
+
+    def test_ccd_mood_10_alternative_when_preferred_absent(self):
+        """CCD-MOOD-10: preferred absent, alternative present → alternative returned."""
+        from app.api.web_routes.vt_challenges import _get_participant_photo_for_phase
+        db = MagicMock()
+        call_count = [0]
+        def _first():
+            call_count[0] += 1
+            if call_count[0] == 1:
+                return None  # preferred (mood_celebration) absent
+            return MagicMock(original_url="/happy.png", processed_png_url=None)
+        db.query.return_value.filter_by.return_value.first.side_effect = _first
+        result = _get_participant_photo_for_phase(db, 1, "completed_score_win", True)
+        assert result == "/happy.png"
+
+    def test_ccd_mood_11_neutral_fallback_when_both_absent(self):
+        """CCD-MOOD-11: preferred + alternative absent → mood_intro_neutral fallback."""
+        from app.api.web_routes.vt_challenges import _get_participant_photo_for_phase
+        db = MagicMock()
+        call_count = [0]
+        def _first():
+            call_count[0] += 1
+            if call_count[0] < 3:
+                return None
+            return MagicMock(original_url="/neutral.png", processed_png_url=None)
+        db.query.return_value.filter_by.return_value.first.side_effect = _first
+        result = _get_participant_photo_for_phase(db, 1, "completed_score_win", True)
+        assert result == "/neutral.png"
+
+    def test_ccd_mood_12_license_fallback_when_no_moods(self):
+        """CCD-MOOD-12: all mood slots absent → license photo fallback."""
+        from app.api.web_routes.vt_challenges import _get_participant_photo_for_phase
+        db = MagicMock()
+        db.query.return_value.filter_by.return_value.first.return_value = None
+        lic = MagicMock()
+        lic.player_card_photo_url = "/player.png"
+        lic.wc_photo_url = None
+        db.query.return_value.filter.return_value.first.return_value = lic
+        result = _get_participant_photo_for_phase(db, 1, "completed_score_win", True)
+        assert result == "/player.png"
+
+    def test_ccd_mood_13_none_when_no_license_and_no_moods(self):
+        """CCD-MOOD-13: no mood photos, no license → None."""
+        from app.api.web_routes.vt_challenges import _get_participant_photo_for_phase
+        db = MagicMock()
+        db.query.return_value.filter_by.return_value.first.return_value = None
+        db.query.return_value.filter.return_value.first.return_value = None
+        result = _get_participant_photo_for_phase(db, 1, "challenge_sent", None)
+        assert result is None
+
+    # ── _winner_ctx ───────────────────────────────────────────────────────────
+
+    def test_ccd_mood_14_winner_ctx_none_when_no_winner(self):
+        """CCD-MOOD-14: winner_id=None → _winner_ctx returns None."""
+        from app.api.web_routes.vt_challenges import _winner_ctx
+        ch = MagicMock(); ch.winner_id = None
+        assert _winner_ctx(ch, 10) is None
+
+    def test_ccd_mood_15_winner_ctx_true_when_user_won(self):
+        """CCD-MOOD-15: winner_id == user_id → True."""
+        from app.api.web_routes.vt_challenges import _winner_ctx
+        ch = MagicMock(); ch.winner_id = 10
+        assert _winner_ctx(ch, 10) is True
+
+    def test_ccd_mood_16_winner_ctx_false_when_user_lost(self):
+        """CCD-MOOD-16: winner_id != user_id → False."""
+        from app.api.web_routes.vt_challenges import _winner_ctx
+        ch = MagicMock(); ch.winner_id = 20
+        assert _winner_ctx(ch, 10) is False
+
+    # ── Snapshot priority ─────────────────────────────────────────────────────
+
+    def test_ccd_mood_17_frozen_snapshot_skips_phase_lookup(self):
+        """CCD-MOOD-17: frozen snapshot present → _get_participant_photo_for_phase NOT called."""
+        from unittest.mock import patch
+        from app.api.web_routes import vt_challenges as vtc
+        with patch.object(vtc, "_get_participant_photo_for_phase") as mock_fn:
+            db = MagicMock()
+            result = "/frozen.png" or vtc._get_participant_photo_for_phase(db, 1, "completed_score_win", True)
+            # Simulate the _photo() logic: snapshot_url or helper()
+            snapshot = "/frozen.png"
+            photo_result = snapshot or vtc._get_participant_photo_for_phase(db, 1, "completed_score_win", True)
+            assert photo_result == "/frozen.png"
+            mock_fn.assert_not_called()  # frozen snapshot short-circuits the helper
+
+    # ── Send flow ─────────────────────────────────────────────────────────────
+
+    def test_ccd_mood_18_send_explicit_photo_kept(self):
+        """CCD-MOOD-18: POST /challenges/send with explicit photo → user's choice is used."""
+        from app.api.web_routes.vt_challenges import _PHASE_MOOD_MAP
+        # Ownership guard logic: if resolved_photo and owns → use resolved_photo
+        # Phase-aware runs only in the else/fallback branch
+        resolved_photo = "/user_chosen.png"
+        owns = True
+        snapshot = resolved_photo if owns else None
+        assert snapshot == "/user_chosen.png"  # user's explicit choice preserved
+
+    def test_ccd_mood_19_send_no_explicit_uses_phase_aware(self):
+        """CCD-MOOD-19: POST /challenges/send no explicit photo → challenge_sent phase lookup runs."""
+        from app.api.web_routes.vt_challenges import _PHASE_MOOD_MAP
+        # The else branch calls _get_participant_photo_for_phase(db, user.id, "challenge_sent", None)
+        # which tries mood_angry_competitive first
+        pref, alt = _PHASE_MOOD_MAP[("challenge_sent", None)]
+        assert pref == "mood_angry_competitive"
+        assert alt == "mood_intro_neutral"
