@@ -17,6 +17,7 @@ Fixture design:
 from __future__ import annotations
 
 import time
+import uuid
 from typing import Dict
 
 import pytest
@@ -53,8 +54,8 @@ def account_user(api_url: str) -> Dict:
     needs a user with a guaranteed-known current password.
     """
     admin_token = get_admin_token(api_url)
-    ts = int(time.time() * 1000)
-    user = create_test_user(api_url, admin_token, "STUDENT", ts, 0)
+    uid = uuid.uuid4().hex[:16]  # collision-free across parallel workers
+    user = create_test_user(api_url, admin_token, "STUDENT", uid, 0)
     yield user
     try:
         fresh_admin_token = get_admin_token(api_url)
