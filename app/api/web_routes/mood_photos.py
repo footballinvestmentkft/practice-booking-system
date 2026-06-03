@@ -17,7 +17,10 @@ import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+import time
+import threading
+
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -31,6 +34,7 @@ from ...models.user_mood_photos import MOOD_PHOTO_SLOTS, MoodPhotoStatus, UserMo
 from ...services.mood_photo_service import (
     MOOD_PHOTO_DIR,
     apply_removal_failure,
+    apply_removal_result,
     check_bg_removal_rate_limit,
     delete_mood_photo,
     get_mood_photos_for_user,
@@ -38,12 +42,61 @@ from ...services.mood_photo_service import (
     save_mood_photo,
     set_status_processing,
 )
-from ...tasks.mood_photo_tasks import remove_background_task
+from ...services.background_removal import get_processor as _get_bg_processor
+from ...database import SessionLocal as _SessionLocal
 
 logger = logging.getLogger(__name__)
 
 BASE_DIR  = Path(__file__).resolve().parent.parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+
+
+def _run_bg_removal_inprocess(user_id: int, slot: str, original_url: str) -> None:
+    """Run background removal inside the web process via FastAPI BackgroundTasks.
+
+    This runs in uvicorn's thread pool — no separate Celery worker required.
+    Opens its own DB session (independent of the request session).
+    State transitions: processing → ready (success) | failed (error/missing file).
+    """
+    db = _SessionLocal()
+    try:
+        filename  = Path(original_url).name
+        orig_path = MOOD_PHOTO_DIR / filename
+        if not orig_path.exists():
+            apply_removal_failure(user_id, slot, db)
+            logger.warning(
+                "bg_removal_missing_file",
+                extra={"user_id": user_id, "slot": slot, "path": str(orig_path)},
+            )
+            return
+
+        input_bytes  = orig_path.read_bytes()
+        processor    = _get_bg_processor()
+        output_bytes = processor.remove(input_bytes)
+
+        for old in MOOD_PHOTO_DIR.glob(f"{user_id}_mood_{slot}_proc_*.png"):
+            old.unlink(missing_ok=True)
+
+        ts            = int(time.time())
+        proc_filename = f"{user_id}_mood_{slot}_proc_{ts}.png"
+        (MOOD_PHOTO_DIR / proc_filename).write_bytes(output_bytes)
+        processed_url = f"/static/uploads/mood_photos/{proc_filename}"
+        apply_removal_result(user_id, slot, processed_url, db)
+        logger.info(
+            "bg_removal_done_inprocess",
+            extra={"user_id": user_id, "slot": slot, "processor": type(processor).__name__},
+        )
+    except Exception as exc:
+        logger.warning(
+            "bg_removal_error_inprocess",
+            extra={"user_id": user_id, "slot": slot, "error": str(exc)},
+        )
+        try:
+            apply_removal_failure(user_id, slot, db)
+        except Exception:
+            pass
+    finally:
+        db.close()
 
 router = APIRouter()
 
@@ -143,11 +196,12 @@ async def mood_photos_page(
 
 @router.post("/profile/my-mood-photos/{slot}/upload")
 async def mood_photo_upload(
-    slot:    str,
-    request: Request,
-    photo:   UploadFile = File(...),
-    user:    User       = Depends(get_current_user_web),
-    db:      Session    = Depends(get_db),
+    slot:             str,
+    request:          Request,
+    background_tasks: BackgroundTasks,
+    photo:            UploadFile = File(...),
+    user:             User       = Depends(get_current_user_web),
+    db:               Session    = Depends(get_db),
 ):
     if slot not in MOOD_PHOTO_SLOTS:
         raise HTTPException(status_code=422, detail=f"Invalid slot: {slot!r}")
@@ -178,15 +232,18 @@ async def mood_photo_upload(
         db.rollback()
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    # BG-REMOVAL-1: auto-trigger background removal after upload
+    # BG-REMOVAL: auto-trigger background removal after upload.
+    # Uses FastAPI BackgroundTasks (in-process thread) — no separate Celery worker needed.
     if settings.BG_REMOVAL_PROCESSOR != "null":
         row = get_mood_photos_for_user(user.id, db).get(slot)
         if row and check_bg_removal_rate_limit(user.id):
             set_status_processing(user.id, slot, db)
             db.commit()
-            remove_background_task.delay(user.id, slot, row.original_url)
+            background_tasks.add_task(
+                _run_bg_removal_inprocess, user.id, slot, row.original_url
+            )
             logger.info(
-                "bg_removal_auto_triggered",
+                "bg_removal_auto_triggered_inprocess",
                 extra={"user": user.email, "slot": slot},
             )
 
@@ -238,9 +295,10 @@ async def mood_photo_delete_api(
 
 @router.post("/profile/my-mood-photos/{slot}/remove-bg")
 async def mood_photo_remove_bg(
-    slot: str,
-    user: User    = Depends(get_current_user_web),
-    db:   Session = Depends(get_db),
+    slot:             str,
+    background_tasks: BackgroundTasks,
+    user:             User    = Depends(get_current_user_web),
+    db:               Session = Depends(get_db),
 ):
     """
     Trigger background removal for a slot.
@@ -289,8 +347,10 @@ async def mood_photo_remove_bg(
 
     set_status_processing(user.id, slot, db)
     db.commit()
-    remove_background_task.delay(user.id, slot, record.original_url)
-    logger.info("bg_removal_triggered", extra={"user": user.email, "slot": slot})
+    background_tasks.add_task(
+        _run_bg_removal_inprocess, user.id, slot, record.original_url
+    )
+    logger.info("bg_removal_triggered_inprocess", extra={"user": user.email, "slot": slot})
     return RedirectResponse(url="/profile/my-mood-photos", status_code=303)
 
 

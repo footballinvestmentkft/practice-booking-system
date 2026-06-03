@@ -64,6 +64,7 @@ def test_mp_r01_authenticated_upload_redirects():
 
         resp = _run(
             mood_photo_upload(
+                background_tasks=MagicMock(),
                 slot    = "mood_happy_smile",
                 request = _request(),
                 photo   = _mock_photo(),
@@ -88,6 +89,7 @@ def test_mp_r02_unauthenticated_raises():
     with pytest.raises(HTTPException) as exc_info:
         _run(
             mood_photo_upload(
+                background_tasks=MagicMock(),
                 slot    = "mood_happy_smile",
                 request = _request(),
                 photo   = _mock_photo(),
@@ -109,6 +111,7 @@ def test_mp_r03_invalid_slot_raises_422():
     with pytest.raises(HTTPException) as exc_info:
         _run(
             mood_photo_upload(
+                background_tasks=MagicMock(),
                 slot    = "angry_rage",
                 request = _request(),
                 photo   = _mock_photo(),
@@ -582,6 +585,7 @@ def test_mp_r22_upload_angry_slot_redirects():
          patch(f"{_BASE}.get_mood_photos_for_user", return_value={}):
         resp = _run(
             mood_photo_upload(
+                background_tasks=MagicMock(),
                 slot    = "mood_angry_competitive",
                 request = _request(),
                 photo   = _mock_photo(),
@@ -604,6 +608,7 @@ def test_mp_r23_upload_surprised_slot_redirects():
          patch(f"{_BASE}.get_mood_photos_for_user", return_value={}):
         resp = _run(
             mood_photo_upload(
+                background_tasks=MagicMock(),
                 slot    = "mood_surprised_shocked",
                 request = _request(),
                 photo   = _mock_photo(),
@@ -902,14 +907,14 @@ def test_mp_r27_remove_bg_uploaded_enqueues_task(tmp_path, monkeypatch):
     rec = _record(status="uploaded", original_url=f"/static/uploads/mood_photos/{orig_file.name}")
     db  = _db_with(rec)
 
+    bg = MagicMock()
     with patch(f"{_BASE}.set_status_processing") as mock_set, \
-         patch(f"{_BASE}.apply_removal_failure") as mock_fail, \
-         patch(f"{_TASK}.delay") as mock_delay:
-        resp = _run(mood_photo_remove_bg(slot="mood_happy_smile", user=_user(42), db=db))
+         patch(f"{_BASE}.apply_removal_failure") as mock_fail:
+        resp = _run(mood_photo_remove_bg(background_tasks=bg, slot="mood_happy_smile", user=_user(42), db=db))
 
     assert resp.status_code == 303
     mock_set.assert_called_once()
-    mock_delay.assert_called_once()
+    bg.add_task.assert_called_once()  # inprocess background task was scheduled
     mock_fail.assert_not_called()
 
 
@@ -925,12 +930,12 @@ def test_mp_r28_remove_bg_failed_retry_enqueues_task(tmp_path, monkeypatch):
     rec = _record(status="failed", original_url=f"/static/uploads/mood_photos/{orig_file.name}")
     db  = _db_with(rec)
 
-    with patch(f"{_BASE}.set_status_processing"), \
-         patch(f"{_TASK}.delay") as mock_delay:
-        resp = _run(mood_photo_remove_bg(slot="mood_happy_smile", user=_user(42), db=db))
+    bg = MagicMock()
+    with patch(f"{_BASE}.set_status_processing"):
+        resp = _run(mood_photo_remove_bg(background_tasks=bg, slot="mood_happy_smile", user=_user(42), db=db))
 
     assert resp.status_code == 303
-    mock_delay.assert_called_once()
+    bg.add_task.assert_called_once()  # inprocess background task was scheduled
 
 
 # ── MP-R29 ── POST /remove-bg status=processing → 303 no-op, no enqueue ──────
@@ -942,11 +947,11 @@ def test_mp_r29_remove_bg_processing_no_double_enqueue(tmp_path, monkeypatch):
     rec = _record(status="processing")
     db  = _db_with(rec)
 
-    with patch(f"{_TASK}.delay") as mock_delay:
-        resp = _run(mood_photo_remove_bg(slot="mood_happy_smile", user=_user(42), db=db))
+    bg = MagicMock()
+    resp = _run(mood_photo_remove_bg(background_tasks=bg, slot="mood_happy_smile", user=_user(42), db=db))
 
     assert resp.status_code == 303
-    mock_delay.assert_not_called()
+    bg.add_task.assert_not_called()  # no background task for already-processed state
 
 
 # ── MP-R30 ── POST /remove-bg status=ready → 303 no-op, no re-trigger ────────
@@ -958,11 +963,11 @@ def test_mp_r30_remove_bg_ready_no_retrigger(tmp_path, monkeypatch):
     rec = _record(status="ready")
     db  = _db_with(rec)
 
-    with patch(f"{_TASK}.delay") as mock_delay:
-        resp = _run(mood_photo_remove_bg(slot="mood_happy_smile", user=_user(42), db=db))
+    bg = MagicMock()
+    resp = _run(mood_photo_remove_bg(background_tasks=bg, slot="mood_happy_smile", user=_user(42), db=db))
 
     assert resp.status_code == 303
-    mock_delay.assert_not_called()
+    bg.add_task.assert_not_called()  # no background task for already-processed state
 
 
 # ── MP-R31 ── POST /remove-bg invalid slot → 422 ─────────────────────────────
@@ -971,7 +976,7 @@ def test_mp_r31_remove_bg_invalid_slot_raises_422():
     from app.api.web_routes.mood_photos import mood_photo_remove_bg
 
     with pytest.raises(HTTPException) as exc:
-        _run(mood_photo_remove_bg(slot="not_a_slot", user=_user(42), db=_db()))
+        _run(mood_photo_remove_bg(background_tasks=MagicMock(), slot="not_a_slot", user=_user(42), db=_db()))
 
     assert exc.value.status_code == 422
 
@@ -983,7 +988,7 @@ def test_mp_r32_remove_bg_no_record_raises_404():
 
     db = _db_with(None)
     with pytest.raises(HTTPException) as exc:
-        _run(mood_photo_remove_bg(slot="mood_happy_smile", user=_user(42), db=db))
+        _run(mood_photo_remove_bg(background_tasks=MagicMock(), slot="mood_happy_smile", user=_user(42), db=db))
 
     assert exc.value.status_code == 404
 
@@ -998,13 +1003,11 @@ def test_mp_r33_remove_bg_missing_file_fast_fail(tmp_path, monkeypatch):
     rec = _record(status="uploaded", original_url="/static/uploads/mood_photos/missing.png")
     db  = _db_with(rec)
 
-    with patch(f"{_BASE}.apply_removal_failure") as mock_fail, \
-         patch(f"{_TASK}.delay") as mock_delay:
-        resp = _run(mood_photo_remove_bg(slot="mood_happy_smile", user=_user(42), db=db))
+    with patch(f"{_BASE}.apply_removal_failure") as mock_fail:
+        resp = _run(mood_photo_remove_bg(background_tasks=MagicMock(), slot="mood_happy_smile", user=_user(42), db=db))
 
     assert resp.status_code == 303
-    mock_fail.assert_called_once()
-    mock_delay.assert_not_called()
+    mock_fail.assert_called_once()  # file missing → failed, no bg task
 
 
 # ── MP-R34 ── GET /status uploaded → JSON, processing_timed_out=False ─────────
@@ -1421,20 +1424,17 @@ def test_mp_r52_remove_bg_rate_limit_exceeded(tmp_path, monkeypatch):
     # First 3 calls: allowed
     for _ in range(3):
         db = _db_with(_record(status="uploaded", original_url=f"/static/uploads/mood_photos/{orig_file.name}"))
-        with patch(f"{_BASE}.set_status_processing"), \
-             patch(f"{_TASK}.delay"):
-            resp = _run(mood_photo_remove_bg(slot="mood_happy_smile", user=_user(42), db=db))
+        with patch(f"{_BASE}.set_status_processing"):
+            resp = _run(mood_photo_remove_bg(background_tasks=MagicMock(), slot="mood_happy_smile", user=_user(42), db=db))
         assert resp.status_code == 303
 
     # 4th call: must be rate-limited
     db = _db_with(_record(status="uploaded", original_url=f"/static/uploads/mood_photos/{orig_file.name}"))
     with patch(f"{_BASE}.set_status_processing"), \
-         patch(f"{_TASK}.delay") as mock_delay, \
          pytest.raises(HTTPException) as exc:
-        _run(mood_photo_remove_bg(slot="mood_happy_smile", user=_user(42), db=db))
+        _run(mood_photo_remove_bg(background_tasks=MagicMock(), slot="mood_happy_smile", user=_user(42), db=db))
 
     assert exc.value.status_code == 429
-    mock_delay.assert_not_called()
 
     reset_bg_removal_rate_counters()
 
@@ -1450,17 +1450,18 @@ def test_bg_01_upload_auto_triggers_bg_removal(tmp_path, monkeypatch):
     row.status           = "uploaded"
     row.processed_png_url = None
 
+    bg = MagicMock()
     with patch(f"{_BASE}.save_mood_photo"), \
          patch(f"{_BASE}.get_mood_photos_for_user", return_value={"mood_happy_smile": row}), \
          patch(f"{_BASE}.settings") as mock_settings, \
          patch(f"{_BASE}.set_status_processing") as mock_set, \
-         patch(f"{_BASE}.check_bg_removal_rate_limit", return_value=True), \
-         patch(f"{_TASK}.delay") as mock_delay:
+         patch(f"{_BASE}.check_bg_removal_rate_limit", return_value=True):
 
         mock_settings.BG_REMOVAL_PROCESSOR = "rembg"
 
         _run(
             mood_photo_upload(
+                background_tasks=bg,
                 slot    = "mood_happy_smile",
                 request = _request(),
                 photo   = _mock_photo(),
@@ -1470,7 +1471,7 @@ def test_bg_01_upload_auto_triggers_bg_removal(tmp_path, monkeypatch):
         )
 
     mock_set.assert_called_once()
-    mock_delay.assert_called_once()
+    bg.add_task.assert_called_once()  # inprocess background task scheduled
 
 
 # ── BG-04 ── Template renders processed_png_url when status='ready' ───────────
@@ -1549,15 +1550,16 @@ def test_bg_08_null_processor_no_task_enqueued():
     row.status           = "uploaded"
     row.processed_png_url = None
 
+    bg = MagicMock()
     with patch(f"{_BASE}.save_mood_photo"), \
          patch(f"{_BASE}.get_mood_photos_for_user", return_value={"mood_happy_smile": row}), \
-         patch(f"{_BASE}.settings") as mock_settings, \
-         patch(f"{_TASK}.delay") as mock_delay:
+         patch(f"{_BASE}.settings") as mock_settings:
 
         mock_settings.BG_REMOVAL_PROCESSOR = "null"
 
         _run(
             mood_photo_upload(
+                background_tasks=bg,
                 slot    = "mood_happy_smile",
                 request = _request(),
                 photo   = _mock_photo(),
@@ -1566,7 +1568,7 @@ def test_bg_08_null_processor_no_task_enqueued():
             )
         )
 
-    mock_delay.assert_not_called()
+    bg.add_task.assert_not_called()  # null processor → no background task
 
 
 # ── BG-09 ── processing_timed_out=True after PROCESSING_TIMEOUT_SECONDS ───────
