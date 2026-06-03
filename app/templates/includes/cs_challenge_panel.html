@@ -138,7 +138,20 @@
   {# ── CC-DESIGN-1 SNAPSHOT: Mood Photo selector — viewer's own slot only ── #}
   <div class="cs-pc-selector">
     <p class="cs-section-label">Your photo for this card</p>
-    <p class="cs-slot-hint" style="font-size:0.68rem;color:#475569;margin:-0.3rem 0 0.5rem;">
+    {# Auto-mood indicator — shows current photo source: auto / fallback / manual #}
+    {% if auto_mood_info is defined and auto_mood_info %}
+    <div class="cs-mood-auto-indicator cs-mood-auto-{{ auto_mood_info.state }}"
+         id="cs-mood-auto-indicator">
+      {% if auto_mood_info.state == "manual" %}
+        ✏️ <span id="cs-mood-auto-label">{{ auto_mood_info.label }}</span>
+      {% elif auto_mood_info.state == "auto" %}
+        🤖 <span id="cs-mood-auto-label">{{ auto_mood_info.label }}</span>
+      {% else %}
+        💡 <span id="cs-mood-auto-label">{{ auto_mood_info.label }}</span>
+      {% endif %}
+    </div>
+    {% endif %}
+    <p class="cs-slot-hint" style="font-size:0.68rem;color:#475569;margin:0.2rem 0 0.5rem;">
       Changes only your side of the card.
     </p>
     {% set mood_photos    = mood_photos    if mood_photos    is defined else {} %}
