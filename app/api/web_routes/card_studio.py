@@ -62,7 +62,10 @@ from .vt_challenges import (
     get_unlocked_challenge_card_phases as _get_unlocked_phases,
     get_locked_challenge_card_phases   as _get_locked_phases,
     _EXPORTABLE_PHASES                 as _CC_EXPORTABLE_PHASES,
+    _PHASE_MOOD_MAP,
+    _winner_ctx,
 )
+from ...models.user_mood_photos import MOOD_PHOTO_SLOTS
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -674,6 +677,55 @@ def _resolve_challenge_context(
 
     opponent = ch.challenged if is_challenger else ch.challenger
 
+    # CC-DESIGN-1 Phase-B: Auto-selected mood indicator for the viewer's side.
+    # Determines which slot would be (or was) automatically chosen so the UI can
+    # show "Auto: Celebration" / "Fallback: Neutral" / "Manual override".
+    _viewer_uid     = user.id
+    _viewer_is_ch   = is_challenger
+    _viewer_snapshot = (
+        ch.challenger_card_photo_url if _viewer_is_ch else ch.challenged_card_photo_url
+    )
+    _viewer_winner  = _winner_ctx(ch, _viewer_uid)
+    _pref, _alt     = _PHASE_MOOD_MAP.get(
+        (phase, _viewer_winner),
+        _PHASE_MOOD_MAP.get((phase, None), (None, "mood_intro_neutral")),
+    )
+    # Determine which slot is actually in use by walking the fallback chain
+    _auto_slot: str | None = None
+    _auto_source = "fallback"  # "preferred" | "alternative" | "fallback" | "license"
+    for _s_label, _slot in [
+        ("preferred",    _pref),
+        ("alternative",  _alt),
+        ("fallback",     "mood_intro_neutral"),
+    ]:
+        if not _slot:
+            continue
+        _mp = mood_photos.get(_slot)
+        if _mp and (_mp.processed_png_url or _mp.original_url):
+            _auto_slot   = _slot
+            _auto_source = _s_label
+            break
+    # Build human label for the auto indicator
+    _slot_label_map = {m["slot"]: m["label"] for m in _MOOD_SLOT_META}
+    if _viewer_snapshot:
+        _auto_mood_info = {
+            "state":  "manual",
+            "label":  "Manual override",
+            "slot":   None,
+        }
+    elif _auto_slot:
+        _auto_mood_info = {
+            "state":  "auto" if _auto_source == "preferred" else "fallback",
+            "label":  f"{'Auto' if _auto_source == 'preferred' else 'Fallback'}: {_slot_label_map.get(_auto_slot, _auto_slot)}",
+            "slot":   _auto_slot,
+        }
+    else:
+        _auto_mood_info = {
+            "state":  "fallback",
+            "label":  "Fallback: Player photo",
+            "slot":   None,
+        }
+
     ctx = {
         "active_type":          "challenge",
         "challenge_mode":       "preview",
@@ -701,6 +753,8 @@ def _resolve_challenge_context(
         # CC-DESIGN-1: mood photo media panel for challenge Studio
         "mood_photos":          mood_photos,
         "mood_slot_meta":       _MOOD_SLOT_META,
+        # CC-DESIGN-1 Phase-B: auto-selected mood indicator
+        "auto_mood_info":       _auto_mood_info,
         **_STUDIO_NAV_CTX,
     }
     return ctx, None

@@ -180,6 +180,15 @@
 .cs-btn-delete:hover { border-color: #ef4444; color: #ef4444; }
 .cs-photo-error { font-size: 0.78rem; color: #f87171; margin-top: 0.4rem; display: none; }
 .cs-slot-hint { font-size: 0.72rem; color: #475569; margin: 0 0 0.6rem; }
+/* CC-DESIGN-1 Phase-B: auto-selected mood indicator */
+.cs-mood-auto-indicator {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.68rem; font-weight: 600; letter-spacing: 0.02em;
+  padding: 2px 8px; border-radius: 4px; margin-bottom: 6px;
+}
+.cs-mood-auto-auto     { background: #fffbeb; color: #92400e; border: 1px solid #fcd34d; }
+.cs-mood-auto-fallback { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
+.cs-mood-auto-manual   { background: #eff6ff; color: #1d4ed8; border: 1px solid #93c5fd; }
 
 /* ── Preview column ── */
 .cs-preview-col { }
@@ -1032,6 +1041,22 @@
     ccIframe.src = src;
   }
 
+  // 2b. Update auto-mood indicator label (Phase-B)
+  function _updateAutoIndicator(photoUrl) {
+    var el = document.getElementById('cs-mood-auto-indicator');
+    if (!el) return;
+    var lbl = document.getElementById('cs-mood-auto-label');
+    el.className = el.className.replace(/cs-mood-auto-(auto|fallback|manual)/g, '');
+    if (photoUrl) {
+      el.className += ' cs-mood-auto-manual';
+      el.innerHTML = '✏️ <span id="cs-mood-auto-label">Manual override</span>';
+    } else {
+      // Revert to server-determined state — reload the panel section to get fresh auto info
+      el.className += ' cs-mood-auto-fallback';
+      el.innerHTML = '💡 <span id="cs-mood-auto-label">Fallback: Neutral</span>';
+    }
+  }
+
   // 3. Persist snapshot via POST /challenges/{id}/card/photo (own slot only)
   function _saveSnapshot(photoUrl) {
     var fd = new FormData();
@@ -1047,6 +1072,7 @@
   // Main: select a photo (save + refresh + update UI)
   function _setChallengePhoto(photoUrl) {
     _updateChipState(photoUrl);
+    _updateAutoIndicator(photoUrl);
     _saveSnapshot(photoUrl);
     _refreshPreview(photoUrl);
   }
