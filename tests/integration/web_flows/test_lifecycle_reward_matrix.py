@@ -56,7 +56,7 @@ from tests/integration/conftest.py. Admin Bearer token bypasses instructor-only 
 """
 import json
 import uuid
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
 from sqlalchemy.orm import Session
@@ -154,12 +154,13 @@ def _tournament(
 ) -> Semester:
     """Create a tournament Semester + TournamentConfiguration + GameConfiguration."""
     preset = _preset(db)
+    _today = date.today()
     t = Semester(
         name=f"SRL Cup {_uid()}",
         code=f"SRL-{_uid()}",
         master_instructor_id=instructor.id,
-        start_date=date(2026, 6, 1),
-        end_date=date(2026, 6, 30),
+        start_date=_today + timedelta(days=30),
+        end_date=_today + timedelta(days=60),
         status=SemesterStatus.ONGOING,
         semester_category=SemesterCategory.TOURNAMENT,
         tournament_status=tournament_status,
@@ -185,10 +186,11 @@ def _tournament(
 
 def _session(db: Session, tournament: Semester) -> SessionModel:
     """Create a minimal MATCH session."""
+    _now = datetime.now(timezone.utc)
     sess = SessionModel(
         title=f"SRL Match {_uid()}",
-        date_start=datetime(2026, 6, 1, 10, 0, tzinfo=timezone.utc),
-        date_end=datetime(2026, 6, 1, 11, 0, tzinfo=timezone.utc),
+        date_start=_now + timedelta(days=30),
+        date_end=_now + timedelta(days=30, hours=1),
         semester_id=tournament.id,
         event_category=EventCategory.MATCH,
         session_type=SessionType.on_site,
@@ -945,12 +947,13 @@ def _ir_tournament(
     The format is inferred from scoring_type != 'HEAD_TO_HEAD'.
     """
     preset = _preset(db)
+    _today = date.today()
     t = Semester(
         name=f"SRL IR {_uid()}",
         code=f"SRL-IR-{_uid()}",
         master_instructor_id=instructor.id,
-        start_date=date(2026, 6, 1),
-        end_date=date(2026, 6, 30),
+        start_date=_today + timedelta(days=30),
+        end_date=_today + timedelta(days=60),
         status=SemesterStatus.ONGOING,
         semester_category=SemesterCategory.TOURNAMENT,
         tournament_status=tournament_status,
