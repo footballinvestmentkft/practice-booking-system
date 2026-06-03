@@ -3689,24 +3689,33 @@ class TestCCDMoodPhaseA:
         pref, _ = _PHASE_MOOD_MAP[("completed_draw", None)]
         assert pref == "mood_surprised_shocked"
 
-    def test_ccd_mood_04_accepted_happy(self):
-        """CCD-MOOD-04: challenge_accepted → mood_happy_smile preferred."""
+    def test_ccd_mood_04_accepted_confident(self):
+        """CCD-MOOD-04 (Phase-B): challenge_accepted → mood_confident preferred."""
         from app.api.web_routes.vt_challenges import _PHASE_MOOD_MAP
         pref, _ = _PHASE_MOOD_MAP[("challenge_accepted", None)]
-        assert pref == "mood_happy_smile"
+        assert pref == "mood_confident"
 
-    def test_ccd_mood_05_sent_angry_competitive(self):
-        """CCD-MOOD-05: challenge_sent → mood_angry_competitive preferred."""
+    def test_ccd_mood_05_sent_focused_ready(self):
+        """CCD-MOOD-05 (Phase-B): sent/waiting/live → mood_focused_ready preferred, angry fallback."""
         from app.api.web_routes.vt_challenges import _PHASE_MOOD_MAP
         for phase in ("challenge_sent", "waiting_for_opponent", "live_lobby_ready", "live_in_progress"):
-            pref, _ = _PHASE_MOOD_MAP[(phase, None)]
-            assert pref == "mood_angry_competitive", f"{phase} should prefer angry_competitive"
+            pref, alt = _PHASE_MOOD_MAP[(phase, None)]
+            assert pref == "mood_focused_ready", f"{phase} should prefer focused_ready"
+            assert alt == "mood_angry_competitive", f"{phase} fallback should be angry_competitive"
 
-    def test_ccd_mood_06_skill_delta_happy(self):
-        """CCD-MOOD-06: skill_delta_result → mood_happy_smile preferred."""
+    def test_ccd_mood_05b_accepted_confident(self):
+        """CCD-MOOD-05b (Phase-B): challenge_accepted → mood_confident preferred."""
         from app.api.web_routes.vt_challenges import _PHASE_MOOD_MAP
-        pref, _ = _PHASE_MOOD_MAP[("skill_delta_result", None)]
-        assert pref == "mood_happy_smile"
+        pref, alt = _PHASE_MOOD_MAP[("challenge_accepted", None)]
+        assert pref == "mood_confident"
+        assert alt == "mood_happy_smile"
+
+    def test_ccd_mood_06_skill_delta_proud(self):
+        """CCD-MOOD-06 (Phase-B): skill_delta_result → mood_proud preferred, happy fallback."""
+        from app.api.web_routes.vt_challenges import _PHASE_MOOD_MAP
+        pref, alt = _PHASE_MOOD_MAP[("skill_delta_result", None)]
+        assert pref == "mood_proud"
+        assert alt == "mood_happy_smile"
 
     def test_ccd_mood_07_forfeit_win_winner_celebration(self):
         """CCD-MOOD-07: completed_forfeit_win winner → mood_celebration."""
@@ -3829,10 +3838,102 @@ class TestCCDMoodPhaseA:
         assert snapshot == "/user_chosen.png"  # user's explicit choice preserved
 
     def test_ccd_mood_19_send_no_explicit_uses_phase_aware(self):
-        """CCD-MOOD-19: POST /challenges/send no explicit photo → challenge_sent phase lookup runs."""
+        """CCD-MOOD-19 (Phase-B): POST /challenges/send no explicit photo → focused_ready first."""
         from app.api.web_routes.vt_challenges import _PHASE_MOOD_MAP
-        # The else branch calls _get_participant_photo_for_phase(db, user.id, "challenge_sent", None)
-        # which tries mood_angry_competitive first
         pref, alt = _PHASE_MOOD_MAP[("challenge_sent", None)]
-        assert pref == "mood_angry_competitive"
-        assert alt == "mood_intro_neutral"
+        assert pref == "mood_focused_ready"
+        assert alt == "mood_angry_competitive"
+
+
+class TestCCDMoodPhaseB:
+    """CCD-MOOD-B: Phase-B — 3 new mood slots and updated phase map.
+
+    CCD-MOOD-B-01  MOOD_PHOTO_SLOTS contains all 9 slots
+    CCD-MOOD-B-02  _MOOD_SLOT_META in card_editor has 9 entries
+    CCD-MOOD-B-03  _SLOT_META in mood_photos has 9 entries
+    CCD-MOOD-B-04  focused_ready in _PHASE_MOOD_MAP for sent/waiting/live
+    CCD-MOOD-B-05  confident in _PHASE_MOOD_MAP for accepted
+    CCD-MOOD-B-06  proud in _PHASE_MOOD_MAP for skill_delta_result
+    CCD-MOOD-B-07  win/loss/draw result phases unchanged from Phase-A
+    CCD-MOOD-B-08  _get_participant_photo_for_phase: new slot preferred when present
+    CCD-MOOD-B-09  _get_participant_photo_for_phase: falls back to angry if no focused_ready
+    """
+
+    def test_ccd_mood_b_01_mood_photo_slots_9(self):
+        """CCD-MOOD-B-01: MOOD_PHOTO_SLOTS contains all 9 slots."""
+        from app.models.user_mood_photos import MOOD_PHOTO_SLOTS
+        assert "mood_focused_ready" in MOOD_PHOTO_SLOTS
+        assert "mood_confident"     in MOOD_PHOTO_SLOTS
+        assert "mood_proud"         in MOOD_PHOTO_SLOTS
+        assert len(MOOD_PHOTO_SLOTS) == 9
+
+    def test_ccd_mood_b_02_card_editor_meta_9(self):
+        """CCD-MOOD-B-02: _MOOD_SLOT_META in card_editor has 9 entries."""
+        from app.api.web_routes.card_editor import _MOOD_SLOT_META
+        slots = [m["slot"] for m in _MOOD_SLOT_META]
+        assert "mood_focused_ready" in slots
+        assert "mood_confident"     in slots
+        assert "mood_proud"         in slots
+        assert len(_MOOD_SLOT_META) == 9
+
+    def test_ccd_mood_b_03_mood_photos_meta_9(self):
+        """CCD-MOOD-B-03: _SLOT_META in mood_photos route has 9 entries."""
+        from app.api.web_routes.mood_photos import _SLOT_META
+        slots = [m["slot"] for m in _SLOT_META]
+        assert "mood_focused_ready" in slots
+        assert "mood_confident"     in slots
+        assert "mood_proud"         in slots
+        assert len(_SLOT_META) == 9
+
+    def test_ccd_mood_b_04_sent_waiting_live_focused(self):
+        """CCD-MOOD-B-04: sent/waiting/live → focused_ready; angry as fallback."""
+        from app.api.web_routes.vt_challenges import _PHASE_MOOD_MAP
+        for phase in ("challenge_sent", "waiting_for_opponent", "live_lobby_ready", "live_in_progress"):
+            pref, alt = _PHASE_MOOD_MAP[(phase, None)]
+            assert pref == "mood_focused_ready"
+            assert alt  == "mood_angry_competitive"
+
+    def test_ccd_mood_b_05_accepted_confident(self):
+        """CCD-MOOD-B-05: challenge_accepted → confident; happy as fallback."""
+        from app.api.web_routes.vt_challenges import _PHASE_MOOD_MAP
+        pref, alt = _PHASE_MOOD_MAP[("challenge_accepted", None)]
+        assert pref == "mood_confident"
+        assert alt  == "mood_happy_smile"
+
+    def test_ccd_mood_b_06_skill_delta_proud(self):
+        """CCD-MOOD-B-06: skill_delta_result → proud; happy as fallback."""
+        from app.api.web_routes.vt_challenges import _PHASE_MOOD_MAP
+        pref, alt = _PHASE_MOOD_MAP[("skill_delta_result", None)]
+        assert pref == "mood_proud"
+        assert alt  == "mood_happy_smile"
+
+    def test_ccd_mood_b_07_result_phases_unchanged(self):
+        """CCD-MOOD-B-07: win/loss/draw Phase-A result map entries unchanged."""
+        from app.api.web_routes.vt_challenges import _PHASE_MOOD_MAP
+        assert _PHASE_MOOD_MAP[("completed_score_win",  True)][0]  == "mood_celebration"
+        assert _PHASE_MOOD_MAP[("completed_score_win",  False)][0] == "mood_sad_disappointed"
+        assert _PHASE_MOOD_MAP[("completed_draw",       None)][0]  == "mood_surprised_shocked"
+
+    def test_ccd_mood_b_08_new_slot_preferred_when_present(self):
+        """CCD-MOOD-B-08: focused_ready slot available → returned for challenge_sent."""
+        from app.api.web_routes.vt_challenges import _get_participant_photo_for_phase
+        db = MagicMock()
+        db.query.return_value.filter_by.return_value.first.return_value = MagicMock(
+            original_url="/focused.png", processed_png_url=None
+        )
+        result = _get_participant_photo_for_phase(db, 1, "challenge_sent", None)
+        assert result == "/focused.png"
+
+    def test_ccd_mood_b_09_fallback_to_angry_when_no_focused(self):
+        """CCD-MOOD-B-09: no focused_ready → falls back to angry_competitive."""
+        from app.api.web_routes.vt_challenges import _get_participant_photo_for_phase
+        db = MagicMock()
+        call_n = [0]
+        def _first():
+            call_n[0] += 1
+            if call_n[0] == 1:
+                return None  # focused_ready absent
+            return MagicMock(original_url="/angry.png", processed_png_url=None)
+        db.query.return_value.filter_by.return_value.first.side_effect = _first
+        result = _get_participant_photo_for_phase(db, 1, "challenge_sent", None)
+        assert result == "/angry.png"

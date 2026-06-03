@@ -96,14 +96,15 @@ _SKILL_CATEGORY_LABEL: dict[str, str] = {
 # is_winner=False → player lost / forfeited      → sad preferred
 # is_winner=None  → pre-game or no winner context → phase-default
 _PHASE_MOOD_MAP: dict[tuple[str, bool | None], tuple[str | None, str | None]] = {
-    # Pre-game phases
-    ("challenge_sent",         None):  ("mood_angry_competitive", "mood_intro_neutral"),
-    ("challenge_received",     None):  ("mood_surprised_shocked",  "mood_intro_neutral"),
-    ("challenge_accepted",     None):  ("mood_happy_smile",        "mood_intro_neutral"),
-    ("waiting_for_opponent",   None):  ("mood_angry_competitive",  "mood_intro_neutral"),
-    ("live_lobby_ready",       None):  ("mood_angry_competitive",  "mood_intro_neutral"),
-    ("live_in_progress",       None):  ("mood_angry_competitive",  "mood_intro_neutral"),
-    # Result phases — winner/loser aware
+    # Pre-game phases — Phase-B: focused_ready / confident where available
+    ("challenge_sent",         None):  ("mood_focused_ready",      "mood_angry_competitive"),
+    # challenge_received: surprise is authentic first reaction; focused as fallback
+    ("challenge_received",     None):  ("mood_surprised_shocked",  "mood_focused_ready"),
+    ("challenge_accepted",     None):  ("mood_confident",          "mood_happy_smile"),
+    ("waiting_for_opponent",   None):  ("mood_focused_ready",      "mood_angry_competitive"),
+    ("live_lobby_ready",       None):  ("mood_focused_ready",      "mood_angry_competitive"),
+    ("live_in_progress",       None):  ("mood_focused_ready",      "mood_angry_competitive"),
+    # Result phases — winner/loser aware (Phase-A logic unchanged)
     ("completed_score_win",    True):  ("mood_celebration",        "mood_happy_smile"),
     ("completed_score_win",    False): ("mood_sad_disappointed",   "mood_intro_neutral"),
     ("completed_draw",         None):  ("mood_surprised_shocked",  "mood_intro_neutral"),
@@ -112,7 +113,8 @@ _PHASE_MOOD_MAP: dict[tuple[str, bool | None], tuple[str | None, str | None]] = 
     ("completed_forfeit_loss", True):  ("mood_celebration",        "mood_happy_smile"),
     ("completed_forfeit_loss", False): ("mood_sad_disappointed",   "mood_intro_neutral"),
     ("no_contest",             None):  ("mood_intro_neutral",      None),
-    ("skill_delta_result",     None):  ("mood_happy_smile",        "mood_celebration"),
+    # Phase-B: proud preferred for skill progress
+    ("skill_delta_result",     None):  ("mood_proud",              "mood_happy_smile"),
     # Terminal rejection phases
     ("challenge_cancelled",    None):  ("mood_intro_neutral",      None),
     ("challenge_declined",     None):  ("mood_sad_disappointed",   "mood_intro_neutral"),
