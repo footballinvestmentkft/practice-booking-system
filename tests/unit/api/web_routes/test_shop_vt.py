@@ -308,3 +308,32 @@ class TestSHOPVT09OwnedState:
         for item in ctx.get("shop_items", []):
             assert item.state in ("get_card", "locked"), \
                 f"{item.id} state={item.state!r} (expected get_card or locked)"
+
+    def test_shopvt09c_owned_vtc_format_has_studio_url(self):
+        """Owned VTC format has studio_url pointing to /card-studio/virtual-training."""
+        _, ctx = _invoke_shop_real(
+            type_param="virtual_training_card",
+            owned_ids_by_type={"virtual_training_card": ["vt_landscape"]},
+        )
+        owned = [i for i in ctx.get("shop_items", []) if i.id == "vt_landscape"]
+        assert len(owned) == 1
+        assert owned[0].studio_url == "/card-studio/virtual-training", \
+            f"owned VTC studio_url={owned[0].studio_url!r}"
+
+    def test_shopvt09d_non_owned_vtc_has_no_studio_url(self):
+        """Non-owned VTC formats have studio_url=None (no studio CTA shown)."""
+        _, ctx = _invoke_shop_real(
+            type_param="virtual_training_card",
+            owned_ids_by_type={"virtual_training_card": []},
+        )
+        for item in ctx.get("shop_items", []):
+            assert item.studio_url is None, \
+                f"{item.id} studio_url={item.studio_url!r} (expected None for non-owned)"
+
+    def test_shopvt09e_owned_vtc_shows_open_studio_cta_in_template(self):
+        """shop_unified.html renders 'Open Studio →' for owned VTC item."""
+        owned_item = _vtc_item("vt_landscape", owned=True)
+        owned_item.studio_url = "/card-studio/virtual-training"
+        html = _render_shop_html([owned_item], type_filter="virtual_training_card")
+        assert "Open Studio" in html, "Owned VTC item must render 'Open Studio →' CTA"
+        assert "/card-studio/virtual-training" in html

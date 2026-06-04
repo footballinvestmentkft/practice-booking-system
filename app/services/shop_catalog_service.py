@@ -200,7 +200,7 @@ def _build_vt_items(credits: int, owned_ids: set[str]) -> list[ShopItem]:
             is_owned       = owned,
             state          = st,
             buy_url        = f"/shop/cards/virtual_training_card/buy/{fmt.design_id}",
-            studio_url     = None,
+            studio_url     = "/card-studio/virtual-training" if owned else None,
             detail_url     = None,
             tags           = ("virtual_training",),
         ))
