@@ -1,8 +1,10 @@
-{# CS-S0/CS-S2A/CS-S2B/CS-S4A: Card Studio Type Switcher (Player/Welcome/Challenge)
-   active_type: "welcome" | "player" | "challenge"
+{# CS-S0/CS-S2A/CS-S2B/CS-S4A/CS-VT-2: Card Studio Type Switcher (Player/Welcome/Challenge/VT)
+   active_type: "welcome" | "player" | "challenge" | "virtual_training"
+   vtc_owned: bool — True if user owns at least one VTC format
    CS-S0: Welcome fully functional.
    CS-S2A+S2B: Player preview + variant/platform/theme selectors.
-   CS-S4A: Challenge preview placeholder (no longer Coming Soon). #}
+   CS-S4A: Challenge preview placeholder (no longer Coming Soon).
+   CS-VT-2: Virtual Training Card — ownership-gated. #}
 <div class="cs-type-switcher" role="tablist" aria-label="Card type">
 
   {# ── Player Card — CS-S2A+S2B ── #}
@@ -36,6 +38,19 @@
           title="{% if _cc_accessible %}Challenge Card Studio{% else %}Purchase Challenge Card to access{% endif %}">
     <span class="cs-type-icon">⚔️{% if not _cc_accessible %}🔒{% endif %}</span>
     <span class="cs-type-label">Challenge Card</span>
+  </button>
+
+
+  {# ── Virtual Training Card — locked if not owned ── #}
+  {% set _vtc_accessible = vtc_owned if vtc_owned is defined else false %}
+  <button class="cs-type-btn{% if active_type == 'virtual_training' %} cs-type-active{% endif %}{% if not _vtc_accessible %} cs-type-locked{% endif %}"
+          role="tab"
+          aria-selected="{{ 'true' if active_type == 'virtual_training' else 'false' }}"
+          onclick="{% if active_type != 'virtual_training' %}window.location='{% if _vtc_accessible %}/card-studio/virtual-training{% else %}/shop?type=virtual_training_card{% endif %}'{% endif %}"
+          {% if active_type == 'virtual_training' %}aria-current="page"{% endif %}
+          title="{% if _vtc_accessible %}Virtual Training Card Studio{% else %}Purchase a VT Card format to access{% endif %}">
+    <span class="cs-type-icon">⚡{% if not _vtc_accessible %}🔒{% endif %}</span>
+    <span class="cs-type-label">VT Card</span>
   </button>
 
 </div>

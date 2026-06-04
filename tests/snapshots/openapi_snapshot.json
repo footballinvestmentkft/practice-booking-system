@@ -60190,6 +60190,73 @@
         ]
       }
     },
+    "/card-studio/virtual-training": {
+      "get": {
+        "description": "CS-VT-2: Virtual Training Card Studio.\n\nOwnership guard: user must own at least one VTC format.\nNo query params \u2192 selector mode (list owned formats + today's eligible games).\n?game_id={id}&platform={pid} \u2192 preview mode (iframe + export CTA).",
+        "operationId": "card_studio_virtual_training_card_studio_virtual_training_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "game_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Game Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "platform",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Platform"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Card Studio Virtual Training",
+        "tags": [
+          "web",
+          "card-studio"
+        ]
+      }
+    },
     "/card-studio/welcome": {
       "get": {
         "description": "Unified Studio shell \u2014 Welcome Card mode (CS-S0 fully functional).",

@@ -388,6 +388,9 @@
     {% elif active_type == "challenge" %}
     <span>›</span>
     <span>Challenge Card</span>
+    {% elif active_type == "virtual_training" %}
+    <span>›</span>
+    <span>Virtual Training Card</span>
     {% endif %}
   </nav>
 
@@ -420,6 +423,11 @@
       {# ── CS-S2A+S2B: Player Card mode ── #}
       {% if active_type == "player" %}
         {% include "includes/cs_player_panel.html" %}
+      {% endif %}
+
+      {# ── CS-VT-2: Virtual Training Card mode ── #}
+      {% if active_type == "virtual_training" %}
+        {% include "includes/cs_vt_panel.html" %}
       {% endif %}
 
       {# Determine format-aware photo slot and endpoints (Welcome mode only) #}
@@ -562,6 +570,28 @@
             </p>
             <a href="/card-studio/challenge" class="cs-preview-placeholder-link">View Challenges →</a>
           </div>
+          {% elif active_type == "virtual_training" %}
+          {# CS-VT-2: VTC — preview iframe if game+platform selected, else placeholder #}
+          {% if preview_url %}
+          <div class="cs-preview-wrap mfg-preview-wrap {{ ratio_class }}">
+            <iframe
+              id="cs-preview-iframe"
+              class="mfg-preview-iframe"
+              src="{{ preview_url }}"
+              loading="lazy"
+              scrolling="no"
+              title="Virtual Training Card Preview"
+            ></iframe>
+          </div>
+          {% else %}
+          <div class="cs-preview-placeholder">
+            <div class="cs-preview-placeholder-icon">⚡</div>
+            <p class="cs-preview-placeholder-msg">
+              Select a completed game and format on the left to preview your card.
+            </p>
+            <a href="/virtual-training" class="cs-preview-placeholder-link">Play VT Games →</a>
+          </div>
+          {% endif %}
           {% else %}
           {# CS-S2A+S2B: Player uses mfg-ratio-45; Welcome uses format ratio #}
           <div class="cs-preview-wrap mfg-preview-wrap {% if active_type == 'player' %}mfg-ratio-45{% else %}{{ ratio_class }}{% endif %}">
@@ -616,6 +646,17 @@
         {% else %}
         <p class="cs-export-dims">Select a challenge phase to see export options.</p>
         {% endif %}
+        {% elif active_type == "virtual_training" %}
+        <p class="cs-export-title">Export</p>
+        {% if can_export and export_url %}
+          <p class="cs-export-dims">Ready to download — {{ active_platform | replace("vt_", "") | replace("_", " ") | title }}</p>
+          <a href="{{ export_url }}" class="cs-btn-download" style="display:inline-flex;">↓ Download PNG</a>
+        {% elif not any_eligible %}
+          <p class="cs-export-dims" style="color:#94a3b8;">Play VT games today to unlock export (5/5 required).</p>
+          <a href="/virtual-training" class="cs-btn-download" style="display:inline-flex;background:#334155;">Play Games →</a>
+        {% else %}
+          <p class="cs-export-dims">Select a game and format to export.</p>
+        {% endif %}
         {% else %}
         <p class="cs-export-title">Download your card</p>
         {% if fmt %}
@@ -648,6 +689,11 @@
   <div class="wcs-nav">
     <a href="/my-cards/challenge" class="wcs-nav-back">← My Challenge Cards</a>
     <a href="/card-editor/challenge" class="wcs-nav-shop">Challenge Card Editor →</a>
+  </div>
+  {% elif active_type == "virtual_training" %}
+  <div class="wcs-nav">
+    <a href="/my-cards" class="wcs-nav-back">← My Cards</a>
+    <a href="/shop?type=virtual_training_card" class="wcs-nav-shop">Browse VT Formats →</a>
   </div>
   {% endif %}
 
