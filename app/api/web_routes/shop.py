@@ -35,9 +35,10 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 router = APIRouter(tags=["shop"])
 
 _TYPE_TO_SHOP_PATH: dict[str, str] = {
-    "player_card":    "/shop/cards/player",
-    "welcome_card":   "/shop/cards/welcome",
-    "challenge_card": "/shop/cards/challenge",
+    "player_card":           "/shop/cards/player",
+    "welcome_card":          "/shop/cards/welcome",
+    "challenge_card":        "/shop/cards/challenge",
+    "virtual_training_card": "/shop?type=virtual_training_card",
 }
 
 
@@ -54,9 +55,10 @@ async def shop_landing(
     type_filter  = _resolve_type(type)
     shop_items   = _build_catalog(db, user.id, user.credit_balance, type_filter)
     active_label = {
-        "player_card":    "Player Cards",
-        "welcome_card":   "Welcome Cards",
-        "challenge_card": "Challenge Cards",
+        "player_card":           "Player Cards",
+        "welcome_card":          "Welcome Cards",
+        "challenge_card":        "Challenge Cards",
+        "virtual_training_card": "VT Cards",
     }.get(type_filter or "", "All Cards")
 
     return templates.TemplateResponse(

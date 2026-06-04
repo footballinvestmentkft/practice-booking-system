@@ -60,9 +60,10 @@
   font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;
   padding: 0.15rem 0.45rem; border-radius: 4px; align-self: flex-start;
 }
-.su-item-type-badge--player   { background: rgba(102,126,234,0.2); color: #a3b3f7; }
-.su-item-type-badge--welcome  { background: rgba(250,204,21,0.15); color: #fde047; }
-.su-item-type-badge--challenge{ background: rgba(251,146,60,0.15); color: #fb923c; }
+.su-item-type-badge--player         { background: rgba(102,126,234,0.2); color: #a3b3f7; }
+.su-item-type-badge--welcome        { background: rgba(250,204,21,0.15); color: #fde047; }
+.su-item-type-badge--challenge      { background: rgba(251,146,60,0.15); color: #fb923c; }
+.su-item-type-badge--virtual_training { background: rgba(74,222,128,0.15); color: #4ade80; }
 
 .su-item-label { font-size: 0.9rem; font-weight: 700; color: #f1f5f9; line-height: 1.2; }
 .su-item-dims  { font-size: 0.7rem; color: #475569; }
@@ -145,16 +146,20 @@
   {# ── Filter bar ── #}
   <div class="su-filter-bar">
     <a href="/shop" class="su-filter-btn{% if not type_filter %} su-filter-btn--active{% endif %}">All Cards</a>
-    <a href="/shop?type=player_card"    class="su-filter-btn{% if type_filter == 'player_card' %} su-filter-btn--active{% endif %}">Player Cards</a>
-    <a href="/shop?type=welcome_card"   class="su-filter-btn{% if type_filter == 'welcome_card' %} su-filter-btn--active{% endif %}">Welcome Cards</a>
-    <a href="/shop?type=challenge_card" class="su-filter-btn{% if type_filter == 'challenge_card' %} su-filter-btn--active{% endif %}">Challenge Cards</a>
+    <a href="/shop?type=player_card"           class="su-filter-btn{% if type_filter == 'player_card' %} su-filter-btn--active{% endif %}">Player Cards</a>
+    <a href="/shop?type=welcome_card"          class="su-filter-btn{% if type_filter == 'welcome_card' %} su-filter-btn--active{% endif %}">Welcome Cards</a>
+    <a href="/shop?type=challenge_card"        class="su-filter-btn{% if type_filter == 'challenge_card' %} su-filter-btn--active{% endif %}">Challenge Cards</a>
+    <a href="/shop?type=virtual_training_card" class="su-filter-btn{% if type_filter == 'virtual_training_card' %} su-filter-btn--active{% endif %}">VT Cards</a>
   </div>
 
   {# ── Product grid ── #}
   {% if shop_items %}
   <div class="su-grid">
     {% for item in shop_items %}
-    {% set _badge_cls = 'player' if item.card_type_id == 'player_card' else ('welcome' if item.card_type_id == 'welcome_card' else 'challenge') %}
+    {% set _badge_cls = 'player' if item.card_type_id == 'player_card'
+       else ('welcome' if item.card_type_id == 'welcome_card'
+       else ('virtual_training' if item.card_type_id == 'virtual_training_card'
+       else 'challenge')) %}
     <div class="su-item{% if item.is_owned %} su-item--owned{% endif %}">
 
       <span class="su-item-type-badge su-item-type-badge--{{ _badge_cls }}">
