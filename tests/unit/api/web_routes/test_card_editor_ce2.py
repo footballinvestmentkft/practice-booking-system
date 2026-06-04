@@ -430,9 +430,9 @@ class TestCE216WelcomeEditorUnchanged:
 
 class TestCE217RouteCount:
     def test_openapi_snapshot_route_count_unchanged(self):
-        """BG-REMOVAL-1 adds 3 mood photo routes — snapshot path count must equal 850."""
+        """feat/virtual-training-card adds 4 VT card routes — snapshot path count must equal 855."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 851, (
-            f"Expected 850 routes (847 CS-S2A baseline + 3 BG-REMOVAL-1 mood photo routes), got {len(paths)}."
+        assert len(paths) == 856, (
+            f"Expected 855 routes (851 prior baseline + 4 VT card routes), got {len(paths)}."
         )

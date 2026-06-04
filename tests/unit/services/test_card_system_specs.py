@@ -178,6 +178,7 @@ class TestListCardTypeIds:
             "player_card",
             "welcome_card",
             "challenge_card",
+            "virtual_training_card",
             "match_card",
             "event_card",
             "birthday_card",

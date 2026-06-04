@@ -954,12 +954,16 @@ async def virtual_training_target_tracking_submit(
         raw["v"]                     = 3
         body["raw_metrics"]          = raw
 
-    # Tag challenge attempts in raw_metrics for auditability (no DB column needed)
+    # Tag challenge attempts in raw_metrics for auditability (no DB column needed).
+    # ALWAYS create a dict if raw_metrics is absent — ensures the tag is written
+    # even when the client sends no raw_metrics payload.  VTC eligibility relies on
+    # raw_metrics->>'attempt_source' = 'challenge' to exclude these from standalone counts.
     if challenge is not None:
         raw = body.get("raw_metrics")
-        if isinstance(raw, dict):
-            raw["attempt_source"] = "challenge"
-            body["raw_metrics"]   = raw
+        if not isinstance(raw, dict):
+            raw = {}
+        raw["attempt_source"] = "challenge"
+        body["raw_metrics"]   = raw
 
     started_at_raw = body.get("started_at", "")
     idem_key = f"vt_tt_u{user.id}_{started_at_raw}"
@@ -1293,12 +1297,16 @@ async def virtual_training_memory_sequence_submit(
             status_code=429,
         )
 
-    # Tag challenge attempts in raw_metrics for auditability (no DB column needed)
+    # Tag challenge attempts in raw_metrics for auditability (no DB column needed).
+    # ALWAYS create a dict if raw_metrics is absent — ensures the tag is written
+    # even when the client sends no raw_metrics payload.  VTC eligibility relies on
+    # raw_metrics->>'attempt_source' = 'challenge' to exclude these from standalone counts.
     if challenge is not None:
         raw = body.get("raw_metrics")
-        if isinstance(raw, dict):
-            raw["attempt_source"] = "challenge"
-            body["raw_metrics"]   = raw
+        if not isinstance(raw, dict):
+            raw = {}
+        raw["attempt_source"] = "challenge"
+        body["raw_metrics"]   = raw
 
     started_at_raw = body.get("started_at", "")
     idem_key = f"vt_ms_u{user.id}_{started_at_raw}"

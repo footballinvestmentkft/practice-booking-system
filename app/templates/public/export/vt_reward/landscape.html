@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>LFA Virtual Training Reward Card</title>
+<style>
+/* ── Self-hosted fonts (FClassic family) ─────────────────────────── */
+@font-face { font-family:'Bebas Neue';     src:url('/static/fonts/BebasNeue-Regular.woff2') format('woff2');    font-weight:400; font-display:block; }
+@font-face { font-family:'Barlow Condensed'; src:url('/static/fonts/BarlowCondensed-400.woff2') format('woff2'); font-weight:400; font-display:block; }
+@font-face { font-family:'Barlow Condensed'; src:url('/static/fonts/BarlowCondensed-600.woff2') format('woff2'); font-weight:600; font-display:block; }
+@font-face { font-family:'Barlow Condensed'; src:url('/static/fonts/BarlowCondensed-700.woff2') format('woff2'); font-weight:700; font-display:block; }
+@font-face { font-family:'Barlow Condensed'; src:url('/static/fonts/BarlowCondensed-800.woff2') format('woff2'); font-weight:800; font-display:block; }
+@font-face { font-family:'Rajdhani';         src:url('/static/fonts/Rajdhani-600.woff2')          format('woff2'); font-weight:600; font-display:block; }
+@font-face { font-family:'Rajdhani';         src:url('/static/fonts/Rajdhani-700.woff2')          format('woff2'); font-weight:700; font-display:block; }
+
+:root {
+  --cc-gold:    #f5c518;
+  --cc-green:   #4ade80;
+  --cc-blue:    #60a5fa;
+  --cc-dim:     #4a5570;
+  --cc-text:    #e8eaf0;
+  --cc-sub:     #7a8aaa;
+  --cc-surface: #111a2a;
+  --cc-border:  #1e2e44;
+  --cc-bg:      #08101e;
+  --font-display: 'Bebas Neue', system-ui, sans-serif;
+  --font-ui:      'Barlow Condensed', system-ui, sans-serif;
+  --font-brand:   'Rajdhani', system-ui, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1280px; height: 720px; overflow: hidden; }
+body {
+  width: 1280px; height: 720px;
+  background: var(--cc-bg);
+  font-family: var(--font-ui);
+  color: var(--cc-text);
+}
+
+.card-wrap {
+  width: 1280px; height: 720px;
+  display: flex; flex-direction: column;
+  background: linear-gradient(135deg, #08101e 0%, #0f1928 55%, #152236 100%);
+  position: relative; overflow: hidden;
+}
+/* Gold top accent line */
+.card-wrap::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, #f5c518 0%, #e8a000 60%, #ff6b35 100%);
+  z-index: 5;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────── */
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 40px 10px; flex-shrink: 0;
+}
+.lfa-brand {
+  font-family: var(--font-brand);
+  font-size: 0.9rem; font-weight: 700; letter-spacing: 0.2em;
+  color: var(--cc-gold); text-transform: uppercase;
+}
+.tier-badge {
+  font-size: 0.64rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 4px 12px; border-radius: 4px;
+  color: var(--cc-gold); border: 1px solid var(--cc-gold);
+  background: rgba(245,197,24,0.08);
+}
+
+/* ── Body: left photo zone + right reward panel ─────────────────── */
+.card-body {
+  flex: 1; display: grid; grid-template-columns: 380px 1fr;
+  overflow: hidden; min-height: 0;
+}
+
+/* ── Left: player photo zone ─────────────────────────────────────── */
+.player-zone {
+  position: relative; overflow: hidden;
+  background: linear-gradient(160deg, #0c1624 0%, #111e30 100%);
+  border-right: 1px solid var(--cc-border);
+}
+.player-zone::after {
+  content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
+  background: linear-gradient(180deg, transparent, var(--cc-border), transparent);
+}
+.player-photo       { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; display: block; }
+.player-initial     { width: 100%; height: 100%; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 32px; font-family: var(--font-display); font-size: 11rem; font-weight: 900; color: var(--cc-gold); opacity: 0.08; text-transform: uppercase; line-height: 1; }
+.player-pos-block   { position: absolute; top: 14px; left: 14px; display: flex; flex-direction: column; gap: 3px; z-index: 3; }
+.player-pos-primary { font-size: 1.4rem; font-weight: 900; color: var(--cc-gold); letter-spacing: 0.06em; line-height: 1; }
+.player-overall     { position: absolute; bottom: 48px; left: 0; right: 0; text-align: center; z-index: 3; font-size: 0.75rem; font-weight: 700; color: rgba(232,234,240,0.5); letter-spacing: 0.06em; }
+.player-name        { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; padding: 24px 8px 10px; background: linear-gradient(0deg, rgba(8,16,30,0.88) 0%, transparent 100%); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cc-text); }
+
+/* ── Right: reward panel ─────────────────────────────────────────── */
+.reward-panel {
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 24px 44px; gap: 0;
+}
+.reward-meta {
+  font-size: 0.58rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--cc-dim); border: 1px solid var(--cc-border); border-radius: 3px;
+  padding: 3px 8px; margin-bottom: 10px; display: inline-block; align-self: flex-start;
+}
+.reward-headline {
+  font-family: var(--font-display);
+  font-size: 3.4rem; font-weight: 400; color: var(--cc-gold); line-height: 1; margin-bottom: 4px;
+}
+.reward-sublabel {
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--cc-sub); margin-bottom: 16px;
+}
+.divider { width: 36px; height: 2px; background: var(--cc-border); margin-bottom: 14px; }
+
+/* ── Completed games list ─────────────────────────────────────────── */
+.game-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.game-item {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 0.84rem; font-weight: 600; color: var(--cc-text); letter-spacing: 0.02em;
+}
+.game-check { color: var(--cc-green); font-size: 0.84rem; flex-shrink: 0; }
+.game-name  { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── XP total ─────────────────────────────────────────────────────── */
+.xp-row { display: flex; align-items: baseline; gap: 8px; }
+.xp-label { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cc-dim); }
+.xp-value { font-size: 1.4rem; font-weight: 800; color: var(--cc-green); line-height: 1; }
+
+/* ── Footer ──────────────────────────────────────────────────────── */
+.card-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 40px 14px; border-top: 1px solid var(--cc-border); flex-shrink: 0;
+}
+.footer-meta   { font-size: 0.7rem; color: var(--cc-sub); }
+.footer-domain { font-size: 0.62rem; color: #2a3a55; }
+</style>
+</head>
+<body>
+<div class="card-wrap">
+
+  <div class="card-header">
+    <div class="lfa-brand">⚡ LFA · Virtual Training</div>
+    <div class="tier-badge">{{ tier }}-Game Mastery</div>
+  </div>
+
+  <div class="card-body">
+
+    {# ── Left: player photo zone ── #}
+    <div class="player-zone">
+      {% if player_photo_url %}
+        <img src="{{ player_photo_url }}" class="player-photo" alt="{{ player_name }}">
+      {% else %}
+        <div class="player-initial">{{ (player_name[0] if player_name else '?') | upper }}</div>
+      {% endif %}
+      {% if player_primary_pos %}
+      <div class="player-pos-block">
+        <span class="player-pos-primary">{{ player_primary_pos }}</span>
+      </div>
+      {% endif %}
+      {% if player_overall is not none %}
+      <div class="player-overall">OVR {{ player_overall }}</div>
+      {% endif %}
+      <div class="player-name">{{ player_name or 'Player' }}</div>
+    </div>
+
+    {# ── Right: reward panel ── #}
+    <div class="reward-panel">
+      <div class="reward-meta">Daily Reward</div>
+      <div class="reward-headline">{{ tier }}-GAME MASTERY</div>
+      <div class="reward-sublabel">{{ completed_games }} game{{ 's' if completed_games != 1 else '' }} completed today</div>
+      <div class="divider"></div>
+      {% if completed_game_names %}
+      <div class="game-list">
+        {% for name in completed_game_names %}
+        <div class="game-item">
+          <span class="game-check">✓</span>
+          <span class="game-name">{{ name }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <div class="xp-row">
+        <span class="xp-label">Total XP</span>
+        <span class="xp-value">+{{ total_xp }}</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card-footer">
+    <div class="footer-meta">{{ attempt_date }}</div>
+    <div class="footer-domain">lfa.gg</div>
+  </div>
+
+</div>
+</body>
+</html>

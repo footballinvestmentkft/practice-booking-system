@@ -33,6 +33,7 @@ from . import (
     shop,
     friends,
     vt_challenges,
+    vt_card,
     ws_events,
     mood_photos,
 )
@@ -73,5 +74,6 @@ router.include_router(card_studio.router)        # 🎴  Card Studio shell (/car
 router.include_router(shop.router)               # 🛒 Card Shop (/shop)
 router.include_router(friends.router)            # 👥 Friendship system (/friends)
 router.include_router(vt_challenges.router)      # 🎮 VT Challenges (/challenges)
+router.include_router(vt_card.router)            # 🃏 VT Card (/virtual-training/card)
 router.include_router(ws_events.router)           # 🔌 Per-user WS event stream (/ws/events)
 router.include_router(mood_photos.router)         # 📸 Hangulatképek (/profile/my-mood-photos)

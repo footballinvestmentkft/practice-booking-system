@@ -1,8 +1,8 @@
 """
-shop_catalog_service — Unified Shop Catalog (SHOP-1).
+shop_catalog_service — Unified Shop Catalog (SHOP-1 + VTC fix).
 
-Builds a single list[ShopItem] spanning all three card families
-(player_card, welcome_card, challenge_card) with CDO-based ownership.
+Builds a single list[ShopItem] spanning all four card families
+(player_card, welcome_card, challenge_card, virtual_training_card) with CDO-based ownership.
 
 SHOP-1 scope: listing + filter only, no color/premium purchase, no TS-2.
 """
@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from .card_design_service import (
     CHALLENGE_CARD_FORMATS,
+    VT_CARD_FORMATS,
     WELCOME_CARD_FORMATS,
     get_all_designs,
     get_owned_design_ids,
@@ -25,7 +26,7 @@ from .card_design_service import (
 @dataclass(frozen=True)
 class ShopItem:
     id:              str
-    card_type_id:    str           # "player_card" | "welcome_card" | "challenge_card"
+    card_type_id:    str           # "player_card" | "welcome_card" | "challenge_card" | "virtual_training_card"
     family_id:       str           # "fclassic" for all current items
     label:           str
     description:     str
@@ -71,6 +72,10 @@ def build_shop_catalog(
     if type_filter is None or type_filter == "challenge_card":
         cc_owned = get_owned_design_ids(db, user_id, "challenge_card")
         items.extend(_build_challenge_items(credit_balance, cc_owned))
+
+    if type_filter is None or type_filter == "virtual_training_card":
+        vtc_owned = get_owned_design_ids(db, user_id, "virtual_training_card")
+        items.extend(_build_vt_items(credit_balance, vtc_owned))
 
     return items
 
@@ -173,10 +178,39 @@ def _build_challenge_items(credits: int, owned_ids: set[str]) -> list[ShopItem]:
     return result
 
 
+def _build_vt_items(credits: int, owned_ids: set[str]) -> list[ShopItem]:
+    result = []
+    for i, fmt in enumerate(VT_CARD_FORMATS):
+        owned = fmt.design_id in owned_ids
+        st    = _state(fmt.credit_cost, True, owned, credits)
+        result.append(ShopItem(
+            id             = fmt.design_id,
+            card_type_id   = "virtual_training_card",
+            family_id      = fmt.family_id,
+            label          = fmt.label,
+            description    = f"Virtual Training Card — {fmt.dims}. Earn by completing daily games.",
+            style_tag      = fmt.style_tag,
+            dims           = fmt.dims,
+            preview_url    = None,
+            card_type_label= "Virtual Training Card",
+            sort_group     = 3,
+            sort_order     = fmt.sort_order if hasattr(fmt, "sort_order") else i,
+            price_credits  = fmt.credit_cost,
+            is_premium     = True,
+            is_owned       = owned,
+            state          = st,
+            buy_url        = f"/shop/cards/virtual_training_card/buy/{fmt.design_id}",
+            studio_url     = "/card-studio/virtual-training" if owned else None,
+            detail_url     = None,
+            tags           = ("virtual_training",),
+        ))
+    return result
+
+
 # ── Filter helper ─────────────────────────────────────────────────────────────
 
 _VALID_TYPE_FILTERS: frozenset[str] = frozenset(
-    {"player_card", "welcome_card", "challenge_card"}
+    {"player_card", "welcome_card", "challenge_card", "virtual_training_card"}
 )
 
 

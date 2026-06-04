@@ -77,3 +77,15 @@ def create_challenge_render_token(user_id: int, challenge_id: int, expires_secon
         data={"sub": str(user_id), "cid": challenge_id, "purpose": "vt_card_render"},
         expires_delta=timedelta(seconds=expires_seconds),
     )
+
+
+def create_vt_card_render_token(user_id: int, expires_seconds: int = 60) -> str:
+    """Short-lived JWT for internal Playwright render auth (Virtual Training Card export).
+
+    Claims: sub=str(user_id), purpose="vtc_render", exp=now+expires_seconds.
+    Only accepted by VT card preview routes when purpose=="vtc_render".
+    """
+    return create_access_token(
+        data={"sub": str(user_id), "purpose": "vtc_render"},
+        expires_delta=timedelta(seconds=expires_seconds),
+    )

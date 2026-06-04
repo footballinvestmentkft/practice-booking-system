@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>LFA Virtual Training Card</title>
+<style>
+/* ── Self-hosted fonts (same as export_base.html) ─────────────────────── */
+@font-face { font-family:'Bebas Neue';     src:url('/static/fonts/BebasNeue-Regular.woff2') format('woff2');    font-weight:400; font-display:block; }
+@font-face { font-family:'Barlow Condensed'; src:url('/static/fonts/BarlowCondensed-400.woff2') format('woff2'); font-weight:400; font-display:block; }
+@font-face { font-family:'Barlow Condensed'; src:url('/static/fonts/BarlowCondensed-600.woff2') format('woff2'); font-weight:600; font-display:block; }
+@font-face { font-family:'Barlow Condensed'; src:url('/static/fonts/BarlowCondensed-700.woff2') format('woff2'); font-weight:700; font-display:block; }
+@font-face { font-family:'Barlow Condensed'; src:url('/static/fonts/BarlowCondensed-800.woff2') format('woff2'); font-weight:800; font-display:block; }
+@font-face { font-family:'Rajdhani';         src:url('/static/fonts/Rajdhani-600.woff2')          format('woff2'); font-weight:600; font-display:block; }
+@font-face { font-family:'Rajdhani';         src:url('/static/fonts/Rajdhani-700.woff2')          format('woff2'); font-weight:700; font-display:block; }
+
+/* ── Design tokens (FClassic family) ────────────────────────────────── */
+:root {
+  --cc-gold:    #f5c518;
+  --cc-green:   #4ade80;
+  --cc-blue:    #60a5fa;
+  --cc-dim:     #4a5570;
+  --cc-text:    #e8eaf0;
+  --cc-sub:     #7a8aaa;
+  --cc-surface: #111a2a;
+  --cc-border:  #1e2e44;
+  --cc-bg:      #08101e;
+  --font-display: 'Bebas Neue', system-ui, sans-serif;
+  --font-ui:      'Barlow Condensed', system-ui, sans-serif;
+  --font-brand:   'Rajdhani', system-ui, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1280px; height: 720px; overflow: hidden; }
+body {
+  width: 1280px; height: 720px;
+  background: var(--cc-bg);
+  font-family: var(--font-ui);
+  color: var(--cc-text);
+}
+
+/* ── Card shell ────────────────────────────────────────────────────── */
+.card-wrap {
+  width: 1280px; height: 720px;
+  display: flex; flex-direction: column;
+  background: linear-gradient(135deg, #08101e 0%, #0f1928 55%, #152236 100%);
+  position: relative; overflow: hidden;
+}
+/* Gold top accent line */
+.card-wrap::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, #f5c518 0%, #e8a000 60%, #ff6b35 100%);
+  z-index: 5;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────── */
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 40px 10px; flex-shrink: 0;
+}
+.lfa-brand {
+  font-family: var(--font-brand);
+  font-size: 0.9rem; font-weight: 700; letter-spacing: 0.2em;
+  color: var(--cc-gold); text-transform: uppercase;
+}
+.completion-badge {
+  font-size: 0.64rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 4px 12px; border-radius: 4px;
+  color: var(--cc-green); border: 1px solid var(--cc-green);
+  background: rgba(74,222,128,0.08);
+}
+
+/* ── Body: left photo zone + right stats panel ───────────────────── */
+.card-body {
+  flex: 1; display: grid; grid-template-columns: 400px 1fr;
+  overflow: hidden; min-height: 0;
+}
+
+/* ── Left: player photo zone ─────────────────────────────────────── */
+.player-zone {
+  position: relative; overflow: hidden;
+  background: linear-gradient(160deg, #0c1624 0%, #111e30 100%);
+  border-right: 1px solid var(--cc-border);
+}
+.player-zone::after {
+  content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
+  background: linear-gradient(180deg, transparent, var(--cc-border), transparent);
+}
+.player-photo {
+  width: 100%; height: 100%; object-fit: contain; object-position: center bottom; display: block;
+}
+.player-initial {
+  width: 100%; height: 100%;
+  display: flex; align-items: flex-end; justify-content: center; padding-bottom: 32px;
+  font-family: var(--font-display);
+  font-size: 11rem; font-weight: 900; color: var(--cc-gold);
+  opacity: 0.08; text-transform: uppercase; line-height: 1;
+}
+.player-pos-block {
+  position: absolute; top: 14px; left: 14px;
+  display: flex; flex-direction: column; gap: 3px; z-index: 3;
+}
+.player-pos-primary   { font-size: 1.4rem; font-weight: 900; color: var(--cc-gold); letter-spacing: 0.06em; line-height: 1; }
+.player-overall       { position: absolute; bottom: 48px; left: 0; right: 0; text-align: center; z-index: 3; font-size: 0.75rem; font-weight: 700; color: rgba(232,234,240,0.5); letter-spacing: 0.06em; }
+.player-name          { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; padding: 24px 8px 10px; background: linear-gradient(0deg, rgba(8,16,30,0.88) 0%, transparent 100%); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cc-text); }
+
+/* ── Right: stats panel ─────────────────────────────────────────── */
+.stats-panel {
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 24px 44px; gap: 0;
+}
+.stats-label {
+  font-size: 0.58rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--cc-dim); border: 1px solid var(--cc-border); border-radius: 3px;
+  padding: 3px 8px; margin-bottom: 10px; display: inline-block; align-self: flex-start;
+}
+.stats-headline {
+  font-family: var(--font-display);
+  font-size: 4.2rem; font-weight: 400; color: var(--cc-gold); line-height: 1; margin-bottom: 4px;
+}
+.stats-game-name {
+  font-size: 1.1rem; font-weight: 700; color: var(--cc-text); text-transform: uppercase;
+  letter-spacing: 0.04em; margin-bottom: 6px;
+}
+.completion-counter {
+  font-family: var(--font-display);
+  font-size: 2.2rem; color: var(--cc-text); line-height: 1; margin-bottom: 16px;
+}
+.completion-counter .done { color: var(--cc-green); }
+.completion-counter .sep  { color: var(--cc-dim); margin: 0 2px; }
+
+.divider { width: 36px; height: 2px; background: var(--cc-border); margin-bottom: 14px; }
+
+/* ── Stats grid ───────────────────────────────────────────────────── */
+.stats-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px;
+}
+.stat-cell { display: flex; flex-direction: column; gap: 2px; }
+.stat-label { font-size: 0.56rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cc-dim); }
+.stat-value { font-size: 1.1rem; font-weight: 800; color: var(--cc-text); line-height: 1.1; }
+.stat-value.gold  { color: var(--cc-gold); }
+.stat-value.green { color: var(--cc-green); }
+.stat-value.blue  { color: var(--cc-blue); }
+.stat-value.muted { color: var(--cc-dim); font-style: italic; }
+
+/* ── Footer ──────────────────────────────────────────────────────── */
+.card-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 40px 14px; border-top: 1px solid var(--cc-border); flex-shrink: 0;
+}
+.footer-meta { font-size: 0.7rem; color: var(--cc-sub); }
+.footer-domain { font-size: 0.62rem; color: #2a3a55; }
+</style>
+</head>
+<body>
+<div class="card-wrap">
+
+  <div class="card-header">
+    <div class="lfa-brand">⚡ LFA · Virtual Training</div>
+    <div class="completion-badge">✓ Daily Complete</div>
+  </div>
+
+  <div class="card-body">
+
+    {# ── Left: player photo zone ── #}
+    <div class="player-zone">
+      {% if player_photo_url %}
+        <img src="{{ player_photo_url }}" class="player-photo" alt="{{ player_name }}">
+      {% else %}
+        <div class="player-initial">{{ (player_name[0] if player_name else '?') | upper }}</div>
+      {% endif %}
+      {% if player_primary_pos %}
+      <div class="player-pos-block">
+        <span class="player-pos-primary">{{ player_primary_pos }}</span>
+      </div>
+      {% endif %}
+      {% if player_overall is not none %}
+      <div class="player-overall">OVR {{ player_overall }}</div>
+      {% endif %}
+      <div class="player-name">{{ player_name or 'Player' }}</div>
+    </div>
+
+    {# ── Right: stats panel ── #}
+    <div class="stats-panel">
+      <div class="stats-label">Virtual Training</div>
+      <div class="stats-headline">DAILY COMPLETE</div>
+      <div class="stats-game-name">{{ game.name }}</div>
+      <div class="completion-counter">
+        <span class="done">{{ completed_count }}</span><span class="sep">/</span>{{ max_attempts }}
+      </div>
+      <div class="divider"></div>
+      <div class="stats-grid">
+        <div class="stat-cell">
+          <span class="stat-label">Best Score</span>
+          {% if best_score is not none %}
+          <span class="stat-value gold">{{ "%.1f"|format(best_score) }}</span>
+          {% else %}
+          <span class="stat-value muted">—</span>
+          {% endif %}
+        </div>
+        {% if avg_reaction_ms is not none %}
+        <div class="stat-cell">
+          <span class="stat-label">Avg Reaction</span>
+          <span class="stat-value blue">{{ avg_reaction_ms }} ms</span>
+        </div>
+        {% endif %}
+        <div class="stat-cell">
+          <span class="stat-label">XP Earned</span>
+          <span class="stat-value green">+{{ xp_earned }}</span>
+        </div>
+        {% if top_skill_delta %}
+        <div class="stat-cell">
+          <span class="stat-label">Top Skill</span>
+          <span class="stat-value green">{{ top_skill_delta.name }} {% if top_skill_delta.delta > 0 %}+{% endif %}{{ "%.2f"|format(top_skill_delta.delta) }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card-footer">
+    <div class="footer-meta">{{ game.name }} · {{ attempt_date }}</div>
+    <div class="footer-domain">lfa.gg</div>
+  </div>
+
+</div>
+</body>
+</html>

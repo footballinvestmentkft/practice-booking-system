@@ -34,7 +34,7 @@ import app.services.card_export_service as _export_svc
 # ── CC-01 / CC-02: CANVAS_SIZES structure ────────────────────────────────────
 
 def test_cc01_canvas_sizes_has_9_platforms():
-    assert len(CANVAS_SIZES) == 12  # 9 social + "default" native FClassic Player export + 2 challenge
+    assert len(CANVAS_SIZES) == 16  # 9 social + "default" native FClassic Player + 2 challenge + 4 VT
 
 
 def test_cc02_canvas_sizes_values_are_int_tuples():
@@ -62,7 +62,7 @@ def test_cc03_export_format_buckets_keys_match_canvas_sizes():
 
 
 def test_cc04_export_format_buckets_value_set():
-    expected_buckets = {"square", "portrait", "story", "tiktok", "landscape", "og", "banner", "challenge"}
+    expected_buckets = {"square", "portrait", "story", "tiktok", "landscape", "og", "banner", "challenge", "vt", "vt_reward"}
     actual_buckets = set(EXPORT_FORMAT_BUCKETS.values())
     assert actual_buckets == expected_buckets, (
         f"Unexpected bucket values: {actual_buckets - expected_buckets}. "
@@ -181,3 +181,30 @@ def test_cc16_card_editor_ids_excludes_default():
         "'default' must not be in CARD_EDITOR_PLATFORM_IDS — it has no canvas size "
         "and is rendered as a separate static button in the editor template."
     )
+
+
+# ── CC-17..CC-20: VT platform sets ───────────────────────────────────────────
+
+from app.services.card_constants import VT_CARD_PLATFORMS, VT_REWARD_CARD_PLATFORMS
+
+
+def test_cc17_vt_card_platforms_in_canvas_sizes():
+    for pid in VT_CARD_PLATFORMS:
+        assert pid in CANVAS_SIZES, f"VT_CARD_PLATFORMS contains {pid!r} absent from CANVAS_SIZES"
+
+
+def test_cc18_vt_reward_card_platforms_in_canvas_sizes():
+    for pid in VT_REWARD_CARD_PLATFORMS:
+        assert pid in CANVAS_SIZES, f"VT_REWARD_CARD_PLATFORMS contains {pid!r} absent from CANVAS_SIZES"
+
+
+def test_cc19_vt_card_platforms_disjoint_from_reward():
+    overlap = VT_CARD_PLATFORMS & VT_REWARD_CARD_PLATFORMS
+    assert not overlap, f"VT_CARD_PLATFORMS and VT_REWARD_CARD_PLATFORMS must be disjoint; overlap={overlap}"
+
+
+def test_cc20_vt_platforms_canvas_sizes():
+    assert CANVAS_SIZES["vt_landscape"]        == (1280,  720)
+    assert CANVAS_SIZES["vt_portrait"]         == (1080, 1920)
+    assert CANVAS_SIZES["vt_reward_landscape"] == (1280,  720)
+    assert CANVAS_SIZES["vt_reward_portrait"]  == (1080, 1920)

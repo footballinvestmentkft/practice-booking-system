@@ -33,11 +33,19 @@ from ...models.license import UserLicense
 from ...models.user import User
 from ...services.card_design_service import (
     CHALLENGE_CARD_FORMATS,
+    VT_CARD_FORMATS,
     WELCOME_CARD_FORMATS,
     get_card_family,
     get_owned_design_ids,
     is_design_accessible,
 )
+from ...services.card_constants import VT_CARD_PLATFORMS, VT_REWARD_CARD_PLATFORMS
+from ...services.vt_card_eligibility import (
+    REWARD_TIERS as _VTC_REWARD_TIERS,
+    check_single_game_eligibility as _vtc_single_elig,
+    check_reward_eligibility as _vtc_reward_elig,
+)
+from ...models.virtual_training import VirtualTrainingGame
 from ...services.mood_photo_service import get_mood_photos_for_user
 from ...services.card_theme_service import (
     get_all_themes as _get_all_themes,
@@ -201,11 +209,16 @@ async def card_studio_welcome(
     if redirect:
         return RedirectResponse(url=redirect, status_code=303)
 
-    _cc_owned = any(is_design_accessible(db, user.id, "challenge_card", pid)
-                    for pid in _CC_VALID_PLATFORMS)
+    _cc_owned  = any(is_design_accessible(db, user.id, "challenge_card", pid)
+                     for pid in _CC_VALID_PLATFORMS)
     return templates.TemplateResponse(
         "card_studio_shell.html",
-        {"request": request, "user": user, "cc_owned": _cc_owned, **ctx},
+        {
+            "request": request, "user": user,
+            "cc_owned": _cc_owned,
+            "vtc_owned": _any_vtc_owned(db, user.id),
+            **ctx,
+        },
     )
 
 
@@ -313,7 +326,12 @@ async def card_studio_player(
                     for pid in _CC_VALID_PLATFORMS)
     return templates.TemplateResponse(
         "card_studio_shell.html",
-        {"request": request, "user": user, "cc_owned": _cc_owned, **ctx},
+        {
+            "request": request, "user": user,
+            "cc_owned": _cc_owned,
+            "vtc_owned": _any_vtc_owned(db, user.id),
+            **ctx,
+        },
     )
 
 
@@ -322,6 +340,21 @@ async def card_studio_player(
 _CC_FORMATS_ORDERED = CHALLENGE_CARD_FORMATS  # 2 formats: 16:9 post + 9:16 story
 
 _CC_VALID_PLATFORMS = ("challenge_post_16_9", "challenge_story_9_16")
+
+# ── VTC constants ─────────────────────────────────────────────────────────────
+_VTC_VALID_IDS: frozenset[str] = frozenset(f.design_id for f in VT_CARD_FORMATS)
+_VTC_RATIO: dict[str, str] = {
+    "vt_landscape":        "mfg-ratio-169",
+    "vt_portrait":         "mfg-ratio-916",
+    "vt_reward_landscape": "mfg-ratio-169",
+    "vt_reward_portrait":  "mfg-ratio-916",
+}
+
+
+def _any_vtc_owned(db: Session, user_id: int) -> bool:
+    """Return True if user owns at least one valid VTC format."""
+    owned = set(get_owned_design_ids(db, user_id, "virtual_training_card"))
+    return bool(owned & _VTC_VALID_IDS)
 
 _CC_RATIO = {
     "challenge_post_16_9":  "mfg-ratio-169",
@@ -801,5 +834,142 @@ async def card_studio_challenge_studio(
 
     return templates.TemplateResponse(
         "card_studio_shell.html",
-        {"request": request, "user": user, "cc_owned": True, **ctx},
+        {
+            "request": request, "user": user,
+            "cc_owned": True,
+            "vtc_owned": _any_vtc_owned(db, user.id),
+            **ctx,
+        },
     )
+
+
+# ── CS-VT-2: Virtual Training Card Studio ────────────────────────────────────
+
+@router.get("/card-studio/virtual-training", response_class=HTMLResponse)
+async def card_studio_virtual_training(
+    request:  Request,
+    game_id:  int | None = Query(default=None),
+    platform: str | None = Query(default=None),
+    db:       Session    = Depends(get_db),
+    user:     User       = Depends(get_current_user_web),
+):
+    """CS-VT-2: Virtual Training Card Studio.
+
+    Ownership guard: user must own at least one VTC format.
+    No query params → selector mode (list owned formats + today's eligible games).
+    ?game_id={id}&platform={pid} → preview mode (iframe + export CTA).
+    """
+    from datetime import datetime, timezone  # noqa: PLC0415
+
+    lic = _license_guard(db, user.id)
+    if not lic:
+        return RedirectResponse(url="/dashboard?info=complete_lfa_onboarding_first", status_code=303)
+    if not lic.onboarding_completed:
+        return RedirectResponse(url="/specialization/lfa-player/onboarding", status_code=303)
+
+    # CDO guard: must own at least one VTC format
+    owned_ids = set(get_owned_design_ids(db, user.id, "virtual_training_card")) & _VTC_VALID_IDS
+    if not owned_ids:
+        return RedirectResponse(
+            url="/shop?type=virtual_training_card&info=purchase_required_for_studio",
+            status_code=303,
+        )
+
+    # Build owned format rows (single-game only for preview)
+    owned_vtc_formats = [
+        {"design_id": f.design_id, "label": f.label, "dims": f.dims, "style_tag": f.style_tag}
+        for f in VT_CARD_FORMATS
+        if f.design_id in owned_ids
+    ]
+
+    # Today's eligible games (5/5 standalone completed today)
+    today = datetime.now(timezone.utc).date()
+    all_active_games = (
+        db.query(VirtualTrainingGame)
+        .filter(VirtualTrainingGame.is_active == True)  # noqa: E712
+        .all()
+    )
+    active_game_count = len(all_active_games)
+
+    eligible_games = []
+    for game in all_active_games:
+        is_elig, count, required = _vtc_single_elig(db, user.id, game.id, today)
+        if is_elig:
+            eligible_games.append({
+                "game_id":   game.id,
+                "game_name": game.name,
+                "completed": count,
+                "required":  required,
+            })
+    any_eligible = bool(eligible_games)
+    eligible_game_ids = {eg["game_id"] for eg in eligible_games}
+
+    # Resolve active platform — must be owned + single-game format
+    _single_game_owned = {d for d in owned_ids if d in VT_CARD_PLATFORMS}
+    if platform not in _single_game_owned:
+        platform = next((f.design_id for f in VT_CARD_FORMATS
+                         if f.design_id in _single_game_owned), None)
+
+    # Resolve active game_id
+    if game_id not in eligible_game_ids:
+        game_id = eligible_games[0]["game_id"] if eligible_games else None
+
+    # Build preview/export URLs
+    preview_url = None
+    export_url  = None
+    can_export  = False
+    ratio_class = _VTC_RATIO.get(platform or "", "mfg-ratio-169")
+
+    if game_id and platform:
+        preview_url = (
+            f"/virtual-training/card/preview?game_id={game_id}&platform={platform}"
+        )
+        export_url = (
+            f"/virtual-training/card/export?game_id={game_id}&platform={platform}"
+        )
+        can_export = game_id in eligible_game_ids
+
+    # Reward tiers context
+    completed_games_count = len(eligible_games)
+    _reward_owned = {d for d in owned_ids if d in VT_REWARD_CARD_PLATFORMS}
+
+    reward_tiers = []
+    for tier in _VTC_REWARD_TIERS:
+        disabled = (tier == 10 and active_game_count < 10)
+        if disabled:
+            tier_eligible = False
+        else:
+            tier_eligible = completed_games_count >= tier
+        reward_tiers.append({
+            "tier":             tier,
+            "eligible":         tier_eligible,
+            "completed_games":  completed_games_count,
+            "disabled":         disabled,
+            "has_owned_format": bool(_reward_owned),
+        })
+
+    # cc_owned for type switcher
+    _cc_owned = any(is_design_accessible(db, user.id, "challenge_card", pid)
+                    for pid in _CC_VALID_PLATFORMS)
+
+    ctx = {
+        "active_type":       "virtual_training",
+        "vtc_owned":         True,
+        "cc_owned":          _cc_owned,
+        # VTC-specific
+        "owned_vtc_formats": owned_vtc_formats,
+        "eligible_games":    eligible_games,
+        "any_eligible":      any_eligible,
+        "active_game_id":    game_id,
+        "active_platform":   platform,
+        "preview_url":       preview_url,
+        "export_url":        export_url,
+        "can_export":        can_export,
+        "reward_tiers":      reward_tiers,
+        # Shell compatibility (avoid undefined errors in other mode blocks)
+        "ratio_class":       ratio_class,
+        "fmt":               None,
+        "challenge_mode":    "selector",
+        **_STUDIO_NAV_CTX,
+    }
+    return templates.TemplateResponse("card_studio_shell.html", {"request": request, "user": user, **ctx})

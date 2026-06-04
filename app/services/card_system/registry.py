@@ -10,6 +10,7 @@ from app.services.card_system._skeletal_specs import (
     EVENT_CARD_SPEC,
     MATCH_CARD_SPEC,
 )
+from app.services.card_system._virtual_training_card import VIRTUAL_TRAINING_CARD_SPEC
 from app.services.card_system._types import CardTypeSpec, VariantCapabilitySpec
 from app.services.card_system._welcome_card import WELCOME_CARD_SPEC
 
@@ -31,6 +32,7 @@ _ALL_SPECS: tuple[CardTypeSpec, ...] = (
     PLAYER_CARD_SPEC,
     WELCOME_CARD_SPEC,
     CHALLENGE_CARD_SPEC,
+    VIRTUAL_TRAINING_CARD_SPEC,
     MATCH_CARD_SPEC,
     EVENT_CARD_SPEC,
     BIRTHDAY_CARD_SPEC,

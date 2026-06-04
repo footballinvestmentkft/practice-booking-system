@@ -1,0 +1,128 @@
+{# CS-VT-2: Virtual Training Card Studio Panel
+   Context:
+     owned_vtc_formats  — list of {design_id, label, dims, style_tag} for owned single-game formats
+     eligible_games     — list of {game_id, game_name, completed, required} for today's 5/5 games
+     any_eligible       — bool
+     active_game_id     — int | None
+     active_platform    — str | None  (e.g. "vt_landscape")
+     can_export         — bool
+     reward_tiers       — list of {tier, eligible, completed_games, disabled, has_owned_format}
+#}
+<style>
+.csvt-section          { margin-bottom: 1.5rem; }
+.csvt-section-title    { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em;
+                         text-transform: uppercase; color: #475569; margin-bottom: 0.6rem; }
+/* Format chips */
+.csvt-chips            { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.csvt-chip             { display: inline-flex; flex-direction: column; align-items: center;
+                         padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.78rem;
+                         font-weight: 600; color: #94a3b8; border: 1px solid #334155;
+                         text-decoration: none; transition: border-color 0.15s; line-height: 1.2; }
+.csvt-chip:hover       { border-color: rgba(255,255,255,0.3); color: #e2e8f0; text-decoration: none; }
+.csvt-chip--active     { border-color: #f5c518; color: #f5c518; background: rgba(245,197,24,0.08); }
+.csvt-chip-dims        { font-size: 0.6rem; font-weight: 400; color: #475569; margin-top: 1px; }
+.csvt-chip--active .csvt-chip-dims { color: rgba(245,197,24,0.7); }
+/* Game rows */
+.csvt-game-row         { display: flex; align-items: center; justify-content: space-between;
+                         padding: 0.5rem 0.65rem; border-radius: 6px; margin-bottom: 0.35rem;
+                         font-size: 0.8rem; font-weight: 600; color: #94a3b8;
+                         border: 1px solid #1e293b; text-decoration: none;
+                         transition: border-color 0.15s; }
+.csvt-game-row:hover   { border-color: rgba(255,255,255,0.2); color: #e2e8f0; text-decoration: none; }
+.csvt-game-row--active { border-color: #4ade80; color: #e2e8f0; background: rgba(74,222,128,0.06); }
+.csvt-badge            { font-size: 0.62rem; font-weight: 700; padding: 2px 7px;
+                         border-radius: 4px; white-space: nowrap; }
+.csvt-badge--eligible  { background: rgba(74,222,128,0.15); color: #4ade80; }
+.csvt-badge--locked    { background: rgba(100,116,139,0.15); color: #64748b; }
+/* Empty / play to unlock */
+.csvt-empty            { text-align: center; padding: 1rem 0.5rem; }
+.csvt-empty-icon       { font-size: 1.6rem; margin-bottom: 0.4rem; }
+.csvt-empty-msg        { font-size: 0.78rem; color: #475569; margin-bottom: 0.75rem; line-height: 1.4; }
+.csvt-empty-link       { display: inline-flex; align-items: center; gap: 0.3rem;
+                         padding: 0.4rem 0.9rem; border-radius: 6px; font-size: 0.78rem;
+                         font-weight: 600; background: #4ade80; color: #0f172a; text-decoration: none; }
+.csvt-empty-link:hover { opacity: 0.88; color: #0f172a; text-decoration: none; }
+/* Reward rows */
+.csvt-reward-row       { display: flex; align-items: center; justify-content: space-between;
+                         padding: 0.45rem 0.65rem; border-radius: 6px; margin-bottom: 0.3rem;
+                         font-size: 0.78rem; font-weight: 600; color: #94a3b8;
+                         border: 1px solid #1e293b; text-decoration: none; }
+.csvt-reward-row--eligible   { border-color: #f5c518; color: #f5c518; background: rgba(245,197,24,0.06); }
+.csvt-reward-row--coming-soon { opacity: 0.45; cursor: not-allowed; }
+.csvt-reward-badge     { font-size: 0.58rem; font-weight: 700; padding: 2px 6px;
+                         border-radius: 3px; }
+.csvt-reward-badge--done   { background: rgba(245,197,24,0.15); color: #f5c518; }
+.csvt-reward-badge--locked { background: rgba(100,116,139,0.15); color: #64748b; }
+.csvt-reward-badge--soon   { background: rgba(100,116,139,0.1); color: #475569; }
+/* No-format note */
+.csvt-no-format-note   { font-size: 0.7rem; color: #475569; padding: 0.4rem 0;
+                         line-height: 1.4; }
+</style>
+
+{# ── Section 1: Format selector (owned single-game formats only) ── #}
+<div class="csvt-section">
+  <div class="csvt-section-title">Format</div>
+  {% set _sg_formats = owned_vtc_formats | selectattr("design_id", "in", ["vt_landscape", "vt_portrait"]) | list %}
+  {% if _sg_formats %}
+  <div class="csvt-chips">
+    {% for fmt in _sg_formats %}
+    <a href="/card-studio/virtual-training?platform={{ fmt.design_id }}{% if active_game_id %}&game_id={{ active_game_id }}{% endif %}"
+       class="csvt-chip{% if active_platform == fmt.design_id %} csvt-chip--active{% endif %}">
+      {{ fmt.label }}
+      <span class="csvt-chip-dims">{{ fmt.dims }}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="csvt-no-format-note">No single-game format owned. <a href="/shop?type=virtual_training_card" style="color:#f5c518;">Browse Shop →</a></p>
+  {% endif %}
+</div>
+
+{# ── Section 2: Eligible games today ── #}
+<div class="csvt-section">
+  <div class="csvt-section-title">Today's Completed Games</div>
+  {% if eligible_games %}
+    {% for eg in eligible_games %}
+    <a href="/card-studio/virtual-training?{% if active_platform %}platform={{ active_platform }}&{% endif %}game_id={{ eg.game_id }}"
+       class="csvt-game-row{% if active_game_id == eg.game_id %} csvt-game-row--active{% endif %}">
+      <span>{{ eg.game_name }}</span>
+      <span class="csvt-badge csvt-badge--eligible">✓ {{ eg.completed }}/{{ eg.required }}</span>
+    </a>
+    {% endfor %}
+  {% else %}
+  <div class="csvt-empty">
+    <div class="csvt-empty-icon">🎮</div>
+    <p class="csvt-empty-msg">No games completed today.<br>Complete 5/5 attempts in any VT game to unlock.</p>
+    <a href="/virtual-training" class="csvt-empty-link">Play to Unlock →</a>
+  </div>
+  {% endif %}
+</div>
+
+{# ── Section 3: Reward tiers ── #}
+<div class="csvt-section">
+  <div class="csvt-section-title">Reward Cards</div>
+  {% for rt in reward_tiers %}
+  {% if rt.disabled %}
+  <div class="csvt-reward-row csvt-reward-row--coming-soon">
+    <span>{{ rt.tier }}-Game Mastery</span>
+    <span class="csvt-reward-badge csvt-reward-badge--soon">Coming Soon</span>
+  </div>
+  {% elif not rt.has_owned_format %}
+  <a href="/shop?type=virtual_training_card" class="csvt-reward-row">
+    <span>{{ rt.tier }}-Game Mastery</span>
+    <span class="csvt-reward-badge csvt-reward-badge--locked">🔒 Buy Format</span>
+  </a>
+  {% elif rt.eligible %}
+  <a href="/card-studio/virtual-training?reward={{ rt.tier }}"
+     class="csvt-reward-row csvt-reward-row--eligible">
+    <span>{{ rt.tier }}-Game Mastery</span>
+    <span class="csvt-reward-badge csvt-reward-badge--done">✓ {{ rt.completed_games }}/{{ rt.tier }}</span>
+  </a>
+  {% else %}
+  <div class="csvt-reward-row">
+    <span>{{ rt.tier }}-Game Mastery</span>
+    <span class="csvt-reward-badge csvt-reward-badge--locked">{{ rt.completed_games }}/{{ rt.tier }}</span>
+  </div>
+  {% endif %}
+  {% endfor %}
+</div>

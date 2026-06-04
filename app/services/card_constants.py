@@ -41,6 +41,11 @@ CANVAS_SIZES: dict[str, tuple[int, int]] = {
     "facebook_post":         (1200,  630),
     "challenge_post_16_9":   (1280,  720),
     "challenge_story_9_16":  (1080, 1920),
+    # Virtual Training Card canvases (single-game + reward variants)
+    "vt_landscape":          (1280,  720),
+    "vt_portrait":           (1080, 1920),
+    "vt_reward_landscape":   (1280,  720),
+    "vt_reward_portrait":    (1080, 1920),
 }
 
 # ── Export template routing ───────────────────────────────────────────────────
@@ -58,6 +63,11 @@ EXPORT_FORMAT_BUCKETS: dict[str, str] = {
     "facebook_post":        "landscape",
     "challenge_post_16_9":  "challenge",
     "challenge_story_9_16": "challenge",
+    # Virtual Training Card buckets
+    "vt_landscape":         "vt",
+    "vt_portrait":          "vt",
+    "vt_reward_landscape":  "vt_reward",
+    "vt_reward_portrait":   "vt_reward",
 }
 
 # ── Animated video export capability registry ─────────────────────────────────
@@ -185,3 +195,8 @@ PC_FORMAT_META: list[dict] = [
     {"bucket": "og",        "platform": "og",                  "label": "Open Graph",         "dims": "1200 × 630",  "ratio": "mfg-ratio-169", "display_order": 5},
     {"bucket": "banner",    "platform": "banner_custom",       "label": "Banner",             "dims": "1500 × 500",  "ratio": "mfg-ratio-169", "display_order": 6},
 ]
+
+# ── Virtual Training Card platform sets ───────────────────────────────────────
+# Used by vt_card routes for platform validation.
+VT_CARD_PLATFORMS: frozenset[str] = frozenset({"vt_landscape", "vt_portrait"})
+VT_REWARD_CARD_PLATFORMS: frozenset[str] = frozenset({"vt_reward_landscape", "vt_reward_portrait"})
