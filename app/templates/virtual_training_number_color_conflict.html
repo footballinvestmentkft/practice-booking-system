@@ -466,8 +466,11 @@
 
 </div>
 
+<script src="/static/js/vt-location.js"></script>
 <script>
 (function () {
+    VtLocation.warmUp();
+
     // ── Server-injected config ─────────────────────────────────────────────
     var PHASES        = {{ game.config.phases | tojson }};
     var NUMBERS       = {{ game.config.numbers | tojson }};
@@ -822,6 +825,7 @@
         var scoreRaw    = 0.55 * hitRate + 0.25 * (1.0 - wrongRate) + 0.20 * speedFactor;
         var scoreNorm   = Math.round(scoreRaw * 100);
 
+        var _vtCtx = VtLocation.buildSubmitPayload();
         var payload = {
             started_at:       startedAt,
             stimuli_count:    totalStim,
@@ -848,6 +852,8 @@
                     assignment_source: handProfile.assignment_source || "system",
                 },
             },
+            browser_timezone: _vtCtx.browser_timezone,
+            location:         _vtCtx.location,
         };
 
         fetch(SUBMIT_URL, {

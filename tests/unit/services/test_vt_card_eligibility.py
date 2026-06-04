@@ -107,7 +107,7 @@ class TestSingleGameEligibility:
     def test_elg07_uses_today_when_date_not_provided(self):
         # check_single_game_eligibility with day=None should not raise
         db = _make_db_no_game()
-        eligible, count, required = check_single_game_eligibility(db, 1, 1, day=None)
+        eligible, count, required = check_single_game_eligibility(db, 1, 1, training_local_date=None)
         assert eligible is False
 
 
@@ -185,7 +185,7 @@ class TestRewardEligibility:
         games = [_make_game(1)]
         db = self._make_db_with_games(games, active_count=1)
         with patch(f"{_MODULE}._standalone_count", return_value=5):
-            eligible, _ = check_reward_eligibility(db, 1, 3, day=None)
+            eligible, _ = check_reward_eligibility(db, 1, 3, training_local_date=None)
         # 1 completed game < tier 3 → not eligible
         assert eligible is False
 

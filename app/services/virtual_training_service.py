@@ -132,24 +132,24 @@ class VirtualTrainingService:
 
     @staticmethod
     def calculate_daily_attempt_index(
-        db: Session, user_id: int, game_id: int
+        db: Session, user_id: int, game_id: int,
+        training_local_date: "date | None" = None,
     ) -> int:
-        """
-        Return the 1-based attempt index for today.
+        """Return the 1-based attempt index for the given training day.
 
-        Counts only valid attempts for the (user, game) pair that started
-        on the current UTC calendar day. Returns 1 when no prior attempts.
+        Uses training_local_date (Phase 1: browser timezone) as the day
+        boundary instead of UTC started_at. Falls back to UTC today if
+        training_local_date is not provided.
         """
-        today_start = datetime.combine(date.today(), datetime.min.time()).replace(
-            tzinfo=timezone.utc
-        )
+        from app.services.training_day import current_training_date_utc
+        _date = training_local_date if training_local_date is not None else current_training_date_utc()
         count = (
             db.query(VirtualTrainingAttempt)
             .filter(
-                VirtualTrainingAttempt.user_id == user_id,
-                VirtualTrainingAttempt.game_id == game_id,
-                VirtualTrainingAttempt.started_at >= today_start,
-                VirtualTrainingAttempt.is_valid == True,  # noqa: E712
+                VirtualTrainingAttempt.user_id             == user_id,
+                VirtualTrainingAttempt.game_id              == game_id,
+                VirtualTrainingAttempt.training_local_date  == _date,
+                VirtualTrainingAttempt.is_valid             == True,  # noqa: E712
             )
             .count()
         )
@@ -364,6 +364,12 @@ class VirtualTrainingService:
         data: dict,
         idempotency_key: str,
         is_challenge: bool = False,
+        # Phase 1: location + timezone from browser (all optional)
+        location_lat: "float | None" = None,
+        location_lng: "float | None" = None,
+        location_accuracy_m: "int | None" = None,
+        location_captured_at: "datetime | None" = None,
+        browser_timezone: "str | None" = None,
     ) -> VirtualTrainingAttempt:
         """
         Persist one validated VirtualTrainingAttempt and award XP.
@@ -386,8 +392,18 @@ class VirtualTrainingService:
         from sqlalchemy.exc import IntegrityError
         from app.services.gamification import xp_service
         from app.services.virtual_training_metrics import compute_vt_skill_deltas
+        from app.services.training_day import (
+            resolve_training_timezone,
+            resolve_location_source,
+            compute_training_local_date,
+        )
 
         now = datetime.now(timezone.utc)
+
+        # ── Phase 1: resolve training day from browser timezone ───────────────
+        training_tz, tz_src = resolve_training_timezone(browser_timezone)
+        training_date = compute_training_local_date(now, training_tz)
+        loc_src = resolve_location_source(location_lat, location_lng, location_captured_at, now)
 
         # For games with per-difficulty validation (e.g. TT), use difficulty-specific
         # overrides when difficulty_level is present in raw_metrics.
@@ -408,7 +424,7 @@ class VirtualTrainingService:
         )
 
         attempt_index = VirtualTrainingService.calculate_daily_attempt_index(
-            db, user_id, game.id
+            db, user_id, game.id, training_local_date=training_date,
         )
         # xp_multiplier: diminishing returns by attempt index (affects XP + delta ceiling)
         xp_multiplier = VirtualTrainingService.calculate_xp_multiplier(attempt_index)
@@ -432,23 +448,20 @@ class VirtualTrainingService:
 
         compute_delta = is_valid and (xp_awarded > 0 or is_challenge)
         if compute_delta:
-            today_start = datetime.combine(date.today(), datetime.min.time()).replace(
-                tzinfo=timezone.utc
-            )
             neg_rows = db.execute(
                 text(
                     """
                     SELECT kv.key, SUM(kv.value::float) AS neg_today
                     FROM virtual_training_attempts vta,
                          jsonb_each_text(vta.skill_deltas) AS kv(key, value)
-                    WHERE vta.user_id    = :uid
-                      AND vta.is_valid   = true
-                      AND vta.started_at >= :today_start
+                    WHERE vta.user_id            = :uid
+                      AND vta.is_valid           = true
+                      AND vta.training_local_date = :training_date
                       AND kv.value::float < 0
                     GROUP BY kv.key
                     """
                 ),
-                {"uid": user_id, "today_start": today_start},
+                {"uid": user_id, "training_date": training_date},
             ).fetchall()
             existing_neg_today: dict[str, float] = {row.key: row.neg_today for row in neg_rows}
             skill_deltas = compute_vt_skill_deltas(
@@ -490,6 +503,16 @@ class VirtualTrainingService:
                 skill_deltas=skill_deltas,
                 attempt_index_today=attempt_index,
                 idempotency_key=idempotency_key,
+                # Phase 1: location + training day
+                location_lat=location_lat,
+                location_lng=location_lng,
+                location_accuracy_m=location_accuracy_m,
+                location_captured_at=location_captured_at,
+                location_source=loc_src,
+                browser_timezone=browser_timezone,
+                training_timezone=training_tz,
+                training_timezone_source=tz_src,
+                training_local_date=training_date,
             )
             db.add(attempt)
             sp.commit()

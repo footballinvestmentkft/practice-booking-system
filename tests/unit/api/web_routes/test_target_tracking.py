@@ -403,7 +403,7 @@ class TestTTSubmit:
 
         captured_key = {}
 
-        def _capture(db, user_id, game, data, idempotency_key, is_challenge=False):
+        def _capture(db, user_id, game, data, idempotency_key, is_challenge=False, **_):
             captured_key["key"] = idempotency_key
             return attempt
 
@@ -843,7 +843,7 @@ class TestTTDifficultySubmit:
 
         captured = {}
 
-        def _capture(db, user_id, game, data, idempotency_key, is_challenge=False):
+        def _capture(db, user_id, game, data, idempotency_key, is_challenge=False, **_):
             captured["raw"] = data.get("raw_metrics", {})
             return attempt
 
@@ -865,7 +865,7 @@ class TestTTDifficultySubmit:
 
         captured = {}
 
-        def _capture(db, user_id, game, data, idempotency_key, is_challenge=False):
+        def _capture(db, user_id, game, data, idempotency_key, is_challenge=False, **_):
             captured["raw"] = data.get("raw_metrics", {})
             return attempt
 
@@ -887,7 +887,7 @@ class TestTTDifficultySubmit:
 
         captured = {}
 
-        def _capture(db, user_id, game, data, idempotency_key, is_challenge=False):
+        def _capture(db, user_id, game, data, idempotency_key, is_challenge=False, **_):
             captured["raw"] = data.get("raw_metrics", {})
             return attempt
 

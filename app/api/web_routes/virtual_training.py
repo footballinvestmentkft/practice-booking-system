@@ -18,6 +18,11 @@ from ...core.redis_pubsub import publish_challenge_event
 from ...services import notification_service
 from ...services.challenge_completion_service import apply_forfeit_if_deadline_passed
 from ...services.virtual_training_service import VirtualTrainingService
+from ...services.training_day import (
+    resolve_training_timezone,
+    resolve_location_source,
+    compute_training_local_date,
+)
 from .helpers import require_student_onboarding
 from .student_features import _spec_ctx
 from fastapi.templating import Jinja2Templates
@@ -26,6 +31,43 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 router = APIRouter(tags=["virtual-training"])
+
+
+# ── Training day helpers ──────────────────────────────────────────────────────
+
+def _parse_location_captured_at(raw: str | None) -> "datetime | None":
+    """Parse ISO datetime string from location payload, return None on failure."""
+    if not raw:
+        return None
+    try:
+        return datetime.fromisoformat(raw)
+    except (ValueError, TypeError):
+        return None
+
+
+def _extract_training_ctx(body: dict) -> dict:
+    """Extract browser timezone + location from submit body; compute training day.
+
+    Returns dict with keys:
+      training_local_date, training_tz, location_lat, location_lng,
+      location_accuracy_m, location_captured_at, browser_timezone
+    All fields are safe to pass directly to VirtualTrainingService.record_attempt().
+    """
+    browser_tz = body.get("browser_timezone")
+    loc = body.get("location") or {}
+    _now = datetime.now(timezone.utc)
+    training_tz, _ = resolve_training_timezone(browser_tz)
+    training_date = compute_training_local_date(_now, training_tz)
+    cap_at = _parse_location_captured_at(loc.get("captured_at"))
+    return {
+        "training_local_date":   training_date,
+        "training_tz":           training_tz,
+        "browser_timezone":      browser_tz,
+        "location_lat":          loc.get("lat"),
+        "location_lng":          loc.get("lng"),
+        "location_accuracy_m":   loc.get("accuracy_m"),
+        "location_captured_at":  cap_at,
+    }
 
 
 # ── PR-C2 Challenge Submit Helpers ────────────────────────────────────────────
@@ -421,19 +463,16 @@ async def virtual_training_color_reaction_submit(
         return JSONResponse({"error": "game not available"}, status_code=404)
 
     body = await request.json()
+    _tctx = _extract_training_ctx(body)
 
-    # Daily cap guard
-    today_start = datetime.combine(
-        datetime.now(timezone.utc).date(),
-        datetime.min.time(),
-    ).replace(tzinfo=timezone.utc)
+    # Daily cap guard — training_local_date based (browser timezone aware)
     valid_today = (
         db.query(VirtualTrainingAttempt)
         .filter(
-            VirtualTrainingAttempt.user_id == user.id,
-            VirtualTrainingAttempt.game_id == game.id,
-            VirtualTrainingAttempt.started_at >= today_start,
-            VirtualTrainingAttempt.is_valid == True,  # noqa: E712
+            VirtualTrainingAttempt.user_id             == user.id,
+            VirtualTrainingAttempt.game_id              == game.id,
+            VirtualTrainingAttempt.training_local_date  == _tctx["training_local_date"],
+            VirtualTrainingAttempt.is_valid             == True,  # noqa: E712
         )
         .count()
     )
@@ -453,6 +492,11 @@ async def virtual_training_color_reaction_submit(
         game=game,
         data=body,
         idempotency_key=idem_key,
+        browser_timezone=_tctx["browser_timezone"],
+        location_lat=_tctx["location_lat"],
+        location_lng=_tctx["location_lng"],
+        location_accuracy_m=_tctx["location_accuracy_m"],
+        location_captured_at=_tctx["location_captured_at"],
     )
 
     db.commit()
@@ -650,18 +694,16 @@ async def virtual_training_go_no_go_submit(
         return JSONResponse({"error": "game not available"}, status_code=404)
 
     body = await request.json()
+    _tctx = _extract_training_ctx(body)
 
-    today_start = datetime.combine(
-        datetime.now(timezone.utc).date(),
-        datetime.min.time(),
-    ).replace(tzinfo=timezone.utc)
+    # Daily cap guard — training_local_date based (browser timezone aware)
     valid_today = (
         db.query(VirtualTrainingAttempt)
         .filter(
-            VirtualTrainingAttempt.user_id == user.id,
-            VirtualTrainingAttempt.game_id == game.id,
-            VirtualTrainingAttempt.started_at >= today_start,
-            VirtualTrainingAttempt.is_valid == True,  # noqa: E712
+            VirtualTrainingAttempt.user_id             == user.id,
+            VirtualTrainingAttempt.game_id              == game.id,
+            VirtualTrainingAttempt.training_local_date  == _tctx["training_local_date"],
+            VirtualTrainingAttempt.is_valid             == True,  # noqa: E712
         )
         .count()
     )
@@ -680,6 +722,11 @@ async def virtual_training_go_no_go_submit(
         game=game,
         data=body,
         idempotency_key=idem_key,
+        browser_timezone=_tctx["browser_timezone"],
+        location_lat=_tctx["location_lat"],
+        location_lng=_tctx["location_lng"],
+        location_accuracy_m=_tctx["location_accuracy_m"],
+        location_captured_at=_tctx["location_captured_at"],
     )
 
     db.commit()
@@ -897,6 +944,7 @@ async def virtual_training_target_tracking_submit(
         return JSONResponse({"error": "game not available"}, status_code=404)
 
     body = await request.json()
+    _tctx = _extract_training_ctx(body)
 
     # Challenge pre-validation (before daily cap / attempt recording)
     raw_challenge_id = body.get("challenge_id")
@@ -922,22 +970,18 @@ async def virtual_training_target_tracking_submit(
                 status_code=403,
             )
 
-    today_start = datetime.combine(
-        datetime.now(timezone.utc).date(),
-        datetime.min.time(),
-    ).replace(tzinfo=timezone.utc)
+    # Daily cap — training_local_date based (browser timezone aware)
+    # Challenge attempts bypass the standalone daily cap.
     valid_today = (
         db.query(VirtualTrainingAttempt)
         .filter(
-            VirtualTrainingAttempt.user_id == user.id,
-            VirtualTrainingAttempt.game_id == game.id,
-            VirtualTrainingAttempt.started_at >= today_start,
-            VirtualTrainingAttempt.is_valid == True,  # noqa: E712
+            VirtualTrainingAttempt.user_id             == user.id,
+            VirtualTrainingAttempt.game_id              == game.id,
+            VirtualTrainingAttempt.training_local_date  == _tctx["training_local_date"],
+            VirtualTrainingAttempt.is_valid             == True,  # noqa: E712
         )
         .count()
     )
-    # Daily cap: challenge attempts bypass the 429 gate — the cap is enforced on
-    # solo play only. Challenge skill delta policy is handled in record_attempt().
     if challenge is None and valid_today >= game.max_daily_attempts:
         return JSONResponse(
             {"error": "daily_cap", "message": "Daily attempt limit reached for this game."},
@@ -975,6 +1019,11 @@ async def virtual_training_target_tracking_submit(
         data=body,
         idempotency_key=idem_key,
         is_challenge=(challenge is not None),
+        browser_timezone=_tctx["browser_timezone"],
+        location_lat=_tctx["location_lat"],
+        location_lng=_tctx["location_lng"],
+        location_accuracy_m=_tctx["location_accuracy_m"],
+        location_captured_at=_tctx["location_captured_at"],
     )
 
     # Challenge linking — only for valid attempts, inside the same transaction
@@ -1263,6 +1312,7 @@ async def virtual_training_memory_sequence_submit(
         return JSONResponse({"error": "game not available"}, status_code=404)
 
     body = await request.json()
+    _tctx = _extract_training_ctx(body)
 
     # Challenge pre-validation (before daily cap / attempt recording)
     raw_challenge_id = body.get("challenge_id")
@@ -1276,21 +1326,18 @@ async def virtual_training_memory_sequence_submit(
         if err is not None:
             return err
 
-    today_start = datetime.combine(
-        datetime.now(timezone.utc).date(),
-        datetime.min.time(),
-    ).replace(tzinfo=timezone.utc)
+    # Daily cap — training_local_date based (browser timezone aware)
+    # Challenge attempts bypass the standalone daily cap.
     valid_today = (
         db.query(VirtualTrainingAttempt)
         .filter(
-            VirtualTrainingAttempt.user_id == user.id,
-            VirtualTrainingAttempt.game_id == game.id,
-            VirtualTrainingAttempt.started_at >= today_start,
-            VirtualTrainingAttempt.is_valid == True,  # noqa: E712
+            VirtualTrainingAttempt.user_id             == user.id,
+            VirtualTrainingAttempt.game_id              == game.id,
+            VirtualTrainingAttempt.training_local_date  == _tctx["training_local_date"],
+            VirtualTrainingAttempt.is_valid             == True,  # noqa: E712
         )
         .count()
     )
-    # Daily cap: challenge attempts bypass the 429 gate (same policy as TT).
     if challenge is None and valid_today >= game.max_daily_attempts:
         return JSONResponse(
             {"error": "daily_cap", "message": "Daily attempt limit reached for this game."},
@@ -1318,6 +1365,11 @@ async def virtual_training_memory_sequence_submit(
         data=body,
         idempotency_key=idem_key,
         is_challenge=(challenge is not None),
+        browser_timezone=_tctx["browser_timezone"],
+        location_lat=_tctx["location_lat"],
+        location_lng=_tctx["location_lng"],
+        location_accuracy_m=_tctx["location_accuracy_m"],
+        location_captured_at=_tctx["location_captured_at"],
     )
 
     # Challenge linking — only for valid attempts, inside the same transaction
@@ -1536,18 +1588,16 @@ async def virtual_training_direction_swipe_submit(
         return JSONResponse({"error": "game not available"}, status_code=404)
 
     body = await request.json()
+    _tctx = _extract_training_ctx(body)
 
-    today_start = datetime.combine(
-        datetime.now(timezone.utc).date(),
-        datetime.min.time(),
-    ).replace(tzinfo=timezone.utc)
+    # Daily cap guard — training_local_date based (browser timezone aware)
     valid_today = (
         db.query(VirtualTrainingAttempt)
         .filter(
-            VirtualTrainingAttempt.user_id == user.id,
-            VirtualTrainingAttempt.game_id == game.id,
-            VirtualTrainingAttempt.started_at >= today_start,
-            VirtualTrainingAttempt.is_valid == True,  # noqa: E712
+            VirtualTrainingAttempt.user_id             == user.id,
+            VirtualTrainingAttempt.game_id              == game.id,
+            VirtualTrainingAttempt.training_local_date  == _tctx["training_local_date"],
+            VirtualTrainingAttempt.is_valid             == True,  # noqa: E712
         )
         .count()
     )
@@ -1566,6 +1616,11 @@ async def virtual_training_direction_swipe_submit(
         game=game,
         data=body,
         idempotency_key=idem_key,
+        browser_timezone=_tctx["browser_timezone"],
+        location_lat=_tctx["location_lat"],
+        location_lng=_tctx["location_lng"],
+        location_accuracy_m=_tctx["location_accuracy_m"],
+        location_captured_at=_tctx["location_captured_at"],
     )
 
     db.commit()
@@ -1754,18 +1809,16 @@ async def virtual_training_number_color_conflict_submit(
         return JSONResponse({"error": "game not available"}, status_code=404)
 
     body = await request.json()
+    _tctx = _extract_training_ctx(body)
 
-    today_start = datetime.combine(
-        datetime.now(timezone.utc).date(),
-        datetime.min.time(),
-    ).replace(tzinfo=timezone.utc)
+    # Daily cap guard — training_local_date based (browser timezone aware)
     valid_today = (
         db.query(VirtualTrainingAttempt)
         .filter(
-            VirtualTrainingAttempt.user_id == user.id,
-            VirtualTrainingAttempt.game_id == game.id,
-            VirtualTrainingAttempt.started_at >= today_start,
-            VirtualTrainingAttempt.is_valid == True,  # noqa: E712
+            VirtualTrainingAttempt.user_id             == user.id,
+            VirtualTrainingAttempt.game_id              == game.id,
+            VirtualTrainingAttempt.training_local_date  == _tctx["training_local_date"],
+            VirtualTrainingAttempt.is_valid             == True,  # noqa: E712
         )
         .count()
     )
@@ -1784,6 +1837,11 @@ async def virtual_training_number_color_conflict_submit(
         game=game,
         data=body,
         idempotency_key=idem_key,
+        browser_timezone=_tctx["browser_timezone"],
+        location_lat=_tctx["location_lat"],
+        location_lng=_tctx["location_lng"],
+        location_accuracy_m=_tctx["location_accuracy_m"],
+        location_captured_at=_tctx["location_captured_at"],
     )
 
     db.commit()

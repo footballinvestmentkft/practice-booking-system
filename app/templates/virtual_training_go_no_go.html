@@ -462,8 +462,11 @@
 
 </div>
 
+<script src="/static/js/vt-location.js"></script>
 <script>
 (function () {
+    VtLocation.warmUp();
+
     // ── Server-injected config ─────────────────────────────────────────────
     var PHASES      = {{ game.config.phases | tojson }};
     var GO_CUE      = {{ game.config.go_cue | tojson }};
@@ -803,6 +806,7 @@
             hand_profile: handProfile
         };
 
+        var _vtCtx = VtLocation.buildSubmitPayload();
         var payload = {
             started_at:        startedAt,
             duration_seconds:  durationSeconds,
@@ -815,6 +819,8 @@
             score_raw:         scoreRaw,
             score_normalized:  scoreNorm,
             raw_metrics:       rawMetrics,
+            browser_timezone:  _vtCtx.browser_timezone,
+            location:          _vtCtx.location,
         };
 
         fetch(SUBMIT_URL, {

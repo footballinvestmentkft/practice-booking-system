@@ -2,7 +2,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import (
-    Boolean, Column, DateTime, Float, ForeignKey,
+    Boolean, Column, Date, DateTime, Float, ForeignKey,
     Integer, SmallInteger, String, Text, UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -85,5 +85,21 @@ class VirtualTrainingAttempt(Base):
     raw_metrics       = Column(JSONB, nullable=True)          # per-stimulus/color/phase (Phase 2.2)
 
     idempotency_key = Column(String(100), nullable=True, unique=True)
+
+    # ── Location (Phase 1: stored; Phase 2: used for tz derivation) ──────────
+    location_lat         = Column(Float,                nullable=True)
+    location_lng         = Column(Float,                nullable=True)
+    location_accuracy_m  = Column(Integer,              nullable=True)
+    location_captured_at = Column(DateTime(timezone=True), nullable=True)
+    location_source      = Column(String(40),           nullable=True)
+    # "browser_geolocation" | "stale_browser_geolocation" | "unavailable"
+
+    # ── Training day (Phase 1: browser_timezone; Phase 2: lat/lng derived) ───
+    browser_timezone         = Column(String(64), nullable=True)
+    training_timezone        = Column(String(64), nullable=True)
+    training_timezone_source = Column(String(32), nullable=True)
+    # "browser_iana" | "utc_fallback"  (Phase 2: "lat_lng_derived")
+    training_local_date      = Column(Date,       nullable=True, index=True)
+    # Local date in training_timezone — single source of truth for daily window
 
     game = relationship("VirtualTrainingGame", back_populates="attempts")

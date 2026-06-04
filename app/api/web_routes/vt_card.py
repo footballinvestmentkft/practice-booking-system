@@ -20,7 +20,7 @@ Platforms:
 from __future__ import annotations
 
 import asyncio
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, Response
@@ -97,22 +97,20 @@ def _player_display(db: Session, user: User) -> dict:
 def _get_standalone_attempts(
     db: Session, user_id: int, game_id: int, day: date, limit: int = 5,
 ) -> list[VirtualTrainingAttempt]:
-    """Return ordered standalone attempts for a user+game+day.
+    """Return ordered standalone attempts for a user+game+training day.
 
+    Uses training_local_date (browser-timezone-aware) as the day boundary.
     Ordering: attempt_index_today (nulls last) → completed_at → started_at.
     Only valid, non-challenge attempts for the exact game are returned.
     Capped at `limit` (= game.max_daily_attempts) so a 6th attempt is excluded.
     """
-    day_start = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
-    day_end   = day_start + timedelta(days=1)
     return (
         db.query(VirtualTrainingAttempt)
         .filter(
-            VirtualTrainingAttempt.user_id    == user_id,
-            VirtualTrainingAttempt.game_id    == game_id,
-            VirtualTrainingAttempt.is_valid   == True,           # noqa: E712
-            VirtualTrainingAttempt.completed_at >= day_start,
-            VirtualTrainingAttempt.completed_at <  day_end,
+            VirtualTrainingAttempt.user_id             == user_id,
+            VirtualTrainingAttempt.game_id              == game_id,
+            VirtualTrainingAttempt.is_valid             == True,           # noqa: E712
+            VirtualTrainingAttempt.training_local_date  == day,
             or_(
                 VirtualTrainingAttempt.raw_metrics.is_(None),
                 VirtualTrainingAttempt.raw_metrics["attempt_source"].astext != "challenge",
@@ -270,18 +268,14 @@ def _get_vtc_mood_photo_url(
 
 
 def _daily_attempt_stats(db: Session, user_id: int, game_id: int, day: date) -> dict:
-    """Legacy aggregation helper — kept for backward compatibility with reward card."""
-    day_start = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
-    day_end = day_start + timedelta(days=1)
-
+    """Aggregation helper for reward card — uses training_local_date boundary."""
     attempts = (
         db.query(VirtualTrainingAttempt)
         .filter(
-            VirtualTrainingAttempt.user_id == user_id,
-            VirtualTrainingAttempt.game_id == game_id,
-            VirtualTrainingAttempt.is_valid == True,  # noqa: E712
-            VirtualTrainingAttempt.completed_at >= day_start,
-            VirtualTrainingAttempt.completed_at < day_end,
+            VirtualTrainingAttempt.user_id             == user_id,
+            VirtualTrainingAttempt.game_id              == game_id,
+            VirtualTrainingAttempt.is_valid             == True,  # noqa: E712
+            VirtualTrainingAttempt.training_local_date  == day,
             or_(
                 VirtualTrainingAttempt.raw_metrics.is_(None),
                 VirtualTrainingAttempt.raw_metrics["attempt_source"].astext != "challenge",
@@ -325,18 +319,15 @@ def _reward_daily_stats(db: Session, user_id: int, completed_game_ids: list[int]
     game_name_map = {g.id: g.name for g in games}
     completed_game_names = [game_name_map[gid] for gid in completed_game_ids if gid in game_name_map]
 
-    # Total XP: sum from ALL standalone attempts today (across all completed games)
+    # Total XP: sum from ALL standalone attempts on this training day (across all completed games)
     if completed_game_ids:
-        day_start = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
-        day_end   = day_start + timedelta(days=1)
         total_xp = (
             db.query(VirtualTrainingAttempt.xp_awarded)
             .filter(
-                VirtualTrainingAttempt.user_id == user_id,
+                VirtualTrainingAttempt.user_id             == user_id,
                 VirtualTrainingAttempt.game_id.in_(completed_game_ids),
-                VirtualTrainingAttempt.is_valid == True,  # noqa: E712
-                VirtualTrainingAttempt.completed_at >= day_start,
-                VirtualTrainingAttempt.completed_at < day_end,
+                VirtualTrainingAttempt.is_valid             == True,  # noqa: E712
+                VirtualTrainingAttempt.training_local_date  == day,
                 or_(
                     VirtualTrainingAttempt.raw_metrics.is_(None),
                     VirtualTrainingAttempt.raw_metrics["attempt_source"].astext != "challenge",

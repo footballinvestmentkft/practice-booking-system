@@ -226,8 +226,11 @@
     </div>
 
 </div>
+<script src="/static/js/vt-location.js"></script>
 <script>
 (function () {
+    VtLocation.warmUp();
+
     var PHASES      = {{ game.config.phases | tojson }};
     var TILE_COLORS = {{ game.config.tile_colors | tojson }};
     var CSRF_TOKEN   = "{{ request.cookies.get('csrf_token', '') }}";
@@ -546,6 +549,7 @@
             late_summary: { timeout_count: timeoutPositions, timeout_rounds: timeoutRounds }
         };
 
+        var _vtCtx = VtLocation.buildSubmitPayload();
         var payload = {
             started_at:        startedAt,
             duration_seconds:  durationSeconds,
@@ -557,7 +561,9 @@
             min_reaction_ms:   minFirstTapMs,
             score_raw:         scoreRaw,
             score_normalized:  scoreNorm,
-            raw_metrics:       rawMetrics
+            raw_metrics:       rawMetrics,
+            browser_timezone:  _vtCtx.browser_timezone,
+            location:          _vtCtx.location,
         };
         if (CHALLENGE_ID) { payload.challenge_id = parseInt(CHALLENGE_ID, 10); }
 

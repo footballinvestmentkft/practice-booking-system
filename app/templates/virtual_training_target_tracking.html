@@ -443,9 +443,11 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script src="/static/js/vt-location.js"></script>
 <script>
 (function () {
 'use strict';
+VtLocation.warmUp();
 
 /* ── Difficulty configs from server ───────────────────────────────────────── */
 const _DIFFICULTIES_RAW = {{ (game.config.get('difficulties', {}) if game.config else {}) | tojson }};
@@ -1083,6 +1085,7 @@ function finishGame() {
         ? Math.round((tapsDuringFlash / totalFlashShown) * 1000) / 1000
         : 0.0;
 
+    var _vtCtx = VtLocation.buildSubmitPayload();
     var payload = {
         started_at:        startedAt,
         duration_seconds:  Math.round(durationSec * 10) / 10,
@@ -1108,6 +1111,8 @@ function finishGame() {
                 total_direction_changes: totalDirChanges,
             },
         },
+        browser_timezone: _vtCtx.browser_timezone,
+        location:         _vtCtx.location,
     };
     if (CHALLENGE_ID) { payload.challenge_id = parseInt(CHALLENGE_ID, 10); }
 
