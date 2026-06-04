@@ -60226,6 +60226,24 @@
               ],
               "title": "Platform"
             }
+          },
+          {
+            "description": "Browser IANA timezone (Phase 1)",
+            "in": "query",
+            "name": "tz",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Browser IANA timezone (Phase 1)",
+              "title": "Tz"
+            }
           }
         ],
         "responses": {

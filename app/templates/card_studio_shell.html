@@ -1136,5 +1136,21 @@
 
 }());
 {% endif %}
+
+{% if active_type == "virtual_training" %}
+// ── VT Phase 1: inject browser timezone into URL (once, no redirect loop) ───
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  if (!params.has('tz')) {
+    try {
+      var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz) {
+        params.set('tz', tz);
+        window.location.replace(window.location.pathname + '?' + params.toString());
+      }
+    } catch (e) { /* Intl unavailable — server UTC fallback is used */ }
+  }
+}());
+{% endif %}
 </script>
 {% endblock %}

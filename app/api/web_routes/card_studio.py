@@ -45,6 +45,7 @@ from ...services.vt_card_eligibility import (
     check_single_game_eligibility as _vtc_single_elig,
     check_reward_eligibility as _vtc_reward_elig,
 )
+from ...services.training_day import resolve_training_timezone, compute_training_local_date
 from ...models.virtual_training import VirtualTrainingGame
 from ...services.mood_photo_service import get_mood_photos_for_user
 from ...services.card_theme_service import (
@@ -850,6 +851,7 @@ async def card_studio_virtual_training(
     request:  Request,
     game_id:  int | None = Query(default=None),
     platform: str | None = Query(default=None),
+    tz:       str | None = Query(default=None, description="Browser IANA timezone (Phase 1)"),
     db:       Session    = Depends(get_db),
     user:     User       = Depends(get_current_user_web),
 ):
@@ -860,6 +862,13 @@ async def card_studio_virtual_training(
     ?game_id={id}&platform={pid} → preview mode (iframe + export CTA).
     """
     from datetime import datetime, timezone  # noqa: PLC0415
+
+    # Phase 1: resolve training day from browser timezone; fallback to UTC
+    _now = datetime.now(timezone.utc)
+    _training_tz, _ = resolve_training_timezone(tz)
+    training_date   = compute_training_local_date(_now, _training_tz)
+    # vt_tz_str is passed to template so navigation links preserve the tz param
+    vt_tz_str = tz or ""
 
     lic = _license_guard(db, user.id)
     if not lic:
@@ -882,8 +891,7 @@ async def card_studio_virtual_training(
         if f.design_id in owned_ids
     ]
 
-    # Today's eligible games (5/5 standalone completed today)
-    today = datetime.now(timezone.utc).date()
+    # Today's eligible games (5/5 standalone completed on training_date)
     all_active_games = (
         db.query(VirtualTrainingGame)
         .filter(VirtualTrainingGame.is_active == True)  # noqa: E712
@@ -893,7 +901,7 @@ async def card_studio_virtual_training(
 
     eligible_games = []
     for game in all_active_games:
-        is_elig, count, required = _vtc_single_elig(db, user.id, game.id, today)
+        is_elig, count, required = _vtc_single_elig(db, user.id, game.id, training_date)
         if is_elig:
             eligible_games.append({
                 "game_id":   game.id,
@@ -921,11 +929,14 @@ async def card_studio_virtual_training(
     ratio_class = _VTC_RATIO.get(platform or "", "mfg-ratio-169")
 
     if game_id and platform:
+        _date_param = training_date.isoformat()
         preview_url = (
-            f"/virtual-training/card/preview?game_id={game_id}&platform={platform}"
+            f"/virtual-training/card/preview"
+            f"?game_id={game_id}&platform={platform}&date={_date_param}"
         )
         export_url = (
-            f"/virtual-training/card/export?game_id={game_id}&platform={platform}"
+            f"/virtual-training/card/export"
+            f"?game_id={game_id}&platform={platform}&date={_date_param}"
         )
         can_export = game_id in eligible_game_ids
 
@@ -966,6 +977,8 @@ async def card_studio_virtual_training(
         "export_url":        export_url,
         "can_export":        can_export,
         "reward_tiers":      reward_tiers,
+        # Phase 1: browser timezone — preserved across navigation
+        "vt_tz_str":         vt_tz_str,
         # Shell compatibility (avoid undefined errors in other mode blocks)
         "ratio_class":       ratio_class,
         "fmt":               None,

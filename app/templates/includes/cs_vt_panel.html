@@ -66,7 +66,7 @@
   {% if _sg_formats %}
   <div class="csvt-chips">
     {% for fmt in _sg_formats %}
-    <a href="/card-studio/virtual-training?platform={{ fmt.design_id }}{% if active_game_id %}&game_id={{ active_game_id }}{% endif %}"
+    <a href="/card-studio/virtual-training?platform={{ fmt.design_id }}{% if active_game_id %}&game_id={{ active_game_id }}{% endif %}{% if vt_tz_str %}&tz={{ vt_tz_str }}{% endif %}"
        class="csvt-chip{% if active_platform == fmt.design_id %} csvt-chip--active{% endif %}">
       {{ fmt.label }}
       <span class="csvt-chip-dims">{{ fmt.dims }}</span>
@@ -83,7 +83,7 @@
   <div class="csvt-section-title">Today's Completed Games</div>
   {% if eligible_games %}
     {% for eg in eligible_games %}
-    <a href="/card-studio/virtual-training?{% if active_platform %}platform={{ active_platform }}&{% endif %}game_id={{ eg.game_id }}"
+    <a href="/card-studio/virtual-training?{% if active_platform %}platform={{ active_platform }}&{% endif %}game_id={{ eg.game_id }}{% if vt_tz_str %}&tz={{ vt_tz_str }}{% endif %}"
        class="csvt-game-row{% if active_game_id == eg.game_id %} csvt-game-row--active{% endif %}">
       <span>{{ eg.game_name }}</span>
       <span class="csvt-badge csvt-badge--eligible">✓ {{ eg.completed }}/{{ eg.required }}</span>
@@ -113,7 +113,7 @@
     <span class="csvt-reward-badge csvt-reward-badge--locked">🔒 Buy Format</span>
   </a>
   {% elif rt.eligible %}
-  <a href="/card-studio/virtual-training?reward={{ rt.tier }}"
+  <a href="/card-studio/virtual-training?reward={{ rt.tier }}{% if vt_tz_str %}&tz={{ vt_tz_str }}{% endif %}"
      class="csvt-reward-row csvt-reward-row--eligible">
     <span>{{ rt.tier }}-Game Mastery</span>
     <span class="csvt-reward-badge csvt-reward-badge--done">✓ {{ rt.completed_games }}/{{ rt.tier }}</span>
