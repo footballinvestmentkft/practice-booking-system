@@ -67,12 +67,18 @@ body {
   background: rgba(74,222,128,0.08);
 }
 
-/* ── Hero zone: top half ─────────────────────────────────────────── */
+/* ── Hero zone: mood / player photo ─────────────────────────────── */
 .player-zone {
-  height: 820px; flex-shrink: 0;
+  height: 720px; flex-shrink: 0;
   position: relative; overflow: hidden;
   background: linear-gradient(180deg, #0c1624 0%, #111e30 100%);
 }
+/* Mood photo: cover + top alignment */
+.player-photo.mood-photo {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: top center; display: block;
+}
+/* Player card photo: contain + bottom alignment */
 .player-photo {
   width: 100%; height: 100%; object-fit: contain; object-position: center bottom; display: block;
 }
@@ -87,39 +93,54 @@ body {
   position: absolute; top: 24px; left: 24px;
   display: flex; flex-direction: column; gap: 4px; z-index: 3;
 }
-.player-pos-primary   { font-size: 2rem; font-weight: 900; color: var(--cc-gold); letter-spacing: 0.06em; line-height: 1; }
-.player-overall       { position: absolute; bottom: 66px; left: 0; right: 0; text-align: center; z-index: 3; font-size: 1rem; font-weight: 700; color: rgba(232,234,240,0.5); letter-spacing: 0.06em; }
-.player-name          { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; padding: 40px 12px 16px; background: linear-gradient(0deg, rgba(8,16,30,0.88) 0%, transparent 100%); font-size: 1rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cc-text); }
+.player-pos-primary { font-size: 2rem; font-weight: 900; color: var(--cc-gold); letter-spacing: 0.06em; line-height: 1; }
+.player-overall     { position: absolute; bottom: 66px; left: 0; right: 0; text-align: center; z-index: 3; font-size: 1rem; font-weight: 700; color: rgba(232,234,240,0.5); letter-spacing: 0.06em; }
+.player-name        { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; padding: 40px 12px 16px; background: linear-gradient(0deg, rgba(8,16,30,0.88) 0%, transparent 100%); font-size: 1rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cc-text); }
 
-/* ── Stats panel: bottom half ────────────────────────────────────── */
+/* ── Stats panel: bottom section ────────────────────────────────── */
 .stats-panel {
   flex: 1; display: flex; flex-direction: column;
-  padding: 44px 64px; gap: 0;
+  padding: 36px 64px 0; gap: 0;
   border-top: 1px solid var(--cc-border);
 }
 .stats-label {
   font-size: 0.66rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--cc-dim); border: 1px solid var(--cc-border); border-radius: 3px;
-  padding: 4px 10px; margin-bottom: 16px; display: inline-block; align-self: flex-start;
+  padding: 4px 10px; margin-bottom: 12px; display: inline-block; align-self: flex-start;
+}
+.stats-top-row {
+  display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px;
 }
 .stats-headline {
   font-family: var(--font-display);
-  font-size: 5.6rem; font-weight: 400; color: var(--cc-gold); line-height: 1; margin-bottom: 8px;
-}
-.stats-game-name {
-  font-size: 1.4rem; font-weight: 700; color: var(--cc-text); text-transform: uppercase;
-  letter-spacing: 0.04em; margin-bottom: 8px;
+  font-size: 4.4rem; font-weight: 400; color: var(--cc-gold); line-height: 1;
 }
 .completion-counter {
   font-family: var(--font-display);
-  font-size: 3.2rem; color: var(--cc-text); line-height: 1; margin-bottom: 28px;
+  font-size: 2.6rem; color: var(--cc-text); line-height: 1;
 }
 .completion-counter .done { color: var(--cc-green); }
 .completion-counter .sep  { color: var(--cc-dim); margin: 0 4px; }
+.stats-game-name {
+  font-size: 1.3rem; font-weight: 700; color: var(--cc-text); text-transform: uppercase;
+  letter-spacing: 0.04em; margin-bottom: 20px;
+}
 
-.divider { width: 48px; height: 2px; background: var(--cc-border); margin-bottom: 24px; }
+/* ── Attempt chart ────────────────────────────────────────────────── */
+.chart-wrap {
+  margin-bottom: 20px;
+  background: rgba(0,0,0,0.15); border-radius: 4px; padding: 8px 10px 4px;
+  border: 1px solid var(--cc-border);
+}
+.chart-wrap .chart-title {
+  font-size: 0.58rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--cc-dim); margin-bottom: 6px;
+}
+.attempt-chart { width: 100%; height: 130px; display: block; }
 
-.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 40px; }
+/* ── Stats grid ───────────────────────────────────────────────────── */
+.divider { width: 48px; height: 2px; background: var(--cc-border); margin: 0 0 20px; }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 40px; }
 .stat-cell  { display: flex; flex-direction: column; gap: 4px; }
 .stat-label-sm { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cc-dim); }
 .stat-value { font-size: 1.4rem; font-weight: 800; color: var(--cc-text); line-height: 1.1; }
@@ -128,10 +149,17 @@ body {
 .stat-value.blue  { color: var(--cc-blue); }
 .stat-value.muted { color: var(--cc-dim); font-style: italic; }
 
+.top-skill-row {
+  margin-top: 16px; font-size: 0.74rem; font-weight: 700; color: var(--cc-sub);
+  letter-spacing: 0.06em;
+}
+.top-skill-row span { color: var(--cc-green); }
+
 /* ── Footer ──────────────────────────────────────────────────────── */
 .card-footer {
   display: flex; align-items: center; justify-content: space-between;
   padding: 12px 64px 24px; border-top: 1px solid var(--cc-border); flex-shrink: 0;
+  margin-top: auto;
 }
 .footer-meta   { font-size: 0.82rem; color: var(--cc-sub); }
 .footer-domain { font-size: 0.72rem; color: #2a3a55; }
@@ -145,9 +173,11 @@ body {
     <div class="completion-badge">✓ Daily Complete</div>
   </div>
 
-  {# Player hero zone #}
+  {# ── Mood / player hero zone ── #}
   <div class="player-zone">
-    {% if player_photo_url %}
+    {% if mood_photo_url %}
+      <img src="{{ mood_photo_url }}" class="player-photo mood-photo" alt="{{ player_name }}">
+    {% elif player_photo_url %}
       <img src="{{ player_photo_url }}" class="player-photo" alt="{{ player_name }}">
     {% else %}
       <div class="player-initial">{{ (player_name[0] if player_name else '?') | upper }}</div>
@@ -163,15 +193,55 @@ body {
     <div class="player-name">{{ player_name or 'Player' }}</div>
   </div>
 
-  {# Stats panel #}
+  {# ── Stats panel ── #}
   <div class="stats-panel">
     <div class="stats-label">Virtual Training</div>
-    <div class="stats-headline">DAILY COMPLETE</div>
-    <div class="stats-game-name">{{ game.name }}</div>
-    <div class="completion-counter">
-      <span class="done">{{ completed_count }}</span><span class="sep">/</span>{{ max_attempts }}
+    <div class="stats-top-row">
+      <div class="stats-headline">DAILY COMPLETE</div>
+      <div class="completion-counter">
+        <span class="done">{{ completed_count }}</span><span class="sep">/</span>{{ max_attempts }}
+      </div>
     </div>
+    <div class="stats-game-name">{{ game.name }}</div>
+
+    {# ── Attempt chart ── #}
+    {% if attempt_chart_points %}
+    <div class="chart-wrap">
+      <div class="chart-title">Score per Attempt (0–100)</div>
+      <svg class="attempt-chart" viewBox="0 0 300 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        {# Gridlines #}
+        <line x1="0" y1="2"   x2="300" y2="2"   stroke="#1e2e44" stroke-width="0.5"/>
+        <line x1="0" y1="57"  x2="300" y2="57"  stroke="#1e2e44" stroke-width="0.5" stroke-dasharray="3,2"/>
+        <line x1="0" y1="112" x2="300" y2="112" stroke="#1e2e44" stroke-width="0.8"/>
+        {# Bars + dots + labels #}
+        {% set _ns = namespace(pts="") %}
+        {% for pt in attempt_chart_points %}
+          {% set _x = 14 + loop.index0 * 52 %}
+          {% if pt.score is not none %}
+            {% set _bh = (pt.score / 100 * 110)|round(1) %}
+            {% set _by = (112 - _bh)|round(1) %}
+            {% set _ns.pts = _ns.pts ~ (_x + 20)|string ~ "," ~ _by|string ~ " " %}
+            <rect x="{{ _x }}" y="{{ _by }}" width="40" height="{{ _bh }}" rx="2" fill="rgba(30,64,128,0.9)"/>
+            <rect x="{{ _x }}" y="{{ _by }}" width="40" height="4" rx="2" fill="#60a5fa"/>
+            <circle cx="{{ _x + 20 }}" cy="{{ _by }}" r="4" fill="#60a5fa"/>
+            <text x="{{ _x + 20 }}" y="{{ (_by - 6)|round(0)|int }}" text-anchor="middle" font-size="9" fill="#e8eaf0" font-family="system-ui" font-weight="700">{{ pt.label }}</text>
+          {% else %}
+            <rect x="{{ _x }}" y="110" width="40" height="2" rx="1" fill="#1e2e44"/>
+            <text x="{{ _x + 20 }}" y="104" text-anchor="middle" font-size="8" fill="#4a5570" font-family="system-ui">—</text>
+          {% endif %}
+          <text x="{{ _x + 20 }}" y="122" text-anchor="middle" font-size="8" fill="#4a5570" font-family="system-ui">{{ pt.index }}</text>
+        {% endfor %}
+        {# Trend polyline #}
+        {% if _ns.pts %}
+        <polyline points="{{ _ns.pts }}" fill="none" stroke="#f5c518" stroke-width="2" stroke-linejoin="round" opacity="0.55"/>
+        {% endif %}
+      </svg>
+    </div>
+    {% endif %}
+
     <div class="divider"></div>
+
+    {# ── Stats grid: Best | Avg | XP | Reaction ── #}
     <div class="stats-grid">
       <div class="stat-cell">
         <span class="stat-label-sm">Best Score</span>
@@ -181,23 +251,32 @@ body {
         <span class="stat-value muted">—</span>
         {% endif %}
       </div>
-      {% if avg_reaction_ms is not none %}
       <div class="stat-cell">
-        <span class="stat-label-sm">Avg Reaction</span>
-        <span class="stat-value blue">{{ avg_reaction_ms }} ms</span>
+        <span class="stat-label-sm">Avg Score</span>
+        {% if avg_score is not none %}
+        <span class="stat-value blue">{{ "%.1f"|format(avg_score) }}</span>
+        {% else %}
+        <span class="stat-value muted">—</span>
+        {% endif %}
       </div>
-      {% endif %}
       <div class="stat-cell">
         <span class="stat-label-sm">XP Earned</span>
         <span class="stat-value green">+{{ xp_earned }}</span>
       </div>
-      {% if top_skill_delta %}
       <div class="stat-cell">
-        <span class="stat-label-sm">Top Skill</span>
-        <span class="stat-value green">{{ top_skill_delta.name }} {% if top_skill_delta.delta > 0 %}+{% endif %}{{ "%.2f"|format(top_skill_delta.delta) }}</span>
+        <span class="stat-label-sm">Avg Reaction</span>
+        {% if avg_reaction_ms is not none %}
+        <span class="stat-value">{{ avg_reaction_ms }} ms</span>
+        {% else %}
+        <span class="stat-value muted">—</span>
+        {% endif %}
       </div>
-      {% endif %}
     </div>
+
+    {% if top_skill_delta %}
+    <div class="top-skill-row">Top Skill — <span>{{ top_skill_delta.name }} {% if top_skill_delta.delta > 0 %}+{% endif %}{{ "%.2f"|format(top_skill_delta.delta) }}</span></div>
+    {% endif %}
+
   </div>
 
   <div class="card-footer">

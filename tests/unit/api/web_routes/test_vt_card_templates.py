@@ -51,10 +51,24 @@ def _single_game_ctx(**overrides: Any) -> dict:
         "player_overall":   72.3,
         "player_photo_url": None,
         "player_primary_pos": "CAM",
+        # aggregated stats
         "best_score":       87.4,
+        "avg_score":        72.1,
         "avg_reaction_ms":  234,
         "xp_earned":        45,
         "top_skill_delta":  {"name": "Passing", "delta": 0.15},
+        "score_trend":      10.0,
+        "score_consistency": 75.0,
+        # mood photo
+        "mood_photo_url":   None,
+        "mood_slot":        "mood_focused_ready",
+        "mood_reason":      "mid_avg_stable",
+        # chart data
+        "attempt_chart_points": [
+            {"index": i, "score": 60.0 + i * 7, "label": str(60 + i * 7), "reaction_ms": 340}
+            for i in range(1, 6)
+        ],
+        "attempts": [],
     }
     ctx.update(overrides)
     return ctx

@@ -94,8 +94,183 @@ def _player_display(db: Session, user: User) -> dict:
     }
 
 
+def _get_standalone_attempts(
+    db: Session, user_id: int, game_id: int, day: date, limit: int = 5,
+) -> list[VirtualTrainingAttempt]:
+    """Return ordered standalone attempts for a user+game+day.
+
+    Ordering: attempt_index_today (nulls last) → completed_at → started_at.
+    Only valid, non-challenge attempts for the exact game are returned.
+    Capped at `limit` (= game.max_daily_attempts) so a 6th attempt is excluded.
+    """
+    day_start = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
+    day_end   = day_start + timedelta(days=1)
+    return (
+        db.query(VirtualTrainingAttempt)
+        .filter(
+            VirtualTrainingAttempt.user_id    == user_id,
+            VirtualTrainingAttempt.game_id    == game_id,
+            VirtualTrainingAttempt.is_valid   == True,           # noqa: E712
+            VirtualTrainingAttempt.completed_at >= day_start,
+            VirtualTrainingAttempt.completed_at <  day_end,
+            or_(
+                VirtualTrainingAttempt.raw_metrics.is_(None),
+                VirtualTrainingAttempt.raw_metrics["attempt_source"].astext != "challenge",
+            ),
+        )
+        .order_by(
+            VirtualTrainingAttempt.attempt_index_today.asc().nullslast(),
+            VirtualTrainingAttempt.completed_at.asc().nullslast(),
+            VirtualTrainingAttempt.started_at.asc(),
+        )
+        .limit(limit)
+        .all()
+    )
+
+
+def _compute_vtc_stats(attempts: list[VirtualTrainingAttempt]) -> dict:
+    """Pure function: compute all derived stats from an ordered attempt list."""
+    _empty = {
+        "best_score": None, "avg_score": None,
+        "score_trend": None, "score_consistency": None,
+        "avg_reaction_ms": None, "xp_earned": 0, "top_skill_delta": None,
+        "attempt_chart_points": [], "attempts": [],
+    }
+    if not attempts:
+        return _empty
+
+    scores    = [a.score_normalized for a in attempts if a.score_normalized is not None]
+    reactions = [a.avg_reaction_ms   for a in attempts if a.avg_reaction_ms   is not None]
+
+    best_score = round(max(scores), 1)          if scores else None
+    avg_score  = round(sum(scores) / len(scores), 1) if scores else None
+
+    if len(scores) >= 4:
+        score_trend = round((scores[-2] + scores[-1]) / 2 - (scores[0] + scores[1]) / 2, 1)
+    elif len(scores) >= 2:
+        score_trend = round(scores[-1] - scores[0], 1)
+    else:
+        score_trend = 0.0
+
+    score_consistency = (
+        round(100.0 - (max(scores) - min(scores)), 1) if len(scores) >= 2 else 100.0
+    )
+
+    avg_reaction_ms = round(sum(reactions) / len(reactions)) if reactions else None
+    xp_earned       = sum(a.xp_awarded or 0 for a in attempts)
+
+    agg_deltas: dict[str, float] = {}
+    for a in attempts:
+        for skill, delta in (a.skill_deltas or {}).items():
+            agg_deltas[skill] = agg_deltas.get(skill, 0.0) + float(delta)
+    top_delta = None
+    if agg_deltas:
+        top_key   = max(agg_deltas, key=lambda k: abs(agg_deltas[k]))
+        top_delta = {"name": top_key.replace("_", " ").title(), "delta": agg_deltas[top_key]}
+
+    chart_points = []
+    attempt_list = []
+    for i, a in enumerate(attempts, start=1):
+        s   = a.score_normalized
+        idx = a.attempt_index_today if a.attempt_index_today else i
+        chart_points.append({
+            "index":       idx,
+            "score":       round(s, 1) if s is not None else None,
+            "label":       str(round(s)) if s is not None else "—",
+            "reaction_ms": a.avg_reaction_ms,
+        })
+        attempt_list.append({
+            "index":       idx,
+            "score":       round(s, 1) if s is not None else None,
+            "reaction_ms": a.avg_reaction_ms,
+            "xp":          a.xp_awarded or 0,
+            "correct":     a.correct_count,
+            "errors":      a.error_count,
+        })
+
+    return {
+        "best_score":           best_score,
+        "avg_score":            avg_score,
+        "score_trend":          score_trend,
+        "score_consistency":    score_consistency,
+        "avg_reaction_ms":      avg_reaction_ms,
+        "xp_earned":            xp_earned,
+        "top_skill_delta":      top_delta,
+        "attempt_chart_points": chart_points,
+        "attempts":             attempt_list,
+    }
+
+
+def _vtc_mood_slots(
+    avg_score: float | None,
+    score_consistency: float | None,
+    score_trend: float | None,
+) -> tuple[str, str, str]:
+    """Return (primary_slot, alt_slot, reason) based on multi-factor performance.
+
+    Thresholds (evaluated in order):
+      avg>=80, consistency>=70 → celebration / happy_smile
+      avg>=80, consistency<70  → proud / happy_smile
+      avg 65-79, trend>5       → proud / confident
+      avg 65-79, trend<=5      → confident / proud
+      avg 45-64, trend>=-5     → focused_ready / confident
+      avg 45-64, trend<-5      → focused_ready / neutral
+      avg<45, trend>5          → focused_ready / neutral
+      avg<45, trend<=5         → sad_disappointed / neutral
+      no score                 → neutral / neutral
+    """
+    if avg_score is None:
+        return ("mood_intro_neutral", "mood_intro_neutral", "no_score_data")
+
+    cons  = score_consistency if score_consistency is not None else 100.0
+    trend = score_trend       if score_trend       is not None else 0.0
+
+    if avg_score >= 80:
+        if cons >= 70:
+            return ("mood_celebration",      "mood_happy_smile",   "high_avg_consistent")
+        return     ("mood_proud",            "mood_happy_smile",   "high_avg_inconsistent")
+    if avg_score >= 65:
+        if trend > 5:
+            return ("mood_proud",            "mood_confident",     "good_avg_improving")
+        return     ("mood_confident",        "mood_proud",         "good_avg_stable")
+    if avg_score >= 45:
+        if trend >= -5:
+            return ("mood_focused_ready",    "mood_confident",     "mid_avg_stable")
+        return     ("mood_focused_ready",    "mood_intro_neutral", "mid_avg_declining")
+    if trend > 5:
+        return     ("mood_focused_ready",    "mood_intro_neutral", "low_avg_improving")
+    return         ("mood_sad_disappointed", "mood_intro_neutral", "low_avg_declining")
+
+
+def _get_vtc_mood_photo_url(
+    db: Session,
+    user_id: int,
+    primary_slot: str,
+    alt_slot: str,
+    player_photo_url: str | None,
+) -> str | None:
+    """Return mood photo URL via 6-step fallback chain:
+    1. primary processed_png_url
+    2. primary original_url
+    3. alt processed_png_url
+    4. alt original_url
+    5. player_card_photo_url
+    6. None → template renders initials
+    """
+    from ...models.user_mood_photos import UserMoodPhoto  # noqa: PLC0415
+
+    for slot in (primary_slot, alt_slot):
+        photo = db.query(UserMoodPhoto).filter_by(user_id=user_id, slot=slot).first()
+        if photo:
+            if photo.processed_png_url:
+                return photo.processed_png_url
+            if photo.original_url:
+                return photo.original_url
+    return player_photo_url
+
+
 def _daily_attempt_stats(db: Session, user_id: int, game_id: int, day: date) -> dict:
-    """Return aggregated stats for standalone attempts on a given game+day."""
+    """Legacy aggregation helper — kept for backward compatibility with reward card."""
     day_start = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
     day_end = day_start + timedelta(days=1)
 
@@ -247,26 +422,47 @@ async def vt_card_preview(
     if game is None:
         raise HTTPException(status_code=404, detail="Game not found")
 
-    player  = _player_display(db, user)
-    stats   = _daily_attempt_stats(db, user.id, game_id, day)
+    player   = _player_display(db, user)
+    attempts = _get_standalone_attempts(db, user.id, game_id, day, limit=required)
+    stats    = _compute_vtc_stats(attempts)
+
+    primary_slot, alt_slot, mood_reason = _vtc_mood_slots(
+        avg_score=stats["avg_score"],
+        score_consistency=stats["score_consistency"],
+        score_trend=stats["score_trend"],
+    )
+    mood_photo_url = _get_vtc_mood_photo_url(
+        db, user.id, primary_slot, alt_slot, player["photo_url"],
+    )
 
     ctx = {
-        "request":          request,
-        "game":             game,
-        "attempt_date":     day.isoformat(),
-        "completed_count":  count,
-        "max_attempts":     required,
-        "platform":         platform,
+        "request":            request,
+        "game":               game,
+        "attempt_date":       day.isoformat(),
+        "completed_count":    count,
+        "max_attempts":       required,
+        "platform":           platform,
         # player identity
-        "player_name":      player["name"],
-        "player_overall":   player["overall"],
-        "player_photo_url": player["photo_url"],
+        "player_name":        player["name"],
+        "player_overall":     player["overall"],
+        "player_photo_url":   player["photo_url"],
         "player_primary_pos": player["primary_pos"],
-        # attempt stats
-        "best_score":       stats["best_score"],
-        "avg_reaction_ms":  stats["avg_reaction_ms"],
-        "xp_earned":        stats["xp_earned"],
-        "top_skill_delta":  stats["top_skill_delta"],
+        # mood photo
+        "mood_photo_url":     mood_photo_url,
+        "mood_slot":          primary_slot,
+        "mood_reason":        mood_reason,
+        # aggregated stats (backward-compat keys)
+        "best_score":         stats["best_score"],
+        "avg_reaction_ms":    stats["avg_reaction_ms"],
+        "xp_earned":          stats["xp_earned"],
+        "top_skill_delta":    stats["top_skill_delta"],
+        # new stats
+        "avg_score":          stats["avg_score"],
+        "score_trend":        stats["score_trend"],
+        "score_consistency":  stats["score_consistency"],
+        # chart + attempt list
+        "attempt_chart_points": stats["attempt_chart_points"],
+        "attempts":             stats["attempts"],
     }
     return templates.TemplateResponse(_VT_TEMPLATE[platform], ctx)
 

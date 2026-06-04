@@ -46,7 +46,6 @@ body {
   background: linear-gradient(135deg, #08101e 0%, #0f1928 55%, #152236 100%);
   position: relative; overflow: hidden;
 }
-/* Gold top accent line */
 .card-wrap::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
   background: linear-gradient(90deg, #f5c518 0%, #e8a000 60%, #ff6b35 100%);
@@ -76,16 +75,18 @@ body {
   overflow: hidden; min-height: 0;
 }
 
-/* ── Left: player photo zone ─────────────────────────────────────── */
+/* ── Left: mood / player photo zone ─────────────────────────────── */
 .player-zone {
   position: relative; overflow: hidden;
   background: linear-gradient(160deg, #0c1624 0%, #111e30 100%);
   border-right: 1px solid var(--cc-border);
 }
-.player-zone::after {
-  content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
-  background: linear-gradient(180deg, transparent, var(--cc-border), transparent);
+/* Mood photo: cover + face-top alignment */
+.player-photo.mood-photo {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: top center; display: block;
 }
+/* Player card photo: contain + bottom alignment (existing behaviour) */
 .player-photo {
   width: 100%; height: 100%; object-fit: contain; object-position: center bottom; display: block;
 }
@@ -100,48 +101,68 @@ body {
   position: absolute; top: 14px; left: 14px;
   display: flex; flex-direction: column; gap: 3px; z-index: 3;
 }
-.player-pos-primary   { font-size: 1.4rem; font-weight: 900; color: var(--cc-gold); letter-spacing: 0.06em; line-height: 1; }
-.player-overall       { position: absolute; bottom: 48px; left: 0; right: 0; text-align: center; z-index: 3; font-size: 0.75rem; font-weight: 700; color: rgba(232,234,240,0.5); letter-spacing: 0.06em; }
-.player-name          { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; padding: 24px 8px 10px; background: linear-gradient(0deg, rgba(8,16,30,0.88) 0%, transparent 100%); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cc-text); }
+.player-pos-primary { font-size: 1.4rem; font-weight: 900; color: var(--cc-gold); letter-spacing: 0.06em; line-height: 1; }
+.player-overall     { position: absolute; bottom: 48px; left: 0; right: 0; text-align: center; z-index: 3; font-size: 0.75rem; font-weight: 700; color: rgba(232,234,240,0.5); letter-spacing: 0.06em; }
+.player-name        { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; padding: 24px 8px 10px; background: linear-gradient(0deg, rgba(8,16,30,0.88) 0%, transparent 100%); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cc-text); }
 
 /* ── Right: stats panel ─────────────────────────────────────────── */
 .stats-panel {
   display: flex; flex-direction: column; justify-content: center;
-  padding: 24px 44px; gap: 0;
+  padding: 20px 44px 16px; gap: 0;
 }
 .stats-label {
   font-size: 0.58rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--cc-dim); border: 1px solid var(--cc-border); border-radius: 3px;
-  padding: 3px 8px; margin-bottom: 10px; display: inline-block; align-self: flex-start;
+  padding: 3px 8px; margin-bottom: 8px; display: inline-block; align-self: flex-start;
+}
+.stats-top-row {
+  display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 2px;
 }
 .stats-headline {
   font-family: var(--font-display);
-  font-size: 4.2rem; font-weight: 400; color: var(--cc-gold); line-height: 1; margin-bottom: 4px;
+  font-size: 3rem; font-weight: 400; color: var(--cc-gold); line-height: 1;
 }
 .stats-game-name {
-  font-size: 1.1rem; font-weight: 700; color: var(--cc-text); text-transform: uppercase;
-  letter-spacing: 0.04em; margin-bottom: 6px;
+  font-size: 1rem; font-weight: 700; color: var(--cc-text); text-transform: uppercase;
+  letter-spacing: 0.04em; margin-bottom: 4px;
 }
 .completion-counter {
   font-family: var(--font-display);
-  font-size: 2.2rem; color: var(--cc-text); line-height: 1; margin-bottom: 16px;
+  font-size: 1.6rem; color: var(--cc-text); line-height: 1; margin-bottom: 12px;
 }
 .completion-counter .done { color: var(--cc-green); }
 .completion-counter .sep  { color: var(--cc-dim); margin: 0 2px; }
 
-.divider { width: 36px; height: 2px; background: var(--cc-border); margin-bottom: 14px; }
+/* ── Attempt chart ────────────────────────────────────────────────── */
+.chart-wrap {
+  margin-bottom: 10px;
+  background: rgba(0,0,0,0.15); border-radius: 4px; padding: 6px 8px 2px;
+  border: 1px solid var(--cc-border);
+}
+.chart-wrap .chart-title {
+  font-size: 0.5rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--cc-dim); margin-bottom: 4px;
+}
+.attempt-chart { width: 100%; height: 96px; display: block; }
 
 /* ── Stats grid ───────────────────────────────────────────────────── */
+.divider { width: 36px; height: 2px; background: var(--cc-border); margin: 8px 0 10px; }
 .stats-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px;
+  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px 16px;
 }
 .stat-cell { display: flex; flex-direction: column; gap: 2px; }
-.stat-label { font-size: 0.56rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cc-dim); }
-.stat-value { font-size: 1.1rem; font-weight: 800; color: var(--cc-text); line-height: 1.1; }
+.stat-label { font-size: 0.52rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cc-dim); }
+.stat-value { font-size: 1rem; font-weight: 800; color: var(--cc-text); line-height: 1.1; }
 .stat-value.gold  { color: var(--cc-gold); }
 .stat-value.green { color: var(--cc-green); }
 .stat-value.blue  { color: var(--cc-blue); }
 .stat-value.muted { color: var(--cc-dim); font-style: italic; }
+
+.top-skill-row {
+  margin-top: 8px; font-size: 0.62rem; font-weight: 700; color: var(--cc-sub);
+  letter-spacing: 0.06em;
+}
+.top-skill-row span { color: var(--cc-green); }
 
 /* ── Footer ──────────────────────────────────────────────────────── */
 .card-footer {
@@ -162,9 +183,11 @@ body {
 
   <div class="card-body">
 
-    {# ── Left: player photo zone ── #}
+    {# ── Left: mood / player photo zone ── #}
     <div class="player-zone">
-      {% if player_photo_url %}
+      {% if mood_photo_url %}
+        <img src="{{ mood_photo_url }}" class="player-photo mood-photo" alt="{{ player_name }}">
+      {% elif player_photo_url %}
         <img src="{{ player_photo_url }}" class="player-photo" alt="{{ player_name }}">
       {% else %}
         <div class="player-initial">{{ (player_name[0] if player_name else '?') | upper }}</div>
@@ -183,12 +206,52 @@ body {
     {# ── Right: stats panel ── #}
     <div class="stats-panel">
       <div class="stats-label">Virtual Training</div>
-      <div class="stats-headline">DAILY COMPLETE</div>
-      <div class="stats-game-name">{{ game.name }}</div>
-      <div class="completion-counter">
-        <span class="done">{{ completed_count }}</span><span class="sep">/</span>{{ max_attempts }}
+      <div class="stats-top-row">
+        <div class="stats-headline">DAILY COMPLETE</div>
+        <div class="completion-counter">
+          <span class="done">{{ completed_count }}</span><span class="sep">/</span>{{ max_attempts }}
+        </div>
       </div>
+      <div class="stats-game-name">{{ game.name }}</div>
+
+      {# ── Attempt chart ── #}
+      {% if attempt_chart_points %}
+      <div class="chart-wrap">
+        <div class="chart-title">Score per Attempt (0–100)</div>
+        <svg class="attempt-chart" viewBox="0 0 300 90" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          {# Gridlines #}
+          <line x1="0" y1="2"  x2="300" y2="2"  stroke="#1e2e44" stroke-width="0.5"/>
+          <line x1="0" y1="43" x2="300" y2="43" stroke="#1e2e44" stroke-width="0.5" stroke-dasharray="3,2"/>
+          <line x1="0" y1="84" x2="300" y2="84" stroke="#1e2e44" stroke-width="0.8"/>
+          {# Bars + dots + labels #}
+          {% set _ns = namespace(pts="") %}
+          {% for pt in attempt_chart_points %}
+            {% set _x = 14 + loop.index0 * 52 %}
+            {% if pt.score is not none %}
+              {% set _bh = (pt.score / 100 * 82)|round(1) %}
+              {% set _by = (84 - _bh)|round(1) %}
+              {% set _ns.pts = _ns.pts ~ (_x + 20)|string ~ "," ~ _by|string ~ " " %}
+              <rect x="{{ _x }}" y="{{ _by }}" width="40" height="{{ _bh }}" rx="2" fill="rgba(30,64,128,0.9)"/>
+              <rect x="{{ _x }}" y="{{ _by }}" width="40" height="3" rx="2" fill="#60a5fa"/>
+              <circle cx="{{ _x + 20 }}" cy="{{ _by }}" r="3" fill="#60a5fa"/>
+              <text x="{{ _x + 20 }}" y="{{ (_by - 4)|round(0)|int }}" text-anchor="middle" font-size="7" fill="#e8eaf0" font-family="system-ui" font-weight="700">{{ pt.label }}</text>
+            {% else %}
+              <rect x="{{ _x }}" y="82" width="40" height="2" rx="1" fill="#1e2e44"/>
+              <text x="{{ _x + 20 }}" y="77" text-anchor="middle" font-size="7" fill="#4a5570" font-family="system-ui">—</text>
+            {% endif %}
+            <text x="{{ _x + 20 }}" y="93" text-anchor="middle" font-size="6.5" fill="#4a5570" font-family="system-ui">{{ pt.index }}</text>
+          {% endfor %}
+          {# Trend polyline #}
+          {% if _ns.pts %}
+          <polyline points="{{ _ns.pts }}" fill="none" stroke="#f5c518" stroke-width="1.5" stroke-linejoin="round" opacity="0.55"/>
+          {% endif %}
+        </svg>
+      </div>
+      {% endif %}
+
       <div class="divider"></div>
+
+      {# ── Stats grid: Best | Avg | XP | Reaction ── #}
       <div class="stats-grid">
         <div class="stat-cell">
           <span class="stat-label">Best Score</span>
@@ -198,23 +261,32 @@ body {
           <span class="stat-value muted">—</span>
           {% endif %}
         </div>
-        {% if avg_reaction_ms is not none %}
         <div class="stat-cell">
-          <span class="stat-label">Avg Reaction</span>
-          <span class="stat-value blue">{{ avg_reaction_ms }} ms</span>
+          <span class="stat-label">Avg Score</span>
+          {% if avg_score is not none %}
+          <span class="stat-value blue">{{ "%.1f"|format(avg_score) }}</span>
+          {% else %}
+          <span class="stat-value muted">—</span>
+          {% endif %}
         </div>
-        {% endif %}
         <div class="stat-cell">
           <span class="stat-label">XP Earned</span>
           <span class="stat-value green">+{{ xp_earned }}</span>
         </div>
-        {% if top_skill_delta %}
         <div class="stat-cell">
-          <span class="stat-label">Top Skill</span>
-          <span class="stat-value green">{{ top_skill_delta.name }} {% if top_skill_delta.delta > 0 %}+{% endif %}{{ "%.2f"|format(top_skill_delta.delta) }}</span>
+          <span class="stat-label">Avg Reaction</span>
+          {% if avg_reaction_ms is not none %}
+          <span class="stat-value">{{ avg_reaction_ms }} ms</span>
+          {% else %}
+          <span class="stat-value muted">—</span>
+          {% endif %}
         </div>
-        {% endif %}
       </div>
+
+      {% if top_skill_delta %}
+      <div class="top-skill-row">Top Skill — <span>{{ top_skill_delta.name }} {% if top_skill_delta.delta > 0 %}+{% endif %}{{ "%.2f"|format(top_skill_delta.delta) }}</span></div>
+      {% endif %}
+
     </div>
 
   </div>
