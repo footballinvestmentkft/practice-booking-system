@@ -66,14 +66,14 @@ _GAMES = [
         },
     },
 
-    # ── 2. stroop_challenge (hidden — not in user-facing catalog) ─────────────
+    # ── 2. stroop_challenge (QA-gated — is_active=False, show_in_hub=False) ────
     {
         "code": "stroop_challenge",
         "name": "Stroop Challenge",
         "description": (
-            "A cognitive inhibition task based on the Stroop effect. "
-            "A colour word is displayed in an incongruent ink colour; "
-            "respond to the ink colour, not the word."
+            "See a colour word displayed in an ink colour — tap the INK colour, "
+            "not the word. Classic cognitive inhibition: ignore what you read, "
+            "respond to what you see."
         ),
         "game_type": "cognitive_inhibition",
         "is_active": False,
@@ -85,12 +85,43 @@ _GAMES = [
             "composure":     0.20,
         },
         "config": {
-            "trial_count":        12,
-            "response_window_ms": 3000,
-            "words":   ["RED", "GREEN", "BLUE", "YELLOW"],
-            "colours": ["#e74c3c", "#2ecc71", "#3498db", "#f1c40f"],
-            # hidden from the Virtual Games hub
+            "protocol_assignment": "free",
+            # 3 phases × 8 stimuli = 24 trials
+            "phases": [
+                # Phase 1 — mixed (50% incongruent): warm-up, 2.5 s window
+                {"stimuli": 8, "window_ms": 2500, "isi_ms": 900,  "congruent_pct": 0.50},
+                # Phase 2 — mostly incongruent (25%): standard pace, 2.0 s window
+                {"stimuli": 8, "window_ms": 2000, "isi_ms": 750,  "congruent_pct": 0.25},
+                # Phase 3 — high conflict (12.5%): fast pace, 1.6 s window
+                {"stimuli": 8, "window_ms": 1600, "isi_ms": 600,  "congruent_pct": 0.125},
+            ],
+            "words": ["RED", "GREEN", "BLUE", "YELLOW"],
+            "colours": {
+                "RED":    "#e74c3c",
+                "GREEN":  "#2ecc71",
+                "BLUE":   "#3498db",
+                "YELLOW": "#f1c40f",
+            },
+            # Score formula weights (kept in config for transparency)
+            # score_raw = 0.55*hit_rate + 0.25*(1-wrong_rate) + 0.20*speed_factor
+            # speed_factor = max(0.0, 1.0 - avg_reaction_ms / 2000)
+            "score_weights": {
+                "hit_rate":    0.55,
+                "wrong_rate":  0.25,
+                "speed_factor": 0.20,
+                "speed_ref_ms": 2000,
+            },
+            "late_grace_ms": 300,
+            "icon":             "🎨",
+            "football_benefit": (
+                "Sharpens selective attention and response inhibition under pressure — "
+                "trains you to ignore misleading cues and act on the right information."
+            ),
             "show_in_hub": False,
+            "validation_overrides": {
+                "min_dur":  20.0,
+                "min_stim": 20,
+            },
         },
     },
 

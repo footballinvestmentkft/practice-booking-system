@@ -1,0 +1,823 @@
+{% extends "student_base.html" %}
+
+{% block title %}Stroop Challenge - LFA{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '🎨' %}
+{% set _page_name = 'Stroop Challenge' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .sc-container {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    /* ── Meta bar ───────────────────────────────────────────────────────── */
+    .sc-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--app-card);
+        border-radius: 10px;
+        padding: 0.65rem 1rem;
+        margin-bottom: 1.25rem;
+        font-size: 0.85rem;
+        color: var(--app-text-muted);
+        box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+    .sc-meta span { font-weight: 600; color: var(--app-text); }
+
+    /* ── Instruction card ───────────────────────────────────────────────── */
+    .sc-instruction {
+        background: var(--app-card);
+        border-radius: 14px;
+        padding: 1.5rem 1.5rem 1.75rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    .sc-instruction h2 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin: 0 0 0.6rem;
+        color: var(--app-text);
+    }
+    .sc-instruction p {
+        font-size: 0.9rem;
+        color: var(--app-text-muted);
+        line-height: 1.6;
+        margin: 0 0 1.25rem;
+    }
+
+    /* ── Stroop example ─────────────────────────────────────────────────── */
+    .sc-example {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+    }
+    .sc-example-item {
+        background: #f3f4f6;
+        border-radius: 10px;
+        padding: 0.75rem 1.1rem;
+        text-align: center;
+        min-width: 110px;
+    }
+    .sc-example-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--app-text-muted);
+        display: block;
+        margin-bottom: 0.35rem;
+    }
+    .sc-example-word {
+        font-size: 1.45rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: 0.02em;
+    }
+    .sc-example-hint {
+        font-size: 0.72rem;
+        color: var(--app-text-muted);
+        margin-top: 0.3rem;
+    }
+
+    .sc-skill-chips {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.25rem;
+    }
+    .sc-skill-chip {
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: #ede9fe;
+        color: #5b21b6;
+        padding: 0.2rem 0.65rem;
+        border-radius: 20px;
+    }
+    .sc-btn-start {
+        display: inline-block;
+        background: #4f46e5;
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 700;
+        padding: 0.8rem 2.5rem;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .sc-btn-start:hover { background: #4338ca; }
+    .sc-btn-start:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+    }
+
+    /* ── Game arena ─────────────────────────────────────────────────────── */
+    .sc-arena { display: none; }
+    .sc-arena.active { display: block; }
+
+    /* ── HUD ────────────────────────────────────────────────────────────── */
+    .sc-hud {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        font-size: 0.82rem;
+        color: var(--app-text-muted);
+        font-weight: 600;
+    }
+    .sc-progress-wrap {
+        background: #e5e7eb;
+        border-radius: 6px;
+        height: 6px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+    .sc-progress-bar {
+        height: 100%;
+        background: #4f46e5;
+        border-radius: 6px;
+        transition: width 0.2s ease;
+        width: 0%;
+    }
+
+    /* ── Counters ───────────────────────────────────────────────────────── */
+    .sc-counters {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .sc-counter {
+        background: var(--app-card);
+        border-radius: 10px;
+        padding: 0.6rem 0.5rem;
+        text-align: center;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .sc-counter-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--app-text-muted);
+        margin-bottom: 0.2rem;
+    }
+    .sc-counter-value {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: var(--app-text);
+    }
+    .sc-counter-value.hit-color   { color: #16a34a; }
+    .sc-counter-value.miss-color  { color: #d97706; }
+    .sc-counter-value.wrong-color { color: #dc2626; }
+    .sc-counter-value.late-color  { color: #9333ea; }
+
+    /* ── Stimulus card ──────────────────────────────────────────────────── */
+    .sc-field {
+        background: var(--app-card);
+        border-radius: 16px;
+        box-shadow: 0 2px 14px rgba(0,0,0,0.09);
+        min-height: 240px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        position: relative;
+        overflow: hidden;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    /* ── Rule reminder ──────────────────────────────────────────────────── */
+    .sc-rule-reminder {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--app-text-muted);
+        margin-bottom: 0.6rem;
+        padding: 0.2rem 0.65rem;
+        background: #f3f4f6;
+        border-radius: 20px;
+    }
+
+    /* ── Stimulus word ──────────────────────────────────────────────────── */
+    .sc-stim-word {
+        font-size: 4rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.25rem;
+    }
+
+    .sc-field-idle {
+        font-size: 0.9rem;
+        color: var(--app-text-muted);
+        font-weight: 600;
+    }
+
+    /* ── Feedback flash ─────────────────────────────────────────────────── */
+    .sc-feedback {
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.82rem;
+        font-weight: 800;
+        padding: 0.25rem 0.85rem;
+        border-radius: 20px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s;
+        white-space: nowrap;
+    }
+    .sc-feedback.show { opacity: 1; }
+    .sc-feedback.fb-hit   { background: #dcfce7; color: #166534; }
+    .sc-feedback.fb-miss  { background: #fef3c7; color: #92400e; }
+    .sc-feedback.fb-wrong { background: #fee2e2; color: #991b1b; }
+    .sc-feedback.fb-late  { background: #f3e8ff; color: #6b21a8; }
+
+    /* ── Answer buttons — 4 colour patches ─────────────────────────────── */
+    .sc-answers {
+        display: none;
+        gap: 0.65rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    .sc-answers.visible { display: flex; }
+
+    .sc-ans-btn {
+        width: 100px;
+        height: 52px;
+        border-radius: 10px;
+        border: 2px solid transparent;
+        font-size: 0.78rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition: transform 0.08s ease, opacity 0.1s;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.35);
+    }
+    .sc-ans-btn:active { transform: scale(0.93); }
+
+    @media (max-width: 400px) {
+        .sc-ans-btn { width: 80px; height: 46px; font-size: 0.7rem; }
+        .sc-stim-word { font-size: 3rem; }
+    }
+
+    /* ── Submitting overlay ─────────────────────────────────────────────── */
+    .sc-submitting {
+        display: none;
+        text-align: center;
+        padding: 3rem 1rem;
+        background: var(--app-card);
+        border-radius: 16px;
+        box-shadow: 0 2px 14px rgba(0,0,0,0.09);
+        color: var(--app-text-muted);
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+    .sc-submitting.active { display: block; }
+    .sc-submitting p { margin: 0.5rem 0 0; }
+
+    /* ── Footer nav ─────────────────────────────────────────────────────── */
+    .sc-footer {
+        text-align: center;
+        margin-top: 1.25rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    .sc-footer a {
+        color: #667eea;
+        text-decoration: none;
+        margin: 0 0.65rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="sc-container">
+
+    {# ── Meta bar ─────────────────────────────────────────────────────────── #}
+    <div class="sc-meta">
+        <div>Today: <span>{{ attempts_today }} / {{ max_daily_attempts }}</span> attempts</div>
+        <div>Remaining: <span>{{ attempts_remaining }}</span></div>
+    </div>
+
+    {# ── Daily cap reached ────────────────────────────────────────────────── #}
+    {% if attempts_remaining == 0 %}
+    <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:12px;padding:1rem 1.25rem;text-align:center;margin-bottom:1.25rem;color:#92400e;font-weight:600;font-size:0.9rem;">
+        Daily limit reached. Come back tomorrow to earn XP again.
+    </div>
+    {% endif %}
+
+    {# ── Instruction screen (pre-game) ────────────────────────────────────── #}
+    <div class="sc-instruction" id="scInstruction">
+        <h2>🎨 Stroop Challenge</h2>
+        <p>
+            A colour <strong>word</strong> appears in an ink colour — which may not match.<br>
+            Tap the <strong>INK COLOUR</strong> you see, not the word you read.
+        </p>
+
+        <div class="sc-example">
+            <div class="sc-example-item">
+                <span class="sc-example-label">Congruent</span>
+                <div class="sc-example-word" style="color:#e74c3c;">RED</div>
+                <div class="sc-example-hint">Tap Red ✓ (easy)</div>
+            </div>
+            <div class="sc-example-item">
+                <span class="sc-example-label">Incongruent</span>
+                <div class="sc-example-word" style="color:#3498db;">RED</div>
+                <div class="sc-example-hint">Tap Blue ✓ (hard)</div>
+            </div>
+        </div>
+
+        <div class="sc-skill-chips">
+            {% for skill in game.skill_targets %}
+            <span class="sc-skill-chip">{{ skill }}</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    {# ── Start button ─────────────────────────────────────────────────────── #}
+    <div style="text-align:center;margin-bottom:1.5rem;">
+        <button class="sc-btn-start" id="scBtnStart"
+            {% if attempts_remaining == 0 %}disabled{% endif %}
+            onclick="scStart()">
+            ▶ Start Game
+        </button>
+    </div>
+
+    {# ── Game arena ───────────────────────────────────────────────────────── #}
+    <div class="sc-arena" id="scArena">
+
+        <div class="sc-hud">
+            <span id="scProgress">0 / {{ game.config.phases | sum(attribute='stimuli') }}</span>
+            <span id="scTimer">0s</span>
+        </div>
+        <div class="sc-progress-wrap">
+            <div class="sc-progress-bar" id="scProgressBar"></div>
+        </div>
+
+        <div class="sc-counters">
+            <div class="sc-counter">
+                <div class="sc-counter-label">Correct</div>
+                <div class="sc-counter-value hit-color" id="scHit">0</div>
+            </div>
+            <div class="sc-counter">
+                <div class="sc-counter-label">Wrong</div>
+                <div class="sc-counter-value wrong-color" id="scWrong">0</div>
+            </div>
+            <div class="sc-counter">
+                <div class="sc-counter-label">Late</div>
+                <div class="sc-counter-value late-color" id="scLate">0</div>
+            </div>
+            <div class="sc-counter">
+                <div class="sc-counter-label">Missed</div>
+                <div class="sc-counter-value miss-color" id="scMiss">0</div>
+            </div>
+        </div>
+
+        <div class="sc-field" id="scField">
+            <div class="sc-feedback" id="scFeedback"></div>
+            <div class="sc-rule-reminder">Tap the INK colour</div>
+            <div class="sc-field-idle" id="scFieldIdle">Get ready…</div>
+            <div id="scStimWord" class="sc-stim-word" style="display:none;"></div>
+        </div>
+
+        <div class="sc-answers" id="scAnswers"></div>
+
+    </div>
+
+    {# ── Submitting overlay ───────────────────────────────────────────────── #}
+    <div class="sc-submitting" id="scSubmitting">
+        <div style="font-size:2rem;margin-bottom:0.5rem;">⏳</div>
+        <p>Saving your result…</p>
+    </div>
+
+    <div class="sc-footer">
+        <a href="/virtual-training">🎮 Virtual Games</a>
+        <a href="/virtual-training/history">📋 History</a>
+    </div>
+
+</div>
+
+<script src="/static/js/vt-location.js"></script>
+<script>
+(function () {
+    VtLocation.warmUp();
+
+    // ── Server-injected config ─────────────────────────────────────────────
+    var PHASES        = {{ game.config.phases | tojson }};
+    var WORDS         = {{ game.config.words | tojson }};
+    var COLOUR_MAP    = {{ game.config.colours | tojson }};   // {"RED": "#hex", ...}
+    var COLOUR_NAMES  = Object.keys(COLOUR_MAP);
+    var LATE_GRACE_MS = {{ game.config.late_grace_ms | default(300) }};
+    var CSRF_TOKEN    = "{{ request.cookies.get('csrf_token', '') }}";
+    var SUBMIT_URL    = "/virtual-training/stroop-challenge/submit";
+    var RESULT_BASE   = "/virtual-training/stroop-challenge/result/";
+
+    var TOTAL_STIM = PHASES.reduce(function(s, p) { return s + p.stimuli; }, 0);
+
+    // ── Game state ─────────────────────────────────────────────────────────
+    var started         = false;
+    var startedAt       = null;
+    var globalStimIdx   = 0;
+    var hitCount        = 0;
+    var wrongCount      = 0;
+    var lateCount       = 0;
+    var missCount       = 0;
+    var reactionTimes   = [];
+    var stimTimestamp   = null;
+    var stimTimeout     = null;
+    var isiTimeout      = null;
+    var elapsedInterval = null;
+    var elapsedSeconds  = 0;
+    var clickHandled    = false;
+    var lateHandled     = false;
+    var windowExpiredAt = null;
+
+    // Current stimulus state
+    var currentWord      = null;   // e.g. "RED"
+    var currentColorName = null;   // ink colour name e.g. "BLUE"
+    var currentColorHex  = null;   // ink colour hex e.g. "#3498db"
+    var currentCongruent = false;  // word === ink colour name
+    var currentPhaseIdx  = 0;
+
+    // Raw-metrics tracking
+    var stimulusLog   = [];
+    var lateClickTimes = [];
+
+    // Stroop-specific: congruent vs incongruent RT buckets (correct only)
+    var congruentRTs   = [];
+    var incongruentRTs = [];
+
+    // ── DOM refs ───────────────────────────────────────────────────────────
+    var elInstruction  = document.getElementById("scInstruction");
+    var elArena        = document.getElementById("scArena");
+    var elBtnStart     = document.getElementById("scBtnStart");
+    var elField        = document.getElementById("scField");
+    var elFieldIdle    = document.getElementById("scFieldIdle");
+    var elStimWord     = document.getElementById("scStimWord");
+    var elFeedback     = document.getElementById("scFeedback");
+    var elAnswers      = document.getElementById("scAnswers");
+    var elProgress     = document.getElementById("scProgress");
+    var elProgressBar  = document.getElementById("scProgressBar");
+    var elTimer        = document.getElementById("scTimer");
+    var elHit          = document.getElementById("scHit");
+    var elWrong        = document.getElementById("scWrong");
+    var elLate         = document.getElementById("scLate");
+    var elMiss         = document.getElementById("scMiss");
+    var elSubmitting   = document.getElementById("scSubmitting");
+
+    // ── Build stimulus sequence ────────────────────────────────────────────
+    function pickStimulus(phase) {
+        var word = WORDS[Math.floor(Math.random() * WORDS.length)];
+
+        var congruent = (Math.random() < phase.congruent_pct);
+        var inkName;
+        if (congruent) {
+            inkName = word;
+        } else {
+            // Pick any colour other than the word
+            var others = COLOUR_NAMES.filter(function(c) { return c !== word; });
+            inkName = others[Math.floor(Math.random() * others.length)];
+        }
+        return { word: word, inkName: inkName, inkHex: COLOUR_MAP[inkName], congruent: congruent };
+    }
+
+    function buildStimSequence() {
+        var seq = [];
+        for (var pi = 0; pi < PHASES.length; pi++) {
+            var p = PHASES[pi];
+            for (var si = 0; si < p.stimuli; si++) {
+                var s = pickStimulus(p);
+                seq.push({ word: s.word, inkName: s.inkName, inkHex: s.inkHex,
+                           congruent: s.congruent, phase: pi, cfg: p });
+            }
+        }
+        return seq;
+    }
+
+    var SEQUENCE = buildStimSequence();
+
+    // ── Render answer buttons (always 4 colour patches) ───────────────────
+    function renderAnswerButtons() {
+        elAnswers.innerHTML = "";
+        COLOUR_NAMES.forEach(function(cname) {
+            var btn = document.createElement("button");
+            btn.className = "sc-ans-btn";
+            btn.style.background = COLOUR_MAP[cname];
+            btn.textContent = cname;
+            btn.dataset.value = cname;
+            btn.addEventListener("click", function() { handleAnswer(cname); });
+            elAnswers.appendChild(btn);
+        });
+        elAnswers.classList.add("visible");
+    }
+
+    // ── Start game ─────────────────────────────────────────────────────────
+    function scStart() {
+        if (started) { return; }
+        started   = true;
+        startedAt = new Date().toISOString();
+
+        elInstruction.style.display = "none";
+        elArena.classList.add("active");
+
+        elapsedInterval = setInterval(function() {
+            elapsedSeconds++;
+            elTimer.textContent = elapsedSeconds + "s";
+        }, 1000);
+
+        isiTimeout = setTimeout(showStimulus, 800);
+    }
+    window.scStart = scStart;
+
+    // ── Show next stimulus ─────────────────────────────────────────────────
+    function showStimulus() {
+        if (globalStimIdx >= SEQUENCE.length) { finishGame(); return; }
+
+        var stim     = SEQUENCE[globalStimIdx];
+        currentWord      = stim.word;
+        currentColorName = stim.inkName;
+        currentColorHex  = stim.inkHex;
+        currentCongruent = stim.congruent;
+        currentPhaseIdx  = stim.phase;
+        clickHandled    = false;
+        lateHandled     = false;
+        windowExpiredAt = null;
+
+        // Display word in ink colour
+        elFieldIdle.style.display = "none";
+        elStimWord.textContent    = stim.word;
+        elStimWord.style.color    = stim.inkHex;
+        elStimWord.style.display  = "block";
+
+        renderAnswerButtons();
+
+        stimTimestamp = Date.now();
+
+        stimTimeout = setTimeout(function() {
+            windowExpiredAt = Date.now();
+            setTimeout(function() {
+                if (!clickHandled && !lateHandled) {
+                    recordOutcome("missed", null);
+                }
+                lateHandled = true;
+            }, LATE_GRACE_MS);
+        }, stim.cfg.window_ms);
+    }
+
+    // ── Handle answer click ────────────────────────────────────────────────
+    function handleAnswer(value) {
+        if (!started || clickHandled) { return; }
+
+        var now = Date.now();
+        var rt  = now - stimTimestamp;
+
+        if (windowExpiredAt !== null && !lateHandled) {
+            lateHandled = true;
+            lateCount++;
+            elLate.textContent = lateCount;
+            lateClickTimes.push(rt);
+
+            stimulusLog.push({
+                stim_idx:      globalStimIdx,
+                phase:         currentPhaseIdx,
+                word:          currentWord,
+                color_shown:   currentColorName,
+                color_shown_hex: currentColorHex,
+                congruent:     currentCongruent,
+                answer:        value,
+                correct:       (value === currentColorName),
+                outcome:       "late",
+                rt_ms:         rt,
+            });
+
+            showFeedback("fb-late", "Late!");
+            clearTimeout(stimTimeout);
+            nextStimulus();
+            return;
+        }
+
+        if (windowExpiredAt !== null) { return; }
+        clickHandled = true;
+        clearTimeout(stimTimeout);
+
+        var isCorrect = (value === currentColorName);
+        var outcome   = isCorrect ? "correct" : "wrong";
+        recordOutcome(outcome, rt);
+    }
+
+    function recordOutcome(outcome, rt) {
+        var isCorrect = (outcome === "correct");
+
+        if (isCorrect) {
+            hitCount++;
+            reactionTimes.push(rt);
+            elHit.textContent = hitCount;
+            showFeedback("fb-hit", "Correct!");
+            // Track congruency RT buckets
+            if (currentCongruent) {
+                congruentRTs.push(rt);
+            } else {
+                incongruentRTs.push(rt);
+            }
+        } else if (outcome === "wrong") {
+            wrongCount++;
+            elWrong.textContent = wrongCount;
+            showFeedback("fb-wrong", "Wrong!");
+        } else {
+            missCount++;
+            elMiss.textContent = missCount;
+            showFeedback("fb-miss", "Missed!");
+        }
+
+        stimulusLog.push({
+            stim_idx:        globalStimIdx,
+            phase:           currentPhaseIdx,
+            word:            currentWord,
+            color_shown:     currentColorName,
+            color_shown_hex: currentColorHex,
+            congruent:       currentCongruent,
+            answer:          outcome !== "missed" ? value : null,
+            correct:         isCorrect,
+            outcome:         outcome,
+            rt_ms:           rt,
+        });
+
+        nextStimulus();
+    }
+
+    // ── Advance to next stimulus ───────────────────────────────────────────
+    function nextStimulus() {
+        elStimWord.style.display = "none";
+        elAnswers.classList.remove("visible");
+        elAnswers.innerHTML = "";
+
+        globalStimIdx++;
+        elProgress.textContent  = globalStimIdx + " / " + TOTAL_STIM;
+        elProgressBar.style.width = ((globalStimIdx / TOTAL_STIM) * 100) + "%";
+
+        if (globalStimIdx >= SEQUENCE.length) {
+            finishGame();
+            return;
+        }
+
+        var isi = SEQUENCE[globalStimIdx].cfg.isi_ms;
+        elFieldIdle.style.display = "block";
+        isiTimeout = setTimeout(showStimulus, isi);
+    }
+
+    // ── Feedback flash ─────────────────────────────────────────────────────
+    var fbTimeout = null;
+    function showFeedback(cls, msg) {
+        elFeedback.className = "sc-feedback " + cls + " show";
+        elFeedback.textContent = msg;
+        clearTimeout(fbTimeout);
+        fbTimeout = setTimeout(function() {
+            elFeedback.classList.remove("show");
+        }, 650);
+    }
+
+    // ── Finish — build payload and submit ──────────────────────────────────
+    function finishGame() {
+        clearInterval(elapsedInterval);
+        clearTimeout(isiTimeout);
+        clearTimeout(stimTimeout);
+
+        elArena.classList.remove("active");
+        elSubmitting.classList.add("active");
+
+        var totalStim = SEQUENCE.length;
+        var avgRt = reactionTimes.length > 0
+            ? reactionTimes.reduce(function(a, b) { return a + b; }, 0) / reactionTimes.length
+            : null;
+
+        // Conflict cost: incongruent avg RT minus congruent avg RT
+        var cAvg = congruentRTs.length > 0
+            ? congruentRTs.reduce(function(a,b){return a+b;},0) / congruentRTs.length
+            : null;
+        var iAvg = incongruentRTs.length > 0
+            ? incongruentRTs.reduce(function(a,b){return a+b;},0) / incongruentRTs.length
+            : null;
+        var conflictCost = (cAvg !== null && iAvg !== null)
+            ? Math.round(iAvg - cAvg)
+            : null;
+
+        // Per-phase aggregation
+        var phaseData = PHASES.map(function(p, pi) {
+            var logs = stimulusLog.filter(function(e) { return e.phase === pi; });
+            var ph_correct   = logs.filter(function(e) { return e.outcome === "correct"; }).length;
+            var ph_wrong     = logs.filter(function(e) { return e.outcome === "wrong"; }).length;
+            var ph_missed    = logs.filter(function(e) { return e.outcome === "missed"; }).length;
+            var ph_late      = logs.filter(function(e) { return e.outcome === "late"; }).length;
+            var ph_cong_rts  = logs.filter(function(e) { return e.outcome === "correct" && e.congruent && e.rt_ms != null; }).map(function(e){return e.rt_ms;});
+            var ph_incong_rts = logs.filter(function(e) { return e.outcome === "correct" && !e.congruent && e.rt_ms != null; }).map(function(e){return e.rt_ms;});
+            var ph_all_rts   = logs.filter(function(e) { return e.outcome === "correct" && e.rt_ms != null; }).map(function(e){return e.rt_ms;});
+            var ph_cong_count   = logs.filter(function(e){ return e.congruent; }).length;
+            var ph_incong_count = logs.filter(function(e){ return !e.congruent; }).length;
+
+            function avg(arr) { return arr.length > 0 ? Math.round(arr.reduce(function(a,b){return a+b;},0)/arr.length) : null; }
+
+            return {
+                phase:               pi,
+                stimuli:             p.stimuli,
+                congruent_pct_target: p.congruent_pct,
+                congruent_count:     ph_cong_count,
+                incongruent_count:   ph_incong_count,
+                correct:             ph_correct,
+                wrong:               ph_wrong,
+                missed:              ph_missed,
+                late:                ph_late,
+                avg_rt_ms:           avg(ph_all_rts),
+                congruent_avg_rt_ms:   avg(ph_cong_rts),
+                incongruent_avg_rt_ms: avg(ph_incong_rts),
+            };
+        });
+
+        // Score
+        var speedFactor = avgRt !== null ? Math.max(0, 1.0 - avgRt / 2000.0) : 0.5;
+        var hitRate     = hitCount / Math.max(totalStim, 1);
+        var wrongRate   = wrongCount / Math.max(totalStim, 1);
+        var scoreRaw    = 0.55 * hitRate + 0.25 * (1.0 - wrongRate) + 0.20 * speedFactor;
+        var scoreNorm   = Math.round(scoreRaw * 100);
+
+        var _vtCtx = VtLocation.buildSubmitPayload();
+        var payload = {
+            started_at:        startedAt,
+            stimuli_count:     totalStim,
+            correct_count:     hitCount,
+            wrong_click_count: wrongCount,
+            error_count:       missCount,
+            avg_reaction_ms:   avgRt !== null ? Math.round(avgRt) : null,
+            duration_seconds:  elapsedSeconds,
+            score_normalized:  scoreNorm,
+            raw_metrics: {
+                v: 3,
+                per_phase:    phaseData,
+                per_stimulus: stimulusLog,
+                conflict_cost_ms:      conflictCost,
+                congruent_avg_rt_ms:   cAvg !== null ? Math.round(cAvg) : null,
+                incongruent_avg_rt_ms: iAvg !== null ? Math.round(iAvg) : null,
+                late_summary: {
+                    late_click_count: lateCount,
+                    late_go_count:    0,
+                    late_no_go_count: 0,
+                },
+                hand_profile: {
+                    hand:   "free",
+                    finger: "free",
+                    label:  "Free",
+                    protocol_difficulty_multiplier: 1.0,
+                    assignment_source: "free",
+                },
+            },
+            browser_timezone: _vtCtx.browser_timezone,
+            location:         _vtCtx.location,
+        };
+
+        fetch(SUBMIT_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-Token": CSRF_TOKEN,
+            },
+            credentials: "same-origin",
+            body: JSON.stringify(payload),
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.attempt_id) {
+                window.location.href = RESULT_BASE + data.attempt_id;
+            } else {
+                window.location.href = "/virtual-training";
+            }
+        })
+        .catch(function() {
+            window.location.href = "/virtual-training";
+        });
+    }
+
+})();
+</script>
+{% endblock %}
