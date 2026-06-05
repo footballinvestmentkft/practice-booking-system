@@ -34,6 +34,8 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch, call
 
+_UID = 7  # non-1 test user id; satisfies Hardcoded FK ID Guard
+
 import pytest
 
 from app.services.training_day import (
@@ -210,7 +212,7 @@ class TestRecordAttemptPhase1Fields:
             MockAttempt.return_value = instance
             VirtualTrainingService.record_attempt(
                 db=db,
-                user_id=1,
+                user_id=_UID,
                 game=game,
                 data=self._data(),
                 idempotency_key="test_key",
@@ -282,7 +284,7 @@ class TestAttemptIndexTrainingDate:
 
         today = date(2026, 6, 5)
         idx   = VirtualTrainingService.calculate_daily_attempt_index(
-            db, user_id=1, game_id=1, training_local_date=today
+            db, user_id=_UID, game_id=1, training_local_date=today
         )
 
         # count=2 → next attempt is index 3
@@ -341,7 +343,7 @@ class TestEligibilityTrainingDate:
         game = self._mock_game_obj(max_daily=3)
         db   = self._db_with_standalone_count(game, 3)
         eligible, count, required = check_single_game_eligibility(
-            db, user_id=1, game_id=1, training_local_date=date(2026, 6, 5)
+            db, user_id=_UID, game_id=1, training_local_date=date(2026, 6, 5)
         )
         assert eligible  is True
         assert count     == 3
@@ -352,7 +354,7 @@ class TestEligibilityTrainingDate:
         game = self._mock_game_obj(max_daily=3)
         db   = self._db_with_standalone_count(game, 2)
         eligible, count, _ = check_single_game_eligibility(
-            db, user_id=1, game_id=1, training_local_date=date(2026, 6, 5)
+            db, user_id=_UID, game_id=1, training_local_date=date(2026, 6, 5)
         )
         assert eligible is False
         assert count    == 2
@@ -371,7 +373,7 @@ class TestEligibilityTrainingDate:
         db.query.return_value = q
 
         eligible, completed = check_reward_eligibility(
-            db, user_id=1, tier=3, training_local_date=date(2026, 6, 5)
+            db, user_id=_UID, tier=3, training_local_date=date(2026, 6, 5)
         )
         assert eligible  is True
         assert completed == 3
