@@ -5,7 +5,7 @@ SVT-02  All game codes are unique in _GAMES
 SVT-03  memory_sequence is defined with is_active=True
 SVT-04  target_tracking is defined with is_active=True
 SVT-05  color_reaction is defined with is_active=True
-SVT-06  stroop_challenge is defined with is_active=False
+SVT-06  stroop_challenge is defined with is_active=True (activated)
 SVT-07  _UPDATE_FIELDS includes is_active (seed overrides admin toggles intentionally)
 SVT-08  _UPDATE_FIELDS includes config, name, skill_targets, base_xp, description
 SVT-09  All _CHALLENGE_COMPATIBLE codes exist in _GAMES and are active
@@ -51,10 +51,10 @@ class TestSeedGameDefinitions:
         game = next(g for g in self._games if g["code"] == "color_reaction")
         assert game["is_active"] is True
 
-    def test_svt06_stroop_inactive(self):
-        """SVT-06: stroop_challenge is_active=False."""
+    def test_svt06_stroop_active(self):
+        """SVT-06: stroop_challenge is_active=True (activated after QA sign-off)."""
         game = next(g for g in self._games if g["code"] == "stroop_challenge")
-        assert game["is_active"] is False
+        assert game["is_active"] is True
 
     def test_svt07_update_fields_includes_is_active(self):
         """SVT-07: _UPDATE_FIELDS includes is_active."""

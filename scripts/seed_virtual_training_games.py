@@ -5,7 +5,7 @@ config/skill_targets/base_xp/description/name/is_active updated in-place (idempo
 
 Active after seed: color_reaction, go_no_go, direction_swipe, number_color_conflict,
 memory_sequence, target_tracking.
-Inactive after seed: stroop_challenge, peripheral_vision, dual_task, fake_target,
+Inactive after seed: peripheral_vision, dual_task, fake_target,
 audio_visual_reaction, pattern_break.
 
 memory_sequence and target_tracking are challenge-compatible (CHALLENGE_COMPATIBLE_GAMES).
@@ -66,7 +66,7 @@ _GAMES = [
         },
     },
 
-    # ── 2. stroop_challenge (QA-gated — is_active=False, show_in_hub=False) ────
+    # ── 2. stroop_challenge (ACTIVE) ─────────────────────────────────────────
     {
         "code": "stroop_challenge",
         "name": "Stroop Challenge",
@@ -76,7 +76,7 @@ _GAMES = [
             "respond to what you see."
         ),
         "game_type": "cognitive_inhibition",
-        "is_active": False,
+        "is_active": True,
         "base_xp": 12,
         "max_daily_attempts": 5,
         "skill_targets": {
@@ -117,7 +117,7 @@ _GAMES = [
                 "Sharpens selective attention and response inhibition under pressure — "
                 "trains you to ignore misleading cues and act on the right information."
             ),
-            "show_in_hub": False,
+            "show_in_hub": True,
             "validation_overrides": {
                 "min_dur":  20.0,
                 "min_stim": 20,

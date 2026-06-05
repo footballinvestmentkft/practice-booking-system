@@ -1,11 +1,11 @@
 """Stroop Challenge — route, submit, scoring, and regression tests.
 
-SC-01   Seed: stroop_challenge is_active=False
+SC-01   Seed: stroop_challenge is_active=True (activated after QA sign-off)
 SC-02   Seed: 3 phases defined (3×8=24 stimuli)
 SC-03   Seed: protocol_assignment="free"
 SC-04   Seed: validation_overrides present (min_dur=20.0, min_stim=20)
 SC-05   Seed: skill_targets {decisions:0.50, concentration:0.30, composure:0.20}
-SC-06   Seed: show_in_hub=False
+SC-06   Seed: show_in_hub=True (visible in hub after activation)
 SC-07   Seed: colours is a dict (not a list)
 
 SC-R01  GET /virtual-training/stroop-challenge → 200 when is_active=True (QA direct URL)
@@ -62,7 +62,7 @@ _SC_CONFIG = {
     "late_grace_ms": 300,
     "icon": "🎨",
     "football_benefit": "Sharpens selective attention.",
-    "show_in_hub": False,
+    "show_in_hub": True,
     "validation_overrides": {"min_dur": 20.0, "min_stim": 20},
 }
 
@@ -196,9 +196,9 @@ class TestStroopSeedConfig:
         from scripts.seed_virtual_training_games import _GAMES
         self._game = next(g for g in _GAMES if g["code"] == "stroop_challenge")
 
-    def test_sc01_stroop_is_inactive(self):
-        """SC-01: stroop_challenge is_active=False (QA-gated)."""
-        assert self._game["is_active"] is False
+    def test_sc01_stroop_is_active(self):
+        """SC-01: stroop_challenge is_active=True (activated after QA sign-off)."""
+        assert self._game["is_active"] is True
 
     def test_sc02_three_phases_24_stimuli(self):
         """SC-02: config has 3 phases summing to 24 stimuli."""
@@ -223,9 +223,9 @@ class TestStroopSeedConfig:
         assert st["concentration"] == 0.30
         assert st["composure"]     == 0.20
 
-    def test_sc06_show_in_hub_false(self):
-        """SC-06: show_in_hub=False — game hidden from the hub listing."""
-        assert self._game["config"]["show_in_hub"] is False
+    def test_sc06_show_in_hub_true(self):
+        """SC-06: show_in_hub=True — game visible in hub after activation."""
+        assert self._game["config"]["show_in_hub"] is True
 
     def test_sc07_colours_is_dict(self):
         """SC-07: colours is a dict {name: hex} not a list."""
