@@ -1296,3 +1296,125 @@ class TestCompletionNotificationLink:
 
         for call in mock_svc.create_notification.call_args_list:
             assert call.kwargs["link"] == "/challenges"
+
+
+# ── Hand/Finger Stats route tests ─────────────────────────────────────────────
+
+class TestHandFingerStatsRoute:
+    """
+    HFS-R01  GET /virtual-training/hand-finger-stats → 200 for onboarded student
+    HFS-R02  GET /virtual-training/hand-finger-stats → 303 for non-onboarded student
+    HFS-R03  Response contains vt-hd-wrap (macro rendered) + single summary card
+    HFS-R04  ?game=color_reaction → 200 (valid game filter)
+    HFS-R05  ?game=bogus → 200 with game_filter='all' (soft fallback)
+    HFS-R06  By Hand: exactly one vt-hf-hand-summary-card block (not two separate cards)
+    HFS-R07  By Hand: both RIGHT HAND and LEFT HAND labels inside the single block
+    """
+
+    def _make_client(self, user_override=None, db_override=None):
+        from fastapi import FastAPI
+        from app.api.web_routes import virtual_training as vt_module
+        from app.dependencies import get_current_user_web
+        from app.database import get_db
+
+        _app = FastAPI()
+        _app.include_router(vt_module.router)
+        if user_override is not None:
+            _app.dependency_overrides[get_current_user_web] = lambda: user_override
+        if db_override is not None:
+            _app.dependency_overrides[get_db] = lambda: db_override
+        return TestClient(_app, raise_server_exceptions=False)
+
+    def _onboarded_user(self):
+        from app.models.user import UserRole
+        u = MagicMock()
+        u.id = 42
+        u.role = UserRole.STUDENT
+        u.onboarding_completed = True
+        u.specialization = MagicMock()
+        u.specialization.value = "LFA_FOOTBALL_PLAYER"
+        return u
+
+    def _db_no_attempts(self):
+        db = MagicMock()
+        result = MagicMock()
+        result.fetchall.return_value = []
+        db.execute.return_value = result
+        q = MagicMock()
+        q.filter.return_value = q
+        q.first.return_value = None
+        q.count.return_value = 0
+        q.order_by.return_value = q
+        q.all.return_value = []
+        db.query.return_value = q
+        return db
+
+    def test_hfs_r01_200_for_onboarded_student(self):
+        """HFS-R01: GET /virtual-training/hand-finger-stats → 200."""
+        resp = self._make_client(
+            user_override=self._onboarded_user(),
+            db_override=self._db_no_attempts(),
+        ).get("/virtual-training/hand-finger-stats", follow_redirects=False)
+        assert resp.status_code == 200
+
+    def test_hfs_r02_303_for_non_onboarded(self):
+        """HFS-R02: Non-onboarded student → 303 redirect."""
+        from app.models.user import UserRole
+        u = MagicMock()
+        u.id = 77; u.role = UserRole.STUDENT; u.onboarding_completed = False
+        u.specialization = MagicMock(); u.specialization.value = "LFA_FOOTBALL_PLAYER"
+        resp = self._make_client(
+            user_override=u,
+            db_override=self._db_no_attempts(),
+        ).get("/virtual-training/hand-finger-stats", follow_redirects=False)
+        assert resp.status_code == 303
+
+    def test_hfs_r03_hand_diagram_and_summary_card_rendered(self):
+        """HFS-R03: Response contains vt-hd-wrap (macro) + hand-summary-card wrapper."""
+        resp = self._make_client(
+            user_override=self._onboarded_user(),
+            db_override=self._db_no_attempts(),
+        ).get("/virtual-training/hand-finger-stats", follow_redirects=False)
+        assert resp.status_code == 200
+        assert "vt-hd-wrap" in resp.text, "Hand diagram macro not rendered"
+        assert "vt-hf-hand-summary-card" in resp.text, "Single hand summary card missing"
+
+    def test_hfs_r04_valid_game_filter(self):
+        """HFS-R04: ?game=color_reaction → 200."""
+        game = MagicMock(); game.id = 1; game.code = "color_reaction"
+        db = self._db_no_attempts()
+        db.query.return_value.filter.return_value.first.return_value = game
+        resp = self._make_client(
+            user_override=self._onboarded_user(),
+            db_override=db,
+        ).get("/virtual-training/hand-finger-stats?game=color_reaction", follow_redirects=False)
+        assert resp.status_code == 200
+
+    def test_hfs_r05_invalid_game_falls_back_to_all(self):
+        """HFS-R05: ?game=bogus → 200, game_filter='all' fallback."""
+        resp = self._make_client(
+            user_override=self._onboarded_user(),
+            db_override=self._db_no_attempts(),
+        ).get("/virtual-training/hand-finger-stats?game=bogus", follow_redirects=False)
+        assert resp.status_code == 200
+        assert "All Games" in resp.text
+
+    def test_hfs_r06_single_hand_summary_block(self):
+        """HFS-R06: Exactly one vt-hf-hand-summary-card in page (not two separate cards)."""
+        resp = self._make_client(
+            user_override=self._onboarded_user(),
+            db_override=self._db_no_attempts(),
+        ).get("/virtual-training/hand-finger-stats", follow_redirects=False)
+        assert resp.status_code == 200
+        assert "vt-hf-hand-summary-card" in resp.text
+        assert resp.text.count("vt-hf-hand-panel") >= 2, "Expected right + left hand panels"
+
+    def test_hfs_r07_both_hand_labels_in_summary(self):
+        """HFS-R07: RIGHT HAND and LEFT HAND both inside the summary card."""
+        resp = self._make_client(
+            user_override=self._onboarded_user(),
+            db_override=self._db_no_attempts(),
+        ).get("/virtual-training/hand-finger-stats", follow_redirects=False)
+        assert resp.status_code == 200
+        assert "RIGHT HAND" in resp.text
+        assert "LEFT HAND" in resp.text

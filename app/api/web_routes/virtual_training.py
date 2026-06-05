@@ -54,11 +54,19 @@ def _extract_training_ctx(body: dict) -> dict:
     All fields are safe to pass directly to VirtualTrainingService.record_attempt().
     """
     browser_tz = body.get("browser_timezone")
-    loc = body.get("location") or {}
-    _now = datetime.now(timezone.utc)
-    training_tz, _ = resolve_training_timezone(browser_tz)
-    training_date = compute_training_local_date(_now, training_tz)
+    loc    = body.get("location") or {}
+    _now   = datetime.now(timezone.utc)
     cap_at = _parse_location_captured_at(loc.get("captured_at"))
+    # Phase 2: lat/lng → timezonefinder takes priority over browser tz
+    training_tz, _ = resolve_training_timezone(
+        browser_tz,
+        lat=loc.get("lat"),
+        lng=loc.get("lng"),
+        accuracy_m=loc.get("accuracy_m"),
+        captured_at=cap_at,
+        now=_now,
+    )
+    training_date = compute_training_local_date(_now, training_tz)
     return {
         "training_local_date":   training_date,
         "training_tz":           training_tz,
@@ -1954,5 +1962,53 @@ async def virtual_training_number_color_conflict_result(
             "late_summary":  late_summary,
             "hand_profile":  hand_profile,
             "is_admin":      is_admin,
+        },
+    )
+
+
+# ── Hand/Finger Performance Stats ─────────────────────────────────────────────
+
+# Games that use the protocol assignment system (hand + finger tracking).
+# color_reaction and go_no_go were the original two; number_color_conflict
+# was added in Phase 2.5 and also uses assign_protocol().
+_VALID_GAME_CODES: frozenset[str] = frozenset({
+    "color_reaction",
+    "go_no_go",
+    "number_color_conflict",
+})
+
+
+@router.get("/virtual-training/hand-finger-stats", response_class=HTMLResponse)
+async def virtual_training_hand_finger_stats(
+    request: Request,
+    game: str = "all",
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user_web),
+):
+    """Hand/Finger performance aggregation — system-assigned v3 attempts only."""
+    guard = require_student_onboarding(user)
+    if guard:
+        return guard
+
+    # Resolve game query param → game_id (invalid param falls back to "all")
+    game_code = game if game in _VALID_GAME_CODES else "all"
+    game_id: int | None = None
+    if game_code != "all":
+        g = VirtualTrainingService.get_game(db, game_code)
+        if g:
+            game_id = g.id
+        else:
+            game_code = "all"
+
+    stats = VirtualTrainingService.get_hand_finger_stats(db, user.id, game_id)
+
+    return templates.TemplateResponse(
+        "virtual_training_hand_finger_stats.html",
+        {
+            "request":     request,
+            "user":        user,
+            **_spec_ctx(user, db),
+            "stats":       stats,
+            "game_filter": game_code,
         },
     )

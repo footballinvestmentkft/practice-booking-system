@@ -325,7 +325,7 @@ class TestCEW18RouteCount:
         """CEW-18: route count baseline check (updated by CE-3.8 to 842)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 856, (
+        assert len(paths) == 857, (
             f"Expected 842 routes (839 CE-3.7 baseline + 3 from-mood endpoints), got {len(paths)}."
         )
 
@@ -678,7 +678,7 @@ class TestCEW44to51TemplateMoodPicker:
         """CEW-47: CE-3.8 adds 3 from-mood routes → total 842."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 856, (
+        assert len(paths) == 857, (
             f"Expected 845 routes (842 baseline + 2 CS-S0 routes), got {len(paths)}"
         )
 

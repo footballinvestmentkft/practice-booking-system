@@ -67761,6 +67761,51 @@
         ]
       }
     },
+    "/virtual-training/hand-finger-stats": {
+      "get": {
+        "description": "Hand/Finger performance aggregation \u2014 system-assigned v3 attempts only.",
+        "operationId": "virtual_training_hand_finger_stats_virtual_training_hand_finger_stats_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "game",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "title": "Game",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Virtual Training Hand Finger Stats",
+        "tags": [
+          "web",
+          "virtual-training"
+        ]
+      }
+    },
     "/virtual-training/history": {
       "get": {
         "description": "Attempt history \u2014 last 20 valid attempts across all VT games.",

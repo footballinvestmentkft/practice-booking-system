@@ -46,6 +46,16 @@ _FREE_PROTOCOL: dict = {
     "assignment_source": "system", "self_declared": True, "not_verified": True,
 }
 
+_MIN_SAMPLES: int = 3   # minimum eligible attempts per (hand, finger) cell to show data
+
+# Canonical finger display order for the stats page
+_FINGER_ORDER: list[tuple[str, str, str]] = [
+    ("right", "index", "Right Index"),
+    ("right", "thumb", "Right Thumb"),
+    ("left",  "index", "Left Index"),
+    ("left",  "thumb", "Left Thumb"),
+]
+
 
 class VirtualTrainingService:
 
@@ -400,8 +410,15 @@ class VirtualTrainingService:
 
         now = datetime.now(timezone.utc)
 
-        # ── Phase 1: resolve training day from browser timezone ───────────────
-        training_tz, tz_src = resolve_training_timezone(browser_timezone)
+        # ── Phase 2: resolve training day — lat/lng takes priority over browser tz
+        training_tz, tz_src = resolve_training_timezone(
+            browser_timezone,
+            lat=location_lat,
+            lng=location_lng,
+            accuracy_m=location_accuracy_m,
+            captured_at=location_captured_at,
+            now=now,
+        )
         training_date = compute_training_local_date(now, training_tz)
         loc_src = resolve_location_source(location_lat, location_lng, location_captured_at, now)
 
@@ -536,3 +553,168 @@ class VirtualTrainingService:
             )
 
         return attempt
+
+    # ── Hand/Finger Performance Stats ─────────────────────────────────────────
+
+    @staticmethod
+    def get_hand_finger_stats(
+        db: Session,
+        user_id: int,
+        game_id: int | None = None,
+    ) -> dict:
+        """
+        Aggregate hand/finger performance from system-assigned v3 attempts.
+
+        Eligible filter: is_valid=TRUE, raw_metrics.v>=3, hand_profile present,
+        assignment_source="system".  v1/v2 and free-protocol attempts excluded.
+
+        game_id=None → all VT games combined.
+        This is a lifetime aggregation — training_local_date is not filtered here
+        because the purpose is all-time protocol performance, not a daily view.
+
+        Returns:
+          {
+            "min_samples":  3,
+            "finger_rows":  [...],   # 4 entries: ri/rt/li/lt in canonical order
+            "by_hand":      {"right": {...}, "left": {...}},
+            "skill_totals": {"right_index": {"reactions": 0.34, ...}, ...},
+          }
+        """
+        from collections import defaultdict
+
+        _base = """
+            a.user_id = :uid
+            AND a.is_valid = TRUE
+            AND a.raw_metrics IS NOT NULL
+            AND (a.raw_metrics->>'v')::int >= 3
+            AND a.raw_metrics ? 'hand_profile'
+            AND a.raw_metrics->'hand_profile'->>'assignment_source' = 'system'
+        """
+        params: dict = {"uid": user_id}
+        if game_id is not None:
+            _base += " AND a.game_id = :gid"
+            params["gid"] = game_id
+
+        # ── 1. Per-(hand, finger) aggregate metrics ───────────────────────────
+        finger_sql = text(f"""
+            SELECT
+                raw_metrics->'hand_profile'->>'hand'   AS hand,
+                raw_metrics->'hand_profile'->>'finger' AS finger,
+                raw_metrics->'hand_profile'->>'label'  AS label,
+                COUNT(*)                               AS attempt_count,
+                ROUND(AVG(a.score_normalized)::numeric, 1)  AS avg_score,
+                ROUND(AVG(a.avg_reaction_ms)::numeric, 0)   AS avg_rt_ms,
+                ROUND(MIN(a.avg_reaction_ms)::numeric, 0)   AS best_rt_ms,
+                ROUND(100.0 * AVG(
+                    a.correct_count::float / NULLIF(a.stimuli_count, 0)
+                )::numeric, 1) AS accuracy_pct,
+                ROUND(100.0 * AVG(
+                    a.error_count::float / NULLIF(a.stimuli_count, 0)
+                )::numeric, 1) AS miss_pct,
+                ROUND(100.0 * AVG(
+                    a.wrong_click_count::float / NULLIF(a.stimuli_count, 0)
+                )::numeric, 1) AS wrong_pct,
+                ROUND(100.0 * AVG(
+                    COALESCE(
+                        (a.raw_metrics->'late_summary'->>'late_click_count')::float, 0
+                    ) / NULLIF(a.stimuli_count, 0)
+                )::numeric, 1) AS late_pct
+            FROM virtual_training_attempts a
+            WHERE {_base}
+            GROUP BY hand, finger, label
+            ORDER BY hand, finger
+        """)
+
+        seen: dict[str, dict] = {}
+        for r in db.execute(finger_sql, params).fetchall():
+            cnt = int(r.attempt_count)
+            seen[f"{r.hand}_{r.finger}"] = {
+                "hand":          r.hand,
+                "finger":        r.finger,
+                "label":         r.label or f"{r.hand.capitalize()} {r.finger.capitalize()}",
+                "attempt_count": cnt,
+                "state":         "ready" if cnt >= _MIN_SAMPLES else "low_sample",
+                "avg_score":     float(r.avg_score)    if r.avg_score    is not None else None,
+                "avg_rt_ms":     int(r.avg_rt_ms)      if r.avg_rt_ms    is not None else None,
+                "best_rt_ms":    int(r.best_rt_ms)     if r.best_rt_ms   is not None else None,
+                "accuracy_pct":  float(r.accuracy_pct) if r.accuracy_pct is not None else None,
+                "miss_pct":      float(r.miss_pct)     if r.miss_pct     is not None else None,
+                "wrong_pct":     float(r.wrong_pct)    if r.wrong_pct    is not None else None,
+                "late_pct":      float(r.late_pct)     if r.late_pct     is not None else None,
+            }
+
+        finger_rows = []
+        for hand, finger, default_label in _FINGER_ORDER:
+            key = f"{hand}_{finger}"
+            if key in seen:
+                finger_rows.append(seen[key])
+            else:
+                finger_rows.append({
+                    "hand": hand, "finger": finger, "label": default_label,
+                    "attempt_count": 0, "state": "no_data",
+                })
+
+        # ── 2. Per-hand aggregate metrics ─────────────────────────────────────
+        hand_sql = text(f"""
+            SELECT
+                raw_metrics->'hand_profile'->>'hand' AS hand,
+                COUNT(*)                             AS attempt_count,
+                ROUND(AVG(a.score_normalized)::numeric, 1)  AS avg_score,
+                ROUND(AVG(a.avg_reaction_ms)::numeric, 0)   AS avg_rt_ms,
+                ROUND(100.0 * AVG(
+                    a.correct_count::float / NULLIF(a.stimuli_count, 0)
+                )::numeric, 1) AS accuracy_pct
+            FROM virtual_training_attempts a
+            WHERE {_base}
+            GROUP BY hand
+            ORDER BY hand
+        """)
+
+        by_hand: dict[str, dict] = {
+            "right": {"attempt_count": 0, "state": "no_data"},
+            "left":  {"attempt_count": 0, "state": "no_data"},
+        }
+        for r in db.execute(hand_sql, params).fetchall():
+            if r.hand in by_hand:
+                cnt = int(r.attempt_count)
+                by_hand[r.hand] = {
+                    "attempt_count": cnt,
+                    "state":         "ready" if cnt >= _MIN_SAMPLES else "low_sample",
+                    "avg_score":     float(r.avg_score)    if r.avg_score    is not None else None,
+                    "avg_rt_ms":     int(r.avg_rt_ms)      if r.avg_rt_ms    is not None else None,
+                    "accuracy_pct":  float(r.accuracy_pct) if r.accuracy_pct is not None else None,
+                }
+
+        # ── 3. Skill delta totals per (hand_finger) ───────────────────────────
+        delta_sql = text(f"""
+            SELECT
+                raw_metrics->'hand_profile'->>'hand'   AS hand,
+                raw_metrics->'hand_profile'->>'finger' AS finger,
+                a.skill_deltas
+            FROM virtual_training_attempts a
+            WHERE {_base}
+            ORDER BY a.completed_at
+        """)
+
+        skill_acc: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
+        for r in db.execute(delta_sql, params).fetchall():
+            deltas = r.skill_deltas
+            if not isinstance(deltas, dict) or not deltas:
+                continue
+            combo = f"{r.hand}_{r.finger}"
+            for skill, delta in deltas.items():
+                try:
+                    skill_acc[combo][skill] = round(
+                        skill_acc[combo][skill] + float(delta), 4
+                    )
+                except (TypeError, ValueError):
+                    pass
+
+        skill_totals = {k: dict(v) for k, v in skill_acc.items()}
+
+        return {
+            "min_samples":  _MIN_SAMPLES,
+            "finger_rows":  finger_rows,
+            "by_hand":      by_hand,
+            "skill_totals": skill_totals,
+        }

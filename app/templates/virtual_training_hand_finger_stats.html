@@ -1,0 +1,579 @@
+{% extends "student_base.html" %}
+{% from "macros/vt_protocol_hand.html" import protocol_hand_diagram %}
+
+{% block title %}Hand & Finger Performance - LFA{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '🖐' %}
+{% set _page_name = 'Hand & Finger Performance' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* ── Container — same 640px as game-start screens ───────────────────── */
+    .vt-hf-container {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    /* ── Game filter tabs ────────────────────────────────────────────────── */
+    .vt-hf-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+    }
+
+    .vt-hf-tab {
+        font-size: 0.82rem;
+        font-weight: 700;
+        padding: 0.4rem 0.9rem;
+        border-radius: 20px;
+        border: 1.5px solid #c7d2fe;
+        color: #4f46e5;
+        background: var(--app-card);
+        text-decoration: none;
+        transition: background 0.13s, color 0.13s;
+    }
+    .vt-hf-tab:hover { background: #ede9fe; }
+    .vt-hf-tab.active { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+
+    /* ── Disclaimer ──────────────────────────────────────────────────────── */
+    .vt-hf-disclaimer {
+        font-size: 0.75rem;
+        color: var(--app-text-muted);
+        background: #fef9ee;
+        border: 1px solid #fde68a;
+        border-radius: 8px;
+        padding: 0.5rem 0.9rem;
+        margin-bottom: 1.75rem;
+        line-height: 1.5;
+    }
+
+    /* ── Section titles ──────────────────────────────────────────────────── */
+    .vt-hf-section-title {
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--app-text-muted);
+        margin: 0 0 0.85rem;
+    }
+
+    /* ── Hand diagram — calibrated for card column (50px vs 60px full-width) */
+    /* 50px × 73px in 2-col cards matches the ~19% proportion of game-start  */
+    .vt-hd-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 4px;
+        margin: 0.4rem 0 0.75rem;
+        overflow: hidden;   /* hard stop — SVG never bleeds card edge */
+    }
+    .vt-hd-svg {
+        width: 50px;
+        height: 73px;
+        flex-shrink: 0;
+        max-width: 100%;    /* fallback for unexpected layout changes */
+    }
+
+    /* ── 2-column grid for both By Hand and By Finger sections ──────────── */
+    .vt-hf-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.875rem;
+        margin-bottom: 2rem;
+    }
+
+    /* ── Protocol card — mirrors game-start .cr-protocol-card ───────────── */
+    .vt-hf-proto-card {
+        background: var(--app-card);
+        border: 1px solid #c7d2fe;
+        border-radius: 14px;
+        padding: 1rem 1.2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        overflow: hidden;   /* SVG cannot overflow card boundary */
+        min-width: 0;       /* grid item won't blow up min-content */
+    }
+
+    .vt-hf-proto-card.low-sample {
+        border-color: #fde68a;
+        box-shadow: 0 2px 10px rgba(217,119,6,0.08);
+    }
+
+    .vt-hf-proto-card.no-data {
+        border-color: #e2e8f0;
+        box-shadow: none;
+        opacity: 0.72;
+    }
+
+    /* ── Card header row (icon + PROTOCOL label) ─────────────────────────── */
+    .vt-hf-proto-header {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .vt-hf-proto-title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--app-text-muted);
+    }
+
+    /* ── Combo name — mirrors .cr-protocol-card-combo ────────────────────── */
+    .vt-hf-proto-combo {
+        font-size: 1.0rem;
+        font-weight: 800;
+        color: #3730a3;
+        letter-spacing: 0.02em;
+        margin-bottom: 0.1rem;
+    }
+    .vt-hf-proto-combo.no-data { color: var(--app-text-muted); }
+
+    /* ── Attempt count line — mirrors .cr-protocol-card-mult ─────────────── */
+    .vt-hf-proto-attempts {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #4f46e5;
+        margin-bottom: 0.5rem;
+    }
+    .vt-hf-proto-attempts.no-data { color: var(--app-text-muted); }
+
+    /* ── Stats list inside card ──────────────────────────────────────────── */
+    .vt-hf-stat-list {
+        border-top: 1px solid #e0e7ff;
+        padding-top: 0.45rem;
+        margin-top: 0.1rem;
+    }
+
+    .vt-hf-stat-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.79rem;
+        color: var(--app-text-muted);
+        margin-bottom: 0.18rem;
+    }
+    .vt-hf-stat-row b { color: var(--app-text); }
+
+    /* ── State badges ────────────────────────────────────────────────────── */
+    .vt-hf-badge {
+        display: inline-block;
+        font-size: 0.64rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-radius: 5px;
+        padding: 0.1rem 0.45rem;
+        margin-bottom: 0.35rem;
+    }
+    .vt-hf-badge.low { color: #92400e; background: #fef3c7; border: 1px solid #fde68a; }
+
+    .vt-hf-nudge {
+        font-size: 0.71rem;
+        color: var(--app-text-muted);
+        margin-top: 0.3rem;
+        line-height: 1.4;
+    }
+
+    .vt-hf-nodata-msg {
+        font-size: 0.78rem;
+        color: var(--app-text-muted);
+        line-height: 1.5;
+    }
+
+    /* ── Skill delta bars ────────────────────────────────────────────────── */
+    .vt-hf-delta-section { margin-bottom: 2rem; }
+    .vt-hf-delta-combo   { margin-bottom: 1.25rem; }
+
+    .vt-hf-delta-combo-title {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #4f46e5;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.6rem;
+    }
+
+    .vt-hf-delta-row {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .vt-hf-delta-skill {
+        width: 110px;
+        flex-shrink: 0;
+        font-size: 0.78rem;
+        color: var(--app-text-muted);
+        text-transform: capitalize;
+    }
+
+    .vt-hf-bar-track {
+        flex: 1;
+        height: 8px;
+        background: #f1f5f9;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .vt-hf-bar-fill { height: 100%; border-radius: 4px; min-width: 2px; }
+    .vt-hf-bar-fill.pos { background: #10b981; }
+    .vt-hf-bar-fill.neg { background: #ef4444; }
+
+    .vt-hf-delta-val {
+        width: 52px;
+        text-align: right;
+        font-size: 0.78rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    .vt-hf-delta-val.pos { color: #059669; }
+    .vt-hf-delta-val.neg { color: #dc2626; }
+
+    .vt-hf-low-badge {
+        display: inline-block;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: #92400e;
+        background: #fef3c7;
+        border: 1px solid #fde68a;
+        border-radius: 4px;
+        padding: 0.05rem 0.35rem;
+        margin-left: 0.3rem;
+        vertical-align: middle;
+    }
+
+    .vt-hf-nodata-delta {
+        font-size: 0.82rem;
+        color: var(--app-text-muted);
+        font-style: italic;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────────────────── */
+    .vt-hf-footer {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    .vt-hf-footer a {
+        color: #667eea;
+        text-decoration: none;
+        margin: 0 0.75rem;
+        font-weight: 600;
+        font-size: 0.88rem;
+    }
+    .vt-hf-footer a:hover { text-decoration: underline; }
+
+    /* ── Hand Summary Card — single combined block for both hands ───────── */
+    .vt-hf-hand-summary-card {
+        background: var(--app-card);
+        border: 1px solid #c7d2fe;
+        border-radius: 14px;
+        padding: 1rem 1.2rem 1.1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        margin-bottom: 2rem;
+        overflow: hidden;
+    }
+
+    .vt-hf-hand-summary-header {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        margin-bottom: 0.85rem;
+        padding-bottom: 0.6rem;
+        border-bottom: 1px solid #e0e7ff;
+    }
+
+    .vt-hf-hand-summary-title {
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--app-text-muted);
+    }
+
+    /* Desktop: two columns side by side, separated by a hairline */
+    .vt-hf-hand-columns {
+        display: grid;
+        grid-template-columns: 1fr 1px 1fr;
+        gap: 0 0.85rem;
+        align-items: start;
+    }
+
+    .vt-hf-hand-divider {
+        background: #e0e7ff;
+        width: 1px;
+        align-self: stretch;
+        min-height: 1px;
+    }
+
+    .vt-hf-hand-panel {
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .vt-hf-hand-panel-label {
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: #4f46e5;
+        margin-bottom: 0.1rem;
+        text-align: center;
+    }
+
+    .vt-hf-hand-panel-attempts {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #4f46e5;
+        text-align: center;
+        margin-bottom: 0.45rem;
+    }
+    .vt-hf-hand-panel-attempts.no-data { color: var(--app-text-muted); }
+
+    .vt-hf-hand-nodata {
+        font-size: 0.75rem;
+        color: var(--app-text-muted);
+        text-align: center;
+        padding: 0.3rem 0;
+        line-height: 1.45;
+    }
+
+    /* ── Mobile: collapse 2-col → 1-col below 580px ─────────────────────── */
+    @media (max-width: 580px) {
+        .vt-hf-grid {
+            grid-template-columns: 1fr;
+        }
+        /* On 1-col, cards are full-width → restore game-start SVG size */
+        .vt-hd-svg {
+            width: 58px;
+            height: 85px;
+        }
+        /* Stack hand panels vertically with horizontal divider */
+        .vt-hf-hand-columns {
+            grid-template-columns: 1fr;
+            grid-template-rows: auto 1px auto;
+            gap: 0.75rem 0;
+        }
+        .vt-hf-hand-divider {
+            width: auto;
+            height: 1px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="vt-hf-container">
+
+    {# ── Game filter tabs ─────────────────────────────────────────────────── #}
+    <div class="vt-hf-tabs">
+        <a href="?game=all"
+           class="vt-hf-tab{% if game_filter == 'all' %} active{% endif %}">
+            🎮 All Games
+        </a>
+        <a href="?game=color_reaction"
+           class="vt-hf-tab{% if game_filter == 'color_reaction' %} active{% endif %}">
+            ⚡ Color Reaction
+        </a>
+        <a href="?game=go_no_go"
+           class="vt-hf-tab{% if game_filter == 'go_no_go' %} active{% endif %}">
+            🛑 Go / No-Go
+        </a>
+        <a href="?game=number_color_conflict"
+           class="vt-hf-tab{% if game_filter == 'number_color_conflict' %} active{% endif %}">
+            🔢 Number-Color
+        </a>
+    </div>
+
+    {# ── Disclaimer ───────────────────────────────────────────────────────── #}
+    <div class="vt-hf-disclaimer">
+        ⚠ Data reflects system-assigned protocols only.
+        Self-declared · Not automatically verified.
+        At least {{ stats.min_samples }} valid attempts per protocol are needed for reliable comparison.
+    </div>
+
+    {# ── By Hand — single combined summary card ──────────────────────────── #}
+    {# Active hand fully highlighted; _all = all fingers soft indigo, none dark #}
+    <h2 class="vt-hf-section-title">By Hand</h2>
+    <div class="vt-hf-hand-summary-card">
+
+        <div class="vt-hf-hand-summary-header">
+            <span>🖐</span>
+            <span class="vt-hf-hand-summary-title">Hand Performance</span>
+        </div>
+
+        <div class="vt-hf-hand-columns">
+
+            {% for side in ["right", "left"] %}
+            {% set hd = stats.by_hand[side] %}
+            {%- set _state = hd.state | default("no_data") -%}
+
+            {# Hairline divider between right and left panels #}
+            {% if loop.index == 2 %}<div class="vt-hf-hand-divider" aria-hidden="true"></div>{% endif %}
+
+            <div class="vt-hf-hand-panel">
+
+                <div class="vt-hf-hand-panel-label">{{ side | upper }} HAND</div>
+
+                {{ protocol_hand_diagram(side, "_all") }}
+
+                <div class="vt-hf-hand-panel-attempts{% if _state == 'no_data' %} no-data{% endif %}">
+                    {% if _state == 'no_data' %}No attempts yet
+                    {% else %}{{ hd.attempt_count }} attempt{{ 's' if hd.attempt_count != 1 else '' }}{% endif %}
+                </div>
+
+                {% if _state == 'no_data' %}
+                <div class="vt-hf-hand-nodata">Play a game with this hand.</div>
+
+                {% else %}
+                {% if _state == 'low_sample' %}
+                <span class="vt-hf-badge low">LOW confidence</span>
+                {%- set _rem = stats.min_samples - hd.attempt_count -%}
+                <div class="vt-hf-nudge">{{ _rem }} more attempt{{ 's' if _rem != 1 else '' }} needed.</div>
+                {% endif %}
+
+                <div class="vt-hf-stat-list">
+                    {% if hd.avg_score is not none %}
+                    <div class="vt-hf-stat-row"><span>Avg score</span><b>{{ hd.avg_score }}%</b></div>
+                    {% endif %}
+                    {% if hd.avg_rt_ms is not none %}
+                    <div class="vt-hf-stat-row"><span>Avg RT</span><b>{{ hd.avg_rt_ms }} ms</b></div>
+                    {% endif %}
+                    {% if hd.accuracy_pct is not none %}
+                    <div class="vt-hf-stat-row"><span>Accuracy</span><b>{{ hd.accuracy_pct }}%</b></div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+            </div>
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+    {# ── By Finger (protocol cards — same visual as game-start) ──────────── #}
+    {# 2×2 grid: RI | RT  /  LI | LT — canonical FINGER_ORDER              #}
+    <h2 class="vt-hf-section-title">By Finger Protocol</h2>
+    <div class="vt-hf-grid">
+
+        {% for row in stats.finger_rows %}
+        {%- set _state = row.state | default("no_data") -%}
+        <div class="vt-hf-proto-card{% if _state == 'low_sample' %} low-sample{% elif _state == 'no_data' %} no-data{% endif %}">
+
+            <div class="vt-hf-proto-header">
+                <span>🎯</span>
+                <span class="vt-hf-proto-title">Protocol</span>
+            </div>
+
+            {# Exact hand + finger highlighted — identical to game-start diagram #}
+            {{ protocol_hand_diagram(row.hand, row.finger) }}
+
+            <div class="vt-hf-proto-combo{% if _state == 'no_data' %} no-data{% endif %}">
+                {{ row.label | upper }}
+            </div>
+            <div class="vt-hf-proto-attempts{% if _state == 'no_data' %} no-data{% endif %}">
+                {% if _state == 'no_data' %}No attempts yet
+                {% else %}{{ row.attempt_count }} attempt{{ 's' if row.attempt_count != 1 else '' }}{% endif %}
+            </div>
+
+            {% if _state == 'no_data' %}
+            <div class="vt-hf-nodata-msg">Play with this protocol to see stats here.</div>
+
+            {% else %}
+            {% if _state == 'low_sample' %}
+            <span class="vt-hf-badge low">LOW confidence</span>
+            {%- set _rem = stats.min_samples - row.attempt_count -%}
+            <div class="vt-hf-nudge">Complete {{ _rem }} more attempt{{ 's' if _rem != 1 else '' }} for reliable comparison.</div>
+            {% endif %}
+
+            <div class="vt-hf-stat-list">
+                {% if row.avg_score is not none %}
+                <div class="vt-hf-stat-row"><span>Avg score</span><b>{{ row.avg_score }}%</b></div>
+                {% endif %}
+                {% if row.avg_rt_ms is not none %}
+                <div class="vt-hf-stat-row"><span>Avg RT</span><b>{{ row.avg_rt_ms }} ms</b></div>
+                {% endif %}
+                {% if row.best_rt_ms is not none %}
+                <div class="vt-hf-stat-row"><span>Best RT</span><b>{{ row.best_rt_ms }} ms</b></div>
+                {% endif %}
+                {% if row.accuracy_pct is not none %}
+                <div class="vt-hf-stat-row"><span>Accuracy</span><b>{{ row.accuracy_pct }}%</b></div>
+                {% endif %}
+                {% if row.miss_pct is not none %}
+                <div class="vt-hf-stat-row"><span>Miss</span><b>{{ row.miss_pct }}%</b></div>
+                {% endif %}
+                {% if row.late_pct is not none %}
+                <div class="vt-hf-stat-row"><span>Late click</span><b>{{ row.late_pct }}%</b></div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+        </div>
+        {% endfor %}
+
+    </div>
+
+    {# ── Skill Deltas by Protocol ─────────────────────────────────────────── #}
+    <h2 class="vt-hf-section-title">Skill Deltas by Protocol</h2>
+    <div class="vt-hf-delta-section">
+
+        {% set _has_any_delta = false %}
+        {% for row in stats.finger_rows %}
+        {% set _combo = row.hand ~ "_" ~ row.finger %}
+        {%- set _row_state = row.state | default("no_data") -%}
+        {% if _row_state != 'no_data' and stats.skill_totals.get(_combo) %}
+        {% set _has_any_delta = true %}
+        {% set _deltas = stats.skill_totals[_combo] %}
+
+        <div class="vt-hf-delta-combo">
+            <div class="vt-hf-delta-combo-title">
+                {{ row.label }}
+                {% if _row_state == 'low_sample' %}<span class="vt-hf-low-badge">LOW</span>{% endif %}
+            </div>
+            {% for skill, delta in _deltas.items() | sort %}
+            {%- set _abs = delta | abs -%}
+            {%- set _bar_w = [(_abs / 1.0 * 100) | int, 100] | min -%}
+            {%- set _pos = delta >= 0 -%}
+            <div class="vt-hf-delta-row">
+                <span class="vt-hf-delta-skill">{{ skill }}</span>
+                <div class="vt-hf-bar-track">
+                    <div class="vt-hf-bar-fill {% if _pos %}pos{% else %}neg{% endif %}"
+                         style="width: {{ _bar_w }}%;"></div>
+                </div>
+                <span class="vt-hf-delta-val {% if _pos %}pos{% else %}neg{% endif %}">
+                    {% if _pos %}+{% endif %}{{ "%.2f" | format(delta) }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% endif %}
+        {% endfor %}
+
+        {% if not _has_any_delta %}
+        <div class="vt-hf-nodata-delta">
+            No skill delta data yet.
+            Complete at least 1 valid system-assigned attempt to see skill impact.
+        </div>
+        {% endif %}
+
+    </div>
+
+    {# ── Footer ───────────────────────────────────────────────────────────── #}
+    <div class="vt-hf-footer">
+        <a href="/virtual-training">💻 All Games</a>
+        <a href="/virtual-training/history">📋 History</a>
+        <a href="/training">🎓 Training</a>
+    </div>
+
+</div>
+{% endblock %}
