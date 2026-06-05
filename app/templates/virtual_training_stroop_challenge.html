@@ -541,6 +541,7 @@
         startedAt = new Date().toISOString();
 
         elInstruction.style.display = "none";
+        elBtnStart.parentElement.style.display = "none";
         elArena.classList.add("active");
 
         elapsedInterval = setInterval(function() {
@@ -580,7 +581,7 @@
             windowExpiredAt = Date.now();
             setTimeout(function() {
                 if (!clickHandled && !lateHandled) {
-                    recordOutcome("missed", null);
+                    recordOutcome("missed", null, null);
                 }
                 lateHandled = true;
             }, LATE_GRACE_MS);
@@ -625,10 +626,10 @@
 
         var isCorrect = (value === currentColorName);
         var outcome   = isCorrect ? "correct" : "wrong";
-        recordOutcome(outcome, rt);
+        recordOutcome(outcome, rt, value);
     }
 
-    function recordOutcome(outcome, rt) {
+    function recordOutcome(outcome, rt, value) {
         var isCorrect = (outcome === "correct");
 
         if (isCorrect) {

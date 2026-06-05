@@ -619,3 +619,82 @@ class TestStroopIntegration:
         assert eligible is True
         assert completed == 5
         assert required == 5
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SC-JS01..05: Template JS game-loop regression (static source analysis)
+#
+# Guards against the ReferenceError bug where recordOutcome() referenced
+# `value` from handleAnswer()'s parameter scope — causing the game to freeze
+# after the first click because nextStimulus() never ran.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _stroop_template_src() -> str:
+    from pathlib import Path
+    return (
+        Path(__file__).parents[4]
+        / "app" / "templates" / "virtual_training_stroop_challenge.html"
+    ).read_text(encoding="utf-8")
+
+
+class TestStroopJSGameLoop:
+
+    def setup_method(self):
+        self._src = _stroop_template_src()
+
+    def test_sc_js01_record_outcome_has_value_param(self):
+        """SC-JS01: recordOutcome signature must declare `value` as 3rd parameter.
+
+        Regression: without this, recordOutcome(outcome, rt) had no `value` param,
+        causing a ReferenceError on the first answer click and freezing the loop.
+        """
+        assert "function recordOutcome(outcome, rt, value)" in self._src, (
+            "recordOutcome must declare `value` as 3rd parameter — "
+            "otherwise accessing `value` inside the function raises ReferenceError."
+        )
+
+    def test_sc_js02_handle_answer_forwards_value(self):
+        """SC-JS02: handleAnswer must pass `value` to recordOutcome.
+
+        Regression: before fix, handleAnswer called recordOutcome(outcome, rt)
+        and `value` was never forwarded, so the log entry could never record
+        which colour the user tapped.
+        """
+        assert "recordOutcome(outcome, rt, value)" in self._src, (
+            "handleAnswer must forward `value` via recordOutcome(outcome, rt, value)."
+        )
+
+    def test_sc_js03_missed_timeout_passes_null_value(self):
+        """SC-JS03: timeout/missed path must pass null as the 3rd (value) argument.
+
+        Regression: before fix, the missed timeout called recordOutcome("missed", null)
+        with only 2 args — inconsistent with the corrected 3-param signature.
+        """
+        assert 'recordOutcome("missed", null, null)' in self._src, (
+            'Missed/timeout path must call recordOutcome("missed", null, null).'
+        )
+
+    def test_sc_js04_start_hides_btn_wrapper(self):
+        """SC-JS04: scStart() must hide the Start button's parent element.
+
+        Regression: before fix, scStart() only hid elInstruction, leaving the
+        Start Game button visible in the DOM throughout the entire game session.
+        """
+        assert "elBtnStart.parentElement.style.display" in self._src, (
+            "scStart() must set elBtnStart.parentElement.style.display so the "
+            "Start button disappears when the game arena activates."
+        )
+
+    def test_sc_js05_next_stimulus_in_record_outcome(self):
+        """SC-JS05: nextStimulus() must appear inside the recordOutcome function body.
+
+        Guards the core loop transition: every answered or missed stimulus must
+        call nextStimulus() to advance the sequence.
+        """
+        fn_start = self._src.find("function recordOutcome(outcome, rt, value)")
+        assert fn_start != -1, "recordOutcome(outcome, rt, value) not found in template"
+        body = self._src[fn_start: fn_start + 1400]
+        assert "nextStimulus()" in body, (
+            "nextStimulus() must be called inside recordOutcome() — "
+            "missing it halts the game loop after every stimulus."
+        )
