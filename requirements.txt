@@ -29,3 +29,6 @@ Pillow>=10.0.0
 # 1.26.0 — the tested+installed version compatible with rembg==2.0.75.
 rembg==2.0.75
 onnxruntime==1.26.0
+# Timezone derivation from GPS coordinates (Phase 2 — lat_lng_derived source)
+# Offline only — no network calls at runtime. numpy already required by onnxruntime.
+timezonefinder==6.5.9

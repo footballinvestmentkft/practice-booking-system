@@ -54,11 +54,19 @@ def _extract_training_ctx(body: dict) -> dict:
     All fields are safe to pass directly to VirtualTrainingService.record_attempt().
     """
     browser_tz = body.get("browser_timezone")
-    loc = body.get("location") or {}
-    _now = datetime.now(timezone.utc)
-    training_tz, _ = resolve_training_timezone(browser_tz)
-    training_date = compute_training_local_date(_now, training_tz)
+    loc    = body.get("location") or {}
+    _now   = datetime.now(timezone.utc)
     cap_at = _parse_location_captured_at(loc.get("captured_at"))
+    # Phase 2: lat/lng → timezonefinder takes priority over browser tz
+    training_tz, _ = resolve_training_timezone(
+        browser_tz,
+        lat=loc.get("lat"),
+        lng=loc.get("lng"),
+        accuracy_m=loc.get("accuracy_m"),
+        captured_at=cap_at,
+        now=_now,
+    )
+    training_date = compute_training_local_date(_now, training_tz)
     return {
         "training_local_date":   training_date,
         "training_tz":           training_tz,

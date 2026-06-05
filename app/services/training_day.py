@@ -1,15 +1,19 @@
-"""training_day — Phase 1 training day resolution via browser timezone.
+"""training_day — Training day resolution via GPS coordinates or browser timezone.
 
-Phase 1 fallback chain:
+Phase 1 fallback chain (browser_timezone only):
   1. valid browser IANA timezone  → training_timezone_source = "browser_iana"
   2. UTC fallback                 → training_timezone_source = "utc_fallback"
 
-Phase 2 (separate approval):
-  lat/lng → timezonefinder → IANA timezone → training_timezone_source = "lat_lng_derived"
+Phase 2 fallback chain (lat/lng takes priority):
+  1. fresh GPS + accuracy ≤ 500m → timezonefinder → "lat_lng_derived"
+  2. valid browser IANA timezone  → "browser_iana"
+  3. UTC fallback                 → "utc_fallback"
 
-Design note: ?tz= query param on the Card Studio page is a Phase 1 interim
-solution only. Phase 2/3 will derive the training timezone from the stored
-attempt location or a user-session-level timezone profile.
+Design note: ?tz= query param on the Card Studio page remains Phase 1 (browser_iana)
+because the Card Studio does not collect GPS. Attempt submit routes use Phase 2.
+
+Phase 3 (separate approval):
+  Campus geofence, on-site challenge enforcement, location retention policy.
 """
 from __future__ import annotations
 
@@ -18,6 +22,29 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 _UTC = ZoneInfo("UTC")
 _LOCATION_FRESHNESS_SECONDS = 300   # 5 minutes
+_LOCATION_ACCURACY_MAX_M    = 500   # max accuracy_m for lat_lng_derived tz
+
+
+# ── timezonefinder singleton (lazy init — avoids startup cost) ────────────────
+
+_TZF = None  # type: ignore[assignment]
+
+
+def _get_tzf():
+    """Return module-level TimezoneFinder instance (lazy, thread-safe for reads)."""
+    global _TZF
+    if _TZF is None:
+        from timezonefinder import TimezoneFinder  # noqa: PLC0415
+        _TZF = TimezoneFinder()
+    return _TZF
+
+
+def _derive_tz_from_coords(lat: float, lng: float) -> str | None:
+    """Look up IANA timezone from GPS coordinates. Returns None on any error."""
+    try:
+        return _get_tzf().timezone_at(lat=lat, lng=lng)
+    except Exception:  # noqa: BLE001
+        return None
 
 
 # ── IANA timezone validation ───────────────────────────────────────────────────
@@ -54,23 +81,47 @@ def resolve_location_source(
     return "browser_geolocation" if age <= _LOCATION_FRESHNESS_SECONDS else "stale_browser_geolocation"
 
 
-# ── Phase 1: timezone resolution ──────────────────────────────────────────────
+# ── Phase 2: timezone resolution ──────────────────────────────────────────────
 
 def resolve_training_timezone(
     browser_timezone: str | None,
+    lat: float | None = None,
+    lng: float | None = None,
+    accuracy_m: int | None = None,
+    captured_at: datetime | None = None,
+    now: datetime | None = None,
 ) -> tuple[str, str]:
     """Return (training_timezone, training_timezone_source).
 
-    Phase 1 fallback chain:
-      1. valid browser IANA tz → ("Europe/Budapest", "browser_iana")
-      2. UTC                   → ("UTC", "utc_fallback")
+    Phase 2 fallback chain:
+      1. Fresh GPS (≤5 min, accuracy ≤500m) → timezonefinder → "lat_lng_derived"
+      2. Valid browser IANA tz              → "browser_iana"
+      3. UTC                               → "utc_fallback"
 
-    Phase 2 will add lat/lng → timezone before step 1 without changing
-    this function's signature — a new param will be added with a default.
+    Backward-compatible: resolve_training_timezone("Europe/Budapest") still returns
+    ("Europe/Budapest", "browser_iana") unchanged — all Phase 1 callers unaffected.
     """
+    # ── Step 1: lat/lng → timezonefinder (Phase 2) ───────────────────────────
+    if lat is not None and lng is not None:
+        _now = now or datetime.now(_tz_module.utc)
+        _acc_ok    = (accuracy_m is None) or (accuracy_m <= _LOCATION_ACCURACY_MAX_M)
+        _fresh_ok  = (captured_at is None) or (
+            (_now - captured_at).total_seconds() <= _LOCATION_FRESHNESS_SECONDS
+        )
+        if _acc_ok and _fresh_ok:
+            try:
+                derived = _derive_tz_from_coords(lat, lng)
+            except Exception:  # noqa: BLE001
+                derived = None
+            if derived and _valid_iana_tz(derived):
+                return derived, "lat_lng_derived"
+
+    # ── Step 2: browser IANA timezone (Phase 1) ──────────────────────────────
     valid = _valid_iana_tz(browser_timezone)
     if valid:
         return valid, "browser_iana"
+
+    # ── Step 3: UTC fallback ─────────────────────────────────────────────────
     return "UTC", "utc_fallback"
 
 
@@ -86,7 +137,7 @@ def compute_training_local_date(
     """
     try:
         return completed_at.astimezone(ZoneInfo(training_timezone)).date()
-    except Exception:
+    except Exception:  # noqa: BLE001
         return completed_at.astimezone(_UTC).date()
 
 

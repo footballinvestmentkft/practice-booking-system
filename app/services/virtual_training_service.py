@@ -400,8 +400,15 @@ class VirtualTrainingService:
 
         now = datetime.now(timezone.utc)
 
-        # ── Phase 1: resolve training day from browser timezone ───────────────
-        training_tz, tz_src = resolve_training_timezone(browser_timezone)
+        # ── Phase 2: resolve training day — lat/lng takes priority over browser tz
+        training_tz, tz_src = resolve_training_timezone(
+            browser_timezone,
+            lat=location_lat,
+            lng=location_lng,
+            accuracy_m=location_accuracy_m,
+            captured_at=location_captured_at,
+            now=now,
+        )
         training_date = compute_training_local_date(now, training_tz)
         loc_src = resolve_location_source(location_lat, location_lng, location_captured_at, now)
 
