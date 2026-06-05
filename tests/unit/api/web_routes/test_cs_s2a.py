@@ -40,7 +40,7 @@ class TestS2A01to02RouteRegistration:
         """S2A-02 (updated CS-S4A): Total route count is 847 (CS-S2A+CS-S4A)."""
         from app.main import app
         count = len(app.openapi().get("paths", {}))
-        assert count == 857, f"Expected 847 routes, got {count}"
+        assert count == 860, f"Expected 847 routes, got {count}"
 
 
 # ── S2A-03..08: _resolve_player_context logic ────────────────────────────────

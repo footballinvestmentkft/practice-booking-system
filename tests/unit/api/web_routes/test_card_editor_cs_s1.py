@@ -294,7 +294,7 @@ class TestS109S110RouteAndSnapshot:
         """S1-09 (updated BG-REMOVAL-1): route count is 850 (+3 BG-REMOVAL-1 mood photo routes)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 857, (
+        assert len(paths) == 860, (
             f"Expected 850 routes (847 CS-S2A baseline + 3 BG-REMOVAL-1), got {len(paths)}"
         )
 

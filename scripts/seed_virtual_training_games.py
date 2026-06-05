@@ -547,7 +547,7 @@ _GAMES = [
             "appear in your peripheral field. Central gaze must not waver."
         ),
         "game_type": "peripheral_detection",
-        "is_active": False,
+        "is_active": False,    # Activated after manual QA sign-off
         "base_xp": 12,
         "max_daily_attempts": 5,
         "skill_targets": {
@@ -557,11 +557,64 @@ _GAMES = [
             "anticipation":       0.15,
         },
         "config": {
+            # Three eccentricity zones, progressively harder.
+            # Distances and sizes are in CSS px (assuming 560px arena side).
+            "phases": [
+                {
+                    "zone":              "near",
+                    "stimuli":           14,
+                    "eccentricity_min_px": 100,
+                    "eccentricity_max_px": 160,
+                    "target_size_px":    50,
+                    "window_ms":         1200,
+                    "isi_ms":            900,
+                    "clock_positions":   8,
+                },
+                {
+                    "zone":              "mid",
+                    "stimuli":           14,
+                    "eccentricity_min_px": 180,
+                    "eccentricity_max_px": 260,
+                    "target_size_px":    44,
+                    "window_ms":         900,
+                    "isi_ms":            750,
+                    "clock_positions":   8,
+                },
+                {
+                    "zone":              "far",
+                    "stimuli":           14,
+                    "eccentricity_min_px": 290,
+                    "eccentricity_max_px": 380,
+                    "target_size_px":    38,
+                    "window_ms":         700,
+                    "isi_ms":            600,
+                    "clock_positions":   8,
+                },
+            ],
+            # Eccentricity bonus weights: far targets score higher than near
+            "eccentricity_weights": {
+                "near": 1.00,
+                "mid":  1.35,
+                "far":  1.75,
+            },
+            # Arena is a square; radius in px from centre (used for JS clamp)
+            "arena_radius_px":        400,
+            "fixation_cross_size_px": 28,
+            "target_color":           "#4f46e5",
+            "fixation_color":         "#1e1b4b",
+            # Free protocol — no hand/finger assignment for this game type
+            "protocol_assignment": "free",
+            # Anti-farming overrides (total session ~70-90s, 42 stimuli)
+            "validation_overrides": {
+                "min_duration_seconds":     20.0,
+                "min_stimuli_count":        30,
+                "bot_reaction_threshold_ms": 80,
+            },
             "show_in_hub":      True,
             "icon":             "👀",
             "football_benefit": (
-                "Peripheral awareness, rapid scene perception, and processing "
-                "field information without lifting the head."
+                "Detect off-ball runs and blind-side threats without losing track "
+                "of the ball — the key visual skill of elite wide players and midfielders."
             ),
         },
     },

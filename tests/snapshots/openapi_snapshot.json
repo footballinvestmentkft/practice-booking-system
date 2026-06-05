@@ -68049,6 +68049,94 @@
         ]
       }
     },
+    "/virtual-training/peripheral-vision": {
+      "get": {
+        "description": "Peripheral Vision game page \u2014 fixation cross + eccentric target detection.",
+        "operationId": "virtual_training_peripheral_vision_virtual_training_peripheral_vision_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Virtual Training Peripheral Vision",
+        "tags": [
+          "web",
+          "virtual-training"
+        ]
+      }
+    },
+    "/virtual-training/peripheral-vision/result/{attempt_id}": {
+      "get": {
+        "description": "Result screen for a completed Peripheral Vision attempt.",
+        "operationId": "virtual_training_peripheral_vision_result_virtual_training_peripheral_vision_result__attempt_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "title": "Attempt Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Virtual Training Peripheral Vision Result",
+        "tags": [
+          "web",
+          "virtual-training"
+        ]
+      }
+    },
+    "/virtual-training/peripheral-vision/submit": {
+      "post": {
+        "description": "Record a Peripheral Vision attempt. Returns attempt_id, xp_awarded, is_valid.",
+        "operationId": "virtual_training_peripheral_vision_submit_virtual_training_peripheral_vision_submit_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Virtual Training Peripheral Vision Submit",
+        "tags": [
+          "web",
+          "virtual-training"
+        ]
+      }
+    },
     "/virtual-training/target-tracking": {
       "get": {
         "description": "Target Tracking game page \u2014 instruction + MOT arena (moving objects).",

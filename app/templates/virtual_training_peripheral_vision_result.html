@@ -1,0 +1,348 @@
+{% extends "student_base.html" %}
+
+{% block title %}Peripheral Vision Result - LFA{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '👀' %}
+{% set _page_name = 'Peripheral Vision — Result' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .pvr-container {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    /* ── Status card ─────────────────────────────────────────────────────── */
+    .pvr-status-card {
+        background: var(--app-card);
+        border-radius: 14px;
+        padding: 1.5rem 1.4rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+        margin-bottom: 1.25rem;
+        text-align: center;
+    }
+    .pvr-status-icon { font-size: 2.5rem; margin-bottom: 0.4rem; }
+    .pvr-status-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--app-text);
+        margin: 0 0 0.25rem;
+    }
+    .pvr-score-big {
+        font-size: 2.6rem;
+        font-weight: 800;
+        color: #4f46e5;
+        line-height: 1;
+        margin: 0.4rem 0 0.15rem;
+    }
+    .pvr-score-label {
+        font-size: 0.78rem;
+        color: var(--app-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 1rem;
+    }
+
+    /* stats grid */
+    .pvr-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+    .pvr-stat-cell {
+        background: #f8f9fc;
+        border-radius: 10px;
+        padding: 0.6rem 0.5rem;
+        text-align: center;
+    }
+    .pvr-stat-val {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--app-text);
+    }
+    .pvr-stat-lbl {
+        font-size: 0.7rem;
+        color: var(--app-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    /* XP badge */
+    .pvr-xp-badge {
+        display: inline-block;
+        font-size: 0.85rem;
+        font-weight: 700;
+        background: #ede9fe;
+        color: #5b21b6;
+        padding: 0.3rem 0.9rem;
+        border-radius: 20px;
+        margin-bottom: 0.5rem;
+    }
+    .pvr-invalid-badge {
+        display: inline-block;
+        font-size: 0.78rem;
+        font-weight: 600;
+        background: #fee2e2;
+        color: #991b1b;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        margin-bottom: 0.5rem;
+    }
+
+    /* ── Section card ────────────────────────────────────────────────────── */
+    .pvr-section {
+        background: var(--app-card);
+        border-radius: 14px;
+        padding: 1.1rem 1.2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        margin-bottom: 1.1rem;
+    }
+    .pvr-section-title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--app-text-muted);
+        margin: 0 0 0.75rem;
+    }
+
+    /* skill delta rows */
+    .pvr-skill-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        margin-bottom: 0.3rem;
+        color: var(--app-text-muted);
+    }
+    .pvr-skill-row b { color: var(--app-text); }
+    .pvr-skill-delta { font-size: 0.82rem; font-weight: 700; }
+    .pvr-skill-delta.pos { color: #059669; }
+    .pvr-skill-delta.neg { color: #dc2626; }
+
+    /* ── Per-zone table ──────────────────────────────────────────────────── */
+    .pvr-zone-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.82rem;
+    }
+    .pvr-zone-table th {
+        text-align: left;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--app-text-muted);
+        padding: 0.4rem 0.5rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .pvr-zone-table td {
+        padding: 0.55rem 0.5rem;
+        border-bottom: 1px solid #f3f4f6;
+        color: var(--app-text);
+    }
+    .pvr-zone-table tr:last-child td { border-bottom: none; }
+    .pvr-zone-badge {
+        display: inline-block;
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 0.1rem 0.45rem;
+        border-radius: 10px;
+    }
+    .pvr-zone-badge.near { background: #dcfce7; color: #166534; }
+    .pvr-zone-badge.mid  { background: #fef3c7; color: #92400e; }
+    .pvr-zone-badge.far  { background: #fee2e2; color: #991b1b; }
+
+    .pvr-acc-hi  { color: #059669; font-weight: 700; }
+    .pvr-acc-mid { color: #d97706; font-weight: 700; }
+    .pvr-acc-lo  { color: #dc2626; font-weight: 700; }
+
+    /* ── Footer ──────────────────────────────────────────────────────────── */
+    .pvr-footer {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    .pvr-footer a {
+        color: #667eea;
+        text-decoration: none;
+        margin: 0 0.75rem;
+        font-weight: 600;
+        font-size: 0.88rem;
+    }
+    .pvr-footer a:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="pvr-container">
+
+    {# ── Status card ──────────────────────────────────────────────────────── #}
+    <div class="pvr-status-card">
+        {% if not attempt.is_valid %}
+        <div class="pvr-status-icon">❌</div>
+        <div class="pvr-status-title">Attempt Not Counted</div>
+        <div class="pvr-score-big">—</div>
+        <div class="pvr-score-label">Invalid — {{ attempt.invalid_reason | replace('_', ' ') | capitalize }}</div>
+        <span class="pvr-invalid-badge">No XP — attempt not valid</span>
+
+        {% else %}
+
+        {# Status icon by score threshold #}
+        {% if attempt.score_normalized >= 85 %}
+        <div class="pvr-status-icon">🏆</div>
+        <div class="pvr-status-title">Excellent awareness!</div>
+        {% elif attempt.score_normalized >= 65 %}
+        <div class="pvr-status-icon">⚡</div>
+        <div class="pvr-status-title">Strong peripheral detection!</div>
+        {% elif attempt.score_normalized >= 45 %}
+        <div class="pvr-status-icon">💪</div>
+        <div class="pvr-status-title">Keep training your periphery!</div>
+        {% else %}
+        <div class="pvr-status-icon">🎯</div>
+        <div class="pvr-status-title">Focus on the far targets!</div>
+        {% endif %}
+
+        <div class="pvr-score-big">{{ attempt.score_normalized | round(0) | int }}%</div>
+        <div class="pvr-score-label">Eccentricity-weighted score</div>
+
+        {% if attempt.xp_awarded > 0 %}
+        <span class="pvr-xp-badge">+{{ attempt.xp_awarded }} XP earned</span>
+        {% else %}
+        <span class="pvr-invalid-badge">No XP — daily limit reached</span>
+        {% endif %}
+
+        {# Stats grid #}
+        <div class="pvr-stats-grid">
+            <div class="pvr-stat-cell">
+                <div class="pvr-stat-val">{{ attempt.correct_count or 0 }} / {{ attempt.stimuli_count or 0 }}</div>
+                <div class="pvr-stat-lbl">Hit / Total</div>
+            </div>
+            <div class="pvr-stat-cell">
+                <div class="pvr-stat-val">
+                    {% if attempt.avg_reaction_ms is not none %}
+                    {{ attempt.avg_reaction_ms | round(0) | int }} ms
+                    {% else %}—{% endif %}
+                </div>
+                <div class="pvr-stat-lbl">Avg RT</div>
+            </div>
+            <div class="pvr-stat-cell">
+                <div class="pvr-stat-val">
+                    {% if attempt.duration_seconds is not none %}
+                    {{ attempt.duration_seconds | round(1) }} s
+                    {% else %}—{% endif %}
+                </div>
+                <div class="pvr-stat-lbl">Duration</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if attempt.is_valid %}
+
+    {# ── Skill deltas ─────────────────────────────────────────────────────── #}
+    {% if attempt.skill_deltas %}
+    <div class="pvr-section">
+        <div class="pvr-section-title">Skill Impact</div>
+        {% for skill, delta in attempt.skill_deltas.items() | sort %}
+        <div class="pvr-skill-row">
+            <span>{{ skill | replace('_', ' ') | capitalize }}</span>
+            <span class="pvr-skill-delta {% if delta >= 0 %}pos{% else %}neg{% endif %}">
+                {{ "%+.3f" | format(delta) }}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {# ── Per-zone breakdown ───────────────────────────────────────────────── #}
+    {% if per_zone %}
+    <div class="pvr-section">
+        <div class="pvr-section-title">By Eccentricity Zone</div>
+        <table class="pvr-zone-table">
+            <thead>
+                <tr>
+                    <th>Zone</th>
+                    <th>Hits / Total</th>
+                    <th>Accuracy</th>
+                    <th>Avg RT</th>
+                    <th>Wrong</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for zone_key in ["near", "mid", "far"] %}
+                {% if zone_key in per_zone %}
+                {% set z = per_zone[zone_key] %}
+                {% set z_total = z.get("hits", 0) + z.get("misses", 0) + z.get("wrong_clicks", 0) %}
+                {% set z_acc = (z.get("hits", 0) / z_total * 100) | round(0) | int if z_total > 0 else 0 %}
+                <tr>
+                    <td><span class="pvr-zone-badge {{ zone_key }}">{{ zone_key | upper }}</span></td>
+                    <td>{{ z.get("hits", 0) }} / {{ z_total }}</td>
+                    <td class="{% if z_acc >= 85 %}pvr-acc-hi{% elif z_acc >= 65 %}pvr-acc-mid{% else %}pvr-acc-lo{% endif %}">
+                        {{ z_acc }}%
+                    </td>
+                    <td>{{ z.get("avg_rt_ms") ~ " ms" if z.get("avg_rt_ms") else "—" }}</td>
+                    <td>{{ z.get("wrong_clicks", 0) }}</td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {# ── Per-phase breakdown ──────────────────────────────────────────────── #}
+    {% if per_phase %}
+    <div class="pvr-section">
+        <div class="pvr-section-title">By Phase</div>
+        <table class="pvr-zone-table">
+            <thead>
+                <tr><th>#</th><th>Zone</th><th>Hit</th><th>Miss</th><th>Wrong</th><th>Avg RT</th></tr>
+            </thead>
+            <tbody>
+                {% for p in per_phase %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td><span class="pvr-zone-badge {{ p.get('zone', '') }}">{{ p.get('zone', '?') | upper }}</span></td>
+                    <td>{{ p.get('hits', 0) }}</td>
+                    <td>{{ p.get('misses', 0) }}</td>
+                    <td>{{ p.get('wrong_clicks', 0) }}</td>
+                    <td>{{ p.get('avg_rt_ms') ~ " ms" if p.get('avg_rt_ms') else "—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% endif %}{# attempt.is_valid #}
+
+    {# ── Admin debug ──────────────────────────────────────────────────────── #}
+    {% if is_admin %}
+    <details style="margin-bottom:1rem;">
+        <summary style="font-size:0.78rem;color:var(--app-text-muted);cursor:pointer;">
+            🔧 Admin: raw data
+        </summary>
+        <pre style="font-size:0.7rem;overflow:auto;background:#f8f9fc;padding:0.75rem;border-radius:8px;margin-top:0.5rem;">
+skill_scores:  {{ skill_scores | tojson(indent=2) }}
+per_zone:      {{ per_zone | tojson(indent=2) }}
+raw_metrics:   {{ attempt.raw_metrics | tojson(indent=2) }}</pre>
+    </details>
+    {% endif %}
+
+    {# ── Footer ───────────────────────────────────────────────────────────── #}
+    <div class="pvr-footer">
+        <a href="/virtual-training/peripheral-vision">▶ Play again</a>
+        <a href="/virtual-training">💻 All Games</a>
+        <a href="/virtual-training/history">📋 History</a>
+    </div>
+
+</div>
+{% endblock %}

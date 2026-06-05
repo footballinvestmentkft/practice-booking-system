@@ -1,0 +1,652 @@
+{% extends "student_base.html" %}
+
+{% block title %}Peripheral Vision - LFA{% endblock %}
+{% block active_page %}lfa-player{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '👀' %}
+{% set _page_name = 'Peripheral Vision' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .pv-container {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    /* ── Meta bar ────────────────────────────────────────────────────────── */
+    .pv-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--app-card);
+        border-radius: 10px;
+        padding: 0.6rem 1rem;
+        margin-bottom: 1.25rem;
+        font-size: 0.85rem;
+        color: var(--app-text-muted);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .pv-meta b { color: var(--app-text); }
+
+    /* ── Instruction card ────────────────────────────────────────────────── */
+    .pv-instruction {
+        background: var(--app-card);
+        border-radius: 14px;
+        padding: 1.5rem 1.4rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+        margin-bottom: 1.5rem;
+    }
+    .pv-instruction h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--app-text);
+        margin: 0 0 0.5rem;
+    }
+    .pv-instruction p {
+        font-size: 0.9rem;
+        color: var(--app-text-muted);
+        margin: 0 0 0.8rem;
+        line-height: 1.55;
+    }
+
+    /* skill chips */
+    .pv-skill-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-bottom: 0.85rem;
+    }
+    .pv-skill-chip {
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: #ede9fe;
+        color: #5b21b6;
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+    }
+
+    /* xp hint */
+    .pv-xp-note {
+        font-size: 0.78rem;
+        color: var(--app-text-muted);
+        background: #f8f9fc;
+        border-radius: 8px;
+        padding: 0.45rem 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    /* how-to hint */
+    .pv-how-to {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 8px;
+        padding: 0.65rem 0.9rem;
+        font-size: 0.82rem;
+        color: #1e40af;
+        line-height: 1.55;
+        margin-bottom: 1.2rem;
+    }
+
+    /* ── Start button ────────────────────────────────────────────────────── */
+    .pv-btn-start {
+        display: block;
+        width: 100%;
+        background: #4f46e5;
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 700;
+        padding: 0.75rem;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.15s;
+        text-align: center;
+    }
+    .pv-btn-start:hover   { background: #4338ca; }
+    .pv-btn-start:disabled { background: #9ca3af; cursor: not-allowed; }
+
+    /* ── Game arena ──────────────────────────────────────────────────────── */
+    .pv-arena {
+        display: none;
+    }
+
+    .pv-stats-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--app-card);
+        border-radius: 10px;
+        padding: 0.5rem 1rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.82rem;
+        color: var(--app-text-muted);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .pv-stats-row b { color: var(--app-text); }
+
+    .pv-progress-bar-wrap {
+        height: 5px;
+        background: #e5e7eb;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 0.85rem;
+    }
+    .pv-progress-bar {
+        height: 100%;
+        background: #4f46e5;
+        border-radius: 4px;
+        width: 0%;
+        transition: width 0.2s linear;
+    }
+
+    /* ── Field: square arena for circular target placement ──────────────── */
+    .pv-field-wrap {
+        position: relative;
+        width: 100%;
+        padding-bottom: 100%; /* 1:1 square */
+        margin-bottom: 0.75rem;
+        overflow: hidden;
+    }
+    .pv-field {
+        position: absolute;
+        inset: 0;
+        background: var(--app-card);
+        border-radius: 14px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+        overflow: hidden;
+    }
+
+    /* Fixation cross — always visible during play */
+    .pv-fixation {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 28px;
+        height: 28px;
+        pointer-events: none;
+        z-index: 10;
+        transition: color 0.08s;
+    }
+    .pv-fixation::before,
+    .pv-fixation::after {
+        content: '';
+        position: absolute;
+        background: #1e1b4b;
+        border-radius: 2px;
+    }
+    .pv-fixation::before { width: 4px; height: 28px; left: 12px; top: 0; }
+    .pv-fixation::after  { width: 28px; height: 4px; left: 0; top: 12px; }
+
+    /* Flash states for fixation cross feedback */
+    .pv-fixation.hit   ::before,
+    .pv-fixation.hit   ::after  { background: #10b981; }
+    .pv-fixation.miss  ::before,
+    .pv-fixation.miss  ::after  { background: #ef4444; }
+    .pv-fixation.wrong ::before,
+    .pv-fixation.wrong ::after  { background: #f59e0b; }
+
+    /* Peripheral target circles */
+    .pv-target {
+        position: absolute;
+        border-radius: 50%;
+        background: #4f46e5;
+        display: none;
+        cursor: pointer;
+        transform: translate(-50%, -50%);
+        transition: opacity 0.06s;
+        z-index: 5;
+    }
+    .pv-target.visible { display: block; }
+
+    /* Phase zone badge */
+    .pv-zone-badge {
+        position: absolute;
+        top: 0.6rem;
+        left: 0.6rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 0.2rem 0.55rem;
+        border-radius: 20px;
+        z-index: 20;
+    }
+    .pv-zone-badge.near { background: #dcfce7; color: #166534; }
+    .pv-zone-badge.mid  { background: #fef3c7; color: #92400e; }
+    .pv-zone-badge.far  { background: #fee2e2; color: #991b1b; }
+
+    /* Timer row */
+    .pv-timer-row {
+        text-align: center;
+        font-size: 0.78rem;
+        color: var(--app-text-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    /* ── Submitting overlay ──────────────────────────────────────────────── */
+    .pv-submitting {
+        display: none;
+        text-align: center;
+        padding: 2rem 1rem;
+        color: var(--app-text-muted);
+        font-size: 0.9rem;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────────────────── */
+    .pv-footer {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    .pv-footer a {
+        color: #667eea;
+        text-decoration: none;
+        margin: 0 0.75rem;
+        font-weight: 600;
+        font-size: 0.88rem;
+    }
+    .pv-footer a:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<div class="pv-container">
+
+    {# ── Meta bar ─────────────────────────────────────────────────────────── #}
+    <div class="pv-meta">
+        <span>{{ game.name }}</span>
+        <span>Attempt <b>{{ attempts_today + 1 }}</b> / <b>{{ max_daily_attempts }}</b>
+              &nbsp;·&nbsp; <b>{{ attempts_remaining }}</b> remaining</span>
+    </div>
+
+    {# ── Instruction card ─────────────────────────────────────────────────── #}
+    <div class="pv-instruction" id="pvInstruction">
+        <h2>👀 Peripheral Vision</h2>
+        <p>{{ game.description }}</p>
+
+        <div class="pv-skill-chips">
+            {% for skill in game.skill_targets.keys() %}
+            <span class="pv-skill-chip">{{ skill | replace('_', ' ') | capitalize }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="pv-xp-note">
+            ⚡ +{{ game.base_xp }} XP per valid attempt
+            &nbsp;·&nbsp; Diminishing returns on repeated attempts today
+        </div>
+
+        <div class="pv-how-to">
+            <b>How to play:</b> Keep your eyes on the <b>+ cross</b> at the centre.
+            When a circle appears anywhere on screen, click or tap it as quickly as possible
+            <em>without moving your gaze away from the cross</em>.
+            There are 3 phases — targets get further from centre and harder to catch.
+        </div>
+
+        {% if attempts_remaining == 0 %}
+        <button class="pv-btn-start" disabled>Daily limit reached — come back tomorrow</button>
+        {% else %}
+        <button class="pv-btn-start" id="btnStart" onclick="pvStart()">▶ Start Game</button>
+        {% endif %}
+    </div>
+
+    {# ── Game arena (hidden until started) ────────────────────────────────── #}
+    <div class="pv-arena" id="pvArena">
+
+        <div class="pv-stats-row">
+            <span>Stim <b id="pvStimIdx">0</b> / <b id="pvStimTotal">42</b></span>
+            <span>✓ <b id="pvHit">0</b> &nbsp; ✗ <b id="pvMiss">0</b> &nbsp; ⚡ <b id="pvWrong">0</b></span>
+            <span>Avg: <b id="pvAvgMs">—</b> ms</span>
+        </div>
+
+        <div class="pv-progress-bar-wrap">
+            <div class="pv-progress-bar" id="pvProgressBar"></div>
+        </div>
+
+        <div class="pv-field-wrap">
+            <div class="pv-field" id="pvField" onclick="pvFieldClick(event)">
+                <div class="pv-fixation" id="pvFixation"></div>
+                <span class="pv-zone-badge near" id="pvZoneBadge">NEAR</span>
+                <div class="pv-target" id="pvTarget" onclick="pvTargetClick(event)"></div>
+            </div>
+        </div>
+
+        <div class="pv-timer-row" id="pvTimerRow">0.0 s</div>
+
+    </div>
+
+    {# ── Submitting overlay ───────────────────────────────────────────────── #}
+    <div class="pv-submitting" id="pvSubmitting">
+        <p>⏳ Saving your attempt…</p>
+    </div>
+
+    {# ── Footer ───────────────────────────────────────────────────────────── #}
+    <div class="pv-footer">
+        <a href="/virtual-training">💻 All Games</a>
+        <a href="/virtual-training/history">📋 History</a>
+        <a href="/training">🎓 Training</a>
+    </div>
+
+</div>
+
+<script src="/static/js/vt-location.js"></script>
+<script>
+(function () {
+"use strict";
+
+// ── Server-injected config ────────────────────────────────────────────────────
+const PHASES    = {{ game.config.get("phases", []) | tojson }};
+const WEIGHTS   = {{ game.config.get("eccentricity_weights", {"near":1.0,"mid":1.35,"far":1.75}) | tojson }};
+const BASE_XP   = {{ game.base_xp }};
+
+const TOTAL_STIMULI = PHASES.reduce((s, p) => s + p.stimuli, 0);
+// Average window across phases — used for speed_score
+const AVG_WINDOW_MS = PHASES.reduce((s, p) => s + p.window_ms, 0) / PHASES.length;
+
+// CSRF
+function csrfToken() {
+    const m = document.cookie.match(/csrf_token=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : "";
+}
+
+// ── Game state ────────────────────────────────────────────────────────────────
+let started      = false;
+let startedAt    = null;
+let globalStimIdx = 0;
+let hitCount     = 0;
+let missCount    = 0;
+let wrongCount   = 0;
+let reactionTimes = [];
+let stimulusLog  = [];   // per_stimulus for raw_metrics
+let windowTimer  = null;
+let timerInterval = null;
+
+// ── DOM refs ──────────────────────────────────────────────────────────────────
+const arenaEl    = document.getElementById("pvArena");
+const instrEl    = document.getElementById("pvInstruction");
+const fieldEl    = document.getElementById("pvField");
+const fixEl      = document.getElementById("pvFixation");
+const targetEl   = document.getElementById("pvTarget");
+const zoneBadge  = document.getElementById("pvZoneBadge");
+const submitEl   = document.getElementById("pvSubmitting");
+const progressEl = document.getElementById("pvProgressBar");
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function getPhaseForStim(idx) {
+    let cumul = 0;
+    for (const p of PHASES) {
+        cumul += p.stimuli;
+        if (idx < cumul) return p;
+    }
+    return PHASES[PHASES.length - 1];
+}
+
+function randBetween(a, b) {
+    return a + Math.random() * (b - a);
+}
+
+function generatePosition(phase) {
+    // 8 clock positions at 45° intervals, random within eccentricity band
+    const slot = Math.floor(Math.random() * phase.clock_positions);
+    const angleDeg = slot * (360 / phase.clock_positions) + (Math.random() * 20 - 10);
+    const angleRad = (angleDeg * Math.PI) / 180;
+    const radius = randBetween(phase.eccentricity_min_px, phase.eccentricity_max_px);
+    // Scale radius to actual field size (field is square; config assumes 560px)
+    const fieldW = fieldEl.clientWidth  || 480;
+    const fieldH = fieldEl.clientHeight || 480;
+    const scale  = Math.min(fieldW, fieldH) / 560;
+    const cx = fieldW / 2 + Math.cos(angleRad) * radius * scale;
+    const cy = fieldH / 2 + Math.sin(angleRad) * radius * scale;
+    return { cx, cy, angleDeg, eccentricityPx: Math.round(radius) };
+}
+
+function updateStats() {
+    document.getElementById("pvStimIdx").textContent  = globalStimIdx;
+    document.getElementById("pvStimTotal").textContent = TOTAL_STIMULI;
+    document.getElementById("pvHit").textContent   = hitCount;
+    document.getElementById("pvMiss").textContent  = missCount;
+    document.getElementById("pvWrong").textContent = wrongCount;
+    const avgMs = reactionTimes.length
+        ? Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length)
+        : null;
+    document.getElementById("pvAvgMs").textContent = avgMs !== null ? avgMs : "—";
+    progressEl.style.width = (globalStimIdx / TOTAL_STIMULI * 100) + "%";
+}
+
+function flashFixation(type) {
+    fixEl.classList.add(type);
+    setTimeout(() => fixEl.classList.remove(type), 200);
+}
+
+function setZoneBadge(zone) {
+    zoneBadge.className = "pv-zone-badge " + zone;
+    zoneBadge.textContent = zone.toUpperCase();
+}
+
+// ── Stimulus scheduling ───────────────────────────────────────────────────────
+let stimulusShownAt = null;
+let currentPhase    = null;
+let currentPos      = null;
+
+function scheduleNextStimulus() {
+    if (globalStimIdx >= TOTAL_STIMULI) {
+        endGame();
+        return;
+    }
+
+    currentPhase = getPhaseForStim(globalStimIdx);
+    setZoneBadge(currentPhase.zone);
+
+    // ISI delay then show target
+    setTimeout(() => {
+        if (!started) return;
+        currentPos      = generatePosition(currentPhase);
+        const size      = currentPhase.target_size_px;
+        const fieldW    = fieldEl.clientWidth  || 480;
+        const fieldH    = fieldEl.clientHeight || 480;
+        const scale     = Math.min(fieldW, fieldH) / 560;
+        const scaledSize = Math.round(size * scale);
+
+        targetEl.style.width  = scaledSize + "px";
+        targetEl.style.height = scaledSize + "px";
+        targetEl.style.left   = currentPos.cx + "px";
+        targetEl.style.top    = currentPos.cy + "px";
+        targetEl.classList.add("visible");
+
+        stimulusShownAt = performance.now();
+
+        // Window timer — miss if no click within window_ms
+        windowTimer = setTimeout(() => {
+            if (!targetEl.classList.contains("visible")) return;
+            recordOutcome("miss", null);
+        }, currentPhase.window_ms);
+
+    }, currentPhase.isi_ms);
+}
+
+function recordOutcome(outcome, reactionMs) {
+    clearTimeout(windowTimer);
+    targetEl.classList.remove("visible");
+
+    if (outcome === "hit") {
+        hitCount++;
+        reactionTimes.push(reactionMs);
+        flashFixation("hit");
+    } else if (outcome === "miss") {
+        missCount++;
+        flashFixation("miss");
+    } else {
+        wrongCount++;
+        flashFixation("wrong");
+    }
+
+    stimulusLog.push({
+        idx:              globalStimIdx,
+        phase:            PHASES.indexOf(currentPhase),
+        zone:             currentPhase.zone,
+        eccentricity_px:  currentPos ? currentPos.eccentricityPx : 0,
+        angle_deg:        currentPos ? Math.round(currentPos.angleDeg) : 0,
+        target_size_px:   currentPhase.target_size_px,
+        reaction_ms:      reactionMs,
+        outcome:          outcome,
+    });
+
+    globalStimIdx++;
+    updateStats();
+    scheduleNextStimulus();
+}
+
+// ── Click handlers ────────────────────────────────────────────────────────────
+window.pvTargetClick = function (e) {
+    e.stopPropagation();
+    if (!started || !targetEl.classList.contains("visible")) return;
+    const rt = Math.round(performance.now() - stimulusShownAt);
+    recordOutcome("hit", rt);
+};
+
+window.pvFieldClick = function (e) {
+    if (!started || targetEl.classList.contains("visible")) {
+        // Click outside target while target is visible = wrong click
+        if (targetEl.classList.contains("visible")) {
+            recordOutcome("wrong", null);
+        }
+    }
+};
+
+// ── Game start / end ──────────────────────────────────────────────────────────
+window.pvStart = function () {
+    document.getElementById("btnStart").disabled = true;
+    instrEl.style.display = "none";
+    arenaEl.style.display = "block";
+    started   = true;
+    startedAt = new Date().toISOString();
+
+    // Elapsed timer
+    const t0 = performance.now();
+    timerInterval = setInterval(() => {
+        const s = ((performance.now() - t0) / 1000).toFixed(1);
+        document.getElementById("pvTimerRow").textContent = s + " s";
+    }, 100);
+
+    VtLocation.warmUp();
+    updateStats();
+    scheduleNextStimulus();
+};
+
+function endGame() {
+    started = false;
+    clearInterval(timerInterval);
+    clearTimeout(windowTimer);
+    targetEl.classList.remove("visible");
+    arenaEl.style.display  = "none";
+    submitEl.style.display = "block";
+
+    const endedAt       = new Date();
+    const durationSec   = (Date.parse(endedAt) - Date.parse(startedAt)) / 1000;
+
+    // Aggregate counts
+    const stimuliCount   = hitCount + missCount + wrongCount;
+    const avgRtMs        = reactionTimes.length
+        ? reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length
+        : null;
+    const minRtMs        = reactionTimes.length ? Math.min(...reactionTimes) : null;
+
+    // Per-phase aggregates
+    const perPhase = PHASES.map((p, pi) => {
+        const phaseStims = stimulusLog.filter(s => s.phase === pi);
+        const phHits  = phaseStims.filter(s => s.outcome === "hit").length;
+        const phMiss  = phaseStims.filter(s => s.outcome === "miss").length;
+        const phWrong = phaseStims.filter(s => s.outcome === "wrong").length;
+        const phRts   = phaseStims.filter(s => s.reaction_ms !== null).map(s => s.reaction_ms);
+        return {
+            phase:        pi,
+            zone:         p.zone,
+            stimuli:      phaseStims.length,
+            hits:         phHits,
+            misses:       phMiss,
+            wrong_clicks: phWrong,
+            avg_rt_ms:    phRts.length ? Math.round(phRts.reduce((a,b)=>a+b,0)/phRts.length) : null,
+        };
+    });
+
+    // Per-zone aggregates
+    const zones = ["near", "mid", "far"];
+    const perZone = {};
+    for (const z of zones) {
+        const zs = stimulusLog.filter(s => s.zone === z);
+        const zRts = zs.filter(s => s.reaction_ms !== null).map(s => s.reaction_ms);
+        perZone[z] = {
+            hits:         zs.filter(s => s.outcome === "hit").length,
+            misses:       zs.filter(s => s.outcome === "miss").length,
+            wrong_clicks: zs.filter(s => s.outcome === "wrong").length,
+            avg_rt_ms:    zRts.length ? Math.round(zRts.reduce((a,b)=>a+b,0)/zRts.length) : null,
+        };
+    }
+
+    // Eccentricity-weighted score
+    const maxPossible = PHASES.reduce((s, p) => s + p.stimuli * WEIGHTS[p.zone], 0);
+    let rawScore = 0;
+    for (const log of stimulusLog) {
+        if (log.outcome !== "hit" || log.reaction_ms === null) continue;
+        const phase = PHASES[log.phase];
+        const speedFactor = Math.max(0, 1.0 - log.reaction_ms / phase.window_ms);
+        rawScore += WEIGHTS[log.zone] * speedFactor;
+    }
+    const scoreNorm = maxPossible > 0 ? Math.round((rawScore / maxPossible) * 100) : 0;
+
+    const payload = {
+        started_at:        startedAt,
+        duration_seconds:  Math.round(durationSec * 10) / 10,
+        stimuli_count:     stimuliCount,
+        correct_count:     hitCount,
+        error_count:       missCount,
+        wrong_click_count: wrongCount,
+        avg_reaction_ms:   avgRtMs !== null ? Math.round(avgRtMs) : null,
+        min_reaction_ms:   minRtMs,
+        score_raw:         Math.round(rawScore * 100) / 100,
+        score_normalized:  scoreNorm,
+        raw_metrics: {
+            v:            3,
+            per_stimulus: stimulusLog,
+            per_phase:    perPhase,
+            per_zone:     perZone,
+            hand_profile: {
+                hand:   "free", finger: "free", label: "Free / No Protocol",
+                protocol_difficulty_multiplier: 1.0,
+                assignment_source: "system", self_declared: true, not_verified: true,
+            },
+        },
+        browser_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
+        location:         VtLocation.get(),
+    };
+
+    fetch("/virtual-training/peripheral-vision/submit", {
+        method:  "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken(),
+        },
+        body:        JSON.stringify(payload),
+        credentials: "include",
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.attempt_id) {
+            window.location.href = "/virtual-training/peripheral-vision/result/" + data.attempt_id;
+        } else {
+            submitEl.innerHTML = "<p>⚠ Submission error. <a href='/virtual-training'>Back to games</a></p>";
+        }
+    })
+    .catch(() => {
+        submitEl.innerHTML = "<p>⚠ Network error. <a href='/virtual-training'>Back to games</a></p>";
+    });
+}
+
+}());
+</script>
+{% endblock %}

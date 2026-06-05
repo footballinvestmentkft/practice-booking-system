@@ -74,6 +74,10 @@ class VTSignals:
     late_nogo_rate:                float = 0.0   # late NO-GO false alarms / stimuli (v2+ GNG only)
     protocol_difficulty_multiplier: float = 1.0  # self-declared; 1.00=free, max 1.25 (v3+)
     difficulty_multiplier:          float = 1.0  # TT difficulty level multiplier (v3+); max 2.50
+    # Peripheral Vision per-zone hit rates (set only for peripheral_detection game type)
+    pv_near_hit_rate: Optional[float] = None   # hits in near zone (100–160px)
+    pv_mid_hit_rate:  Optional[float] = None   # hits in mid zone (180–260px)
+    pv_far_hit_rate:  Optional[float] = None   # hits in far zone (290–380px)
 
 
 # ── Layer 1: Signal extraction ────────────────────────────────────────────────
@@ -145,6 +149,24 @@ class VTSignalExtractor:
             except (TypeError, ValueError):
                 difficulty_multiplier = 1.0
 
+        # Peripheral Vision per-zone hit rates (only present for peripheral_detection)
+        pv_near_hit_rate: Optional[float] = None
+        pv_mid_hit_rate:  Optional[float] = None
+        pv_far_hit_rate:  Optional[float] = None
+        if isinstance(raw, dict):
+            per_zone = raw.get("per_zone") or {}
+            if per_zone:
+                def _zone_hit_rate(zone_key: str) -> Optional[float]:
+                    z = per_zone.get(zone_key) or {}
+                    hits   = int(z.get("hits",   0))
+                    misses = int(z.get("misses",  0))
+                    wrong  = int(z.get("wrong_clicks", 0))
+                    total  = hits + misses + wrong
+                    return max(0.0, min(1.0, hits / total)) if total > 0 else None
+                pv_near_hit_rate = _zone_hit_rate("near")
+                pv_mid_hit_rate  = _zone_hit_rate("mid")
+                pv_far_hit_rate  = _zone_hit_rate("far")
+
         return VTSignals(
             hit_rate=hit_rate,
             wrong_rate=wrong_rate,
@@ -158,6 +180,9 @@ class VTSignalExtractor:
             late_nogo_rate=late_nogo_rate,
             protocol_difficulty_multiplier=protocol_difficulty_multiplier,
             difficulty_multiplier=difficulty_multiplier,
+            pv_near_hit_rate=pv_near_hit_rate,
+            pv_mid_hit_rate=pv_mid_hit_rate,
+            pv_far_hit_rate=pv_far_hit_rate,
         )
 
 
@@ -242,27 +267,30 @@ class VTSkillScorer:
     @staticmethod
     def score_tactical_awareness(signals: VTSignals) -> float:
         """
-        Visuospatial working memory span (Memory Sequence primary scorer).
+        Visuospatial awareness scorer — two game-specific paths + general fallback.
 
-        Measures how much of the shown sequence the player correctly recalled,
-        with emphasis on completing longer, harder sequences (Phase 3).
+        Peripheral Vision path (activates when pv_*_hit_rate fields present):
+          Eccentricity-weighted: far targets demand more spatial awareness than near.
+            score = 0.40 × far_hit + 0.35 × mid_hit + 0.25 × near_hit
+          Missing zone defaults to 0 (conservative — absence = no performance signal).
 
-        Aggregate path (always available):
-          tactical_awareness = 0.65 × hit_rate + 0.35 × completion_rate
-
-          hit_rate        = correct_positions / total_expected_positions
-          completion_rate = positions_attempted / total_expected_positions
-
-        Per-phase upgrade (auto-activates when per_phase[2] present):
-          Phase 3 (sequence_length=7) carries more signal about span capacity.
+        Memory Sequence path (activates when per_phase[2] present):
+          Phase 3 (sequence_length=7) carries the most span signal.
             score = 0.4 × completion_rate × hit_rate  +  0.6 × phase_3_accuracy
 
-          Reads 'correct_positions'/'total_positions' (Memory Sequence format);
-          falls back to 'correct'/'stimuli' for CR/NCC legacy compatibility.
+        Aggregate fallback (all other games):
+          tactical_awareness = 0.65 × hit_rate + 0.35 × completion_rate
 
-        Range: [0, 1] — always non-negative. Wrong positions already reduce
-        hit_rate; no additional wrong-rate penalty here.
+        Range: [0, 1] — always non-negative.
         """
+        # ── Peripheral Vision path ────────────────────────────────────────────
+        if signals.pv_far_hit_rate is not None:
+            far  = signals.pv_far_hit_rate
+            mid  = signals.pv_mid_hit_rate  if signals.pv_mid_hit_rate  is not None else 0.0
+            near = signals.pv_near_hit_rate if signals.pv_near_hit_rate is not None else 0.0
+            return max(0.0, min(1.0, 0.40 * far + 0.35 * mid + 0.25 * near))
+
+        # ── Memory Sequence path ──────────────────────────────────────────────
         if signals.per_phase and len(signals.per_phase) >= 3:
             p3 = signals.per_phase[2]
             p3_total = p3.get("total_positions", 0) or p3.get("stimuli", 0)
@@ -271,6 +299,8 @@ class VTSkillScorer:
                 p3_acc = max(0.0, min(1.0, p3_correct / p3_total))
                 score = 0.4 * signals.completion_rate * signals.hit_rate + 0.6 * p3_acc
                 return max(0.0, min(1.0, score))
+
+        # ── General fallback ──────────────────────────────────────────────────
         return max(0.0, min(1.0, 0.65 * signals.hit_rate + 0.35 * signals.completion_rate))
 
     @staticmethod
