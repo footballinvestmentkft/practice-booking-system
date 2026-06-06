@@ -119,8 +119,8 @@ _GAMES = [
             ),
             "show_in_hub": False,
             "validation_overrides": {
-                "min_dur":  20.0,
-                "min_stim": 20,
+                "min_duration_seconds": 20.0,
+                "min_stimuli_count":    20,
             },
         },
     },
