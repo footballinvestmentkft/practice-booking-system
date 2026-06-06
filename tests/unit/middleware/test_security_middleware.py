@@ -685,6 +685,66 @@ class TestSecurityHeadersMiddleware:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# MediaPipe vendor hotfix — iOS Safari 18.7 getContextAttributes() null-guard
+# ──────────────────────────────────────────────────────────────────────────────
+
+class TestMediaPipeVendorHotfix:
+    """Verify that the iOS Safari 18.7 null-guard is present in both WASM loaders.
+
+    Root cause: iOS Safari 18.7 WebGLRenderingContext.getContextAttributes()
+    returns null in a Web Worker / OffscreenCanvas context. The unguarded
+    `t = t.getContextAttributes(); HEAP32[a>>2] = t.alpha;` in the Emscripten
+    WASM loader crashes with TypeError: null is not an object (evaluating 't.alpha'),
+    failing HandLandmarker.createFromOptions() for both GPU and CPU delegates.
+
+    VENDOR HOTFIX — re-verify on next MediaPipe upgrade (> 0.10.14).
+    Patch: insert `if(!t)return-3;` after getContextAttributes() call.
+    """
+
+    _NOSIMD = (
+        "app/static/mediapipe/vision_wasm_nosimd_internal.js"
+    )
+    _SIMD = (
+        "app/static/mediapipe/vision_wasm_internal.js"
+    )
+
+    def _read(self, path: str) -> str:
+        from pathlib import Path
+        # parents[3] = practice_booking_system (project root)
+        return (Path(__file__).resolve().parents[3] / path).read_text(encoding="utf-8")
+
+    def test_mp_hotfix_01_nosimd_has_null_guard(self):
+        """MP-HOTFIX-01: vision_wasm_nosimd_internal.js has getContextAttributes null-guard."""
+        txt = self._read(self._NOSIMD)
+        assert "getContextAttributes();if(!t)return-3;HEAP32" in txt, (
+            "iOS Safari 18.7 null-guard missing from vision_wasm_nosimd_internal.js. "
+            "Add: if(!t)return-3; after t=t.getContextAttributes();"
+        )
+
+    def test_mp_hotfix_02_simd_has_null_guard(self):
+        """MP-HOTFIX-02: vision_wasm_internal.js has getContextAttributes null-guard."""
+        txt = self._read(self._SIMD)
+        assert "getContextAttributes();if(!t)return-3;HEAP32" in txt, (
+            "iOS Safari 18.7 null-guard missing from vision_wasm_internal.js. "
+            "Add: if(!t)return-3; after t=t.getContextAttributes();"
+        )
+
+    def test_mp_hotfix_03_nosimd_no_unguarded_access(self):
+        """MP-HOTFIX-03: vision_wasm_nosimd_internal.js has no unguarded t.alpha write."""
+        txt = self._read(self._NOSIMD)
+        assert "getContextAttributes();HEAP32" not in txt, (
+            "Unguarded getContextAttributes() → HEAP32 write still present in nosimd loader."
+        )
+
+    def test_mp_hotfix_04_simd_no_unguarded_access(self):
+        """MP-HOTFIX-04: vision_wasm_internal.js has no unguarded t.alpha write."""
+        txt = self._read(self._SIMD)
+        assert "getContextAttributes();HEAP32" not in txt, (
+            "Unguarded getContextAttributes() → HEAP32 write still present in simd loader."
+        )
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # RequestSizeLimitMiddleware
 # ──────────────────────────────────────────────────────────────────────────────
 
