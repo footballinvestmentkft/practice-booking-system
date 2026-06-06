@@ -73,8 +73,13 @@ var CalibCenter = (function () {
     var FRAME_LOOP_MIN   = 10;     // frames received before loop confirmed
     var LOOP_TIMEOUT_MS  = 8000;
     var HAND_TIMEOUT_MS  = 25000;
-    var MODEL_TIMEOUT_MS = 25000;
     var FPS_SLOW         = 4.0;
+
+    // iOS requires extra time: CPU-only WASM JIT cold-start (9 MB binary) + model
+    // loading takes 30–45 s on iPhone without the GPU delegate warming up the JIT.
+    // Desktop keeps the standard 25 s timeout.
+    var _iosDevice       = /iP(hone|ad|od)/.test(navigator.userAgent || '');
+    var MODEL_TIMEOUT_MS = _iosDevice ? 50000 : 25000;
 
     // ── State ────────────────────────────────────────────────────────────────
     var _running     = false;
@@ -416,7 +421,12 @@ var CalibCenter = (function () {
     }
 
     function _startWorkerPhase(videoEl) {
-        _setStatus('ccModel', 'Loading…', 'cc-s-checking');
+        // On iOS, WASM JIT cold-start without GPU warm-up takes 30–45 s.
+        // Show a longer status label so the user knows it has not frozen.
+        var modelLoadLabel = _iosDevice
+            ? 'Loading… (iPhone: up to 50 s)'
+            : 'Loading…';
+        _setStatus('ccModel', modelLoadLabel, 'cc-s-checking');
         _D('_startWorkerPhase — creating Worker');
         _D('env: createImageBitmap=' + (typeof createImageBitmap !== 'undefined')
             + ' WebAssembly=' + (typeof WebAssembly !== 'undefined')
@@ -498,7 +508,7 @@ var CalibCenter = (function () {
         _worker.postMessage({ type: 'init' });
         _D('init message posted — modelTimer=' + MODEL_TIMEOUT_MS + 'ms');
 
-        // 25 s model load timeout
+        // Model load timeout — iOS: 50 s, desktop: 25 s (see MODEL_TIMEOUT_MS config)
         _modelTimer = setTimeout(function () {
             _D('modelTimer FIRED — _modelReady=' + _modelReady);
             if (!_modelReady) {
