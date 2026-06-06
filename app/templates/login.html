@@ -180,6 +180,14 @@
             <p class="login-subtitle">Football Education Platform</p>
         </div>
 
+        <!-- Registration success notice (redirect from post-commit session failure) -->
+        {% if registered %}
+        <div class="error-alert" style="background:linear-gradient(135deg,#1a3a2a,#0d2e1a);border-color:#2a6b3a;color:#7fffa0;">
+            <span style="font-size: 1.3rem;">✅</span>
+            <span>Your account was created successfully. Please sign in to continue.</span>
+        </div>
+        {% endif %}
+
         <!-- Error Message -->
         {% if error %}
         <div class="error-alert gradient-red animate-shake">

@@ -54,9 +54,9 @@ def _safe_next(url: str) -> str:
 
 
 @router.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request, next: str = ""):
+async def login_page(request: Request, next: str = "", registered: str = ""):
     """Display login page"""
-    return templates.TemplateResponse("login.html", {"request": request, "next_url": next})
+    return templates.TemplateResponse("login.html", {"request": request, "next_url": next, "registered": registered == "1"})
 
 
 @router.post("/login")
@@ -403,13 +403,19 @@ async def register_submit(
 
         logger.info("new_registration", extra={"user": new_user.email, "credits": new_user.credit_balance})
 
-        # Auto-login: create session cookie and redirect
+    except Exception as e:
+        logger.error("registration_error", exc_info=True)
+        traceback.print_exc()
+        return error(f"Registration failed: {str(e)}")
+
+    # Post-commit: user + invite code are now permanently saved.
+    # If session creation fails here, send the user to login instead of
+    # showing a generic error that implies registration itself failed.
+    try:
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
             data={"sub": new_user.email}, expires_delta=access_token_expires
         )
-        # Fresh student always needs age verification... but DOB is already set.
-        # Redirect directly to dashboard.
         response = RedirectResponse(url="/dashboard", status_code=303)
         response.set_cookie(
             key="access_token",
@@ -421,8 +427,9 @@ async def register_submit(
             path="/"
         )
         return response
-
-    except Exception as e:
-        logger.error("registration_error", exc_info=True)
-        traceback.print_exc()
-        return error(f"Registration failed: {str(e)}")
+    except Exception:
+        logger.error("post_registration_session_error", exc_info=True)
+        return RedirectResponse(
+            url="/login?registered=1",
+            status_code=303
+        )
