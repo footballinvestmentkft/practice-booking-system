@@ -38,6 +38,35 @@ var CalibCenter = (function () {
         if (typeof window.ccDbgAdd === 'function') window.ccDbgAdd(line, 'error');
     }
 
+    // ── Runtime patch fingerprint (TEMP diagnostic) ──────────────────────────
+    // Fetches the WASM loader JS with a timestamp param so Safari cannot serve
+    // a cached copy. Confirms the null-guard patch is present at runtime and
+    // logs the actual Cache-Control header the server sends.
+    function _mpVerifyLoader(variant, url) {
+        var bustUrl = url + '?_t=' + Date.now();
+        var prefix  = '[MP_VERIFY] ' + variant + ':';
+        fetch(bustUrl, { cache: 'no-store' })
+            .then(function (resp) {
+                var cc = resp.headers.get('cache-control') || '(none)';
+                var status = resp.status;
+                _D(prefix + ' HTTP ' + status + ' cache-control=' + cc);
+                return resp.text();
+            })
+            .then(function (txt) {
+                var hasGuard   = txt.indexOf('if(!t)return-3;HEAP32') !== -1;
+                var hasUnguard = txt.indexOf('getContextAttributes();HEAP32') !== -1;
+                _D(prefix + ' null-guard present=' + hasGuard
+                    + ' unguarded-access=' + hasUnguard
+                    + ' size=' + txt.length + 'B');
+                if (!hasGuard) {
+                    _Derr(prefix + ' PATCH MISSING — iPhone loading unpatched file!', null);
+                }
+            })
+            .catch(function (err) {
+                _Derr(prefix + ' fetch failed', err);
+            });
+    }
+
     // ── Config ───────────────────────────────────────────────────────────────
     var MIN_HAND_CONF    = 0.60;
     var HAND_FRAMES_NEED = 5;      // consecutive frames with hand required
@@ -587,6 +616,14 @@ var CalibCenter = (function () {
             + ' WebAssembly=' + (typeof WebAssembly !== 'undefined')
             + ' crossOriginIsolated=' + (typeof crossOriginIsolated !== 'undefined'
                 ? crossOriginIsolated : 'N/A'));
+
+        // ── Runtime patch fingerprint (TEMP diagnostic) ───────────────────────
+        // Fetches each WASM loader JS with a cache-busting timestamp so Safari
+        // cannot serve a cached copy. Logs whether the null-guard patch is present
+        // and what Cache-Control the server actually sent. This runs in parallel
+        // with the calibration flow and never blocks it.
+        _mpVerifyLoader('nosimd', '/static/mediapipe/vision_wasm_nosimd_internal.js');
+        _mpVerifyLoader('simd',   '/static/mediapipe/vision_wasm_internal.js');
 
         _resetChecklist();
 
