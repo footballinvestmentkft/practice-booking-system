@@ -163,11 +163,8 @@ function processFrame(bitmap, timestamp) {
     }
     bitmap.close();
 
-    // Use result.handLandmarks (correct MediaPipe Tasks API field).
-    // result.landmarks does not exist in HandLandmarkerResult — using it
-    // returns undefined, causing 'always no_hands' even with hands present.
-    const handedness = result.handedness    || [];
-    const landmarks  = result.handLandmarks || [];
+    const handedness = result.handedness || [];
+    const landmarks  = result.landmarks  || [];
 
     if (!landmarks.length) {
         self.postMessage({ type: 'no_hands' });
