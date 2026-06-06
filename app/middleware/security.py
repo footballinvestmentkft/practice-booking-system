@@ -305,7 +305,16 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         
         for header, value in security_headers.items():
             response.headers[header] = value
-        
+
+        # MediaPipe assets must revalidate on every request so patched WASM loader
+        # files are picked up immediately without requiring browser cache clearing.
+        # 'no-cache' tells the browser to send a conditional GET (ETag / If-Modified-Since)
+        # on every use; the server returns 304 if the file is unchanged (fast),
+        # or 200 with the new content if it changed (e.g., after a vendor hotfix).
+        # This does NOT disable caching — it only prevents serving stale cached responses.
+        if request.url.path.startswith("/static/mediapipe/"):
+            response.headers["Cache-Control"] = "no-cache"
+
         return response
 
 

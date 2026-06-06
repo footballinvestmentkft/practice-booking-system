@@ -521,17 +521,20 @@ class TestRateLimitDispatch:
 
 class TestSecurityHeadersMiddleware:
 
-    def _dispatch(self, csp=None):
+    def _dispatch(self, csp=None, path="/"):
         """Run dispatch and return the response with headers."""
         app = MagicMock()
         mw = SecurityHeadersMiddleware(app=app, csp_policy=csp)
         response = MagicMock()
         response.headers = {}
 
+        request = MagicMock()
+        request.url.path = path
+
         async def call_next(req):
             return response
 
-        _run(mw.dispatch(MagicMock(), call_next))
+        _run(mw.dispatch(request, call_next))
         return response
 
     def test_x_content_type_options_nosniff(self):
@@ -682,6 +685,56 @@ class TestSecurityHeadersMiddleware:
                 "script-src must not contain plain 'unsafe-eval' — "
                 "use 'wasm-unsafe-eval' only"
             )
+
+    # CACHE-MP-01
+    def test_cache_mp_01_mediapipe_nosimd_js_gets_no_cache(self):
+        """CACHE-MP-01: /static/mediapipe/vision_wasm_nosimd_internal.js → Cache-Control: no-cache.
+
+        Without this, Safari caches the old (pre-patch) WASM loader JS indefinitely
+        and continues to crash with 't.alpha' even after the server file is patched.
+        """
+        response = self._dispatch(
+            path="/static/mediapipe/vision_wasm_nosimd_internal.js"
+        )
+        assert response.headers.get("Cache-Control") == "no-cache", (
+            "MediaPipe nosimd loader must have Cache-Control: no-cache "
+            "so Safari re-validates on every request"
+        )
+
+    # CACHE-MP-02
+    def test_cache_mp_02_mediapipe_simd_js_gets_no_cache(self):
+        """CACHE-MP-02: /static/mediapipe/vision_wasm_internal.js → Cache-Control: no-cache."""
+        response = self._dispatch(
+            path="/static/mediapipe/vision_wasm_internal.js"
+        )
+        assert response.headers.get("Cache-Control") == "no-cache"
+
+    # CACHE-MP-03
+    def test_cache_mp_03_mediapipe_task_gets_no_cache(self):
+        """CACHE-MP-03: /static/mediapipe/hand_landmarker.task → Cache-Control: no-cache."""
+        response = self._dispatch(
+            path="/static/mediapipe/hand_landmarker.task"
+        )
+        assert response.headers.get("Cache-Control") == "no-cache"
+
+    # CACHE-MP-04
+    def test_cache_mp_04_non_mediapipe_static_no_cache_control(self):
+        """CACHE-MP-04: Non-mediapipe static assets do NOT get an extra Cache-Control header.
+
+        Only /static/mediapipe/* should force revalidation.
+        Other static files (CSS, app JS) use browser default caching.
+        """
+        response = self._dispatch(path="/static/js/calib-center.js")
+        assert "Cache-Control" not in response.headers, (
+            "/static/js/ files must not get Cache-Control: no-cache — "
+            "only /static/mediapipe/ files need forced revalidation"
+        )
+
+    # CACHE-MP-05
+    def test_cache_mp_05_non_static_path_no_cache_control(self):
+        """CACHE-MP-05: Non-static paths (e.g., /profile) do NOT get Cache-Control: no-cache."""
+        response = self._dispatch(path="/profile/calibration")
+        assert "Cache-Control" not in response.headers
 
 
 # ──────────────────────────────────────────────────────────────────────────────
