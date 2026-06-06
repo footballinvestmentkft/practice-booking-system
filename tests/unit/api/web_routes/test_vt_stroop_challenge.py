@@ -3,7 +3,9 @@
 SC-01   Seed: stroop_challenge is_active=False
 SC-02   Seed: 3 phases defined (3×8=24 stimuli)
 SC-03   Seed: protocol_assignment="free"
-SC-04   Seed: validation_overrides present (min_dur=20.0, min_stim=20)
+SC-04   Seed: validation_overrides uses canonical keys (min_duration_seconds, min_stimuli_count)
+SC-04b  Seed: validation_overrides no legacy keys (min_dur, min_stim absent)
+SC-04c  Seed: 24 stimuli passes validation with Stroop overrides applied
 SC-05   Seed: skill_targets {decisions:0.50, concentration:0.30, composure:0.20}
 SC-06   Seed: show_in_hub=False
 SC-07   Seed: colours is a dict (not a list)
@@ -23,8 +25,9 @@ SC-R11  Result template renders per-phase table
 SC-S01  Score formula: perfect game → score_normalized = 100
 SC-S02  Score formula: 50% accuracy, no wrong, avg_rt=2000 → mid-range score
 SC-S03  Score formula: all missed → score_normalized = 0
-SC-S04  validate_attempt() respects Stroop min_dur override (20.0s)
-SC-S05  validate_attempt() respects Stroop min_stim override (20)
+SC-S04  validate_attempt() respects Stroop min_duration_seconds=20.0 override
+SC-S04b validate_attempt() 20.0 s boundary: not too_short at exactly the threshold
+SC-S05  validate_attempt() respects Stroop min_stimuli_count=20 override
 
 SC-T01  Location/timezone fields forwarded to record_attempt
 SC-T02  NCC route still returns 200 (regression)
@@ -63,7 +66,7 @@ _SC_CONFIG = {
     "icon": "🎨",
     "football_benefit": "Sharpens selective attention.",
     "show_in_hub": False,
-    "validation_overrides": {"min_dur": 20.0, "min_stim": 20},
+    "validation_overrides": {"min_duration_seconds": 20.0, "min_stimuli_count": 20},
 }
 
 _SC_SKILL_TARGETS = {
@@ -210,11 +213,49 @@ class TestStroopSeedConfig:
         """SC-03: protocol_assignment='free' (no hand/finger assignment)."""
         assert self._game["config"]["protocol_assignment"] == "free"
 
-    def test_sc04_validation_overrides_present(self):
-        """SC-04: validation_overrides sets min_dur=20.0 and min_stim=20."""
+    def test_sc04_validation_overrides_canonical_keys(self):
+        """SC-04: validation_overrides uses canonical service keys.
+
+        The service reads min_duration_seconds and min_stimuli_count.
+        If the seed uses legacy aliases (min_dur / min_stim) the overrides
+        are silently ignored and the module defaults (28 stimuli, 25 s) apply,
+        which exceed Stroop's 24-trial design and mark every attempt invalid.
+        """
         overrides = self._game["config"]["validation_overrides"]
-        assert overrides["min_dur"]  == 20.0
-        assert overrides["min_stim"] == 20
+        assert overrides["min_duration_seconds"] == 20.0
+        assert overrides["min_stimuli_count"]    == 20
+
+    def test_sc04b_no_legacy_override_keys(self):
+        """SC-04b: legacy aliases min_dur and min_stim must not be present."""
+        overrides = self._game["config"]["validation_overrides"]
+        assert "min_dur"  not in overrides, (
+            "min_dur is a legacy alias — use min_duration_seconds"
+        )
+        assert "min_stim" not in overrides, (
+            "min_stim is a legacy alias — use min_stimuli_count"
+        )
+
+    def test_sc04c_24_stimuli_passes_validation(self):
+        """SC-04c: a full 24-stimulus Stroop attempt passes validation with the correct overrides.
+
+        This is the end-to-end gate: seed overrides must be wired up so that a
+        normal completed game (24 stimuli, ≥20 s) is accepted as valid.
+        """
+        from app.services.virtual_training_service import VirtualTrainingService
+        overrides = self._game["config"]["validation_overrides"]
+        is_valid, reason = VirtualTrainingService.validate_attempt(
+            {
+                "duration_seconds":  25.0,
+                "stimuli_count":     24,
+                "avg_reaction_ms":   600,
+                "wrong_click_count": 2,
+            },
+            overrides=overrides,
+        )
+        assert is_valid is True, (
+            f"Expected valid attempt to pass — got invalid reason: {reason!r}. "
+            "Check that validation_overrides keys match the service (min_duration_seconds / min_stimuli_count)."
+        )
 
     def test_sc05_skill_targets(self):
         """SC-05: skill_targets = decisions 0.50, concentration 0.30, composure 0.20."""
@@ -490,28 +531,59 @@ class TestStroopScoring:
         """
         assert self._score(0, 0, 24, 2000.0) == 25
 
-    def test_sc_s04_validation_override_min_dur(self):
-        """SC-S04: validate_attempt respects Stroop min_dur=20.0 override."""
+    def test_sc_s04_validation_override_min_duration(self):
+        """SC-S04: validate_attempt respects Stroop min_duration_seconds=20.0 override.
+
+        19.9 s < 20.0 s threshold (override) → too_short.
+        Without the override the default is 25.0 s, so this would still fail —
+        the meaningful assertion is that the override key is actually read.
+        Paired with SC-S04-boundary below which proves 20.0 s itself passes.
+        """
         from app.services.virtual_training_service import VirtualTrainingService
-        game = _mock_game(is_active=True)
+        overrides = _mock_game(is_active=True).config.get("validation_overrides")
+        assert "min_duration_seconds" in overrides, (
+            "Override must use min_duration_seconds — check _SC_CONFIG"
+        )
 
         is_valid, reason = VirtualTrainingService.validate_attempt(
             {"duration_seconds": 19.9, "stimuli_count": 24,
              "avg_reaction_ms": 400, "wrong_click_count": 0},
-            overrides=game.config.get("validation_overrides"),
+            overrides=overrides,
         )
         assert is_valid is False
         assert reason == "too_short"
 
-    def test_sc_s05_validation_override_min_stim(self):
-        """SC-S05: validate_attempt respects Stroop min_stim=20 override."""
+    def test_sc_s04_boundary_duration_exactly_at_threshold(self):
+        """SC-S04 boundary: exactly 20.0 s is NOT too_short (Stroop override = 20.0)."""
         from app.services.virtual_training_service import VirtualTrainingService
-        game = _mock_game(is_active=True)
+        overrides = _mock_game(is_active=True).config.get("validation_overrides")
+
+        is_valid, reason = VirtualTrainingService.validate_attempt(
+            {"duration_seconds": 20.0, "stimuli_count": 24,
+             "avg_reaction_ms": 400, "wrong_click_count": 0},
+            overrides=overrides,
+        )
+        assert reason != "too_short", (
+            "20.0 s equals the threshold — should not be too_short"
+        )
+
+    def test_sc_s05_validation_override_min_stimuli(self):
+        """SC-S05: validate_attempt respects Stroop min_stimuli_count=20 override.
+
+        19 stimuli < 20 threshold (override) → too_few_stimuli.
+        Without the override the default is 28, so 19 would still fail —
+        the critical proof is SC-04c which verifies 24 stimuli passes.
+        """
+        from app.services.virtual_training_service import VirtualTrainingService
+        overrides = _mock_game(is_active=True).config.get("validation_overrides")
+        assert "min_stimuli_count" in overrides, (
+            "Override must use min_stimuli_count — check _SC_CONFIG"
+        )
 
         is_valid, reason = VirtualTrainingService.validate_attempt(
             {"duration_seconds": 35.0, "stimuli_count": 19,
              "avg_reaction_ms": 400, "wrong_click_count": 0},
-            overrides=game.config.get("validation_overrides"),
+            overrides=overrides,
         )
         assert is_valid is False
         assert reason == "too_few_stimuli"
