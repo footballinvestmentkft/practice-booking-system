@@ -44,6 +44,10 @@ def _inv_code(is_valid=True, email_ok=True, bonus=100):
     code.is_valid.return_value = is_valid
     code.can_be_used_by_email.return_value = email_ok
     code.bonus_credits = bonus
+    # P1b: handler now checks is_used and expires_at directly (not via is_valid()).
+    # Set explicit values so the new early-exit checks behave predictably.
+    code.is_used = not is_valid   # used=True when is_valid=False (mimics used code)
+    code.expires_at = None        # no expiry unless overridden
     return code
 
 
@@ -233,7 +237,11 @@ class TestRegisterSubmitInvitationCode:
             _run(register_submit(request=_req(), db=db, **_valid_form()))
         _, ctx = mock_tmpl.TemplateResponse.call_args.args
         assert "error" in ctx
-        assert "restricted" in ctx["error"].lower() or "different" in ctx["error"].lower()
+        # P1b+P2a: message was updated to "issued for a specific email address…"
+        assert ("specific email" in ctx["error"].lower()
+                or "invitation on" in ctx["error"].lower()
+                or "restricted" in ctx["error"].lower()   # backward-compat guard
+                or "different" in ctx["error"].lower())
 
 
 # ──────────────────────────────────────────────────────────────────────────────
