@@ -7,7 +7,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from pathlib import Path
-from datetime import timedelta, datetime, date
+from datetime import timedelta, datetime, date, timezone
 import asyncio
 import logging
 import traceback
@@ -350,11 +350,16 @@ async def register_submit(
         ).first()
 
         if inv_code is None:
-            return error("Invalid invitation code.")
-        if not inv_code.is_valid():
-            return error("This invitation code has already been used or has expired.")
+            return error("Invalid invitation code. Please check for typos and try again.")
+        if inv_code.is_used:
+            return error("This invitation code has already been used.")
+        if inv_code.expires_at and inv_code.expires_at < datetime.now(timezone.utc):
+            return error("This invitation code has expired. Please request a new one from your administrator.")
         if not inv_code.can_be_used_by_email(email):
-            return error("This invitation code is restricted to a different email address.")
+            return error(
+                "This invitation code was issued for a specific email address. "
+                "Please register using the email address you received the invitation on."
+            )
 
         # Create user
         new_user = User(
