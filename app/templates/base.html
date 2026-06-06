@@ -70,6 +70,14 @@
               window.location.href = resp.url;
               return;
             }
+            /* 403 CSRF failure or 422 FastAPI validation error: the response
+               body is JSON, not HTML. Showing raw JSON would be confusing.
+               Reload the page so the user gets a fresh CSRF cookie and a
+               clean form, then let them retry. */
+            if (resp.status === 403 || resp.status === 422) {
+              window.location.reload();
+              return;
+            }
             /* 200 response — usually a re-rendered form with an error message.
                Replace body content so the error displays correctly.          */
             return resp.text().then(function (html) {
