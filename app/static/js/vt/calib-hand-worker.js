@@ -72,12 +72,24 @@ async function initModel() {
         return;
     }
 
+    // iOS/iPadOS: CPU-only — skip GPU entirely.
+    // On iOS Safari, the GPU delegate fails with "kGpuService not provided /
+    // Error querying for GL extensions". This failure leaves the WASM module's
+    // internal WebGL/OpenGL state partially initialised and corrupted. When the
+    // CPU delegate subsequently calls detectForVideo(), the corrupted state
+    // causes a C++ assertion failure → RuntimeError: Aborted() on every frame.
+    // By skipping GPU on iOS, the CPU path starts from a clean state.
+    //
+    // Desktop (non-iOS): keep GPU → CPU fallback for better performance.
+    const _isIOS = typeof self.navigator !== 'undefined'
+        && /iP(hone|ad|od)/.test(self.navigator.userAgent);
+    const _delegates = _isIOS ? ['CPU'] : ['GPU', 'CPU'];
+    _D('platform: isIOS=' + _isIOS + ' delegates=' + JSON.stringify(_delegates));
+
     // forVisionTasks() is called inside the loop so each delegate attempt gets
-    // a fresh fileset object. A GPU failure on iOS Safari contaminates the
-    // internal WebGL/canvas state of the vision object (t.alpha → null);
-    // reusing the same vision for the CPU fallback causes the same crash.
-    // This matches the pattern used by the working BQR hand-worker.js.
-    for (const delegate of ['GPU', 'CPU']) {
+    // a fresh fileset object (GPU failure contaminates the vision object's
+    // internal WebGL/canvas state on iOS).
+    for (const delegate of _delegates) {
         _D('FilesetResolver.forVisionTasks start — delegate=' + delegate
             + ' base=' + MEDIAPIPE_BASE);
         let vision;
