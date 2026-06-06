@@ -1,0 +1,555 @@
+'use strict';
+/**
+ * calib-center.js — Calibration Center P0 IIFE
+ *
+ * Self-contained diagnostic module for /profile/calibration.
+ * No dependency on gaze-consent.js or any game-specific JS.
+ * No data is sent to the server — all checks are local.
+ *
+ * Public API:
+ *   CalibCenter.start()   — begin calibration run
+ *   CalibCenter.retry()   — reset state and re-run
+ *   CalibCenter.stop()    — stop camera + worker, return to idle
+ *   CalibCenter.pause()   — pause frame loop (visibilitychange)
+ *   CalibCenter.resume()  — resume frame loop (visibilitychange)
+ *
+ * DOM IDs (all on profile_calibration_center.html):
+ *   ccBtnRun, ccBtnRetry, ccBtnStop
+ *   ccIntro, ccCameraWrap, ccChecklist, ccHint
+ *   ccPass, ccPassDesc, ccError, ccErrorTitle, ccErrorDesc
+ *   ccFpsWarn, ccActions
+ *   ccSecure, ccCamera, ccStream, ccModel, ccFrames, ccCanvas, ccHand
+ *   cc-video (video element), cc-canvas (canvas element)
+ */
+var CalibCenter = (function () {
+
+    // ── Config ───────────────────────────────────────────────────────────────
+    var MIN_HAND_CONF    = 0.60;
+    var HAND_FRAMES_NEED = 5;      // consecutive frames with hand required
+    var FRAME_LOOP_MIN   = 10;     // frames received before loop confirmed
+    var LOOP_TIMEOUT_MS  = 8000;
+    var HAND_TIMEOUT_MS  = 25000;
+    var MODEL_TIMEOUT_MS = 25000;
+    var FPS_SLOW         = 4.0;
+
+    // ── State ────────────────────────────────────────────────────────────────
+    var _running     = false;
+    var _paused      = false;
+    var _stream      = null;
+    var _worker      = null;
+    var _modelReady  = false;
+    var _framesRcvd  = 0;
+    var _handConsec  = 0;
+    var _rafId       = null;
+    var _loopTimer   = null;
+    var _handTimer   = null;
+    var _modelTimer  = null;
+    var _fpsSamples  = [];
+    var _effectiveFPS = null;
+
+    // ── Error messages ───────────────────────────────────────────────────────
+    var _ERRORS = {
+        not_secure: {
+            title: 'Secure connection required',
+            desc:  'Camera access requires HTTPS. Open this page via the https:// link.',
+        },
+        no_media_api: {
+            title: 'Browser not supported',
+            desc:  'This browser does not support camera access. Try Safari 15+ on iOS or Chrome on Android.',
+        },
+        camera_blocked: {
+            title: 'Camera blocked',
+            desc:  'Camera permission was denied. On iOS: Settings → Safari → Camera → Allow, then tap Retry.',
+        },
+        camera_not_found: {
+            title: 'No camera found',
+            desc:  'No camera hardware was detected on this device.',
+        },
+        camera_in_use: {
+            title: 'Camera in use',
+            desc:  'Another app is using the camera. Close other apps and tap Retry.',
+        },
+        model_failed: {
+            title: 'Hand-tracking model failed to load',
+            desc:  'The AI model could not be initialised. Check your internet connection and tap Retry.',
+        },
+        no_frames: {
+            title: 'Video not streaming',
+            desc:  'The camera started but no frames arrived. Try rotating the device, then tap Retry.',
+        },
+        canvas_zero: {
+            title: 'Display error',
+            desc:  'The camera overlay has zero size. Try rotating the screen, then tap Retry.',
+        },
+        no_hand: {
+            title: 'No hand detected',
+            desc:  'Hold your open hand, palm facing forward, in the upper half of the camera view.',
+        },
+    };
+
+    // ── DOM helpers ──────────────────────────────────────────────────────────
+    function _el(id) { return document.getElementById(id); }
+
+    function _setStatus(id, text, cls) {
+        var el = _el(id);
+        if (!el) return;
+        el.textContent = text;
+        el.className   = 'cc-status ' + (cls || 'cc-s-pending');
+    }
+
+    function _showError(code) {
+        var m   = _ERRORS[code] || _ERRORS.model_failed;
+        var t   = _el('ccErrorTitle');
+        var d   = _el('ccErrorDesc');
+        var box = _el('ccError');
+        if (t) t.textContent = m.title;
+        if (d) d.textContent = m.desc;
+        if (box) box.className = 'cc-error cc-err-visible';
+        // Show Retry button
+        var r = _el('ccBtnRetry');
+        if (r) r.className = 'cc-btn-retry cc-retry-visible';
+    }
+
+    function _hideError() {
+        var box = _el('ccError');
+        if (box) box.className = 'cc-error';
+        var r = _el('ccBtnRetry');
+        if (r) r.className = 'cc-btn-retry';
+    }
+
+    function _showHint(visible) {
+        var h = _el('ccHint');
+        if (h) h.className = 'cc-hint' + (visible ? ' cc-hint-visible' : '');
+    }
+
+    function _showPass(fpsWarn) {
+        var p = _el('ccPass');
+        if (p) p.className = 'cc-pass cc-pass-visible';
+        if (fpsWarn) {
+            var w = _el('ccFpsWarn');
+            if (w) w.className = 'cc-fps-warn cc-fps-visible';
+        }
+        // Hide run button, show stop (cleanup)
+        var run = _el('ccBtnRun');
+        if (run) run.style.display = 'none';
+        var stop = _el('ccBtnStop');
+        if (stop) stop.className = 'cc-btn-stop cc-stop-visible';
+    }
+
+    function _resetChecklist() {
+        ['ccSecure','ccCamera','ccStream','ccModel',
+         'ccFrames','ccCanvas','ccHand'].forEach(function (id) {
+            _setStatus(id, '—', 'cc-s-pending');
+        });
+        _hideError();
+        _showHint(false);
+        var p = _el('ccPass');
+        if (p) p.className = 'cc-pass';
+        var w = _el('ccFpsWarn');
+        if (w) w.className = 'cc-fps-warn';
+    }
+
+    // ── Camera helpers ───────────────────────────────────────────────────────
+    function _stopCamera() {
+        if (_stream) {
+            _stream.getTracks().forEach(function (t) { t.stop(); });
+            _stream = null;
+        }
+        var vid = _el('cc-video');
+        if (vid) vid.srcObject = null;
+    }
+
+    function _stopWorker() {
+        if (_rafId) { cancelAnimationFrame(_rafId); _rafId = null; }
+        if (_worker) {
+            try { _worker.postMessage({ type: 'stop' }); } catch (_) {}
+            _worker.onmessage = null;
+            _worker.onerror   = null;
+            _worker = null;
+        }
+        _modelReady = false;
+        _framesRcvd = 0;
+        _fpsSamples = [];
+        _effectiveFPS = null;
+    }
+
+    function _clearTimers() {
+        if (_loopTimer) { clearTimeout(_loopTimer);  _loopTimer = null; }
+        if (_handTimer) { clearTimeout(_handTimer);  _handTimer = null; }
+        if (_modelTimer){ clearTimeout(_modelTimer); _modelTimer = null; }
+    }
+
+    function _activateCamera(videoEl) {
+        var wrap = _el('ccCameraWrap');
+        if (!wrap || !videoEl) return;
+        // Move video into the wrap (it starts hidden in the body)
+        wrap.insertBefore(videoEl, wrap.firstChild);
+        videoEl.style.cssText  = '';
+        videoEl.style.position = 'absolute';
+        videoEl.style.inset    = '0';
+        videoEl.style.width    = '100%';
+        videoEl.style.height   = '100%';
+        videoEl.style.objectFit = 'cover';
+        videoEl.style.transform = 'scaleX(-1)';
+        // Sync canvas size
+        videoEl.addEventListener('loadedmetadata', _syncCanvas, { once: true });
+        _syncCanvas();
+    }
+
+    function _syncCanvas() {
+        var canvas = _el('cc-canvas');
+        var wrap   = _el('ccCameraWrap');
+        if (!canvas || !wrap) return;
+        var r = wrap.getBoundingClientRect();
+        if (r.width > 0) {
+            canvas.width  = Math.round(r.width);
+            canvas.height = Math.round(r.height);
+        }
+    }
+
+    // ── Canvas overlay — wrist dot ───────────────────────────────────────────
+    function _drawWrists(hands) {
+        var canvas = _el('cc-canvas');
+        if (!canvas) return;
+        _syncCanvas();
+        var ctx = canvas.getContext('2d');
+        var W   = canvas.width;
+        var H   = canvas.height;
+        ctx.clearRect(0, 0, W, H);
+        if (!W || !H) return;
+
+        hands.forEach(function (h) {
+            if (h.confidence < MIN_HAND_CONF) return;
+            var cx = (1 - h.wrist.x) * W;   // mirror: video CSS scaleX(-1)
+            var cy = h.wrist.y * H;
+            var isLeft = h.side === 'Right'; // MediaPipe 'Right' → user's left (selfie)
+            var color  = isLeft ? '#4f46e5' : '#059669';
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+            ctx.fillStyle = color + '44';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+        });
+    }
+
+    // ── Frame loop ───────────────────────────────────────────────────────────
+    function _startFrameLoop(videoEl) {
+        function loop(ts) {
+            _rafId = requestAnimationFrame(loop);
+            if (_paused) return;
+            if (!videoEl || !videoEl.srcObject || !_modelReady) return;
+            try {
+                createImageBitmap(videoEl).then(function (bmp) {
+                    if (_worker) {
+                        _worker.postMessage({ type: 'frame', bitmap: bmp, timestamp: ts }, [bmp]);
+                    } else {
+                        bmp.close();
+                    }
+                }).catch(function () {});
+            } catch (_) {}
+        }
+        _rafId = requestAnimationFrame(loop);
+    }
+
+    // ── Checks ───────────────────────────────────────────────────────────────
+    function _checkSecureContext() {
+        if (!window.isSecureContext) {
+            _setStatus('ccSecure', 'FAIL', 'cc-s-fail');
+            _showError('not_secure');
+            return false;
+        }
+        _setStatus('ccSecure', 'OK', 'cc-s-ok');
+        return true;
+    }
+
+    function _checkMediaDevices() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            _setStatus('ccCamera', 'FAIL', 'cc-s-fail');
+            _showError('no_media_api');
+            return false;
+        }
+        return true;
+    }
+
+    // ── Main run sequence ────────────────────────────────────────────────────
+    function _run() {
+        if (!_checkSecureContext()) { _running = false; return; }
+        if (!_checkMediaDevices()) { _running = false; return; }
+
+        _setStatus('ccCamera', 'Checking…', 'cc-s-checking');
+
+        // Show checklist and camera wrap
+        var cl = _el('ccChecklist');
+        if (cl) cl.style.display = '';
+        var cw = _el('ccCameraWrap');
+        if (cw) cw.className = 'cc-camera-wrap cc-cam-active';
+
+        // Step 3: request camera
+        var constraints = { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } };
+        navigator.mediaDevices.getUserMedia(constraints)
+            .catch(function (err) {
+                // iOS OverconstrainedError fallback
+                if (err.name === 'OverconstrainedError' ||
+                    err.name === 'ConstraintNotSatisfiedError') {
+                    return navigator.mediaDevices.getUserMedia({ video: true });
+                }
+                throw err;
+            })
+            .then(function (stream) {
+                _stream = stream;
+                var tracks = stream.getVideoTracks();
+                if (!tracks.length || tracks[0].readyState !== 'live') {
+                    _setStatus('ccCamera', 'FAIL', 'cc-s-fail');
+                    _setStatus('ccStream',  'FAIL', 'cc-s-fail');
+                    _showError('camera_in_use');
+                    _running = false;
+                    return;
+                }
+                _setStatus('ccCamera', 'OK', 'cc-s-ok');
+                _setStatus('ccStream',  'OK', 'cc-s-ok');
+
+                // Attach stream to video element
+                var vid = _el('cc-video');
+                if (vid) {
+                    vid.srcObject = stream;
+                    // Hide placeholder
+                    var ph = _el('ccCamPlaceholder');
+                    if (ph) ph.style.display = 'none';
+                    _activateCamera(vid);
+                }
+
+                _startWorkerPhase(vid);
+            })
+            .catch(function (err) {
+                var code = 'camera_blocked';
+                if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                    code = 'camera_not_found';
+                } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                    code = 'camera_in_use';
+                }
+                _setStatus('ccCamera', 'FAIL', 'cc-s-fail');
+                _showError(code);
+                _running = false;
+            });
+    }
+
+    function _startWorkerPhase(videoEl) {
+        _setStatus('ccModel', 'Loading…', 'cc-s-checking');
+
+        try {
+            _worker = new Worker('/static/js/vt/calib-hand-worker.js');
+        } catch (err) {
+            _setStatus('ccModel', 'FAIL', 'cc-s-fail');
+            _showError('model_failed');
+            _running = false;
+            return;
+        }
+
+        _worker.onmessage = function (e) {
+            var msg = e.data;
+            if (!msg) return;
+
+            if (msg.type === 'ready') {
+                clearTimeout(_modelTimer); _modelTimer = null;
+                _modelReady = true;
+                _setStatus('ccModel', 'OK', 'cc-s-ok');
+                _startFramePhase(videoEl);
+
+            } else if (msg.type === 'error') {
+                clearTimeout(_modelTimer); _modelTimer = null;
+                _setStatus('ccModel', 'FAIL', 'cc-s-fail');
+                _showError('model_failed');
+                _running = false;
+
+            } else if (msg.type === 'hands') {
+                _framesRcvd++;
+                _onHands(msg.hands);
+
+            } else if (msg.type === 'no_hands') {
+                _framesRcvd++;
+                _onHands([]);
+            }
+        };
+
+        _worker.onerror = function () {
+            clearTimeout(_modelTimer); _modelTimer = null;
+            _setStatus('ccModel', 'FAIL', 'cc-s-fail');
+            _showError('model_failed');
+            _running = false;
+        };
+
+        _worker.postMessage({ type: 'init' });
+
+        // 25 s model load timeout
+        _modelTimer = setTimeout(function () {
+            if (!_modelReady) {
+                _setStatus('ccModel', 'FAIL', 'cc-s-fail');
+                _showError('model_failed');
+                _running = false;
+            }
+        }, MODEL_TIMEOUT_MS);
+
+        _startFrameLoop(videoEl);
+    }
+
+    function _startFramePhase(videoEl) {
+        // Step 5: wait for frame loop to produce FRAME_LOOP_MIN frames
+        _setStatus('ccFrames', 'Checking…', 'cc-s-checking');
+
+        _loopTimer = setTimeout(function () {
+            _setStatus('ccFrames', 'FAIL', 'cc-s-fail');
+            _showError('no_frames');
+            _running = false;
+        }, LOOP_TIMEOUT_MS);
+
+        var _poll = setInterval(function () {
+            if (_framesRcvd >= FRAME_LOOP_MIN) {
+                clearInterval(_poll);
+                clearTimeout(_loopTimer); _loopTimer = null;
+                _setStatus('ccFrames', 'OK', 'cc-s-ok');
+                _startHandPhase();
+            }
+        }, 200);
+    }
+
+    function _startHandPhase() {
+        // Step 6: canvas size check (best-effort — wrap may not be sized yet)
+        var wrap = _el('ccCameraWrap');
+        if (wrap) {
+            var r = wrap.getBoundingClientRect();
+            if (r.width === 0 || r.height === 0) {
+                _setStatus('ccCanvas', 'FAIL', 'cc-s-fail');
+                _showError('canvas_zero');
+                _running = false;
+                return;
+            }
+            _setStatus('ccCanvas', 'OK', 'cc-s-ok');
+        }
+
+        // Step 7: wait for HAND_FRAMES_NEED consecutive frames with hand
+        _setStatus('ccHand', 'Waiting…', 'cc-s-checking');
+        _showHint(true);
+        _handConsec = 0;
+
+        _handTimer = setTimeout(function () {
+            _setStatus('ccHand', 'FAIL', 'cc-s-fail');
+            _showHint(false);
+            _showError('no_hand');
+            _running = false;
+        }, HAND_TIMEOUT_MS);
+    }
+
+    function _onHands(hands) {
+        // FPS measurement
+        if (_fpsSamples.length < 30) {
+            _fpsSamples.push(performance.now());
+            if (_fpsSamples.length === 30 && _effectiveFPS === null) {
+                _effectiveFPS = 29000 / (_fpsSamples[29] - _fpsSamples[0]);
+            }
+        }
+
+        // Draw wrist overlay during hand-wait phase
+        _drawWrists(hands);
+
+        // Only count hand frames during hand-wait phase
+        if (!_handTimer) return;
+
+        var hasValid = hands.some(function (h) { return h.confidence >= MIN_HAND_CONF; });
+        if (hasValid) {
+            _handConsec++;
+        } else {
+            _handConsec = 0;
+        }
+
+        if (_handConsec >= HAND_FRAMES_NEED) {
+            clearTimeout(_handTimer); _handTimer = null;
+            _setStatus('ccHand', 'OK', 'cc-s-ok');
+            _showHint(false);
+
+            // Final canvas check
+            var wrap = _el('ccCameraWrap');
+            if (wrap) {
+                var r2 = wrap.getBoundingClientRect();
+                if (r2.width === 0 || r2.height === 0) {
+                    _setStatus('ccCanvas', 'FAIL', 'cc-s-fail');
+                    _showError('canvas_zero');
+                    _running = false;
+                    return;
+                }
+                _setStatus('ccCanvas', 'OK', 'cc-s-ok');
+            }
+
+            var lowFps = (_effectiveFPS !== null && _effectiveFPS < FPS_SLOW);
+            _showPass(lowFps);
+            _running = false;
+        }
+    }
+
+    // ── Public API ───────────────────────────────────────────────────────────
+    function start() {
+        if (_running) return;
+        _running = true;
+        _paused  = false;
+
+        _resetChecklist();
+
+        // Hide intro button while running, show Stop
+        var run  = _el('ccBtnRun');
+        if (run)  run.disabled = true;
+        var stop = _el('ccBtnStop');
+        if (stop) stop.className = 'cc-btn-stop cc-stop-visible';
+
+        _run();
+    }
+
+    function retry() {
+        stop();
+        _resetChecklist();
+        // Re-enable run button (stop() hid camera wrap but reset happens here)
+        var run = _el('ccBtnRun');
+        if (run) { run.disabled = false; run.style.display = ''; }
+        var stopBtn = _el('ccBtnStop');
+        if (stopBtn) stopBtn.className = 'cc-btn-stop';
+        var retryBtn = _el('ccBtnRetry');
+        if (retryBtn) retryBtn.className = 'cc-btn-retry';
+        var cl = _el('ccChecklist');
+        if (cl) cl.style.display = 'none';
+        var cw = _el('ccCameraWrap');
+        if (cw) cw.className = 'cc-camera-wrap';
+        // Move video back out of wrap (cleanup)
+        var vid = _el('cc-video');
+        if (vid && vid.parentElement && vid.parentElement.id === 'ccCameraWrap') {
+            document.body.appendChild(vid);
+            vid.style.cssText = 'display:none; position:absolute; width:1px; height:1px; ' +
+                                 'opacity:0; pointer-events:none; overflow:hidden;';
+        }
+        var ph = _el('ccCamPlaceholder');
+        if (ph) ph.style.display = '';
+        start();
+    }
+
+    function stop() {
+        _clearTimers();
+        _stopWorker();
+        _stopCamera();
+        _running = false;
+        _paused  = false;
+        _handConsec = 0;
+        _framesRcvd = 0;
+    }
+
+    function pause() {
+        _paused = true;
+    }
+
+    function resume() {
+        _paused = false;
+    }
+
+    return { start: start, retry: retry, stop: stop, pause: pause, resume: resume };
+}());
