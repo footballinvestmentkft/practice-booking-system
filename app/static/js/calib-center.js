@@ -40,8 +40,9 @@ var CalibCenter = (function () {
 
     // ── Runtime patch fingerprint (TEMP diagnostic) ──────────────────────────
     // Fetches the WASM loader JS with a timestamp param so Safari cannot serve
-    // a cached copy. Confirms the null-guard patch is present at runtime and
+    // a cached copy. Confirms the iOS null-guard is present at runtime and
     // logs the actual Cache-Control header the server sends.
+    // 0.10.35: guard is native — pattern is `?.getContextAttributes();\n  if (!t) return -3;`
     function _mpVerifyLoader(variant, url) {
         var bustUrl = url + '?_t=' + Date.now();
         var prefix  = '[MP_VERIFY] ' + variant + ':';
@@ -53,13 +54,14 @@ var CalibCenter = (function () {
                 return resp.text();
             })
             .then(function (txt) {
-                var hasGuard   = txt.indexOf('if(!t)return-3;HEAP32') !== -1;
-                var hasUnguard = txt.indexOf('getContextAttributes();HEAP32') !== -1;
+                // 0.10.35 native guard: optional-chaining + explicit null check before HEAP8 write
+                var hasGuard   = txt.indexOf('getContextAttributes();\n  if (!t) return -3;') !== -1;
+                var hasUnguard = txt.indexOf('getContextAttributes();\n  HEAP8[a]') !== -1;
                 _D(prefix + ' null-guard present=' + hasGuard
                     + ' unguarded-access=' + hasUnguard
                     + ' size=' + txt.length + 'B');
                 if (!hasGuard) {
-                    _Derr(prefix + ' PATCH MISSING — iPhone loading unpatched file!', null);
+                    _Derr(prefix + ' NULL-GUARD MISSING — iOS will crash on createFromOptions!', null);
                 }
             })
             .catch(function (err) {

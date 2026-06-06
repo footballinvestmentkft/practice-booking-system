@@ -157,8 +157,8 @@ function processFrame(bitmap, timestamp) {
         return;
     }
     if (_frameCount === 1) {
-        _D('first inference OK — handLandmarks='
-            + (result.handLandmarks || []).length
+        _D('first inference OK — landmarks='
+            + (result.landmarks || []).length
             + ' handedness=' + (result.handedness || []).length);
     }
     bitmap.close();
