@@ -73,6 +73,10 @@ var CalibCenter = (function () {
             title: 'Hand-tracking model failed to load',
             desc:  'The AI model could not be initialised. Check your internet connection and tap Retry.',
         },
+        model_crashed: {
+            title: 'Hand tracking stopped unexpectedly',
+            desc:  'The hand-tracking model crashed during operation. Reload the page and try again.',
+        },
         no_frames: {
             title: 'Video not streaming',
             desc:  'The camera started but no frames arrived. Try rotating the device, then tap Retry.',
@@ -161,6 +165,7 @@ var CalibCenter = (function () {
 
     function _stopWorker() {
         if (_rafId) { cancelAnimationFrame(_rafId); _rafId = null; }
+        _mainInFlight = false;
         if (_worker) {
             try { _worker.postMessage({ type: 'stop' }); } catch (_) {}
             _worker.onmessage = null;
@@ -238,20 +243,34 @@ var CalibCenter = (function () {
     }
 
     // ── Frame loop ───────────────────────────────────────────────────────────
+    var _mainInFlight = false;  // one createImageBitmap in-flight at a time
+
     function _startFrameLoop(videoEl) {
-        function loop(ts) {
+        function loop() {
             _rafId = requestAnimationFrame(loop);
             if (_paused) return;
             if (!videoEl || !videoEl.srcObject || !_modelReady) return;
+            // Guard: skip if a previous bitmap is still being created.
+            // Prevents bitmap back-pressure on slow devices (iPhone) and ensures
+            // the timestamp passed to detectForVideo is always fresh and monotonic.
+            if (_mainInFlight) return;
+            _mainInFlight = true;
             try {
                 createImageBitmap(videoEl).then(function (bmp) {
+                    _mainInFlight = false;
                     if (_worker) {
-                        _worker.postMessage({ type: 'frame', bitmap: bmp, timestamp: ts }, [bmp]);
+                        // Use performance.now() at bitmap-ready time, not the stale
+                        // RAF ts captured before the async createImageBitmap call.
+                        // detectForVideo requires strictly increasing timestamps (VIDEO mode).
+                        _worker.postMessage(
+                            { type: 'frame', bitmap: bmp, timestamp: performance.now() },
+                            [bmp]
+                        );
                     } else {
                         bmp.close();
                     }
-                }).catch(function () {});
-            } catch (_) {}
+                }).catch(function () { _mainInFlight = false; });
+            } catch (_) { _mainInFlight = false; }
         }
         _rafId = requestAnimationFrame(loop);
     }
@@ -379,7 +398,10 @@ var CalibCenter = (function () {
         _worker.onerror = function () {
             clearTimeout(_modelTimer); _modelTimer = null;
             _setStatus('ccModel', 'FAIL', 'cc-s-fail');
-            _showError('model_failed');
+            // Distinguish init failure from post-ready crash:
+            // model_failed  = worker never sent 'ready' (init/WASM error)
+            // model_crashed = worker sent 'ready', then crashed during frame processing
+            _showError(_modelReady ? 'model_crashed' : 'model_failed');
             _running = false;
         };
 

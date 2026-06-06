@@ -46,9 +46,20 @@ async function initModel() {
         return;
     }
 
+    // Load WASM fileset once — reused across GPU→CPU fallback.
+    // Calling forVisionTasks() inside the loop caused double WASM loading (+9 MB)
+    // and left GPU fileset resources unreleased on iOS, leading to OOM crashes
+    // after the CPU delegate sent 'ready'.
+    let vision;
+    try {
+        vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_BASE);
+    } catch (err) {
+        self.postMessage({ type: 'error', code: 'fileset_failed', message: err.message });
+        return;
+    }
+
     for (const delegate of ['GPU', 'CPU']) {
         try {
-            const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_BASE);
             _landmarker = await HandLandmarker.createFromOptions(vision, {
                 baseOptions: { modelAssetPath: MODEL_PATH, delegate },
                 numHands:                   2,
