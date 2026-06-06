@@ -98,6 +98,16 @@ var CalibCenter = (function () {
     var _fpsSamples  = [];
     var _effectiveFPS = null;
 
+    // ── Warning messages (non-fatal platform notices) ────────────────────────
+    var _WARNINGS = {
+        ios_hand_unsupported: {
+            title: 'Hand tracking not available on iPhone / iPad Safari',
+            desc:  'Your camera is working correctly. Hand-tracking games require '
+                 + 'a laptop or desktop browser for now. '
+                 + 'Mobile support is in development.',
+        },
+    };
+
     // ── Error messages ───────────────────────────────────────────────────────
     var _ERRORS = {
         not_secure: {
@@ -172,6 +182,21 @@ var CalibCenter = (function () {
         if (r) r.className = 'cc-btn-retry';
     }
 
+    function _showWarn(code) {
+        var m   = _WARNINGS[code] || {};
+        var box = _el('ccWarn');
+        var t   = _el('ccWarnTitle');
+        var d   = _el('ccWarnDesc');
+        if (t) t.textContent = m.title || '';
+        if (d) d.textContent = m.desc  || '';
+        if (box) box.className = 'cc-warn cc-warn-visible';
+    }
+
+    function _hideWarn() {
+        var box = _el('ccWarn');
+        if (box) box.className = 'cc-warn';
+    }
+
     function _showHint(visible) {
         var h = _el('ccHint');
         if (h) h.className = 'cc-hint' + (visible ? ' cc-hint-visible' : '');
@@ -197,6 +222,7 @@ var CalibCenter = (function () {
             _setStatus(id, '—', 'cc-s-pending');
         });
         _hideError();
+        _hideWarn();
         _showHint(false);
         var p = _el('ccPass');
         if (p) p.className = 'cc-pass';
@@ -423,12 +449,19 @@ var CalibCenter = (function () {
     }
 
     function _startWorkerPhase(videoEl) {
-        // On iOS, WASM JIT cold-start without GPU warm-up takes 30–45 s.
-        // Show a longer status label so the user knows it has not frozen.
-        var modelLoadLabel = _iosDevice
-            ? 'Loading… (iPhone: up to 50 s)'
-            : 'Loading…';
-        _setStatus('ccModel', modelLoadLabel, 'cc-s-checking');
+        // iOS / iPadOS Safari: MediaPipe Tasks WASM inference aborts on first
+        // detect() call (RuntimeError: Aborted) regardless of MediaPipe version.
+        // Skip the worker phase entirely; show a platform warning instead.
+        // Camera and video streaming checks already passed at this point.
+        if (_iosDevice) {
+            _D('iOS detected — skipping hand-tracking worker (unsupported)');
+            _setStatus('ccModel', '⚠ Not supported', 'cc-s-warn');
+            _showWarn('ios_hand_unsupported');
+            _running = false;
+            return;
+        }
+
+        _setStatus('ccModel', 'Loading…', 'cc-s-checking');
         _D('_startWorkerPhase — creating Worker');
         _D('env: createImageBitmap=' + (typeof createImageBitmap !== 'undefined')
             + ' WebAssembly=' + (typeof WebAssembly !== 'undefined')

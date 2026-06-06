@@ -158,3 +158,26 @@ class TestCalibCenterRoute:
         html = self._get_html()
         assert "Face" in html
         assert "COMING NEXT" in html or "coming" in html.lower()
+
+    def test_cc_11_warn_css_class_defined(self):
+        """CC-11: Template defines cc-s-warn amber status class and cc-warn box styles."""
+        html = self._get_html()
+        assert "cc-s-warn" in html, "Missing amber warn status CSS class"
+        assert "cc-warn" in html, "Missing cc-warn platform warning box CSS/DOM"
+
+    def test_cc_12_ios_fallback_present_in_calib_js(self):
+        """CC-12: calib-center.js contains iOS detection flag and unsupported warning code."""
+        from pathlib import Path
+        # parents[4] = project root (tests/unit/api/web_routes/ is 4 levels deep)
+        js = (Path(__file__).resolve().parents[4]
+              / "app/static/js/calib-center.js").read_text(encoding="utf-8")
+        assert "_iosDevice" in js, \
+            "iOS device detection variable missing from calib-center.js"
+        assert "ios_hand_unsupported" in js, \
+            "iOS unsupported warning code missing from calib-center.js"
+
+    def test_cc_13_warn_dom_element_present(self):
+        """CC-13: Template contains ccWarn DOM element for platform warning box."""
+        html = self._get_html()
+        assert 'id="ccWarn"' in html, \
+            "ccWarn DOM element missing from calibration template"

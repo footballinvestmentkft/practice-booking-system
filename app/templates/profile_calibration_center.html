@@ -123,6 +123,16 @@
     .cc-error-title { font-weight: 700; font-size: 0.9rem; color: #991b1b; margin: 0 0 0.3rem; }
     .cc-error-desc  { font-size: 0.82rem; color: #7f1d1d; line-height: 1.5; margin: 0; }
 
+    /* ── Platform warning box (amber, no Retry) ────────────────────────── */
+    .cc-warn {
+        background: #fffbeb; border: 1px solid #fde68a;
+        border-radius: 10px; padding: 0.85rem 1rem;
+        margin-bottom: 0.9rem; display: none;
+    }
+    .cc-warn.cc-warn-visible { display: block; }
+    .cc-warn-title { font-weight: 700; font-size: 0.9rem; color: #92400e; margin: 0 0 0.3rem; }
+    .cc-warn-desc  { font-size: 0.82rem; color: #78350f; line-height: 1.5; margin: 0; }
+
     /* ── FPS warning ────────────────────────────────────────────────────── */
     .cc-fps-warn {
         background: #fffbeb; border: 1px solid #fde68a;
@@ -325,6 +335,12 @@
     <div class="cc-error" id="ccError">
         <p class="cc-error-title" id="ccErrorTitle"></p>
         <p class="cc-error-desc"  id="ccErrorDesc"></p>
+    </div>
+
+    {# ── Platform warning box (non-fatal, no Retry) ──────────────────────── #}
+    <div class="cc-warn" id="ccWarn">
+        <p class="cc-warn-title" id="ccWarnTitle"></p>
+        <p class="cc-warn-desc"  id="ccWarnDesc"></p>
     </div>
 
     {# ── FPS warning (non-blocking) ──────────────────────────────────────── #}
