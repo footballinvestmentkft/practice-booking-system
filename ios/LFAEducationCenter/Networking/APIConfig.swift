@@ -14,4 +14,8 @@ enum APIConfig {
 
     // Versioned path prefix — matches backend API_V1_STR.
     static let v1 = baseURL + "/api/v1"
+
+    // Base URL for Academy ID QR verify links — mirrors backend VERIFY_BASE_URL.
+    // Must match the URL a scanner can actually reach (same host as baseURL in dev).
+    static let verifyBaseURL = baseURL
 }

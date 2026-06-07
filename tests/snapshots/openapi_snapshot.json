@@ -20307,6 +20307,17 @@
             "title": "Is Active",
             "type": "boolean"
           },
+          "lfa_academy_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lfa Academy Id"
+          },
           "licenses": {
             "default": [],
             "items": {
@@ -20523,6 +20534,18 @@
               }
             ],
             "title": "Profile Photo Url"
+          },
+          "public_token": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Public Token"
           },
           "role": {
             "$ref": "#/components/schemas/UserRole",
@@ -21729,6 +21752,17 @@
             "title": "Is Active",
             "type": "boolean"
           },
+          "lfa_academy_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lfa Academy Id"
+          },
           "licenses": {
             "default": [],
             "items": {
@@ -21945,6 +21979,18 @@
               }
             ],
             "title": "Profile Photo Url"
+          },
+          "public_token": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Public Token"
           },
           "role": {
             "$ref": "#/components/schemas/UserRole",
@@ -59384,6 +59430,34 @@
         ]
       }
     },
+    "/api/v1/users/me/academy-id": {
+      "get": {
+        "description": "Return the current user's Academy ID fields and the QR verify URL.\n\nLazily assigns lfa_academy_id and public_token if not yet set\n(covers users registered before the Phase 2A migration ran).\n\nResponse:\n    lfa_academy_id  \u2014 human-readable card ID (LFA-YYYY-NNNNN)\n    public_token    \u2014 UUID used in the QR URL (owner's eyes only)\n    qr_url          \u2014 relative verify path (/verify/{token})\n    qr_data         \u2014 absolute URL to embed in the QR code",
+        "operationId": "get_academy_id_api_v1_users_me_academy_id_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Get Academy Id Api V1 Users Me Academy Id Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Academy Id",
+        "tags": [
+          "users",
+          "users"
+        ]
+      }
+    },
     "/api/v1/users/me/credit-transactions": {
       "get": {
         "description": "Get current user's credit transaction history.\n\nAvailable for ALL users (Student, Instructor, Admin) to see their own transactions.\nShows:\n- License renewals (credit deductions)\n- Credit purchases\n- Semester enrollments\n- Refunds\n- Admin adjustments",
@@ -67334,6 +67408,50 @@
           }
         },
         "summary": "Unread Counts",
+        "tags": [
+          "web"
+        ]
+      }
+    },
+    "/verify/{public_token}": {
+      "get": {
+        "description": "Public Academy ID verification page.\n\nAccessed by scanning the QR code on an Academy ID card.\nReturns a minimal branded page confirming LFA membership.",
+        "operationId": "verify_academy_id_verify__public_token__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "public_token",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Public Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Verify Academy Id",
         "tags": [
           "web"
         ]

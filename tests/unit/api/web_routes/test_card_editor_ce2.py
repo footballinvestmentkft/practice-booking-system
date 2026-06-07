@@ -433,6 +433,6 @@ class TestCE217RouteCount:
         """feat/virtual-training-card adds 4 VT card routes — snapshot path count must equal 857."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 865, (
+        assert len(paths) == 867, (
             f"Expected 857 routes (856 prior baseline + 1 hand-finger-stats route), got {len(paths)}."
         )

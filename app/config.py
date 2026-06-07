@@ -284,6 +284,13 @@ class Settings(BaseSettings):
     BG_REMOVAL_PROCESSOR: str = "null"
     PROCESSING_TIMEOUT_SECONDS: int = 300
 
+    # ── Academy ID Phase 2A ───────────────────────────────────────────────────
+    # Base URL used to build the QR verify link: {VERIFY_BASE_URL}/verify/{token}
+    # Dev (simulator):       http://localhost:8000
+    # Dev (physical iPhone): http://<MAC_LAN_IP>:8000
+    # Production:            https://lfa.hu
+    VERIFY_BASE_URL: str = "http://localhost:8000"
+
     # ── Slow-query monitoring ──────────────────────────────────────────────────
     # Queries slower than SLOW_QUERY_THRESHOLD_MS are logged to app.slow_query
     # and counted in the slow_queries_total metric.  Raise this value if normal

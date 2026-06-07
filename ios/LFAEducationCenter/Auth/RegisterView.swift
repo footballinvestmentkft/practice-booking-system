@@ -184,7 +184,8 @@ struct RegisterView: View {
                         profilePhotoURL:          nil,   // upload not yet wired in RegisterView
                         profilePhotoProcessedURL: nil,
                         isVerified:               isAccessVerified,
-                        lfaID:                    lfaDisplayID
+                        lfaAcademyId:             nil,   // assigned by backend after registration
+                        publicToken:              nil    // QR shows placeholder until /me/academy-id
                     )
                     .padding(.horizontal, Theme.Spacing.md)
 

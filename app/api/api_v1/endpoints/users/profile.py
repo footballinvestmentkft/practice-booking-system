@@ -1,6 +1,6 @@
 """
 User profile management endpoints
-Self-service profile updates, password reset, and profile photo management.
+Self-service profile updates, password reset, profile photo and Academy ID management.
 """
 from typing import Any
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
@@ -21,6 +21,10 @@ from .....services.profile_photo_service import (
     trigger_bg_removal,
     run_bg_removal,
     STATUS_NONE,
+)
+from .....services.academy_id_service import (
+    assign_lfa_academy_id,
+    ensure_public_token,
 )
 from .....config import settings as _settings
 from .helpers import validate_email_unique, validate_nickname
@@ -213,3 +217,48 @@ def delete_current_profile_photo(
     """
     delete_profile_photo(current_user, db)
     db.commit()
+
+
+# ── Academy ID — Phase 2A ─────────────────────────────────────────────────────
+
+@router.get("/me/academy-id")
+def get_academy_id(
+    db:           Session = Depends(get_db),
+    current_user: User    = Depends(get_current_user),
+) -> Any:
+    """
+    Return the current user's Academy ID fields and the QR verify URL.
+
+    Lazily assigns lfa_academy_id and public_token if not yet set
+    (covers users registered before the Phase 2A migration ran).
+
+    Response:
+        lfa_academy_id  — human-readable card ID (LFA-YYYY-NNNNN)
+        public_token    — UUID used in the QR URL (owner's eyes only)
+        qr_url          — relative verify path (/verify/{token})
+        qr_data         — absolute URL to embed in the QR code
+    """
+    changed = False
+
+    if not current_user.lfa_academy_id:
+        assign_lfa_academy_id(current_user, db)
+        changed = True
+
+    ensure_public_token(current_user, db)
+    if not current_user.public_token:
+        changed = True
+
+    if changed:
+        db.commit()
+        db.refresh(current_user)
+
+    token    = str(current_user.public_token)
+    qr_url   = f"/verify/{token}"
+    qr_data  = f"{_settings.VERIFY_BASE_URL}/verify/{token}"
+
+    return {
+        "lfa_academy_id": current_user.lfa_academy_id,
+        "public_token":   token,
+        "qr_url":         qr_url,
+        "qr_data":        qr_data,
+    }

@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, field_serializer, computed_field
 from typing import Optional, List, Dict, Any
 from datetime import datetime
+from uuid import UUID
 from ..models.user import UserRole
 from ..models.specialization import SpecializationType
 
@@ -104,9 +105,12 @@ class User(UserBase):
     # ⭐ XP system fields
     xp_balance: Optional[int] = 0
     # 🪪 Profile photo (Academy ID Phase 1)
-    profile_photo_url:           Optional[str] = None
-    profile_photo_processed_url: Optional[str] = None
-    profile_photo_status:        Optional[str] = None
+    profile_photo_url:           Optional[str]  = None
+    profile_photo_processed_url: Optional[str]  = None
+    profile_photo_status:        Optional[str]  = None
+    # 🪪 Academy ID (Phase 2A) — only exposed on the owner's own authenticated response
+    lfa_academy_id:              Optional[str]  = None
+    public_token:                Optional[UUID] = None
     # 📜 User licenses (NEW - replaces deprecated specialization field)
     licenses: List[UserLicenseSimple] = []
 

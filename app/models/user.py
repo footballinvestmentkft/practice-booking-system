@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Enum, Index
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 import enum
+import uuid
 from typing import Optional
 
 from ..database import Base
@@ -103,6 +105,26 @@ class User(Base):
         nullable=False,
         default=0,
         comment="Current XP (Experience Points) - earned through training and tournaments"
+    )
+
+    # 🪪 ACADEMY ID: Phase 2A — lfa_academy_id + public_token
+    # lfa_academy_id: human-readable, shown on the card (e.g. LFA-2026-00142)
+    # public_token:   non-guessable UUID — used exclusively in QR verify URL
+    #   /verify/{public_token}  — never log, never show to other users.
+    lfa_academy_id = Column(
+        String(20),
+        unique=True,
+        nullable=True,  # nullable until backfill completes; lazy-assigned on first /me/academy-id call
+        index=True,
+        comment="Human-readable Academy ID: LFA-YYYY-NNNNN",
+    )
+    public_token = Column(
+        UUID(as_uuid=True),
+        unique=True,
+        nullable=True,  # DB default gen_random_uuid() set in migration
+        index=True,
+        default=uuid.uuid4,
+        comment="Non-guessable UUID for /verify/{token} QR URL — do not log",
     )
 
     # 🪪 PROFILE PHOTO: Academy ID Card photo (Phase 1)

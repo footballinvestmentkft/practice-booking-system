@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Academy ID Verification — Lion Football Academy</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0a0e1a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 24px 16px;
+    }
+
+    .card {
+      background: #141927;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 380px;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+    }
+
+    /* ── Header ── */
+    .card-header {
+      background: #1a2236;
+      padding: 16px 20px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .brand-dot {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e8b84b, #c9952a);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 800; color: #0a0e1a;
+      flex-shrink: 0;
+    }
+    .brand-text { line-height: 1.25; }
+    .brand-name {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+      color: #e8b84b; text-transform: uppercase;
+    }
+    .brand-sub {
+      font-size: 9px; color: rgba(255,255,255,0.35);
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    .header-badge {
+      margin-left: auto;
+      font-size: 8px; font-weight: 700; letter-spacing: 0.7px;
+      color: rgba(255,255,255,0.3); text-transform: uppercase;
+    }
+
+    /* ── Photo ── */
+    .photo-section {
+      padding: 24px 20px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .photo-wrap {
+      width: 96px; height: 96px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 3px solid rgba(232,184,75,0.45);
+      background: #1e2740;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .photo-wrap img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .photo-placeholder {
+      font-size: 36px; color: rgba(255,255,255,0.15);
+    }
+    .display-name {
+      font-size: 20px; font-weight: 700; color: #fff;
+      text-align: center; line-height: 1.25;
+    }
+
+    /* ── Academy ID row ── */
+    .academy-id-row {
+      text-align: center; padding: 0 20px 4px;
+    }
+    .academy-id-label {
+      font-size: 9px; font-weight: 600; letter-spacing: 0.8px;
+      color: rgba(255,255,255,0.3); text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .academy-id-value {
+      font-size: 15px; font-weight: 700; letter-spacing: 1.5px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      color: #e8b84b;
+    }
+
+    /* ── Verified badge ── */
+    .verified-badge {
+      margin: 16px 20px;
+      background: rgba(34,197,94,0.12);
+      border: 1px solid rgba(34,197,94,0.3);
+      border-radius: 10px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .verified-icon { font-size: 20px; }
+    .verified-text { line-height: 1.35; }
+    .verified-title {
+      font-size: 13px; font-weight: 700; color: #4ade80;
+    }
+    .verified-sub {
+      font-size: 11px; color: rgba(255,255,255,0.4);
+    }
+
+    /* ── Meta row ── */
+    .meta-row {
+      padding: 0 20px 20px;
+      display: flex;
+      gap: 12px;
+    }
+    .meta-chip {
+      flex: 1;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 8px 10px;
+      text-align: center;
+    }
+    .meta-chip-label {
+      font-size: 8px; font-weight: 600; letter-spacing: 0.6px;
+      color: rgba(255,255,255,0.25); text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+    .meta-chip-value {
+      font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7);
+    }
+
+    /* ── Footer ── */
+    .card-footer {
+      border-top: 1px solid rgba(255,255,255,0.05);
+      padding: 10px 20px;
+      text-align: center;
+    }
+    .footer-note {
+      font-size: 9px; color: rgba(255,255,255,0.2); letter-spacing: 0.4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+
+    <!-- Header -->
+    <div class="card-header">
+      <div class="brand-dot">L</div>
+      <div class="brand-text">
+        <div class="brand-name">Lion Football Academy</div>
+        <div class="brand-sub">LFA Education Center</div>
+      </div>
+      <div class="header-badge">Academy ID</div>
+    </div>
+
+    <!-- Photo + Name -->
+    <div class="photo-section">
+      <div class="photo-wrap">
+        {% if photo_url %}
+          <img src="{{ photo_url }}" alt="Profile photo" loading="lazy">
+        {% else %}
+          <span class="photo-placeholder">👤</span>
+        {% endif %}
+      </div>
+      <div class="display-name">{{ display_name or "LFA Member" }}</div>
+    </div>
+
+    <!-- Academy ID -->
+    {% if lfa_academy_id %}
+    <div class="academy-id-row">
+      <div class="academy-id-label">Academy ID</div>
+      <div class="academy-id-value">{{ lfa_academy_id }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Verified badge -->
+    <div class="verified-badge">
+      <div class="verified-icon">✅</div>
+      <div class="verified-text">
+        <div class="verified-title">Verified LFA Member</div>
+        <div class="verified-sub">Lion Football Academy Education Center</div>
+      </div>
+    </div>
+
+    <!-- Meta chips -->
+    <div class="meta-row">
+      {% if member_since %}
+      <div class="meta-chip">
+        <div class="meta-chip-label">Member since</div>
+        <div class="meta-chip-value">{{ member_since }}</div>
+      </div>
+      {% endif %}
+      {% if spec_label %}
+      <div class="meta-chip">
+        <div class="meta-chip-label">Specialization</div>
+        <div class="meta-chip-value">{{ spec_label }}</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <div class="card-footer">
+      <div class="footer-note">lfa.hu · Official Academy ID Verification</div>
+    </div>
+
+  </div>
+</body>
+</html>

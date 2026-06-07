@@ -19,6 +19,9 @@ struct UserProfile: Decodable {
     let profilePhotoUrl:             String?       // profile_photo_url
     let profilePhotoProcessedUrl:    String?       // profile_photo_processed_url (BG-removed PNG)
     let profilePhotoStatus:          String?       // none/uploaded/processing/ready/failed
+    // 🪪 Academy ID (Phase 2A) — only present on the owner's own authenticated response
+    let lfaAcademyId:                String?       // lfa_academy_id — shown on card, not secret
+    let publicToken:                 String?       // UUID for /verify/{token} QR — owner eyes only
     let licenses:                    [UserLicenseBrief]?
 
     // displayName maps directly to name — no first/last split in the backend schema.
@@ -50,6 +53,8 @@ struct UserProfile: Decodable {
         case profilePhotoUrl          = "profile_photo_url"
         case profilePhotoProcessedUrl = "profile_photo_processed_url"
         case profilePhotoStatus       = "profile_photo_status"
+        case lfaAcademyId             = "lfa_academy_id"
+        case publicToken              = "public_token"
         case licenses
     }
 }

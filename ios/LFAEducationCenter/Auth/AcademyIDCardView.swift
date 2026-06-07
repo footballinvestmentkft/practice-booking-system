@@ -1,18 +1,21 @@
 import SwiftUI
 
-// Live-updating Academy ID preview card — RegisterView preview and (future) Profile view.
+// Live-updating Academy ID preview card — RegisterView preview and Profile view.
 //
 // Layout:
 //   Header — LFA branding + ACADEMY ID label
 //   Body   — 80×104pt portrait panel (left) | name/profile/location fields (right)
 //   Specs  — ⚽ — 🎓 — 🥋 — 💼 — placeholder slots
-//   Footer — LFA-ID | ACCESS VERIFIED badge
+//   Footer — lfa_academy_id (left) | QR code 56×56pt (right) | ACCESS VERIFIED badge
 //
 // Photo priority (first non-nil wins):
 //   1. profilePhotoProcessedURL — backend BG-removed transparent PNG
 //   2. profilePhotoURL          — backend raw upload
 //   3. profileImage             — local UIImage (RegisterView preview, never uploaded)
 //   4. silhouette placeholder
+//
+// QR: generated from publicToken via QRCodeGenerator (CoreImage, no external dep).
+//   nil → placeholder qrcode SF Symbol shown instead.
 struct AcademyIDCardView: View {
     let firstName:                String?
     let lastName:                 String?
@@ -26,7 +29,9 @@ struct AcademyIDCardView: View {
     let profilePhotoURL:          String?   // backend original URL (Academy ID Phase 1)
     let profilePhotoProcessedURL: String?   // backend BG-removed PNG (when rembg active)
     let isVerified:               Bool
-    let lfaID:                    String
+    // Phase 2A — Academy ID fields (nil during registration flow, set from /me after login)
+    let lfaAcademyId:             String?   // "LFA-2026-00142" — shown on card
+    let publicToken:              String?   // UUID for QR — build with VERIFY_BASE_URL
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -119,32 +124,71 @@ struct AcademyIDCardView: View {
         .padding(.vertical, 7)
     }
 
-    // MARK: — Footer
+    // MARK: — Footer (Academy ID + QR panel)
 
     private var footerRow: some View {
-        HStack {
-            Text("LFA-\(lfaID)")
-                .font(.system(size: 8, weight: .bold, design: .monospaced))
-                .foregroundColor(Theme.Color.muted)
-            Spacer()
-            if isVerified {
-                HStack(spacing: 4) {
-                    Image(systemName: "checkmark.shield.fill")
-                        .font(.system(size: 9))
-                    Text("ACCESS VERIFIED")
-                        .font(.system(size: 8, weight: .bold))
+        HStack(alignment: .center, spacing: 10) {
+
+            // Left: lfa_academy_id + ACCESS VERIFIED badge
+            VStack(alignment: .leading, spacing: 5) {
+                Text(lfaAcademyId ?? "LFA-????-?????")
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .foregroundColor(lfaAcademyId != nil ? Theme.Color.muted : Theme.Color.muted.opacity(0.35))
+                if isVerified {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.shield.fill")
+                            .font(.system(size: 9))
+                        Text("ACCESS VERIFIED")
+                            .font(.system(size: 8, weight: .bold))
+                    }
+                    .foregroundColor(Theme.Color.primary)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 4)
+                    .background(Theme.Color.primary.opacity(0.10))
+                    .cornerRadius(5)
+                    .transition(.opacity.combined(with: .scale(scale: 0.75, anchor: .leading)))
                 }
-                .foregroundColor(Theme.Color.primary)
-                .padding(.horizontal, 7)
-                .padding(.vertical, 4)
-                .background(Theme.Color.primary.opacity(0.10))
-                .cornerRadius(5)
-                .transition(.opacity.combined(with: .scale(scale: 0.75, anchor: .trailing)))
             }
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isVerified)
+
+            Spacer()
+
+            // Right: QR code (56×56 pt)
+            qrPanel
         }
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isVerified)
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
+    }
+
+    // QR panel: shows generated QR when publicToken is available, placeholder otherwise.
+    @ViewBuilder
+    private var qrPanel: some View {
+        if let token = publicToken,
+           let qrImage = QRCodeGenerator.image(
+               from: "\(APIConfig.verifyBaseURL)/verify/\(token)"
+           ) {
+            Image(uiImage: qrImage)
+                .interpolation(.none)           // crisp pixels, no blur
+                .resizable()
+                .scaledToFit()
+                .frame(width: 56, height: 56)
+                .background(Color.white)
+                .cornerRadius(4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(Theme.Color.secondary.opacity(0.2), lineWidth: 0.5)
+                )
+        } else {
+            // Placeholder when publicToken not yet available (registration flow)
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Theme.Color.muted.opacity(0.06))
+                .frame(width: 56, height: 56)
+                .overlay(
+                    Image(systemName: "qrcode")
+                        .font(.system(size: 22))
+                        .foregroundColor(Theme.Color.muted.opacity(0.20))
+                )
+        }
     }
 
     // MARK: — Portrait photo panel (ID-card style, 80×104pt, not circular)

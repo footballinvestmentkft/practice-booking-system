@@ -5,6 +5,7 @@ Combines all modular web route files into a single router
 from fastapi import APIRouter
 
 from . import (
+    verify,
     auth,
     onboarding,
     profile,
@@ -77,3 +78,4 @@ router.include_router(vt_challenges.router)      # 🎮 VT Challenges (/challeng
 router.include_router(vt_card.router)            # 🃏 VT Card (/virtual-training/card)
 router.include_router(ws_events.router)           # 🔌 Per-user WS event stream (/ws/events)
 router.include_router(mood_photos.router)         # 📸 Hangulatképek (/profile/my-mood-photos)
+router.include_router(verify.router)              # 🪪 Academy ID public verify (/verify/{token})
