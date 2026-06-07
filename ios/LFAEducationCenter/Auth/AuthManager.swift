@@ -27,6 +27,12 @@ final class AuthManager: ObservableObject {
     @Published private(set) var isValidatingSession:  Bool    = true   // true until validateSession() completes
     @Published              var errorMessage:          String? = nil
 
+    // Set to true after a successful registration — clears on Continue or logout.
+    // Never set by login() or validateSession(), so it never fires for returning users.
+    @Published private(set) var justRegistered:       Bool    = false
+    // First name captured from the register form for immediate display in WelcomeSuccessView.
+    private(set) var registeredUserName:              String? = nil
+
     // Shared-task barrier replacing the former isRefreshing: Bool flag.
     // A non-nil value means a refresh is in-flight; new callers join via .value.
     private var pendingRefresh: Task<Bool, Never>?
@@ -139,7 +145,9 @@ final class AuthManager: ObservableObject {
                 body: body
             )
             saveTokens(response)
-            isLoggedIn = true
+            registeredUserName = firstName
+            justRegistered     = true
+            isLoggedIn         = true
 
         } catch APIError.httpError(let code, let detail) {
             switch code {
@@ -156,11 +164,21 @@ final class AuthManager: ObservableObject {
         }
     }
 
+    // MARK: — Post-registration context
+
+    // Called by WelcomeSuccessView when the user taps Continue to Hub.
+    func clearJustRegistered() {
+        justRegistered     = false
+        registeredUserName = nil
+    }
+
     // MARK: — Logout
 
     func logout() {
         KeychainService.clearAll()
-        isLoggedIn = false
+        justRegistered     = false
+        registeredUserName = nil
+        isLoggedIn         = false
     }
 
     // MARK: — Protected request wrappers

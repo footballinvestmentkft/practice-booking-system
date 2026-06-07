@@ -3,25 +3,21 @@ import SwiftUI
 // Auth-gated root with splash screen during session restore.
 //
 // State machine:
-//   isValidatingSession = true  → SplashView (shown on every cold launch)
-//   isLoggedIn = true           → MainHubView
-//   isLoggedIn = false          → LoginView
+//   isValidatingSession = true               → SplashView (shown on every cold launch)
+//   isLoggedIn = true  AND justRegistered    → WelcomeSuccessView (new registration only)
+//   isLoggedIn = true  AND !justRegistered   → MainHubView
+//   isLoggedIn = false                       → LoginView
 //
-// Navigation tree:
-//   SplashView (session restore)
-//     └─ validateSession() completes
-//          ├─ token valid / refreshed → MainHubView
-//          └─ no token / refresh fail → LoginView
-//
-//   MainHubView → [LFA card tap] → LFASpecTabView (fullScreenCover)
-//   LFASpecTabView.Profile → "Back to Hub" → MainHubView
-//   Any "Sign Out" → AuthManager.logout() → LoginView
+// justRegistered is set only by AuthManager.register() — never by login() or
+// validateSession() — so returning users and session-restore flows are unaffected.
 struct RootView: View {
     @EnvironmentObject var authManager: AuthManager
 
     var body: some View {
         if authManager.isValidatingSession {
             SplashView()
+        } else if authManager.isLoggedIn && authManager.justRegistered {
+            WelcomeSuccessView()
         } else if authManager.isLoggedIn {
             MainHubView()
         } else {
