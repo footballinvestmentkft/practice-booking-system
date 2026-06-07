@@ -41,6 +41,7 @@
 		BB000004000000000000032 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000034 /* SplashView.swift */; };
 		BB000004000000000000033 /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000035 /* RegisterView.swift */; };
 		BB000004000000000000034 /* WelcomeSuccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000036 /* WelcomeSuccessView.swift */; };
+		BB000004000000000000035 /* AcademyIDCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000037 /* AcademyIDCardView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -80,6 +81,7 @@
 		BB000003000000000000034 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		BB000003000000000000035 /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
 		BB000003000000000000036 /* WelcomeSuccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeSuccessView.swift; sourceTree = "<group>"; };
+		BB000003000000000000037 /* AcademyIDCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDCardView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -193,6 +195,7 @@
 				BB000003000000000000015 /* AuthManager.swift */,
 				BB000003000000000000016 /* LoginView.swift */,
 				BB000003000000000000035 /* RegisterView.swift */,
+				BB000003000000000000037 /* AcademyIDCardView.swift */,
 			);
 			path = Auth;
 			sourceTree = "<group>";
@@ -333,6 +336,7 @@
 				BB000004000000000000032 /* SplashView.swift in Sources */,
 				BB000004000000000000033 /* RegisterView.swift in Sources */,
 				BB000004000000000000034 /* WelcomeSuccessView.swift in Sources */,
+				BB000004000000000000035 /* AcademyIDCardView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
