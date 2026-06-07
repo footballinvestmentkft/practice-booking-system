@@ -28,18 +28,18 @@ struct RegisterView: View {
 
     // (code, display label) pairs sent to backend as the code value.
     private let nationalityOptions: [(String, String)] = [
-        ("HU", "Hungarian"),
-        ("AT", "Austrian"),
-        ("DE", "German"),
-        ("SK", "Slovak"),
-        ("RO", "Romanian"),
-        ("RS", "Serbian"),
-        ("HR", "Croatian"),
-        ("SI", "Slovenian"),
-        ("UA", "Ukrainian"),
-        ("PL", "Polish"),
-        ("CZ", "Czech"),
-        ("Other", "Other"),
+        ("HU", "🇭🇺 Hungarian"),
+        ("AT", "🇦🇹 Austrian"),
+        ("DE", "🇩🇪 German"),
+        ("SK", "🇸🇰 Slovak"),
+        ("RO", "🇷🇴 Romanian"),
+        ("RS", "🇷🇸 Serbian"),
+        ("HR", "🇭🇷 Croatian"),
+        ("SI", "🇸🇮 Slovenian"),
+        ("UA", "🇺🇦 Ukrainian"),
+        ("PL", "🇵🇱 Polish"),
+        ("CZ", "🇨🇿 Czech"),
+        ("Other", "🌐 Other"),
     ]
 
     // Step 2 — Address
