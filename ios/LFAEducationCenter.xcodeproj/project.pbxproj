@@ -29,6 +29,12 @@
 		BB000004000000000000020 /* UserLicense.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000022 /* UserLicense.swift */; };
 		BB000004000000000000021 /* LFAPlayerLicense.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000023 /* LFAPlayerLicense.swift */; };
 		BB000004000000000000022 /* LicenseDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000024 /* LicenseDashboard.swift */; };
+		BB000004000000000000023 /* SpecializationInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000025 /* SpecializationInfo.swift */; };
+		BB000004000000000000024 /* SpecializationStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000026 /* SpecializationStatus.swift */; };
+		BB000004000000000000025 /* SpecializationProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000027 /* SpecializationProgress.swift */; };
+		BB000004000000000000026 /* SkillProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000028 /* SkillProfile.swift */; };
+		BB000004000000000000027 /* EducationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000029 /* EducationViewModel.swift */; };
+		BB000004000000000000028 /* EducationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000030 /* EducationView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -56,6 +62,12 @@
 		BB000003000000000000022 /* UserLicense.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserLicense.swift; sourceTree = "<group>"; };
 		BB000003000000000000023 /* LFAPlayerLicense.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LFAPlayerLicense.swift; sourceTree = "<group>"; };
 		BB000003000000000000024 /* LicenseDashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseDashboard.swift; sourceTree = "<group>"; };
+		BB000003000000000000025 /* SpecializationInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpecializationInfo.swift; sourceTree = "<group>"; };
+		BB000003000000000000026 /* SpecializationStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpecializationStatus.swift; sourceTree = "<group>"; };
+		BB000003000000000000027 /* SpecializationProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpecializationProgress.swift; sourceTree = "<group>"; };
+		BB000003000000000000028 /* SkillProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillProfile.swift; sourceTree = "<group>"; };
+		BB000003000000000000029 /* EducationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EducationViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000030 /* EducationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EducationView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -148,6 +160,10 @@
 				BB000003000000000000022 /* UserLicense.swift */,
 				BB000003000000000000023 /* LFAPlayerLicense.swift */,
 				BB000003000000000000024 /* LicenseDashboard.swift */,
+				BB000003000000000000025 /* SpecializationInfo.swift */,
+				BB000003000000000000026 /* SpecializationStatus.swift */,
+				BB000003000000000000027 /* SpecializationProgress.swift */,
+				BB000003000000000000028 /* SkillProfile.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -175,6 +191,8 @@
 		BB000002000000000000011 /* Education */ = {
 			isa = PBXGroup;
 			children = (
+				BB000003000000000000029 /* EducationViewModel.swift */,
+				BB000003000000000000030 /* EducationView.swift */,
 			);
 			path = Education;
 			sourceTree = "<group>";
@@ -285,6 +303,12 @@
 				BB000004000000000000020 /* UserLicense.swift in Sources */,
 				BB000004000000000000021 /* LFAPlayerLicense.swift in Sources */,
 				BB000004000000000000022 /* LicenseDashboard.swift in Sources */,
+				BB000004000000000000023 /* SpecializationInfo.swift in Sources */,
+				BB000004000000000000024 /* SpecializationStatus.swift in Sources */,
+				BB000004000000000000025 /* SpecializationProgress.swift in Sources */,
+				BB000004000000000000026 /* SkillProfile.swift in Sources */,
+				BB000004000000000000027 /* EducationViewModel.swift in Sources */,
+				BB000004000000000000028 /* EducationView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

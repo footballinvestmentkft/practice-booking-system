@@ -21,9 +21,7 @@ struct MainTabView: View {
             DashboardView()
                 .tabItem { Label("Dashboard", systemImage: "house.fill") }
 
-            PlaceholderScreen(title: "Education",
-                              subtitle: "Education Center — Phase E",
-                              icon: "book.fill")
+            EducationView()
                 .tabItem { Label("Education", systemImage: "book.fill") }
 
             PlaceholderScreen(title: "Training",
