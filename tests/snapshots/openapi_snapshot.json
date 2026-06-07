@@ -4605,6 +4605,20 @@
         "title": "Body_team_invite_teams__team_id__invite_post",
         "type": "object"
       },
+      "Body_upload_profile_photo_api_v1_users_me_profile_photo_post": {
+        "properties": {
+          "photo": {
+            "format": "binary",
+            "title": "Photo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "photo"
+        ],
+        "title": "Body_upload_profile_photo_api_v1_users_me_profile_photo_post",
+        "type": "object"
+      },
       "Booking": {
         "properties": {
           "attended_status": {
@@ -20477,6 +20491,39 @@
             ],
             "title": "Position"
           },
+          "profile_photo_processed_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Photo Processed Url"
+          },
+          "profile_photo_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Photo Status"
+          },
+          "profile_photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Photo Url"
+          },
           "role": {
             "$ref": "#/components/schemas/UserRole",
             "default": "student"
@@ -21865,6 +21912,39 @@
               }
             ],
             "title": "Position"
+          },
+          "profile_photo_processed_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Photo Processed Url"
+          },
+          "profile_photo_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Photo Status"
+          },
+          "profile_photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Photo Url"
           },
           "role": {
             "$ref": "#/components/schemas/UserRole",
@@ -59365,6 +59445,101 @@
           }
         ],
         "summary": "Get My Credit Transactions",
+        "tags": [
+          "users",
+          "users"
+        ]
+      }
+    },
+    "/api/v1/users/me/profile-photo": {
+      "delete": {
+        "description": "Delete the current user's profile photo.\n\nRemoves disk files and sets all three photo columns to NULL.  Idempotent.",
+        "operationId": "delete_current_profile_photo_api_v1_users_me_profile_photo_delete",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Current Profile Photo",
+        "tags": [
+          "users",
+          "users"
+        ]
+      },
+      "post": {
+        "description": "Upload or replace the current user's profile photo.\n\n- Accepts JPEG, PNG, WEBP (max 5 MB).\n- Resizes to max 2048 px, saves as PNG.\n- Auto-triggers background removal if BG_REMOVAL_PROCESSOR != \"null\".\n- Returns { profile_photo_url, status }.",
+        "operationId": "upload_profile_photo_api_v1_users_me_profile_photo_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_profile_photo_api_v1_users_me_profile_photo_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Upload Profile Photo Api V1 Users Me Profile Photo Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Upload Profile Photo",
+        "tags": [
+          "users",
+          "users"
+        ]
+      }
+    },
+    "/api/v1/users/me/profile-photo/status": {
+      "get": {
+        "description": "Return current profile photo status and URLs.\n\nstatus values: none / uploaded / processing / ready / failed\nNULL DB status is returned as \"none\".",
+        "operationId": "get_profile_photo_status_api_v1_users_me_profile_photo_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Get Profile Photo Status Api V1 Users Me Profile Photo Status Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Profile Photo Status",
         "tags": [
           "users",
           "users"
