@@ -37,6 +37,8 @@
 		BB000004000000000000028 /* EducationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000030 /* EducationView.swift */; };
 		BB000004000000000000029 /* MainHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000031 /* MainHubView.swift */; };
 		BB000004000000000000030 /* LFASpecTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000032 /* LFASpecTabView.swift */; };
+		BB000004000000000000031 /* BrandLogoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000033 /* BrandLogoView.swift */; };
+		BB000004000000000000032 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000034 /* SplashView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -72,6 +74,8 @@
 		BB000003000000000000030 /* EducationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EducationView.swift; sourceTree = "<group>"; };
 		BB000003000000000000031 /* MainHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainHubView.swift; sourceTree = "<group>"; };
 		BB000003000000000000032 /* LFASpecTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LFASpecTabView.swift; sourceTree = "<group>"; };
+		BB000003000000000000033 /* BrandLogoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandLogoView.swift; sourceTree = "<group>"; };
+		BB000003000000000000034 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -126,6 +130,7 @@
 				BB000003000000000000002 /* RootView.swift */,
 				BB000003000000000000031 /* MainHubView.swift */,
 				BB000003000000000000032 /* LFASpecTabView.swift */,
+				BB000003000000000000034 /* SplashView.swift */,
 				BB000003000000000000003 /* Info.plist */,
 			);
 			path = App;
@@ -135,6 +140,7 @@
 			isa = PBXGroup;
 			children = (
 				BB000003000000000000006 /* Theme.swift */,
+				BB000003000000000000033 /* BrandLogoView.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -317,6 +323,8 @@
 				BB000004000000000000028 /* EducationView.swift in Sources */,
 				BB000004000000000000029 /* MainHubView.swift in Sources */,
 				BB000004000000000000030 /* LFASpecTabView.swift in Sources */,
+				BB000004000000000000031 /* BrandLogoView.swift in Sources */,
+				BB000004000000000000032 /* SplashView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

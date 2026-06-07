@@ -22,17 +22,18 @@ import Foundation
 @MainActor
 final class AuthManager: ObservableObject {
 
-    @Published private(set) var isLoggedIn:   Bool    = false
-    @Published private(set) var isLoading:    Bool    = false
-    @Published              var errorMessage: String? = nil
+    @Published private(set) var isLoggedIn:           Bool    = false
+    @Published private(set) var isLoading:            Bool    = false
+    @Published private(set) var isValidatingSession:  Bool    = true   // true until validateSession() completes
+    @Published              var errorMessage:          String? = nil
 
     // Shared-task barrier replacing the former isRefreshing: Bool flag.
     // A non-nil value means a refresh is in-flight; new callers join via .value.
     private var pendingRefresh: Task<Bool, Never>?
 
     init() {
-        // Optimistic: if tokens exist, show MainTabView immediately.
-        // validateSession() (called from app .task) will verify and correct if needed.
+        // Optimistic: set isLoggedIn from Keychain immediately.
+        // isValidatingSession stays true so SplashView is shown until validateSession() finishes.
         isLoggedIn = KeychainService.load(account: KeychainService.accessTokenKey) != nil
     }
 
@@ -46,6 +47,9 @@ final class AuthManager: ObservableObject {
     //   4. Refresh 401 → logout (tokens invalid/expired beyond recovery).
     //   5. Network error at any step → stay logged in (offline tolerance).
     func validateSession() async {
+        // isValidatingSession was true from init — clear it when we're done regardless of outcome.
+        defer { isValidatingSession = false }
+
         guard let token = accessToken else {
             isLoggedIn = false
             return

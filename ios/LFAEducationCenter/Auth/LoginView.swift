@@ -17,13 +17,10 @@ struct LoginView: View {
             Spacer()
 
             // Brand header
-            VStack(spacing: Theme.Spacing.sm) {
-                Image(systemName: "person.circle.fill")
-                    .font(.system(size: 64))
-                    .foregroundColor(Theme.Color.primary)
-                Text("LFA Education Center")
-                    .font(.title2.weight(.bold))
-                    .foregroundColor(Theme.Color.onSurface)
+            VStack(spacing: Theme.Spacing.md) {
+                BrandLogoView()
+                    .frame(maxWidth: 220)
+                    .padding(.horizontal, Theme.Spacing.xl)
                 Text("Sign in to continue")
                     .font(.subheadline)
                     .foregroundColor(Theme.Color.muted)
