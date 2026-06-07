@@ -1,0 +1,503 @@
+{% extends "student_base.html" %}
+
+{% block title %}Camera & Hand Tracking Check – LFA{% endblock %}
+{% block active_page %}profile{% endblock %}
+
+{% block student_header %}
+{% set _page_icon = '📷' %}
+{% set _page_name = 'Camera & Tracking Check' %}
+{% include "includes/spec_subpage_hdr.html" %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .cc-container {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 1rem 1rem 3rem;
+    }
+
+    /* ── Intro card ─────────────────────────────────────────────────────── */
+    .cc-intro {
+        background: var(--app-card, #fff);
+        border-radius: 14px;
+        padding: 1.5rem 1.4rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+        margin-bottom: 1.25rem;
+    }
+    .cc-intro h2 {
+        font-size: 1.1rem; font-weight: 700;
+        color: var(--app-text, #1e293b); margin: 0 0 0.5rem;
+        display: flex; align-items: center; gap: 0.4rem;
+    }
+    .cc-intro p {
+        font-size: 0.875rem; color: var(--app-text-muted, #64748b);
+        margin: 0 0 1rem; line-height: 1.55;
+    }
+    .cc-btn-run {
+        display: block; width: 100%;
+        background: #4f46e5; color: #fff;
+        font-size: 1rem; font-weight: 700;
+        padding: 0.75rem; border: none; border-radius: 10px;
+        cursor: pointer; transition: background 0.15s; text-align: center;
+    }
+    .cc-btn-run:hover  { background: #4338ca; }
+    .cc-btn-run:disabled { background: #9ca3af; cursor: not-allowed; }
+
+    /* ── Camera wrap ────────────────────────────────────────────────────── */
+    .cc-camera-wrap {
+        position: relative;
+        width: 100%; aspect-ratio: 4 / 3;
+        max-height: 62vh;
+        background: #111827;
+        border-radius: 14px;
+        overflow: hidden;
+        margin-bottom: 0.9rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+        display: none;
+    }
+    .cc-camera-wrap.cc-cam-active { display: block; }
+
+    #cc-video {
+        position: absolute; inset: 0;
+        width: 100%; height: 100%;
+        object-fit: cover;
+        transform: scaleX(-1);
+    }
+    #cc-canvas {
+        position: absolute; inset: 0;
+        width: 100%; height: 100%;
+        pointer-events: none;
+    }
+
+    .cc-cam-placeholder {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        gap: 0.5rem;
+        color: #6b7280; font-size: 0.9rem; text-align: center;
+    }
+    .cc-cam-placeholder-icon { font-size: 2.5rem; opacity: 0.4; }
+
+    /* ── Checklist ──────────────────────────────────────────────────────── */
+    .cc-checklist {
+        background: var(--app-card, #fff);
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        display: flex; flex-direction: column; gap: 0.5rem;
+        margin-bottom: 0.9rem;
+    }
+    .cc-row {
+        display: flex; align-items: center; gap: 0.55rem;
+        font-size: 0.875rem;
+    }
+    .cc-icon { font-size: 1rem; width: 1.5rem; text-align: center; flex-shrink: 0; }
+    .cc-label { color: var(--app-text, #1e293b); flex: 1; }
+    .cc-status {
+        font-size: 0.75rem; font-weight: 600;
+        padding: 0.1rem 0.45rem; border-radius: 20px;
+        white-space: nowrap;
+    }
+    .cc-s-pending  { background: #f3f4f6; color: #6b7280; }
+    .cc-s-checking { background: #fef3c7; color: #92400e; }
+    .cc-s-ok       { background: #d1fae5; color: #065f46; }
+    .cc-s-warn     { background: #fef3c7; color: #92400e; }
+    .cc-s-fail     { background: #fee2e2; color: #991b1b; }
+
+    /* Hand instruction hint */
+    .cc-hint {
+        font-size: 0.82rem; color: var(--app-text-muted, #64748b);
+        text-align: center; line-height: 1.5;
+        padding: 0.5rem 0; display: none;
+    }
+    .cc-hint.cc-hint-visible { display: block; }
+
+    /* ── Error box ──────────────────────────────────────────────────────── */
+    .cc-error {
+        background: #fef2f2; border: 1px solid #fca5a5;
+        border-radius: 10px; padding: 0.85rem 1rem;
+        margin-bottom: 0.9rem; display: none;
+    }
+    .cc-error.cc-err-visible { display: block; }
+    .cc-error-title { font-weight: 700; font-size: 0.9rem; color: #991b1b; margin: 0 0 0.3rem; }
+    .cc-error-desc  { font-size: 0.82rem; color: #7f1d1d; line-height: 1.5; margin: 0; }
+
+    /* ── Platform warning box (amber, no Retry) ────────────────────────── */
+    .cc-warn {
+        background: #fffbeb; border: 1px solid #fde68a;
+        border-radius: 10px; padding: 0.85rem 1rem;
+        margin-bottom: 0.9rem; display: none;
+    }
+    .cc-warn.cc-warn-visible { display: block; }
+    .cc-warn-title { font-weight: 700; font-size: 0.9rem; color: #92400e; margin: 0 0 0.3rem; }
+    .cc-warn-desc  { font-size: 0.82rem; color: #78350f; line-height: 1.5; margin: 0; }
+
+    /* ── FPS warning ────────────────────────────────────────────────────── */
+    .cc-fps-warn {
+        background: #fffbeb; border: 1px solid #fde68a;
+        border-radius: 10px; padding: 0.65rem 0.9rem;
+        font-size: 0.82rem; color: #92400e;
+        margin-bottom: 0.9rem; display: none;
+    }
+    .cc-fps-warn.cc-fps-visible { display: block; }
+
+    /* ── Pass summary ───────────────────────────────────────────────────── */
+    .cc-pass {
+        background: #f0fdf4; border: 1px solid #86efac;
+        border-radius: 12px; padding: 1rem 1.1rem;
+        margin-bottom: 0.9rem; display: none;
+    }
+    .cc-pass.cc-pass-visible { display: block; }
+    .cc-pass-title { font-weight: 700; font-size: 0.95rem; color: #166534; margin: 0 0 0.3rem; }
+    .cc-pass-desc  { font-size: 0.82rem; color: #14532d; line-height: 1.5; margin: 0; }
+
+    /* ── Action buttons row ─────────────────────────────────────────────── */
+    .cc-actions {
+        display: flex; gap: 0.75rem; flex-wrap: wrap;
+        justify-content: center; margin-bottom: 1rem;
+    }
+    .cc-btn-retry {
+        padding: 0.6rem 1.6rem; font-size: 0.9rem; font-weight: 700;
+        border-radius: 10px; border: none; cursor: pointer;
+        background: #4f46e5; color: #fff; display: none;
+    }
+    .cc-btn-retry.cc-retry-visible { display: inline-block; }
+    .cc-btn-stop {
+        padding: 0.55rem 1.2rem; font-size: 0.85rem;
+        border-radius: 10px; border: 1px solid #d1d5db;
+        background: transparent; color: var(--app-text-muted, #6b7280);
+        cursor: pointer; display: none;
+    }
+    .cc-btn-stop.cc-stop-visible { display: inline-block; }
+
+    /* ── Face tracking section (disabled P0 placeholder) ───────────────── */
+    .cc-face-section {
+        background: var(--app-card, #fff);
+        border: 1px dashed #d1d5db;
+        border-radius: 12px; padding: 1rem 1.1rem;
+        margin-top: 1.25rem; opacity: 0.6;
+    }
+    .cc-face-title {
+        font-size: 0.95rem; font-weight: 700;
+        color: var(--app-text-muted, #6b7280);
+        display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.35rem;
+    }
+    .cc-face-badge {
+        font-size: 0.68rem; font-weight: 700;
+        background: #f3f4f6; color: #6b7280;
+        padding: 0.1rem 0.45rem; border-radius: 20px;
+        letter-spacing: 0.04em;
+    }
+    .cc-face-desc {
+        font-size: 0.82rem; color: var(--app-text-muted, #64748b);
+        margin: 0; line-height: 1.5;
+    }
+
+    /* ── Camera-test link ───────────────────────────────────────────────── */
+    .cc-footer {
+        text-align: center; margin-top: 2rem;
+        padding-top: 1.5rem; border-top: 1px solid #e2e8f0;
+        font-size: 0.82rem; color: var(--app-text-muted, #64748b);
+    }
+    .cc-footer a {
+        color: #4f46e5; text-decoration: none; font-weight: 600;
+        margin: 0 0.5rem;
+    }
+    .cc-footer a:hover { text-decoration: underline; }
+
+    /* ── On-screen debug panel (TEMP — diagnostic only) ─────────────────── */
+    .cc-dbg-panel {
+        margin-top: 1.5rem;
+        border: 1px solid #d1d5db; border-radius: 10px;
+        font-family: ui-monospace, 'Cascadia Code', monospace;
+        font-size: 0.72rem; overflow: hidden;
+        background: #f9fafb;
+    }
+    .cc-dbg-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0.4rem 0.65rem;
+        background: #1e293b; color: #e2e8f0;
+        cursor: pointer; user-select: none;
+    }
+    .cc-dbg-header-title { font-weight: 700; font-size: 0.75rem; letter-spacing: 0.04em; }
+    .cc-dbg-btn-row { display: flex; gap: 0.35rem; }
+    .cc-dbg-btn {
+        padding: 0.18rem 0.55rem; border-radius: 5px; border: none;
+        font-size: 0.7rem; font-weight: 600; cursor: pointer;
+        background: #334155; color: #e2e8f0;
+    }
+    .cc-dbg-btn:hover { background: #475569; }
+    .cc-dbg-body { display: none; }
+    .cc-dbg-body.cc-dbg-open { display: block; }
+    .cc-dbg-log {
+        max-height: 260px; overflow-y: auto;
+        padding: 0.5rem 0.65rem; line-height: 1.7;
+        background: #0f172a; color: #cbd5e1;
+    }
+    .cc-dbg-entry     { color: #94a3b8; word-break: break-all; }
+    .cc-dbg-entry-err { color: #f87171; word-break: break-all; }
+    .cc-dbg-area {
+        display: none; width: 100%; box-sizing: border-box;
+        min-height: 120px; padding: 0.5rem 0.65rem;
+        font-family: ui-monospace, monospace; font-size: 0.7rem;
+        border: none; border-top: 1px solid #d1d5db;
+        background: #f1f5f9; color: #1e293b; resize: vertical;
+    }
+    .cc-dbg-empty { color: #475569; font-style: italic; padding: 0.5rem; }
+</style>
+{% endblock %}
+
+{% block student_content %}
+
+{# Hidden video element — CalibCenter grabs the stream here #}
+<video id="cc-video" playsinline autoplay muted aria-hidden="true"
+       style="display:none; position:absolute; width:1px; height:1px; opacity:0;
+              pointer-events:none; overflow:hidden;"></video>
+
+<div class="cc-container">
+
+    {# ── Intro / start card ──────────────────────────────────────────────── #}
+    <div class="cc-intro" id="ccIntro">
+        <h2>📷 Camera &amp; Hand Tracking Check</h2>
+        <p>
+            Verify your camera, browser support, and hand-tracking model before playing
+            any camera-based game. This runs only on your device — nothing is sent to our servers.
+        </p>
+        <button class="cc-btn-run" id="ccBtnRun" onclick="CalibCenter.start()">
+            ▶ Run Calibration Check
+        </button>
+    </div>
+
+    {# ── Camera preview (hidden until check starts) ──────────────────────── #}
+    <div class="cc-camera-wrap" id="ccCameraWrap">
+        <canvas id="cc-canvas" aria-hidden="true"></canvas>
+        <div class="cc-cam-placeholder" id="ccCamPlaceholder">
+            <div class="cc-cam-placeholder-icon">📷</div>
+            <span>Starting camera…</span>
+        </div>
+    </div>
+
+    {# ── Checklist ───────────────────────────────────────────────────────── #}
+    <div class="cc-checklist" id="ccChecklist" style="display:none;">
+        <div class="cc-row">
+            <span class="cc-icon">🔒</span>
+            <span class="cc-label">Secure connection</span>
+            <span class="cc-status cc-s-pending" id="ccSecure">—</span>
+        </div>
+        <div class="cc-row">
+            <span class="cc-icon">📷</span>
+            <span class="cc-label">Camera API available</span>
+            <span class="cc-status cc-s-pending" id="ccCamera">—</span>
+        </div>
+        <div class="cc-row">
+            <span class="cc-icon">🎥</span>
+            <span class="cc-label">Video streaming</span>
+            <span class="cc-status cc-s-pending" id="ccStream">—</span>
+        </div>
+        <div class="cc-row">
+            <span class="cc-icon">🧠</span>
+            <span class="cc-label">Hand-tracking model</span>
+            <span class="cc-status cc-s-pending" id="ccModel">—</span>
+        </div>
+        <div class="cc-row">
+            <span class="cc-icon">⚙️</span>
+            <span class="cc-label">Frame processing</span>
+            <span class="cc-status cc-s-pending" id="ccFrames">—</span>
+        </div>
+        <div class="cc-row">
+            <span class="cc-icon">🖼️</span>
+            <span class="cc-label">Display overlay</span>
+            <span class="cc-status cc-s-pending" id="ccCanvas">—</span>
+        </div>
+        <div class="cc-row">
+            <span class="cc-icon">🤚</span>
+            <span class="cc-label">Hand detected</span>
+            <span class="cc-status cc-s-pending" id="ccHand">—</span>
+        </div>
+    </div>
+
+    {# ── Hand instruction hint ────────────────────────────────────────────── #}
+    <div class="cc-hint" id="ccHint">
+        💡 Hold your open hand, palm facing forward,<br>
+        in the upper half of the camera view.
+    </div>
+
+    {# ── Pass summary ────────────────────────────────────────────────────── #}
+    <div class="cc-pass" id="ccPass">
+        <p class="cc-pass-title">✅ All checks passed</p>
+        <p class="cc-pass-desc" id="ccPassDesc">
+            Camera and hand tracking are working. You're ready to play any camera-based game.
+        </p>
+    </div>
+
+    {# ── Error box ───────────────────────────────────────────────────────── #}
+    <div class="cc-error" id="ccError">
+        <p class="cc-error-title" id="ccErrorTitle"></p>
+        <p class="cc-error-desc"  id="ccErrorDesc"></p>
+    </div>
+
+    {# ── Platform warning box (non-fatal, no Retry) ──────────────────────── #}
+    <div class="cc-warn" id="ccWarn">
+        <p class="cc-warn-title" id="ccWarnTitle"></p>
+        <p class="cc-warn-desc"  id="ccWarnDesc"></p>
+    </div>
+
+    {# ── FPS warning (non-blocking) ──────────────────────────────────────── #}
+    <div class="cc-fps-warn" id="ccFpsWarn">
+        ⚠️ Low frame rate detected — camera-based games will auto-extend response windows.
+        The check passed but performance may be reduced on this device.
+    </div>
+
+    {# ── Action buttons ──────────────────────────────────────────────────── #}
+    <div class="cc-actions" id="ccActions">
+        <button class="cc-btn-retry" id="ccBtnRetry" onclick="CalibCenter.retry()">
+            ↻ Retry
+        </button>
+        <button class="cc-btn-stop" id="ccBtnStop" onclick="CalibCenter.stop()">
+            Stop
+        </button>
+    </div>
+
+    {# ── Face tracking placeholder (P1+) ─────────────────────────────────── #}
+    <div class="cc-face-section">
+        <p class="cc-face-title">
+            👁 Face Tracking Check
+            <span class="cc-face-badge">COMING NEXT</span>
+        </p>
+        <p class="cc-face-desc">
+            Face landmark detection and head-turn exercises will be available in a future update.
+            This will enable gaze-based games on this device.
+        </p>
+    </div>
+
+    {# ── Footer ──────────────────────────────────────────────────────────── #}
+    <div class="cc-footer">
+        <a href="/virtual-training/camera-test">🔧 Advanced camera diagnostic</a>
+        &nbsp;·&nbsp;
+        <a href="/profile">← Back to profile</a>
+    </div>
+
+    {# ── On-screen debug panel (TEMP — tap header to expand) ────────────── #}
+    <div class="cc-dbg-panel" id="ccDbgPanel">
+        <div class="cc-dbg-header" onclick="ccDbgToggle()">
+            <span class="cc-dbg-header-title">🔍 Debug Log</span>
+            <div class="cc-dbg-btn-row" onclick="event.stopPropagation()">
+                <button class="cc-dbg-btn" id="ccDbgCopyBtn" onclick="ccDbgCopy()">📋 Copy</button>
+                <button class="cc-dbg-btn" onclick="ccDbgShowArea()">≡ Text</button>
+                <button class="cc-dbg-btn" onclick="ccDbgClear()">🗑 Clear</button>
+                <button class="cc-dbg-btn" onclick="ccDbgToggle()">▼</button>
+            </div>
+        </div>
+        <div class="cc-dbg-body" id="ccDbgBody">
+            <div class="cc-dbg-log" id="ccDbgLog">
+                <div class="cc-dbg-empty" id="ccDbgEmpty">No logs yet — tap ▶ Run Calibration Check to start.</div>
+            </div>
+            <textarea class="cc-dbg-area" id="ccDbgArea"
+                      readonly placeholder="Tap ≡ Text to see copyable log here."></textarea>
+        </div>
+    </div>
+
+</div>
+
+<script src="/static/js/calib-center.js"></script>
+<script>
+(function () {
+    "use strict";
+
+    // ── On-screen debug panel — TEMP diagnostic tool ──────────────────────────
+    // All data stays on-device. Nothing is sent to the server.
+
+    var _ccBuf = '';   // full log text buffer for clipboard / textarea
+
+    window.ccDbgAdd = function (msg, level) {
+        var t   = new Date().toISOString().substring(11, 23);
+        var line = '[' + t + '] ' + msg;
+        _ccBuf  += line + '\n';
+
+        var log = document.getElementById('ccDbgLog');
+        if (!log) return;
+
+        // Remove "no logs" placeholder on first entry
+        var ph = document.getElementById('ccDbgEmpty');
+        if (ph) { ph.style.display = 'none'; }
+
+        var el = document.createElement('div');
+        el.className  = level === 'error' ? 'cc-dbg-entry cc-dbg-entry-err' : 'cc-dbg-entry';
+        el.textContent = line;
+        log.appendChild(el);
+
+        // Auto-scroll to newest entry
+        log.scrollTop = log.scrollHeight;
+
+        // Trim to 300 entries to avoid memory growth
+        while (log.children.length > 300) { log.removeChild(log.firstChild); }
+
+        // Keep textarea in sync if visible
+        var area = document.getElementById('ccDbgArea');
+        if (area && area.style.display !== 'none') { area.value = _ccBuf; }
+    };
+
+    window.ccDbgToggle = function () {
+        var body   = document.getElementById('ccDbgBody');
+        var toggle = document.querySelector('#ccDbgPanel .cc-dbg-header .cc-dbg-btn:last-child');
+        if (!body) return;
+        var open = body.classList.toggle('cc-dbg-open');
+        if (toggle) toggle.textContent = open ? '▲' : '▼';
+    };
+
+    window.ccDbgCopy = function () {
+        var btn = document.getElementById('ccDbgCopyBtn');
+        function _ok() {
+            if (btn) { btn.textContent = '✓ Copied!'; setTimeout(function () { btn.textContent = '📋 Copy'; }, 2500); }
+        }
+        function _fallback() { ccDbgShowArea(); }
+
+        if (!_ccBuf) { if (btn) btn.textContent = '(empty)'; return; }
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            navigator.clipboard.writeText(_ccBuf).then(_ok).catch(_fallback);
+        } else {
+            _fallback();
+        }
+    };
+
+    window.ccDbgShowArea = function () {
+        var area = document.getElementById('ccDbgArea');
+        if (!area) return;
+        area.value        = _ccBuf || '(no logs yet)';
+        area.style.display = 'block';
+        // Open panel if collapsed
+        var body = document.getElementById('ccDbgBody');
+        if (body && !body.classList.contains('cc-dbg-open')) { ccDbgToggle(); }
+        // Select all text for easy manual copy
+        setTimeout(function () { area.focus(); area.select(); }, 50);
+    };
+
+    window.ccDbgClear = function () {
+        _ccBuf = '';
+        var log  = document.getElementById('ccDbgLog');
+        var area = document.getElementById('ccDbgArea');
+        var ph   = document.getElementById('ccDbgEmpty');
+        if (log)  { log.innerHTML  = ''; if (ph) { ph.style.display = ''; log.appendChild(ph); } }
+        if (area) { area.value = ''; area.style.display = 'none'; }
+    };
+
+    // Auto-open the debug panel so it's visible immediately on iPhone
+    window.addEventListener('DOMContentLoaded', function () {
+        var body = document.getElementById('ccDbgBody');
+        if (body) body.classList.add('cc-dbg-open');
+        var toggle = document.querySelector('#ccDbgPanel .cc-dbg-header .cc-dbg-btn:last-child');
+        if (toggle) toggle.textContent = '▲';
+    });
+
+    // ── CalibCenter lifecycle ─────────────────────────────────────────────────
+    window.addEventListener('beforeunload', function () {
+        if (typeof CalibCenter !== 'undefined') CalibCenter.stop();
+    });
+    document.addEventListener('visibilitychange', function () {
+        if (document.hidden && typeof CalibCenter !== 'undefined') CalibCenter.pause();
+        else if (!document.hidden && typeof CalibCenter !== 'undefined') CalibCenter.resume();
+    });
+}());
+</script>
+{% endblock %}

@@ -1102,3 +1102,18 @@ async def export_onboarding_welcome_card(
             "X-Export-Platform":   platform,
         },
     )
+
+
+# ── Calibration Center ────────────────────────────────────────────────────────
+
+@router.get("/profile/calibration", response_class=HTMLResponse)
+async def profile_calibration_page(
+    request: Request,
+    user: User = Depends(get_current_user_web),
+):
+    """Camera & Hand Tracking Calibration Center — P0 (diagnostic only, no DB write)."""
+    return templates.TemplateResponse(
+        request,
+        "profile_calibration_center.html",
+        {"user": user},
+    )

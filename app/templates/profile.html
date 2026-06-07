@@ -394,6 +394,16 @@
         </div>
         {% endif %}
 
+        <!-- Camera & Tracking Check (all users) -->
+        <div class="card">
+            <h2>📷 Camera &amp; Tracking</h2>
+            <p style="font-size:0.85rem; color:#64748b; margin-bottom:0.85rem;">
+                Verify your camera, browser support, and hand-tracking model before playing
+                camera-based games. Runs locally — nothing is sent to our servers.
+            </p>
+            <a href="/profile/calibration" class="btn btn-primary">▶ Run check</a>
+        </div>
+
         <!-- Emergency Contact (if provided) -->
         {% if user.emergency_contact or user.emergency_phone %}
         <div class="card">

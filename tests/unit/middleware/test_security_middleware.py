@@ -521,17 +521,20 @@ class TestRateLimitDispatch:
 
 class TestSecurityHeadersMiddleware:
 
-    def _dispatch(self, csp=None):
+    def _dispatch(self, csp=None, path="/"):
         """Run dispatch and return the response with headers."""
         app = MagicMock()
         mw = SecurityHeadersMiddleware(app=app, csp_policy=csp)
         response = MagicMock()
         response.headers = {}
 
+        request = MagicMock()
+        request.url.path = path
+
         async def call_next(req):
             return response
 
-        _run(mw.dispatch(MagicMock(), call_next))
+        _run(mw.dispatch(request, call_next))
         return response
 
     def test_x_content_type_options_nosniff(self):
@@ -613,6 +616,191 @@ class TestSecurityHeadersMiddleware:
         pp = response.headers.get("Permissions-Policy", "")
         assert "geolocation=(self)" in pp, (
             "Permissions-Policy must include geolocation=(self)"
+        )
+
+    # WASM-SEC-01
+    def test_wasm_sec_01_script_src_contains_wasm_unsafe_eval(self):
+        """WASM-SEC-01: script-src must include 'wasm-unsafe-eval' for MediaPipe WASM init.
+
+        Safari iOS refuses WebAssembly.Module compilation without this directive.
+        'wasm-unsafe-eval' does NOT enable JS eval() — only WASM binary instantiation.
+        """
+        response = self._dispatch()
+        csp = response.headers["Content-Security-Policy"]
+        script_src = [p for p in csp.split(";") if "script-src" in p]
+        assert script_src, "CSP must contain a script-src directive"
+        assert "'wasm-unsafe-eval'" in script_src[0], (
+            "script-src must include 'wasm-unsafe-eval' for MediaPipe WASM "
+            "(Safari iOS blocks WebAssembly.Module without it)"
+        )
+
+    # WASM-SEC-02
+    def test_wasm_sec_02_worker_src_allows_self_and_blob(self):
+        """WASM-SEC-02: CSP must include worker-src 'self' blob: for Web Workers.
+
+        Same-origin Web Workers (hand/face tracking) require 'self'.
+        blob: covers browsers that wrap the worker URL in a Blob object URL.
+        Without worker-src, Safari iOS may block dynamic import() inside workers.
+        """
+        response = self._dispatch()
+        csp = response.headers["Content-Security-Policy"]
+        assert "worker-src" in csp, "CSP must contain a worker-src directive"
+        worker_src = [p for p in csp.split(";") if "worker-src" in p][0]
+        assert "'self'" in worker_src, "worker-src must include 'self'"
+        assert "blob:" in worker_src, "worker-src must include blob:"
+
+    # WASM-SEC-03
+    def test_wasm_sec_03_permissions_policy_camera_self(self):
+        """WASM-SEC-03: Permissions-Policy must set camera=(self), not camera=().
+
+        camera=() blocks getUserMedia entirely — even for same-origin pages.
+        camera=(self) restricts camera access to same-origin only (correct).
+        """
+        response = self._dispatch()
+        pp = response.headers.get("Permissions-Policy", "")
+        assert "camera=(self)" in pp, (
+            "Permissions-Policy must include camera=(self) "
+            "(camera=() blocks getUserMedia even for same-origin pages)"
+        )
+        assert "camera=()" not in pp, (
+            "Permissions-Policy must not contain camera=() — "
+            "this disables getUserMedia entirely"
+        )
+
+    # WASM-SEC-04
+    def test_wasm_sec_04_script_src_no_plain_unsafe_eval(self):
+        """WASM-SEC-04: script-src must NOT contain 'unsafe-eval' (only wasm-unsafe-eval).
+
+        'unsafe-eval' would allow arbitrary JS eval() — a significant XSS risk.
+        'wasm-unsafe-eval' is the narrow, WASM-only permission needed.
+        """
+        response = self._dispatch()
+        csp = response.headers["Content-Security-Policy"]
+        script_src = [p for p in csp.split(";") if "script-src" in p]
+        if script_src:
+            # 'unsafe-eval' should not appear unless it's part of 'wasm-unsafe-eval'
+            # Remove the wasm-unsafe-eval token, then check the remainder
+            remaining = script_src[0].replace("'wasm-unsafe-eval'", "")
+            assert "'unsafe-eval'" not in remaining, (
+                "script-src must not contain plain 'unsafe-eval' — "
+                "use 'wasm-unsafe-eval' only"
+            )
+
+    # CACHE-MP-01
+    def test_cache_mp_01_mediapipe_nosimd_js_gets_no_cache(self):
+        """CACHE-MP-01: /static/mediapipe/vision_wasm_nosimd_internal.js → Cache-Control: no-cache.
+
+        Without this, Safari caches the old (pre-patch) WASM loader JS indefinitely
+        and continues to crash with 't.alpha' even after the server file is patched.
+        """
+        response = self._dispatch(
+            path="/static/mediapipe/vision_wasm_nosimd_internal.js"
+        )
+        assert response.headers.get("Cache-Control") == "no-cache", (
+            "MediaPipe nosimd loader must have Cache-Control: no-cache "
+            "so Safari re-validates on every request"
+        )
+
+    # CACHE-MP-02
+    def test_cache_mp_02_mediapipe_simd_js_gets_no_cache(self):
+        """CACHE-MP-02: /static/mediapipe/vision_wasm_internal.js → Cache-Control: no-cache."""
+        response = self._dispatch(
+            path="/static/mediapipe/vision_wasm_internal.js"
+        )
+        assert response.headers.get("Cache-Control") == "no-cache"
+
+    # CACHE-MP-03
+    def test_cache_mp_03_mediapipe_task_gets_no_cache(self):
+        """CACHE-MP-03: /static/mediapipe/hand_landmarker.task → Cache-Control: no-cache."""
+        response = self._dispatch(
+            path="/static/mediapipe/hand_landmarker.task"
+        )
+        assert response.headers.get("Cache-Control") == "no-cache"
+
+    # CACHE-MP-04
+    def test_cache_mp_04_non_mediapipe_static_no_cache_control(self):
+        """CACHE-MP-04: Non-mediapipe static assets do NOT get an extra Cache-Control header.
+
+        Only /static/mediapipe/* should force revalidation.
+        Other static files (CSS, app JS) use browser default caching.
+        """
+        response = self._dispatch(path="/static/js/calib-center.js")
+        assert "Cache-Control" not in response.headers, (
+            "/static/js/ files must not get Cache-Control: no-cache — "
+            "only /static/mediapipe/ files need forced revalidation"
+        )
+
+    # CACHE-MP-05
+    def test_cache_mp_05_non_static_path_no_cache_control(self):
+        """CACHE-MP-05: Non-static paths (e.g., /profile) do NOT get Cache-Control: no-cache."""
+        response = self._dispatch(path="/profile/calibration")
+        assert "Cache-Control" not in response.headers
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# MediaPipe 0.10.35 — iOS Safari 18.7 getContextAttributes() null-guard
+# ──────────────────────────────────────────────────────────────────────────────
+
+class TestMediaPipeVendorHotfix:
+    """Verify that the iOS Safari 18.7 null-guard is natively present in both
+    WASM loaders shipped with @mediapipe/tasks-vision 0.10.35.
+
+    Root cause: iOS Safari 18.7 WebGLRenderingContext.getContextAttributes()
+    returns null in a Web Worker / OffscreenCanvas context.  Unguarded access
+    crashes HandLandmarker.createFromOptions() for both GPU and CPU delegates.
+
+    In 0.10.35 Emscripten emits the guard natively — no manual vendor patch
+    is needed.  The Emscripten pattern is:
+        var t = c.GLctx?.getContextAttributes();
+        if (!t) return -3;
+        HEAP8[a] = t.alpha;
+
+    These tests confirm that pattern is present in the self-hosted loaders and
+    that no unguarded HEAP8/HEAP32 write follows getContextAttributes().
+    """
+
+    _NOSIMD = (
+        "app/static/mediapipe/vision_wasm_nosimd_internal.js"
+    )
+    _SIMD = (
+        "app/static/mediapipe/vision_wasm_internal.js"
+    )
+
+    def _read(self, path: str) -> str:
+        from pathlib import Path
+        # parents[3] = practice_booking_system (project root)
+        return (Path(__file__).resolve().parents[3] / path).read_text(encoding="utf-8")
+
+    def test_mp_hotfix_01_nosimd_has_null_guard(self):
+        """MP-HOTFIX-01: vision_wasm_nosimd_internal.js has native getContextAttributes null-guard."""
+        txt = self._read(self._NOSIMD)
+        # 0.10.35: optional-chaining + explicit null check before any HEAP write
+        assert "getContextAttributes();\n  if (!t) return -3;" in txt, (
+            "iOS Safari 18.7 null-guard missing from vision_wasm_nosimd_internal.js — "
+            "verify this is @mediapipe/tasks-vision 0.10.35 or later."
+        )
+
+    def test_mp_hotfix_02_simd_has_null_guard(self):
+        """MP-HOTFIX-02: vision_wasm_internal.js has native getContextAttributes null-guard."""
+        txt = self._read(self._SIMD)
+        assert "getContextAttributes();\n  if (!t) return -3;" in txt, (
+            "iOS Safari 18.7 null-guard missing from vision_wasm_internal.js — "
+            "verify this is @mediapipe/tasks-vision 0.10.35 or later."
+        )
+
+    def test_mp_hotfix_03_nosimd_no_unguarded_access(self):
+        """MP-HOTFIX-03: vision_wasm_nosimd_internal.js has no unguarded t.alpha write."""
+        txt = self._read(self._NOSIMD)
+        # Neither old HEAP32 pattern nor bare HEAP8 without guard should appear
+        assert "getContextAttributes();\n  HEAP8[a]" not in txt, (
+            "Unguarded getContextAttributes() → HEAP8 write present in nosimd loader."
+        )
+
+    def test_mp_hotfix_04_simd_no_unguarded_access(self):
+        """MP-HOTFIX-04: vision_wasm_internal.js has no unguarded t.alpha write."""
+        txt = self._read(self._SIMD)
+        assert "getContextAttributes();\n  HEAP8[a]" not in txt, (
+            "Unguarded getContextAttributes() → HEAP8 write present in simd loader."
         )
 
 

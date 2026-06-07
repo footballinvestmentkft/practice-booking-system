@@ -2450,3 +2450,72 @@ async def virtual_training_peripheral_vision_result(
             "is_admin":     is_admin,
         },
     )
+
+
+# ── Camera diagnostic (no auth) ───────────────────────────────────────────────
+
+@router.get("/virtual-training/camera-test", response_class=HTMLResponse)
+async def camera_test_page(request: Request):
+    """Minimal camera diagnostic — no auth, no DB. Linked from Calibration Center."""
+    return HTMLResponse(content=_CAMERA_TEST_HTML)
+
+
+_CAMERA_TEST_HTML = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Camera Diagnostic - LFA</title>
+<style>
+  body { font-family: ui-monospace, monospace; background: #111; color: #e5e7eb;
+         max-width: 480px; margin: 2rem auto; padding: 1rem; }
+  h2   { color: #6ee7b7; margin: 0 0 1rem; }
+  pre  { background: #1f2937; padding: 1rem; border-radius: 6px;
+         white-space: pre-wrap; word-break: break-all; font-size: 0.8rem; }
+  .ok  { color: #6ee7b7; } .err { color: #fca5a5; } .warn { color: #fde68a; }
+  video { width: 100%; border-radius: 6px; margin-top: 1rem; background:#000; }
+  button { margin-top: 1rem; padding: 0.6rem 1.2rem; background: #4f46e5;
+           color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; }
+</style>
+</head>
+<body>
+<h2>&#x1f4f7; Camera Diagnostic</h2>
+<pre id="out">Running checks…</pre>
+<video id="vid" autoplay playsinline muted></video>
+<button onclick="runTest()">Re-run</button>
+<script>
+var out = document.getElementById('out');
+function log(line, cls) {
+    var span = document.createElement('span');
+    span.className = cls || '';
+    span.textContent = line + '\\n';
+    out.appendChild(span);
+}
+function runTest() {
+    out.innerHTML = '';
+    log('=== Environment ===');
+    log('isSecureContext:  ' + window.isSecureContext, window.isSecureContext ? 'ok' : 'err');
+    log('getUserMedia:     ' + (navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? 'exists' : 'MISSING'),
+        (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? 'ok' : 'err');
+    log('');
+    log('=== getUserMedia test ===');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        log('BLOCKED: not a secure context?', 'err'); return;
+    }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'user' }, width: { ideal: 640 } } })
+        .then(function(stream) {
+            log('SUCCESS', 'ok');
+            var t = stream.getVideoTracks()[0];
+            if (t) { log('label: ' + t.label, 'ok'); log('readyState: ' + t.readyState, 'ok'); }
+            document.getElementById('vid').srcObject = stream;
+        })
+        .catch(function(err) {
+            log('FAILED', 'err');
+            log('error.name: ' + err.name, 'err');
+            log('error.message: ' + err.message, 'err');
+        });
+}
+runTest();
+</script>
+</body>
+</html>"""

@@ -780,7 +780,7 @@ class TestCCD22to23RouteSnapshot:
         """CCD-22: Route count is 851 (CC-DESIGN-1 SNAPSHOT adds POST /challenges/{id}/card/photo)."""
         from app.main import app
         count = len(app.openapi().get("paths", {}))
-        assert count == 863, f"Expected 851, got {count}"
+        assert count == 865, f"Expected 851, got {count}"
 
     def test_ccd_23_openapi_snapshot_match(self):
         """CCD-23: OpenAPI snapshot matches live API."""
