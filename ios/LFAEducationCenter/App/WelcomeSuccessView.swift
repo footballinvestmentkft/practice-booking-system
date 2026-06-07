@@ -42,7 +42,7 @@ struct WelcomeSuccessView: View {
                         .foregroundColor(Theme.Color.primary)
                         .multilineTextAlignment(.center)
                         .lineLimit(nil)
-                    Text("LFA Education Center")
+                    Text("Lion Football Academy")
                         .font(.caption.weight(.semibold))
                         .foregroundColor(Theme.Color.muted)
                 }
