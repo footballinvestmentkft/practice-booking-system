@@ -1,7 +1,7 @@
 {
   "images": [
     {
-      "filename": "logo-dark.png",
+      "filename": "logo-light.png",
       "idiom": "universal",
       "appearances": [
         {
@@ -11,7 +11,7 @@
       ]
     },
     {
-      "filename": "logo-light.png",
+      "filename": "logo-dark.png",
       "idiom": "universal",
       "appearances": [
         {
