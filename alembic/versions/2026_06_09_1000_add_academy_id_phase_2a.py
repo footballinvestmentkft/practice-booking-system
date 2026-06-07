@@ -72,13 +72,15 @@ def upgrade() -> None:
             {"aid": academy_id, "uid": row.id},
         )
 
-    # 4. Apply UNIQUE index + NOT NULL now that every row is filled.
+    # 4. Apply UNIQUE index.
+    # Column stays NULLABLE — new users receive lfa_academy_id lazily via
+    # GET /me/academy-id (lazy assign with UNIQUE retry).  This avoids
+    # breaking any user-creation path that does not go through the
+    # academy-id service (e.g. fixtures, admin-created users, CI test setup).
     op.create_index("ix_users_lfa_academy_id", _TABLE, ["lfa_academy_id"], unique=True)
-    op.alter_column(_TABLE, "lfa_academy_id", nullable=False)
 
 
 def downgrade() -> None:
-    op.alter_column(_TABLE, "lfa_academy_id", nullable=True)
     op.drop_index("ix_users_lfa_academy_id", table_name=_TABLE)
     op.drop_column(_TABLE, "lfa_academy_id")
     op.drop_index("ix_users_public_token", table_name=_TABLE)
