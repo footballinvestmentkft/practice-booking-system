@@ -48,11 +48,13 @@ describe('CC-E2E-02: Insecure context → ccSecure FAIL', {
   beforeEach(() => { cy.clearAllCookies(); cy.webLoginAs('student'); });
 
   it('window.isSecureContext=false → ccSecure shows FAIL, error box visible', () => {
-    cy.visit(CC_URL);
-
-    cy.window().then((win) => {
-      // Override isSecureContext to false
-      Object.defineProperty(win, 'isSecureContext', { value: false, writable: true });
+    // Override isSecureContext BEFORE page loads (non-configurable in some browsers)
+    cy.visit(CC_URL, {
+      onBeforeLoad(win) {
+        Object.defineProperty(win, 'isSecureContext', {
+          get: () => false, configurable: true,
+        });
+      },
     });
 
     cy.get('#ccBtnRun').click();
@@ -63,6 +65,15 @@ describe('CC-E2E-02: Insecure context → ccSecure FAIL', {
   });
 });
 
+// ── Shared fake stream factory ────────────────────────────────────────────────
+function _fakeStream() {
+  var track  = { readyState: 'live', stop: function() {} };
+  return {
+    getVideoTracks: function() { return [track]; },
+    getTracks:      function() { return [track]; },
+  };
+}
+
 // ── CC-E2E-03 ─────────────────────────────────────────────────────────────────
 describe('CC-E2E-03: Camera blocked → ccCamera FAIL + error shown', {
   tags: ['@profile', '@calibration'],
@@ -71,21 +82,17 @@ describe('CC-E2E-03: Camera blocked → ccCamera FAIL + error shown', {
   beforeEach(() => { cy.clearAllCookies(); cy.webLoginAs('student'); });
 
   it('getUserMedia rejects with NotAllowedError → camera_blocked error shown', () => {
-    cy.visit(CC_URL);
-
-    cy.window().then((win) => {
-      // Ensure secure context passes
-      Object.defineProperty(win, 'isSecureContext', { value: true, writable: true });
-
-      // Stub mediaDevices.getUserMedia to reject
-      if (!win.navigator.mediaDevices) {
+    // Stub mediaDevices BEFORE page loads so CI headless (no camera) works
+    cy.visit(CC_URL, {
+      onBeforeLoad(win) {
+        var err = Object.assign(new Error('Permission denied'), { name: 'NotAllowedError' });
         Object.defineProperty(win.navigator, 'mediaDevices', {
-          value: { getUserMedia: () => {} }, writable: true, configurable: true,
+          value: {
+            getUserMedia: function() { return Promise.reject(err); },
+          },
+          configurable: true, writable: true,
         });
-      }
-      cy.stub(win.navigator.mediaDevices, 'getUserMedia').rejects(
-        Object.assign(new Error('Permission denied'), { name: 'NotAllowedError' })
-      );
+      },
     });
 
     cy.get('#ccBtnRun').click();
@@ -109,29 +116,21 @@ describe('CC-E2E-04: 5 hand frames → ccHand OK, pass shown', {
   before(() => { cy.resetDb('baseline'); });
   beforeEach(() => { cy.clearAllCookies(); cy.webLoginAs('student'); });
 
-  it('inject 5 hand frames via _testInjectHands → ccHand OK, cc-pass-visible', () => {
-    cy.visit(CC_URL);
-
-    cy.window().then((win) => {
-      // Stub entire pipeline: isSecureContext, getUserMedia (mock stream), Worker
-      Object.defineProperty(win, 'isSecureContext', { value: true, writable: true });
-
-      // Fake live MediaStream
-      var fakeTrack = { readyState: 'live', stop: function() {} };
-      var fakeStream = {
-        getVideoTracks: function() { return [fakeTrack]; },
-        getTracks: function() { return [fakeTrack]; },
-      };
-      if (!win.navigator.mediaDevices) {
+  it('inject 5 hand frames via worker mock → ccHand OK, cc-pass-visible', () => {
+    // Stub mediaDevices BEFORE page loads (navigator.mediaDevices undefined in headless CI)
+    var stream = _fakeStream();
+    cy.visit(CC_URL, {
+      onBeforeLoad(win) {
         Object.defineProperty(win.navigator, 'mediaDevices', {
-          value: { getUserMedia: () => {} }, writable: true, configurable: true,
+          value: { getUserMedia: function() { return Promise.resolve(stream); } },
+          configurable: true, writable: true,
         });
-      }
-      cy.stub(win.navigator.mediaDevices, 'getUserMedia').resolves(fakeStream);
+      },
+    });
 
-      // Suppress Worker creation — inject frames directly via _qaFramesRcvd + callback
-      var OrigWorker = win.Worker;
-      win.Worker = function(url) {
+    // After visit: replace Worker with a mock that emits 'ready' on init
+    cy.window().then((win) => {
+      win.Worker = function() {
         this.onmessage = null;
         this.onerror   = null;
         this.postMessage = function(msg) {
@@ -145,31 +144,21 @@ describe('CC-E2E-04: 5 hand frames → ccHand OK, pass shown', {
             try { msg.bitmap.close(); } catch(_) {}
           }
         };
-        this.onerror = null;
-        // store reference so test can send hand frames
         win._calibTestWorker = this;
       };
     });
 
     cy.get('#ccBtnRun').click();
 
-    // Wait for model OK (worker sends 'ready' after 50ms)
+    // Worker emits 'ready' after 50ms → ccModel shows OK
     cy.get('#ccModel', { timeout: 5000 }).should('contain', 'OK');
 
-    // Advance frame counter past FRAME_LOOP_MIN (10) so frame-loop check passes
+    // Drive frames + hands via the mock worker reference
     cy.window().then((win) => {
-      win._qaFramesRcvd_calib = 15; // internal variable exposed via CalibCenter
-      // Patch CalibCenter internal _framesRcvd — simulate via direct counter increment
-      // CalibCenter polls _framesRcvd; we can't easily reach inside the closure,
-      // so instead drive via the worker onmessage callback directly.
       if (win._calibTestWorker && win._calibTestWorker.onmessage) {
-        // Send 15 no_hands messages to pass frame loop check
         for (var i = 0; i < 15; i++) {
-          win._calibTestWorker.onmessage({
-            data: { type: 'no_hands' },
-          });
+          win._calibTestWorker.onmessage({ data: { type: 'no_hands' } });
         }
-        // Then send 5 hands messages to pass hand check
         for (var j = 0; j < 5; j++) {
           win._calibTestWorker.onmessage({
             data: {
@@ -194,24 +183,19 @@ describe('CC-E2E-05: No hand detected timeout → FAIL + instruction shown', {
   beforeEach(() => { cy.clearAllCookies(); cy.webLoginAs('student'); });
 
   it('no hand frames for 25 s → ccHand FAIL, no_hand error shown', () => {
-    cy.visit(CC_URL);
+    var stream = _fakeStream();
+    cy.visit(CC_URL, {
+      onBeforeLoad(win) {
+        Object.defineProperty(win.navigator, 'mediaDevices', {
+          value: { getUserMedia: function() { return Promise.resolve(stream); } },
+          configurable: true, writable: true,
+        });
+      },
+    });
+
     cy.clock();  // fake timers
 
     cy.window().then((win) => {
-      Object.defineProperty(win, 'isSecureContext', { value: true, writable: true });
-
-      var fakeTrack  = { readyState: 'live', stop: function() {} };
-      var fakeStream = {
-        getVideoTracks: function() { return [fakeTrack]; },
-        getTracks:      function() { return [fakeTrack]; },
-      };
-      if (!win.navigator.mediaDevices) {
-        Object.defineProperty(win.navigator, 'mediaDevices', {
-          value: { getUserMedia: () => {} }, writable: true, configurable: true,
-        });
-      }
-      cy.stub(win.navigator.mediaDevices, 'getUserMedia').resolves(fakeStream);
-
       win.Worker = function() {
         this.onmessage = null;
         this.postMessage = function(msg) {
@@ -219,7 +203,6 @@ describe('CC-E2E-05: No hand detected timeout → FAIL + instruction shown', {
             var self = this;
             setTimeout(function() {
               if (self.onmessage) {
-                // Send model ready + 15 no_hands to pass frame loop
                 self.onmessage({ data: { type: 'ready', delegate: 'CPU' } });
                 for (var i = 0; i < 15; i++) {
                   self.onmessage({ data: { type: 'no_hands' } });
@@ -237,7 +220,6 @@ describe('CC-E2E-05: No hand detected timeout → FAIL + instruction shown', {
     cy.get('#ccBtnRun').click();
     cy.get('#ccModel', { timeout: 5000 }).should('contain', 'OK');
 
-    // Advance fake clock past HAND_TIMEOUT_MS (25 000 ms)
     cy.tick(26000);
 
     cy.get('#ccHand', { timeout: 3000 }).should('contain', 'FAIL');
