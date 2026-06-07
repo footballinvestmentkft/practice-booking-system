@@ -3,15 +3,19 @@ import Foundation
 // Education Center data layer.
 //
 // Endpoint mapping:
-//   /api/v1/specializations/me            → status  (fatal — determines what to show)
+//   /api/v1/specializations/me            → status  (network error = fatal, other errors = empty state)
 //   /api/v1/specializations/              → availableSpecs (non-fatal, public catalog)
 //   /api/v1/specializations/progress/me  → progressData (non-fatal, silent-fail OK)
 //   /api/v1/lfa-player/licenses/me        → lfaLicense (non-fatal, 404 = not onboarded)
 //   /api/v1/progression/skill-profile     → skillProfile (non-fatal, 404 = no license)
 //
-// /api/v1/progression/progress is intentionally excluded: it returns mock/hardcoded data.
+// Error handling policy:
+//   networkError  → .error (connection error shown)
+//   unauthorized  → .idle  (AuthManager triggers logout)
+//   httpError 4xx/5xx, decodingError on status → status = nil, continue to .loaded (empty state)
+//   httpError/decodingError on non-fatal calls → try? swallows, field stays nil
 //
-// Concurrent 401 race is handled by AuthManager.performRefresh() shared Task barrier.
+// /api/v1/progression/progress is intentionally excluded: returns mock/hardcoded data.
 @MainActor
 final class EducationViewModel: ObservableObject {
 
@@ -30,12 +34,12 @@ final class EducationViewModel: ObservableObject {
         }
     }
 
-    @Published private(set) var loadState:     LoadState                            = .idle
-    @Published private(set) var status:        SpecializationStatus?                = nil
-    @Published private(set) var availableSpecs: [SpecializationInfo]               = []
-    @Published private(set) var progressData:  [String: SpecializationProgressData] = [:]
-    @Published private(set) var lfaLicense:    LFAPlayerLicense?                   = nil
-    @Published private(set) var skillProfile:  SkillProfile?                        = nil
+    @Published private(set) var loadState:      LoadState                             = .idle
+    @Published private(set) var status:         SpecializationStatus?                 = nil
+    @Published private(set) var availableSpecs: [SpecializationInfo]                  = []
+    @Published private(set) var progressData:   [String: SpecializationProgressData]  = [:]
+    @Published private(set) var lfaLicense:     LFAPlayerLicense?                     = nil
+    @Published private(set) var skillProfile:   SkillProfile?                          = nil
 
     // MARK: — Load (initial, guarded)
 
@@ -72,40 +76,44 @@ final class EducationViewModel: ObservableObject {
     private func fetchData(using authManager: AuthManager) async {
         loadState = .loading
 
+        // 1. Specialization status — precise per-error-type handling.
+        //    networkError → fatal (connection error). Other errors → empty state (status = nil).
+        //    This prevents misleading "connection error" when backend returns 4xx or schema drifts.
         do {
-            // 1. Current specialization — fatal (can't render Education without it)
-            status = try await authManager.authenticatedGet(
-                path: "/api/v1/specializations/me"
-            )
-
-            // 2. Available specializations catalog — non-fatal
-            availableSpecs = (try? await authManager.authenticatedGet(
-                path: "/api/v1/specializations/"
-            )) ?? []
-
-            // 3. Specialization progress — non-fatal (silent-fail returns empty dict)
-            let progressResp: SpecializationProgressResponse? = try? await authManager.authenticatedGet(
-                path: "/api/v1/specializations/progress/me"
-            )
-            progressData = progressResp?.data ?? [:]
-
-            // 4. LFA Player license — non-fatal (404 = user not yet onboarded)
-            lfaLicense = try? await authManager.authenticatedGet(
-                path: "/api/v1/lfa-player/licenses/me"
-            )
-
-            // 5. Skill profile — non-fatal (404 = no active LFA license yet)
-            skillProfile = try? await authManager.authenticatedGet(
-                path: "/api/v1/progression/skill-profile"
-            )
-
-            loadState = .loaded
-
+            status = try await authManager.authenticatedGet(path: "/api/v1/specializations/me")
         } catch APIError.unauthorized {
-            // AuthManager already called logout() → RootView switches to LoginView.
             loadState = .idle
+            return
+        } catch APIError.networkError(_) {
+            loadState = .error("Could not reach Education Center. Check your connection.")
+            return
         } catch {
-            loadState = .error("Could not load Education Center. Check your connection.")
+            // HTTP 4xx/5xx or decodingError — not a connectivity problem.
+            // Show empty/onboarding state rather than a misleading connection error.
+            status = nil
         }
+
+        // 2. Available specializations catalog — non-fatal (empty list if endpoint fails)
+        availableSpecs = (try? await authManager.authenticatedGet(
+            path: "/api/v1/specializations/"
+        )) ?? []
+
+        // 3. Specialization progress — non-fatal (silent-fail on empty dict or decode error)
+        let progressResp: SpecializationProgressResponse? = try? await authManager.authenticatedGet(
+            path: "/api/v1/specializations/progress/me"
+        )
+        progressData = progressResp?.data ?? [:]
+
+        // 4. LFA Player license — non-fatal (404 = user not yet onboarded)
+        lfaLicense = try? await authManager.authenticatedGet(
+            path: "/api/v1/lfa-player/licenses/me"
+        )
+
+        // 5. Skill profile — non-fatal (404 = no active LFA license yet)
+        skillProfile = try? await authManager.authenticatedGet(
+            path: "/api/v1/progression/skill-profile"
+        )
+
+        loadState = .loaded
     }
 }
