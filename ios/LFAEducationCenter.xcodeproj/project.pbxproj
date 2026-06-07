@@ -24,6 +24,9 @@
 		BB000004000000000000015 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000017 /* APIClient.swift */; };
 		BB000004000000000000016 /* APIConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000018 /* APIConfig.swift */; };
 		BB000004000000000000017 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000019 /* UserProfile.swift */; };
+		BB000004000000000000018 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000020 /* DashboardView.swift */; };
+		BB000004000000000000019 /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000021 /* DashboardViewModel.swift */; };
+		BB000004000000000000020 /* UserLicense.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000022 /* UserLicense.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -46,6 +49,9 @@
 		BB000003000000000000017 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		BB000003000000000000018 /* APIConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIConfig.swift; sourceTree = "<group>"; };
 		BB000003000000000000019 /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
+		BB000003000000000000020 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		BB000003000000000000021 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000022 /* UserLicense.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserLicense.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -135,6 +141,7 @@
 			children = (
 				BB000003000000000000010 /* SkeletonFrame.swift */,
 				BB000003000000000000019 /* UserProfile.swift */,
+				BB000003000000000000022 /* UserLicense.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -153,6 +160,8 @@
 		BB000002000000000000010 /* Dashboard */ = {
 			isa = PBXGroup;
 			children = (
+				BB000003000000000000020 /* DashboardView.swift */,
+				BB000003000000000000021 /* DashboardViewModel.swift */,
 			);
 			path = Dashboard;
 			sourceTree = "<group>";
@@ -265,6 +274,9 @@
 				BB000004000000000000015 /* APIClient.swift in Sources */,
 				BB000004000000000000016 /* APIConfig.swift in Sources */,
 				BB000004000000000000017 /* UserProfile.swift in Sources */,
+				BB000004000000000000018 /* DashboardView.swift in Sources */,
+				BB000004000000000000019 /* DashboardViewModel.swift in Sources */,
+				BB000004000000000000020 /* UserLicense.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
