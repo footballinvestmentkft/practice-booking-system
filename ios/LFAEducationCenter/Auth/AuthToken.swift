@@ -45,6 +45,24 @@ struct RegisterRequest: Encodable {
     }
 }
 
+// POST /api/v1/invitation-codes/validate — public, no auth required.
+// Pre-checks a code before registration; does NOT consume it.
+struct InviteValidateRequest: Encodable {
+    let code: String
+}
+
+struct InviteValidateResponse: Decodable {
+    let success:      Bool
+    let valid:        Bool
+    let bonusCredits: Int?
+    let invitedName:  String?
+    enum CodingKeys: String, CodingKey {
+        case success, valid
+        case bonusCredits = "bonus_credits"
+        case invitedName  = "invited_name"
+    }
+}
+
 // Shared response for login and refresh — both endpoints return the same shape.
 struct AuthResponse: Decodable {
     let accessToken:  String

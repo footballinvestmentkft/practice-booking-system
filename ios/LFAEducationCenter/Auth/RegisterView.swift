@@ -1,13 +1,15 @@
 import SwiftUI
+import PhotosUI
 
-// Academy Dialogue + ID Builder Hybrid registration.
+// Academy Dialogue + ID Builder Hybrid — Invite First flow.
 //
-// Flow: Intro → Step 0–4 → submitRegistration() → WelcomeSuccessView
-// step == -1: intro screen (no card shown)
-// step  0–4:  question-based enrollment with live AcademyIDCardView
+// Step order:
+//   Intro → Step 0 (Invitation + Verify) → Step 1 (Identity + Photo)
+//         → Step 2 (Profile) → Step 3 (Contact) → Step 4 (Location)
+//         → Join the Academy → WelcomeSuccessView
 //
-// All backend fields are preserved — RegisterRequest and
-// POST /api/v1/auth/register-with-invitation are unchanged.
+// RegisterRequest and POST /api/v1/auth/register-with-invitation are unchanged.
+// profileImage is local preview only — never sent to the backend.
 struct RegisterView: View {
     @EnvironmentObject private var authManager: AuthManager
     @Environment(\.presentationMode) private var presentationMode
@@ -16,33 +18,39 @@ struct RegisterView: View {
     @State private var step:           Int  = -1   // -1 = intro
     @State private var isGoingForward: Bool = true
 
-    // Step 0 — Identity
-    @State private var firstName = ""
-    @State private var lastName  = ""
-    @State private var nickname  = ""
+    // Step 0 — Invitation
+    @State private var invitationCode   = ""
+    @State private var isVerifying      = false
+    @State private var isAccessVerified = false
+    @State private var verifiedCredits: Int?    = nil
+    @State private var verifyError:     String? = nil
 
-    // Step 1 — Profile
+    // Step 1 — Identity + Photo
+    @State private var firstName    = ""
+    @State private var lastName     = ""
+    @State private var nickname     = ""
+    @State private var profileImage: UIImage? = nil
+    @State private var showPhotoPicker = false
+
+    // Step 2 — Profile
     @State private var dateOfBirth: Date = Calendar.current.date(
         byAdding: .year, value: -16, to: Date()
     ) ?? Date()
     @State private var nationality = "HU"
     @State private var gender      = "Male"
 
-    // Step 2 — Contact
+    // Step 3 — Contact
     @State private var phone    = ""
     @State private var email    = ""
     @State private var password = ""
 
-    // Step 3 — Location
+    // Step 4 — Location
     @State private var streetAddress = ""
     @State private var city          = ""
     @State private var postalCode    = ""
     @State private var country       = ""
 
-    // Step 4 — Invitation
-    @State private var invitationCode = ""
-
-    // Visual-only LFA-ID generated once per registration session
+    // Visual-only LFA-ID generated once per session
     @State private var lfaDisplayID = String(format: "%06d", Int.random(in: 100_000...999_999))
 
     private let maxDate = Calendar.current.date(byAdding: .year, value: -5, to: Date()) ?? Date()
@@ -55,16 +63,21 @@ struct RegisterView: View {
     ]
 
     private let stepMeta: [(title: String, subtitle: String)] = [
-        ("What should we call you?",
+        // Step 0 — Invitation
+        ("Your invitation.",
+         "Enter your code to unlock access to the academy."),
+        // Step 1 — Identity
+        ("Who are you?",
          "Your name will appear on your Academy profile."),
+        // Step 2 — Profile
         ("Tell us about yourself.",
          "This helps us personalise your Academy experience."),
+        // Step 3 — Contact
         ("How can the academy reach you?",
          "Your contact information stays private."),
+        // Step 4 — Location
         ("Where will you be joining from?",
          "Your location helps us connect you to local sessions."),
-        ("You were personally invited.",
-         "Enter your invitation code to complete enrolment."),
     ]
 
     // MARK: — Body
@@ -95,8 +108,7 @@ struct RegisterView: View {
             Spacer()
 
             VStack(spacing: Theme.Spacing.lg) {
-                BrandLogoView()
-                    .frame(maxWidth: 130)
+                BrandLogoView().frame(maxWidth: 130)
 
                 VStack(spacing: Theme.Spacing.sm) {
                     Text("Welcome to the Academy.")
@@ -104,12 +116,10 @@ struct RegisterView: View {
                         .foregroundColor(Theme.Color.onSurface)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
-
                     Text("Let's build your LFA profile.")
                         .font(.subheadline)
                         .foregroundColor(Theme.Color.muted)
                         .multilineTextAlignment(.center)
-
                     Text("This will only take a few minutes.")
                         .font(.caption)
                         .foregroundColor(Theme.Color.muted.opacity(0.65))
@@ -119,9 +129,7 @@ struct RegisterView: View {
 
             Spacer()
 
-            Button {
-                advance(to: 0)
-            } label: {
+            Button { advance(to: 0) } label: {
                 Text("Begin →")
                     .fontWeight(.semibold)
                     .frame(maxWidth: .infinity)
@@ -145,15 +153,10 @@ struct RegisterView: View {
             // Animated progress bar
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(Theme.Color.muted.opacity(0.15))
-                        .frame(height: 3)
+                    Capsule().fill(Theme.Color.muted.opacity(0.15)).frame(height: 3)
                     Capsule()
                         .fill(Theme.Color.primary)
-                        .frame(
-                            width: geo.size.width * Double(step + 1) / 5.0,
-                            height: 3
-                        )
+                        .frame(width: geo.size.width * Double(step + 1) / 5.0, height: 3)
                         .animation(.easeInOut(duration: 0.3), value: step)
                 }
             }
@@ -161,27 +164,26 @@ struct RegisterView: View {
             .padding(.horizontal, Theme.Spacing.xl)
             .padding(.bottom, Theme.Spacing.sm)
 
-            // Scrollable content: ID card + step
             ScrollView {
                 VStack(spacing: Theme.Spacing.md) {
                     // Academy ID live preview
                     AcademyIDCardView(
-                        firstName:   opt(firstName),
-                        lastName:    opt(lastName),
-                        nickname:    opt(nickname),
-                        age:         computedAge,
-                        nationality: nationality,
-                        gender:      gender,
-                        city:        opt(city),
-                        country:     opt(country),
-                        isInvited:   invitationCode.trimmingCharacters(in: .whitespaces).count >= 8,
-                        lfaID:       lfaDisplayID
+                        firstName:    opt(firstName),
+                        lastName:     opt(lastName),
+                        nickname:     opt(nickname),
+                        age:          computedAge,
+                        nationality:  nationality,
+                        gender:       gender,
+                        city:         opt(city),
+                        country:      opt(country),
+                        profileImage: profileImage,
+                        isVerified:   isAccessVerified,
+                        lfaID:        lfaDisplayID
                     )
                     .padding(.horizontal, Theme.Spacing.md)
 
                     Divider()
 
-                    // Step header + fields
                     VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                         stepHeader
                         currentStepContent
@@ -210,16 +212,12 @@ struct RegisterView: View {
                 presentationMode.wrappedValue.dismiss()
             }
             .foregroundColor(Theme.Color.muted)
-
             Spacer()
-
             Text("Academy Enrolment")
                 .font(.subheadline.weight(.semibold))
                 .foregroundColor(Theme.Color.onSurface)
-
             Spacer()
-
-            Text("Cancel").foregroundColor(.clear) // centering balance
+            Text("Cancel").foregroundColor(.clear)
         }
         .padding(.horizontal, Theme.Spacing.xl)
         .padding(.top, Theme.Spacing.md)
@@ -250,32 +248,150 @@ struct RegisterView: View {
     @ViewBuilder
     private var currentStepContent: some View {
         switch step {
-        case 0: identityStep
-        case 1: profileStep
-        case 2: contactStep
-        case 3: locationStep
-        default: invitationStep
+        case 0: invitationStep
+        case 1: identityStep
+        case 2: profileStep
+        case 3: contactStep
+        default: locationStep
         }
     }
 
-    // MARK: — Step 0: Identity
+    // MARK: — Step 0: Invitation + pre-check
+
+    private var invitationStep: some View {
+        VStack(spacing: Theme.Spacing.md) {
+            regField("Invitation Code", text: $invitationCode, autocap: true)
+                .onChange(of: invitationCode) { _ in
+                    // Reset verification whenever the code changes
+                    isAccessVerified = false
+                    verifiedCredits  = nil
+                    verifyError      = nil
+                }
+
+            // Verify Access button
+            Button {
+                Task { await verifyInvitationCode() }
+            } label: {
+                HStack(spacing: 6) {
+                    if isVerifying {
+                        ProgressView().scaleEffect(0.75)
+                        Text("Verifying...")
+                    } else if isAccessVerified {
+                        Image(systemName: "checkmark.shield.fill")
+                        Text("Access Verified")
+                    } else {
+                        Image(systemName: "checkmark.shield")
+                        Text("Verify Access")
+                    }
+                }
+                .font(.body.weight(.semibold))
+                .frame(maxWidth: .infinity)
+                .frame(height: 44)
+                .background(
+                    isAccessVerified
+                        ? Theme.Color.primary.opacity(0.12)
+                        : Theme.Color.primary
+                )
+                .foregroundColor(isAccessVerified ? Theme.Color.primary : .white)
+                .cornerRadius(Theme.Radius.sm)
+            }
+            .disabled(
+                invitationCode.trimmingCharacters(in: .whitespaces).isEmpty
+                || isVerifying
+                || isAccessVerified
+            )
+
+            // Verification status
+            if isAccessVerified {
+                VStack(spacing: 4) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(Theme.Color.primary)
+                        Text("Access verified.")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundColor(Theme.Color.primary)
+                    }
+                    if let cr = verifiedCredits, cr > 0 {
+                        Text("+ \(cr) CR included with this invitation.")
+                            .font(.caption)
+                            .foregroundColor(Theme.Color.secondary)
+                    }
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.95, anchor: .top)))
+            }
+
+            if let err = verifyError {
+                Text(err)
+                    .font(.footnote)
+                    .foregroundColor(Theme.Color.error)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: isAccessVerified)
+        .animation(.easeInOut(duration: 0.15), value: verifyError)
+    }
+
+    // MARK: — Step 1: Identity + optional photo
 
     private var identityStep: some View {
         VStack(spacing: Theme.Spacing.md) {
             regField("First Name", text: $firstName)
             regField("Last Name", text: $lastName)
             regField("Nickname", text: $nickname)
+
+            // Photo picker
+            VStack(spacing: 6) {
+                Button { showPhotoPicker = true } label: {
+                    HStack(spacing: 10) {
+                        if let img = profileImage {
+                            Image(uiImage: img)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 32, height: 32)
+                                .clipShape(Circle())
+                        } else {
+                            Circle()
+                                .fill(Theme.Color.muted.opacity(0.12))
+                                .frame(width: 32, height: 32)
+                                .overlay(
+                                    Image(systemName: "person.crop.circle.badge.plus")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(Theme.Color.muted)
+                                )
+                        }
+                        Text(profileImage == nil
+                             ? "Add Profile Photo (optional)"
+                             : "Change Photo")
+                            .font(.subheadline)
+                            .foregroundColor(Theme.Color.muted)
+                        Spacer()
+                    }
+                    .padding(.horizontal, Theme.Spacing.md)
+                    .padding(.vertical, Theme.Spacing.sm)
+                    .background(Theme.Color.surface)
+                    .cornerRadius(Theme.Radius.sm)
+                }
+
+                Text("Preview only. Photo upload available after onboarding.")
+                    .font(.caption2)
+                    .foregroundColor(Theme.Color.muted.opacity(0.6))
+                    .multilineTextAlignment(.center)
+            }
+            .sheet(isPresented: $showPhotoPicker) {
+                PhotoPicker(isPresented: $showPhotoPicker, selectedImage: $profileImage)
+            }
         }
     }
 
-    // MARK: — Step 1: Profile
+    // MARK: — Step 2: Profile
 
     private var profileStep: some View {
         VStack(spacing: Theme.Spacing.md) {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Date of Birth")
-                    .font(.caption)
-                    .foregroundColor(Theme.Color.muted)
+                    .font(.caption).foregroundColor(Theme.Color.muted)
                 DatePicker("", selection: $dateOfBirth, in: ...maxDate, displayedComponents: .date)
                     .datePickerStyle(.compact)
                     .labelsHidden()
@@ -284,11 +400,9 @@ struct RegisterView: View {
                     .background(Theme.Color.surface)
                     .cornerRadius(Theme.Radius.sm)
             }
-
             VStack(alignment: .leading, spacing: 6) {
                 Text("Nationality")
-                    .font(.caption)
-                    .foregroundColor(Theme.Color.muted)
+                    .font(.caption).foregroundColor(Theme.Color.muted)
                 Picker("Nationality", selection: $nationality) {
                     ForEach(nationalityOptions, id: \.0) { code, label in
                         Text(label).tag(code)
@@ -301,11 +415,9 @@ struct RegisterView: View {
                 .background(Theme.Color.surface)
                 .cornerRadius(Theme.Radius.sm)
             }
-
             VStack(alignment: .leading, spacing: 6) {
                 Text("Gender")
-                    .font(.caption)
-                    .foregroundColor(Theme.Color.muted)
+                    .font(.caption).foregroundColor(Theme.Color.muted)
                 Picker("Gender", selection: $gender) {
                     Text("Male").tag("Male")
                     Text("Female").tag("Female")
@@ -320,7 +432,7 @@ struct RegisterView: View {
         }
     }
 
-    // MARK: — Step 2: Contact
+    // MARK: — Step 3: Contact
 
     private var contactStep: some View {
         VStack(spacing: Theme.Spacing.md) {
@@ -330,7 +442,7 @@ struct RegisterView: View {
         }
     }
 
-    // MARK: — Step 3: Location
+    // MARK: — Step 4: Location
 
     private var locationStep: some View {
         VStack(spacing: Theme.Spacing.md) {
@@ -338,25 +450,6 @@ struct RegisterView: View {
             regField("City", text: $city)
             regField("Postal Code", text: $postalCode, keyboard: .numbersAndPunctuation)
             regField("Country (e.g. Hungary)", text: $country)
-        }
-    }
-
-    // MARK: — Step 4: Invitation
-
-    private var invitationStep: some View {
-        VStack(spacing: Theme.Spacing.md) {
-            if invitationCode.trimmingCharacters(in: .whitespaces).count >= 8 {
-                HStack(spacing: 6) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(Theme.Color.primary)
-                    Text("Invitation code ready.")
-                        .font(.caption.weight(.semibold))
-                        .foregroundColor(Theme.Color.primary)
-                }
-                .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .leading)))
-            }
-
-            regField("Invitation Code", text: $invitationCode, autocap: true)
 
             if let error = authManager.errorMessage {
                 Text(error)
@@ -366,7 +459,6 @@ struct RegisterView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: invitationCode.count >= 8)
     }
 
     // MARK: — Navigation bar
@@ -402,40 +494,67 @@ struct RegisterView: View {
 
     private var canProceed: Bool {
         switch step {
-        case 0: return isStep0Valid
-        case 1: return true  // all fields have defaults
-        case 2: return isStep2Valid
+        case 0: return isAccessVerified
+        case 1: return isStep1Valid
+        case 2: return true
         case 3: return isStep3Valid
         case 4: return isStep4Valid && !authManager.isLoading
         default: return false
         }
     }
 
-    private var isStep0Valid: Bool {
+    private var isStep1Valid: Bool {
         !firstName.trimmingCharacters(in: .whitespaces).isEmpty &&
         !lastName.trimmingCharacters(in: .whitespaces).isEmpty &&
         !nickname.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    private var isStep2Valid: Bool {
+    private var isStep3Valid: Bool {
         isValidEmail(email) &&
         password.count >= 6 &&
         !phone.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    private var isStep3Valid: Bool {
+    private var isStep4Valid: Bool {
         !streetAddress.trimmingCharacters(in: .whitespaces).isEmpty &&
         !city.trimmingCharacters(in: .whitespaces).isEmpty &&
         !postalCode.trimmingCharacters(in: .whitespaces).isEmpty &&
         !country.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    private var isStep4Valid: Bool {
-        !invitationCode.trimmingCharacters(in: .whitespaces).isEmpty
-    }
+    private func isValidEmail(_ s: String) -> Bool { s.contains("@") && s.contains(".") }
 
-    private func isValidEmail(_ s: String) -> Bool {
-        s.contains("@") && s.contains(".")
+    // MARK: — Pre-check
+
+    private func verifyInvitationCode() async {
+        let code = invitationCode.trimmingCharacters(in: .whitespaces).uppercased()
+        guard !code.isEmpty else { return }
+        isVerifying = true
+        verifyError = nil
+
+        do {
+            let resp: InviteValidateResponse = try await APIClient.post(
+                path: "/api/v1/invitation-codes/validate",
+                body: InviteValidateRequest(code: code)
+            )
+            withAnimation {
+                isAccessVerified = resp.valid
+                verifiedCredits  = resp.bonusCredits
+            }
+        } catch APIError.httpError(let status, let detail) {
+            verifyError = detail ?? (status == 404
+                ? "Invitation code not found."
+                : "This invitation code is no longer valid.")
+            isAccessVerified = false
+        } catch APIError.networkError {
+            verifyError = "Could not verify. Check your connection and try again."
+            isAccessVerified = false
+        } catch {
+            verifyError = "Verification failed. Please try again."
+            isAccessVerified = false
+        }
+
+        isVerifying = false
     }
 
     // MARK: — Navigation helpers
@@ -463,7 +582,7 @@ struct RegisterView: View {
               )
     }
 
-    // MARK: — Submit
+    // MARK: — Submit (RegisterRequest unchanged)
 
     private func submitRegistration() {
         dismissKeyboard()
@@ -494,13 +613,12 @@ struct RegisterView: View {
         Calendar.current.dateComponents([.year], from: dateOfBirth, to: Date()).year
     }
 
-    // Returns nil for empty/whitespace-only strings so the card shows "———"
     private func opt(_ s: String) -> String? {
         let t = s.trimmingCharacters(in: .whitespaces)
         return t.isEmpty ? nil : t
     }
 
-    // MARK: — Utility
+    // MARK: — Utilities
 
     private func formattedDate(_ date: Date) -> String {
         let f = DateFormatter()
@@ -514,6 +632,42 @@ struct RegisterView: View {
             #selector(UIResponder.resignFirstResponder),
             to: nil, from: nil, for: nil
         )
+    }
+}
+
+// MARK: — PHPickerViewController wrapper (iOS 14+)
+
+private struct PhotoPicker: UIViewControllerRepresentable {
+    @Binding var isPresented:   Bool
+    @Binding var selectedImage: UIImage?
+
+    func makeUIViewController(context: Context) -> PHPickerViewController {
+        var config = PHPickerConfiguration()
+        config.selectionLimit = 1
+        config.filter = .images
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    class Coordinator: NSObject, PHPickerViewControllerDelegate {
+        var parent: PhotoPicker
+        init(_ parent: PhotoPicker) { self.parent = parent }
+
+        func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+            parent.isPresented = false
+            guard let provider = results.first?.itemProvider,
+                  provider.canLoadObject(ofClass: UIImage.self) else { return }
+            provider.loadObject(ofClass: UIImage.self) { [weak self] image, _ in
+                DispatchQueue.main.async {
+                    self?.parent.selectedImage = image as? UIImage
+                }
+            }
+        }
     }
 }
 
