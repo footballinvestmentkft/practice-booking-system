@@ -23,8 +23,24 @@ struct RegisterView: View {
     @State private var dateOfBirth: Date = Calendar.current.date(
         byAdding: .year, value: -16, to: Date()
     ) ?? Date()
-    @State private var nationality = ""
+    @State private var nationality = "HU"   // ISO 2-letter code; backend accepts free string
     @State private var gender = "Male"
+
+    // (code, display label) pairs sent to backend as the code value.
+    private let nationalityOptions: [(String, String)] = [
+        ("HU", "Hungarian"),
+        ("AT", "Austrian"),
+        ("DE", "German"),
+        ("SK", "Slovak"),
+        ("RO", "Romanian"),
+        ("RS", "Serbian"),
+        ("HR", "Croatian"),
+        ("SI", "Slovenian"),
+        ("UA", "Ukrainian"),
+        ("PL", "Polish"),
+        ("CZ", "Czech"),
+        ("Other", "Other"),
+    ]
 
     // Step 2 — Address
     @State private var streetAddress = ""
@@ -142,7 +158,22 @@ struct RegisterView: View {
                 .cornerRadius(Theme.Radius.sm)
             }
 
-            formField("Nationality (e.g. HU, DE, US)", text: $nationality)
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Nationality")
+                    .font(.caption)
+                    .foregroundColor(Theme.Color.muted)
+                Picker("Nationality", selection: $nationality) {
+                    ForEach(nationalityOptions, id: \.0) { code, label in
+                        Text(label).tag(code)
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, Theme.Spacing.md)
+                .padding(.vertical, Theme.Spacing.sm)
+                .background(Theme.Color.surface)
+                .cornerRadius(Theme.Radius.sm)
+            }
 
             VStack(alignment: .leading, spacing: 6) {
                 Text("Gender")
