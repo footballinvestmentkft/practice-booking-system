@@ -3,8 +3,9 @@ import SwiftUI
 struct LoginView: View {
     @EnvironmentObject private var authManager: AuthManager
 
-    @State private var email:    String = ""
-    @State private var password: String = ""
+    @State private var email:             String = ""
+    @State private var password:          String = ""
+    @State private var isShowingRegister: Bool   = false
 
     private var isSubmittable: Bool {
         !email.trimmingCharacters(in: .whitespaces).isEmpty &&
@@ -83,10 +84,25 @@ struct LoginView: View {
             }
             .padding(.horizontal, Theme.Spacing.xl)
 
-            Spacer()
+            // Create account link
+            Button {
+                isShowingRegister = true
+            } label: {
+                Text("Don't have an account? ")
+                    .foregroundColor(Theme.Color.muted) +
+                Text("Create Account")
+                    .foregroundColor(Theme.Color.primary)
+                    .bold()
+            }
+            .font(.subheadline)
+            .padding(.top, Theme.Spacing.sm)
+
             Spacer()
         }
         .background(Theme.Color.background.ignoresSafeArea())
+        .fullScreenCover(isPresented: $isShowingRegister) {
+            RegisterView()
+        }
     }
 
     // Works on iOS 14+ without @FocusState (iOS 15+ only).

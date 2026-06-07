@@ -97,6 +97,65 @@ final class AuthManager: ObservableObject {
         }
     }
 
+    // MARK: — Register
+
+    // Creates a new account via POST /api/v1/auth/register-with-invitation.
+    // On success: saves tokens to Keychain and sets isLoggedIn = true.
+    // errorMessage is set on any failure; the view observes and displays it.
+    func register(
+        email: String, password: String,
+        firstName: String, lastName: String, nickname: String,
+        phone: String, dateOfBirth: String,
+        nationality: String, gender: String,
+        streetAddress: String, city: String,
+        postalCode: String, country: String,
+        invitationCode: String
+    ) async {
+        isLoading    = true
+        errorMessage = nil
+        defer { isLoading = false }
+
+        let body = RegisterRequest(
+            email: email,
+            password: password,
+            name: "\(firstName) \(lastName)",
+            firstName: firstName,
+            lastName: lastName,
+            nickname: nickname,
+            phone: phone,
+            dateOfBirth: dateOfBirth,
+            nationality: nationality,
+            gender: gender,
+            streetAddress: streetAddress,
+            city: city,
+            postalCode: postalCode,
+            country: country,
+            invitationCode: invitationCode
+        )
+
+        do {
+            let response: AuthResponse = try await APIClient.post(
+                path: "/api/v1/auth/register-with-invitation",
+                body: body
+            )
+            saveTokens(response)
+            isLoggedIn = true
+
+        } catch APIError.httpError(let code, let detail) {
+            switch code {
+            case 400: errorMessage = detail ?? "Registration failed. Check your details."
+            case 403: errorMessage = detail ?? "Invitation code restricted."
+            case 404: errorMessage = "Invalid or expired invitation code."
+            case 409: errorMessage = "Email already registered. Try signing in."
+            default:  errorMessage = "Server error (\(code)). Please try again."
+            }
+        } catch APIError.networkError {
+            errorMessage = "Network error. Check your connection and try again."
+        } catch {
+            errorMessage = "Something went wrong. Please try again."
+        }
+    }
+
     // MARK: — Logout
 
     func logout() {
