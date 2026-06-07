@@ -90,6 +90,10 @@ struct RegisterView: View {
                 enrollmentScreen
             }
         }
+        // Sheet at root level — reliable presentation regardless of active step.
+        .sheet(isPresented: $showPhotoPicker) {
+            PhotoPicker(isPresented: $showPhotoPicker, selectedImage: $profileImage)
+        }
         .onAppear { authManager.errorMessage = nil }
     }
 
@@ -379,9 +383,6 @@ struct RegisterView: View {
                     .foregroundColor(Theme.Color.muted.opacity(0.6))
                     .multilineTextAlignment(.center)
             }
-            .sheet(isPresented: $showPhotoPicker) {
-                PhotoPicker(isPresented: $showPhotoPicker, selectedImage: $profileImage)
-            }
         }
     }
 
@@ -659,6 +660,8 @@ private struct PhotoPicker: UIViewControllerRepresentable {
         init(_ parent: PhotoPicker) { self.parent = parent }
 
         func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+            // Explicit dismiss first — binding update alone can be unreliable on iOS 14.
+            picker.dismiss(animated: true)
             parent.isPresented = false
             guard let provider = results.first?.itemProvider,
                   provider.canLoadObject(ofClass: UIImage.self) else { return }
