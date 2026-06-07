@@ -103,6 +103,10 @@ class User(UserBase):
     credit_payment_reference: Optional[str] = None
     # ⭐ XP system fields
     xp_balance: Optional[int] = 0
+    # 🪪 Profile photo (Academy ID Phase 1)
+    profile_photo_url:           Optional[str] = None
+    profile_photo_processed_url: Optional[str] = None
+    profile_photo_status:        Optional[str] = None
     # 📜 User licenses (NEW - replaces deprecated specialization field)
     licenses: List[UserLicenseSimple] = []
 

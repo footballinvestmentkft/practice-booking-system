@@ -15,8 +15,11 @@ struct UserProfile: Decodable {
     let xpBalance:           Int?          // xp_balance — Phase E stat display
     let onboardingCompleted: Bool?
     let position:            String?       // football position
-    let dateOfBirth:         String?       // date_of_birth — ISO 8601, e.g. "2000-01-01T00:00:00"
-    let licenses:            [UserLicenseBrief]?  // embedded from response
+    let dateOfBirth:                 String?       // date_of_birth — ISO 8601
+    let profilePhotoUrl:             String?       // profile_photo_url
+    let profilePhotoProcessedUrl:    String?       // profile_photo_processed_url (BG-removed PNG)
+    let profilePhotoStatus:          String?       // none/uploaded/processing/ready/failed
+    let licenses:                    [UserLicenseBrief]?
 
     // displayName maps directly to name — no first/last split in the backend schema.
     var displayName: String { name }
@@ -43,7 +46,10 @@ struct UserProfile: Decodable {
         case creditBalance       = "credit_balance"
         case xpBalance           = "xp_balance"
         case onboardingCompleted = "onboarding_completed"
-        case dateOfBirth         = "date_of_birth"
+        case dateOfBirth              = "date_of_birth"
+        case profilePhotoUrl          = "profile_photo_url"
+        case profilePhotoProcessedUrl = "profile_photo_processed_url"
+        case profilePhotoStatus       = "profile_photo_status"
         case licenses
     }
 }

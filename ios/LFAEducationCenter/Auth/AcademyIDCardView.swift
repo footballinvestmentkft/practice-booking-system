@@ -1,28 +1,32 @@
 import SwiftUI
 
-// Live-updating Academy ID preview card shown throughout RegisterView steps.
+// Live-updating Academy ID preview card — RegisterView preview and (future) Profile view.
 //
 // Layout:
 //   Header — LFA branding + ACADEMY ID label
-//   Body   — 80pt photo circle (left) | name/profile/location fields (right)
+//   Body   — 80×104pt portrait panel (left) | name/profile/location fields (right)
 //   Specs  — ⚽ — 🎓 — 🥋 — 💼 — placeholder slots
 //   Footer — LFA-ID | ACCESS VERIFIED badge
 //
-// Field transitions nil → value animate with opacity fade-in.
-// ACCESS VERIFIED badge spring-animates when isVerified becomes true.
-// Photo shows as 80pt ID-card circle with gold ring; falls back to person icon.
+// Photo priority (first non-nil wins):
+//   1. profilePhotoProcessedURL — backend BG-removed transparent PNG
+//   2. profilePhotoURL          — backend raw upload
+//   3. profileImage             — local UIImage (RegisterView preview, never uploaded)
+//   4. silhouette placeholder
 struct AcademyIDCardView: View {
-    let firstName:    String?
-    let lastName:     String?
-    let nickname:     String?
-    let age:          Int?
-    let nationality:  String    // always present — defaults to "HU"
-    let gender:       String?   // "Male" / "Female" / "Other"
-    let city:         String?
-    let country:      String?
-    let profileImage: UIImage?  // local preview only — not uploaded to backend
-    let isVerified:   Bool      // true after successful /invitation-codes/validate
-    let lfaID:        String
+    let firstName:                String?
+    let lastName:                 String?
+    let nickname:                 String?
+    let age:                      Int?
+    let nationality:              String    // always present — defaults to "HU"
+    let gender:                   String?
+    let city:                     String?
+    let country:                  String?
+    let profileImage:             UIImage?  // local preview (RegisterView)
+    let profilePhotoURL:          String?   // backend original URL (Academy ID Phase 1)
+    let profilePhotoProcessedURL: String?   // backend BG-removed PNG (when rembg active)
+    let isVerified:               Bool
+    let lfaID:                    String
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -144,15 +148,21 @@ struct AcademyIDCardView: View {
     }
 
     // MARK: — Portrait photo panel (ID-card style, 80×104pt, not circular)
+    //
+    // Priority: processedURL → originalURL → local UIImage → silhouette
 
     private var photoPanel: some View {
-        Group {
-            if let img = profileImage {
+        ZStack {
+            if let url = profilePhotoProcessedURL {
+                URLPhotoView(urlPath: url)
+                    .frame(width: 80, height: 104).clipped()
+            } else if let url = profilePhotoURL {
+                URLPhotoView(urlPath: url)
+                    .frame(width: 80, height: 104).clipped()
+            } else if let img = profileImage {
                 Image(uiImage: img)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 80, height: 104)
-                    .clipped()
+                    .resizable().scaledToFill()
+                    .frame(width: 80, height: 104).clipped()
             } else {
                 Rectangle()
                     .fill(Theme.Color.muted.opacity(0.06))
@@ -174,8 +184,8 @@ struct AcademyIDCardView: View {
             RoundedRectangle(cornerRadius: 6)
                 .stroke(Theme.Color.secondary.opacity(0.3), lineWidth: 1)
         )
-        .animation(.easeIn(duration: 0.2), value: profileImage != nil)
     }
+
 
     // MARK: — Field block
 
@@ -242,5 +252,41 @@ struct AcademyIDCardView: View {
     private var locationDisplay: String? {
         let parts = [city, country].compactMap { $0 }
         return parts.isEmpty ? nil : parts.joined(separator: ", ")
+    }
+}
+
+// MARK: — URL-based image loader (iOS 14 compatible, no AsyncImage)
+
+// Loads an image from a server-relative path (e.g. "/static/uploads/profile_photos/...").
+// Prepends APIConfig.baseURL. Caches loaded UIImage in @State so re-renders don't refetch.
+private struct URLPhotoView: View {
+    let urlPath: String
+    @State private var image: UIImage? = nil
+
+    var body: some View {
+        Group {
+            if let img = image {
+                Image(uiImage: img)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                Rectangle()
+                    .fill(Theme.Color.muted.opacity(0.08))
+                    .overlay(
+                        ProgressView()
+                            .scaleEffect(0.6)
+                    )
+            }
+        }
+        .onAppear { loadImage() }
+    }
+
+    private func loadImage() {
+        guard image == nil,
+              let url = URL(string: APIConfig.baseURL + urlPath) else { return }
+        URLSession.shared.dataTask(with: url) { data, _, _ in
+            guard let data = data, let img = UIImage(data: data) else { return }
+            DispatchQueue.main.async { self.image = img }
+        }.resume()
     }
 }

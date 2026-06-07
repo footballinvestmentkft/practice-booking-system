@@ -1,9 +1,9 @@
 """
 User profile management endpoints
-Self-service profile updates and password reset
+Self-service profile updates, password reset, and profile photo management.
 """
 from typing import Any
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 import json
@@ -15,6 +15,14 @@ from .....models.user import User
 from .....models.license import UserLicense
 from .....schemas.user import User as UserSchema, UserUpdateSelf
 from .....schemas.auth import ResetPassword
+from .....services.profile_photo_service import (
+    save_profile_photo,
+    delete_profile_photo,
+    trigger_bg_removal,
+    run_bg_removal,
+    STATUS_NONE,
+)
+from .....config import settings as _settings
 from .helpers import validate_email_unique, validate_nickname
 
 router = APIRouter()
@@ -126,8 +134,82 @@ def check_nickname_availability(
     Check if a nickname is available for use
     """
     is_valid, message = validate_nickname(nickname, db, current_user.id)
-    
+
     return {
         "available": is_valid,
         "message": message
     }
+
+
+# ── Profile Photo — Academy ID Phase 1 ───────────────────────────────────────
+
+@router.post("/me/profile-photo", status_code=status.HTTP_201_CREATED)
+async def upload_profile_photo(
+    background_tasks: BackgroundTasks,
+    photo:            UploadFile   = File(...),
+    db:               Session      = Depends(get_db),
+    current_user:     User         = Depends(get_current_user),
+) -> Any:
+    """
+    Upload or replace the current user's profile photo.
+
+    - Accepts JPEG, PNG, WEBP (max 5 MB).
+    - Resizes to max 2048 px, saves as PNG.
+    - Auto-triggers background removal if BG_REMOVAL_PROCESSOR != "null".
+    - Returns { profile_photo_url, status }.
+    """
+    file_bytes   = await photo.read()
+    content_type = photo.content_type or ""
+
+    try:
+        updated = save_profile_photo(file_bytes, content_type, current_user, db)
+        db.commit()
+        db.refresh(updated)
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+    # Auto-trigger BG removal only when a real processor is configured.
+    # With BG_REMOVAL_PROCESSOR="null" (default) we skip — no status change.
+    if _settings.BG_REMOVAL_PROCESSOR != "null" and trigger_bg_removal(updated, db):
+        db.commit()
+        background_tasks.add_task(
+            run_bg_removal, updated.id, updated.profile_photo_url, db
+        )
+
+    return {
+        "profile_photo_url": updated.profile_photo_url,
+        "status":            updated.profile_photo_status,
+    }
+
+
+@router.get("/me/profile-photo/status")
+def get_profile_photo_status(
+    db:           Session = Depends(get_db),
+    current_user: User    = Depends(get_current_user),
+) -> Any:
+    """
+    Return current profile photo status and URLs.
+
+    status values: none / uploaded / processing / ready / failed
+    NULL DB status is returned as "none".
+    """
+    return {
+        "status":                       current_user.profile_photo_status or STATUS_NONE,
+        "profile_photo_url":            current_user.profile_photo_url,
+        "profile_photo_processed_url":  current_user.profile_photo_processed_url,
+    }
+
+
+@router.delete("/me/profile-photo", status_code=status.HTTP_204_NO_CONTENT)
+def delete_current_profile_photo(
+    db:           Session = Depends(get_db),
+    current_user: User    = Depends(get_current_user),
+) -> None:
+    """
+    Delete the current user's profile photo.
+
+    Removes disk files and sets all three photo columns to NULL.  Idempotent.
+    """
+    delete_profile_photo(current_user, db)
+    db.commit()

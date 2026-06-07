@@ -105,6 +105,27 @@ class User(Base):
         comment="Current XP (Experience Points) - earned through training and tournaments"
     )
 
+    # 🪪 PROFILE PHOTO: Academy ID Card photo (Phase 1)
+    # Managed via POST/DELETE /api/v1/users/me/profile-photo.
+    # Background removal pipeline mirrors mood photo flow:
+    #   status: none → uploaded → processing → ready/failed
+    #   processed_url: NULL until BG_REMOVAL_PROCESSOR=rembg produces transparent PNG.
+    profile_photo_url = Column(
+        String(512),
+        nullable=True,
+        comment="Raw uploaded profile photo URL (app/static/uploads/profile_photos/)"
+    )
+    profile_photo_processed_url = Column(
+        String(512),
+        nullable=True,
+        comment="Background-removed transparent PNG — NULL until rembg processor runs"
+    )
+    profile_photo_status = Column(
+        String(20),
+        nullable=True,
+        comment="none/uploaded/processing/ready/failed — NULL treated as none"
+    )
+
     # 📄 NEW: NDA acceptance fields
     nda_accepted = Column(
         Boolean,

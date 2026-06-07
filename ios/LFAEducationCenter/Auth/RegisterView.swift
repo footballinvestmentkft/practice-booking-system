@@ -172,17 +172,19 @@ struct RegisterView: View {
                 VStack(spacing: Theme.Spacing.md) {
                     // Academy ID live preview
                     AcademyIDCardView(
-                        firstName:    opt(firstName),
-                        lastName:     opt(lastName),
-                        nickname:     opt(nickname),
-                        age:          computedAge,
-                        nationality:  nationality,
-                        gender:       gender,
-                        city:         opt(city),
-                        country:      opt(country),
-                        profileImage: profileImage,
-                        isVerified:   isAccessVerified,
-                        lfaID:        lfaDisplayID
+                        firstName:                opt(firstName),
+                        lastName:                 opt(lastName),
+                        nickname:                 opt(nickname),
+                        age:                      computedAge,
+                        nationality:              nationality,
+                        gender:                   gender,
+                        city:                     opt(city),
+                        country:                  opt(country),
+                        profileImage:             profileImage,
+                        profilePhotoURL:          nil,   // upload not yet wired in RegisterView
+                        profilePhotoProcessedURL: nil,
+                        isVerified:               isAccessVerified,
+                        lfaID:                    lfaDisplayID
                     )
                     .padding(.horizontal, Theme.Spacing.md)
 

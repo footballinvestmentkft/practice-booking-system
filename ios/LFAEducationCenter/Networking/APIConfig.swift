@@ -8,7 +8,9 @@ import Foundation
 // Staging:         https://staging.your-domain.com
 // Production:      https://your-domain.com
 enum APIConfig {
-    static let baseURL = "http://localhost:8000"
+    // Simulator:       http://localhost:8000
+    // Physical iPhone: http://192.168.1.129:8000  ← current Mac LAN IP
+    static let baseURL = "http://192.168.1.129:8000"
 
     // Versioned path prefix — matches backend API_V1_STR.
     static let v1 = baseURL + "/api/v1"
