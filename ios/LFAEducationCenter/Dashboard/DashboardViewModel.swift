@@ -22,14 +22,15 @@ enum LFACardState {
 enum DashboardLoadState: Equatable {
     case idle
     case loading
+    case unlocking  // post-unlock reload — prevents card from flashing unlockAvailable again
     case loaded
     case error(String)
 
     static func == (lhs: DashboardLoadState, rhs: DashboardLoadState) -> Bool {
         switch (lhs, rhs) {
-        case (.idle, .idle), (.loading, .loading), (.loaded, .loaded): return true
-        case (.error(let a), .error(let b)):                           return a == b
-        default:                                                        return false
+        case (.idle, .idle), (.loading, .loading), (.unlocking, .unlocking), (.loaded, .loaded): return true
+        case (.error(let a), .error(let b)):                                                      return a == b
+        default:                                                                                   return false
         }
     }
 }
@@ -77,6 +78,19 @@ final class DashboardViewModel: ObservableObject {
 
     func reload(using authManager: AuthManager) async {
         loadState  = .idle
+        profile    = nil
+        lfaLicense = nil
+        dashboard  = nil
+        licenses   = []
+        await fetchData(using: authManager)
+    }
+
+    // MARK: — Reload after unlock
+    // Called by UnlockViewModel on success. Sets .unlocking so the card does not
+    // flash back to .unlockAvailable during the post-unlock dashboard refresh.
+
+    func reloadAfterUnlock(using authManager: AuthManager) async {
+        loadState  = .unlocking
         profile    = nil
         lfaLicense = nil
         dashboard  = nil

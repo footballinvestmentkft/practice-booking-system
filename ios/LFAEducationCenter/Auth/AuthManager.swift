@@ -209,6 +209,20 @@ final class AuthManager: ObservableObject {
         }
     }
 
+    // Form-encoded POST with automatic Bearer inject, single 401 refresh + retry.
+    // Used for FastAPI endpoints that declare Form(...) parameters.
+    func authenticatedFormPost<T: Decodable>(path: String, fields: [String: String]) async throws -> T {
+        guard let token = accessToken else { logout(); throw APIError.unauthorized }
+
+        do {
+            return try await APIClient.formPost(path: path, fields: fields, token: token)
+        } catch APIError.httpError(401, _) {
+            let refreshed = await performRefresh()
+            guard refreshed, let newToken = accessToken else { throw APIError.unauthorized }
+            return try await APIClient.formPost(path: path, fields: fields, token: newToken)
+        }
+    }
+
     // MARK: — Token accessors
 
     var accessToken: String? {

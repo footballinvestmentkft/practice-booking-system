@@ -6,7 +6,7 @@ import Foundation
 // Base URL sourced from APIConfig — one place to change for all environments.
 enum APIClient {
 
-    // MARK: — POST
+    // MARK: — POST (JSON)
 
     static func post<B: Encodable, T: Decodable>(
         path:  String,
@@ -15,6 +15,22 @@ enum APIClient {
     ) async throws -> T {
         var request = try buildRequest(path: path, method: "POST", token: token)
         request.httpBody = try JSONEncoder().encode(body)
+        return try await execute(request)
+    }
+
+    // MARK: — POST (Form-encoded)
+    // Used by endpoints that declare FastAPI Form(...) parameters (e.g. /specialization/unlock).
+
+    static func formPost<T: Decodable>(
+        path:   String,
+        fields: [String: String],
+        token:  String? = nil
+    ) async throws -> T {
+        var request = try buildFormRequest(path: path, token: token)
+        request.httpBody = fields
+            .map { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? $0.value)" }
+            .joined(separator: "&")
+            .data(using: .utf8)
         return try await execute(request)
     }
 
@@ -37,6 +53,20 @@ enum APIClient {
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let token = token {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        return request
+    }
+
+    private static func buildFormRequest(path: String, token: String?) throws -> URLRequest {
+        guard let url = URL(string: APIConfig.baseURL + path) else {
+            throw APIError.invalidURL
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         if let token = token {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")

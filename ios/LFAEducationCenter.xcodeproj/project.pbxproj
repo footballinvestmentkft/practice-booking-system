@@ -50,6 +50,8 @@
 		BB000004000000000000041 /* CreditsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000043 /* CreditsViewModel.swift */; };
 		BB000004000000000000042 /* CreditsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000044 /* CreditsView.swift */; };
 		BB000004000000000000043 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000045 /* ProfileView.swift */; };
+		BB000004000000000000044 /* UnlockViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000046 /* UnlockViewModel.swift */; };
+		BB000004000000000000045 /* UnlockConfirmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000047 /* UnlockConfirmView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -98,6 +100,8 @@
 		BB000003000000000000043 /* CreditsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditsViewModel.swift; sourceTree = "<group>"; };
 		BB000003000000000000044 /* CreditsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditsView.swift; sourceTree = "<group>"; };
 		BB000003000000000000045 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		BB000003000000000000046 /* UnlockViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnlockViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000047 /* UnlockConfirmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnlockConfirmView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -142,6 +146,7 @@
 				BB000002000000000000013 /* Networking */,
 				BB000002000000000000014 /* Credits */,
 				BB000002000000000000015 /* Profile */,
+				BB000002000000000000016 /* Unlock */,
 				BB000003000000000000004 /* Assets.xcassets */,
 			);
 			path = LFAEducationCenter;
@@ -274,6 +279,15 @@
 			path = Profile;
 			sourceTree = "<group>";
 		};
+		BB000002000000000000016 /* Unlock */ = {
+			isa = PBXGroup;
+			children = (
+				BB000003000000000000046 /* UnlockViewModel.swift */,
+				BB000003000000000000047 /* UnlockConfirmView.swift */,
+			);
+			path = Unlock;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -385,6 +399,8 @@
 				BB000004000000000000041 /* CreditsViewModel.swift in Sources */,
 				BB000004000000000000042 /* CreditsView.swift in Sources */,
 				BB000004000000000000043 /* ProfileView.swift in Sources */,
+				BB000004000000000000044 /* UnlockViewModel.swift in Sources */,
+				BB000004000000000000045 /* UnlockConfirmView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

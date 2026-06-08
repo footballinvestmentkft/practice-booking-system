@@ -10,10 +10,11 @@ import SwiftUI
 struct MainHubView: View {
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var dashboardVM: DashboardViewModel
-    @State private var isShowingLFASpec   = false
-    @State private var isShowingAcademyID = false
-    @State private var isShowingCredits   = false
-    @State private var isShowingProfile   = false
+    @State private var isShowingLFASpec      = false
+    @State private var isShowingAcademyID   = false
+    @State private var isShowingCredits     = false
+    @State private var isShowingProfile     = false
+    @State private var isShowingUnlockConfirm = false
 
     private let gridColumns = [GridItem(.adaptive(minimum: 150), spacing: Theme.Spacing.sm)]
 
@@ -101,17 +102,24 @@ struct MainHubView: View {
                 .environmentObject(authManager)
                 .environmentObject(dashboardVM)
         }
+        .fullScreenCover(isPresented: $isShowingUnlockConfirm) {
+            UnlockConfirmView()
+                .environmentObject(authManager)
+                .environmentObject(dashboardVM)
+        }
     }
 
     // MARK: — LFA card helpers
 
     // Returns the tap action for the LFA Football Player SpecCard.
-    // .active            → open LFASpecTabView (specialization dashboard)
+    // .active              → open LFASpecTabView (specialization dashboard)
+    // .unlockAvailable     → open UnlockConfirmView (R3B: confirm + pay 100 CR)
     // .insufficientCredits → open CreditsView (R3A: no more zsákutca)
-    // all other states   → nil (tap disabled)
+    // all other states     → nil (tap disabled)
     private func lfaCardAction(for state: LFACardState) -> (() -> Void)? {
         switch state {
         case .active:              return { isShowingLFASpec = true }
+        case .unlockAvailable:     return { isShowingUnlockConfirm = true }
         case .insufficientCredits: return { isShowingCredits = true }
         default:                   return nil
         }

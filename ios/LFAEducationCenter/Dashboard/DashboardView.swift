@@ -8,7 +8,7 @@ struct DashboardView: View {
         NavigationView {
             Group {
                 switch dashboardVM.loadState {
-                case .idle, .loading:
+                case .idle, .loading, .unlocking:
                     loadingView
                 case .loaded:
                     if let profile = dashboardVM.profile {
