@@ -49,6 +49,10 @@ struct CreditsView: View {
                         Task {
                             await viewModel.reload(using: authManager)
                             await pendingInvoicesVM.reload(using: authManager)
+                            // Also reload dashboard so the Hub balance badge and
+                            // DashboardView hero reflect the latest credit_balance
+                            // (e.g. after admin verifies an invoice).
+                            await dashboardVM.reload(using: authManager)
                         }
                     } label: {
                         Image(systemName: "arrow.clockwise")
@@ -84,13 +88,21 @@ struct CreditsView: View {
 
     // MARK: — Balance hero
 
+    // Prefer the credit_balance from the transaction page (fresher than dashboardVM,
+    // which is only reloaded on DashboardView appear). Falls back to dashboardVM when
+    // the transaction page hasn't loaded yet.
+    private var displayBalance: Int {
+        if case .loaded(let page) = viewModel.loadState { return page.creditBalance }
+        return dashboardVM.profile?.creditBalance ?? 0
+    }
+
     private var balanceHero: some View {
         VStack(spacing: 8) {
             Image(systemName: "creditcard.fill")
                 .font(.system(size: 36))
                 .foregroundColor(Theme.Color.secondary)
 
-            Text("\(dashboardVM.profile?.creditBalance ?? 0)")
+            Text("\(displayBalance)")
                 .font(.system(size: 48, weight: .bold, design: .rounded))
                 .foregroundColor(Theme.Color.onSurface)
 
@@ -98,8 +110,8 @@ struct CreditsView: View {
                 .font(.subheadline)
                 .foregroundColor(Theme.Color.muted)
 
-            if (dashboardVM.profile?.creditBalance ?? 0) < 100 {
-                let needed = 100 - (dashboardVM.profile?.creditBalance ?? 0)
+            if displayBalance < 100 {
+                let needed = 100 - displayBalance
                 Text("You need \(needed) more CR to unlock LFA Football Player")
                     .font(.caption)
                     .foregroundColor(Theme.Color.error)

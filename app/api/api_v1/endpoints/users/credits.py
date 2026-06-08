@@ -186,20 +186,26 @@ def get_my_credit_transactions(
         UserLicense.user_id == current_user.id
     ).all()
 
-    if not user_licenses:
-        return {
-            "transactions": [],
-            "total_count": 0,
-            "credit_balance": current_user.credit_balance
-        }
+    # Always include direct user-level transactions (user_license_id IS NULL) —
+    # invoices, coupons, and admin grants are stored this way and must be visible
+    # even for users who have no UserLicense records.
+    from sqlalchemy import or_
+    user_direct_filter = (
+        (CreditTransaction.user_id == current_user.id) &
+        (CreditTransaction.user_license_id == None)
+    )
 
-    license_ids = [lic.id for lic in user_licenses]
+    if user_licenses:
+        license_ids = [lic.id for lic in user_licenses]
+        tx_filter = or_(
+            CreditTransaction.user_license_id.in_(license_ids),
+            user_direct_filter,
+        )
+    else:
+        tx_filter = user_direct_filter
 
-    # Get transactions for all user's licenses OR directly for user (for tournament rewards)
-    # Tournament rewards have user_license_id = NULL, so we need to include user_id filter
     transactions_query = db.query(CreditTransaction).filter(
-        (CreditTransaction.user_license_id.in_(license_ids)) |
-        ((CreditTransaction.user_id == current_user.id) & (CreditTransaction.user_license_id == None))
+        tx_filter
     ).order_by(CreditTransaction.created_at.desc())
 
     total_count = transactions_query.count()
