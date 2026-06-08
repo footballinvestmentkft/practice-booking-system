@@ -15,6 +15,8 @@ struct UserProfile: Decodable {
     let xpBalance:           Int?          // xp_balance — Phase E stat display
     let onboardingCompleted: Bool?
     let position:            String?       // football position
+    let city:                String?       // city — shown on Academy ID card LOCATION field
+    let country:             String?       // country — shown on Academy ID card LOCATION field
     let dateOfBirth:                 String?       // date_of_birth — ISO 8601
     let profilePhotoUrl:             String?       // profile_photo_url
     let profilePhotoProcessedUrl:    String?       // profile_photo_processed_url (BG-removed PNG)
@@ -45,7 +47,7 @@ struct UserProfile: Decodable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, name, email, role, position
+        case id, name, email, role, position, city, country
         case creditBalance       = "credit_balance"
         case xpBalance           = "xp_balance"
         case onboardingCompleted = "onboarding_completed"
