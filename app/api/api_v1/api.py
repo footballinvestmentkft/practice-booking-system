@@ -69,6 +69,7 @@ from .endpoints import (
     public_profile,
     license_renewal,
 )
+from .endpoints.lfa_player import self_assessment as lfa_player_self_assessment
 from .endpoints.periods import lfa_player_generators
 
 # ── TOURNAMENTS ───────────────────────────────────────────────────────────────
@@ -161,6 +162,7 @@ api_router.include_router(invoices.router, prefix="/invoices", tags=["invoices"]
 api_router.include_router(coupons.router, prefix="", tags=["coupons"])
 api_router.include_router(invitation_codes.router, prefix="", tags=["invitation-codes"])
 api_router.include_router(lfa_player.router, prefix="/lfa-player", tags=["lfa-player"])
+api_router.include_router(lfa_player_self_assessment.router, prefix="/lfa-player", tags=["lfa-player"])
 api_router.include_router(gancuju.router, prefix="/gancuju", tags=["gancuju"])
 api_router.include_router(internship.router, prefix="/internship", tags=["internship"])
 api_router.include_router(coach.router, prefix="/coach", tags=["coach"])

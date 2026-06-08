@@ -43,6 +43,7 @@
 		BB000004000000000000034 /* WelcomeSuccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000036 /* WelcomeSuccessView.swift */; };
 		BB000004000000000000035 /* AcademyIDCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000037 /* AcademyIDCardView.swift */; };
 		BB000004000000000000036 /* QRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000038 /* QRCodeGenerator.swift */; };
+		BB000004000000000000070 /* SkillConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000072 /* SkillConfig.swift */; };
 		BB000004000000000000037 /* AcademyIDResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000039 /* AcademyIDResponse.swift */; };
 		BB000004000000000000038 /* AcademyIDViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000040 /* AcademyIDViewModel.swift */; };
 		BB000004000000000000039 /* AcademyIDFullScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000041 /* AcademyIDFullScreenView.swift */; };
@@ -66,6 +67,8 @@
 		BB000004000000000000057 /* PhotoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000059 /* PhotoPicker.swift */; };
 		BB000004000000000000058 /* ProfilePhotoUploadViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000060 /* ProfilePhotoUploadViewModel.swift */; };
 		BB000004000000000000059 /* ProfilePhotoUploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000061 /* ProfilePhotoUploadView.swift */; };
+		BB000004000000000000060 /* BaselineSelfRatingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000062 /* BaselineSelfRatingViewModel.swift */; };
+		BB000004000000000000061 /* BaselineSelfRatingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000063 /* BaselineSelfRatingView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -107,6 +110,7 @@
 		BB000003000000000000036 /* WelcomeSuccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeSuccessView.swift; sourceTree = "<group>"; };
 		BB000003000000000000037 /* AcademyIDCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDCardView.swift; sourceTree = "<group>"; };
 		BB000003000000000000038 /* QRCodeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeGenerator.swift; sourceTree = "<group>"; };
+		BB000003000000000000072 /* SkillConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillConfig.swift; sourceTree = "<group>"; };
 		BB000003000000000000039 /* AcademyIDResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDResponse.swift; sourceTree = "<group>"; };
 		BB000003000000000000040 /* AcademyIDViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDViewModel.swift; sourceTree = "<group>"; };
 		BB000003000000000000041 /* AcademyIDFullScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDFullScreenView.swift; sourceTree = "<group>"; };
@@ -130,6 +134,8 @@
 		BB000003000000000000059 /* PhotoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoPicker.swift; sourceTree = "<group>"; };
 		BB000003000000000000060 /* ProfilePhotoUploadViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePhotoUploadViewModel.swift; sourceTree = "<group>"; };
 		BB000003000000000000061 /* ProfilePhotoUploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePhotoUploadView.swift; sourceTree = "<group>"; };
+		BB000003000000000000062 /* BaselineSelfRatingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaselineSelfRatingViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000063 /* BaselineSelfRatingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaselineSelfRatingView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -201,6 +207,7 @@
 				BB000003000000000000006 /* Theme.swift */,
 				BB000003000000000000033 /* BrandLogoView.swift */,
 				BB000003000000000000038 /* QRCodeGenerator.swift */,
+				BB000003000000000000072 /* SkillConfig.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -314,6 +321,8 @@
 				BB000003000000000000059 /* PhotoPicker.swift */,
 				BB000003000000000000060 /* ProfilePhotoUploadViewModel.swift */,
 				BB000003000000000000061 /* ProfilePhotoUploadView.swift */,
+				BB000003000000000000062 /* BaselineSelfRatingViewModel.swift */,
+				BB000003000000000000063 /* BaselineSelfRatingView.swift */,
 			);
 			path = Profile;
 			sourceTree = "<group>";
@@ -442,6 +451,7 @@
 				BB000004000000000000034 /* WelcomeSuccessView.swift in Sources */,
 				BB000004000000000000035 /* AcademyIDCardView.swift in Sources */,
 				BB000004000000000000036 /* QRCodeGenerator.swift in Sources */,
+				BB000004000000000000070 /* SkillConfig.swift in Sources */,
 				BB000004000000000000037 /* AcademyIDResponse.swift in Sources */,
 				BB000004000000000000038 /* AcademyIDViewModel.swift in Sources */,
 				BB000004000000000000039 /* AcademyIDFullScreenView.swift in Sources */,
@@ -465,6 +475,8 @@
 				BB000004000000000000057 /* PhotoPicker.swift in Sources */,
 				BB000004000000000000058 /* ProfilePhotoUploadViewModel.swift in Sources */,
 				BB000004000000000000059 /* ProfilePhotoUploadView.swift in Sources */,
+				BB000004000000000000060 /* BaselineSelfRatingViewModel.swift in Sources */,
+				BB000004000000000000061 /* BaselineSelfRatingView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

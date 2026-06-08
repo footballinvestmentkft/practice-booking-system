@@ -6,35 +6,37 @@ import SwiftUI
 // All data comes from already-loaded DashboardViewModel.
 //
 // Weights (total = 100):
-//   Position & Physical  30  ← lfaLicense.onboardingCompleted
-//   Academy ID           10  ← profile.lfaAcademyId != nil
-//   Profile Photo        15  ← profile.profilePhotoUrl != nil
-//   Goals & Motivation   15  ← R3F (always 0 until implemented)
-//   Skill Assessment     20  ← R3E (always 0 until implemented)
-//   Mood Photos          10  ← R3D (always 0 until implemented)
+//   Position & Physical   30  ← lfaLicense.onboardingCompleted
+//   Academy ID            10  ← profile.lfaAcademyId != nil
+//   Profile Photo         15  ← profile.profilePhotoUrl != nil
+//   Baseline Self-Rating  15  ← selfRatingCompleted (motivation_scores["self_assessment_completed"])
+//   Goals & Motivation     0  ← Coming Next (separate future module)
+//   Skill Assessment      20  ← Coming Next (R3E)
+//   Mood Photos           10  ← Coming Next (R3D)
 struct ProfileCompletionScore {
-    let positionPhysical: Int
-    let academyID:        Int
-    let profilePhoto:     Int
-    let goalsMotivation:  Int   // R3F
-    let skillAssessment:  Int   // R3E
-    let moodPhotos:       Int   // R3D
+    let positionPhysical:  Int
+    let academyID:         Int
+    let profilePhoto:      Int
+    let baselineSelfRating: Int  // R3F — live from selfRatingCompleted
+    let skillAssessment:   Int   // R3E — always 0 until implemented
+    let moodPhotos:        Int   // R3D — always 0 until implemented
 
     var total: Int {
         positionPhysical + academyID + profilePhoto
-        + goalsMotivation + skillAssessment + moodPhotos
+        + baselineSelfRating + skillAssessment + moodPhotos
     }
     var fraction: Double { min(Double(total) / 100.0, 1.0) }
 
     static func compute(profile: UserProfile,
-                        lfaLicense: LFAPlayerLicense?) -> ProfileCompletionScore {
+                        lfaLicense: LFAPlayerLicense?,
+                        selfRatingCompleted: Bool = false) -> ProfileCompletionScore {
         ProfileCompletionScore(
-            positionPhysical: lfaLicense?.onboardingCompleted == true ? 30 : 0,
-            academyID:        profile.lfaAcademyId != nil ? 10 : 0,
-            profilePhoto:     profile.profilePhotoUrl != nil ? 15 : 0,
-            goalsMotivation:  0,
-            skillAssessment:  0,
-            moodPhotos:       0
+            positionPhysical:  lfaLicense?.onboardingCompleted == true ? 30 : 0,
+            academyID:         profile.lfaAcademyId != nil ? 10 : 0,
+            profilePhoto:      profile.profilePhotoUrl != nil ? 15 : 0,
+            baselineSelfRating: selfRatingCompleted ? 15 : 0,
+            skillAssessment:   0,
+            moodPhotos:        0
         )
     }
 }
@@ -93,9 +95,9 @@ struct ProfileCompletionCard: View {
 
     @ViewBuilder
     private var missingItems: some View {
-        if score.goalsMotivation == 0 {
-            missingPill(icon: "target",
-                        label: "Goals & Motivation")
+        if score.baselineSelfRating == 0 {
+            missingPill(icon: "chart.bar.doc.horizontal",
+                        label: "Baseline Self-Rating")
         }
         if score.skillAssessment == 0 {
             missingPill(icon: "slider.horizontal.3",
@@ -142,11 +144,12 @@ struct ProfileCompletionCard: View {
 // MARK: — ProfileView full section
 
 // Full checklist shown in ProfileView.
-// Academy ID row is tappable; all future modules are "Coming Next".
+// Academy ID, Profile Photo, and Baseline Self-Rating rows are tappable.
 struct ProfileCompletionSection: View {
-    let score:           ProfileCompletionScore
-    let onAcademyIDTap:  () -> Void
-    let onPhotoTap:      () -> Void
+    let score:                   ProfileCompletionScore
+    let onAcademyIDTap:          () -> Void
+    let onPhotoTap:              () -> Void
+    let onBaselineSelfRatingTap: () -> Void
 
     private static let successGreen = Color(red: 0.18, green: 0.80, blue: 0.44)
 
@@ -200,15 +203,21 @@ struct ProfileCompletionSection: View {
                 state: score.profilePhoto > 0 ? .complete : .incomplete(action: onPhotoTap),
                 tapAction: score.profilePhoto > 0 ? onPhotoTap : nil)
 
+            row(icon: "chart.bar.doc.horizontal",
+                title: "Baseline Self-Rating",
+                subtitle: "Rate your 44 football skills",
+                state: score.baselineSelfRating > 0 ? .complete : .incomplete(action: onBaselineSelfRatingTap),
+                tapAction: score.baselineSelfRating > 0 ? onBaselineSelfRatingTap : nil)
+
             row(icon: "target",
                 title: "Goals & Motivation",
                 subtitle: "Your football goals and drive",
-                state: score.goalsMotivation > 0 ? .complete : .upcoming("R3F"))
+                state: .upcoming("R3G"))
 
             row(icon: "slider.horizontal.3",
                 title: "Skill Assessment",
-                subtitle: "Rate your 44 technical & mental skills",
-                state: score.skillAssessment > 0 ? .complete : .upcoming("R3E"))
+                subtitle: "Validated skill measurement",
+                state: .upcoming("R3E"))
 
             row(icon: "photo.on.rectangle",
                 title: "Mood Photos",

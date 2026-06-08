@@ -50,11 +50,12 @@ enum DashboardLoadState: Equatable {
 @MainActor
 final class DashboardViewModel: ObservableObject {
 
-    @Published private(set) var loadState:  DashboardLoadState = .idle
-    @Published private(set) var profile:    UserProfile?       = nil
-    @Published private(set) var lfaLicense: LFAPlayerLicense?  = nil
-    @Published private(set) var dashboard:  LicenseDashboard?  = nil
-    @Published private(set) var licenses:   [UserLicense]      = []  // GānCuju, reserved
+    @Published private(set) var loadState:          DashboardLoadState = .idle
+    @Published private(set) var profile:            UserProfile?       = nil
+    @Published private(set) var lfaLicense:         LFAPlayerLicense?  = nil
+    @Published private(set) var dashboard:          LicenseDashboard?  = nil
+    @Published private(set) var licenses:           [UserLicense]      = []  // GānCuju, reserved
+    @Published private(set) var selfRatingCompleted: Bool              = false
 
     // MARK: — LFA Card State
 
@@ -77,11 +78,12 @@ final class DashboardViewModel: ObservableObject {
     // MARK: — Reload (manual retry, resets state)
 
     func reload(using authManager: AuthManager) async {
-        loadState  = .idle
-        profile    = nil
-        lfaLicense = nil
-        dashboard  = nil
-        licenses   = []
+        loadState           = .idle
+        profile             = nil
+        lfaLicense          = nil
+        dashboard           = nil
+        licenses            = []
+        selfRatingCompleted = false
         await fetchData(using: authManager)
     }
 
@@ -90,22 +92,24 @@ final class DashboardViewModel: ObservableObject {
     // flash back to .unlockAvailable during the post-unlock dashboard refresh.
 
     func reloadAfterUnlock(using authManager: AuthManager) async {
-        loadState  = .unlocking
-        profile    = nil
-        lfaLicense = nil
-        dashboard  = nil
-        licenses   = []
+        loadState           = .unlocking
+        profile             = nil
+        lfaLicense          = nil
+        dashboard           = nil
+        licenses            = []
+        selfRatingCompleted = false
         await fetchData(using: authManager)
     }
 
     // MARK: — Reset (called on logout so next login fetches fresh data)
 
     func reset() {
-        loadState  = .idle
-        profile    = nil
-        lfaLicense = nil
-        dashboard  = nil
-        licenses   = []
+        loadState           = .idle
+        profile             = nil
+        lfaLicense          = nil
+        dashboard           = nil
+        licenses            = []
+        selfRatingCompleted = false
     }
 
     // MARK: — Private
@@ -136,6 +140,14 @@ final class DashboardViewModel: ObservableObject {
             licenses = (try? await authManager.authenticatedGet(
                 path: "/api/v1/licenses/me"
             )) ?? []
+
+            // 5. Goals & Motivation completion — non-fatal.
+            //    Returns {completed: bool} for the user's most recent license.
+            //    404 (no license) or any decode error → false.
+            struct MotivationCheck: Decodable { let completed: Bool }
+            selfRatingCompleted = (try? await authManager.authenticatedGet(
+                path: "/api/v1/licenses/motivation-assessment"
+            ) as MotivationCheck)?.completed ?? false
 
             loadState = .loaded
 

@@ -81,7 +81,7 @@ def submit_motivation_assessment(
             )
 
         # Validate motivation type matches license specialization
-        if data.lfa_player and specialization_type not in ["LFA_PLAYER", "LFA_PLAYER_PRE", "LFA_PLAYER_YOUTH", "LFA_PLAYER_AMATEUR", "LFA_PLAYER_PRO"]:
+        if data.lfa_player and specialization_type not in ["LFA_FOOTBALL_PLAYER", "LFA_PLAYER", "LFA_PLAYER_PRE", "LFA_PLAYER_YOUTH", "LFA_PLAYER_AMATEUR", "LFA_PLAYER_PRO"]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"LFA Player motivation provided but license is {specialization_type}"
@@ -170,8 +170,13 @@ def get_motivation_assessment(
         # Parse JSON string to dict
         motivation_data = json.loads(result[0]) if isinstance(result[0], str) else result[0]
 
+        # completed = True only when the 44-skill baseline self-rating has been submitted.
+        # R3C onboarding sets motivation_scores (not null) but does NOT set
+        # self_assessment_completed — so R3C alone does not satisfy this check.
+        completed = isinstance(motivation_data, dict) and motivation_data.get("self_assessment_completed") is True
+
         return {
-            "completed": True,
+            "completed": completed,
             "motivation_data": motivation_data,
             "specialization_type": result[1],
             "assessed_at": result[2].isoformat() if result[2] else None
