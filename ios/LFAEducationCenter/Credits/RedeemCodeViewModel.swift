@@ -31,7 +31,7 @@ private struct InvitationValidateResponse: Decodable {
 }
 
 private struct RedeemResponse: Decodable {
-    let success:      Bool
+    let success:      Bool?   // optional — coupon apply omits this field
     let message:      String?
     let bonusCredits: Int?
     let creditsAwarded: Int?
