@@ -430,9 +430,9 @@ class TestCE216WelcomeEditorUnchanged:
 
 class TestCE217RouteCount:
     def test_openapi_snapshot_route_count_unchanged(self):
-        """feat/r3-credits-v2 adds 1 Bearer redeem route — snapshot path count must equal 868."""
+        """feat/r3f adds POST /api/v1/lfa-player/self-assessment — snapshot path count must equal 869."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 868, (
-            f"Expected 868 routes (867 prior baseline + 1 invitation-codes/redeem-authenticated route), got {len(paths)}."
+        assert len(paths) == 869, (
+            f"Expected 869 routes (868 prior baseline + 1 lfa-player/self-assessment route), got {len(paths)}."
         )
