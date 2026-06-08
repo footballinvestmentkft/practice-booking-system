@@ -88,7 +88,8 @@ struct DashboardView: View {
                     let score = ProfileCompletionScore.compute(
                         profile:             profile,
                         lfaLicense:          dashboardVM.lfaLicense,
-                        selfRatingCompleted: dashboardVM.selfRatingCompleted
+                        selfRatingCompleted: dashboardVM.selfRatingCompleted,
+                        moodPhotosCompleted: dashboardVM.moodPhotosCompleted
                     )
                     ProfileCompletionCard(score: score,
                                          onViewAll: { isShowingProfile = true })

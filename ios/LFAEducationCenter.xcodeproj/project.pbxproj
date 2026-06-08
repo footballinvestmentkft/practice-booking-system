@@ -69,6 +69,9 @@
 		BB000004000000000000059 /* ProfilePhotoUploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000061 /* ProfilePhotoUploadView.swift */; };
 		BB000004000000000000060 /* BaselineSelfRatingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000062 /* BaselineSelfRatingViewModel.swift */; };
 		BB000004000000000000061 /* BaselineSelfRatingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000063 /* BaselineSelfRatingView.swift */; };
+		BB000004000000000000062 /* MoodPhotosViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000064 /* MoodPhotosViewModel.swift */; };
+		BB000004000000000000063 /* MoodPhotoSlotCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000065 /* MoodPhotoSlotCard.swift */; };
+		BB000004000000000000064 /* MoodPhotosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000066 /* MoodPhotosView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -136,6 +139,9 @@
 		BB000003000000000000061 /* ProfilePhotoUploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePhotoUploadView.swift; sourceTree = "<group>"; };
 		BB000003000000000000062 /* BaselineSelfRatingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaselineSelfRatingViewModel.swift; sourceTree = "<group>"; };
 		BB000003000000000000063 /* BaselineSelfRatingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaselineSelfRatingView.swift; sourceTree = "<group>"; };
+		BB000003000000000000064 /* MoodPhotosViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodPhotosViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000065 /* MoodPhotoSlotCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodPhotoSlotCard.swift; sourceTree = "<group>"; };
+		BB000003000000000000066 /* MoodPhotosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodPhotosView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -323,6 +329,9 @@
 				BB000003000000000000061 /* ProfilePhotoUploadView.swift */,
 				BB000003000000000000062 /* BaselineSelfRatingViewModel.swift */,
 				BB000003000000000000063 /* BaselineSelfRatingView.swift */,
+				BB000003000000000000064 /* MoodPhotosViewModel.swift */,
+				BB000003000000000000065 /* MoodPhotoSlotCard.swift */,
+				BB000003000000000000066 /* MoodPhotosView.swift */,
 			);
 			path = Profile;
 			sourceTree = "<group>";
@@ -477,6 +486,9 @@
 				BB000004000000000000059 /* ProfilePhotoUploadView.swift in Sources */,
 				BB000004000000000000060 /* BaselineSelfRatingViewModel.swift in Sources */,
 				BB000004000000000000061 /* BaselineSelfRatingView.swift in Sources */,
+				BB000004000000000000062 /* MoodPhotosViewModel.swift in Sources */,
+				BB000004000000000000063 /* MoodPhotoSlotCard.swift in Sources */,
+				BB000004000000000000064 /* MoodPhotosView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

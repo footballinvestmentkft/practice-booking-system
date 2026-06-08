@@ -16204,6 +16204,220 @@
         ]
       }
     },
+    "/api/v1/lfa-player/mood-photos": {
+      "get": {
+        "tags": [
+          "lfa-player"
+        ],
+        "summary": "List Mood Photos",
+        "description": "Return all 9 mood photo slots for the current user.\n\nphase_a_complete is True when all 6 Phase-A slots have original_url set\n(status may be uploaded / processing / ready / failed \u2014 all count).",
+        "operationId": "list_mood_photos_api_v1_lfa_player_mood_photos_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/lfa-player/mood-photos/{slot}/upload": {
+      "post": {
+        "tags": [
+          "lfa-player"
+        ],
+        "summary": "Upload Mood Photo",
+        "description": "Upload (or replace) a mood photo slot.\n\nAccepts JPEG, PNG, or WebP \u2264 5 MB.\nIf BG_REMOVAL_PROCESSOR is not 'null', auto-triggers background removal.\nReturns the updated slot dict.",
+        "operationId": "upload_mood_photo_api_v1_lfa_player_mood_photos__slot__upload_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slot",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slot"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_mood_photo_api_v1_lfa_player_mood_photos__slot__upload_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/lfa-player/mood-photos/{slot}": {
+      "delete": {
+        "tags": [
+          "lfa-player"
+        ],
+        "summary": "Delete Mood Photo Endpoint",
+        "description": "Delete a mood photo slot. Idempotent \u2014 no-op if slot has no photo.",
+        "operationId": "delete_mood_photo_endpoint_api_v1_lfa_player_mood_photos__slot__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slot",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slot"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/lfa-player/mood-photos/{slot}/remove-bg": {
+      "post": {
+        "tags": [
+          "lfa-player"
+        ],
+        "summary": "Trigger Bg Removal",
+        "description": "Manually trigger background removal for a slot.\n\nNo-op if slot is already processing or ready.\nRate-limited: 3 triggers per 60 s per user.",
+        "operationId": "trigger_bg_removal_api_v1_lfa_player_mood_photos__slot__remove_bg_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slot",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slot"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/lfa-player/mood-photos/{slot}/status": {
+      "get": {
+        "tags": [
+          "lfa-player"
+        ],
+        "summary": "Get Slot Status",
+        "description": "Poll the processing status of a single slot.\n\nReturns processing_timed_out=True when status='processing' and the\nrecord has not been updated within PROCESSING_TIMEOUT_SECONDS.",
+        "operationId": "get_slot_status_api_v1_lfa_player_mood_photos__slot__status_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slot",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slot"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/gancuju/licenses": {
       "get": {
         "tags": [
@@ -49285,6 +49499,20 @@
           "invited_user_id"
         ],
         "title": "Body_team_invite_teams__team_id__invite_post"
+      },
+      "Body_upload_mood_photo_api_v1_lfa_player_mood_photos__slot__upload_post": {
+        "properties": {
+          "photo": {
+            "type": "string",
+            "format": "binary",
+            "title": "Photo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "photo"
+        ],
+        "title": "Body_upload_mood_photo_api_v1_lfa_player_mood_photos__slot__upload_post"
       },
       "Body_upload_profile_photo_api_v1_users_me_profile_photo_post": {
         "properties": {

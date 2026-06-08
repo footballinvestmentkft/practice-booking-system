@@ -233,6 +233,18 @@ final class AuthManager: ObservableObject {
         }
     }
 
+    // DELETE with no response body (204) — Bearer inject, single 401 refresh + retry.
+    func authenticatedDeleteNoContent(path: String) async throws {
+        guard let token = accessToken else { logout(); throw APIError.unauthorized }
+        do {
+            try await APIClient.deleteNoContent(path: path, token: token)
+        } catch APIError.httpError(401, _) {
+            let refreshed = await performRefresh()
+            guard refreshed, let newToken = accessToken else { throw APIError.unauthorized }
+            try await APIClient.deleteNoContent(path: path, token: newToken)
+        }
+    }
+
     // Form-encoded POST with automatic Bearer inject, single 401 refresh + retry.
     // Used for FastAPI endpoints that declare Form(...) parameters.
     func authenticatedFormPost<T: Decodable>(path: String, fields: [String: String]) async throws -> T {
