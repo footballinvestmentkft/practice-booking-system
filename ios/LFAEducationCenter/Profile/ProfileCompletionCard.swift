@@ -190,7 +190,8 @@ struct ProfileCompletionSection: View {
             row(icon: "creditcard.fill",
                 title: "Academy ID",
                 subtitle: "Your LFA Football Player ID",
-                state: score.academyID > 0 ? .complete : .incomplete(action: onAcademyIDTap))
+                state: score.academyID > 0 ? .complete : .incomplete(action: onAcademyIDTap),
+                tapAction: onAcademyIDTap)
 
             row(icon: "camera.fill",
                 title: "Profile Photo",
@@ -218,9 +219,12 @@ struct ProfileCompletionSection: View {
 
     @ViewBuilder
     private func row(icon: String, title: String,
-                     subtitle: String, state: CompletionRowState) -> some View {
+                     subtitle: String, state: CompletionRowState,
+                     tapAction: (() -> Void)? = nil) -> some View {
         let content = rowContent(icon: icon, title: title, subtitle: subtitle, state: state)
         switch state {
+        case .complete where tapAction != nil:
+            Button(action: tapAction!) { content }
         case .incomplete(let action) where action != nil:
             Button(action: action!) { content }
         case .upcoming, .locked:
