@@ -55,7 +55,8 @@ final class DashboardViewModel: ObservableObject {
     @Published private(set) var lfaLicense:         LFAPlayerLicense?  = nil
     @Published private(set) var dashboard:          LicenseDashboard?  = nil
     @Published private(set) var licenses:           [UserLicense]      = []  // GānCuju, reserved
-    @Published private(set) var selfRatingCompleted: Bool              = false
+    @Published private(set) var selfRatingCompleted:  Bool              = false
+    @Published private(set) var moodPhotosCompleted: Bool              = false
 
     // MARK: — LFA Card State
 
@@ -83,7 +84,8 @@ final class DashboardViewModel: ObservableObject {
         lfaLicense          = nil
         dashboard           = nil
         licenses            = []
-        selfRatingCompleted = false
+        selfRatingCompleted  = false
+        moodPhotosCompleted  = false
         await fetchData(using: authManager)
     }
 
@@ -97,7 +99,8 @@ final class DashboardViewModel: ObservableObject {
         lfaLicense          = nil
         dashboard           = nil
         licenses            = []
-        selfRatingCompleted = false
+        selfRatingCompleted  = false
+        moodPhotosCompleted  = false
         await fetchData(using: authManager)
     }
 
@@ -109,7 +112,8 @@ final class DashboardViewModel: ObservableObject {
         lfaLicense          = nil
         dashboard           = nil
         licenses            = []
-        selfRatingCompleted = false
+        selfRatingCompleted  = false
+        moodPhotosCompleted  = false
     }
 
     // MARK: — Private
@@ -141,13 +145,24 @@ final class DashboardViewModel: ObservableObject {
                 path: "/api/v1/licenses/me"
             )) ?? []
 
-            // 5. Goals & Motivation completion — non-fatal.
-            //    Returns {completed: bool} for the user's most recent license.
+            // 5. Baseline Self-Rating completion — non-fatal.
+            //    Returns {completed: bool} when self_assessment_completed flag is set.
             //    404 (no license) or any decode error → false.
             struct MotivationCheck: Decodable { let completed: Bool }
             selfRatingCompleted = (try? await authManager.authenticatedGet(
                 path: "/api/v1/licenses/motivation-assessment"
             ) as MotivationCheck)?.completed ?? false
+
+            // 6. Mood Photos completion — non-fatal.
+            //    Returns {phase_a_complete: bool} when all 6 Phase-A slots are uploaded.
+            //    404 or decode error → false.
+            struct MoodCheck: Decodable {
+                let phaseAComplete: Bool
+                enum CodingKeys: String, CodingKey { case phaseAComplete = "phase_a_complete" }
+            }
+            moodPhotosCompleted = (try? await authManager.authenticatedGet(
+                path: "/api/v1/lfa-player/mood-photos"
+            ) as MoodCheck)?.phaseAComplete ?? false
 
             loadState = .loaded
 

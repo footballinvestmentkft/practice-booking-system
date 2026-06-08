@@ -54,6 +54,19 @@ enum APIClient {
         return try await execute(request)
     }
 
+    // MARK: — DELETE (No Content — 204)
+
+    static func deleteNoContent(path: String, token: String? = nil) async throws {
+        let request = try buildRequest(path: path, method: "DELETE", token: token)
+        let (_, response) = try await perform(request)
+        guard let http = response as? HTTPURLResponse else {
+            throw APIError.networkError(URLError(.badServerResponse))
+        }
+        guard (200...299).contains(http.statusCode) else {
+            throw APIError.httpError(statusCode: http.statusCode, detail: nil)
+        }
+    }
+
     // MARK: — GET
 
     static func get<T: Decodable>(

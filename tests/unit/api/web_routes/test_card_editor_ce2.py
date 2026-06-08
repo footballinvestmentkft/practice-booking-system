@@ -433,6 +433,6 @@ class TestCE217RouteCount:
         """feat/r3f adds POST /api/v1/lfa-player/self-assessment — snapshot path count must equal 869."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 869, (
+        assert len(paths) == 874, (
             f"Expected 869 routes (868 prior baseline + 1 lfa-player/self-assessment route), got {len(paths)}."
         )

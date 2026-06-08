@@ -29,14 +29,15 @@ struct ProfileCompletionScore {
 
     static func compute(profile: UserProfile,
                         lfaLicense: LFAPlayerLicense?,
-                        selfRatingCompleted: Bool = false) -> ProfileCompletionScore {
+                        selfRatingCompleted: Bool = false,
+                        moodPhotosCompleted: Bool = false) -> ProfileCompletionScore {
         ProfileCompletionScore(
             positionPhysical:  lfaLicense?.onboardingCompleted == true ? 30 : 0,
             academyID:         profile.lfaAcademyId != nil ? 10 : 0,
             profilePhoto:      profile.profilePhotoUrl != nil ? 15 : 0,
             baselineSelfRating: selfRatingCompleted ? 15 : 0,
             skillAssessment:   0,
-            moodPhotos:        0
+            moodPhotos:        moodPhotosCompleted ? 10 : 0
         )
     }
 }
@@ -99,6 +100,10 @@ struct ProfileCompletionCard: View {
             missingPill(icon: "chart.bar.doc.horizontal",
                         label: "Baseline Self-Rating")
         }
+        if score.moodPhotos == 0 {
+            missingPill(icon: "photo.on.rectangle",
+                        label: "Mood Photos")
+        }
         if score.skillAssessment == 0 {
             missingPill(icon: "slider.horizontal.3",
                         label: "Skill Assessment")
@@ -144,12 +149,13 @@ struct ProfileCompletionCard: View {
 // MARK: — ProfileView full section
 
 // Full checklist shown in ProfileView.
-// Academy ID, Profile Photo, and Baseline Self-Rating rows are tappable.
+// Academy ID, Profile Photo, Baseline Self-Rating, and Mood Photos rows are tappable.
 struct ProfileCompletionSection: View {
     let score:                   ProfileCompletionScore
     let onAcademyIDTap:          () -> Void
     let onPhotoTap:              () -> Void
     let onBaselineSelfRatingTap: () -> Void
+    let onMoodPhotosTap:         () -> Void
 
     private static let successGreen = Color(red: 0.18, green: 0.80, blue: 0.44)
 
@@ -222,7 +228,8 @@ struct ProfileCompletionSection: View {
             row(icon: "photo.on.rectangle",
                 title: "Mood Photos",
                 subtitle: "Match-ready expressions for your card",
-                state: score.moodPhotos > 0 ? .complete : .upcoming("R3D"))
+                state: score.moodPhotos > 0 ? .complete : .incomplete(action: onMoodPhotosTap),
+                tapAction: onMoodPhotosTap)
         }
         .background(Theme.Color.surface)
         .cornerRadius(Theme.Radius.md)
