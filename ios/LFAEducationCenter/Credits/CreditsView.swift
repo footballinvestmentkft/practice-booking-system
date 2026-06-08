@@ -313,12 +313,18 @@ struct CreditsView: View {
     @ViewBuilder
     private var transactionSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("TRANSACTION HISTORY")
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(Theme.Color.muted)
-                .kerning(0.8)
-                .padding(.horizontal, Theme.Spacing.md)
-                .padding(.top, Theme.Spacing.lg)
+            HStack {
+                Text("TRANSACTION HISTORY")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(Theme.Color.muted)
+                    .kerning(0.8)
+                Spacer()
+                Text("Latest first")
+                    .font(.system(size: 10))
+                    .foregroundColor(Theme.Color.muted)
+            }
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.top, Theme.Spacing.lg)
 
             switch viewModel.loadState {
             case .loading:
@@ -357,7 +363,7 @@ struct CreditsView: View {
     }
 
     private func transactionRow(_ tx: CreditTransaction) -> some View {
-        HStack {
+        HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(tx.typeLabel)
                     .font(.subheadline.weight(.semibold))
@@ -368,11 +374,18 @@ struct CreditsView: View {
                         .foregroundColor(Theme.Color.muted)
                         .lineLimit(1)
                 }
+                let date = tx.formattedDate
+                if !date.isEmpty {
+                    Text(date)
+                        .font(.caption2)
+                        .foregroundColor(Theme.Color.muted.opacity(0.7))
+                }
             }
             Spacer()
             Text(tx.amountDisplay)
                 .font(.subheadline.weight(.bold))
                 .foregroundColor(tx.isCredit ? Color(red: 0.18, green: 0.80, blue: 0.44) : Theme.Color.error)
+                .padding(.top, 2)
         }
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.vertical, 10)

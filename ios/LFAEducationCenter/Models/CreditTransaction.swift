@@ -26,6 +26,27 @@ struct CreditTransaction: Decodable, Identifiable {
 
     var isCredit: Bool { amount >= 0 }
 
+    // Short date/time label for transaction rows: "Jun 8, 13:56"
+    // Tries ISO 8601 with and without fractional seconds; falls back to raw prefix.
+    var formattedDate: String {
+        guard let iso = createdAt, !iso.isEmpty else { return "" }
+        let fmts = ["yyyy-MM-dd'T'HH:mm:ss.SSSSSS",
+                    "yyyy-MM-dd'T'HH:mm:ss",
+                    "yyyy-MM-dd'T'HH:mm:ssZ",
+                    "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZ"]
+        for fmt in fmts {
+            let f = DateFormatter()
+            f.locale = Locale(identifier: "en_US_POSIX")
+            f.dateFormat = fmt
+            if let date = f.date(from: iso) {
+                let out = DateFormatter()
+                out.dateFormat = "MMM d, HH:mm"
+                return out.string(from: date)
+            }
+        }
+        return String(iso.prefix(10))
+    }
+
     // Human-readable type label
     var typeLabel: String {
         switch transactionType.lowercased() {

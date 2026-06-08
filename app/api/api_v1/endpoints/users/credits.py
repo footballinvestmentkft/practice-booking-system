@@ -206,7 +206,7 @@ def get_my_credit_transactions(
 
     transactions_query = db.query(CreditTransaction).filter(
         tx_filter
-    ).order_by(CreditTransaction.created_at.desc())
+    ).order_by(CreditTransaction.created_at.desc(), CreditTransaction.id.desc())
 
     total_count = transactions_query.count()
 
