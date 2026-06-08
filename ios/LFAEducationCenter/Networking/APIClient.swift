@@ -120,6 +120,26 @@ enum APIError: Error {
     case unauthorized   // no token available or refresh failed
 }
 
+// Handles both string and object `detail` shapes from FastAPI:
+//   {"detail": "some message"}
+//   {"detail": {"error": "...", "message": "human readable"}}
 private struct ErrorBody: Decodable {
     let detail: String?
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let s = try? container.decode(String.self, forKey: .detail) {
+            detail = s
+        } else if let obj = try? container.decode(ErrorDetailObject.self, forKey: .detail) {
+            detail = obj.message
+        } else {
+            detail = nil
+        }
+    }
+
+    enum CodingKeys: String, CodingKey { case detail }
+}
+
+private struct ErrorDetailObject: Decodable {
+    let message: String?
 }

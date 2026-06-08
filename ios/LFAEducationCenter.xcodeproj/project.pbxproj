@@ -56,6 +56,10 @@
 		BB000004000000000000047 /* PitchSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000049 /* PitchSelectorView.swift */; };
 		BB000004000000000000048 /* LFAOnboardingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000050 /* LFAOnboardingViewModel.swift */; };
 		BB000004000000000000049 /* LFAOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000051 /* LFAOnboardingView.swift */; };
+		BB000004000000000000050 /* RedeemCodeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000052 /* RedeemCodeViewModel.swift */; };
+		BB000004000000000000051 /* RedeemCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000053 /* RedeemCodeView.swift */; };
+		BB000004000000000000052 /* InvoiceRequestViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000054 /* InvoiceRequestViewModel.swift */; };
+		BB000004000000000000053 /* InvoiceRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000055 /* InvoiceRequestView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -110,6 +114,10 @@
 		BB000003000000000000049 /* PitchSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchSelectorView.swift; sourceTree = "<group>"; };
 		BB000003000000000000050 /* LFAOnboardingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LFAOnboardingViewModel.swift; sourceTree = "<group>"; };
 		BB000003000000000000051 /* LFAOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LFAOnboardingView.swift; sourceTree = "<group>"; };
+		BB000003000000000000052 /* RedeemCodeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedeemCodeViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000053 /* RedeemCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedeemCodeView.swift; sourceTree = "<group>"; };
+		BB000003000000000000054 /* InvoiceRequestViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceRequestViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000055 /* InvoiceRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceRequestView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -276,6 +284,10 @@
 			children = (
 				BB000003000000000000043 /* CreditsViewModel.swift */,
 				BB000003000000000000044 /* CreditsView.swift */,
+				BB000003000000000000052 /* RedeemCodeViewModel.swift */,
+				BB000003000000000000053 /* RedeemCodeView.swift */,
+				BB000003000000000000054 /* InvoiceRequestViewModel.swift */,
+				BB000003000000000000055 /* InvoiceRequestView.swift */,
 			);
 			path = Credits;
 			sourceTree = "<group>";
@@ -425,6 +437,10 @@
 				BB000004000000000000047 /* PitchSelectorView.swift in Sources */,
 				BB000004000000000000048 /* LFAOnboardingViewModel.swift in Sources */,
 				BB000004000000000000049 /* LFAOnboardingView.swift in Sources */,
+				BB000004000000000000050 /* RedeemCodeViewModel.swift in Sources */,
+				BB000004000000000000051 /* RedeemCodeView.swift in Sources */,
+				BB000004000000000000052 /* InvoiceRequestViewModel.swift in Sources */,
+				BB000004000000000000053 /* InvoiceRequestView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

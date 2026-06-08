@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pydantic import BaseModel, EmailStr
 
 from ....database import get_db
-from ....dependencies import get_current_user_web, get_current_admin_user, get_current_admin_user_hybrid
+from ....dependencies import get_current_user, get_current_user_web, get_current_admin_user, get_current_admin_user_hybrid
 from ....models.user import User
 from ....models.invitation_code import InvitationCode
 from ....models.credit_transaction import CreditTransaction, TransactionType
@@ -330,4 +330,96 @@ async def redeem_invitation_code(
         "bonus_credits": code.bonus_credits,
         "old_balance": old_balance,
         "new_balance": new_balance
+    }
+
+
+@router.post("/invitation-codes/redeem-authenticated")
+def redeem_invitation_code_bearer(
+    redeem_data:  InvitationCodeRedeem,
+    db:           Session = Depends(get_db),
+    current_user: User    = Depends(get_current_user),
+) -> Any:
+    """
+    Redeem an invitation code via Bearer JWT (iOS native app).
+
+    Identical business logic to POST /invitation-codes/redeem (cookie-based web),
+    but accepts a JSON body and Bearer token instead of a session cookie.
+    The existing web endpoint is NOT modified.
+
+    Request:  {"code": "INV-YYYYMMDD-XXXXXX"}
+    Response: {"success", "message", "bonus_credits", "old_balance", "new_balance"}
+
+    Error codes:
+      401 — missing / invalid Bearer token (handled by dependency)
+      404 — code not found
+      400 — invalid, expired, or already used
+      403 — email-restricted code, caller's email does not match
+    """
+    normalized = redeem_data.code.upper().strip()
+
+    code = db.query(InvitationCode).filter(
+        InvitationCode.code == normalized
+    ).first()
+
+    if not code:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invitation code not found",
+        )
+
+    if not code.is_valid():
+        if code.is_used:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This invitation code has already been used",
+            )
+        if code.expires_at and code.expires_at < datetime.now(timezone.utc):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This invitation code has expired",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This invitation code is no longer valid",
+        )
+
+    if not code.can_be_used_by_email(current_user.email):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This invitation code is restricted to a specific email address",
+        )
+
+    old_balance = current_user.credit_balance
+    current_user.credit_balance += code.bonus_credits
+    new_balance = current_user.credit_balance
+
+    code.is_used = True
+    code.used_by_user_id = current_user.id
+    code.used_at = datetime.now(timezone.utc)
+
+    ct = CreditTransaction(
+        user_id=current_user.id,
+        transaction_type=TransactionType.INVITATION_BONUS.value,
+        amount=code.bonus_credits,
+        balance_after=new_balance,
+        description=f"Invitation code '{code.code}' redeemed — {code.bonus_credits} bonus credits",
+        idempotency_key=f"invitation-code-{code.id}-user-{current_user.id}",
+    )
+    db.add(ct)
+    db.commit()
+    db.refresh(current_user)
+    db.refresh(code)
+
+    logger.info(
+        "invitation_code_redeemed_bearer",
+        extra={"code": code.code, "user": current_user.email,
+               "credits": code.bonus_credits, "new_balance": new_balance},
+    )
+
+    return {
+        "success":      True,
+        "message":      f"{code.bonus_credits} bonus credits added to your account!",
+        "bonus_credits": code.bonus_credits,
+        "old_balance":   old_balance,
+        "new_balance":   new_balance,
     }
