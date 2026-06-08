@@ -71,6 +71,14 @@ struct AcademyIDFullScreenView: View {
         .navigationViewStyle(.stack)
         .onAppear { Task { await viewModel.load(using: authManager, profile: dashboardVM.profile) } }
         .onDisappear { restoreBrightness() }
+        // If the slow path just lazy-assigned a new Academy ID, reload the dashboard so
+        // ProfileView subtitle and ProfileCompletionScore.academyID (+10%) update immediately.
+        .onChange(of: viewModel.loadState.isLoaded) { isLoaded in
+            guard isLoaded,
+                  dashboardVM.profile?.lfaAcademyId == nil,
+                  viewModel.loadState.response?.lfaAcademyId != nil else { return }
+            Task { await dashboardVM.reload(using: authManager) }
+        }
     }
 
     // MARK: — Profile photo

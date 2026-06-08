@@ -74,7 +74,16 @@ final class AcademyIDViewModel: ObservableObject {
             let response: AcademyIDResponse = try await authManager.authenticatedGet(
                 path: "/api/v1/users/me/academy-id"
             )
-            loadState = .loaded(response)
+            // Rebuild qrData using APIConfig.verifyBaseURL so fast path and slow path
+            // always produce the same QR URL on this iOS client, regardless of the
+            // backend's VERIFY_BASE_URL default (which may be localhost in dev).
+            let iosQrData = APIConfig.verifyBaseURL + "/verify/" + response.publicToken
+            loadState = .loaded(AcademyIDResponse(
+                lfaAcademyId: response.lfaAcademyId,
+                publicToken:  response.publicToken,
+                qrUrl:        response.qrUrl,
+                qrData:       iosQrData
+            ))
         } catch {
             loadState = .error("Could not load Academy ID. Check your connection.")
         }
