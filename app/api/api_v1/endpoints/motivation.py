@@ -81,7 +81,7 @@ def submit_motivation_assessment(
             )
 
         # Validate motivation type matches license specialization
-        if data.lfa_player and specialization_type not in ["LFA_PLAYER", "LFA_PLAYER_PRE", "LFA_PLAYER_YOUTH", "LFA_PLAYER_AMATEUR", "LFA_PLAYER_PRO"]:
+        if data.lfa_player and specialization_type not in ["LFA_FOOTBALL_PLAYER", "LFA_PLAYER", "LFA_PLAYER_PRE", "LFA_PLAYER_YOUTH", "LFA_PLAYER_AMATEUR", "LFA_PLAYER_PRO"]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"LFA Player motivation provided but license is {specialization_type}"
