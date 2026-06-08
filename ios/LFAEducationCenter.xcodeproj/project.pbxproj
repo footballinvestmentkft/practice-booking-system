@@ -62,6 +62,7 @@
 		BB000004000000000000053 /* InvoiceRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000055 /* InvoiceRequestView.swift */; };
 		BB000004000000000000054 /* InvoiceItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000056 /* InvoiceItem.swift */; };
 		BB000004000000000000055 /* PendingInvoicesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000057 /* PendingInvoicesViewModel.swift */; };
+		BB000004000000000000056 /* ProfileCompletionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000058 /* ProfileCompletionCard.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -122,6 +123,7 @@
 		BB000003000000000000055 /* InvoiceRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceRequestView.swift; sourceTree = "<group>"; };
 		BB000003000000000000056 /* InvoiceItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceItem.swift; sourceTree = "<group>"; };
 		BB000003000000000000057 /* PendingInvoicesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingInvoicesViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000058 /* ProfileCompletionCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileCompletionCard.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -302,6 +304,7 @@
 			isa = PBXGroup;
 			children = (
 				BB000003000000000000045 /* ProfileView.swift */,
+				BB000003000000000000058 /* ProfileCompletionCard.swift */,
 			);
 			path = Profile;
 			sourceTree = "<group>";
@@ -449,6 +452,7 @@
 				BB000004000000000000053 /* InvoiceRequestView.swift in Sources */,
 				BB000004000000000000054 /* InvoiceItem.swift in Sources */,
 				BB000004000000000000055 /* PendingInvoicesViewModel.swift in Sources */,
+				BB000004000000000000056 /* ProfileCompletionCard.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -4,6 +4,8 @@ struct DashboardView: View {
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var dashboardVM: DashboardViewModel
 
+    @State private var isShowingProfile = false
+
     var body: some View {
         NavigationView {
             Group {
@@ -25,6 +27,11 @@ struct DashboardView: View {
         .navigationViewStyle(.stack)
         .onAppear {
             Task { await dashboardVM.load(using: authManager) }
+        }
+        .fullScreenCover(isPresented: $isShowingProfile) {
+            ProfileView()
+                .environmentObject(authManager)
+                .environmentObject(dashboardVM)
         }
     }
 
@@ -76,6 +83,15 @@ struct DashboardView: View {
 
                 // LFA Player license — from /api/v1/lfa-player/licenses/me
                 LFALicenseCard(license: dashboardVM.lfaLicense)
+
+                if dashboardVM.lfaLicense?.onboardingCompleted == true {
+                    let score = ProfileCompletionScore.compute(
+                        profile: profile,
+                        lfaLicense: dashboardVM.lfaLicense
+                    )
+                    ProfileCompletionCard(score: score,
+                                         onViewAll: { isShowingProfile = true })
+                }
 
                 // Overall progress from /api/v1/licenses/dashboard — shown if decode succeeds
                 if let progress = dashboardVM.dashboard?.overallProgress {
