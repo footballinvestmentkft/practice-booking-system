@@ -82,6 +82,8 @@ class User(UserBase):
     date_of_birth: Optional[datetime] = None
     nationality: Optional[str] = None
     gender: Optional[str] = None
+    city:    Optional[str] = None
+    country: Optional[str] = None
     medical_notes: Optional[str] = None
     interests: Optional[str] = None  # JSON string of interests array
     position: Optional[str] = None  # Football position
