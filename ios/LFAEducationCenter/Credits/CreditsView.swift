@@ -1,23 +1,24 @@
 import SwiftUI
 
-// Credits overview — balance hero, credit acquisition CTAs, how-to info, transaction history.
+// Credits overview — balance hero, pending invoices, credit acquisition CTAs, history.
 //
-// Balance:        DashboardViewModel.profile.creditBalance (no extra fetch)
-// Transactions:   CreditsViewModel → GET /api/v1/users/me/credit-transactions?limit=50
-//                 User-level endpoint — works without LFA Player license.
+// Balance:          DashboardViewModel.profile.creditBalance (no extra fetch)
+// Transactions:     CreditsViewModel → GET /api/v1/users/me/credit-transactions?limit=50
+// Pending invoices: PendingInvoicesViewModel → GET /api/v1/invoices/my-invoices
 //
 // Credit acquisition:
-//   Redeem a Code → RedeemCodeView (coupon + INV-* invitation codes)
+//   Redeem a Code  → RedeemCodeView (coupon + INV-* invitation codes)
 //   Request Invoice → InvoiceRequestView (package picker → offline bank transfer)
 struct CreditsView: View {
 
-    @EnvironmentObject private var authManager: AuthManager
-    @EnvironmentObject private var dashboardVM: DashboardViewModel
-    @StateObject         private var viewModel  = CreditsViewModel()
+    @EnvironmentObject private var authManager:         AuthManager
+    @EnvironmentObject private var dashboardVM:         DashboardViewModel
+    @StateObject         private var viewModel          = CreditsViewModel()
+    @StateObject         private var pendingInvoicesVM  = PendingInvoicesViewModel()
 
     @Environment(\.presentationMode) private var presentationMode
 
-    @State private var isShowingRedeemCode    = false
+    @State private var isShowingRedeemCode     = false
     @State private var isShowingInvoiceRequest = false
 
     var body: some View {
@@ -25,6 +26,7 @@ struct CreditsView: View {
             ScrollView {
                 VStack(spacing: 0) {
                     balanceHero
+                    pendingInvoicesSection
                     getCreditsSection
                     howToGetSection
                     transactionSection
@@ -44,7 +46,10 @@ struct CreditsView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        Task { await viewModel.reload(using: authManager) }
+                        Task {
+                            await viewModel.reload(using: authManager)
+                            await pendingInvoicesVM.reload(using: authManager)
+                        }
                     } label: {
                         Image(systemName: "arrow.clockwise")
                             .font(.system(size: 14, weight: .semibold))
@@ -55,13 +60,22 @@ struct CreditsView: View {
             }
         }
         .navigationViewStyle(.stack)
-        .onAppear { Task { await viewModel.load(using: authManager) } }
-        .fullScreenCover(isPresented: $isShowingRedeemCode) {
+        .onAppear {
+            Task { await viewModel.load(using: authManager) }
+            Task { await pendingInvoicesVM.load(using: authManager) }
+        }
+        .fullScreenCover(isPresented: $isShowingRedeemCode, onDismiss: {
+            // Reload transaction history so the new credit entry appears immediately.
+            Task { await viewModel.reload(using: authManager) }
+        }) {
             RedeemCodeView()
                 .environmentObject(authManager)
                 .environmentObject(dashboardVM)
         }
-        .fullScreenCover(isPresented: $isShowingInvoiceRequest) {
+        .fullScreenCover(isPresented: $isShowingInvoiceRequest, onDismiss: {
+            // Reload when InvoiceRequestView closes so a new invoice appears immediately.
+            Task { await pendingInvoicesVM.reload(using: authManager) }
+        }) {
             InvoiceRequestView()
                 .environmentObject(authManager)
                 .environmentObject(dashboardVM)
@@ -99,6 +113,87 @@ struct CreditsView: View {
         .background(Theme.Color.surface)
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.top, Theme.Spacing.md)
+        .cornerRadius(Theme.Radius.md)
+    }
+
+    // MARK: — Pending invoices
+
+    // Shown only when there are pending invoices — hidden when empty (normal state).
+    @ViewBuilder
+    private var pendingInvoicesSection: some View {
+        if pendingInvoicesVM.hasPending {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                Text("PENDING INVOICES")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(Theme.Color.muted)
+                    .kerning(0.8)
+                    .padding(.horizontal, Theme.Spacing.md)
+                    .padding(.top, Theme.Spacing.lg)
+
+                VStack(spacing: Theme.Spacing.sm) {
+                    ForEach(pendingInvoicesVM.pendingInvoices.prefix(3)) { invoice in
+                        pendingInvoiceCard(invoice)
+                    }
+                }
+                .padding(.horizontal, Theme.Spacing.md)
+            }
+        }
+    }
+
+    private func pendingInvoiceCard(_ invoice: InvoiceItem) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            HStack {
+                Image(systemName: "doc.text.fill")
+                    .font(.system(size: 14))
+                    .foregroundColor(Theme.Color.secondary)
+                Text("Invoice \(invoice.priceLabel)")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(Theme.Color.onSurface)
+                Spacer()
+                Text(invoice.statusLabel)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(Theme.Color.secondary)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(Theme.Color.secondary.opacity(0.12))
+                    .cornerRadius(4)
+            }
+
+            // Reference (monospaced, tappable for copy)
+            HStack(spacing: 6) {
+                Text(invoice.paymentReference)
+                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                    .foregroundColor(Theme.Color.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Spacer()
+                Button {
+                    UIPasteboard.general.string = invoice.paymentReference
+                } label: {
+                    Image(systemName: "doc.on.doc")
+                        .font(.system(size: 13))
+                        .foregroundColor(Theme.Color.primary)
+                }
+            }
+
+            HStack {
+                Text("\(invoice.creditsLabel) on approval")
+                    .font(.caption)
+                    .foregroundColor(Theme.Color.muted)
+                Spacer()
+                if !invoice.createdAtFormatted.isEmpty {
+                    Text(invoice.createdAtFormatted)
+                        .font(.caption)
+                        .foregroundColor(Theme.Color.muted)
+                }
+            }
+
+            Text("Credits will be added after admin verifies your bank transfer.")
+                .font(.caption2)
+                .foregroundColor(Theme.Color.muted)
+        }
+        .padding(Theme.Spacing.md)
+        .background(Theme.Color.surface)
         .cornerRadius(Theme.Radius.md)
     }
 
@@ -158,7 +253,7 @@ struct CreditsView: View {
         }
     }
 
-    // MARK: — How to get credits
+    // MARK: — How credits work
 
     private var howToGetSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
@@ -170,10 +265,10 @@ struct CreditsView: View {
                 .padding(.top, Theme.Spacing.lg)
 
             VStack(spacing: 1) {
-                infoRow(icon: "gift.fill",           title: "Invitation Code",    detail: "Redeem an INV-* code above")
-                infoRow(icon: "tag.fill",             title: "Coupon Code",       detail: "Apply a BONUS_CREDITS coupon above")
-                infoRow(icon: "doc.text.fill",        title: "Invoice Payment",   detail: "Request a package invoice, pay by bank transfer")
-                infoRow(icon: "building.columns",     title: "Admin Grant",       detail: "Credits granted by your Academy administrator")
+                infoRow(icon: "gift.fill",       title: "Invitation Code",  detail: "Redeem an INV-* code above")
+                infoRow(icon: "tag.fill",         title: "Coupon Code",     detail: "Apply a BONUS_CREDITS coupon above")
+                infoRow(icon: "doc.text.fill",    title: "Invoice Payment", detail: "Request a package invoice, pay by bank transfer")
+                infoRow(icon: "building.columns", title: "Admin Grant",     detail: "Credits granted by your Academy administrator")
             }
             .background(Theme.Color.surface)
             .cornerRadius(Theme.Radius.md)

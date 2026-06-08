@@ -108,8 +108,21 @@ struct RedeemCodeView: View {
             .frame(maxWidth: .infinity)
             .padding(Theme.Spacing.lg)
 
-        case .success(let credits, let balance):
-            successView(creditsAwarded: credits, newBalance: balance)
+        case .success(let credits, let balance, let oldBalance, let code, let codeType):
+            SuccessRewardView(
+                creditsAwarded: credits,
+                newBalance:     balance,
+                oldBalance:     oldBalance,
+                couponCode:     code,
+                codeType:       codeType,
+                onContinue:     { presentationMode.wrappedValue.dismiss() }
+            )
+            .onAppear {
+                Task {
+                    try? await Task.sleep(nanoseconds: 400_000_000)
+                    await dashboardVM.reload(using: authManager)
+                }
+            }
 
         case .error(let message):
             errorView(message: message)
@@ -190,7 +203,9 @@ struct RedeemCodeView: View {
 
     private func confirmRedeemButton(preview: RedeemPreview) -> some View {
         Button {
-            Task { await viewModel.confirm(using: authManager) }
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            let oldBalance = dashboardVM.profile?.creditBalance ?? 0
+            Task { await viewModel.confirm(using: authManager, oldBalance: oldBalance) }
         } label: {
             Text("Confirm Redeem")
                 .font(.body.weight(.semibold))
@@ -201,45 +216,6 @@ struct RedeemCodeView: View {
                 .cornerRadius(Theme.Radius.sm)
         }
         .disabled(isWorking)
-    }
-
-    // MARK: — Success view
-
-    private func successView(creditsAwarded: Int, newBalance: Int) -> some View {
-        VStack(spacing: Theme.Spacing.md) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 48))
-                .foregroundColor(Color(red: 0.18, green: 0.80, blue: 0.44))
-
-            Text("+\(creditsAwarded) CR Added!")
-                .font(.title2.weight(.bold))
-                .foregroundColor(Theme.Color.onSurface)
-
-            if newBalance > 0 {
-                Text("New balance: \(newBalance) CR")
-                    .font(.subheadline)
-                    .foregroundColor(Theme.Color.muted)
-            }
-
-            Button {
-                presentationMode.wrappedValue.dismiss()
-            } label: {
-                Text("Done")
-                    .font(.body.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-                    .background(Theme.Color.primary)
-                    .foregroundColor(.white)
-                    .cornerRadius(Theme.Radius.sm)
-            }
-        }
-        .padding(Theme.Spacing.md)
-        .onAppear {
-            Task {
-                try? await Task.sleep(nanoseconds: 400_000_000)
-                await dashboardVM.reload(using: authManager)
-            }
-        }
     }
 
     // MARK: — Error view
@@ -283,5 +259,164 @@ struct RedeemCodeView: View {
             .font(.system(size: 10, weight: .semibold))
             .foregroundColor(Theme.Color.muted)
             .kerning(0.8)
+    }
+}
+
+// MARK: — Success reward screen
+
+// Shown after a successful coupon or invitation code redemption.
+// Animations: checkmark spring-in → "+N CR" slide-up → receipt card fade-in.
+// Haptic: UINotificationFeedbackGenerator(.success) on appear.
+private struct SuccessRewardView: View {
+
+    let creditsAwarded: Int
+    let newBalance:     Int
+    let oldBalance:     Int
+    let couponCode:     String
+    let codeType:       RedeemCodeType
+    let onContinue:     () -> Void
+
+    @State private var checkmarkScaled  = false
+    @State private var creditsAppeared  = false
+    @State private var receiptAppeared  = false
+
+    private static let successGreen = Color(red: 0.18, green: 0.80, blue: 0.44)
+
+    var body: some View {
+        VStack(spacing: Theme.Spacing.lg) {
+            checkmarkSection
+            creditHeadline
+            receiptCard
+            continueButton
+        }
+        .padding(Theme.Spacing.md)
+        .onAppear { triggerAnimations() }
+    }
+
+    // MARK: — Subviews
+
+    private var checkmarkSection: some View {
+        Image(systemName: "checkmark.circle.fill")
+            .font(.system(size: 72))
+            .foregroundColor(Self.successGreen)
+            .scaleEffect(checkmarkScaled ? 1.0 : 0.2)
+            .opacity(checkmarkScaled ? 1.0 : 0.0)
+            .animation(.spring(response: 0.45, dampingFraction: 0.60), value: checkmarkScaled)
+            .padding(.top, Theme.Spacing.sm)
+    }
+
+    private var creditHeadline: some View {
+        VStack(spacing: 4) {
+            Text("+\(creditsAwarded) CR")
+                .font(.system(size: 52, weight: .bold, design: .rounded))
+                .foregroundColor(Self.successGreen)
+            Text("Credited to your account")
+                .font(.subheadline)
+                .foregroundColor(Theme.Color.muted)
+        }
+        .opacity(creditsAppeared ? 1.0 : 0.0)
+        .offset(y: creditsAppeared ? 0 : 18)
+        .animation(.easeOut(duration: 0.28), value: creditsAppeared)
+    }
+
+    private var receiptCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Header label + code
+            Text(codeType == .invitationCode ? "INVITATION CODE" : "COUPON APPLIED")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(Theme.Color.muted)
+                .kerning(0.8)
+                .padding(.horizontal, Theme.Spacing.md)
+                .padding(.top, 12)
+
+            Text(couponCode.uppercased())
+                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                .foregroundColor(Theme.Color.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .padding(.horizontal, Theme.Spacing.md)
+                .padding(.top, 4)
+
+            Divider()
+                .padding(.horizontal, Theme.Spacing.md)
+                .padding(.vertical, 10)
+
+            // Balance rows
+            receiptRow(label: "Balance before",
+                       value: "\(oldBalance) CR",
+                       valueColor: Theme.Color.muted,
+                       bold: false)
+            receiptRow(label: "Credits added",
+                       value: "+\(creditsAwarded) CR",
+                       valueColor: Self.successGreen,
+                       bold: false)
+            receiptRow(label: "New balance",
+                       value: "\(newBalance) CR",
+                       valueColor: Self.successGreen,
+                       bold: true)
+
+            Divider()
+                .padding(.horizontal, Theme.Spacing.md)
+                .padding(.top, 6)
+
+            Text(formattedToday())
+                .font(.caption2)
+                .foregroundColor(Theme.Color.muted)
+                .padding(.horizontal, Theme.Spacing.md)
+                .padding(.vertical, 10)
+        }
+        .background(Theme.Color.surface)
+        .cornerRadius(Theme.Radius.md)
+        .opacity(receiptAppeared ? 1.0 : 0.0)
+        .offset(y: receiptAppeared ? 0 : 8)
+        .animation(.easeOut(duration: 0.25), value: receiptAppeared)
+    }
+
+    private var continueButton: some View {
+        Button(action: onContinue) {
+            Text("Continue")
+                .font(.body.weight(.semibold))
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+                .background(Theme.Color.primary)
+                .foregroundColor(.white)
+                .cornerRadius(Theme.Radius.sm)
+        }
+        .opacity(receiptAppeared ? 1.0 : 0.0)
+        .animation(.easeOut(duration: 0.20), value: receiptAppeared)
+    }
+
+    // MARK: — Helpers
+
+    private func receiptRow(label: String, value: String, valueColor: Color, bold: Bool) -> some View {
+        HStack {
+            Text(label)
+                .font(.caption)
+                .foregroundColor(Theme.Color.muted)
+            Spacer()
+            Text(value)
+                .font(bold ? .subheadline.weight(.bold) : .subheadline.weight(.semibold))
+                .foregroundColor(valueColor)
+        }
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.vertical, 8)
+    }
+
+    private func formattedToday() -> String {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        f.timeStyle = .none
+        return f.string(from: Date())
+    }
+
+    private func triggerAnimations() {
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        withAnimation { checkmarkScaled = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+            withAnimation { creditsAppeared = true }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.44) {
+            withAnimation { receiptAppeared = true }
+        }
     }
 }

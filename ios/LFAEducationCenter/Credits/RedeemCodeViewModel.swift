@@ -86,7 +86,7 @@ final class RedeemCodeViewModel: ObservableObject {
         case validating
         case preview(RedeemPreview)
         case redeeming
-        case success(creditsAwarded: Int, newBalance: Int)
+        case success(creditsAwarded: Int, newBalance: Int, oldBalance: Int, couponCode: String, codeType: RedeemCodeType)
         case error(String)
     }
 
@@ -112,14 +112,18 @@ final class RedeemCodeViewModel: ObservableObject {
 
     // MARK: — Step 2: Confirm redeem
 
-    func confirm(using authManager: AuthManager) async {
+    // oldBalance: the user's credit balance BEFORE redemption, captured by the View
+    // from DashboardViewModel at the moment the user taps Confirm Redeem.
+    func confirm(using authManager: AuthManager, oldBalance: Int) async {
         guard case .preview(let preview) = state else { return }  // duplicate-tap guard
         state = .redeeming
 
         if preview.codeType == .invitationCode {
-            await redeemInvitation(code: preview.rawCode, authManager: authManager)
+            await redeemInvitation(code: preview.rawCode, codeType: preview.codeType,
+                                   authManager: authManager, oldBalance: oldBalance)
         } else {
-            await redeemCoupon(code: preview.rawCode, authManager: authManager)
+            await redeemCoupon(code: preview.rawCode, codeType: preview.codeType,
+                               authManager: authManager, oldBalance: oldBalance)
         }
     }
 
@@ -187,13 +191,20 @@ final class RedeemCodeViewModel: ObservableObject {
 
     // MARK: — Private: redeem
 
-    private func redeemCoupon(code: String, authManager: AuthManager) async {
+    private func redeemCoupon(code: String, codeType: RedeemCodeType,
+                               authManager: AuthManager, oldBalance: Int) async {
         do {
             let resp: RedeemResponse = try await authManager.authenticatedPost(
                 path: "/api/v1/coupons/apply",
                 body: ["code": code]
             )
-            state = .success(creditsAwarded: resp.awardedAmount, newBalance: resp.resolvedBalance)
+            state = .success(
+                creditsAwarded: resp.awardedAmount,
+                newBalance:     resp.resolvedBalance,
+                oldBalance:     oldBalance,
+                couponCode:     code,
+                codeType:       codeType
+            )
         } catch APIError.httpError(let c, let d) where c == 400 {
             state = .error(d ?? "This coupon could not be applied.")
         } catch APIError.httpError(let c, let d) where c == 409 {
@@ -205,13 +216,20 @@ final class RedeemCodeViewModel: ObservableObject {
         }
     }
 
-    private func redeemInvitation(code: String, authManager: AuthManager) async {
+    private func redeemInvitation(code: String, codeType: RedeemCodeType,
+                                   authManager: AuthManager, oldBalance: Int) async {
         do {
             let resp: RedeemResponse = try await authManager.authenticatedPost(
                 path: "/api/v1/invitation-codes/redeem-authenticated",
                 body: ["code": code]
             )
-            state = .success(creditsAwarded: resp.awardedAmount, newBalance: resp.resolvedBalance)
+            state = .success(
+                creditsAwarded: resp.awardedAmount,
+                newBalance:     resp.resolvedBalance,
+                oldBalance:     oldBalance,
+                couponCode:     code,
+                codeType:       codeType
+            )
         } catch APIError.httpError(let c, let d) where c == 400 {
             state = .error(d ?? "This invitation code could not be redeemed.")
         } catch APIError.httpError(let c, _) where c == 403 {
