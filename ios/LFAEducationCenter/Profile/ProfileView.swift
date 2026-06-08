@@ -21,6 +21,7 @@ struct ProfileView: View {
                     photoSection
                     identitySection
                     academyIDSection
+                    completionSection
                     Spacer(minLength: Theme.Spacing.xl)
                 }
                 .padding(.horizontal, Theme.Spacing.md)
@@ -106,6 +107,20 @@ struct ProfileView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.bottom, Theme.Spacing.lg)
+    }
+
+    // MARK: — Profile completion checklist
+
+    @ViewBuilder
+    private var completionSection: some View {
+        if let profile = dashboardVM.profile,
+           dashboardVM.lfaLicense?.onboardingCompleted == true {
+            let score = ProfileCompletionScore.compute(profile: profile,
+                                                       lfaLicense: dashboardVM.lfaLicense)
+            ProfileCompletionSection(score: score,
+                                     onAcademyIDTap: { isShowingAcademyID = true })
+                .padding(.top, Theme.Spacing.lg)
+        }
     }
 
     // MARK: — Academy ID entry
