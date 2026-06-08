@@ -52,6 +52,10 @@
 		BB000004000000000000043 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000045 /* ProfileView.swift */; };
 		BB000004000000000000044 /* UnlockViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000046 /* UnlockViewModel.swift */; };
 		BB000004000000000000045 /* UnlockConfirmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000047 /* UnlockConfirmView.swift */; };
+		BB000004000000000000046 /* FootballPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000048 /* FootballPosition.swift */; };
+		BB000004000000000000047 /* PitchSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000049 /* PitchSelectorView.swift */; };
+		BB000004000000000000048 /* LFAOnboardingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000050 /* LFAOnboardingViewModel.swift */; };
+		BB000004000000000000049 /* LFAOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000051 /* LFAOnboardingView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -102,6 +106,10 @@
 		BB000003000000000000045 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		BB000003000000000000046 /* UnlockViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnlockViewModel.swift; sourceTree = "<group>"; };
 		BB000003000000000000047 /* UnlockConfirmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnlockConfirmView.swift; sourceTree = "<group>"; };
+		BB000003000000000000048 /* FootballPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FootballPosition.swift; sourceTree = "<group>"; };
+		BB000003000000000000049 /* PitchSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchSelectorView.swift; sourceTree = "<group>"; };
+		BB000003000000000000050 /* LFAOnboardingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LFAOnboardingViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000051 /* LFAOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LFAOnboardingView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -147,6 +155,7 @@
 				BB000002000000000000014 /* Credits */,
 				BB000002000000000000015 /* Profile */,
 				BB000002000000000000016 /* Unlock */,
+				BB000002000000000000017 /* Onboarding */,
 				BB000003000000000000004 /* Assets.xcassets */,
 			);
 			path = LFAEducationCenter;
@@ -288,6 +297,17 @@
 			path = Unlock;
 			sourceTree = "<group>";
 		};
+		BB000002000000000000017 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				BB000003000000000000048 /* FootballPosition.swift */,
+				BB000003000000000000049 /* PitchSelectorView.swift */,
+				BB000003000000000000050 /* LFAOnboardingViewModel.swift */,
+				BB000003000000000000051 /* LFAOnboardingView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -401,6 +421,10 @@
 				BB000004000000000000043 /* ProfileView.swift in Sources */,
 				BB000004000000000000044 /* UnlockViewModel.swift in Sources */,
 				BB000004000000000000045 /* UnlockConfirmView.swift in Sources */,
+				BB000004000000000000046 /* FootballPosition.swift in Sources */,
+				BB000004000000000000047 /* PitchSelectorView.swift in Sources */,
+				BB000004000000000000048 /* LFAOnboardingViewModel.swift in Sources */,
+				BB000004000000000000049 /* LFAOnboardingView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

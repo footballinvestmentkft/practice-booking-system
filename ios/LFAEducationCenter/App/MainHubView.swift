@@ -10,11 +10,12 @@ import SwiftUI
 struct MainHubView: View {
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var dashboardVM: DashboardViewModel
-    @State private var isShowingLFASpec      = false
-    @State private var isShowingAcademyID   = false
-    @State private var isShowingCredits     = false
-    @State private var isShowingProfile     = false
+    @State private var isShowingLFASpec       = false
+    @State private var isShowingAcademyID    = false
+    @State private var isShowingCredits      = false
+    @State private var isShowingProfile      = false
     @State private var isShowingUnlockConfirm = false
+    @State private var isShowingOnboarding   = false
 
     private let gridColumns = [GridItem(.adaptive(minimum: 150), spacing: Theme.Spacing.sm)]
 
@@ -107,6 +108,11 @@ struct MainHubView: View {
                 .environmentObject(authManager)
                 .environmentObject(dashboardVM)
         }
+        .fullScreenCover(isPresented: $isShowingOnboarding) {
+            LFAOnboardingView()
+                .environmentObject(authManager)
+                .environmentObject(dashboardVM)
+        }
     }
 
     // MARK: — LFA card helpers
@@ -114,12 +120,14 @@ struct MainHubView: View {
     // Returns the tap action for the LFA Football Player SpecCard.
     // .active              → open LFASpecTabView (specialization dashboard)
     // .unlockAvailable     → open UnlockConfirmView (R3B: confirm + pay 100 CR)
+    // .setupPending        → open LFAOnboardingView (R3C: minimum onboarding)
     // .insufficientCredits → open CreditsView (R3A: no more zsákutca)
     // all other states     → nil (tap disabled)
     private func lfaCardAction(for state: LFACardState) -> (() -> Void)? {
         switch state {
         case .active:              return { isShowingLFASpec = true }
         case .unlockAvailable:     return { isShowingUnlockConfirm = true }
+        case .setupPending:        return { isShowingOnboarding = true }
         case .insufficientCredits: return { isShowingCredits = true }
         default:                   return nil
         }
@@ -146,7 +154,7 @@ struct MainHubView: View {
         case .unlockAvailable:
             let cr = dashboardVM.profile?.creditBalance ?? 0
             return "\(cr) CR · Ready"
-        case .setupPending:        return "Onboarding pending"
+        case .setupPending:        return "Tap to complete setup"
         case .active:              return "Skills · Cards"
         }
     }
@@ -270,11 +278,11 @@ private enum SpecStatus {
     case setupPending
     case comingSoon
 
-    // Full opacity + primary title colour for actionable/prominent states.
+    // Full opacity for actionable/prominent states.
     var isProminent: Bool {
         switch self {
-        case .active, .unlockAvailable, .insufficientCredits: return true
-        default:                                              return false
+        case .active, .unlockAvailable, .insufficientCredits, .setupPending: return true
+        default:                                                               return false
         }
     }
 }
