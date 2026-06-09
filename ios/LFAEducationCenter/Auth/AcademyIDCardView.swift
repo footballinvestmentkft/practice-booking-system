@@ -33,7 +33,7 @@ struct AcademyIDCardView: View {
     let lfaAcademyId:             String?   // "LFA-2026-00142" — shown on card
     let publicToken:              String?   // UUID for QR — build with VERIFY_BASE_URL
     // Specialization display label — nil shows — in the football slot (registration preview, no licence)
-    let specialization:           String?   = nil
+    let specialization:           String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {

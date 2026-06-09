@@ -185,7 +185,8 @@ struct RegisterView: View {
                         profilePhotoProcessedURL: nil,
                         isVerified:               false,  // registration preview — invite valid ≠ ID card verified
                         lfaAcademyId:             nil,   // assigned by backend after registration
-                        publicToken:              nil    // QR shows placeholder until /me/academy-id
+                        publicToken:              nil,   // QR shows placeholder until /me/academy-id
+                        specialization:           nil    // no licence during registration
                     )
                     .padding(.horizontal, Theme.Spacing.md)
 
