@@ -433,6 +433,6 @@ class TestCE217RouteCount:
         """PR-2 biometric consent adds 1 new path — snapshot path count must equal 877."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 877, (
+        assert len(paths) == 878, (
             f"Expected 877 routes (876 prior + 1 biometric-consent path), got {len(paths)}."
         )

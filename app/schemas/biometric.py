@@ -16,9 +16,9 @@ and embedding-related fields remain absent.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # ── Liveness metadata ─────────────────────────────────────────────────────────
 
@@ -94,6 +94,39 @@ class BiometricConsentRevokeRequest(BaseModel):
     )
 
     # No biometric data fields — revocation carries no sensor data
+
+
+# ── Liveness reference request schema (PR-3) ─────────────────────────────────
+
+class BiometricLivenessSubmitRequest(BaseModel):
+    """Body for POST /me/biometric-liveness (PR-3)."""
+    model_config = ConfigDict(extra="forbid")
+
+    source: Literal["onboarding_liveness"] = Field(
+        ...,
+        description="Must be 'onboarding_liveness'; other sources reserved for future PRs",
+    )
+    liveness_metadata: LivenessMetadata = Field(
+        ...,
+        description="High-level liveness challenge metadata — forbidden fields rejected by schema",
+    )
+    photo_filename: Optional[str] = Field(
+        default=None,
+        max_length=255,
+        description="Basename of the captured photo file. No path separators allowed.",
+    )
+
+    @field_validator("photo_filename")
+    @classmethod
+    def _no_path_traversal(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        import os
+        if os.path.basename(v) != v:
+            raise ValueError("photo_filename must be a plain filename with no path separators")
+        return v
+
+    # face_match_score, embedding, raw sensor data — deliberately absent
 
 
 # ── Consent response schema ───────────────────────────────────────────────────
