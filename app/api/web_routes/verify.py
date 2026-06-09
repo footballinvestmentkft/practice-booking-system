@@ -38,7 +38,7 @@ from ...services.academy_id_service import (
     check_verify_rate_limit,
     specialization_display_label,
 )
-from ...services.licence_package import sync_active_on_expiry
+from ...services.licence_package import is_licence_expired
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -54,10 +54,9 @@ def _compute_card_status(user: User, db: Session) -> tuple[str, str | None]:
     Priority order (first matching wins):
       no_licence > inactive > expired > onboarding_required > photo_required > verified
 
-    Side effect: if the licence is expired and is_active is still True,
-    sync_active_on_expiry() sets it to False and flushes.
-    The caller (verify endpoint) owns the DB session; commit happens there
-    implicitly when the response is returned (SQLAlchemy autoflush).
+    Pure read — no DB writes.  is_active sync on expiry is a separate admin/scheduler
+    concern; the verify page must not produce DB side effects (session autocommit=False,
+    no commit in this route, flush would be silently rolled back on session close).
     """
     licence = (
         db.query(UserLicense)
@@ -74,9 +73,6 @@ def _compute_card_status(user: User, db: Session) -> tuple[str, str | None]:
 
     now = datetime.now(timezone.utc)
 
-    # Lazy expiry enforcement: deactivate if expired.
-    expired = sync_active_on_expiry(licence, db, now)
-
     # Build expiry_display from expires_at (None for perpetual legacy licences)
     expiry_display: str | None = None
     if licence.expires_at is not None:
@@ -85,7 +81,8 @@ def _compute_card_status(user: User, db: Session) -> tuple[str, str | None]:
             exp = exp.replace(tzinfo=timezone.utc)
         expiry_display = exp.strftime("%-d %b %Y")
 
-    if expired:
+    # Check expiry first — takes priority over is_active flag
+    if is_licence_expired(licence, now):
         return "expired", expiry_display
 
     if not licence.is_active:
