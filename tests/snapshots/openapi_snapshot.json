@@ -4399,6 +4399,11 @@
       },
       "Body_specialization_unlock_specialization_unlock_post": {
         "properties": {
+          "duration_months": {
+            "default": 1,
+            "title": "Duration Months",
+            "type": "integer"
+          },
           "specialization": {
             "title": "Specialization",
             "type": "string"
@@ -66957,7 +66962,7 @@
     },
     "/specialization/unlock": {
       "post": {
-        "description": "Unlock a specialization from Streamlit (costs 100 credits)\nUses Bearer token authentication for Streamlit frontend\n\nBUSINESS LOGIC:\n- All specializations are VISIBLE to all users (for motivation/future planning)\n- Age requirement is ONLY enforced at UNLOCK time",
+        "description": "Unlock a specialization (Bearer token auth \u2014 iOS native).\n\nduration_months controls both the credit cost and the licence expiry:\n  1  month  \u2192 100 CR\n  3  months \u2192 250 CR\n  6  months \u2192 450 CR\n  12 months \u2192 800 CR\n\nexpires_at is always set (never NULL) on new licences.\nExpiry uses calendar-month arithmetic (dateutil.relativedelta).",
         "operationId": "specialization_unlock_specialization_unlock_post",
         "requestBody": {
           "content": {
