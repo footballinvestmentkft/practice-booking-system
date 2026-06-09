@@ -1185,6 +1185,55 @@
         ]
       }
     },
+    "/api/v1/users/me/biometric-liveness": {
+      "post": {
+        "tags": [
+          "users",
+          "users",
+          "biometric"
+        ],
+        "summary": "Submit onboarding liveness challenge result",
+        "description": "Record a completed onboarding liveness challenge on the backend.\n\n- Requires BIOMETRIC_FACE_MATCHING_ENABLED=true (feature flag).\n- Requires active biometric consent (403 otherwise).\n- Accepts source=onboarding_liveness only.\n- liveness_metadata is validated by schema (extra fields \u2192 422)\n  and sanitized again by the service layer before DB write.\n- Returns face_reference_photo_status and face_match_status.\n- face_match_score is never returned.\n- Embedding generation is a placeholder (PR-4).",
+        "operationId": "submit_biometric_liveness_api_v1_users_me_biometric_liveness_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BiometricLivenessSubmitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BiometricVerificationStatusOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/users/": {
       "post": {
         "tags": [
@@ -47176,6 +47225,83 @@
         "title": "BiometricConsentStatusOut",
         "description": "Read-only view of the user's biometric consent state."
       },
+      "BiometricLivenessSubmitRequest": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "onboarding_liveness"
+            ],
+            "const": "onboarding_liveness",
+            "title": "Source",
+            "description": "Must be 'onboarding_liveness'; other sources reserved for future PRs"
+          },
+          "liveness_metadata": {
+            "$ref": "#/components/schemas/LivenessMetadata",
+            "description": "High-level liveness challenge metadata \u2014 forbidden fields rejected by schema"
+          },
+          "photo_filename": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Filename",
+            "description": "Basename of the captured photo file. No path separators allowed."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "liveness_metadata"
+        ],
+        "title": "BiometricLivenessSubmitRequest",
+        "description": "Body for POST /me/biometric-liveness (PR-3)."
+      },
+      "BiometricVerificationStatusOut": {
+        "properties": {
+          "face_match_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Face Match Status"
+          },
+          "face_reference_photo_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Face Reference Photo Status"
+          },
+          "has_biometric_consent": {
+            "type": "boolean",
+            "title": "Has Biometric Consent",
+            "default": false
+          },
+          "manual_review_required": {
+            "type": "boolean",
+            "title": "Manual Review Required",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "BiometricVerificationStatusOut",
+        "description": "Current biometric verification state returned to the client.\n\nface_match_score is intentionally absent \u2014 clients must not receive\nthe raw similarity score; only the classified status is exposed."
+      },
       "Body_accept_friend_request_friends_accept__friendship_id__post": {
         "properties": {
           "next": {
@@ -55042,6 +55168,60 @@
         ],
         "title": "LicenseStatusResponse",
         "description": "License status details"
+      },
+      "LivenessMetadata": {
+        "properties": {
+          "challenge_version": {
+            "type": "string",
+            "maxLength": 20,
+            "title": "Challenge Version",
+            "description": "Challenge spec version, e.g. 'v1.0'"
+          },
+          "steps_completed": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Steps Completed",
+            "description": "Ordered list of completed challenge steps"
+          },
+          "total_duration_ms": {
+            "type": "integer",
+            "maximum": 120000.0,
+            "minimum": 0.0,
+            "title": "Total Duration Ms",
+            "description": "Wall-clock duration from challenge start to completion/failure (ms)"
+          },
+          "retry_count": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Retry Count",
+            "description": "Number of challenge retries in this session"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason",
+            "description": "Only set when challenge failed; null on success"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "challenge_version",
+          "total_duration_ms",
+          "retry_count"
+        ],
+        "title": "LivenessMetadata",
+        "description": "High-level liveness challenge metadata.\n\nextra=\"forbid\" ensures that forbidden fields (yaw, roll, device_model,\nios_version, landmarks, frames, etc.) are rejected at API ingestion time.\nThe liveness_metadata_sanitizer provides a third layer of defence for\nany code path that bypasses schema validation."
       },
       "LocationCreate": {
         "properties": {
