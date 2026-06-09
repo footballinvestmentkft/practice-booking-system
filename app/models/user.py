@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Enum, Index
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, ForeignKey, Enum, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
@@ -126,6 +126,46 @@ class User(Base):
         default=uuid.uuid4,
         comment="Non-guessable UUID for /verify/{token} QR URL — do not log",
     )
+
+    # 🔬 BIOMETRIC FACE MATCHING: Face verification status (feature flag gated)
+    # All columns nullable; populated only when BIOMETRIC_FACE_MATCHING_ENABLED=true.
+    # face_match_score stored for admin/threshold use — NEVER returned in API responses.
+    face_match_status = Column(
+        String(30),
+        nullable=True,
+        comment=(
+            "Biometric verification state: NULL / reference_pending / verified / "
+            "failed / manual_review_required / consent_revoked / "
+            "onboarding_liveness_capture"
+        ),
+    )
+    face_match_score = Column(
+        Float,
+        nullable=True,
+        comment="Last cosine similarity score [0,1]. NEVER returned in API responses.",
+    )
+    face_reference_photo_status = Column(
+        String(30),
+        nullable=True,
+        comment=(
+            "Reference photo state: NULL / not_set / onboarding_liveness_capture / "
+            "pending_review / approved / rejected"
+        ),
+    )
+    manual_review_required = Column(
+        Boolean,
+        nullable=False,
+        default=False,
+        comment="True when face match score is in review threshold band",
+    )
+    reviewed_by = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True,
+        comment="Admin user_id who performed manual review",
+    )
+    reviewed_at     = Column(DateTime, nullable=True)
+    rejection_reason = Column(String(500), nullable=True)
 
     # 🪪 PROFILE PHOTO: Academy ID Card photo (Phase 1)
     # Managed via POST/DELETE /api/v1/users/me/profile-photo.
@@ -268,6 +308,21 @@ class User(Base):
         "TournamentBadge",
         back_populates="user",
         cascade="all, delete-orphan"
+    )
+
+    # 🔬 Biometric relationships (feature-flag gated; populated by PR-2+)
+    biometric_consents = relationship(
+        "UserBiometricConsent",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        foreign_keys="UserBiometricConsent.user_id",
+    )
+    face_embedding = relationship(
+        "UserFaceEmbedding",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+        foreign_keys="UserFaceEmbedding.user_id",
     )
 
     # 🎓 NEW: Specialization helper properties and methods

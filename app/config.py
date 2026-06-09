@@ -291,6 +291,20 @@ class Settings(BaseSettings):
     # Production:            https://lfa.hu
     VERIFY_BASE_URL: str = "http://localhost:8000"
 
+    # ── Biometric Face Matching ───────────────────────────────────────────────
+    # BIOMETRIC_FACE_MATCHING_ENABLED controls the entire biometric pipeline.
+    #   false (default) — all biometric endpoints return HTTP 503.
+    #   true            — requires DPIA completion, consent v1.0 legal approval,
+    #                     and written sign-off before setting in production.
+    #
+    # BIOMETRIC_EMBEDDING_KEY — 32-byte AES-256-GCM key for embedding encryption.
+    #   Generate with: python -c "import secrets; print(secrets.token_hex(32))"
+    #   Must be set before BIOMETRIC_FACE_MATCHING_ENABLED=true can be used in
+    #   production. Empty string disables encryption validation in development
+    #   and test environments (no real embeddings stored in those environments).
+    BIOMETRIC_FACE_MATCHING_ENABLED: bool = False
+    BIOMETRIC_EMBEDDING_KEY: str = ""
+
     # ── Slow-query monitoring ──────────────────────────────────────────────────
     # Queries slower than SLOW_QUERY_THRESHOLD_MS are logged to app.slow_query
     # and counted in the slow_queries_total metric.  Raise this value if normal
