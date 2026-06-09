@@ -10,12 +10,13 @@ import SwiftUI
 struct MainHubView: View {
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var dashboardVM: DashboardViewModel
-    @State private var isShowingLFASpec       = false
-    @State private var isShowingAcademyID    = false
-    @State private var isShowingCredits      = false
-    @State private var isShowingProfile      = false
-    @State private var isShowingUnlockConfirm = false
-    @State private var isShowingOnboarding   = false
+    @State private var isShowingLFASpec          = false
+    @State private var isShowingAcademyID        = false
+    @State private var isShowingCredits          = false
+    @State private var isShowingProfile          = false
+    @State private var isShowingUnlockConfirm    = false
+    @State private var isShowingOnboarding       = false
+    @State private var isShowingCompletionScreen = false
 
     private let gridColumns = [GridItem(.adaptive(minimum: 150), spacing: Theme.Spacing.sm)]
 
@@ -85,6 +86,21 @@ struct MainHubView: View {
         .onAppear {
             Task { await dashboardVM.load(using: authManager) }
         }
+        // Trigger celebration check whenever the dashboard finishes loading.
+        // Covers both first launch and re-logins after an interrupted session.
+        .onChange(of: dashboardVM.loadState) { state in
+            if state == .loaded { checkCompletionCelebration() }
+        }
+        .fullScreenCover(isPresented: $isShowingCompletionScreen) {
+            ProfileCompletionCelebrationView {
+                // Mark seen ONLY on explicit "Continue" tap, not on appear.
+                if let userId = dashboardVM.profile?.id {
+                    CompletionCelebrationStore.markSeen(forUserId: userId)
+                }
+                isShowingCompletionScreen = false
+                Task { await dashboardVM.reload(using: authManager) }
+            }
+        }
         .fullScreenCover(isPresented: $isShowingLFASpec) {
             LFASpecTabView()
         }
@@ -113,6 +129,29 @@ struct MainHubView: View {
                 .environmentObject(authManager)
                 .environmentObject(dashboardVM)
         }
+    }
+
+    // MARK: — Profile completion celebration
+
+    // Shows the full-screen celebration exactly once per user, on the load cycle
+    // where isAvailableComplete first becomes true.  If the app was killed before
+    // the user tapped "Continue", the store flag is still false, so the screen
+    // reappears on the next launch.
+    private func checkCompletionCelebration() {
+        guard let profile  = dashboardVM.profile,
+              let userId   = profile.id else { return }
+
+        let score = ProfileCompletionScore.compute(
+            profile:             profile,
+            lfaLicense:          dashboardVM.lfaLicense,
+            selfRatingCompleted: dashboardVM.selfRatingCompleted,
+            moodPhotosCompleted: dashboardVM.moodPhotosCompleted
+        )
+
+        guard score.isAvailableComplete,
+              !CompletionCelebrationStore.hasBeenSeen(forUserId: userId) else { return }
+
+        isShowingCompletionScreen = true
     }
 
     // MARK: — LFA card helpers

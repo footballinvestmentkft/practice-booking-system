@@ -73,6 +73,8 @@
 		BB000004000000000000063 /* MoodPhotoSlotCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000065 /* MoodPhotoSlotCard.swift */; };
 		BB000004000000000000064 /* MoodPhotosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000066 /* MoodPhotosView.swift */; };
 		BB000004000000000000069 /* MoodPhotoPreviewSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000069 /* MoodPhotoPreviewSheet.swift */; };
+		BB00000400000000000006A /* CompletionCelebrationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000006A /* CompletionCelebrationStore.swift */; };
+		BB00000400000000000006B /* ProfileCompletionCelebrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000006B /* ProfileCompletionCelebrationView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -144,6 +146,8 @@
 		BB000003000000000000065 /* MoodPhotoSlotCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodPhotoSlotCard.swift; sourceTree = "<group>"; };
 		BB000003000000000000066 /* MoodPhotosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodPhotosView.swift; sourceTree = "<group>"; };
 		BB000003000000000000069 /* MoodPhotoPreviewSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodPhotoPreviewSheet.swift; sourceTree = "<group>"; };
+		BB00000300000000000006A /* CompletionCelebrationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompletionCelebrationStore.swift; sourceTree = "<group>"; };
+		BB00000300000000000006B /* ProfileCompletionCelebrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileCompletionCelebrationView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -335,6 +339,8 @@
 				BB000003000000000000065 /* MoodPhotoSlotCard.swift */,
 				BB000003000000000000066 /* MoodPhotosView.swift */,
 				BB000003000000000000069 /* MoodPhotoPreviewSheet.swift */,
+				BB00000300000000000006A /* CompletionCelebrationStore.swift */,
+				BB00000300000000000006B /* ProfileCompletionCelebrationView.swift */,
 			);
 			path = Profile;
 			sourceTree = "<group>";
@@ -493,6 +499,8 @@
 				BB000004000000000000063 /* MoodPhotoSlotCard.swift in Sources */,
 				BB000004000000000000064 /* MoodPhotosView.swift in Sources */,
 				BB000004000000000000069 /* MoodPhotoPreviewSheet.swift in Sources */,
+				BB00000400000000000006A /* CompletionCelebrationStore.swift in Sources */,
+				BB00000400000000000006B /* ProfileCompletionCelebrationView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
