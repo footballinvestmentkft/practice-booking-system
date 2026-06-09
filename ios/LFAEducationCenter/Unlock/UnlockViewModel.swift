@@ -2,26 +2,32 @@ import Foundation
 
 // Decoded from POST /specialization/unlock (200 OK).
 private struct UnlockResponse: Decodable {
-    let success:    Bool
-    let message:    String?
-    let newBalance: Int?
-    let licenseId:  Int?
+    let success:        Bool
+    let message:        String?
+    let newBalance:     Int?
+    let licenseId:      Int?
+    let durationMonths: Int?
+    let cost:           Int?
+    let expiresAt:      String?   // ISO 8601 — nil only on legacy/error paths
 
     enum CodingKeys: String, CodingKey {
         case success, message
-        case newBalance = "new_balance"
-        case licenseId  = "license_id"
+        case newBalance     = "new_balance"
+        case licenseId      = "license_id"
+        case durationMonths = "duration_months"
+        case cost
+        case expiresAt      = "expires_at"
     }
 }
 
 // Manages the specialization unlock POST flow.
 //
 // Endpoint: POST /specialization/unlock
-//   Body: form-encoded  specialization=LFA_PLAYER
+//   Body: form-encoded  specialization=LFA_PLAYER&duration_months=<1|3|6|12>
 //   Auth: Bearer token (same as all API calls)
 //
 // State machine:
-//   .idle    → user sees confirm UI
+//   .idle    → user sees confirm UI with duration selector
 //   .loading → request in-flight, duplicate tap blocked
 //   .success → dashboard reload triggered, view auto-dismisses
 //   .error   → message shown, user can reset and retry
@@ -41,14 +47,17 @@ final class UnlockViewModel: ObservableObject {
 
     // MARK: — Perform unlock
 
-    func performUnlock(using authManager: AuthManager) async {
+    func performUnlock(using authManager: AuthManager, durationMonths: Int) async {
         guard case .idle = state else { return }    // duplicate-tap guard
         state = .loading
 
         do {
             let response: UnlockResponse = try await authManager.authenticatedFormPost(
                 path:   "/specialization/unlock",
-                fields: ["specialization": "LFA_PLAYER"]
+                fields: [
+                    "specialization":  "LFA_PLAYER",
+                    "duration_months": "\(durationMonths)",
+                ]
             )
             state = .success(newBalance: response.newBalance ?? 0)
 

@@ -91,11 +91,11 @@ struct AcademyIDCardView: View {
                 fieldBlock(label: "NICKNAME",  value: nickname)
 
                 HStack(spacing: 0) {
-                    fieldBlock(label: "AGE",  value: age.map { "\($0)" })
+                    fieldBlock(label: "AGE",         value: age.map { "\($0) years" })
                     Spacer()
-                    fieldBlock(label: "NAT",  value: nationalityShort, align: .center)
+                    fieldBlock(label: "NATIONALITY", value: nationalityDisplay, align: .center)
                     Spacer()
-                    fieldBlock(label: "GEN",  value: genderShort, align: .trailing)
+                    fieldBlock(label: "GENDER",      value: genderDisplay, align: .trailing)
                 }
 
                 fieldBlock(label: "LOCATION", value: locationDisplay)
@@ -109,7 +109,7 @@ struct AcademyIDCardView: View {
 
     private var specSlotsRow: some View {
         HStack(spacing: 0) {
-            Text("SPECS")
+            Text("SPECIALIZATION")
                 .font(.system(size: 7, weight: .semibold))
                 .foregroundColor(Theme.Color.muted)
             Spacer()
@@ -274,24 +274,31 @@ struct AcademyIDCardView: View {
         return parts.isEmpty ? nil : parts.joined(separator: " ")
     }
 
-    // Short nationality for narrow column: just the flag + ISO code.
+    // Full nationality display for ID card: flag emoji + full country name.
     // Returns nil for empty string so fieldBlock shows "———" placeholder instead of a space.
-    private var nationalityShort: String? {
+    private var nationalityDisplay: String? {
         guard !nationality.isEmpty else { return nil }
         let flags: [String: String] = [
             "HU": "🇭🇺", "AT": "🇦🇹", "DE": "🇩🇪", "SK": "🇸🇰",
             "RO": "🇷🇴", "RS": "🇷🇸", "HR": "🇭🇷", "SI": "🇸🇮",
-            "UA": "🇺🇦", "PL": "🇵🇱", "CZ": "🇨🇿", "Other": "🌐"
+            "UA": "🇺🇦", "PL": "🇵🇱", "CZ": "🇨🇿", "Other": "🌐",
         ]
-        return (flags[nationality] ?? "") + " " + nationality
+        let names: [String: String] = [
+            "HU": "Hungarian",  "AT": "Austrian",  "DE": "German",
+            "SK": "Slovak",     "RO": "Romanian",  "RS": "Serbian",
+            "HR": "Croatian",   "SI": "Slovenian", "UA": "Ukrainian",
+            "PL": "Polish",     "CZ": "Czech",     "Other": "Other",
+        ]
+        let flag = flags[nationality] ?? ""
+        let name = names[nationality] ?? nationality
+        return flag.isEmpty ? name : "\(flag) \(name)"
     }
 
-    private var genderShort: String? {
+    // Full gender display for ID card — no abbreviation.
+    private var genderDisplay: String? {
         switch gender {
-        case "Male":   return "M"
-        case "Female": return "F"
-        case "Other":  return "O"
-        default:       return nil
+        case "Male", "Female", "Other": return gender
+        default:                         return nil
         }
     }
 

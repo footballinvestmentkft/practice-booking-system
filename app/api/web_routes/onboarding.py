@@ -21,6 +21,7 @@ from ...utils.age_requirements import get_available_specializations
 from ...utils.football_positions import normalize_position, normalize_positions, VALID_POSITION_VALUES
 from ...skills_config import SKILL_CATEGORIES, get_all_skill_keys
 from ...services.skill_progression import SYSTEM_BASELINE
+from ...services.licence_package import DEFAULT_DURATION_MONTHS, cost_for_duration, calculate_expires_at
 import logging
 
 # Setup templates
@@ -89,47 +90,53 @@ async def specialization_select_submit(
             UserLicense.specialization_type == spec_type.value
         ).first()
 
-        # If NO license exists, this is a NEW unlock -> costs 100 credits
+        # If NO license exists, this is a NEW unlock.
+        # Web path defaults to DEFAULT_DURATION_MONTHS (1 month) — no UI picker yet.
+        # expires_at is always set; perpetual licences are no longer created here.
         if not user_license:
-            SPEC_UNLOCK_COST = 100  # Cost to unlock a new specialization
+            unlock_duration = DEFAULT_DURATION_MONTHS
+            unlock_cost     = cost_for_duration(unlock_duration)
 
-            # Check if user has enough credits
-            if user.credit_balance < SPEC_UNLOCK_COST:
-                logger.warning("onboarding_insufficient_credits", extra={"user": user.email, "balance": user.credit_balance, "required": SPEC_UNLOCK_COST, "spec": spec_type.value})
-                # Redirect back to dashboard with error message
-                error_msg = f"Insufficient credits! Unlocking {spec_type.value.replace('_', ' ')} requires {SPEC_UNLOCK_COST} credits. You have {user.credit_balance} credits."
+            if user.credit_balance < unlock_cost:
+                logger.warning("onboarding_insufficient_credits", extra={"user": user.email, "balance": user.credit_balance, "required": unlock_cost, "spec": spec_type.value})
+                error_msg = f"Insufficient credits! Unlocking {spec_type.value.replace('_', ' ')} requires {unlock_cost} credits. You have {user.credit_balance} credits."
                 return RedirectResponse(url=f"/dashboard?error={error_msg}", status_code=303)
 
-            # DEDUCT credits and create the license
-            logger.info("onboarding_credits_deducted", extra={"user": user.email, "cost": SPEC_UNLOCK_COST, "new_balance": user.credit_balance - SPEC_UNLOCK_COST})
-            user.credit_balance -= SPEC_UNLOCK_COST
+            now        = datetime.now(timezone.utc)
+            expires_at = calculate_expires_at(now, unlock_duration)
 
-            # Create the UserLicense (unlock specialization)
+            logger.info("onboarding_credits_deducted", extra={"user": user.email, "cost": unlock_cost, "new_balance": user.credit_balance - unlock_cost})
+            user.credit_balance -= unlock_cost
+
             user_license = UserLicense(
                 user_id=user.id,
                 specialization_type=spec_type.value,
                 current_level=1,
-                started_at=datetime.now(),  # Required field!
-                payment_verified=True,  # Paid via credits
-                payment_verified_at=datetime.now(),
-                created_at=datetime.now()
+                started_at=now,
+                payment_verified=True,
+                payment_verified_at=now,
+                onboarding_completed=False,
+                is_active=True,
+                expires_at=expires_at,
             )
             db.add(user_license)
-            db.flush()  # Flush to get the user_license.id
+            db.flush()
 
-            # Log credit transaction
             credit_transaction = CreditTransaction(
                 user_license_id=user_license.id,
-                amount=-SPEC_UNLOCK_COST,
+                amount=-unlock_cost,
                 transaction_type=TransactionType.SPECIALIZATION_UNLOCK.value,
-                description=f"Unlocked specialization: {spec_type.value.replace('_', ' ')}",
+                description=(
+                    f"Unlocked specialization: {spec_type.value.replace('_', ' ')} "
+                    f"({unlock_duration} month)"
+                ),
                 balance_after=user.credit_balance,
                 idempotency_key=str(uuid.uuid4()),
-                created_at=datetime.now()
+                created_at=now,
             )
             db.add(credit_transaction)
 
-            logger.info("onboarding_spec_unlocked", extra={"user": user.email, "spec": spec_type.value, "cost": SPEC_UNLOCK_COST})
+            logger.info("onboarding_spec_unlocked", extra={"user": user.email, "spec": spec_type.value, "cost": unlock_cost, "duration_months": unlock_duration, "expires_at": expires_at.isoformat()})
 
         logger.info("onboarding_spec_set", extra={"user": user.email, "spec": str(spec_type)})
 

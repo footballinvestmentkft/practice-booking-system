@@ -44,8 +44,11 @@ struct ProfilePhotoUploadView: View {
                 }
             }
             .sheet(isPresented: $isShowingPicker) {
-                ProfilePhotoPicker { image in
-                    vm.selectImage(image)
+                ProfilePhotoPicker { imageOrNil in
+                    isShowingPicker = false   // SwiftUI-safe dismissal, no UIKit cascade
+                    if let image = imageOrNil {
+                        vm.selectImage(image)
+                    }
                 }
             }
         }

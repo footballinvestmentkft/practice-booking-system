@@ -5,27 +5,40 @@ import SwiftUI
 // Client-side profile completion score — no extra API call.
 // All data comes from already-loaded DashboardViewModel.
 //
-// Weights (total = 100):
+// User-completable weights (availableMax = 80):
 //   Position & Physical   30  ← lfaLicense.onboardingCompleted
 //   Academy ID            10  ← profile.lfaAcademyId != nil
 //   Profile Photo         15  ← profile.profilePhotoUrl != nil
 //   Baseline Self-Rating  15  ← selfRatingCompleted (motivation_scores["self_assessment_completed"])
-//   Goals & Motivation     0  ← Coming Next (separate future module)
-//   Skill Assessment      20  ← Coming Next (R3E)
-//   Mood Photos           10  ← Coming Next (R3D)
+//   Mood Photos           10  ← moodPhotosCompleted (phase_a_complete, all 6 Phase-A slots)
+//
+// Not user-completable (excluded from availableMax):
+//   Skill Assessment  — instructor-driven external assessment (R3E); user has no action
+//   Goals & Motivation — future module, weight 0, no action available
+//
+// fraction = total / availableMax so a user who finishes all available modules hits 1.0.
 struct ProfileCompletionScore {
-    let positionPhysical:  Int
-    let academyID:         Int
-    let profilePhoto:      Int
-    let baselineSelfRating: Int  // R3F — live from selfRatingCompleted
-    let skillAssessment:   Int   // R3E — always 0 until implemented
-    let moodPhotos:        Int   // R3D — always 0 until implemented
+    let positionPhysical:   Int
+    let academyID:          Int
+    let profilePhoto:       Int
+    let baselineSelfRating: Int
+    let skillAssessment:    Int   // always 0 — instructor-driven (R3E), not user-completable
+    let moodPhotos:         Int
+
+    // Maximum points a user can earn with currently available modules.
+    // Skill Assessment (instructor-driven, R3E) is excluded.
+    static let availableMax: Int = 80   // 30 + 10 + 15 + 15 + 10
 
     var total: Int {
         positionPhysical + academyID + profilePhoto
         + baselineSelfRating + skillAssessment + moodPhotos
     }
-    var fraction: Double { min(Double(total) / 100.0, 1.0) }
+
+    var fraction: Double {
+        min(Double(total) / Double(Self.availableMax), 1.0)
+    }
+
+    var isAvailableComplete: Bool { total >= Self.availableMax }
 
     static func compute(profile: UserProfile,
                         lfaLicense: LFAPlayerLicense?,
@@ -47,14 +60,14 @@ struct ProfileCompletionScore {
 enum CompletionRowState {
     case complete
     case incomplete(action: (() -> Void)?)
-    case upcoming(String)   // module tag: "R3F", "R3E", "R3D"
+    case upcoming(String)   // module tag: "R3G", "R3E"
     case locked
 }
 
 // MARK: — Dashboard compact card
 
 // Shown below LFALicenseCard when onboarding is complete.
-// Displays overall %, progress bar, 2 top missing items, and a CTA.
+// Only shows user-actionable missing items (not instructor-driven or future modules).
 struct ProfileCompletionCard: View {
     let score: ProfileCompletionScore
     let onViewAll: () -> Void
@@ -66,7 +79,7 @@ struct ProfileCompletionCard: View {
                 .accentColor(Theme.Color.primary)
             motivationText
             missingItems
-            viewAllButton
+            bottomAction
         }
         .padding(Theme.Spacing.md)
         .background(Theme.Color.surface)
@@ -81,75 +94,82 @@ struct ProfileCompletionCard: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundColor(Theme.Color.onSurface)
             Spacer()
-            Text("\(score.total)%")
+            Text("\(score.total) / \(ProfileCompletionScore.availableMax)")
                 .font(.subheadline.weight(.bold))
                 .foregroundColor(Theme.Color.primary)
         }
     }
 
     private var motivationText: some View {
-        Text("Your profile is ready. Add more details to unlock richer cards and insights.")
+        let text = score.isAvailableComplete
+            ? "Your player profile is complete."
+            : "Your profile is ready. Add more details to unlock richer cards and insights."
+        return Text(text)
             .font(.caption)
             .foregroundColor(Theme.Color.muted)
             .fixedSize(horizontal: false, vertical: true)
     }
 
+    // Only user-actionable missing items. Skill Assessment (instructor-driven) is never shown here.
     @ViewBuilder
     private var missingItems: some View {
         if score.baselineSelfRating == 0 {
-            missingPill(icon: "chart.bar.doc.horizontal",
-                        label: "Baseline Self-Rating")
+            actionablePill(icon: "chart.bar.doc.horizontal", label: "Baseline Self-Rating")
         }
         if score.moodPhotos == 0 {
-            missingPill(icon: "photo.on.rectangle",
-                        label: "Mood Photos")
-        }
-        if score.skillAssessment == 0 {
-            missingPill(icon: "slider.horizontal.3",
-                        label: "Skill Assessment")
+            actionablePill(icon: "photo.on.rectangle", label: "Mood Photos")
         }
     }
 
-    private func missingPill(icon: String, label: String) -> some View {
+    private func actionablePill(icon: String, label: String) -> some View {
         HStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.system(size: 11))
-                .foregroundColor(Theme.Color.muted)
+                .foregroundColor(Theme.Color.primary)
             Text(label)
                 .font(.caption)
-                .foregroundColor(Theme.Color.muted)
+                .foregroundColor(Theme.Color.onSurface)
             Spacer()
-            Text("Coming Next")
+            Text("Finish now")
                 .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(Theme.Color.secondary)
+                .foregroundColor(Theme.Color.primary)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
-                .background(Theme.Color.secondary.opacity(0.10))
+                .background(Theme.Color.primary.opacity(0.10))
                 .cornerRadius(4)
         }
     }
 
-    private var viewAllButton: some View {
-        Button(action: onViewAll) {
-            HStack {
-                Spacer()
-                Text("Complete Profile")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(Theme.Color.primary)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(Theme.Color.primary)
-                Spacer()
+    @ViewBuilder
+    private var bottomAction: some View {
+        if score.isAvailableComplete {
+            Text("Profile complete for now")
+                .font(.caption)
+                .foregroundColor(Theme.Color.muted)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.top, 2)
+        } else {
+            Button(action: onViewAll) {
+                HStack {
+                    Spacer()
+                    Text("Complete Profile")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(Theme.Color.primary)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Theme.Color.primary)
+                    Spacer()
+                }
             }
+            .padding(.top, 2)
         }
-        .padding(.top, 2)
     }
 }
 
 // MARK: — ProfileView full section
 
 // Full checklist shown in ProfileView.
-// Academy ID, Profile Photo, Baseline Self-Rating, and Mood Photos rows are tappable.
+// Skill Assessment row is informative only — not tappable, not an incomplete task.
 struct ProfileCompletionSection: View {
     let score:                   ProfileCompletionScore
     let onAcademyIDTap:          () -> Void
@@ -176,14 +196,17 @@ struct ProfileCompletionSection: View {
                 .foregroundColor(Theme.Color.muted)
                 .kerning(0.8)
             Spacer()
-            Text("\(score.total)%")
+            Text("\(score.total) / \(ProfileCompletionScore.availableMax)")
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundColor(Theme.Color.primary)
         }
     }
 
     private var motivationText: some View {
-        Text("Your player profile is ready. Add more details to unlock richer cards and insights.")
+        let text = score.isAvailableComplete
+            ? "Your player profile is complete. More modules will become available later."
+            : "Your player profile is ready. Add more details to unlock richer cards and insights."
+        return Text(text)
             .font(.caption)
             .foregroundColor(Theme.Color.muted)
             .fixedSize(horizontal: false, vertical: true)
@@ -215,6 +238,12 @@ struct ProfileCompletionSection: View {
                 state: score.baselineSelfRating > 0 ? .complete : .incomplete(action: onBaselineSelfRatingTap),
                 tapAction: score.baselineSelfRating > 0 ? onBaselineSelfRatingTap : nil)
 
+            row(icon: "photo.on.rectangle",
+                title: "Mood Photos",
+                subtitle: "Match-ready expressions for your card",
+                state: score.moodPhotos > 0 ? .complete : .incomplete(action: onMoodPhotosTap),
+                tapAction: onMoodPhotosTap)
+
             row(icon: "target",
                 title: "Goals & Motivation",
                 subtitle: "Your football goals and drive",
@@ -222,14 +251,8 @@ struct ProfileCompletionSection: View {
 
             row(icon: "slider.horizontal.3",
                 title: "Skill Assessment",
-                subtitle: "Validated skill measurement",
+                subtitle: "Expert instructor assessment — coming later",
                 state: .upcoming("R3E"))
-
-            row(icon: "photo.on.rectangle",
-                title: "Mood Photos",
-                subtitle: "Match-ready expressions for your card",
-                state: score.moodPhotos > 0 ? .complete : .incomplete(action: onMoodPhotosTap),
-                tapAction: onMoodPhotosTap)
         }
         .background(Theme.Color.surface)
         .cornerRadius(Theme.Radius.md)
@@ -304,9 +327,9 @@ struct ProfileCompletionSection: View {
 
     private func iconColor(_ state: CompletionRowState) -> Color {
         switch state {
-        case .complete:             return Self.successGreen
-        case .incomplete:           return Theme.Color.primary
-        default:                    return Theme.Color.muted
+        case .complete:   return Self.successGreen
+        case .incomplete: return Theme.Color.primary
+        default:          return Theme.Color.muted
         }
     }
 

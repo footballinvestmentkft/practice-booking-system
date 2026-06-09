@@ -1,5 +1,19 @@
 import SwiftUI
 
+// Slot-key → emoji mapping. iOS-only — no backend change needed.
+// Keys match backend _SLOT_META exactly (mood_photos.py).
+private let _moodEmoji: [String: String] = [
+    "mood_intro_neutral":     "😐",
+    "mood_happy_smile":       "😄",
+    "mood_celebration":       "🎉",
+    "mood_sad_disappointed":  "😢",
+    "mood_angry_competitive": "😠",
+    "mood_surprised_shocked": "😮",
+    "mood_focused_ready":     "🎯",
+    "mood_confident":         "💪",
+    "mood_proud":             "🏆",
+]
+
 // Async image loader — loads a relative URL path using the configured base URL.
 // Private to this file; mirrors ProfileURLPhotoView in ProfileView.swift.
 private struct MoodPhotoThumbnail: View {
@@ -32,6 +46,7 @@ private struct MoodPhotoThumbnail: View {
 // Per-slot card for the Mood Photos screen.
 // Shows thumbnail (if uploaded), label, upload / delete / BG removal controls,
 // and processing / ready / failed state indicators.
+// Thumbnail is tappable when a photo exists — opens MoodPhotoPreviewSheet.
 struct MoodPhotoSlotCard: View {
 
     let slot:         MoodPhotoSlotData
@@ -40,6 +55,7 @@ struct MoodPhotoSlotCard: View {
     let onDelete:     () -> Void
     let onRemoveBg:   () -> Void
     let onReset:      () -> Void    // reset stuck processing
+    let onPreview:    () -> Void    // tap thumbnail → MoodPhotoPreviewSheet
 
     private static let successGreen = Color(red: 0.18, green: 0.80, blue: 0.44)
 
@@ -47,9 +63,14 @@ struct MoodPhotoSlotCard: View {
         HStack(spacing: Theme.Spacing.md) {
             thumbnail
             VStack(alignment: .leading, spacing: 4) {
-                Text(slot.label)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(Theme.Color.onSurface)
+                HStack(spacing: 5) {
+                    if let emoji = _moodEmoji[slot.slot] {
+                        Text(emoji).font(.system(size: 15))
+                    }
+                    Text(slot.label)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(Theme.Color.onSurface)
+                }
                 statusLine
             }
             Spacer()
@@ -70,18 +91,32 @@ struct MoodPhotoSlotCard: View {
                 .frame(width: 56, height: 56)
                 .overlay(ProgressView().scaleEffect(0.7))
         } else if let url = slot.processedPngUrl ?? slot.originalUrl {
-            MoodPhotoThumbnail(urlPath: url)
-                .frame(width: 56, height: 56)
-                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.sm))
+            Button(action: onPreview) {
+                MoodPhotoThumbnail(urlPath: url)
+                    .frame(width: 56, height: 56)
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.sm))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.Radius.sm)
+                            .stroke(Theme.Color.primary.opacity(0.25), lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
         } else {
-            RoundedRectangle(cornerRadius: Theme.Radius.sm)
-                .fill(Theme.Color.muted.opacity(0.15))
-                .frame(width: 56, height: 56)
-                .overlay(
-                    Image(systemName: "camera.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(Theme.Color.muted)
-                )
+            Button(action: onUpload) {
+                RoundedRectangle(cornerRadius: Theme.Radius.sm)
+                    .fill(Theme.Color.primary.opacity(0.07))
+                    .frame(width: 56, height: 56)
+                    .overlay(
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 18))
+                            .foregroundColor(Theme.Color.primary.opacity(0.6))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.Radius.sm)
+                            .stroke(Theme.Color.primary.opacity(0.15), lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
         }
     }
 

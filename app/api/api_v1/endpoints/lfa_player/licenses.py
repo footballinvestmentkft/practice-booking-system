@@ -38,6 +38,7 @@ class LicenseResponse(BaseModel):
     is_active: bool
     onboarding_completed: bool
     started_at: Optional[str] = None
+    expires_at: Optional[str] = None  # ISO 8601 — null means perpetual (no expiry set)
 
 
 # ==================== Endpoints ====================
@@ -75,6 +76,7 @@ def list_all_licenses(
             is_active=lic.is_active,
             onboarding_completed=lic.onboarding_completed,
             started_at=lic.started_at.isoformat() if lic.started_at else None,
+            expires_at=lic.expires_at.isoformat() if lic.expires_at else None,
         )
         for lic in licenses
     ]
@@ -125,4 +127,5 @@ def get_my_license(
         is_active=lfa_license.is_active,
         onboarding_completed=lfa_license.onboarding_completed,
         started_at=lfa_license.started_at.isoformat() if lfa_license.started_at else None,
+        expires_at=lfa_license.expires_at.isoformat() if lfa_license.expires_at else None,
     )

@@ -28,7 +28,7 @@
 		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>Camera is required for skeleton pose tracking in training sessions.</string>
+	<string>Camera is used for pose tracking in training sessions and for capturing mood expression photos on your player card.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

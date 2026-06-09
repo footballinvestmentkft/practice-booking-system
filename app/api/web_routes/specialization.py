@@ -18,6 +18,13 @@ from ...models.license import UserLicense
 from ...models.credit_transaction import CreditTransaction, TransactionType
 from ...models.specialization import SpecializationType
 from ...utils.age_requirements import validate_specialization_for_age
+from ...services.licence_package import (
+    ALLOWED_DURATIONS,
+    DEFAULT_DURATION_MONTHS,
+    validate_duration_months,
+    cost_for_duration,
+    calculate_expires_at,
+)
 
 # Setup templates
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -30,22 +37,38 @@ router = APIRouter()
 
 @router.post("/specialization/unlock")
 async def specialization_unlock(
-    specialization: str = Form(...),
+    specialization:  str = Form(...),
+    duration_months: int = Form(DEFAULT_DURATION_MONTHS),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """
-    Unlock a specialization from Streamlit (costs 100 credits)
-    Uses Bearer token authentication for Streamlit frontend
+    Unlock a specialization (Bearer token auth — iOS native).
 
-    BUSINESS LOGIC:
-    - All specializations are VISIBLE to all users (for motivation/future planning)
-    - Age requirement is ONLY enforced at UNLOCK time
+    duration_months controls both the credit cost and the licence expiry:
+      1  month  → 100 CR
+      3  months → 250 CR
+      6  months → 450 CR
+      12 months → 800 CR
+
+    expires_at is always set (never NULL) on new licences.
+    Expiry uses calendar-month arithmetic (dateutil.relativedelta).
     """
-    if current_user.credit_balance < 100:
+    # Validate duration
+    try:
+        validate_duration_months(duration_months)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+    cost = cost_for_duration(duration_months)
+
+    if current_user.credit_balance < cost:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Insufficient credits. You have {current_user.credit_balance} credits, but need 100."
+            detail=(
+                f"Insufficient credits. You have {current_user.credit_balance} CR "
+                f"but need {cost} CR for a {duration_months}-month licence."
+            ),
         )
 
     # Map specialization enum
@@ -53,52 +76,52 @@ async def specialization_unlock(
         "LFA_PLAYER": SpecializationType.LFA_FOOTBALL_PLAYER,
         "LFA_COACH": SpecializationType.LFA_COACH,
         "INTERNSHIP": SpecializationType.INTERNSHIP,
-        "GANCUJU_PLAYER": SpecializationType.GANCUJU_PLAYER
+        "GANCUJU_PLAYER": SpecializationType.GANCUJU_PLAYER,
     }
-
     spec_type = spec_mapping.get(specialization)
     if not spec_type:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid specialization: {specialization}"
+            detail=f"Invalid specialization: {specialization}",
         )
 
-    # ✅ AGE REQUIREMENT VALIDATION (Business requirement)
-    # Check if user meets age requirement for this specialization
+    # Age requirement validation
     if not validate_specialization_for_age(specialization, current_user.age):
-        # Get age requirement text for error message
         age_requirements = {
             "INTERNSHIP": "18+",
             "LFA_COACH": "14+",
             "GANCUJU_PLAYER": "5+",
-            "LFA_PLAYER": "5+"
+            "LFA_PLAYER": "5+",
         }
         required_age = age_requirements.get(specialization, "unknown")
-
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Age requirement not met. This specialization requires age {required_age}. Your current age: {current_user.age or 'not set'}."
+            detail=(
+                f"Age requirement not met. This specialization requires age {required_age}. "
+                f"Your current age: {current_user.age or 'not set'}."
+            ),
         )
 
     # Lock user row to prevent concurrent unlock race conditions
     current_user = db.query(User).with_for_update().filter(User.id == current_user.id).first()
 
-    # Check for existing license (re-check AFTER acquiring the lock)
+    # Re-check after acquiring the lock
     existing_license = db.query(UserLicense).filter(
         UserLicense.user_id == current_user.id,
-        UserLicense.specialization_type == spec_type.value
+        UserLicense.specialization_type == spec_type.value,
     ).first()
     if existing_license:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"You already have a license for {spec_type.value}"
+            detail=f"You already have a license for {spec_type.value}",
         )
 
-    # Deduct credits (only after all validations pass)
-    current_user.credit_balance -= 100
-
-    # Create user license
+    # All validations passed — deduct credits and create licence
     now = datetime.now(timezone.utc)
+    expires_at = calculate_expires_at(now, duration_months)
+
+    current_user.credit_balance -= cost
+
     new_license = UserLicense(
         user_id=current_user.id,
         specialization_type=spec_type.value,
@@ -108,27 +131,27 @@ async def specialization_unlock(
         payment_verified=True,
         payment_verified_at=now,
         onboarding_completed=False,
-        is_active=True
+        is_active=True,
+        expires_at=expires_at,
     )
     db.add(new_license)
-    db.flush()  # Get the ID
+    db.flush()
 
-    # Create credit transaction
-    import uuid
-    idempotency_key = f"unlock_{current_user.id}_{spec_type.value}_{now.timestamp()}"
-
+    import uuid as _uuid
     credit_transaction = CreditTransaction(
         user_license_id=new_license.id,
-        amount=-100,
+        amount=-cost,
         transaction_type=TransactionType.SPECIALIZATION_UNLOCK.value,
-        description=f"Unlocked specialization: {spec_type.value}",
+        description=(
+            f"Unlocked specialization: {spec_type.value} "
+            f"({duration_months} month{'s' if duration_months > 1 else ''})"
+        ),
         balance_after=current_user.credit_balance,
-        idempotency_key=idempotency_key,
+        idempotency_key=f"unlock_{current_user.id}_{spec_type.value}_{now.timestamp()}",
         created_at=now,
     )
     db.add(credit_transaction)
 
-    # Update user specialization
     current_user.specialization = spec_type.value
 
     try:
@@ -137,14 +160,28 @@ async def specialization_unlock(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"License for {spec_type.value} already exists (concurrent request)"
+            detail=f"License for {spec_type.value} already exists (concurrent request)",
         )
 
+    logger.info(
+        "specialization_unlocked",
+        extra={
+            "user": current_user.email,
+            "spec": spec_type.value,
+            "duration_months": duration_months,
+            "cost": cost,
+            "expires_at": expires_at.isoformat(),
+        },
+    )
+
     return {
-        "success": True,
-        "message": "Specialization unlocked successfully",
-        "new_balance": current_user.credit_balance,
-        "license_id": new_license.id
+        "success":        True,
+        "message":        "Specialization unlocked successfully",
+        "new_balance":    current_user.credit_balance,
+        "license_id":     new_license.id,
+        "duration_months": duration_months,
+        "cost":           cost,
+        "expires_at":     expires_at.isoformat(),
     }
 
 

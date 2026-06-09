@@ -144,7 +144,7 @@ def _run_bg_removal(user_id: int, slot: str, original_url: str) -> None:
             apply_removal_failure(user_id, slot, db)
             return
 
-        output_bytes = processor.remove_background(orig_path.read_bytes())
+        output_bytes = processor.remove(orig_path.read_bytes())
         ts = int(time.time())
         proc_filename = f"{user_id}_mood_{slot}_proc_{ts}.png"
         (MOOD_PHOTO_DIR / proc_filename).write_bytes(output_bytes)
