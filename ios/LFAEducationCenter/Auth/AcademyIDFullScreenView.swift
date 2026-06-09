@@ -5,6 +5,7 @@ import UIKit
 //
 // Layout (scrollable):
 //   AcademyIDCardView  — same component shown in RegisterView, now with real user data
+//   CardStatusBanner   — shown when card is not yet verified (replaces ACCESS VERIFIED)
 //   Divider
 //   QR scan panel      — 200×200pt, white background, tap to boost brightness
 //   Hint + verify URL
@@ -19,6 +20,49 @@ import UIKit
 //
 // Privacy: email / phone / user_id / credits are never rendered.
 // Offline: fast path uses cached publicToken — QR visible without network.
+//
+// Card status (computed from dashboardVM):
+//   verified            — photo + active licence + onboarding + not expired
+//   no_licence          — no LFA_FOOTBALL_PLAYER licence
+//   inactive            — licence.isActive == false
+//   expired             — licence.isExpired == true
+//   onboarding_required — licence active but onboarding not complete
+//   photo_required      — licence + onboarding OK but no profile photo
+// MARK: — Card status model
+
+enum IDCardStatus {
+    case verified
+    case noLicence
+    case inactive
+    case expired
+    case onboardingRequired
+    case photoRequired
+
+    var statusIcon: String {
+        switch self {
+        case .verified:            return "checkmark.shield.fill"
+        case .noLicence:           return "exclamationmark.circle"
+        case .inactive:            return "nosign"
+        case .expired:             return "clock.badge.xmark"
+        case .onboardingRequired:  return "list.clipboard"
+        case .photoRequired:       return "camera.badge.ellipsis"
+        }
+    }
+
+    var statusMessage: String {
+        switch self {
+        case .verified:            return "ACCESS VERIFIED"
+        case .noLicence:           return "No active licence"
+        case .inactive:            return "Licence inactive"
+        case .expired:             return "Licence expired"
+        case .onboardingRequired:  return "Onboarding required"
+        case .photoRequired:       return "Profile photo required"
+        }
+    }
+
+    var isVerified: Bool { self == .verified }
+}
+
 struct AcademyIDFullScreenView: View {
 
     @EnvironmentObject private var authManager: AuthManager
@@ -35,6 +79,10 @@ struct AcademyIDFullScreenView: View {
             ScrollView {
                 VStack(spacing: 0) {
                     cardSection
+                    if cardStatus != .verified {
+                        cardStatusBanner
+                            .padding(.top, Theme.Spacing.sm)
+                    }
                     Divider()
                         .background(Theme.Color.secondary.opacity(0.15))
                         .padding(.vertical, Theme.Spacing.lg)
@@ -83,6 +131,18 @@ struct AcademyIDFullScreenView: View {
         }
     }
 
+    // MARK: — Card status (computed, replaces hardcoded isVerified: true)
+
+    private var cardStatus: IDCardStatus {
+        guard let licence = dashboardVM.lfaLicense else { return .noLicence }
+        guard licence.isActive  else { return .inactive }
+        guard !licence.isExpired else { return .expired }
+        guard licence.onboardingCompleted else { return .onboardingRequired }
+        let hasPhoto = dashboardVM.profile?.profilePhotoUrl != nil
+                    || dashboardVM.profile?.profilePhotoProcessedUrl != nil
+        return hasPhoto ? .verified : .photoRequired
+    }
+
     // MARK: — Academy ID card (same component as RegisterView preview)
 
     private var cardSection: some View {
@@ -98,11 +158,47 @@ struct AcademyIDFullScreenView: View {
             profileImage:             nil,
             profilePhotoURL:          dashboardVM.profile?.profilePhotoUrl,
             profilePhotoProcessedURL: dashboardVM.profile?.profilePhotoProcessedUrl,
-            isVerified:               true,
+            isVerified:               cardStatus.isVerified,
             lfaAcademyId:             viewModel.loadState.response?.lfaAcademyId
                                       ?? dashboardVM.profile?.lfaAcademyId,
             publicToken:              viewModel.loadState.response?.publicToken
                                       ?? dashboardVM.profile?.publicToken
+        )
+    }
+
+    // MARK: — Status banner (shown only when not verified)
+
+    private var cardStatusBanner: some View {
+        let isExpiredStatus = cardStatus == .expired
+        let isInactiveStatus = cardStatus == .inactive
+        let accentColor: Color = isExpiredStatus ? .red
+                               : isInactiveStatus ? Color(red: 0.98, green: 0.57, blue: 0.24)
+                               : Theme.Color.secondary
+
+        return HStack(spacing: Theme.Spacing.sm) {
+            Image(systemName: cardStatus.statusIcon)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(accentColor)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(cardStatus.statusMessage)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(accentColor)
+                if cardStatus == .expired,
+                   let expiry = dashboardVM.lfaLicense?.expiryDisplayString {
+                    Text("Expired \(expiry)")
+                        .font(.system(size: 10))
+                        .foregroundColor(Theme.Color.muted)
+                }
+            }
+            Spacer()
+        }
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.vertical, Theme.Spacing.sm)
+        .background(accentColor.opacity(0.08))
+        .cornerRadius(Theme.Radius.sm)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.sm)
+                .stroke(accentColor.opacity(0.25), lineWidth: 1)
         )
     }
 
