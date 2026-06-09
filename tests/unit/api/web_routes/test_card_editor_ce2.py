@@ -430,9 +430,9 @@ class TestCE216WelcomeEditorUnchanged:
 
 class TestCE217RouteCount:
     def test_openapi_snapshot_route_count_unchanged(self):
-        """Academy ID colour system Phase 1 adds 2 new routes — snapshot path count must equal 876."""
+        """PR-2 biometric consent adds 1 new path — snapshot path count must equal 877."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 876, (
-            f"Expected 876 routes (874 prior baseline + 2 academy-id colour routes), got {len(paths)}."
+        assert len(paths) == 877, (
+            f"Expected 877 routes (876 prior + 1 biometric-consent path), got {len(paths)}."
         )
