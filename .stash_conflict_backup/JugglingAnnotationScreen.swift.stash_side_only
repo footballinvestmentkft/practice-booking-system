@@ -1,0 +1,109 @@
+# Extracted Stashed-changes side from conflict markers in ios/LFAEducationCenter/Juggling/Annotation/Screen/JugglingAnnotationScreen.swift
+# Conflict blocks: 20
+
+# --- Block 1 ---
+    // AN-3B2C-1: ball detection overlay on main video (event-level granularity, ±500ms window)
+    @State private var showBallOverlay        = false
+    // AN-3B2C-1: manual ball selection mode — user taps to mark ball position on nearest event
+    @State private var isBallSelecting        = false
+    @State private var ballSelectionDragPoint: CGPoint? = nil
+
+# --- Block 2 ---
+                    // Newly synced events from this labeling session may now have
+                    // server event IDs — pick them up for timeline badge display.
+
+# --- Block 3 ---
+                // Fetch ball detections for any newly-synced events (serverEventId just assigned).
+
+# --- Block 4 ---
+                // Skeleton overlay — event-level granularity, ±500ms window.
+                // Shows a status banner when the toggle is ON but no snapshot is nearby,
+                // so the user knows why the overlay is empty rather than seeing silence.
+                if showSkeletonOverlay {
+                    if let snap = closestSnapshot(toMs: playback.currentTimestampMs) {
+                        PoseSnapshotOverlayView(keypoints: snap.keypoints)
+                            .frame(width: renderSize.width, height: renderSize.height)
+                            .allowsHitTesting(false)
+                    } else {
+                        skeletonStatusBanner
+                            .frame(width: renderSize.width, height: renderSize.height)
+
+# --- Block 5 ---
+
+# --- Block 6 ---
+
+# --- Block 7 ---
+                // Overlay toggle controls — skeleton + ball, always visible
+
+# --- Block 8 ---
+
+# --- Block 9 ---
+        // Populate timeline badges for events already synced in previous sessions.
+
+# --- Block 10 ---
+    // Returns the ball detection for the active event closest to the playhead (±500ms).
+    // Only returns detections where the ball was actually found (noBallDetected=false, coords non-nil).
+    // noBallDetected events are communicated by the xmark badge on the timeline pin instead.
+
+# --- Block 11 ---
+    // Overlay toggle button — always enabled. Data availability is communicated
+    // through the video overlay when toggled on, not by disabling the button.
+
+# --- Block 12 ---
+    // Status text shown when skeleton toggle is ON but no snapshot is available.
+    // Static so SkeletonOverlayTests can call it directly without ViewInspector.
+
+# --- Block 13 ---
+    // Banner displayed over the video area when skeleton overlay is ON but no
+    // pose snapshot falls within ±500ms of the current playhead.
+
+# --- Block 14 ---
+    // Status banner shown when ball overlay is ON but no auto-detection is visible
+    // at the current playhead. Includes "Megjelölöm" correction button when a
+    // target event is available within ±2000ms.
+
+# --- Block 15 ---
+        // No events recorded yet — loading state would be misleading.
+        if vm.activeEvents.isEmpty {
+            return "Rögzíts kontakt eseményt a labda jelöléséhez"
+        }
+        // Events exist but none are synced to the backend yet.
+
+# --- Block 16 ---
+        // Synced events exist; wait for fetches to complete.
+
+# --- Block 17 ---
+    // Interactive overlay shown in isBallSelecting mode.
+    // Crosshair circle follows the finger; hint + cancel button at top.
+
+# --- Block 18 ---
+    // Returns the nearest synced event within ±2000ms of the current playhead.
+    // Used to determine the target event for a main-screen manual ball correction.
+
+# --- Block 19 ---
+    // Called when the user lifts their finger in ball-selection mode.
+    // Posts the normalized position to the nearest event's ball detection endpoint.
+    private func handleBallSelection(normalizedPoint np: CGPoint) {
+        guard let draft = nearestEventForBallSelection(),
+              let serverId = draft.serverEventId else {
+            #if DEBUG
+            AnnotationDiagnosticsLog.log("handleBallSelection — aborted: no target event within ±2s of \(playback.currentTimestampMs)ms")
+            #endif
+
+# --- Block 20 ---
+        #if DEBUG
+        AnnotationDiagnosticsLog.log(
+            "handleBallSelection — POST /videos/\(vm.videoId)/contacts/\(serverId)/ball-detection x=\(String(format: "%.3f", x)) y=\(String(format: "%.3f", y)) targetEventMs=\(draft.timestampMs)"
+        )
+        #endif
+        Task {
+            do {
+                try await vm.postManualBallPosition(videoId: vm.videoId, eventId: serverId, x: x, y: y)
+                #if DEBUG
+                AnnotationDiagnosticsLog.log("handleBallSelection — POST success eventId=\(serverId)")
+                #endif
+            } catch {
+                #if DEBUG
+                AnnotationDiagnosticsLog.log("handleBallSelection — POST failed eventId=\(serverId) error=\(error.localizedDescription)")
+                #endif
+

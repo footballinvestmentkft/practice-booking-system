@@ -1,0 +1,1407 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		36CB92D674607508AC4335E1 /* JugglingVideoListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20CD58654D76D5278A5E5B62 /* JugglingVideoListViewModel.swift */; };
+		3A252E40BD69018C7269AAF2 /* JugglingVideoItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FD7851919C9B8A9FC46733 /* JugglingVideoItem.swift */; };
+		7FC19EF38DE99E82AE19FBE0 /* JugglingVideoListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89E393EC38D4612DE04DD285 /* JugglingVideoListView.swift */; };
+		888E1C3A10647BB0B654ABB3 /* JugglingPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E075CE337E219F48D39CBDFA /* JugglingPlayerView.swift */; };
+		BB000004000000000000001 /* LFAEducationCenterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000001 /* LFAEducationCenterApp.swift */; };
+		BB000004000000000000002 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000002 /* RootView.swift */; };
+		BB000004000000000000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000004 /* Assets.xcassets */; };
+		BB000004000000000000004 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000006 /* Theme.swift */; };
+		BB000004000000000000005 /* BodyPoseDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000007 /* BodyPoseDetector.swift */; };
+		BB000004000000000000006 /* SkeletonSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000008 /* SkeletonSerializer.swift */; };
+		BB000004000000000000007 /* CameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000009 /* CameraManager.swift */; };
+		BB000004000000000000008 /* SkeletonFrame.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000010 /* SkeletonFrame.swift */; };
+		BB000004000000000000009 /* SkeletonBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000011 /* SkeletonBridge.swift */; };
+		BB000004000000000000010 /* skeleton_receiver.html in Resources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000012 /* skeleton_receiver.html */; };
+		BB000004000000000000011 /* AuthToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000013 /* AuthToken.swift */; };
+		BB000004000000000000012 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000014 /* KeychainService.swift */; };
+		BB000004000000000000013 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000015 /* AuthManager.swift */; };
+		BB000004000000000000014 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000016 /* LoginView.swift */; };
+		BB000004000000000000015 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000017 /* APIClient.swift */; };
+		BB000004000000000000016 /* APIConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000018 /* APIConfig.swift */; };
+		BB000004000000000000017 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000019 /* UserProfile.swift */; };
+		BB000004000000000000018 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000020 /* DashboardView.swift */; };
+		BB000004000000000000019 /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000021 /* DashboardViewModel.swift */; };
+		BB000004000000000000020 /* UserLicense.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000022 /* UserLicense.swift */; };
+		BB000004000000000000021 /* LFAPlayerLicense.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000023 /* LFAPlayerLicense.swift */; };
+		BB000004000000000000022 /* LicenseDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000024 /* LicenseDashboard.swift */; };
+		BB000004000000000000023 /* SpecializationInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000025 /* SpecializationInfo.swift */; };
+		BB000004000000000000024 /* SpecializationStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000026 /* SpecializationStatus.swift */; };
+		BB000004000000000000025 /* SpecializationProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000027 /* SpecializationProgress.swift */; };
+		BB000004000000000000026 /* SkillProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000028 /* SkillProfile.swift */; };
+		BB000004000000000000027 /* EducationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000029 /* EducationViewModel.swift */; };
+		BB000004000000000000028 /* EducationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000030 /* EducationView.swift */; };
+		BB000004000000000000029 /* MainHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000031 /* MainHubView.swift */; };
+		BB000004000000000000030 /* LFASpecTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000032 /* LFASpecTabView.swift */; };
+		BB000004000000000000031 /* BrandLogoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000033 /* BrandLogoView.swift */; };
+		BB000004000000000000032 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000034 /* SplashView.swift */; };
+		BB000004000000000000033 /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000035 /* RegisterView.swift */; };
+		BB000004000000000000034 /* WelcomeSuccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000036 /* WelcomeSuccessView.swift */; };
+		BB000004000000000000035 /* AcademyIDCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000037 /* AcademyIDCardView.swift */; };
+		BB000004000000000000036 /* QRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000038 /* QRCodeGenerator.swift */; };
+		BB000004000000000000037 /* AcademyIDResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000039 /* AcademyIDResponse.swift */; };
+		BB000004000000000000038 /* AcademyIDViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000040 /* AcademyIDViewModel.swift */; };
+		BB000004000000000000039 /* AcademyIDFullScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000041 /* AcademyIDFullScreenView.swift */; };
+		BB000004000000000000040 /* CreditTransaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000042 /* CreditTransaction.swift */; };
+		BB000004000000000000041 /* CreditsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000043 /* CreditsViewModel.swift */; };
+		BB000004000000000000042 /* CreditsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000044 /* CreditsView.swift */; };
+		BB000004000000000000043 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000045 /* ProfileView.swift */; };
+		BB000004000000000000044 /* UnlockViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000046 /* UnlockViewModel.swift */; };
+		BB000004000000000000045 /* UnlockConfirmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000047 /* UnlockConfirmView.swift */; };
+		BB000004000000000000046 /* FootballPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000048 /* FootballPosition.swift */; };
+		BB000004000000000000047 /* PitchSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000049 /* PitchSelectorView.swift */; };
+		BB000004000000000000048 /* LFAOnboardingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000050 /* LFAOnboardingViewModel.swift */; };
+		BB000004000000000000049 /* LFAOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000051 /* LFAOnboardingView.swift */; };
+		BB000004000000000000050 /* RedeemCodeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000052 /* RedeemCodeViewModel.swift */; };
+		BB000004000000000000051 /* RedeemCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000053 /* RedeemCodeView.swift */; };
+		BB000004000000000000052 /* InvoiceRequestViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000054 /* InvoiceRequestViewModel.swift */; };
+		BB000004000000000000053 /* InvoiceRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000055 /* InvoiceRequestView.swift */; };
+		BB000004000000000000054 /* InvoiceItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000056 /* InvoiceItem.swift */; };
+		BB000004000000000000055 /* PendingInvoicesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000057 /* PendingInvoicesViewModel.swift */; };
+		BB000004000000000000056 /* ProfileCompletionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000058 /* ProfileCompletionCard.swift */; };
+		BB000004000000000000057 /* PhotoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000059 /* PhotoPicker.swift */; };
+		BB000004000000000000058 /* ProfilePhotoUploadViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000060 /* ProfilePhotoUploadViewModel.swift */; };
+		BB000004000000000000059 /* ProfilePhotoUploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000061 /* ProfilePhotoUploadView.swift */; };
+		BB000004000000000000060 /* BaselineSelfRatingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000062 /* BaselineSelfRatingViewModel.swift */; };
+		BB000004000000000000061 /* BaselineSelfRatingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000063 /* BaselineSelfRatingView.swift */; };
+		BB000004000000000000062 /* MoodPhotosViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000064 /* MoodPhotosViewModel.swift */; };
+		BB000004000000000000063 /* MoodPhotoSlotCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000065 /* MoodPhotoSlotCard.swift */; };
+		BB000004000000000000064 /* MoodPhotosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000066 /* MoodPhotosView.swift */; };
+		BB000004000000000000069 /* MoodPhotoPreviewSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000069 /* MoodPhotoPreviewSheet.swift */; };
+		BB00000400000000000006A /* CompletionCelebrationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000006A /* CompletionCelebrationStore.swift */; };
+		BB00000400000000000006B /* ProfileCompletionCelebrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000006B /* ProfileCompletionCelebrationView.swift */; };
+		BB00000400000000000006C /* AcademyIDColorTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000006C /* AcademyIDColorTheme.swift */; };
+		BB00000400000000000006D /* AcademyIDColorConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000006D /* AcademyIDColorConfig.swift */; };
+		BB00000400000000000006E /* AcademyIDColorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000006E /* AcademyIDColorViewModel.swift */; };
+		BB00000400000000000006F /* AcademyIDColorPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000006F /* AcademyIDColorPickerView.swift */; };
+		BB000004000000000000070 /* SkillConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000072 /* SkillConfig.swift */; };
+		BB000004000000000000071 /* AcademyIDCardPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000070 /* AcademyIDCardPreviewView.swift */; };
+		BB000004000000000000073 /* BiometricModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000073 /* BiometricModels.swift */; };
+		BB000004000000000000074 /* BiometricService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000074 /* BiometricService.swift */; };
+		BB000004000000000000075 /* BiometricDisclosureViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000075 /* BiometricDisclosureViewModel.swift */; };
+		BB000004000000000000076 /* BiometricDisclosureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000076 /* BiometricDisclosureView.swift */; };
+		BB000004000000000000077 /* BiometricLivenessViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000077 /* BiometricLivenessViewModel.swift */; };
+		BB000004000000000000078 /* BiometricLivenessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000078 /* BiometricLivenessView.swift */; };
+		BB000004000000000000079 /* BiometricVerifyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000079 /* BiometricVerifyViewModel.swift */; };
+		BB00000400000000000007A /* BiometricVerifyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000007A /* BiometricVerifyView.swift */; };
+		BB00000400000000000007B /* BiometricAutoCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000007B /* BiometricAutoCapture.swift */; };
+		BB00000400000000000007C /* FaceGestureType.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000007C /* FaceGestureType.swift */; };
+		BB00000400000000000007D /* FacePoseThresholds.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000007D /* FacePoseThresholds.swift */; };
+		BB00000400000000000007E /* FaceGestureDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000007E /* FaceGestureDetector.swift */; };
+		BB00000400000000000007F /* GestureStabilizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000007F /* GestureStabilizer.swift */; };
+		BB000004000000000000080 /* SpikeLivenessViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000080 /* SpikeLivenessViewModel.swift */; };
+		BB000004000000000000081 /* ARFaceTrackingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000081 /* ARFaceTrackingView.swift */; };
+		BB000004000000000000082 /* SpikeLivenessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000082 /* SpikeLivenessView.swift */; };
+		AA100004000000000000001 /* ContactTaxonomy.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000001 /* ContactTaxonomy.swift */; };
+		AA100004000000000000002 /* ContactTaxonomyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000002 /* ContactTaxonomyStore.swift */; };
+		AA100004000000000000003 /* ContactEventDraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000003 /* ContactEventDraft.swift */; };
+		AA100004000000000000004 /* ContactEventResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000004 /* ContactEventResponse.swift */; };
+		AA100004000000000000005 /* LocalAnnotationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000005 /* LocalAnnotationStore.swift */; };
+		AA100004000000000000006 /* AnnotationSyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000006 /* AnnotationSyncEngine.swift */; };
+		AA100004000000000000007 /* JugglingAnnotationAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000007 /* JugglingAnnotationAPIClient.swift */; };
+		AA100004000000000000008 /* JugglingAnnotationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000008 /* JugglingAnnotationViewModel.swift */; };
+		AA100004000000000000009 /* contact_types_v1.json in Resources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000009 /* contact_types_v1.json */; };
+		AA100004000000000000010 /* PlaybackController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000010 /* PlaybackController.swift */; };
+		AA100004000000000000011 /* AnnotationDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000011 /* AnnotationDiagnostics.swift */; };
+		BB200004000000000000010 /* AnnotationDebugOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000010 /* AnnotationDebugOverlay.swift */; };
+		BB200004000000000000011 /* EventLabelDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000011 /* EventLabelDetailView.swift */; };
+		BB200004000000000000012 /* BodyZone.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000012 /* BodyZone.swift */; };
+		BB200004000000000000013 /* BodyZonePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000013 /* BodyZonePickerView.swift */; };
+		BB200004000000000000016 /* EmojiBodyZonePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000016 /* EmojiBodyZonePickerView.swift */; };
+		BB200004000000000000014 /* LabelingOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000014 /* LabelingOverviewView.swift */; };
+		BB200004000000000000015 /* EventPreviewSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000015 /* EventPreviewSession.swift */; };
+		BB300004000000000000001 /* JugglingVideoUploadViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB300003000000000000001 /* JugglingVideoUploadViewModel.swift */; };
+		BB300004000000000000002 /* JugglingVideoPHPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB300003000000000000002 /* JugglingVideoPHPicker.swift */; };
+		BB300004000000000000005 /* JugglingVideoExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB300003000000000000005 /* JugglingVideoExportService.swift */; };
+		BB300004000000000000003 /* JugglingVideoUploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB300003000000000000003 /* JugglingVideoUploadView.swift */; };
+		BB300004000000000000004 /* JugglingVideoUploadCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB300003000000000000004 /* JugglingVideoUploadCoordinator.swift */; };
+		AA100004000000000000012 /* EventStillFrameGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000012 /* EventStillFrameGenerator.swift */; };
+		AA100004000000000000013 /* PoseSnapshotDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000013 /* PoseSnapshotDTO.swift */; };
+		AA100004000000000000014 /* PoseSnapshotService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000014 /* PoseSnapshotService.swift */; };
+		EE100004000000000000001 /* DensePoseDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE100003000000000000001 /* DensePoseDTO.swift */; };
+		EE100004000000000000004 /* BallTrajectoryDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE100003000000000000004 /* BallTrajectoryDTO.swift */; };
+		EE100004000000000000002 /* DensePoseCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE100003000000000000002 /* DensePoseCache.swift */; };
+		EE100004000000000000003 /* DensePoseExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE100003000000000000003 /* DensePoseExtractor.swift */; };
+		EE200004000000000000001 /* DenseSkeletonViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE200003000000000000001 /* DenseSkeletonViewModel.swift */; };
+		EE200004000000000000003 /* BallTrajectoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE200003000000000000003 /* BallTrajectoryViewModel.swift */; };
+		EE200004000000000000004 /* BallTrajectoryOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE200003000000000000004 /* BallTrajectoryOverlayView.swift */; };
+		EE200004000000000000002 /* ContinuousSkeletonOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE200003000000000000002 /* ContinuousSkeletonOverlayView.swift */; };
+		EE300004000000000000001 /* DensePoseExtractionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE300003000000000000001 /* DensePoseExtractionTests.swift */; };
+		EE300004000000000000002 /* BallTrajectoryOverlayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE300003000000000000002 /* BallTrajectoryOverlayTests.swift */; };
+		EE400004000000000000001 /* EventRecordingBallTrajectoryIndependenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE400003000000000000001 /* EventRecordingBallTrajectoryIndependenceTests.swift */; };
+		CC400004000000000000010 /* EditEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000010 /* EditEventTests.swift */; };
+		CC400004000000000000011 /* FlushPendingEditTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000011 /* FlushPendingEditTests.swift */; };
+		CC400004000000000000012 /* PlaybackControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000012 /* PlaybackControllerTests.swift */; };
+		CC400004000000000000013 /* MarkTimestampVMTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000013 /* MarkTimestampVMTests.swift */; };
+		CC400004000000000000014 /* EventLabelingVMTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000014 /* EventLabelingVMTests.swift */; };
+		CC400004000000000000015 /* BodyZoneTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000015 /* BodyZoneTests.swift */; };
+		CC400004000000000000016 /* EventStillFrameGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000016 /* EventStillFrameGeneratorTests.swift */; };
+		CC400004000000000000017 /* LabelingCTAVMTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000017 /* LabelingCTAVMTests.swift */; };
+		CC400004000000000000018 /* EventPreviewSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000018 /* EventPreviewSessionTests.swift */; };
+		CC400004000000000000019 /* MultiEventLabelingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000019 /* MultiEventLabelingTests.swift */; };
+		CC400004000000000000020 /* P2CF1LabelingQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000020 /* P2CF1LabelingQueueTests.swift */; };
+		CC400004000000000000021 /* P2CF2AutoAdvanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000021 /* P2CF2AutoAdvanceTests.swift */; };
+		CC400004000000000000022 /* P2CF3SingleEditModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000022 /* P2CF3SingleEditModeTests.swift */; };
+		CC400004000000000000023 /* SILO1EmojiZonePickerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000023 /* SILO1EmojiZonePickerTests.swift */; };
+		CC400004000000000000024 /* SILO2LayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000024 /* SILO2LayoutTests.swift */; };
+		CC400004000000000000025 /* APIConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000025 /* APIConfigTests.swift */; };
+		CC400004000000000000026 /* JugglingVideoListViewModelDeleteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000026 /* JugglingVideoListViewModelDeleteTests.swift */; };
+		CC400004000000000000027 /* JugglingVideoListViewModelSwipeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000027 /* JugglingVideoListViewModelSwipeTests.swift */; };
+		CC400004000000000000028 /* JugglingUploadAPIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000028 /* JugglingUploadAPIClientTests.swift */; };
+		CC400004000000000000029 /* JugglingVideoUploadViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000029 /* JugglingVideoUploadViewModelTests.swift */; };
+		CC400004000000000000031 /* JugglingVideoExportServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000031 /* JugglingVideoExportServiceTests.swift */; };
+		CC400004000000000000032 /* PoseSnapshotServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000032 /* PoseSnapshotServiceTests.swift */; };
+		CC400004000000000000033 /* RotationPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000033 /* RotationPersistenceTests.swift */; };
+		CC400004000000000000034 /* FlushOnDismissTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000034 /* FlushOnDismissTests.swift */; };
+		CC400004000000000000035 /* PoseSnapshotFetchOnAppearTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000035 /* PoseSnapshotFetchOnAppearTests.swift */; };
+		CC400004000000000000036 /* BallDetectionAPIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000036 /* BallDetectionAPIClientTests.swift */; };
+		CC400004000000000000037 /* BallDetectionVMTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000037 /* BallDetectionVMTests.swift */; };
+		CC400004000000000000038 /* BallOverlayViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000038 /* BallOverlayViewTests.swift */; };
+		CC400004000000000000039 /* BallDetectionTimelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000039 /* BallDetectionTimelineTests.swift */; };
+		CC400004000000000000030 /* JugglingVideoUploadIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000030 /* JugglingVideoUploadIntegrationTests.swift */; };
+		CC400004000000000000001 /* JugglingVideoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000001 /* JugglingVideoTests.swift */; };
+		CC400004000000000000005 /* ContactTaxonomyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000005 /* ContactTaxonomyTests.swift */; };
+		CC400004000000000000006 /* LocalAnnotationStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000006 /* LocalAnnotationStoreTests.swift */; };
+		CC400004000000000000007 /* ContactEventDraftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000007 /* ContactEventDraftTests.swift */; };
+		CC400004000000000000008 /* AnnotationSyncEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000008 /* AnnotationSyncEngineTests.swift */; };
+		CC400004000000000000009 /* JugglingAnnotationViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000009 /* JugglingAnnotationViewModelTests.swift */; };
+		BB100004000000000000001 /* AVPlayerLayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100003000000000000001 /* AVPlayerLayerView.swift */; };
+		BB100004000000000000002 /* AnnotationVideoLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100003000000000000002 /* AnnotationVideoLoader.swift */; };
+		BB100004000000000000003 /* PlaybackControlBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100003000000000000003 /* PlaybackControlBar.swift */; };
+		BB100004000000000000004 /* AnnotationVideoLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100003000000000000004 /* AnnotationVideoLoaderTests.swift */; };
+		BB100004000000000000005 /* PlaybackBarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100003000000000000005 /* PlaybackBarTests.swift */; };
+		BB100004000000000000006 /* AVPlayerLayerViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100003000000000000006 /* AVPlayerLayerViewTests.swift */; };
+		BB200004000000000000001 /* JugglingAnnotationScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000001 /* JugglingAnnotationScreen.swift */; };
+		BB200004000000000000020 /* PoseSnapshotOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000020 /* PoseSnapshotOverlayView.swift */; };
+		BB200004000000000000021 /* BallOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000021 /* BallOverlayView.swift */; };
+		BB200004000000000000022 /* BallVideoOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000022 /* BallVideoOverlayView.swift */; };
+		CC400004000000000000040 /* SkeletonOverlayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000040 /* SkeletonOverlayTests.swift */; };
+<<<<<<< Updated upstream
+		BF100004000000000000001 /* BallFeedbackDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF100003000000000000001 /* BallFeedbackDTO.swift */; };
+		BF200004000000000000001 /* BallFeedbackViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF200003000000000000001 /* BallFeedbackViewModel.swift */; };
+		BF300004000000000000001 /* BallFeedbackOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF300003000000000000001 /* BallFeedbackOverlayView.swift */; };
+		BF400004000000000000001 /* BallFeedbackPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF400003000000000000001 /* BallFeedbackPanel.swift */; };
+		BF500004000000000000001 /* BallFeedbackVMTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF500003000000000000001 /* BallFeedbackVMTests.swift */; };
+		BF600004000000000000001 /* BallFeedbackPanelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF600003000000000000001 /* BallFeedbackPanelTests.swift */; };
+		BF700004000000000000001 /* BallFeedbackAnnotationIndependenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF700003000000000000001 /* BallFeedbackAnnotationIndependenceTests.swift */; };
+		BF800004000000000000001 /* JugglingAnnotationAPIClientFeedbackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF800003000000000000001 /* JugglingAnnotationAPIClientFeedbackTests.swift */; };
+=======
+>>>>>>> Stashed changes
+		BB200004000000000000003 /* EventTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000003 /* EventTimelineView.swift */; };
+		BB200004000000000000006 /* PlaybackControllerLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000006 /* PlaybackControllerLayoutTests.swift */; };
+		BB200004000000000000009 /* EventTimelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000009 /* EventTimelineTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		20CD58654D76D5278A5E5B62 /* JugglingVideoListViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JugglingVideoListViewModel.swift; sourceTree = "<group>"; };
+		89E393EC38D4612DE04DD285 /* JugglingVideoListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JugglingVideoListView.swift; sourceTree = "<group>"; };
+		BB000003000000000000001 /* LFAEducationCenterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LFAEducationCenterApp.swift; sourceTree = "<group>"; };
+		BB000003000000000000002 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		BB000003000000000000003 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		BB000003000000000000004 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		BB000003000000000000005 /* LFAEducationCenter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LFAEducationCenter.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB000003000000000000006 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		BB000003000000000000007 /* BodyPoseDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyPoseDetector.swift; sourceTree = "<group>"; };
+		BB000003000000000000008 /* SkeletonSerializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonSerializer.swift; sourceTree = "<group>"; };
+		BB000003000000000000009 /* CameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraManager.swift; sourceTree = "<group>"; };
+		BB000003000000000000010 /* SkeletonFrame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonFrame.swift; sourceTree = "<group>"; };
+		BB000003000000000000011 /* SkeletonBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonBridge.swift; sourceTree = "<group>"; };
+		BB000003000000000000012 /* skeleton_receiver.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = skeleton_receiver.html; sourceTree = "<group>"; };
+		BB000003000000000000013 /* AuthToken.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthToken.swift; sourceTree = "<group>"; };
+		BB000003000000000000014 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		BB000003000000000000015 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		BB000003000000000000016 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		BB000003000000000000017 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		BB000003000000000000018 /* APIConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIConfig.swift; sourceTree = "<group>"; };
+		BB000003000000000000019 /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
+		BB000003000000000000020 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		BB000003000000000000021 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000022 /* UserLicense.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserLicense.swift; sourceTree = "<group>"; };
+		BB000003000000000000023 /* LFAPlayerLicense.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LFAPlayerLicense.swift; sourceTree = "<group>"; };
+		BB000003000000000000024 /* LicenseDashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseDashboard.swift; sourceTree = "<group>"; };
+		BB000003000000000000025 /* SpecializationInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpecializationInfo.swift; sourceTree = "<group>"; };
+		BB000003000000000000026 /* SpecializationStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpecializationStatus.swift; sourceTree = "<group>"; };
+		BB000003000000000000027 /* SpecializationProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpecializationProgress.swift; sourceTree = "<group>"; };
+		BB000003000000000000028 /* SkillProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillProfile.swift; sourceTree = "<group>"; };
+		BB000003000000000000029 /* EducationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EducationViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000030 /* EducationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EducationView.swift; sourceTree = "<group>"; };
+		BB000003000000000000031 /* MainHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainHubView.swift; sourceTree = "<group>"; };
+		BB000003000000000000032 /* LFASpecTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LFASpecTabView.swift; sourceTree = "<group>"; };
+		BB000003000000000000033 /* BrandLogoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandLogoView.swift; sourceTree = "<group>"; };
+		BB000003000000000000034 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
+		BB000003000000000000035 /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
+		BB000003000000000000036 /* WelcomeSuccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeSuccessView.swift; sourceTree = "<group>"; };
+		BB000003000000000000037 /* AcademyIDCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDCardView.swift; sourceTree = "<group>"; };
+		BB000003000000000000038 /* QRCodeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeGenerator.swift; sourceTree = "<group>"; };
+		BB000003000000000000039 /* AcademyIDResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDResponse.swift; sourceTree = "<group>"; };
+		BB000003000000000000040 /* AcademyIDViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000041 /* AcademyIDFullScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDFullScreenView.swift; sourceTree = "<group>"; };
+		BB000003000000000000042 /* CreditTransaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditTransaction.swift; sourceTree = "<group>"; };
+		BB000003000000000000043 /* CreditsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditsViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000044 /* CreditsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditsView.swift; sourceTree = "<group>"; };
+		BB000003000000000000045 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		BB000003000000000000046 /* UnlockViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnlockViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000047 /* UnlockConfirmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnlockConfirmView.swift; sourceTree = "<group>"; };
+		BB000003000000000000048 /* FootballPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FootballPosition.swift; sourceTree = "<group>"; };
+		BB000003000000000000049 /* PitchSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchSelectorView.swift; sourceTree = "<group>"; };
+		BB000003000000000000050 /* LFAOnboardingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LFAOnboardingViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000051 /* LFAOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LFAOnboardingView.swift; sourceTree = "<group>"; };
+		BB000003000000000000052 /* RedeemCodeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedeemCodeViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000053 /* RedeemCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedeemCodeView.swift; sourceTree = "<group>"; };
+		BB000003000000000000054 /* InvoiceRequestViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceRequestViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000055 /* InvoiceRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceRequestView.swift; sourceTree = "<group>"; };
+		BB000003000000000000056 /* InvoiceItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceItem.swift; sourceTree = "<group>"; };
+		BB000003000000000000057 /* PendingInvoicesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingInvoicesViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000058 /* ProfileCompletionCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileCompletionCard.swift; sourceTree = "<group>"; };
+		BB000003000000000000059 /* PhotoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoPicker.swift; sourceTree = "<group>"; };
+		BB000003000000000000060 /* ProfilePhotoUploadViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePhotoUploadViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000061 /* ProfilePhotoUploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePhotoUploadView.swift; sourceTree = "<group>"; };
+		BB000003000000000000062 /* BaselineSelfRatingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaselineSelfRatingViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000063 /* BaselineSelfRatingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaselineSelfRatingView.swift; sourceTree = "<group>"; };
+		BB000003000000000000064 /* MoodPhotosViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodPhotosViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000065 /* MoodPhotoSlotCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodPhotoSlotCard.swift; sourceTree = "<group>"; };
+		BB000003000000000000066 /* MoodPhotosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodPhotosView.swift; sourceTree = "<group>"; };
+		BB000003000000000000069 /* MoodPhotoPreviewSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodPhotoPreviewSheet.swift; sourceTree = "<group>"; };
+		BB00000300000000000006A /* CompletionCelebrationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompletionCelebrationStore.swift; sourceTree = "<group>"; };
+		BB00000300000000000006B /* ProfileCompletionCelebrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileCompletionCelebrationView.swift; sourceTree = "<group>"; };
+		BB00000300000000000006C /* AcademyIDColorTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDColorTheme.swift; sourceTree = "<group>"; };
+		BB00000300000000000006D /* AcademyIDColorConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDColorConfig.swift; sourceTree = "<group>"; };
+		BB00000300000000000006E /* AcademyIDColorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDColorViewModel.swift; sourceTree = "<group>"; };
+		BB00000300000000000006F /* AcademyIDColorPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDColorPickerView.swift; sourceTree = "<group>"; };
+		BB000003000000000000070 /* AcademyIDCardPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDCardPreviewView.swift; sourceTree = "<group>"; };
+		BB000003000000000000072 /* SkillConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillConfig.swift; sourceTree = "<group>"; };
+		BB000003000000000000073 /* BiometricModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricModels.swift; sourceTree = "<group>"; };
+		BB000003000000000000074 /* BiometricService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricService.swift; sourceTree = "<group>"; };
+		BB000003000000000000075 /* BiometricDisclosureViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricDisclosureViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000076 /* BiometricDisclosureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricDisclosureView.swift; sourceTree = "<group>"; };
+		BB000003000000000000077 /* BiometricLivenessViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricLivenessViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000078 /* BiometricLivenessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricLivenessView.swift; sourceTree = "<group>"; };
+		BB000003000000000000079 /* BiometricVerifyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricVerifyViewModel.swift; sourceTree = "<group>"; };
+		BB00000300000000000007A /* BiometricVerifyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricVerifyView.swift; sourceTree = "<group>"; };
+		C2FD7851919C9B8A9FC46733 /* JugglingVideoItem.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JugglingVideoItem.swift; sourceTree = "<group>"; };
+		E075CE337E219F48D39CBDFA /* JugglingPlayerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JugglingPlayerView.swift; sourceTree = "<group>"; };
+		BB00000300000000000007B /* BiometricAutoCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricAutoCapture.swift; sourceTree = "<group>"; };
+		BB00000300000000000007C /* FaceGestureType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceGestureType.swift; sourceTree = "<group>"; };
+		BB00000300000000000007D /* FacePoseThresholds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FacePoseThresholds.swift; sourceTree = "<group>"; };
+		BB00000300000000000007E /* FaceGestureDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceGestureDetector.swift; sourceTree = "<group>"; };
+		BB00000300000000000007F /* GestureStabilizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GestureStabilizer.swift; sourceTree = "<group>"; };
+		BB000003000000000000080 /* SpikeLivenessViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpikeLivenessViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000081 /* ARFaceTrackingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARFaceTrackingView.swift; sourceTree = "<group>"; };
+		BB000003000000000000082 /* SpikeLivenessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpikeLivenessView.swift; sourceTree = "<group>"; };
+		AA100003000000000000001 /* ContactTaxonomy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactTaxonomy.swift; sourceTree = "<group>"; };
+		AA100003000000000000002 /* ContactTaxonomyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactTaxonomyStore.swift; sourceTree = "<group>"; };
+		AA100003000000000000003 /* ContactEventDraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactEventDraft.swift; sourceTree = "<group>"; };
+		AA100003000000000000004 /* ContactEventResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactEventResponse.swift; sourceTree = "<group>"; };
+		AA100003000000000000005 /* LocalAnnotationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalAnnotationStore.swift; sourceTree = "<group>"; };
+		AA100003000000000000006 /* AnnotationSyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationSyncEngine.swift; sourceTree = "<group>"; };
+		AA100003000000000000007 /* JugglingAnnotationAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingAnnotationAPIClient.swift; sourceTree = "<group>"; };
+		AA100003000000000000008 /* JugglingAnnotationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingAnnotationViewModel.swift; sourceTree = "<group>"; };
+		AA100003000000000000009 /* contact_types_v1.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = contact_types_v1.json; sourceTree = "<group>"; };
+		AA100003000000000000010 /* PlaybackController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackController.swift; sourceTree = "<group>"; };
+		AA100003000000000000011 /* AnnotationDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationDiagnostics.swift; sourceTree = "<group>"; };
+		AA100003000000000000012 /* EventStillFrameGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventStillFrameGenerator.swift; sourceTree = "<group>"; };
+		AA100003000000000000013 /* PoseSnapshotDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoseSnapshotDTO.swift; sourceTree = "<group>"; };
+		AA100003000000000000014 /* PoseSnapshotService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoseSnapshotService.swift; sourceTree = "<group>"; };
+		EE100003000000000000001 /* DensePoseDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DensePoseDTO.swift; sourceTree = "<group>"; };
+		EE100003000000000000002 /* DensePoseCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DensePoseCache.swift; sourceTree = "<group>"; };
+		EE100003000000000000003 /* DensePoseExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DensePoseExtractor.swift; sourceTree = "<group>"; };
+		EE100003000000000000004 /* BallTrajectoryDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrajectoryDTO.swift; sourceTree = "<group>"; };
+		EE200003000000000000001 /* DenseSkeletonViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DenseSkeletonViewModel.swift; sourceTree = "<group>"; };
+		EE200003000000000000003 /* BallTrajectoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrajectoryViewModel.swift; sourceTree = "<group>"; };
+		EE200003000000000000004 /* BallTrajectoryOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrajectoryOverlayView.swift; sourceTree = "<group>"; };
+		EE200003000000000000002 /* ContinuousSkeletonOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContinuousSkeletonOverlayView.swift; sourceTree = "<group>"; };
+		EE300003000000000000001 /* DensePoseExtractionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DensePoseExtractionTests.swift; sourceTree = "<group>"; };
+		EE300003000000000000002 /* BallTrajectoryOverlayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrajectoryOverlayTests.swift; sourceTree = "<group>"; };
+		EE400003000000000000001 /* EventRecordingBallTrajectoryIndependenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventRecordingBallTrajectoryIndependenceTests.swift; sourceTree = "<group>"; };
+		BB200003000000000000010 /* AnnotationDebugOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationDebugOverlay.swift; sourceTree = "<group>"; };
+		BB200003000000000000011 /* EventLabelDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventLabelDetailView.swift; sourceTree = "<group>"; };
+		BB200003000000000000012 /* BodyZone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyZone.swift; sourceTree = "<group>"; };
+		BB200003000000000000013 /* BodyZonePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyZonePickerView.swift; sourceTree = "<group>"; };
+		BB200003000000000000016 /* EmojiBodyZonePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmojiBodyZonePickerView.swift; sourceTree = "<group>"; };
+		BB200003000000000000014 /* LabelingOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabelingOverviewView.swift; sourceTree = "<group>"; };
+		BB200003000000000000015 /* EventPreviewSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventPreviewSession.swift; sourceTree = "<group>"; };
+		BB300003000000000000001 /* JugglingVideoUploadViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoUploadViewModel.swift; sourceTree = "<group>"; };
+		BB300003000000000000002 /* JugglingVideoPHPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoPHPicker.swift; sourceTree = "<group>"; };
+		BB300003000000000000005 /* JugglingVideoExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoExportService.swift; sourceTree = "<group>"; };
+		BB300003000000000000003 /* JugglingVideoUploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoUploadView.swift; sourceTree = "<group>"; };
+		BB300003000000000000004 /* JugglingVideoUploadCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoUploadCoordinator.swift; sourceTree = "<group>"; };
+		BB100003000000000000001 /* AVPlayerLayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVPlayerLayerView.swift; sourceTree = "<group>"; };
+		BB100003000000000000002 /* AnnotationVideoLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationVideoLoader.swift; sourceTree = "<group>"; };
+		BB100003000000000000003 /* PlaybackControlBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackControlBar.swift; sourceTree = "<group>"; };
+		BB100003000000000000004 /* AnnotationVideoLoaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationVideoLoaderTests.swift; sourceTree = "<group>"; };
+		BB100003000000000000005 /* PlaybackBarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackBarTests.swift; sourceTree = "<group>"; };
+		BB100003000000000000006 /* AVPlayerLayerViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVPlayerLayerViewTests.swift; sourceTree = "<group>"; };
+		BB200003000000000000001 /* JugglingAnnotationScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingAnnotationScreen.swift; sourceTree = "<group>"; };
+		BB200003000000000000020 /* PoseSnapshotOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoseSnapshotOverlayView.swift; sourceTree = "<group>"; };
+		BB200003000000000000021 /* BallOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallOverlayView.swift; sourceTree = "<group>"; };
+		BB200003000000000000022 /* BallVideoOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallVideoOverlayView.swift; sourceTree = "<group>"; };
+		CC300003000000000000040 /* SkeletonOverlayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonOverlayTests.swift; sourceTree = "<group>"; };
+<<<<<<< Updated upstream
+		BF100003000000000000001 /* BallFeedbackDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallFeedbackDTO.swift; sourceTree = "<group>"; };
+		BF200003000000000000001 /* BallFeedbackViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallFeedbackViewModel.swift; sourceTree = "<group>"; };
+		BF300003000000000000001 /* BallFeedbackOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallFeedbackOverlayView.swift; sourceTree = "<group>"; };
+		BF400003000000000000001 /* BallFeedbackPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallFeedbackPanel.swift; sourceTree = "<group>"; };
+		BF500003000000000000001 /* BallFeedbackVMTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallFeedbackVMTests.swift; sourceTree = "<group>"; };
+		BF600003000000000000001 /* BallFeedbackPanelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallFeedbackPanelTests.swift; sourceTree = "<group>"; };
+		BF700003000000000000001 /* BallFeedbackAnnotationIndependenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallFeedbackAnnotationIndependenceTests.swift; sourceTree = "<group>"; };
+		BF800003000000000000001 /* JugglingAnnotationAPIClientFeedbackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingAnnotationAPIClientFeedbackTests.swift; sourceTree = "<group>"; };
+=======
+>>>>>>> Stashed changes
+		BB200003000000000000003 /* EventTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTimelineView.swift; sourceTree = "<group>"; };
+		BB200003000000000000006 /* PlaybackControllerLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackControllerLayoutTests.swift; sourceTree = "<group>"; };
+		BB200003000000000000009 /* EventTimelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTimelineTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000010 /* EditEventTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditEventTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000011 /* FlushPendingEditTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlushPendingEditTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000012 /* PlaybackControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackControllerTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000013 /* MarkTimestampVMTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkTimestampVMTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000014 /* EventLabelingVMTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventLabelingVMTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000015 /* BodyZoneTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyZoneTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000016 /* EventStillFrameGeneratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventStillFrameGeneratorTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000017 /* LabelingCTAVMTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabelingCTAVMTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000018 /* EventPreviewSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventPreviewSessionTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000019 /* MultiEventLabelingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiEventLabelingTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000020 /* P2CF1LabelingQueueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2CF1LabelingQueueTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000021 /* P2CF2AutoAdvanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2CF2AutoAdvanceTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000022 /* P2CF3SingleEditModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2CF3SingleEditModeTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000023 /* SILO1EmojiZonePickerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SILO1EmojiZonePickerTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000024 /* SILO2LayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SILO2LayoutTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000025 /* APIConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIConfigTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000026 /* JugglingVideoListViewModelDeleteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoListViewModelDeleteTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000027 /* JugglingVideoListViewModelSwipeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoListViewModelSwipeTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000028 /* JugglingUploadAPIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingUploadAPIClientTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000029 /* JugglingVideoUploadViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoUploadViewModelTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000031 /* JugglingVideoExportServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoExportServiceTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000032 /* PoseSnapshotServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoseSnapshotServiceTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000033 /* RotationPersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RotationPersistenceTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000034 /* FlushOnDismissTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlushOnDismissTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000035 /* PoseSnapshotFetchOnAppearTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoseSnapshotFetchOnAppearTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000036 /* BallDetectionAPIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallDetectionAPIClientTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000037 /* BallDetectionVMTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallDetectionVMTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000038 /* BallOverlayViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallOverlayViewTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000039 /* BallDetectionTimelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallDetectionTimelineTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000030 /* JugglingVideoUploadIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoUploadIntegrationTests.swift; sourceTree = "<group>"; };
+		DD000003000000000000001 /* Config.Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.Debug.xcconfig; sourceTree = "<group>"; };
+		DD000003000000000000002 /* Config.Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.Release.xcconfig; sourceTree = "<group>"; };
+		CC300003000000000000001 /* JugglingVideoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000005 /* ContactTaxonomyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactTaxonomyTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000006 /* LocalAnnotationStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalAnnotationStoreTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000007 /* ContactEventDraftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactEventDraftTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000008 /* AnnotationSyncEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationSyncEngineTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000009 /* JugglingAnnotationViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingAnnotationViewModelTests.swift; sourceTree = "<group>"; };
+		CC100003000000000000001 /* LFAEducationCenterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LFAEducationCenterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXContainerItemProxy section */
+		CC100001000000000000005 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BB000001000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BB000001000000000000002;
+			remoteInfo = LFAEducationCenter;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		BB000001000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CC100001000000000000003 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		BB000002000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				BB000002000000000000003 /* LFAEducationCenter */,
+				CC200002000000000000001 /* LFAEducationCenterTests */,
+				BB000002000000000000002 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		BB000002000000000000002 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BB000003000000000000005 /* LFAEducationCenter.app */,
+				CC100003000000000000001 /* LFAEducationCenterTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		BB000002000000000000003 /* LFAEducationCenter */ = {
+			isa = PBXGroup;
+			children = (
+				BB000002000000000000004 /* App */,
+				BB000002000000000000005 /* Shared */,
+				BB000002000000000000006 /* Skeleton */,
+				BB000002000000000000007 /* WebBridge */,
+				BB000002000000000000008 /* Models */,
+				BB000002000000000000009 /* Auth */,
+				BB000002000000000000010 /* Dashboard */,
+				BB000002000000000000011 /* Education */,
+				BB000002000000000000012 /* Training */,
+				BB000002000000000000013 /* Networking */,
+				BB000002000000000000014 /* Credits */,
+				BB000002000000000000015 /* Profile */,
+				BB000002000000000000016 /* Unlock */,
+				BB000002000000000000017 /* Onboarding */,
+				BB000002000000000000018 /* Biometric */,
+				BB000003000000000000004 /* Assets.xcassets */,
+				BC53ECBBF23C75435C8218AB /* Juggling */,
+				DD000002000000000000001 /* Config */,
+			);
+			path = LFAEducationCenter;
+			sourceTree = "<group>";
+		};
+		BB000002000000000000004 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				BB000003000000000000001 /* LFAEducationCenterApp.swift */,
+				BB000003000000000000002 /* RootView.swift */,
+				BB000003000000000000031 /* MainHubView.swift */,
+				BB000003000000000000032 /* LFASpecTabView.swift */,
+				BB000003000000000000034 /* SplashView.swift */,
+				BB000003000000000000036 /* WelcomeSuccessView.swift */,
+				BB000003000000000000003 /* Info.plist */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		BB000002000000000000005 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				BB000003000000000000006 /* Theme.swift */,
+				BB000003000000000000033 /* BrandLogoView.swift */,
+				BB000003000000000000038 /* QRCodeGenerator.swift */,
+				BB000003000000000000072 /* SkillConfig.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		BB000002000000000000006 /* Skeleton */ = {
+			isa = PBXGroup;
+			children = (
+				BB000003000000000000007 /* BodyPoseDetector.swift */,
+				BB000003000000000000008 /* SkeletonSerializer.swift */,
+				BB000003000000000000009 /* CameraManager.swift */,
+			);
+			path = Skeleton;
+			sourceTree = "<group>";
+		};
+		BB000002000000000000007 /* WebBridge */ = {
+			isa = PBXGroup;
+			children = (
+				BB000003000000000000011 /* SkeletonBridge.swift */,
+				BB000003000000000000012 /* skeleton_receiver.html */,
+			);
+			path = WebBridge;
+			sourceTree = "<group>";
+		};
+		BB000002000000000000008 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				BB000003000000000000010 /* SkeletonFrame.swift */,
+				BB000003000000000000019 /* UserProfile.swift */,
+				BB000003000000000000022 /* UserLicense.swift */,
+				BB000003000000000000023 /* LFAPlayerLicense.swift */,
+				BB000003000000000000024 /* LicenseDashboard.swift */,
+				BB000003000000000000025 /* SpecializationInfo.swift */,
+				BB000003000000000000026 /* SpecializationStatus.swift */,
+				BB000003000000000000027 /* SpecializationProgress.swift */,
+				BB000003000000000000028 /* SkillProfile.swift */,
+				BB000003000000000000039 /* AcademyIDResponse.swift */,
+				BB00000300000000000006C /* AcademyIDColorTheme.swift */,
+				BB000003000000000000042 /* CreditTransaction.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		BB000002000000000000009 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				BB000003000000000000013 /* AuthToken.swift */,
+				BB000003000000000000014 /* KeychainService.swift */,
+				BB000003000000000000015 /* AuthManager.swift */,
+				BB000003000000000000016 /* LoginView.swift */,
+				BB000003000000000000035 /* RegisterView.swift */,
+				BB000003000000000000037 /* AcademyIDCardView.swift */,
+				BB000003000000000000040 /* AcademyIDViewModel.swift */,
+				BB000003000000000000041 /* AcademyIDFullScreenView.swift */,
+				BB00000300000000000006D /* AcademyIDColorConfig.swift */,
+				BB00000300000000000006E /* AcademyIDColorViewModel.swift */,
+				BB00000300000000000006F /* AcademyIDColorPickerView.swift */,
+				BB000003000000000000070 /* AcademyIDCardPreviewView.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		BB000002000000000000010 /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				BB000003000000000000020 /* DashboardView.swift */,
+				BB000003000000000000021 /* DashboardViewModel.swift */,
+			);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		BB000002000000000000011 /* Education */ = {
+			isa = PBXGroup;
+			children = (
+				BB000003000000000000029 /* EducationViewModel.swift */,
+				BB000003000000000000030 /* EducationView.swift */,
+			);
+			path = Education;
+			sourceTree = "<group>";
+		};
+		BB000002000000000000012 /* Training */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Training;
+			sourceTree = "<group>";
+		};
+		BB000002000000000000013 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				BB000003000000000000018 /* APIConfig.swift */,
+				BB000003000000000000017 /* APIClient.swift */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		BB000002000000000000014 /* Credits */ = {
+			isa = PBXGroup;
+			children = (
+				BB000003000000000000043 /* CreditsViewModel.swift */,
+				BB000003000000000000044 /* CreditsView.swift */,
+				BB000003000000000000052 /* RedeemCodeViewModel.swift */,
+				BB000003000000000000053 /* RedeemCodeView.swift */,
+				BB000003000000000000054 /* InvoiceRequestViewModel.swift */,
+				BB000003000000000000055 /* InvoiceRequestView.swift */,
+				BB000003000000000000056 /* InvoiceItem.swift */,
+				BB000003000000000000057 /* PendingInvoicesViewModel.swift */,
+			);
+			path = Credits;
+			sourceTree = "<group>";
+		};
+		BB000002000000000000015 /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				BB000003000000000000045 /* ProfileView.swift */,
+				BB000003000000000000058 /* ProfileCompletionCard.swift */,
+				BB000003000000000000059 /* PhotoPicker.swift */,
+				BB000003000000000000060 /* ProfilePhotoUploadViewModel.swift */,
+				BB000003000000000000061 /* ProfilePhotoUploadView.swift */,
+				BB000003000000000000062 /* BaselineSelfRatingViewModel.swift */,
+				BB000003000000000000063 /* BaselineSelfRatingView.swift */,
+				BB000003000000000000064 /* MoodPhotosViewModel.swift */,
+				BB000003000000000000065 /* MoodPhotoSlotCard.swift */,
+				BB000003000000000000066 /* MoodPhotosView.swift */,
+				BB000003000000000000069 /* MoodPhotoPreviewSheet.swift */,
+				BB00000300000000000006A /* CompletionCelebrationStore.swift */,
+				BB00000300000000000006B /* ProfileCompletionCelebrationView.swift */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		BB000002000000000000016 /* Unlock */ = {
+			isa = PBXGroup;
+			children = (
+				BB000003000000000000046 /* UnlockViewModel.swift */,
+				BB000003000000000000047 /* UnlockConfirmView.swift */,
+			);
+			path = Unlock;
+			sourceTree = "<group>";
+		};
+		BB000002000000000000017 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				BB000003000000000000048 /* FootballPosition.swift */,
+				BB000003000000000000049 /* PitchSelectorView.swift */,
+				BB000003000000000000050 /* LFAOnboardingViewModel.swift */,
+				BB000003000000000000051 /* LFAOnboardingView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		BB000002000000000000018 /* Biometric */ = {
+			isa = PBXGroup;
+			children = (
+				BB000003000000000000073 /* BiometricModels.swift */,
+				BB000003000000000000074 /* BiometricService.swift */,
+				BB000003000000000000075 /* BiometricDisclosureViewModel.swift */,
+				BB000003000000000000076 /* BiometricDisclosureView.swift */,
+				BB000003000000000000077 /* BiometricLivenessViewModel.swift */,
+				BB000003000000000000078 /* BiometricLivenessView.swift */,
+				BB000003000000000000079 /* BiometricVerifyViewModel.swift */,
+				BB00000300000000000007A /* BiometricVerifyView.swift */,
+				BB000002000000000000019 /* Spike */,
+			);
+			path = Biometric;
+			sourceTree = "<group>";
+		};
+		BC53ECBBF23C75435C8218AB /* Juggling */ = {
+			isa = PBXGroup;
+			children = (
+				C2FD7851919C9B8A9FC46733 /* JugglingVideoItem.swift */,
+				89E393EC38D4612DE04DD285 /* JugglingVideoListView.swift */,
+				20CD58654D76D5278A5E5B62 /* JugglingVideoListViewModel.swift */,
+				E075CE337E219F48D39CBDFA /* JugglingPlayerView.swift */,
+				AA100002000000000000001 /* Annotation */,
+				AA100002000000000000003 /* Playback */,
+				BB300002000000000000001 /* Upload */,
+			);
+			name = Juggling;
+			path = Juggling;
+			sourceTree = "<group>";
+		};
+		AA100002000000000000003 /* Playback */ = {
+			isa = PBXGroup;
+			children = (
+				AA100003000000000000010 /* PlaybackController.swift */,
+				BB100003000000000000001 /* AVPlayerLayerView.swift */,
+				BB100003000000000000003 /* PlaybackControlBar.swift */,
+			);
+			path = Playback;
+			sourceTree = "<group>";
+		};
+		AA100002000000000000001 /* Annotation */ = {
+			isa = PBXGroup;
+			children = (
+				AA100003000000000000001 /* ContactTaxonomy.swift */,
+				AA100003000000000000002 /* ContactTaxonomyStore.swift */,
+				AA100003000000000000003 /* ContactEventDraft.swift */,
+				AA100003000000000000004 /* ContactEventResponse.swift */,
+				AA100003000000000000005 /* LocalAnnotationStore.swift */,
+				AA100003000000000000006 /* AnnotationSyncEngine.swift */,
+				AA100003000000000000007 /* JugglingAnnotationAPIClient.swift */,
+				AA100003000000000000008 /* JugglingAnnotationViewModel.swift */,
+				AA100003000000000000011 /* AnnotationDiagnostics.swift */,
+				AA100003000000000000012 /* EventStillFrameGenerator.swift */,
+				AA100003000000000000013 /* PoseSnapshotDTO.swift */,
+				AA100003000000000000014 /* PoseSnapshotService.swift */,
+				EE100003000000000000001 /* DensePoseDTO.swift */,
+				EE100003000000000000002 /* DensePoseCache.swift */,
+				EE100003000000000000003 /* DensePoseExtractor.swift */,
+				EE100003000000000000004 /* BallTrajectoryDTO.swift */,
+				BF100003000000000000001 /* BallFeedbackDTO.swift */,
+				BF200003000000000000001 /* BallFeedbackViewModel.swift */,
+				BB100003000000000000002 /* AnnotationVideoLoader.swift */,
+				BB200002000000000000001 /* Screen */,
+				AA100002000000000000002 /* Resources */,
+			);
+			path = Annotation;
+			sourceTree = "<group>";
+		};
+		BB200002000000000000001 /* Screen */ = {
+			isa = PBXGroup;
+			children = (
+				BB200003000000000000001 /* JugglingAnnotationScreen.swift */,
+				BB200003000000000000020 /* PoseSnapshotOverlayView.swift */,
+				BB200003000000000000021 /* BallOverlayView.swift */,
+				BB200003000000000000022 /* BallVideoOverlayView.swift */,
+				BB200003000000000000003 /* EventTimelineView.swift */,
+				BB200003000000000000010 /* AnnotationDebugOverlay.swift */,
+				BB200003000000000000011 /* EventLabelDetailView.swift */,
+				BB200003000000000000012 /* BodyZone.swift */,
+				BB200003000000000000013 /* BodyZonePickerView.swift */,
+				BB200003000000000000016 /* EmojiBodyZonePickerView.swift */,
+				BB200003000000000000014 /* LabelingOverviewView.swift */,
+				BB200003000000000000015 /* EventPreviewSession.swift */,
+				EE200003000000000000001 /* DenseSkeletonViewModel.swift */,
+				EE200003000000000000003 /* BallTrajectoryViewModel.swift */,
+				EE200003000000000000004 /* BallTrajectoryOverlayView.swift */,
+				EE200003000000000000002 /* ContinuousSkeletonOverlayView.swift */,
+				BF300003000000000000001 /* BallFeedbackOverlayView.swift */,
+				BF400003000000000000001 /* BallFeedbackPanel.swift */,
+			);
+			path = Screen;
+			sourceTree = "<group>";
+		};
+		BB300002000000000000001 /* Upload */ = {
+			isa = PBXGroup;
+			children = (
+				BB300003000000000000001 /* JugglingVideoUploadViewModel.swift */,
+				BB300003000000000000002 /* JugglingVideoPHPicker.swift */,
+				BB300003000000000000003 /* JugglingVideoUploadView.swift */,
+				BB300003000000000000004 /* JugglingVideoUploadCoordinator.swift */,
+				BB300003000000000000005 /* JugglingVideoExportService.swift */,
+			);
+			path = Upload;
+			sourceTree = "<group>";
+		};
+		AA100002000000000000002 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				AA100003000000000000009 /* contact_types_v1.json */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		CC200002000000000000001 /* LFAEducationCenterTests */ = {
+			isa = PBXGroup;
+			children = (
+				CC300003000000000000001 /* JugglingVideoTests.swift */,
+				CC200002000000000000003 /* Juggling */,
+				CC200002000000000000004 /* Networking */,
+			);
+			path = LFAEducationCenterTests;
+			sourceTree = "<group>";
+		};
+		CC200002000000000000004 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				CC300003000000000000025 /* APIConfigTests.swift */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		DD000002000000000000001 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				DD000003000000000000001 /* Config.Debug.xcconfig */,
+				DD000003000000000000002 /* Config.Release.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		CC200002000000000000003 /* Juggling */ = {
+			isa = PBXGroup;
+			children = (
+				CC300003000000000000005 /* ContactTaxonomyTests.swift */,
+				CC300003000000000000006 /* LocalAnnotationStoreTests.swift */,
+				CC300003000000000000007 /* ContactEventDraftTests.swift */,
+				CC300003000000000000008 /* AnnotationSyncEngineTests.swift */,
+				CC300003000000000000009 /* JugglingAnnotationViewModelTests.swift */,
+				CC300003000000000000010 /* EditEventTests.swift */,
+				CC300003000000000000011 /* FlushPendingEditTests.swift */,
+				CC300003000000000000012 /* PlaybackControllerTests.swift */,
+				CC300003000000000000013 /* MarkTimestampVMTests.swift */,
+				CC300003000000000000014 /* EventLabelingVMTests.swift */,
+				CC300003000000000000015 /* BodyZoneTests.swift */,
+				CC300003000000000000016 /* EventStillFrameGeneratorTests.swift */,
+				CC300003000000000000017 /* LabelingCTAVMTests.swift */,
+				CC300003000000000000018 /* EventPreviewSessionTests.swift */,
+				CC300003000000000000019 /* MultiEventLabelingTests.swift */,
+				CC300003000000000000020 /* P2CF1LabelingQueueTests.swift */,
+				CC300003000000000000021 /* P2CF2AutoAdvanceTests.swift */,
+				CC300003000000000000022 /* P2CF3SingleEditModeTests.swift */,
+				CC300003000000000000023 /* SILO1EmojiZonePickerTests.swift */,
+				CC300003000000000000024 /* SILO2LayoutTests.swift */,
+				CC300003000000000000026 /* JugglingVideoListViewModelDeleteTests.swift */,
+				CC300003000000000000027 /* JugglingVideoListViewModelSwipeTests.swift */,
+				CC300003000000000000028 /* JugglingUploadAPIClientTests.swift */,
+				CC300003000000000000029 /* JugglingVideoUploadViewModelTests.swift */,
+				CC300003000000000000030 /* JugglingVideoUploadIntegrationTests.swift */,
+				CC300003000000000000031 /* JugglingVideoExportServiceTests.swift */,
+				CC300003000000000000032 /* PoseSnapshotServiceTests.swift */,
+				CC300003000000000000033 /* RotationPersistenceTests.swift */,
+				CC300003000000000000034 /* FlushOnDismissTests.swift */,
+				CC300003000000000000035 /* PoseSnapshotFetchOnAppearTests.swift */,
+				CC300003000000000000036 /* BallDetectionAPIClientTests.swift */,
+				CC300003000000000000037 /* BallDetectionVMTests.swift */,
+				CC300003000000000000038 /* BallOverlayViewTests.swift */,
+				CC300003000000000000039 /* BallDetectionTimelineTests.swift */,
+<<<<<<< Updated upstream
+				EE300003000000000000001 /* DensePoseExtractionTests.swift */,
+				EE300003000000000000002 /* BallTrajectoryOverlayTests.swift */,
+				EE400003000000000000001 /* EventRecordingBallTrajectoryIndependenceTests.swift */,
+				CC300003000000000000040 /* SkeletonOverlayTests.swift */,
+				BF500003000000000000001 /* BallFeedbackVMTests.swift */,
+				BF600003000000000000001 /* BallFeedbackPanelTests.swift */,
+				BF700003000000000000001 /* BallFeedbackAnnotationIndependenceTests.swift */,
+				BF800003000000000000001 /* JugglingAnnotationAPIClientFeedbackTests.swift */,
+=======
+				CC300003000000000000040 /* SkeletonOverlayTests.swift */,
+>>>>>>> Stashed changes
+				BB100003000000000000004 /* AnnotationVideoLoaderTests.swift */,
+				BB100003000000000000005 /* PlaybackBarTests.swift */,
+				BB100003000000000000006 /* AVPlayerLayerViewTests.swift */,
+				BB200003000000000000006 /* PlaybackControllerLayoutTests.swift */,
+				BB200003000000000000009 /* EventTimelineTests.swift */,
+			);
+			path = Juggling;
+			sourceTree = "<group>";
+		};
+		BB000002000000000000019 /* Spike */ = {
+			isa = PBXGroup;
+			children = (
+				BB00000300000000000007B /* BiometricAutoCapture.swift */,
+				BB00000300000000000007C /* FaceGestureType.swift */,
+				BB00000300000000000007D /* FacePoseThresholds.swift */,
+				BB00000300000000000007E /* FaceGestureDetector.swift */,
+				BB00000300000000000007F /* GestureStabilizer.swift */,
+				BB000003000000000000080 /* SpikeLivenessViewModel.swift */,
+				BB000003000000000000081 /* ARFaceTrackingView.swift */,
+				BB000003000000000000082 /* SpikeLivenessView.swift */,
+			);
+			path = Spike;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		BB000001000000000000002 /* LFAEducationCenter */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BB000006000000000000002 /* Build configuration list for PBXNativeTarget "LFAEducationCenter" */;
+			buildPhases = (
+				BB000001000000000000003 /* Sources */,
+				BB000001000000000000004 /* Resources */,
+				BB000001000000000000005 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LFAEducationCenter;
+			productName = LFAEducationCenter;
+			productReference = BB000003000000000000005 /* LFAEducationCenter.app */;
+			productType = "com.apple.product-type.application";
+		};
+		CC100002000000000000001 /* LFAEducationCenterTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CC100006000000000000001 /* Build configuration list for PBXNativeTarget "LFAEducationCenterTests" */;
+			buildPhases = (
+				CC100001000000000000001 /* Sources */,
+				CC100001000000000000002 /* Resources */,
+				CC100001000000000000003 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CC100001000000000000004 /* PBXTargetDependency */,
+			);
+			name = LFAEducationCenterTests;
+			productName = LFAEducationCenterTests;
+			productReference = CC100003000000000000001 /* LFAEducationCenterTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		BB000001000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1700;
+				LastUpgradeCheck = 1700;
+				TargetAttributes = {
+					BB000001000000000000002 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					CC100002000000000000001 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = BB000001000000000000002;
+					};
+				};
+			};
+			buildConfigurationList = BB000006000000000000001 /* Build configuration list for PBXProject "LFAEducationCenter" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = BB000002000000000000001;
+			productRefGroup = BB000002000000000000002 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				BB000001000000000000002 /* LFAEducationCenter */,
+				CC100002000000000000001 /* LFAEducationCenterTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		BB000001000000000000004 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB000004000000000000003 /* Assets.xcassets in Resources */,
+				BB000004000000000000010 /* skeleton_receiver.html in Resources */,
+				AA100004000000000000009 /* contact_types_v1.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CC100001000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		BB000001000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB000004000000000000001 /* LFAEducationCenterApp.swift in Sources */,
+				BB000004000000000000002 /* RootView.swift in Sources */,
+				BB000004000000000000004 /* Theme.swift in Sources */,
+				BB000004000000000000005 /* BodyPoseDetector.swift in Sources */,
+				BB000004000000000000006 /* SkeletonSerializer.swift in Sources */,
+				BB000004000000000000007 /* CameraManager.swift in Sources */,
+				BB000004000000000000008 /* SkeletonFrame.swift in Sources */,
+				BB000004000000000000009 /* SkeletonBridge.swift in Sources */,
+				BB000004000000000000011 /* AuthToken.swift in Sources */,
+				BB000004000000000000012 /* KeychainService.swift in Sources */,
+				BB000004000000000000013 /* AuthManager.swift in Sources */,
+				BB000004000000000000014 /* LoginView.swift in Sources */,
+				BB000004000000000000015 /* APIClient.swift in Sources */,
+				BB000004000000000000016 /* APIConfig.swift in Sources */,
+				BB000004000000000000017 /* UserProfile.swift in Sources */,
+				BB000004000000000000018 /* DashboardView.swift in Sources */,
+				BB000004000000000000019 /* DashboardViewModel.swift in Sources */,
+				BB000004000000000000020 /* UserLicense.swift in Sources */,
+				BB000004000000000000021 /* LFAPlayerLicense.swift in Sources */,
+				BB000004000000000000022 /* LicenseDashboard.swift in Sources */,
+				BB000004000000000000023 /* SpecializationInfo.swift in Sources */,
+				BB000004000000000000024 /* SpecializationStatus.swift in Sources */,
+				BB000004000000000000025 /* SpecializationProgress.swift in Sources */,
+				BB000004000000000000026 /* SkillProfile.swift in Sources */,
+				BB000004000000000000027 /* EducationViewModel.swift in Sources */,
+				BB000004000000000000028 /* EducationView.swift in Sources */,
+				BB000004000000000000029 /* MainHubView.swift in Sources */,
+				BB000004000000000000030 /* LFASpecTabView.swift in Sources */,
+				BB000004000000000000031 /* BrandLogoView.swift in Sources */,
+				BB000004000000000000032 /* SplashView.swift in Sources */,
+				BB000004000000000000033 /* RegisterView.swift in Sources */,
+				BB000004000000000000034 /* WelcomeSuccessView.swift in Sources */,
+				BB000004000000000000035 /* AcademyIDCardView.swift in Sources */,
+				BB000004000000000000036 /* QRCodeGenerator.swift in Sources */,
+				BB000004000000000000070 /* SkillConfig.swift in Sources */,
+				BB000004000000000000037 /* AcademyIDResponse.swift in Sources */,
+				BB000004000000000000038 /* AcademyIDViewModel.swift in Sources */,
+				BB000004000000000000039 /* AcademyIDFullScreenView.swift in Sources */,
+				BB000004000000000000040 /* CreditTransaction.swift in Sources */,
+				BB000004000000000000041 /* CreditsViewModel.swift in Sources */,
+				BB000004000000000000042 /* CreditsView.swift in Sources */,
+				BB000004000000000000043 /* ProfileView.swift in Sources */,
+				BB000004000000000000044 /* UnlockViewModel.swift in Sources */,
+				BB000004000000000000045 /* UnlockConfirmView.swift in Sources */,
+				BB000004000000000000046 /* FootballPosition.swift in Sources */,
+				BB000004000000000000047 /* PitchSelectorView.swift in Sources */,
+				BB000004000000000000048 /* LFAOnboardingViewModel.swift in Sources */,
+				BB000004000000000000049 /* LFAOnboardingView.swift in Sources */,
+				BB000004000000000000050 /* RedeemCodeViewModel.swift in Sources */,
+				BB000004000000000000051 /* RedeemCodeView.swift in Sources */,
+				BB000004000000000000052 /* InvoiceRequestViewModel.swift in Sources */,
+				BB000004000000000000053 /* InvoiceRequestView.swift in Sources */,
+				BB000004000000000000054 /* InvoiceItem.swift in Sources */,
+				BB000004000000000000055 /* PendingInvoicesViewModel.swift in Sources */,
+				BB000004000000000000056 /* ProfileCompletionCard.swift in Sources */,
+				BB000004000000000000057 /* PhotoPicker.swift in Sources */,
+				BB000004000000000000058 /* ProfilePhotoUploadViewModel.swift in Sources */,
+				BB000004000000000000059 /* ProfilePhotoUploadView.swift in Sources */,
+				BB000004000000000000060 /* BaselineSelfRatingViewModel.swift in Sources */,
+				BB000004000000000000061 /* BaselineSelfRatingView.swift in Sources */,
+				BB000004000000000000062 /* MoodPhotosViewModel.swift in Sources */,
+				BB000004000000000000063 /* MoodPhotoSlotCard.swift in Sources */,
+				BB000004000000000000064 /* MoodPhotosView.swift in Sources */,
+				BB000004000000000000069 /* MoodPhotoPreviewSheet.swift in Sources */,
+				BB00000400000000000006A /* CompletionCelebrationStore.swift in Sources */,
+				BB00000400000000000006B /* ProfileCompletionCelebrationView.swift in Sources */,
+				BB00000400000000000006C /* AcademyIDColorTheme.swift in Sources */,
+				BB00000400000000000006D /* AcademyIDColorConfig.swift in Sources */,
+				BB00000400000000000006E /* AcademyIDColorViewModel.swift in Sources */,
+				BB00000400000000000006F /* AcademyIDColorPickerView.swift in Sources */,
+				BB000004000000000000071 /* AcademyIDCardPreviewView.swift in Sources */,
+				BB000004000000000000073 /* BiometricModels.swift in Sources */,
+				BB000004000000000000074 /* BiometricService.swift in Sources */,
+				BB000004000000000000075 /* BiometricDisclosureViewModel.swift in Sources */,
+				BB000004000000000000076 /* BiometricDisclosureView.swift in Sources */,
+				BB000004000000000000077 /* BiometricLivenessViewModel.swift in Sources */,
+				BB000004000000000000078 /* BiometricLivenessView.swift in Sources */,
+				BB000004000000000000079 /* BiometricVerifyViewModel.swift in Sources */,
+				BB00000400000000000007A /* BiometricVerifyView.swift in Sources */,
+				3A252E40BD69018C7269AAF2 /* JugglingVideoItem.swift in Sources */,
+				7FC19EF38DE99E82AE19FBE0 /* JugglingVideoListView.swift in Sources */,
+				36CB92D674607508AC4335E1 /* JugglingVideoListViewModel.swift in Sources */,
+				888E1C3A10647BB0B654ABB3 /* JugglingPlayerView.swift in Sources */,
+				BB00000400000000000007B /* BiometricAutoCapture.swift in Sources */,
+				BB00000400000000000007C /* FaceGestureType.swift in Sources */,
+				BB00000400000000000007D /* FacePoseThresholds.swift in Sources */,
+				BB00000400000000000007E /* FaceGestureDetector.swift in Sources */,
+				BB00000400000000000007F /* GestureStabilizer.swift in Sources */,
+				BB000004000000000000080 /* SpikeLivenessViewModel.swift in Sources */,
+				BB000004000000000000081 /* ARFaceTrackingView.swift in Sources */,
+				BB000004000000000000082 /* SpikeLivenessView.swift in Sources */,
+				AA100004000000000000001 /* ContactTaxonomy.swift in Sources */,
+				AA100004000000000000002 /* ContactTaxonomyStore.swift in Sources */,
+				AA100004000000000000003 /* ContactEventDraft.swift in Sources */,
+				AA100004000000000000004 /* ContactEventResponse.swift in Sources */,
+				AA100004000000000000005 /* LocalAnnotationStore.swift in Sources */,
+				AA100004000000000000006 /* AnnotationSyncEngine.swift in Sources */,
+				AA100004000000000000007 /* JugglingAnnotationAPIClient.swift in Sources */,
+				AA100004000000000000008 /* JugglingAnnotationViewModel.swift in Sources */,
+				AA100004000000000000010 /* PlaybackController.swift in Sources */,
+				AA100004000000000000011 /* AnnotationDiagnostics.swift in Sources */,
+				AA100004000000000000012 /* EventStillFrameGenerator.swift in Sources */,
+				AA100004000000000000013 /* PoseSnapshotDTO.swift in Sources */,
+				AA100004000000000000014 /* PoseSnapshotService.swift in Sources */,
+				EE100004000000000000001 /* DensePoseDTO.swift in Sources */,
+				EE100004000000000000002 /* DensePoseCache.swift in Sources */,
+				EE100004000000000000003 /* DensePoseExtractor.swift in Sources */,
+				EE100004000000000000004 /* BallTrajectoryDTO.swift in Sources */,
+				BF100004000000000000001 /* BallFeedbackDTO.swift in Sources */,
+				BF200004000000000000001 /* BallFeedbackViewModel.swift in Sources */,
+				EE200004000000000000001 /* DenseSkeletonViewModel.swift in Sources */,
+				EE200004000000000000003 /* BallTrajectoryViewModel.swift in Sources */,
+				EE200004000000000000004 /* BallTrajectoryOverlayView.swift in Sources */,
+				EE200004000000000000002 /* ContinuousSkeletonOverlayView.swift in Sources */,
+				BF300004000000000000001 /* BallFeedbackOverlayView.swift in Sources */,
+				BF400004000000000000001 /* BallFeedbackPanel.swift in Sources */,
+				BB100004000000000000001 /* AVPlayerLayerView.swift in Sources */,
+				BB100004000000000000002 /* AnnotationVideoLoader.swift in Sources */,
+				BB100004000000000000003 /* PlaybackControlBar.swift in Sources */,
+				BB200004000000000000001 /* JugglingAnnotationScreen.swift in Sources */,
+				BB200004000000000000020 /* PoseSnapshotOverlayView.swift in Sources */,
+				BB200004000000000000021 /* BallOverlayView.swift in Sources */,
+				BB200004000000000000022 /* BallVideoOverlayView.swift in Sources */,
+				BB200004000000000000003 /* EventTimelineView.swift in Sources */,
+				BB200004000000000000010 /* AnnotationDebugOverlay.swift in Sources */,
+				BB200004000000000000011 /* EventLabelDetailView.swift in Sources */,
+				BB200004000000000000012 /* BodyZone.swift in Sources */,
+				BB200004000000000000013 /* BodyZonePickerView.swift in Sources */,
+				BB200004000000000000016 /* EmojiBodyZonePickerView.swift in Sources */,
+				BB200004000000000000014 /* LabelingOverviewView.swift in Sources */,
+				BB200004000000000000015 /* EventPreviewSession.swift in Sources */,
+				BB300004000000000000001 /* JugglingVideoUploadViewModel.swift in Sources */,
+				BB300004000000000000002 /* JugglingVideoPHPicker.swift in Sources */,
+				BB300004000000000000003 /* JugglingVideoUploadView.swift in Sources */,
+				BB300004000000000000004 /* JugglingVideoUploadCoordinator.swift in Sources */,
+				BB300004000000000000005 /* JugglingVideoExportService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CC100001000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC400004000000000000001 /* JugglingVideoTests.swift in Sources */,
+				CC400004000000000000005 /* ContactTaxonomyTests.swift in Sources */,
+				CC400004000000000000006 /* LocalAnnotationStoreTests.swift in Sources */,
+				CC400004000000000000007 /* ContactEventDraftTests.swift in Sources */,
+				CC400004000000000000008 /* AnnotationSyncEngineTests.swift in Sources */,
+				CC400004000000000000009 /* JugglingAnnotationViewModelTests.swift in Sources */,
+				CC400004000000000000010 /* EditEventTests.swift in Sources */,
+				CC400004000000000000011 /* FlushPendingEditTests.swift in Sources */,
+				CC400004000000000000012 /* PlaybackControllerTests.swift in Sources */,
+				CC400004000000000000013 /* MarkTimestampVMTests.swift in Sources */,
+				CC400004000000000000014 /* EventLabelingVMTests.swift in Sources */,
+				CC400004000000000000015 /* BodyZoneTests.swift in Sources */,
+				CC400004000000000000016 /* EventStillFrameGeneratorTests.swift in Sources */,
+				CC400004000000000000017 /* LabelingCTAVMTests.swift in Sources */,
+				CC400004000000000000018 /* EventPreviewSessionTests.swift in Sources */,
+				CC400004000000000000019 /* MultiEventLabelingTests.swift in Sources */,
+				CC400004000000000000020 /* P2CF1LabelingQueueTests.swift in Sources */,
+				CC400004000000000000021 /* P2CF2AutoAdvanceTests.swift in Sources */,
+				CC400004000000000000022 /* P2CF3SingleEditModeTests.swift in Sources */,
+				CC400004000000000000023 /* SILO1EmojiZonePickerTests.swift in Sources */,
+				CC400004000000000000024 /* SILO2LayoutTests.swift in Sources */,
+				CC400004000000000000025 /* APIConfigTests.swift in Sources */,
+				CC400004000000000000026 /* JugglingVideoListViewModelDeleteTests.swift in Sources */,
+				CC400004000000000000027 /* JugglingVideoListViewModelSwipeTests.swift in Sources */,
+				CC400004000000000000028 /* JugglingUploadAPIClientTests.swift in Sources */,
+				CC400004000000000000029 /* JugglingVideoUploadViewModelTests.swift in Sources */,
+				CC400004000000000000030 /* JugglingVideoUploadIntegrationTests.swift in Sources */,
+				CC400004000000000000031 /* JugglingVideoExportServiceTests.swift in Sources */,
+				CC400004000000000000032 /* PoseSnapshotServiceTests.swift in Sources */,
+				CC400004000000000000033 /* RotationPersistenceTests.swift in Sources */,
+				CC400004000000000000034 /* FlushOnDismissTests.swift in Sources */,
+				CC400004000000000000035 /* PoseSnapshotFetchOnAppearTests.swift in Sources */,
+				CC400004000000000000036 /* BallDetectionAPIClientTests.swift in Sources */,
+				CC400004000000000000037 /* BallDetectionVMTests.swift in Sources */,
+				CC400004000000000000038 /* BallOverlayViewTests.swift in Sources */,
+				CC400004000000000000039 /* BallDetectionTimelineTests.swift in Sources */,
+<<<<<<< Updated upstream
+				EE300004000000000000001 /* DensePoseExtractionTests.swift in Sources */,
+				EE300004000000000000002 /* BallTrajectoryOverlayTests.swift in Sources */,
+				EE400004000000000000001 /* EventRecordingBallTrajectoryIndependenceTests.swift in Sources */,
+				CC400004000000000000040 /* SkeletonOverlayTests.swift in Sources */,
+				BF500004000000000000001 /* BallFeedbackVMTests.swift in Sources */,
+				BF600004000000000000001 /* BallFeedbackPanelTests.swift in Sources */,
+				BF700004000000000000001 /* BallFeedbackAnnotationIndependenceTests.swift in Sources */,
+				BF800004000000000000001 /* JugglingAnnotationAPIClientFeedbackTests.swift in Sources */,
+=======
+				CC400004000000000000040 /* SkeletonOverlayTests.swift in Sources */,
+>>>>>>> Stashed changes
+				BB100004000000000000004 /* AnnotationVideoLoaderTests.swift in Sources */,
+				BB100004000000000000005 /* PlaybackBarTests.swift in Sources */,
+				BB100004000000000000006 /* AVPlayerLayerViewTests.swift in Sources */,
+				BB200004000000000000006 /* PlaybackControllerLayoutTests.swift in Sources */,
+				BB200004000000000000009 /* EventTimelineTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		CC100001000000000000004 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BB000001000000000000002 /* LFAEducationCenter */;
+			targetProxy = CC100001000000000000005 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		BB000005000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		BB000005000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		BB000005000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4D7V9ZWVHY;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LFAEducationCenter/App/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.lovas-zoltan.lfa-education-center";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			baseConfigurationReference = DD000003000000000000001 /* Config.Debug.xcconfig */;
+			name = Debug;
+		};
+		BB000005000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4D7V9ZWVHY;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LFAEducationCenter/App/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.lovas-zoltan.lfa-education-center";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			baseConfigurationReference = DD000003000000000000002 /* Config.Release.xcconfig */;
+			name = Release;
+		};
+		CC100005000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 4D7V9ZWVHY;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.lovas-zoltan.lfa-education-center.LFAEducationCenterTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LFAEducationCenter.app/LFAEducationCenter";
+				TEST_TARGET_NAME = LFAEducationCenter;
+			};
+			name = Debug;
+		};
+		CC100005000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 4D7V9ZWVHY;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.lovas-zoltan.lfa-education-center.LFAEducationCenterTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LFAEducationCenter.app/LFAEducationCenter";
+				TEST_TARGET_NAME = LFAEducationCenter;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		BB000006000000000000001 /* Build configuration list for PBXProject "LFAEducationCenter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BB000005000000000000001 /* Debug */,
+				BB000005000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BB000006000000000000002 /* Build configuration list for PBXNativeTarget "LFAEducationCenter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BB000005000000000000003 /* Debug */,
+				BB000005000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CC100006000000000000001 /* Build configuration list for PBXNativeTarget "LFAEducationCenterTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CC100005000000000000001 /* Debug */,
+				CC100005000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = BB000001000000000000001 /* Project object */;
+}

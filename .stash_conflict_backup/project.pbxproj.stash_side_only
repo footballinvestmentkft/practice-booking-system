@@ -1,0 +1,13 @@
+# Extracted Stashed-changes side from conflict markers in ios/LFAEducationCenter.xcodeproj/project.pbxproj
+# Conflict blocks: 4
+
+# --- Block 1 ---
+
+# --- Block 2 ---
+
+# --- Block 3 ---
+				CC300003000000000000040 /* SkeletonOverlayTests.swift */,
+
+# --- Block 4 ---
+				CC400004000000000000040 /* SkeletonOverlayTests.swift in Sources */,
+

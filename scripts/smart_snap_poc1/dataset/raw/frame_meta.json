@@ -1,0 +1,602 @@
+[
+  {
+    "frame_id": "8e39b06f_0002100ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0002100ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 2100,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0005900ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0005900ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 5900,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0006000ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0006000ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 6000,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0002900ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0002900ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 2900,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0006800ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0006800ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 6800,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0008600ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0008600ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 8600,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0005100ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0005100ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 5100,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0002700ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0002700ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 2700,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0005200ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0005200ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 5200,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0002800ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0002800ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 2800,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0007000ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0007000ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 7000,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0003100ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0003100ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 3100,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0006900ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0006900ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 6900,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0002500ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0002500ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 2500,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0002400ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0002400ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 2400,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0008800ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0008800ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 8800,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0002200ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0002200ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 2200,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0006600ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0006600ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 6600,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0000400ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0000400ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 400,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0009100ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0009100ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "A",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 9100,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "47466ee0_0051200ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/47466ee0_0051200ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 420,
+    "type": "B",
+    "video_id": "47466ee0-959f-470e-bbaf-47595d5c8ed5",
+    "frame_ms": 51200,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "47466ee0_0051100ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/47466ee0_0051100ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 420,
+    "type": "B",
+    "video_id": "47466ee0-959f-470e-bbaf-47595d5c8ed5",
+    "frame_ms": 51100,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "47466ee0_0042700ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/47466ee0_0042700ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 420,
+    "type": "B",
+    "video_id": "47466ee0-959f-470e-bbaf-47595d5c8ed5",
+    "frame_ms": 42700,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "47466ee0_0051000ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/47466ee0_0051000ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 420,
+    "type": "B",
+    "video_id": "47466ee0-959f-470e-bbaf-47595d5c8ed5",
+    "frame_ms": 51000,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "47466ee0_0049400ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/47466ee0_0049400ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 420,
+    "type": "B",
+    "video_id": "47466ee0-959f-470e-bbaf-47595d5c8ed5",
+    "frame_ms": 49400,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "47466ee0_0050900ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/47466ee0_0050900ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 420,
+    "type": "B",
+    "video_id": "47466ee0-959f-470e-bbaf-47595d5c8ed5",
+    "frame_ms": 50900,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "47466ee0_0051300ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/47466ee0_0051300ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 420,
+    "type": "B",
+    "video_id": "47466ee0-959f-470e-bbaf-47595d5c8ed5",
+    "frame_ms": 51300,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "47466ee0_0050800ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/47466ee0_0050800ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 420,
+    "type": "B",
+    "video_id": "47466ee0-959f-470e-bbaf-47595d5c8ed5",
+    "frame_ms": 50800,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "5416b28f_0004200ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/5416b28f_0004200ms.jpg",
+    "image_width_px": 360,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "5416b28f-e1d3-4f85-85c8-6bba85175355",
+    "frame_ms": 4200,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "5416b28f_0008500ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/5416b28f_0008500ms.jpg",
+    "image_width_px": 360,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "5416b28f-e1d3-4f85-85c8-6bba85175355",
+    "frame_ms": 8500,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "5416b28f_0006200ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/5416b28f_0006200ms.jpg",
+    "image_width_px": 360,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "5416b28f-e1d3-4f85-85c8-6bba85175355",
+    "frame_ms": 6200,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "5416b28f_0006900ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/5416b28f_0006900ms.jpg",
+    "image_width_px": 360,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "5416b28f-e1d3-4f85-85c8-6bba85175355",
+    "frame_ms": 6900,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "5416b28f_0007500ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/5416b28f_0007500ms.jpg",
+    "image_width_px": 360,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "5416b28f-e1d3-4f85-85c8-6bba85175355",
+    "frame_ms": 7500,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "5416b28f_0003700ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/5416b28f_0003700ms.jpg",
+    "image_width_px": 360,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "5416b28f-e1d3-4f85-85c8-6bba85175355",
+    "frame_ms": 3700,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "5416b28f_0007300ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/5416b28f_0007300ms.jpg",
+    "image_width_px": 360,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "5416b28f-e1d3-4f85-85c8-6bba85175355",
+    "frame_ms": 7300,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "5416b28f_0008600ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/5416b28f_0008600ms.jpg",
+    "image_width_px": 360,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "5416b28f-e1d3-4f85-85c8-6bba85175355",
+    "frame_ms": 8600,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "66ee1c8a_0008900ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/66ee1c8a_0008900ms.jpg",
+    "image_width_px": 296,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "66ee1c8a-4ba7-46f1-9275-4c0652597004",
+    "frame_ms": 8900,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "66ee1c8a_0009000ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/66ee1c8a_0009000ms.jpg",
+    "image_width_px": 296,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "66ee1c8a-4ba7-46f1-9275-4c0652597004",
+    "frame_ms": 9000,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "66ee1c8a_0000600ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/66ee1c8a_0000600ms.jpg",
+    "image_width_px": 296,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "66ee1c8a-4ba7-46f1-9275-4c0652597004",
+    "frame_ms": 600,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "66ee1c8a_0000500ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/66ee1c8a_0000500ms.jpg",
+    "image_width_px": 296,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "66ee1c8a-4ba7-46f1-9275-4c0652597004",
+    "frame_ms": 500,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "66ee1c8a_0000300ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/66ee1c8a_0000300ms.jpg",
+    "image_width_px": 296,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "66ee1c8a-4ba7-46f1-9275-4c0652597004",
+    "frame_ms": 300,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "66ee1c8a_0000400ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/66ee1c8a_0000400ms.jpg",
+    "image_width_px": 296,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "66ee1c8a-4ba7-46f1-9275-4c0652597004",
+    "frame_ms": 400,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "66ee1c8a_0001100ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/66ee1c8a_0001100ms.jpg",
+    "image_width_px": 296,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "66ee1c8a-4ba7-46f1-9275-4c0652597004",
+    "frame_ms": 1100,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "66ee1c8a_0009400ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/66ee1c8a_0009400ms.jpg",
+    "image_width_px": 296,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "66ee1c8a-4ba7-46f1-9275-4c0652597004",
+    "frame_ms": 9400,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "a3d45095_0001500ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/a3d45095_0001500ms.jpg",
+    "image_width_px": 360,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "a3d45095-0745-45bc-904e-2ec9e7a83588",
+    "frame_ms": 1500,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "a3d45095_0001600ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/a3d45095_0001600ms.jpg",
+    "image_width_px": 360,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "a3d45095-0745-45bc-904e-2ec9e7a83588",
+    "frame_ms": 1600,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "a3d45095_0001700ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/a3d45095_0001700ms.jpg",
+    "image_width_px": 360,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "a3d45095-0745-45bc-904e-2ec9e7a83588",
+    "frame_ms": 1700,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "a3d45095_0001900ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/a3d45095_0001900ms.jpg",
+    "image_width_px": 360,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "a3d45095-0745-45bc-904e-2ec9e7a83588",
+    "frame_ms": 1900,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "a3d45095_0001800ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/a3d45095_0001800ms.jpg",
+    "image_width_px": 360,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "a3d45095-0745-45bc-904e-2ec9e7a83588",
+    "frame_ms": 1800,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "a3d45095_0002000ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/a3d45095_0002000ms.jpg",
+    "image_width_px": 360,
+    "image_height_px": 640,
+    "type": "B",
+    "video_id": "a3d45095-0745-45bc-904e-2ec9e7a83588",
+    "frame_ms": 2000,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "47466ee0_0000100ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/47466ee0_0000100ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 420,
+    "type": "C",
+    "video_id": "47466ee0-959f-470e-bbaf-47595d5c8ed5",
+    "frame_ms": 100,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "47466ee0_0023000ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/47466ee0_0023000ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 420,
+    "type": "C",
+    "video_id": "47466ee0-959f-470e-bbaf-47595d5c8ed5",
+    "frame_ms": 23000,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "5416b28f_0000100ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/5416b28f_0000100ms.jpg",
+    "image_width_px": 360,
+    "image_height_px": 640,
+    "type": "C",
+    "video_id": "5416b28f-e1d3-4f85-85c8-6bba85175355",
+    "frame_ms": 100,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "5416b28f_0000300ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/5416b28f_0000300ms.jpg",
+    "image_width_px": 360,
+    "image_height_px": 640,
+    "type": "C",
+    "video_id": "5416b28f-e1d3-4f85-85c8-6bba85175355",
+    "frame_ms": 300,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "66ee1c8a_0000100ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/66ee1c8a_0000100ms.jpg",
+    "image_width_px": 296,
+    "image_height_px": 640,
+    "type": "C",
+    "video_id": "66ee1c8a-4ba7-46f1-9275-4c0652597004",
+    "frame_ms": 100,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "66ee1c8a_0005900ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/66ee1c8a_0005900ms.jpg",
+    "image_width_px": 296,
+    "image_height_px": 640,
+    "type": "C",
+    "video_id": "66ee1c8a-4ba7-46f1-9275-4c0652597004",
+    "frame_ms": 5900,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0000100ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0000100ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "C",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 100,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "8e39b06f_0007500ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/8e39b06f_0007500ms.jpg",
+    "image_width_px": 640,
+    "image_height_px": 628,
+    "type": "C",
+    "video_id": "8e39b06f-2fc8-47ff-b4f9-222a563f1252",
+    "frame_ms": 7500,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "a3d45095_0000100ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/a3d45095_0000100ms.jpg",
+    "image_width_px": 360,
+    "image_height_px": 640,
+    "type": "C",
+    "video_id": "a3d45095-0745-45bc-904e-2ec9e7a83588",
+    "frame_ms": 100,
+    "auto_category_hints": []
+  },
+  {
+    "frame_id": "a3d45095_0001300ms",
+    "jpg_path": "/Users/lovas.zoltan/Seafile/Football Investment/Projects/Football Investment Internship/practice_booking_system/scripts/smart_snap_poc1/dataset/raw/a3d45095_0001300ms.jpg",
+    "image_width_px": 360,
+    "image_height_px": 640,
+    "type": "C",
+    "video_id": "a3d45095-0745-45bc-904e-2ec9e7a83588",
+    "frame_ms": 1300,
+    "auto_category_hints": []
+  }
+]
