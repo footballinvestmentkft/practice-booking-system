@@ -294,7 +294,7 @@ class TestS109S110RouteAndSnapshot:
         """S1-09 (updated r3-credits-v2): route count is 868 (+1 invitation-codes/redeem-authenticated)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 876, (
+        assert len(paths) == 877, (
             f"Expected 868 routes (867 prior baseline + 1 invitation-codes/redeem-authenticated), got {len(paths)}"
         )
 

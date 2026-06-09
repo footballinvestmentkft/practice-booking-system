@@ -61,7 +61,7 @@ jobs:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/lfa_intern_system_test
         SECRET_KEY: test-secret-key-for-ci-only-not-production
       run: |
-        pytest tests/unit/ tests/database/ tests/integration/tournament/ tests/integration/web_flows/ tests/integration/domain/ \
+        pytest tests/unit/ tests/database/ tests/integration/tournament/ tests/integration/web_flows/ tests/integration/domain/ tests/biometric/ \
           -q --tb=line -v \
           --cov=app \
           --cov-branch \

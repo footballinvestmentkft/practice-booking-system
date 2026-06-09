@@ -1,5 +1,5 @@
 """
-Biometric Pydantic schemas — PR-1 foundation.
+Biometric Pydantic schemas — PR-1 foundation + PR-2 consent request/response.
 
 Design rules enforced structurally (compile/import time):
   1. face_match_score is ABSENT from every response schema.
@@ -68,7 +68,35 @@ class LivenessMetadata(BaseModel):
     # violate the data-minimization requirement.
 
 
-# ── Consent schemas ───────────────────────────────────────────────────────────
+# ── Consent request schemas (PR-2) ────────────────────────────────────────────
+
+class BiometricConsentGrantRequest(BaseModel):
+    """Body for POST /me/biometric-consent."""
+    model_config = ConfigDict(extra="forbid")
+
+    consent_version: str = Field(
+        ...,
+        max_length=20,
+        description="Consent text version the user accepted, e.g. 'v1.0'",
+    )
+
+    # face_match_score, embedding, liveness raw data — deliberately absent
+
+
+class BiometricConsentRevokeRequest(BaseModel):
+    """Body for DELETE /me/biometric-consent."""
+    model_config = ConfigDict(extra="forbid")
+
+    reason: Optional[str] = Field(
+        default=None,
+        max_length=200,
+        description="Optional reason for revocation (user-provided)",
+    )
+
+    # No biometric data fields — revocation carries no sensor data
+
+
+# ── Consent response schema ───────────────────────────────────────────────────
 
 class BiometricConsentStatusOut(BaseModel):
     """Read-only view of the user's biometric consent state."""
@@ -79,6 +107,7 @@ class BiometricConsentStatusOut(BaseModel):
     is_active:   bool               = False
 
     # face_match_score ABSENT — enforced by schema structure
+    # embedding_ciphertext ABSENT — enforced by schema structure
 
 
 # ── Verification status (GET /me/profile-photo/verification-status) ───────────
