@@ -38,16 +38,22 @@ struct AcademyIDCardView: View {
     // Colour system — nil = official appearance (backward-compatible default)
     let colorConfig:              AcademyIDColorConfig?
 
-    // MARK: — Derived colours (fall back to system tokens when colorConfig is nil)
+    // Forces re-render on dark/light mode switch so official's UIKit dynamic
+    // colors (Color(UIColor.label) etc.) resolve correctly for the active mode.
+    @Environment(\.colorScheme) private var colorScheme
 
-    private var cardSurface:       Color  { colorConfig?.surfaceColor ?? Theme.Color.surface }
-    private var cardBorderColor:   Color  { colorConfig?.borderColor  ?? Color(hex: "#b8a06a") }
+    // MARK: — Derived colours (fall back to system tokens when colorConfig is nil)
+    // Uses explicit stored tokens from AcademyIDColorConfig — NOT derived from
+    // isLightSurface — so ivory always gives dark text even in iOS dark mode.
+
+    private var cardSurface:       Color  { colorConfig?.surfaceColor  ?? Color(UIColor.secondarySystemBackground) }
+    private var cardBorderColor:   Color  { colorConfig?.borderColor   ?? Color(hex: "#b8a06a") }
     private var cardBorderOpacity: Double { colorConfig?.borderOpacity ?? 0.28 }
-    private var textValue:         Color  { colorConfig?.valueColor   ?? Theme.Color.onSurface }
-    private var textLabel:         Color  { colorConfig?.labelColor   ?? Theme.Color.muted }
-    private var textMuted:         Color  { colorConfig?.mutedColor   ?? Theme.Color.muted.opacity(0.4) }
-    private var textBrand:         Color  { colorConfig?.brandAccent  ?? Theme.Color.secondary }
-    private var photoBorder:       Color  { colorConfig?.panelBorder  ?? Theme.Color.secondary.opacity(0.3) }
+    private var textValue:         Color  { colorConfig?.textPrimary   ?? Color(UIColor.label) }
+    private var textLabel:         Color  { colorConfig?.textSecondary ?? Color(UIColor.secondaryLabel) }
+    private var textMuted:         Color  { colorConfig?.textMuted     ?? Color(UIColor.tertiaryLabel) }
+    private var textBrand:         Color  { colorConfig?.textBrand     ?? Theme.Color.secondary }
+    private var photoBorder:       Color  { colorConfig?.panelBorder   ?? Theme.Color.secondary.opacity(0.30) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {

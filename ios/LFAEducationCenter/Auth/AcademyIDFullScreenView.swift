@@ -1,34 +1,20 @@
 import SwiftUI
 import UIKit
 
-// Full-screen My Academy ID view — suitable for on-site verification.
+// My Academy ID — static base page.
 //
 // Layout (scrollable):
-//   AcademyIDCardView  — same component shown in RegisterView, now with real user data
-//   CardStatusBanner   — shown when card is not yet verified (replaces ACCESS VERIFIED)
+//   AcademyIDCardView  — static, no shimmer / glow / swipe
+//                        tap → opens AcademyIDCardPreviewView (fullScreenCover)
+//   CardStatusBanner   — shown when not verified
 //   Divider
-//   QR scan panel      — 200×200pt, white background, tap to boost brightness
-//   Hint + verify URL
+//   QR scan panel      — always here, never in the preview
 //
-// Visual consistency: uses the identical AcademyIDCardView component as the
-// registration preview, so the user sees the same card identity both during
-// registration and later in "My Academy ID".
-//
-// Brightness boost:
-//   tap QR → UIScreen.main.brightness = 1.0
-//   tap again or dismiss → restore original brightness
-//
-// Privacy: email / phone / user_id / credits are never rendered.
-// Offline: fast path uses cached publicToken — QR visible without network.
-//
-// Card status (computed from dashboardVM):
-//   verified            — photo + active licence + onboarding + not expired
-//   no_licence          — no LFA_FOOTBALL_PLAYER licence
-//   inactive            — licence.isActive == false
-//   expired             — licence.isExpired == true
-//   onboarding_required — licence active but onboarding not complete
-//   photo_required      — licence + onboarding OK but no profile photo
-// MARK: — Card status model
+// Color: AcademyIDColorViewModel drives activeColorConfig; 🎨 toolbar button.
+// Brightness: tap QR → UIScreen.main.brightness = 1.0
+// Offline: fast path uses cached publicToken.
+
+// MARK: — Card status (module-level: also used by AcademyIDCardPreviewView)
 
 enum IDCardStatus {
     case verified
@@ -61,7 +47,19 @@ enum IDCardStatus {
     }
 
     var isVerified: Bool { self == .verified }
+
+    var accentColor: Color {
+        switch self {
+        case .verified:                                 return Theme.Color.primary
+        case .expired:                                  return .red
+        case .inactive:                                 return Color(red: 0.98, green: 0.57, blue: 0.24)
+        case .noLicence, .onboardingRequired,
+             .photoRequired:                            return Theme.Color.secondary
+        }
+    }
 }
+
+// MARK: — Main view
 
 struct AcademyIDFullScreenView: View {
 
@@ -71,33 +69,44 @@ struct AcademyIDFullScreenView: View {
     @StateObject         private var colorVM    = AcademyIDColorViewModel()
 
     @Environment(\.presentationMode) private var presentationMode
+    @Environment(\.colorScheme)      private var colorScheme
 
-    @State private var brightnessBoostActive  = false
+    @State private var isShowingCardPreview  = false
+    @State private var isShowingColorPicker  = false
+    @State private var brightnessBoostActive = false
     @State private var originalBrightness: CGFloat = UIScreen.main.brightness
-    @State private var isShowingColorPicker   = false
 
-    // Resolved colour config from the active colour ID
     private var activeColorConfig: AcademyIDColorConfig {
         AcademyIDColorConfig.resolve(colorVM.activeColorId)
     }
+
+    // MARK: — Body
 
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 0) {
-                    cardSection
+                    staticCard
+                        .padding(.horizontal, Theme.Spacing.md)
+                        .padding(.top, Theme.Spacing.lg)
+
+                    tapHint
+                        .padding(.top, Theme.Spacing.xs)
+
                     if cardStatus != .verified {
                         cardStatusBanner
                             .padding(.top, Theme.Spacing.sm)
+                            .padding(.horizontal, Theme.Spacing.md)
                     }
+
                     Divider()
                         .background(Theme.Color.secondary.opacity(0.15))
                         .padding(.vertical, Theme.Spacing.lg)
+
                     qrSection
+
                     Spacer(minLength: Theme.Spacing.xl)
                 }
-                .padding(.horizontal, Theme.Spacing.md)
-                .padding(.top, Theme.Spacing.lg)
             }
             .background(Color(UIColor.systemBackground).ignoresSafeArea())
             .navigationTitle("My Academy ID")
@@ -115,7 +124,6 @@ struct AcademyIDFullScreenView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     HStack(spacing: Theme.Spacing.sm) {
-                        // Colour picker — only shown when licence exists (colour data available)
                         if dashboardVM.lfaLicense != nil {
                             Button { isShowingColorPicker = true } label: {
                                 Image(systemName: "paintpalette")
@@ -123,7 +131,6 @@ struct AcademyIDFullScreenView: View {
                                     .foregroundColor(Theme.Color.primary)
                             }
                         }
-                        // Reload
                         Button {
                             Task { await viewModel.reload(using: authManager, profile: dashboardVM.profile) }
                         } label: {
@@ -141,13 +148,23 @@ struct AcademyIDFullScreenView: View {
             AcademyIDColorPickerView(colorVM: colorVM)
                 .environmentObject(authManager)
         }
+        .fullScreenCover(isPresented: $isShowingCardPreview) {
+            AcademyIDCardPreviewView(
+                colorConfig:  activeColorConfig,
+                isVerified:   cardStatus.isVerified,
+                lfaAcademyId: viewModel.loadState.response?.lfaAcademyId
+                              ?? dashboardVM.profile?.lfaAcademyId,
+                publicToken:  viewModel.loadState.response?.publicToken
+                              ?? dashboardVM.profile?.publicToken
+            )
+            .environmentObject(dashboardVM)
+            .environmentObject(authManager)
+        }
         .onAppear {
             Task { await viewModel.load(using: authManager, profile: dashboardVM.profile) }
             Task { await colorVM.load(using: authManager) }
         }
         .onDisappear { restoreBrightness() }
-        // If the slow path just lazy-assigned a new Academy ID, reload the dashboard so
-        // ProfileView subtitle and ProfileCompletionScore.academyID (+10%) update immediately.
         .onChange(of: viewModel.loadState.isLoaded) { isLoaded in
             guard isLoaded,
                   dashboardVM.profile?.lfaAcademyId == nil,
@@ -156,21 +173,9 @@ struct AcademyIDFullScreenView: View {
         }
     }
 
-    // MARK: — Card status (computed, replaces hardcoded isVerified: true)
+    // MARK: — Static card (no shimmer, no glow, no swipe)
 
-    private var cardStatus: IDCardStatus {
-        guard let licence = dashboardVM.lfaLicense else { return .noLicence }
-        guard licence.isActive  else { return .inactive }
-        guard !licence.isExpired else { return .expired }
-        guard licence.onboardingCompleted else { return .onboardingRequired }
-        let hasPhoto = dashboardVM.profile?.profilePhotoUrl != nil
-                    || dashboardVM.profile?.profilePhotoProcessedUrl != nil
-        return hasPhoto ? .verified : .photoRequired
-    }
-
-    // MARK: — Academy ID card (same component as RegisterView preview)
-
-    private var cardSection: some View {
+    private var staticCard: some View {
         AcademyIDCardView(
             firstName:                cardFirstName,
             lastName:                 cardLastName,
@@ -190,25 +195,49 @@ struct AcademyIDFullScreenView: View {
                                       ?? dashboardVM.profile?.publicToken,
             colorConfig:              activeColorConfig
         )
+        .contentShape(Rectangle())
+        .onTapGesture {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            isShowingCardPreview = true
+        }
     }
 
-    // MARK: — Status banner (shown only when not verified)
+    // MARK: — Tap hint
+
+    private var tapHint: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "hand.tap")
+                .font(.system(size: 10))
+            Text("Koppints a kártyára a megnyitáshoz")
+                .font(.system(size: 11))
+        }
+        .foregroundColor(Theme.Color.muted)
+    }
+
+    // MARK: — Card status
+
+    private var cardStatus: IDCardStatus {
+        guard let licence = dashboardVM.lfaLicense else { return .noLicence }
+        guard licence.isActive   else { return .inactive }
+        guard !licence.isExpired else { return .expired }
+        guard licence.onboardingCompleted else { return .onboardingRequired }
+        let hasPhoto = dashboardVM.profile?.profilePhotoUrl != nil
+                    || dashboardVM.profile?.profilePhotoProcessedUrl != nil
+        return hasPhoto ? .verified : .photoRequired
+    }
+
+    // MARK: — Status banner
 
     private var cardStatusBanner: some View {
-        let isExpiredStatus = cardStatus == .expired
-        let isInactiveStatus = cardStatus == .inactive
-        let accentColor: Color = isExpiredStatus ? .red
-                               : isInactiveStatus ? Color(red: 0.98, green: 0.57, blue: 0.24)
-                               : Theme.Color.secondary
-
+        let accent = cardStatus.accentColor
         return HStack(spacing: Theme.Spacing.sm) {
             Image(systemName: cardStatus.statusIcon)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(accentColor)
+                .foregroundColor(accent)
             VStack(alignment: .leading, spacing: 2) {
                 Text(cardStatus.statusMessage)
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(accentColor)
+                    .foregroundColor(accent)
                 if cardStatus == .expired,
                    let expiry = dashboardVM.lfaLicense?.expiryDisplayString {
                     Text("Expired \(expiry)")
@@ -220,34 +249,27 @@ struct AcademyIDFullScreenView: View {
         }
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.vertical, Theme.Spacing.sm)
-        .background(accentColor.opacity(0.08))
+        .background(accent.opacity(0.08))
         .cornerRadius(Theme.Radius.sm)
         .overlay(
             RoundedRectangle(cornerRadius: Theme.Radius.sm)
-                .stroke(accentColor.opacity(0.25), lineWidth: 1)
+                .stroke(accent.opacity(0.25), lineWidth: 1)
         )
     }
 
-    // MARK: — QR scan panel (200×200, brightness boost)
+    // MARK: — QR section
 
     @ViewBuilder
     private var qrSection: some View {
         switch viewModel.loadState {
-        case .loading:
+        case .loading, .idle:
             ProgressView()
                 .frame(width: 200, height: 200)
                 .padding(.bottom, Theme.Spacing.md)
-
         case .loaded(let response):
             loadedQR(qrData: response.qrData)
-
         case .error(let msg):
             errorState(message: msg)
-
-        case .idle:
-            ProgressView()
-                .frame(width: 200, height: 200)
-                .padding(.bottom, Theme.Spacing.md)
         }
     }
 
@@ -269,7 +291,6 @@ struct AcademyIDFullScreenView: View {
                     .contentShape(Rectangle())
                     .onTapGesture { toggleBrightness() }
             }
-
             HStack(spacing: 5) {
                 Image(systemName: brightnessBoostActive ? "sun.max.fill" : "sun.min")
                     .font(.system(size: 11))
@@ -280,7 +301,6 @@ struct AcademyIDFullScreenView: View {
             }
             .foregroundColor(brightnessBoostActive ? Theme.Color.secondary : Theme.Color.muted)
             .animation(.easeInOut(duration: 0.2), value: brightnessBoostActive)
-
             Text(qrData)
                 .font(.system(size: 8))
                 .foregroundColor(Theme.Color.muted.opacity(0.5))
@@ -296,12 +316,10 @@ struct AcademyIDFullScreenView: View {
                 .font(.system(size: 56))
                 .foregroundColor(Theme.Color.muted.opacity(0.25))
                 .frame(width: 200, height: 200)
-
             Text(message)
                 .font(.subheadline)
                 .foregroundColor(Theme.Color.muted)
                 .multilineTextAlignment(.center)
-
             Button {
                 Task { await viewModel.reload(using: authManager, profile: dashboardVM.profile) }
             } label: {
@@ -326,10 +344,9 @@ struct AcademyIDFullScreenView: View {
     }
 
     private func restoreBrightness() {
-        if brightnessBoostActive {
-            UIScreen.main.brightness = originalBrightness
-            brightnessBoostActive = false
-        }
+        guard brightnessBoostActive else { return }
+        UIScreen.main.brightness = originalBrightness
+        brightnessBoostActive = false
     }
 
     // MARK: — Helpers
@@ -339,7 +356,6 @@ struct AcademyIDFullScreenView: View {
         return false
     }
 
-    // Split displayName ("R2Test Beta") → firstName ("R2Test") / lastName ("Beta")
     private var cardFirstName: String? {
         guard let name = dashboardVM.profile?.displayName, !name.isEmpty else { return nil }
         return name.split(separator: " ", maxSplits: 1).first.map(String.init)
@@ -348,7 +364,6 @@ struct AcademyIDFullScreenView: View {
     private var cardLastName: String? {
         guard let name = dashboardVM.profile?.displayName else { return nil }
         let parts = name.split(separator: " ", maxSplits: 1)
-        guard parts.count > 1 else { return nil }
-        return String(parts[1])
+        return parts.count > 1 ? String(parts[1]) : nil
     }
 }

@@ -79,6 +79,7 @@
 		BB00000400000000000006D /* AcademyIDColorConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000006D /* AcademyIDColorConfig.swift */; };
 		BB00000400000000000006E /* AcademyIDColorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000006E /* AcademyIDColorViewModel.swift */; };
 		BB00000400000000000006F /* AcademyIDColorPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000006F /* AcademyIDColorPickerView.swift */; };
+		BB000004000000000000071 /* AcademyIDCardPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000070 /* AcademyIDCardPreviewView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -156,6 +157,7 @@
 		BB00000300000000000006D /* AcademyIDColorConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDColorConfig.swift; sourceTree = "<group>"; };
 		BB00000300000000000006E /* AcademyIDColorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDColorViewModel.swift; sourceTree = "<group>"; };
 		BB00000300000000000006F /* AcademyIDColorPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDColorPickerView.swift; sourceTree = "<group>"; };
+		BB000003000000000000070 /* AcademyIDCardPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDCardPreviewView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -284,6 +286,7 @@
 				BB00000300000000000006D /* AcademyIDColorConfig.swift */,
 				BB00000300000000000006E /* AcademyIDColorViewModel.swift */,
 				BB00000300000000000006F /* AcademyIDColorPickerView.swift */,
+				BB000003000000000000070 /* AcademyIDCardPreviewView.swift */,
 			);
 			path = Auth;
 			sourceTree = "<group>";
@@ -517,6 +520,7 @@
 				BB00000400000000000006D /* AcademyIDColorConfig.swift in Sources */,
 				BB00000400000000000006E /* AcademyIDColorViewModel.swift in Sources */,
 				BB00000400000000000006F /* AcademyIDColorPickerView.swift in Sources */,
+				BB000004000000000000071 /* AcademyIDCardPreviewView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

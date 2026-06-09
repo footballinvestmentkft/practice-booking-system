@@ -1935,16 +1935,20 @@ jobs:
         SECRET_KEY: test-secret-key-for-ci-only-not-production
       run: |
         START_NS=$(date +%s%N)
-        alembic downgrade -1
+        # alembic downgrade -1 is ambiguous at merge migration points (two parents).
+        # Resolve the parent revision dynamically: handles both regular and merge heads.
+        PREV=$(python3 scripts/get_prev_migration.py)
+        echo "Downgrading to prev revision: $PREV"
+        alembic downgrade "$PREV"
         alembic upgrade head
         END_NS=$(date +%s%N)
         ELAPSED_MS=$(( (END_NS - START_NS) / 1000000 ))
         echo "Migration roundtrip on seeded DB: ${ELAPSED_MS}ms"
         if [ "$ELAPSED_MS" -gt 30000 ]; then
-          echo "::error::Migration roundtrip took ${ELAPSED_MS}ms (> 30 s limit on seeded dataset)"
+          echo "::error::Migration roundtrip took ${ELAPSED_MS}ms (> 30s limit on seeded dataset)"
           exit 1
         fi
-        echo "✅ Migration roundtrip on seeded DB: ${ELAPSED_MS}ms (within 30 s limit)"
+        echo "Migration roundtrip on seeded DB: ${ELAPSED_MS}ms (within 30s limit)"
 
     - name: Migration volume failure annotation
       if: failure()

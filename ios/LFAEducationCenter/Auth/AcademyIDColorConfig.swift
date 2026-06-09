@@ -2,71 +2,85 @@ import SwiftUI
 
 // iOS-side rendering tokens for the Academy ID card colour system.
 //
-// The backend returns colour IDs (e.g. "ivory"), not CSS variables.
-// This struct maps those IDs to SwiftUI Color values and derived text tones,
-// keeping the card rendering fully native and independent of the backend's
-// web-card CSS variable system.
+// DESIGN RULE: every theme defines ALL colour tokens explicitly.
+// No token is derived from isLightSurface at runtime — this prevents the
+// dark/light system-mode mismatch where e.g. ivory (fixed cream surface)
+// would pick up Color(UIColor.label) = white in dark mode, producing
+// white-on-cream illegible text.
 //
-// Phase 1: official / ivory / charcoal (all flat colours, no gradient).
-// Phase 2: will add gradient-capable colours (surfaceEnd non-nil).
+//   official → adaptive (UIKit dynamic colors follow system dark/light mode)
+//   ivory    → always cream surface, always dark warm-brown text
+//   charcoal → always near-black surface, always white text
+//
+// Phase 1: official / ivory / charcoal (flat colours, no gradient).
+// Phase 2: will extend with gradient surfaces (surfaceEnd field).
 
 struct AcademyIDColorConfig {
 
     let id:            String
-    let surfaceColor:  Color    // card background (flat in Phase 1)
+    let surfaceColor:  Color
     let borderColor:   Color
     let borderOpacity: Double
-    let isLightSurface: Bool   // true = dark text; false = white text
+    let isLightSurface: Bool  // kept for callers that need a quick boolean (e.g. glow colour)
 
-    // MARK: — Derived text tones
-
-    /// Primary value text (field values, full name, etc.)
-    var valueColor:  Color { isLightSurface ? Color(UIColor.label) : .white }
-
-    /// Secondary label text (field name caps: "FULL NAME", "AGE"…)
-    var labelColor:  Color { isLightSurface ? Color(UIColor.secondaryLabel) : Color.white.opacity(0.55) }
-
-    /// Faint placeholder text ("———", spec "—")
-    var mutedColor:  Color { isLightSurface ? Color(UIColor.secondaryLabel).opacity(0.4) : Color.white.opacity(0.28) }
-
-    /// Brand accent (header "LION FOOTBALL ACADEMY")
-    var brandAccent: Color { isLightSurface ? Color(hex: "#b8a06a") : Color.white.opacity(0.80) }
-
-    /// Photo panel / QR border tint
-    var panelBorder: Color { isLightSurface ? Color(hex: "#b8a06a").opacity(0.30) : Color.white.opacity(0.15) }
+    // Explicit colour tokens — single source of truth for all text/icon rendering on the card.
+    let textPrimary:   Color   // field values: name, age, nationality…
+    let textSecondary: Color   // field label caps: "FULL NAME", "AGE", "SPECIALIZATION"…
+    let textMuted:     Color   // placeholders ("———"), spec dashes, muted metadata
+    let textBrand:     Color   // header: "LION FOOTBALL ACADEMY"
+    let panelBorder:   Color   // photo panel border + QR panel border
 
     // MARK: — Static resolver
 
-    /// Map a backend colour ID to the iOS rendering config.
-    /// Unknown IDs fall back to "official" (the default white card appearance).
+    /// Map a backend colour ID to iOS rendering tokens.
+    /// Unknown IDs fall back to "official" (the default adaptive appearance).
     static func resolve(_ colorId: String) -> AcademyIDColorConfig {
         switch colorId {
 
         case "ivory":
+            // Fixed cream surface — text is always dark warm-brown regardless of system mode.
+            let gold = Color(hex: "#b8a06a")
             return AcademyIDColorConfig(
                 id:            "ivory",
                 surfaceColor:  Color(red: 253/255, green: 250/255, blue: 244/255),
-                borderColor:   Color(hex: "#b8a06a"),
+                borderColor:   gold,
                 borderOpacity: 0.40,
-                isLightSurface: true
+                isLightSurface: true,
+                textPrimary:   Color(red: 0.12, green: 0.10, blue: 0.07),
+                textSecondary: Color(red: 0.38, green: 0.33, blue: 0.25),
+                textMuted:     Color(red: 0.55, green: 0.50, blue: 0.40).opacity(0.50),
+                textBrand:     gold,
+                panelBorder:   gold.opacity(0.30)
             )
 
         case "charcoal":
+            // Fixed dark surface — text is always white regardless of system mode.
             return AcademyIDColorConfig(
                 id:            "charcoal",
                 surfaceColor:  Color(red: 28/255, green: 28/255, blue: 30/255),
                 borderColor:   .white,
                 borderOpacity: 0.18,
-                isLightSurface: false
+                isLightSurface: false,
+                textPrimary:   .white,
+                textSecondary: Color.white.opacity(0.60),
+                textMuted:     Color.white.opacity(0.28),
+                textBrand:     Color.white.opacity(0.82),
+                panelBorder:   Color.white.opacity(0.15)
             )
 
-        default: // "official" and unknown → existing system appearance
+        default: // "official" — fully adaptive: UIKit dynamic colors follow system mode
+            let gold = Color(hex: "#b8a06a")
             return AcademyIDColorConfig(
                 id:            "official",
                 surfaceColor:  Color(UIColor.secondarySystemBackground),
-                borderColor:   Color(hex: "#b8a06a"),
+                borderColor:   gold,
                 borderOpacity: 0.28,
-                isLightSurface: true
+                isLightSurface: true,
+                textPrimary:   Color(UIColor.label),
+                textSecondary: Color(UIColor.secondaryLabel),
+                textMuted:     Color(UIColor.tertiaryLabel),
+                textBrand:     Theme.Color.secondary,
+                panelBorder:   Theme.Color.secondary.opacity(0.30)
             )
         }
     }
