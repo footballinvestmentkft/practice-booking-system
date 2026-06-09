@@ -45,8 +45,7 @@ struct ProfileCompletionCelebrationView: View {
                     .animation(.spring(response: 0.5, dampingFraction: 0.65).delay(0.15),
                                value: appeared)
 
-                    // Title — CONTENT-TBD
-                    Text("Profile Complete")
+                    Text("Onboarding Complete")
                         .font(.largeTitle.weight(.bold))
                         .foregroundColor(Theme.Color.onSurface)
                         .multilineTextAlignment(.center)
@@ -54,8 +53,7 @@ struct ProfileCompletionCelebrationView: View {
                         .offset(y: appeared ? 0 : 16)
                         .animation(.easeOut(duration: 0.4).delay(0.3), value: appeared)
 
-                    // Subtitle — CONTENT-TBD
-                    Text("Your LFA Football Player profile is ready.\nMore features will unlock over time.")
+                    Text("Your LFA onboarding is complete. You're ready to continue to your player dashboard.")
                         .font(.body)
                         .foregroundColor(Theme.Color.muted)
                         .multilineTextAlignment(.center)
@@ -68,22 +66,6 @@ struct ProfileCompletionCelebrationView: View {
                 // ── End hero area ─────────────────────────────────────────
 
                 Spacer()
-
-                // Stats row — CONTENT-TBD: replace with final profile stats
-                HStack(spacing: 0) {
-                    statItem(label: "Available\nModules", value: "5 / 5")
-                    Divider().frame(height: 40)
-                    statItem(label: "Profile\nScore", value: "80 / 80")
-                    Divider().frame(height: 40)
-                    statItem(label: "ID Card\nStatus", value: "Verified")
-                }
-                .padding(.horizontal, Theme.Spacing.md)
-                .padding(.vertical, Theme.Spacing.md)
-                .background(Theme.Color.surface)
-                .cornerRadius(Theme.Radius.md)
-                .padding(.horizontal, Theme.Spacing.md)
-                .opacity(appeared ? 1 : 0)
-                .animation(.easeOut(duration: 0.35).delay(0.6), value: appeared)
 
                 Spacer(minLength: Theme.Spacing.xl)
 
@@ -110,19 +92,5 @@ struct ProfileCompletionCelebrationView: View {
         .onAppear { appeared = true }
         // fullScreenCover has no swipe-to-dismiss on iOS 14+.
         // The only exit is the "Continue →" button — intentionally non-skippable.
-    }
-
-    private func statItem(label: String, value: String) -> some View {
-        VStack(spacing: 4) {
-            Text(value)
-                .font(.subheadline.weight(.bold))
-                .foregroundColor(Theme.Color.onSurface)
-            Text(label)
-                .font(.caption)
-                .foregroundColor(Theme.Color.muted)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 4)
     }
 }
