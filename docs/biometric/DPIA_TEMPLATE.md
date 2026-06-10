@@ -41,7 +41,18 @@
 | **Referencia fotó fájlnév** | Basename string, `biometric_verification_logs` | Admin audit |
 | **Liveness challenge metadata** | High-level JSONB, `biometric_verification_logs` | Admin audit |
 | **Hozzájárulás IP / User-Agent** | `user_biometric_consents` | Audit only |
-| **face_match_score** | Float, `biometric_verification_logs` | DB admin — sosem API response |
+| **face_match_score (scoring metadata)** | Float, `biometric_verification_logs.face_match_score` | Belső DB admin + threshold-tuning — **sosem API response, sosem logfájl** |
+
+> **face_match_score adatvédelmi megjegyzés (PR-6, 2026-06-10):**
+> A `face_match_score` (cosine hasonlósági érték, 0–1 skálán) biometrikus döntési scoring metaadat,
+> amely a `biometric_verification_logs` táblában kerül tárolásra belső admin-review és
+> threshold-kalibrációs célból. Ez az érték:
+> - **Soha nem jelenik meg API response-ban** (strukturális Pydantic kényszer, tesztekkel igazolva)
+> - **Soha nem kerül logfájlba** (log üzenetek csak `outcome` értéket tartalmaznak)
+> - Production aktiválás előtt ezt az adatkategóriát **külön legal/DPO review** alá kell vonni,
+>   és a felhasználói tájékoztató / DPIA végleges változatában dokumentálni kell.
+> - A tárolás jogalapja az elsődleges biometrikus hozzájárulással azonos (GDPR Art. 9(2)(a)),
+>   de a scoring metadata jellegéből adódóan a tájékoztatónak erre külön ki kell térnie.
 
 **TILOS tárolni (enforced by sanitizer + schema):**
 - Arclandmark koordináták (yaw, roll, pitch, landmarks)
@@ -106,7 +117,7 @@
 | Hozzájárulás record | 5 év (bizonyítási kötelezettség) | Soft-delete; fizikai törlés 5 év után |
 | Face embedding | Hozzájárulás visszavonásától 30 nap | Celery task (PR-4) |
 | Biometrikus audit log | 5 év | Archiválás, nem törlés |
-| face_match_score | 5 év (audit log soron belül) | Audit log sorral együtt |
+| face_match_score (scoring metadata) | 5 év (audit log soron belül) | Audit log sorral együtt — nem törlhető külön (sorban tárolt) |
 
 ---
 
@@ -118,7 +129,8 @@
 | Törlés / visszavonás | DELETE /me/biometric-consent | ✅ PR-2 |
 | Adathordozhatóság | [PENDING — export endpoint] | ⛔ Tervező |
 | Tiltakozás | Hozzájárulás visszavonásával | ✅ PR-2 |
-| Automatizált döntés elleni tiltakozás | Admin review fallback | ⏳ PR-7 |
+| Automatizált döntés elleni tiltakozás | Admin review fallback | ⏳ PR-7B |
+| Előzetes tájékoztatás / disclosure | Consent modal (biometrikus tájékoztató) | ⏳ PR-7A |
 
 ---
 
