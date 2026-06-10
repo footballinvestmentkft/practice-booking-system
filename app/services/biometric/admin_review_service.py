@@ -258,9 +258,9 @@ def apply_admin_override(
     )
 
     logger.info(
-        "biometric_admin_override user_id=%s actor_user_id=%s decision=%s",
-        target_user_id, actor_user_id, decision,
-        # no score in log
+        "biometric_admin_override decision=%s",
+        decision,
+        # user_id and actor_user_id stored in BiometricVerificationLog (audit DB) only
     )
 
     return AdminBiometricOverrideOut(

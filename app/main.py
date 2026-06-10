@@ -68,6 +68,28 @@ async def lifespan(app: FastAPI):
         logger.error(f"❌ Failed to start background scheduler: {e}")
         # Continue without scheduler (non-critical)
 
+    # ── Biometric feature flag startup warnings (PR-8) ───────────────────────
+    # These flags are False by default. If True in any environment, emit a
+    # security warning. Production activation requires DPIA/DPO/legal approval.
+    try:
+        from .config import settings as _s
+        from .services.biometric.metrics import biometric_metrics, M_FLAG_ENABLED
+        if _s.BIOMETRIC_FACE_MATCHING_ENABLED:
+            logger.critical(
+                "SECURITY WARNING: BIOMETRIC_FACE_MATCHING_ENABLED=True — "
+                "DPIA/DPO approval and legal sign-off required before production use. "
+                "Ensure all gate conditions in PRODUCTION_ACTIVATION_CHECKLIST.md are met."
+            )
+            biometric_metrics.increment(M_FLAG_ENABLED, flag="face_matching")
+        if _s.BIOMETRIC_DISCLOSURE_ENABLED:
+            logger.warning(
+                "SECURITY WARNING: BIOMETRIC_DISCLOSURE_ENABLED=True — "
+                "ensure disclosure text has passed legal review before production use."
+            )
+            biometric_metrics.increment(M_FLAG_ENABLED, flag="disclosure")
+    except Exception:
+        pass  # never crash startup on metrics/warning failure
+
     logger.info("✅ Application startup complete")
 
     yield

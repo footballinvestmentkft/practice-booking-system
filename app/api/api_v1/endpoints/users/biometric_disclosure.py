@@ -58,6 +58,7 @@ def _extract_ip(request: Request) -> Optional[str]:
     summary="Get biometric disclosure acceptance status",
 )
 def get_biometric_disclosure(
+    request: Request = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Any:
@@ -65,8 +66,18 @@ def get_biometric_disclosure(
     Return the user's current disclosure acceptance state.
 
     - Requires BIOMETRIC_DISCLOSURE_ENABLED=true (503 otherwise).
+    - Rate limited: 30 / 60s per user (PR-8).
     - No face_match_score, embedding, or raw biometric data in response.
     """
+    from app.services.biometric.rate_limiter import enforce_rate_limit, DISCLOSURE_GET
+    _ip = _extract_ip(request) if request else None
+    enforce_rate_limit(
+        endpoint_group=DISCLOSURE_GET,
+        user_id=current_user.id,
+        ip=_ip,
+        db=db,
+        audit_user_id=current_user.id,
+    )
     return get_disclosure_status(db=db, user=current_user)
 
 
@@ -94,13 +105,24 @@ def accept_biometric_disclosure(
 
     BCD-22: disclosure acceptance allowed even when BIOMETRIC_FACE_MATCHING_ENABLED=False.
     """
+    from app.services.biometric.rate_limiter import enforce_rate_limit, DISCLOSURE_POST
+    from app.services.biometric.metrics import biometric_metrics, M_DISCLOSURE_ACCEPT
+    _ip = _extract_ip(request)
+    enforce_rate_limit(
+        endpoint_group=DISCLOSURE_POST,
+        user_id=current_user.id,
+        ip=_ip,
+        db=db,
+        audit_user_id=current_user.id,
+    )
     result = accept_disclosure(
         db=db,
         user=current_user,
         disclosure_version=payload.disclosure_version,
-        ip_address=_extract_ip(request),
+        ip_address=_ip,
     )
     db.commit()
+    biometric_metrics.increment(M_DISCLOSURE_ACCEPT)
     return result
 
 
@@ -125,10 +147,21 @@ def revoke_biometric_disclosure(
     - Audit: EVT_DISCLOSURE_REVOKED + EVT_CONSENT_REVOKED (if consent was active).
     - No face_match_score, embedding in response.
     """
+    from app.services.biometric.rate_limiter import enforce_rate_limit, DISCLOSURE_DELETE
+    from app.services.biometric.metrics import biometric_metrics, M_DISCLOSURE_REVOKE
+    _ip = _extract_ip(request)
+    enforce_rate_limit(
+        endpoint_group=DISCLOSURE_DELETE,
+        user_id=current_user.id,
+        ip=_ip,
+        db=db,
+        audit_user_id=current_user.id,
+    )
     result = revoke_disclosure(
         db=db,
         user=current_user,
-        ip_address=_extract_ip(request),
+        ip_address=_ip,
     )
     db.commit()
+    biometric_metrics.increment(M_DISCLOSURE_REVOKE)
     return result

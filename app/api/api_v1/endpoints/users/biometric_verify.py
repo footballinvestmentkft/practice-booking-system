@@ -13,7 +13,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -36,6 +36,7 @@ router = APIRouter()
 )
 def verify_biometric(
     payload: BiometricVerifyRequest,
+    request: Request = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Any:
@@ -43,12 +44,30 @@ def verify_biometric(
     Compare a live-capture photo against the user's stored reference embedding.
 
     - Requires BIOMETRIC_FACE_MATCHING_ENABLED=true (feature flag).
+    - Rate limited: 5 requests / 15 minutes per user (PR-8).
     - Requires active biometric consent (403 otherwise).
     - Requires an active reference embedding (404 otherwise).
     - photo_filename path-traversal guard enforced by schema + service.
     - Returns result: verified | manual_review_required | rejected.
     - face_match_score is NEVER returned — stored internally in audit log only.
     """
+    # ── Rate limit (PR-8) ─────────────────────────────────────────────────────
+    from app.services.biometric.rate_limiter import (
+        enforce_rate_limit, VERIFY, record_verify_outcome,
+    )
+    from app.services.biometric.metrics import (
+        biometric_metrics, M_VERIFY_ATTEMPT,
+        M_VERIFY_SUCCESS, M_VERIFY_MANUAL_REVIEW, M_VERIFY_REJECTED,
+    )
+    _ip = request.client.host if request and request.client else None
+    enforce_rate_limit(
+        endpoint_group=VERIFY,
+        user_id=current_user.id,
+        ip=_ip,
+        db=db,
+        audit_user_id=current_user.id,
+    )
+
     # ── Disclosure guard (PR-7A — must precede consent) ──────────────────────
     from app.services.biometric.disclosure_service import assert_disclosure_current
     assert_disclosure_current(db=db, user_id=current_user.id)
@@ -101,6 +120,17 @@ def verify_biometric(
         user=current_user,
         live_image_seed=live_image_seed,
     )
+
+    # ── Abuse detection + metrics (PR-8) ──────────────────────────────────────
+    record_verify_outcome(user_id=current_user.id, outcome=outcome, db=db, ip=_ip)
+    biometric_metrics.increment(M_VERIFY_ATTEMPT, outcome=outcome)
+    if outcome == "verified":
+        biometric_metrics.increment(M_VERIFY_SUCCESS)
+    elif outcome == "manual_review_required":
+        biometric_metrics.increment(M_VERIFY_MANUAL_REVIEW)
+    elif outcome == "rejected":
+        biometric_metrics.increment(M_VERIFY_REJECTED)
+
     db.commit()
 
     # face_match_score is NOT in BiometricVerifyResponse (structural enforcement)
