@@ -32,7 +32,6 @@ from app.services.biometric.audit_log import (
     BiometricAuditLogger,
     EVT_CONSENT_GRANTED,
     EVT_CONSENT_REVOKED,
-    EVT_EMBEDDING_DELETED,
 )
 
 logger = logging.getLogger(__name__)
@@ -172,10 +171,16 @@ def revoke_consent(
 
     db.flush()
 
-    # 4. Schedule physical deletion (placeholder — Celery task in PR-4)
+    # 4. Schedule physical deletion via Celery ETA task (PR-4)
     scheduled_deletion = now + timedelta(days=EMBEDDING_DELETION_DELAY_DAYS)
-    _schedule_embedding_deletion_placeholder(
-        db=db, user_id=user.id, delete_after=scheduled_deletion, ip_address=ip_address
+    from app.tasks.biometric_tasks import biometric_delete_embedding_task
+    biometric_delete_embedding_task.apply_async(
+        args=[user.id],
+        eta=scheduled_deletion,
+    )
+    logger.info(
+        "biometric_embedding_deletion_scheduled user_id=%d delete_after=%s",
+        user.id, scheduled_deletion.isoformat(),
     )
 
     # 5. Audit log
@@ -189,35 +194,3 @@ def revoke_consent(
     return consent
 
 
-def _schedule_embedding_deletion_placeholder(
-    *,
-    db: Session,
-    user_id: int,
-    delete_after: datetime,
-    ip_address: Optional[str] = None,
-) -> None:
-    """
-    Placeholder for scheduling physical embedding deletion after consent revocation.
-
-    In PR-4 this becomes a real Celery task:
-        delete_embedding_task.apply_async(args=[user_id], eta=delete_after)
-
-    For now: logs the intent as an audit event so the audit trail is complete.
-    The embedding has already been soft-deleted (is_active=False) at this point.
-    """
-    logger.info(
-        "biometric_embedding_deletion_scheduled user_id=%d delete_after=%s "
-        "(Celery task pending PR-4)",
-        user_id, delete_after.isoformat(),
-    )
-
-    BiometricAuditLogger(db).log(
-        user_id          = user_id,
-        event_type       = EVT_EMBEDDING_DELETED,
-        event_result     = "pending",
-        actor_ip_address = ip_address,
-        error_message    = (
-            f"Physical deletion scheduled for {delete_after.date().isoformat()}. "
-            "Celery task not yet implemented (PR-4)."
-        ),
-    )

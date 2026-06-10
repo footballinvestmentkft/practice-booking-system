@@ -304,6 +304,10 @@ class Settings(BaseSettings):
     #   and test environments (no real embeddings stored in those environments).
     BIOMETRIC_FACE_MATCHING_ENABLED: bool = False
     BIOMETRIC_EMBEDDING_KEY: str = ""
+    # Provider: "fake" (PR-4, no ONNX) | "onnx" (PR-5, InsightFace)
+    BIOMETRIC_EMBEDDING_PROVIDER: str = "fake"
+    # True only in test/dev — allows empty BIOMETRIC_EMBEDDING_KEY without raising
+    BIOMETRIC_ENCRYPTION_ALLOW_TEST_KEY: bool = False
 
     # ── Slow-query monitoring ──────────────────────────────────────────────────
     # Queries slower than SLOW_QUERY_THRESHOLD_MS are logged to app.slow_query

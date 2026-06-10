@@ -130,10 +130,14 @@ def submit_liveness_result(
         actor_ip_address=ip_address,
     )
 
-    # ── 7. Embedding generation placeholder (PR-4 Celery task) ───────────────
+    # ── 7. Dispatch embedding generation Celery task ──────────────────────────
+    from app.tasks.biometric_tasks import biometric_generate_embedding_task
+    biometric_generate_embedding_task.apply_async(
+        args=[user.id, photo_filename],
+        countdown=5,
+    )
     logger.info(
-        "biometric_embedding_generation_pending user_id=%s source=%s "
-        "(Celery task in PR-4 — not implemented yet)",
+        "biometric_generate_embedding_task dispatched user_id=%s source=%s",
         user.id, source,
     )
 
