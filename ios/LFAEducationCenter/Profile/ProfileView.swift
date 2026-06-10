@@ -12,10 +12,11 @@ struct ProfileView: View {
 
     @Environment(\.presentationMode) private var presentationMode
 
-    @State private var isShowingAcademyID       = false
-    @State private var isShowingPhotoUpload     = false
+    @State private var isShowingAcademyID          = false
+    @State private var isShowingPhotoUpload        = false
     @State private var isShowingBaselineSelfRating = false
     @State private var isShowingMoodPhotos         = false
+    @State private var isShowingBiometric          = false
 
     var body: some View {
         NavigationView {
@@ -25,6 +26,7 @@ struct ProfileView: View {
                     identitySection
                     academyIDSection
                     completionSection
+                    biometricSection
                     Spacer(minLength: Theme.Spacing.xl)
                 }
                 .padding(.horizontal, Theme.Spacing.md)
@@ -69,6 +71,13 @@ struct ProfileView: View {
                 }
                 .environmentObject(authManager)
                 .environmentObject(dashboardVM)
+            }
+            .fullScreenCover(isPresented: $isShowingBiometric) {
+                BiometricDisclosureView(
+                    service: BiometricService(auth: authManager),
+                    onDismiss: { isShowingBiometric = false }
+                )
+                .environmentObject(authManager)
             }
         }
         .navigationViewStyle(.stack)
@@ -169,6 +178,42 @@ struct ProfileView: View {
             )
                 .padding(.top, Theme.Spacing.lg)
         }
+    }
+
+    // MARK: — Biometric (dev/test — gated by BIOMETRIC_DISCLOSURE_ENABLED on backend)
+
+    private var biometricSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("BIOMETRIKUS AZONOSÍTÁS")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(Theme.Color.muted)
+                .kerning(0.8)
+
+            Button { isShowingBiometric = true } label: {
+                HStack {
+                    Image(systemName: "faceid")
+                        .font(.system(size: 15))
+                        .foregroundColor(Theme.Color.primary)
+                        .frame(width: 28)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Biometrikus regisztráció")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundColor(Theme.Color.onSurface)
+                        Text("Tájékoztató és liveness teszt")
+                            .font(.system(size: 11))
+                            .foregroundColor(Theme.Color.muted)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Theme.Color.muted)
+                }
+                .padding(Theme.Spacing.md)
+                .background(Theme.Color.surface)
+                .cornerRadius(Theme.Radius.md)
+            }
+        }
+        .padding(.top, Theme.Spacing.lg)
     }
 
     // MARK: — Academy ID entry

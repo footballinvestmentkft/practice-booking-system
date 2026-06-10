@@ -80,6 +80,14 @@
 		BB00000400000000000006E /* AcademyIDColorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000006E /* AcademyIDColorViewModel.swift */; };
 		BB00000400000000000006F /* AcademyIDColorPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000006F /* AcademyIDColorPickerView.swift */; };
 		BB000004000000000000071 /* AcademyIDCardPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000070 /* AcademyIDCardPreviewView.swift */; };
+		BB000004000000000000073 /* BiometricModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000073 /* BiometricModels.swift */; };
+		BB000004000000000000074 /* BiometricService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000074 /* BiometricService.swift */; };
+		BB000004000000000000075 /* BiometricDisclosureViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000075 /* BiometricDisclosureViewModel.swift */; };
+		BB000004000000000000076 /* BiometricDisclosureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000076 /* BiometricDisclosureView.swift */; };
+		BB000004000000000000077 /* BiometricLivenessViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000077 /* BiometricLivenessViewModel.swift */; };
+		BB000004000000000000078 /* BiometricLivenessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000078 /* BiometricLivenessView.swift */; };
+		BB000004000000000000079 /* BiometricVerifyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000079 /* BiometricVerifyViewModel.swift */; };
+		BB00000400000000000007A /* BiometricVerifyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000007A /* BiometricVerifyView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -158,6 +166,14 @@
 		BB00000300000000000006E /* AcademyIDColorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDColorViewModel.swift; sourceTree = "<group>"; };
 		BB00000300000000000006F /* AcademyIDColorPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDColorPickerView.swift; sourceTree = "<group>"; };
 		BB000003000000000000070 /* AcademyIDCardPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDCardPreviewView.swift; sourceTree = "<group>"; };
+		BB000003000000000000073 /* BiometricModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricModels.swift; sourceTree = "<group>"; };
+		BB000003000000000000074 /* BiometricService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricService.swift; sourceTree = "<group>"; };
+		BB000003000000000000075 /* BiometricDisclosureViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricDisclosureViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000076 /* BiometricDisclosureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricDisclosureView.swift; sourceTree = "<group>"; };
+		BB000003000000000000077 /* BiometricLivenessViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricLivenessViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000078 /* BiometricLivenessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricLivenessView.swift; sourceTree = "<group>"; };
+		BB000003000000000000079 /* BiometricVerifyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricVerifyViewModel.swift; sourceTree = "<group>"; };
+		BB00000300000000000007A /* BiometricVerifyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricVerifyView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -204,6 +220,7 @@
 				BB000002000000000000015 /* Profile */,
 				BB000002000000000000016 /* Unlock */,
 				BB000002000000000000017 /* Onboarding */,
+				BB000002000000000000018 /* Biometric */,
 				BB000003000000000000004 /* Assets.xcassets */,
 			);
 			path = LFAEducationCenter;
@@ -380,6 +397,21 @@
 			path = Onboarding;
 			sourceTree = "<group>";
 		};
+		BB000002000000000000018 /* Biometric */ = {
+			isa = PBXGroup;
+			children = (
+				BB000003000000000000073 /* BiometricModels.swift */,
+				BB000003000000000000074 /* BiometricService.swift */,
+				BB000003000000000000075 /* BiometricDisclosureViewModel.swift */,
+				BB000003000000000000076 /* BiometricDisclosureView.swift */,
+				BB000003000000000000077 /* BiometricLivenessViewModel.swift */,
+				BB000003000000000000078 /* BiometricLivenessView.swift */,
+				BB000003000000000000079 /* BiometricVerifyViewModel.swift */,
+				BB00000300000000000007A /* BiometricVerifyView.swift */,
+			);
+			path = Biometric;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -521,6 +553,14 @@
 				BB00000400000000000006E /* AcademyIDColorViewModel.swift in Sources */,
 				BB00000400000000000006F /* AcademyIDColorPickerView.swift in Sources */,
 				BB000004000000000000071 /* AcademyIDCardPreviewView.swift in Sources */,
+				BB000004000000000000073 /* BiometricModels.swift in Sources */,
+				BB000004000000000000074 /* BiometricService.swift in Sources */,
+				BB000004000000000000075 /* BiometricDisclosureViewModel.swift in Sources */,
+				BB000004000000000000076 /* BiometricDisclosureView.swift in Sources */,
+				BB000004000000000000077 /* BiometricLivenessViewModel.swift in Sources */,
+				BB000004000000000000078 /* BiometricLivenessView.swift in Sources */,
+				BB000004000000000000079 /* BiometricVerifyViewModel.swift in Sources */,
+				BB00000400000000000007A /* BiometricVerifyView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
