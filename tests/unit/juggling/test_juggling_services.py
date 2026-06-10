@@ -469,6 +469,98 @@ class TestExtractServerMetadata:
         assert m["rotation"] == 0
 
 
+# ── quality_service — remaining branches ─────────────────────────────────────
+
+class TestQualityServiceRemainingBranches:
+    def test_dark_frame_ratio_rejection(self, monkeypatch):
+        from app.services.juggling import quality_service as qs
+        monkeypatch.setattr(qs, "_estimate_dark_frame_ratio", lambda b: 0.5)
+        _, _, _, reason = qs.analyze(b"\x00" * 1000, _meta())
+        assert reason == "too_dark"
+
+    def test_blur_score_rejection(self, monkeypatch):
+        from app.services.juggling import quality_service as qs
+        monkeypatch.setattr(qs, "_estimate_blur_score", lambda b: 0.1)
+        _, _, _, reason = qs.analyze(b"\x00" * 1000, _meta())
+        assert reason == "too_blurry"
+
+    def test_needs_review_path(self, monkeypatch):
+        from app.services.juggling import quality_service as qs
+        monkeypatch.setattr(qs, "_estimate_blur_score", lambda b: 0.5)
+        monkeypatch.setattr(qs, "_estimate_dark_frame_ratio", lambda b: 0.25)
+        _, status, _, reason = qs.analyze(b"\x00" * 1000, _meta(fps=24.0))
+        assert status in ("needs_review", "acceptable")
+        assert reason is None
+
+
+# ── video_service — save_file and state machine ───────────────────────────────
+
+class TestVideoServiceSaveFile:
+    def test_save_file_creates_directory(self, tmp_path, monkeypatch):
+        from app.services.juggling import video_service
+        monkeypatch.setattr(video_service, "JUGGLING_UPLOAD_DIR", tmp_path / "juggling")
+        dest = video_service.save_file(b"hello", "test.mp4")
+        assert dest.exists()
+        assert dest.read_bytes() == b"hello"
+
+    def test_save_file_existing_dir(self, tmp_path, monkeypatch):
+        from app.services.juggling import video_service
+        jd = tmp_path / "juggling"
+        jd.mkdir(parents=True)
+        monkeypatch.setattr(video_service, "JUGGLING_UPLOAD_DIR", jd)
+        dest = video_service.save_file(b"data", "v.mp4")
+        assert dest.read_bytes() == b"data"
+
+
+class TestVideoServiceResetProcessing:
+    def test_reset_no_op_when_status_not_processing(self):
+        from app.services.juggling import video_service
+        from unittest.mock import MagicMock
+        v = MagicMock(); v.status = "analyzed"
+        db = MagicMock()
+        db.query.return_value.filter.return_value.first.return_value = v
+        result = video_service.reset_processing("x", db)
+        assert result is v
+        db.commit.assert_not_called()
+
+    def test_reset_no_op_when_not_found(self):
+        from app.services.juggling import video_service
+        from unittest.mock import MagicMock
+        db = MagicMock()
+        db.query.return_value.filter.return_value.first.return_value = None
+        result = video_service.reset_processing("x", db)
+        assert result is None
+
+    def test_reset_transitions_to_uploaded(self):
+        from app.services.juggling import video_service
+        from unittest.mock import MagicMock
+        v = MagicMock(); v.status = "processing"
+        db = MagicMock()
+        db.query.return_value.filter.return_value.first.return_value = v
+        video_service.reset_processing("x", db)
+        assert v.status == "uploaded"
+        db.commit.assert_called_once()
+
+
+class TestVideoServiceSetProcessingErrors:
+    def test_raises_when_not_found(self):
+        from app.services.juggling import video_service
+        from unittest.mock import MagicMock
+        db = MagicMock()
+        db.query.return_value.filter.return_value.first.return_value = None
+        with pytest.raises(ValueError, match="video_not_found"):
+            video_service.set_processing("missing", db)
+
+    def test_raises_when_wrong_status(self):
+        from app.services.juggling import video_service
+        from unittest.mock import MagicMock
+        v = MagicMock(); v.status = "analyzed"
+        db = MagicMock()
+        db.query.return_value.filter.return_value.first.return_value = v
+        with pytest.raises(ValueError, match="invalid_transition"):
+            video_service.set_processing("x", db)
+
+
 # ── consent_service ──────────────────────────────────────────────────────────
 
 class TestConsentService:
