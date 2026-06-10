@@ -155,9 +155,12 @@ def test_bes12_get_provider_fake(fake_provider_enabled):
 
 # ── BES-13 ────────────────────────────────────────────────────────────────────
 
-def test_bes13_get_provider_onnx_raises(monkeypatch):
+def test_bes13_get_provider_onnx_without_rnd_flag_raises(monkeypatch):
+    """PR-5: provider=onnx without BIOMETRIC_ONNX_RND_ENABLED → ModelNotAvailableError."""
+    from app.services.biometric.model_registry import ModelNotAvailableError
     monkeypatch.setattr("app.config.settings.BIOMETRIC_EMBEDDING_PROVIDER", "onnx")
-    with pytest.raises(NotImplementedError, match="PR-5"):
+    monkeypatch.setattr("app.config.settings.BIOMETRIC_ONNX_RND_ENABLED", False)
+    with pytest.raises(ModelNotAvailableError, match="BIOMETRIC_ONNX_RND_ENABLED"):
         get_embedding_provider()
 
 

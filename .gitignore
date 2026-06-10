@@ -170,3 +170,10 @@ scripts/dev_*.py
 welcome-card-layout-validation.jsx
 tests/snapshots/openapi_schema.json
 tests/unit/test_card_preview_routing.py
+
+
+# Biometric ONNX model weights — NEVER commit (PR-5 policy)
+# Model files must be stored in an external artifact registry.
+# See docs/biometric/PR5_PLAN.md for model weight policy.
+*.onnx
+app/services/biometric/models/

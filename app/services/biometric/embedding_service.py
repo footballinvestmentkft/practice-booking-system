@@ -95,17 +95,28 @@ def get_embedding_provider() -> AbstractEmbeddingProvider:
     """
     Return the active embedding provider based on BIOMETRIC_EMBEDDING_PROVIDER.
 
-    PR-4: only 'fake' is supported.
-    'onnx' is reserved for PR-5 (InsightFace buffalo_sc_v1).
+    "fake" (default) — FakeEmbeddingProvider: deterministic 512-dim, no ONNX.
+    "onnx"           — OnnxEmbeddingProvider: R&D/prototype only.
+                       Requires BIOMETRIC_ONNX_RND_ENABLED=true (never in production).
+                       onnxruntime is imported only inside OnnxEmbeddingProvider.__init__
+                       to prevent loading when provider=fake.
     """
     provider = getattr(settings, "BIOMETRIC_EMBEDDING_PROVIDER", "fake")
     if provider == "fake":
         return FakeEmbeddingProvider()
     if provider == "onnx":
-        raise NotImplementedError(
-            "OnnxEmbeddingProvider not implemented — planned for PR-5. "
-            "Set BIOMETRIC_EMBEDDING_PROVIDER=fake for development."
-        )
+        # Guard check: BIOMETRIC_ONNX_RND_ENABLED must be True (R&D only)
+        if not getattr(settings, "BIOMETRIC_ONNX_RND_ENABLED", False):
+            from app.services.biometric.model_registry import ModelNotAvailableError
+            raise ModelNotAvailableError(
+                "ONNX provider is disabled. "
+                "BIOMETRIC_ONNX_RND_ENABLED=true is required for R&D use. "
+                "This flag must NEVER be true in production. "
+                "See docs/biometric/PR5_PLAN.md for production readiness gates."
+            )
+        # Deferred import — onnxruntime is loaded only when provider=onnx and guard passes
+        from app.services.biometric.onnx_provider import OnnxEmbeddingProvider
+        return OnnxEmbeddingProvider()
     raise ValueError(f"Unknown BIOMETRIC_EMBEDDING_PROVIDER: {provider!r}")
 
 

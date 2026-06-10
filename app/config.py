@@ -304,10 +304,28 @@ class Settings(BaseSettings):
     #   and test environments (no real embeddings stored in those environments).
     BIOMETRIC_FACE_MATCHING_ENABLED: bool = False
     BIOMETRIC_EMBEDDING_KEY: str = ""
-    # Provider: "fake" (PR-4, no ONNX) | "onnx" (PR-5, InsightFace)
+    # Provider: "fake" (PR-4, default) | "onnx" (PR-5, R&D only — see guards below)
     BIOMETRIC_EMBEDDING_PROVIDER: str = "fake"
     # True only in test/dev — allows empty BIOMETRIC_EMBEDDING_KEY without raising
     BIOMETRIC_ENCRYPTION_ALLOW_TEST_KEY: bool = False
+
+    # ── PR-5 ONNX R&D guards ─────────────────────────────────────────────────
+    # BIOMETRIC_ONNX_RND_ENABLED — separate guard for the ONNX provider.
+    #   False (default) — ONNX provider is disabled even if provider=onnx is set.
+    #   True            — R&D/prototype dev/test use ONLY. NEVER set True in production.
+    #                     BIOMETRIC_FACE_MATCHING_ENABLED=true alone is NOT sufficient
+    #                     to activate the ONNX provider.
+    BIOMETRIC_ONNX_RND_ENABLED: bool = False
+
+    # BIOMETRIC_ONNX_MODEL_PATH — filesystem path to the ONNX model file.
+    #   Must be an absolute path on disk (not a URL, not a CDN reference).
+    #   Empty string → graceful disabled (503), no crash.
+    #   The model file must NOT be committed to the repository (.gitignore enforced).
+    BIOMETRIC_ONNX_MODEL_PATH: str = ""
+
+    # BIOMETRIC_ONNX_MODEL_SHA256 — expected SHA-256 hex digest of the model file.
+    #   Empty string → checksum validation skipped (dev only; required in staging/prod R&D).
+    BIOMETRIC_ONNX_MODEL_SHA256: str = ""
 
     # ── Slow-query monitoring ──────────────────────────────────────────────────
     # Queries slower than SLOW_QUERY_THRESHOLD_MS are logged to app.slow_query
