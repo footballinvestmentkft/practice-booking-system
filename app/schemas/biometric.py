@@ -160,6 +160,45 @@ class BiometricVerificationStatusOut(BaseModel):
     # face_match_score ABSENT — structural enforcement
 
 
+# ── Face-verify request / response (PR-6) ────────────────────────────────────
+
+class BiometricVerifyRequest(BaseModel):
+    """Body for POST /me/biometric-verify (PR-6)."""
+    model_config = ConfigDict(extra="forbid")
+
+    photo_filename: Optional[str] = Field(
+        default=None,
+        max_length=255,
+        description="Basename of the live-capture photo. No path separators allowed.",
+    )
+
+    @field_validator("photo_filename")
+    @classmethod
+    def _no_path_traversal(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        import os
+        if os.path.basename(v) != v:
+            raise ValueError("photo_filename must be a plain filename with no path separators")
+        return v
+
+    # face_match_score, embedding, raw sensor data — deliberately absent
+
+
+class BiometricVerifyResponse(BaseModel):
+    """
+    Response for POST /me/biometric-verify.
+
+    result is the classified match outcome.
+    face_match_score is intentionally absent — clients must never receive
+    the raw similarity value; only the classified outcome is returned.
+    """
+    result: Literal["verified", "manual_review_required", "rejected"]
+
+    # face_match_score ABSENT — structural enforcement
+    # embedding ABSENT — structural enforcement
+
+
 # ── Audit log output (admin) ──────────────────────────────────────────────────
 
 class BiometricVerificationLogOut(BaseModel):

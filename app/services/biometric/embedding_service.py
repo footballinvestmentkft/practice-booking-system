@@ -165,6 +165,31 @@ def store_embedding(
     return row
 
 
+def load_reference_embedding(
+    *,
+    db: Session,
+    user_id: int,
+) -> "tuple[UserFaceEmbedding | None, list[float] | None]":
+    """
+    Load, decrypt, and deserialize the active reference embedding for user_id.
+
+    Returns (row, embedding) if an active reference exists.
+    Returns (None, None) if no active embedding row is found.
+
+    The returned plaintext embedding list MUST be deleted by the caller after use.
+    face_match_score is never involved in this function.
+    Used by PR-6 matching_service.run_face_match().
+    """
+    row = db.query(UserFaceEmbedding).filter_by(user_id=user_id, is_active=True).first()
+    if row is None:
+        return None, None
+    enc = BiometricEncryptionService()
+    plaintext = enc.decrypt(row.embedding_ciphertext, row.embedding_iv)
+    embedding = enc.bytes_to_embedding(plaintext)
+    del plaintext   # plaintext protection — never persisted or logged
+    return row, embedding
+
+
 def delete_embedding(
     *,
     db: Session,

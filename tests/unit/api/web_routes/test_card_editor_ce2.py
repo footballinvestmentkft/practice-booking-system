@@ -430,9 +430,9 @@ class TestCE216WelcomeEditorUnchanged:
 
 class TestCE217RouteCount:
     def test_openapi_snapshot_route_count_unchanged(self):
-        """PR-2 biometric consent adds 1 new path — snapshot path count must equal 877."""
+        """PR-6 biometric verify adds 1 new path — snapshot path count must equal 879."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 878, (
-            f"Expected 877 routes (876 prior + 1 biometric-consent path), got {len(paths)}."
+        assert len(paths) == 879, (
+            f"Expected 879 routes (878 prior + 1 biometric-verify path), got {len(paths)}."
         )
