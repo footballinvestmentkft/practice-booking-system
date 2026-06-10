@@ -1,7 +1,9 @@
 # Embedding Generálás — Architekturális Terv (PR-4+ scope)
 
-> **Státusz:** TERV — implementáció PR-4-ban kezdődik.
-> Jelen dokumentum tervező jellegű; semmiféle kód nincs még implementálva.
+> **Engineering/Product státusz:** ✅ ACCEPTED FOR ENGINEERING (Zoltán + ChatGPT szakmai review, 2026-06-10)
+> **Legal/DPO státusz:** ⏳ LEGAL/DPO REVIEW ONLY IF PRODUCTION ACTIVATION — not required for development phases
+> **Production aktiválás:** ⛔ NOT PRODUCTION ACTIVE — architekturális terv, `BIOMETRIC_FACE_MATCHING_ENABLED=false`
+> **Implementációs státusz:** PR-4 MERGED (AES-256-GCM + FakeEmbeddingProvider + Celery tasks). PR-5 (ONNX) tervező fázisban.
 
 ---
 

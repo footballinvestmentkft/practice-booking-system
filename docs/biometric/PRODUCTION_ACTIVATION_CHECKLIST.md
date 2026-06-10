@@ -1,10 +1,12 @@
 # Biometric Feature — Production Activation Checklist
 ## BIOMETRIC_FACE_MATCHING_ENABLED: false → true
 
-> **Jelen állapot:** `BIOMETRIC_FACE_MATCHING_ENABLED=false` (production locked)
-> **Utolsó felülvizsgálat:** 2026-06-09
+> **Engineering/Product státusz:** ✅ ACCEPTED FOR ENGINEERING (Zoltán + ChatGPT szakmai review, 2026-06-10)
+> **Legal/DPO státusz:** ⏳ FINAL APPROVAL PENDING BEFORE PRODUCTION — not required for development phases
+> **Production aktiválás:** ⛔ NOT PRODUCTION ACTIVE — `BIOMETRIC_FACE_MATCHING_ENABLED=false` locked
+> **Utolsó felülvizsgálat:** 2026-06-10
 > Ez a dokumentum az egyetlen jóváhagyott útvonal a feature production engedélyezéshez.
-> Minden sor letickelhető állapotban kell legyen, ÉS írásos approval gate szükséges.
+> Minden sor letickelhető állapotban kell legyen, ÉS írásos approval gate szükséges (Gate 1 legal/DPO).
 
 ---
 

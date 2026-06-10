@@ -1,12 +1,15 @@
 # DPIA — Biometrikus Arcfelismerés (LFA Practice Booking System)
 ## Data Protection Impact Assessment — GDPR Art. 35 sablon
 
-> **Státusz:** VÁZLAT — jogi/adatvédelmi szakértői jóváhagyás szükséges a produkció előtt.
-> **Verziószám:** v0.1-draft
-> **Utolsó módosítás:** 2026-06-09
+> **Engineering/Product státusz:** ✅ ACCEPTED FOR ENGINEERING (Zoltán + ChatGPT szakmai review, 2026-06-10)
+> **Legal/DPO státusz:** ⏳ FINAL SIGN-OFF PENDING BEFORE PRODUCTION ACTIVATION — not required for development phases
+> **Production aktiválás:** ⛔ NOT PRODUCTION ACTIVE — `BIOMETRIC_FACE_MATCHING_ENABLED=false`
+> **Verziószám:** v0.2-engineering-accepted
+> **Utolsó módosítás:** 2026-06-10
 > **Elkészítette:** Engineering team (technikai rész)
-> **Jóváhagyja:** [Adatvédelmi felelős / DPO neve] — PENDING
-> **Jogtanácsosi jóváhagyás:** PENDING
+> **Megjegyzés:** Ez a dokumentum engineering/product szinten elfogadott fejlesztési referencia.
+>   Külső DPO/jogtanácsosi aláírás NEM történt meg. Production aktiváláshoz külön legal/DPO
+>   final sign-off szükséges (lásd PRODUCTION_ACTIVATION_CHECKLIST.md Gate 1).
 
 ---
 
