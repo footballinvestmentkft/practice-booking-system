@@ -342,6 +342,24 @@ class Settings(BaseSettings):
     #   Empty string → checksum validation skipped (dev only; required in staging/prod R&D).
     BIOMETRIC_ONNX_MODEL_SHA256: str = ""
 
+    # ── Juggling POC — Video Intake + Quality Pipeline ───────────────────────
+    # JUGGLING_POC_ENABLED — master switch; false = all juggling endpoints return 503.
+    JUGGLING_POC_ENABLED: bool = False
+
+    # JUGGLING_VIDEO_MAX_SIZE_MB — upload hard limit.
+    #   100 MB ≈ 80–130 s of 720p/60fps H.265 at ~6–10 Mbps; sufficient for POC.
+    JUGGLING_VIDEO_MAX_SIZE_MB: int = 100
+
+    # JUGGLING_VIDEO_MAX_DURATION_SECONDS — ffprobe duration gate.
+    JUGGLING_VIDEO_MAX_DURATION_SECONDS: int = 120
+
+    # JUGGLING_UPLOAD_DIR — filesystem path for stored video files.
+    #   Intentionally outside app/static/ — NOT served by StaticFiles mount.
+    JUGGLING_UPLOAD_DIR: str = "app/uploads/juggling"
+
+    # JUGGLING_FFPROBE_TIMEOUT_SECONDS — subprocess timeout for ffprobe.
+    JUGGLING_FFPROBE_TIMEOUT_SECONDS: int = 30
+
     # ── Slow-query monitoring ──────────────────────────────────────────────────
     # Queries slower than SLOW_QUERY_THRESHOLD_MS are logged to app.slow_query
     # and counted in the slow_queries_total metric.  Raise this value if normal

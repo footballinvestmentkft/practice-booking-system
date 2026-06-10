@@ -159,7 +159,7 @@ class TestCEL12RouteCount:
         """CEL-12: route count 844 (unchanged — redirect is handler change, not new route)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 883, (
+        assert len(paths) == 888, (
             f"Expected 845 routes (redirect handler change does not add routes), got {len(paths)}."
         )
 

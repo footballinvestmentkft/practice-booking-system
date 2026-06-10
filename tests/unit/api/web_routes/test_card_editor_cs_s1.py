@@ -291,11 +291,11 @@ class TestS1bCTAAndNaming:
 class TestS109S110RouteAndSnapshot:
 
     def test_s1_09_route_count_846(self):
-        """S1-09 (updated PR-6): route count is 879 (+1 biometric-verify endpoint)."""
+        """S1-09 (updated PR-JUG-1): route count is 888 (+5 juggling-intake paths)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 883, (
-            f"Expected 879 routes (878 prior + 1 biometric-verify), got {len(paths)}"
+        assert len(paths) == 888, (
+            f"Expected 888 routes (883 prior + 5 juggling-intake paths), got {len(paths)}"
         )
 
     def test_s1_10_openapi_snapshot_still_matches(self):

@@ -5111,6 +5111,20 @@
         "title": "Body_team_invite_teams__team_id__invite_post",
         "type": "object"
       },
+      "Body_upload_file_api_v1_users_me_juggling_videos__video_id__upload_post": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_file_api_v1_users_me_juggling_videos__video_id__upload_post",
+        "type": "object"
+      },
       "Body_upload_mood_photo_api_v1_lfa_player_mood_photos__slot__upload_post": {
         "properties": {
           "photo": {
@@ -9827,6 +9841,257 @@
           "positions"
         ],
         "title": "JobBoardResponse",
+        "type": "object"
+      },
+      "JugglingCompleteOut": {
+        "properties": {
+          "message": {
+            "default": "Analysis queued. Poll GET /quality for results.",
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "video_id": {
+            "title": "Video Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "video_id",
+          "status"
+        ],
+        "title": "JugglingCompleteOut",
+        "type": "object"
+      },
+      "JugglingConsentGrantRequest": {
+        "properties": {
+          "admin_review_consent": {
+            "default": false,
+            "title": "Admin Review Consent",
+            "type": "boolean"
+          },
+          "service_consent": {
+            "default": false,
+            "title": "Service Consent",
+            "type": "boolean"
+          },
+          "training_consent": {
+            "default": false,
+            "title": "Training Consent",
+            "type": "boolean"
+          }
+        },
+        "title": "JugglingConsentGrantRequest",
+        "type": "object"
+      },
+      "JugglingConsentOut": {
+        "properties": {
+          "admin_review_consent": {
+            "title": "Admin Review Consent",
+            "type": "boolean"
+          },
+          "consented_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consented At"
+          },
+          "service_consent": {
+            "title": "Service Consent",
+            "type": "boolean"
+          },
+          "training_consent": {
+            "title": "Training Consent",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "service_consent",
+          "training_consent",
+          "admin_review_consent"
+        ],
+        "title": "JugglingConsentOut",
+        "type": "object"
+      },
+      "JugglingQualityOut": {
+        "properties": {
+          "quality_detail": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality Detail"
+          },
+          "quality_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality Score"
+          },
+          "quality_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality Status"
+          },
+          "rejection_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rejection Reason"
+          },
+          "server_detected_metadata": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Server Detected Metadata"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "video_id": {
+            "title": "Video Id",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "video_id",
+          "status",
+          "quality_status",
+          "quality_score",
+          "server_detected_metadata",
+          "quality_detail",
+          "rejection_reason"
+        ],
+        "title": "JugglingQualityOut",
+        "type": "object"
+      },
+      "JugglingUploadFileOut": {
+        "properties": {
+          "checksum_sha256": {
+            "title": "Checksum Sha256",
+            "type": "string"
+          },
+          "file_size_bytes": {
+            "title": "File Size Bytes",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "video_id": {
+            "title": "Video Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "video_id",
+          "status",
+          "file_size_bytes",
+          "checksum_sha256"
+        ],
+        "title": "JugglingUploadFileOut",
+        "type": "object"
+      },
+      "JugglingUploadInitOut": {
+        "properties": {
+          "message": {
+            "default": "Upload ready. POST the video file to upload_url.",
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "upload_url": {
+            "title": "Upload Url",
+            "type": "string"
+          },
+          "video_id": {
+            "title": "Video Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "video_id",
+          "status",
+          "upload_url"
+        ],
+        "title": "JugglingUploadInitOut",
+        "type": "object"
+      },
+      "JugglingUploadInitRequest": {
+        "properties": {
+          "client_reported_metadata": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Reported Metadata"
+          },
+          "source_type": {
+            "description": "in_app_capture | uploaded_video",
+            "title": "Source Type",
+            "type": "string"
+          },
+          "upload_source": {
+            "default": "unknown",
+            "description": "camera | gallery | file | unknown",
+            "title": "Upload Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_type"
+        ],
+        "title": "JugglingUploadInitRequest",
         "type": "object"
       },
       "LFAPlayerAmateurRequest": {
@@ -61043,6 +61308,291 @@
         "tags": [
           "users",
           "users"
+        ]
+      }
+    },
+    "/api/v1/users/me/juggling-consent": {
+      "get": {
+        "operationId": "get_juggling_consent_api_v1_users_me_juggling_consent_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JugglingConsentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get current juggling consent state",
+        "tags": [
+          "users",
+          "users",
+          "juggling",
+          "juggling"
+        ]
+      },
+      "post": {
+        "operationId": "post_juggling_consent_api_v1_users_me_juggling_consent_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JugglingConsentGrantRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JugglingConsentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create or update juggling consent",
+        "tags": [
+          "users",
+          "users",
+          "juggling",
+          "juggling"
+        ]
+      }
+    },
+    "/api/v1/users/me/juggling/videos/upload-init": {
+      "post": {
+        "operationId": "upload_init_api_v1_users_me_juggling_videos_upload_init_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JugglingUploadInitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JugglingUploadInitOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Initialise a juggling video upload",
+        "tags": [
+          "users",
+          "users",
+          "juggling",
+          "juggling"
+        ]
+      }
+    },
+    "/api/v1/users/me/juggling/videos/{video_id}/complete": {
+      "post": {
+        "operationId": "complete_api_v1_users_me_juggling_videos__video_id__complete_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "video_id",
+            "required": true,
+            "schema": {
+              "title": "Video Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JugglingCompleteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Trigger quality analysis (Celery async)",
+        "tags": [
+          "users",
+          "users",
+          "juggling",
+          "juggling"
+        ]
+      }
+    },
+    "/api/v1/users/me/juggling/videos/{video_id}/quality": {
+      "get": {
+        "operationId": "get_quality_api_v1_users_me_juggling_videos__video_id__quality_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "video_id",
+            "required": true,
+            "schema": {
+              "title": "Video Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JugglingQualityOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Poll quality analysis result",
+        "tags": [
+          "users",
+          "users",
+          "juggling",
+          "juggling"
+        ]
+      }
+    },
+    "/api/v1/users/me/juggling/videos/{video_id}/upload": {
+      "post": {
+        "operationId": "upload_file_api_v1_users_me_juggling_videos__video_id__upload_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "video_id",
+            "required": true,
+            "schema": {
+              "title": "Video Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_file_api_v1_users_me_juggling_videos__video_id__upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JugglingUploadFileOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Upload juggling video file",
+        "tags": [
+          "users",
+          "users",
+          "juggling",
+          "juggling"
         ]
       }
     },

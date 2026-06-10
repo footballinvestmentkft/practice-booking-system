@@ -192,7 +192,7 @@ class TestS3B215to16RouteAndSnapshot:
         """S3B2-15: Route count = 845 (template deletion does not affect routes)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 883, f"Expected 845 routes, got {len(paths)}"
+        assert len(paths) == 888, f"Expected 845 routes, got {len(paths)}"
 
     def test_s3b2_16_openapi_snapshot_match(self):
         """S3B2-16: OpenAPI snapshot matches live API."""

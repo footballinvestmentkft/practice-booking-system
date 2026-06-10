@@ -4,7 +4,19 @@ Aggregates all user-related routers into a single router
 """
 from fastapi import APIRouter
 
-from . import crud, profile, search, credits, instructor_analytics, biometric_consent, biometric_liveness, biometric_verify, biometric_disclosure
+from . import (
+    crud,
+    profile,
+    search,
+    credits,
+    instructor_analytics,
+    biometric_consent,
+    biometric_liveness,
+    biometric_verify,
+    biometric_disclosure,
+    juggling_consent,
+    juggling_videos,
+)
 
 # Create main router
 router = APIRouter()
@@ -35,6 +47,10 @@ router.include_router(biometric_verify.router, tags=["users", "biometric"])
 
 # Biometric disclosure modal endpoints (PR-7A; BIOMETRIC_DISCLOSURE_ENABLED gated)
 router.include_router(biometric_disclosure.router, tags=["users", "biometric"])
+
+# Juggling POC — video intake + quality pipeline (JUGGLING_POC_ENABLED gated; 503 when off)
+router.include_router(juggling_consent.router, tags=["users", "juggling"])
+router.include_router(juggling_videos.router, tags=["users", "juggling"])
 
 # CRUD endpoints (should be last due to /{user_id} catch-all)
 router.include_router(crud.router, tags=["users"])

@@ -67,6 +67,7 @@ def create_celery() -> Celery:
             "app.tasks.mood_photo_tasks.remove_background_task":                   {"queue": "mood_photos"},
             "app.tasks.biometric_tasks.biometric_generate_embedding_task":         {"queue": "biometric_embeddings"},
             "app.tasks.biometric_tasks.biometric_delete_embedding_task":           {"queue": "biometric_embeddings"},
+            "app.tasks.juggling_tasks.analyze_video_task":                         {"queue": "juggling_videos"},
         },
         # Queues
         task_default_queue="default",
@@ -75,6 +76,7 @@ def create_celery() -> Celery:
             "tournaments":          {},
             "mood_photos":          {},
             "biometric_embeddings": {},
+            "juggling_videos":      {},
         },
         # Rate limiting (protect DB under heavy load)
         task_annotations={
@@ -86,6 +88,9 @@ def create_celery() -> Celery:
             },
             "app.tasks.biometric_tasks.biometric_delete_embedding_task": {
                 "rate_limit": "60/m",
+            },
+            "app.tasks.juggling_tasks.analyze_video_task": {
+                "rate_limit": "20/m",
             },
         },
     )

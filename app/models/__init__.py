@@ -68,6 +68,14 @@ from .vt_challenge import (
 )
 from .user_mood_photos import UserMoodPhoto, MOOD_PHOTO_SLOTS, MoodPhotoStatus
 from .biometric import UserBiometricConsent, UserFaceEmbedding, BiometricVerificationLog
+from .juggling import (
+    JugglingConsent,
+    JugglingVideo,
+    JugglingVideoStatus,
+    JugglingVideoQualityStatus,
+    JugglingSourceType,
+    JugglingUploadSource,
+)
 
 # 🎓 New Track-Based Modular Education System
 from .track import Track, Module, ModuleComponent
