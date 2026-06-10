@@ -16,6 +16,7 @@ from sqlalchemy.orm import sessionmaker
 from app.database import engine
 from app.models.user import User, UserRole
 from app.services.biometric.audit_log import BiometricAuditLogger
+import app.services.biometric.rate_limiter as _rl
 
 
 @pytest.fixture(scope="function")
@@ -111,6 +112,22 @@ def allow_test_key(monkeypatch):
 def fake_provider_enabled(monkeypatch):
     """Ensures BIOMETRIC_EMBEDDING_PROVIDER=fake (default, but explicit for clarity)."""
     monkeypatch.setattr("app.config.settings.BIOMETRIC_EMBEDDING_PROVIDER", "fake")
+
+
+@pytest.fixture(autouse=True)
+def _reset_biometric_rate_limiter():
+    """
+    Force in-memory rate limit fallback and clear the store before each test.
+
+    Without this, tests that share a mock IP "127.0.0.1" against a real Redis
+    would accumulate counts across the test session and start receiving 429s.
+    In-memory mode gives full isolation: each test starts with a clean slate.
+    """
+    _rl._redis_available = False
+    _rl._redis_client = None
+    _rl._mem_store.clear()
+    yield
+    _rl._mem_store.clear()
 
 
 @pytest.fixture(autouse=True)

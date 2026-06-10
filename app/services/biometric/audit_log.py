@@ -66,6 +66,30 @@ EVT_UPLOAD_MULTIPLE_FACES = "upload_rejected_multiple_faces"
 EVT_DISCLOSURE_ACCEPTED = "disclosure_accepted"
 EVT_DISCLOSURE_REVOKED  = "disclosure_revoked"
 
+# Security / abuse / monitoring events (PR-8)
+#
+# Persistence guarantee:
+#   COMPLIANCE-GRADE (db.commit() called before any exception is raised):
+#     EVT_ADMIN_OVERRIDE_SELF_ATTEMPT  — committed in endpoint before 403 raise
+#     EVT_ADMIN_HISTORY_ACCESSED       — committed in endpoint after successful read
+#
+#   BEST-EFFORT SECURITY TELEMETRY (db.flush() only; may be lost if the
+#   surrounding transaction rolls back — e.g. 403/429 exception propagation):
+#     EVT_RATE_LIMITED                 — flushed inside rate_limiter._write_rate_limited_audit()
+#     EVT_VERIFY_ABUSE_DETECTED        — flushed inside rate_limiter.record_verify_outcome()
+#     EVT_DISCLOSURE_STALE_ATTEMPT     — flushed inside disclosure_service.assert_disclosure_current()
+#
+#   Best-effort events are NOT compliance-grade audit records. They provide
+#   security telemetry and anomaly signals; their occasional loss under
+#   transaction rollback is an accepted, documented limitation of PR-8.
+#   Compliance-grade persistence for these events requires a separate
+#   out-of-band write path (e.g. dedicated session / audit queue) — deferred.
+EVT_RATE_LIMITED                 = "rate_limited"
+EVT_VERIFY_ABUSE_DETECTED        = "verify_abuse_detected"
+EVT_DISCLOSURE_STALE_ATTEMPT     = "disclosure_stale_attempt"
+EVT_ADMIN_OVERRIDE_SELF_ATTEMPT  = "admin_override_self_attempt"
+EVT_ADMIN_HISTORY_ACCESSED       = "admin_history_accessed"
+
 # Complete set — used by test_audit_completeness to ensure coverage
 ALL_EVENT_TYPES: frozenset[str] = frozenset({
     EVT_CONSENT_GRANTED,
@@ -89,6 +113,11 @@ ALL_EVENT_TYPES: frozenset[str] = frozenset({
     EVT_UPLOAD_MULTIPLE_FACES,
     EVT_DISCLOSURE_ACCEPTED,
     EVT_DISCLOSURE_REVOKED,
+    EVT_RATE_LIMITED,
+    EVT_VERIFY_ABUSE_DETECTED,
+    EVT_DISCLOSURE_STALE_ATTEMPT,
+    EVT_ADMIN_OVERRIDE_SELF_ATTEMPT,
+    EVT_ADMIN_HISTORY_ACCESSED,
 })
 
 # ── BiometricAuditLogger ──────────────────────────────────────────────────────

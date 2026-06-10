@@ -37,6 +37,7 @@ from app.services.biometric.audit_log import (
     BiometricAuditLogger,
     EVT_DISCLOSURE_ACCEPTED,
     EVT_DISCLOSURE_REVOKED,
+    EVT_DISCLOSURE_STALE_ATTEMPT,
 )
 
 logger = logging.getLogger(__name__)
@@ -232,6 +233,15 @@ def assert_disclosure_current(*, db: Session, user_id: int) -> None:
         )
     current = settings.CURRENT_BIOMETRIC_DISCLOSURE_VERSION
     if row.disclosure_version != current:
+        try:
+            BiometricAuditLogger(db).log(
+                user_id=user_id,
+                event_type=EVT_DISCLOSURE_STALE_ATTEMPT,
+                event_result="forbidden",
+                error_message=f"accepted={row.disclosure_version} current={current}",
+            )
+        except Exception:
+            pass  # best-effort; may not persist if transaction rolls back
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="biometric_disclosure_update_required",

@@ -1,0 +1,122 @@
+# Biometric Security Alerting Rules — PR-8
+#
+# ╔══════════════════════════════════════════════════════════════════════╗
+# ║  DOCS-ONLY — RECOMMENDED RULES — NOT PRODUCTION DEPLOYMENT CONFIG  ║
+# ║                                                                      ║
+# ║  This file is NOT loaded, parsed, or executed by the application.   ║
+# ║  It is engineering documentation describing the recommended alert   ║
+# ║  rules to configure in Prometheus/Grafana after:                    ║
+# ║    1. DPIA/DPO final sign-off                                       ║
+# ║    2. Legal/jogtanácsosi approval                                   ║
+# ║    3. Production activation of biometric feature flags              ║
+# ║  Do NOT deploy to a Prometheus instance without these approvals.    ║
+# ╚══════════════════════════════════════════════════════════════════════╝
+#
+# Metric names match app/services/biometric/metrics.py constants.
+# All label values are enum-whitelisted (no PII, no user_id, no IP).
+
+groups:
+  - name: biometric_security
+    interval: 60s
+    rules:
+
+      # ── Verify rejection spike ───────────────────────────────────────────────
+      # Fires when more than 20% of verify attempts are rejected over a 5-minute
+      # window. Potential credential stuffing or systematic spoofing attack.
+      - alert: BiometricVerifyRejectionRateHigh
+        expr: |
+          (
+            rate(biometric_verify_rejected_total[5m])
+            /
+            rate(biometric_verify_attempt_total[5m])
+          ) > 0.20
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "Biometric verify rejection rate > 20% (5 min)"
+          description: >
+            More than 20% of biometric verify attempts are being rejected.
+            Check for spoofing, mass testing of stolen photos, or a model
+            regression that raises false-negatives.
+          runbook: "docs/biometric/PRODUCTION_ACTIVATION_CHECKLIST.md"
+
+      # ── Verify rate-limit storm ──────────────────────────────────────────────
+      # Fires when rate-limited events exceed 10 per minute. Sustained
+      # rate-limiting suggests automated hammering of the verify endpoint.
+      - alert: BiometricRateLimitStorm
+        expr: rate(biometric_rate_limited_total[1m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "Biometric rate limiter firing > 10/min"
+          description: >
+            The biometric rate limiter is blocking more than 10 requests per
+            minute. Investigate for automated abuse or a client-side retry loop.
+
+      # ── Abuse detection spike ────────────────────────────────────────────────
+      # Fires when verify abuse events (3 consecutive rejections / 15 min)
+      # are detected more than 5 times in 10 minutes.
+      - alert: BiometricAbuseDetectionSpike
+        expr: increase(biometric_verify_rejected_total[10m]) > 5
+        for: 0m
+        labels:
+          severity: critical
+          team: security
+        annotations:
+          summary: "Biometric abuse detection: consecutive rejections spike"
+          description: >
+            Multiple users have triggered the consecutive-rejection abuse
+            detector in the last 10 minutes. Review biometric_verification_logs
+            for EVT_VERIFY_ABUSE_DETECTED entries.
+
+      # ── Admin override anomaly ───────────────────────────────────────────────
+      # Fires when admin overrides exceed 10 per hour. Expected volume is low;
+      # a spike may indicate a compromised admin account.
+      - alert: BiometricAdminOverrideVolumeHigh
+        expr: increase(biometric_admin_override_total[1h]) > 10
+        for: 0m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "Biometric admin overrides > 10 in last hour"
+          description: >
+            Admin biometric overrides are unusually high. Review
+            biometric_verification_logs for EVT_ADMIN_OVERRIDE entries and
+            verify each decision was made by an authorised reviewer.
+
+      # ── Self-override attempt ────────────────────────────────────────────────
+      # Fires immediately on any self-override attempt. This should never
+      # occur in normal operation and warrants immediate investigation.
+      - alert: BiometricAdminSelfOverrideAttempt
+        expr: increase(biometric_admin_override_selfblock_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          team: security
+        annotations:
+          summary: "Admin attempted to self-approve biometric override"
+          description: >
+            An admin user attempted to override their own biometric review case.
+            Check biometric_verification_logs for EVT_ADMIN_OVERRIDE_SELF_ATTEMPT.
+            This may indicate account sharing, privilege escalation, or a UI bug.
+
+      # ── Feature flag left on in non-production ───────────────────────────────
+      # Fires if the feature flag was activated but DPIA checklist is not
+      # confirmed. Tracked via startup metric increment.
+      - alert: BiometricFeatureFlagEnabledWithoutApproval
+        expr: increase(biometric_feature_flag_enabled_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          team: legal
+        annotations:
+          summary: "Biometric feature flag enabled — verify DPIA approval"
+          description: >
+            BIOMETRIC_FACE_MATCHING_ENABLED=True detected at startup.
+            Confirm DPIA/DPO/legal sign-off is in place before serving
+            biometric traffic. See PRODUCTION_ACTIVATION_CHECKLIST.md.

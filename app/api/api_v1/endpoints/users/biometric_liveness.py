@@ -54,13 +54,24 @@ def submit_biometric_liveness(
     - face_match_score is never returned.
     - Embedding generation is a placeholder (PR-4).
     """
+    from app.services.biometric.rate_limiter import enforce_rate_limit, LIVENESS_SUBMIT
+    from app.services.biometric.metrics import biometric_metrics, M_LIVENESS_SUBMIT
+    _ip = _extract_ip(request)
+    enforce_rate_limit(
+        endpoint_group=LIVENESS_SUBMIT,
+        user_id=current_user.id,
+        ip=_ip,
+        db=db,
+        audit_user_id=current_user.id,
+    )
     result = submit_liveness_result(
         db=db,
         user=current_user,
         liveness_metadata=payload.liveness_metadata.model_dump(),
         source=payload.source,
         photo_filename=payload.photo_filename,
-        ip_address=_extract_ip(request),
+        ip_address=_ip,
     )
     db.commit()
+    biometric_metrics.increment(M_LIVENESS_SUBMIT, status="completed")
     return result
