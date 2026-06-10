@@ -257,3 +257,80 @@ class BiometricVerificationLogOut(BaseModel):
     # embedding_ciphertext ABSENT — structural enforcement
 
     model_config = ConfigDict(from_attributes=True, protected_namespaces=())
+
+
+# ── Admin Biometric Review schemas (PR-7B) ────────────────────────────────────
+
+class AdminBiometricReviewItemOut(BaseModel):
+    """Single item in the admin manual-review queue. No score, no embedding."""
+    user_id:                    int
+    face_match_status:          str
+    face_reference_photo_status: Optional[str] = None
+    manual_review_flagged_at:   Optional[datetime] = None
+    consent_version:            Optional[str] = None
+    disclosure_accepted:        bool = False
+    disclosure_version:         Optional[str] = None
+
+    # face_match_score ABSENT — structural enforcement
+    # embedding ABSENT — structural enforcement
+    # raw liveness / yaw / roll / pitch / landmarks ABSENT
+
+
+class AdminBiometricReviewQueueOut(BaseModel):
+    """Response for GET /admin/biometric/review-queue."""
+    items: List[AdminBiometricReviewItemOut]
+
+    # face_match_score ABSENT — structural enforcement
+
+
+class AdminBiometricHistoryEventOut(BaseModel):
+    """One event row from biometric_verification_logs, admin-only view.
+
+    threshold_used and model_version are returned for admin diagnostic use.
+    face_match_score is NOT returned — internal DB only.
+    """
+    event_type:    str
+    event_result:  Optional[str]   = None
+    threshold_used: Optional[float] = None
+    model_version: Optional[str]   = None
+    created_at:    datetime
+
+    # face_match_score ABSENT — structural enforcement
+    # embedding ABSENT — structural enforcement
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AdminBiometricHistoryOut(BaseModel):
+    """Response for GET /admin/biometric/{user_id}/history."""
+    user_id: int
+    events:  List[AdminBiometricHistoryEventOut]
+
+    # face_match_score ABSENT — structural enforcement
+
+
+class AdminBiometricOverrideRequest(BaseModel):
+    """Body for POST /admin/biometric/{user_id}/override."""
+    model_config = ConfigDict(extra="forbid")
+
+    decision: Literal["approved", "rejected"] = Field(
+        ...,
+        description="Admin decision: 'approved' sets verified; 'rejected' sets rejected.",
+    )
+    reason: Optional[str] = Field(
+        default=None,
+        max_length=200,
+        description="Optional reason for the decision (sanitised, stored in audit log).",
+    )
+
+    # face_match_score ABSENT — structural enforcement
+    # embedding, raw biometric data — deliberately absent
+
+
+class AdminBiometricOverrideOut(BaseModel):
+    """Response for POST /admin/biometric/{user_id}/override."""
+    result:     Literal["approved", "rejected"]
+    user_id:    int
+    decided_at: datetime
+
+    # face_match_score ABSENT — structural enforcement

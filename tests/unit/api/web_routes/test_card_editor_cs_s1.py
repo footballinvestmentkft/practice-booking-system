@@ -294,7 +294,7 @@ class TestS109S110RouteAndSnapshot:
         """S1-09 (updated PR-6): route count is 879 (+1 biometric-verify endpoint)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 880, (
+        assert len(paths) == 883, (
             f"Expected 879 routes (878 prior + 1 biometric-verify), got {len(paths)}"
         )
 

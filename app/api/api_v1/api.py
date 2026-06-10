@@ -102,6 +102,7 @@ from .endpoints import (
 )
 from .endpoints import system_events
 from .endpoints import admin_players
+from .endpoints import admin_biometric_review
 from .endpoints.sandbox import run_test as sandbox
 from .endpoints.sandbox import data as sandbox_data
 from .endpoints import (
@@ -190,5 +191,12 @@ api_router.include_router(pitches.router, prefix="", tags=["pitches", "pitch-ins
 api_router.include_router(generate_sessions.router, prefix="/tournaments", tags=["tournaments", "session-generation"])
 api_router.include_router(admin_enroll.router, prefix="/tournaments", tags=["tournaments", "admin-enrollment"])
 api_router.include_router(admin_players.router, prefix="/admin", tags=["admin", "player-provisioning"])
+
+# Biometric admin review endpoints (PR-7B; BIOMETRIC_FACE_MATCHING_ENABLED gated)
+api_router.include_router(
+    admin_biometric_review.router,
+    prefix="/admin/biometric",
+    tags=["admin", "biometric"],
+)
 api_router.include_router(sandbox.router, prefix="/sandbox", tags=["sandbox-testing"])
 api_router.include_router(sandbox_data.router, prefix="/sandbox", tags=["sandbox-data"])

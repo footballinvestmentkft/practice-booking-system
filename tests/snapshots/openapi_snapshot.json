@@ -27536,6 +27536,142 @@
         ]
       }
     },
+    "/api/v1/admin/biometric/review-queue": {
+      "get": {
+        "tags": [
+          "admin",
+          "biometric"
+        ],
+        "summary": "List users requiring biometric manual review (admin only)",
+        "description": "Return all users with face_match_status='manual_review_required'.\n\n- Requires admin role (403 for non-admin).\n- Requires BIOMETRIC_FACE_MATCHING_ENABLED=true (503 otherwise).\n- No face_match_score in response.",
+        "operationId": "admin_get_review_queue_api_v1_admin_biometric_review_queue_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminBiometricReviewQueueOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/biometric/{user_id}/history": {
+      "get": {
+        "tags": [
+          "admin",
+          "biometric"
+        ],
+        "summary": "Biometric audit history for a user (admin only, no score)",
+        "description": "Return biometric audit log events for a specific user.\n\n- Requires admin role (403 for non-admin).\n- Requires BIOMETRIC_FACE_MATCHING_ENABLED=true (503).\n- face_match_score is NOT returned \u2014 internal DB only.\n- Returns: event_type, event_result, threshold_used, model_version, created_at.",
+        "operationId": "admin_get_user_history_api_v1_admin_biometric__user_id__history_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminBiometricHistoryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/biometric/{user_id}/override": {
+      "post": {
+        "tags": [
+          "admin",
+          "biometric"
+        ],
+        "summary": "Admin override for a biometric manual review case",
+        "description": "Approve or reject a manual_review_required biometric case.\n\n- Requires admin role (403 for non-admin).\n- Requires BIOMETRIC_FACE_MATCHING_ENABLED=true (503).\n- 403 self_override_forbidden if actor == target.\n- 404 if target user not found.\n- 409 override_not_applicable if target is not manual_review_required.\n- 403 if target lacks active consent or current disclosure.\n- Audit: EVT_ADMIN_OVERRIDE with actor_user_id (NOT NULL), no face_match_score.\n- approved \u2192 face_match_status=\"verified\", manual_review_required=False.\n- rejected \u2192 face_match_status=\"rejected\", manual_review_required=False.\n- No face_match_score in response.",
+        "operationId": "admin_override_biometric_api_v1_admin_biometric__user_id__override_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminBiometricOverrideRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminBiometricOverrideOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/sandbox/run-test": {
       "post": {
         "tags": [
@@ -45630,6 +45766,229 @@
           "user_id"
         ],
         "title": "AdminAddMemberRequest"
+      },
+      "AdminBiometricHistoryEventOut": {
+        "properties": {
+          "event_type": {
+            "type": "string",
+            "title": "Event Type"
+          },
+          "event_result": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Result"
+          },
+          "threshold_used": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold Used"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_type",
+          "created_at"
+        ],
+        "title": "AdminBiometricHistoryEventOut",
+        "description": "One event row from biometric_verification_logs, admin-only view.\n\nthreshold_used and model_version are returned for admin diagnostic use.\nface_match_score is NOT returned \u2014 internal DB only."
+      },
+      "AdminBiometricHistoryOut": {
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "title": "User Id"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/AdminBiometricHistoryEventOut"
+            },
+            "type": "array",
+            "title": "Events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "events"
+        ],
+        "title": "AdminBiometricHistoryOut",
+        "description": "Response for GET /admin/biometric/{user_id}/history."
+      },
+      "AdminBiometricOverrideOut": {
+        "properties": {
+          "result": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "rejected"
+            ],
+            "title": "Result"
+          },
+          "user_id": {
+            "type": "integer",
+            "title": "User Id"
+          },
+          "decided_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Decided At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "result",
+          "user_id",
+          "decided_at"
+        ],
+        "title": "AdminBiometricOverrideOut",
+        "description": "Response for POST /admin/biometric/{user_id}/override."
+      },
+      "AdminBiometricOverrideRequest": {
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "rejected"
+            ],
+            "title": "Decision",
+            "description": "Admin decision: 'approved' sets verified; 'rejected' sets rejected."
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason",
+            "description": "Optional reason for the decision (sanitised, stored in audit log)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "decision"
+        ],
+        "title": "AdminBiometricOverrideRequest",
+        "description": "Body for POST /admin/biometric/{user_id}/override."
+      },
+      "AdminBiometricReviewItemOut": {
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "title": "User Id"
+          },
+          "face_match_status": {
+            "type": "string",
+            "title": "Face Match Status"
+          },
+          "face_reference_photo_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Face Reference Photo Status"
+          },
+          "manual_review_flagged_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Review Flagged At"
+          },
+          "consent_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consent Version"
+          },
+          "disclosure_accepted": {
+            "type": "boolean",
+            "title": "Disclosure Accepted",
+            "default": false
+          },
+          "disclosure_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disclosure Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "face_match_status"
+        ],
+        "title": "AdminBiometricReviewItemOut",
+        "description": "Single item in the admin manual-review queue. No score, no embedding."
+      },
+      "AdminBiometricReviewQueueOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminBiometricReviewItemOut"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "AdminBiometricReviewQueueOut",
+        "description": "Response for GET /admin/biometric/review-queue."
       },
       "AdminCreateTeamRequest": {
         "properties": {
