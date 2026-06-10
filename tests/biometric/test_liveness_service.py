@@ -169,17 +169,26 @@ def test_bcls08_duplicate_submission_raises_409(db, student_user, biometric_feat
     assert exc.value.status_code == 409
 
 
-# ── BCLS-09 — embedding placeholder log, no Celery task ──────────────────────
+# ── BCLS-09 — Celery generate task dispatched (PR-4) ─────────────────────────
 
-def test_bcls09_embedding_placeholder_logged(db, student_user, biometric_feature_enabled, caplog):
+def test_bcls09_celery_generate_task_dispatched(db, student_user, biometric_feature_enabled, caplog):
+    """
+    PR-4: liveness_service dispatches biometric_generate_embedding_task via apply_async.
+    Replaces the PR-2/3 placeholder log message test.
+    """
+    from unittest.mock import patch
     _grant_consent(db, student_user)
-    with caplog.at_level(logging.INFO, logger="app.services.biometric.liveness_service"):
+
+    with patch(
+        "app.tasks.biometric_tasks.biometric_generate_embedding_task.apply_async"
+    ) as mock_dispatch, caplog.at_level(logging.INFO, logger="app.services.biometric.liveness_service"):
         submit_liveness_result(
             db=db, user=student_user, liveness_metadata=_VALID_METADATA,
             source="onboarding_liveness", photo_filename=None,
         )
-    assert "biometric_embedding_generation_pending" in caplog.text
-    assert "PR-4" in caplog.text
+
+    mock_dispatch.assert_called_once()
+    assert "dispatched" in caplog.text
 
 
 # ── BCLS-10 — db.flush() called ──────────────────────────────────────────────

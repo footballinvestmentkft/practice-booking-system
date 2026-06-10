@@ -169,15 +169,23 @@ def test_bcs16_revoke_logs_consent_revoked(db, student_user):
     assert row is not None
 
 
-def test_bcs17_revoke_logs_embedding_deleted_placeholder(db, student_user):
+def test_bcs17_revoke_dispatches_celery_delete_task(db, student_user):
+    """
+    PR-4: revoke_consent dispatches biometric_delete_embedding_task via Celery apply_async
+    (replaces the PR-2 placeholder that wrote an EVT_EMBEDDING_DELETED(pending) log row).
+    """
+    from unittest.mock import patch
     grant_consent(db=db, user=student_user, consent_version="v1.0")
-    revoke_consent(db=db, user=student_user)
-    row = db.query(BiometricVerificationLog).filter_by(
-        user_id=student_user.id, event_type=EVT_EMBEDDING_DELETED
-    ).first()
-    assert row is not None
-    assert row.event_result == "pending"     # placeholder — not yet deleted
-    assert "PR-4" in (row.error_message or "")
+
+    with patch(
+        "app.tasks.biometric_tasks.biometric_delete_embedding_task.apply_async"
+    ) as mock_dispatch:
+        revoke_consent(db=db, user=student_user)
+
+    mock_dispatch.assert_called_once()
+    kwargs = mock_dispatch.call_args.kwargs
+    assert kwargs["args"] == [student_user.id]
+    assert "eta" in kwargs, "delete task must be scheduled with ETA (30-day delayed deletion)"
 
 
 def test_bcs18_revoke_no_embedding_no_error(db, student_user):

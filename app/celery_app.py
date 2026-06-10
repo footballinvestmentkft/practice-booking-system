@@ -30,6 +30,7 @@ def create_celery() -> Celery:
         include=[
             "app.tasks.tournament_tasks",
             "app.tasks.mood_photo_tasks",
+            "app.tasks.biometric_tasks",
         ],
     )
 
@@ -62,21 +63,30 @@ def create_celery() -> Celery:
         },
         # Routing
         task_routes={
-            "app.tasks.tournament_tasks.generate_sessions_task": {"queue": "tournaments"},
-            "app.tasks.mood_photo_tasks.remove_background_task": {"queue": "mood_photos"},
+            "app.tasks.tournament_tasks.generate_sessions_task":                   {"queue": "tournaments"},
+            "app.tasks.mood_photo_tasks.remove_background_task":                   {"queue": "mood_photos"},
+            "app.tasks.biometric_tasks.biometric_generate_embedding_task":         {"queue": "biometric_embeddings"},
+            "app.tasks.biometric_tasks.biometric_delete_embedding_task":           {"queue": "biometric_embeddings"},
         },
         # Queues
         task_default_queue="default",
         task_queues={
-            "default":     {},
-            "tournaments": {},
-            "mood_photos": {},
+            "default":              {},
+            "tournaments":          {},
+            "mood_photos":          {},
+            "biometric_embeddings": {},
         },
         # Rate limiting (protect DB under heavy load)
         task_annotations={
             "app.tasks.tournament_tasks.generate_sessions_task": {
-                "rate_limit": "10/m",  # max 10 large-tournament generations per minute
-            }
+                "rate_limit": "10/m",
+            },
+            "app.tasks.biometric_tasks.biometric_generate_embedding_task": {
+                "rate_limit": "30/m",
+            },
+            "app.tasks.biometric_tasks.biometric_delete_embedding_task": {
+                "rate_limit": "60/m",
+            },
         },
     )
 

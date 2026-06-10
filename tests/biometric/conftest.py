@@ -78,3 +78,45 @@ def biometric_feature_enabled(monkeypatch):
     monkeypatch.setattr(
         "app.services.biometric.feature_flag.settings.BIOMETRIC_FACE_MATCHING_ENABLED", True
     )
+
+
+# ── PR-4 fixtures ─────────────────────────────────────────────────────────────
+
+_TEST_EMBEDDING_KEY = "ab" * 32   # 64 hex chars = 32 bytes, NOT secure, test only
+
+
+@pytest.fixture()
+def encryption_test_key(monkeypatch):
+    """
+    Sets a valid test AES-256 key for encryption service tests.
+    This key is NOT secure and must never be used in production.
+    """
+    monkeypatch.setattr("app.config.settings.BIOMETRIC_EMBEDDING_KEY", _TEST_EMBEDDING_KEY)
+    monkeypatch.setattr("app.config.settings.BIOMETRIC_ENCRYPTION_ALLOW_TEST_KEY", False)
+
+
+@pytest.fixture()
+def allow_test_key(monkeypatch):
+    """Enables the test-key fallback (empty BIOMETRIC_EMBEDDING_KEY → zero key)."""
+    monkeypatch.setattr("app.config.settings.BIOMETRIC_EMBEDDING_KEY", "")
+    monkeypatch.setattr("app.config.settings.BIOMETRIC_ENCRYPTION_ALLOW_TEST_KEY", True)
+
+
+@pytest.fixture()
+def fake_provider_enabled(monkeypatch):
+    """Ensures BIOMETRIC_EMBEDDING_PROVIDER=fake (default, but explicit for clarity)."""
+    monkeypatch.setattr("app.config.settings.BIOMETRIC_EMBEDDING_PROVIDER", "fake")
+
+
+@pytest.fixture()
+def celery_eager(monkeypatch):
+    """
+    Run Celery tasks synchronously (no broker needed).
+    Pairs with patching SessionLocal to inject the test DB session.
+    """
+    from app.celery_app import celery_app
+    celery_app.conf.task_always_eager = True
+    celery_app.conf.task_eager_propagates = True
+    yield
+    celery_app.conf.task_always_eager = False
+    celery_app.conf.task_eager_propagates = False
