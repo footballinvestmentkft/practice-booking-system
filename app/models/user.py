@@ -330,6 +330,19 @@ class User(Base):
         cascade="all, delete-orphan",
         foreign_keys="UserFaceEmbedding.user_id",
     )
+    juggling_consent = relationship(
+        "JugglingConsent",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+        foreign_keys="JugglingConsent.user_id",
+    )
+    juggling_videos = relationship(
+        "JugglingVideo",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        foreign_keys="JugglingVideo.user_id",
+    )
 
     # 🎓 NEW: Specialization helper properties and methods
     @property
