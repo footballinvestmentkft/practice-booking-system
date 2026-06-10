@@ -1,10 +1,12 @@
 # PR-4 Részletes Terv — Biometric Embedding Generálás + Celery Architecture
 ## feat/biometric-pr4-embedding-celery
 
-> **Státusz:** TERV — implementáció csak jóváhagyás után.
-> **Base:** main (HEAD: 9c03a4e5 — PR-3 merged)
-> **Előfeltétel:** PR #268 merged ✓
-> **Nem KYC. Nem production-ready. DPIA/DPO jóváhagyás pending.**
+> **Engineering/Product státusz:** ✅ ACCEPTED FOR ENGINEERING (Zoltán + ChatGPT szakmai review, 2026-06-10)
+> **Legal/DPO státusz:** ⏳ LEGAL/DPO NOT REQUIRED FOR IMPLEMENTATION — pending only before production activation
+> **Production aktiválás:** ⛔ NOT PRODUCTION ACTIVE — `BIOMETRIC_FACE_MATCHING_ENABLED=false`
+> **Implementációs státusz:** ✅ IMPLEMENTED & MERGED — PR #271, merge commit c8f9d077, main HEAD c8f9d0770a
+> **Base:** main (HEAD: 9c03a4e5 — PR-3 merged → implementálva PR-4-ben)
+> **Nem KYC. Production aktiváláshoz külön legal/DPO gate szükséges.**
 
 ---
 
