@@ -281,6 +281,7 @@ class TestQualityServiceAnalyze:
 # ── feature_flag ─────────────────────────────────────────────────────────────
 
 from app.services.juggling.feature_flag import is_juggling_enabled, require_juggling_enabled
+from app.services.juggling import metadata_service
 import asyncio
 
 
@@ -307,6 +308,165 @@ class TestFeatureFlag:
         from app.services.juggling import feature_flag as ff
         monkeypatch.setattr(ff.settings, "JUGGLING_POC_ENABLED", True)
         asyncio.run(require_juggling_enabled())
+
+
+# ── metadata_service — branch coverage ──────────────────────────────────────
+
+class TestParseFraction:
+    def test_fraction_60000_1001(self):
+        r = metadata_service._parse_fraction("60000/1001")
+        assert r is not None
+        assert abs(r - 59.94) < 0.01
+
+    def test_fraction_30_1(self):
+        r = metadata_service._parse_fraction("30/1")
+        assert r == 30.0
+
+    def test_plain_float(self):
+        r = metadata_service._parse_fraction("25.0")
+        assert r == 25.0
+
+    def test_zero_zero(self):
+        assert metadata_service._parse_fraction("0/0") is None
+
+    def test_empty_string(self):
+        assert metadata_service._parse_fraction("") is None
+
+    def test_none_value(self):
+        assert metadata_service._parse_fraction(None) is None
+
+    def test_zero_denominator(self):
+        assert metadata_service._parse_fraction("30/0") is None
+
+    def test_invalid_string(self):
+        assert metadata_service._parse_fraction("not/a/number") is None
+
+
+def _probe(video_streams=None, audio_streams=None, fmt=None):
+    """Build minimal ffprobe probe_data dict."""
+    streams = []
+    if video_streams:
+        streams.extend(video_streams)
+    if audio_streams:
+        streams.extend(audio_streams)
+    return {"streams": streams, "format": fmt or {}}
+
+
+def _vs(**kw):
+    """Minimal video stream dict."""
+    s = {"codec_type": "video", "codec_name": "h264",
+         "width": 1280, "height": 720,
+         "avg_frame_rate": "60/1", "r_frame_rate": "60/1",
+         "duration": "30.0", "tags": {}, "side_data_list": []}
+    s.update(kw)
+    return s
+
+
+def _as_(**kw):
+    """Minimal audio stream dict."""
+    s = {"codec_type": "audio"}
+    s.update(kw)
+    return s
+
+
+class TestExtractServerMetadata:
+    def test_full_video_with_audio(self):
+        d = _probe([_vs()], [_as_()], {"format_name": "mov,mp4", "bit_rate": "8000000"})
+        m = metadata_service.extract_server_metadata(d)
+        assert m["codec"] == "h264"
+        assert m["resolution"] == "1280x720"
+        assert m["fps"] == 60.0
+        assert m["duration_seconds"] == 30.0
+        assert m["has_audio"] is True
+        assert m["bitrate_kbps"] == 8000
+        assert m["container"] == "mov"
+        assert m["nb_streams"] == 2
+
+    def test_no_streams(self):
+        m = metadata_service.extract_server_metadata({"streams": [], "format": {}})
+        assert m["fps"] is None
+        assert m["resolution"] is None
+        assert m["has_audio"] is False
+        assert m["nb_streams"] == 0
+
+    def test_fps_fallback_to_r_frame_rate(self):
+        vs = _vs(avg_frame_rate="0/0", r_frame_rate="30/1")
+        d = _probe([vs])
+        m = metadata_service.extract_server_metadata(d)
+        assert m["fps"] == 30.0
+
+    def test_no_width_height(self):
+        vs = _vs()
+        del vs["width"]
+        del vs["height"]
+        d = _probe([vs])
+        m = metadata_service.extract_server_metadata(d)
+        assert m["resolution"] is None
+
+    def test_duration_from_format_when_no_stream_duration(self):
+        vs = _vs()
+        vs.pop("duration", None)
+        d = _probe([vs], fmt={"duration": "45.0"})
+        m = metadata_service.extract_server_metadata(d)
+        assert m["duration_seconds"] == 45.0
+
+    def test_invalid_duration_ignored(self):
+        vs = _vs(duration="invalid")
+        d = _probe([vs])
+        m = metadata_service.extract_server_metadata(d)
+        assert m["duration_seconds"] is None
+
+    def test_invalid_bitrate_ignored(self):
+        d = _probe([_vs()], fmt={"bit_rate": "notanumber"})
+        m = metadata_service.extract_server_metadata(d)
+        assert m["bitrate_kbps"] is None
+
+    def test_rotation_from_tags(self):
+        vs = _vs(tags={"rotate": "90"})
+        d = _probe([vs])
+        m = metadata_service.extract_server_metadata(d)
+        assert m["rotation"] == 90
+
+    def test_rotation_from_side_data(self):
+        vs = _vs(side_data_list=[{"side_data_type": "Display Matrix", "rotation": 270}])
+        d = _probe([vs])
+        m = metadata_service.extract_server_metadata(d)
+        assert m["rotation"] == 270
+
+    def test_rotation_invalid_tag_falls_back_to_zero(self):
+        vs = _vs(tags={"rotate": "bad"})
+        d = _probe([vs])
+        m = metadata_service.extract_server_metadata(d)
+        assert m["rotation"] == 0
+
+    def test_multiple_video_streams_uses_first(self):
+        vs1 = _vs(codec_name="h264")
+        vs2 = _vs(codec_name="hevc")
+        d = _probe([vs1, vs2])
+        m = metadata_service.extract_server_metadata(d)
+        assert m["codec"] == "h264"
+
+    def test_no_audio_stream(self):
+        d = _probe([_vs()])
+        m = metadata_service.extract_server_metadata(d)
+        assert m["has_audio"] is False
+
+    def test_no_format_name(self):
+        d = _probe([_vs()], fmt={})
+        m = metadata_service.extract_server_metadata(d)
+        assert m["container"] is None
+
+    def test_side_data_non_display_matrix_ignored(self):
+        vs = _vs(side_data_list=[{"side_data_type": "Other", "rotation": 180}])
+        d = _probe([vs])
+        m = metadata_service.extract_server_metadata(d)
+        assert m["rotation"] == 0
+
+    def test_side_data_rotation_none_ignored(self):
+        vs = _vs(side_data_list=[{"side_data_type": "Display Matrix", "rotation": None}])
+        d = _probe([vs])
+        m = metadata_service.extract_server_metadata(d)
+        assert m["rotation"] == 0
 
 
 # ── consent_service ──────────────────────────────────────────────────────────
