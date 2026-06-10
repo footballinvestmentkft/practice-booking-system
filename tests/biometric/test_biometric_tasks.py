@@ -288,6 +288,29 @@ def test_bbt12_tasks_module_no_onnxruntime_import():
             assert "insightface" not in module, "insightface import found in biometric_tasks"
 
 
+# ── BBT-15 ────────────────────────────────────────────────────────────────────
+
+def test_bbt15_generate_activates_reference_after_liveness(
+    db, student_user, biometric_feature_enabled, encryption_test_key, celery_eager
+):
+    """
+    After biometric_generate_embedding_task completes successfully,
+    the UserFaceEmbedding row must have is_active=True (PR-6 approval gate).
+    """
+    from datetime import datetime, timezone
+    _grant_consent(db, student_user)
+
+    with patch(_SESSION_PATH, return_value=db):
+        db.close = lambda: None
+        biometric_generate_embedding_task.apply(args=[student_user.id, "photo.jpg"])
+
+    from app.models.biometric import UserFaceEmbedding
+    row = db.query(UserFaceEmbedding).filter_by(user_id=student_user.id).first()
+    assert row is not None, "Embedding row must exist"
+    assert row.is_active is True, "is_active must be True after liveness auto-approval"
+    assert row.approved_at is not None, "approved_at must be set"
+
+
 # ── BBT-13 ────────────────────────────────────────────────────────────────────
 
 def test_bbt13_liveness_service_dispatches_generate_task(

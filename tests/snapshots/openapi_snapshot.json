@@ -1234,6 +1234,55 @@
         ]
       }
     },
+    "/api/v1/users/me/biometric-verify": {
+      "post": {
+        "tags": [
+          "users",
+          "users",
+          "biometric"
+        ],
+        "summary": "Verify live face against stored reference embedding",
+        "description": "Compare a live-capture photo against the user's stored reference embedding.\n\n- Requires BIOMETRIC_FACE_MATCHING_ENABLED=true (feature flag).\n- Requires active biometric consent (403 otherwise).\n- Requires an active reference embedding (404 otherwise).\n- photo_filename path-traversal guard enforced by schema + service.\n- Returns result: verified | manual_review_required | rejected.\n- face_match_score is NEVER returned \u2014 stored internally in audit log only.",
+        "operationId": "verify_biometric_api_v1_users_me_biometric_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BiometricVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BiometricVerifyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/users/": {
       "post": {
         "tags": [
@@ -47301,6 +47350,46 @@
         "type": "object",
         "title": "BiometricVerificationStatusOut",
         "description": "Current biometric verification state returned to the client.\n\nface_match_score is intentionally absent \u2014 clients must not receive\nthe raw similarity score; only the classified status is exposed."
+      },
+      "BiometricVerifyRequest": {
+        "properties": {
+          "photo_filename": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Filename",
+            "description": "Basename of the live-capture photo. No path separators allowed."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "BiometricVerifyRequest",
+        "description": "Body for POST /me/biometric-verify (PR-6)."
+      },
+      "BiometricVerifyResponse": {
+        "properties": {
+          "result": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "manual_review_required",
+              "rejected"
+            ],
+            "title": "Result"
+          }
+        },
+        "type": "object",
+        "required": [
+          "result"
+        ],
+        "title": "BiometricVerifyResponse",
+        "description": "Response for POST /me/biometric-verify.\n\nresult is the classified match outcome.\nface_match_score is intentionally absent \u2014 clients must never receive\nthe raw similarity value; only the classified outcome is returned."
       },
       "Body_accept_friend_request_friends_accept__friendship_id__post": {
         "properties": {

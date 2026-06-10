@@ -154,7 +154,17 @@ def biometric_generate_embedding_task(
         )
         del embedding   # plaintext protection
 
-        # ── 8. Audit log ──────────────────────────────────────────────────────
+        # ── 8. Activate reference (PR-6 approval gate close) ─────────────────
+        # store_embedding() sets is_active=False; for onboarding_liveness the
+        # liveness challenge itself is the approval signal → set is_active=True.
+        from datetime import datetime, timezone as _tz
+        row = db.query(UserFaceEmbedding).filter_by(user_id=user_id).first()
+        if row is not None and not row.is_active:
+            row.is_active   = True
+            row.approved_at = datetime.now(_tz.utc)
+            db.flush()
+
+        # ── 9. Audit log ──────────────────────────────────────────────────────
         BiometricAuditLogger(db).log(
             user_id=user_id,
             event_type=EVT_REFERENCE_AUTO_APPROVED_LIVENESS,

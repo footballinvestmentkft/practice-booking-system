@@ -382,7 +382,7 @@ class TestCSCOL15to16RouteAndSnapshot:
         """CSCOL-15: route count = 845 (+1 POST /dashboard/wc-card-theme)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 878, f"Expected 845 routes, got {len(paths)}"
+        assert len(paths) == 879, f"Expected 845 routes, got {len(paths)}"
 
     def test_cscol_16_openapi_snapshot_includes_wc_card_theme(self):
         """CSCOL-16: OpenAPI snapshot includes /dashboard/wc-card-theme."""

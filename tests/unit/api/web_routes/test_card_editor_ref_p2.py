@@ -287,7 +287,7 @@ class TestP227to29RouteAndOpenAPI:
         """P2-27: Route count = 846 (CS-S2A +1 /card-studio/player)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 878, f"Expected 846 routes, got {len(paths)}"
+        assert len(paths) == 879, f"Expected 846 routes, got {len(paths)}"
 
     def test_p2_28_openapi_snapshot_match(self):
         """P2-28: OpenAPI snapshot matches live API paths."""
