@@ -34,7 +34,7 @@ struct BiometricVerifyView: View {
                 dismissButton: .default(Text("OK"), action: onDismiss)
             )
         }
-        .task { await vm.verify(photoFilename: photoFilename) }
+        .onAppear { Task { await vm.verify(photoFilename: photoFilename) } }
     }
 
     // MARK: — Content
