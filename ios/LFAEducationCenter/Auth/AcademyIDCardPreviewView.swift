@@ -424,10 +424,6 @@ struct AcademyIDCardPreviewView: View {
     }
 
     // MARK: — Flip container
-    // Both faces share the same frame via:
-    //   ZStack → .frame(maxWidth: .infinity) + .aspectRatio(1/cardAspectRatio, contentMode: .fit)
-    // Each face: .frame(maxWidth: .infinity, maxHeight: .infinity)
-    // Result: both faces are identical portrait rectangles — no size jump on flip.
 
     private var flipContainer: some View {
         ZStack {
