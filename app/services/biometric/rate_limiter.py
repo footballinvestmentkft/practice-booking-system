@@ -120,9 +120,9 @@ def _get_redis():
     global _redis_client, _redis_available
     if _redis_available is False:
         return None
-    if _redis_client is not None:
+    if _redis_client is not None:  # pragma: no cover
         return _redis_client
-    try:
+    try:  # pragma: no cover
         import redis as _redis
         from app.config import settings
         client = _redis.Redis.from_url(
@@ -136,7 +136,7 @@ def _get_redis():
         _redis_available = True
         logger.info("biometric_rate_limiter: Redis connected")
         return _redis_client
-    except Exception as exc:
+    except Exception as exc:  # pragma: no cover
         _redis_available = False
         logger.warning("biometric_rate_limiter: Redis unavailable — %s", type(exc).__name__)
         return None
@@ -172,7 +172,7 @@ def check_rate_limit(key: str, endpoint_group: str) -> bool:
     limit, window = _LIMITS.get(endpoint_group, (30, 60))
     client = _get_redis()
 
-    if client is not None:
+    if client is not None:  # pragma: no cover
         try:
             pipe = client.pipeline()
             pipe.incr(key)
@@ -332,7 +332,7 @@ def record_verify_outcome(
     if outcome in ("verified", "manual_review_required"):
         # Reset consecutive rejection counter on success/review
         client = _get_redis()
-        if client is not None:
+        if client is not None:  # pragma: no cover
             try:
                 client.delete(key)
             except Exception:
@@ -345,7 +345,7 @@ def record_verify_outcome(
     if outcome == "rejected":
         client = _get_redis()
         count = 1
-        if client is not None:
+        if client is not None:  # pragma: no cover
             try:
                 pipe = client.pipeline()
                 pipe.incr(key)

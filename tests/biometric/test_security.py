@@ -14,6 +14,11 @@ Rate limiter unit tests:
   BSEC-10  record_verify_outcome resets counter on "verified"
   BSEC-11  record_verify_outcome increments counter on "rejected"
   BSEC-12  record_verify_outcome writes EVT_VERIFY_ABUSE_DETECTED at threshold
+  BSEC-31  _hash_ip(None) returns "unknown" sentinel
+  BSEC-32  _is_fail_open() returns False when env var unset
+  BSEC-33  _is_fail_open() returns True when BIOMETRIC_RATE_LIMIT_FAIL_OPEN=true
+  BSEC-34  enforce_rate_limit raises 503 in production fail-closed (no Redis)
+  BSEC-35  enforce_rate_limit bypasses in production fail-open (no Redis)
 
 Metrics unit tests:
   BSEC-13  biometric_metrics.increment creates counter
@@ -66,6 +71,7 @@ from app.services.biometric.metrics import (
 from app.services.biometric.rate_limiter import (
     VERIFY,
     _hash_ip,
+    _is_fail_open,
     admin_key,
     check_rate_limit,
     enforce_rate_limit,
@@ -534,3 +540,61 @@ def test_bsec30_admin_override_increments_metric(db, biometric_feature_enabled):
     ))
 
     assert biometric_metrics.get(M_ADMIN_OVERRIDE, decision="approved") == 1
+
+
+# ── BSEC-31..35  Coverage: edge cases + production paths ─────────────────────
+
+def test_bsec31_hash_ip_none_returns_unknown():
+    assert _hash_ip(None) == "unknown"
+
+
+def test_bsec32_hash_ip_empty_returns_unknown():
+    assert _hash_ip("") == "unknown"
+
+
+def test_bsec33_is_fail_open_default_false(monkeypatch):
+    monkeypatch.delenv("BIOMETRIC_RATE_LIMIT_FAIL_OPEN", raising=False)
+    assert _is_fail_open() is False
+
+
+def test_bsec34_is_fail_open_true_when_env_set(monkeypatch):
+    monkeypatch.setenv("BIOMETRIC_RATE_LIMIT_FAIL_OPEN", "true")
+    assert _is_fail_open() is True
+
+
+def test_bsec35_enforce_rate_limit_503_in_production_fail_closed(monkeypatch):
+    """Production + no Redis + BIOMETRIC_RATE_LIMIT_FAIL_OPEN=false → HTTP 503."""
+    import app.services.biometric.rate_limiter as rl
+    monkeypatch.setattr(rl, "_redis_available", False)
+    monkeypatch.setattr(rl, "_redis_client", None)
+    monkeypatch.setenv("ENV", "production")
+    monkeypatch.delenv("BIOMETRIC_RATE_LIMIT_FAIL_OPEN", raising=False)
+
+    with pytest.raises(HTTPException) as exc_info:
+        enforce_rate_limit(endpoint_group=VERIFY, user_id=99999)
+    assert exc_info.value.status_code == 503
+    assert exc_info.value.detail == "biometric_rate_limiter_unavailable"
+
+
+def test_bsec36_enforce_rate_limit_bypass_in_production_fail_open(monkeypatch):
+    """Production + no Redis + BIOMETRIC_RATE_LIMIT_FAIL_OPEN=true → allowed (CRITICAL log)."""
+    import app.services.biometric.rate_limiter as rl
+    monkeypatch.setattr(rl, "_redis_available", False)
+    monkeypatch.setattr(rl, "_redis_client", None)
+    monkeypatch.setenv("ENV", "production")
+    monkeypatch.setenv("BIOMETRIC_RATE_LIMIT_FAIL_OPEN", "true")
+
+    # Should NOT raise — fail-open returns without checking keys
+    enforce_rate_limit(endpoint_group=VERIFY, user_id=99998)
+
+
+def test_bsec37_check_rate_limit_production_safety_net(monkeypatch):
+    """check_rate_limit production safety net: no Redis in production → True (secondary guard)."""
+    import app.services.biometric.rate_limiter as rl
+    monkeypatch.setattr(rl, "_redis_available", False)
+    monkeypatch.setattr(rl, "_redis_client", None)
+    monkeypatch.setenv("ENV", "production")
+
+    key = _unique_key(":bsec37")
+    result = check_rate_limit(key, VERIFY)
+    assert result is True, "check_rate_limit production safety net must return True (fail-open)"
