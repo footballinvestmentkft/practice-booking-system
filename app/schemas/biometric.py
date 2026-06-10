@@ -298,7 +298,7 @@ class AdminBiometricHistoryEventOut(BaseModel):
     # face_match_score ABSENT — structural enforcement
     # embedding ABSENT — structural enforcement
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, protected_namespaces=())
 
 
 class AdminBiometricHistoryOut(BaseModel):
