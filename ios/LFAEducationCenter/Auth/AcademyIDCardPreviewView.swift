@@ -173,32 +173,34 @@ struct AcademyIDCardPreviewView: View {
     }
 
     // MARK: — Flip container
-    // simultaneousGesture: safe even though there's no ScrollView here —
-    // ensures the drag isn't accidentally swallowed if the hierarchy changes.
+    // Front card drives the frame size (content-driven AcademyIDCardView).
+    // Back face is positioned as .overlay so it receives the front card's
+    // exact proposed size — .frame(maxWidth/maxHeight: .infinity) inside
+    // AcademyIDBackFaceView fills that size precisely, giving both faces
+    // identical dimensions with no ZStack expansion artefact.
 
     private var flipContainer: some View {
-        ZStack {
-            frontCard
-                .cardShimmer()
-                .rotation3DEffect(
-                    .degrees(frontDegrees),
-                    axis: (x: 0, y: 1, z: 0),
-                    perspective: 0.4
-                )
-                .opacity(frontVisible ? 1 : 0)
-
-            AcademyIDBackFaceView()
-                .cardShimmer()
-                .rotation3DEffect(
-                    .degrees(backDegrees),
-                    axis: (x: 0, y: 1, z: 0),
-                    perspective: 0.4
-                )
-                .opacity(frontVisible ? 0 : 1)
-        }
-        .cardGlow(color: glowColor, radius: glowRadius, pulse: isVerified)
-        .animation(.spring(response: 0.45, dampingFraction: 0.72), value: isFlipped)
-        .simultaneousGesture(swipeGesture)
+        frontCard
+            .cardShimmer()
+            .rotation3DEffect(
+                .degrees(frontDegrees),
+                axis: (x: 0, y: 1, z: 0),
+                perspective: 0.4
+            )
+            .opacity(frontVisible ? 1 : 0)
+            .overlay(
+                AcademyIDBackFaceView()
+                    .cardShimmer()
+                    .rotation3DEffect(
+                        .degrees(backDegrees),
+                        axis: (x: 0, y: 1, z: 0),
+                        perspective: 0.4
+                    )
+                    .opacity(frontVisible ? 0 : 1)
+            )
+            .cardGlow(color: glowColor, radius: glowRadius, pulse: isVerified)
+            .animation(.spring(response: 0.45, dampingFraction: 0.72), value: isFlipped)
+            .simultaneousGesture(swipeGesture)
     }
 
     // MARK: — Front card
