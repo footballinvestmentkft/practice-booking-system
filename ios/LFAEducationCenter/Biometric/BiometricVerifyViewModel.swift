@@ -15,6 +15,7 @@ final class BiometricVerifyViewModel: ObservableObject {
 
     func verify(photoFilename: String?) async {
         isLoading = true
+        error     = nil      // clear previous error before each attempt
         defer { isLoading = false }
         do {
             result = try await service.verify(photoFilename: photoFilename)
@@ -23,5 +24,12 @@ final class BiometricVerifyViewModel: ObservableObject {
         } catch {
             self.error = .networkError(error)
         }
+    }
+
+    // Retry: clear result + error, then re-run verify with the same photoFilename.
+    // Used when referenceNotFound (embedding may be ready after Celery delay).
+    func retryVerify(photoFilename: String?) async {
+        result = nil
+        await verify(photoFilename: photoFilename)
     }
 }
