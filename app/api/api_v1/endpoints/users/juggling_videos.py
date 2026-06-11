@@ -5,6 +5,8 @@ POST /api/v1/users/me/juggling/videos/upload-init      — create pending record
 POST /api/v1/users/me/juggling/videos/{video_id}/upload  — upload file
 POST /api/v1/users/me/juggling/videos/{video_id}/complete — enqueue analysis
 GET  /api/v1/users/me/juggling/videos/{video_id}/quality  — poll result
+GET  /api/v1/users/me/juggling/videos/{video_id}/thumbnail — auth-gated JPEG thumbnail
+GET  /api/v1/users/me/juggling/videos/{video_id}/media     — auth-gated processed video stream
 
 All endpoints gated by require_juggling_enabled() → 503 when flag off.
 service_consent is required before upload-init → 403 if missing.
@@ -12,6 +14,7 @@ service_consent is required before upload-init → 403 if missing.
 Storage: files written to JUGGLING_UPLOAD_DIR (outside app/static/).
          DB stores storage_path only — never a public URL.
 Quality endpoint returns metadata + scores only; no video URL in response.
+Media endpoints stream thumbnail_path / processed_path only — no raw path in response.
 
 Security pipeline (pre-save, all in upload endpoint):
   1. Extension allowlist: .mp4 .mov .m4v
@@ -25,10 +28,11 @@ Security pipeline (pre-save, all in upload endpoint):
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, get_current_user_media
 from app.models.juggling import JugglingVideo, JugglingVideoStatus
 from app.models.user import User
 from app.schemas.juggling import (
@@ -45,6 +49,15 @@ from app.services.juggling.security_service import (
     run_all_pre_save_checks,
 )
 from app.services.juggling import video_service
+from app.services.juggling.media_service import (
+    MediaMissingError,
+    MediaNotReadyError,
+    PathSafetyError,
+    ThumbnailMissingError,
+    ThumbnailNotReadyError,
+    resolve_media_path,
+    resolve_thumbnail_path,
+)
 from app.tasks.juggling_transcode_task import transcode_video_task
 
 router = APIRouter()
@@ -255,3 +268,54 @@ def get_quality(
         processed_fps=video.processed_fps,
         processed_file_size_bytes=video.processed_file_size_bytes,
     )
+
+
+_MEDIA_HEADERS = {"Cache-Control": "private, no-store"}
+
+
+@router.get(
+    "/me/juggling/videos/{video_id}/thumbnail",
+    dependencies=[Depends(require_juggling_enabled)],
+    summary="Serve auth-gated JPEG thumbnail",
+    tags=["juggling"],
+    response_class=FileResponse,
+)
+def get_thumbnail(
+    video_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_media),
+) -> FileResponse:
+    video = _get_video_or_404(video_id, current_user.id, db)
+    try:
+        path = resolve_thumbnail_path(video)
+    except ThumbnailNotReadyError as exc:
+        raise HTTPException(status_code=409, detail=exc.reason)
+    except ThumbnailMissingError:
+        raise HTTPException(status_code=404, detail="Thumbnail not available.")
+    except PathSafetyError:
+        raise HTTPException(status_code=404, detail="Thumbnail not available.")
+    return FileResponse(path=str(path), media_type="image/jpeg", headers=_MEDIA_HEADERS)
+
+
+@router.get(
+    "/me/juggling/videos/{video_id}/media",
+    dependencies=[Depends(require_juggling_enabled)],
+    summary="Serve auth-gated processed video stream (Range supported)",
+    tags=["juggling"],
+    response_class=FileResponse,
+)
+def get_media(
+    video_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_media),
+) -> FileResponse:
+    video = _get_video_or_404(video_id, current_user.id, db)
+    try:
+        path = resolve_media_path(video)
+    except MediaNotReadyError as exc:
+        raise HTTPException(status_code=409, detail=exc.reason)
+    except MediaMissingError:
+        raise HTTPException(status_code=404, detail="Media file not available.")
+    except PathSafetyError:
+        raise HTTPException(status_code=404, detail="Media file not available.")
+    return FileResponse(path=str(path), media_type="video/mp4", headers=_MEDIA_HEADERS)

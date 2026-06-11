@@ -250,3 +250,35 @@ async def get_current_admin_or_instructor_user_hybrid(
         detail="Not authenticated",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+
+async def get_current_user_media(
+    request: Request,
+    db: Session = Depends(get_db),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_optional),
+) -> User:
+    """Dual-auth for juggling media endpoints: Bearer (native iOS app / API) OR cookie (Safari/WKWebView).
+
+    Try Bearer first so existing API tests and iOS native app clients are unaffected.
+    Fall back to access_token cookie so Safari <video src> and WKWebView same-site requests work.
+    No role restriction — any active authenticated user is permitted.
+    """
+    # 1. Bearer token path (native iOS app, API clients, fetch() calls)
+    if credentials:
+        token = credentials.credentials
+        username = verify_token(token, "access")
+        if username:
+            user = db.query(User).filter(User.email == username).first()
+            if user and user.is_active:
+                return user
+
+    # 2. Cookie path (Safari <video src>, WKWebView same-site context)
+    user = await get_current_user_optional(request, db)
+    if user:
+        return user
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Not authenticated",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
