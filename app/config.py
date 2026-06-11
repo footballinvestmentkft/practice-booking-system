@@ -360,6 +360,18 @@ class Settings(BaseSettings):
     # JUGGLING_FFPROBE_TIMEOUT_SECONDS — subprocess timeout for ffprobe.
     JUGGLING_FFPROBE_TIMEOUT_SECONDS: int = 30
 
+    # ── Juggling P2 — transcode settings ─────────────────────────────────────
+    # JUGGLING_FFMPEG_TARGET_FPS — output FPS target (input above this triggers transcode).
+    JUGGLING_FFMPEG_TARGET_FPS: int = 30
+
+    # JUGGLING_FFMPEG_TARGET_HEIGHT — output height target in pixels (e.g. 720 = 720p).
+    #   Videos taller than this are scaled down (scale=-2:720). Width adjusted automatically.
+    JUGGLING_FFMPEG_TARGET_HEIGHT: int = 720
+
+    # JUGGLING_FFMPEG_TIMEOUT_SECONDS — subprocess timeout for the ffmpeg transcode command.
+    #   Should be larger than JUGGLING_FFPROBE_TIMEOUT_SECONDS to allow actual encoding.
+    JUGGLING_FFMPEG_TIMEOUT_SECONDS: int = 120
+
     # ── Slow-query monitoring ──────────────────────────────────────────────────
     # Queries slower than SLOW_QUERY_THRESHOLD_MS are logged to app.slow_query
     # and counted in the slow_queries_total metric.  Raise this value if normal

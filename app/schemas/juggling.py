@@ -95,13 +95,19 @@ class JugglingCompleteOut(BaseModel):
 # ── Quality response ──────────────────────────────────────────────────────────
 
 class JugglingQualityOut(BaseModel):
-    video_id:                 str
-    status:                   str
-    quality_status:           Optional[str]
-    quality_score:            Optional[float]
-    server_detected_metadata: Optional[Dict[str, Any]]
-    quality_detail:           Optional[Dict[str, Any]]
-    rejection_reason:         Optional[str]
-    warnings:                 List[str] = Field(default_factory=list)
+    video_id:                   str
+    status:                     str
+    quality_status:             Optional[str]
+    quality_score:              Optional[float]
+    server_detected_metadata:   Optional[Dict[str, Any]]
+    quality_detail:             Optional[Dict[str, Any]]
+    rejection_reason:           Optional[str]
+    warnings:                   List[str] = Field(default_factory=list)
+    # P2 transcode fields — paths are NEVER included; only derived/safe metadata
+    transcode_status:           Optional[str] = None
+    audio_stripped:             Optional[bool] = None
+    processed_resolution:       Optional[str] = None
+    processed_fps:              Optional[float] = None
+    processed_file_size_bytes:  Optional[int] = None
 
     model_config = {"from_attributes": True}

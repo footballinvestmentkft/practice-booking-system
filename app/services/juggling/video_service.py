@@ -23,7 +23,12 @@ from typing import Any, Dict, Optional
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.models.juggling import JugglingVideo, JugglingVideoStatus, JugglingVideoQualityStatus
+from app.models.juggling import (
+    JugglingVideo,
+    JugglingVideoStatus,
+    JugglingVideoQualityStatus,
+    JugglingTranscodeStatus,
+)
 
 JUGGLING_UPLOAD_DIR = Path(settings.JUGGLING_UPLOAD_DIR)
 
@@ -192,3 +197,86 @@ def save_file(file_bytes: bytes, filename: str) -> Path:
     dest = JUGGLING_UPLOAD_DIR / filename
     dest.write_bytes(file_bytes)
     return dest
+
+
+# ── P2 transcode state helpers ────────────────────────────────────────────────
+
+def set_transcode_processing(video_id: str, db: Session) -> JugglingVideo:
+    """Set transcode_status=processing before dispatching ffmpeg."""
+    video = db.query(JugglingVideo).filter(JugglingVideo.id == video_id).first()
+    if video is None:
+        raise ValueError(f"video_not_found: {video_id}")
+    video.transcode_status = JugglingTranscodeStatus.processing.value
+    video.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(video)
+    return video
+
+
+def apply_transcode_result(
+    video_id: str,
+    result: "TranscodeResult",
+    db: Session,
+) -> JugglingVideo:
+    """
+    Persist TranscodeResult fields to DB after transcode_service.transcode() returns.
+    Imports TranscodeResult locally to avoid circular imports.
+    """
+    video = db.query(JugglingVideo).filter(JugglingVideo.id == video_id).first()
+    if video is None:
+        raise ValueError(f"video_not_found: {video_id}")
+
+    video.transcode_status    = result.status
+    video.transcode_error     = result.error
+    video.audio_stripped      = result.audio_stripped if result.audio_stripped else None
+    video.processed_path      = str(result.processed_path) if result.processed_path else None
+    video.thumbnail_path      = str(result.thumbnail_path) if result.thumbnail_path else None
+    video.processed_resolution     = result.processed_resolution
+    video.processed_fps            = result.processed_fps
+    video.processed_file_size_bytes = result.processed_file_size_bytes
+    video.checksum_processed  = result.checksum_processed
+    video.updated_at          = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(video)
+    return video
+
+
+def apply_transcode_failure(
+    video_id: str,
+    reason: str,
+    db: Session,
+) -> JugglingVideo:
+    """Set transcode_status=failed with an error message."""
+    video = db.query(JugglingVideo).filter(JugglingVideo.id == video_id).first()
+    if video is None:
+        raise ValueError(f"video_not_found: {video_id}")
+    video.transcode_status = JugglingTranscodeStatus.failed.value
+    video.transcode_error  = reason
+    video.updated_at       = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(video)
+    return video
+
+
+def set_uploaded_with_original(
+    video: JugglingVideo,
+    storage_path: str,
+    filename_stored: str,
+    file_size_bytes: int,
+    checksum_sha256: str,
+    db: Session,
+) -> JugglingVideo:
+    """
+    Extended set_uploaded that also writes original_path = storage_path.
+    Used by the upload endpoint for all new uploads in P2.
+    """
+    video.status          = JugglingVideoStatus.uploaded.value
+    video.storage_path    = storage_path
+    video.original_path   = storage_path   # P2: track original path explicitly
+    video.filename_stored = filename_stored
+    video.file_size_bytes = file_size_bytes
+    video.checksum_sha256 = checksum_sha256
+    video.updated_at      = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(video)
+    return video

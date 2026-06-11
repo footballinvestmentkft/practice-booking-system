@@ -45,7 +45,7 @@ from app.services.juggling.security_service import (
     run_all_pre_save_checks,
 )
 from app.services.juggling import video_service
-from app.tasks.juggling_tasks import analyze_video_task
+from app.tasks.juggling_transcode_task import transcode_video_task
 
 router = APIRouter()
 
@@ -151,7 +151,7 @@ async def upload_file(
 
     file_path = video_service.save_file(file_bytes, server_filename)
 
-    video_service.set_uploaded(
+    video_service.set_uploaded_with_original(
         video=video,
         storage_path=str(file_path),
         filename_stored=server_filename,
@@ -199,8 +199,10 @@ def complete(
         )
 
     # Transition to processing BEFORE enqueue (mood_photo pattern)
+    # P2: transcode_video_task runs first; it dispatches analyze_video_task
+    # only when transcode_status=done or skipped.
     video_service.set_processing(video_id, db)
-    analyze_video_task.delay(video_id)
+    transcode_video_task.delay(video_id)
 
     return JugglingCompleteOut(
         video_id=video_id,
@@ -243,4 +245,10 @@ def get_quality(
         quality_detail=detail if detail else None,
         rejection_reason=video.rejection_reason,
         warnings=warnings,
+        # P2 transcode metadata — paths are never included
+        transcode_status=video.transcode_status,
+        audio_stripped=video.audio_stripped,
+        processed_resolution=video.processed_resolution,
+        processed_fps=video.processed_fps,
+        processed_file_size_bytes=video.processed_file_size_bytes,
     )

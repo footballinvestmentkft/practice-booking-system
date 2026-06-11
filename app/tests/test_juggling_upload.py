@@ -2,7 +2,7 @@
 Juggling upload endpoint tests — JU-01..JU-18.
 
 Tests run with JUGGLING_POC_ENABLED=True (monkeypatched).
-analyze_video_task.delay is mocked so no Celery worker is needed.
+transcode_video_task.delay is mocked so no Celery worker is needed.
 """
 from __future__ import annotations
 
@@ -268,7 +268,7 @@ def test_ju15_complete_returns_processing(client, student_token, tmp_path):
         _upload_file(client, student_token, video_id)
 
     with patch(
-        "app.api.api_v1.endpoints.users.juggling_videos.analyze_video_task"
+        "app.api.api_v1.endpoints.users.juggling_videos.transcode_video_task"
     ) as mock_task:
         mock_task.delay = MagicMock()
         r = client.post(
@@ -304,7 +304,7 @@ def test_ju17_complete_409_double_submit(client, student_token, tmp_path):
         (tmp_path / "t.mp4").write_bytes(_valid_mp4())
         _upload_file(client, student_token, video_id)
 
-    with patch("app.api.api_v1.endpoints.users.juggling_videos.analyze_video_task") as mock_task:
+    with patch("app.api.api_v1.endpoints.users.juggling_videos.transcode_video_task") as mock_task:
         mock_task.delay = MagicMock()
         client.post(
             f"/api/v1/users/me/juggling/videos/{video_id}/complete",

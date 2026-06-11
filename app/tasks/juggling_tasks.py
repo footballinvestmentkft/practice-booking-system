@@ -63,6 +63,17 @@ def analyze_video_task(self, video_id: str) -> dict:
             video_service.apply_failure(video_id, "missing_storage_path", db)
             return {"status": "failed", "reason": "missing_storage_path"}
 
+        # P2 guard: never analyze if transcode failed
+        if (
+            video.transcode_status is not None
+            and video.transcode_status == "failed"
+        ):
+            logger.warning(
+                "juggling_analyze_blocked_transcode_failed",
+                extra={"video_id": video_id},
+            )
+            return {"status": "blocked", "reason": "transcode_failed"}
+
         file_path = Path(video.storage_path)
         if not file_path.exists():
             video_service.apply_failure(video_id, "file_not_found", db)

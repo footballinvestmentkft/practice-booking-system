@@ -25,6 +25,7 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -50,6 +51,14 @@ class JugglingVideoQualityStatus(str, enum.Enum):
     acceptable   = "acceptable"
     needs_review = "needs_review"
     rejected     = "rejected"
+
+
+class JugglingTranscodeStatus(str, enum.Enum):
+    pending    = "pending"
+    processing = "processing"
+    done       = "done"
+    skipped    = "skipped"
+    failed     = "failed"
 
 
 class JugglingSourceType(str, enum.Enum):
@@ -135,6 +144,31 @@ class JugglingVideo(Base):
                               comment="Server-generated UUID filename; client name is discarded")
     file_size_bytes  = Column(BigInteger, nullable=True)
     checksum_sha256  = Column(String(64), nullable=True)
+
+    # ── P2 transcode fields ───────────────────────────────────────────────────
+    # original_path: mirrors storage_path; set at upload time so the original
+    # is tracked even if storage_path semantics ever change.
+    original_path             = Column(String(512), nullable=True,
+                                       comment="Original upload path; mirrors storage_path at upload")
+    processed_path            = Column(String(512), nullable=True,
+                                       comment="ffmpeg output path; null when transcode_status=skipped/failed")
+    thumbnail_path            = Column(String(512), nullable=True,
+                                       comment="First-frame JPEG path; populated after transcode task")
+    transcode_status          = Column(String(20), nullable=True,
+                                       default=JugglingTranscodeStatus.pending.value,
+                                       comment="pending|processing|done|skipped|failed")
+    transcode_error           = Column(String(512), nullable=True,
+                                       comment="Error message when transcode_status=failed")
+    audio_stripped            = Column(Boolean, nullable=True,
+                                       comment="True once audio removed from processed file")
+    processed_resolution      = Column(String(20), nullable=True,
+                                       comment="WxH of processed file; null if skipped")
+    processed_fps             = Column(Float, nullable=True,
+                                       comment="FPS of processed file; null if skipped")
+    processed_file_size_bytes = Column(BigInteger, nullable=True,
+                                       comment="Byte size of processed file; null if skipped")
+    checksum_processed        = Column(String(64), nullable=True,
+                                       comment="SHA-256 hex of processed file; null if skipped")
 
     # ── Client-reported metadata (not authoritative) ─────────────────────────
     # Allowed keys: fps, resolution, duration_seconds, codec,

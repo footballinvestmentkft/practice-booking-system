@@ -9924,6 +9924,50 @@
       },
       "JugglingQualityOut": {
         "properties": {
+          "audio_stripped": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audio Stripped"
+          },
+          "processed_file_size_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processed File Size Bytes"
+          },
+          "processed_fps": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processed Fps"
+          },
+          "processed_resolution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processed Resolution"
+          },
           "quality_detail": {
             "anyOf": [
               {
@@ -9982,6 +10026,17 @@
           "status": {
             "title": "Status",
             "type": "string"
+          },
+          "transcode_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transcode Status"
           },
           "video_id": {
             "title": "Video Id",

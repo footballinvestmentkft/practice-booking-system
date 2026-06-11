@@ -31,6 +31,8 @@ def create_celery() -> Celery:
             "app.tasks.tournament_tasks",
             "app.tasks.mood_photo_tasks",
             "app.tasks.biometric_tasks",
+            "app.tasks.juggling_tasks",
+            "app.tasks.juggling_transcode_task",
         ],
     )
 
@@ -68,6 +70,7 @@ def create_celery() -> Celery:
             "app.tasks.biometric_tasks.biometric_generate_embedding_task":         {"queue": "biometric_embeddings"},
             "app.tasks.biometric_tasks.biometric_delete_embedding_task":           {"queue": "biometric_embeddings"},
             "app.tasks.juggling_tasks.analyze_video_task":                         {"queue": "juggling_videos"},
+            "app.tasks.juggling_transcode_task.transcode_video_task":               {"queue": "juggling_videos"},
         },
         # Queues
         task_default_queue="default",
@@ -91,6 +94,9 @@ def create_celery() -> Celery:
             },
             "app.tasks.juggling_tasks.analyze_video_task": {
                 "rate_limit": "20/m",
+            },
+            "app.tasks.juggling_transcode_task.transcode_video_task": {
+                "rate_limit": "10/m",
             },
         },
     )
