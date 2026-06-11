@@ -49,12 +49,13 @@ from app.tasks.juggling_transcode_task import transcode_video_task
 
 router = APIRouter()
 
-# Statuses from which complete() is blocked
+# Statuses from which complete() is blocked (gdpr_deleted is also caught by _get_video_or_404 → 410)
 _COMPLETE_BLOCKED = {
     JugglingVideoStatus.pending_upload.value,
     JugglingVideoStatus.processing.value,
     JugglingVideoStatus.analyzed.value,
     JugglingVideoStatus.rejected.value,
+    JugglingVideoStatus.gdpr_deleted.value,
 }
 
 
@@ -66,6 +67,8 @@ def _get_video_or_404(video_id: str, user_id: int, db: Session) -> JugglingVideo
     )
     if video is None:
         raise HTTPException(status_code=404, detail="Video not found.")
+    if video.status == JugglingVideoStatus.gdpr_deleted.value:
+        raise HTTPException(status_code=410, detail="Video has been permanently deleted.")
     return video
 
 

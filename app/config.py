@@ -372,6 +372,33 @@ class Settings(BaseSettings):
     #   Should be larger than JUGGLING_FFPROBE_TIMEOUT_SECONDS to allow actual encoding.
     JUGGLING_FFMPEG_TIMEOUT_SECONDS: int = 120
 
+    # ── Juggling P3 — Retention + Audit ──────────────────────────────────────
+    # JUGGLING_RETENTION_CLEANUP_ENABLED — master switch for destructive retention cleanup.
+    #   False (default) = no file or DB deletion runs automatically.
+    #   True = retention expiry + orphan cleanup active (subject to DRY_RUN flag).
+    JUGGLING_RETENTION_CLEANUP_ENABLED: bool = False
+
+    # JUGGLING_RETENTION_DRY_RUN — if True, all cleanup operations only log; no files
+    #   deleted, no DB mutations. Default True = safe baseline.
+    JUGGLING_RETENTION_DRY_RUN: bool = True
+
+    # JUGGLING_TEMP_CLEANUP_ENABLED — master switch for *.tmp.* file cleanup.
+    #   Separate flag for consistency; temp files are not personal data but default False
+    #   keeps all destructive ops explicit in POC.
+    JUGGLING_TEMP_CLEANUP_ENABLED: bool = False
+
+    # JUGGLING_AUDIT_HASH_SECRET — HMAC-SHA256 key for audit log path hashing
+    #   and user pseudonymisation.
+    #   Empty string → ValueError raised lazily (at first HMAC call) if retention
+    #   is active. Does NOT block startup when retention is disabled (POC default).
+    #   Test environment: deterministic value provided automatically via is_testing().
+    #   Production: set via JUGGLING_AUDIT_HASH_SECRET env var.
+    JUGGLING_AUDIT_HASH_SECRET: str = (
+        "test-audit-hash-secret-for-testing-only-do-not-use-in-production"
+        if is_testing()
+        else os.getenv("JUGGLING_AUDIT_HASH_SECRET", "")
+    )
+
     # ── Slow-query monitoring ──────────────────────────────────────────────────
     # Queries slower than SLOW_QUERY_THRESHOLD_MS are logged to app.slow_query
     # and counted in the slow_queries_total metric.  Raise this value if normal

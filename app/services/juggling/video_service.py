@@ -38,6 +38,7 @@ _COMPLETE_BLOCKED_STATUSES = {
     JugglingVideoStatus.processing.value,
     JugglingVideoStatus.analyzed.value,
     JugglingVideoStatus.rejected.value,
+    JugglingVideoStatus.gdpr_deleted.value,
 }
 
 
@@ -256,6 +257,11 @@ def apply_transcode_failure(
     db.commit()
     db.refresh(video)
     return video
+
+
+def is_gdpr_deleted(video: JugglingVideo) -> bool:
+    """Return True if this video has been permanently GDPR-deleted."""
+    return video.status == JugglingVideoStatus.gdpr_deleted.value
 
 
 def set_uploaded_with_original(

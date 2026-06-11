@@ -7,12 +7,14 @@ Two tables:
 
 State machine for juggling_videos.status:
   pending_upload → uploaded → processing → analyzed
-                                        → rejected  (quality/codec/duration gate)
-                                        → failed    (ffprobe crash / timeout / corrupt)
+                                        → rejected    (quality/codec/duration gate)
+                                        → failed      (ffprobe crash / timeout / corrupt)
+                                        → gdpr_deleted (P3: terminal; all data nulled)
 
 Definitions:
-  rejected = a deliberate quality or validation gate decision; file was readable.
-  failed   = technical error; ffprobe could not process the file.
+  rejected     = a deliberate quality or validation gate decision; file was readable.
+  failed       = technical error; ffprobe could not process the file.
+  gdpr_deleted = GDPR/retention delete applied; paths nulled; status is irreversible.
 """
 from __future__ import annotations
 
@@ -34,6 +36,9 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
+# SQLAlchemy import for audit log BigInteger autoincrement PK
+from sqlalchemy import Sequence as _Sequence
+
 from app.database import Base
 
 
@@ -44,6 +49,7 @@ class JugglingVideoStatus(str, enum.Enum):
     analyzed       = "analyzed"
     rejected       = "rejected"
     failed         = "failed"
+    gdpr_deleted   = "gdpr_deleted"   # P3: terminal — all personal data nulled
 
 
 class JugglingVideoQualityStatus(str, enum.Enum):
@@ -220,6 +226,18 @@ class JugglingVideo(Base):
         ),
     )
 
+    # ── P3 Retention fields ───────────────────────────────────────────────────
+    deleted_at               = Column(DateTime(timezone=True), nullable=True,
+                                      comment="Timestamp when GDPR delete or retention expiry applied")
+    deletion_reason          = Column(String(50), nullable=True,
+                                      comment="gdpr_request | retention_expired | orphan_cleanup | admin_delete")
+    retention_expires_at     = Column(DateTime(timezone=True), nullable=True,
+                                      comment="When this record is eligible for retention cleanup")
+    retention_last_checked_at = Column(DateTime(timezone=True), nullable=True,
+                                       comment="Last time the retention scan evaluated this record")
+    retention_error          = Column(String(255), nullable=True,
+                                      comment="Last retention operation error; cleared on success")
+
     # ── Timestamps ───────────────────────────────────────────────────────────
     created_at = Column(DateTime(timezone=True), nullable=False, index=True,
                         default=lambda: datetime.now(timezone.utc))
@@ -228,3 +246,40 @@ class JugglingVideo(Base):
                         onupdate=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="juggling_videos")
+
+
+class JugglingFileDeletionLog(Base):
+    """
+    Immutable audit trail for all file deletion and retention scan events.
+
+    Invariants:
+      file_path_hash = HMAC_SHA256(JUGGLING_AUDIT_HASH_SECRET, raw_path)
+      user_pseudonym = HMAC_SHA256(JUGGLING_AUDIT_HASH_SECRET, str(user_id))
+      Raw paths and raw user_id MUST NOT be stored here.
+    """
+    __tablename__ = "juggling_file_deletion_log"
+
+    id             = Column(BigInteger, primary_key=True, autoincrement=True)
+    video_id       = Column(UUID(as_uuid=True),
+                            ForeignKey("juggling_videos.id", ondelete="SET NULL"),
+                            nullable=True,
+                            comment="SET NULL when the video record is hard-deleted")
+    user_pseudonym = Column(String(64), nullable=True,
+                            comment="HMAC_SHA256(secret, str(user_id)) — never raw user_id")
+    event_type     = Column(String(50), nullable=False,
+                            comment=(
+                                "gdpr_delete | retention_expire | orphan_cleanup | "
+                                "missing_file_audit | temp_cleanup | "
+                                "dry_run_would_delete | scan_started | scan_completed"
+                            ))
+    file_type      = Column(String(30), nullable=True,
+                            comment="original | processed | thumbnail | temp | all")
+    file_path_hash = Column(String(64), nullable=True,
+                            comment="HMAC_SHA256(secret, raw_path) — never raw path")
+    dry_run        = Column(Boolean, nullable=False, default=True)
+    success        = Column(Boolean, nullable=True)
+    error_message  = Column(String(255), nullable=True)
+    task_run_id    = Column(String(36), nullable=True,
+                            comment="Celery task ID for correlation")
+    created_at     = Column(DateTime(timezone=True), nullable=False,
+                            default=lambda: datetime.now(timezone.utc))

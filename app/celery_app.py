@@ -33,6 +33,7 @@ def create_celery() -> Celery:
             "app.tasks.biometric_tasks",
             "app.tasks.juggling_tasks",
             "app.tasks.juggling_transcode_task",
+            "app.tasks.juggling_retention_task",
         ],
     )
 
@@ -71,6 +72,7 @@ def create_celery() -> Celery:
             "app.tasks.biometric_tasks.biometric_delete_embedding_task":           {"queue": "biometric_embeddings"},
             "app.tasks.juggling_tasks.analyze_video_task":                         {"queue": "juggling_videos"},
             "app.tasks.juggling_transcode_task.transcode_video_task":               {"queue": "juggling_videos"},
+            "app.tasks.juggling_retention_task.run_retention_task":                 {"queue": "juggling_retention"},
         },
         # Queues
         task_default_queue="default",
@@ -80,6 +82,7 @@ def create_celery() -> Celery:
             "mood_photos":          {},
             "biometric_embeddings": {},
             "juggling_videos":      {},
+            "juggling_retention":   {},
         },
         # Rate limiting (protect DB under heavy load)
         task_annotations={
@@ -97,6 +100,9 @@ def create_celery() -> Celery:
             },
             "app.tasks.juggling_transcode_task.transcode_video_task": {
                 "rate_limit": "10/m",
+            },
+            "app.tasks.juggling_retention_task.run_retention_task": {
+                "rate_limit": "2/h",
             },
         },
     )
