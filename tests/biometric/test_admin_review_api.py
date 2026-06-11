@@ -542,7 +542,7 @@ def test_bca_adm21_override_audit_no_score(db, biometric_feature_enabled):
 def test_bca_adm22_route_count_883():
     from app.main import app
     paths = app.openapi().get("paths", {})
-    assert len(paths) == 888, f"Expected 883 routes, got {len(paths)}"
+    assert len(paths) == 890, f"Expected 890 routes (P4 private media +2), got {len(paths)}"
     assert "/api/v1/admin/biometric/review-queue" in paths
     assert "/api/v1/admin/biometric/{user_id}/history" in paths
     assert "/api/v1/admin/biometric/{user_id}/override" in paths
