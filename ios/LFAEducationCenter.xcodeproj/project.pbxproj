@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		36CB92D674607508AC4335E1 /* JugglingVideoListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20CD58654D76D5278A5E5B62 /* JugglingVideoListViewModel.swift */; };
+		3A252E40BD69018C7269AAF2 /* JugglingVideoItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FD7851919C9B8A9FC46733 /* JugglingVideoItem.swift */; };
+		7FC19EF38DE99E82AE19FBE0 /* JugglingVideoListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89E393EC38D4612DE04DD285 /* JugglingVideoListView.swift */; };
+		888E1C3A10647BB0B654ABB3 /* JugglingPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E075CE337E219F48D39CBDFA /* JugglingPlayerView.swift */; };
 		BB000004000000000000001 /* LFAEducationCenterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000001 /* LFAEducationCenterApp.swift */; };
 		BB000004000000000000002 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000002 /* RootView.swift */; };
 		BB000004000000000000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000004 /* Assets.xcassets */; };
@@ -43,7 +47,6 @@
 		BB000004000000000000034 /* WelcomeSuccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000036 /* WelcomeSuccessView.swift */; };
 		BB000004000000000000035 /* AcademyIDCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000037 /* AcademyIDCardView.swift */; };
 		BB000004000000000000036 /* QRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000038 /* QRCodeGenerator.swift */; };
-		BB000004000000000000070 /* SkillConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000072 /* SkillConfig.swift */; };
 		BB000004000000000000037 /* AcademyIDResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000039 /* AcademyIDResponse.swift */; };
 		BB000004000000000000038 /* AcademyIDViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000040 /* AcademyIDViewModel.swift */; };
 		BB000004000000000000039 /* AcademyIDFullScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000041 /* AcademyIDFullScreenView.swift */; };
@@ -79,6 +82,7 @@
 		BB00000400000000000006D /* AcademyIDColorConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000006D /* AcademyIDColorConfig.swift */; };
 		BB00000400000000000006E /* AcademyIDColorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000006E /* AcademyIDColorViewModel.swift */; };
 		BB00000400000000000006F /* AcademyIDColorPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000006F /* AcademyIDColorPickerView.swift */; };
+		BB000004000000000000070 /* SkillConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000072 /* SkillConfig.swift */; };
 		BB000004000000000000071 /* AcademyIDCardPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000070 /* AcademyIDCardPreviewView.swift */; };
 		BB000004000000000000073 /* BiometricModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000073 /* BiometricModels.swift */; };
 		BB000004000000000000074 /* BiometricService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000074 /* BiometricService.swift */; };
@@ -91,6 +95,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		20CD58654D76D5278A5E5B62 /* JugglingVideoListViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JugglingVideoListViewModel.swift; sourceTree = "<group>"; };
+		89E393EC38D4612DE04DD285 /* JugglingVideoListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JugglingVideoListView.swift; sourceTree = "<group>"; };
 		BB000003000000000000001 /* LFAEducationCenterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LFAEducationCenterApp.swift; sourceTree = "<group>"; };
 		BB000003000000000000002 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		BB000003000000000000003 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -129,7 +135,6 @@
 		BB000003000000000000036 /* WelcomeSuccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeSuccessView.swift; sourceTree = "<group>"; };
 		BB000003000000000000037 /* AcademyIDCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDCardView.swift; sourceTree = "<group>"; };
 		BB000003000000000000038 /* QRCodeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeGenerator.swift; sourceTree = "<group>"; };
-		BB000003000000000000072 /* SkillConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillConfig.swift; sourceTree = "<group>"; };
 		BB000003000000000000039 /* AcademyIDResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDResponse.swift; sourceTree = "<group>"; };
 		BB000003000000000000040 /* AcademyIDViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDViewModel.swift; sourceTree = "<group>"; };
 		BB000003000000000000041 /* AcademyIDFullScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDFullScreenView.swift; sourceTree = "<group>"; };
@@ -166,6 +171,7 @@
 		BB00000300000000000006E /* AcademyIDColorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDColorViewModel.swift; sourceTree = "<group>"; };
 		BB00000300000000000006F /* AcademyIDColorPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDColorPickerView.swift; sourceTree = "<group>"; };
 		BB000003000000000000070 /* AcademyIDCardPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcademyIDCardPreviewView.swift; sourceTree = "<group>"; };
+		BB000003000000000000072 /* SkillConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillConfig.swift; sourceTree = "<group>"; };
 		BB000003000000000000073 /* BiometricModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricModels.swift; sourceTree = "<group>"; };
 		BB000003000000000000074 /* BiometricService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricService.swift; sourceTree = "<group>"; };
 		BB000003000000000000075 /* BiometricDisclosureViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricDisclosureViewModel.swift; sourceTree = "<group>"; };
@@ -174,6 +180,8 @@
 		BB000003000000000000078 /* BiometricLivenessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricLivenessView.swift; sourceTree = "<group>"; };
 		BB000003000000000000079 /* BiometricVerifyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricVerifyViewModel.swift; sourceTree = "<group>"; };
 		BB00000300000000000007A /* BiometricVerifyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricVerifyView.swift; sourceTree = "<group>"; };
+		C2FD7851919C9B8A9FC46733 /* JugglingVideoItem.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JugglingVideoItem.swift; sourceTree = "<group>"; };
+		E075CE337E219F48D39CBDFA /* JugglingPlayerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JugglingPlayerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -222,6 +230,7 @@
 				BB000002000000000000017 /* Onboarding */,
 				BB000002000000000000018 /* Biometric */,
 				BB000003000000000000004 /* Assets.xcassets */,
+				BC53ECBBF23C75435C8218AB /* Juggling */,
 			);
 			path = LFAEducationCenter;
 			sourceTree = "<group>";
@@ -412,6 +421,18 @@
 			path = Biometric;
 			sourceTree = "<group>";
 		};
+		BC53ECBBF23C75435C8218AB /* Juggling */ = {
+			isa = PBXGroup;
+			children = (
+				C2FD7851919C9B8A9FC46733 /* JugglingVideoItem.swift */,
+				89E393EC38D4612DE04DD285 /* JugglingVideoListView.swift */,
+				20CD58654D76D5278A5E5B62 /* JugglingVideoListViewModel.swift */,
+				E075CE337E219F48D39CBDFA /* JugglingPlayerView.swift */,
+			);
+			name = Juggling;
+			path = Juggling;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -561,6 +582,10 @@
 				BB000004000000000000078 /* BiometricLivenessView.swift in Sources */,
 				BB000004000000000000079 /* BiometricVerifyViewModel.swift in Sources */,
 				BB00000400000000000007A /* BiometricVerifyView.swift in Sources */,
+				3A252E40BD69018C7269AAF2 /* JugglingVideoItem.swift in Sources */,
+				7FC19EF38DE99E82AE19FBE0 /* JugglingVideoListView.swift in Sources */,
+				36CB92D674607508AC4335E1 /* JugglingVideoListViewModel.swift in Sources */,
+				888E1C3A10647BB0B654ABB3 /* JugglingPlayerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
