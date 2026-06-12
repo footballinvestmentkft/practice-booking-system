@@ -245,6 +245,19 @@ final class AuthManager: ObservableObject {
         }
     }
 
+    // GET (binary) with automatic Bearer inject, single 401 refresh + retry.
+    // Used for juggling thumbnail and media endpoints that return JPEG/MP4 binary.
+    func authenticatedFetchData(path: String) async throws -> Data {
+        guard let token = accessToken else { logout(); throw APIError.unauthorized }
+        do {
+            return try await APIClient.fetchData(path: path, token: token)
+        } catch APIError.httpError(401, _) {
+            let refreshed = await performRefresh()
+            guard refreshed, let newToken = accessToken else { throw APIError.unauthorized }
+            return try await APIClient.fetchData(path: path, token: newToken)
+        }
+    }
+
     // Form-encoded POST with automatic Bearer inject, single 401 refresh + retry.
     // Used for FastAPI endpoints that declare Form(...) parameters.
     func authenticatedFormPost<T: Decodable>(path: String, fields: [String: String]) async throws -> T {

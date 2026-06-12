@@ -18,10 +18,8 @@ struct LFASpecTabView: View {
             EducationView()
                 .tabItem { Label("Education", systemImage: "book.fill") }
 
-            PlaceholderScreen(title: "Training",
-                              subtitle: "Skeleton tracking — Phase F",
-                              icon: "stopwatch.fill")
-                .tabItem { Label("Training", systemImage: "stopwatch.fill") }
+            JugglingVideoListView()
+                .tabItem { Label("Training", systemImage: "video.fill") }
 
             LFAProfileTab(onReturnToHub: { presentationMode.wrappedValue.dismiss() })
                 .tabItem { Label("Profile", systemImage: "person.fill") }

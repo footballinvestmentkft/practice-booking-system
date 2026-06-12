@@ -67,7 +67,7 @@ enum APIClient {
         }
     }
 
-    // MARK: — GET
+    // MARK: — GET (JSON)
 
     static func get<T: Decodable>(
         path:  String,
@@ -75,6 +75,24 @@ enum APIClient {
     ) async throws -> T {
         let request = try buildRequest(path: path, method: "GET", token: token)
         return try await execute(request)
+    }
+
+    // MARK: — GET (binary — for thumbnail / media endpoints)
+    // Returns raw Data. Does not attempt JSON decode.
+    // Accept header is set to */* so binary responses (JPEG, MP4) are received cleanly.
+
+    static func fetchData(path: String, token: String? = nil) async throws -> Data {
+        var request = try buildRequest(path: path, method: "GET", token: token)
+        request.setValue("*/*", forHTTPHeaderField: "Accept")
+        let (data, response) = try await perform(request)
+        guard let http = response as? HTTPURLResponse else {
+            throw APIError.networkError(URLError(.badServerResponse))
+        }
+        guard (200...299).contains(http.statusCode) else {
+            let detail = try? JSONDecoder().decode(ErrorBody.self, from: data)
+            throw APIError.httpError(statusCode: http.statusCode, detail: detail?.detail)
+        }
+        return data
     }
 
     // MARK: — Private helpers
