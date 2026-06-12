@@ -342,6 +342,13 @@ class Settings(BaseSettings):
     #   Empty string → checksum validation skipped (dev only; required in staging/prod R&D).
     BIOMETRIC_ONNX_MODEL_SHA256: str = ""
 
+    # BIOMETRIC_RETAIN_PHOTOS — privacy-by-design override.
+    #   Default: False — reference photos are deleted after embedding generation
+    #   (privacy-by-design: raw biometric image not retained beyond processing need).
+    #   Set to True only if DPIA / legal counsel explicitly requires longer retention.
+    #   See biometric_generate_embedding_task step 10 for deletion logic.
+    BIOMETRIC_RETAIN_PHOTOS: bool = False
+
     # ── Juggling POC — Video Intake + Quality Pipeline ───────────────────────
     # JUGGLING_POC_ENABLED — master switch; false = all juggling endpoints return 503.
     JUGGLING_POC_ENABLED: bool = False

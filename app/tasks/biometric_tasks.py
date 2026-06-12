@@ -172,6 +172,26 @@ def biometric_generate_embedding_task(
             model_version=_FAKE_MODEL_VERSION,
         )
         db.commit()
+
+        # ── 10. Privacy-by-design: delete nyers reference photo after embedding ─
+        # The raw photo is only needed for embedding generation (PR-4/PR-5).
+        # Once the encrypted embedding is stored and activated, the plaintext
+        # image file is no longer required and is deleted immediately.
+        # Retention: consent_revoke path also deletes (biometric_delete_embedding_task).
+        # Exception: if DPIA/legal requires longer retention, set env BIOMETRIC_RETAIN_PHOTOS=true.
+        if not getattr(settings, "BIOMETRIC_RETAIN_PHOTOS", False) and photo_filename:
+            try:
+                from app.services.biometric.photo_upload_service import delete_biometric_photos_for_user
+                n = delete_biometric_photos_for_user(user_id=user_id)
+                logger.info(
+                    "biometric_generate_embedding_task: deleted %d reference photo(s) for user_id=%s (privacy-by-design)",
+                    n, user_id,
+                )
+            except Exception as photo_exc:
+                logger.error(
+                    "biometric_generate_embedding_task: could not delete reference photo(s) for user_id=%s: %s",
+                    user_id, photo_exc,
+                )
         logger.info(
             "biometric_generate_embedding_task: completed for user_id=%s model=%s",
             user_id, _FAKE_MODEL_VERSION,
