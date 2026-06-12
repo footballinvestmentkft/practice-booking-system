@@ -31,12 +31,12 @@ final class BiometricLivenessViewModel: ObservableObject {
 
         var instruction: String {
             switch self {
-            case .center1: return "Nézz egyenesen a kamerába"
-            case .left:    return "Fordítsd lassan a fejed BALRA"
-            case .center2: return "Fordítsd vissza a fejed EGYENESEN"
-            case .right:   return "Fordítsd lassan a fejed JOBBRA"
-            case .center3: return "Fordítsd vissza a fejed EGYENESEN"
-            case .capture: return "Maradj egyenesen — kép rögzítése"
+            case .center1: return "Look straight at the camera"
+            case .left:    return "Slowly turn your head LEFT"
+            case .center2: return "Turn your head back STRAIGHT"
+            case .right:   return "Slowly turn your head RIGHT"
+            case .center3: return "Turn your head back STRAIGHT"
+            case .capture: return "Stay straight — capturing photo"
             }
         }
 

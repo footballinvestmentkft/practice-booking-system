@@ -45,15 +45,15 @@ struct BiometricLivenessView: View {
                 if vm.isLoading { loadingOverlay }
             }
             .ignoresSafeArea(edges: .bottom)
-            .navigationTitle("Liveness Teszt")
+            .navigationTitle("Liveness Test")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { closeButton }
             .alert(item: $vm.error) { err in
                 Alert(
-                    title: Text("Hiba"),
+                    title: Text("Error"),
                     message: Text(err.userFacingMessage),
-                    primaryButton: .default(Text("Újra")) { vm.retry() },
-                    secondaryButton: .cancel(Text("Mégse"), action: onDismiss)
+                    primaryButton: .default(Text("Retry")) { vm.retry() },
+                    secondaryButton: .cancel(Text("Cancel"), action: onDismiss)
                 )
             }
             .sheet(isPresented: $showCapturePicker) {
@@ -111,15 +111,15 @@ struct BiometricLivenessView: View {
             Image(systemName: "camera.slash.fill")
                 .font(.system(size: 48))
                 .foregroundColor(Theme.Color.warning)
-            Text("Kamera hozzáférés szükséges.")
+            Text("Camera access required.")
                 .font(.system(size: Theme.FontSize.body, weight: .semibold))
                 .foregroundColor(Theme.Color.onSurface)
                 .multilineTextAlignment(.center)
-            Text("Engedélyezd a kamera hozzáférést a Beállításokban.")
+            Text("Please enable camera access in Settings.")
                 .font(.system(size: Theme.FontSize.body))
                 .foregroundColor(Theme.Color.muted)
                 .multilineTextAlignment(.center)
-            Button("Beállítások megnyitása") {
+            Button("Open Settings") {
                 if let url = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(url)
                 }
@@ -183,7 +183,7 @@ struct BiometricLivenessView: View {
             Button {
                 showCapturePicker = true
             } label: {
-                Label("Kép rögzítése", systemImage: "camera.fill")
+                Label("Capture Photo", systemImage: "camera.fill")
                     .font(.system(size: Theme.FontSize.body, weight: .semibold))
                     .foregroundColor(.black)
                     .frame(maxWidth: .infinity)
@@ -196,7 +196,7 @@ struct BiometricLivenessView: View {
             Button {
                 vm.advanceStep()
             } label: {
-                Text("Tovább →")
+                Text("Continue →")
                     .font(.system(size: Theme.FontSize.body, weight: .semibold))
                     .foregroundColor(.black)
                     .frame(maxWidth: .infinity)

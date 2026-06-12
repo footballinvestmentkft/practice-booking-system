@@ -2,9 +2,13 @@ import SwiftUI
 
 // Disclosure + consent flow — two sequential steps gated by backend flags.
 //
+// Spike bypass: when kBiometricAutoCaptureSpikeEnabled == true, the entire backend
+// disclosure/consent flow is skipped and SpikeLivenessView is shown directly.
+// This prevents a backend 503 (feature flag off in dev) from blocking the spike.
+// kBiometricAutoCaptureSpikeEnabled is false by default; false in all Release builds.
+//
 // Disclosure text is a dev/test placeholder (v1.0).
-// Legal review of the final Hungarian disclosure text is required before production use.
-// The disclosureVersion sent to the backend is "v1.0" (kBiometricDisclosureVersion).
+// Legal review of the final disclosure text is required before production use.
 struct BiometricDisclosureView: View {
 
     @EnvironmentObject private var authManager: AuthManager
@@ -19,6 +23,19 @@ struct BiometricDisclosureView: View {
     }
 
     var body: some View {
+        // Spike short-circuit: bypass backend disclosure/consent entirely.
+        // The spike is local-only — no backend disclosure state is needed.
+        if kBiometricAutoCaptureSpikeEnabled {
+            SpikeLivenessView(onDismiss: onDismiss)
+                .environmentObject(authManager)
+        } else {
+            productionFlow
+        }
+    }
+
+    // MARK: — Production flow (kBiometricAutoCaptureSpikeEnabled == false)
+
+    private var productionFlow: some View {
         NavigationView {
             ZStack {
                 Color(UIColor.systemBackground).ignoresSafeArea()
@@ -30,30 +47,24 @@ struct BiometricDisclosureView: View {
             .toolbar { closeButton }
             .alert(item: $vm.error) { err in
                 Alert(
-                    title: Text("Hiba"),
+                    title: Text("Error"),
                     message: Text(err.userFacingMessage),
                     dismissButton: .default(Text("OK"))
                 )
             }
             .fullScreenCover(isPresented: $showLiveness) {
-                if kBiometricAutoCaptureSpikeEnabled {
-                    // Spike: ARKit auto-capture flow (feat/biometric-auto-capture-spike).
-                    // kBiometricAutoCaptureSpikeEnabled is false by default — no-op in production.
-                    SpikeLivenessView(onDismiss: { showLiveness = false })
-                        .environmentObject(authManager)
-                } else {
-                    BiometricLivenessView(
-                        service: makeService(),
-                        onDismiss: { showLiveness = false }
-                    )
-                    .environmentObject(authManager)
-                }
+                BiometricLivenessView(
+                    service: BiometricService(auth: authManager),
+                    onDismiss: { showLiveness = false }
+                )
+                .environmentObject(authManager)
             }
         }
         .onAppear {
             vm.onReadyForLiveness = { showLiveness = true }
             Task { await vm.load() }
         }
+        .navigationViewStyle(.stack)
     }
 
     // MARK: — Phase rendering
@@ -79,28 +90,28 @@ struct BiometricDisclosureView: View {
     private var disclosureStep: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-                Text("Biometrikus Tájékoztató")
+                Text("Biometric Disclosure")
                     .font(.system(size: Theme.FontSize.title3, weight: .bold))
                     .foregroundColor(Theme.Color.onSurface)
 
                 // DEV/TEST PLACEHOLDER — not legally approved production text.
-                // Legal review of the Hungarian disclosure is required before production.
+                // Legal review of the disclosure is required before production.
                 Text(disclosureBodyText)
                     .font(.system(size: Theme.FontSize.body))
                     .foregroundColor(Theme.Color.onSurface)
                     .lineSpacing(4)
 
-                Text("Verzió: \(kBiometricDisclosureVersion)")
+                Text("Version: \(kBiometricDisclosureVersion)")
                     .font(.system(size: Theme.FontSize.caption))
                     .foregroundColor(Theme.Color.muted)
 
                 actionButton(
-                    label: "Elfogadom",
+                    label: "I Accept",
                     color: Theme.Color.primary
                 ) { await vm.acceptDisclosure() }
 
                 Button(action: onDismiss) {
-                    Text("Elutasítom / Később")
+                    Text("Decline / Later")
                         .font(.system(size: Theme.FontSize.body))
                         .foregroundColor(Theme.Color.muted)
                         .frame(maxWidth: .infinity)
@@ -111,23 +122,21 @@ struct BiometricDisclosureView: View {
         }
     }
 
-    // DEV/TEST placeholder disclosure text.
-    // This is NOT the legally reviewed final text.
-    // Legal sign-off is required before this text can be used in production.
+    // DEV/TEST placeholder disclosure text — not legally reviewed.
     private var disclosureBodyText: String {
         """
-        Az LFA Football Academy biometrikus arcfelismerési rendszert alkalmaz az \
-        edzéslátogatás és az Academy ID azonosítás ellenőrzéséhez.
+        LFA Football Academy uses biometric face recognition to verify \
+        attendance and authenticate Academy ID.
 
-        Az arcfelismerési adatokat (arc-embedding vektort) titkosítva tároljuk. \
-        Ezek az adatok kizárólag belső azonosítási célra kerülnek felhasználásra, \
-        és a GDPR 9. cikke szerinti különleges kategóriájú személyes adatnak minősülnek.
+        Face recognition data (face embedding vector) is stored encrypted. \
+        This data is used exclusively for internal identification purposes \
+        and qualifies as a special category of personal data under GDPR Article 9.
 
-        A hozzájárulás bármikor visszavonható a Profil → Biometrikus beállítások menüben. \
-        Visszavonás esetén az arc-embedding adatot 30 napon belül töröljük.
+        Consent can be withdrawn at any time via Profile → Biometric settings. \
+        Upon withdrawal, face embedding data will be deleted within 30 days.
 
-        Ez a tájékoztató fejlesztői/tesztkörnyezetre vonatkozik. \
-        A végleges jogi szöveg külön jóváhagyás tárgyát képezi.
+        This disclosure applies to the developer/test environment. \
+        The final legal text is subject to separate approval.
         """
     }
 
@@ -136,29 +145,29 @@ struct BiometricDisclosureView: View {
     private var consentStep: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-                Text("Biometrikus Hozzájárulás")
+                Text("Biometric Consent")
                     .font(.system(size: Theme.FontSize.title3, weight: .bold))
                     .foregroundColor(Theme.Color.onSurface)
 
                 Text(
-                    "A tájékoztatót elfogadtad. A biometrikus ellenőrzés aktiválásához " +
-                    "szükséges az explicit GDPR Art. 9(2)(a) szerinti hozzájárulás megadása is."
+                    "You have accepted the disclosure. To activate biometric verification, " +
+                    "explicit consent under GDPR Art. 9(2)(a) is also required."
                 )
                 .font(.system(size: Theme.FontSize.body))
                 .foregroundColor(Theme.Color.onSurface)
                 .lineSpacing(4)
 
-                Text("Hozzájárulás verziója: \(kBiometricConsentVersion)")
+                Text("Consent version: \(kBiometricConsentVersion)")
                     .font(.system(size: Theme.FontSize.caption))
                     .foregroundColor(Theme.Color.muted)
 
                 actionButton(
-                    label: "Hozzájárulok",
+                    label: "I Consent",
                     color: Theme.Color.primary
                 ) { await vm.grantConsent() }
 
                 Button(action: onDismiss) {
-                    Text("Mégsem")
+                    Text("Cancel")
                         .font(.system(size: Theme.FontSize.body))
                         .foregroundColor(Theme.Color.muted)
                         .frame(maxWidth: .infinity)
@@ -176,16 +185,16 @@ struct BiometricDisclosureView: View {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 64))
                 .foregroundColor(Theme.Color.primary)
-            Text("Tájékoztató és hozzájárulás elfogadva.")
+            Text("Disclosure and consent accepted.")
                 .font(.system(size: Theme.FontSize.title3, weight: .semibold))
                 .foregroundColor(Theme.Color.onSurface)
                 .multilineTextAlignment(.center)
 
-            actionButton(label: "Folytatás a liveness teszthez", color: Theme.Color.primary) {
+            actionButton(label: "Continue to liveness test", color: Theme.Color.primary) {
                 showLiveness = true
             }
             Button(action: onDismiss) {
-                Text("Bezárás")
+                Text("Close")
                     .font(.system(size: Theme.FontSize.body))
                     .foregroundColor(Theme.Color.muted)
             }
@@ -205,7 +214,7 @@ struct BiometricDisclosureView: View {
                 .foregroundColor(Theme.Color.onSurface)
                 .multilineTextAlignment(.center)
             Button(action: onDismiss) {
-                Text("Bezárás")
+                Text("Close")
                     .font(.system(size: Theme.FontSize.body))
                     .foregroundColor(Theme.Color.muted)
             }
@@ -217,10 +226,10 @@ struct BiometricDisclosureView: View {
 
     private var navigationTitle: String {
         switch vm.phase {
-        case .loading, .unavailable: return "Biometrikus"
-        case .disclosure:            return "Tájékoztató"
-        case .consent:               return "Hozzájárulás"
-        case .done:                  return "Kész"
+        case .loading, .unavailable: return "Biometric"
+        case .disclosure:            return "Disclosure"
+        case .consent:               return "Consent"
+        case .done:                  return "Done"
         }
     }
 
@@ -258,10 +267,6 @@ struct BiometricDisclosureView: View {
                 .cornerRadius(Theme.Radius.sm)
         }
         .disabled(vm.isLoading)
-    }
-
-    private func makeService() -> BiometricService {
-        BiometricService(auth: authManager)
     }
 }
 

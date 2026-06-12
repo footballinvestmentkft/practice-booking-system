@@ -39,9 +39,9 @@ final class BiometricDisclosureViewModel: ObservableObject {
             }
         } catch BiometricClientError.featureDisabled,
                 BiometricClientError.rateLimiterUnavailable {
-            phase = .unavailable("A biometrikus ellenőrzés jelenleg nem elérhető.")
+            phase = .unavailable("Biometric verification is currently unavailable.")
         } catch BiometricClientError.parentalConsentRequired {
-            phase = .unavailable("A biometrikus ellenőrzés 18 éves kor felett érhető el.")
+            phase = .unavailable("Biometric verification requires parental consent for users under 18.")
         } catch let e as BiometricClientError {
             error = e
         } catch {
@@ -62,7 +62,7 @@ final class BiometricDisclosureViewModel: ObservableObject {
             // Already accepted — advance to consent step.
             phase = .consent
         } catch BiometricClientError.parentalConsentRequired {
-            phase = .unavailable("A biometrikus ellenőrzés 18 éves kor felett érhető el.")
+            phase = .unavailable("Biometric verification requires parental consent for users under 18.")
         } catch let e as BiometricClientError {
             error = e
         } catch {

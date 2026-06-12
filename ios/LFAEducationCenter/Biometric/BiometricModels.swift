@@ -159,22 +159,22 @@ enum BiometricClientError: Error {
 
     var userFacingMessage: String {
         switch self {
-        case .featureDisabled:           return "A biometrikus ellenőrzés jelenleg nem elérhető."
-        case .rateLimiterUnavailable:    return "A biometrikus rendszer átmenetileg nem elérhető."
-        case .rateLimited:               return "Túl sok kísérlet. Kérjük, várj egy percet."
-        case .parentalConsentRequired:   return "A biometrikus ellenőrzés 18 éves kor felett érhető el."
-        case .disclosureRequired:        return "A tájékoztató elfogadása szükséges."
-        case .disclosureUpdateRequired:  return "A tájékoztató megváltozott. Kérjük, fogadd el újra."
-        case .consentRequired:           return "A hozzájárulás megadása szükséges."
-        case .disclosureAlreadyAccepted: return "A tájékoztató már el lett fogadva."
-        case .consentAlreadyActive:      return "A hozzájárulás már megadásra került."
-        case .livenessAlreadySubmitted:  return "A liveness teszt már elvégzésre került."
-        case .disclosureNotFound:        return "Nincs aktív tájékoztató visszavonni."
-        case .referenceNotFound:         return "Nincs tárolt referencia kép. Végezd el a liveness tesztet."
-        case .pathTraversalRejected:     return "Érvénytelen fájlnév."
-        case .unauthorized:              return "A munkamenet lejárt. Kérjük, jelentkezz be újra."
-        case .networkError:              return "Hálózati hiba. Ellenőrizd a kapcsolatot."
-        case .unknown(let code, let d):  return d ?? "Ismeretlen hiba (\(code))."
+        case .featureDisabled:           return "Biometric verification is currently unavailable."
+        case .rateLimiterUnavailable:    return "The biometric system is temporarily unavailable."
+        case .rateLimited:               return "Too many attempts. Please wait a minute."
+        case .parentalConsentRequired:   return "Biometric verification requires parental consent for users under 18."
+        case .disclosureRequired:        return "Please accept the biometric disclosure first."
+        case .disclosureUpdateRequired:  return "The disclosure has been updated. Please accept it again."
+        case .consentRequired:           return "Biometric consent is required."
+        case .disclosureAlreadyAccepted: return "The disclosure has already been accepted."
+        case .consentAlreadyActive:      return "Biometric consent is already active."
+        case .livenessAlreadySubmitted:  return "Liveness test already completed."
+        case .disclosureNotFound:        return "No active disclosure to revoke."
+        case .referenceNotFound:         return "No reference photo found. Please complete the liveness test."
+        case .pathTraversalRejected:     return "Invalid file name."
+        case .unauthorized:              return "Session expired. Please log in again."
+        case .networkError:              return "Network error. Check your connection."
+        case .unknown(let code, let d):  return d ?? "Unknown error (\(code))."
         }
     }
 

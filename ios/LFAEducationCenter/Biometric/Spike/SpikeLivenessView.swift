@@ -46,7 +46,14 @@ struct SpikeLivenessView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { closeToolbarItem }
         }
-        .onAppear { vm.start() }
+        .onAppear {
+            vm.start()
+#if DEBUG
+            let build   = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
+            let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+            print("[SPIKE] SpikeLivenessView appeared — v\(version) (\(build)) — flag: \(kBiometricAutoCaptureSpikeEnabled) — TrueDepth: \(ARFaceTrackingView.isDeviceSupported)")
+#endif
+        }
         .navigationViewStyle(.stack)
     }
 
@@ -305,14 +312,24 @@ struct SpikeLivenessView: View {
 
 #if DEBUG
     private var debugOverlay: some View {
-        let v = vm.debugValues
+        let v       = vm.debugValues
+        let build   = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        let truedepth = ARFaceTrackingView.isDeviceSupported
+
+        let holdPct: Int = {
+            if case .stabilizing(let p) = vm.stepState { return Int(p * 100) }
+            if case .confirmed = vm.stepState { return 100 }
+            return 0
+        }()
+
         let lines: [String] = [
-            "gesture: \(vm.currentGesture?.debugLabel ?? "—")  detected: \(v.detected ? "YES" : "no")",
-            String(format: "yaw: %+.3f  pitch: %+.3f", v.yaw, v.pitch),
+            "build: \(version) (\(build))  TrueDepth: \(truedepth ? "YES" : "NO")",
+            "step \(vm.currentStepIndex + 1)/\(vm.totalSteps): \(vm.currentGesture?.debugLabel ?? "—")  detected: \(v.detected ? "YES✓" : "no")",
+            String(format: "yaw: %+.3f  pitch: %+.3f  hold: \(holdPct)%%", v.yaw, v.pitch),
             String(format: "blinkL: %.2f  blinkR: %.2f", v.blinkLeft, v.blinkRight),
-            String(format: "smileL: %.2f  smileR: %.2f", v.smileLeft, v.smileRight),
-            String(format: "sqntL:  %.2f  sqntR:  %.2f", v.squintLeft, v.squintRight),
-            "hold: \(String(format: "%.0f", vm.stepState == .stabilizing(vm.stepState == .confirmed ? 1 : 0) ? 100 : 0))%",
+            String(format: "smileL: %.2f  smileR: %.2f  sqntAvg: %.2f",
+                   v.smileLeft, v.smileRight, (v.squintLeft + v.squintRight) / 2),
         ]
         return VStack(alignment: .leading, spacing: 2) {
             Text("⚙ SPIKE DEBUG")
