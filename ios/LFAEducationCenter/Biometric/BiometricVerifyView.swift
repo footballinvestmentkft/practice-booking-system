@@ -40,7 +40,7 @@ struct BiometricVerifyView: View {
             content
             if vm.isLoading { loadingOverlay }
         }
-        .navigationTitle("Ellenőrzés")
+        .navigationTitle("Verification")
         .navigationBarTitleDisplayMode(.inline)
         .alert(item: $vm.error) { err in
             errorAlert(for: err)
@@ -55,13 +55,13 @@ struct BiometricVerifyView: View {
         case .referenceNotFound:
             // Retries exhausted — offer pop-back or full dismiss.
             return Alert(
-                title: Text("Referencia kép nem áll rendelkezésre"),
-                message: Text("Az arcadat generálása nem sikerült időben. Próbáld meg újra a liveness folyamatot."),
-                primaryButton: .default(Text("Visszalépés")) {
+                title: Text("Reference photo unavailable"),
+                message: Text("Face data generation did not complete in time. Please retry the liveness flow."),
+                primaryButton: .default(Text("Go back")) {
                     // Reset NavigationLink first, then no dismiss — flow stays open.
                     onPopToLiveness()
                 },
-                secondaryButton: .cancel(Text("Bezárás")) {
+                secondaryButton: .cancel(Text("Close")) {
                     // Reset NavigationLink, then close entire flow.
                     onPopToLiveness()
                     onDismiss()
@@ -70,9 +70,9 @@ struct BiometricVerifyView: View {
         default:
             // Non-fatal errors: pop back to liveness without closing the full flow.
             return Alert(
-                title: Text("Hiba"),
+                title: Text("Error"),
                 message: Text(err.userFacingMessage),
-                dismissButton: .default(Text("Visszalépés")) {
+                dismissButton: .default(Text("Go back")) {
                     onPopToLiveness()
                 }
             )
@@ -101,7 +101,7 @@ struct BiometricVerifyView: View {
             outcomeView(
                 icon: "checkmark.circle.fill",
                 color: Theme.Color.primary,
-                title: "Biometrikus ellenőrzés sikeres.",
+                title: "Biometric verification successful.",
                 subtitle: nil,
                 showRetry: false
             )
@@ -109,23 +109,23 @@ struct BiometricVerifyView: View {
             outcomeView(
                 icon: "clock.fill",
                 color: Theme.Color.warning,
-                title: "Ellenőrzés kézi felülvizsgálatra vár.",
-                subtitle: "Az adminisztrátor hamarosan felülvizsgálja a kérelmet.",
+                title: "Verification pending manual review.",
+                subtitle: "An administrator will review your request shortly.",
                 showRetry: false
             )
         case "rejected":
             outcomeView(
                 icon: "xmark.circle.fill",
                 color: Theme.Color.error,
-                title: "Az ellenőrzés nem sikerült.",
-                subtitle: "Kérjük, próbáld meg újra a liveness folyamatot.",
+                title: "Verification failed.",
+                subtitle: "Please retry the liveness flow.",
                 showRetry: true
             )
         default:
             outcomeView(
                 icon: "questionmark.circle.fill",
                 color: Theme.Color.muted,
-                title: "Ismeretlen eredmény.",
+                title: "Unknown result.",
                 subtitle: nil,
                 showRetry: false
             )
@@ -162,7 +162,7 @@ struct BiometricVerifyView: View {
                     // Pop back to liveness — flow stays open for another attempt.
                     onPopToLiveness()
                 } label: {
-                    Text("Újra")
+                    Text("Retry")
                         .font(.system(size: Theme.FontSize.body, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -174,7 +174,7 @@ struct BiometricVerifyView: View {
             }
 
             Button(action: onDismiss) {
-                Text("Bezárás")
+                Text("Close")
                     .font(.system(size: Theme.FontSize.body))
                     .foregroundColor(Theme.Color.muted)
             }
