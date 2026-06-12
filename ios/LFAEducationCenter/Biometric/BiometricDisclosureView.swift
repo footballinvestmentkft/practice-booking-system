@@ -36,11 +36,18 @@ struct BiometricDisclosureView: View {
                 )
             }
             .fullScreenCover(isPresented: $showLiveness) {
-                BiometricLivenessView(
-                    service: makeService(),
-                    onDismiss: { showLiveness = false }
-                )
-                .environmentObject(authManager)
+                if kBiometricAutoCaptureSpikeEnabled {
+                    // Spike: ARKit auto-capture flow (feat/biometric-auto-capture-spike).
+                    // kBiometricAutoCaptureSpikeEnabled is false by default — no-op in production.
+                    SpikeLivenessView(onDismiss: { showLiveness = false })
+                        .environmentObject(authManager)
+                } else {
+                    BiometricLivenessView(
+                        service: makeService(),
+                        onDismiss: { showLiveness = false }
+                    )
+                    .environmentObject(authManager)
+                }
             }
         }
         .onAppear {

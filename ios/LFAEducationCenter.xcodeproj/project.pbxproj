@@ -92,6 +92,14 @@
 		BB000004000000000000078 /* BiometricLivenessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000078 /* BiometricLivenessView.swift */; };
 		BB000004000000000000079 /* BiometricVerifyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000079 /* BiometricVerifyViewModel.swift */; };
 		BB00000400000000000007A /* BiometricVerifyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000007A /* BiometricVerifyView.swift */; };
+		BB00000400000000000007B /* BiometricAutoCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000007B /* BiometricAutoCapture.swift */; };
+		BB00000400000000000007C /* FaceGestureType.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000007C /* FaceGestureType.swift */; };
+		BB00000400000000000007D /* FacePoseThresholds.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000007D /* FacePoseThresholds.swift */; };
+		BB00000400000000000007E /* FaceGestureDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000007E /* FaceGestureDetector.swift */; };
+		BB00000400000000000007F /* GestureStabilizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00000300000000000007F /* GestureStabilizer.swift */; };
+		BB000004000000000000080 /* SpikeLivenessViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000080 /* SpikeLivenessViewModel.swift */; };
+		BB000004000000000000081 /* ARFaceTrackingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000081 /* ARFaceTrackingView.swift */; };
+		BB000004000000000000082 /* SpikeLivenessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000082 /* SpikeLivenessView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -182,6 +190,14 @@
 		BB00000300000000000007A /* BiometricVerifyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricVerifyView.swift; sourceTree = "<group>"; };
 		C2FD7851919C9B8A9FC46733 /* JugglingVideoItem.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JugglingVideoItem.swift; sourceTree = "<group>"; };
 		E075CE337E219F48D39CBDFA /* JugglingPlayerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JugglingPlayerView.swift; sourceTree = "<group>"; };
+		BB00000300000000000007B /* BiometricAutoCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricAutoCapture.swift; sourceTree = "<group>"; };
+		BB00000300000000000007C /* FaceGestureType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceGestureType.swift; sourceTree = "<group>"; };
+		BB00000300000000000007D /* FacePoseThresholds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FacePoseThresholds.swift; sourceTree = "<group>"; };
+		BB00000300000000000007E /* FaceGestureDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceGestureDetector.swift; sourceTree = "<group>"; };
+		BB00000300000000000007F /* GestureStabilizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GestureStabilizer.swift; sourceTree = "<group>"; };
+		BB000003000000000000080 /* SpikeLivenessViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpikeLivenessViewModel.swift; sourceTree = "<group>"; };
+		BB000003000000000000081 /* ARFaceTrackingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARFaceTrackingView.swift; sourceTree = "<group>"; };
+		BB000003000000000000082 /* SpikeLivenessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpikeLivenessView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -417,6 +433,7 @@
 				BB000003000000000000078 /* BiometricLivenessView.swift */,
 				BB000003000000000000079 /* BiometricVerifyViewModel.swift */,
 				BB00000300000000000007A /* BiometricVerifyView.swift */,
+				BB000002000000000000019 /* Spike */,
 			);
 			path = Biometric;
 			sourceTree = "<group>";
@@ -431,6 +448,21 @@
 			);
 			name = Juggling;
 			path = Juggling;
+			sourceTree = "<group>";
+		};
+		BB000002000000000000019 /* Spike */ = {
+			isa = PBXGroup;
+			children = (
+				BB00000300000000000007B /* BiometricAutoCapture.swift */,
+				BB00000300000000000007C /* FaceGestureType.swift */,
+				BB00000300000000000007D /* FacePoseThresholds.swift */,
+				BB00000300000000000007E /* FaceGestureDetector.swift */,
+				BB00000300000000000007F /* GestureStabilizer.swift */,
+				BB000003000000000000080 /* SpikeLivenessViewModel.swift */,
+				BB000003000000000000081 /* ARFaceTrackingView.swift */,
+				BB000003000000000000082 /* SpikeLivenessView.swift */,
+			);
+			path = Spike;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -586,6 +618,14 @@
 				7FC19EF38DE99E82AE19FBE0 /* JugglingVideoListView.swift in Sources */,
 				36CB92D674607508AC4335E1 /* JugglingVideoListViewModel.swift in Sources */,
 				888E1C3A10647BB0B654ABB3 /* JugglingPlayerView.swift in Sources */,
+				BB00000400000000000007B /* BiometricAutoCapture.swift in Sources */,
+				BB00000400000000000007C /* FaceGestureType.swift in Sources */,
+				BB00000400000000000007D /* FacePoseThresholds.swift in Sources */,
+				BB00000400000000000007E /* FaceGestureDetector.swift in Sources */,
+				BB00000400000000000007F /* GestureStabilizer.swift in Sources */,
+				BB000004000000000000080 /* SpikeLivenessViewModel.swift in Sources */,
+				BB000004000000000000081 /* ARFaceTrackingView.swift in Sources */,
+				BB000004000000000000082 /* SpikeLivenessView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
