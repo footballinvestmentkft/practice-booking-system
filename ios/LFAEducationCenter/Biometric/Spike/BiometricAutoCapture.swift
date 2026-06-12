@@ -15,3 +15,10 @@ var kBiometricAutoCaptureSpikeEnabled: Bool = false
 #else
 let kBiometricAutoCaptureSpikeEnabled: Bool = false   // compile-time constant → optimizer strips spike code
 #endif
+
+// Spike build label — identifies which commit era this binary came from.
+// Shown in console log and #if DEBUG overlay so the device tester can confirm
+// they are running the expected build without Xcode attached.
+// Format: "spike-v<N>/<nearest-parent-sha>"
+// Updated with each fix commit; does NOT need to equal the post-commit SHA.
+let kSpikeLabel = "spike-v5/dcd1bbe2"

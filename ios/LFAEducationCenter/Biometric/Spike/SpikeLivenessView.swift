@@ -51,7 +51,7 @@ struct SpikeLivenessView: View {
 #if DEBUG
             let build   = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
             let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
-            print("[SPIKE] SpikeLivenessView appeared — v\(version) (\(build)) — flag: \(kBiometricAutoCaptureSpikeEnabled) — TrueDepth: \(ARFaceTrackingView.isDeviceSupported)")
+            print("[SPIKE] SpikeLivenessView appeared — \(kSpikeLabel) — v\(version)(\(build)) — flag:\(kBiometricAutoCaptureSpikeEnabled) — TrueDepth:\(ARFaceTrackingView.isDeviceSupported)")
 #endif
         }
         .navigationViewStyle(.stack)
@@ -324,7 +324,7 @@ struct SpikeLivenessView: View {
         }()
 
         let lines: [String] = [
-            "build: \(version) (\(build))  TrueDepth: \(truedepth ? "YES" : "NO")",
+            "\(kSpikeLabel)  TrueDepth:\(truedepth ? "YES" : "NO")  v\(version)(\(build))",
             "step \(vm.currentStepIndex + 1)/\(vm.totalSteps): \(vm.currentGesture?.debugLabel ?? "—")  detected: \(v.detected ? "YES✓" : "no")",
             String(format: "yaw: %+.3f  pitch: %+.3f  hold: \(holdPct)%%", v.yaw, v.pitch),
             String(format: "blinkL: %.2f  blinkR: %.2f", v.blinkLeft, v.blinkRight),
