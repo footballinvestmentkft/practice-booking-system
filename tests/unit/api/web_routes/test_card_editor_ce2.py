@@ -433,6 +433,6 @@ class TestCE217RouteCount:
         """PR-JUG-1 juggling intake adds 5 new paths (883 prior → 888); P4 private media adds 2 (888 → 890)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 890, (
+        assert len(paths) == 891, (
             f"Expected 890 routes (888 prior (now 890 with P4 private media +2) + 2 P4 private-media paths), got {len(paths)}."
         )

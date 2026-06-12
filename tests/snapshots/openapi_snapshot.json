@@ -1462,6 +1462,74 @@
         ]
       }
     },
+    "/api/v1/users/me/juggling/videos": {
+      "get": {
+        "tags": [
+          "users",
+          "users",
+          "juggling",
+          "juggling"
+        ],
+        "summary": "List own juggling videos",
+        "operationId": "list_videos_api_v1_users_me_juggling_videos_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Max items to return (1\u2013100)",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Max items to return (1\u2013100)"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of items to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Number of items to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JugglingVideoListOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/users/me/juggling/videos/upload-init": {
       "post": {
         "tags": [
@@ -55950,6 +56018,172 @@
           "source_type"
         ],
         "title": "JugglingUploadInitRequest"
+      },
+      "JugglingVideoItemOut": {
+        "properties": {
+          "video_id": {
+            "type": "string",
+            "title": "Video Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "transcode_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transcode Status"
+          },
+          "quality_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality Status"
+          },
+          "quality_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality Score"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Seconds"
+          },
+          "processed_resolution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processed Resolution"
+          },
+          "processed_fps": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processed Fps"
+          },
+          "processed_file_size_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processed File Size Bytes"
+          },
+          "has_thumbnail": {
+            "type": "boolean",
+            "title": "Has Thumbnail"
+          },
+          "has_media": {
+            "type": "boolean",
+            "title": "Has Media"
+          },
+          "upload_source": {
+            "type": "string",
+            "title": "Upload Source"
+          },
+          "source_type": {
+            "type": "string",
+            "title": "Source Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "video_id",
+          "status",
+          "transcode_status",
+          "quality_status",
+          "quality_score",
+          "created_at",
+          "updated_at",
+          "duration_seconds",
+          "processed_resolution",
+          "processed_fps",
+          "processed_file_size_bytes",
+          "has_thumbnail",
+          "has_media",
+          "upload_source",
+          "source_type"
+        ],
+        "title": "JugglingVideoItemOut",
+        "description": "One video row in the list response.\n\nPrivacy invariant: no raw path, no filesystem path, no URL is ever included.\nhas_thumbnail / has_media signal expected availability; the media endpoints\nperform the authoritative disk check and return 404 if the file is absent."
+      },
+      "JugglingVideoListOut": {
+        "properties": {
+          "videos": {
+            "items": {
+              "$ref": "#/components/schemas/JugglingVideoItemOut"
+            },
+            "type": "array",
+            "title": "Videos"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "videos",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "JugglingVideoListOut"
       },
       "LFAPlayerAmateurRequest": {
         "properties": {
