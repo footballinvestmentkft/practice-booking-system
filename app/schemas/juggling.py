@@ -111,3 +111,36 @@ class JugglingQualityOut(BaseModel):
     processed_file_size_bytes:  Optional[int] = None
 
     model_config = {"from_attributes": True}
+
+
+# ── Video list schemas (P5) ───────────────────────────────────────────────────
+
+class JugglingVideoItemOut(BaseModel):
+    """One video row in the list response.
+
+    Privacy invariant: no raw path, no filesystem path, no URL is ever included.
+    has_thumbnail / has_media signal expected availability; the media endpoints
+    perform the authoritative disk check and return 404 if the file is absent.
+    """
+    video_id:                   str
+    status:                     str
+    transcode_status:           Optional[str]
+    quality_status:             Optional[str]
+    quality_score:              Optional[float]
+    created_at:                 datetime
+    updated_at:                 datetime
+    duration_seconds:           Optional[float]
+    processed_resolution:       Optional[str]
+    processed_fps:              Optional[float]
+    processed_file_size_bytes:  Optional[int]
+    has_thumbnail:              bool
+    has_media:                  bool
+    upload_source:              str
+    source_type:                str
+
+
+class JugglingVideoListOut(BaseModel):
+    videos: List[JugglingVideoItemOut]
+    total:  int
+    limit:  int
+    offset: int

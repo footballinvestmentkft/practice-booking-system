@@ -1,6 +1,7 @@
 """
 Juggling video intake endpoints.
 
+GET  /api/v1/users/me/juggling/videos                    — list own videos (P5)
 POST /api/v1/users/me/juggling/videos/upload-init      — create pending record
 POST /api/v1/users/me/juggling/videos/{video_id}/upload  — upload file
 POST /api/v1/users/me/juggling/videos/{video_id}/complete — enqueue analysis
@@ -27,13 +28,13 @@ Security pipeline (pre-save, all in upload endpoint):
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Request
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_current_user, get_current_user_media
-from app.models.juggling import JugglingVideo, JugglingVideoStatus
+from app.models.juggling import JugglingVideo, JugglingVideoStatus, JugglingTranscodeStatus
 from app.models.user import User
 from app.schemas.juggling import (
     JugglingCompleteOut,
@@ -41,6 +42,8 @@ from app.schemas.juggling import (
     JugglingUploadFileOut,
     JugglingUploadInitRequest,
     JugglingUploadInitOut,
+    JugglingVideoItemOut,
+    JugglingVideoListOut,
 )
 from app.services.juggling.consent_service import has_service_consent
 from app.services.juggling.feature_flag import require_juggling_enabled
@@ -62,7 +65,41 @@ from app.tasks.juggling_transcode_task import transcode_video_task
 
 router = APIRouter()
 
-# Statuses from which complete() is blocked (gdpr_deleted is also caught by _get_video_or_404 → 410)
+# ── P5 list helpers ───────────────────────────────────────────────────────────
+
+# Statuses where a thumbnail cannot exist yet — mirrors media_service._THUMBNAIL_NOT_READY_STATUSES
+_THUMBNAIL_NOT_READY = frozenset({
+    JugglingVideoStatus.pending_upload.value,
+    JugglingVideoStatus.uploaded.value,
+    JugglingVideoStatus.processing.value,
+})
+
+
+def _has_thumbnail(video: JugglingVideo) -> bool:
+    return video.thumbnail_path is not None and video.status not in _THUMBNAIL_NOT_READY
+
+
+def _has_media(video: JugglingVideo) -> bool:
+    return (
+        video.status == JugglingVideoStatus.analyzed.value
+        and video.transcode_status == JugglingTranscodeStatus.done.value
+        and video.processed_path is not None
+    )
+
+
+def _duration_seconds(video: JugglingVideo) -> float | None:
+    detail = video.quality_detail or {}
+    val = detail.get("duration_seconds")
+    if val is None:
+        return None
+    try:
+        return float(val)
+    except (TypeError, ValueError):
+        return None
+
+
+# ── Statuses from which complete() is blocked ─────────────────────────────────
+# (gdpr_deleted is also caught by _get_video_or_404 → 410)
 _COMPLETE_BLOCKED = {
     JugglingVideoStatus.pending_upload.value,
     JugglingVideoStatus.processing.value,
@@ -83,6 +120,58 @@ def _get_video_or_404(video_id: str, user_id: int, db: Session) -> JugglingVideo
     if video.status == JugglingVideoStatus.gdpr_deleted.value:
         raise HTTPException(status_code=410, detail="Video has been permanently deleted.")
     return video
+
+
+@router.get(
+    "/me/juggling/videos",
+    response_model=JugglingVideoListOut,
+    dependencies=[Depends(require_juggling_enabled)],
+    summary="List own juggling videos",
+    tags=["juggling"],
+)
+def list_videos(
+    limit:  int = Query(default=50, ge=1, le=100, description="Max items to return (1–100)"),
+    offset: int = Query(default=0,  ge=0,          description="Number of items to skip"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> JugglingVideoListOut:
+    base_q = (
+        db.query(JugglingVideo)
+        .filter(
+            JugglingVideo.user_id == current_user.id,
+            JugglingVideo.status != JugglingVideoStatus.gdpr_deleted.value,
+        )
+    )
+    total = base_q.count()
+    rows = (
+        base_q
+        .order_by(JugglingVideo.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
+
+    items = [
+        JugglingVideoItemOut(
+            video_id=str(v.id),
+            status=v.status,
+            transcode_status=v.transcode_status,
+            quality_status=v.quality_status,
+            quality_score=float(v.quality_score) if v.quality_score is not None else None,
+            created_at=v.created_at,
+            updated_at=v.updated_at,
+            duration_seconds=_duration_seconds(v),
+            processed_resolution=v.processed_resolution,
+            processed_fps=v.processed_fps,
+            processed_file_size_bytes=v.processed_file_size_bytes,
+            has_thumbnail=_has_thumbnail(v),
+            has_media=_has_media(v),
+            upload_source=v.upload_source,
+            source_type=v.source_type,
+        )
+        for v in rows
+    ]
+    return JugglingVideoListOut(videos=items, total=total, limit=limit, offset=offset)
 
 
 @router.post(
