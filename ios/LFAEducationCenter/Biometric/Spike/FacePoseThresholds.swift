@@ -25,8 +25,10 @@ struct FacePoseThresholds {
     var pitchUp:  Float = 0.20      // ≈ +11° — provisional, calibrate
 
     /// Neutral window: |yaw| < neutralYaw AND |pitch| < neutralPitch
-    var neutralYaw:   Float = 0.12  // ≈ ±7°
-    var neutralPitch: Float = 0.12
+    /// Calibrated from device: rest yaw ≈ -0.143, rest pitch ≈ -0.176 → needs ≥ 0.20.
+    /// Set to 0.25 (±14°) to give a comfortable margin above observed rest values.
+    var neutralYaw:   Float = 0.25  // ≈ ±14° — widened from 0.12 after device calibration
+    var neutralPitch: Float = 0.25  // ≈ ±14° — widened from 0.12 after device calibration
 
     // MARK: — Blendshapes [0.0 … 1.0]
 

@@ -11,7 +11,7 @@ import Foundation
 //
 // NEVER merge a change that sets this to `true` in the non-DEBUG branch.
 #if DEBUG
-var kBiometricAutoCaptureSpikeEnabled: Bool = false
+var kBiometricAutoCaptureSpikeEnabled: Bool = true   // LOCAL-ONLY — do NOT commit
 #else
 let kBiometricAutoCaptureSpikeEnabled: Bool = false   // compile-time constant → optimizer strips spike code
 #endif
@@ -21,4 +21,4 @@ let kBiometricAutoCaptureSpikeEnabled: Bool = false   // compile-time constant �
 // they are running the expected build without Xcode attached.
 // Format: "spike-v<N>/<nearest-parent-sha>"
 // Updated with each fix commit; does NOT need to equal the post-commit SHA.
-let kSpikeLabel = "spike-v5/dcd1bbe2"
+let kSpikeLabel = "spike-v6/neutral-threshold-fix"
