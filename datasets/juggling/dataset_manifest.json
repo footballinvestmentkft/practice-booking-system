@@ -1,0 +1,50 @@
+{
+  "manifest_version": "1.0",
+  "schema_version": "annotation_schema_v1.json",
+  "created_at": "2026-06-12",
+  "last_updated": "2026-06-12",
+
+  "summary": {
+    "total_videos": 0,
+    "annotated_videos": 0,
+    "by_difficulty": {
+      "easy": 0,
+      "medium": 0,
+      "hard": 0
+    },
+    "total_annotated_count": 0,
+    "phase_a_acceptance": {
+      "required_total": 20,
+      "required_easy": 5,
+      "required_medium": 10,
+      "required_hard": 5,
+      "status": "IN_PROGRESS"
+    }
+  },
+
+  "videos": [
+
+    {
+      "_comment": "TEMPLATE — copy and fill for each real video. Delete this entry.",
+      "video_id": "TEMPLATE_DELETE_ME",
+      "filename": "example.mp4",
+      "difficulty": "easy",
+      "annotation_file": "annotations/TEMPLATE.json",
+      "checksum_sha256": "FILL_IN_SHA256_OF_ORIGINAL_VIDEO",
+      "video_storage": "local_only",
+      "video_path_local": "datasets/juggling/videos/example.mp4",
+      "video_available": false,
+      "notes": "Template entry — replace with real video data"
+    }
+
+  ],
+
+  "storage_policy": {
+    "video_files": "NOT committed to git. Stored locally at datasets/juggling/videos/ and mirrored on Seafile.",
+    "annotation_files": "Committed to git at datasets/juggling/annotations/",
+    "large_file_threshold_mb": 5,
+    "gitignore_rule": "datasets/juggling/videos/"
+  },
+
+  "checksum_note": "checksum_sha256 is computed on the ORIGINAL video file (before any processing). If the file changes, recompute: sha256sum <filename>"
+}
