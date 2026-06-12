@@ -6,7 +6,7 @@ import Foundation
 // We retry silently up to kMaxRetries times with kRetryDelayNs between each attempt.
 // After exhausting retries the error surfaces to the UI for a controlled alert.
 // Task.sleep(nanoseconds:) is available from iOS 13 — no iOS 16+ Duration needed.
-private let kMaxRetries:   Int    = 3
+private let kMaxRetries:   Int    = 5
 private let kRetryDelayNs: UInt64 = 2_000_000_000   // 2 seconds in nanoseconds
 
 @MainActor
