@@ -1,0 +1,281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "juggling_annotation_v1",
+  "title": "Juggling Video Annotation Schema v1.0",
+  "description": "Ground-truth annotation for a single juggling video clip. Required fields must be filled by the primary annotator. contact_events is optional in v1.0.",
+  "type": "object",
+
+  "required": [
+    "annotation_schema_version",
+    "video_id",
+    "filename",
+    "source",
+    "duration_seconds",
+    "resolution",
+    "fps",
+    "orientation",
+    "difficulty",
+    "total_juggling_count",
+    "count_confidence",
+    "dominant_body_part",
+    "body_parts_used",
+    "ball_visible_quality",
+    "lighting_quality",
+    "camera_stability",
+    "multi_person_present",
+    "multiple_balls_present",
+    "expected_validity",
+    "annotator",
+    "annotation_date",
+    "annotation_version"
+  ],
+
+  "properties": {
+
+    "annotation_schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version — must be '1.0' for this schema."
+    },
+
+    "video_id": {
+      "type": "string",
+      "description": "Stable identifier matching dataset_manifest.json. Format: jug_<difficulty>_<NNN> (e.g. jug_easy_001) or UUID from upload system."
+    },
+
+    "filename": {
+      "type": "string",
+      "description": "Original video filename (without path). Must match dataset_manifest.json."
+    },
+
+    "source": {
+      "type": "string",
+      "enum": ["iphone_14", "iphone_15_pro", "iphone_other", "android", "dji_mini", "gopro", "external_clip", "unknown"],
+      "description": "Device or source used to record the video."
+    },
+
+    "duration_seconds": {
+      "type": "number",
+      "minimum": 1,
+      "description": "Video duration in seconds (from ffprobe or manual measurement)."
+    },
+
+    "resolution": {
+      "type": "string",
+      "pattern": "^[0-9]+x[0-9]+$",
+      "description": "Width x Height of the processed video file (e.g. '1280x720')."
+    },
+
+    "fps": {
+      "type": "number",
+      "minimum": 1,
+      "description": "Detected frame rate of the video (from ffprobe)."
+    },
+
+    "orientation": {
+      "type": "string",
+      "enum": ["landscape", "portrait", "square"],
+      "description": "Visual orientation after rotation correction."
+    },
+
+    "difficulty": {
+      "type": "string",
+      "enum": ["easy", "medium", "hard"],
+      "description": "Subjective difficulty tier: easy (good conditions), medium (typical), hard (challenging)."
+    },
+
+    "total_juggling_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of juggling touches in the entire clip. Counted manually at 0.5x playback speed."
+    },
+
+    "count_confidence": {
+      "type": "string",
+      "enum": ["high", "medium", "low"],
+      "description": "Annotator's confidence in the count. high = certain ±0, medium = ±1, low = ±2 or more."
+    },
+
+    "dominant_body_part": {
+      "type": "string",
+      "enum": ["foot", "knee", "thigh", "shoulder", "head", "chest", "mixed"],
+      "description": "The body part responsible for the majority of touches."
+    },
+
+    "body_parts_used": {
+      "type": "object",
+      "description": "Which body parts are used at least once in the clip.",
+      "required": ["foot", "knee", "thigh", "shoulder", "head", "chest"],
+      "properties": {
+        "foot":     {"type": "boolean"},
+        "knee":     {"type": "boolean"},
+        "thigh":    {"type": "boolean"},
+        "shoulder": {"type": "boolean"},
+        "head":     {"type": "boolean"},
+        "chest":    {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+
+    "ball_visible_quality": {
+      "type": "string",
+      "enum": ["excellent", "good", "partial", "poor"],
+      "description": "How clearly the ball is visible throughout the clip. excellent = always sharp; poor = frequently occluded/blurred."
+    },
+
+    "lighting_quality": {
+      "type": "string",
+      "enum": ["excellent", "good", "variable", "poor"],
+      "description": "Overall lighting quality. variable = changes during clip (e.g. moving past windows)."
+    },
+
+    "camera_stability": {
+      "type": "string",
+      "enum": ["tripod", "handheld_stable", "handheld_moving", "tracking"],
+      "description": "How the camera was held. tracking = camera follows the player."
+    },
+
+    "multi_person_present": {
+      "type": "boolean",
+      "description": "True if more than one person is visible at any point in the clip."
+    },
+
+    "multiple_balls_present": {
+      "type": "boolean",
+      "description": "True if more than one ball is visible at any point in the clip."
+    },
+
+    "expected_validity": {
+      "type": "string",
+      "enum": ["valid", "borderline", "invalid"],
+      "description": "Is this clip suitable for detection evaluation? valid = yes; borderline = usable but has issues; invalid = exclude from eval."
+    },
+
+    "invalidity_reason": {
+      "type": ["string", "null"],
+      "description": "If expected_validity is not 'valid', describe why. Null otherwise."
+    },
+
+    "notes": {
+      "type": ["string", "null"],
+      "description": "Free-text notes about anything unusual in this clip."
+    },
+
+    "annotator": {
+      "type": "string",
+      "description": "Initials or identifier of the primary annotator (e.g. 'ZL')."
+    },
+
+    "second_annotator": {
+      "type": ["string", "null"],
+      "description": "Initials of the second annotator if cross-check was done. Null if only one annotator."
+    },
+
+    "second_annotator_count": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "total_juggling_count as determined by the second annotator. Null if no second annotator."
+    },
+
+    "inter_annotator_agreement": {
+      "type": ["boolean", "null"],
+      "description": "True if both annotators agree within ±2. Null if no second annotator."
+    },
+
+    "annotation_date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+      "description": "ISO 8601 date when annotation was completed (YYYY-MM-DD)."
+    },
+
+    "annotation_version": {
+      "type": "string",
+      "const": "v1.0",
+      "description": "Annotation workflow version used. Must be 'v1.0' for this schema."
+    },
+
+    "contact_events": {
+      "type": ["array", "null"],
+      "description": "Frame-level contact events. Optional in v1.0. Required for Phase D training data.",
+      "items": {
+        "type": "object",
+        "required": ["event_id", "timestamp_ms", "body_part", "annotation_confidence"],
+        "properties": {
+          "event_id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Sequential event number within this clip."
+          },
+          "timestamp_ms": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Approximate millisecond offset of the contact frame from video start."
+          },
+          "body_part": {
+            "type": "string",
+            "enum": ["foot", "knee", "thigh", "shoulder", "head", "chest"]
+          },
+          "side": {
+            "type": ["string", "null"],
+            "enum": ["left", "right", "unknown", null],
+            "description": "Which side of the body made contact."
+          },
+          "ball_height_approx_px": {
+            "type": ["integer", "null"],
+            "minimum": 0,
+            "description": "Approximate pixel Y-coordinate of the ball center at contact. Null if not estimated."
+          },
+          "annotation_confidence": {
+            "type": "string",
+            "enum": ["certain", "probable", "uncertain"],
+            "description": "How confident the annotator is that this is a real contact event."
+          },
+          "note": {
+            "type": ["string", "null"],
+            "description": "Optional per-event note."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+
+  },
+
+  "additionalProperties": false,
+
+  "examples": [
+    {
+      "annotation_schema_version": "1.0",
+      "video_id": "jug_easy_001",
+      "filename": "jug_easy_001.mp4",
+      "source": "iphone_15_pro",
+      "duration_seconds": 18.4,
+      "resolution": "1280x720",
+      "fps": 29.944,
+      "orientation": "landscape",
+      "difficulty": "easy",
+      "total_juggling_count": 14,
+      "count_confidence": "high",
+      "dominant_body_part": "foot",
+      "body_parts_used": {
+        "foot": true, "knee": false, "thigh": true,
+        "shoulder": false, "head": false, "chest": false
+      },
+      "ball_visible_quality": "excellent",
+      "lighting_quality": "good",
+      "camera_stability": "tripod",
+      "multi_person_present": false,
+      "multiple_balls_present": false,
+      "expected_validity": "valid",
+      "invalidity_reason": null,
+      "notes": "Clear light, static camera, ideal conditions.",
+      "annotator": "ZL",
+      "second_annotator": null,
+      "second_annotator_count": null,
+      "inter_annotator_agreement": null,
+      "annotation_date": "2026-06-12",
+      "annotation_version": "v1.0",
+      "contact_events": null
+    }
+  ]
+}

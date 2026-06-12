@@ -177,3 +177,17 @@ tests/unit/test_card_preview_routing.py
 # See docs/biometric/PR5_PLAN.md for model weight policy.
 *.onnx
 app/services/biometric/models/
+
+# Juggling dataset — large video files (licence_policy: never commit)
+# Annotations and manifest are committed; videos are local/Seafile only.
+datasets/juggling/videos/
+app/uploads/juggling/*.mp4
+app/uploads/juggling/*.mov
+app/uploads/juggling/*_proc.mp4
+app/uploads/juggling/*_thumb.jpg
+
+# Juggling trained models — large binary files (licence_policy: never commit)
+# Store in local_models/juggling/ locally; export path via config.
+local_models/juggling/*.onnx
+local_models/juggling/*.pt
+local_models/juggling/*.pth
