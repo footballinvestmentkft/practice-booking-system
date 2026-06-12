@@ -183,37 +183,175 @@ struct ProfileView: View {
     // MARK: — Biometric (dev/test — gated by BIOMETRIC_DISCLOSURE_ENABLED on backend)
 
     private var biometricSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("BIOMETRIKUS AZONOSÍTÁS")
+        let profile = dashboardVM.profile
+        let state   = profile?.biometricRegistrationState ?? .notStarted
+        return VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("BIOMETRIC VERIFICATION")
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundColor(Theme.Color.muted)
                 .kerning(0.8)
 
-            Button { isShowingBiometric = true } label: {
-                HStack {
-                    Image(systemName: "faceid")
-                        .font(.system(size: 15))
-                        .foregroundColor(Theme.Color.primary)
-                        .frame(width: 28)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Biometrikus regisztráció")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundColor(Theme.Color.onSurface)
-                        Text("Tájékoztató és liveness teszt")
-                            .font(.system(size: 11))
-                            .foregroundColor(Theme.Color.muted)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(Theme.Color.muted)
-                }
-                .padding(Theme.Spacing.md)
-                .background(Theme.Color.surface)
-                .cornerRadius(Theme.Radius.md)
+            switch state {
+            case .verified:
+                biometricActiveCard
+
+            case .pendingReview:
+                biometricStatusCard(
+                    icon: "clock.fill",
+                    iconColor: Theme.Color.warning,
+                    title: "Under biometric review",
+                    subtitle: "An administrator will check shortly."
+                )
+
+            case .inProgress:
+                biometricStatusCard(
+                    icon: "arrow.clockwise",
+                    iconColor: Theme.Color.muted,
+                    title: "Biometric registration in progress",
+                    subtitle: "Verification not yet complete."
+                )
+
+            case .rejected, .notStarted:
+                biometricRegisterCTA
             }
+
+            #if DEBUG
+            biometricDebugOverlay(profile: profile, state: state)
+            #endif
         }
         .padding(.top, Theme.Spacing.lg)
+    }
+
+    // Active state: green badge, secondary CTA for re-registration
+    private var biometricActiveCard: some View {
+        VStack(spacing: Theme.Spacing.sm) {
+            HStack {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 15))
+                    .foregroundColor(Theme.Color.primary)
+                    .frame(width: 28)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Biometric verification active")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(Theme.Color.primary)
+                    Text("Face recognition registered and active.")
+                        .font(.system(size: 11))
+                        .foregroundColor(Theme.Color.muted)
+                }
+                Spacer()
+            }
+            .padding(Theme.Spacing.md)
+            .background(Theme.Color.primary.opacity(0.08))
+            .cornerRadius(Theme.Radius.md)
+
+            Button { isShowingBiometric = true } label: {
+                Text("Refresh biometrics")
+                    .font(.system(size: 13))
+                    .foregroundColor(Theme.Color.muted)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .background(Theme.Color.surface)
+                    .cornerRadius(Theme.Radius.sm)
+            }
+        }
+    }
+
+    // Primary CTA: registration not started or rejected
+    private var biometricRegisterCTA: some View {
+        Button { isShowingBiometric = true } label: {
+            HStack {
+                Image(systemName: "faceid")
+                    .font(.system(size: 15))
+                    .foregroundColor(Theme.Color.primary)
+                    .frame(width: 28)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Biometric registration")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(Theme.Color.onSurface)
+                    Text("Disclosure and liveness test")
+                        .font(.system(size: 11))
+                        .foregroundColor(Theme.Color.muted)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(Theme.Color.muted)
+            }
+            .padding(Theme.Spacing.md)
+            .background(Theme.Color.surface)
+            .cornerRadius(Theme.Radius.md)
+        }
+    }
+
+    // Debug overlay — visible only in DEBUG builds.
+    // Shows the full data pipeline so a physical-device failure can be diagnosed
+    // without Xcode attached: API raw value → decoded state → rendered branch.
+    #if DEBUG
+    private func biometricDebugOverlay(
+        profile: UserProfile?,
+        state:   UserProfile.BiometricRegistrationState
+    ) -> some View {
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+
+        let stateLabel: String
+        switch state {
+        case .notStarted:    stateLabel = "notStarted → registerCTA"
+        case .inProgress:    stateLabel = "inProgress → inProgressCard"
+        case .verified:      stateLabel = "verified → activeCard"
+        case .pendingReview: stateLabel = "pendingReview → pendingReviewCard"
+        case .rejected:      stateLabel = "rejected → rejectedCTA"
+        }
+
+        let lines = [
+            "build: \(version) (\(build))",
+            "faceMatchStatus: \(profile?.faceMatchStatus ?? "<nil>")",
+            "faceRefPhotoStatus: \(profile?.faceReferencePhotoStatus ?? "<nil>")",
+            "state: \(stateLabel)",
+        ]
+
+        return VStack(alignment: .leading, spacing: 2) {
+            Text("⚙ DEBUG")
+                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                .foregroundColor(.orange)
+            ForEach(lines, id: \.self) { line in
+                Text(line)
+                    .font(.system(size: 9, design: .monospaced))
+                    .foregroundColor(.orange.opacity(0.85))
+            }
+        }
+        .padding(6)
+        .background(Color.black.opacity(0.06))
+        .cornerRadius(6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    #endif
+
+    // Informational card for non-interactive states
+    private func biometricStatusCard(
+        icon: String,
+        iconColor: Color,
+        title: String,
+        subtitle: String
+    ) -> some View {
+        HStack {
+            Image(systemName: icon)
+                .font(.system(size: 15))
+                .foregroundColor(iconColor)
+                .frame(width: 28)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(Theme.Color.onSurface)
+                Text(subtitle)
+                    .font(.system(size: 11))
+                    .foregroundColor(Theme.Color.muted)
+            }
+            Spacer()
+        }
+        .padding(Theme.Spacing.md)
+        .background(Theme.Color.surface)
+        .cornerRadius(Theme.Radius.md)
     }
 
     // MARK: — Academy ID entry

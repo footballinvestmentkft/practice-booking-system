@@ -29,6 +29,11 @@ struct UserProfile: Decodable {
     let publicToken:                 String?       // UUID for /verify/{token} QR — owner eyes only
     let licenses:                    [UserLicenseBrief]?
 
+    // 🧬 Biometric status — nullable; nil = no biometric activity.
+    // face_match_score is intentionally absent — never returned by the backend.
+    let faceMatchStatus:           String?   // "reference_pending" | "verified" | "rejected" | "manual_review_required"
+    let faceReferencePhotoStatus:  String?   // "onboarding_liveness_capture" | …
+
     // displayName maps directly to name — no first/last split in the backend schema.
     var displayName: String { name }
 
@@ -49,6 +54,26 @@ struct UserProfile: Decodable {
         return nil
     }
 
+    // MARK: — Biometric registration state (derived from faceMatchStatus)
+
+    enum BiometricRegistrationState {
+        case notStarted          // face_match_status == nil
+        case inProgress          // face_match_status == "reference_pending"
+        case verified            // face_match_status == "verified"
+        case pendingReview       // face_match_status == "manual_review_required"
+        case rejected            // face_match_status == "rejected"
+    }
+
+    var biometricRegistrationState: BiometricRegistrationState {
+        switch faceMatchStatus {
+        case "verified":                return .verified
+        case "manual_review_required":  return .pendingReview
+        case "rejected":                return .rejected
+        case "reference_pending":       return .inProgress
+        default:                        return .notStarted
+        }
+    }
+
     enum CodingKeys: String, CodingKey {
         case id, name, email, role, position
         case nickname, gender, nationality, city, country
@@ -62,6 +87,8 @@ struct UserProfile: Decodable {
         case lfaAcademyId             = "lfa_academy_id"
         case publicToken              = "public_token"
         case licenses
+        case faceMatchStatus          = "face_match_status"
+        case faceReferencePhotoStatus = "face_reference_photo_status"
     }
 }
 
