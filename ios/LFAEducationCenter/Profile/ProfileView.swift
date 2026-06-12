@@ -183,37 +183,126 @@ struct ProfileView: View {
     // MARK: — Biometric (dev/test — gated by BIOMETRIC_DISCLOSURE_ENABLED on backend)
 
     private var biometricSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+        let state = dashboardVM.profile?.biometricRegistrationState ?? .notStarted
+        return VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text("BIOMETRIKUS AZONOSÍTÁS")
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundColor(Theme.Color.muted)
                 .kerning(0.8)
 
-            Button { isShowingBiometric = true } label: {
-                HStack {
-                    Image(systemName: "faceid")
-                        .font(.system(size: 15))
-                        .foregroundColor(Theme.Color.primary)
-                        .frame(width: 28)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Biometrikus regisztráció")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundColor(Theme.Color.onSurface)
-                        Text("Tájékoztató és liveness teszt")
-                            .font(.system(size: 11))
-                            .foregroundColor(Theme.Color.muted)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(Theme.Color.muted)
-                }
-                .padding(Theme.Spacing.md)
-                .background(Theme.Color.surface)
-                .cornerRadius(Theme.Radius.md)
+            switch state {
+            case .verified:
+                biometricActiveCard
+
+            case .pendingReview:
+                biometricStatusCard(
+                    icon: "clock.fill",
+                    iconColor: Theme.Color.warning,
+                    title: "Biometrikus felülvizsgálat alatt",
+                    subtitle: "Az adminisztrátor hamarosan ellenőrzi."
+                )
+
+            case .inProgress:
+                biometricStatusCard(
+                    icon: "arrow.clockwise",
+                    iconColor: Theme.Color.muted,
+                    title: "Biometrikus regisztráció folyamatban",
+                    subtitle: "Az ellenőrzés még nem fejeződött be."
+                )
+
+            case .rejected, .notStarted:
+                biometricRegisterCTA
             }
         }
         .padding(.top, Theme.Spacing.lg)
+    }
+
+    // Active state: green badge, secondary CTA for re-registration
+    private var biometricActiveCard: some View {
+        VStack(spacing: Theme.Spacing.sm) {
+            HStack {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 15))
+                    .foregroundColor(Theme.Color.primary)
+                    .frame(width: 28)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Biometrikus azonosítás aktív")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(Theme.Color.primary)
+                    Text("Az arcfelismerés regisztrálva és aktív.")
+                        .font(.system(size: 11))
+                        .foregroundColor(Theme.Color.muted)
+                }
+                Spacer()
+            }
+            .padding(Theme.Spacing.md)
+            .background(Theme.Color.primary.opacity(0.08))
+            .cornerRadius(Theme.Radius.md)
+
+            Button { isShowingBiometric = true } label: {
+                Text("Biometria frissítése")
+                    .font(.system(size: 13))
+                    .foregroundColor(Theme.Color.muted)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .background(Theme.Color.surface)
+                    .cornerRadius(Theme.Radius.sm)
+            }
+        }
+    }
+
+    // Primary CTA: registration not started or rejected
+    private var biometricRegisterCTA: some View {
+        Button { isShowingBiometric = true } label: {
+            HStack {
+                Image(systemName: "faceid")
+                    .font(.system(size: 15))
+                    .foregroundColor(Theme.Color.primary)
+                    .frame(width: 28)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Biometrikus regisztráció")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(Theme.Color.onSurface)
+                    Text("Tájékoztató és liveness teszt")
+                        .font(.system(size: 11))
+                        .foregroundColor(Theme.Color.muted)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(Theme.Color.muted)
+            }
+            .padding(Theme.Spacing.md)
+            .background(Theme.Color.surface)
+            .cornerRadius(Theme.Radius.md)
+        }
+    }
+
+    // Informational card for non-interactive states
+    private func biometricStatusCard(
+        icon: String,
+        iconColor: Color,
+        title: String,
+        subtitle: String
+    ) -> some View {
+        HStack {
+            Image(systemName: icon)
+                .font(.system(size: 15))
+                .foregroundColor(iconColor)
+                .frame(width: 28)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(Theme.Color.onSurface)
+                Text(subtitle)
+                    .font(.system(size: 11))
+                    .foregroundColor(Theme.Color.muted)
+            }
+            Spacer()
+        }
+        .padding(Theme.Spacing.md)
+        .background(Theme.Color.surface)
+        .cornerRadius(Theme.Radius.md)
     }
 
     // MARK: — Academy ID entry

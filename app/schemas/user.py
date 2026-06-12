@@ -115,6 +115,10 @@ class User(UserBase):
     public_token:                Optional[UUID] = None
     # 📜 User licenses (NEW - replaces deprecated specialization field)
     licenses: List[UserLicenseSimple] = []
+    # 🧬 Biometric status — nullable; None = no biometric activity yet.
+    # face_match_score is intentionally absent — never exposed in any API response.
+    face_match_status:           Optional[str] = None
+    face_reference_photo_status: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
