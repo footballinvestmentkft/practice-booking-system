@@ -212,3 +212,19 @@ class TestResolveMediaPath:
         )
         result = resolve_media_path(v)
         assert result == f.resolve()
+
+    def test_ms21_transcode_none_with_processed_path_serves(self, tmp_path, monkeypatch):
+        """MS-21: transcode_status=None (pre-P2 row) + processed_path exists → skips transcode block → serves file."""
+        from app.services.juggling import media_service
+        monkeypatch.setattr(media_service, "_UPLOAD_DIR", tmp_path)
+        f = tmp_path / "no_transcode_status.mp4"
+        f.write_bytes(b"\x00")
+        v = _video(transcode_status=None, processed_path=str(f))
+        result = resolve_media_path(v)
+        assert result == f.resolve()
+
+    def test_ms22_transcode_processing_raises_not_ready(self):
+        """MS-22: analyzed + transcode_status=processing → MediaNotReadyError(transcode_processing)."""
+        v = _video(transcode_status=JugglingTranscodeStatus.processing.value, processed_path="/some/path.mp4")
+        with pytest.raises(MediaNotReadyError, match="transcode_processing"):
+            resolve_media_path(v)
