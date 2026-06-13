@@ -3,215 +3,220 @@ import XCTest
 
 // MARK: — AN-3B2: JugglingAnnotationViewModel conflict resolution (AN3B-S01..S10)
 //
-// Tests cover:
-//   - resolveConflict() auto-resolves (server-wins) for retryCount ≤ 3
-//   - resolveConflict() surfaces pendingConflictId + pendingServerSnapshot on 4th attempt
-//   - acceptServerVersion() clears snapshot, advances pendingConflictId
-//   - keepLocalVersion() resets retryCount, clears snapshot, re-queues event
+// Tests use the DI init (apiClient + localStore) to avoid real network calls.
+// The local store is seeded with a draft already in .conflicted state so tests
+// do not need to drive the full POST→PATCH→versionConflict pipeline.
+//
+// resolveConflict(deviceEventId:) is async and calls apiClient.listContacts().
+// acceptServerVersion / keepLocalVersion are synchronous.
 
 @MainActor
 final class AnnotationVMConflictTests: XCTestCase {
 
+    private var tempDir: URL!
+
+    override func setUp() {
+        super.setUp()
+        tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("an3b2_vm_conflict_\(UUID().uuidString)", isDirectory: true)
+    }
+
+    override func tearDown() {
+        try? FileManager.default.removeItem(at: tempDir)
+        tempDir = nil
+        super.tearDown()
+    }
+
     // MARK: — Helpers
 
-    private func makeVM() -> JugglingAnnotationViewModel {
-        JugglingAnnotationViewModel(
-            userId:      42,
-            videoId:     "test-video-001",
-            authManager: MockAuthManager()
-        )
-    }
+    /// Seeds the local store with one draft already in .conflicted state,
+    /// then loads the VM from that store. Returns (VM, mock API, draft UUID).
+    private func makeVMWithConflictedDraft(
+        retryCount: Int
+    ) async -> (JugglingAnnotationViewModel, MockAnnotationAPIClient, UUID) {
+        let mock       = MockAnnotationAPIClient()
+        let localStore = LocalAnnotationStore(baseDirectory: tempDir)
+        let taxStore   = ContactTaxonomyStore(authManager: AuthManager(), cacheDirectory: tempDir)
 
-    private func makeDraft(
-        key:          String = "foot_full",
-        side:         String? = "left",
-        retryCount:   Int    = 0
-    ) -> ContactEventDraft {
-        var d = ContactEventDraft.new(
+        var draft = ContactEventDraft.new(
             timestampMs:          5000,
-            contactType:          key,
-            side:                 side,
-            annotationConfidence: "high",
-            customLabel:          nil,
-            customDescription:    nil
+            contactType:          "foot_full",
+            side:                 "left",
+            annotationConfidence: "certain"
         )
-        d.conflictRetryCount = retryCount
-        return d
+        draft.syncStatus         = .conflicted
+        draft.serverEventId      = UUID()   // PATCH target — needed for resolveConflictedDraft
+        draft.conflictRetryCount = retryCount
+
+        var session = localStore.emptySession(userId: 1, videoId: "vid-1")
+        session.drafts.append(draft)
+        try! localStore.save(session: &session)
+
+        let vm = JugglingAnnotationViewModel(
+            userId:        1,
+            videoId:       "vid-1",
+            apiClient:     mock,
+            taxonomyStore: taxStore,
+            localStore:    localStore
+        )
+        await vm.onAppear()
+        return (vm, mock, draft.deviceEventId)
     }
 
-    private func makeServerSnapshot() -> ContactEventOut {
+    private func makeServerEvent(deviceEventId: UUID) -> ContactEventOut {
         ContactEventOut(
-            id:                   999,
-            deviceEventId:        UUID().uuidString,
-            videoId:              "test-video-001",
-            timestampMs:          5100,
-            contactType:          "foot_instep",
-            side:                 "right",
-            annotationConfidence: "medium",
-            customLabel:          nil,
-            customDescription:    nil,
-            annotatorUserId:      42,
-            annotationState:      "in_progress",
-            createdAt:            "2026-06-13T00:00:00Z",
-            updatedAt:            "2026-06-13T00:00:01Z"
+            eventId:                UUID(),
+            deviceEventId:          deviceEventId,
+            timestampMs:            5000,
+            contactType:            "foot_full",
+            side:                   "right",
+            annotationConfidence:   "medium",
+            annotationReviewStatus: "pending",
+            taxonomyReviewStatus:   "stable",
+            excludedFromTraining:   false,
+            customLabel:            nil,
+            customDescription:      nil,
+            version:                2,
+            createdAt:              Date(),
+            updatedAt:              Date()
         )
     }
 
     // MARK: — resolveConflict auto-resolve (retryCount ≤ 3)
 
-    // AN3B-S01: first conflict (retryCount=0) → auto server-wins, no pendingConflictId set
+    // AN3B-S01: retryCount=0 → increments to 1 → ≤3 → auto server-wins, no pendingConflictId
     func test_AN3B_S01_firstConflict_autoServerWins() async {
-        let vm     = makeVM()
-        var draft  = makeDraft(retryCount: 0)
-        let server = makeServerSnapshot()
-        draft.deviceEventId = UUID()
+        let (vm, mock, id) = await makeVMWithConflictedDraft(retryCount: 0)
+        mock.listContactsResult = .success(ContactEventListOut(
+            videoId: "vid-1", annotationStatus: nil,
+            events: [makeServerEvent(deviceEventId: id)]
+        ))
 
-        await vm.injectDraft(draft)
-        await vm.resolveConflict(deviceEventId: draft.deviceEventId, serverSnapshot: server)
-
-        XCTAssertNil(vm.pendingConflictId,
-            "Auto-resolve (retry 0) must NOT set pendingConflictId")
-    }
-
-    // AN3B-S02: second conflict (retryCount=1) → still auto server-wins
-    func test_AN3B_S02_secondConflict_autoServerWins() async {
-        let vm     = makeVM()
-        var draft  = makeDraft(retryCount: 1)
-        let server = makeServerSnapshot()
-        draft.deviceEventId = UUID()
-
-        await vm.injectDraft(draft)
-        await vm.resolveConflict(deviceEventId: draft.deviceEventId, serverSnapshot: server)
+        await vm.resolveConflict(deviceEventId: id)
 
         XCTAssertNil(vm.pendingConflictId,
-            "Auto-resolve (retry 1) must NOT set pendingConflictId")
+            "retryCount 0→1 must auto-resolve without surfacing conflict UI")
     }
 
-    // AN3B-S03: third conflict (retryCount=2) → still auto server-wins
-    func test_AN3B_S03_thirdConflict_autoServerWins() async {
-        let vm     = makeVM()
-        var draft  = makeDraft(retryCount: 2)
-        let server = makeServerSnapshot()
-        draft.deviceEventId = UUID()
+    // AN3B-S02: retryCount=2 → increments to 3 → still ≤3 → auto server-wins
+    func test_AN3B_S02_thirdConflict_autoServerWins() async {
+        let (vm, mock, id) = await makeVMWithConflictedDraft(retryCount: 2)
+        mock.listContactsResult = .success(ContactEventListOut(
+            videoId: "vid-1", annotationStatus: nil,
+            events: [makeServerEvent(deviceEventId: id)]
+        ))
 
-        await vm.injectDraft(draft)
-        await vm.resolveConflict(deviceEventId: draft.deviceEventId, serverSnapshot: server)
+        await vm.resolveConflict(deviceEventId: id)
 
-        XCTAssertNil(vm.pendingConflictId,
-            "Auto-resolve (retry 2) must NOT set pendingConflictId")
+        XCTAssertNil(vm.pendingConflictId, "retryCount 2→3 must still auto-resolve")
     }
 
-    // AN3B-S04: fourth conflict (retryCount=3) → manual, pendingConflictId set
-    func test_AN3B_S04_fourthConflict_surfacesManualResolution() async {
-        let vm     = makeVM()
-        var draft  = makeDraft(retryCount: 3)
-        let server = makeServerSnapshot()
-        draft.deviceEventId = UUID()
+    // AN3B-S03: retryCount=3 → increments to 4 → >3 → pendingConflictId surfaced
+    func test_AN3B_S03_fourthConflict_surfacesPendingConflictId() async {
+        let (vm, mock, id) = await makeVMWithConflictedDraft(retryCount: 3)
+        mock.listContactsResult = .success(ContactEventListOut(
+            videoId: "vid-1", annotationStatus: nil,
+            events: [makeServerEvent(deviceEventId: id)]
+        ))
 
-        await vm.injectDraft(draft)
-        await vm.resolveConflict(deviceEventId: draft.deviceEventId, serverSnapshot: server)
+        await vm.resolveConflict(deviceEventId: id)
 
-        XCTAssertEqual(vm.pendingConflictId, draft.deviceEventId,
-            "4th conflict (retryCount=3) must surface pendingConflictId for manual resolution")
+        XCTAssertEqual(vm.pendingConflictId, id,
+            "4th conflict (retryCount 3→4) must set pendingConflictId for manual resolution")
     }
 
-    // AN3B-S05: fourth conflict → pendingServerSnapshot stored on draft
-    func test_AN3B_S05_fourthConflict_storesPendingServerSnapshot() async {
-        let vm     = makeVM()
-        var draft  = makeDraft(retryCount: 3)
-        let server = makeServerSnapshot()
-        draft.deviceEventId = UUID()
+    // AN3B-S04: retryCount=3 → resolveConflict stores pendingServerSnapshot on the draft
+    func test_AN3B_S04_fourthConflict_storesPendingServerSnapshot() async {
+        let (vm, mock, id) = await makeVMWithConflictedDraft(retryCount: 3)
+        mock.listContactsResult = .success(ContactEventListOut(
+            videoId: "vid-1", annotationStatus: nil,
+            events: [makeServerEvent(deviceEventId: id)]
+        ))
 
-        await vm.injectDraft(draft)
-        await vm.resolveConflict(deviceEventId: draft.deviceEventId, serverSnapshot: server)
+        await vm.resolveConflict(deviceEventId: id)
 
-        let updated = vm.activeEvents.first { $0.deviceEventId == draft.deviceEventId }
+        let updated = vm.activeEvents.first { $0.deviceEventId == id }
         XCTAssertNotNil(updated?.pendingServerSnapshot,
-            "4th conflict must store pendingServerSnapshot on the draft")
-        XCTAssertEqual(updated?.pendingServerSnapshot?.id, 999)
+            "4th conflict must store pendingServerSnapshot so ConflictResolutionView can compare")
+    }
+
+    // AN3B-S05: network error → draft stays .conflicted; pendingConflictId stays nil
+    func test_AN3B_S05_networkError_draftStaysConflicted() async {
+        let (vm, mock, id) = await makeVMWithConflictedDraft(retryCount: 0)
+        mock.listContactsResult = .failure(AnnotationAPIError.retryable(code: nil))
+
+        await vm.resolveConflict(deviceEventId: id)
+
+        let updated = vm.activeEvents.first { $0.deviceEventId == id }
+        XCTAssertEqual(updated?.syncStatus, .conflicted,
+            "Network error must leave draft in .conflicted so caller can retry")
+        XCTAssertNil(vm.pendingConflictId)
     }
 
     // MARK: — acceptServerVersion
 
-    // AN3B-S06: acceptServerVersion clears pendingConflictId
-    func test_AN3B_S06_acceptServer_clearsPendingConflictId() async {
-        let vm     = makeVM()
-        var draft  = makeDraft(retryCount: 3)
-        let server = makeServerSnapshot()
-        draft.deviceEventId = UUID()
-
-        await vm.injectDraft(draft)
-        await vm.resolveConflict(deviceEventId: draft.deviceEventId, serverSnapshot: server)
-        XCTAssertNotNil(vm.pendingConflictId)
-
-        await vm.acceptServerVersion(deviceEventId: draft.deviceEventId)
-
-        XCTAssertNil(vm.pendingConflictId,
-            "acceptServerVersion must clear pendingConflictId")
+    // Helper: get VM into state where pendingConflictId is set (after 4th conflict)
+    private func makeVMReadyForManualResolution() async -> (JugglingAnnotationViewModel, UUID) {
+        let (vm, mock, id) = await makeVMWithConflictedDraft(retryCount: 3)
+        mock.listContactsResult = .success(ContactEventListOut(
+            videoId: "vid-1", annotationStatus: nil,
+            events: [makeServerEvent(deviceEventId: id)]
+        ))
+        await vm.resolveConflict(deviceEventId: id)
+        XCTAssertNotNil(vm.pendingConflictId)   // precondition guard
+        return (vm, id)
     }
 
-    // AN3B-S07: acceptServerVersion clears pendingServerSnapshot on draft
+    // AN3B-S06: acceptServerVersion clears pendingConflictId
+    func test_AN3B_S06_acceptServer_clearsPendingConflictId() async {
+        let (vm, id) = await makeVMReadyForManualResolution()
+
+        vm.acceptServerVersion(deviceEventId: id)
+
+        XCTAssertNil(vm.pendingConflictId, "acceptServerVersion must clear pendingConflictId")
+    }
+
+    // AN3B-S07: acceptServerVersion clears pendingServerSnapshot on the draft
     func test_AN3B_S07_acceptServer_clearsPendingSnapshot() async {
-        let vm     = makeVM()
-        var draft  = makeDraft(retryCount: 3)
-        let server = makeServerSnapshot()
-        draft.deviceEventId = UUID()
+        let (vm, id) = await makeVMReadyForManualResolution()
 
-        await vm.injectDraft(draft)
-        await vm.resolveConflict(deviceEventId: draft.deviceEventId, serverSnapshot: server)
-        await vm.acceptServerVersion(deviceEventId: draft.deviceEventId)
+        vm.acceptServerVersion(deviceEventId: id)
 
-        let updated = vm.activeEvents.first { $0.deviceEventId == draft.deviceEventId }
+        let updated = vm.activeEvents.first { $0.deviceEventId == id }
         XCTAssertNil(updated?.pendingServerSnapshot,
-            "acceptServerVersion must clear pendingServerSnapshot on the draft")
+            "acceptServerVersion must clear pendingServerSnapshot after applying server state")
     }
 
     // MARK: — keepLocalVersion
 
     // AN3B-S08: keepLocalVersion clears pendingConflictId
     func test_AN3B_S08_keepLocal_clearsPendingConflictId() async {
-        let vm     = makeVM()
-        var draft  = makeDraft(retryCount: 3)
-        let server = makeServerSnapshot()
-        draft.deviceEventId = UUID()
+        let (vm, id) = await makeVMReadyForManualResolution()
 
-        await vm.injectDraft(draft)
-        await vm.resolveConflict(deviceEventId: draft.deviceEventId, serverSnapshot: server)
-        await vm.keepLocalVersion(deviceEventId: draft.deviceEventId)
+        vm.keepLocalVersion(deviceEventId: id)
 
-        XCTAssertNil(vm.pendingConflictId,
-            "keepLocalVersion must clear pendingConflictId")
+        XCTAssertNil(vm.pendingConflictId, "keepLocalVersion must clear pendingConflictId")
     }
 
     // AN3B-S09: keepLocalVersion resets conflictRetryCount to 0
     func test_AN3B_S09_keepLocal_resetsRetryCount() async {
-        let vm     = makeVM()
-        var draft  = makeDraft(retryCount: 3)
-        let server = makeServerSnapshot()
-        draft.deviceEventId = UUID()
+        let (vm, id) = await makeVMReadyForManualResolution()
 
-        await vm.injectDraft(draft)
-        await vm.resolveConflict(deviceEventId: draft.deviceEventId, serverSnapshot: server)
-        await vm.keepLocalVersion(deviceEventId: draft.deviceEventId)
+        vm.keepLocalVersion(deviceEventId: id)
 
-        let updated = vm.activeEvents.first { $0.deviceEventId == draft.deviceEventId }
+        let updated = vm.activeEvents.first { $0.deviceEventId == id }
         XCTAssertEqual(updated?.conflictRetryCount, 0,
-            "keepLocalVersion must reset conflictRetryCount to 0 to allow re-sync")
+            "keepLocalVersion must reset conflictRetryCount so next sync attempt starts fresh")
     }
 
-    // AN3B-S10: keepLocalVersion sets syncStatus to .localOnly (re-queues for flush)
+    // AN3B-S10: keepLocalVersion sets syncStatus to .localOnly for re-queuing
     func test_AN3B_S10_keepLocal_setsLocalOnlyStatus() async {
-        let vm     = makeVM()
-        var draft  = makeDraft(retryCount: 3)
-        let server = makeServerSnapshot()
-        draft.deviceEventId = UUID()
+        let (vm, id) = await makeVMReadyForManualResolution()
 
-        await vm.injectDraft(draft)
-        await vm.resolveConflict(deviceEventId: draft.deviceEventId, serverSnapshot: server)
-        await vm.keepLocalVersion(deviceEventId: draft.deviceEventId)
+        vm.keepLocalVersion(deviceEventId: id)
 
-        let updated = vm.activeEvents.first { $0.deviceEventId == draft.deviceEventId }
+        let updated = vm.activeEvents.first { $0.deviceEventId == id }
         XCTAssertEqual(updated?.syncStatus, .localOnly,
-            "keepLocalVersion must set syncStatus=.localOnly so flushPending() re-sends it")
+            "keepLocalVersion must set .localOnly so flushPending() re-sends the local payload")
     }
 }
