@@ -35,6 +35,8 @@ final class AnnotationSyncEngine {
     // Pushes every localOnly / retryPending draft to the server.
     // Drafts that were deleted locally before ever syncing are marked
     // .deleted without a network call (nothing exists server-side).
+    // AN-3A: also pushes .updating drafts (events that were edited after
+    // reaching .synced — see editEvent on JugglingAnnotationViewModel).
     // Mutates session.drafts in place; caller persists afterwards.
     func flushPending(session: inout AnnotationSessionFile) async {
         for index in session.drafts.indices {
@@ -55,6 +57,33 @@ final class AnnotationSyncEngine {
             let draft = session.drafts[index]
             guard draft.deletedLocally, draft.syncStatus == .synced, draft.serverEventId != nil else { continue }
             session.drafts[index] = await pushDelete(draft: draft, videoId: session.videoId)
+        }
+
+        // Edited drafts: .updating means a local edit is pending a PATCH.
+        // If the draft was also deleted before the PATCH was sent, push a
+        // DELETE instead (the user edited then immediately removed the event).
+        for index in session.drafts.indices {
+            let draft = session.drafts[index]
+            guard draft.syncStatus == .updating else { continue }
+            // pushPatch handles the serverEventId == nil defensive case internally
+            // (returns .failedPermanent with reason "patch_without_server_id").
+            if draft.deletedLocally {
+                session.drafts[index] = await pushDelete(draft: draft, videoId: session.videoId)
+            } else {
+                let request = ContactEventPatchRequest(
+                    version:              draft.version,
+                    contactType:          draft.contactType,
+                    annotationConfidence: draft.annotationConfidence,
+                    side:                 draft.side,
+                    customLabel:          draft.customLabel,
+                    customDescription:    draft.customDescription
+                )
+                session.drafts[index] = await pushPatch(
+                    draft:   draft,
+                    videoId: session.videoId,
+                    request: request
+                )
+            }
         }
     }
 
@@ -219,6 +248,19 @@ final class AnnotationSyncEngine {
         case .synced, .deleted, .failedPermanent:
             return false
         }
+    }
+
+    // MARK: — Conflict resolution (AN-3A)
+
+    // Applies authoritative server state to a .conflicted draft, transitioning
+    // it to .synced with the server's current version. Used by
+    // JugglingAnnotationViewModel.resolveConflict() which fetches the server
+    // event via listContacts before calling this.
+    func resolveConflictedDraft(
+        draft:       ContactEventDraft,
+        serverEvent: ContactEventOut
+    ) -> ContactEventDraft {
+        applyServerState(to: draft, from: serverEvent)
     }
 
     // MARK: — Private helpers

@@ -141,6 +141,115 @@ final class JugglingAnnotationViewModel: ObservableObject {
         return draft
     }
 
+    // Edits an existing draft in-place. Permitted statuses and resulting transitions:
+    //   .localOnly     → stays .localOnly      (edit before first POST, included in pushCreate)
+    //   .retryPending  → .localOnly            (reset retry, POST the updated payload)
+    //   .synced        → .updating             (PATCH will be sent on next flushPending)
+    //   .failedPermanent (no serverEventId, not idempotency_conflict) → .localOnly  (retry POST)
+    //   .failedPermanent (serverEventId != nil, not idempotency_conflict) → .updating (retry PATCH)
+    //
+    // Blocked (no state change):
+    //   .failedPermanent with idempotency_conflict reason → caller must use resolveConflict
+    //   .conflicted, .needsReconciliation → caller must resolve / reconcile first
+    //   .syncing, .updating, .deleting    → in-flight, cannot edit
+    //   .deleted                          → unreachable from active timeline
+    //
+    // Invariants: deviceEventId (let) never changes. version is NOT mutated here —
+    // the PATCH carries the last-known-good version; applyServerState updates it on success.
+    @discardableResult
+    func editEvent(
+        deviceEventId:        UUID,
+        contactType:          String,
+        side:                 String?,
+        annotationConfidence: String,
+        customLabel:          String? = nil,
+        customDescription:    String? = nil
+    ) -> Bool {
+        guard var current = session,
+              let index = current.drafts.firstIndex(where: { $0.deviceEventId == deviceEventId })
+        else { return false }
+
+        var draft = current.drafts[index]
+
+        switch draft.syncStatus {
+        case .localOnly:
+            draft.contactType          = contactType
+            draft.side                 = side
+            draft.annotationConfidence = annotationConfidence
+            draft.customLabel          = customLabel
+            draft.customDescription    = customDescription
+
+        case .retryPending:
+            draft.contactType          = contactType
+            draft.side                 = side
+            draft.annotationConfidence = annotationConfidence
+            draft.customLabel          = customLabel
+            draft.customDescription    = customDescription
+            draft.syncStatus           = .localOnly
+            draft.retryCount           = 0
+            draft.failureReason        = nil
+
+        case .synced:
+            draft.contactType          = contactType
+            draft.side                 = side
+            draft.annotationConfidence = annotationConfidence
+            draft.customLabel          = customLabel
+            draft.customDescription    = customDescription
+            draft.syncStatus           = .updating
+
+        case .failedPermanent:
+            // idempotency_conflict cannot be fixed by editing alone — requires resolveConflict
+            if let reason = draft.failureReason, reason.hasPrefix("idempotency_conflict:") {
+                return false
+            }
+            draft.contactType          = contactType
+            draft.side                 = side
+            draft.annotationConfidence = annotationConfidence
+            draft.customLabel          = customLabel
+            draft.customDescription    = customDescription
+            draft.failureReason        = nil
+            draft.retryCount           = 0
+            draft.syncStatus           = draft.serverEventId != nil ? .updating : .localOnly
+
+        case .conflicted, .needsReconciliation, .syncing, .updating, .deleting, .deleted:
+            return false
+        }
+
+        current.drafts[index] = draft
+        try? localStore.save(session: &current)
+        session = current
+        return true
+    }
+
+    // Resolves a .conflicted draft by fetching the authoritative server state via
+    // GET /contacts and applying it locally (version + all server fields).
+    // After resolution the draft is .synced — the user can then re-edit it if desired.
+    // If the draft is absent from the server response it is treated as .deleted.
+    // On network error the draft stays .conflicted so the caller can retry.
+    func resolveConflict(deviceEventId: UUID) async {
+        guard var current = session,
+              let index = current.drafts.firstIndex(where: { $0.deviceEventId == deviceEventId }),
+              current.drafts[index].syncStatus == .conflicted
+        else { return }
+
+        do {
+            let list = try await apiClient.listContacts(videoId: videoId)
+            if let serverEvent = list.events.first(where: { $0.deviceEventId == deviceEventId }) {
+                current.drafts[index] = syncEngine.resolveConflictedDraft(
+                    draft:       current.drafts[index],
+                    serverEvent: serverEvent
+                )
+            } else {
+                current.drafts[index].syncStatus    = .deleted
+                current.drafts[index].failureReason = nil
+            }
+            try? localStore.save(session: &current)
+            session = current
+        } catch {
+            // Network error: draft remains .conflicted; UI should offer "Retry resolve".
+        }
+    }
+
     // Marks a draft for deletion. Drafts never synced are removed locally
     // immediately; synced drafts are flagged for a DELETE push on next flush.
     func markDeleted(deviceEventId: UUID) {

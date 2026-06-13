@@ -109,6 +109,10 @@
 		AA100004000000000000007 /* JugglingAnnotationAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000007 /* JugglingAnnotationAPIClient.swift */; };
 		AA100004000000000000008 /* JugglingAnnotationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000008 /* JugglingAnnotationViewModel.swift */; };
 		AA100004000000000000009 /* contact_types_v1.json in Resources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000009 /* contact_types_v1.json */; };
+		AA100004000000000000010 /* PlaybackController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000010 /* PlaybackController.swift */; };
+		CC400004000000000000010 /* EditEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000010 /* EditEventTests.swift */; };
+		CC400004000000000000011 /* FlushPendingEditTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000011 /* FlushPendingEditTests.swift */; };
+		CC400004000000000000012 /* PlaybackControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000012 /* PlaybackControllerTests.swift */; };
 		CC400004000000000000001 /* JugglingVideoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000001 /* JugglingVideoTests.swift */; };
 		CC400004000000000000005 /* ContactTaxonomyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000005 /* ContactTaxonomyTests.swift */; };
 		CC400004000000000000006 /* LocalAnnotationStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000006 /* LocalAnnotationStoreTests.swift */; };
@@ -222,6 +226,10 @@
 		AA100003000000000000007 /* JugglingAnnotationAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingAnnotationAPIClient.swift; sourceTree = "<group>"; };
 		AA100003000000000000008 /* JugglingAnnotationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingAnnotationViewModel.swift; sourceTree = "<group>"; };
 		AA100003000000000000009 /* contact_types_v1.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = contact_types_v1.json; sourceTree = "<group>"; };
+		AA100003000000000000010 /* PlaybackController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackController.swift; sourceTree = "<group>"; };
+		CC300003000000000000010 /* EditEventTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditEventTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000011 /* FlushPendingEditTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlushPendingEditTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000012 /* PlaybackControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackControllerTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000001 /* JugglingVideoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000005 /* ContactTaxonomyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactTaxonomyTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000006 /* LocalAnnotationStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalAnnotationStoreTests.swift; sourceTree = "<group>"; };
@@ -496,9 +504,18 @@
 				20CD58654D76D5278A5E5B62 /* JugglingVideoListViewModel.swift */,
 				E075CE337E219F48D39CBDFA /* JugglingPlayerView.swift */,
 				AA100002000000000000001 /* Annotation */,
+				AA100002000000000000003 /* Playback */,
 			);
 			name = Juggling;
 			path = Juggling;
+			sourceTree = "<group>";
+		};
+		AA100002000000000000003 /* Playback */ = {
+			isa = PBXGroup;
+			children = (
+				AA100003000000000000010 /* PlaybackController.swift */,
+			);
+			path = Playback;
 			sourceTree = "<group>";
 		};
 		AA100002000000000000001 /* Annotation */ = {
@@ -542,6 +559,9 @@
 				CC300003000000000000007 /* ContactEventDraftTests.swift */,
 				CC300003000000000000008 /* AnnotationSyncEngineTests.swift */,
 				CC300003000000000000009 /* JugglingAnnotationViewModelTests.swift */,
+				CC300003000000000000010 /* EditEventTests.swift */,
+				CC300003000000000000011 /* FlushPendingEditTests.swift */,
+				CC300003000000000000012 /* PlaybackControllerTests.swift */,
 			);
 			path = Juggling;
 			sourceTree = "<group>";
@@ -761,6 +781,7 @@
 				AA100004000000000000006 /* AnnotationSyncEngine.swift in Sources */,
 				AA100004000000000000007 /* JugglingAnnotationAPIClient.swift in Sources */,
 				AA100004000000000000008 /* JugglingAnnotationViewModel.swift in Sources */,
+				AA100004000000000000010 /* PlaybackController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -774,6 +795,9 @@
 				CC400004000000000000007 /* ContactEventDraftTests.swift in Sources */,
 				CC400004000000000000008 /* AnnotationSyncEngineTests.swift in Sources */,
 				CC400004000000000000009 /* JugglingAnnotationViewModelTests.swift in Sources */,
+				CC400004000000000000010 /* EditEventTests.swift in Sources */,
+				CC400004000000000000011 /* FlushPendingEditTests.swift in Sources */,
+				CC400004000000000000012 /* PlaybackControllerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
