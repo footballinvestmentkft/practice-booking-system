@@ -157,36 +157,58 @@ identical to the dataset source-of-truth checksum.
 
 ---
 
-## 8. CI status (snapshot — IN PROGRESS, not yet final)
+## 8. CI status (re-checked 2026-06-13, ~20 min after first snapshot)
 
 ```
 mergeable        = MERGEABLE
-mergeStateStatus = BLOCKED   (checks still running)
+mergeStateStatus = UNSTABLE   (1 check still running)
 reviewDecision   = (none yet)
 ```
 
 | Check | Status |
 |---|---|
 | API Module Integrity (import + route count) | ✅ SUCCESS |
-| Hardcoded FK ID Guard (lint) | ✅ SUCCESS |
+| API Tests (Baseline: 0 failed, 0 errors) | ✅ SUCCESS |
+| Auth Lifecycle E2E (BLOCKING) | ✅ SUCCESS |
+| Booking Lifecycle E2E (BLOCKING) | ✅ SUCCESS |
+| Core Access & State Sanity (BLOCKING) | ✅ SUCCESS |
 | Credit Balance Audit (static AST) | ✅ SUCCESS |
+| Cypress Web E2E — admin | ✅ SUCCESS |
+| Cypress Web E2E — business-workflow | ✅ SUCCESS |
+| Cypress Web E2E — instructor | ✅ SUCCESS |
+| Cypress Web E2E — student | ✅ SUCCESS |
+| Cypress Web E2E — cross-role integration | ⏳ IN PROGRESS |
+| E2E Smoke Tests | ✅ SUCCESS |
+| Enrollment Workflow E2E (BLOCKING) | ✅ SUCCESS |
+| Hardcoded FK ID Guard (lint) | ✅ SUCCESS |
+| Instructor Assignment Lifecycle E2E (BLOCKING) | ✅ SUCCESS |
+| Instructor Lifecycle E2E (BLOCKING) | ✅ SUCCESS |
+| Load Gate — Phase 6.3 (50 VUs, 10 min) | ✅ SUCCESS |
 | Migration Chain Integrity (empty → head → base → head) | ✅ SUCCESS |
 | Migration Volume Safety (data-present roundtrip) | ✅ SUCCESS |
+| Multi-Campus Round-Robin E2E (BLOCKING) | ✅ SUCCESS |
 | Operational Smoke Test (full stack) | ✅ SUCCESS |
+| Payment Workflow E2E (BLOCKING) | ✅ SUCCESS |
+| Refund Workflow E2E (BLOCKING) | ✅ SUCCESS |
+| Security Gate (CSRF + SQL injection — 63 tests) | ✅ SUCCESS |
+| Session Management E2E (BLOCKING) | ✅ SUCCESS |
+| Skill Assessment Lifecycle E2E (BLOCKING) | ✅ SUCCESS |
 | Skill Weight Pipeline — 28 required tests | ✅ SUCCESS |
+| Student Lifecycle E2E (BLOCKING) | ✅ SUCCESS |
+| Unit Tests (Baseline: 0 failed, 0 errors) | ✅ SUCCESS |
+| User Account E2E (BLOCKING) | ✅ SUCCESS |
+| cypress-web-by-role (admin) | ✅ SUCCESS |
+| cypress-web-by-role (business-workflow) | ✅ SUCCESS |
+| cypress-web-by-role (instructor) | ✅ SUCCESS |
+| cypress-web-by-role (student) | ✅ SUCCESS |
+| cypress-web-integration | ✅ SUCCESS |
 | Preset Weight Audit (informational) | ⏭️ SKIPPED (informational, non-blocking) |
-| Unit Tests (Baseline: 0 failed, 0 errors) | ⏳ IN PROGRESS |
-| API Tests (Baseline: 0 failed, 0 errors) | ⏳ IN PROGRESS |
-| Load Gate — Phase 6.3 (50 VUs, 10 min) | ⏳ IN PROGRESS |
-| Migration Chain Integrity rerun (cypress prep) | ⏳ IN PROGRESS |
-| cypress-web-by-role (admin) | ⏳ IN PROGRESS |
-| cypress-web-by-role (instructor) | ⏳ IN PROGRESS |
-| cypress-web-by-role (student) | ⏳ IN PROGRESS |
-| cypress-web-by-role (business-workflow) | ⏳ IN PROGRESS |
 
-**0 failed, 0 pending-forever, 6 in progress** at snapshot time. No iOS
-build/test check exists in this repository's required-checks set — see
-§9.
+**0 failed, 1 still in progress** ("Cypress Web E2E — cross-role
+integration"). `mergeStateStatus` moved from `BLOCKED` to `UNSTABLE`
+(GitHub's status for "mergeable but checks not all green yet" — the
+remaining check is in progress, not failed). No iOS build/test check
+exists in this repository's required-checks set — see §9.
 
 ---
 
@@ -259,11 +281,11 @@ PR #296's diff.
 **`BLOCKED_CI`**
 
 Rationale: the PR is `MERGEABLE` with a clean scope (§3), full local
-Xcode build/test evidence (§4-§7), and 0 failed checks so far — but
-`mergeStateStatus = BLOCKED` because 6 required CI checks (Unit Tests,
-API Tests, Load Gate, 4× Cypress) are still `IN_PROGRESS` at snapshot
-time, and `reviewDecision` is empty (no review yet). No PR merge has
-been performed. AN-3 has not been started.
+Xcode build/test evidence (§4-§7), and 0 failed checks — but
+`mergeStateStatus = UNSTABLE` because 1 check ("Cypress Web E2E —
+cross-role integration") is still `IN_PROGRESS`, and `reviewDecision`
+is empty (no review yet). No PR merge has been performed. AN-3 has not
+been started.
 
 This report will be updated once CI completes (either to
 `AN2_PR_READY_FOR_REVIEW` if all required checks pass with 0 failures,
