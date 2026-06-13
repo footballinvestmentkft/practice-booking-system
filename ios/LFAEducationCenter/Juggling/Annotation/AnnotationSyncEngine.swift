@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: — AnnotationSyncEngine
 //
-// Implements the 10-state ContactEventSyncStatus machine for one annotation
+// Implements the 12-state ContactEventSyncStatus machine for one annotation
 // session. All methods operate on a single ContactEventDraft (or the whole
 // session for flush/reconcile) and return updated values — the caller
 // (JugglingAnnotationViewModel) owns persistence via LocalAnnotationStore.
@@ -114,14 +114,24 @@ final class AnnotationSyncEngine {
     // MARK: — Single-draft operations
 
     // POST /contacts. 201 → new, 200 → exact duplicate — both are .synced.
+    // Requires draft.contactType != nil — flushPending only calls this for
+    // .localOnly / .retryPending drafts, which always have a contactType.
+    // The nil guard below is a backend-contract safety net.
     func pushCreate(draft: ContactEventDraft, videoId: String) async -> ContactEventDraft {
+        guard let contactType = draft.contactType else {
+            var failed = draft
+            failed.syncStatus    = .failedPermanent
+            failed.failureReason = "contact_type_nil_safety_guard"
+            return failed
+        }
+
         var updated = draft
         updated.syncStatus = .syncing
 
         let request = ContactEventCreateRequest(
             deviceEventId:        draft.deviceEventId,
             timestampMs:          draft.timestampMs,
-            contactType:          draft.contactType,
+            contactType:          contactType,
             annotationConfidence: draft.annotationConfidence,
             side:                 draft.side,
             customLabel:          draft.customLabel,

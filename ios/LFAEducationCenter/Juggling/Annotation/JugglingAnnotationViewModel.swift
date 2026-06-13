@@ -21,8 +21,7 @@ final class JugglingAnnotationViewModel: ObservableObject {
     @Published private(set) var isFinishing:        Bool = false
     @Published private(set) var finishResult:       FinishAnnotationOut?
     @Published private(set) var finishError:        String?
-    // AN-3B2: deviceEventId of the conflict waiting for user resolution, or nil.
-    // Drives ConflictResolutionView visibility in JugglingAnnotationScreen.
+    // deviceEventId of the conflict waiting for user resolution, or nil.
     @Published private(set) var pendingConflictId:  UUID? = nil
 
     let userId:  Int
@@ -119,6 +118,30 @@ final class JugglingAnnotationViewModel: ObservableObject {
     }
 
     // MARK: — Draft management
+
+    // Phase 1 entry point: marks the current playback position as a contact event.
+    // contactType is nil; the event stays .unlabeled until Phase 2 labels it (AN-3B2B).
+    // Dedup: ignores taps within 200 ms of an existing active event (guards
+    // against accidental double-tap on the same video position).
+    // Returns the created draft, or nil if dedup blocked the mark.
+    @discardableResult
+    func markTimestamp(ms: Int) -> ContactEventDraft? {
+        guard var current = session else { return nil }
+
+        let dedupWindowMs = 200
+        let isDuplicate = current.drafts.contains { draft in
+            !draft.deletedLocally &&
+            draft.syncStatus != .deleted &&
+            abs(draft.timestampMs - ms) < dedupWindowMs
+        }
+        guard !isDuplicate else { return nil }
+
+        let draft = ContactEventDraft.timestamp(ms: ms)
+        current.drafts.append(draft)
+        try? localStore.save(session: &current)
+        session = current
+        return draft
+    }
 
     @discardableResult
     func addEvent(
@@ -230,10 +253,9 @@ final class JugglingAnnotationViewModel: ObservableObject {
     }
 
     // Resolves a .conflicted draft by fetching the authoritative server state via
-    // GET /contacts. If conflictRetryCount < 3, applies the server state silently
-    // (.synced — no user decision needed). If the draft has been retried 3+ times
-    // or the server state differs meaningfully, sets pendingServerSnapshot and
-    // pendingConflictId so the UI can show ConflictResolutionView.
+    // GET /contacts. If conflictRetryCount ≤ 3, applies server state silently
+    // (.synced). If retries exceeded, sets pendingServerSnapshot and
+    // pendingConflictId for user resolution (AN-3B2B scope).
     // If the draft is absent from the server response it is treated as .deleted.
     // On network error the draft stays .conflicted so the caller can retry.
     func resolveConflict(deviceEventId: UUID) async {
@@ -313,7 +335,9 @@ final class JugglingAnnotationViewModel: ObservableObject {
         guard let index = current.drafts.firstIndex(where: { $0.deviceEventId == deviceEventId }) else { return }
 
         current.drafts[index].deletedLocally = true
-        if current.drafts[index].syncStatus == .localOnly {
+        let s = current.drafts[index].syncStatus
+        if s == .localOnly || s == .unlabeled {
+            // Never reached the server — nothing to delete remotely.
             current.drafts[index].syncStatus = .deleted
         }
 

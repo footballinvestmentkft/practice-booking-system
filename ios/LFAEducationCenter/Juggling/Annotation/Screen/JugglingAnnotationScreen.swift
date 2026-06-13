@@ -30,7 +30,8 @@ struct JugglingAnnotationScreen: View {
     @StateObject private var playback: PlaybackController
     @StateObject private var vm:      JugglingAnnotationViewModel
 
-    @State private var didCleanUp = false   // guards double onDisappear calls
+    @State private var didCleanUp  = false   // guards double onDisappear calls
+    @State private var fabPressed  = false   // brief scale-down on successful mark
 
     @Environment(\.presentationMode) private var presentationMode
 
@@ -298,7 +299,14 @@ struct JugglingAnnotationScreen: View {
 
     private var fabButton: some View {
         Button {
-            // AN-3B2A: markTimestamp — wired in next commit
+            guard loaderReady else { return }
+            if vm.markTimestamp(ms: playback.currentTimestampMs) != nil {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                withAnimation(.spring(response: 0.15, dampingFraction: 0.6)) { fabPressed = true }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                    withAnimation(.spring(response: 0.15, dampingFraction: 0.6)) { fabPressed = false }
+                }
+            }
         } label: {
             Image(systemName: "plus")
                 .font(.title2.weight(.semibold))
@@ -307,11 +315,12 @@ struct JugglingAnnotationScreen: View {
                 .background(loaderReady ? Color.accentColor : Color.gray)
                 .clipShape(Circle())
                 .shadow(color: .black.opacity(0.25), radius: 4)
+                .scaleEffect(fabPressed ? 0.88 : 1.0)
         }
         .padding(16)
         .disabled(!loaderReady)
-        .accessibilityLabel("Új kontakt esemény")
-        .accessibilityHint("Videó jelenlegi időpontjában rögzít egy kontakt eseményt")
+        .accessibilityLabel("Kontakt jelölése")
+        .accessibilityHint("Rögzíti a kontakt eseményt a videó jelenlegi időpontján")
     }
 
     // MARK: — Lifecycle
@@ -331,8 +340,9 @@ struct JugglingAnnotationScreen: View {
 
     // MARK: — Display helpers
 
-    private func typeLabel(for key: String) -> String {
-        vm.taxonomy?.groups.flatMap { $0.contactTypes }.first { $0.key == key }?.labelHu ?? key
+    private func typeLabel(for key: String?) -> String {
+        guard let key = key else { return "—" }
+        return vm.taxonomy?.groups.flatMap { $0.contactTypes }.first { $0.key == key }?.labelHu ?? key
     }
 
     private func loaderErrorMessage(_ error: AnnotationVideoLoader.LoadError) -> String {

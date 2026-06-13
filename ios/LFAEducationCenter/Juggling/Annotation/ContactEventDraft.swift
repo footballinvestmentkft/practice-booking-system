@@ -35,7 +35,7 @@ struct ContactEventDraft: Identifiable, Equatable {
     var syncStatus:           ContactEventSyncStatus
     var version:              Int         // mirrors server version for optimistic locking
     var timestampMs:          Int
-    var contactType:          String      // validated taxonomy key
+    var contactType:          String?     // nil for Phase 1 (.unlabeled); valid taxonomy key after Phase 2 labeling
     var side:                 String?
     var annotationConfidence: String      // "certain"|"probable"|"uncertain"
     var customLabel:          String?
@@ -53,6 +53,7 @@ struct ContactEventDraft: Identifiable, Equatable {
 
     var id: UUID { deviceEventId }
 
+    // Phase 2 factory: contactType is known at creation time.
     static func new(
         timestampMs:          Int,
         contactType:          String,
@@ -72,6 +73,30 @@ struct ContactEventDraft: Identifiable, Equatable {
             annotationConfidence: annotationConfidence,
             customLabel:          customLabel,
             customDescription:    customDescription,
+            deletedLocally:       false,
+            failureReason:        nil,
+            retryCount:           0,
+            createdAtLocal:       Date(),
+            serverCreatedAt:      nil,
+            serverUpdatedAt:      nil,
+            pendingServerSnapshot: nil,
+            conflictRetryCount:   0
+        )
+    }
+
+    // Phase 1 factory: contactType is nil; draft stays .unlabeled until Phase 2 labeling.
+    static func timestamp(ms: Int) -> ContactEventDraft {
+        ContactEventDraft(
+            deviceEventId:        UUID(),
+            serverEventId:        nil,
+            syncStatus:           .unlabeled,
+            version:              1,
+            timestampMs:          ms,
+            contactType:          nil,
+            side:                 nil,
+            annotationConfidence: "certain",
+            customLabel:          nil,
+            customDescription:    nil,
             deletedLocally:       false,
             failureReason:        nil,
             retryCount:           0,
@@ -108,7 +133,8 @@ extension ContactEventDraft: Codable {
         syncStatus           = try c.decode(ContactEventSyncStatus.self,  forKey: .syncStatus)
         version              = try c.decode(Int.self,                     forKey: .version)
         timestampMs          = try c.decode(Int.self,                     forKey: .timestampMs)
-        contactType          = try c.decode(String.self,                  forKey: .contactType)
+        // decodeIfPresent: Phase 1 drafts have nil; old session files always have a String (backward-compat).
+        contactType          = try c.decodeIfPresent(String.self,         forKey: .contactType)
         side                 = try c.decodeIfPresent(String.self,         forKey: .side)
         annotationConfidence = try c.decode(String.self,                  forKey: .annotationConfidence)
         customLabel          = try c.decodeIfPresent(String.self,         forKey: .customLabel)
