@@ -1,10 +1,10 @@
 {
-  "annotation_schema_version": "1.0",
+  "annotation_schema_version": "2.0",
   "video_id": "jug_b1_004",
   "filename": "52349e85-5b9a-4c5a-88f8-793e10c72cb8.mp4",
   "upload_source": "app_gallery_upload",
   "capture_device": "unknown",
-  "duration_seconds": 10.60,
+  "duration_seconds": 10.6,
   "original_resolution": "1080x1920",
   "processed_resolution": "406x720",
   "fps": 30.0,
@@ -12,15 +12,13 @@
   "display_orientation": "portrait",
   "checksum_sha256": "1505807097bff756cbc75059030da48c0cd8864ff28e3ab127f3afd76edcb065",
   "annotation_status": "metadata_ready",
-  "annotation_version": "v1.0",
-
+  "annotation_version": "v2.0",
   "privacy_review_status": "pending",
   "ownership_confirmed": null,
   "consent_confirmed": null,
   "recognizable_third_party_present": null,
   "minor_present": null,
   "external_source": null,
-
   "difficulty": null,
   "total_juggling_count": null,
   "count_confidence": null,
@@ -39,5 +37,6 @@
   "second_annotator_count": null,
   "inter_annotator_agreement": null,
   "annotation_date": null,
-  "contact_events": null
+  "contact_events": null,
+  "taxonomy_version": "v1"
 }

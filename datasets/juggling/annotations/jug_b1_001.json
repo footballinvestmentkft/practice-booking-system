@@ -1,5 +1,5 @@
 {
-  "annotation_schema_version": "1.0",
+  "annotation_schema_version": "2.0",
   "video_id": "jug_b1_001",
   "filename": "d9ffe19a-f143-4458-a816-0a408c211e39.mp4",
   "upload_source": "app_gallery_upload",
@@ -12,15 +12,13 @@
   "display_orientation": "landscape",
   "checksum_sha256": "631a7febf22f780f4725c34bd001c213a003cccbdd705d329b177ffdf1f13c93",
   "annotation_status": "metadata_ready",
-  "annotation_version": "v1.0",
-
+  "annotation_version": "v2.0",
   "privacy_review_status": "pending",
   "ownership_confirmed": null,
   "consent_confirmed": null,
   "recognizable_third_party_present": null,
   "minor_present": null,
   "external_source": null,
-
   "difficulty": null,
   "total_juggling_count": null,
   "count_confidence": null,
@@ -39,5 +37,6 @@
   "second_annotator_count": null,
   "inter_annotator_agreement": null,
   "annotation_date": null,
-  "contact_events": null
+  "contact_events": null,
+  "taxonomy_version": "v1"
 }
