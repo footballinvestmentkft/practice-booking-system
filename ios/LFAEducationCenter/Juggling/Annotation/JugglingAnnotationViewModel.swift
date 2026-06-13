@@ -15,12 +15,15 @@ import Foundation
 @MainActor
 final class JugglingAnnotationViewModel: ObservableObject {
 
-    @Published private(set) var session:      AnnotationSessionFile?
-    @Published private(set) var taxonomy:      TaxonomyDocument?
-    @Published private(set) var loadWarning:   String?
-    @Published private(set) var isFinishing:   Bool = false
-    @Published private(set) var finishResult:  FinishAnnotationOut?
-    @Published private(set) var finishError:   String?
+    @Published private(set) var session:           AnnotationSessionFile?
+    @Published private(set) var taxonomy:           TaxonomyDocument?
+    @Published private(set) var loadWarning:        String?
+    @Published private(set) var isFinishing:        Bool = false
+    @Published private(set) var finishResult:       FinishAnnotationOut?
+    @Published private(set) var finishError:        String?
+    // AN-3B2: deviceEventId of the conflict waiting for user resolution, or nil.
+    // Drives ConflictResolutionView visibility in JugglingAnnotationScreen.
+    @Published private(set) var pendingConflictId:  UUID? = nil
 
     let userId:  Int
     let videoId: String
@@ -108,10 +111,11 @@ final class JugglingAnnotationViewModel: ObservableObject {
     // the caller must construct a new view model for the next user (userId
     // is immutable here by design).
     func clearSession() {
-        session     = nil
-        loadWarning  = nil
-        finishResult = nil
-        finishError  = nil
+        session          = nil
+        loadWarning      = nil
+        finishResult     = nil
+        finishError      = nil
+        pendingConflictId = nil
     }
 
     // MARK: — Draft management
@@ -222,8 +226,10 @@ final class JugglingAnnotationViewModel: ObservableObject {
     }
 
     // Resolves a .conflicted draft by fetching the authoritative server state via
-    // GET /contacts and applying it locally (version + all server fields).
-    // After resolution the draft is .synced — the user can then re-edit it if desired.
+    // GET /contacts. If conflictRetryCount < 3, applies the server state silently
+    // (.synced — no user decision needed). If the draft has been retried 3+ times
+    // or the server state differs meaningfully, sets pendingServerSnapshot and
+    // pendingConflictId so the UI can show ConflictResolutionView.
     // If the draft is absent from the server response it is treated as .deleted.
     // On network error the draft stays .conflicted so the caller can retry.
     func resolveConflict(deviceEventId: UUID) async {
@@ -235,19 +241,65 @@ final class JugglingAnnotationViewModel: ObservableObject {
         do {
             let list = try await apiClient.listContacts(videoId: videoId)
             if let serverEvent = list.events.first(where: { $0.deviceEventId == deviceEventId }) {
-                current.drafts[index] = syncEngine.resolveConflictedDraft(
-                    draft:       current.drafts[index],
-                    serverEvent: serverEvent
-                )
+                current.drafts[index].conflictRetryCount += 1
+                if current.drafts[index].conflictRetryCount <= 3 {
+                    // Auto-resolve: server wins silently (mirrors AN-3A server-wins policy)
+                    current.drafts[index] = syncEngine.resolveConflictedDraft(
+                        draft:       current.drafts[index],
+                        serverEvent: serverEvent
+                    )
+                    current.drafts[index].pendingServerSnapshot = nil
+                    pendingConflictId = firstPendingConflict(in: current)
+                } else {
+                    // Max retries exceeded: surface to user for manual decision
+                    current.drafts[index].pendingServerSnapshot = serverEvent
+                    pendingConflictId = deviceEventId
+                }
             } else {
                 current.drafts[index].syncStatus    = .deleted
                 current.drafts[index].failureReason = nil
+                current.drafts[index].pendingServerSnapshot = nil
+                pendingConflictId = firstPendingConflict(in: current)
             }
             try? localStore.save(session: &current)
             session = current
         } catch {
             // Network error: draft remains .conflicted; UI should offer "Retry resolve".
         }
+    }
+
+    // User accepts the server version: applies pendingServerSnapshot → .synced.
+    // pendingConflictId advances to the next conflict if one exists.
+    func acceptServerVersion(deviceEventId: UUID) {
+        guard var current = session,
+              let index = current.drafts.firstIndex(where: { $0.deviceEventId == deviceEventId }),
+              let snapshot = current.drafts[index].pendingServerSnapshot
+        else { return }
+
+        current.drafts[index] = syncEngine.resolveConflictedDraft(
+            draft:       current.drafts[index],
+            serverEvent: snapshot
+        )
+        current.drafts[index].pendingServerSnapshot = nil
+        pendingConflictId = firstPendingConflict(in: current)
+        try? localStore.save(session: &current)
+        session = current
+    }
+
+    // User keeps the local version: clears the snapshot, resets to .localOnly
+    // so the next flushPending will POST the local payload again.
+    func keepLocalVersion(deviceEventId: UUID) {
+        guard var current = session,
+              let index = current.drafts.firstIndex(where: { $0.deviceEventId == deviceEventId })
+        else { return }
+
+        current.drafts[index].pendingServerSnapshot = nil
+        current.drafts[index].conflictRetryCount    = 0
+        current.drafts[index].syncStatus            = .localOnly
+        current.drafts[index].failureReason         = nil
+        pendingConflictId = firstPendingConflict(in: current)
+        try? localStore.save(session: &current)
+        session = current
     }
 
     // Marks a draft for deletion. Drafts never synced are removed locally
@@ -331,6 +383,12 @@ final class JugglingAnnotationViewModel: ObservableObject {
     }
 
     // MARK: — Private
+
+    private func firstPendingConflict(in session: AnnotationSessionFile) -> UUID? {
+        session.drafts.first(where: {
+            $0.syncStatus == .conflicted && $0.pendingServerSnapshot != nil
+        })?.deviceEventId
+    }
 
     private func callFinish(confirmZero: Bool) async {
         do {
