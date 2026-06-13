@@ -126,13 +126,8 @@
 		BB100004000000000000005 /* PlaybackBarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100003000000000000005 /* PlaybackBarTests.swift */; };
 		BB100004000000000000006 /* AVPlayerLayerViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100003000000000000006 /* AVPlayerLayerViewTests.swift */; };
 		BB200004000000000000001 /* JugglingAnnotationScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000001 /* JugglingAnnotationScreen.swift */; };
-		BB200004000000000000002 /* ContactPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000002 /* ContactPickerView.swift */; };
 		BB200004000000000000003 /* EventTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000003 /* EventTimelineView.swift */; };
-		BB200004000000000000004 /* EventDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000004 /* EventDetailView.swift */; };
-		BB200004000000000000005 /* ConflictResolutionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000005 /* ConflictResolutionView.swift */; };
 		BB200004000000000000006 /* PlaybackControllerLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000006 /* PlaybackControllerLayoutTests.swift */; };
-		BB200004000000000000007 /* AnnotationVMConflictTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000007 /* AnnotationVMConflictTests.swift */; };
-		BB200004000000000000008 /* ContactPickerLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000008 /* ContactPickerLogicTests.swift */; };
 		BB200004000000000000009 /* EventTimelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000009 /* EventTimelineTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -249,13 +244,8 @@
 		BB100003000000000000005 /* PlaybackBarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackBarTests.swift; sourceTree = "<group>"; };
 		BB100003000000000000006 /* AVPlayerLayerViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVPlayerLayerViewTests.swift; sourceTree = "<group>"; };
 		BB200003000000000000001 /* JugglingAnnotationScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingAnnotationScreen.swift; sourceTree = "<group>"; };
-		BB200003000000000000002 /* ContactPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactPickerView.swift; sourceTree = "<group>"; };
 		BB200003000000000000003 /* EventTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTimelineView.swift; sourceTree = "<group>"; };
-		BB200003000000000000004 /* EventDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventDetailView.swift; sourceTree = "<group>"; };
-		BB200003000000000000005 /* ConflictResolutionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConflictResolutionView.swift; sourceTree = "<group>"; };
 		BB200003000000000000006 /* PlaybackControllerLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackControllerLayoutTests.swift; sourceTree = "<group>"; };
-		BB200003000000000000007 /* AnnotationVMConflictTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationVMConflictTests.swift; sourceTree = "<group>"; };
-		BB200003000000000000008 /* ContactPickerLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactPickerLogicTests.swift; sourceTree = "<group>"; };
 		BB200003000000000000009 /* EventTimelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTimelineTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000010 /* EditEventTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditEventTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000011 /* FlushPendingEditTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlushPendingEditTests.swift; sourceTree = "<group>"; };
@@ -572,10 +562,7 @@
 			isa = PBXGroup;
 			children = (
 				BB200003000000000000001 /* JugglingAnnotationScreen.swift */,
-				BB200003000000000000002 /* ContactPickerView.swift */,
 				BB200003000000000000003 /* EventTimelineView.swift */,
-				BB200003000000000000004 /* EventDetailView.swift */,
-				BB200003000000000000005 /* ConflictResolutionView.swift */,
 			);
 			path = Screen;
 			sourceTree = "<group>";
@@ -612,8 +599,6 @@
 				BB100003000000000000005 /* PlaybackBarTests.swift */,
 				BB100003000000000000006 /* AVPlayerLayerViewTests.swift */,
 				BB200003000000000000006 /* PlaybackControllerLayoutTests.swift */,
-				BB200003000000000000007 /* AnnotationVMConflictTests.swift */,
-				BB200003000000000000008 /* ContactPickerLogicTests.swift */,
 				BB200003000000000000009 /* EventTimelineTests.swift */,
 			);
 			path = Juggling;
@@ -839,10 +824,7 @@
 				BB100004000000000000002 /* AnnotationVideoLoader.swift in Sources */,
 				BB100004000000000000003 /* PlaybackControlBar.swift in Sources */,
 				BB200004000000000000001 /* JugglingAnnotationScreen.swift in Sources */,
-				BB200004000000000000002 /* ContactPickerView.swift in Sources */,
 				BB200004000000000000003 /* EventTimelineView.swift in Sources */,
-				BB200004000000000000004 /* EventDetailView.swift in Sources */,
-				BB200004000000000000005 /* ConflictResolutionView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -863,8 +845,6 @@
 				BB100004000000000000005 /* PlaybackBarTests.swift in Sources */,
 				BB100004000000000000006 /* AVPlayerLayerViewTests.swift in Sources */,
 				BB200004000000000000006 /* PlaybackControllerLayoutTests.swift in Sources */,
-				BB200004000000000000007 /* AnnotationVMConflictTests.swift in Sources */,
-				BB200004000000000000008 /* ContactPickerLogicTests.swift in Sources */,
 				BB200004000000000000009 /* EventTimelineTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

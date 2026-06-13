@@ -3,8 +3,10 @@ import AVFoundation
 
 // MARK: — JugglingAnnotationScreen
 
-// Primary self-annotation screen. Owns the video player, timeline, event list,
-// and contact picker. Replaces JugglingPlayerView for annotation-mode playback.
+// Phase 1 (AN-3B2A) — Event Marking Mode only.
+// Tap the FAB to mark a contact event at the current playhead position.
+// Swipe left on a row to delete. Tap a timeline pin or row to seek.
+// Phase 2 picker / detail / conflict UI: AN-3B2B.
 //
 // Mixed-orientation layout:
 //   videoAreaHeight(in:) computes the video container height from
@@ -15,10 +17,6 @@ import AVFoundation
 //       → leaves ≥ 50 % for PlaybackControlBar + EventTimelineView + EventList
 //   AVPlayerLayerView uses .resizeAspect in all cases: black pillarbox/letterbox
 //   fills any gap between the video and the container boundary.
-//
-// Lifecycle:
-//   .task { onAppear() }        — loads taxonomy, local session, starts download
-//   .onDisappear { onDisappear() } — persists session, cancels in-flight download
 //
 // NOT in scope (AN-3C):
 //   Finish flow, result/summary screen, navigation to next video.
@@ -32,9 +30,7 @@ struct JugglingAnnotationScreen: View {
     @StateObject private var playback: PlaybackController
     @StateObject private var vm:      JugglingAnnotationViewModel
 
-    @State private var showPicker        = false
-    @State private var editingEventId:   UUID? = nil
-    @State private var didCleanUp        = false   // guards double onDisappear calls
+    @State private var didCleanUp = false   // guards double onDisappear calls
 
     @Environment(\.presentationMode) private var presentationMode
 
@@ -67,7 +63,11 @@ struct JugglingAnnotationScreen: View {
                         events:    vm.activeEvents,
                         duration:  playback.duration,
                         currentMs: playback.currentTimestampMs,
-                        onTap:  { editingEventId = $0 },
+                        onTap:  { id in
+                            if let draft = vm.activeEvents.first(where: { $0.deviceEventId == id }) {
+                                playback.seek(toTimestampMs: draft.timestampMs)
+                            }
+                        },
                         onSeek: { playback.seek(toTimestampMs: $0) }
                     )
                     .padding(.bottom, 4)
@@ -90,14 +90,6 @@ struct JugglingAnnotationScreen: View {
                     .accessibilityLabel("Bezárás")
                 }
             }
-            .overlay(conflictOverlay, alignment: .bottom)
-            .sheet(isPresented: $showPicker) { pickerSheet }
-            .sheet(isPresented: Binding(
-                get: { editingEventId != nil },
-                set: { if !$0 { editingEventId = nil } }
-            )) {
-                if let id = editingEventId { detailSheet(for: id) }
-            }
             .onAppear { Task { await onAppear() } }
             .onDisappear { onDisappear() }
             .onChange(of: loader.state, perform: { state in
@@ -107,7 +99,6 @@ struct JugglingAnnotationScreen: View {
                     if let avp = playback.avPlayer { avp.play() }
                 }
             })
-            .onChange(of: vm.pendingConflictId, perform: { _ in })  // re-render trigger
         }
         .navigationViewStyle(.stack)
     }
@@ -249,7 +240,9 @@ struct JugglingAnnotationScreen: View {
 
     @ViewBuilder
     private func eventRow(_ draft: ContactEventDraft) -> some View {
-        Button { editingEventId = draft.deviceEventId } label: {
+        Button {
+            playback.seek(toTimestampMs: draft.timestampMs)
+        } label: {
             HStack(spacing: 12) {
                 Circle()
                     .fill(EventTimelineView.pinColor(for: draft.syncStatus))
@@ -303,7 +296,7 @@ struct JugglingAnnotationScreen: View {
 
     private var fabButton: some View {
         Button {
-            showPicker = true
+            // AN-3B2A: markTimestamp — wired in next commit
         } label: {
             Image(systemName: "plus")
                 .font(.title2.weight(.semibold))
@@ -317,82 +310,6 @@ struct JugglingAnnotationScreen: View {
         .disabled(!loaderReady)
         .accessibilityLabel("Új kontakt esemény")
         .accessibilityHint("Videó jelenlegi időpontjában rögzít egy kontakt eseményt")
-    }
-
-    // MARK: — Conflict overlay
-
-    @ViewBuilder
-    private var conflictOverlay: some View {
-        if let conflictId = vm.pendingConflictId,
-           let draft = vm.activeEvents.first(where: { $0.deviceEventId == conflictId }) {
-            Color.black.opacity(0.45)
-                .ignoresSafeArea()
-                .overlay(
-                    ConflictResolutionView(
-                        draft:    draft,
-                        taxonomy: vm.taxonomy,
-                        onAcceptServer: {
-                            vm.acceptServerVersion(deviceEventId: conflictId)
-                        },
-                        onKeepLocal: {
-                            vm.keepLocalVersion(deviceEventId: conflictId)
-                            Task { await vm.flushPending() }
-                        }
-                    )
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 8),
-                    alignment: .bottom
-                )
-                .accessibilityElement(children: .contain)
-                .transition(.opacity)
-        }
-    }
-
-    // MARK: — Sheets
-
-    @ViewBuilder
-    private var pickerSheet: some View {
-        ContactPickerView(
-            taxonomy:  vm.taxonomy,
-            currentMs: playback.currentTimestampMs,
-            onSave: { type, side, confidence, label, desc in
-                vm.addEvent(
-                    timestampMs:          playback.currentTimestampMs,
-                    contactType:          type,
-                    side:                 side,
-                    annotationConfidence: confidence,
-                    customLabel:          label,
-                    customDescription:    desc
-                )
-                showPicker = false
-                Task { await vm.flushPending() }
-            },
-            onCancel: { showPicker = false }
-        )
-    }
-
-    @ViewBuilder
-    private func detailSheet(for id: UUID) -> some View {
-        if let draft = vm.activeEvents.first(where: { $0.deviceEventId == id }) {
-            EventDetailView(
-                draft:    draft,
-                taxonomy: vm.taxonomy,
-                onEdit: { type, side, confidence, label, desc in
-                    vm.editEvent(
-                        deviceEventId:        id,
-                        contactType:          type,
-                        side:                 side,
-                        annotationConfidence: confidence,
-                        customLabel:          label,
-                        customDescription:    desc
-                    )
-                    Task { await vm.flushPending() }
-                },
-                onDelete: {
-                    vm.markDeleted(deviceEventId: id)
-                }
-            )
-        }
     }
 
     // MARK: — Lifecycle
