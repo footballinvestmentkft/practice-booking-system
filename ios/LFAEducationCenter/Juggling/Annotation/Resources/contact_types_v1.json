@@ -1,0 +1,507 @@
+{
+  "_comment": "Source-of-truth for juggling contact type taxonomy. This file is the single canonical definition used by: browser helper, annotation_schema_v2.json, iOS Swift enum, and the training pipeline. Do NOT modify enum keys without a taxonomy review. See contact_taxonomy_v1.md for the full governance process.",
+  "taxonomy_version": "v1",
+  "created_at": "2026-06-13",
+  "policy": "no_paid_model",
+  "stable_count": 17,
+  "total_count": 18,
+
+  "_invariants": {
+    "right_stable_keys_count": 7,
+    "left_stable_keys_count": 7,
+    "center_stable_keys_count": 3,
+    "custom_keys_count": 1,
+    "no_duplicate_keys": true,
+    "no_duplicate_sort_orders": true,
+    "custom_other_excluded_from_training_auto": true,
+    "thigh_to_hip_auto_migration": "FORBIDDEN",
+    "thigh_to_hip_auto_migration_reason": "Anatomically distinct contact zones. If a non-null v1 body_part=thigh contact_event exists, manual_review_required must be set. No automatic reclassification."
+  },
+
+  "side_policy": {
+    "description": "For stable contact types the side is derived from the enum key and must never be set independently by the user. Validators must enforce consistency. Only custom_other requires explicit user-supplied side.",
+    "right_prefix_keys": ["right_instep","right_inside_foot","right_outside_foot","right_heel","right_knee","right_hip","right_shoulder"],
+    "left_prefix_keys":  ["left_instep","left_inside_foot","left_outside_foot","left_heel","left_knee","left_hip","left_shoulder"],
+    "center_keys":       ["chest","head","back"],
+    "custom_explicit":   ["custom_other"],
+    "allowed_side_values": ["left","right","center","unknown"]
+  },
+
+  "review_status_enum": {
+    "_comment": "Single unified enum for all contact events regardless of source. Annotator and user-facing statuses use the same values to avoid divergence.",
+    "values": {
+      "pending":                  "Created but not yet reviewed by anyone.",
+      "confirmed":                "Reviewer confirmed the contact type and side are correct.",
+      "corrected":                "Contact type or side was changed by a reviewer or user from a previous value.",
+      "rejected":                 "Event is invalid (false detection, double-counted, non-contact frame). Excluded from counts and training.",
+      "pending_taxonomy_review":  "custom_other only — awaiting taxonomy review to determine classification path.",
+      "reclassified":             "custom_other — reviewer determined it matches an existing stable key; contact_type updated to that stable key.",
+      "promotion_candidate":      "custom_other — same custom_label seen in ≥3 videos; under evaluation for new stable type.",
+      "promoted":                 "custom_other — new stable enum key created and approved; contact_type updated; legacy custom fields preserved for audit.",
+      "approved_unclassified":    "custom_other — reviewed, does not match any stable type and will not be promoted. Permanently excluded from training."
+    },
+    "stable_type_allowed": ["pending","confirmed","corrected","rejected"],
+    "custom_other_allowed": ["pending_taxonomy_review","reclassified","promotion_candidate","promoted","approved_unclassified"],
+    "excluded_from_training_states": ["pending","rejected","pending_taxonomy_review","promotion_candidate","approved_unclassified"]
+  },
+
+  "annotation_source_enum": {
+    "values": {
+      "manual_annotator": "Entered via the browser annotation helper or CLI by an internal annotator producing ground truth.",
+      "manual_user":      "Entered by an athlete/student via the iOS app (manual fallback mode).",
+      "model_prediction": "Automatically detected by the trained model (Phase D+). Not yet reviewed.",
+      "user_corrected":   "Originally a model_prediction that was changed by a user or reviewer."
+    }
+  },
+
+  "groups": [
+    {
+      "group_id": "foot",
+      "group_label_hu": "Lábfej",
+      "group_label_en": "Foot",
+      "group_sort_order": 1,
+      "ios_section_icon": "shoe.fill",
+      "contact_types": [
+        {
+          "key": "right_instep",
+          "label_hu": "Jobb rüszt",
+          "label_en": "Right instep",
+          "body_region": "foot",
+          "side": "right",
+          "side_policy": "fixed",
+          "sort_order": 1,
+          "ios_icon": "shoe.2",
+          "is_stable": true,
+          "auto_detectable": true,
+          "auto_detectable_phase": "D",
+          "annotation_difficulty": "medium",
+          "definition_hu": "A jobb lábfej háti (dorsal) felszíne, a lábujjtő és a bokaszár között. Klasszikus rüsztérintés.",
+          "definition_en": "Dorsal surface of the right foot between the toe knuckles and the ankle. Classic instep touch.",
+          "excluded_from_training_auto": false,
+          "taxonomy_version_added": "v1"
+        },
+        {
+          "key": "left_instep",
+          "label_hu": "Bal rüszt",
+          "label_en": "Left instep",
+          "body_region": "foot",
+          "side": "left",
+          "side_policy": "fixed",
+          "sort_order": 2,
+          "ios_icon": "shoe.2",
+          "is_stable": true,
+          "auto_detectable": true,
+          "auto_detectable_phase": "D",
+          "annotation_difficulty": "medium",
+          "definition_hu": "A bal lábfej háti felszíne. Klasszikus rüsztérintés.",
+          "definition_en": "Dorsal surface of the left foot. Classic instep touch.",
+          "excluded_from_training_auto": false,
+          "taxonomy_version_added": "v1"
+        },
+        {
+          "key": "right_inside_foot",
+          "label_hu": "Jobb belső",
+          "label_en": "Right inside foot",
+          "body_region": "foot",
+          "side": "right",
+          "side_policy": "fixed",
+          "sort_order": 3,
+          "ios_icon": "shoe.fill",
+          "is_stable": true,
+          "auto_detectable": false,
+          "auto_detectable_phase": null,
+          "annotation_difficulty": "hard",
+          "definition_hu": "A jobb láb mediális (belső) felszíne a sarokcsonttól a nagy lábujj tövéig.",
+          "definition_en": "Medial surface of the right foot from the heel to the base of the big toe.",
+          "excluded_from_training_auto": false,
+          "taxonomy_version_added": "v1"
+        },
+        {
+          "key": "left_inside_foot",
+          "label_hu": "Bal belső",
+          "label_en": "Left inside foot",
+          "body_region": "foot",
+          "side": "left",
+          "side_policy": "fixed",
+          "sort_order": 4,
+          "ios_icon": "shoe.fill",
+          "is_stable": true,
+          "auto_detectable": false,
+          "auto_detectable_phase": null,
+          "annotation_difficulty": "hard",
+          "definition_hu": "A bal láb mediális felszíne a saroktól a nagy lábujj tövéig.",
+          "definition_en": "Medial surface of the left foot from heel to base of big toe.",
+          "excluded_from_training_auto": false,
+          "taxonomy_version_added": "v1"
+        },
+        {
+          "key": "right_outside_foot",
+          "label_hu": "Jobb külső",
+          "label_en": "Right outside foot",
+          "body_region": "foot",
+          "side": "right",
+          "side_policy": "fixed",
+          "sort_order": 5,
+          "ios_icon": "shoe.fill",
+          "is_stable": true,
+          "auto_detectable": false,
+          "auto_detectable_phase": null,
+          "annotation_difficulty": "very_hard",
+          "definition_hu": "A jobb láb laterális (külső) felszíne a kis ujjak mentén.",
+          "definition_en": "Lateral surface of the right foot along the little toe side.",
+          "excluded_from_training_auto": false,
+          "taxonomy_version_added": "v1"
+        },
+        {
+          "key": "left_outside_foot",
+          "label_hu": "Bal külső",
+          "label_en": "Left outside foot",
+          "body_region": "foot",
+          "side": "left",
+          "side_policy": "fixed",
+          "sort_order": 6,
+          "ios_icon": "shoe.fill",
+          "is_stable": true,
+          "auto_detectable": false,
+          "auto_detectable_phase": null,
+          "annotation_difficulty": "very_hard",
+          "definition_hu": "A bal láb laterális felszíne.",
+          "definition_en": "Lateral surface of the left foot.",
+          "excluded_from_training_auto": false,
+          "taxonomy_version_added": "v1"
+        },
+        {
+          "key": "right_heel",
+          "label_hu": "Jobb sarok",
+          "label_en": "Right heel",
+          "body_region": "foot",
+          "side": "right",
+          "side_policy": "fixed",
+          "sort_order": 7,
+          "ios_icon": "shoe.fill",
+          "is_stable": true,
+          "auto_detectable": false,
+          "auto_detectable_phase": null,
+          "annotation_difficulty": "very_hard",
+          "definition_hu": "A jobb láb sarokcsonti (calcaneus) felszíne.",
+          "definition_en": "Calcaneal (heel bone) surface of the right foot.",
+          "excluded_from_training_auto": false,
+          "taxonomy_version_added": "v1"
+        },
+        {
+          "key": "left_heel",
+          "label_hu": "Bal sarok",
+          "label_en": "Left heel",
+          "body_region": "foot",
+          "side": "left",
+          "side_policy": "fixed",
+          "sort_order": 8,
+          "ios_icon": "shoe.fill",
+          "is_stable": true,
+          "auto_detectable": false,
+          "auto_detectable_phase": null,
+          "annotation_difficulty": "very_hard",
+          "definition_hu": "A bal láb sarokcsonti felszíne.",
+          "definition_en": "Calcaneal surface of the left foot.",
+          "excluded_from_training_auto": false,
+          "taxonomy_version_added": "v1"
+        }
+      ]
+    },
+    {
+      "group_id": "knee",
+      "group_label_hu": "Térd",
+      "group_label_en": "Knee",
+      "group_sort_order": 2,
+      "ios_section_icon": "figure.stand",
+      "contact_types": [
+        {
+          "key": "right_knee",
+          "label_hu": "Jobb térd",
+          "label_en": "Right knee",
+          "body_region": "knee",
+          "side": "right",
+          "side_policy": "fixed",
+          "sort_order": 9,
+          "ios_icon": "figure.stand",
+          "is_stable": true,
+          "auto_detectable": true,
+          "auto_detectable_phase": "D",
+          "annotation_difficulty": "medium",
+          "definition_hu": "A jobb térdkalács és a közvetlenül körülötte lévő felszín.",
+          "definition_en": "The right patella and immediately surrounding surface.",
+          "excluded_from_training_auto": false,
+          "taxonomy_version_added": "v1"
+        },
+        {
+          "key": "left_knee",
+          "label_hu": "Bal térd",
+          "label_en": "Left knee",
+          "body_region": "knee",
+          "side": "left",
+          "side_policy": "fixed",
+          "sort_order": 10,
+          "ios_icon": "figure.stand",
+          "is_stable": true,
+          "auto_detectable": true,
+          "auto_detectable_phase": "D",
+          "annotation_difficulty": "medium",
+          "definition_hu": "A bal térdkalács és körülötte lévő felszín.",
+          "definition_en": "The left patella and immediately surrounding surface.",
+          "excluded_from_training_auto": false,
+          "taxonomy_version_added": "v1"
+        }
+      ]
+    },
+    {
+      "group_id": "hip",
+      "group_label_hu": "Csípő",
+      "group_label_en": "Hip",
+      "group_sort_order": 3,
+      "ios_section_icon": "figure.stand",
+      "_backward_compat_note": "v1 schema had 'thigh' as a body_part. 'thigh' and 'hip' are anatomically distinct. Auto-migration from thigh→hip is FORBIDDEN. If a non-null v1 contact_event with body_part='thigh' exists, it must be flagged for manual_review_required.",
+      "contact_types": [
+        {
+          "key": "right_hip",
+          "label_hu": "Jobb csípő",
+          "label_en": "Right hip",
+          "body_region": "hip",
+          "side": "right",
+          "side_policy": "fixed",
+          "sort_order": 11,
+          "ios_icon": "figure.stand",
+          "is_stable": true,
+          "auto_detectable": false,
+          "auto_detectable_phase": null,
+          "annotation_difficulty": "hard",
+          "definition_hu": "A jobb csípőcsont laterális felszíne és a nagyobb trochanter környéke. NEM azonos a combbal (thigh).",
+          "definition_en": "Lateral surface of the right iliac crest and greater trochanter area. NOT the same as thigh.",
+          "excluded_from_training_auto": false,
+          "taxonomy_version_added": "v1"
+        },
+        {
+          "key": "left_hip",
+          "label_hu": "Bal csípő",
+          "label_en": "Left hip",
+          "body_region": "hip",
+          "side": "left",
+          "side_policy": "fixed",
+          "sort_order": 12,
+          "ios_icon": "figure.stand",
+          "is_stable": true,
+          "auto_detectable": false,
+          "auto_detectable_phase": null,
+          "annotation_difficulty": "hard",
+          "definition_hu": "A bal csípőcsont laterális felszíne. NEM azonos a combbal.",
+          "definition_en": "Lateral surface of the left iliac crest. NOT the same as thigh.",
+          "excluded_from_training_auto": false,
+          "taxonomy_version_added": "v1"
+        }
+      ]
+    },
+    {
+      "group_id": "upper_body",
+      "group_label_hu": "Felsőtest",
+      "group_label_en": "Upper Body",
+      "group_sort_order": 4,
+      "ios_section_icon": "figure.arms.open",
+      "contact_types": [
+        {
+          "key": "chest",
+          "label_hu": "Mellkas",
+          "label_en": "Chest",
+          "body_region": "chest",
+          "side": "center",
+          "side_policy": "center",
+          "sort_order": 13,
+          "ios_icon": "heart.fill",
+          "is_stable": true,
+          "auto_detectable": true,
+          "auto_detectable_phase": "D",
+          "annotation_difficulty": "easy",
+          "definition_hu": "A mellcsont és a mellkasi elülső felszín (pectoralis zona). Nincs lateralitás — side=center.",
+          "definition_en": "Sternum and anterior thoracic surface (pectoral zone). No laterality — side=center.",
+          "excluded_from_training_auto": false,
+          "taxonomy_version_added": "v1"
+        },
+        {
+          "key": "right_shoulder",
+          "label_hu": "Jobb váll",
+          "label_en": "Right shoulder",
+          "body_region": "shoulder",
+          "side": "right",
+          "side_policy": "fixed",
+          "sort_order": 14,
+          "ios_icon": "figure.arms.open",
+          "is_stable": true,
+          "auto_detectable": true,
+          "auto_detectable_phase": "D",
+          "annotation_difficulty": "medium",
+          "definition_hu": "A jobb deltoid felszín és a felső karfej (acromion környéke).",
+          "definition_en": "Right deltoid surface and upper arm head (acromion region).",
+          "excluded_from_training_auto": false,
+          "taxonomy_version_added": "v1"
+        },
+        {
+          "key": "left_shoulder",
+          "label_hu": "Bal váll",
+          "label_en": "Left shoulder",
+          "body_region": "shoulder",
+          "side": "left",
+          "side_policy": "fixed",
+          "sort_order": 15,
+          "ios_icon": "figure.arms.open",
+          "is_stable": true,
+          "auto_detectable": true,
+          "auto_detectable_phase": "D",
+          "annotation_difficulty": "medium",
+          "definition_hu": "A bal deltoid felszín és felső karfej.",
+          "definition_en": "Left deltoid surface and upper arm head.",
+          "excluded_from_training_auto": false,
+          "taxonomy_version_added": "v1"
+        },
+        {
+          "key": "head",
+          "label_hu": "Fej",
+          "label_en": "Head",
+          "body_region": "head",
+          "side": "center",
+          "side_policy": "center",
+          "sort_order": 16,
+          "ios_icon": "person.fill",
+          "is_stable": true,
+          "auto_detectable": true,
+          "auto_detectable_phase": "D",
+          "annotation_difficulty": "easy",
+          "definition_hu": "A koponya bármely felszíne. Nincs lateralitás — side=center.",
+          "definition_en": "Any surface of the skull. No laterality — side=center.",
+          "excluded_from_training_auto": false,
+          "taxonomy_version_added": "v1"
+        },
+        {
+          "key": "back",
+          "label_hu": "Hát",
+          "label_en": "Back",
+          "body_region": "back",
+          "side": "center",
+          "side_policy": "center",
+          "sort_order": 17,
+          "ios_icon": "figure.walk.motion",
+          "is_stable": true,
+          "auto_detectable": false,
+          "auto_detectable_phase": null,
+          "annotation_difficulty": "very_hard",
+          "definition_hu": "A hát spinális oldala (thoracalis és lumbalis zona). Nincs lateralitás — side=center.",
+          "definition_en": "Spinal side of the back (thoracic and lumbar zone). No laterality — side=center.",
+          "excluded_from_training_auto": false,
+          "taxonomy_version_added": "v1"
+        }
+      ]
+    },
+    {
+      "group_id": "custom",
+      "group_label_hu": "Egyéb / Egyedi",
+      "group_label_en": "Other / Custom",
+      "group_sort_order": 5,
+      "ios_section_icon": "plus.circle",
+      "contact_types": [
+        {
+          "key": "custom_other",
+          "label_hu": "Egyedi érintés",
+          "label_en": "Custom / Other",
+          "body_region": "unclassified",
+          "side": null,
+          "side_policy": "explicit_required",
+          "side_allowed_values": ["left","right","center","unknown"],
+          "sort_order": 18,
+          "ios_icon": "plus.circle",
+          "is_stable": false,
+          "auto_detectable": false,
+          "auto_detectable_phase": null,
+          "annotation_difficulty": "variable",
+          "definition_hu": "Olyan érintési mód, amely nem illeszthető a 17 stabil kategóriába. Kötelező custom_label és custom_description. Taxonomy review szükséges.",
+          "definition_en": "A contact type that does not fit any of the 17 stable categories. Requires custom_label and custom_description. Taxonomy review required.",
+          "excluded_from_training_auto": true,
+          "excluded_from_training_policy": "ALWAYS — in every review_status. No unclassified_custom training class exists. Training inclusion only possible after promotion to a new stable key.",
+          "requires_custom_label": true,
+          "requires_custom_description": true,
+          "requires_explicit_side": true,
+          "custom_label_constraints": {
+            "pattern": "^[a-z][a-z0-9_]{0,38}[a-z0-9]$",
+            "max_length": 40,
+            "must_not_match_existing_key": true,
+            "normalization": "lowercase_underscore",
+            "deduplication_check_required": true
+          },
+          "custom_description_constraints": {
+            "max_length": 200,
+            "must_not_be_empty": true
+          },
+          "review_flow": {
+            "initial_review_status": "pending_taxonomy_review",
+            "allowed_transitions": {
+              "pending_taxonomy_review": ["reclassified","promotion_candidate","approved_unclassified"],
+              "promotion_candidate": ["promoted","approved_unclassified"],
+              "reclassified": [],
+              "promoted": [],
+              "approved_unclassified": []
+            },
+            "promotion_threshold_videos": 3,
+            "promotion_requires_manual_approval": true,
+            "auto_enum_key_from_custom_label": "FORBIDDEN"
+          },
+          "taxonomy_version_added": "v1"
+        }
+      ]
+    }
+  ],
+
+  "stable_keys": [
+    "right_instep","left_instep",
+    "right_inside_foot","left_inside_foot",
+    "right_outside_foot","left_outside_foot",
+    "right_heel","left_heel",
+    "right_knee","left_knee",
+    "right_hip","left_hip",
+    "chest","right_shoulder","left_shoulder",
+    "head","back"
+  ],
+
+  "right_stable_keys": [
+    "right_instep","right_inside_foot","right_outside_foot","right_heel",
+    "right_knee","right_hip","right_shoulder"
+  ],
+
+  "left_stable_keys": [
+    "left_instep","left_inside_foot","left_outside_foot","left_heel",
+    "left_knee","left_hip","left_shoulder"
+  ],
+
+  "center_stable_keys": ["chest","head","back"],
+
+  "all_keys": [
+    "right_instep","left_instep",
+    "right_inside_foot","left_inside_foot",
+    "right_outside_foot","left_outside_foot",
+    "right_heel","left_heel",
+    "right_knee","left_knee",
+    "right_hip","left_hip",
+    "chest","right_shoulder","left_shoulder",
+    "head","back",
+    "custom_other"
+  ],
+
+  "backward_compatibility": {
+    "v1_body_part_to_v2_contact_type": {
+      "foot":     ["right_instep","left_instep","right_inside_foot","left_inside_foot","right_outside_foot","left_outside_foot","right_heel","left_heel"],
+      "knee":     ["right_knee","left_knee"],
+      "thigh":    "MANUAL_REVIEW_REQUIRED — thigh and hip are anatomically distinct. Auto-migration FORBIDDEN.",
+      "shoulder": ["right_shoulder","left_shoulder"],
+      "head":     ["head"],
+      "chest":    ["chest"]
+    },
+    "v2_new_keys_not_in_v1": ["right_hip","left_hip","back"],
+    "v1_deprecated_keys": ["thigh"],
+    "thigh_migration_policy": "If a non-null contact_event with body_part='thigh' is found in a v1 annotation, set manual_review_required=true on that event. Do not reclassify automatically."
+  }
+}

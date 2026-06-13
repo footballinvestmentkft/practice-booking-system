@@ -100,6 +100,21 @@
 		BB000004000000000000080 /* SpikeLivenessViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000080 /* SpikeLivenessViewModel.swift */; };
 		BB000004000000000000081 /* ARFaceTrackingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000081 /* ARFaceTrackingView.swift */; };
 		BB000004000000000000082 /* SpikeLivenessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003000000000000082 /* SpikeLivenessView.swift */; };
+		AA100004000000000000001 /* ContactTaxonomy.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000001 /* ContactTaxonomy.swift */; };
+		AA100004000000000000002 /* ContactTaxonomyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000002 /* ContactTaxonomyStore.swift */; };
+		AA100004000000000000003 /* ContactEventDraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000003 /* ContactEventDraft.swift */; };
+		AA100004000000000000004 /* ContactEventResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000004 /* ContactEventResponse.swift */; };
+		AA100004000000000000005 /* LocalAnnotationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000005 /* LocalAnnotationStore.swift */; };
+		AA100004000000000000006 /* AnnotationSyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000006 /* AnnotationSyncEngine.swift */; };
+		AA100004000000000000007 /* JugglingAnnotationAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000007 /* JugglingAnnotationAPIClient.swift */; };
+		AA100004000000000000008 /* JugglingAnnotationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000008 /* JugglingAnnotationViewModel.swift */; };
+		AA100004000000000000009 /* contact_types_v1.json in Resources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000009 /* contact_types_v1.json */; };
+		CC400004000000000000001 /* JugglingVideoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000001 /* JugglingVideoTests.swift */; };
+		CC400004000000000000005 /* ContactTaxonomyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000005 /* ContactTaxonomyTests.swift */; };
+		CC400004000000000000006 /* LocalAnnotationStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000006 /* LocalAnnotationStoreTests.swift */; };
+		CC400004000000000000007 /* ContactEventDraftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000007 /* ContactEventDraftTests.swift */; };
+		CC400004000000000000008 /* AnnotationSyncEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000008 /* AnnotationSyncEngineTests.swift */; };
+		CC400004000000000000009 /* JugglingAnnotationViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000009 /* JugglingAnnotationViewModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -198,10 +213,43 @@
 		BB000003000000000000080 /* SpikeLivenessViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpikeLivenessViewModel.swift; sourceTree = "<group>"; };
 		BB000003000000000000081 /* ARFaceTrackingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARFaceTrackingView.swift; sourceTree = "<group>"; };
 		BB000003000000000000082 /* SpikeLivenessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpikeLivenessView.swift; sourceTree = "<group>"; };
+		AA100003000000000000001 /* ContactTaxonomy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactTaxonomy.swift; sourceTree = "<group>"; };
+		AA100003000000000000002 /* ContactTaxonomyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactTaxonomyStore.swift; sourceTree = "<group>"; };
+		AA100003000000000000003 /* ContactEventDraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactEventDraft.swift; sourceTree = "<group>"; };
+		AA100003000000000000004 /* ContactEventResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactEventResponse.swift; sourceTree = "<group>"; };
+		AA100003000000000000005 /* LocalAnnotationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalAnnotationStore.swift; sourceTree = "<group>"; };
+		AA100003000000000000006 /* AnnotationSyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationSyncEngine.swift; sourceTree = "<group>"; };
+		AA100003000000000000007 /* JugglingAnnotationAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingAnnotationAPIClient.swift; sourceTree = "<group>"; };
+		AA100003000000000000008 /* JugglingAnnotationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingAnnotationViewModel.swift; sourceTree = "<group>"; };
+		AA100003000000000000009 /* contact_types_v1.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = contact_types_v1.json; sourceTree = "<group>"; };
+		CC300003000000000000001 /* JugglingVideoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000005 /* ContactTaxonomyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactTaxonomyTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000006 /* LocalAnnotationStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalAnnotationStoreTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000007 /* ContactEventDraftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactEventDraftTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000008 /* AnnotationSyncEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationSyncEngineTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000009 /* JugglingAnnotationViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingAnnotationViewModelTests.swift; sourceTree = "<group>"; };
+		CC100003000000000000001 /* LFAEducationCenterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LFAEducationCenterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXContainerItemProxy section */
+		CC100001000000000000005 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BB000001000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BB000001000000000000002;
+			remoteInfo = LFAEducationCenter;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		BB000001000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CC100001000000000000003 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -215,6 +263,7 @@
 			isa = PBXGroup;
 			children = (
 				BB000002000000000000003 /* LFAEducationCenter */,
+				CC200002000000000000001 /* LFAEducationCenterTests */,
 				BB000002000000000000002 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -223,6 +272,7 @@
 			isa = PBXGroup;
 			children = (
 				BB000003000000000000005 /* LFAEducationCenter.app */,
+				CC100003000000000000001 /* LFAEducationCenterTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -445,8 +495,54 @@
 				89E393EC38D4612DE04DD285 /* JugglingVideoListView.swift */,
 				20CD58654D76D5278A5E5B62 /* JugglingVideoListViewModel.swift */,
 				E075CE337E219F48D39CBDFA /* JugglingPlayerView.swift */,
+				AA100002000000000000001 /* Annotation */,
 			);
 			name = Juggling;
+			path = Juggling;
+			sourceTree = "<group>";
+		};
+		AA100002000000000000001 /* Annotation */ = {
+			isa = PBXGroup;
+			children = (
+				AA100003000000000000001 /* ContactTaxonomy.swift */,
+				AA100003000000000000002 /* ContactTaxonomyStore.swift */,
+				AA100003000000000000003 /* ContactEventDraft.swift */,
+				AA100003000000000000004 /* ContactEventResponse.swift */,
+				AA100003000000000000005 /* LocalAnnotationStore.swift */,
+				AA100003000000000000006 /* AnnotationSyncEngine.swift */,
+				AA100003000000000000007 /* JugglingAnnotationAPIClient.swift */,
+				AA100003000000000000008 /* JugglingAnnotationViewModel.swift */,
+				AA100002000000000000002 /* Resources */,
+			);
+			path = Annotation;
+			sourceTree = "<group>";
+		};
+		AA100002000000000000002 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				AA100003000000000000009 /* contact_types_v1.json */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		CC200002000000000000001 /* LFAEducationCenterTests */ = {
+			isa = PBXGroup;
+			children = (
+				CC300003000000000000001 /* JugglingVideoTests.swift */,
+				CC200002000000000000003 /* Juggling */,
+			);
+			path = LFAEducationCenterTests;
+			sourceTree = "<group>";
+		};
+		CC200002000000000000003 /* Juggling */ = {
+			isa = PBXGroup;
+			children = (
+				CC300003000000000000005 /* ContactTaxonomyTests.swift */,
+				CC300003000000000000006 /* LocalAnnotationStoreTests.swift */,
+				CC300003000000000000007 /* ContactEventDraftTests.swift */,
+				CC300003000000000000008 /* AnnotationSyncEngineTests.swift */,
+				CC300003000000000000009 /* JugglingAnnotationViewModelTests.swift */,
+			);
 			path = Juggling;
 			sourceTree = "<group>";
 		};
@@ -485,6 +581,24 @@
 			productReference = BB000003000000000000005 /* LFAEducationCenter.app */;
 			productType = "com.apple.product-type.application";
 		};
+		CC100002000000000000001 /* LFAEducationCenterTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CC100006000000000000001 /* Build configuration list for PBXNativeTarget "LFAEducationCenterTests" */;
+			buildPhases = (
+				CC100001000000000000001 /* Sources */,
+				CC100001000000000000002 /* Resources */,
+				CC100001000000000000003 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CC100001000000000000004 /* PBXTargetDependency */,
+			);
+			name = LFAEducationCenterTests;
+			productName = LFAEducationCenterTests;
+			productReference = CC100003000000000000001 /* LFAEducationCenterTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -497,6 +611,10 @@
 				TargetAttributes = {
 					BB000001000000000000002 = {
 						CreatedOnToolsVersion = 15.0;
+					};
+					CC100002000000000000001 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = BB000001000000000000002;
 					};
 				};
 			};
@@ -514,6 +632,7 @@
 			projectRoot = "";
 			targets = (
 				BB000001000000000000002 /* LFAEducationCenter */,
+				CC100002000000000000001 /* LFAEducationCenterTests */,
 			);
 		};
 /* End PBXProject section */
@@ -525,6 +644,14 @@
 			files = (
 				BB000004000000000000003 /* Assets.xcassets in Resources */,
 				BB000004000000000000010 /* skeleton_receiver.html in Resources */,
+				AA100004000000000000009 /* contact_types_v1.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CC100001000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -626,10 +753,39 @@
 				BB000004000000000000080 /* SpikeLivenessViewModel.swift in Sources */,
 				BB000004000000000000081 /* ARFaceTrackingView.swift in Sources */,
 				BB000004000000000000082 /* SpikeLivenessView.swift in Sources */,
+				AA100004000000000000001 /* ContactTaxonomy.swift in Sources */,
+				AA100004000000000000002 /* ContactTaxonomyStore.swift in Sources */,
+				AA100004000000000000003 /* ContactEventDraft.swift in Sources */,
+				AA100004000000000000004 /* ContactEventResponse.swift in Sources */,
+				AA100004000000000000005 /* LocalAnnotationStore.swift in Sources */,
+				AA100004000000000000006 /* AnnotationSyncEngine.swift in Sources */,
+				AA100004000000000000007 /* JugglingAnnotationAPIClient.swift in Sources */,
+				AA100004000000000000008 /* JugglingAnnotationViewModel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CC100001000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC400004000000000000001 /* JugglingVideoTests.swift in Sources */,
+				CC400004000000000000005 /* ContactTaxonomyTests.swift in Sources */,
+				CC400004000000000000006 /* LocalAnnotationStoreTests.swift in Sources */,
+				CC400004000000000000007 /* ContactEventDraftTests.swift in Sources */,
+				CC400004000000000000008 /* AnnotationSyncEngineTests.swift in Sources */,
+				CC400004000000000000009 /* JugglingAnnotationViewModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		CC100001000000000000004 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BB000001000000000000002 /* LFAEducationCenter */;
+			targetProxy = CC100001000000000000005 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		BB000005000000000000001 /* Debug */ = {
@@ -799,6 +955,42 @@
 			};
 			name = Release;
 		};
+		CC100005000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 4D7V9ZWVHY;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.lovas-zoltan.lfa-education-center.LFAEducationCenterTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LFAEducationCenter.app/LFAEducationCenter";
+				TEST_TARGET_NAME = LFAEducationCenter;
+			};
+			name = Debug;
+		};
+		CC100005000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 4D7V9ZWVHY;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.lovas-zoltan.lfa-education-center.LFAEducationCenterTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LFAEducationCenter.app/LFAEducationCenter";
+				TEST_TARGET_NAME = LFAEducationCenter;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -816,6 +1008,15 @@
 			buildConfigurations = (
 				BB000005000000000000003 /* Debug */,
 				BB000005000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CC100006000000000000001 /* Build configuration list for PBXNativeTarget "LFAEducationCenterTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CC100005000000000000001 /* Debug */,
+				CC100005000000000000002 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
