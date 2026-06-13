@@ -11,6 +11,7 @@ import CryptoKit
 // bundled JSON decodes and validates correctly, plus the checksum constant
 // is consistent with the file actually shipped.
 
+@MainActor
 final class ContactTaxonomyTests: XCTestCase {
 
     // ios/LFAEducationCenterTests/Juggling/ContactTaxonomyTests.swift

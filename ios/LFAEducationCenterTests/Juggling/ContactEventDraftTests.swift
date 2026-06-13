@@ -3,6 +3,7 @@ import XCTest
 
 // MARK: — AN2-T11..T16: ContactEventDraft model + FinishReadiness + wire decode
 
+@MainActor
 final class ContactEventDraftTests: XCTestCase {
 
     // AN2-T11: .new() produces a localOnly draft with sane defaults.

@@ -82,7 +82,7 @@ final class ContactTaxonomyStore: ObservableObject {
     // MARK: — Private
 
     private func fetchFromBackend() async throws -> TaxonomyDocument {
-        var path = "/api/v1/users/me/juggling/taxonomy"
+        let path = "/api/v1/users/me/juggling/taxonomy"
         let headers: [String: String]? = cachedETag.map { ["If-None-Match": $0] }
 
         // Use raw token inject rather than authenticated* wrapper so we can inspect status code.
