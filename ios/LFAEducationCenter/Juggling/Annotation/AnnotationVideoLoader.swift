@@ -1,4 +1,3 @@
-import AVFoundation
 import Foundation
 
 // MARK: — Testability seams
