@@ -23,32 +23,24 @@ private final class StillFrameSession: ObservableObject {
     }
 }
 
-// MARK: — EventLabelDetailView (AN-3B2A P2B-1/P2B-3)
+// MARK: — EventLabelDetailView (AN-3B2A P2B-1/P2B-3/P2B-4)
 //
-// Step-by-step Phase 2 labeling flow, presented after enterLabelingMode()
-// transitions every .unlabeled draft to .labelPending.
+// Step-by-step labeling flow presented after enterLabelingMode() transitions
+// all .unlabeled drafts to .labelPending.
 //
-// P2B-3 changes: still frame preview pinned at top (non-scrolling), using
-// EventStillFrameGenerator; taxonomy list remains below. No body-zone picker
-// yet (P2B-4). No second AVPlayer yet (P2B-3 scope only covers still frame).
+// P2B-4 default flow:
+//   still frame → body-zone picker → filtered contact type chips
+//   → confidence → "Mentés és tovább"
+// "Egyéb / Lista nézet" falls through to the full taxonomy list.
+// "Vissza az ábrához" from either detail view returns to the body picker.
 //
-// Layout:
-//   [still frame, 180pt, non-scrolling]
-//   [timestamp + status badge row, non-scrolling]
-//   [──────────────────────────────────────────]
-//   [List: taxonomy groups / confidence / custom fields / nav row]  ← scrolls
-//
-// The queue is captured once on appear (deviceEventIds of all .labelPending
-// drafts, sorted by timestamp). On each step:
-//   .labelPending → pick contact type / side / confidence → labelEvent()
-//                  → persisted immediately → .localOnly
-// "Vissza" revisits a previous queue entry (now .localOnly) so its current
-// values can be reviewed or changed.
-//
-// Closing never needs an extra save: every successful step already persisted.
-// clearAll() on close drops all cached still frames.
-//
-// NOT in scope: backend sync, Finish, conflict resolution (AN-3C+).
+// Layout (non-scrolling header):
+//   [still frame, 180pt]
+//   [timestamp + status badge row]
+//   [───────────────────────────────]
+//   IF no zone selected AND !fallback → BodyZonePickerView + "Egyéb" button
+//   IF zone selected               → filtered typeRow list
+//   IF fallback                    → full taxonomy list
 
 struct EventLabelDetailView: View {
     @ObservedObject var vm: JugglingAnnotationViewModel
@@ -71,6 +63,10 @@ struct EventLabelDetailView: View {
     // P2B-3 — still frame state
     @State private var stillImage:     UIImage? = nil
     @State private var isLoadingFrame: Bool     = false
+
+    // P2B-4 — body zone picker state
+    @State private var selectedBodyZone:    BodyZone? = nil
+    @State private var showTaxonomyFallback: Bool      = false
 
     // MARK: — Body
 
@@ -101,38 +97,131 @@ struct EventLabelDetailView: View {
         .navigationViewStyle(.stack)
         .onAppear { setUpQueue() }
         .onChange(of: currentIndex) { _ in loadFrameForCurrentDraft() }
+        .onChange(of: selectedBodyZone) { zone in
+            guard let zone = zone else { return }
+            handleZoneSelection(zone)
+        }
     }
 
-    // MARK: — Labeling layout (P2B-3: still frame pinned on top)
+    // MARK: — Top-level labeling layout
 
     @ViewBuilder
     private var labelingView: some View {
         VStack(spacing: 0) {
-            stillFramePreview           // fixed — non-scrolling
-            timestampRow                // fixed — non-scrolling
+            stillFramePreview        // fixed — non-scrolling
+            timestampRow             // fixed — non-scrolling
             Divider()
-            List {
-                if let doc = vm.taxonomy {
-                    ForEach(doc.groups.sorted { $0.groupSortOrder < $1.groupSortOrder }) { group in
-                        Section(header: groupHeader(group)) {
-                            ForEach(group.contactTypes.sorted { $0.sortOrder < $1.sortOrder }) { type in
-                                typeRow(type)
-                            }
+            if showTaxonomyFallback {
+                taxonomyListView     // full list + "← Vissza az ábrához"
+            } else if let zone = selectedBodyZone {
+                zoneDetailView(zone) // filtered types + "← Vissza az ábrához"
+            } else {
+                bodyPickerView       // BodyZonePickerView + "Egyéb" button
+            }
+        }
+    }
+
+    // MARK: — Body zone picker screen
+
+    private var bodyPickerView: some View {
+        VStack(spacing: 0) {
+            BodyZonePickerView(selectedZone: $selectedBodyZone, taxonomy: vm.taxonomy)
+                .frame(maxWidth: .infinity)
+                .frame(height: 220)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 8)
+
+            Divider()
+
+            Button {
+                showTaxonomyFallback = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "list.bullet")
+                    Text("Egyéb / Lista nézet")
+                }
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .accessibilityLabel("Lista nézet — összes kontakt típus")
+
+            Spacer()
+        }
+    }
+
+    // MARK: — Zone detail: filtered types for the selected zone
+
+    @ViewBuilder
+    private func zoneDetailView(_ zone: BodyZone) -> some View {
+        List {
+            Section {
+                Button {
+                    selectedBodyZone = nil
+                } label: {
+                    Label("Vissza az ábrához", systemImage: "chevron.left")
+                        .foregroundColor(.accentColor)
+                }
+                .accessibilityLabel("Vissza a testrész-kiválasztóhoz")
+            }
+
+            if let doc = vm.taxonomy {
+                let types = zone.contactTypes(in: doc)
+                if !types.isEmpty {
+                    Section(header: Text(zone.labelHu)) {
+                        ForEach(types) { type in
+                            typeRow(type)
                         }
                     }
-                } else {
-                    Section {
-                        Text("Taxonomy betöltése…")
-                            .foregroundColor(.secondary)
+                }
+            }
+
+            confidenceSection
+            if needsCustomLabel        { customLabelSection }
+            if needsCustomDescription  { customDescSection }
+            navigationSection
+        }
+        .listStyle(.insetGrouped)
+    }
+
+    // MARK: — Taxonomy fallback: full list
+
+    @ViewBuilder
+    private var taxonomyListView: some View {
+        List {
+            Section {
+                Button {
+                    showTaxonomyFallback = false
+                    selectedBodyZone = nil
+                } label: {
+                    Label("Vissza az ábrához", systemImage: "chevron.left")
+                        .foregroundColor(.accentColor)
+                }
+                .accessibilityLabel("Vissza a testrész-kiválasztóhoz")
+            }
+
+            if let doc = vm.taxonomy {
+                ForEach(doc.groups.sorted { $0.groupSortOrder < $1.groupSortOrder }) { group in
+                    Section(header: groupHeader(group)) {
+                        ForEach(group.contactTypes.sorted { $0.sortOrder < $1.sortOrder }) { type in
+                            typeRow(type)
+                        }
                     }
                 }
-                confidenceSection
-                if needsCustomLabel        { customLabelSection }
-                if needsCustomDescription  { customDescSection }
-                navigationSection
+            } else {
+                Section {
+                    Text("Taxonomy betöltése…")
+                        .foregroundColor(.secondary)
+                }
             }
-            .listStyle(.insetGrouped)
+
+            confidenceSection
+            if needsCustomLabel        { customLabelSection }
+            if needsCustomDescription  { customDescSection }
+            navigationSection
         }
+        .listStyle(.insetGrouped)
     }
 
     // MARK: — Still frame preview (P2B-3)
@@ -152,7 +241,6 @@ struct EventLabelDetailView: View {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
             } else {
-                // placeholder — generation failed or no videoURL
                 VStack(spacing: 8) {
                     Image(systemName: "photo.slash")
                         .font(.system(size: 28))
@@ -169,7 +257,7 @@ struct EventLabelDetailView: View {
         .accessibilityHidden(true)
     }
 
-    // MARK: — Timestamp row (fixed below preview)
+    // MARK: — Timestamp row
 
     private var timestampRow: some View {
         HStack(spacing: 8) {
@@ -230,13 +318,55 @@ struct EventLabelDetailView: View {
         if selectedSide == nil, let type = currentType {
             selectedSide = Self.autoSide(for: type)
         }
+        restoreBodyZone()
+    }
+
+    // Reverse-lookup: which body zone owns the current selectedKey?
+    // Sets selectedBodyZone / showTaxonomyFallback for the picker routing.
+    private func restoreBodyZone() {
+        guard let key = selectedKey else {
+            selectedBodyZone     = nil
+            showTaxonomyFallback = false
+            return
+        }
+        if let doc = vm.taxonomy {
+            for zone in BodyZone.allCases {
+                if zone.contactTypes(in: doc).contains(where: { $0.key == key }) {
+                    selectedBodyZone     = zone
+                    showTaxonomyFallback = false
+                    return
+                }
+            }
+        }
+        // Key is "back", "custom_other", or taxonomy not yet loaded — use list
+        selectedBodyZone     = nil
+        showTaxonomyFallback = true
+    }
+
+    // Auto-select contact type when a zone has only one type, or preserve
+    // existing key if it already belongs to the selected zone.
+    private func handleZoneSelection(_ zone: BodyZone) {
+        guard let doc = vm.taxonomy else { return }
+        let types = zone.contactTypes(in: doc)
+        guard !types.isEmpty else { return }
+
+        if types.count == 1, let single = types.first {
+            selectedKey  = single.key
+            selectedSide = Self.autoSide(for: single)
+        } else {
+            // Multi-type zone: only clear if the current key is from a different zone
+            if let key = selectedKey, !types.contains(where: { $0.key == key }) {
+                selectedKey  = nil
+                selectedSide = nil
+            }
+        }
     }
 
     // MARK: — Still frame loading (P2B-3)
 
     private func loadFrameForCurrentDraft() {
         frameSession.cancelLoad()
-        stillImage     = nil    // clear immediately — no flash of previous event's frame
+        stillImage     = nil
         isLoadingFrame = false
 
         guard let videoURL, let draft = currentDraft else { return }
@@ -254,7 +384,7 @@ struct EventLabelDetailView: View {
         }
     }
 
-    // MARK: — Taxonomy sections
+    // MARK: — Taxonomy row helpers
 
     @ViewBuilder
     private func groupHeader(_ group: TaxonomyGroup) -> some View {
@@ -349,7 +479,7 @@ struct EventLabelDetailView: View {
         }
     }
 
-    // MARK: — Navigation row (Vissza / Mentés és tovább)
+    // MARK: — Navigation row (Vissza event / Mentés és tovább)
 
     @ViewBuilder
     private var navigationSection: some View {
@@ -416,8 +546,8 @@ struct EventLabelDetailView: View {
         return vm.taxonomy?.groups.flatMap { $0.contactTypes }.first { $0.key == key }
     }
 
-    private var needsCustomLabel: Bool { currentType?.requiresCustomLabel == true }
-    private var needsCustomDescription: Bool { currentType?.requiresCustomDescription == true }
+    private var needsCustomLabel:       Bool { currentType?.requiresCustomLabel        == true }
+    private var needsCustomDescription: Bool { currentType?.requiresCustomDescription   == true }
 
     private var canSave: Bool {
         guard selectedKey != nil else { return false }
@@ -480,8 +610,8 @@ struct EventLabelDetailView: View {
 
     private func accessibilityLabel(for type: TaxonomyContactType) -> String {
         var parts = [type.labelHu, type.labelEn]
-        if type.sidePolicy == "explicit_required" { parts.append("Oldal szükséges") }
-        if type.requiresCustomLabel == true { parts.append("Egyedi label szükséges") }
+        if type.sidePolicy == "explicit_required"  { parts.append("Oldal szükséges") }
+        if type.requiresCustomLabel == true         { parts.append("Egyedi label szükséges") }
         return parts.joined(separator: ", ")
     }
 }

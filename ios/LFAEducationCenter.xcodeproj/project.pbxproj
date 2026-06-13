@@ -114,6 +114,7 @@
 		BB200004000000000000010 /* AnnotationDebugOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000010 /* AnnotationDebugOverlay.swift */; };
 		BB200004000000000000011 /* EventLabelDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000011 /* EventLabelDetailView.swift */; };
 		BB200004000000000000012 /* BodyZone.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000012 /* BodyZone.swift */; };
+		BB200004000000000000013 /* BodyZonePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000013 /* BodyZonePickerView.swift */; };
 		AA100004000000000000012 /* EventStillFrameGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000012 /* EventStillFrameGenerator.swift */; };
 		CC400004000000000000010 /* EditEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000010 /* EditEventTests.swift */; };
 		CC400004000000000000011 /* FlushPendingEditTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000011 /* FlushPendingEditTests.swift */; };
@@ -251,6 +252,7 @@
 		BB200003000000000000010 /* AnnotationDebugOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationDebugOverlay.swift; sourceTree = "<group>"; };
 		BB200003000000000000011 /* EventLabelDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventLabelDetailView.swift; sourceTree = "<group>"; };
 		BB200003000000000000012 /* BodyZone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyZone.swift; sourceTree = "<group>"; };
+		BB200003000000000000013 /* BodyZonePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyZonePickerView.swift; sourceTree = "<group>"; };
 		BB100003000000000000001 /* AVPlayerLayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVPlayerLayerView.swift; sourceTree = "<group>"; };
 		BB100003000000000000002 /* AnnotationVideoLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationVideoLoader.swift; sourceTree = "<group>"; };
 		BB100003000000000000003 /* PlaybackControlBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackControlBar.swift; sourceTree = "<group>"; };
@@ -586,6 +588,7 @@
 				BB200003000000000000010 /* AnnotationDebugOverlay.swift */,
 				BB200003000000000000011 /* EventLabelDetailView.swift */,
 				BB200003000000000000012 /* BodyZone.swift */,
+				BB200003000000000000013 /* BodyZonePickerView.swift */,
 			);
 			path = Screen;
 			sourceTree = "<group>";
@@ -857,6 +860,7 @@
 				BB200004000000000000010 /* AnnotationDebugOverlay.swift in Sources */,
 				BB200004000000000000011 /* EventLabelDetailView.swift in Sources */,
 				BB200004000000000000012 /* BodyZone.swift in Sources */,
+				BB200004000000000000013 /* BodyZonePickerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
