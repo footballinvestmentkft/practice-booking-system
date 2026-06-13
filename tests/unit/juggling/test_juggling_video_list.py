@@ -477,7 +477,7 @@ def test_jvl26_alembic_head_unchanged():
     import os
     cfg = Config(os.path.join(os.path.dirname(__file__), "..", "..", "..", "alembic.ini"))
     heads = ScriptDirectory.from_config(cfg).get_heads()
-    assert heads == ["2026_06_11_1100"], f"Unexpected Alembic heads: {heads}"
+    assert heads == ["2026_06_13_1000"], f"Unexpected Alembic heads: {heads}"
 
 
 # ── JVL-27: P4 thumbnail/media regression ────────────────────────────────────
