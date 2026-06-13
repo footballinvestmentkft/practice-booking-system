@@ -34,6 +34,25 @@ enum AnnotationScreenMode: Equatable {
     case labeling
 }
 
+// MARK: — LabelingCTAState (AN-3B2A P2B-5A)
+//
+// Derived from the active event set. Drives both showLabelingCTA and the
+// CTA button label in JugglingAnnotationScreen. Priority (highest first):
+//   hidden         — no active events at all
+//   unlabeled      — at least one .unlabeled event; label-first is most urgent
+//   resumeLabeling — no .unlabeled, but stuck .labelPending (e.g. app crash mid-session)
+//   hasProblems    — .conflicted or .failedPermanent events need attention
+//   reviewLocal    — every event is .localOnly (all labeled, none synced)
+//   viewOrEdit     — catch-all: mixed, synced, in-flight, or retry states
+enum LabelingCTAState: Equatable {
+    case hidden
+    case unlabeled
+    case resumeLabeling
+    case hasProblems
+    case reviewLocal
+    case viewOrEdit
+}
+
 @MainActor
 final class JugglingAnnotationViewModel: ObservableObject {
 
@@ -536,20 +555,75 @@ final class JugglingAnnotationViewModel: ObservableObject {
         activeEvents.filter { $0.syncStatus == .labelPending }.count
     }
 
+    // MARK: — P2B-5A: labeling overview helpers
+
+    // Events with a contactType assigned (regardless of sync state).
+    var labeledCount: Int {
+        activeEvents.filter { $0.contactType != nil }.count
+    }
+
+    // First event (by timestamp) still awaiting labeling: .unlabeled or stuck .labelPending.
+    var nextUnlabeledId: UUID? {
+        activeEvents
+            .sorted { $0.timestampMs < $1.timestampMs }
+            .first { $0.syncStatus == .unlabeled || $0.syncStatus == .labelPending }
+            .map { $0.deviceEventId }
+    }
+
+    // Derived CTA state — never set independently; computed fresh on every access.
+    var labelingCTAState: LabelingCTAState {
+        let events = activeEvents
+        guard !events.isEmpty else { return .hidden }
+        if events.contains(where: { $0.syncStatus == .unlabeled })            { return .unlabeled }
+        if events.contains(where: { $0.syncStatus == .labelPending })         { return .resumeLabeling }
+        if events.contains(where: {
+            $0.syncStatus == .conflicted || $0.syncStatus == .failedPermanent
+        })                                                                     { return .hasProblems }
+        if events.allSatisfy({ $0.syncStatus == .localOnly })                 { return .reviewLocal }
+        return .viewOrEdit
+    }
+
+    var showLabelingCTA: Bool { labelingCTAState != .hidden }
+
+    var labelingCTAText: String {
+        switch labelingCTAState {
+        case .hidden:          return ""
+        case .unlabeled:       return "Tovább a címkézéshez"
+        case .resumeLabeling:  return "Címkézés folytatása"
+        case .hasProblems:     return "Problémás események"
+        case .reviewLocal:     return "Címkék áttekintése"
+        case .viewOrEdit:      return "Megtekintés / szerkesztés"
+        }
+    }
+
     // Transitions all .unlabeled drafts to .labelPending, persists, and
     // switches screenMode to .labeling so the Screen can navigate to the
     // labeling flow.
+    //
+    // Idempotent: safe to call when .labelPending events already exist (e.g. after
+    // an app crash mid-session). If no .unlabeled events are present, no persist is
+    // performed — screenMode is set directly if labelable events exist.
     func enterLabelingMode() {
         guard var current = session else { return }
+        var changed = false
         for index in current.drafts.indices {
             if current.drafts[index].syncStatus == .unlabeled {
                 current.drafts[index].syncStatus = .labelPending
+                changed = true
             }
         }
-        let ok = persistSession(&current, logContext: "enterLabelingMode")
-        session = current
-        if ok {
-            screenMode = .labeling
+        if changed {
+            let ok = persistSession(&current, logContext: "enterLabelingMode")
+            session = current
+            if ok { screenMode = .labeling }
+        } else {
+            // No transitions needed — set .labeling if there are events the user can act on.
+            let hasLabelable = current.drafts.contains {
+                !$0.deletedLocally && $0.syncStatus != .deleted &&
+                ($0.syncStatus == .labelPending || $0.syncStatus == .localOnly ||
+                 $0.syncStatus == .synced       || $0.syncStatus == .retryPending)
+            }
+            if hasLabelable { screenMode = .labeling }
         }
     }
 
@@ -593,6 +667,59 @@ final class JugglingAnnotationViewModel: ObservableObject {
         guard ok else { return false }
         session = current
         return true
+    }
+
+    // Unified relabeling write path for the LabelingOverviewView flow (AN-3B2A P2B-5A).
+    //
+    // Routing:
+    //   .labelPending / .localOnly  → labelEvent()   (first-time label or in-session relabel)
+    //   .synced / .retryPending /
+    //   .failedPermanent (non-idempotency) → editEvent()  (post-sync correction)
+    //
+    // Blocked (returns false, no state change):
+    //   .unlabeled          — enterLabelingMode() must be called first
+    //   .syncing / .updating / .deleting — in-flight; caller must wait
+    //   .conflicted         — resolveConflict() required
+    //   .needsReconciliation — reconcile() required
+    //   .deleted            — unreachable from active timeline
+    //
+    // Note: for .failedPermanent with idempotency_conflict reason, editEvent()
+    // returns false internally — this method propagates that result unchanged.
+    // No backend sync is triggered here.
+    @discardableResult
+    func relabelEvent(
+        deviceEventId:        UUID,
+        contactType:          String,
+        side:                 String?,
+        annotationConfidence: String,
+        customLabel:          String? = nil,
+        customDescription:    String? = nil
+    ) -> Bool {
+        guard let draft = activeEvents.first(where: { $0.deviceEventId == deviceEventId })
+        else { return false }
+
+        switch draft.syncStatus {
+        case .labelPending, .localOnly:
+            return labelEvent(
+                deviceEventId:        deviceEventId,
+                contactType:          contactType,
+                side:                 side,
+                annotationConfidence: annotationConfidence,
+                customLabel:          customLabel,
+                customDescription:    customDescription
+            )
+        case .synced, .retryPending, .failedPermanent:
+            return editEvent(
+                deviceEventId:        deviceEventId,
+                contactType:          contactType,
+                side:                 side,
+                annotationConfidence: annotationConfidence,
+                customLabel:          customLabel,
+                customDescription:    customDescription
+            )
+        case .unlabeled, .syncing, .updating, .deleting, .conflicted, .needsReconciliation, .deleted:
+            return false
+        }
     }
 
     var finishReadiness: FinishReadiness {
