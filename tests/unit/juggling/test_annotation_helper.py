@@ -815,15 +815,20 @@ class TestHELP29_CustomOtherExcludedFromTraining:
         )
         assert saved["contact_events"][0]["review_status"] == "pending_taxonomy_review"
 
-    def test_stable_type_excluded_from_training_false(self, client, tmp_fs):
-        """HELP-29c: A stable contact_type does NOT have excluded_from_training=true."""
+    def test_stable_type_excluded_from_training_true_when_pending(self, client, tmp_fs):
+        """HELP-29c: Pending manual_annotator stable event defaults to excluded_from_training=true.
+
+        Policy B: excluded_from_training=true until a second reviewer confirms the event.
+        Only confirmed/corrected events may become training-eligible (via explicit set).
+        """
         payload = {"annotator": "ZL", "annotation_date": "2026-06-13",
                    "contact_events": [_VALID_RIGHT_INSTEP_EVENT]}
         client.post(f"/api/annotation/{_VIDEO_ID}", json=payload)
         saved = json.loads(
             (tmp_fs["annotations_dir"] / f"{_VIDEO_ID}.json").read_text()
         )
-        assert saved["contact_events"][0]["excluded_from_training"] is False
+        assert saved["contact_events"][0]["excluded_from_training"] is True
+        assert saved["contact_events"][0]["review_status"] == "pending"
 
 
 # ── HELP-30: legacy foot event → manual review required ──────────────────────

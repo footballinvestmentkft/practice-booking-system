@@ -346,7 +346,7 @@ def _fill_contact_event_defaults(evt: dict) -> dict:
     merged  = dict(evt)
     merged.setdefault("annotation_source",     "manual_annotator")
     merged.setdefault("review_status",          "pending_taxonomy_review" if is_cust else "pending")
-    merged.setdefault("excluded_from_training", True if is_cust else False)
+    merged.setdefault("excluded_from_training", True)
     merged.setdefault("excluded_from_count",    merged["review_status"] == "rejected")
     merged.setdefault("promotion_candidate",    False)
     merged.setdefault("taxonomy_version",       "v1")
@@ -1056,7 +1056,7 @@ function addContactAtCurrentTime() {
     annotation_confidence: 'probable',
     annotation_source: 'manual_annotator',
     review_status: 'pending',
-    excluded_from_training: false,
+    excluded_from_training: true,
     excluded_from_count: false,
     promotion_candidate: false,
     custom_label: null, custom_description: null,
