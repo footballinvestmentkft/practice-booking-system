@@ -10,11 +10,12 @@ import AVFoundation
 //   - A white playhead (3 pt wide) at the current position.
 //   - Colour-coded circular pins (10 pt) at each event's timestamp.
 //   - A drag gesture on the entire bar to seek.
-//   - Tap on a pin to open EventDetailView for that event.
+//   - Tap on a pin to seek to that event's timestamp.
 //
 // Pin colour encodes ContactEventSyncStatus:
-//   .localOnly / .retryPending      → orange  (pending upload)
-//   .syncing / .updating / .deleting → blue    (in-flight)
+//   .unlabeled / .labelPending       → gray   (Phase 1: no contact type yet)
+//   .localOnly / .retryPending       → orange (pending upload)
+//   .syncing / .updating / .deleting → blue   (in-flight)
 //   .synced                          → green
 //   .conflicted / .failedPermanent   → red
 //   .needsReconciliation             → yellow
@@ -113,6 +114,7 @@ struct EventTimelineView: View {
 
     static func pinColor(for status: ContactEventSyncStatus) -> Color {
         switch status {
+        case .unlabeled, .labelPending:         return Color(.systemGray)
         case .localOnly, .retryPending:         return .orange
         case .syncing, .updating, .deleting:    return .blue
         case .synced:                            return .green

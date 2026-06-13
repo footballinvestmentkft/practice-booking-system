@@ -279,6 +279,8 @@ struct JugglingAnnotationScreen: View {
     @ViewBuilder
     private func syncIcon(for draft: ContactEventDraft) -> some View {
         switch draft.syncStatus {
+        case .unlabeled, .labelPending:
+            EmptyView()
         case .synced:
             Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
         case .localOnly, .retryPending:

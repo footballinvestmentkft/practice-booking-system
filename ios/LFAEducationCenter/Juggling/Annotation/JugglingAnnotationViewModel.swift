@@ -215,6 +215,10 @@ final class JugglingAnnotationViewModel: ObservableObject {
             draft.retryCount           = 0
             draft.syncStatus           = draft.serverEventId != nil ? .updating : .localOnly
 
+        case .unlabeled, .labelPending:
+            // Phase 1 events have no contactType yet — edit is Phase 2 (AN-3B2B) scope.
+            return false
+
         case .conflicted, .needsReconciliation, .syncing, .updating, .deleting, .deleted:
             return false
         }

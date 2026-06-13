@@ -2,10 +2,16 @@ import Foundation
 
 // MARK: — ContactEventSyncStatus
 
-// 10-state sync machine.
+// 12-state sync machine.
 // Transitions are documented in the sync engine.
 // "failed" is split into failedPermanent and retryPending for clear retry routing.
+// Phase 1 (AN-3B2A): .unlabeled and .labelPending are local-only; they never sync.
 enum ContactEventSyncStatus: String, Codable, Equatable {
+    // --- Phase 1 (AN-3B2A) — local-only, never sent to server ---
+    case unlabeled            // timestamp marked; contactType == nil; awaits Phase 2 labeling
+    case labelPending         // Phase 1→2 boundary; labeled but not yet transitioned to .localOnly
+
+    // --- Standard sync states ---
     case localOnly            // draft created locally, never sent
     case syncing              // POST /contacts in-flight
     case synced               // server confirmed 201 or 200 (exact dup)
@@ -40,10 +46,9 @@ struct ContactEventDraft: Identifiable, Equatable {
     var createdAtLocal:       Date
     var serverCreatedAt:      Date?
     var serverUpdatedAt:      Date?
-    // AN-3B2 conflict resolution: server snapshot shown in ConflictResolutionView.
     // Set by resolveConflict when the server event is fetched; cleared on resolution.
     var pendingServerSnapshot: ContactEventOut?
-    // How many times resolveConflict was retried; capped at 3 before showing conflict UI.
+    // How many times resolveConflict was retried before surfacing to the user.
     var conflictRetryCount:   Int
 
     var id: UUID { deviceEventId }
@@ -81,10 +86,10 @@ struct ContactEventDraft: Identifiable, Equatable {
 
 // MARK: — ContactEventDraft: Codable
 //
-// Custom Codable implementation so that:
-//  • pendingServerSnapshot defaults to nil when absent (old session files).
-//  • conflictRetryCount defaults to 0 when absent (old session files).
-// These fields were added in AN-3B2; existing persisted sessions lack them.
+// Custom Codable implementation so that fields added across AN releases default
+// gracefully when absent from persisted session files (backward-compat).
+//  • pendingServerSnapshot → nil when absent
+//  • conflictRetryCount   → 0 when absent
 
 extension ContactEventDraft: Codable {
     enum CodingKeys: String, CodingKey {

@@ -242,7 +242,8 @@ final class AnnotationSyncEngine {
 
     static func isBlocking(_ status: ContactEventSyncStatus) -> Bool {
         switch status {
-        case .localOnly, .syncing, .updating, .deleting,
+        case .unlabeled, .labelPending,
+             .localOnly, .syncing, .updating, .deleting,
              .retryPending, .conflicted, .needsReconciliation:
             return true
         case .synced, .deleted, .failedPermanent:
