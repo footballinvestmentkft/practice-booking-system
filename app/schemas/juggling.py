@@ -5,14 +5,26 @@ Response rules (enforced structurally):
   - storage_path is NEVER returned in any response.
   - filename_stored is NEVER returned in any response.
   - quality endpoint returns metadata and scores only; no direct video URL.
+
+AN-1 additions:
+  - ContactEventCreateRequest / ContactEventOut (single event CRUD)
+  - ContactEventBatchRequest / ContactEventBatchResult (batch submit)
+  - ContactEventPatchRequest (edit with optimistic locking)
+  - FinishAnnotationRequest / FinishAnnotationOut (state machine)
+  - JugglingVideoItemOut extended with annotation_status
+
+Service invariants enforced in schemas (client CANNOT override):
+  annotation_source, annotation_review_status, taxonomy_review_status,
+  excluded_from_training are all set server-side and absent from requests.
 """
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 # ── Consent schemas ──────────────────────────────────────────────────────────
 
@@ -121,6 +133,8 @@ class JugglingVideoItemOut(BaseModel):
     Privacy invariant: no raw path, no filesystem path, no URL is ever included.
     has_thumbnail / has_media signal expected availability; the media endpoints
     perform the authoritative disk check and return 404 if the file is absent.
+
+    AN-1: annotation_status added to drive iOS CTA display.
     """
     video_id:                   str
     status:                     str
@@ -137,6 +151,7 @@ class JugglingVideoItemOut(BaseModel):
     has_media:                  bool
     upload_source:              str
     source_type:                str
+    annotation_status:          Optional[str] = None
 
 
 class JugglingVideoListOut(BaseModel):
@@ -144,3 +159,144 @@ class JugglingVideoListOut(BaseModel):
     total:  int
     limit:  int
     offset: int
+
+
+# ── AN-1: Contact event schemas ───────────────────────────────────────────────
+
+_VALID_CONFIDENCE = frozenset({"certain", "probable", "uncertain"})
+_VALID_SIDE       = frozenset({"left", "right", "center", "unknown"})
+_CUSTOM_LABEL_RE  = re.compile(r"^[a-z][a-z0-9_]{0,38}[a-z0-9]$")
+
+
+class ContactEventCreateRequest(BaseModel):
+    """
+    Single contact event submission.
+
+    Server-set fields (client MUST NOT include):
+      annotation_source, annotation_review_status, taxonomy_review_status,
+      excluded_from_training, side (for stable types).
+
+    custom_other requires: custom_label + custom_description + side.
+    Stable types: side is derived server-side; do not send.
+    """
+    device_event_id:    uuid.UUID = Field(..., description="Client-generated UUID for idempotency")
+    timestamp_ms:       int       = Field(..., ge=0, description="Contact timestamp in ms from video start")
+    contact_type:       str       = Field(..., description="Taxonomy v1 key")
+    annotation_confidence: Literal["certain", "probable", "uncertain"]
+
+    # custom_other only
+    side:               Optional[str]  = Field(None, description="Required for custom_other only")
+    custom_label:       Optional[str]  = Field(None, max_length=40)
+    custom_description: Optional[str]  = Field(None, max_length=200)
+
+    @field_validator("side")
+    @classmethod
+    def _validate_side(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in _VALID_SIDE:
+            raise ValueError(f"side must be one of {sorted(_VALID_SIDE)}, got {v!r}")
+        return v
+
+    @field_validator("custom_label")
+    @classmethod
+    def _validate_custom_label(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and not _CUSTOM_LABEL_RE.match(v):
+            raise ValueError(
+                "custom_label must match ^[a-z][a-z0-9_]{0,38}[a-z0-9]$ "
+                "(lowercase, underscore-separated, 2–40 chars)"
+            )
+        return v
+
+
+class ContactEventOut(BaseModel):
+    """Read-only contact event representation."""
+    event_id:                uuid.UUID
+    device_event_id:         uuid.UUID
+    timestamp_ms:            int
+    contact_type:            str
+    side:                    Optional[str]
+    annotation_confidence:   str
+    annotation_review_status:   str
+    taxonomy_review_status:     str
+    excluded_from_training:     bool
+    custom_label:            Optional[str]
+    custom_description:      Optional[str]
+    version:                 int
+    created_at:              datetime
+    updated_at:              datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ContactEventListOut(BaseModel):
+    video_id:          str
+    annotation_status: Optional[str]
+    events:            List[ContactEventOut]
+
+
+# ── Batch ─────────────────────────────────────────────────────────────────────
+
+class ContactEventBatchRequest(BaseModel):
+    events: List[ContactEventCreateRequest] = Field(..., min_length=1, max_length=200)
+
+
+class ContactEventBatchItemResult(BaseModel):
+    device_event_id: uuid.UUID
+    status:          Literal["created", "duplicate", "conflict"]
+    event_id:        Optional[uuid.UUID] = None
+    detail:          Optional[str]       = None
+
+
+class ContactEventBatchResult(BaseModel):
+    created:           int
+    duplicate_skipped: int
+    conflict:          int
+    results:           List[ContactEventBatchItemResult]
+
+
+# ── Patch ─────────────────────────────────────────────────────────────────────
+
+class ContactEventPatchRequest(BaseModel):
+    """
+    Partial update. Only the supplied fields are changed.
+    version is required for optimistic locking (409 on mismatch).
+    """
+    contact_type:          Optional[str]  = None
+    annotation_confidence: Optional[Literal["certain", "probable", "uncertain"]] = None
+    side:                  Optional[str]  = None
+    custom_label:          Optional[str]  = Field(None, max_length=40)
+    custom_description:    Optional[str]  = Field(None, max_length=200)
+    version:               int            = Field(..., description="Optimistic lock version")
+
+    @field_validator("side")
+    @classmethod
+    def _validate_side(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in _VALID_SIDE:
+            raise ValueError(f"side must be one of {sorted(_VALID_SIDE)}, got {v!r}")
+        return v
+
+    @field_validator("custom_label")
+    @classmethod
+    def _validate_custom_label(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and not _CUSTOM_LABEL_RE.match(v):
+            raise ValueError("custom_label does not match required pattern")
+        return v
+
+
+# ── Finish ────────────────────────────────────────────────────────────────────
+
+class FinishAnnotationRequest(BaseModel):
+    confirm_zero_contacts: bool = Field(
+        default=False,
+        description=(
+            "Must be true when finishing with 0 active events. "
+            "Prevents accidental zero-contact finish."
+        ),
+    )
+
+
+class FinishAnnotationOut(BaseModel):
+    video_id:              str
+    annotation_status:     str
+    total_juggling_count:  int
+    contact_event_count:   int
+    annotation_finished_at: datetime

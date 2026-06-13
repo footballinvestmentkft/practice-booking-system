@@ -168,6 +168,7 @@ def list_videos(
             has_media=_has_media(v),
             upload_source=v.upload_source,
             source_type=v.source_type,
+            annotation_status=v.annotation_status,
         )
         for v in rows
     ]

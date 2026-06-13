@@ -17,6 +17,8 @@ from . import (
     biometric_photo,
     juggling_consent,
     juggling_videos,
+    juggling_contacts,
+    juggling_taxonomy,
 )
 
 # Create main router
@@ -55,6 +57,9 @@ router.include_router(biometric_photo.router, tags=["users", "biometric"])
 # Juggling POC — video intake + quality pipeline (JUGGLING_POC_ENABLED gated; 503 when off)
 router.include_router(juggling_consent.router, tags=["users", "juggling"])
 router.include_router(juggling_videos.router, tags=["users", "juggling"])
+# AN-1: contact annotation CRUD + taxonomy (more specific paths before /{event_id} catch-alls)
+router.include_router(juggling_taxonomy.router, tags=["users", "juggling"])
+router.include_router(juggling_contacts.router, tags=["users", "juggling"])
 
 # CRUD endpoints (should be last due to /{user_id} catch-all)
 router.include_router(crud.router, tags=["users"])
