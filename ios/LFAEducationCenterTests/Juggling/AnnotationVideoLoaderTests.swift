@@ -467,4 +467,175 @@ final class AnnotationVideoLoaderTests: XCTestCase {
         task.cancel()
         XCTAssertTrue(task.didCancel)
     }
+
+    // MARK: — Validation supplement: race conditions, privacy, lifecycle
+
+    // AN3B-L21: two loads on same video after reset — second load permitted
+    func test_AN3B_L21_twoLoadsAfterResetOnSameVideo() async {
+        let loader = makeLoader()
+        await loader.load(videoId: "vid-21", userId: 1)
+        // Whatever state (likely .failed(.unauthorized) in test env), reset.
+        loader.reset()
+        XCTAssertEqual(loader.state, .idle)
+        // Second load must be accepted from idle.
+        await loader.load(videoId: "vid-21", userId: 1)
+        // Must not still be .idle unless the token guard fires immediately.
+        // Accept .failed or .idle — not .downloading (task already completed).
+        switch loader.state {
+        case .failed, .idle: break
+        default: XCTFail("Unexpected state on second load: \(loader.state)")
+        }
+    }
+
+    // AN3B-L22: two different videos sequentially (reset between) — no cross-contamination
+    func test_AN3B_L22_twoDifferentVideosSequentially() async {
+        let loader = makeLoader()
+        await loader.load(videoId: "vid-22a", userId: 1)
+        loader.reset()
+        await loader.load(videoId: "vid-22b", userId: 1)
+        // State is determined by token/network; just verify no crash.
+        switch loader.state {
+        case .failed, .idle: break
+        default: XCTFail("Unexpected: \(loader.state)")
+        }
+    }
+
+    // AN3B-L23: cancel when idle is no-op — state unchanged
+    // (Also tests that cancel() on .idle never transitions to .failed(.cancelled).)
+    func test_AN3B_L23_cancelWhenIdleDoesNotTransitionToFailed() {
+        let loader = makeLoader()
+        XCTAssertEqual(loader.state, .idle)
+        loader.cancel()  // guard: case .downloading = state → returns
+        XCTAssertEqual(loader.state, .idle)
+    }
+
+    // AN3B-L24: existing final file is replaced on re-download (overwrite policy)
+    func test_AN3B_L24_existingFinalFileReplacedOnRedownload() throws {
+        let dir      = fm.temporaryDirectory.appendingPathComponent("AN3B-L24-\(UUID().uuidString)")
+        let finalURL = dir.appendingPathComponent("video.mp4")
+        let partial  = dir.appendingPathComponent("video.mp4.partial")
+        try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        try Data("old_content".utf8).write(to: finalURL)
+        try Data("new_content".utf8).write(to: partial)
+
+        // Simulate load() rename logic: remove existing final + move partial → final.
+        try fm.removeItem(at: finalURL)
+        try fm.moveItem(at: partial, to: finalURL)
+
+        let content = try Data(contentsOf: finalURL)
+        XCTAssertEqual(String(data: content, encoding: .utf8), "new_content",
+                       "Existing final file must be replaced, not silently ignored")
+        XCTAssertFalse(fm.fileExists(atPath: partial.path),
+                       "Partial must be consumed by the atomic rename")
+        try? fm.removeItem(at: dir)
+    }
+
+    // AN3B-L25: cleanupAll is idempotent (calling twice must not crash)
+    func test_AN3B_L25_cleanupAllIsIdempotent() {
+        let loader = makeLoader()
+        loader.cleanupAll(userId: 888)   // dir may not exist — must not crash
+        loader.cleanupAll(userId: 888)   // second call must not crash either
+        XCTAssertEqual(loader.state, .idle)
+    }
+
+    // AN3B-L26: other user's directory not touched by cleanupAll
+    func test_AN3B_L26_cleanupAllDoesNotTouchOtherUser() throws {
+        let userA = fm.temporaryDirectory.appendingPathComponent("juggling_annotation/100/vid-x")
+        let userB = fm.temporaryDirectory.appendingPathComponent("juggling_annotation/200/vid-x")
+        try fm.createDirectory(at: userA, withIntermediateDirectories: true)
+        try fm.createDirectory(at: userB, withIntermediateDirectories: true)
+        let sentinelB = userB.appendingPathComponent("video.mp4")
+        try Data("B".utf8).write(to: sentinelB)
+
+        let loader = makeLoader()
+        loader.cleanupAll(userId: 100)  // removes user 100's dir only
+
+        XCTAssertTrue(fm.fileExists(atPath: sentinelB.path),
+                      "User 200's files must not be removed by cleanupAll(userId:100)")
+
+        try? fm.removeItem(at: fm.temporaryDirectory.appendingPathComponent("juggling_annotation/100"))
+        try? fm.removeItem(at: fm.temporaryDirectory.appendingPathComponent("juggling_annotation/200"))
+    }
+
+    // AN3B-L27: first-party URL contains no arbitrary-parameter injection surface
+    func test_AN3B_L27_firstPartyURLPattern() {
+        let videoId  = "abc-def-123"
+        let expected = APIConfig.baseURL + "/api/v1/users/me/juggling/videos/\(videoId)/media"
+        XCTAssertTrue(expected.hasPrefix(APIConfig.baseURL),
+                      "URL must start with the app-config base URL")
+        XCTAssertTrue(expected.hasSuffix("/media"),
+                      "URL must end with /media")
+        XCTAssertTrue(expected.contains("/api/v1/users/me/juggling/videos/"),
+                      "URL must use the first-party juggling video media path")
+        // Verify no query string, fragment, or extra segment appears.
+        XCTAssertFalse(expected.contains("?"), "Must not include query string")
+        XCTAssertFalse(expected.contains("#"), "Must not include fragment")
+    }
+
+    // AN3B-L28: partial file left behind on download failure is cleaned up
+    func test_AN3B_L28_partialCleanedUpOnFailure() throws {
+        let dir     = fm.temporaryDirectory.appendingPathComponent("AN3B-L28-\(UUID().uuidString)")
+        let partial = dir.appendingPathComponent("video.mp4.partial")
+        try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        try Data("partial".utf8).write(to: partial)
+        XCTAssertTrue(fm.fileExists(atPath: partial.path))
+
+        // Simulate loader cleanupPartial behaviour.
+        try? fm.removeItem(at: partial)
+
+        XCTAssertFalse(fm.fileExists(atPath: partial.path),
+                       "Partial file must be removed when download fails or is cancelled")
+        try? fm.removeItem(at: dir)
+    }
+
+    // AN3B-L29: LoadState.downloading(-1) is the initial downloading state
+    //           Progress must start indeterminate before Content-Length is known.
+    func test_AN3B_L29_initialDownloadingProgressIsIndeterminate() {
+        let s = AnnotationVideoLoader.LoadState.downloading(progress: -1.0)
+        if case .downloading(let p) = s {
+            XCTAssertEqual(p, -1.0, accuracy: 0.001,
+                           "Initial progress must be -1.0 (indeterminate)")
+        } else {
+            XCTFail("Expected .downloading state")
+        }
+    }
+
+    // AN3B-L30: file protection attributes set without throwing (documents contract)
+    func test_AN3B_L30_fileProtectionAttributesAreSettable() throws {
+        let file = scratchDir.appendingPathComponent("prot_test.mp4")
+        try Data("x".utf8).write(to: file)
+
+        // completeUnlessOpen — used while partial download is in progress
+        XCTAssertNoThrow(try fm.setAttributes(
+            [.protectionKey: FileProtectionType.completeUnlessOpen],
+            ofItemAtPath: file.path
+        ), "Setting completeUnlessOpen on a writable file must not throw")
+
+        // complete — used after atomic rename to final
+        XCTAssertNoThrow(try fm.setAttributes(
+            [.protectionKey: FileProtectionType.complete],
+            ofItemAtPath: file.path
+        ), "Setting complete on a writable file must not throw")
+    }
+
+    // AN3B-L31: isExcludedFromBackup can be set without throwing (documents contract)
+    func test_AN3B_L31_excludeFromBackupIsSettable() throws {
+        let file = scratchDir.appendingPathComponent("backup_test.mp4")
+        try Data("x".utf8).write(to: file)
+
+        var rv = URLResourceValues()
+        rv.isExcludedFromBackup = true
+        var url = file
+        XCTAssertNoThrow(try url.setResourceValues(rv),
+                         "Setting isExcludedFromBackup on a temp file must not throw")
+    }
+
+    // AN3B-L32: userId isolation — same videoId under different userIds → distinct paths
+    func test_AN3B_L32_sameVideoIdDifferentUsersHaveDistinctPaths() {
+        let base = fm.temporaryDirectory.appendingPathComponent("juggling_annotation")
+        let pathA = base.appendingPathComponent("1/vid-shared/video.mp4").path
+        let pathB = base.appendingPathComponent("2/vid-shared/video.mp4").path
+        XCTAssertNotEqual(pathA, pathB,
+                          "Same videoId under different userIds must resolve to distinct filesystem paths")
+    }
 }

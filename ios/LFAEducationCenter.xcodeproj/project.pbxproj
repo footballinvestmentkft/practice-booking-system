@@ -124,6 +124,7 @@
 		BB100004000000000000003 /* PlaybackControlBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100003000000000000003 /* PlaybackControlBar.swift */; };
 		BB100004000000000000004 /* AnnotationVideoLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100003000000000000004 /* AnnotationVideoLoaderTests.swift */; };
 		BB100004000000000000005 /* PlaybackBarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100003000000000000005 /* PlaybackBarTests.swift */; };
+		BB100004000000000000006 /* AVPlayerLayerViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100003000000000000006 /* AVPlayerLayerViewTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -237,6 +238,7 @@
 		BB100003000000000000003 /* PlaybackControlBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackControlBar.swift; sourceTree = "<group>"; };
 		BB100003000000000000004 /* AnnotationVideoLoaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationVideoLoaderTests.swift; sourceTree = "<group>"; };
 		BB100003000000000000005 /* PlaybackBarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackBarTests.swift; sourceTree = "<group>"; };
+		BB100003000000000000006 /* AVPlayerLayerViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVPlayerLayerViewTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000010 /* EditEventTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditEventTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000011 /* FlushPendingEditTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlushPendingEditTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000012 /* PlaybackControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackControllerTests.swift; sourceTree = "<group>"; };
@@ -577,6 +579,7 @@
 				CC300003000000000000012 /* PlaybackControllerTests.swift */,
 				BB100003000000000000004 /* AnnotationVideoLoaderTests.swift */,
 				BB100003000000000000005 /* PlaybackBarTests.swift */,
+				BB100003000000000000006 /* AVPlayerLayerViewTests.swift */,
 			);
 			path = Juggling;
 			sourceTree = "<group>";
@@ -818,6 +821,7 @@
 				CC400004000000000000012 /* PlaybackControllerTests.swift in Sources */,
 				BB100004000000000000004 /* AnnotationVideoLoaderTests.swift in Sources */,
 				BB100004000000000000005 /* PlaybackBarTests.swift in Sources */,
+				BB100004000000000000006 /* AVPlayerLayerViewTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

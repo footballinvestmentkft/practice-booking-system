@@ -18,6 +18,8 @@ import SwiftUI
 ///   - Touch targets are 44×44 pt minimum throughout.
 struct PlaybackControlBar: View {
     @ObservedObject var controller: PlaybackController
+    /// Set to false to disable all controls — e.g. while AnnotationVideoLoader is not yet .ready.
+    var isEnabled: Bool = true
 
     var body: some View {
         VStack(spacing: 6) {
@@ -30,6 +32,7 @@ struct PlaybackControlBar: View {
                 Spacer()
                 rateMenuButton
             }
+            .disabled(!isEnabled)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
