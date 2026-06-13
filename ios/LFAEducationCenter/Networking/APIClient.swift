@@ -54,6 +54,62 @@ enum APIClient {
         return try await execute(request)
     }
 
+    // MARK: — PATCH (JSON)
+
+    static func patch<B: Encodable, T: Decodable>(
+        path:  String,
+        body:  B,
+        token: String? = nil
+    ) async throws -> T {
+        var request = try buildRequest(path: path, method: "PATCH", token: token)
+        request.httpBody = try JSONEncoder().encode(body)
+        return try await execute(request)
+    }
+
+    // MARK: — GET (raw — no 2xx check, no decode)
+    // Caller receives (Data, URLResponse) and inspects the status code directly.
+    // Used for ETag-based endpoints where 304 is a valid non-error response.
+
+    static func getRaw(
+        path:         String,
+        token:        String? = nil,
+        extraHeaders: [String: String] = [:]
+    ) async throws -> (Data, URLResponse) {
+        var request = try buildRequest(path: path, method: "GET", token: token)
+        for (key, value) in extraHeaders {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        return try await perform(request)
+    }
+
+    // MARK: — POST (raw status code)
+    // Returns (Data, statusCode) for 2xx. Throws APIError.httpError for non-2xx
+    // (with parsed detail, so callers can distinguish e.g. 409 idempotency vs version conflicts).
+    // Used by annotation endpoints that need to distinguish 200 (duplicate) from 201 (created).
+
+    static func postRaw<B: Encodable>(
+        path:  String,
+        body:  B,
+        token: String? = nil
+    ) async throws -> (Data, Int) {
+        var request = try buildRequest(path: path, method: "POST", token: token)
+        request.httpBody = try JSONEncoder().encode(body)
+        return try await executeRaw(request)
+    }
+
+    // MARK: — PATCH (raw status code)
+    // See postRaw — same semantics, PATCH method.
+
+    static func patchRaw<B: Encodable>(
+        path:  String,
+        body:  B,
+        token: String? = nil
+    ) async throws -> (Data, Int) {
+        var request = try buildRequest(path: path, method: "PATCH", token: token)
+        request.httpBody = try JSONEncoder().encode(body)
+        return try await executeRaw(request)
+    }
+
     // MARK: — DELETE (No Content — 204)
 
     static func deleteNoContent(path: String, token: String? = nil) async throws {
@@ -169,6 +225,23 @@ enum APIClient {
         } catch {
             throw APIError.decodingError
         }
+    }
+
+    // Returns (Data, statusCode) for 2xx; throws APIError.httpError with parsed
+    // detail for non-2xx so callers can branch on status code + body together.
+    private static func executeRaw(_ request: URLRequest) async throws -> (Data, Int) {
+        let (data, response) = try await perform(request)
+
+        guard let http = response as? HTTPURLResponse else {
+            throw APIError.networkError(URLError(.badServerResponse))
+        }
+
+        guard (200...299).contains(http.statusCode) else {
+            let detail = try? JSONDecoder().decode(ErrorBody.self, from: data)
+            throw APIError.httpError(statusCode: http.statusCode, detail: detail?.detail)
+        }
+
+        return (data, http.statusCode)
     }
 
     // URLSession.data(for:) async is iOS 15+.

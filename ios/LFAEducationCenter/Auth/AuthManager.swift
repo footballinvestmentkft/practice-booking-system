@@ -272,6 +272,43 @@ final class AuthManager: ObservableObject {
         }
     }
 
+    // GET (raw) — inject Bearer, returns (Data, URLResponse) without a 2xx check.
+    // No 401 refresh: getRaw never throws on non-2xx, so a 401 body passes through
+    // for the caller to inspect (e.g. ContactTaxonomyStore falls back to bundled data).
+    func authenticatedGetRaw(
+        path:         String,
+        extraHeaders: [String: String] = [:]
+    ) async throws -> (Data, URLResponse) {
+        guard let token = accessToken else { logout(); throw APIError.unauthorized }
+        return try await APIClient.getRaw(path: path, token: token, extraHeaders: extraHeaders)
+    }
+
+    // POST (raw) — inject Bearer, single 401 refresh + retry, returns (Data, statusCode).
+    // Used by annotation create/batch endpoints to distinguish 200 (duplicate) from 201 (created)
+    // and to surface 409 conflict bodies to the caller via APIError.httpError.
+    func authenticatedPostRaw<B: Encodable>(path: String, body: B) async throws -> (Data, Int) {
+        guard let token = accessToken else { logout(); throw APIError.unauthorized }
+        do {
+            return try await APIClient.postRaw(path: path, body: body, token: token)
+        } catch APIError.httpError(401, _) {
+            let refreshed = await performRefresh()
+            guard refreshed, let newToken = accessToken else { throw APIError.unauthorized }
+            return try await APIClient.postRaw(path: path, body: body, token: newToken)
+        }
+    }
+
+    // PATCH (raw) — inject Bearer, single 401 refresh + retry, returns (Data, statusCode).
+    func authenticatedPatchRaw<B: Encodable>(path: String, body: B) async throws -> (Data, Int) {
+        guard let token = accessToken else { logout(); throw APIError.unauthorized }
+        do {
+            return try await APIClient.patchRaw(path: path, body: body, token: token)
+        } catch APIError.httpError(401, _) {
+            let refreshed = await performRefresh()
+            guard refreshed, let newToken = accessToken else { throw APIError.unauthorized }
+            return try await APIClient.patchRaw(path: path, body: body, token: newToken)
+        }
+    }
+
     // MARK: — Token accessors
 
     var accessToken: String? {
