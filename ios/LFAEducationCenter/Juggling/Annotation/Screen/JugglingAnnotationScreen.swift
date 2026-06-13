@@ -95,14 +95,14 @@ struct JugglingAnnotationScreen: View {
             .sheet(item: $editingEventId) { id in detailSheet(for: id) }
             .task { await onAppear() }
             .onDisappear { onDisappear() }
-            .onChange(of: loader.state) { state in
+            .onChange(of: loader.state, perform: { state in
                 if case .ready(let url) = state {
                     let asset = AVAsset(url: url)
                     playback.loadAsset(asset)
                     if let avp = playback.avPlayer { avp.play() }
                 }
-            }
-            .onChange(of: vm.pendingConflictId) { _ in }  // re-render trigger
+            })
+            .onChange(of: vm.pendingConflictId, perform: { _ in })  // re-render trigger
         }
         .navigationViewStyle(.stack)
     }
