@@ -511,7 +511,12 @@ def test_pm32_openapi_path_delta_exactly_plus_2(client):
 # ── PM-33: No DB migration ────────────────────────────────────────────────────
 
 def test_pm33_no_db_migration():
-    """PM-33: Alembic head unchanged from P3 baseline (2026_06_11_1100)."""
+    """PM-33: Alembic head is the PR-1 contact event schema migration (2026_06_13_1000).
+
+    Updated from P3 baseline (2026_06_11_1100): PR-1 intentionally advances
+    the head with juggling_contact_events table and juggling_videos annotation
+    columns. Single head guaranteed (no merge divergence).
+    """
     from alembic.config import Config
     from alembic.script import ScriptDirectory
     import os
@@ -521,7 +526,7 @@ def test_pm33_no_db_migration():
     cfg = Config(alembic_ini)
     script = ScriptDirectory.from_config(cfg)
     heads = script.get_heads()
-    assert heads == ["2026_06_11_1100"], f"Unexpected alembic heads: {heads}"
+    assert heads == ["2026_06_13_1000"], f"Unexpected alembic heads: {heads}"
 
 
 # ── PM-34: P1/P2/P3 regression ───────────────────────────────────────────────
