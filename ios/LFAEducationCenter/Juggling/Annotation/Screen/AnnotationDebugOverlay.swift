@@ -17,6 +17,7 @@ struct AnnotationDebugOverlay: View {
     let videoId: String
 
     @Environment(\.presentationMode) private var presentationMode
+    @State private var didCopy = false
 
     var body: some View {
         NavigationView {
@@ -64,6 +65,15 @@ struct AnnotationDebugOverlay: View {
             .navigationTitle("AN-3B2A Diagnostics")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(didCopy ? "Másolva ✓" : "Másolás") {
+                        UIPasteboard.general.string = copyText
+                        didCopy = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            didCopy = false
+                        }
+                    }
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Bezárás") {
                         presentationMode.wrappedValue.dismiss()
@@ -89,6 +99,47 @@ struct AnnotationDebugOverlay: View {
         let f = DateFormatter()
         f.dateFormat = "HH:mm:ss.SSS"
         return f.string(from: date)
+    }
+
+    // MARK: — Copy-all
+
+    // Plain-text dump of every value shown above, in the same order, so it
+    // can be pasted directly into a bug report.
+    private var copyText: String {
+        var lines: [String] = []
+        lines.append("=== AN-3B2A Diagnostics ===")
+        lines.append("Build tag: \(AnnotationBuildInfo.tag)")
+        lines.append("")
+        lines.append("-- Identity --")
+        lines.append("authManager.currentUserId: \(authManager.currentUserId.map(String.init) ?? "nil")")
+        lines.append("vm.userId: \(vm.userId)")
+        lines.append("videoId: \(videoId)")
+        lines.append("")
+        lines.append("-- Local session file --")
+        lines.append("Path: \(vm.diagSessionFilePath.path)")
+        lines.append("File exists: \(vm.diagSessionFileExists)")
+        lines.append("Quarantine dir: \(vm.diagQuarantineDirectory.path)")
+        lines.append("")
+        lines.append("-- Last load --")
+        lines.append("Result: \(vm.diagnostics.loadResult.description)")
+        lines.append("At: \(formatted(vm.diagnostics.lastLoadAt))")
+        if let qPath = vm.diagnostics.quarantinePath {
+            lines.append("Quarantine path: \(qPath.path)")
+        }
+        lines.append("")
+        lines.append("-- Session counts --")
+        lines.append("Active events: \(vm.activeEvents.count)")
+        lines.append("Unlabeled: \(vm.unlabeledCount)")
+        lines.append("Label pending: \(vm.labelPendingCount)")
+        lines.append("")
+        lines.append("-- Last save --")
+        lines.append("Result: \(vm.diagnostics.lastSaveResult.description)")
+        lines.append("At: \(formatted(vm.diagnostics.lastSaveAt))")
+        lines.append("")
+        lines.append("-- Errors / warnings --")
+        lines.append("saveError: \(vm.saveError ?? "—")")
+        lines.append("loadWarning: \(vm.loadWarning ?? "—")")
+        return lines.joined(separator: "\n")
     }
 }
 #endif
