@@ -183,6 +183,149 @@ final class AnnotationSyncEngineTests: XCTestCase {
         XCTAssertEqual(skipped.syncStatus, .deleted)
     }
 
+    // AN2-T26: PATCH 200 → synced, server state (incl. bumped version) applied.
+    func test_AN2_T26_pushPatchSuccessBecomesSynced() async {
+        let mock = MockAnnotationAPIClient()
+        var draft = ContactEventDraft.new(timestampMs: 1, contactType: "head", side: "center", annotationConfidence: "certain")
+        draft.serverEventId = UUID()
+        draft.syncStatus = .synced
+        draft.version = 1
+
+        let serverEvent = makeServerEvent(deviceEventId: draft.deviceEventId, contactType: "chest", side: "center", version: 2)
+        mock.patchContactResult = .success(serverEvent)
+
+        let engine = AnnotationSyncEngine(apiClient: mock)
+        let request = ContactEventPatchRequest(version: 1, contactType: "chest", annotationConfidence: nil, side: nil, customLabel: nil, customDescription: nil)
+        let result = await engine.pushPatch(draft: draft, videoId: "vid-1", request: request)
+
+        XCTAssertEqual(result.syncStatus, .synced)
+        XCTAssertEqual(result.contactType, "chest")
+        XCTAssertEqual(result.version, 2)
+        XCTAssertNil(result.failureReason)
+    }
+
+    // AN2-T27: PATCH 409 version_conflict → conflicted, failureReason carries detail.
+    func test_AN2_T27_pushPatchVersionConflictBecomesConflicted() async {
+        let mock = MockAnnotationAPIClient()
+        var draft = ContactEventDraft.new(timestampMs: 1, contactType: "head", side: "center", annotationConfidence: "certain")
+        draft.serverEventId = UUID()
+        draft.syncStatus = .synced
+        mock.patchContactResult = .failure(AnnotationAPIError.versionConflict(detail: "version_conflict: expected 1, got 2"))
+
+        let engine = AnnotationSyncEngine(apiClient: mock)
+        let request = ContactEventPatchRequest(version: 1, contactType: nil, annotationConfidence: nil, side: nil, customLabel: nil, customDescription: nil)
+        let result = await engine.pushPatch(draft: draft, videoId: "vid-1", request: request)
+
+        XCTAssertEqual(result.syncStatus, .conflicted)
+        XCTAssertEqual(result.failureReason, "version_conflict: expected 1, got 2")
+    }
+
+    // AN2-T28: PATCH 422 validation error → failedPermanent, not retried.
+    func test_AN2_T28_pushPatchValidationErrorBecomesFailedPermanent() async {
+        let mock = MockAnnotationAPIClient()
+        var draft = ContactEventDraft.new(timestampMs: 1, contactType: "head", side: "center", annotationConfidence: "certain")
+        draft.serverEventId = UUID()
+        draft.syncStatus = .synced
+        mock.patchContactResult = .failure(AnnotationAPIError.permanent(code: 422, detail: "validation_error"))
+
+        let engine = AnnotationSyncEngine(apiClient: mock)
+        let request = ContactEventPatchRequest(version: 1, contactType: nil, annotationConfidence: nil, side: nil, customLabel: nil, customDescription: nil)
+        let result = await engine.pushPatch(draft: draft, videoId: "vid-1", request: request)
+
+        XCTAssertEqual(result.syncStatus, .failedPermanent)
+        XCTAssertEqual(result.retryCount, 0)
+    }
+
+    // AN2-T29: PATCH timeout/network error → needsReconciliation (outcome unknown, not idempotent).
+    func test_AN2_T29_pushPatchTimeoutBecomesNeedsReconciliation() async {
+        let mock = MockAnnotationAPIClient()
+        var draft = ContactEventDraft.new(timestampMs: 1, contactType: "head", side: "center", annotationConfidence: "certain")
+        draft.serverEventId = UUID()
+        draft.syncStatus = .synced
+        mock.patchContactResult = .failure(AnnotationAPIError.retryable(code: nil))
+
+        let engine = AnnotationSyncEngine(apiClient: mock)
+        let request = ContactEventPatchRequest(version: 1, contactType: nil, annotationConfidence: nil, side: nil, customLabel: nil, customDescription: nil)
+        let result = await engine.pushPatch(draft: draft, videoId: "vid-1", request: request)
+
+        XCTAssertEqual(result.syncStatus, .needsReconciliation)
+        XCTAssertEqual(result.failureReason, "patch_timeout_or_unavailable")
+    }
+
+    // AN2-T30: DELETE timeout/network error → needsReconciliation (outcome unknown).
+    func test_AN2_T30_pushDeleteTimeoutBecomesNeedsReconciliation() async {
+        let mock = MockAnnotationAPIClient()
+        var draft = ContactEventDraft.new(timestampMs: 1, contactType: "head", side: "center", annotationConfidence: "certain")
+        draft.serverEventId = UUID()
+        draft.syncStatus = .synced
+        mock.deleteContactResult = .failure(AnnotationAPIError.retryable(code: nil))
+
+        let engine = AnnotationSyncEngine(apiClient: mock)
+        let result = await engine.pushDelete(draft: draft, videoId: "vid-1")
+
+        XCTAssertEqual(result.syncStatus, .needsReconciliation)
+        XCTAssertEqual(result.failureReason, "delete_timeout_or_unavailable")
+    }
+
+    // AN2-T31: POST 409 idempotency_conflict → failedPermanent, requires user resolution (no auto-retry).
+    func test_AN2_T31_pushCreateIdempotencyConflictBecomesFailedPermanent() async {
+        let mock = MockAnnotationAPIClient()
+        mock.createContactResult = .failure(AnnotationAPIError.idempotencyConflict(detail: "idempotency_conflict: payload mismatch"))
+        let draft = ContactEventDraft.new(timestampMs: 1, contactType: "head", side: "center", annotationConfidence: "certain")
+
+        let engine = AnnotationSyncEngine(apiClient: mock)
+        let result = await engine.pushCreate(draft: draft, videoId: "vid-1")
+
+        XCTAssertEqual(result.syncStatus, .failedPermanent)
+        XCTAssertEqual(result.retryCount, 0)
+        XCTAssertEqual(result.failureReason, "idempotency_conflict: idempotency_conflict: payload mismatch")
+    }
+
+    // AN2-T32: reconcile — server list contains an event for an unrelated
+    // device (not present locally) alongside the one this draft needs.
+    // The extra server-side event must be ignored; only the matching draft
+    // is updated.
+    func test_AN2_T32_reconcileIgnoresUnrelatedServerEvent() async throws {
+        let mock = MockAnnotationAPIClient()
+        var draft = ContactEventDraft.new(timestampMs: 1, contactType: "head", side: "center", annotationConfidence: "certain")
+        draft.syncStatus = .needsReconciliation
+
+        let matchingServerEvent = makeServerEvent(deviceEventId: draft.deviceEventId, contactType: "head", side: "center", version: 1)
+        let unrelatedServerEvent = makeServerEvent(deviceEventId: UUID(), contactType: "chest", side: "center", version: 1)
+        mock.listContactsResult = .success(ContactEventListOut(videoId: "vid-1", annotationStatus: "in_progress", events: [matchingServerEvent, unrelatedServerEvent]))
+
+        let engine = AnnotationSyncEngine(apiClient: mock)
+        var session = makeSession(drafts: [draft])
+        try await engine.reconcile(session: &session)
+
+        XCTAssertEqual(session.drafts.count, 1, "reconcile must not add drafts for server events with no local match")
+        XCTAssertEqual(session.drafts[0].syncStatus, .synced)
+        XCTAssertEqual(session.drafts[0].serverEventId, matchingServerEvent.eventId)
+    }
+
+    // AN2-T33: reconcile — drafts not in needsReconciliation are left untouched.
+    func test_AN2_T33_reconcileLeavesNonReconciliationDraftsUntouched() async throws {
+        let mock = MockAnnotationAPIClient()
+        var needsRecon = ContactEventDraft.new(timestampMs: 1, contactType: "head", side: "center", annotationConfidence: "certain")
+        needsRecon.syncStatus = .needsReconciliation
+        needsRecon.serverEventId = UUID()
+
+        var alreadySynced = ContactEventDraft.new(timestampMs: 2, contactType: "chest", side: "center", annotationConfidence: "certain")
+        alreadySynced.syncStatus = .synced
+        alreadySynced.serverEventId = UUID()
+        alreadySynced.version = 5
+
+        mock.listContactsResult = .success(ContactEventListOut(videoId: "vid-1", annotationStatus: "in_progress", events: []))
+
+        let engine = AnnotationSyncEngine(apiClient: mock)
+        var session = makeSession(drafts: [needsRecon, alreadySynced])
+        try await engine.reconcile(session: &session)
+
+        XCTAssertEqual(session.drafts[0].syncStatus, .deleted, "absent needsReconciliation draft must become deleted")
+        XCTAssertEqual(session.drafts[1].syncStatus, .synced, "drafts outside needsReconciliation must be left untouched")
+        XCTAssertEqual(session.drafts[1].version, 5)
+    }
+
     // MARK: — Helpers
 
     private func makeSession(drafts: [ContactEventDraft]) -> AnnotationSessionFile {

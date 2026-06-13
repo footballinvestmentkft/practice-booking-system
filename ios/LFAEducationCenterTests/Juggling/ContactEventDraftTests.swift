@@ -90,6 +90,43 @@ final class ContactEventDraftTests: XCTestCase {
         XCTAssertNil(result.results[1].eventId)
     }
 
+    // AN2-T34: full Finish-blocked matrix — every blocking status, in isolation,
+    // blocks finish with exactly that status reported.
+    func test_AN2_T34_finishReadinessBlockedMatrix() {
+        let engine = AnnotationSyncEngine(apiClient: MockAnnotationAPIClient())
+        let blockingStatuses: [ContactEventSyncStatus] = [
+            .localOnly, .syncing, .updating, .deleting,
+            .retryPending, .conflicted, .needsReconciliation,
+        ]
+
+        for status in blockingStatuses {
+            var draft = ContactEventDraft.new(timestampMs: 1, contactType: "head", side: "center", annotationConfidence: "certain")
+            draft.syncStatus = status
+            let session = makeSession(drafts: [draft])
+
+            XCTAssertEqual(
+                engine.finishReadiness(for: session), .blocked([status]),
+                "status \(status) must block finish"
+            )
+        }
+    }
+
+    // AN2-T35: a failedPermanent active event does NOT block finish — it
+    // requires user resolution but finish proceeds with the remaining events.
+    func test_AN2_T35_finishReadinessNotBlockedByFailedPermanent() {
+        let engine = AnnotationSyncEngine(apiClient: MockAnnotationAPIClient())
+        var failed = ContactEventDraft.new(timestampMs: 1, contactType: "head", side: "center", annotationConfidence: "certain")
+        failed.syncStatus = .failedPermanent
+
+        let zeroSession = makeSession(drafts: [failed])
+        XCTAssertEqual(engine.finishReadiness(for: zeroSession), .readyZero)
+
+        var synced = ContactEventDraft.new(timestampMs: 2, contactType: "chest", side: "center", annotationConfidence: "certain")
+        synced.syncStatus = .synced
+        let withSyncedSession = makeSession(drafts: [failed, synced])
+        XCTAssertEqual(engine.finishReadiness(for: withSyncedSession), .readyWithCount(1))
+    }
+
     // MARK: — Helper
 
     private func makeSession(drafts: [ContactEventDraft]) -> AnnotationSessionFile {
