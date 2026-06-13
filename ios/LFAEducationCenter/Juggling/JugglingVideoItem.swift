@@ -26,6 +26,9 @@ struct JugglingVideoItem: Codable, Identifiable {
     let hasMedia:                 Bool
     let uploadSource:             String
     let sourceType:               String
+    // AN-1 contact annotation state. Nil if the backend response predates AN-1
+    // or annotation was never started for this video.
+    let annotationStatus:         String?
 
     var id: String { videoId }
 
@@ -45,6 +48,7 @@ struct JugglingVideoItem: Codable, Identifiable {
         case hasMedia                 = "has_media"
         case uploadSource             = "upload_source"
         case sourceType               = "source_type"
+        case annotationStatus         = "annotation_status"
     }
 
     // MARK: — Display helpers
