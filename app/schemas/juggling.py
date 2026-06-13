@@ -24,7 +24,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, Field, field_validator, model_validator
 
 # ── Consent schemas ──────────────────────────────────────────────────────────
 
@@ -209,7 +209,7 @@ class ContactEventCreateRequest(BaseModel):
 
 class ContactEventOut(BaseModel):
     """Read-only contact event representation."""
-    event_id:                uuid.UUID
+    event_id: uuid.UUID = Field(validation_alias=AliasChoices("event_id", "id"))
     device_event_id:         uuid.UUID
     timestamp_ms:            int
     contact_type:            str

@@ -38,6 +38,17 @@ from app.models.juggling import (
 from app.models.user import User, UserRole
 from app.services.juggling import feature_flag as ff_module
 
+
+def _err_msg(r) -> str:
+    """Extract error message regardless of whether this project uses {"detail": ...} or {"error": {"message": ...}}."""
+    body = r.json()
+    if "detail" in body:
+        return str(body["detail"]).lower()
+    if "error" in body and "message" in body["error"]:
+        return str(body["error"]["message"]).lower()
+    return str(body).lower()
+
+
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
 @pytest.fixture()
@@ -267,7 +278,7 @@ class TestCA13_ContactTypeValidation:
         """CA-14: right_thigh is explicitly rejected → 422."""
         r = client.post(_contacts_url(video.id), json=_base_event("right_thigh"), headers=_auth(token))
         assert r.status_code == 422
-        assert "thigh" in r.json()["detail"].lower() or "422" in str(r.status_code)
+        assert "thigh" in _err_msg(r) or r.status_code == 422
 
     def test_ca15_left_thigh_422(self, client, token, video):
         """CA-15: left_thigh is explicitly rejected → 422."""
@@ -356,7 +367,7 @@ class TestCA23_SideDerivation:
         body = {**_base_event("right_knee"), "side": "left"}
         r = client.post(_contacts_url(video.id), json=body, headers=_auth(token))
         assert r.status_code == 422
-        assert "mismatch" in r.json()["detail"].lower()
+        assert "mismatch" in _err_msg(r)
 
     def test_ca27_stable_type_correct_side_201(self, client, token, video):
         """CA-27: sending matching side for stable type → 201 (allowed)."""
@@ -429,7 +440,7 @@ class TestCA28_SingleCreate:
         client.post(_contacts_url(video.id), json=body1, headers=_auth(token))
         r = client.post(_contacts_url(video.id), json=body2, headers=_auth(token))
         assert r.status_code == 409
-        assert "idempotency_conflict" in r.json()["detail"]
+        assert "idempotency_conflict" in _err_msg(r)
 
     def test_ca34_get_contacts_lists_created_event(self, client, token, video):
         """CA-34: created event appears in GET /contacts."""
@@ -537,7 +548,7 @@ class TestCA41_Patch:
         patch = {"annotation_confidence": "certain", "version": 999}
         r = client.patch(self._patch_url(video.id, evt["event_id"]), json=patch, headers=_auth(token))
         assert r.status_code == 409
-        assert "version_conflict" in r.json()["detail"]
+        assert "version_conflict" in _err_msg(r)
 
     def test_ca44_patch_other_user_event_404(self, client, token, other_video, other_token, db_session, other_user):
         """CA-44: PATCH on event belonging to another user's video → 404."""
@@ -620,7 +631,7 @@ class TestCA50_Finish:
         """CA-51: Finish with 0 events, confirm_zero_contacts=false → 422."""
         r = client.post(self._finish_url(video.id), json={"confirm_zero_contacts": False}, headers=_auth(token))
         assert r.status_code == 422
-        assert "zero_contact_not_confirmed" in r.json()["detail"]
+        assert "zero_contact_not_confirmed" in _err_msg(r)
 
     def test_ca52_finish_zero_with_confirm_200(self, client, token, video):
         """CA-52: Finish with 0 events, confirm_zero_contacts=true → 200."""
@@ -685,7 +696,7 @@ class TestCA58_PostFinishGuard:
         self._finish(client, token, video)
         r = client.post(_contacts_url(video.id), json=_base_event(), headers=_auth(token))
         assert r.status_code == 409
-        assert "annotation_closed" in r.json()["detail"]
+        assert "annotation_closed" in _err_msg(r)
 
     def test_ca59_patch_blocked_after_finish(self, client, token, video):
         """CA-59: PATCH after Finish → 409."""
@@ -695,7 +706,7 @@ class TestCA58_PostFinishGuard:
         client.post(f"{_contacts_url(video.id)}/finish", json={"confirm_zero_contacts": False}, headers=_auth(token))
         r = client.patch(f"{_contacts_url(video.id)}/{evt_id}", json={"annotation_confidence": "certain", "version": 1}, headers=_auth(token))
         assert r.status_code == 409
-        assert "annotation_closed" in r.json()["detail"]
+        assert "annotation_closed" in _err_msg(r)
 
     def test_ca60_delete_blocked_after_finish(self, client, token, video):
         """CA-60: DELETE after Finish → 409."""
@@ -705,4 +716,4 @@ class TestCA58_PostFinishGuard:
         client.post(f"{_contacts_url(video.id)}/finish", json={"confirm_zero_contacts": False}, headers=_auth(token))
         r = client.delete(f"{_contacts_url(video.id)}/{evt_id}", headers=_auth(token))
         assert r.status_code == 409
-        assert "annotation_closed" in r.json()["detail"]
+        assert "annotation_closed" in _err_msg(r)
