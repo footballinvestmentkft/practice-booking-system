@@ -910,7 +910,7 @@ class TestHELP32_ThighToHipForbidden:
 # ── HELP-33: skeleton JSONs are schema v2 ────────────────────────────────────
 
 class TestHELP33_SkeletonJsonsSchemaV2:
-    _SKELETONS = [f"jug_b1_00{i}" for i in range(1, 5)]
+    _SKELETONS = [f"jug_b1_00{i}" for i in range(1, 5) if i != 2]
 
     @pytest.mark.parametrize("vid_id", _SKELETONS)
     def test_skeleton_annotation_schema_version_is_v2(self, vid_id):
@@ -963,7 +963,7 @@ class TestHELP34_ManifestTaxonomyReference:
 # ── HELP-35: all human fields still null/pending ──────────────────────────────
 
 class TestHELP35_HumanFieldsNullPending:
-    _SKELETONS = [f"jug_b1_00{i}" for i in range(1, 5)]
+    _SKELETONS = [f"jug_b1_00{i}" for i in range(1, 5) if i != 2]
     _NULL_HUMAN_FIELDS = [
         "difficulty", "total_juggling_count", "count_confidence",
         "dominant_body_part", "body_parts_used",

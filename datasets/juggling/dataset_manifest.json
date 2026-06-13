@@ -5,10 +5,10 @@
   "last_updated": "2026-06-12",
   "summary": {
     "total_videos": 4,
-    "metadata_ready": 4,
+    "metadata_ready": 3,
     "annotated_videos": 0,
     "reviewed_videos": 0,
-    "privacy_approved_videos": 0,
+    "privacy_approved_videos": 1,
     "by_difficulty": {
       "easy": 0,
       "medium": 0,
@@ -45,8 +45,8 @@
       "filename": "d5ff5f63-79d6-4276-99ee-a7615337bc0d.mp4",
       "annotation_file": "annotations/jug_b1_002.json",
       "checksum_sha256": "b70b0682095bc486f96a741cf62371573dee339d46556632a9a5d550dd3aea95",
-      "annotation_status": "metadata_ready",
-      "privacy_review_status": "pending",
+      "annotation_status": "human_review_pending",
+      "privacy_review_status": "approved",
       "difficulty": "pending",
       "dataset_eligibility": "pending_human_review",
       "upload_source": "app_gallery_upload",
