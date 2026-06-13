@@ -1,9 +1,10 @@
 """
 Juggling POC — Video Intake + Quality Pipeline models.
 
-Two tables:
-  juggling_consents  — per-user consent record (service + training + admin_review)
-  juggling_videos    — per-video upload record with status state machine
+Tables:
+  juggling_consents       — per-user consent record (service + training + admin_review)
+  juggling_videos         — per-video upload record with status state machine
+  juggling_contact_events — per-event annotation records (PR-1)
 
 State machine for juggling_videos.status:
   pending_upload → uploaded → processing → analyzed
@@ -11,10 +12,12 @@ State machine for juggling_videos.status:
                                         → failed      (ffprobe crash / timeout / corrupt)
                                         → gdpr_deleted (P3: terminal; all data nulled)
 
-Definitions:
-  rejected     = a deliberate quality or validation gate decision; file was readable.
-  failed       = technical error; ffprobe could not process the file.
-  gdpr_deleted = GDPR/retention delete applied; paths nulled; status is irreversible.
+Training eligibility dual-gate (JugglingContactEvent):
+  Training use requires BOTH simultaneously:
+    1. consent_snapshot->>'training_consent' == 'true'   (historical at creation)
+    2. JugglingConsent.training_consent == true           (current live consent)
+  The snapshot is an immutable audit trail; revocation is enforced at
+  export/query time by joining the live consent, NOT by mutating the snapshot.
 """
 from __future__ import annotations
 
@@ -25,6 +28,7 @@ from datetime import datetime, timezone
 from sqlalchemy import (
     BigInteger,
     Boolean,
+    CheckConstraint,
     Column,
     DateTime,
     Float,
@@ -238,6 +242,28 @@ class JugglingVideo(Base):
     retention_error          = Column(String(255), nullable=True,
                                       comment="Last retention operation error; cleared on success")
 
+    # ── PR-1 annotation tracking ──────────────────────────────────────────────
+    # annotation_status NULL = not yet started (same as metadata_ready for legacy rows)
+    annotation_status = Column(
+        String(30), nullable=True,
+        comment=(
+            "metadata_ready | in_progress | human_review_pending | "
+            "annotated | reviewed | rejected. "
+            "NULL = not yet started."
+        ),
+    )
+    annotation_finished_at = Column(
+        DateTime(timezone=True), nullable=True,
+        comment="Timestamp when POST /contacts/finish was successfully called.",
+    )
+    total_juggling_count = Column(
+        Integer, nullable=True,
+        comment=(
+            "Computed count of non-excluded contact events after finish. "
+            "NULL until annotation is finished."
+        ),
+    )
+
     # ── Timestamps ───────────────────────────────────────────────────────────
     created_at = Column(DateTime(timezone=True), nullable=False, index=True,
                         default=lambda: datetime.now(timezone.utc))
@@ -246,6 +272,166 @@ class JugglingVideo(Base):
                         onupdate=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="juggling_videos")
+    contact_events = relationship(
+        "JugglingContactEvent",
+        back_populates="video",
+        foreign_keys="JugglingContactEvent.video_id",
+        cascade="all, delete-orphan",
+    )
+
+
+# ── Juggling contact event enums ──────────────────────────────────────────────
+
+class JugglingAnnotationSource(str, enum.Enum):
+    manual_user      = "manual_user"
+    model_prediction = "model_prediction"
+    user_corrected   = "user_corrected"
+
+
+class JugglingAnnotationConfidence(str, enum.Enum):
+    certain   = "certain"
+    probable  = "probable"
+    uncertain = "uncertain"
+
+
+class JugglingAnnotationReviewStatus(str, enum.Enum):
+    pending   = "pending"
+    confirmed = "confirmed"
+    corrected = "corrected"
+    rejected  = "rejected"
+
+
+class JugglingTaxonomyReviewStatus(str, enum.Enum):
+    not_applicable         = "not_applicable"
+    pending_taxonomy_review = "pending_taxonomy_review"
+    reclassified           = "reclassified"
+    promotion_candidate    = "promotion_candidate"
+    promoted               = "promoted"
+    approved_unclassified  = "approved_unclassified"
+
+
+class JugglingVideoAnnotationStatus(str, enum.Enum):
+    metadata_ready        = "metadata_ready"
+    in_progress           = "in_progress"
+    human_review_pending  = "human_review_pending"
+    annotated             = "annotated"
+    reviewed              = "reviewed"
+    rejected              = "rejected"
+
+
+class JugglingContactEvent(Base):
+    """
+    Per-event annotation record for juggling contact annotation.
+
+    FK policy:
+      video_id FK CASCADE          — deleted when video is deleted
+      created_by_user_id FK RESTRICT — never orphaned; safe because users →
+        juggling_videos CASCADE → contact events CASCADE means the RESTRICT
+        is never triggered in practice during GDPR user deletion.
+      corrected_from_event_id FK SET NULL — preserves correction trail
+
+    Training eligibility dual-gate: see module docstring.
+    """
+    __tablename__ = "juggling_contact_events"
+
+    id                   = Column(UUID(as_uuid=True), primary_key=True,
+                                  default=_uuid_mod.uuid4)
+    video_id             = Column(UUID(as_uuid=True),
+                                  ForeignKey("juggling_videos.id", ondelete="CASCADE"),
+                                  nullable=False, index=True)
+    created_by_user_id   = Column(Integer,
+                                  ForeignKey("users.id", ondelete="RESTRICT"),
+                                  nullable=False, index=True)
+    device_event_id      = Column(UUID(as_uuid=True), nullable=False)
+
+    timestamp_ms         = Column(BigInteger, nullable=False)
+    contact_type         = Column(String(40), nullable=False)
+    side                 = Column(String(20), nullable=True)
+    annotation_confidence = Column(String(20), nullable=False)
+
+    annotation_review_status = Column(
+        String(20), nullable=False,
+        default=JugglingAnnotationReviewStatus.pending.value,
+        server_default="pending",
+    )
+    taxonomy_review_status = Column(
+        String(40), nullable=False,
+        default=JugglingTaxonomyReviewStatus.not_applicable.value,
+        server_default="not_applicable",
+    )
+    annotation_source    = Column(String(30), nullable=False)
+
+    excluded_from_training = Column(Boolean, nullable=False, default=True,
+                                    server_default="true")
+    excluded_from_count    = Column(Boolean, nullable=False, default=False,
+                                    server_default="false")
+
+    model_confidence         = Column(Float, nullable=True)
+    user_confirmed           = Column(Boolean, nullable=True)
+    corrected_from_event_id  = Column(
+        UUID(as_uuid=True),
+        ForeignKey("juggling_contact_events.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
+    custom_label        = Column(String(40), nullable=True)
+    custom_description  = Column(String(200), nullable=True)
+    taxonomy_version    = Column(String(10), nullable=False, default="v1",
+                                 server_default="v1")
+    consent_snapshot    = Column(JSONB, nullable=True)
+    note                = Column(String(500), nullable=True)
+    ball_height_approx_px = Column(Integer, nullable=True)
+
+    version    = Column(Integer, nullable=False, default=1, server_default="1")
+    created_at = Column(DateTime(timezone=True), nullable=False, index=True,
+                        default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=False,
+                        default=lambda: datetime.now(timezone.utc),
+                        onupdate=lambda: datetime.now(timezone.utc))
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("video_id", "device_event_id",
+                         name="uq_juggling_contact_device_event"),
+        CheckConstraint(
+            "annotation_source IN ('manual_user','model_prediction','user_corrected')",
+            name="ck_juggling_contact_annotation_source",
+        ),
+        CheckConstraint(
+            "annotation_confidence IN ('certain','probable','uncertain')",
+            name="ck_juggling_contact_annotation_confidence",
+        ),
+        CheckConstraint(
+            "annotation_review_status IN ('pending','confirmed','corrected','rejected')",
+            name="ck_juggling_contact_annotation_review_status",
+        ),
+        CheckConstraint(
+            "taxonomy_review_status IN ("
+            "'not_applicable','pending_taxonomy_review','reclassified',"
+            "'promotion_candidate','promoted','approved_unclassified')",
+            name="ck_juggling_contact_taxonomy_review_status",
+        ),
+        CheckConstraint(
+            "timestamp_ms >= 0",
+            name="ck_juggling_contact_timestamp_ms_nonneg",
+        ),
+        CheckConstraint(
+            "version >= 1",
+            name="ck_juggling_contact_version_positive",
+        ),
+        CheckConstraint(
+            "model_confidence IS NULL OR "
+            "(model_confidence >= 0.0 AND model_confidence <= 1.0)",
+            name="ck_juggling_contact_model_confidence_range",
+        ),
+    )
+
+    video          = relationship("JugglingVideo", back_populates="contact_events",
+                                  foreign_keys=[video_id])
+    created_by     = relationship("User", foreign_keys=[created_by_user_id])
+    corrected_from = relationship("JugglingContactEvent",
+                                  foreign_keys=[corrected_from_event_id],
+                                  remote_side="JugglingContactEvent.id")
 
 
 class JugglingFileDeletionLog(Base):

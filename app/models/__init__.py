@@ -75,6 +75,12 @@ from .juggling import (
     JugglingVideoQualityStatus,
     JugglingSourceType,
     JugglingUploadSource,
+    JugglingContactEvent,
+    JugglingAnnotationSource,
+    JugglingAnnotationConfidence,
+    JugglingAnnotationReviewStatus,
+    JugglingTaxonomyReviewStatus,
+    JugglingVideoAnnotationStatus,
 )
 
 # 🎓 New Track-Based Modular Education System
