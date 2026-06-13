@@ -24,7 +24,11 @@ struct JugglingVideoListView: View {
         }
         .navigationViewStyle(.stack)
         .fullScreenCover(item: $viewModel.showPlayerFor) { video in
-            JugglingAnnotationScreen(video: video, authManager: authManager)
+            if let userId = authManager.currentUserId, userId > 0 {
+                JugglingAnnotationScreen(video: video, authManager: authManager, userId: userId)
+            } else {
+                AnnotationUserUnavailableView()
+            }
         }
     }
 
@@ -189,5 +193,42 @@ private struct JugglingVideoRow: View {
         case "rejected", "failed": return Theme.Color.error
         default:                  return Theme.Color.muted
         }
+    }
+}
+
+// MARK: — Annotation user-unavailable fallback
+
+// Shown instead of JugglingAnnotationScreen when authManager.currentUserId is
+// nil or non-positive. JugglingAnnotationViewModel can only be constructed
+// with a valid, positive userId — presenting the screen without one would
+// either crash (precondition) or, before this fix, silently scope local
+// storage to userId 0.
+private struct AnnotationUserUnavailableView: View {
+    @Environment(\.presentationMode) private var presentationMode
+
+    var body: some View {
+        VStack(spacing: Theme.Spacing.md) {
+            ProgressView()
+            Text("A felhasználói profil betöltése folyamatban van.")
+                .font(.subheadline)
+                .foregroundColor(Theme.Color.onSurface)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, Theme.Spacing.xl)
+            Text("Ha ez a hibaüzenet nem tűnik el, lépj ki és jelentkezz be újra.")
+                .font(.caption)
+                .foregroundColor(Theme.Color.muted)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, Theme.Spacing.xl)
+            Button {
+                presentationMode.wrappedValue.dismiss()
+            } label: {
+                Text("Bezárás")
+                    .font(.body.weight(.semibold))
+                    .foregroundColor(Theme.Color.primary)
+            }
+            .padding(.top, Theme.Spacing.sm)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.systemBackground))
     }
 }

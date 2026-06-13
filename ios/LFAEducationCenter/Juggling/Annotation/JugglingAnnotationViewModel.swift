@@ -21,6 +21,9 @@ final class JugglingAnnotationViewModel: ObservableObject {
     @Published private(set) var isFinishing:        Bool = false
     @Published private(set) var finishResult:       FinishAnnotationOut?
     @Published private(set) var finishError:        String?
+    // Set when a local persistence write fails. The UI must not claim the
+    // affected change is saved while this is non-nil.
+    @Published private(set) var saveError:          String?
     // deviceEventId of the conflict waiting for user resolution, or nil.
     @Published private(set) var pendingConflictId:  UUID? = nil
 
@@ -37,6 +40,7 @@ final class JugglingAnnotationViewModel: ObservableObject {
         videoId:     String,
         authManager: AuthManager
     ) {
+        precondition(userId > 0, "JugglingAnnotationViewModel requires a valid, positive userId")
         self.userId  = userId
         self.videoId = videoId
 
@@ -55,6 +59,7 @@ final class JugglingAnnotationViewModel: ObservableObject {
         taxonomyStore: ContactTaxonomyStore,
         localStore:    LocalAnnotationStore
     ) {
+        precondition(userId > 0, "JugglingAnnotationViewModel requires a valid, positive userId")
         self.userId        = userId
         self.videoId       = videoId
         self.apiClient     = apiClient
@@ -73,27 +78,21 @@ final class JugglingAnnotationViewModel: ObservableObject {
         taxonomy = taxonomyStore.document
 
         switch localStore.load(userId: userId, videoId: videoId) {
-        case .empty:
-            var fresh = localStore.emptySession(
-                userId: userId, videoId: videoId,
-                taxonomyVersion: taxonomyStore.document?.taxonomyVersion ?? "v1"
-            )
-            try? localStore.save(session: &fresh)
-            session = fresh
+        case .notFound:
+            // No file exists for this (userId, videoId) — safe to create one.
+            createAndPersistFreshSession()
 
         case .loaded(let loaded):
             session = loaded
 
         case .quarantined(_, let hasLocalOnlyEvents):
+            // The corrupt file has already been moved to quarantine/ (original
+            // path is vacated, original bytes preserved) — creating a fresh
+            // session here does not overwrite anything.
             loadWarning = hasLocalOnlyEvents
                 ? "A korábbi annotációs adatok megsérültek és karanténba kerültek. Néhány nem-szinkronizált esemény elveszhetett."
                 : "A korábbi annotációs adatok megsérültek és karanténba kerültek. Új session indul."
-            var fresh = localStore.emptySession(
-                userId: userId, videoId: videoId,
-                taxonomyVersion: taxonomyStore.document?.taxonomyVersion ?? "v1"
-            )
-            try? localStore.save(session: &fresh)
-            session = fresh
+            createAndPersistFreshSession()
         }
 
         await taxonomyStore.refreshFromBackend()
@@ -103,7 +102,36 @@ final class JugglingAnnotationViewModel: ObservableObject {
     // Call when the annotation screen disappears — persists any in-memory changes.
     func onDisappear() {
         guard var current = session else { return }
-        try? localStore.save(session: &current)
+        do {
+            try localStore.save(session: &current)
+            saveError = nil
+            session = current
+        } catch {
+            saveError = "A mentés sikertelen: \(error.localizedDescription)"
+        }
+    }
+
+    // Clears a previously-set save error (e.g. after the user dismisses an alert).
+    func clearSaveError() {
+        saveError = nil
+    }
+
+    // Creates an empty session and persists it immediately. Used by onAppear()
+    // for .notFound and .quarantined results. session is set in-memory even if
+    // the save fails (there is nothing to roll back to), but saveError is set
+    // so the UI can surface the failure.
+    private func createAndPersistFreshSession() {
+        var fresh = localStore.emptySession(
+            userId: userId, videoId: videoId,
+            taxonomyVersion: taxonomyStore.document?.taxonomyVersion ?? "v1"
+        )
+        do {
+            try localStore.save(session: &fresh)
+            saveError = nil
+        } catch {
+            saveError = "A mentés sikertelen: \(error.localizedDescription)"
+        }
+        session = fresh
     }
 
     // Call on logout / user switch. Drops in-memory state for this instance;
@@ -138,9 +166,16 @@ final class JugglingAnnotationViewModel: ObservableObject {
 
         let draft = ContactEventDraft.timestamp(ms: ms)
         current.drafts.append(draft)
-        try? localStore.save(session: &current)
-        session = current
-        return draft
+        do {
+            try localStore.save(session: &current)
+            saveError = nil
+            session = current
+            return draft
+        } catch {
+            // Roll back — do not present a memory-only event as persisted.
+            saveError = "A mentés sikertelen: \(error.localizedDescription)"
+            return nil
+        }
     }
 
     @discardableResult
@@ -163,9 +198,15 @@ final class JugglingAnnotationViewModel: ObservableObject {
             customDescription:    customDescription
         )
         current.drafts.append(draft)
-        try? localStore.save(session: &current)
-        session = current
-        return draft
+        do {
+            try localStore.save(session: &current)
+            saveError = nil
+            session = current
+            return draft
+        } catch {
+            saveError = "A mentés sikertelen: \(error.localizedDescription)"
+            return nil
+        }
     }
 
     // Edits an existing draft in-place. Permitted statuses and resulting transitions:
@@ -247,9 +288,15 @@ final class JugglingAnnotationViewModel: ObservableObject {
         }
 
         current.drafts[index] = draft
-        try? localStore.save(session: &current)
-        session = current
-        return true
+        do {
+            try localStore.save(session: &current)
+            saveError = nil
+            session = current
+            return true
+        } catch {
+            saveError = "A mentés sikertelen: \(error.localizedDescription)"
+            return false
+        }
     }
 
     // Resolves a .conflicted draft by fetching the authoritative server state via
@@ -287,7 +334,12 @@ final class JugglingAnnotationViewModel: ObservableObject {
                 current.drafts[index].pendingServerSnapshot = nil
                 pendingConflictId = firstPendingConflict(in: current)
             }
-            try? localStore.save(session: &current)
+            do {
+                try localStore.save(session: &current)
+                saveError = nil
+            } catch {
+                saveError = "A mentés sikertelen: \(error.localizedDescription)"
+            }
             session = current
         } catch {
             // Network error: draft remains .conflicted; UI should offer "Retry resolve".
@@ -308,7 +360,12 @@ final class JugglingAnnotationViewModel: ObservableObject {
         )
         current.drafts[index].pendingServerSnapshot = nil
         pendingConflictId = firstPendingConflict(in: current)
-        try? localStore.save(session: &current)
+        do {
+            try localStore.save(session: &current)
+            saveError = nil
+        } catch {
+            saveError = "A mentés sikertelen: \(error.localizedDescription)"
+        }
         session = current
     }
 
@@ -324,7 +381,12 @@ final class JugglingAnnotationViewModel: ObservableObject {
         current.drafts[index].syncStatus            = .localOnly
         current.drafts[index].failureReason         = nil
         pendingConflictId = firstPendingConflict(in: current)
-        try? localStore.save(session: &current)
+        do {
+            try localStore.save(session: &current)
+            saveError = nil
+        } catch {
+            saveError = "A mentés sikertelen: \(error.localizedDescription)"
+        }
         session = current
     }
 
@@ -341,8 +403,14 @@ final class JugglingAnnotationViewModel: ObservableObject {
             current.drafts[index].syncStatus = .deleted
         }
 
-        try? localStore.save(session: &current)
-        session = current
+        do {
+            try localStore.save(session: &current)
+            saveError = nil
+            session = current
+        } catch {
+            // Roll back — the event must not appear deleted if the change wasn't persisted.
+            saveError = "A mentés sikertelen: \(error.localizedDescription)"
+        }
     }
 
     var activeEvents: [ContactEventDraft] {
@@ -366,8 +434,14 @@ final class JugglingAnnotationViewModel: ObservableObject {
                 current.drafts[index].syncStatus = .labelPending
             }
         }
-        try? localStore.save(session: &current)
-        session = current
+        do {
+            try localStore.save(session: &current)
+            saveError = nil
+            session = current
+        } catch {
+            // Roll back — events must not appear .labelPending if not persisted.
+            saveError = "A mentés sikertelen: \(error.localizedDescription)"
+        }
     }
 
     var finishReadiness: FinishReadiness {
@@ -382,7 +456,14 @@ final class JugglingAnnotationViewModel: ObservableObject {
     func flushPending() async {
         guard var current = session else { return }
         await syncEngine.flushPending(session: &current)
-        try? localStore.save(session: &current)
+        do {
+            try localStore.save(session: &current)
+            saveError = nil
+        } catch {
+            // Sync state already changed server-side; surface the local
+            // persistence failure without discarding the updated sync state.
+            saveError = "A mentés sikertelen: \(error.localizedDescription)"
+        }
         session = current
     }
 
@@ -402,12 +483,22 @@ final class JugglingAnnotationViewModel: ObservableObject {
         defer { isFinishing = false }
 
         await syncEngine.flushPending(session: &current)
-        try? localStore.save(session: &current)
+        do {
+            try localStore.save(session: &current)
+            saveError = nil
+        } catch {
+            saveError = "A mentés sikertelen: \(error.localizedDescription)"
+        }
 
         if current.drafts.contains(where: { $0.syncStatus == .needsReconciliation }) {
             do {
                 try await syncEngine.reconcile(session: &current)
-                try? localStore.save(session: &current)
+                do {
+                    try localStore.save(session: &current)
+                    saveError = nil
+                } catch {
+                    saveError = "A mentés sikertelen: \(error.localizedDescription)"
+                }
             } catch {
                 session = current
                 finishError = "A befejezés sikertelen: nem sikerült egyeztetni a szerverrel. Ellenőrizd a kapcsolatot, és próbáld újra."

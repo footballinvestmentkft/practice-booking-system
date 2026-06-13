@@ -37,13 +37,18 @@ struct JugglingAnnotationScreen: View {
 
     // Explicit init: @StateObject values must be created before the view appears,
     // and EnvironmentObject is not available at init time.
-    init(video: JugglingVideoItem, authManager: AuthManager) {
+    //
+    // userId is required and must be a valid, positive id — callers (e.g.
+    // JugglingVideoListView) must guard on authManager.currentUserId before
+    // presenting this screen. JugglingAnnotationViewModel's init enforces this
+    // with a precondition; there is no `?? 0` fallback here by design.
+    init(video: JugglingVideoItem, authManager: AuthManager, userId: Int) {
         self.video       = video
         self.authManager = authManager
         _loader  = StateObject(wrappedValue: AnnotationVideoLoader(authManager: authManager))
         _playback = StateObject(wrappedValue: PlaybackController())
         _vm      = StateObject(wrappedValue: JugglingAnnotationViewModel(
-            userId:      authManager.currentUserId ?? 0,
+            userId:      userId,
             videoId:     video.videoId,
             authManager: authManager
         ))

@@ -50,11 +50,12 @@ final class LocalAnnotationStore {
 
     // MARK: — Public interface
 
-    // Load session. On corruption: quarantine + return empty + emit recovery event.
+    // Load session. On corruption: quarantine the bad file + return .quarantined
+    // (the caller decides whether/how to start a fresh session).
     func load(userId: Int, videoId: String) -> AnnotationLoadResult {
         let url = fileURL(userId: userId, videoId: videoId)
         guard FileManager.default.fileExists(atPath: url.path) else {
-            return .empty
+            return .notFound
         }
         do {
             let data = try Data(contentsOf: url)
@@ -162,7 +163,11 @@ final class LocalAnnotationStore {
 // MARK: — AnnotationLoadResult
 
 enum AnnotationLoadResult {
-    case empty
+    // No session file exists on disk yet — safe to create a fresh empty session.
+    case notFound
     case loaded(AnnotationSessionFile)
+    // File existed but was corrupt/checksum-mismatched and has been moved to
+    // quarantine/ (original bytes preserved). The path is now free, but the
+    // caller must surface loadWarning to the user before starting fresh.
     case quarantined(quarantineURL: URL, hasLocalOnlyEvents: Bool)
 }
