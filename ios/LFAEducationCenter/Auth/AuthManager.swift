@@ -32,6 +32,9 @@ final class AuthManager: ObservableObject {
     @Published private(set) var justRegistered:       Bool    = false
     // First name captured from the register form for immediate display in WelcomeSuccessView.
     private(set) var registeredUserName:              String? = nil
+    // Cached from GET /api/v1/users/me after successful validateSession / login.
+    // Used by annotation screens to scope local storage without an extra network call.
+    @Published private(set) var currentUserId:        Int?    = nil
 
     // Shared-task barrier replacing the former isRefreshing: Bool flag.
     // A non-nil value means a refresh is in-flight; new callers join via .value.
@@ -62,10 +65,11 @@ final class AuthManager: ObservableObject {
         }
 
         do {
-            let _: UserProfile = try await APIClient.get(
+            let profile: UserProfile = try await APIClient.get(
                 path: "/api/v1/users/me",
                 token: token
             )
+            currentUserId = profile.id
             isLoggedIn = true
 
         } catch APIError.httpError(401, _) {
@@ -178,6 +182,7 @@ final class AuthManager: ObservableObject {
         KeychainService.clearAll()
         justRegistered     = false
         registeredUserName = nil
+        currentUserId      = nil
         isLoggedIn         = false
     }
 

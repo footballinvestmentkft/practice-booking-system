@@ -50,6 +50,7 @@ final class PlaybackController: ObservableObject {
     @Published private(set) var isPlaying:          Bool         = false
     @Published private(set) var currentTimestampMs: Int          = 0
     @Published private(set) var selectedRate:       PlaybackRate = .normal
+    @Published private(set) var videoNaturalSize:   CGSize?      = nil
     @Published var duration: CMTime = .zero
 
     // Set once when the asset loads; var (not private(set)) so tests can inject
@@ -81,8 +82,16 @@ final class PlaybackController: ObservableObject {
 
     // Call once the authenticated temp-file URL is ready (after download).
     // Reads nominalFrameRate / minFrameDuration from the asset before playback starts.
+    // Also reads naturalSize + preferredTransform to publish videoNaturalSize for
+    // mixed-orientation layout (16:9 landscape vs 9:16 portrait).
     func loadAsset(_ asset: AVAsset) {
         frameDuration = Self.effectiveFrameDuration(for: asset)
+        if let track = asset.tracks(withMediaType: .video).first {
+            videoNaturalSize = Self.displaySize(
+                naturalSize:        track.naturalSize,
+                preferredTransform: track.preferredTransform
+            )
+        }
         if let avp = player as? AVPlayer {
             let item = AVPlayerItem(asset: asset)
             avp.replaceCurrentItem(with: item)
@@ -91,6 +100,14 @@ final class PlaybackController: ObservableObject {
         if dur.isValid && dur > .zero {
             duration = dur
         }
+    }
+
+    // Returns the display size after applying preferredTransform.
+    // Abs() handles mirrored transforms where width or height may be negative.
+    // Exposed as static for direct unit-test coverage without an AVAsset.
+    static func displaySize(naturalSize: CGSize, preferredTransform: CGAffineTransform) -> CGSize {
+        let transformed = naturalSize.applying(preferredTransform)
+        return CGSize(width: abs(transformed.width), height: abs(transformed.height))
     }
 
     // MARK: — Transport controls
