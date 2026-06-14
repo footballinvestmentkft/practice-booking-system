@@ -1,0 +1,18 @@
+// Config.Debug.xcconfig — Debug build backend URL
+//
+// SETUP (required before building to a physical iPhone):
+//   1. Find your Mac's current LAN IP:
+//      Terminal: ifconfig | grep "inet " | grep -v 127.0.0.1
+//   2. Replace CHANGEME below with that IP. Example:
+//      API_BASE_URL = http://192.168.1.129:8000
+//
+// Simulator builds:
+//   API_BASE_URL = http://localhost:8000
+//
+// This file MUST NOT be committed with a real LAN IP — each developer
+// sets this to their own Mac's IP. Add it to .gitignore if needed.
+//
+// The app will crash at launch with a clear message if this value is
+// "http://CHANGEME:8000" or otherwise unreachable — that is intentional.
+
+API_BASE_URL = http://CHANGEME:8000

@@ -1,0 +1,7 @@
+// Config.Release.xcconfig — Release / TestFlight / App Store build backend URL
+//
+// Set this to the production HTTPS backend URL before archiving.
+// Must NOT be a LAN IP address (192.168.x.x, 10.x.x.x) or localhost.
+// The app will crash at launch if this is a development IP in a Release build.
+
+API_BASE_URL = https://PRODUCTION_URL_NOT_SET
