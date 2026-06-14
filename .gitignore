@@ -190,4 +190,25 @@ app/uploads/juggling/*_thumb.jpg
 # Store in local_models/juggling/ locally; export path via config.
 local_models/juggling/*.onnx
 local_models/juggling/*.pt
+
+# Biometric model weights — NEVER commit (GDPR + size policy)
+# *.onnx.data: ONNX external data format (companion to *.onnx), up to 166 MB
+# *.safetensors: HuggingFace model weights, up to 333 MB per model
+# local_models/cvlface_*/: CVLFace model directories (weights + config)
+# *.onnx already covered above; *.onnx.data is a separate extension.
+*.onnx.data
+*.safetensors
+local_models/cvlface_*/
+
+# Biometric test images — NEVER commit (GDPR: personal biometric data)
+# Contains face photos of real individuals used for accuracy benchmarking.
+scripts/test_images/
+
+# Xcode per-developer data — editor state, breakpoints, layout (never shared)
+xcuserdata/
+
+# Xcode simulator build cache — generated output, not source
+# Confirmed contents: Debug-iphoneos, ExplicitPrecompiledModules,
+# LFAEducationCenter.build, XCBuildData (all build artefacts)
+ios/ios/
 local_models/juggling/*.pth
