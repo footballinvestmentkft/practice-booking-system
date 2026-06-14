@@ -95,6 +95,7 @@ struct JugglingVideoListView: View {
                         isDeleting: viewModel.deletingVideoIds.contains(video.videoId),
                         onPlay: { viewModel.playVideo(video) }
                     )
+                    .deleteDisabled(video.status == "media_deleted")
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets(
                         top: Theme.Spacing.xs,

@@ -227,6 +227,61 @@ final class JugglingVideoItemDisplayTests: XCTestCase {
     }
 }
 
+// MARK: — ARC-01..ARC-03: media_deleted archív sor badge (I-3 visual)
+
+final class JugglingVideoItemArchiveTests: XCTestCase {
+
+    private func makeItem(status: String) -> JugglingVideoItem {
+        let json = """
+        {
+          "video_id": "\(UUID().uuidString)",
+          "status": "\(status)",
+          "transcode_status": "done",
+          "quality_status": "pass",
+          "quality_score": 88.0,
+          "created_at": "2026-06-14T10:00:00Z",
+          "updated_at": "2026-06-14T10:00:00Z",
+          "duration_seconds": 12.0,
+          "processed_resolution": "1920x1080",
+          "processed_fps": 30.0,
+          "processed_file_size_bytes": 9000000,
+          "has_thumbnail": true,
+          "has_media": true,
+          "upload_source": "gallery",
+          "source_type": "uploaded_video"
+        }
+        """.data(using: .utf8)!
+        return try! JSONDecoder().decode(JugglingVideoItem.self, from: json)
+    }
+
+    // ARC-01: media_deleted badge pontosan "📦 Archivált"
+    func test_ARC01_media_deleted_badge_label_is_hungarian_archivalt() {
+        let item = makeItem(status: "media_deleted")
+        XCTAssertEqual(item.statusBadgeLabel, "📦 Archivált",
+                       "media_deleted badge must be the Hungarian 📦 Archivált label")
+    }
+
+    // ARC-02: withMediaDeleted() után a badge azonnal "📦 Archivált"
+    func test_ARC02_withMediaDeleted_badge_label_is_archivalt() {
+        let item = makeItem(status: "analyzed")
+        let archived = item.withMediaDeleted()
+        XCTAssertEqual(archived.statusBadgeLabel, "📦 Archivált",
+                       "withMediaDeleted() must produce a badge of 📦 Archivált without an API round-trip")
+    }
+
+    // ARC-03: media_deleted sor nem játszható le (Play gomb nem aktív)
+    func test_ARC03_media_deleted_not_playable() {
+        let item = makeItem(status: "media_deleted")
+        // media_deleted items always have hasMedia=false (set by withMediaDeleted / backend schema)
+        // isPlayable = hasMedia, so media_deleted is never playable
+        let archived = item.withMediaDeleted()
+        XCTAssertFalse(archived.isPlayable,
+                       "Archived video must not be playable — hasMedia is false")
+        XCTAssertFalse(archived.hasThumbnail,
+                       "Archived video must have no thumbnail")
+    }
+}
+
 // MARK: — JM-15: No backend route delta
 
 final class JugglingBackendDeltaTests: XCTestCase {

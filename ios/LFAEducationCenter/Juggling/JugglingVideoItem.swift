@@ -85,7 +85,7 @@ struct JugglingVideoItem: Codable, Identifiable {
         case "failed":         return "! Failed"
         case "uploaded":       return "↑ Uploaded"
         case "pending_upload": return "Pending"
-        case "media_deleted":  return "🗑 Archived"
+        case "media_deleted":  return "📦 Archivált"
         default:               return status.capitalized
         }
     }
