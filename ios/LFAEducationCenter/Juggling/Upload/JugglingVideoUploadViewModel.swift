@@ -90,6 +90,9 @@ final class JugglingVideoUploadViewModel: ObservableObject {
     ) {
         self.apiClient = apiClient
         self.maxFileSizeBytes = maxFileSizeBytes
+        #if DEBUG
+        print("[B3-DIAG][ViewModel] init — maxFileSizeBytes=\(maxFileSizeBytes) bytes")
+        #endif
     }
 
     // MARK: — Picker lifecycle
@@ -182,6 +185,10 @@ final class JugglingVideoUploadViewModel: ObservableObject {
         let size: Int64
         do {
             let attrs = try FileManager.default.attributesOfItem(atPath: tempURL.path)
+            #if DEBUG
+            let rawSize = attrs[.size]
+            log("prepareAndUpload — attrs[.size] raw=\(String(describing: rawSize)), type=\(type(of: rawSize))")
+            #endif
             size = (attrs[.size] as? Int64) ?? 0
             #if DEBUG
             log("prepareAndUpload — tempFile size=\(size) bytes")
@@ -195,6 +202,9 @@ final class JugglingVideoUploadViewModel: ObservableObject {
             return
         }
 
+        #if DEBUG
+        log("prepareAndUpload — size check: size=\(size) bytes, maxFileSizeBytes=\(maxFileSizeBytes) bytes, exceeds=\(size > maxFileSizeBytes)")
+        #endif
         guard size <= maxFileSizeBytes else {
             try? FileManager.default.removeItem(at: tempURL)
             state = .failure(.fileTooLarge)

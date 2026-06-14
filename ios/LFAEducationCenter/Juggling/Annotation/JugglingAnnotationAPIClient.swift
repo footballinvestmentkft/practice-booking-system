@@ -419,7 +419,7 @@ enum JugglingUploadError: Error, LocalizedError, Equatable {
         switch self {
         case .noConsent:              return "Juggling service consent required."
         case .invalidState(let d):   return "Cannot upload: video in wrong state. \(d ?? "")".trimmingCharacters(in: .whitespaces)
-        case .fileTooLarge:          return "File too large. Maximum 100 MB."
+        case .fileTooLarge:          return "A videófájl túl nagy. A maximális méret 100 MB."
         case .unsupportedFormat:     return "Unsupported video format. Use MP4 or MOV."
         case .unauthorized:          return "Session expired. Please log in again."
         case .networkError:          return "Network error. Please try again."
