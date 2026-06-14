@@ -45,6 +45,11 @@ struct LabelingOverviewView: View {
     @State private var loadingIds:       Set<UUID>       = []
     @State private var selectedEventId:  UUID?           = nil  // P2B-5D: routing state
 
+    // P2C-FLOW-2: true after the first auto-advance fires within this sheet lifecycle.
+    // Prevents re-routing when the user returns to the overview via "← Áttekintő".
+    // Resets automatically on sheet re-open (fresh @State on new instance).
+    @State private var hasAutoAdvanced:  Bool            = false
+
     // MARK: — Body
 
     var body: some View {
@@ -67,7 +72,21 @@ struct LabelingOverviewView: View {
             )
         } else {
             overviewContent
+                .onAppear { autoAdvanceIfNeeded() }
         }
+    }
+
+    // MARK: — Auto-advance (P2C-FLOW-2)
+
+    // Fires on every overviewContent appear, but acts only on the first one per sheet
+    // lifecycle (hasAutoAdvanced guards re-entry). Routes to the earliest incomplete
+    // event via handleOpenEvent(), which also handles the .unlabeled → .labelPending
+    // transition for any events not yet processed by enterLabelingMode().
+    private func autoAdvanceIfNeeded() {
+        guard !hasAutoAdvanced else { return }
+        hasAutoAdvanced = true
+        guard let nextId = vm.nextUnlabeledId else { return }   // nil = nothing to auto-open
+        handleOpenEvent(id: nextId)
     }
 
     // MARK: — Overview navigation

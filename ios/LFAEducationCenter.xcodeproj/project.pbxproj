@@ -129,6 +129,7 @@
 		CC400004000000000000018 /* EventPreviewSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000018 /* EventPreviewSessionTests.swift */; };
 		CC400004000000000000019 /* MultiEventLabelingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000019 /* MultiEventLabelingTests.swift */; };
 		CC400004000000000000020 /* P2CF1LabelingQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000020 /* P2CF1LabelingQueueTests.swift */; };
+		CC400004000000000000021 /* P2CF2AutoAdvanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000021 /* P2CF2AutoAdvanceTests.swift */; };
 		CC400004000000000000001 /* JugglingVideoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000001 /* JugglingVideoTests.swift */; };
 		CC400004000000000000005 /* ContactTaxonomyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000005 /* ContactTaxonomyTests.swift */; };
 		CC400004000000000000006 /* LocalAnnotationStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000006 /* LocalAnnotationStoreTests.swift */; };
@@ -282,6 +283,7 @@
 		CC300003000000000000018 /* EventPreviewSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventPreviewSessionTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000019 /* MultiEventLabelingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiEventLabelingTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000020 /* P2CF1LabelingQueueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2CF1LabelingQueueTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000021 /* P2CF2AutoAdvanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2CF2AutoAdvanceTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000001 /* JugglingVideoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000005 /* ContactTaxonomyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactTaxonomyTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000006 /* LocalAnnotationStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalAnnotationStoreTests.swift; sourceTree = "<group>"; };
@@ -643,6 +645,7 @@
 				CC300003000000000000018 /* EventPreviewSessionTests.swift */,
 				CC300003000000000000019 /* MultiEventLabelingTests.swift */,
 				CC300003000000000000020 /* P2CF1LabelingQueueTests.swift */,
+				CC300003000000000000021 /* P2CF2AutoAdvanceTests.swift */,
 				BB100003000000000000004 /* AnnotationVideoLoaderTests.swift */,
 				BB100003000000000000005 /* PlaybackBarTests.swift */,
 				BB100003000000000000006 /* AVPlayerLayerViewTests.swift */,
@@ -905,6 +908,7 @@
 				CC400004000000000000018 /* EventPreviewSessionTests.swift in Sources */,
 				CC400004000000000000019 /* MultiEventLabelingTests.swift in Sources */,
 				CC400004000000000000020 /* P2CF1LabelingQueueTests.swift in Sources */,
+				CC400004000000000000021 /* P2CF2AutoAdvanceTests.swift in Sources */,
 				BB100004000000000000004 /* AnnotationVideoLoaderTests.swift in Sources */,
 				BB100004000000000000005 /* PlaybackBarTests.swift in Sources */,
 				BB100004000000000000006 /* AVPlayerLayerViewTests.swift in Sources */,
