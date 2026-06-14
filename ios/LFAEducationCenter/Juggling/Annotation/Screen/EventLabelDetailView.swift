@@ -1,20 +1,23 @@
 import SwiftUI
 import AVFoundation
 
-// MARK: — EventLabelDetailView (AN-3B2A P2B-1/P2B-3/P2B-4/P2B-5C/P2C-1)
+// MARK: — EventLabelDetailView (AN-3B2A P2B-1/P2B-3/P2B-4/P2B-5C/P2C-1/SILO-2)
 //
 // Step-by-step labeling / re-labeling flow.
 //
-// Opening modes:
-//   startingEventId == nil  → first-session flow; queue = .labelPending + .localOnly
-//   startingEventId != nil  → overview-initiated; queue = all editable states;
-//                             initial position = startingEventId (fallback: index 0)
+// Opening modes (P2C-FLOW-3):
+//   startingEventId == nil          → sequential; queue = all .labelPending
+//   startingEventId with .labelPending target → sequential; positioned at target
+//   startingEventId with .localOnly/.synced/.retryPending/.failedPermanent → singleEdit;
+//       queue = [startId]; save → navigateBack()
+//   Blocked states → targetEventMissing safety view
 //
-// P2B-4 default flow:
-//   still frame → body-zone picker → filtered contact type chips
-//   → confidence → "Mentés és tovább"
-// "Egyéb / Lista nézet" falls through to the full taxonomy list.
-// "Vissza az ábrához" from either detail view returns to the body picker.
+// SILO-2 layout (replaces 3-branch picker / zone-detail / taxonomy-list approach):
+//   1. loopPreview        — fixed; adaptive height (240pt normal / 200pt small screen)
+//   2. timestampRow       — fixed
+//   3. scrollableZoneBody — ScrollView: EmojiBodyZonePickerView OR taxonomy fallback,
+//                           plus custom label/description fields
+//   4. pinnedBottomBar    — always visible; confidence segmented picker + back + save
 //
 // Callbacks (P2B-5C):
 //   onBack  — returns to the overview; does NOT call exitLabelingMode()
@@ -23,7 +26,6 @@ import AVFoundation
 // Write path: vm.relabelEvent() routes .labelPending/.localOnly → labelEvent(),
 //             .synced/.retryPending/.failedPermanent → editEvent().
 // Blocked states (.syncing/.updating/.deleting/.conflicted/etc.) keep canSave=false.
-// No backend sync or Finish flow is triggered here.
 
 struct EventLabelDetailView: View {
     @ObservedObject var vm: JugglingAnnotationViewModel
@@ -44,18 +46,15 @@ struct EventLabelDetailView: View {
     @State private var customDescription: String  = ""
 
     @State private var showSaveErrorAlert   = false
-    // P2B-5D: true when startingEventId was supplied but not found in the queue
-    // (e.g. event was deleted or in a permanently blocked state). Shows a safe
-    // error view instead of silently jumping to another event.
+    // P2B-5D: true when startingEventId was supplied but not found in the queue.
     @State private var targetEventMissing   = false
 
-    // P2B-4 — body zone picker state
+    // P2B-4 — body zone picker state (used by EmojiBodyZonePickerView)
     @State private var selectedBodyZone:     BodyZone? = nil
     @State private var showTaxonomyFallback: Bool      = false
 
     // P2C-FLOW-1/3 — labeling mode + double-save guard.
-    // Internal (not private) so unit tests can inspect mode detection via detectMode().
-    enum LabelingDetailMode {
+    enum LabelingDetailMode: Equatable {
         case sequential   // .labelPending events only, auto-advance through queue
         case singleEdit   // .localOnly/.synced/.retryPending/.failedPermanent — single event, save → back
     }
@@ -72,11 +71,8 @@ struct EventLabelDetailView: View {
                 } else if currentDraft != nil {
                     labelingView
                 } else if mode == .singleEdit {
-                    // Event was deleted or became unavailable during a single-edit session.
-                    // Normal save path calls navigateBack() before this branch is reached.
                     missingEventView
                 } else {
-                    // Sequential: all .labelPending events have been labeled.
                     completionView
                 }
             }
@@ -105,37 +101,56 @@ struct EventLabelDetailView: View {
         .onChange(of: currentIndex) { _ in loadPreviewForCurrentDraft() }
     }
 
-    // MARK: — Top-level labeling layout
+    // MARK: — Top-level labeling layout (SILO-2)
+    //
+    //   loopPreview (fixed, adaptive height)
+    //   timestampRow (fixed)
+    //   ─────────────────────────────────
+    //   scrollableZoneBody (flexible)
+    //   ─────────────────────────────────
+    //   pinnedBottomBar (fixed)
 
     @ViewBuilder
     private var labelingView: some View {
         VStack(spacing: 0) {
-            loopPreview              // fixed — non-scrolling
-            timestampRow             // fixed — non-scrolling
+            loopPreview
+            timestampRow
             Divider()
-            if showTaxonomyFallback {
-                taxonomyListView     // full list + "← Vissza az ábrához"
-            } else if let zone = selectedBodyZone {
-                zoneDetailView(zone) // filtered types + "← Vissza az ábrához"
-            } else {
-                bodyPickerView       // BodyZonePickerView + "Egyéb" button
+            scrollableZoneBody
+            Divider()
+            pinnedBottomBar
+        }
+    }
+
+    // MARK: — Scrollable zone body
+
+    private var scrollableZoneBody: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                if showTaxonomyFallback {
+                    taxonomyFallbackContent
+                } else {
+                    emojiPickerContent
+                }
             }
         }
     }
 
-    // MARK: — Body zone picker screen
+    // MARK: — Emoji picker section (default)
 
-    private var bodyPickerView: some View {
+    private var emojiPickerContent: some View {
         VStack(spacing: 0) {
-            BodyZonePickerView(selectedZone: $selectedBodyZone,
-                               taxonomy: vm.taxonomy,
-                               onZoneSelected: { zone in handleZoneSelection(zone) })
-                .frame(maxWidth: .infinity)
-                .frame(height: 220)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 8)
+            EmojiBodyZonePickerView(
+                selectedZone: $selectedBodyZone,
+                selectedKey:  $selectedKey,
+                selectedSide: $selectedSide,
+                taxonomy:     vm.taxonomy,
+                onZoneSelected: { zone in handleZoneSelection(zone) }
+            )
 
             Divider()
+                .padding(.horizontal, 16)
+                .padding(.vertical, 2)
 
             Button {
                 showTaxonomyFallback = true
@@ -151,86 +166,155 @@ struct EventLabelDetailView: View {
             .padding(.vertical, 12)
             .accessibilityLabel("Lista nézet — összes kontakt típus")
 
-            Spacer()
+            if needsCustomLabel        { customLabelField }
+            if needsCustomDescription  { customDescField }
         }
     }
 
-    // MARK: — Zone detail: filtered types for the selected zone
+    // MARK: — Taxonomy fallback (Egyéb / Lista nézet)
 
     @ViewBuilder
-    private func zoneDetailView(_ zone: BodyZone) -> some View {
-        List {
-            Section {
-                Button {
-                    selectedBodyZone = nil
-                } label: {
-                    Label("Vissza az ábrához", systemImage: "chevron.left")
-                        .foregroundColor(.accentColor)
-                }
-                .accessibilityLabel("Vissza a testrész-kiválasztóhoz")
+    private var taxonomyFallbackContent: some View {
+        VStack(spacing: 0) {
+            Button {
+                showTaxonomyFallback = false
+                selectedBodyZone     = nil
+            } label: {
+                Label("Vissza az ábrához", systemImage: "chevron.left")
+                    .foregroundColor(.accentColor)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Color(.systemBackground))
+            .accessibilityLabel("Vissza a testrész-kiválasztóhoz")
 
-            if let doc = vm.taxonomy {
-                let types = zone.contactTypes(in: doc)
-                if !types.isEmpty {
-                    Section(header: Text(zone.labelHu)) {
-                        ForEach(types) { type in
-                            typeRow(type)
-                        }
-                    }
-                }
-            }
-
-            confidenceSection
-            if needsCustomLabel        { customLabelSection }
-            if needsCustomDescription  { customDescSection }
-            navigationSection
-        }
-        .listStyle(.insetGrouped)
-    }
-
-    // MARK: — Taxonomy fallback: full list
-
-    @ViewBuilder
-    private var taxonomyListView: some View {
-        List {
-            Section {
-                Button {
-                    showTaxonomyFallback = false
-                    selectedBodyZone = nil
-                } label: {
-                    Label("Vissza az ábrához", systemImage: "chevron.left")
-                        .foregroundColor(.accentColor)
-                }
-                .accessibilityLabel("Vissza a testrész-kiválasztóhoz")
-            }
+            Divider()
 
             if let doc = vm.taxonomy {
                 ForEach(doc.groups.sorted { $0.groupSortOrder < $1.groupSortOrder }) { group in
-                    Section(header: groupHeader(group)) {
-                        ForEach(group.contactTypes.sorted { $0.sortOrder < $1.sortOrder }) { type in
-                            typeRow(type)
-                        }
+                    groupSectionHeader(group)
+                    ForEach(group.contactTypes.sorted { $0.sortOrder < $1.sortOrder }) { type in
+                        typeRow(type)
+                        Divider()
+                            .padding(.leading, 16)
                     }
                 }
             } else {
-                Section {
-                    Text("Taxonomy betöltése…")
-                        .foregroundColor(.secondary)
-                }
+                Text("Taxonomy betöltése…")
+                    .foregroundColor(.secondary)
+                    .padding(16)
             }
 
-            confidenceSection
-            if needsCustomLabel        { customLabelSection }
-            if needsCustomDescription  { customDescSection }
-            navigationSection
+            if needsCustomLabel        { customLabelField }
+            if needsCustomDescription  { customDescField }
         }
-        .listStyle(.insetGrouped)
+        .background(Color(.systemBackground))
     }
 
-    // MARK: — Loop preview (P2C-1)
+    @ViewBuilder
+    private func groupSectionHeader(_ group: TaxonomyGroup) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: group.iosIcon ?? "circle")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Text(group.groupLabelHu)
+                .font(.footnote.weight(.semibold))
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.top, 14)
+        .padding(.bottom, 4)
+        .background(Color(.systemGroupedBackground))
+        .accessibilityLabel(group.groupLabelHu)
+    }
 
-    private let stillFrameHeight: CGFloat = 180
+    // MARK: — Standalone custom fields (replaces Section-based versions)
+
+    @ViewBuilder
+    private var customLabelField: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Egyedi label (kötelező)")
+                .font(.caption.weight(.semibold))
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 16)
+            TextField("pl. belső csüd", text: $customLabel)
+                .textFieldStyle(.roundedBorder)
+                .padding(.horizontal, 16)
+        }
+        .padding(.top, 12)
+        .padding(.bottom, 4)
+        .background(Color(.systemBackground))
+        .accessibilityLabel("Egyedi label szöveges mező")
+    }
+
+    @ViewBuilder
+    private var customDescField: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Leírás")
+                .font(.caption.weight(.semibold))
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 16)
+            TextField("Rövid leírás (opcionális)", text: $customDescription)
+                .textFieldStyle(.roundedBorder)
+                .padding(.horizontal, 16)
+        }
+        .padding(.top, 4)
+        .padding(.bottom, 12)
+        .background(Color(.systemBackground))
+        .accessibilityLabel("Leírás szöveges mező")
+    }
+
+    // MARK: — Pinned bottom bar (SILO-2)
+    //
+    // Always visible below the scrollable body. Contains:
+    //   • Confidence segmented picker
+    //   • Back button (← Áttekintő / Vissza / disabled)
+    //   • Save button (Mentés / Mentés és következő / Mentés és befejezés)
+
+    private var pinnedBottomBar: some View {
+        VStack(spacing: 8) {
+            Picker("Bizonyosság", selection: $confidence) {
+                Text("Biztos").tag("certain")
+                Text("Valószínű").tag("probable")
+                Text("Bizonytalan").tag("uncertain")
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 16)
+            .accessibilityLabel("Bizonyosság szint")
+
+            HStack(spacing: 12) {
+                backButton
+                Button(saveButtonLabel) {
+                    saveAndAdvance()
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .foregroundColor(canSave ? .white : .secondary)
+                .background(canSave ? Color.accentColor : Color(.systemGray5))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .disabled(!canSave)
+                .accessibilityLabel(saveButtonLabel)
+            }
+            .padding(.horizontal, 16)
+        }
+        .padding(.vertical, 10)
+        .background(Color(.systemBackground))
+        .shadow(color: Color.black.opacity(0.06), radius: 4, x: 0, y: -2)
+    }
+
+    // MARK: — Loop preview (P2C-1, SILO-2: adaptive height)
+
+    // SILO-2: adaptive preview height — 240pt for standard iPhones (screen height > 667pt),
+    // 200pt for compact (iPhone SE 2nd gen: 667pt and below). Keeps preview primary on all
+    // screen sizes without crowding the zone picker on small devices.
+    static func previewHeight(for screenHeight: CGFloat) -> CGFloat {
+        screenHeight <= 667 ? 200 : 240
+    }
+    private var adaptivePreviewHeight: CGFloat {
+        Self.previewHeight(for: UIScreen.main.bounds.height)
+    }
 
     @ViewBuilder
     private var loopPreview: some View {
@@ -282,7 +366,7 @@ struct EventLabelDetailView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: stillFrameHeight)
+        .frame(height: adaptivePreviewHeight)
         .clipped()
         .accessibilityHidden(true)
     }
@@ -303,7 +387,6 @@ struct EventLabelDetailView: View {
         .background(Color(.systemBackground))
     }
 
-    // P2B-5C: Expanded status badge for all reachable sync states.
     @ViewBuilder
     private var statusBadge: some View {
         let status = currentDraft?.syncStatus ?? .labelPending
@@ -352,11 +435,6 @@ struct EventLabelDetailView: View {
         return vm.activeEvents.first { $0.deviceEventId == id }
     }
 
-    // P2C-FLOW-3: mode detection based on the target event's syncStatus.
-    //   nil startingEventId            → .sequential (first-session)
-    //   .labelPending target           → .sequential (pending event, part of auto-flow)
-    //   .localOnly/.synced/etc. target → .singleEdit (targeted overview edit)
-    //   blocked/unknown target         → .sequential (safety: targetEventMissing will fire)
     private func setUpQueue() {
         guard queue.isEmpty else { return }
 
@@ -369,22 +447,18 @@ struct EventLabelDetailView: View {
 
             switch mode {
             case .sequential:
-                // .labelPending target: include all pending events, position at startId.
                 queue = Self.sequentialQueueIds(from: vm.activeEvents)
                 guard let idx = queue.firstIndex(of: startId) else {
-                    // Target not in sequential queue (blocked/unlabeled): show safety view.
                     targetEventMissing = true
                     return
                 }
                 currentIndex = idx
 
             case .singleEdit:
-                // .localOnly/.synced/.retryPending/.failedPermanent: exactly one event.
                 queue = [startId]
                 currentIndex = 0
             }
         } else {
-            // No startingEventId → first-session sequential mode.
             mode = .sequential
             queue = Self.sequentialQueueIds(from: vm.activeEvents)
             currentIndex = 0
@@ -417,8 +491,7 @@ struct EventLabelDetailView: View {
         restoreBodyZone()
     }
 
-    // P2C-FLOW-1: internal for unit tests — mirrors the first-session filter in setUpQueue().
-    // Returns UUIDs of .labelPending events sorted by timestamp (sequential queue order).
+    // P2C-FLOW-1: internal for unit tests.
     static func sequentialQueueIds(from events: [ContactEventDraft]) -> [UUID] {
         events
             .filter { $0.syncStatus == .labelPending }
@@ -426,9 +499,7 @@ struct EventLabelDetailView: View {
             .map { $0.deviceEventId }
     }
 
-    // P2C-FLOW-3: internal for unit tests — pure mode detection from target syncStatus.
-    // nil startingEventId always returns .sequential (first-session path).
-    // syncStatus nil (event missing) returns .sequential (targetEventMissing safety will fire).
+    // P2C-FLOW-3: internal for unit tests.
     static func detectMode(for startingEventId: UUID?,
                            syncStatus: ContactEventSyncStatus?) -> LabelingDetailMode {
         guard startingEventId != nil else { return .sequential }
@@ -448,8 +519,6 @@ struct EventLabelDetailView: View {
         }
     }
 
-    // Reverse-lookup: which body zone owns the current selectedKey?
-    // Sets selectedBodyZone / showTaxonomyFallback for the picker routing.
     private func restoreBodyZone() {
         guard let key = selectedKey else {
             selectedBodyZone     = nil
@@ -465,13 +534,10 @@ struct EventLabelDetailView: View {
                 }
             }
         }
-        // Key is "back", "custom_other", or taxonomy not yet loaded — use list
         selectedBodyZone     = nil
         showTaxonomyFallback = true
     }
 
-    // Auto-select contact type when a zone has only one type, or preserve
-    // existing key if it already belongs to the selected zone.
     private func handleZoneSelection(_ zone: BodyZone) {
         guard let doc = vm.taxonomy else { return }
         let types = zone.contactTypes(in: doc)
@@ -481,15 +547,12 @@ struct EventLabelDetailView: View {
             selectedKey  = single.key
             selectedSide = Self.autoSide(for: single)
         } else {
-            // Multi-type zone: only clear if the current key is from a different zone
             if let key = selectedKey, !types.contains(where: { $0.key == key }) {
                 selectedKey  = nil
                 selectedSide = nil
             }
         }
     }
-
-    // MARK: — Loop preview loading (P2C-1)
 
     private func loadPreviewForCurrentDraft() {
         guard let videoURL, let draft = currentDraft else {
@@ -499,7 +562,7 @@ struct EventLabelDetailView: View {
         previewSession.restart(url: videoURL, timestampMs: draft.timestampMs)
     }
 
-    // MARK: — Taxonomy row helpers
+    // MARK: — Taxonomy row helpers (used in taxonomyFallbackContent)
 
     @ViewBuilder
     private func groupHeader(_ group: TaxonomyGroup) -> some View {
@@ -540,9 +603,12 @@ struct EventLabelDetailView: View {
                 }
             }
             .contentShape(Rectangle())
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
         }
         .buttonStyle(.plain)
         .frame(minHeight: 52)
+        .background(Color(.systemBackground))
         .accessibilityLabel(accessibilityLabel(for: type))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
@@ -567,58 +633,7 @@ struct EventLabelDetailView: View {
         .accessibilityAddTraits(selectedSide == value ? .isSelected : [])
     }
 
-    private var confidenceSection: some View {
-        Section(header: Text("Bizonyosság")) {
-            Picker("Bizonyosság", selection: $confidence) {
-                Text("Biztos").tag("certain")
-                Text("Valószínű").tag("probable")
-                Text("Bizonytalan").tag("uncertain")
-            }
-            .pickerStyle(.segmented)
-            .padding(.vertical, 4)
-            .accessibilityLabel("Bizonyosság szint")
-        }
-    }
-
-    private var customLabelSection: some View {
-        Section(header: Text("Egyedi label (kötelező)")) {
-            TextField("pl. belső csüd", text: $customLabel)
-                .accessibilityLabel("Egyedi label szöveges mező")
-        }
-    }
-
-    private var customDescSection: some View {
-        Section(header: Text("Leírás")) {
-            TextField("Rövid leírás (opcionális)", text: $customDescription)
-                .accessibilityLabel("Leírás szöveges mező")
-        }
-    }
-
-    // MARK: — Navigation row (Vissza event / Mentés és tovább)
-
-    // P2B-5C: "Vissza" at index 0 calls onBack (overview) when available,
-    // otherwise remains disabled (first-session behaviour unchanged).
-    @ViewBuilder
-    private var navigationSection: some View {
-        Section {
-            HStack(spacing: 12) {
-                backButton
-                Button(saveButtonLabel) {
-                    saveAndAdvance()
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-                .foregroundColor(canSave ? .white : .secondary)
-                .background(canSave ? Color.accentColor : Color(.systemGray5))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .disabled(!canSave)
-                .accessibilityLabel(saveButtonLabel)
-            }
-            .listRowInsets(EdgeInsets())
-            .padding(.horizontal, 16)
-            .padding(.vertical, 4)
-        }
-    }
+    // MARK: — Navigation helpers
 
     @ViewBuilder
     private var backButton: some View {
@@ -627,23 +642,21 @@ struct EventLabelDetailView: View {
                 goToPrevious()
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
+            .padding(.vertical, 10)
             .foregroundColor(.accentColor)
             .accessibilityLabel("Előző esemény")
         } else if onBack != nil {
-            // At first position and opened from overview: go back to the list.
             Button("← Áttekintő") {
                 navigateBack()
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
+            .padding(.vertical, 10)
             .foregroundColor(.accentColor)
             .accessibilityLabel("Vissza az áttekintőhöz")
         } else {
-            // First-session: no back navigation available.
             Button("Vissza") { }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
+                .padding(.vertical, 10)
                 .foregroundColor(.secondary)
                 .disabled(true)
                 .accessibilityLabel("Előző esemény")
@@ -664,7 +677,6 @@ struct EventLabelDetailView: View {
                 .foregroundColor(.green)
             Text(queue.isEmpty ? "Nincs cimkézendő esemény" : "Minden esemény megcimkézve")
                 .font(.headline)
-            // P2B-5C: if opened from overview, return to it; otherwise close.
             Button(onBack != nil ? "Vissza az áttekintőhöz" : "Vissza a videóhoz") {
                 navigateBack()
             }
@@ -680,9 +692,6 @@ struct EventLabelDetailView: View {
     }
 
     // MARK: — Missing event safety view (P2B-5D)
-    //
-    // Shown when startingEventId was supplied but not present in the built queue.
-    // Does not fall back to another event. Offers only a safe back/close action.
 
     @ViewBuilder
     private var missingEventView: some View {
@@ -720,9 +729,6 @@ struct EventLabelDetailView: View {
     private var needsCustomLabel:       Bool { currentType?.requiresCustomLabel        == true }
     private var needsCustomDescription: Bool { currentType?.requiresCustomDescription   == true }
 
-    // P2B-5C: Block save for in-flight / unresolvable sync states.
-    // relabelEvent() would also return false for these, but blocking at canSave
-    // keeps the button clearly disabled so the user is not confused.
     private var isBlocked: Bool {
         guard let status = currentDraft?.syncStatus else { return false }
         switch status {
@@ -736,7 +742,7 @@ struct EventLabelDetailView: View {
     }
 
     private var canSave: Bool {
-        guard !isSaving else { return false }   // P2C-FLOW-1: double-save guard
+        guard !isSaving else { return false }
         guard !isBlocked else { return false }
         guard selectedKey != nil else { return false }
         if currentType?.sidePolicy == "explicit_required" && selectedSide == nil { return false }
@@ -763,11 +769,8 @@ struct EventLabelDetailView: View {
         }
     }
 
-    // P2B-5C / P2C-FLOW-3: relabelEvent() routes .labelPending/.localOnly → labelEvent(),
-    // .synced/.retryPending/.failedPermanent → editEvent(). After a successful save,
-    // sequential mode advances the queue; singleEdit mode returns to the overview.
     private func saveAndAdvance() {
-        guard canSave else { return }   // includes !isSaving; prevents double-advance
+        guard canSave else { return }
         isSaving = true
 
         guard let draft = currentDraft, let key = selectedKey else {
@@ -786,9 +789,9 @@ struct EventLabelDetailView: View {
             customDescription:    desc.isEmpty  ? nil : desc
         )
         guard ok else {
-            isSaving = false            // reset so user can retry (in either mode)
+            isSaving = false
             showSaveErrorAlert = true
-            return                      // currentIndex unchanged; no navigateBack on error
+            return
         }
 
         switch mode {
@@ -797,7 +800,6 @@ struct EventLabelDetailView: View {
             if currentIndex < queue.count { loadFormState() }
             isSaving = false
         case .singleEdit:
-            // Immediate return to overview — do NOT increment currentIndex.
             isSaving = false
             navigateBack()
         }
@@ -809,8 +811,6 @@ struct EventLabelDetailView: View {
         loadFormState()
     }
 
-    // P2B-5C: navigateBack — returns to overview without exitLabelingMode.
-    // Falls back to closeAll() when onBack is nil (first-session mode).
     private func navigateBack() {
         previewSession.stop()
         if let onBack = onBack {
@@ -820,7 +820,6 @@ struct EventLabelDetailView: View {
         }
     }
 
-    // Closes the entire labeling flow: stops preview, exits labeling mode, calls onClose.
     private func closeAll() {
         previewSession.stop()
         vm.exitLabelingMode()
