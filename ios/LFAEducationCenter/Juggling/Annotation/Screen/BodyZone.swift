@@ -49,6 +49,28 @@ enum BodyZone: String, CaseIterable, Identifiable {
         }
     }
 
+    // SILO-1: emoji for EmojiBodyZonePickerView zone buttons.
+    var emoji: String {
+        switch self {
+        case .head:          return "🙂"
+        case .chest:         return "🫁"
+        case .leftShoulder:  return "💪"
+        case .rightShoulder: return "💪"
+        case .leftHip:       return "🦴"
+        case .rightHip:      return "🦴"
+        case .leftKnee:      return "🦵"
+        case .rightKnee:     return "🦵"
+        case .leftFoot:      return "🦶"
+        case .rightFoot:     return "🦶"
+        }
+    }
+
+    // SILO-1: true when the zone has exactly one contact type in the taxonomy
+    // (tap → immediate auto-select, no sub-type expansion needed).
+    func isAutoSelect(in document: TaxonomyDocument) -> Bool {
+        contactTypes(in: document).count == 1
+    }
+
     // Returns the contact types belonging to this zone, sorted by
     // taxonomy sort_order. Filters purely on existing group_id / key /
     // side fields — never duplicates taxonomy content.
