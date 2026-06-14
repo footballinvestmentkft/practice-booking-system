@@ -627,6 +627,40 @@ final class JugglingAnnotationViewModel: ObservableObject {
         }
     }
 
+    // Transitions a single .unlabeled draft to .labelPending (AN-3B2A P2B-5D).
+    //
+    // Called by LabelingOverviewView when the user taps a card CTA for a
+    // specific .unlabeled event. Only that draft is transitioned; other
+    // .unlabeled events are not affected (cf. enterLabelingMode which
+    // transitions all).
+    //
+    // Returns true when the event is now editable:
+    //   .unlabeled      → transitions to .labelPending, persists, returns true
+    //   already editable (.labelPending / .localOnly / .synced / .retryPending /
+    //                     .failedPermanent) → no-op, returns true
+    // Returns false for blocked states or unknown ID.
+    @discardableResult
+    func markEventForLabeling(deviceEventId: UUID) -> Bool {
+        guard var current = session,
+              let index = current.drafts.firstIndex(where: { $0.deviceEventId == deviceEventId })
+        else { return false }
+
+        switch current.drafts[index].syncStatus {
+        case .labelPending, .localOnly, .synced, .retryPending, .failedPermanent:
+            return true  // already editable — caller may open detail immediately
+        case .unlabeled:
+            break        // transition below
+        case .syncing, .updating, .deleting, .conflicted, .needsReconciliation, .deleted:
+            return false // blocked
+        }
+
+        current.drafts[index].syncStatus = .labelPending
+        let ok = persistSession(&current, logContext: "markEventForLabeling")
+        guard ok else { return false }
+        session = current
+        return true
+    }
+
     // Returns to marking mode. Called when the labeling screen is closed.
     // Does not touch session state — labelEvent() already persisted every
     // change made while labeling.

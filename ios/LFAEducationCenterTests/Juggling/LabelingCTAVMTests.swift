@@ -431,4 +431,84 @@ final class LabelingCTAVMTests: XCTestCase {
         XCTAssertEqual(vm.screenMode, .labeling)
         XCTAssertNil(vm.saveError)
     }
+
+    // MARK: — VM_LABEL_25..29: markEventForLabeling (AN-3B2A P2B-5D)
+
+    // VM_LABEL_25: .unlabeled → .labelPending; only that draft changes.
+    func test_VM_LABEL_25_markEventForLabeling_transitionsUnlabeled() async throws {
+        let a = makeTimestampDraft(timestampMs: 1000, syncStatus: .unlabeled)
+        let b = makeTimestampDraft(timestampMs: 2000, syncStatus: .unlabeled)
+        try seedSession(drafts: [a, b])
+
+        let vm = makeViewModel()
+        await vm.onAppear()
+
+        let ok = vm.markEventForLabeling(deviceEventId: a.deviceEventId)
+
+        XCTAssertTrue(ok)
+        let statuses = vm.activeEvents.reduce(into: [UUID: ContactEventSyncStatus]()) {
+            $0[$1.deviceEventId] = $1.syncStatus
+        }
+        XCTAssertEqual(statuses[a.deviceEventId], .labelPending, "target must become .labelPending")
+        XCTAssertEqual(statuses[b.deviceEventId], .unlabeled,    "sibling must stay .unlabeled")
+        XCTAssertNil(vm.saveError)
+    }
+
+    // VM_LABEL_26: Already .labelPending — no-op, returns true.
+    func test_VM_LABEL_26_markEventForLabeling_noOp_forLabelPending() async throws {
+        let draft = makeTimestampDraft(timestampMs: 1000, syncStatus: .labelPending)
+        try seedSession(drafts: [draft])
+
+        let vm = makeViewModel()
+        await vm.onAppear()
+
+        let ok = vm.markEventForLabeling(deviceEventId: draft.deviceEventId)
+
+        XCTAssertTrue(ok)
+        XCTAssertEqual(vm.activeEvents.first?.syncStatus, .labelPending)
+        XCTAssertNil(vm.saveError)
+    }
+
+    // VM_LABEL_27: .synced event — returns true without any state change.
+    func test_VM_LABEL_27_markEventForLabeling_noOp_forSynced() async throws {
+        let draft = makeDraft(syncStatus: .synced)
+        try seedSession(drafts: [draft])
+
+        let vm = makeViewModel()
+        await vm.onAppear()
+
+        let ok = vm.markEventForLabeling(deviceEventId: draft.deviceEventId)
+
+        XCTAssertTrue(ok)
+        XCTAssertEqual(vm.activeEvents.first?.syncStatus, .synced)
+        XCTAssertNil(vm.saveError)
+    }
+
+    // VM_LABEL_28: Blocked state (.syncing) — returns false, no mutation.
+    func test_VM_LABEL_28_markEventForLabeling_returnsFalse_forSyncing() async throws {
+        let draft = makeDraft(syncStatus: .syncing)
+        try seedSession(drafts: [draft])
+
+        let vm = makeViewModel()
+        await vm.onAppear()
+
+        let ok = vm.markEventForLabeling(deviceEventId: draft.deviceEventId)
+
+        XCTAssertFalse(ok)
+        XCTAssertEqual(vm.activeEvents.first?.syncStatus, .syncing)
+    }
+
+    // VM_LABEL_29: Unknown UUID — returns false, session unchanged.
+    func test_VM_LABEL_29_markEventForLabeling_returnsFalse_forUnknownId() async throws {
+        let draft = makeTimestampDraft(syncStatus: .unlabeled)
+        try seedSession(drafts: [draft])
+
+        let vm = makeViewModel()
+        await vm.onAppear()
+
+        let ok = vm.markEventForLabeling(deviceEventId: UUID())
+
+        XCTAssertFalse(ok)
+        XCTAssertEqual(vm.activeEvents.first?.syncStatus, .unlabeled)
+    }
 }

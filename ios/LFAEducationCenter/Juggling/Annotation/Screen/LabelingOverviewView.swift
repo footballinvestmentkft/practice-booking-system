@@ -2,10 +2,6 @@ import SwiftUI
 import AVFoundation
 
 // MARK: — ThumbnailSession (AN-3B2A P2B-5B)
-//
-// Owns the shared EventStillFrameGenerator for the overview sheet lifetime.
-// Per-event load tasks are tracked by UUID so they can be cancelled individually.
-// clearAll() is called when the sheet is dismissed.
 
 @MainActor
 private final class ThumbnailSession: ObservableObject {
@@ -19,17 +15,23 @@ private final class ThumbnailSession: ObservableObject {
     }
 }
 
-// MARK: — LabelingOverviewView (AN-3B2A P2B-5B)
+// MARK: — LabelingOverviewView (AN-3B2A P2B-5B / P2B-5D)
 //
-// Shows ALL active events in chronological order regardless of sync state.
-// Each row: still-frame thumbnail, timestamp, type label or "Nincs címkézve",
-// status badge, and a per-event CTA button.
+// Presents either:
+//   • the scrollable event card list (selectedEventId == nil)
+//   • EventLabelDetailView for the selected event (selectedEventId != nil)
 //
-// Progress bar: labeledCount / activeEvents.count.
-// "Következő címkézetlen" bottom CTA when nextUnlabeledId != nil.
+// Card CTA routing (P2B-5D):
+//   .unlabeled           → markEventForLabeling() (single-event only) → then open
+//   .labelPending / .localOnly / .synced / .retryPending / .failedPermanent → open directly
+//   blocked states       → do nothing (no detail opens)
 //
-// Navigation callbacks (onOpenEvent, onNextUnlabeled) are wired in P2B-5D.
-// Main screen integration is P2B-5E.
+// "Következő cimkézetlen" finds the earliest unfinished event via vm.nextUnlabeledId
+// and routes it through the same handleOpenEvent() path.
+//
+// onBack (from detail) → dismisses detail, returns to the card list.
+// onClose             → clears thumbs, propagates to the caller (closes the sheet).
+// No fallback to another event if startingEventId is not found — safety state shown instead.
 // No backend sync, no Finish flow.
 
 struct LabelingOverviewView: View {
@@ -38,17 +40,39 @@ struct LabelingOverviewView: View {
     var videoURL: URL?
     var onClose: () -> Void
 
-    // P2B-5D will supply these; nil = stub (no-op) for P2B-5B.
-    var onOpenEvent:     ((UUID) -> Void)? = nil
-    var onNextUnlabeled: (() -> Void)?     = nil
-
     @StateObject private var thumbSession = ThumbnailSession()
-    @State private var thumbnails: [UUID: UIImage] = [:]
-    @State private var loadingIds: Set<UUID>       = []
+    @State private var thumbnails:       [UUID: UIImage] = [:]
+    @State private var loadingIds:       Set<UUID>       = []
+    @State private var selectedEventId:  UUID?           = nil  // P2B-5D: routing state
 
     // MARK: — Body
 
     var body: some View {
+        if let eventId = selectedEventId {
+            // Detail view replaces the overview entirely when an event is selected.
+            EventLabelDetailView(
+                vm:              vm,
+                videoURL:        videoURL,
+                startingEventId: eventId,
+                onBack: {
+                    // Return to the overview — do NOT call exitLabelingMode().
+                    selectedEventId = nil
+                },
+                onClose: {
+                    // Close the entire labeling flow.
+                    selectedEventId = nil
+                    thumbSession.clearAll()
+                    onClose()
+                }
+            )
+        } else {
+            overviewContent
+        }
+    }
+
+    // MARK: — Overview navigation
+
+    private var overviewContent: some View {
         NavigationView {
             VStack(spacing: 0) {
                 progressSection
@@ -58,7 +82,7 @@ struct LabelingOverviewView: View {
                 bottomCTA
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Címkézés — \(vm.activeEvents.count) esemény")
+            .navigationTitle("Cimkézés — \(vm.activeEvents.count) esemény")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -114,7 +138,7 @@ struct LabelingOverviewView: View {
                         thumbnail:          thumbnails[draft.deviceEventId],
                         isLoadingThumbnail: loadingIds.contains(draft.deviceEventId)
                     ) {
-                        onOpenEvent?(draft.deviceEventId)
+                        handleOpenEvent(id: draft.deviceEventId)
                     }
                     .onAppear { loadThumbnail(for: draft) }
                     .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
@@ -146,11 +170,11 @@ struct LabelingOverviewView: View {
 
     @ViewBuilder
     private var bottomCTA: some View {
-        if vm.nextUnlabeledId != nil {
+        if let nextId = vm.nextUnlabeledId {
             Button {
-                onNextUnlabeled?()
+                handleOpenEvent(id: nextId)
             } label: {
-                Text("Következő címkézetlen")
+                Text("Következő cimkézetlen")
                     .font(.body.weight(.semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
@@ -161,18 +185,42 @@ struct LabelingOverviewView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .background(Color(.systemBackground))
-            .accessibilityLabel("Következő megcímkézetlen esemény megnyitása")
+            .accessibilityLabel("Következő megcimkézetlen esemény megnyitása")
         } else if !vm.activeEvents.isEmpty {
             HStack(spacing: 6) {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(.green)
-                Text("Minden esemény megcímkézve")
+                Text("Minden esemény megcimkézve")
                     .font(.subheadline.weight(.semibold))
                     .foregroundColor(.green)
             }
             .padding(.vertical, 14)
             .frame(maxWidth: .infinity)
             .background(Color(.systemBackground))
+        }
+    }
+
+    // MARK: — Event routing (P2B-5D)
+
+    // Opens EventLabelDetailView for exactly the requested event.
+    //
+    // .unlabeled: calls markEventForLabeling() to transition only this event
+    //   to .labelPending before opening — does NOT touch other unlabeled events.
+    // .labelPending / .localOnly / .synced / .retryPending / .failedPermanent:
+    //   opens directly with selectedEventId = id.
+    // Blocked (.syncing / .updating / .deleting / .conflicted /
+    //          .needsReconciliation / .deleted): no-op, detail stays closed.
+    private func handleOpenEvent(id: UUID) {
+        guard let draft = vm.activeEvents.first(where: { $0.deviceEventId == id }) else { return }
+
+        switch draft.syncStatus {
+        case .unlabeled:
+            guard vm.markEventForLabeling(deviceEventId: id) else { return }
+            selectedEventId = id
+        case .labelPending, .localOnly, .synced, .retryPending, .failedPermanent:
+            selectedEventId = id
+        case .syncing, .updating, .deleting, .conflicted, .needsReconciliation, .deleted:
+            return
         }
     }
 
@@ -253,7 +301,6 @@ private struct EventOverviewCard: View {
 
     private var infoStack: some View {
         VStack(alignment: .leading, spacing: 4) {
-            // Timestamp row
             HStack(spacing: 4) {
                 Image(systemName: "clock")
                     .font(.caption2)
@@ -263,13 +310,11 @@ private struct EventOverviewCard: View {
                     .foregroundColor(.secondary)
             }
 
-            // Type label
             Text(typeLabel)
                 .font(.subheadline)
                 .foregroundColor(draft.contactType != nil ? .primary : Color(.tertiaryLabel))
                 .lineLimit(1)
 
-            // Status badge
             HStack(spacing: 4) {
                 Circle()
                     .fill(EventTimelineView.pinColor(for: draft.syncStatus))
@@ -290,7 +335,7 @@ private struct EventOverviewCard: View {
     }
 
     private var typeLabel: String {
-        guard let key = draft.contactType else { return "Nincs címkézve" }
+        guard let key = draft.contactType else { return "Nincs cimkézve" }
         return taxonomy?.groups
             .flatMap { $0.contactTypes }
             .first { $0.key == key }?
@@ -350,7 +395,7 @@ private struct EventOverviewCard: View {
 
     private var ctaConfig: (label: String, enabled: Bool) {
         switch draft.syncStatus {
-        case .unlabeled:           return ("Címkézés",    true)
+        case .unlabeled:           return ("Cimkézés",    true)
         case .labelPending:        return ("Folytatás",   true)
         case .localOnly:           return ("Szerkesztés", true)
         case .synced:              return ("Szerkesztés", true)

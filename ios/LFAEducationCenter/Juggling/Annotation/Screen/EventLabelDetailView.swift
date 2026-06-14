@@ -65,7 +65,11 @@ struct EventLabelDetailView: View {
     @State private var customLabel:       String  = ""
     @State private var customDescription: String  = ""
 
-    @State private var showSaveErrorAlert = false
+    @State private var showSaveErrorAlert   = false
+    // P2B-5D: true when startingEventId was supplied but not found in the queue
+    // (e.g. event was deleted or in a permanently blocked state). Shows a safe
+    // error view instead of silently jumping to another event.
+    @State private var targetEventMissing   = false
 
     // P2B-3 — still frame state
     @State private var stillImage:     UIImage? = nil
@@ -80,7 +84,13 @@ struct EventLabelDetailView: View {
     var body: some View {
         NavigationView {
             Group {
-                if currentDraft != nil { labelingView } else { completionView }
+                if targetEventMissing {
+                    missingEventView
+                } else if currentDraft != nil {
+                    labelingView
+                } else {
+                    completionView
+                }
             }
             .navigationTitle(navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
@@ -348,8 +358,14 @@ struct EventLabelDetailView: View {
             .sorted { $0.timestampMs < $1.timestampMs }
             .map { $0.deviceEventId }
 
-        // Position to the requested event; fall back to first if not found.
-        if let startId = startingEventId, let idx = queue.firstIndex(of: startId) {
+        // P2B-5D: When opened for a specific event, that event MUST be in the queue.
+        // If it is not (deleted, blocked state, or never transitioned from .unlabeled),
+        // show the missing-event safety screen instead of silently jumping elsewhere.
+        if let startId = startingEventId {
+            guard let idx = queue.firstIndex(of: startId) else {
+                targetEventMissing = true
+                return
+            }
             currentIndex = idx
         } else {
             currentIndex = 0
@@ -611,6 +627,37 @@ struct EventLabelDetailView: View {
             .background(Color.accentColor)
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .accessibilityLabel(onBack != nil ? "Vissza az áttekintőhöz" : "Vissza a videóhoz")
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    // MARK: — Missing event safety view (P2B-5D)
+    //
+    // Shown when startingEventId was supplied but not present in the built queue.
+    // Does not fall back to another event. Offers only a safe back/close action.
+
+    @ViewBuilder
+    private var missingEventView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 40))
+                .foregroundColor(.orange)
+            Text("Az esemény nem érhető el")
+                .font(.headline)
+            Text("Az esemény törlődött vagy jelenleg nem szerkeszthető.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+            Button(onBack != nil ? "Vissza az áttekintőhöz" : "Bezárás") {
+                navigateBack()
+            }
+            .font(.body.weight(.semibold))
+            .foregroundColor(.white)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 10)
+            .background(Color.accentColor)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
