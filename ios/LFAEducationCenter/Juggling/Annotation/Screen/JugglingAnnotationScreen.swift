@@ -101,7 +101,7 @@ struct JugglingAnnotationScreen: View {
 
                     eventList
 
-                    if vm.unlabeledCount > 0 {
+                    if vm.showLabelingCTA {
                         labelingCTA
                             .padding(.horizontal, 12)
                             .padding(.bottom, 4)
@@ -159,8 +159,17 @@ struct JugglingAnnotationScreen: View {
                     dismissButton: .default(Text("OK")) { vm.clearSaveError() }
                 )
             }
-            .sheet(isPresented: $showLabeling) {
-                EventLabelDetailView(vm: vm, videoURL: loaderVideoURL, onClose: { showLabeling = false })
+            // P2B-5E: labeling flow now opens via the overview, not directly into detail.
+            // onDismiss ensures exitLabelingMode() runs however the sheet is dismissed
+            // (X button, drag-to-dismiss, or programmatic showLabeling = false).
+            .sheet(isPresented: $showLabeling, onDismiss: {
+                vm.exitLabelingMode()
+            }) {
+                LabelingOverviewView(
+                    vm:       vm,
+                    videoURL: loaderVideoURL,
+                    onClose:  { showLabeling = false }
+                )
             }
             .onChange(of: loader.state, perform: { state in
                 if case .ready(let url) = state {
@@ -457,17 +466,27 @@ struct JugglingAnnotationScreen: View {
         }
     }
 
-    // MARK: — Labeling CTA (AN-3B2A P2)
+    // MARK: — Labeling CTA (AN-3B2A P2 / P2B-5E)
 
+    // Button text is vm.labelingCTAText — updates reactively as session state changes.
+    // Tapping always pauses the main player first.
+    //
+    // .unlabeled CTA state: enterLabelingMode() batch-transitions all .unlabeled →
+    //   .labelPending so the overview immediately shows "Folytatás" cards. Opens only
+    //   when screenMode becomes .labeling (guards session == nil edge case).
+    //
+    // All other CTA states: opens LabelingOverviewView directly — the overview
+    //   handles per-event routing via handleOpenEvent(id:).
     private var labelingCTA: some View {
         Button {
-            playback.pause()    // AN-3B2A P2B-3: stop main player before sheet opens
-            vm.enterLabelingMode()
-            if vm.screenMode == .labeling {
-                showLabeling = true
+            playback.pause()
+            if vm.labelingCTAState == .unlabeled {
+                vm.enterLabelingMode()
+                guard vm.screenMode == .labeling else { return }
             }
+            showLabeling = true
         } label: {
-            Text("Tovább a címkézéshez")
+            Text(vm.labelingCTAText)
                 .font(.body.weight(.semibold))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
@@ -475,8 +494,8 @@ struct JugglingAnnotationScreen: View {
                 .background(Color.accentColor)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
         }
-        .accessibilityLabel("Tovább a címkézéshez")
-        .accessibilityHint("Megnyitja az események egyenkénti címkézését")
+        .accessibilityLabel(vm.labelingCTAText)
+        .accessibilityHint("Megnyitja a címkézési áttekintőt")
     }
 
     // MARK: — Save and close (AN-3B2A P1)
