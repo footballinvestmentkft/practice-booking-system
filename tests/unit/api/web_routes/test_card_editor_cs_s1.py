@@ -291,11 +291,11 @@ class TestS1bCTAAndNaming:
 class TestS109S110RouteAndSnapshot:
 
     def test_s1_09_route_count_846(self):
-        """S1-09 (updated PR-JUG-1): route count is 888 (+5 juggling-intake paths)."""
+        """S1-09 (updated B-2): route count is 898 (+1 B-2 media delete endpoint)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 897, (
-            f"Expected 890 routes (883 prior + 5 juggling-intake paths), got {len(paths)}"
+        assert len(paths) == 898, (
+            f"Expected 898 routes (897 prior + 1 B-2 media delete endpoint), got {len(paths)}"
         )
 
     def test_s1_10_openapi_snapshot_still_matches(self):

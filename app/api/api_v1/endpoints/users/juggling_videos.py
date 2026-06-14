@@ -28,7 +28,7 @@ Security pipeline (pre-save, all in upload endpoint):
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Request, Response
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
@@ -376,6 +376,8 @@ def get_thumbnail(
     current_user: User = Depends(get_current_user_media),
 ) -> FileResponse:
     video = _get_video_or_404(video_id, current_user.id, db)
+    if video.status == JugglingVideoStatus.media_deleted.value:
+        raise HTTPException(status_code=410, detail="Media has been deleted.")
     try:
         path = resolve_thumbnail_path(video)
     except ThumbnailNotReadyError as exc:
@@ -400,6 +402,8 @@ def get_media(
     current_user: User = Depends(get_current_user_media),
 ) -> FileResponse:
     video = _get_video_or_404(video_id, current_user.id, db)
+    if video.status == JugglingVideoStatus.media_deleted.value:
+        raise HTTPException(status_code=410, detail="Media has been deleted.")
     try:
         path = resolve_media_path(video)
     except MediaNotReadyError as exc:
@@ -409,3 +413,39 @@ def get_media(
     except PathSafetyError:
         raise HTTPException(status_code=404, detail="Media file not available.")
     return FileResponse(path=str(path), media_type="video/mp4", headers=_MEDIA_HEADERS)
+
+
+@router.delete(
+    "/me/juggling/videos/{video_id}",
+    status_code=204,
+    dependencies=[Depends(require_juggling_enabled)],
+    summary="Delete juggling video media (storage release)",
+    description=(
+        "Deletes the physical media files for the video and marks it as media_deleted. "
+        "Analysis results, quality data, contact events and annotation data are preserved. "
+        "Idempotent: calling DELETE on an already media_deleted video returns 204. "
+        "This is NOT a GDPR erasure — account/profile data deletion is a separate flow."
+    ),
+    tags=["juggling"],
+)
+def delete_video(
+    video_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Response:
+    result = video_service.delete_media(video_id, current_user.id, db)
+    status = result["status"]
+
+    if status in ("deleted", "skipped"):
+        return Response(status_code=204)
+
+    reason = result.get("reason", "")
+    if status == "error":
+        if reason == "gdpr_deleted":
+            raise HTTPException(status_code=410, detail="Video has been permanently deleted.")
+        raise HTTPException(status_code=404, detail="Video not found.")
+
+    raise HTTPException(
+        status_code=500,
+        detail=f"Media deletion failed: {reason}",
+    )

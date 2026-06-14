@@ -133,14 +133,15 @@ class TestWriteDeletionLog:
         """RET-06: raw_path is HMAC-hashed; raw string never appears in DB."""
         monkeypatch.setattr(settings, "JUGGLING_AUDIT_HASH_SECRET", "test-secret-ret")
         raw = f"/uploads/juggling/secret_{uuid.uuid4().hex}.mp4"
+        run_id = uuid.uuid4().hex
         write_deletion_log(
             db=test_db, event_type="gdpr_delete", raw_path=raw, dry_run=False,
+            task_run_id=run_id,
         )
-        rows = test_db.query(JugglingFileDeletionLog).filter_by(
-            event_type="gdpr_delete"
-        ).all()
-        assert rows
-        row = rows[-1]
+        row = test_db.query(JugglingFileDeletionLog).filter_by(
+            task_run_id=run_id
+        ).first()
+        assert row is not None
         assert row.file_path_hash is not None
         assert raw not in (row.file_path_hash or "")
         assert len(row.file_path_hash) == 64
