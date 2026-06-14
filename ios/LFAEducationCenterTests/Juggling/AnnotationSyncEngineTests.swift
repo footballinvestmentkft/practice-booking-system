@@ -14,6 +14,8 @@ final class MockAnnotationAPIClient: JugglingAnnotationAPIClientProtocol {
     var patchContactResult:    Result<ContactEventOut, Error> = .failure(AnnotationAPIError.unauthorized)
     var deleteContactResult:   Result<DeleteContactResult, Error> = .failure(AnnotationAPIError.unauthorized)
     var finishAnnotationResult: Result<FinishAnnotationOut, Error> = .failure(AnnotationAPIError.unauthorized)
+    // B-2 I-1: video-level storage-release delete
+    var deleteVideoResult:     Result<Void, Error> = .failure(VideoDeleteError.unauthorized)
 
     func listContacts(videoId: String) async throws -> ContactEventListOut {
         try listContactsResult.get()
@@ -33,6 +35,10 @@ final class MockAnnotationAPIClient: JugglingAnnotationAPIClientProtocol {
 
     func finishAnnotation(videoId: String, confirmZero: Bool) async throws -> FinishAnnotationOut {
         try finishAnnotationResult.get()
+    }
+
+    func deleteVideo(videoId: String) async throws {
+        try deleteVideoResult.get()
     }
 }
 

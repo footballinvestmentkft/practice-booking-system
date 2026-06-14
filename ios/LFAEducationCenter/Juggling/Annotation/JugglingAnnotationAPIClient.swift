@@ -26,6 +26,8 @@ protocol JugglingAnnotationAPIClientProtocol: AnyObject {
     func patchContact(videoId: String, eventId: UUID, request: ContactEventPatchRequest) async throws -> ContactEventOut
     func deleteContact(videoId: String, eventId: UUID) async throws -> DeleteContactResult
     func finishAnnotation(videoId: String, confirmZero: Bool) async throws -> FinishAnnotationOut
+    // B-2: storage release — 204 or 410 are both success; throws VideoDeleteError on failure
+    func deleteVideo(videoId: String) async throws
 }
 
 @MainActor
@@ -159,6 +161,38 @@ final class JugglingAnnotationAPIClient: JugglingAnnotationAPIClientProtocol {
         }
     }
 
+    // MARK: — Video media delete (B-2)
+    //
+    // DELETE /api/v1/users/me/juggling/videos/{videoId}
+    // 204 → success (files deleted, status set to media_deleted on server)
+    // 410 → idempotent success (media already deleted — no-throw)
+    // 404 → VideoDeleteError.notFound
+    // 401 → VideoDeleteError.unauthorized
+    // 403 → VideoDeleteError.permissionDenied
+    // network → VideoDeleteError.networkError
+
+    func deleteVideo(videoId: String) async throws {
+        let path = "/api/v1/users/me/juggling/videos/\(videoId)"
+        do {
+            try await authManager.authenticatedDeleteNoContent(path: path)
+        } catch let err as APIError {
+            switch err {
+            case .httpError(statusCode: 410, _):
+                return   // already media_deleted — idempotent success
+            case .httpError(statusCode: 404, _):
+                throw VideoDeleteError.notFound
+            case .httpError(statusCode: 401, _), .unauthorized:
+                throw VideoDeleteError.unauthorized
+            case .httpError(statusCode: 403, let detail):
+                throw VideoDeleteError.permissionDenied(detail: detail ?? "forbidden")
+            case .networkError(let e):
+                throw VideoDeleteError.networkError(e)
+            default:
+                throw VideoDeleteError.networkError(URLError(.badServerResponse))
+            }
+        }
+    }
+
     // MARK: — Private helpers
 
     private func decodeEvent(_ data: Data) throws -> ContactEventOut {
@@ -232,5 +266,33 @@ enum AnnotationAPIError: Error, LocalizedError {
     var isRetryable: Bool {
         if case .retryable = self { return true }
         return false
+    }
+}
+
+// MARK: — VideoDeleteError
+
+enum VideoDeleteError: Error, LocalizedError, Equatable {
+    case notFound                          // 404
+    case unauthorized                      // 401 / session expired
+    case permissionDenied(detail: String)  // 403
+    case networkError(Error)               // URLError or transport failure
+
+    var errorDescription: String? {
+        switch self {
+        case .notFound:                    return "Video not found."
+        case .unauthorized:                return "Session expired. Please log in again."
+        case .permissionDenied(let d):     return "Permission denied: \(d)"
+        case .networkError:                return "Network error. Please try again."
+        }
+    }
+
+    static func == (lhs: VideoDeleteError, rhs: VideoDeleteError) -> Bool {
+        switch (lhs, rhs) {
+        case (.notFound, .notFound):                           return true
+        case (.unauthorized, .unauthorized):                   return true
+        case (.permissionDenied(let a), .permissionDenied(let b)): return a == b
+        case (.networkError, .networkError):                   return true
+        default:                                               return false
+        }
     }
 }
