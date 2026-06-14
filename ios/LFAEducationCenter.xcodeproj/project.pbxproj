@@ -136,6 +136,7 @@
 		CC400004000000000000024 /* SILO2LayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000024 /* SILO2LayoutTests.swift */; };
 		CC400004000000000000025 /* APIConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000025 /* APIConfigTests.swift */; };
 		CC400004000000000000026 /* JugglingVideoListViewModelDeleteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000026 /* JugglingVideoListViewModelDeleteTests.swift */; };
+		CC400004000000000000027 /* JugglingVideoListViewModelSwipeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000027 /* JugglingVideoListViewModelSwipeTests.swift */; };
 		CC400004000000000000001 /* JugglingVideoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000001 /* JugglingVideoTests.swift */; };
 		CC400004000000000000005 /* ContactTaxonomyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000005 /* ContactTaxonomyTests.swift */; };
 		CC400004000000000000006 /* LocalAnnotationStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000006 /* LocalAnnotationStoreTests.swift */; };
@@ -296,6 +297,7 @@
 		CC300003000000000000024 /* SILO2LayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SILO2LayoutTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000025 /* APIConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIConfigTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000026 /* JugglingVideoListViewModelDeleteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoListViewModelDeleteTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000027 /* JugglingVideoListViewModelSwipeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoListViewModelSwipeTests.swift; sourceTree = "<group>"; };
 		DD000003000000000000001 /* Config.Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.Debug.xcconfig; sourceTree = "<group>"; };
 		DD000003000000000000002 /* Config.Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.Release.xcconfig; sourceTree = "<group>"; };
 		CC300003000000000000001 /* JugglingVideoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoTests.swift; sourceTree = "<group>"; };
@@ -684,6 +686,7 @@
 				CC300003000000000000023 /* SILO1EmojiZonePickerTests.swift */,
 				CC300003000000000000024 /* SILO2LayoutTests.swift */,
 				CC300003000000000000026 /* JugglingVideoListViewModelDeleteTests.swift */,
+				CC300003000000000000027 /* JugglingVideoListViewModelSwipeTests.swift */,
 				BB100003000000000000004 /* AnnotationVideoLoaderTests.swift */,
 				BB100003000000000000005 /* PlaybackBarTests.swift */,
 				BB100003000000000000006 /* AVPlayerLayerViewTests.swift */,
@@ -953,6 +956,7 @@
 				CC400004000000000000024 /* SILO2LayoutTests.swift in Sources */,
 				CC400004000000000000025 /* APIConfigTests.swift in Sources */,
 				CC400004000000000000026 /* JugglingVideoListViewModelDeleteTests.swift in Sources */,
+				CC400004000000000000027 /* JugglingVideoListViewModelSwipeTests.swift in Sources */,
 				BB100004000000000000004 /* AnnotationVideoLoaderTests.swift in Sources */,
 				BB100004000000000000005 /* PlaybackBarTests.swift in Sources */,
 				BB100004000000000000006 /* AVPlayerLayerViewTests.swift in Sources */,

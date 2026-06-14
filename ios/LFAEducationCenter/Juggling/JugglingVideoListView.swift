@@ -6,6 +6,14 @@ struct JugglingVideoListView: View {
     @EnvironmentObject var authManager: AuthManager
     @StateObject private var viewModel = JugglingVideoListViewModel()
 
+    // Swipe-to-delete UI state (I-2).
+    // deleteCandidate holds the stable videoId captured at swipe time by
+    // resolveDeleteCandidate(at:in:). It is never re-derived from an index later.
+    @State private var deleteCandidate:       String? = nil
+    @State private var showDeleteConfirmation = false
+    @State private var showDeleteError        = false
+    @State private var deleteErrorMessage:    String  = ""
+
     var body: some View {
         NavigationView {
             listContent
@@ -30,6 +38,34 @@ struct JugglingVideoListView: View {
                 AnnotationUserUnavailableView()
             }
         }
+        // iOS 14-compatible ActionSheet (confirmationDialog is iOS 15+).
+        .actionSheet(isPresented: $showDeleteConfirmation) {
+            ActionSheet(
+                title: Text("Videófelvétel törlése"),
+                message: Text(
+                    "A videófájl és az előnézeti kép véglegesen törlődik, " +
+                    "így tárhely szabadul fel. Az elemzési eredmények, " +
+                    "címkék és statisztikák megmaradnak a profilodban."
+                ),
+                buttons: [
+                    .destructive(Text("Felvételek törlése")) {
+                        guard let videoId = deleteCandidate else { return }
+                        deleteCandidate = nil
+                        Task { await performDelete(videoId: videoId) }
+                    },
+                    .cancel(Text("Mégse")) {
+                        deleteCandidate = nil
+                    }
+                ]
+            )
+        }
+        .alert(isPresented: $showDeleteError) {
+            Alert(
+                title: Text("Törlés sikertelen"),
+                message: Text(deleteErrorMessage),
+                dismissButton: .default(Text("OK"))
+            )
+        }
     }
 
     @ViewBuilder
@@ -48,21 +84,48 @@ struct JugglingVideoListView: View {
             }
 
         case .loaded(let videos):
-            ScrollView {
-                LazyVStack(spacing: Theme.Spacing.sm) {
-                    ForEach(videos) { video in
-                        JugglingVideoRow(
-                            video: video,
-                            thumbnail: viewModel.thumbnails[video.videoId],
-                            onPlay: { viewModel.playVideo(video) }
-                        )
-                        .onAppear {
-                            viewModel.fetchThumbnailIfNeeded(for: video, using: authManager)
-                        }
-                        .padding(.horizontal, Theme.Spacing.md)
+            // Switch to List so ForEach .onDelete gives us swipe-to-delete gestures.
+            // iOS 14: separators and UITableView background are hidden via UIAppearance
+            // in .onAppear / .onDisappear below.
+            List {
+                ForEach(videos) { video in
+                    JugglingVideoRow(
+                        video: video,
+                        thumbnail: viewModel.thumbnails[video.videoId],
+                        isDeleting: viewModel.deletingVideoIds.contains(video.videoId),
+                        onPlay: { viewModel.playVideo(video) }
+                    )
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(
+                        top: Theme.Spacing.xs,
+                        leading: Theme.Spacing.md,
+                        bottom: Theme.Spacing.xs,
+                        trailing: Theme.Spacing.md
+                    ))
+                    .onAppear {
+                        viewModel.fetchThumbnailIfNeeded(for: video, using: authManager)
                     }
                 }
-                .padding(.vertical, Theme.Spacing.sm)
+                .onDelete { indexSet in
+                    // resolveDeleteCandidate extracts and validates the videoId NOW,
+                    // before any async call or list reorder can happen.
+                    guard let videoId = viewModel.resolveDeleteCandidate(
+                        at: indexSet, in: videos
+                    ) else { return }   // media_deleted or in-flight — no-op
+                    deleteCandidate = videoId
+                    showDeleteConfirmation = true
+                }
+            }
+            .listStyle(PlainListStyle())
+            .onAppear {
+                // iOS 14: hide List separators and clear the UITableView background.
+                // Restored in .onDisappear to limit impact on other screens.
+                UITableView.appearance().separatorColor = .clear
+                UITableView.appearance().backgroundColor = .clear
+            }
+            .onDisappear {
+                UITableView.appearance().separatorColor = .opaqueSeparator
+                UITableView.appearance().backgroundColor = .systemBackground
             }
 
         case .empty:
@@ -100,14 +163,25 @@ struct JugglingVideoListView: View {
             }
         }
     }
+
+    // Calls the ViewModel delete, then shows an error alert if it failed.
+    // videoId was captured at swipe time — never re-derived from a list index here.
+    private func performDelete(videoId: String) async {
+        await viewModel.deleteVideo(videoId: videoId)
+        if let msg = viewModel.errorMessage {
+            deleteErrorMessage = msg
+            showDeleteError = true
+        }
+    }
 }
 
 // MARK: — Video row
 
 private struct JugglingVideoRow: View {
-    let video:     JugglingVideoItem
-    let thumbnail: UIImage?
-    let onPlay:    () -> Void
+    let video:      JugglingVideoItem
+    let thumbnail:  UIImage?
+    let isDeleting: Bool        // true while a DELETE for this video is in flight
+    let onPlay:     () -> Void
 
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
@@ -149,6 +223,20 @@ private struct JugglingVideoRow: View {
         .padding(Theme.Spacing.sm)
         .background(Theme.Color.surface)
         .cornerRadius(Theme.Radius.md)
+        // iOS 14: .overlay(_ view:) — the iOS 15+ alignment: label form is not available.
+        // Shows a spinner overlay while the storage-release DELETE is in flight.
+        .overlay(
+            Group {
+                if isDeleting {
+                    ZStack {
+                        Theme.Color.surface.opacity(0.55)
+                        ProgressView()
+                    }
+                    .cornerRadius(Theme.Radius.md)
+                }
+            }
+        )
+        .disabled(isDeleting)
     }
 
     @ViewBuilder
@@ -169,10 +257,11 @@ private struct JugglingVideoRow: View {
 
     private var thumbnailPlaceholderIcon: String {
         switch video.status {
-        case "processing": return "clock"
-        case "rejected":   return "xmark.circle"
-        case "failed":     return "exclamationmark.circle"
-        default:           return "photo"
+        case "media_deleted": return "archivebox"
+        case "processing":    return "clock"
+        case "rejected":      return "xmark.circle"
+        case "failed":        return "exclamationmark.circle"
+        default:              return "photo"
         }
     }
 
@@ -191,6 +280,7 @@ private struct JugglingVideoRow: View {
         case "analyzed":          return Theme.Color.primary
         case "processing":        return Theme.Color.secondary
         case "rejected", "failed": return Theme.Color.error
+        case "media_deleted":     return Theme.Color.muted
         default:                  return Theme.Color.muted
         }
     }

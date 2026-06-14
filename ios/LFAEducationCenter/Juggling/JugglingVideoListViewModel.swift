@@ -122,6 +122,8 @@ final class JugglingVideoListViewModel: ObservableObject {
         deletingVideoIds.insert(videoId)
         defer { deletingVideoIds.remove(videoId) }
 
+        errorMessage = nil   // clear stale error before each attempt
+
         let client: JugglingAnnotationAPIClientProtocol
         if let injected = injectableDeleteClient {
             client = injected
@@ -140,6 +142,22 @@ final class JugglingVideoListViewModel: ObservableObject {
         } catch {
             errorMessage = "Could not delete video. Please try again."
         }
+    }
+
+    // MARK: — Swipe-to-delete resolution (I-2)
+    //
+    // Converts an IndexSet from .onDelete into a stable videoId captured at
+    // swipe time. Returns nil (no-op) for:
+    //   • already media_deleted — archive row, nothing left to remove
+    //   • a delete already in flight for this video — duplicate guard
+    //   • index out of bounds — defensive guard
+
+    func resolveDeleteCandidate(at indexSet: IndexSet, in videos: [JugglingVideoItem]) -> String? {
+        guard let index = indexSet.first, index < videos.count else { return nil }
+        let video = videos[index]
+        guard video.status != "media_deleted" else { return nil }
+        guard !deletingVideoIds.contains(video.videoId) else { return nil }
+        return video.videoId
     }
 
     // MARK: — Test support (internal — accessible via @testable import in unit tests)
