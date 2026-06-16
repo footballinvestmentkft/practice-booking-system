@@ -245,6 +245,14 @@ final class JugglingAnnotationViewModel: ObservableObject {
         await client.uploadPoseSnapshot(videoId: videoId, eventId: serverEventId, request: request)
     }
 
+    // Phase 2A: fetch all existing pose snapshots for this video.
+    // Returns [] when the feature flag is off (503 is swallowed in the API client)
+    // or when the client is a test mock.
+    func fetchPoseSnapshots() async -> [PoseSnapshotOut] {
+        guard let client = apiClient as? JugglingAnnotationAPIClient else { return [] }
+        return await client.fetchPoseSnapshots(videoId: videoId)
+    }
+
     // Creates an empty session and persists it immediately. Used by onAppear()
     // for .notFound and .quarantined results. session is set in-memory even if
     // the save fails (there is nothing to roll back to), but saveError is set

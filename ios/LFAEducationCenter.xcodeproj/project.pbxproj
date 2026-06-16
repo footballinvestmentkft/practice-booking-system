@@ -161,6 +161,7 @@
 		BB100004000000000000005 /* PlaybackBarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100003000000000000005 /* PlaybackBarTests.swift */; };
 		BB100004000000000000006 /* AVPlayerLayerViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100003000000000000006 /* AVPlayerLayerViewTests.swift */; };
 		BB200004000000000000001 /* JugglingAnnotationScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000001 /* JugglingAnnotationScreen.swift */; };
+		BB200004000000000000020 /* PoseSnapshotOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000020 /* PoseSnapshotOverlayView.swift */; };
 		BB200004000000000000003 /* EventTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000003 /* EventTimelineView.swift */; };
 		BB200004000000000000006 /* PlaybackControllerLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000006 /* PlaybackControllerLayoutTests.swift */; };
 		BB200004000000000000009 /* EventTimelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000009 /* EventTimelineTests.swift */; };
@@ -295,6 +296,7 @@
 		BB100003000000000000005 /* PlaybackBarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackBarTests.swift; sourceTree = "<group>"; };
 		BB100003000000000000006 /* AVPlayerLayerViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVPlayerLayerViewTests.swift; sourceTree = "<group>"; };
 		BB200003000000000000001 /* JugglingAnnotationScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingAnnotationScreen.swift; sourceTree = "<group>"; };
+		BB200003000000000000020 /* PoseSnapshotOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoseSnapshotOverlayView.swift; sourceTree = "<group>"; };
 		BB200003000000000000003 /* EventTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTimelineView.swift; sourceTree = "<group>"; };
 		BB200003000000000000006 /* PlaybackControllerLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackControllerLayoutTests.swift; sourceTree = "<group>"; };
 		BB200003000000000000009 /* EventTimelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTimelineTests.swift; sourceTree = "<group>"; };
@@ -640,6 +642,7 @@
 			isa = PBXGroup;
 			children = (
 				BB200003000000000000001 /* JugglingAnnotationScreen.swift */,
+				BB200003000000000000020 /* PoseSnapshotOverlayView.swift */,
 				BB200003000000000000003 /* EventTimelineView.swift */,
 				BB200003000000000000010 /* AnnotationDebugOverlay.swift */,
 				BB200003000000000000011 /* EventLabelDetailView.swift */,
@@ -961,6 +964,7 @@
 				BB100004000000000000002 /* AnnotationVideoLoader.swift in Sources */,
 				BB100004000000000000003 /* PlaybackControlBar.swift in Sources */,
 				BB200004000000000000001 /* JugglingAnnotationScreen.swift in Sources */,
+				BB200004000000000000020 /* PoseSnapshotOverlayView.swift in Sources */,
 				BB200004000000000000003 /* EventTimelineView.swift in Sources */,
 				BB200004000000000000010 /* AnnotationDebugOverlay.swift in Sources */,
 				BB200004000000000000011 /* EventLabelDetailView.swift in Sources */,

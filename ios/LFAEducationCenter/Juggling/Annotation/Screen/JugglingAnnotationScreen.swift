@@ -54,6 +54,8 @@ struct JugglingAnnotationScreen: View {
         let inferenceConfidence: Double?
     }
     @State private var pendingPoseSnapshots: [UUID: CapturedPose] = [:]
+    @State private var poseSnapshots:        [PoseSnapshotOut]    = []
+    @State private var showSkeletonOverlay   = false
 
     @Environment(\.presentationMode) private var presentationMode
     #if DEBUG
@@ -189,6 +191,7 @@ struct JugglingAnnotationScreen: View {
                     let asset = AVAsset(url: url)
                     playback.loadAsset(asset)
                     if let avp = playback.avPlayer { avp.play() }
+                    Task { poseSnapshots = await vm.fetchPoseSnapshots() }
                 }
             })
             .onChange(of: vm.activeEvents) { events in
@@ -213,7 +216,10 @@ struct JugglingAnnotationScreen: View {
                         imageHeightPx:       captured.imageHeightPx,
                         inferenceConfidence: captured.inferenceConfidence
                     )
-                    Task { await vm.uploadPendingPoseSnapshot(serverEventId: eid, request: req) }
+                    Task {
+                        await vm.uploadPendingPoseSnapshot(serverEventId: eid, request: req)
+                        poseSnapshots = await vm.fetchPoseSnapshots()
+                    }
                 }
             }
             #if DEBUG
@@ -274,6 +280,38 @@ struct JugglingAnnotationScreen: View {
                     .frame(width: renderSize.width, height: renderSize.height)
                     .rotationEffect(.degrees(Double(playback.userRotation)))
                     .animation(.easeInOut(duration: 0.25), value: playback.userRotation)
+
+                if showSkeletonOverlay,
+                   let snap = closestSnapshot(toMs: playback.currentTimestampMs) {
+                    PoseSnapshotOverlayView(keypoints: snap.keypoints)
+                        .frame(width: renderSize.width, height: renderSize.height)
+                        .allowsHitTesting(false)
+                }
+
+                if !poseSnapshots.isEmpty {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Button {
+                                showSkeletonOverlay.toggle()
+                            } label: {
+                                Image(systemName: showSkeletonOverlay
+                                      ? "figure.walk.circle.fill"
+                                      : "figure.walk.circle")
+                                    .font(.title3)
+                                    .foregroundColor(.white)
+                                    .padding(8)
+                                    .background(Color.black.opacity(0.45))
+                                    .clipShape(Circle())
+                            }
+                            .padding(8)
+                            .accessibilityLabel(showSkeletonOverlay
+                                                ? "Csontváz elrejtése"
+                                                : "Csontváz megjelenítése")
+                        }
+                        Spacer()
+                    }
+                }
             } else {
                 loaderPlaceholder
             }
@@ -404,6 +442,12 @@ struct JugglingAnnotationScreen: View {
 
                 Spacer()
 
+                if let serverEventId = draft.serverEventId,
+                   poseSnapshots.contains(where: { $0.contactEventId == serverEventId }) {
+                    Image(systemName: "figure.walk.circle")
+                        .font(.caption)
+                        .foregroundColor(.blue)
+                }
                 if let side = draft.side { sideTag(side) }
                 syncIcon(for: draft)
             }
@@ -629,6 +673,14 @@ struct JugglingAnnotationScreen: View {
     }
 
     // MARK: — Display helpers
+
+    // Returns the pose snapshot whose timestamp is closest to the given playhead
+    // position, provided it falls within a ±500 ms window of the playhead.
+    private func closestSnapshot(toMs ms: Int) -> PoseSnapshotOut? {
+        guard !poseSnapshots.isEmpty else { return nil }
+        let best = poseSnapshots.min(by: { abs($0.timestampMs - ms) < abs($1.timestampMs - ms) })!
+        return abs(best.timestampMs - ms) <= 500 ? best : nil
+    }
 
     private func typeLabel(for key: String?) -> String {
         guard let key = key else { return "—" }
