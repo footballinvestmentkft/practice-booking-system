@@ -186,4 +186,105 @@ final class PlaybackControllerTests: XCTestCase {
         XCTAssertEqual(CMTime.invalid.asMilliseconds, 0)
         XCTAssertEqual(CMTime.indefinite.asMilliseconds, 0)
     }
+
+    // MARK: — PlaybackRate extended cases (PS-01..PS-09)
+
+    // PS-01: all 8 cases present in allCases
+    func test_PS01_playbackRateAllCasesCount() {
+        XCTAssertEqual(PlaybackRate.allCases.count, 8,
+            "Expected 8 playback rates: 0.25/0.5/0.75/1/1.25/1.5/2/3")
+    }
+
+    // PS-02: rawValues are exactly correct
+    func test_PS02_playbackRateRawValues() {
+        XCTAssertEqual(PlaybackRate.quarter.rawValue,       0.25, accuracy: 0.001)
+        XCTAssertEqual(PlaybackRate.half.rawValue,          0.5,  accuracy: 0.001)
+        XCTAssertEqual(PlaybackRate.threeQuarters.rawValue, 0.75, accuracy: 0.001)
+        XCTAssertEqual(PlaybackRate.normal.rawValue,        1.0,  accuracy: 0.001)
+        XCTAssertEqual(PlaybackRate.oneAndQuarter.rawValue, 1.25, accuracy: 0.001)
+        XCTAssertEqual(PlaybackRate.oneAndHalf.rawValue,    1.5,  accuracy: 0.001)
+        XCTAssertEqual(PlaybackRate.double.rawValue,        2.0,  accuracy: 0.001)
+        XCTAssertEqual(PlaybackRate.triple.rawValue,        3.0,  accuracy: 0.001)
+    }
+
+    // PS-03: labels are user-facing strings
+    func test_PS03_playbackRateLabels() {
+        XCTAssertEqual(PlaybackRate.quarter.label,       "0.25×")
+        XCTAssertEqual(PlaybackRate.half.label,          "0.5×")
+        XCTAssertEqual(PlaybackRate.threeQuarters.label, "0.75×")
+        XCTAssertEqual(PlaybackRate.normal.label,        "1×")
+        XCTAssertEqual(PlaybackRate.oneAndQuarter.label, "1.25×")
+        XCTAssertEqual(PlaybackRate.oneAndHalf.label,    "1.5×")
+        XCTAssertEqual(PlaybackRate.double.label,        "2×")
+        XCTAssertEqual(PlaybackRate.triple.label,        "3×")
+    }
+
+    // PS-04: setRate(.threeQuarters) applies 0.75× while playing
+    func test_PS04_setRateThreeQuartersAppliedWhilePlaying() {
+        let (ctrl, player) = makeController()
+        ctrl.play()
+
+        ctrl.setRate(.threeQuarters)
+
+        XCTAssertEqual(ctrl.selectedRate, .threeQuarters)
+        XCTAssertEqual(player.rate, 0.75, accuracy: 0.001)
+    }
+
+    // PS-05: setRate(.oneAndQuarter) applies 1.25× while playing
+    func test_PS05_setRateOneAndQuarterAppliedWhilePlaying() {
+        let (ctrl, player) = makeController()
+        ctrl.play()
+
+        ctrl.setRate(.oneAndQuarter)
+
+        XCTAssertEqual(ctrl.selectedRate, .oneAndQuarter)
+        XCTAssertEqual(player.rate, 1.25, accuracy: 0.001)
+    }
+
+    // PS-06: setRate(.oneAndHalf) applies 1.5× while playing
+    func test_PS06_setRateOneAndHalfAppliedWhilePlaying() {
+        let (ctrl, player) = makeController()
+        ctrl.play()
+
+        ctrl.setRate(.oneAndHalf)
+
+        XCTAssertEqual(ctrl.selectedRate, .oneAndHalf)
+        XCTAssertEqual(player.rate, 1.5, accuracy: 0.001)
+    }
+
+    // PS-07: setRate(.double) applies 2× while playing
+    func test_PS07_setRateDoubleAppliedWhilePlaying() {
+        let (ctrl, player) = makeController()
+        ctrl.play()
+
+        ctrl.setRate(.double)
+
+        XCTAssertEqual(ctrl.selectedRate, .double)
+        XCTAssertEqual(player.rate, 2.0, accuracy: 0.001)
+    }
+
+    // PS-08: setRate(.triple) applies 3× — AVPlayer handles unsupported rates
+    // gracefully (silently reduces rate or stutters) without crashing.
+    func test_PS08_setRateTripleAppliedWithMockPlayer() {
+        let (ctrl, player) = makeController()
+        ctrl.play()
+
+        ctrl.setRate(.triple)
+
+        XCTAssertEqual(ctrl.selectedRate, .triple)
+        XCTAssertEqual(player.rate, 3.0, accuracy: 0.001)
+    }
+
+    // PS-09: setRate does not change player.rate while paused (all new rates)
+    func test_PS09_newRatesDoNotChangePlayerRateWhilePaused() {
+        let (ctrl, player) = makeController()
+        // ctrl is NOT playing
+
+        for rate in [PlaybackRate.threeQuarters, .oneAndQuarter, .oneAndHalf, .double, .triple] {
+            ctrl.setRate(rate)
+            XCTAssertEqual(ctrl.selectedRate, rate)
+            XCTAssertEqual(player.rate, 0.0,
+                "player.rate must stay 0 while paused — rate \(rate.label) changed it")
+        }
+    }
 }

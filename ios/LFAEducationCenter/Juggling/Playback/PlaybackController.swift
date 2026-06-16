@@ -4,17 +4,27 @@ import Combine
 // MARK: — PlaybackRate
 
 enum PlaybackRate: Float, CaseIterable, Identifiable {
-    case quarter = 0.25
-    case half    = 0.5
-    case normal  = 1.0
+    case quarter        = 0.25
+    case half           = 0.5
+    case threeQuarters  = 0.75
+    case normal         = 1.0
+    case oneAndQuarter  = 1.25
+    case oneAndHalf     = 1.5
+    case double         = 2.0
+    case triple         = 3.0
 
     var id: Float { rawValue }
 
     var label: String {
         switch self {
-        case .quarter: return "0.25×"
-        case .half:    return "0.5×"
-        case .normal:  return "1×"
+        case .quarter:       return "0.25×"
+        case .half:          return "0.5×"
+        case .threeQuarters: return "0.75×"
+        case .normal:        return "1×"
+        case .oneAndQuarter: return "1.25×"
+        case .oneAndHalf:    return "1.5×"
+        case .double:        return "2×"
+        case .triple:        return "3×"
         }
     }
 }
@@ -128,6 +138,12 @@ final class PlaybackController: ObservableObject {
     }
 
     func setRate(_ rate: PlaybackRate) {
+        // AVPlayer does not expose a per-rate capability check API on iOS 15.
+        // Setting player.rate to an unsupported value (e.g. 3× on slow hardware)
+        // causes AVPlayer to silently reduce to the nearest supported rate —
+        // it does not crash or throw. selectedRate is still updated so the UI
+        // reflects what the user requested; if the device cannot sustain 3×,
+        // the playback will stutter visibly without any additional error handling.
         selectedRate = rate
         if isPlaying {
             player.rate = rate.rawValue

@@ -92,6 +92,14 @@ final class PlaybackBarTests: XCTestCase {
         XCTAssertEqual(PlaybackControlBar.formatTimestamp(ms: 60_000), "1:00.000")
     }
 
+    // AN3B-B12b: rate menu has exactly 8 options (all PlaybackRate.allCases)
+    // The menu is driven by ForEach(PlaybackRate.allCases) so this guards
+    // against accidentally missing a case in the menu.
+    func test_AN3B_B12b_rateMenuHasEightOptions() {
+        XCTAssertEqual(PlaybackRate.allCases.count, 8,
+            "Menu must offer 8 speed options: 0.25/0.5/0.75/1/1.25/1.5/2/3")
+    }
+
     // AN3B-B13: bar has no reference to AnnotationVideoLoader (no coupling)
     // PlaybackControlBar only depends on PlaybackController — verified structurally.
     func test_AN3B_B13_barHasNoLoaderDependency() {
