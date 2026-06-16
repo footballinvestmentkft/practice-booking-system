@@ -1,5 +1,6 @@
+import re
 import time
-from typing import Dict, Callable, Optional
+from typing import Dict, Callable, List, Optional
 from collections import defaultdict, deque
 from datetime import datetime, timezone, timedelta
 
@@ -307,13 +308,35 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
     """
     Middleware to limit request body size for security.
+
+    Paths matching any pattern in ``excluded_path_regexes`` bypass the global
+    limit entirely — their endpoint is responsible for enforcing its own limit.
+    Use this for routes that legitimately accept larger payloads (e.g. video
+    upload) so that iOS/Android clients receive a proper HTTP 413 from the
+    endpoint rather than a TCP-close that looks like a network error.
     """
-    
-    def __init__(self, app, max_size_mb: int = 10):
+
+    def __init__(
+        self,
+        app,
+        max_size_mb: int = 10,
+        excluded_path_regexes: Optional[List[str]] = None,
+    ):
         super().__init__(app)
-        self.max_size_bytes = max_size_mb * 1024 * 1024  # Convert MB to bytes
-    
+        self.max_size_bytes = max_size_mb * 1024 * 1024
+        self._excluded_patterns: List[re.Pattern] = [
+            re.compile(p) for p in (excluded_path_regexes or [])
+        ]
+
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        # Paths excluded from the global limit pass straight through.
+        # Their endpoint must enforce its own size constraint.
+        if self._excluded_patterns:
+            path = request.url.path
+            for pattern in self._excluded_patterns:
+                if pattern.match(path):
+                    return await call_next(request)
+
         # Check Content-Length header
         content_length = request.headers.get("content-length")
         if content_length:
@@ -329,5 +352,5 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
                     )
             except ValueError:
                 pass
-        
+
         return await call_next(request)

@@ -686,3 +686,125 @@ class TestRequestSizeLimitMiddleware:
         req = self._mock_request_with_content_length(2 * 1024 * 1024)  # 2 MB
         response, _ = self._run_dispatch(mw, req)
         assert response.status_code == 413
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# RequestSizeLimitMiddleware — juggling upload path exclusion
+# ──────────────────────────────────────────────────────────────────────────────
+
+_JUGGLING_UPLOAD_PATTERN = r"^/api/v1/users/me/juggling/videos/[^/]+/upload$"
+_JUGGLING_UPLOAD_PATH = "/api/v1/users/me/juggling/videos/d232ef7f-c7a3-4676-99b6-66abf74f009c/upload"
+
+
+class TestRequestSizeLimitMiddlewareJugglingExclusion:
+    """
+    Verifies that the juggling video upload path bypasses the 10 MB global
+    middleware limit while all other paths retain the 10 MB restriction.
+
+    The excluded path pattern registered in main.py is:
+        ^/api/v1/users/me/juggling/videos/[^/]+/upload$
+    """
+
+    def _make_mw(self, max_mb: int = 10):
+        return RequestSizeLimitMiddleware(
+            app=MagicMock(),
+            max_size_mb=max_mb,
+            excluded_path_regexes=[_JUGGLING_UPLOAD_PATTERN],
+        )
+
+    def _mock_request(self, path: str, size_bytes=None):
+        req = MagicMock()
+        req.url.path = path
+        if size_bytes is not None:
+            req.headers.get = lambda k, d=None: str(size_bytes) if k == "content-length" else d
+        else:
+            req.headers.get = lambda k, d=None: d
+        return req
+
+    def _run_dispatch(self, mw, req):
+        expected = MagicMock()
+        expected.status_code = 200
+
+        async def call_next(r):
+            return expected
+
+        return _run(mw.dispatch(req, call_next)), expected
+
+    # ── juggling upload path: all sizes ≤100 MB pass the middleware ───────────
+
+    def test_jug_excl_01_juggling_upload_5mb_passes(self):
+        """JUG-EXCL-01: 5 MB on juggling upload path → middleware passes through."""
+        mw = self._make_mw()
+        req = self._mock_request(_JUGGLING_UPLOAD_PATH, 5 * 1024 * 1024)
+        response, expected = self._run_dispatch(mw, req)
+        assert response is expected
+
+    def test_jug_excl_02_juggling_upload_12mb_passes(self):
+        """JUG-EXCL-02: 12 MB on juggling upload path → middleware passes through (>10 MB global)."""
+        mw = self._make_mw()
+        req = self._mock_request(_JUGGLING_UPLOAD_PATH, 12 * 1024 * 1024)
+        response, expected = self._run_dispatch(mw, req)
+        assert response is expected
+
+    def test_jug_excl_03_juggling_upload_99mb_passes(self):
+        """JUG-EXCL-03: 99 MB on juggling upload path → middleware passes through."""
+        mw = self._make_mw()
+        req = self._mock_request(_JUGGLING_UPLOAD_PATH, 99 * 1024 * 1024)
+        response, expected = self._run_dispatch(mw, req)
+        assert response is expected
+
+    def test_jug_excl_04_juggling_upload_no_content_length_passes(self):
+        """JUG-EXCL-04: No Content-Length on juggling upload path → passes through."""
+        mw = self._make_mw()
+        req = self._mock_request(_JUGGLING_UPLOAD_PATH, size_bytes=None)
+        response, expected = self._run_dispatch(mw, req)
+        assert response is expected
+
+    # ── non-juggling paths retain the 10 MB global limit ─────────────────────
+
+    def test_jug_excl_05_other_endpoint_12mb_blocked(self):
+        """JUG-EXCL-05: 12 MB on a non-juggling path → middleware returns 413."""
+        mw = self._make_mw()
+        req = self._mock_request("/api/v1/users/me/profile", 12 * 1024 * 1024)
+        response, _ = self._run_dispatch(mw, req)
+        assert response.status_code == 413
+
+    def test_jug_excl_06_other_endpoint_5mb_passes(self):
+        """JUG-EXCL-06: 5 MB on a non-juggling path → middleware passes through."""
+        mw = self._make_mw()
+        req = self._mock_request("/api/v1/users/me/profile", 5 * 1024 * 1024)
+        response, expected = self._run_dispatch(mw, req)
+        assert response is expected
+
+    def test_jug_excl_07_juggling_path_without_upload_suffix_blocked(self):
+        """JUG-EXCL-07: Juggling video path without /upload suffix → NOT excluded → 413."""
+        mw = self._make_mw()
+        # e.g. the list endpoint or a different sub-resource
+        req = self._mock_request(
+            "/api/v1/users/me/juggling/videos/d232ef7f-c7a3-4676-99b6-66abf74f009c",
+            12 * 1024 * 1024,
+        )
+        response, _ = self._run_dispatch(mw, req)
+        assert response.status_code == 413
+
+    def test_jug_excl_08_413_body_from_middleware_has_structured_error(self):
+        """JUG-EXCL-08: Middleware 413 body has 'error' and 'message' fields."""
+        import json
+        mw = self._make_mw()
+        req = self._mock_request("/api/v1/users/me/profile", 12 * 1024 * 1024)
+        response, _ = self._run_dispatch(mw, req)
+        assert response.status_code == 413
+        body = json.loads(response.body)
+        assert body["error"] == "request_too_large"
+        assert "10MB" in body["message"] or "10" in body["message"]
+
+    # ── without exclusion list: original behaviour unchanged ──────────────────
+
+    def test_jug_excl_09_no_exclusion_juggling_path_blocked(self):
+        """JUG-EXCL-09: Without exclusion list, juggling path is subject to 10 MB limit."""
+        mw = RequestSizeLimitMiddleware(app=MagicMock(), max_size_mb=10)
+        req = self._mock_request(_JUGGLING_UPLOAD_PATH, 12 * 1024 * 1024)
+        # req.url is accessed only when exclusions are configured; with no
+        # exclusions the middleware goes straight to the Content-Length check.
+        response, _ = self._run_dispatch(mw, req)
+        assert response.status_code == 413
