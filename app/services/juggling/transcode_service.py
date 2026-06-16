@@ -99,7 +99,17 @@ def build_transcode_command(
         raise TranscodeSkip("no_processing_needed")
 
     binary = shutil.which("ffmpeg") or "ffmpeg"
-    cmd: list[str] = [binary, "-y", "-i", str(input_path)]
+
+    if needs_vf:
+        # -noautorotate MUST precede -i.
+        # ffmpeg applies the Display Matrix rotation automatically during decode
+        # (autorotate). Without -noautorotate, the explicit transpose filter below
+        # and the implicit autorotate both run, rotating the video twice.
+        cmd: list[str] = [binary, "-y", "-noautorotate", "-i", str(input_path)]
+    else:
+        # Audio-only strip uses -c:v copy (stream copy bypasses the decoder,
+        # so autorotate never fires). -noautorotate is not needed here.
+        cmd: list[str] = [binary, "-y", "-i", str(input_path)]
 
     if needs_vf:
         # Build filtergraph: transpose → scale → fps
@@ -140,7 +150,6 @@ def build_thumbnail_command(
 ) -> list[str]:
     """Return ffmpeg argv for first-frame JPEG with rotation correction."""
     binary = shutil.which("ffmpeg") or "ffmpeg"
-    cmd: list[str] = [binary, "-y", "-ss", "0", "-i", str(input_path)]
 
     filters: list[str] = []
     if rotation == 90:
@@ -149,8 +158,15 @@ def build_thumbnail_command(
         filters.append("transpose=2")
     elif rotation == 180:
         filters.append("transpose=1,transpose=1")
+
     if filters:
+        # -noautorotate MUST precede -i: same double-rotation hazard as in
+        # build_transcode_command — the decoder auto-applies the Display Matrix
+        # and then the explicit transpose filter would rotate a second time.
+        cmd: list[str] = [binary, "-y", "-ss", "0", "-noautorotate", "-i", str(input_path)]
         cmd += ["-vf", ",".join(filters)]
+    else:
+        cmd: list[str] = [binary, "-y", "-ss", "0", "-i", str(input_path)]
 
     cmd += ["-vframes", "1", "-q:v", "2", str(output_path)]
     return cmd
