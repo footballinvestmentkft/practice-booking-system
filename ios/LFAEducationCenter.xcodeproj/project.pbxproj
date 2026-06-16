@@ -147,6 +147,7 @@
 		CC400004000000000000028 /* JugglingUploadAPIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000028 /* JugglingUploadAPIClientTests.swift */; };
 		CC400004000000000000029 /* JugglingVideoUploadViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000029 /* JugglingVideoUploadViewModelTests.swift */; };
 		CC400004000000000000031 /* JugglingVideoExportServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000031 /* JugglingVideoExportServiceTests.swift */; };
+		CC400004000000000000032 /* PoseSnapshotServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000032 /* PoseSnapshotServiceTests.swift */; };
 		CC400004000000000000030 /* JugglingVideoUploadIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000030 /* JugglingVideoUploadIntegrationTests.swift */; };
 		CC400004000000000000001 /* JugglingVideoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000001 /* JugglingVideoTests.swift */; };
 		CC400004000000000000005 /* ContactTaxonomyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000005 /* ContactTaxonomyTests.swift */; };
@@ -321,6 +322,7 @@
 		CC300003000000000000028 /* JugglingUploadAPIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingUploadAPIClientTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000029 /* JugglingVideoUploadViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoUploadViewModelTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000031 /* JugglingVideoExportServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoExportServiceTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000032 /* PoseSnapshotServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoseSnapshotServiceTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000030 /* JugglingVideoUploadIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoUploadIntegrationTests.swift; sourceTree = "<group>"; };
 		DD000003000000000000001 /* Config.Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.Debug.xcconfig; sourceTree = "<group>"; };
 		DD000003000000000000002 /* Config.Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.Release.xcconfig; sourceTree = "<group>"; };
@@ -731,6 +733,7 @@
 				CC300003000000000000029 /* JugglingVideoUploadViewModelTests.swift */,
 				CC300003000000000000030 /* JugglingVideoUploadIntegrationTests.swift */,
 				CC300003000000000000031 /* JugglingVideoExportServiceTests.swift */,
+				CC300003000000000000032 /* PoseSnapshotServiceTests.swift */,
 				BB100003000000000000004 /* AnnotationVideoLoaderTests.swift */,
 				BB100003000000000000005 /* PlaybackBarTests.swift */,
 				BB100003000000000000006 /* AVPlayerLayerViewTests.swift */,
@@ -1013,6 +1016,7 @@
 				CC400004000000000000029 /* JugglingVideoUploadViewModelTests.swift in Sources */,
 				CC400004000000000000030 /* JugglingVideoUploadIntegrationTests.swift in Sources */,
 				CC400004000000000000031 /* JugglingVideoExportServiceTests.swift in Sources */,
+				CC400004000000000000032 /* PoseSnapshotServiceTests.swift in Sources */,
 				BB100004000000000000004 /* AnnotationVideoLoaderTests.swift in Sources */,
 				BB100004000000000000005 /* PlaybackBarTests.swift in Sources */,
 				BB100004000000000000006 /* AVPlayerLayerViewTests.swift in Sources */,
