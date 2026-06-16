@@ -25,6 +25,8 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+from celery.exceptions import Retry as CeleryRetry
+
 from app.celery_app import celery_app
 from app.config import settings
 from app.database import SessionLocal
@@ -64,6 +66,9 @@ def transcode_video_task(self, video_id: str) -> dict:
         if not original or not original.exists():
             reason = "missing_storage_path" if not original else "file_not_found"
             video_service.apply_transcode_failure(video_id, reason, db)
+            # video.status stays 'processing' after transcode failure; transition it
+            # to 'failed' so the video is not stuck in processing forever.
+            video_service.apply_failure(video_id, reason, db)
             return {"status": "failed", "reason": reason}
 
         # ── Step 1: set transcode_status=processing ───────────────────────────
@@ -85,6 +90,7 @@ def transcode_video_task(self, video_id: str) -> dict:
                 raise self.retry(exc=exc)
             except self.MaxRetriesExceededError:
                 video_service.apply_transcode_failure(video_id, "probe_failed", db)
+                video_service.apply_failure(video_id, "probe_failed", db)
                 return {"status": "failed", "reason": "probe_failed"}
 
         # ── Step 3: run transcode pipeline ────────────────────────────────────
@@ -120,6 +126,11 @@ def transcode_video_task(self, video_id: str) -> dict:
             )
             return {"status": "failed", "reason": result.error}
 
+    except CeleryRetry:
+        # A Retry raised inside a sub-handler (e.g. probe error) bubbles here.
+        # Re-raise so Celery handles the re-queue without double-incrementing the
+        # retry counter and without swallowing the MaxRetriesExceededError.
+        raise
     except Exception as exc:
         logger.warning(
             "transcode_task_error",
@@ -128,9 +139,9 @@ def transcode_video_task(self, video_id: str) -> dict:
         try:
             raise self.retry(exc=exc)
         except self.MaxRetriesExceededError:
-            video_service.apply_transcode_failure(
-                video_id, f"task_exception:{exc}", db
-            )
+            reason = f"task_exception:{exc}"
+            video_service.apply_transcode_failure(video_id, reason, db)
+            video_service.apply_failure(video_id, reason, db)
             return {"status": "failed", "reason": str(exc)}
     finally:
         db.close()

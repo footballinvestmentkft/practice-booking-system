@@ -10,7 +10,9 @@
 # =============================================================================
 
 .DEFAULT_GOAL := help
-.PHONY: help web worker-mood worker-all recover-mood recover-mood-execute \
+.PHONY: help web worker-mood worker-juggling worker-all \
+        recover-mood recover-mood-execute \
+        recover-juggling recover-juggling-execute \
         migrate test-unit test-cc docker-up docker-down
 
 # ── Help ──────────────────────────────────────────────────────────────────────
@@ -19,13 +21,16 @@ help:
 	@echo "  LFA Practice Booking System — dev commands"
 	@echo ""
 	@echo "  Dev servers:"
-	@echo "    make web              Start FastAPI dev server (port 8000)"
-	@echo "    make worker-mood      Start mood photo background removal worker"
-	@echo "    make worker-all       Start worker for ALL queues (mood + tournaments)"
+	@echo "    make web                  Start FastAPI dev server (port 8000)"
+	@echo "    make worker-mood          Start mood photo background removal worker"
+	@echo "    make worker-juggling      Start juggling video transcode + analyze worker"
+	@echo "    make worker-all           Start worker for ALL queues"
 	@echo ""
 	@echo "  Recovery:"
-	@echo "    make recover-mood         Dry-run: show stuck processing mood photos"
-	@echo "    make recover-mood-execute Execute: reset stuck processing mood photos"
+	@echo "    make recover-mood             Dry-run: show stuck processing mood photos"
+	@echo "    make recover-mood-execute     Execute: reset stuck processing mood photos"
+	@echo "    make recover-juggling         Dry-run: show stuck processing juggling videos"
+	@echo "    make recover-juggling-execute Execute: reset stuck processing juggling videos"
 	@echo ""
 	@echo "  Database:"
 	@echo "    make migrate          Run Alembic migrations"
@@ -52,10 +57,18 @@ worker-mood:
 		--concurrency=1 \
 		--loglevel=info
 
-worker-all:
-	@echo "Starting Celery worker for ALL queues (mood_photos + tournaments + default)..."
+worker-juggling:
+	@echo "Starting juggling_videos Celery worker (transcode + analyze)..."
 	celery -A app.celery_app worker \
-		-Q mood_photos,tournaments,default \
+		-Q juggling_videos,juggling_retention \
+		--pool=solo \
+		--concurrency=1 \
+		--loglevel=info
+
+worker-all:
+	@echo "Starting Celery worker for ALL queues..."
+	celery -A app.celery_app worker \
+		-Q mood_photos,tournaments,juggling_videos,juggling_retention,default \
 		--pool=prefork \
 		--concurrency=2 \
 		--loglevel=info
@@ -68,6 +81,14 @@ recover-mood:
 recover-mood-execute:
 	@echo "[EXECUTE] Resetting stuck processing mood photos..."
 	python scripts/recover_stuck_mood_photos.py --execute
+
+recover-juggling:
+	@echo "[DRY-RUN] Checking for stuck processing juggling videos..."
+	python scripts/recover_stuck_juggling.py
+
+recover-juggling-execute:
+	@echo "[EXECUTE] Resetting stuck processing juggling videos..."
+	python scripts/recover_stuck_juggling.py --execute
 
 # ── Database ─────────────────────────────────────────────────────────────────
 migrate:
